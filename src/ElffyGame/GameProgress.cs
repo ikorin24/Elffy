@@ -35,14 +35,13 @@ namespace ElffyGame
             _font = new Font(FontFamily.GenericSansSerif, 130);
             _text = new Text(Game.ClientSize);
             _text.Tag = "sampleText";
-            _text.Clear(Color.Violet);
             Game.AddGameObject(_text);
         }
 
         public override void Update()
         {
             if(_text != null) {
-                _text.Clear(Color.Violet);
+                _text.Clear(Color.FromArgb(0, Color.Violet));
                 _text.DrawString($"{FPSManager.GetFPS():N2}", _font, Brushes.White, new Point());
             }
 
