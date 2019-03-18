@@ -32,8 +32,8 @@ namespace ElffyGame
 
         public override void Start()
         {
-            _font = new Font(FontFamily.GenericSansSerif, 20);
-            _text = new Text(120, 50);
+            _font = new Font(FontFamily.GenericSansSerif, 130);
+            _text = new Text(Game.ClientSize);
             _text.Tag = "sampleText";
             _text.Clear(Color.Violet);
             Game.AddGameObject(_text);

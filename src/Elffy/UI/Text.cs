@@ -17,6 +17,9 @@ namespace Elffy.UI
     public class Text : GameObject, IDisposable
     {
         //private Matrix4 _modelView;
+        const int BYTE_PER_PIXEL = 4;
+        /// <summary>テクスチャ更新時に使用するバッファ(メンバ変数として使いまわすことでGCを削減)</summary>
+        private byte[] _buf;
 
         #region private Member
         private Bitmap _bmp;
@@ -135,20 +138,21 @@ namespace Elffy.UI
             // 変更部分がある時のみ更新
             if(_dirtyRegion != RectangleF.Empty) {
                 var data = _bmp.LockBits(new Rectangle(0, 0, _bmp.Width, _bmp.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-                const int BYTE_PER_PIXEL = 4;
-                var buf = new byte[_dirtyRegion.Width * _dirtyRegion.Height * BYTE_PER_PIXEL];      // サブビットマップの生バイト配列
                 var subStartAddr = data.Scan0 + (_dirtyRegion.Y * _bmp.Width + _dirtyRegion.X) * BYTE_PER_PIXEL;
+                if(_buf == null) {
+                    _buf = new byte[_bmp.Width * _bmp.Height * BYTE_PER_PIXEL]; // バッファが用意されていないなら用意する。(バッファ長はビットマップ全体の大きさを用意)
+                }
                 for(int i = 0; i < _dirtyRegion.Height; i++) {
                     var addr = subStartAddr + i * _bmp.Width * BYTE_PER_PIXEL;  // コピー元のアドレス
                     var len = _dirtyRegion.Width * BYTE_PER_PIXEL;              // コピーする長さ
                     var bufPos = i * _dirtyRegion.Width * BYTE_PER_PIXEL;       // コピー先の配列の位置
-                    Marshal.Copy(addr, buf, bufPos, len);
+                    Marshal.Copy(addr, _buf, bufPos, len);
                 }
 
                 GL.BindTexture(TextureTarget.Texture2D, _texture);
                 GL.TexSubImage2D(TextureTarget.Texture2D, 0,
                     _dirtyRegion.X, _dirtyRegion.Y, _dirtyRegion.Width, _dirtyRegion.Height,
-                    PixelFormat.Bgra, PixelType.UnsignedByte, buf);
+                    PixelFormat.Bgra, PixelType.UnsignedByte, _buf);            // バッファは必要な部分だけしか参照されず、該当部分はきちんと更新されているので使いまわせる
                 _bmp.UnlockBits(data);
                 _dirtyRegion = Rectangle.Empty;
             }
