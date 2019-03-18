@@ -14,7 +14,7 @@ using Elffy.Core;
 
 namespace Elffy.UI
 {
-    public class Text : GameObject
+    public class Text : GameObject, IDisposable
     {
         //private Matrix4 _modelView;
 
@@ -40,6 +40,10 @@ namespace Elffy.UI
 
         #region constructor
         /// <summary>コンストラクタ</summary>
+        /// <param name="size">サイズ</param>
+        public Text(Size size) : this(size.Width, size.Height) { }
+
+        /// <summary>コンストラクタ</summary>
         /// <param name="width">幅</param>
         /// <param name="height">高さ</param>
         public Text(int width, int height)
@@ -61,6 +65,14 @@ namespace Elffy.UI
         #endregion
 
         #region public Method
+        #region Destroy
+        public override void Destroy()
+        {
+            base.Destroy();
+            Dispose();
+        }
+        #endregion
+
         #region Clear
         /// <summary>全体を塗りつぶします</summary>
         /// <param name="color">塗りつぶす色</param>
@@ -92,7 +104,7 @@ namespace Elffy.UI
         #endregion
 
         #region Dispose
-        public override void Dispose()
+        public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);

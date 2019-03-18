@@ -6,10 +6,24 @@ using System.Threading.Tasks;
 
 namespace Elffy
 {
-    public abstract class GameObject : IDisposable
+    public abstract class GameObject
     {
-        public abstract void Render();
+        internal bool IsStarted { get; set; }
 
-        public abstract void Dispose();
+        public string Tag { get; set; }
+
+        protected bool IsDestroyed { get; private set; }
+
+        public virtual void Render() { }
+
+        public virtual void Start() { }
+
+        public virtual void Update() { }
+
+        public virtual void Destroy()
+        {
+            Game.RemoveGameObject(this);
+            IsDestroyed = true;
+        }
     }
 }

@@ -15,7 +15,8 @@ namespace ElffyGame
         [STAThread]
         static void Main()
         {
-            Game.Run();
+            Game.Initialize += GameProgress.Initialize;
+            Game.Run(600, 400, "Game", WindowStyle.FixedWindow);
         }
     }
 }

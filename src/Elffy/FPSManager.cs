@@ -7,7 +7,7 @@ namespace Elffy
 {
     public static class FPSManager
     {
-        private const int BUF_MAX = 30;
+        private const int BUF_MAX = 100;
         private static Queue<double> _buf = new Queue<double>(BUF_MAX);
         private static double _fps;
 
@@ -15,7 +15,7 @@ namespace Elffy
         /// フレーム間の時間を集計
         /// </summary>
         /// <param name="frameSpan">Frame span (sec)</param>
-        public static void Aggregate(double frameSpan)
+        internal static void Aggregate(double frameSpan)
         {
             if(_buf.Count >= BUF_MAX) { _buf.Dequeue(); }
             _buf.Enqueue(frameSpan);

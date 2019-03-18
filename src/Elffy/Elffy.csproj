@@ -57,7 +57,7 @@
     <Compile Include="Input\Key.cs" />
     <Compile Include="Input\PadState.cs" />
     <Compile Include="Input\StickAxis.cs" />
-    <Compile Include="ElffyWindow.cs" />
+    <Compile Include="Game.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UI\Text.cs" />
   </ItemGroup>
