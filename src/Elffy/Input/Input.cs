@@ -1,0 +1,229 @@
+﻿using OpenTK;
+using OpenTK.Input;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Text;
+using OpenTKKey = OpenTK.Input.Key;
+
+namespace Elffy.Input
+{
+    public static class Input
+    {
+        #region private member
+        /// <summary>Axisのデフォルトの最小値</summary>
+        private const float DEFAULT_AXIS_MIN_VALUE = 0.1f;
+        /// <summary>ゲームパッドの状態</summary>
+        private static PadState _pad = new PadState();
+        /// <summary>キーボードの状態</summary>
+        private static KeyboardState _keyboard;
+        /// <summary>入力状態名と関連情報</summary>
+        private static Dictionary<string, StateNameObject> _stateNames = new Dictionary<string, StateNameObject>();
+        /// <summary>入力軸状態名と関連情報</summary>
+        private static Dictionary<string, AxisNameObject> _axisNames = new Dictionary<string, AxisNameObject>();
+        /// <summary>各入力状態の現在の状態</summary>
+        private static Dictionary<string, bool> _currentState = new Dictionary<string, bool>();
+        /// <summary>各入力状態の前回の状態</summary>
+        private static Dictionary<string, bool> _previousState = new Dictionary<string, bool>();
+        /// <summary各入力軸状態の現在の状態</summary>
+        private static Dictionary<string, float> _currentAxis = new Dictionary<string, float>();
+        /// <summary>各入力軸状態の前回の状態</summary>
+        private static Dictionary<string, float> _previousAxis = new Dictionary<string, float>();
+        #endregion private member
+
+        #region public Method
+        #region GetState
+        /// <summary>現在の入力状態を取得します</summary>
+        /// <param name="name">状態名</param>
+        /// <returns>入力状態</returns>
+        public static bool GetState(string name)
+        {
+            if(!_currentState.TryGetValue(name, out bool result)) {
+                throw new KeyNotFoundException($"入力状態 '{name}' は登録されていません。");
+            }
+            return result;
+        }
+        #endregion
+
+        #region GetStateDown
+        /// <summary>現在のフレームで状態が入力されたかどうかを取得します（ボタン入力されたフレームのみtrue）</summary>
+        /// <param name="name">状態名</param>
+        /// <returns>入力状態</returns>
+        public static bool GetStateDown(string name)
+        {
+            if(!_currentState.TryGetValue(name, out var current) || !_previousState.TryGetValue(name, out var prev)) {
+                throw new KeyNotFoundException($"入力状態 '{name}' は登録されていません。");
+            }
+            return current && !prev;        // 立ち上がりを検出
+        }
+        #endregion
+
+        #region GetStateUp
+        /// <summary>現在のフレームで状態が入力解除されたかどうかを取得します（ボタン入力解除されたフレームのみtrue）</summary>
+        /// <param name="name">状態名</param>
+        /// <returns>結果</returns>
+        public static bool GetStateUp(string name)
+        {
+            if(!_currentState.TryGetValue(name, out var current) || !_previousState.TryGetValue(name, out var prev)) {
+                throw new KeyNotFoundException($"入力状態 '{name}' は登録されていません。");
+            }
+            return !current && prev;        // 立ち下がりを検出
+        }
+        #endregion
+
+        #region GetAxis
+        /// <summary>現在の入力軸状態を取得します</summary>
+        /// <param name="name">状態名</param>
+        /// <returns>入力値</returns>
+        public static float GetAxis(string name)
+        {
+            if(!_currentAxis.TryGetValue(name, out float value)) {
+                throw new KeyNotFoundException($"入力状態 '{name}' は登録されていません。");
+            }
+            return value;
+        }
+        #endregion
+
+        #region AddState
+        /// <summary>入力状態を登録します</summary>
+        /// <param name="name">状態名</param>
+        /// <param name="key">関連させるキーボードのキー</param>
+        /// <param name="gamepadButton">関連させるゲームパッドのボタン番号</param>
+        public static void AddState(string name, Key key, int gamepadButton)
+        {
+            if(name == null) { throw new ArgumentNullException(nameof(name)); }
+            if(gamepadButton < 0 || gamepadButton >= PadState.BUTTON_COUNT) { throw new ArgumentException($"'{gamepadButton}' は0以上{PadState.BUTTON_COUNT - 1}以下を指定してください"); }
+            try {
+                _stateNames.Add(name, new StateNameObject(name, key, gamepadButton));
+                _currentState.Add(name, false);
+                _previousState.Add(name, false);
+            }
+            catch(ArgumentException) {
+                throw new ArgumentException($"入力状態 '{name}' は既に登録されています。");
+            }
+        }
+        #endregion
+
+        #region AddAxis
+        /// <summary>入力軸状態を登録します</summary>
+        /// <param name="name">状態名</param>
+        /// <param name="positiveKey">軸の正方向に関連させるキーボードのキー</param>
+        /// <param name="negativeKey">軸の負方向に関連させるキーボードのキー</param>
+        /// <param name="stickAxis">関連させるゲームパッドの軸</param>
+        public static void AddAxis(string name, Key positiveKey, Key negativeKey, StickAxis stickAxis) 
+            => AddAxis(name, positiveKey, negativeKey, stickAxis, DEFAULT_AXIS_MIN_VALUE);
+
+        /// <summary>入力軸状態を登録します</summary>
+        /// <param name="name">状態名</param>
+        /// <param name="positiveKey">軸の正方向に関連させるキーボードのキー</param>
+        /// <param name="negativeKey">軸の負方向に関連させるキーボードのキー</param>
+        /// <param name="stickAxis">関連させるゲームパッドの軸</param>
+        /// <param name="minValue">軸が反応する最小値</param>
+        public static void AddAxis(string name, Key positiveKey, Key negativeKey, StickAxis stickAxis, float minValue)
+        {
+            if(name == null) { throw new ArgumentNullException(nameof(name)); }
+            if(minValue < 0 || minValue > 1) { throw new ArgumentException($"'{minValue}' は0～1でなければなりません。"); }
+            try {
+                _axisNames.Add(name, new AxisNameObject(name, positiveKey, negativeKey, stickAxis, minValue));
+                _currentAxis.Add(name, 0);
+                _previousAxis.Add(name, 0);
+            }
+            catch(ArgumentException) {
+                throw new ArgumentException($"入力状態 '{name}' は既に登録されています。");
+            }
+        }
+        #endregion
+        #endregion
+
+        #region internal Method
+        #region Update
+        /// <summary>入力の状態を更新します</summary>
+        internal static void Update()
+        {
+            _pad.Parse(GamePad.GetState(0));
+            _keyboard = Keyboard.GetState();
+
+            // Stateを更新
+            foreach(var sn in _stateNames) {
+                _previousState[sn.Key] = _currentState[sn.Key];
+                _currentState[sn.Key] = _pad.Button[sn.Value.GamepadButton] | _keyboard[(OpenTKKey)sn.Value.Key];
+            }
+            // Axisを更新
+            foreach(var an in _axisNames) {
+                float padValue = 0f;
+                switch(an.Value.Axis) {
+                    case StickAxis.LeftStickX:
+                        padValue = _pad.LeftStick.X;
+                        break;
+                    case StickAxis.LeftStickY:
+                        padValue = _pad.LeftStick.Y;
+                        break;
+                    case StickAxis.RightStickX:
+                        padValue = _pad.RightStick.X;
+                        break;
+                    case StickAxis.RightStickY:
+                        padValue = _pad.RightStick.Y;
+                        break;
+                    default:
+                        break;
+                }
+                if(Math.Abs(padValue) < an.Value.MinValue) {
+                    padValue = 0f;
+                }
+                float keyboradValue = (_keyboard[(OpenTKKey)an.Value.PositiveKey] ? 1 : 0) - (_keyboard[(OpenTKKey)an.Value.NegativeKey] ? 1 : 0);
+                _previousAxis[an.Key] = _currentAxis[an.Key];
+                _currentAxis[an.Key] = Math.Abs(padValue) < Math.Abs(keyboradValue) ? keyboradValue : padValue;
+            }
+        }
+        #endregion
+
+        #region PadDump
+        /// <summary>デバッグ用</summary>
+        internal static void PadDump()
+        {
+            _pad.Parse(GamePad.GetState(0));
+            foreach(var b in _pad.Button) {
+                DebugManager.Append(b ? 1 : 0);
+            }
+            DebugManager.Append($"({_pad.LeftStick.X:N2},{_pad.LeftStick.Y:N2})");
+            DebugManager.Append($"({_pad.RightStick.X:N2},{_pad.RightStick.Y:N2})");
+        }
+        #endregion
+        #endregion
+
+        #region class StateNameObject
+        class StateNameObject
+        {
+            public string Name { get; private set; }
+            public Key Key { get; private set; }
+            public int GamepadButton { get; private set; }
+
+            public StateNameObject(string name, Key key, int gamepadButton)
+            {
+                Name = name;
+                Key = key;
+                GamepadButton = gamepadButton;
+            }
+        }
+        #endregion
+
+        #region class AxisNameObject
+        class AxisNameObject
+        {
+            public string Name { get; private set; }
+            public Key PositiveKey { get; private set; }
+            public Key NegativeKey { get; private set; }
+            public StickAxis Axis { get; private set; }
+            public float MinValue { get;private set; }
+            public AxisNameObject(string name, Key positiveKey, Key negativeKey, StickAxis axis, float minValue)
+            {
+                Name = name;
+                PositiveKey = positiveKey;
+                NegativeKey = negativeKey;
+                Axis = axis;
+                MinValue = minValue;
+            }
+        }
+        #endregion
+    }
+}
