@@ -4,7 +4,7 @@ using System.Text;
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
-
+using System.Linq;
 using Elffy.Input;
 using Elffy.UI;
 using Elffy.Core;
@@ -30,12 +30,17 @@ namespace Elffy
         {
         }
 
+        #region Run
         public static void Run(int width, int heigh, string title, WindowStyle windowStyle)
+            => Run(width, heigh, title, windowStyle, null);
+
+        public static void Run(int width, int heigh, string title, WindowStyle windowStyle, Icon icon)
         {
             if(Instance != null) { throw new InvalidOperationException("Game is already Running"); }
             Instance = new Game();
             try {
                 using(var window = new GameWindow(width, heigh, GraphicsMode.Default, title, (GameWindowFlags)windowStyle)) {
+                    window.Icon = icon;
                     Instance._window = window;
                     window.Load += OnLoaded;
                     window.RenderFrame += OnRendering;
@@ -54,7 +59,9 @@ namespace Elffy
                 Instance = null;
             }
         }
+        #endregion Run
 
+        #region AddGameObject
         public static bool AddGameObject(GameObject gameObject)
         {
             if(Instance == null) { return false; }
@@ -62,7 +69,9 @@ namespace Elffy
             Instance._addedGameObjectBuffer.Add(gameObject);
             return true;
         }
+        #endregion
 
+        #region RemoveGameObject
         public static bool RemoveGameObject(GameObject gameObject)
         {
             if(Instance == null) { return false; }
@@ -70,17 +79,23 @@ namespace Elffy
             Instance._removedGameObjectBuffer.Add(gameObject);
             return true;
         }
+        #endregion
 
+        #region FindObject
         public static GameObject FindObject(string tag)
         {
             return Instance?._gameObjectList?.Find(x => x.Tag == tag);
         }
+        #endregion
 
+        #region FindAllObject
         public static List<GameObject> FindAllObject(string tag)
         {
             return Instance?._gameObjectList?.FindAll(x => x.Tag == tag) ?? new List<GameObject>();
         }
+        #endregion  
 
+        #region OnLoaded
         private static void OnLoaded(object sender, EventArgs e)
         {
             // OpenGLの初期設定
@@ -89,15 +104,18 @@ namespace Elffy
             GL.Enable(EnableCap.Texture2D);
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            GL.Viewport(Instance._window.ClientRectangle);
             Instance._window.VSync = VSyncMode.On;
             Initialize?.Invoke(Instance, EventArgs.Empty);
         }
+        #endregion
 
+        #region OnFrameUpdating
         private static void OnFrameUpdating(object sender, OpenTK.FrameEventArgs e)
         {
             FPSManager.Aggregate(e.Time);
             Input.Input.Update();
-            foreach(var gameObject in Instance._gameObjectList) {
+            foreach(var gameObject in Instance._gameObjectList.Where(x => !x.IsFrozen)) {
                 if(gameObject.IsStarted == false) {
                     gameObject.Start();
                     gameObject.IsStarted = true;
@@ -115,16 +133,27 @@ namespace Elffy
             }
             DebugManager.Dump();
         }
+        #endregion
 
+        #region OnRendering
         private static void OnRendering(object sender, OpenTK.FrameEventArgs e)
         {
+            GL.MatrixMode(MatrixMode.Projection);
+            var projection = Camera.Current.Projection;
+            //GL.Ortho(-1, 1, -1, 1, 0, 100);
+            //GL.Frustum(0, 1, 0, 1, 0, 100);         // TODO:
+            //projection = Matrix4.CreatePerspectiveFieldOfView(190f / 180 * (float)Math.PI, ClientSize.Width / ClientSize.Height, 0.1f, 64.0f);
+            GL.LoadMatrix(ref projection);
+
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            foreach(var gameObject in Instance._gameObjectList) {
+            foreach(var gameObject in Instance._gameObjectList.OfType<Renderable>().Where(x => x.IsVisible)) {
                 gameObject.Render();
             }
             Instance._window.SwapBuffers();
         }
+        #endregion
 
+        #region OnClosed
         private static void OnClosed(object sender, EventArgs e)
         {
             foreach(var item in Instance._gameObjectList) {
@@ -134,10 +163,8 @@ namespace Elffy
             Instance._addedGameObjectBuffer.Clear();
             Instance._removedGameObjectBuffer.Clear();
         }
+        #endregion
 
-        private static Exception NewGameNotRunningException()
-        {
-            return new InvalidOperationException("Game is Not Running");
-        }
+        private static Exception NewGameNotRunningException() => new InvalidOperationException("Game is Not Running");
     }
 }

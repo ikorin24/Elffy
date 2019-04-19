@@ -3,6 +3,7 @@ using OpenTK.Input;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Text;
 using OpenTKKey = OpenTK.Input.Key;
 
@@ -179,7 +180,8 @@ namespace Elffy.Input
 
         #region PadDump
         /// <summary>デバッグ用</summary>
-        internal static void PadDump()
+        [Conditional("DEBUG")]
+        public static void PadDump()
         {
             _pad.Parse(GamePad.GetState(0));
             foreach(var b in _pad.Button) {

@@ -14,20 +14,22 @@ using Elffy.Core;
 
 namespace Elffy.UI
 {
-    public class Text : GameObject, IDisposable
+    public class Canvas : Renderable, IDisposable
     {
-        //private Matrix4 _modelView;
         const int BYTE_PER_PIXEL = 4;
         /// <summary>テクスチャ更新時に使用するバッファ(メンバ変数として使いまわすことでGCを削減)</summary>
         private byte[] _buf;
 
         #region private Member
-        private Bitmap _bmp;
-        private Graphics _g;
-        private int _texture;
+        private readonly Bitmap _bmp;
+        private readonly Graphics _g;
+        private readonly int _texture;
         private Rectangle _dirtyRegion;
         private bool _isDisposed;
         #endregion
+
+        public int PixelWidth => _bmp.Width;
+        public int PixelHeight => _bmp.Height;
 
         #region Texture
         /// <summary>テクスチャ番号</summary>
@@ -43,19 +45,19 @@ namespace Elffy.UI
 
         #region constructor
         /// <summary>コンストラクタ</summary>
-        /// <param name="size">サイズ</param>
-        public Text(Size size) : this(size.Width, size.Height) { }
+        /// <param name="pixelSize">ピクセルサイズ</param>
+        public Canvas(Size pixelSize) : this(pixelSize.Width, pixelSize.Height) { }
 
         /// <summary>コンストラクタ</summary>
-        /// <param name="width">幅</param>
-        /// <param name="height">高さ</param>
-        public Text(int width, int height)
+        /// <param name="pixelWidth">ピクセル幅</param>
+        /// <param name="pixelHeight">ピクセル高さ</param>
+        public Canvas(int pixelWidth, int pixelHeight)
         {
-            if(width <= 0) { throw new ArgumentException(nameof(width)); }
-            if(height <= 0) { throw new ArgumentException(nameof(height)); }
+            if(pixelWidth <= 0) { throw new ArgumentException(nameof(pixelWidth)); }
+            if(pixelHeight <= 0) { throw new ArgumentException(nameof(pixelHeight)); }
             if(GraphicsContext.CurrentContext == null) { throw new InvalidOperationException("No GraphicsContext is current on the calling thread."); }
 
-            _bmp = new Bitmap(width, height, DPixelFormat.Format32bppArgb);
+            _bmp = new Bitmap(pixelWidth, pixelHeight, DPixelFormat.Format32bppArgb);
             _g = Graphics.FromImage(_bmp);
             _g.TextRenderingHint = TextRenderingHint.AntiAlias;
             _texture = GL.GenTexture();
@@ -63,7 +65,7 @@ namespace Elffy.UI
             GL.BindTexture(TextureTarget.Texture2D, _texture);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, width, height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, pixelWidth, pixelHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
         }
         #endregion
 
@@ -118,8 +120,9 @@ namespace Elffy.UI
         public override void Render()
         {
             GL.MatrixMode(MatrixMode.Modelview);
-            //GL.LoadMatrix(ref _modelView);
-            GL.LoadIdentity();
+            GL.LoadMatrix(ref _modelView);
+            var cameraMatrix = Camera.Current.Matrix;
+            GL.MultMatrix(ref cameraMatrix);
 
             GL.BindTexture(TextureTarget.Texture2D, Texture);
             GL.Begin(PrimitiveType.Quads);
@@ -137,7 +140,7 @@ namespace Elffy.UI
         {
             // 変更部分がある時のみ更新
             if(_dirtyRegion != RectangleF.Empty) {
-                var data = _bmp.LockBits(new Rectangle(0, 0, _bmp.Width, _bmp.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                var data = _bmp.LockBits(new Rectangle(0, 0, _bmp.Width, _bmp.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, DPixelFormat.Format32bppArgb);
                 var subStartAddr = data.Scan0 + (_dirtyRegion.Y * _bmp.Width + _dirtyRegion.X) * BYTE_PER_PIXEL;
                 if(_buf == null) {
                     _buf = new byte[_bmp.Width * _bmp.Height * BYTE_PER_PIXEL]; // バッファが用意されていないなら用意する。(バッファ長はビットマップ全体の大きさを用意)

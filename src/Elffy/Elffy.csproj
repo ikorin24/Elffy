@@ -46,9 +46,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Camera.cs" />
     <Compile Include="Core\ElffySerializer.cs" />
     <Compile Include="Core\FrameEvent.cs" />
+    <Compile Include="Core\Positionable.cs" />
     <Compile Include="Core\Random.cs" />
+    <Compile Include="Core\Renderable.cs" />
     <Compile Include="Core\WindowStyle.cs" />
     <Compile Include="DebugManager.cs" />
     <Compile Include="FPSManager.cs" />
@@ -59,7 +62,7 @@
     <Compile Include="Input\StickAxis.cs" />
     <Compile Include="Game.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="UI\Text.cs" />
+    <Compile Include="UI\Canvas.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="dll\OpenTK.dll" />

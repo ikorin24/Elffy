@@ -62,7 +62,7 @@ namespace Elffy
 
         /// <summary>バッファをデバッグ出力に出力します</summary>
         [Conditional("DEBUG")]
-        public static void Dump()
+        internal static void Dump()
         {
             if(_sb.Length == 0) { return; }
             Debug.WriteLine(_sb.ToString());

@@ -8,23 +8,26 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Drawing;
+using OpenTK;
 
 namespace ElffyGame
 {
     public class GameProgress : GameObject
     {
         private Font _font = new Font(FontFamily.GenericSerif, 20);
-        private Text _text;
+        private Canvas _canvas;
 
         public static void Initialize(object sender, EventArgs e)
         {
             // 入力の登録
-            Input.AddState("A", Key.Space, 0);
-            Input.AddState("B", Key.BackSpace, 2);
-            Input.AddState("X", Key.X, 1);
-            Input.AddState("Y", Key.Y, 3);
-            Input.AddAxis("AxisX", Key.Right, Key.Left, StickAxis.LeftStickX);
-            Input.AddAxis("AxisY", Key.Up, Key.Down, StickAxis.LeftStickY);
+            Input.AddState(Controller.A, Key.Space, 0);
+            Input.AddState(Controller.B, Key.BackSpace, 2);
+            Input.AddState(Controller.X, Key.X, 1);
+            Input.AddState(Controller.Y, Key.Y, 3);
+            Input.AddAxis(Controller.AXIS_X, Key.Right, Key.Left, StickAxis.LeftStickX);
+            Input.AddAxis(Controller.AXIS_Y, Key.Up, Key.Down, StickAxis.LeftStickY);
+            Input.AddAxis(Controller.SUB_AXIS_X, Key.D, Key.A, StickAxis.RightStickX);
+            Input.AddAxis(Controller.SUB_AXIS_Y, Key.W, Key.S, StickAxis.RightStickY);
 
             var progress = new GameProgress();
             Game.AddGameObject(progress);
@@ -33,26 +36,44 @@ namespace ElffyGame
         public override void Start()
         {
             _font = new Font(FontFamily.GenericSansSerif, 130);
-            _text = new Text(Game.ClientSize);
-            _text.Tag = "sampleText";
-            Game.AddGameObject(_text);
+            _canvas = new Canvas(Game.ClientSize);
+            _canvas.Tag = "sampleText";
+            _canvas.Position = new Vector3(0, 0, 0);
+            //_canvas.MultiplyScale(20);
+            Game.AddGameObject(_canvas);
         }
 
         public override void Update()
         {
-            if(_text != null) {
-                _text.Clear(Color.FromArgb(0, Color.Violet));
-                _text.DrawString($"{FPSManager.GetFPS():N2}", _font, Brushes.White, new Point());
+            _canvas.Clear(Color.Violet);
+            _canvas.DrawString($"{FPSManager.GetFPS():N2}", _font, Brushes.White, new Point());
+
+            if(Input.GetStateDown(Controller.A)) {
+                DebugManager.Append(Controller.A);
+            }
+            if(Input.GetStateDown(Controller.B)) {
+                DebugManager.Append(Controller.B);
+            }
+            if(Input.GetStateDown(Controller.Y)) {
+                DebugManager.Append(Controller.Y);
             }
 
+            // https://blog.miz-ar.info/2017/12/opengl-projection-matrix/
 
-            //DebugManager.Append($"{FPSManager.GetFPS():N2}");
-            if(Input.GetStateDown("A")) {
-                DebugManager.Append("A");
-            }
-            if(Input.GetStateDown("B")) {
-                DebugManager.Append("B");
-            }
+            var p = 0.02f;
+            var x = Input.GetAxis(Controller.AXIS_X) * p;
+            var y = Input.GetAxis(Controller.AXIS_Y) * p;
+            var z = -Input.GetAxis(Controller.SUB_AXIS_Y) * p;
+            DebugManager.Append(Camera.Current.P);
+            DebugManager.Append(Environment.NewLine);
+            DebugManager.Append(Camera.Current.Position);
+            DebugManager.Append(_canvas.Position);
+            DebugManager.Append(Environment.NewLine);
+            //Camera.Move(x, y, z);
+            Camera.Move(x, y, 0);
+            _canvas.Translate(0, 0, -z);
+
+            //Input.PadDump();
         }
     }
 }
