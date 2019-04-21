@@ -1,38 +1,22 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Linq;
+using System.IO;
 
 namespace ElffyResource
 {
-    class MainClass
+    class Program
     {
-        const string HELP = 
-@"How to use:
-    -b | build a resource file
-    -d | decompres a resource file to current directory
-    -h | show help
-";
-
         public static void Main(string[] args)
         {
-            if(args.Length > 1) {
-                switch(args[0]) {
-                    case "-b": {
-                        var manager = new ResourceManager();
-                        return;
-                    }
-                    case "-d": {
-                        var manager = new ResourceManager();
-                        return;
-                    }
-                    case "-h": {
-                        Console.WriteLine(HELP);
-                        return;
-                    }
-                    default: {
-                        break;
-                    }
-                }
-            }
-            Console.WriteLine($"Invalid Usege.{Environment.NewLine}{HELP}");
+            var sw = new Stopwatch();
+            sw.Start();
+            var dir = @"..\..\Resources";
+            var output = "Resources.dat";
+            var password = "ikorin24";
+            ResourceManager.Build(dir, output, password);
+            sw.Stop();
+            Debug.WriteLine($"{sw.ElapsedMilliseconds}ms");
         }
     }
 }
