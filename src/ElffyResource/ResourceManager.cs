@@ -25,7 +25,7 @@ namespace ElffyResource
         /// <summary>正常解凍を確認するためのマジックワード</summary>
         private const string MAGIC_WORD = "ELFFY_RESOURCE";
         /// <summary>暗号化された状態でのマジックワードのバイト長</summary>
-        private const int ENCRYPTED_MAGIC_WORD_LEN = 32;
+        private const int ENCRYPTED_MAGIC_WORD_LEN = 16;
 
         private const int BUF_LEN = 1024 * 1024;
         /// <summary>AESの鍵生成時のsalt</summary>
@@ -56,22 +56,15 @@ namespace ElffyResource
             try {
                 _buf = new byte[BUF_LEN];
                 GenerateAesKey(password, out var aesKey, out var iv);
-
-                if(File.Exists(outputPath)) {
-                    File.Delete(outputPath);
-                }
-
+                if(File.Exists(outputPath)) { File.Delete(outputPath); }
                 using(var fs = File.OpenWrite(outputPath))
                 using(var aes = new AesManaged() { BlockSize = 128, KeySize = 128, Mode = CipherMode.CBC, Padding = PaddingMode.PKCS7, Key = aesKey, IV = iv })
                 using(var encryptor = aes.CreateEncryptor(aes.Key, aes.IV)) {
                     WriteToStream(fs, FORMAT_VERSION);                          // フォーマットバージョンを出力へ書きこむ
                     using(var ms = new MemoryStream()) {
                         using(var cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write)) {
-                            WriteToStream(cs, MAGIC_WORD);                     // マジックワードを暗号化してメモリストリームへ書き込む
+                            WriteToStream(cs, MAGIC_WORD);                      // マジックワードを暗号化してメモリストリームへ書き込む
                         }
-                        //using(var dfs = new DeflateStream(cs, CompressionMode.Compress)) {
-                        //    WriteToStream(dfs, MAGIC_WORD);                     // マジックワードを圧縮・暗号化してメモリストリームへ書き込む
-                        //}
                         var bytes = ms.ToArray();
                         fs.Write(bytes, 0, bytes.Length);                       // 暗号化されたマジックワードを出力へ書き込む
                     }
@@ -104,16 +97,16 @@ namespace ElffyResource
                     if(formatVersion != FORMAT_VERSION) { return false; }
 
                     // マジックワードの確認
-                    byte[] encryptedMagicWord = new byte[ENCRYPTED_MAGIC_WORD_LEN];
                     if(fs.Read(_buf, 0, ENCRYPTED_MAGIC_WORD_LEN) != ENCRYPTED_MAGIC_WORD_LEN) { return false; }
-                    Array.Copy(_buf, 0, encryptedMagicWord, 0, ENCRYPTED_MAGIC_WORD_LEN);
                     using(var ms = new MemoryStream()) {
                         using(var cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Write)) {
-                            cs.Write(encryptedMagicWord, 0, encryptedMagicWord.Length);
-                            //cs.FlushFinalBlock();
-                            //var magicWord = ReadFromStream(ms, (int)ms.Length);
+                            cs.Write(_buf, 0, ENCRYPTED_MAGIC_WORD_LEN);
                         }
-                        var magicWord = _encoding.GetString(ms.ToArray());
+                        try {
+                            var magicWord = _encoding.GetString(ms.ToArray());
+                            if(magicWord != MAGIC_WORD) { return false; }
+                        }
+                        catch(Exception) { return false; }
                     }
 
                     // ディレクトリへの展開

@@ -20,7 +20,7 @@ namespace ElffyResource
             //sw.Start();
             //var dir = @"..\..\Resources";
             //var output = "Resources.dat";
-            //var password = "ikorin24";
+            //var password = "password";
             //ResourceManager.Build(dir, output, password);
             //sw.Stop();
             //Debug.WriteLine($"{sw.ElapsedMilliseconds}ms");
@@ -28,7 +28,7 @@ namespace ElffyResource
             var sw = new Stopwatch();
             sw.Start();
             var inputPath = "Resources.dat";
-            var password = "ikorin24";
+            var password = "password";
             var outputDir = "Resources";
             var result = ResourceManager.Decompress(inputPath, outputDir, password);
             sw.Stop();
