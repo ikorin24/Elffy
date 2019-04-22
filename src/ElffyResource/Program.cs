@@ -10,9 +10,9 @@ namespace ElffyResource
         public static void Main(string[] args)
         {
             // -------- for test ---------
-            Test.Build();
-            Test.Decompress();
-            Console.WriteLine("Complete !!");
+            //Test.Build();
+            //Test.Decompress();
+            //Console.WriteLine("Complete !!");
             // ---------------------------
 
 
@@ -25,15 +25,15 @@ namespace ElffyResource
             //sw.Stop();
             //Debug.WriteLine($"{sw.ElapsedMilliseconds}ms");
 
-            //var sw = new Stopwatch();
-            //sw.Start();
-            //var inputPath = "Resources.dat";
-            //var password = "ikorin24";
-            //var outputDir = "Resources";
-            //var result = ResourceManager.Decompress(inputPath, outputDir, password);
-            //sw.Stop();
-            //Debug.WriteLine($"{sw.ElapsedMilliseconds}ms");
-            //Console.WriteLine(result);
+            var sw = new Stopwatch();
+            sw.Start();
+            var inputPath = "Resources.dat";
+            var password = "ikorin24";
+            var outputDir = "Resources";
+            var result = ResourceManager.Decompress(inputPath, outputDir, password);
+            sw.Stop();
+            Debug.WriteLine($"{sw.ElapsedMilliseconds}ms");
+            Console.WriteLine(result);
 
             Console.WriteLine("Press Any Key...");
             Console.ReadKey();

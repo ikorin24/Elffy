@@ -66,10 +66,12 @@ namespace ElffyResource
                 using(var encryptor = aes.CreateEncryptor(aes.Key, aes.IV)) {
                     WriteToStream(fs, FORMAT_VERSION);                          // フォーマットバージョンを出力へ書きこむ
                     using(var ms = new MemoryStream()) {
-                        using(var cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
-                        using(var dfs = new DeflateStream(cs, CompressionMode.Compress)) {
-                            WriteToStream(dfs, MAGIC_WORD);                     // マジックワードを圧縮・暗号化してメモリストリームへ書き込む
+                        using(var cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write)) {
+                            WriteToStream(cs, MAGIC_WORD);                     // マジックワードを暗号化してメモリストリームへ書き込む
                         }
+                        //using(var dfs = new DeflateStream(cs, CompressionMode.Compress)) {
+                        //    WriteToStream(dfs, MAGIC_WORD);                     // マジックワードを圧縮・暗号化してメモリストリームへ書き込む
+                        //}
                         var bytes = ms.ToArray();
                         fs.Write(bytes, 0, bytes.Length);                       // 暗号化されたマジックワードを出力へ書き込む
                     }
@@ -106,13 +108,12 @@ namespace ElffyResource
                     if(fs.Read(_buf, 0, ENCRYPTED_MAGIC_WORD_LEN) != ENCRYPTED_MAGIC_WORD_LEN) { return false; }
                     Array.Copy(_buf, 0, encryptedMagicWord, 0, ENCRYPTED_MAGIC_WORD_LEN);
                     using(var ms = new MemoryStream()) {
-                        using(var dfs = new DeflateStream(ms, CompressionMode.Decompress))
                         using(var cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Write)) {
                             cs.Write(encryptedMagicWord, 0, encryptedMagicWord.Length);
-                            cs.FlushFinalBlock();
-                            var magicWord = _encoding.GetString(ms.ToArray());
+                            //cs.FlushFinalBlock();
                             //var magicWord = ReadFromStream(ms, (int)ms.Length);
                         }
+                        var magicWord = _encoding.GetString(ms.ToArray());
                     }
 
                     // ディレクトリへの展開
@@ -157,19 +158,18 @@ namespace ElffyResource
                 WriteToStream(stream, $"'{dirName}{file.Name}'");       // ファイル名を出力
                 if(file.Length > LARGE_FILE_SIZE) {
                     long fileLen = 0;
-                    using(var tmpFs = File.OpenWrite(TMP_FILE))
-                    using(var cs = new CryptoStream(tmpFs, encryptor, CryptoStreamMode.Write))
-                    using(var dfs = new DeflateStream(cs, CompressionMode.Compress))
-                    using(var fileReader = file.OpenRead()) {
-                        while(true) {
-                            var readlen = fileReader.Read(_buf, 0, _buf.Length);
-                            if(readlen == 0) { break; }
-                            dfs.Write(_buf, 0, readlen);
+                    using(var tmpFs = File.OpenWrite(TMP_FILE)) {
+                        using(var cs = new CryptoStream(tmpFs, encryptor, CryptoStreamMode.Write))
+                        using(var fs = file.OpenRead()) {
+                            while(true) {
+                                var readlen = fs.Read(_buf, 0, _buf.Length);
+                                if(readlen == 0) { break; }
+                                cs.Write(_buf, 0, readlen);
+                            }
                         }
-                        cs.FlushFinalBlock();       // CryptoStream.Dispose()時に呼ばれる処理だがファイル長取得の為に先に行っておく(ここで行うとDispose()時にはもう呼ばれないので問題ない)
                         fileLen = tmpFs.Length;
+                        WriteToStream(stream, $"{fileLen.ToString()}:");    // ファイル長を書き込み
                     }
-                    WriteToStream(stream, $"{fileLen.ToString()}:");    // ファイル長を書き込み
 
                     // 一時ファイルの内容を出力ストリームに書き込む(一時ファイルは使いまわしているので、その内容全てがこのファイルの暗号化バイト列ではないことに注意)
                     using(var tmpFs = File.OpenRead(TMP_FILE)) {
@@ -186,19 +186,19 @@ namespace ElffyResource
                     }
                 }
                 else {
-                    using(var ms = new MemoryStream())
-                    using(var cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
-                    using(var dfs = new DeflateStream(cs, CompressionMode.Compress))
-                    using(var fileReader = file.OpenRead()) {
-                        while(true) {
-                            var readlen = fileReader.Read(_buf, 0, _buf.Length);
-                            if(readlen == 0) { break; }
-                            dfs.Write(_buf, 0, readlen);
+                    using(var ms = new MemoryStream()) {
+                        using(var cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
+                        using(var fs = file.OpenRead()) {
+                            while(true) {
+                                var readlen = fs.Read(_buf, 0, _buf.Length);
+                                if(readlen == 0) { break; }
+                                cs.Write(_buf, 0, readlen);
+                            }
                         }
-                        cs.FlushFinalBlock();       // CryptoStream.Dispose()時に呼ばれる処理だがMemoryStreamの内容を確定させるために先に呼ぶ
                         var data = ms.ToArray();
                         WriteToStream(stream, $"{data.Length.ToString()}:");    // ファイル長を書き込み
                         stream.Write(data, 0, data.Length);                     // 暗号化されたバイト列を出力ストリームへ書き込む
+
                     }
                 }
             }
