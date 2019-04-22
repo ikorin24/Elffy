@@ -6,12 +6,14 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Security.Cryptography;
 using System.IO.Compression;
+using System.Runtime.InteropServices;
 
 namespace ElffyResource
 {
     public static class ResourceManager
     {
         #region private Member
+        private const string FORMAT_VERSION = "1.0";
         /// <summary>一時ファイル名</summary>
         private const string TMP_FILE = "____tmp____";
         /// <summary>パスワードからAESのキーを生成する時のsaltのバイト数</summary>
@@ -24,6 +26,8 @@ namespace ElffyResource
         private const string MAGIC_WORD = "ELFFY_RESOURCE";
         /// <summary>暗号化された状態でのマジックワードのバイト長</summary>
         private const int ENCRYPTED_MAGIC_WORD_LEN = 32;
+
+        private const int BUF_LEN = 1024 * 1024;
         /// <summary>AESの鍵生成時のsalt</summary>
         private static readonly byte[] _salt = new byte[16]
         {
@@ -39,38 +43,45 @@ namespace ElffyResource
         #endregion
 
         #region Build
+        /// <summary>リソースのビルドを行います。</summary>
+        /// <param name="directory">リソースディレクトリのパス</param>
+        /// <param name="outputPath">出力ファイル名</param>
+        /// <param name="password">暗号化に用いるパスワード</param>
         public static void Build(string directory, string outputPath, string password)
         {
             if(directory == null) { throw new ArgumentNullException(nameof(directory)); }
             if(outputPath == null) { throw new ArgumentNullException(nameof(outputPath)); }
-            if(password == null) { throw new ArgumentNullException(nameof(password)); }
+            if(string.IsNullOrEmpty(password)) { throw new ArgumentException(nameof(password)); }
             if(!Directory.Exists(directory)) { throw new DirectoryNotFoundException($"directoryName : {directory}"); }
+            try {
+                _buf = new byte[BUF_LEN];
+                GenerateAesKey(password, out var aesKey, out var iv);
 
-            _buf = new byte[1024 * 1024];
-            GenerateAesKey(password, out var aesKey, out var iv);
-
-            if(File.Exists(outputPath)) {
-                File.Delete(outputPath);
-            }
-
-            using(var fs = File.OpenWrite(outputPath))
-            using(var aes = new AesManaged() { BlockSize = 128, KeySize = 128, Mode = CipherMode.CBC, Padding = PaddingMode.PKCS7, Key = aesKey, IV = iv })
-            using(var encryptor = aes.CreateEncryptor(aes.Key, aes.IV)) {
-                fs.Write(iv, 0, iv.Length);                             // 初期化ベクトルをファイル先頭に書き込む
-                using(var ms = new MemoryStream()) {
-                    using(var cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
-                    using(var dfs = new DeflateStream(cs, CompressionMode.Compress)) {
-                        WriteToStream(dfs, MAGIC_WORD);                     // マジックワードを圧縮・暗号化してメモリストリームへ書き込む
-                    }
-                    var bytes = ms.ToArray();
-                    fs.Write(bytes, 0, bytes.Length);
+                if(File.Exists(outputPath)) {
+                    File.Delete(outputPath);
                 }
-                WriteDirectory(new DirectoryInfo(directory), "", fs, encryptor);
+
+                using(var fs = File.OpenWrite(outputPath))
+                using(var aes = new AesManaged() { BlockSize = 128, KeySize = 128, Mode = CipherMode.CBC, Padding = PaddingMode.PKCS7, Key = aesKey, IV = iv })
+                using(var encryptor = aes.CreateEncryptor(aes.Key, aes.IV)) {
+                    WriteToStream(fs, FORMAT_VERSION);                          // フォーマットバージョンを出力へ書きこむ
+                    using(var ms = new MemoryStream()) {
+                        using(var cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
+                        using(var dfs = new DeflateStream(cs, CompressionMode.Compress)) {
+                            WriteToStream(dfs, MAGIC_WORD);                     // マジックワードを圧縮・暗号化してメモリストリームへ書き込む
+                        }
+                        var bytes = ms.ToArray();
+                        fs.Write(bytes, 0, bytes.Length);                       // 暗号化されたマジックワードを出力へ書き込む
+                    }
+                    WriteDirectory(new DirectoryInfo(directory), "", fs, encryptor);
+                }
+                if(File.Exists(TMP_FILE)) {
+                    File.Delete(TMP_FILE);
+                }
             }
-            if(File.Exists(TMP_FILE)) {
-                File.Delete(TMP_FILE);
+            finally {
+                _buf = null;
             }
-            _buf = null;
         }
         #endregion
 
@@ -78,9 +89,39 @@ namespace ElffyResource
         {
             if(outputDirectory == null) { throw new ArgumentNullException(nameof(outputDirectory)); }
             if(inputPath == null) { throw new ArgumentNullException(nameof(inputPath)); }
-            if(password == null) { throw new ArgumentNullException(nameof(password)); }
-            if(!Directory.Exists(outputDirectory)) { throw new DirectoryNotFoundException($"directoryName : {outputDirectory}"); }
+            if(string.IsNullOrEmpty(password)) { throw new ArgumentException(nameof(password)); }
+            if(!File.Exists(inputPath)) { throw new FileNotFoundException($"file : {inputPath}"); }
+            try {
+                _buf = new byte[BUF_LEN];
+                GenerateAesKey(password, out var aesKey, out var iv);
+                using(var fs = File.OpenRead(inputPath))
+                using(var aes = new AesManaged() { BlockSize = 128, KeySize = 128, Mode = CipherMode.CBC, Padding = PaddingMode.PKCS7, Key = aesKey, IV = iv })
+                using(var decryptor = aes.CreateDecryptor(aes.Key, aes.IV)) {
+                    // フォーマットバージョンの確認
+                    var formatVersion = ReadFromStream(fs, 3);
+                    if(formatVersion != FORMAT_VERSION) { return false; }
 
+                    // マジックワードの確認
+                    byte[] encryptedMagicWord = new byte[ENCRYPTED_MAGIC_WORD_LEN];
+                    if(fs.Read(_buf, 0, ENCRYPTED_MAGIC_WORD_LEN) != ENCRYPTED_MAGIC_WORD_LEN) { return false; }
+                    Array.Copy(_buf, 0, encryptedMagicWord, 0, ENCRYPTED_MAGIC_WORD_LEN);
+                    using(var ms = new MemoryStream()) {
+                        using(var dfs = new DeflateStream(ms, CompressionMode.Decompress))
+                        using(var cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Write)) {
+                            cs.Write(encryptedMagicWord, 0, encryptedMagicWord.Length);
+                            cs.FlushFinalBlock();
+                            var magicWord = _encoding.GetString(ms.ToArray());
+                            //var magicWord = ReadFromStream(ms, (int)ms.Length);
+                        }
+                    }
+
+                    // ディレクトリへの展開
+                    ReadDirectory(fs, decryptor);
+                }
+            }
+            finally {
+                _buf = null;
+            }
             return true;
         }
 
@@ -167,11 +208,24 @@ namespace ElffyResource
         }
         #endregion
 
+        private static void ReadDirectory(Stream stream, ICryptoTransform decryptor)
+        {
+            
+        }
+
         #region WriteToStream
         private static void WriteToStream(Stream stream, string str)
         {
             var bytes = _encoding.GetBytes(str);
             stream.Write(bytes, 0, bytes.Length);
+        }
+        #endregion
+
+        #region ReadFromString
+        private static string ReadFromStream(Stream stream, int byteCount)
+        {
+            stream.Read(_buf, 0, byteCount);
+            return _encoding.GetString(_buf, 0, byteCount);
         }
         #endregion
     }
