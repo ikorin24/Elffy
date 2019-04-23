@@ -18,8 +18,6 @@ namespace ElffyResource
         private const string TMP_FILE = "____tmp____";
         /// <summary>一時ディレクトリ名</summary>
         private const string TMP_DIR = "____tmp_dir____";
-        /// <summary>パスワードからAESのキーを生成する時のsaltのバイト数</summary>
-        private const int SALT_SIZE = 16;
         /// <summary>AESのキーのバイト数</summary>
         private const int AES_KEY_SIZE = 16;
         /// <summary>初期化ベクトルのバイト数</summary>
@@ -90,6 +88,8 @@ namespace ElffyResource
 
         public static void DiffCompile(string directory, string outputPath, string password)
         {
+            throw new NotImplementedException();
+
             if(directory == null) { throw new ArgumentNullException(nameof(directory)); }
             if(outputPath == null) { throw new ArgumentNullException(nameof(outputPath)); }
             if(string.IsNullOrEmpty(password)) { throw new ArgumentException(nameof(password)); }

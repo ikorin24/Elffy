@@ -45,7 +45,6 @@ namespace ElffyGame
                 _text.DrawString($"{FPSManager.GetFPS():N2}", _font, Brushes.White, new Point());
             }
 
-
             //DebugManager.Append($"{FPSManager.GetFPS():N2}");
             if(Input.GetStateDown("A")) {
                 DebugManager.Append("A");

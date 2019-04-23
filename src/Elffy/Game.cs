@@ -30,29 +30,33 @@ namespace Elffy
         {
         }
 
-        public static void Run(int width, int heigh, string title, WindowStyle windowStyle)
+        public static GameExitResult Run(int width, int heigh, string title, WindowStyle windowStyle)
         {
             if(Instance != null) { throw new InvalidOperationException("Game is already Running"); }
-            Instance = new Game();
+            Resources.Initialize();
+            return RunPrivate(width, heigh, title, windowStyle, null);
+        }
+
+        public static GameExitResult Run(int width, int heigh, string title, WindowStyle windowStyle, string resourcePassword)
+        {
+            if(Instance != null) { throw new InvalidOperationException("Game is already Running"); }
             try {
-                using(var window = new GameWindow(width, heigh, GraphicsMode.Default, title, (GameWindowFlags)windowStyle)) {
-                    Instance._window = window;
-                    window.Load += OnLoaded;
-                    window.RenderFrame += OnRendering;
-                    window.UpdateFrame += OnFrameUpdating;
-                    window.Closed += OnClosed;
-                    window.Run(200);
-                }
+                Resources.Initialize(resourcePassword);
             }
-            finally {
-                // リソースの解放
-                var window = Instance._window;
-                window.Load -= OnLoaded;
-                window.RenderFrame -= OnRendering;
-                window.UpdateFrame -= OnFrameUpdating;
-                window.Closed -= OnClosed;
-                Instance = null;
+            catch(Exception) { return GameExitResult.FailedInInitializingResource; }
+            return RunPrivate(width, heigh, title, windowStyle, null);
+        }
+
+        public static GameExitResult Run(int width, int heigh, string title, WindowStyle windowStyle, string resourcePassword, string iconResourcePath)
+        {
+            if(Instance != null) { throw new InvalidOperationException("Game is already Running"); }
+            if(string.IsNullOrEmpty(resourcePassword)) { throw new ArgumentException($"{nameof(resourcePassword)} is null or empty"); }
+            if(string.IsNullOrEmpty(iconResourcePath)) { throw new ArgumentException($"{nameof(iconResourcePath)} is null or empty"); }
+            try {
+                Resources.Initialize(resourcePassword);
             }
+            catch(Exception) { return GameExitResult.FailedInInitializingResource; }
+            return RunPrivate(width, heigh, title, windowStyle, iconResourcePath);
         }
 
         public static bool AddGameObject(GameObject gameObject)
@@ -80,6 +84,47 @@ namespace Elffy
         {
             return Instance?._gameObjectList?.FindAll(x => x.Tag == tag) ?? new List<GameObject>();
         }
+
+        #region RunPrivate
+        /// <summary>ゲームウィンドウを開始します</summary>
+        /// <param name="width">ウィンドウ幅</param>
+        /// <param name="heigh">ウィンドウ高さ</param>
+        /// <param name="title">ウィンドウタイトル</param>
+        /// <param name="windowStyle">ウィンドウスタイル</param>
+        /// <param name="iconResourcePath">ウィンドウアイコンのリソースパス(nullならアイコン不使用)</param>
+        /// <returns></returns>
+        private static GameExitResult RunPrivate(int width, int heigh, string title, WindowStyle windowStyle, string iconResourcePath)
+        {
+            Icon icon = null;
+            if(iconResourcePath != null) {
+                using(var stream = Resources.LoadAsStream(iconResourcePath)) {
+                    icon = new Icon(stream);
+                }
+            }
+            Instance = new Game();
+            try {
+                using(var window = new GameWindow(width, heigh, GraphicsMode.Default, title, (GameWindowFlags)windowStyle)) {
+                    Instance._window = window;
+                    window.Icon = icon;
+                    window.Load += OnLoaded;
+                    window.RenderFrame += OnRendering;
+                    window.UpdateFrame += OnFrameUpdating;
+                    window.Closed += OnClosed;
+                    window.Run(200);
+                    return GameExitResult.SuccessfulCompletion;
+                }
+            }
+            finally {
+                // リソースの解放
+                var window = Instance._window;
+                window.Load -= OnLoaded;
+                window.RenderFrame -= OnRendering;
+                window.UpdateFrame -= OnFrameUpdating;
+                window.Closed -= OnClosed;
+                Instance = null;
+            }
+        }
+        #endregion
 
         private static void OnLoaded(object sender, EventArgs e)
         {
@@ -139,5 +184,11 @@ namespace Elffy
         {
             return new InvalidOperationException("Game is Not Running");
         }
+    }
+
+    public enum GameExitResult
+    {
+        SuccessfulCompletion,
+        FailedInInitializingResource,
     }
 }
