@@ -15,24 +15,23 @@ namespace ElffyResource
             //Console.WriteLine("Complete !!");
             // ---------------------------
 
-
-            //var sw = new Stopwatch();
-            //sw.Start();
-            //var dir = @"..\..\Resources";
-            //var output = "Resources.dat";
-            //var password = "password";
-            //ResourceManager.Build(dir, output, password);
-            //sw.Stop();
-            //Debug.WriteLine($"{sw.ElapsedMilliseconds}ms");
-
             var sw = new Stopwatch();
             sw.Start();
-            var inputPath = "Resources.dat";
+            var dir = @"..\..\Resources";
+            var output = "Resources.dat";
             var password = "password";
-            var outputDir = "Resources";
-            var result = ResourceManager.Decompress(inputPath, outputDir, password);
+            ResourceManager.Compile(dir, output, password);
             sw.Stop();
             Debug.WriteLine($"{sw.ElapsedMilliseconds}ms");
+
+            var sw2 = new Stopwatch();
+            sw2.Start();
+            var inputPath = "Resources.dat";
+            var password2 = "password";
+            var outputDir = "Resources";
+            var result = ResourceManager.Decompile(inputPath, outputDir, password2);
+            sw2.Stop();
+            Debug.WriteLine($"{sw2.ElapsedMilliseconds}ms");
             Console.WriteLine(result);
 
             Console.WriteLine("Press Any Key...");

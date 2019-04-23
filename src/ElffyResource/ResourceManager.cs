@@ -44,14 +44,18 @@ namespace ElffyResource
         private static readonly Encoding _encoding = Encoding.UTF8;
         /// <summary>ファイル読み込み用のバッファ</summary>
         private static byte[] _buf;
+        /// <summary>ファイルのハッシュ値計算用</summary>
+        private static readonly HashAlgorithm _hashFunc = new SHA256CryptoServiceProvider();
+        /// <summary>ハッシュのバイト長</summary>
+        private const int HASH_LEN = 32;
         #endregion
 
-        #region Build
+        #region Compile
         /// <summary>リソースのビルドを行います。</summary>
         /// <param name="directory">リソースディレクトリのパス</param>
         /// <param name="outputPath">出力ファイル名</param>
         /// <param name="password">暗号化に用いるパスワード</param>
-        public static void Build(string directory, string outputPath, string password)
+        public static void Compile(string directory, string outputPath, string password)
         {
             if(directory == null) { throw new ArgumentNullException(nameof(directory)); }
             if(outputPath == null) { throw new ArgumentNullException(nameof(outputPath)); }
@@ -84,13 +88,25 @@ namespace ElffyResource
         }
         #endregion
 
-        #region Decompress
+        public static void DiffCompile(string directory, string outputPath, string password)
+        {
+            if(directory == null) { throw new ArgumentNullException(nameof(directory)); }
+            if(outputPath == null) { throw new ArgumentNullException(nameof(outputPath)); }
+            if(string.IsNullOrEmpty(password)) { throw new ArgumentException(nameof(password)); }
+            if(!Directory.Exists(directory)) { throw new DirectoryNotFoundException($"directoryName : {directory}"); }
+            if(!File.Exists(outputPath)) {
+                Compile(directory, outputPath, password);           // 出力ファイルが存在しないなら全コンパイル
+                return;
+            }
+        }
+
+        #region Decompile
         /// <summary>リソースを解凍します</summary>
         /// <param name="inputPath">解凍するリソースのパス</param>
         /// <param name="outputDirectory">出力ディレクトリ</param>
         /// <param name="password">復号パスワード</param>
         /// <returns></returns>
-        public static bool Decompress(string inputPath, string outputDirectory, string password)
+        public static bool Decompile(string inputPath, string outputDirectory, string password)
         {
             if(outputDirectory == null) { throw new ArgumentNullException(nameof(outputDirectory)); }
             if(inputPath == null) { throw new ArgumentNullException(nameof(inputPath)); }
@@ -173,6 +189,14 @@ namespace ElffyResource
             // 小さいファイルの場合はMemoryStreamを使用する。(高速)
             foreach(var file in dir.GetFiles()) {
                 WriteToStream(stream, $"{dirName}{file.Name}:");       // ファイル名を出力
+
+                // ファイルハッシュの書き込み
+                using(var fs = file.OpenRead()) {
+                    var hash = _hashFunc.ComputeHash(fs);
+                    stream.Write(hash, 0, hash.Length);
+                }
+                
+                // データ部の書き込み
                 if(file.Length > LARGE_FILE_SIZE) {
                     long fileLen = 0;
                     using(var tmpFs = File.OpenWrite(TMP_FILE)) {       // 既に同名のファイルが存在しているとき、書き込んだ部分だけがファイルに上書きされる
@@ -215,7 +239,6 @@ namespace ElffyResource
                         var data = ms.ToArray();
                         WriteToStream(stream, $"{data.Length.ToString()}:");    // ファイル長を書き込み
                         stream.Write(data, 0, data.Length);                     // 暗号化されたバイト列を出力ストリームへ書き込む
-
                     }
                 }
             }
@@ -240,6 +263,9 @@ namespace ElffyResource
                     _buf[bufPos++] = b;
                 }
                 var formattedFilePath = _encoding.GetString(_buf, 0, bufPos);
+
+                // ハッシュ値を読む(使わないので読み飛ばす)
+                if(stream.Read(_buf, 0, HASH_LEN) != HASH_LEN) { return false; }
 
                 // 読み取るバイト長を取得
                 bufPos = 0;
