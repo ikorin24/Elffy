@@ -1,4 +1,4 @@
-﻿namespace Elffy.Core
+﻿namespace Elffy
 {
     public enum WindowStyle
     {
