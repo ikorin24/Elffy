@@ -9,6 +9,7 @@ using Elffy.Input;
 using Elffy.UI;
 using Elffy.Core;
 using System.Drawing;
+using System.IO;
 
 namespace Elffy
 {
@@ -97,7 +98,7 @@ namespace Elffy
         {
             Icon icon = null;
             if(iconResourcePath != null) {
-                using(var stream = Resources.LoadAsStream(iconResourcePath)) {
+                using(var stream = new MemoryStream(Resources.Load(iconResourcePath), false)) {
                     icon = new Icon(stream);
                 }
             }

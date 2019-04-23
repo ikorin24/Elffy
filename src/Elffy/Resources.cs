@@ -45,13 +45,33 @@ namespace Elffy
         public static byte[] Load(string name)
         {
             CheckInitialized();
-            throw new NotImplementedException();
-        }
-
-        public static MemoryStream LoadAsStream(string name)
-        {
-            CheckInitialized();
-            throw new NotImplementedException();
+            if(name == null) { throw new ArgumentNullException(nameof(name)); }
+            if(!_resources.TryGetValue(name, out var resource)) {
+                throw new ResourceNotFoundException(name);
+            }
+            try {
+                using(var fs = File.OpenRead(RESOURCE_FILE_NAME))
+                using(var aes = new AesManaged() { BlockSize = 128, KeySize = 128, Mode = CipherMode.CBC, Padding = PaddingMode.PKCS7, Key = _aesKey, IV = _iv })
+                using(var decryptor = aes.CreateDecryptor(aes.Key, aes.IV))
+                using(var ms = new MemoryStream(resource.Length > int.MaxValue ? int.MaxValue : (int)resource.Length)) {
+                    using(var cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Write)) {
+                        fs.Position = resource.Position;
+                        var allLen = resource.Length;
+                        while(true) {
+                            if(allLen <= 0) { break; }
+                            var readRequestLen = (int)(_buf.Length < allLen ? _buf.Length : allLen);
+                            var readlen = fs.Read(_buf, 0, readRequestLen);
+                            if(readlen != readRequestLen) { throw new ResourceLoadFailedException(name, null); }
+                            allLen -= readlen;
+                            cs.Write(_buf, 0, readlen);
+                        }
+                    }
+                    return ms.ToArray();
+                }
+            }
+            catch(Exception ex) {
+                throw new ResourceLoadFailedException(name, ex);
+            }
         }
 
         #region Initialize
@@ -177,5 +197,20 @@ namespace Elffy
             public override string ToString() => $"'{Name}', Length:{Length}, Position:{Position}";
         }
         #endregion
+
+        public class ResourceNotFoundException : Exception
+        {
+            public string Name { get; private set; }
+
+            internal ResourceNotFoundException(string name) : base($"Resouce '{name}' is not found") => Name = name;
+        }
+
+        public class ResourceLoadFailedException : Exception
+        {
+            public string Name { get; private set; }
+
+            internal ResourceLoadFailedException(string name, Exception innerException) 
+                : base($"Failed in loading resource '{name}'", innerException) => Name = name;
+        }
     }
 }
