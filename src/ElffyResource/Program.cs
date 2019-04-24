@@ -7,35 +7,40 @@ namespace ElffyResource
 {
     class Program
     {
-        public static void Main(string[] args)
+        public static int Main(string[] args)
         {
-            // -------- for test ---------
-            //Test.Build();
-            //Test.Decompress();
-            //Console.WriteLine("Complete !!");
-            // ---------------------------
+            if(args.Length < 1) {
+                Console.WriteLine("Please set resource directory as arg[0].");
+                Console.WriteLine("[ERROR] Resource is not compiled !!");
+                return -1;
+            }
+
+            if(args.Length < 2) {
+                Console.WriteLine("Please set output directory as arg[1].");
+                Console.WriteLine("[ERROR] Resource is not compiled !!");
+                return -1;
+            }
+
+            if(args.Length < 3) {
+                Console.WriteLine("Please set password which compile resources as arg[2].");
+                Console.WriteLine("[ERROR] Resource is not compiled !!");
+                return -1;
+            }
+
+            var resourceDir = args[0];
+            var output = Path.Combine(args[1], "Resources.dat");
+            var password = args[2];
+
+            Console.WriteLine($"resourceDir : {resourceDir}");
+            Console.WriteLine($"output : {output}");
+            Console.WriteLine($"password : {password}");
 
             var sw = new Stopwatch();
             sw.Start();
-            var dir = @"..\..\Resources";
-            var output = "Resources.dat";
-            var password = "password";
-            ResourceManager.Compile(dir, output, password);
+            ResourceManager.Compile(resourceDir, output, password);
             sw.Stop();
-            Debug.WriteLine($"{sw.ElapsedMilliseconds}ms");
-
-            var sw2 = new Stopwatch();
-            sw2.Start();
-            var inputPath = "Resources.dat";
-            var password2 = "password";
-            var outputDir = "Resources";
-            var result = ResourceManager.Decompile(inputPath, outputDir, password2);
-            sw2.Stop();
-            Debug.WriteLine($"{sw2.ElapsedMilliseconds}ms");
-            Console.WriteLine(result);
-
-            Console.WriteLine("Press Any Key...");
-            Console.ReadKey();
+            Console.WriteLine($"Resouce compiled : {sw.ElapsedMilliseconds}ms");
+            return 0;
         }
     }
 }

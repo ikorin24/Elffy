@@ -50,19 +50,19 @@ namespace ElffyResource
 
         #region Compile
         /// <summary>リソースのビルドを行います。</summary>
-        /// <param name="directory">リソースディレクトリのパス</param>
+        /// <param name="targetDir">リソースディレクトリのパス</param>
         /// <param name="outputPath">出力ファイル名</param>
         /// <param name="password">暗号化に用いるパスワード</param>
-        public static void Compile(string directory, string outputPath, string password)
+        public static void Compile(string targetDir, string outputPath, string password)
         {
-            if(directory == null) { throw new ArgumentNullException(nameof(directory)); }
+            if(targetDir == null) { throw new ArgumentNullException(nameof(targetDir)); }
             if(outputPath == null) { throw new ArgumentNullException(nameof(outputPath)); }
             if(string.IsNullOrEmpty(password)) { throw new ArgumentException(nameof(password)); }
-            if(!Directory.Exists(directory)) { throw new DirectoryNotFoundException($"directoryName : {directory}"); }
             try {
                 _buf = new byte[BUF_LEN];
                 GenerateAesKey(password, out var aesKey, out var iv);
                 if(File.Exists(outputPath)) { File.Delete(outputPath); }
+                Directory.CreateDirectory(Directory.GetParent(outputPath).FullName);
                 using(var fs = File.OpenWrite(outputPath))
                 using(var aes = new AesManaged() { BlockSize = 128, KeySize = 128, Mode = CipherMode.CBC, Padding = PaddingMode.PKCS7, Key = aesKey, IV = iv })
                 using(var encryptor = aes.CreateEncryptor(aes.Key, aes.IV)) {
@@ -74,7 +74,9 @@ namespace ElffyResource
                         var bytes = ms.ToArray();
                         fs.Write(bytes, 0, bytes.Length);                       // 暗号化されたマジックワードを出力へ書き込む
                     }
-                    WriteDirectory(new DirectoryInfo(directory), "", fs, encryptor);
+                    var dir = new DirectoryInfo(targetDir);
+                    if(!Directory.Exists(dir.FullName)) { return; }
+                    WriteDirectory(dir, "", fs, encryptor);
                 }
                 if(File.Exists(TMP_FILE)) {
                     File.Delete(TMP_FILE);

@@ -16,7 +16,8 @@ namespace ElffyGame
         static void Main()
         {
             Game.Initialize += GameProgress.Initialize;
-            Game.Run(600, 400, "Game", WindowStyle.FixedWindow, "password", "icon.ico");
+            //Game.Run(600, 400, "Game", WindowStyle.FixedWindow, "password", "icon.ico");
+            Game.Run(600, 400, "Game", WindowStyle.FixedWindow, "ikorin24pass");
         }
     }
 }

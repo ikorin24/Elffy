@@ -129,15 +129,19 @@ namespace Elffy
                 // フォーマットバージョンの確認
                 if(ReadFromStream(fs, 3) != FORMAT_VERSION) { throw new FormatException(); }
                 
-                if(fs.Read(_buf, 0, ENCRYPTED_MAGIC_WORD_LEN) != ENCRYPTED_MAGIC_WORD_LEN) { throw new FormatException(); }
                 using(var aes = new AesManaged() { BlockSize = 128, KeySize = 128, Mode = CipherMode.CBC, Padding = PaddingMode.PKCS7, Key = _aesKey, IV = _iv })
                 using(var decryptor = aes.CreateDecryptor(aes.Key, aes.IV)) {
                     // マジックワードの確認
+                    if(fs.Read(_buf, 0, ENCRYPTED_MAGIC_WORD_LEN) != ENCRYPTED_MAGIC_WORD_LEN) { throw new FormatException(); }
                     using(var ms = new MemoryStream()) {
                         using(var cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Write)) {
                             cs.Write(_buf, 0, ENCRYPTED_MAGIC_WORD_LEN);
                         }
-                        if(_encoding.GetString(ms.ToArray()) != MAGIC_WORD) { throw new FormatException(); }
+                        try {
+                            var magicWord = _encoding.GetString(ms.ToArray());
+                            if(magicWord != MAGIC_WORD) { throw new FormatException(); }
+                        }
+                        catch(Exception) { throw new FormatException(); }
                     }
 
                     _resources = new Dictionary<string, ResourceObject>();
