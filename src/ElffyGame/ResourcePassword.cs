@@ -14,10 +14,9 @@ namespace ElffyGame
 
         public static string GetPassword()
         {
-            var passLen = GetPasswordFromUnmanaged(out var ptr);
-            var passArray = new byte[passLen];
+            var passArray = new byte[GetPasswordFromUnmanaged(out var ptr)];
             Marshal.Copy(ptr, passArray, 0, passArray.Length);
-            var password = Encoding.ASCII.GetString(passArray);
+            var password = Encoding.UTF8.GetString(passArray);
             return password;
         }
     }

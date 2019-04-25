@@ -119,8 +119,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>cp "$(ProjectDir)Nativedll\PG.dll" "$(ProjectDir)$(OutDir)PG.dll"
-"$(ProjectDir)externalExe\ElffyResourceCompiler.exe" "$(ProjectDir)Resources" "$(ProjectDir)$(OutDir)\" "ikorin24pass"</PostBuildEvent>
+    <PostBuildEvent>copy /Y "$(ProjectDir)Nativedll\PG.dll" "$(ProjectDir)$(OutDir)PG.dll"
+"$(ProjectDir)externalExe\ElffyResourceCompiler.exe" "$(ProjectDir)Resources" "$(ProjectDir)$(OutDir)\" "ikorin24p@ss"</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent>
