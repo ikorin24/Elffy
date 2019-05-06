@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Elffy", "Elffy\Elffy.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ElffyGame", "ElffyGame\ElffyGame.csproj", "{369ED885-5F80-47C8-8809-9CF4A3A0B105}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ElffyResource", "ElffyResource\ElffyResource.csproj", "{E3C6EE51-9B98-45DF-9BAE-9453DCC7F849}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ElffyResourceCompiler", "ElffyResourceCompiler\ElffyResourceCompiler.csproj", "{E3C6EE51-9B98-45DF-9BAE-9453DCC7F849}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

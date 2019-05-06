@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.IO;
 
-namespace ElffyResource
+namespace ElffyResourceCompiler
 {
     class Program
     {

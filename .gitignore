@@ -261,4 +261,4 @@ __pycache__/
 *.pyc
 
 # Custom (only for this project)
-src/ElffyResource/Resources
+src/ElffyResourceCompiler/Resources
