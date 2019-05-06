@@ -40,6 +40,9 @@
     <ApplicationIcon>Elffy.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="NAudio, Version=1.9.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\NAudio.1.9.0\lib\net35\NAudio.dll</HintPath>
+    </Reference>
     <Reference Include="OpenTK, Version=3.0.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>dll\OpenTK.dll</HintPath>
@@ -56,6 +59,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Elffy\GameScene.cs" />
+    <Compile Include="Elffy\Sound.cs" />
     <Compile Include="Framing\FrameProcessObject.cs" />
     <Compile Include="Framing\FrameProcessInfo.cs" />
     <Compile Include="Framing\FrameProcess.cs" />
@@ -112,6 +116,8 @@
     <Content Include="dll\OpenTK.xml" />
     <Content Include="Elffy.ico" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
