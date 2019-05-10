@@ -50,6 +50,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Camera.cs" />
+    <Compile Include="Control\MessageBox.cs" />
     <Compile Include="Core\ElffySerializer.cs" />
     <Compile Include="Core\FrameEvent.cs" />
     <Compile Include="Core\Positionable.cs" />
