@@ -32,8 +32,15 @@ namespace Elffy
         }
 
         #region Run
-        //public static void Run(int width, int heigh, string title, WindowStyle windowStyle)
-        //    => Run(width, heigh, title, windowStyle, null);
+        public static GameExitResult Run(int width, int heigh, string title, WindowStyle windowStyle)
+        {
+            if(Instance != null) { throw new InvalidOperationException("Game is already Running"); }
+            try {
+                Resources.Initialize();
+            }
+            catch(Exception) { return GameExitResult.FailedInInitializingResource; }
+            return RunPrivate(width, heigh, title, windowStyle, null);
+        }
 
         public static GameExitResult Run(int width, int heigh, string title, WindowStyle windowStyle, string icon)
         {
@@ -41,23 +48,10 @@ namespace Elffy
             if(string.IsNullOrEmpty(icon)) { throw new ArgumentException($"Icon is null or empty"); }
             try {
                 Resources.Initialize();
-                //Resources.Initialize(resourcePassword);
             }
             catch(Exception) { return GameExitResult.FailedInInitializingResource; }
             return RunPrivate(width, heigh, title, windowStyle, icon);
         }
-
-        //public static GameExitResult Run(int width, int heigh, string title, WindowStyle windowStyle, string resourcePassword, string iconResourcePath)
-        //{
-        //    if(Instance != null) { throw new InvalidOperationException("Game is already Running"); }
-        //    if(string.IsNullOrEmpty(resourcePassword)) { throw new ArgumentException($"{nameof(resourcePassword)} is null or empty"); }
-        //    if(string.IsNullOrEmpty(iconResourcePath)) { throw new ArgumentException($"{nameof(iconResourcePath)} is null or empty"); }
-        //    try {
-        //        Resources.Initialize(resourcePassword);
-        //    }
-        //    catch(Exception) { return GameExitResult.FailedInInitializingResource; }
-        //    return RunPrivate(width, heigh, title, windowStyle, iconResourcePath);
-        //}
         #endregion Run
 
         #region AddGameObject

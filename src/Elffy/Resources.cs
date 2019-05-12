@@ -60,14 +60,15 @@ namespace Elffy
                 _resources = new Dictionary<string, ResourceObject>(0);
                 return;
             }
-
+            int BytesToIntLittleEndian(byte[] x) => Enumerable.Range(0, 4).Select(i => x[i] << (i * 8)).Sum();
             const byte END_MARK = 0x3A;
             using(var fs = File.OpenRead(RESOURCE_FILE_NAME)) {
                 // フォーマットバージョンの確認
                 if(ReadString(fs, 3) != FORMAT_VERSION) { throw new FormatException(); }
                 // マジックワードの確認
                 if(ReadString(fs, MAGIC_WORD.Length) != MAGIC_WORD) { throw new FormatException(); }
-                var fileCount = ReadInt(fs, END_MARK);          // ファイル数取得
+                fs.Read(_buf, 0, 4);
+                var fileCount = BytesToIntLittleEndian(_buf);       // ファイル数取得
                 _resources = new Dictionary<string, ResourceObject>(fileCount);
                 while(true) {
                     if(fs.Position == fs.Length) { break; }     // ファイル末尾で終了

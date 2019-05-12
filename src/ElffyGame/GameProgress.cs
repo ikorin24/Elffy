@@ -64,11 +64,11 @@ namespace ElffyGame
             var x = Input.GetAxis(Controller.AXIS_X) * p;
             var y = Input.GetAxis(Controller.AXIS_Y) * p;
             var z = -Input.GetAxis(Controller.SUB_AXIS_Y) * p;
-            DebugManager.Append(Camera.Current.P);
-            DebugManager.Append(Environment.NewLine);
-            DebugManager.Append(Camera.Current.Position);
-            DebugManager.Append(_canvas.Position);
-            DebugManager.Append(Environment.NewLine);
+            //DebugManager.Append(Camera.Current.P);
+            //DebugManager.Append(Environment.NewLine);
+            //DebugManager.Append(Camera.Current.Position);
+            //DebugManager.Append(_canvas.Position);
+            //DebugManager.Append(Environment.NewLine);
             //Camera.Move(x, y, z);
             Camera.Move(x, y, 0);
             _canvas.Translate(0, 0, -z);
