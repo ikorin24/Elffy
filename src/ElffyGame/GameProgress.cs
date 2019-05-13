@@ -51,15 +51,10 @@ namespace ElffyGame
             _canvas.Clear(Color.Violet);
             _canvas.DrawString($"{FPSManager.GetFPS():N2}", _font, Brushes.White, new Point());
 
-            if(Input.GetStateDown(Controller.A)) {
-                DebugManager.Append(Controller.A);
-            }
-            if(Input.GetStateDown(Controller.B)) {
-                DebugManager.Append(Controller.B);
-            }
-            if(Input.GetStateDown(Controller.Y)) {
-                DebugManager.Append(Controller.Y);
-            }
+
+            DebugManager.AppendIf(Input.GetStateDown(Controller.A), Controller.A);
+            DebugManager.AppendIf(Input.GetStateDown(Controller.B), Controller.B);
+            DebugManager.AppendIf(Input.GetStateDown(Controller.Y), Controller.Y);
 
             //DebugManager.Append($"Left Trigger : {Input.GetTrigger("LTrigger")}");
             //DebugManager.Append($"Right Trigger : {Input.GetTrigger("RTrigger")}");
