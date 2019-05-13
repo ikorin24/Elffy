@@ -242,6 +242,7 @@ namespace Elffy.Input
             }
             DebugManager.Append($"({_pad.LeftStick.X:N2},{_pad.LeftStick.Y:N2})");
             DebugManager.Append($"({_pad.RightStick.X:N2},{_pad.RightStick.Y:N2})");
+            DebugManager.Append($"({_pad.LeftTrigger:N2}, {_pad.RightTrigger:N2})");
         }
         #endregion
         #endregion
