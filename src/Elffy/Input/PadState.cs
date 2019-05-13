@@ -16,6 +16,8 @@ namespace Elffy.Input
         public bool IsAnyButtonPressed { get; private set; }
         public Vector2 LeftStick { get; private set; }
         public Vector2 RightStick { get; private set; }
+        public float LeftTrigger { get; private set; }
+        public float RightTrigger { get; private set; }
 
         public PadState()
         {
@@ -51,6 +53,10 @@ namespace Elffy.Input
             // スティック
             LeftStick = state.ThumbSticks.Left;
             RightStick = state.ThumbSticks.Right;
+
+            // トリガー
+            LeftTrigger = state.Triggers.Left;
+            RightTrigger = state.Triggers.Right;
         }
         #endregion
     }

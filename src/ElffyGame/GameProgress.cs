@@ -29,6 +29,9 @@ namespace ElffyGame
             Input.AddAxis(Controller.SUB_AXIS_X, Key.D, Key.A, StickAxis.RightStickX);
             Input.AddAxis(Controller.SUB_AXIS_Y, Key.W, Key.S, StickAxis.RightStickY);
 
+            Input.AddTrigger("LTrigger", Key.O, Trigger.LeftTrigger);
+            Input.AddTrigger("RTrigger", Key.P, Trigger.RightTrigger);
+
             var progress = new GameProgress();
             Game.AddGameObject(progress);
         }
@@ -57,6 +60,9 @@ namespace ElffyGame
             if(Input.GetStateDown(Controller.Y)) {
                 DebugManager.Append(Controller.Y);
             }
+
+            DebugManager.Append($"Left Trigger : {Input.GetTrigger("LTrigger")}");
+            DebugManager.Append($"Right Trigger : {Input.GetTrigger("RTrigger")}");
 
             // https://blog.miz-ar.info/2017/12/opengl-projection-matrix/
 

@@ -22,6 +22,8 @@ namespace Elffy.Input
         private static Dictionary<string, StateNameObject> _stateNames = new Dictionary<string, StateNameObject>();
         /// <summary>入力軸状態名と関連情報</summary>
         private static Dictionary<string, AxisNameObject> _axisNames = new Dictionary<string, AxisNameObject>();
+        /// <summary>入力トリガー状態名と関連情報</summary>
+        private static Dictionary<string, TriggerNameObject> _triggerNames = new Dictionary<string, TriggerNameObject>();
         /// <summary>各入力状態の現在の状態</summary>
         private static Dictionary<string, bool> _currentState = new Dictionary<string, bool>();
         /// <summary>各入力状態の前回の状態</summary>
@@ -30,6 +32,10 @@ namespace Elffy.Input
         private static Dictionary<string, float> _currentAxis = new Dictionary<string, float>();
         /// <summary>各入力軸状態の前回の状態</summary>
         private static Dictionary<string, float> _previousAxis = new Dictionary<string, float>();
+        /// <summary>各入力トリガーの現在の状態</summary>
+        private static Dictionary<string, float> _currentTrigger = new Dictionary<string, float>();
+        /// <summary>各入力トリガーの前回の状態</summary>
+        private static Dictionary<string, float> _previousTrigger = new Dictionary<string, float>();
         #endregion private member
 
         #region public Method
@@ -85,6 +91,14 @@ namespace Elffy.Input
         }
         #endregion
 
+        public static float GetTrigger(string name)
+        {
+            if(!_currentTrigger.TryGetValue(name, out float value)) {
+                throw new KeyNotFoundException($"入力状態 '{name}' は登録されていません。");
+            }
+            return value;
+        }
+
         #region AddState
         /// <summary>入力状態を登録します</summary>
         /// <param name="name">状態名</param>
@@ -111,7 +125,7 @@ namespace Elffy.Input
         /// <param name="positiveKey">軸の正方向に関連させるキーボードのキー</param>
         /// <param name="negativeKey">軸の負方向に関連させるキーボードのキー</param>
         /// <param name="stickAxis">関連させるゲームパッドの軸</param>
-        public static void AddAxis(string name, Key positiveKey, Key negativeKey, StickAxis stickAxis) 
+        public static void AddAxis(string name, Key positiveKey, Key negativeKey, StickAxis stickAxis)
             => AddAxis(name, positiveKey, negativeKey, stickAxis, DEFAULT_AXIS_MIN_VALUE);
 
         /// <summary>入力軸状態を登録します</summary>
@@ -128,6 +142,24 @@ namespace Elffy.Input
                 _axisNames.Add(name, new AxisNameObject(name, positiveKey, negativeKey, stickAxis, minValue));
                 _currentAxis.Add(name, 0);
                 _previousAxis.Add(name, 0);
+            }
+            catch(ArgumentException) {
+                throw new ArgumentException($"入力状態 '{name}' は既に登録されています。");
+            }
+        }
+        #endregion
+
+        #region AddTrigger
+        public static void AddTrigger(string name, Key key, Trigger trigger) => AddTrigger(name, key, trigger, DEFAULT_AXIS_MIN_VALUE);
+
+        public static void AddTrigger(string name, Key key, Trigger trigger, float minValue)
+        {
+            if(name == null) { throw new ArgumentNullException(nameof(name)); }
+            if(minValue < 0 || minValue > 1) { throw new ArgumentException($"'{minValue}' は0～1でなければなりません。"); }
+            try {
+                _triggerNames.Add(name, new TriggerNameObject(name, key, trigger, minValue));
+                _currentTrigger.Add(name, 0);
+                _previousTrigger.Add(name, 0);
             }
             catch(ArgumentException) {
                 throw new ArgumentException($"入力状態 '{name}' は既に登録されています。");
@@ -171,9 +203,30 @@ namespace Elffy.Input
                 if(Math.Abs(padValue) < an.Value.MinValue) {
                     padValue = 0f;
                 }
-                float keyboradValue = (_keyboard[(OpenTKKey)an.Value.PositiveKey] ? 1 : 0) - (_keyboard[(OpenTKKey)an.Value.NegativeKey] ? 1 : 0);
+                float keyboardValue = (_keyboard[(OpenTKKey)an.Value.PositiveKey] ? 1 : 0) - (_keyboard[(OpenTKKey)an.Value.NegativeKey] ? 1 : 0);
                 _previousAxis[an.Key] = _currentAxis[an.Key];
-                _currentAxis[an.Key] = Math.Abs(padValue) < Math.Abs(keyboradValue) ? keyboradValue : padValue;
+                _currentAxis[an.Key] = Math.Abs(padValue) < Math.Abs(keyboardValue) ? keyboardValue : padValue;
+            }
+            // Triggerを更新
+            foreach(var tn in _triggerNames) {
+                float value = 0f;
+                var name = tn.Key;
+                switch(tn.Value.Trigger) {
+                    case Trigger.RightTrigger:
+                        value = _pad.RightTrigger;
+                        break;
+                    case Trigger.LeftTrigger:
+                        value = _pad.LeftTrigger;
+                        break;
+                    default:
+                        break;
+                }
+                if(Math.Abs(value) < tn.Value.MinValue) {
+                    value = 0f;
+                }
+                float keyboardValue = _keyboard[(OpenTKKey)tn.Value.Key] ? 1 : 0;
+                _previousTrigger[tn.Key] = _currentTrigger[tn.Key];
+                _currentTrigger[tn.Key] = value < keyboardValue ? keyboardValue : value;
             }
         }
         #endregion
@@ -216,13 +269,32 @@ namespace Elffy.Input
             public Key PositiveKey { get; private set; }
             public Key NegativeKey { get; private set; }
             public StickAxis Axis { get; private set; }
-            public float MinValue { get;private set; }
+            public float MinValue { get; private set; }
+
             public AxisNameObject(string name, Key positiveKey, Key negativeKey, StickAxis axis, float minValue)
             {
                 Name = name;
                 PositiveKey = positiveKey;
                 NegativeKey = negativeKey;
                 Axis = axis;
+                MinValue = minValue;
+            }
+        }
+        #endregion
+
+        #region class TriggerNameObject
+        class TriggerNameObject
+        {
+            public string Name { get; private set; }
+            public Key Key { get; private set; }
+            public Trigger Trigger { get; private set; }
+            public float MinValue { get; private set; }
+
+            public TriggerNameObject(string name, Key key, Trigger trigger, float minValue)
+            {
+                Name = name;
+                Key = key;
+                Trigger = trigger;
                 MinValue = minValue;
             }
         }
