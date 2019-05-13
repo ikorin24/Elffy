@@ -56,6 +56,7 @@
     <Compile Include="Core\Positionable.cs" />
     <Compile Include="Core\Random.cs" />
     <Compile Include="Core\Renderable.cs" />
+    <Compile Include="Exceptions\ResourceNotFoundException.cs" />
     <Compile Include="Input\Trigger.cs" />
     <Compile Include="WindowStyle.cs" />
     <Compile Include="DebugManager.cs" />

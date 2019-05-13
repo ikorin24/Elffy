@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Elffy.Exceptions;
 
 namespace Elffy
 {
@@ -47,11 +48,14 @@ namespace Elffy
             if(!IsInitialized) { throw new InvalidOperationException("Resources not Initialized"); }
             if(name == null) { throw new ArgumentNullException(); }
             if(!_resources.TryGetValue(name, out var resource)) {
-                throw new KeyNotFoundException(name);
+                throw new ResourceNotFoundException(name);
             }
             return new ResourceStream(resource.Position, resource.Length);
         }
         #endregion
+
+        internal static bool HasResource(string name) => 
+            _resources?.ContainsKey(name) ?? throw new InvalidOperationException("Resources not Initialized");
 
         #region CreateDictionary
         private static void CreateDictionary()

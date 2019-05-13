@@ -100,8 +100,10 @@ namespace Elffy
         {
             Icon icon = null;
             if(iconResourcePath != null) {
-                using(var stream = Resources.LoadStream(iconResourcePath)) {
-                    icon = new Icon(stream);
+                if(Resources.HasResource(iconResourcePath)) {
+                    using(var stream = Resources.LoadStream(iconResourcePath)) {
+                        icon = new Icon(stream);
+                    }
                 }
             }
             Instance = new Game();

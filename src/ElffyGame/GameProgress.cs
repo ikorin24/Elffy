@@ -61,8 +61,8 @@ namespace ElffyGame
                 DebugManager.Append(Controller.Y);
             }
 
-            DebugManager.Append($"Left Trigger : {Input.GetTrigger("LTrigger")}");
-            DebugManager.Append($"Right Trigger : {Input.GetTrigger("RTrigger")}");
+            //DebugManager.Append($"Left Trigger : {Input.GetTrigger("LTrigger")}");
+            //DebugManager.Append($"Right Trigger : {Input.GetTrigger("RTrigger")}");
 
             // https://blog.miz-ar.info/2017/12/opengl-projection-matrix/
 
