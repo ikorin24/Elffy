@@ -49,12 +49,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Animation\AnimationObject.cs" />
+    <Compile Include="Animation\AnimationInfo.cs" />
+    <Compile Include="Animation\Animation.cs" />
     <Compile Include="Camera.cs" />
+    <Compile Include="Control\MessageBox.cs" />
     <Compile Include="Core\ElffySerializer.cs" />
     <Compile Include="Core\FrameEvent.cs" />
     <Compile Include="Core\Positionable.cs" />
     <Compile Include="Core\Random.cs" />
     <Compile Include="Core\Renderable.cs" />
+    <Compile Include="Exceptions\ResourceNotFoundException.cs" />
+    <Compile Include="Input\Trigger.cs" />
     <Compile Include="WindowStyle.cs" />
     <Compile Include="DebugManager.cs" />
     <Compile Include="FPSManager.cs" />

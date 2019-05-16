@@ -8,7 +8,7 @@ using System.Security.Cryptography;
 using System.IO.Compression;
 using System.Runtime.InteropServices;
 
-namespace ElffyResource
+namespace ElffyResourceCompiler
 {
     public static class ResourceManager
     {

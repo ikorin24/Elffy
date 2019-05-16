@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Drawing;
 using OpenTK;
+using Elffy.Animation;
 
 namespace ElffyGame
 {
@@ -29,9 +30,14 @@ namespace ElffyGame
             Input.AddAxis(Controller.SUB_AXIS_X, Key.D, Key.A, StickAxis.RightStickX);
             Input.AddAxis(Controller.SUB_AXIS_Y, Key.W, Key.S, StickAxis.RightStickY);
 
+            Input.AddTrigger("LTrigger", Key.O, Trigger.LeftTrigger);
+            Input.AddTrigger("RTrigger", Key.P, Trigger.RightTrigger);
+
             var progress = new GameProgress();
             Game.AddGameObject(progress);
         }
+
+        Animation _animation;
 
         public override void Start()
         {
@@ -41,22 +47,32 @@ namespace ElffyGame
             _canvas.Position = new Vector3(0, 0, 0);
             //_canvas.MultiplyScale(20);
             Game.AddGameObject(_canvas);
+
+            _animation = Animation.Create()
+                                  .Begin(100, info => DebugManager.Append("a" + info.FrameNum.ToString()))
+                                  .Wait(500)
+                                  .Begin(100, info => DebugManager.Append("b" + info.FrameNum.ToString()))
+                                  .While(() => !Input.GetState(Controller.A), info => DebugManager.Append("hoge" + info.FrameNum.ToString()))
+                                  .Do(info => DebugManager.Append("Complete"));
         }
 
         public override void Update()
         {
+            //throw new Exception("hoge");
+            if(Input.GetState(Controller.B)) {
+                _animation.Cancel();
+            }
+
             _canvas.Clear(Color.Violet);
             _canvas.DrawString($"{FPSManager.GetFPS():N2}", _font, Brushes.White, new Point());
 
-            if(Input.GetStateDown(Controller.A)) {
-                DebugManager.Append(Controller.A);
-            }
-            if(Input.GetStateDown(Controller.B)) {
-                DebugManager.Append(Controller.B);
-            }
-            if(Input.GetStateDown(Controller.Y)) {
-                DebugManager.Append(Controller.Y);
-            }
+
+            DebugManager.AppendIf(Input.GetStateDown(Controller.A), Controller.A);
+            DebugManager.AppendIf(Input.GetStateDown(Controller.B), Controller.B);
+            DebugManager.AppendIf(Input.GetStateDown(Controller.Y), Controller.Y);
+
+            //DebugManager.Append($"Left Trigger : {Input.GetTrigger("LTrigger")}");
+            //DebugManager.Append($"Right Trigger : {Input.GetTrigger("RTrigger")}");
 
             // https://blog.miz-ar.info/2017/12/opengl-projection-matrix/
 
@@ -64,11 +80,11 @@ namespace ElffyGame
             var x = Input.GetAxis(Controller.AXIS_X) * p;
             var y = Input.GetAxis(Controller.AXIS_Y) * p;
             var z = -Input.GetAxis(Controller.SUB_AXIS_Y) * p;
-            DebugManager.Append(Camera.Current.P);
-            DebugManager.Append(Environment.NewLine);
-            DebugManager.Append(Camera.Current.Position);
-            DebugManager.Append(_canvas.Position);
-            DebugManager.Append(Environment.NewLine);
+            //DebugManager.Append(Camera.Current.P);
+            //DebugManager.Append(Environment.NewLine);
+            //DebugManager.Append(Camera.Current.Position);
+            //DebugManager.Append(_canvas.Position);
+            //DebugManager.Append(Environment.NewLine);
             //Camera.Move(x, y, z);
             Camera.Move(x, y, 0);
             _canvas.Translate(0, 0, -z);
