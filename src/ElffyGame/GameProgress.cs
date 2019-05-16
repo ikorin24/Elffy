@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Drawing;
 using OpenTK;
+using Elffy.Animation;
 
 namespace ElffyGame
 {
@@ -36,6 +37,8 @@ namespace ElffyGame
             Game.AddGameObject(progress);
         }
 
+        Animation _animation;
+
         public override void Start()
         {
             _font = new Font(FontFamily.GenericSansSerif, 130);
@@ -44,10 +47,22 @@ namespace ElffyGame
             _canvas.Position = new Vector3(0, 0, 0);
             //_canvas.MultiplyScale(20);
             Game.AddGameObject(_canvas);
+
+            _animation = Animation.Create()
+                                  .Begin(100, info => DebugManager.Append("a" + info.FrameNum.ToString()))
+                                  .Wait(500)
+                                  .Begin(100, info => DebugManager.Append("b" + info.FrameNum.ToString()))
+                                  .While(() => !Input.GetState(Controller.A), info => DebugManager.Append("hoge" + info.FrameNum.ToString()))
+                                  .Do(info => DebugManager.Append("Complete"));
         }
 
         public override void Update()
         {
+            //throw new Exception("hoge");
+            if(Input.GetState(Controller.B)) {
+                _animation.Cancel();
+            }
+
             _canvas.Clear(Color.Violet);
             _canvas.DrawString($"{FPSManager.GetFPS():N2}", _font, Brushes.White, new Point());
 

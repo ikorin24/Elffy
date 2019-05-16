@@ -15,10 +15,18 @@ namespace ElffyGame
         [STAThread]
         static void Main()
         {
-            Game.Initialize += GameProgress.Initialize;
-            var result = Game.Run(600, 400, "Game", WindowStyle.FixedWindow, "icon.ico");
-            if(result == GameExitResult.FailedInInitializingResource) {
-                MessageBox.Show("Fatal Error (code:1)", "Error", MessageBoxType.Ok, MessageBoxIcon.Error);
+            try {
+                Game.Initialize += GameProgress.Initialize;
+                var result = Game.Run(600, 400, "Game", WindowStyle.FixedWindow, "icon.ico");
+                if(result == GameExitResult.FailedInInitializingResource) {
+                    MessageBox.Show("Fatal Error (CODE : 1)", "Error", MessageBoxType.Ok, MessageBoxIcon.Error);
+                    return;
+                }
+            }
+            catch(Exception) {
+                MessageBox.Show("Fatal Error (CODE : 0)", "Error", MessageBoxType.Ok, MessageBoxIcon.Error);
+                // TODO: ロギング
+                return;
             }
         }
     }

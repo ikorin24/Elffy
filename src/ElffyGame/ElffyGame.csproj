@@ -117,9 +117,7 @@
   <ItemGroup>
     <Content Include="externalExe\ElffyResourceCompiler.exe" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Nativedll\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>"$(ProjectDir)externalExe\ElffyResourceCompiler.exe" "$(ProjectDir)Resources" "$(ProjectDir)$(OutDir)\" "ikorin24p@ss"</PostBuildEvent>

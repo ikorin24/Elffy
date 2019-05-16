@@ -49,6 +49,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Animation\AnimationObject.cs" />
+    <Compile Include="Animation\AnimationInfo.cs" />
+    <Compile Include="Animation\Animation.cs" />
     <Compile Include="Camera.cs" />
     <Compile Include="Control\MessageBox.cs" />
     <Compile Include="Core\ElffySerializer.cs" />
