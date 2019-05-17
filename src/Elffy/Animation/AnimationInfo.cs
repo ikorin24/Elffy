@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Elffy.Animation
 {
-    public class AnimationInfo
+    public struct AnimationInfo
     {
         public int LifeSpan { get; internal set; }
         public int FrameNum { get; internal set; }
