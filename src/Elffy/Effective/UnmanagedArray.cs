@@ -10,17 +10,20 @@ using System.Threading.Tasks;
 
 namespace Elffy.Effective
 {
+    #region class UnmanagedArray<T>
     /// <summary>
     /// Array class which is allocated in unmanaged memory.<para/>
-    /// Only for unmanaged type. (e.g. int, float, struct, and so on.)
+    /// Only for unmanaged type. (e.g. int, float, recursive-unmanaged struct, and so on.)
     /// </summary>
     /// <typeparam name="T">type of array</typeparam>
-    [DebuggerDisplay("Length = {Length}")]
+    [DebuggerTypeProxy(typeof(UnmanagedArrayDebuggerTypeProxy<>))]
+    [DebuggerDisplay("UnmanagedArray<{Type.Name}>[{Length}]")]
     public sealed class UnmanagedArray<T> : IList<T>, IReadOnlyList<T>, IDisposable
         where T : unmanaged
     {
         #region private member
-        private readonly object _syncRoot = new object();
+        private readonly object _syncRoot;
+        private int _length;
         private int _version;
         private bool _disposed;
         private bool _isFree;
@@ -28,51 +31,103 @@ namespace Elffy.Effective
         private readonly int _objsize;
         #endregion private member
 
+        /// <summary>Get wheater this instance is thread-safe-access-suppoted.</summary>
+        public bool IsThreadSafe { get; }
+
+        /// <summary>Get the type of an item in this array.</summary>
+        public Type Type => typeof(T);
+
+        /// <summary>Get the specific item of specific index.</summary>
+        /// <param name="i">index</param>
+        /// <returns>The item of specific index</returns>
         public T this[int i]
         {
             get
             {
-                ThrowIfFree();
-                unsafe {
-                    return *(T*)(_array + i * _objsize);
+                if(IsThreadSafe) {
+                    lock(_syncRoot) {
+                        ThrowIfFree();
+                        unsafe {
+                            return *(T*)(_array + i * _objsize);
+                        }
+                    }
+                }
+                else {
+                    ThrowIfFree();
+                    unsafe {
+                        return *(T*)(_array + i * _objsize);
+                    }
                 }
             }
             set
             {
-                ThrowIfFree();
-                var ptr = _array + i * _objsize;
-                Marshal.StructureToPtr<T>(value, ptr, true);
-                _version++;
+                if(IsThreadSafe) {
+                    lock(_syncRoot) {
+                        ThrowIfFree();
+                        var ptr = _array + i * _objsize;
+                        Marshal.StructureToPtr<T>(value, ptr, true);
+                        _version++;
+                    }
+                }
+                else {
+                    ThrowIfFree();
+                    var ptr = _array + i * _objsize;
+                    Marshal.StructureToPtr<T>(value, ptr, true);
+                    _version++;
+                }
             }
         }
 
         /// <summary>Length of this array</summary>
-        public int Length { get; private set; }
+        public int Length => _length;
 
         /// <summary>Length of this array (ICollection implementation)</summary>
-        public int Count => Length;
+        public int Count => _length;
 
+        /// <summary>Get wheater this array is readonly.</summary>
         public bool IsReadOnly => false;
 
         #region constructor
+        public UnmanagedArray(int length) : this(length, false) { }
+
         /// <summary>UnmanagedArray Constructor</summary>
         /// <param name="length">Length of array</param>
-        public UnmanagedArray(int length)
+        public UnmanagedArray(int length, bool threadSafe)
         {
             if(length < 0) { throw new InvalidOperationException(); }
+            IsThreadSafe = threadSafe;
+            if(threadSafe) {
+                _syncRoot = new object();
+            }
             _objsize = Marshal.SizeOf<T>();
             _array = Marshal.AllocHGlobal(length * _objsize);
-            Length = length;
+            _length = length;
+
+            // initialize all block as zero
+            for(int i = 0; i < _objsize * length; i++) {
+                Marshal.WriteByte(_array + i, 0x00);
+            }
         }
 
         ~UnmanagedArray() => Dispose(false);
         #endregion
 
         #region Free
-        /// <summary>Free the allocated memory of this instance.</summary>
+        /// <summary>
+        /// Free the allocated memory of this instance. <para/>
+        /// If already free, do nothing.<para/>
+        /// </summary>
         public void Free()
         {
-            lock(_syncRoot) {
+            if(IsThreadSafe) {
+                lock(_syncRoot) {
+                    if(!_isFree) {
+                        Marshal.FreeHGlobal(_array);
+                        _isFree = true;
+                    }
+                }
+            }
+            else {
                 if(!_isFree) {
                     Marshal.FreeHGlobal(_array);
                     _isFree = true;
@@ -87,7 +142,7 @@ namespace Elffy.Effective
         /// <returns>index (if not contain, value is -1)</returns>
         public int IndexOf(T item)
         {
-            for(int i = 0; i < Length; i++) {
+            for(int i = 0; i < _length; i++) {
                 if(item.Equals(this[i])) { return i; }
             }
             return -1;
@@ -98,7 +153,7 @@ namespace Elffy.Effective
         /// <returns>true: This array contains the target item. false: not contain</returns>
         public bool Contains(T item)
         {
-            for(int i = 0; i < Length; i++) {
+            for(int i = 0; i < _length; i++) {
                 if(item.Equals(this[i])) { return true; }
             }
             return false;
@@ -110,9 +165,9 @@ namespace Elffy.Effective
         public void CopyTo(T[] array, int arrayIndex)
         {
             if(array == null) { throw new ArgumentNullException(nameof(array)); }
-            if(arrayIndex + Length > array.Length) { throw new ArgumentException("There is not enouph length of array"); }
+            if(arrayIndex + _length > array.Length) { throw new ArgumentException("There is not enouph length of destination array"); }
             unsafe {
-                for(int i = 0; i < Length; i++) {
+                for(int i = 0; i < _length; i++) {
                     array[i + arrayIndex] = this[i];
                 }
             }
@@ -123,20 +178,25 @@ namespace Elffy.Effective
         /// <summary>Not Supported in this class.</summary>
         /// <param name="index"></param>
         /// <param name="item"></param>
+        [Obsolete("This method is not supported.", true)]
         public void Insert(int index, T item) => throw new NotSupportedException();
 
         /// <summary>Not Supported in this class.</summary>
         /// <param name="index"></param>
+        [Obsolete("This method is not supported.", true)]
         public void RemoveAt(int index) => throw new NotSupportedException();
 
         /// <summary>Not Supported in this class.</summary>
         /// <param name="item"></param>
+        [Obsolete("This method is not supported.", true)]
         public void Add(T item) => throw new NotSupportedException();
 
         /// <summary>Not Supported in this class.</summary>
+        [Obsolete("This method is not supported.", true)]
         public bool Remove(T item) => throw new NotSupportedException();
 
         /// <summary>Not Supported in this class.</summary>
+        [Obsolete("This method is not supported.", true)]
         public void Clear() => throw new NotSupportedException();
         #endregion
 
@@ -187,7 +247,7 @@ namespace Elffy.Effective
             public bool MoveNext()
             {
                 var localList = _array;
-                if(_version == localList._version && ((uint)_index < (uint)localList.Length)) {
+                if(_version == localList._version && ((uint)_index < (uint)localList._length)) {
                     Current = localList[_index];
                     _index++;
                     return true;
@@ -196,7 +256,7 @@ namespace Elffy.Effective
                 if(_version != _array._version) {
                     throw new InvalidOperationException();
                 }
-                _index = _array.Length + 1;
+                _index = _array._length + 1;
                 Current = default;
                 return false;
             }
@@ -204,7 +264,7 @@ namespace Elffy.Effective
             object IEnumerator.Current
             {
                 get {
-                    if(_index == 0 || _index == _array.Length + 1) {
+                    if(_index == 0 || _index == _array._length + 1) {
                         throw new InvalidOperationException();
                     }
                     return Current;
@@ -222,4 +282,29 @@ namespace Elffy.Effective
         }
         #endregion struct Enumerator
     }
+    #endregion class UnmanagedArray<T>
+
+    #region class UnmanagedArrayDebuggerTypeProxy<T>
+    internal class UnmanagedArrayDebuggerTypeProxy<T> where T : unmanaged
+    {
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private UnmanagedArray<T> _entity;
+
+        [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+        public T[] Items
+        {
+            get {
+                var items = new T[_entity.Length];
+                _entity.CopyTo(items, 0);
+                return items;
+            }
+        }
+
+        public bool IsThreadSafe => _entity.IsThreadSafe;
+
+        public bool IsReadOnly => _entity.IsReadOnly;
+
+        public UnmanagedArrayDebuggerTypeProxy(UnmanagedArray<T> entity) => _entity = entity;
+    }
+    #endregion class UnmanagedArrayDebuggerTypeProxy<T>
 }
