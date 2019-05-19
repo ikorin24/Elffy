@@ -33,10 +33,10 @@
             </Grid.RowDefinitions>
             <DockPanel Grid.Row="0" LastChildFill="False">
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                    <Button FontFamily="Marlett" Content="0" Width="30" Height="30" Style="{StaticResource SystemButtonDark}"/>
-                    <Button FontFamily="Marlett" Content="1" Width="30" Height="30" Style="{StaticResource SystemButtonDark}"/>
-                    <Button FontFamily="Marlett" Content="2" Width="30" Height="30" Style="{StaticResource SystemButtonDark}"/>
-                    <Button FontFamily="Marlett" Content="r" Width="30" Height="30" Style="{StaticResource SystemButtonDark}"/>
+                    <Button FontFamily="Marlett" Content="0" Width="30" Height="30" Style="{StaticResource Dark-CaptionButtonStyle}" Command="{x:Static SystemCommands.MinimizeWindowCommand}"/>
+                    <Button FontFamily="Marlett" Content="1" Width="30" Height="30" Style="{StaticResource Dark-CaptionButtonStyle}" Command="{x:Static SystemCommands.MaximizeWindowCommand}"/>
+                    <Button FontFamily="Marlett" Content="2" Width="30" Height="30" Style="{StaticResource Dark-CaptionButtonStyle}" Command="{x:Static SystemCommands.RestoreWindowCommand}"/>
+                    <Button FontFamily="Marlett" Content="r" Width="30" Height="30" Style="{StaticResource Dark-CaptionButtonStyle}"/>
                 </StackPanel>
             </DockPanel>
         </Grid>
