@@ -1,0 +1,44 @@
+﻿<Window x:Class="ElffyDev.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ElffyDev"
+        mc:Ignorable="d"
+        Title="Elffy" Height="450" Width="800"
+        Background="Transparent" WindowStyle="None"  AllowsTransparency="True" MinWidth="300" MinHeight="40">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="30" UseAeroCaptionButtons="False"/>
+    </WindowChrome.WindowChrome>
+
+    <Border BorderBrush="#FFFF3AE1" Background="#FF3F3F46">
+        <Border.Style>
+            <Style TargetType="{x:Type Border}">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding WindowState, RelativeSource={RelativeSource FindAncestor, AncestorType=Window}}" Value="{x:Static WindowState.Maximized}">
+                        <Setter Property="BorderThickness" Value="7"/>
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding WindowState, RelativeSource={RelativeSource FindAncestor, AncestorType=Window}}" Value="{x:Static WindowState.Normal}">
+                        <Setter Property="BorderThickness" Value="1"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Border.Style>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="30"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <DockPanel Grid.Row="0" LastChildFill="False">
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button FontFamily="Marlett" Content="0" Width="30" Height="30" Style="{StaticResource SystemButtonDark}"/>
+                    <Button FontFamily="Marlett" Content="1" Width="30" Height="30" Style="{StaticResource SystemButtonDark}"/>
+                    <Button FontFamily="Marlett" Content="2" Width="30" Height="30" Style="{StaticResource SystemButtonDark}"/>
+                    <Button FontFamily="Marlett" Content="r" Width="30" Height="30" Style="{StaticResource SystemButtonDark}"/>
+                </StackPanel>
+            </DockPanel>
+        </Grid>
+    </Border>
+</Window>
