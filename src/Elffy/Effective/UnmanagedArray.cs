@@ -284,6 +284,34 @@ namespace Elffy.Effective
     }
     #endregion class UnmanagedArray<T>
 
+    public static class UnmanagedArrayExtension
+    {
+        /// <summary>Create a new instance of <see cref="UnmanagedArray{T}"/> initialized by source.</summary>
+        /// <typeparam name="T">Type of item in array</typeparam>
+        /// <param name="source">source which initializes new array.</param>
+        /// <returns>instance of <see cref="UnmanagedArray{T}"/></returns>
+        public static UnmanagedArray<T> ToUnmanagedArray<T>(this IEnumerable<T> source) where T : unmanaged 
+            => ToUnmanagedArray(source, false);
+
+        /// <summary>Create a new instance of <see cref="UnmanagedArray{T}"/> initialized by source.</summary>
+        /// <typeparam name="T">Type of item in array</typeparam>
+        /// <param name="source">source which initializes new array.</param>
+        /// <param name="threadSafe">thread safety of <see cref="UnmanagedArray{T}"/>.</param>
+        /// <returns>instance of <see cref="UnmanagedArray{T}"/></returns>
+        public static UnmanagedArray<T> ToUnmanagedArray<T>(this IEnumerable<T> source, bool threadSafe) where T : unmanaged
+        {
+            if(source == null) { throw new ArgumentNullException(); }
+            var len = source.Count();
+            var array = new UnmanagedArray<T>(len, threadSafe);
+            var i = 0;
+            foreach (var item in source)
+            {
+                array[i++] = item;
+            }
+            return array;
+        }
+    }
+
     #region class UnmanagedArrayDebuggerTypeProxy<T>
     internal class UnmanagedArrayDebuggerTypeProxy<T> where T : unmanaged
     {
