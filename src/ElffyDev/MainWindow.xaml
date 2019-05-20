@@ -5,40 +5,45 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ElffyDev"
         mc:Ignorable="d"
-        Title="Elffy" Height="450" Width="800"
-        Background="Transparent" WindowStyle="None"  AllowsTransparency="True" MinWidth="300" MinHeight="40">
-
-    <WindowChrome.WindowChrome>
-        <WindowChrome CaptionHeight="30" UseAeroCaptionButtons="False"/>
-    </WindowChrome.WindowChrome>
-
-    <Border BorderBrush="#FFFF3AE1" Background="#FF3F3F46">
-        <Border.Style>
-            <Style TargetType="{x:Type Border}">
-                <Style.Triggers>
-                    <DataTrigger Binding="{Binding WindowState, RelativeSource={RelativeSource FindAncestor, AncestorType=Window}}" Value="{x:Static WindowState.Maximized}">
-                        <Setter Property="BorderThickness" Value="7"/>
-                    </DataTrigger>
-                    <DataTrigger Binding="{Binding WindowState, RelativeSource={RelativeSource FindAncestor, AncestorType=Window}}" Value="{x:Static WindowState.Normal}">
-                        <Setter Property="BorderThickness" Value="1"/>
-                    </DataTrigger>
-                </Style.Triggers>
-            </Style>
-        </Border.Style>
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="30"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
-            <DockPanel Grid.Row="0" LastChildFill="False">
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                    <Button FontFamily="Marlett" Content="0" Width="30" Height="30" Style="{StaticResource Dark-CaptionButtonStyle}" Command="{x:Static SystemCommands.MinimizeWindowCommand}"/>
-                    <Button FontFamily="Marlett" Content="1" Width="30" Height="30" Style="{StaticResource Dark-CaptionButtonStyle}" Command="{x:Static SystemCommands.MaximizeWindowCommand}"/>
-                    <Button FontFamily="Marlett" Content="2" Width="30" Height="30" Style="{StaticResource Dark-CaptionButtonStyle}" Command="{x:Static SystemCommands.RestoreWindowCommand}"/>
-                    <Button FontFamily="Marlett" Content="r" Width="30" Height="30" Style="{StaticResource Dark-CaptionButtonStyle}"/>
-                </StackPanel>
-            </DockPanel>
-        </Grid>
-    </Border>
+        Style="{StaticResource NoBorderWindowStyle}"
+        BorderBrush="{StaticResource Dark-HighlightBrush}" Background="{StaticResource Dark-BackBrush}"
+        Title="Elffy" Height="450" Width="800" WindowStartupLocation="CenterScreen"
+        MinWidth="300" MinHeight="40">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="28"/>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <DockPanel Grid.Row="0" LastChildFill="False">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <Button Content="0" Style="{StaticResource CaptionButtonStyle}"/>
+                <Button Content="1" Style="{StaticResource CaptionButtonStyle}"/>
+                <Button Content="2" Style="{StaticResource CaptionButtonStyle}"/>
+                <Button Content="r" Style="{StaticResource CaptionButtonStyle}" Click="Button_Click"/>
+            </StackPanel>
+            <Image Width="28" Height="28" DockPanel.Dock="Left"/>
+            <Menu VerticalAlignment="Stretch" DockPanel.Dock="Left" Style="{StaticResource MenuStyle}">
+                <MenuItem Header="File(_F)">
+                    <MenuItem Header="Open(_O)" InputGestureText="Ctrl + O"/>
+                    <MenuItem Header="Save(_S)" InputGestureText="Ctrl + S"/>
+                    <Separator/>
+                    <MenuItem Header="Exit(_X)" InputGestureText="Alt + F4"/>
+                </MenuItem>
+                <MenuItem Header="Edit(_E)">
+                    <MenuItem Header="Empty"/>
+                </MenuItem>
+                <MenuItem Header="View(_V)">
+                    <MenuItem Header="Empty"/>
+                </MenuItem>
+                <MenuItem Header="Debug(_D)">
+                    <MenuItem Header="Empty"/>
+                </MenuItem>
+                <MenuItem Header="Help(_H)" >
+                    <MenuItem Header="Show version info(_V)..."/>
+                </MenuItem>
+            </Menu>
+        </DockPanel>
+    </Grid>
 </Window>
