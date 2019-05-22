@@ -20,6 +20,13 @@ namespace ElffyGame
 
         public static void Initialize(object sender, EventArgs e)
         {
+            var loaded = SaveData.Default.Load();
+            if(loaded == false) {
+                var block = new SaveBlock() { Name = "Test" };
+                SaveData.Default.Blocks.Add(block);
+                SaveData.Default.Save();
+            }
+
             // 入力の登録
             Input.AddState(Controller.A, Key.Space, 0);
             Input.AddState(Controller.B, Key.BackSpace, 2);

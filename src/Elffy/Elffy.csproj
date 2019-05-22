@@ -55,6 +55,8 @@
     <Compile Include="Animation\Animation.cs" />
     <Compile Include="Camera.cs" />
     <Compile Include="Control\MessageBox.cs" />
+    <Compile Include="ConfigBase.cs" />
+    <Compile Include="Core\DataSerializer.cs" />
     <Compile Include="Core\FrameEvent.cs" />
     <Compile Include="Core\Positionable.cs" />
     <Compile Include="Core\Random.cs" />
