@@ -6,7 +6,6 @@
         xmlns:local="clr-namespace:ElffyDev"
         mc:Ignorable="d"
         Style="{StaticResource NoBorderWindowStyle}"
-        BorderBrush="{StaticResource Dark-HighlightBrush}" Background="{StaticResource Dark-BackBrush}"
         Title="Elffy" Height="450" Width="800" WindowStartupLocation="CenterScreen"
         MinWidth="300" MinHeight="40">
     <Grid>

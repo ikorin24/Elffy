@@ -5,7 +5,8 @@
     <Color x:Key="Dark-BackColor">#FF2D2D30</Color>
     <Color x:Key="Dark-ForeColor">#FFFFFFFF</Color>
     <Color x:Key="Dark-ShadowColor">#FF1E1E1E</Color>
-    <Color x:Key="Dark-HighlightColor">#FFFF3AE1</Color>
+    <!--<Color x:Key="Dark-HighlightColor">#FFFF3AE1</Color>-->
+    <Color x:Key="Dark-HighlightColor">#FFF499FF</Color>
     <Color x:Key="Dark-LightColor">#FF606060</Color>
     <Color x:Key="Dark-ForeDisableColor">#FF808080</Color>
     <SolidColorBrush x:Key="Dark-BackBrush" Color="{StaticResource Dark-BackColor}"/>
@@ -17,7 +18,8 @@
 
     <!--#region Window-->
     <Style TargetType="Window" x:Key="NoBorderWindowStyle">
-        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Dark-HighlightBrush}"/>
+        <Setter Property="Background" Value="{StaticResource Dark-BackBrush}"/>
         <Setter Property="AllowsTransparency" Value="True"/>
         <Setter Property="WindowStyle" Value="None"/>
         <Setter Property="WindowChrome.WindowChrome">
@@ -46,6 +48,11 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsActive" Value="False">
+                <Setter Property="BorderBrush" Value="Gray"/>
+            </Trigger>
+        </Style.Triggers>
     </Style>
     <!--#endregion-->
 
