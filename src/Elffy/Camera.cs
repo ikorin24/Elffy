@@ -11,7 +11,7 @@ namespace Elffy
     public class Camera
     {
         private const int MAIN_CAMERA = 0;
-        private const float Z_NEAR = 1e-1f;
+        private const float Z_NEAR = 0.5f;
         private static int _numGenerator = MAIN_CAMERA;
         private static readonly Dictionary<int, Camera> _cameras = new Dictionary<int, Camera>();
 
@@ -73,7 +73,7 @@ namespace Elffy
                 SetProjection(radian, _zfar);
             }
         }
-        private float _fovy = 150;
+        private float _fovy = 80;
         #endregion
 
         #region Zfar

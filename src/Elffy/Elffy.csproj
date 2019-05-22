@@ -64,6 +64,9 @@
     <Compile Include="Effective\UnmanagedArray.cs" />
     <Compile Include="Exceptions\ResourceNotFoundException.cs" />
     <Compile Include="Input\Trigger.cs" />
+    <Compile Include="ObjectLayer.cs" />
+    <Compile Include="Shape\Cube.cs" />
+    <Compile Include="UI\UISetting.cs" />
     <Compile Include="WindowStyle.cs" />
     <Compile Include="DebugManager.cs" />
     <Compile Include="FPSManager.cs" />

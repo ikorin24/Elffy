@@ -10,13 +10,16 @@ using System.Threading.Tasks;
 using System.Drawing;
 using OpenTK;
 using Elffy.Animation;
+using Elffy.Shape;
 
 namespace ElffyGame
 {
     public class GameProgress : FrameObject
     {
+        private Animation _animation;
         private Font _font = new Font(FontFamily.GenericSerif, 20);
         private Canvas _canvas;
+        private Cube _cube;
 
         public static void Initialize(object sender, EventArgs e)
         {
@@ -44,16 +47,20 @@ namespace ElffyGame
             Game.AddFrameObject(progress);
         }
 
-        Animation _animation;
-
         public override void Start()
         {
             _font = new Font(FontFamily.GenericSansSerif, 130);
-            _canvas = new Canvas(Game.ClientSize);
+            _canvas = new Canvas(UISetting.Width, UISetting.Height);
             _canvas.Tag = "sampleText";
             _canvas.Position = new Vector3(0, 0, 0);
-            //_canvas.MultiplyScale(20);
+            //_canvas.MultiplyScale(UISetting.Width / 2f, UISetting.Height / 2f, 1, new Vector3(0, 0, 0));
+            //_canvas.Layer = ObjectLayer.UI;
             Game.AddFrameObject(_canvas);
+
+            _cube = new Cube();
+            _cube.Position = new Vector3(1, -1, -5);
+            //_cube.MultiplyScale(0.5f, 0.1f, 0.1f, new Vector3(0, 0, 0));
+            Game.AddFrameObject(_cube);
 
             _animation = Animation.Create()
                                   .Begin(100, info => DebugManager.Append("a" + info.FrameNum.ToString()))

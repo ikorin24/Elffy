@@ -11,6 +11,8 @@ namespace Elffy.Core
     {
         protected Matrix4 _modelView = Matrix4.Identity;
 
+        public ObjectLayer Layer { get; set; }
+
         public Vector3 Position
         {
             get { return _modelView.Row3.Xyz; }

@@ -199,17 +199,26 @@ namespace Elffy
 
             GL.MatrixMode(MatrixMode.Projection);
             var projection = Camera.Current.Projection;
-            //GL.Ortho(-1, 1, -1, 1, 0, 100);
-            //GL.Frustum(0, 1, 0, 1, 0, 100);         // TODO:
-            //projection = Matrix4.CreatePerspectiveFieldOfView(190f / 180 * (float)Math.PI, ClientSize.Width / ClientSize.Height, 0.1f, 64.0f);
             GL.LoadMatrix(ref projection);
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            foreach(var frameObject in Instance._frameObjectList.OfType<Renderable>().Where(x => x.IsVisible)) {
+            var renderables = Instance._frameObjectList.OfType<Renderable>();
+
+            // Render World Object
+            foreach(var frameObject in renderables.Where(x => x.Layer == ObjectLayer.World && x.IsVisible)) {
                 frameObject.Render();
             }
-            Instance._window.SwapBuffers();
 
+            GL.MatrixMode(MatrixMode.Projection);
+            var uiProjection = UISetting.Projection;
+            GL.LoadMatrix(ref uiProjection);
+
+            // Render UI Object
+            foreach(var frameObject in renderables.Where(x => x.Layer == ObjectLayer.UI && x.IsVisible)) {
+                frameObject.Render();
+            }
+
+            Instance._window.SwapBuffers();
             DebugManager.Next();
         }
         #endregion

@@ -117,13 +117,8 @@ namespace Elffy.UI
         #endregion
         #endregion
 
-        public override void Render()
+        protected override void TextureVertex()
         {
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.LoadMatrix(ref _modelView);
-            var cameraMatrix = Camera.Current.Matrix;
-            GL.MultMatrix(ref cameraMatrix);
-
             GL.BindTexture(TextureTarget.Texture2D, Texture);
             GL.Begin(PrimitiveType.Quads);
             GL.TexCoord2(0.0f, 1.0f); GL.Vertex2(-1f, -1f);
