@@ -115,7 +115,7 @@ namespace Elffy
                     window.RenderFrame += OnRendering;
                     window.UpdateFrame += OnFrameUpdating;
                     window.Closed += OnClosed;
-                    window.Run(200);
+                    window.Run();
                     return GameExitResult.SuccessfulCompletion;
                 }
             }
@@ -141,13 +141,39 @@ namespace Elffy
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             GL.Viewport(Instance._window.ClientRectangle);
-            Instance._window.VSync = VSyncMode.On;
+            Instance._window.VSync = VSyncMode.Adaptive;
+            Instance._window.TargetRenderFrequency = DisplayDevice.Default.RefreshRate;
             Initialize?.Invoke(Instance, EventArgs.Empty);
         }
         #endregion
 
         #region OnFrameUpdating
         private static void OnFrameUpdating(object sender, OpenTK.FrameEventArgs e)
+        {
+            //FPSManager.Aggregate(e.Time);
+            //Input.Input.Update();
+            //foreach(var gameObject in Instance._gameObjectList.Where(x => !x.IsFrozen)) {
+            //    if(gameObject.IsStarted == false) {
+            //        gameObject.Start();
+            //        gameObject.IsStarted = true;
+            //    }
+            //    gameObject.Update();
+            //}
+            //if(Instance._removedGameObjectBuffer.Count > 0) {
+            //    foreach(var item in Instance._removedGameObjectBuffer) {
+            //        Instance._gameObjectList.Remove(item);
+            //    }
+            //}
+            //if(Instance._addedGameObjectBuffer.Count > 0) {
+            //    Instance._gameObjectList.AddRange(Instance._addedGameObjectBuffer);
+            //    Instance._addedGameObjectBuffer.Clear();
+            //}
+            //DebugManager.Dump();
+        }
+        #endregion
+
+        #region OnRendering
+        private static void OnRendering(object sender, OpenTK.FrameEventArgs e)
         {
             FPSManager.Aggregate(e.Time);
             Input.Input.Update();
@@ -167,13 +193,7 @@ namespace Elffy
                 Instance._gameObjectList.AddRange(Instance._addedGameObjectBuffer);
                 Instance._addedGameObjectBuffer.Clear();
             }
-            DebugManager.Dump();
-        }
-        #endregion
 
-        #region OnRendering
-        private static void OnRendering(object sender, OpenTK.FrameEventArgs e)
-        {
             GL.MatrixMode(MatrixMode.Projection);
             var projection = Camera.Current.Projection;
             //GL.Ortho(-1, 1, -1, 1, 0, 100);
@@ -186,6 +206,8 @@ namespace Elffy
                 gameObject.Render();
             }
             Instance._window.SwapBuffers();
+
+            DebugManager.Dump();
         }
         #endregion
 
@@ -201,10 +223,7 @@ namespace Elffy
         }
         #endregion
 
-        private static Exception NewGameNotRunningException()
-        {
-            return new InvalidOperationException("Game is Not Running");
-        }
+        private static Exception NewGameNotRunningException() => new InvalidOperationException("Game is Not Running");
     }
 
     public enum GameExitResult

@@ -54,6 +54,7 @@ namespace ElffyGame
                                   .Begin(100, info => DebugManager.Append("b" + info.FrameNum.ToString()))
                                   .While(() => !Input.GetState(Controller.A), info => DebugManager.Append("hoge" + info.FrameNum.ToString()))
                                   .Do(info => DebugManager.Append("Complete"));
+            _animation.Cancel();
         }
 
         public override void Update()
@@ -63,7 +64,14 @@ namespace ElffyGame
                 _animation.Cancel();
             }
 
-            _canvas.Clear(Color.Violet);
+            if(Game.RenderDelta >= 1d / 45) {
+                _canvas.Clear(Color.Red);
+            }
+            else{
+                _canvas.Clear(Color.Blue);
+            }
+
+
             _canvas.DrawString($"{FPSManager.GetFPS():N2}", _font, Brushes.White, new Point());
 
 
