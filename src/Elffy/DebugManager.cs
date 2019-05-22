@@ -8,7 +8,7 @@ namespace Elffy
     public static class DebugManager
     {
         private const string SPACE = "  ";
-        private static StringBuilder _sb = new StringBuilder();
+        private static bool _isAppended;
 
         #region Append
         /// <summary>デバッグ出力バッファに文字を追加します</summary>
@@ -17,8 +17,8 @@ namespace Elffy
         [Conditional("DEBUG")]
         public static void Append(string value, string space = SPACE)
         {
-            _sb.Append(value);
-            _sb.Append(SPACE);
+            Debug.Write(value + SPACE);
+            _isAppended = true;
         }
 
         /// <summary>デバッグ出力バッファに文字を追加します</summary>
@@ -27,8 +27,8 @@ namespace Elffy
         [Conditional("DEBUG")]
         public static void Append(int value, string space = SPACE)
         {
-            _sb.Append(value);
-            _sb.Append(SPACE);
+            Debug.Write(value + SPACE);
+            _isAppended = true;
         }
 
         /// <summary>デバッグ出力バッファに文字を追加します</summary>
@@ -37,8 +37,8 @@ namespace Elffy
         [Conditional("DEBUG")]
         public static void Append(double value, string space = SPACE)
         {
-            _sb.Append(value);
-            _sb.Append(SPACE);
+            Debug.Write(value + SPACE);
+            _isAppended = true;
         }
 
         /// <summary>デバッグ出力バッファに文字を追加します</summary>
@@ -47,8 +47,8 @@ namespace Elffy
         [Conditional("DEBUG")]
         public static void Append(float value, string space = SPACE)
         {
-            _sb.Append(value);
-            _sb.Append(SPACE);
+            Debug.Write(value + SPACE);
+            _isAppended = true;
         }
 
         /// <summary>デバッグ出力バッファに文字を追加します</summary>
@@ -57,8 +57,8 @@ namespace Elffy
         [Conditional("DEBUG")]
         public static void Append(object value, string space = SPACE)
         {
-            _sb.Append(value);
-            _sb.Append(SPACE);
+            Debug.Write(value + SPACE);
+            _isAppended = true;
         }
         #endregion
 
@@ -124,13 +124,13 @@ namespace Elffy
         }
         #endregion
 
-        /// <summary>バッファをデバッグ出力に出力します</summary>
         [Conditional("DEBUG")]
-        internal static void Dump()
+        internal static void Next()
         {
-            if(_sb.Length == 0) { return; }
-            Debug.WriteLine(_sb.ToString());
-            _sb.Clear();
+            if(_isAppended) {
+                Debug.WriteLine("");
+                _isAppended = false;
+            }
         }
     }
 }
