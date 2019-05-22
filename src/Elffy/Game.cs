@@ -53,6 +53,9 @@ namespace Elffy
             return RunPrivate(width, heigh, title, windowStyle, icon);
         }
         #endregion Run
+        
+        /// <summary>Exit this game.</summary>
+        public static void Exit() => Instance?._window?.Close();
 
         #region AddGameObject
         public static bool AddGameObject(GameObject gameObject)
@@ -207,7 +210,7 @@ namespace Elffy
             }
             Instance._window.SwapBuffers();
 
-            DebugManager.Dump();
+            DebugManager.Next();
         }
         #endregion
 
