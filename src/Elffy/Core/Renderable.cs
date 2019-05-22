@@ -8,7 +8,7 @@ using OpenTK.Graphics.OpenGL;
 
 namespace Elffy.Core
 {
-    public abstract class Renderable : GameObject
+    public abstract class Renderable : Positionable
     {
         /// <summary>描画処理を行うかどうか</summary>
         public bool IsVisible { get; set; } = true;

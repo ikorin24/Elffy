@@ -13,7 +13,7 @@ using Elffy.Animation;
 
 namespace ElffyGame
 {
-    public class GameProgress : GameObject
+    public class GameProgress : FrameObject
     {
         private Font _font = new Font(FontFamily.GenericSerif, 20);
         private Canvas _canvas;
@@ -41,7 +41,7 @@ namespace ElffyGame
             Input.AddTrigger("RTrigger", Key.P, Trigger.RightTrigger);
 
             var progress = new GameProgress();
-            Game.AddGameObject(progress);
+            Game.AddFrameObject(progress);
         }
 
         Animation _animation;
@@ -53,7 +53,7 @@ namespace ElffyGame
             _canvas.Tag = "sampleText";
             _canvas.Position = new Vector3(0, 0, 0);
             //_canvas.MultiplyScale(20);
-            Game.AddGameObject(_canvas);
+            Game.AddFrameObject(_canvas);
 
             _animation = Animation.Create()
                                   .Begin(100, info => DebugManager.Append("a" + info.FrameNum.ToString()))

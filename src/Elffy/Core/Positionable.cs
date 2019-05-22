@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Elffy.Core
 {
-    public abstract class Positionable
+    public abstract class Positionable : FrameObject
     {
         protected Matrix4 _modelView = Matrix4.Identity;
 

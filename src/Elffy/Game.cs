@@ -16,9 +16,9 @@ namespace Elffy
     public class Game
     {
         private GameWindow _window;
-        private List<GameObject> _gameObjectList = new List<GameObject>();
-        private List<GameObject> _addedGameObjectBuffer = new List<GameObject>();
-        private List<GameObject> _removedGameObjectBuffer = new List<GameObject>();
+        private List<FrameObject> _frameObjectList = new List<FrameObject>();
+        private List<FrameObject> _addedFrameObjectBuffer = new List<FrameObject>();
+        private List<FrameObject> _removedFrameObjectBuffer = new List<FrameObject>();
 
         public static Game Instance { get; private set; }
         public static Size ClientSize => Instance?._window?.ClientSize ?? throw NewGameNotRunningException();
@@ -57,37 +57,37 @@ namespace Elffy
         /// <summary>Exit this game.</summary>
         public static void Exit() => Instance?._window?.Close();
 
-        #region AddGameObject
-        public static bool AddGameObject(GameObject gameObject)
+        #region AddFrameObject
+        public static bool AddFrameObject(FrameObject frameObject)
         {
             if(Instance == null) { return false; }
-            if(gameObject == null) { return false; }
-            Instance._addedGameObjectBuffer.Add(gameObject);
+            if(frameObject == null) { return false; }
+            Instance._addedFrameObjectBuffer.Add(frameObject);
             return true;
         }
         #endregion
 
-        #region RemoveGameObject
-        public static bool RemoveGameObject(GameObject gameObject)
+        #region RemoveFrameObject
+        public static bool RemoveFrameObject(FrameObject frameObject)
         {
             if(Instance == null) { return false; }
-            if(gameObject == null) { return false; }
-            Instance._removedGameObjectBuffer.Add(gameObject);
+            if(frameObject == null) { return false; }
+            Instance._removedFrameObjectBuffer.Add(frameObject);
             return true;
         }
         #endregion
 
         #region FindObject
-        public static GameObject FindObject(string tag)
+        public static FrameObject FindObject(string tag)
         {
-            return Instance?._gameObjectList?.Find(x => x.Tag == tag);
+            return Instance?._frameObjectList?.Find(x => x.Tag == tag);
         }
         #endregion
 
         #region FindAllObject
-        public static List<GameObject> FindAllObject(string tag)
+        public static List<FrameObject> FindAllObject(string tag)
         {
-            return Instance?._gameObjectList?.FindAll(x => x.Tag == tag) ?? new List<GameObject>();
+            return Instance?._frameObjectList?.FindAll(x => x.Tag == tag) ?? new List<FrameObject>();
         }
         #endregion
 
@@ -155,21 +155,21 @@ namespace Elffy
         {
             //FPSManager.Aggregate(e.Time);
             //Input.Input.Update();
-            //foreach(var gameObject in Instance._gameObjectList.Where(x => !x.IsFrozen)) {
-            //    if(gameObject.IsStarted == false) {
-            //        gameObject.Start();
-            //        gameObject.IsStarted = true;
+            //foreach(var frameObject in Instance._frameObjectList.Where(x => !x.IsFrozen)) {
+            //    if(frameObject.IsStarted == false) {
+            //        frameObject.Start();
+            //        frameObject.IsStarted = true;
             //    }
-            //    gameObject.Update();
+            //    frameObject.Update();
             //}
-            //if(Instance._removedGameObjectBuffer.Count > 0) {
-            //    foreach(var item in Instance._removedGameObjectBuffer) {
-            //        Instance._gameObjectList.Remove(item);
+            //if(Instance._removedFrameObjectBuffer.Count > 0) {
+            //    foreach(var item in Instance._removedFrameObjectBuffer) {
+            //        Instance._frameObjectList.Remove(item);
             //    }
             //}
-            //if(Instance._addedGameObjectBuffer.Count > 0) {
-            //    Instance._gameObjectList.AddRange(Instance._addedGameObjectBuffer);
-            //    Instance._addedGameObjectBuffer.Clear();
+            //if(Instance._addedFrameObjectBuffer.Count > 0) {
+            //    Instance._frameObjectList.AddRange(Instance._addedFrameObjectBuffer);
+            //    Instance._addedFrameObjectBuffer.Clear();
             //}
             //DebugManager.Dump();
         }
@@ -180,21 +180,21 @@ namespace Elffy
         {
             FPSManager.Aggregate(e.Time);
             Input.Input.Update();
-            foreach(var gameObject in Instance._gameObjectList.Where(x => !x.IsFrozen)) {
-                if(gameObject.IsStarted == false) {
-                    gameObject.Start();
-                    gameObject.IsStarted = true;
+            foreach(var frameObject in Instance._frameObjectList.Where(x => !x.IsFrozen)) {
+                if(frameObject.IsStarted == false) {
+                    frameObject.Start();
+                    frameObject.IsStarted = true;
                 }
-                gameObject.Update();
+                frameObject.Update();
             }
-            if(Instance._removedGameObjectBuffer.Count > 0) {
-                foreach(var item in Instance._removedGameObjectBuffer) {
-                    Instance._gameObjectList.Remove(item);
+            if(Instance._removedFrameObjectBuffer.Count > 0) {
+                foreach(var item in Instance._removedFrameObjectBuffer) {
+                    Instance._frameObjectList.Remove(item);
                 }
             }
-            if(Instance._addedGameObjectBuffer.Count > 0) {
-                Instance._gameObjectList.AddRange(Instance._addedGameObjectBuffer);
-                Instance._addedGameObjectBuffer.Clear();
+            if(Instance._addedFrameObjectBuffer.Count > 0) {
+                Instance._frameObjectList.AddRange(Instance._addedFrameObjectBuffer);
+                Instance._addedFrameObjectBuffer.Clear();
             }
 
             GL.MatrixMode(MatrixMode.Projection);
@@ -205,8 +205,8 @@ namespace Elffy
             GL.LoadMatrix(ref projection);
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            foreach(var gameObject in Instance._gameObjectList.OfType<Renderable>().Where(x => x.IsVisible)) {
-                gameObject.Render();
+            foreach(var frameObject in Instance._frameObjectList.OfType<Renderable>().Where(x => x.IsVisible)) {
+                frameObject.Render();
             }
             Instance._window.SwapBuffers();
 
@@ -217,12 +217,12 @@ namespace Elffy
         #region OnClosed
         private static void OnClosed(object sender, EventArgs e)
         {
-            foreach(var item in Instance._gameObjectList) {
+            foreach(var item in Instance._frameObjectList) {
                 item.Destroy();
             }
-            Instance._gameObjectList.Clear();
-            Instance._addedGameObjectBuffer.Clear();
-            Instance._removedGameObjectBuffer.Clear();
+            Instance._frameObjectList.Clear();
+            Instance._addedFrameObjectBuffer.Clear();
+            Instance._removedFrameObjectBuffer.Clear();
         }
         #endregion
 

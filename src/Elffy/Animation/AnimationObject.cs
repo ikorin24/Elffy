@@ -8,7 +8,7 @@ namespace Elffy.Animation
 {
     public delegate void AnimationBehavior(AnimationInfo frame);
 
-    internal class AnimationObject : GameObject
+    internal class AnimationObject : FrameObject
     {
         #region private member
         private readonly Queue<BehaviorQueueObject> _animationQueue = new Queue<BehaviorQueueObject>();

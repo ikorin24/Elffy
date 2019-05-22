@@ -7,7 +7,7 @@ using Elffy.Core;
 
 namespace Elffy
 {
-    public abstract class GameObject : Positionable
+    public abstract class FrameObject
     {
         internal bool IsStarted { get; set; }
 
@@ -24,7 +24,7 @@ namespace Elffy
 
         public virtual void Destroy()
         {
-            Game.RemoveGameObject(this);
+            Game.RemoveFrameObject(this);
             IsDestroyed = true;
         }
     }

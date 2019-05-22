@@ -67,7 +67,7 @@
     <Compile Include="WindowStyle.cs" />
     <Compile Include="DebugManager.cs" />
     <Compile Include="FPSManager.cs" />
-    <Compile Include="GameObject.cs" />
+    <Compile Include="FrameObject.cs" />
     <Compile Include="Input\Input.cs" />
     <Compile Include="Input\Key.cs" />
     <Compile Include="Input\PadState.cs" />
