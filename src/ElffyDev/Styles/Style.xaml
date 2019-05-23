@@ -1,6 +1,5 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:local="clr-namespace:ElffyDev.Styles">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
     <Color x:Key="Dark-BackColor">#FF2D2D30</Color>
     <Color x:Key="Dark-ForeColor">#FFFFFFFF</Color>

@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ElffyDev"
-        mc:Ignorable="d"
+        mc:Ignorable="d" Icon="Elffy.ico"
         Style="{StaticResource NoBorderWindowStyle}"
         Title="Elffy" Height="450" Width="800" WindowStartupLocation="CenterScreen"
         MinWidth="300" MinHeight="40">
@@ -20,7 +20,7 @@
                 <Button Content="2" Style="{StaticResource CaptionButtonStyle}"/>
                 <Button Content="r" Style="{StaticResource CaptionButtonStyle}" Click="Button_Click"/>
             </StackPanel>
-            <Image Width="28" Height="28" DockPanel.Dock="Left"/>
+            <Image Width="22" Height="22" Margin="8,0,8,0" DockPanel.Dock="Left" Source="{Binding Icon, RelativeSource={RelativeSource FindAncestor, AncestorType=Window}}"/>
             <Menu VerticalAlignment="Stretch" DockPanel.Dock="Left" Style="{StaticResource MenuStyle}">
                 <MenuItem Header="File(_F)">
                     <MenuItem Header="Open(_O)..." InputGestureText="Ctrl+O"/>
