@@ -55,6 +55,9 @@
   <PropertyGroup>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>Elffy.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="OpenTK">
       <HintPath>..\Elffy\dll\OpenTK.dll</HintPath>
@@ -118,6 +121,7 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Elffy.ico" />
     <Content Include="externalExe\ElffyResourceCompiler.exe" />
   </ItemGroup>
   <ItemGroup />
