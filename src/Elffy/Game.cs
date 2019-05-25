@@ -113,6 +113,7 @@ namespace Elffy
             try {
                 using(var window = new GameWindow(width, heigh, GraphicsMode.Default, title, (GameWindowFlags)windowStyle)) {
                     Instance._window = window;
+                    window.ClientSize = new Size(width, heigh);
                     window.Icon = icon;
                     window.Load += OnLoaded;
                     window.RenderFrame += OnRendering;
@@ -137,14 +138,23 @@ namespace Elffy
         #region OnLoaded
         private static void OnLoaded(object sender, EventArgs e)
         {
-            // OpenGLの初期設定
-            GL.ClearColor(Color4.Black);
+            GL.ClearColor(Color4.Gray);
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Texture2D);
+
+            // αブレンディング設定
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+
+            GL.Enable(EnableCap.Normalize);     // 法線の正規化
+
+            // 裏面削除 反時計回りが表でカリング
+            GL.Enable(EnableCap.CullFace);
+            GL.CullFace(CullFaceMode.Back);
+            GL.FrontFace(FrontFaceDirection.Ccw);
+
             GL.Viewport(Instance._window.ClientRectangle);
-            Instance._window.VSync = VSyncMode.Adaptive;
+            Instance._window.VSync = VSyncMode.Off;
             Instance._window.TargetRenderFrequency = DisplayDevice.Default.RefreshRate;
             Initialize?.Invoke(Instance, EventArgs.Empty);
         }
@@ -187,27 +197,22 @@ namespace Elffy
                 }
                 frameObject.Update();
             }
-            if(Instance._removedFrameObjectBuffer.Count > 0) {
-                foreach(var item in Instance._removedFrameObjectBuffer) {
-                    Instance._frameObjectList.Remove(item);
-                }
-            }
-            if(Instance._addedFrameObjectBuffer.Count > 0) {
-                Instance._frameObjectList.AddRange(Instance._addedFrameObjectBuffer);
-                Instance._addedFrameObjectBuffer.Clear();
-            }
 
             GL.MatrixMode(MatrixMode.Projection);
             var projection = Camera.Current.Projection;
             GL.LoadMatrix(ref projection);
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+
+            Light.LightUp();        // 光源点灯
             var renderables = Instance._frameObjectList.OfType<Renderable>();
 
             // Render World Object
             foreach(var frameObject in renderables.Where(x => x.Layer == ObjectLayer.World && x.IsVisible)) {
                 frameObject.Render();
             }
+
+            Light.TurnOff();        // 光源消灯
 
             GL.MatrixMode(MatrixMode.Projection);
             var uiProjection = UISetting.Projection;
@@ -219,6 +224,17 @@ namespace Elffy
             }
 
             Instance._window.SwapBuffers();
+
+            if(Instance._removedFrameObjectBuffer.Count > 0) {
+                foreach(var item in Instance._removedFrameObjectBuffer) {
+                    Instance._frameObjectList.Remove(item);
+                }
+            }
+            if(Instance._addedFrameObjectBuffer.Count > 0) {
+                Instance._frameObjectList.AddRange(Instance._addedFrameObjectBuffer);
+                Instance._addedFrameObjectBuffer.Clear();
+            }
+
             DebugManager.Next();
         }
         #endregion

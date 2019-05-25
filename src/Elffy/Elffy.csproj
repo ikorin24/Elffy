@@ -64,9 +64,11 @@
     <Compile Include="Core\Positionable.cs" />
     <Compile Include="Core\Random.cs" />
     <Compile Include="Core\Renderable.cs" />
+    <Compile Include="Light.cs" />
     <Compile Include="Effective\UnmanagedArray.cs" />
     <Compile Include="Exceptions\ResourceNotFoundException.cs" />
     <Compile Include="Input\Trigger.cs" />
+    <Compile Include="Material.cs" />
     <Compile Include="ObjectLayer.cs" />
     <Compile Include="Shape\Cube.cs" />
     <Compile Include="UI\UISetting.cs" />

@@ -13,11 +13,18 @@ namespace Elffy.Core
         /// <summary>描画処理を行うかどうか</summary>
         public bool IsVisible { get; set; } = true;
 
-        //public abstract void Render();
+        public Material Material { get; set; }
+
         internal void Render()
         {
+            // 座標を適用
             GL.MatrixMode(MatrixMode.Modelview);
             GL.LoadMatrix(ref _modelView);
+
+            // マテリアルの適用
+            Material?.Apply();
+
+            // 頂点を描画
             TextureVertex();
         }
 

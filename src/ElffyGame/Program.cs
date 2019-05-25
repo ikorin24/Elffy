@@ -17,7 +17,7 @@ namespace ElffyGame
         {
             try {
                 Game.Initialize += GameProgress.Initialize;
-                var result = Game.Run(600, 400, "Game", WindowStyle.FixedWindow, "icon.ico");
+                var result = Game.Run(800, 450, "Game", WindowStyle.FixedWindow, "icon.ico");
                 if(result == GameExitResult.FailedInInitializingResource) {
                     MessageBox.Show("Fatal Error (CODE : 1)", "Error", MessageBoxType.Ok, MessageBoxIcon.Error);
                     return;
