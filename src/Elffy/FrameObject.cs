@@ -22,10 +22,16 @@ namespace Elffy
 
         public virtual void Update() { }
 
+        public void Activate()
+        {
+            Game.AddFrameObject(this);
+        }
+
         public virtual void Destroy()
         {
             Game.RemoveFrameObject(this);
             IsDestroyed = true;
+            (this as IDisposable)?.Dispose();
         }
     }
 }

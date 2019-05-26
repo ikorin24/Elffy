@@ -117,16 +117,16 @@ namespace Elffy.UI
         #endregion
         #endregion
 
-        protected override void TextureVertex()
-        {
-            GL.BindTexture(TextureTarget.Texture2D, Texture);
-            GL.Begin(PrimitiveType.Quads);
-            GL.TexCoord2(0.0f, 1.0f); GL.Vertex2(-1f, -1f);
-            GL.TexCoord2(1.0f, 1.0f); GL.Vertex2(1f, -1f);
-            GL.TexCoord2(1.0f, 0.0f); GL.Vertex2(1f, 1f);
-            GL.TexCoord2(0.0f, 0.0f); GL.Vertex2(-1f, 1f);
-            GL.End();
-        }
+        //protected override void TextureVertex()
+        //{
+        //    GL.BindTexture(TextureTarget.Texture2D, Texture);
+        //    GL.Begin(PrimitiveType.Quads);
+        //    GL.TexCoord2(0.0f, 1.0f); GL.Vertex2(-1f, -1f);
+        //    GL.TexCoord2(1.0f, 1.0f); GL.Vertex2(1f, -1f);
+        //    GL.TexCoord2(1.0f, 0.0f); GL.Vertex2(1f, 1f);
+        //    GL.TexCoord2(0.0f, 0.0f); GL.Vertex2(-1f, 1f);
+        //    GL.End();
+        //}
 
         #region privage Method
         #region UpdateTexture

@@ -58,8 +58,6 @@ namespace Elffy
 
         internal Matrix4 Projection { get; private set; } = Matrix4.Identity;
 
-        public Matrix4 P => Projection;     // TODO: 消す
-
         #region Fovy
         /// <summary>視野角</summary>
         public float Fovy

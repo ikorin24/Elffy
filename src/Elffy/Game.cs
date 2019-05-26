@@ -58,7 +58,7 @@ namespace Elffy
         public static void Exit() => Instance?._window?.Close();
 
         #region AddFrameObject
-        public static bool AddFrameObject(FrameObject frameObject)
+        internal static bool AddFrameObject(FrameObject frameObject)
         {
             if(Instance == null) { return false; }
             if(frameObject == null) { return false; }
@@ -68,7 +68,7 @@ namespace Elffy
         #endregion
 
         #region RemoveFrameObject
-        public static bool RemoveFrameObject(FrameObject frameObject)
+        internal static bool RemoveFrameObject(FrameObject frameObject)
         {
             if(Instance == null) { return false; }
             if(frameObject == null) { return false; }
@@ -145,8 +145,6 @@ namespace Elffy
             // αブレンディング設定
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-
-            GL.Enable(EnableCap.Normalize);     // 法線の正規化
 
             // 裏面削除 反時計回りが表でカリング
             GL.Enable(EnableCap.CullFace);
