@@ -20,28 +20,24 @@ namespace Elffy.UI
         /// <summary>テクスチャ更新時に使用するバッファ(メンバ変数として使いまわすことでGCを削減)</summary>
         private byte[] _buf;
 
+        private static readonly Vertex[] _vertexArray = new Vertex[4]
+        {
+            new Vertex(new Vector3(-1, 1, 0),   new Vector3(-1, 1, 0),   Color4.White, new Vector2(-1, 1)),
+            new Vertex(new Vector3(-1, -1, 0),  new Vector3(-1, -1, 0),  Color4.White, new Vector2(-1, -1)),
+            new Vertex(new Vector3(1, -1, 0),   new Vector3(1, 1, 0),    Color4.White, new Vector2(1, -1)),
+            new Vertex(new Vector3(1, 1, 0),    new Vector3(1, -1, 0),   Color4.White, new Vector2(1, 1)),
+        };
+        private static readonly int[] _indexArray = new int[6] { 0, 1, 2, 2, 3, 0 };
+
         #region private Member
         private readonly Bitmap _bmp;
         private readonly Graphics _g;
-        private readonly int _texture;
         private Rectangle _dirtyRegion;
         private bool _isDisposed;
         #endregion
 
         public int PixelWidth => _bmp.Width;
         public int PixelHeight => _bmp.Height;
-
-        #region Texture
-        /// <summary>テクスチャ番号</summary>
-        internal int Texture
-        {
-            get
-            {
-                UpdateTexture();
-                return _texture;
-            }
-        }
-        #endregion
 
         #region constructor
         /// <summary>コンストラクタ</summary>
@@ -55,29 +51,25 @@ namespace Elffy.UI
         {
             if(pixelWidth <= 0) { throw new ArgumentException(nameof(pixelWidth)); }
             if(pixelHeight <= 0) { throw new ArgumentException(nameof(pixelHeight)); }
-            if(GraphicsContext.CurrentContext == null) { throw new InvalidOperationException("No GraphicsContext is current on the calling thread."); }
 
             _bmp = new Bitmap(pixelWidth, pixelHeight, DPixelFormat.Format32bppArgb);
             _g = Graphics.FromImage(_bmp);
             _g.TextRenderingHint = TextRenderingHint.AntiAlias;
-            _texture = GL.GenTexture();
 
-            GL.BindTexture(TextureTarget.Texture2D, _texture);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, pixelWidth, pixelHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
+            Load(_vertexArray, _indexArray);
+
+            Texture = new Texture(pixelWidth, pixelHeight) { PixelFormat = TexturePixelFormat.Bgra };
+            OnRendering += (sender, e) => {
+                WriteToBuffer();                // 変更部分をバッファに転写
+                if(!_dirtyRegion.IsEmpty && _buf != null) {
+                    Texture.UpdateTexture(_buf, _dirtyRegion);
+                    _dirtyRegion = Rectangle.Empty;
+                }
+            };
         }
         #endregion
 
         #region public Method
-        #region Destroy
-        public override void Destroy()
-        {
-            base.Destroy();
-            Dispose();
-        }
-        #endregion
-
         #region Clear
         /// <summary>全体を塗りつぶします</summary>
         /// <param name="color">塗りつぶす色</param>
@@ -94,7 +86,7 @@ namespace Elffy.UI
         /// <param name="font">描画するフォント</param>
         /// <param name="brush">ブラシ</param>
         /// <param name="point">描画を開始する位置</param>
-        public void DrawString(string text, Font font, Brush brush, PointF point)
+        public void DrawString(string text, Font font, Brush brush, PointF point)       // TODO: DrawStringが上手く反映されない
         {
             _g.DrawString(text, font, brush, point);
 
@@ -117,22 +109,13 @@ namespace Elffy.UI
         #endregion
         #endregion
 
-        //protected override void TextureVertex()
-        //{
-        //    GL.BindTexture(TextureTarget.Texture2D, Texture);
-        //    GL.Begin(PrimitiveType.Quads);
-        //    GL.TexCoord2(0.0f, 1.0f); GL.Vertex2(-1f, -1f);
-        //    GL.TexCoord2(1.0f, 1.0f); GL.Vertex2(1f, -1f);
-        //    GL.TexCoord2(1.0f, 0.0f); GL.Vertex2(1f, 1f);
-        //    GL.TexCoord2(0.0f, 0.0f); GL.Vertex2(-1f, 1f);
-        //    GL.End();
-        //}
-
         #region privage Method
-        #region UpdateTexture
-        /// <summary>変更部分のテクスチャを更新</summary>
-        private void UpdateTexture()
+        #region WriteToBuffer
+        /// <summary>ビットマップのピクセルの変更部分をバッファに転写</summary>
+        private void WriteToBuffer()
         {
+            // バッファは必要な部分だけしか参照されず、該当部分はきちんと更新されているので使いまわせる
+
             // 変更部分がある時のみ更新
             if(_dirtyRegion != RectangleF.Empty) {
                 var data = _bmp.LockBits(new Rectangle(0, 0, _bmp.Width, _bmp.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, DPixelFormat.Format32bppArgb);
@@ -146,13 +129,7 @@ namespace Elffy.UI
                     var bufPos = i * _dirtyRegion.Width * BYTE_PER_PIXEL;       // コピー先の配列の位置
                     Marshal.Copy(addr, _buf, bufPos, len);
                 }
-
-                GL.BindTexture(TextureTarget.Texture2D, _texture);
-                GL.TexSubImage2D(TextureTarget.Texture2D, 0,
-                    _dirtyRegion.X, _dirtyRegion.Y, _dirtyRegion.Width, _dirtyRegion.Height,
-                    PixelFormat.Bgra, PixelType.UnsignedByte, _buf);            // バッファは必要な部分だけしか参照されず、該当部分はきちんと更新されているので使いまわせる
                 _bmp.UnlockBits(data);
-                _dirtyRegion = Rectangle.Empty;
             }
         }
         #endregion
@@ -164,10 +141,9 @@ namespace Elffy.UI
                 if(manual) {
                     _bmp.Dispose();
                     _g.Dispose();
+                    _buf = null;
                     base.Dispose(true);
                 }
-                //if(GraphicsContext.CurrentContext != null) { GL.DeleteTexture(_texture); }
-                GL.DeleteTexture(_texture);
                 _isDisposed = true;
             }
         }

@@ -50,20 +50,22 @@ namespace ElffyGame
         public override void Start()
         {
             //Light.CreateDirectLight(new Vector3(-1, 0, -3), Color4.White);
-            Light.CreateDirectLight(new Vector3(-1, 0, -3), Color4.Blue);
-            Light.CreateDirectLight(new Vector3(1, 0, 0), Color4.Yellow);
+            //Light.CreateDirectLight(new Vector3(-1, 0, -3), Color4.Blue);
+            //Light.CreateDirectLight(new Vector3(1, 0, 0), Color4.Yellow);
 
-            //_canvas = new Canvas(300, 300);
-            //_canvas.Position = new Vector3(0, 0, -10);
-            //Game.AddFrameObject(_canvas);
-            //Animation.Create()
-            //         .While(() => true, info => {
-            //             _canvas.Clear(Color.Blue);
-            //             _canvas.DrawString($"{FPSManager.GetFPS():N2}", _font, Brushes.White, new Point());
-            //         });
+            _canvas = new Canvas(300, 300);
+            _canvas.Position = new Vector3(0, 0, -5);
+            _canvas.Clear(Color.Blue);
+            _canvas.Activate();
+            Animation.Create()
+                     .While(() => true, info => {
+                         _canvas.Clear(Rand.Color());
+                         //_canvas.DrawString($"{FPSManager.GetFPS():N2}", _font, Brushes.Yellow, new Point());
+                     });
 
 
             _cube = new Cube();
+            //_cube.Texture = new Texture();
 
             //_cube.Material = new Material(new Color4(0.24725f, 0.1995f, 0.0225f, 1.0f), 
             //                              new Color4(0.75164f, 0.60648f, 0.22648f, 1.0f),
@@ -76,6 +78,7 @@ namespace ElffyGame
                 _cube.Position = new Vector3((info.FrameNum % 60) / 10f - 4, ((info.FrameNum + 15) % 80) / 10f - 4, pos.Z);
             });
             _cube.Activate();
+            //_cube.IsVisible = false;
         }
 
         public override void Update()

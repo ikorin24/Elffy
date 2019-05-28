@@ -27,6 +27,8 @@ namespace Elffy.Core
         private bool _isLoaded;
         #endregion private member
 
+        protected event EventHandler OnRendering;
+
         #region Property
         /// <summary>描画処理を行うかどうか</summary>
         public bool IsVisible { get; set; } = true;
@@ -48,6 +50,8 @@ namespace Elffy.Core
         /// <summary>このインスタンスを描画します</summary>
         internal void Render()
         {
+            OnRendering?.Invoke(this, EventArgs.Empty);
+
             // 座標を適用
             GL.MatrixMode(MatrixMode.Modelview);
             GL.LoadMatrix(ref _modelView);
@@ -112,7 +116,7 @@ namespace Elffy.Core
         {
             if(_isLoaded) {
                 if(Texture != null) {
-                    Texture.SwitchToThis();
+                    Texture.SwitchToThis();                     // GLのテクスチャをこのテクスチャに切り替え
                 }
                 else {
                     GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);
@@ -122,7 +126,7 @@ namespace Elffy.Core
                 GL.DrawElements(BeginMode.Triangles, _indexArray.Length, DrawElementsType.UnsignedInt, 0);
                 GL.BindBuffer(BufferTarget.ElementArrayBuffer, Consts.NULL);
                 GL.BindVertexArray(Consts.NULL);
-                GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);
+                GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);   // テクスチャのバインド解除
             }
         }
         #endregion
