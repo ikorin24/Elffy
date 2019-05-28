@@ -109,7 +109,7 @@ namespace Elffy.UI
         #endregion
 
         #region Dispose
-        public void Dispose()
+        public override void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
@@ -158,15 +158,16 @@ namespace Elffy.UI
         #endregion
 
         #region Dispose
-        private void Dispose(bool manual)
+        protected override void Dispose(bool manual)
         {
             if(!_isDisposed) {
                 if(manual) {
                     _bmp.Dispose();
                     _g.Dispose();
-                    if(GraphicsContext.CurrentContext != null) { GL.DeleteTexture(_texture); }
+                    base.Dispose(true);
                 }
-
+                //if(GraphicsContext.CurrentContext != null) { GL.DeleteTexture(_texture); }
+                GL.DeleteTexture(_texture);
                 _isDisposed = true;
             }
         }

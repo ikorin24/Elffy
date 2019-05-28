@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Elffy
 {
-    public class Material
+    public sealed class Material
     {
         private const float DEFAULT_SHININESS = 30f;
 

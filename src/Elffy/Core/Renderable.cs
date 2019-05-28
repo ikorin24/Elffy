@@ -27,11 +27,14 @@ namespace Elffy.Core
         private bool _isLoaded;
         #endregion private member
 
+        #region Property
         /// <summary>描画処理を行うかどうか</summary>
         public bool IsVisible { get; set; } = true;
-
         /// <summary>マテリアル</summary>
         public Material Material { get; set; }
+        /// <summary>テクスチャ</summary>
+        public Texture Texture { get; set; }
+        #endregion
 
         static Renderable()
         {
@@ -42,6 +45,7 @@ namespace Elffy.Core
         ~Renderable() => Dispose(false);
 
         #region Render
+        /// <summary>このインスタンスを描画します</summary>
         internal void Render()
         {
             // 座標を適用
@@ -52,31 +56,40 @@ namespace Elffy.Core
             Material?.Apply();
 
             // 頂点を描画
-            Draw();
+            DrawVertexAndTexture();
         }
         #endregion
 
         #region Load
+        /// <summary>描画する3Dモデル(頂点データ)をロードします</summary>
+        /// <param name="resource">リソース名</param>
+        protected void Load(string resource)
+        {
+            throw new NotImplementedException();        // TODO: リソースからの3Dモデルのロード
+            //_isLoaded = true;
+        }
+
+        /// <summary>描画する3Dモデル(頂点データ)をロードします</summary>
+        /// <param name="vertexArray">頂点配列</param>
+        /// <param name="indexArray">頂点インデックス配列</param>
         protected void Load(Vertex[] vertexArray, int[] indexArray)
         {
-            if(vertexArray == null) { throw new ArgumentNullException(nameof(vertexArray)); }
-            if(indexArray == null) { throw new ArgumentNullException(nameof(indexArray)); }
-            _vertexArray = vertexArray;
-            _indexArray = indexArray;
+            _vertexArray = vertexArray ?? throw new ArgumentNullException(nameof(vertexArray));
+            _indexArray = indexArray ?? throw new ArgumentNullException(nameof(indexArray));
 
             // 頂点バッファ(VBO)生成
             _vertexBuffer = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBuffer);
             int vertexSize = _vertexArray.Length * Vertex.Size;
             GL.BufferData(BufferTarget.ArrayBuffer, vertexSize, _vertexArray, BufferUsageHint.StaticDraw);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, Consts.NULL);
 
             // 頂点indexバッファ(IBO)生成
             _indexBuffer = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBuffer);
             int indexSize = _indexArray.Length * sizeof(int);
             GL.BufferData(BufferTarget.ElementArrayBuffer, indexSize, _indexArray, BufferUsageHint.StaticDraw);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, Consts.NULL);
 
             // VAO
             _vao = GL.GenVertexArray();
@@ -85,23 +98,31 @@ namespace Elffy.Core
             GL.EnableClientState(ArrayCap.NormalArray);
             GL.EnableClientState(ArrayCap.ColorArray);
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBuffer);
-            Vertex.GLSetPointer();                          // 頂点構造体のレイアウトを指定
-            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
-            GL.BindVertexArray(0);
+            Vertex.GLSetStructLayout();                          // 頂点構造体のレイアウトを指定
+            GL.BindBuffer(BufferTarget.ArrayBuffer, Consts.NULL);
+            GL.BindVertexArray(Consts.NULL);
 
             _isLoaded = true;
         }
         #endregion
 
-        #region Draw
-        private void Draw()
+        #region DrawVertexAndTexture
+        /// <summary>Vertex および Textureを描画します</summary>
+        private void DrawVertexAndTexture()
         {
             if(_isLoaded) {
+                if(Texture != null) {
+                    Texture.SwitchToThis();
+                }
+                else {
+                    GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);
+                }
                 GL.BindVertexArray(_vao);
                 GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBuffer);
                 GL.DrawElements(BeginMode.Triangles, _indexArray.Length, DrawElementsType.UnsignedInt, 0);
-                GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
-                GL.BindVertexArray(0);
+                GL.BindBuffer(BufferTarget.ElementArrayBuffer, Consts.NULL);
+                GL.BindVertexArray(Consts.NULL);
+                GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);
             }
         }
         #endregion
@@ -112,6 +133,7 @@ namespace Elffy.Core
             if(!_disposed) {
                 if(disposing) {
                     // Release managed resource here.
+                    Texture?.Dispose();
                 }
 
                 // Release unmanaged resource
@@ -124,7 +146,7 @@ namespace Elffy.Core
             }
         }
 
-        public void Dispose()
+        public virtual void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);

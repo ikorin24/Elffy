@@ -49,7 +49,9 @@ namespace ElffyGame
 
         public override void Start()
         {
-            Light.CreateDirectLight(new Vector3(-1, 0, -3), Color4.Violet);
+            //Light.CreateDirectLight(new Vector3(-1, 0, -3), Color4.White);
+            Light.CreateDirectLight(new Vector3(-1, 0, -3), Color4.Blue);
+            Light.CreateDirectLight(new Vector3(1, 0, 0), Color4.Yellow);
 
             //_canvas = new Canvas(300, 300);
             //_canvas.Position = new Vector3(0, 0, -10);
@@ -62,10 +64,12 @@ namespace ElffyGame
 
 
             _cube = new Cube();
-            _cube.Material = new Material(new Color4(0.24725f, 0.1995f, 0.0225f, 1.0f), 
-                                          new Color4(0.75164f, 0.60648f, 0.22648f, 1.0f),
-                                          new Color4(0.628281f, 0.555802f, 0.366065f, 1.0f), 
-                                          50f);
+
+            //_cube.Material = new Material(new Color4(0.24725f, 0.1995f, 0.0225f, 1.0f), 
+            //                              new Color4(0.75164f, 0.60648f, 0.22648f, 1.0f),
+            //                              new Color4(0.628281f, 0.555802f, 0.366065f, 1.0f), 
+            //                              50f);
+            //_cube.Material = new Material();
             _cube.Position = new Vector3(2, 2, -9);
             Animation.Create().While(() => true, info => {
                 var pos = _cube.Position;

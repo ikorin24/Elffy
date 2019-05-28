@@ -12,17 +12,16 @@ namespace Elffy.Shape
 {
     public class Cube : Renderable
     {
-        //private int _texture;
         private static readonly Vertex[] _vertexArray = new Vertex[8]
         {
-            new Vertex(new Vector3(-1, 1, 1),   new Vector3(-1, 1, 1),   Color4.White),
-            new Vertex(new Vector3(-1, -1, 1),  new Vector3(-1, -1, 1),  Color4.White),
-            new Vertex(new Vector3(1, -1, 1),   new Vector3(1, 1, 1),    Color4.White),
-            new Vertex(new Vector3(1, 1, 1),    new Vector3(1, -1, 1),   Color4.White),
-            new Vertex(new Vector3(-1, 1, -1),  new Vector3(-1, 1, -1),  Color4.White),
-            new Vertex(new Vector3(-1, -1, -1), new Vector3(-1, -1, -1), Color4.White),
-            new Vertex(new Vector3(1, -1, -1),  new Vector3(1, -1, -1),  Color4.White),
-            new Vertex(new Vector3(1, 1, -1),   new Vector3(1, 1, -1),   Color4.White),
+            new Vertex(new Vector3(-1, 1, 1),   new Vector3(-1, 1, 1),   Color4.White, new Vector2(-1, 1)),
+            new Vertex(new Vector3(-1, -1, 1),  new Vector3(-1, -1, 1),  Color4.White, new Vector2(-1, -1)),
+            new Vertex(new Vector3(1, -1, 1),   new Vector3(1, 1, 1),    Color4.White, new Vector2(1, -1)),
+            new Vertex(new Vector3(1, 1, 1),    new Vector3(1, -1, 1),   Color4.White, new Vector2(1, 1)),
+            new Vertex(new Vector3(-1, 1, -1),  new Vector3(-1, 1, -1),  Color4.White, new Vector2(-1, 1)),
+            new Vertex(new Vector3(-1, -1, -1), new Vector3(-1, -1, -1), Color4.White, new Vector2(-1, -1)),
+            new Vertex(new Vector3(1, -1, -1),  new Vector3(1, -1, -1),  Color4.White, new Vector2(1, -1)),
+            new Vertex(new Vector3(1, 1, -1),   new Vector3(1, 1, -1),   Color4.White, new Vector2(1, 1)),
         };
         private static readonly int[] _indexArray = new int[36]
         {
