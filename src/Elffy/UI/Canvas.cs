@@ -59,13 +59,6 @@ namespace Elffy.UI
             Load(_vertexArray, _indexArray);
 
             Texture = new Texture(pixelWidth, pixelHeight) { PixelFormat = TexturePixelFormat.Bgra };
-            OnRendering += (sender, e) => {
-                WriteToBuffer();                // 変更部分をバッファに転写
-                if(!_dirtyRegion.IsEmpty && _buf != null) {
-                    Texture.UpdateTexture(_buf, _dirtyRegion);
-                    _dirtyRegion = Rectangle.Empty;
-                }
-            };
         }
         #endregion
 
@@ -77,6 +70,7 @@ namespace Elffy.UI
         {
             _g.Clear(color);
             _dirtyRegion = new Rectangle(0, 0, _bmp.Width, _bmp.Height);
+            _bmp.Save("Clear.png");
         }
         #endregion
 
@@ -89,7 +83,7 @@ namespace Elffy.UI
         public void DrawString(string text, Font font, Brush brush, PointF point)       // TODO: DrawStringが上手く反映されない
         {
             _g.DrawString(text, font, brush, point);
-
+            //_bmp.Save("test.png");
             // 描画した範囲を記録
             var size = _g.MeasureString(text, font);
             var updateRegion = new Rectangle((int)point.X, (int)point.Y, (int)size.Width + 2, (int)size.Height + 2);
@@ -110,6 +104,15 @@ namespace Elffy.UI
         #endregion
 
         #region privage Method
+        protected override void OnRendering()
+        {
+            WriteToBuffer();                // 変更部分をバッファに転写
+            if(!_dirtyRegion.IsEmpty && _buf != null) {
+                Texture.UpdateTexture(_buf, _dirtyRegion);
+                _dirtyRegion = Rectangle.Empty;
+            }
+        }
+
         #region WriteToBuffer
         /// <summary>ビットマップのピクセルの変更部分をバッファに転写</summary>
         private void WriteToBuffer()

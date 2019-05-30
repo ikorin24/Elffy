@@ -27,8 +27,6 @@ namespace Elffy.Core
         private bool _isLoaded;
         #endregion private member
 
-        protected event EventHandler OnRendering;
-
         #region Property
         /// <summary>描画処理を行うかどうか</summary>
         public bool IsVisible { get; set; } = true;
@@ -50,7 +48,7 @@ namespace Elffy.Core
         /// <summary>このインスタンスを描画します</summary>
         internal void Render()
         {
-            OnRendering?.Invoke(this, EventArgs.Empty);
+            OnRendering();
 
             // 座標を適用
             GL.MatrixMode(MatrixMode.Modelview);
@@ -63,6 +61,9 @@ namespace Elffy.Core
             DrawVertexAndTexture();
         }
         #endregion
+
+        /// <summary>派生クラスでoverrideされると、このインスタンスの描画前に実行されます。overrideされない場合、何もしません。</summary>
+        protected virtual void OnRendering() { }
 
         #region Load
         /// <summary>描画する3Dモデル(頂点データ)をロードします</summary>

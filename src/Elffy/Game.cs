@@ -22,6 +22,9 @@ namespace Elffy
 
         public static Game Instance { get; private set; }
         public static Size ClientSize => Instance?._window?.ClientSize ?? throw NewGameNotRunningException();
+        
+        /// <summary>現在のフレームがゲーム開始から何フレーム目かを取得します(Rendering Frame)</summary>
+        public static long CurrentFrame { get; internal set; }
         public static double FrameDelta => Instance?._window?.UpdatePeriod ?? throw NewGameNotRunningException();
         public static double RenderDelta => Instance?._window?.RenderPeriod ?? throw NewGameNotRunningException();
 
@@ -155,6 +158,7 @@ namespace Elffy
             Instance._window.VSync = VSyncMode.Off;
             Instance._window.TargetRenderFrequency = DisplayDevice.Default.RefreshRate;
             Initialize?.Invoke(Instance, EventArgs.Empty);
+            UpdateFrameObjectList();        // Initializeの中でのFrameObjectの変更を適用
         }
         #endregion
 
@@ -223,17 +227,10 @@ namespace Elffy
 
             Instance._window.SwapBuffers();
 
-            if(Instance._removedFrameObjectBuffer.Count > 0) {
-                foreach(var item in Instance._removedFrameObjectBuffer) {
-                    Instance._frameObjectList.Remove(item);
-                }
-            }
-            if(Instance._addedFrameObjectBuffer.Count > 0) {
-                Instance._frameObjectList.AddRange(Instance._addedFrameObjectBuffer);
-                Instance._addedFrameObjectBuffer.Clear();
-            }
+            UpdateFrameObjectList();
 
             DebugManager.Next();
+            CurrentFrame++;
         }
         #endregion
 
@@ -248,6 +245,19 @@ namespace Elffy
             Instance._removedFrameObjectBuffer.Clear();
         }
         #endregion
+
+        private static void UpdateFrameObjectList()
+        {
+            if(Instance._removedFrameObjectBuffer.Count > 0) {
+                foreach(var item in Instance._removedFrameObjectBuffer) {
+                    Instance._frameObjectList.Remove(item);
+                }
+            }
+            if(Instance._addedFrameObjectBuffer.Count > 0) {
+                Instance._frameObjectList.AddRange(Instance._addedFrameObjectBuffer);
+                Instance._addedFrameObjectBuffer.Clear();
+            }
+        }
 
         private static Exception NewGameNotRunningException() => new InvalidOperationException("Game is Not Running");
     }
