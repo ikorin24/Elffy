@@ -15,12 +15,8 @@ using OpenTK.Graphics;
 
 namespace ElffyGame
 {
-    public class GameProgress : FrameObject
+    public class GameStartUp
     {
-        private Font _font = new Font(FontFamily.GenericSerif, 20);
-        private Canvas _canvas;
-        private Cube _cube;
-
         public static void Initialize(object sender, EventArgs e)
         {
             var loaded = SaveData.Default.Load();
@@ -43,28 +39,23 @@ namespace ElffyGame
             Input.AddTrigger("LTrigger", Key.O, Trigger.LeftTrigger);
             Input.AddTrigger("RTrigger", Key.P, Trigger.RightTrigger);
 
-            var progress = new GameProgress();
-            progress.Activate();
-        }
+            // ---------------------------------------
 
-        public override void Start()
-        {
             //Light.CreateDirectLight(new Vector3(-1, 0, -3), Color4.White);
-            //Light.CreateDirectLight(new Vector3(-1, 0, -3), Color4.Blue);
-            //Light.CreateDirectLight(new Vector3(1, 0, 0), Color4.Yellow);
 
-            _canvas = new Canvas(300, 300);
-            _canvas.Position = new Vector3(0, 0, -5);
-            _canvas.Clear(Color.Blue);
-            _canvas.Activate();
-            Animation.Create()
-                     .While(() => true, info => {
-                         _canvas.Clear(Rand.Color());
-                         //_canvas.DrawString($"{FPSManager.GetFPS():N2}", _font, Brushes.Yellow, new Point());
-                     });
+            var canvas = new Canvas(300, 300);
+            canvas.Position = new Vector3(0, 0, -5);
+            //canvas.Clear(Color.Blue);
+            canvas.Activate();
+            var a = Game.CurrentFrame;
+            var font = new Font(FontFamily.GenericSerif, 20);
+            Animation.Create().Wait(1).Do(f => {
+                //canvas.DrawString("test", font, Brushes.Red, new Point());
+                //canvas.DrawPoint();
+                DebugManager.Append($"test @ {Game.CurrentFrame}");
+            });
 
-
-            _cube = new Cube();
+            var cube = new Cube();
             //_cube.Texture = new Texture();
 
             //_cube.Material = new Material(new Color4(0.24725f, 0.1995f, 0.0225f, 1.0f), 
@@ -72,17 +63,14 @@ namespace ElffyGame
             //                              new Color4(0.628281f, 0.555802f, 0.366065f, 1.0f), 
             //                              50f);
             //_cube.Material = new Material();
-            _cube.Position = new Vector3(2, 2, -9);
+            cube.Position = new Vector3(2, 2, -9);
             Animation.Create().While(() => true, info => {
-                var pos = _cube.Position;
-                _cube.Position = new Vector3((info.FrameNum % 60) / 10f - 4, ((info.FrameNum + 15) % 80) / 10f - 4, pos.Z);
+                var pos = cube.Position;
+                cube.Position = new Vector3((info.FrameNum % 60) / 10f - 4, ((info.FrameNum + 15) % 80) / 10f - 4, pos.Z);
             });
-            _cube.Activate();
+            cube.Activate();
             //_cube.IsVisible = false;
-        }
 
-        public override void Update()
-        {
             DebugManager.AppendIf(Input.GetStateDown(Controller.A), Controller.A);
             DebugManager.AppendIf(Input.GetStateDown(Controller.B), Controller.B);
             DebugManager.AppendIf(Input.GetStateDown(Controller.Y), Controller.Y);
