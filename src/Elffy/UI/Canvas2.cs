@@ -40,7 +40,7 @@ namespace Elffy.UI
             _bmp = new Bitmap(pixelWidth, pixelHeight);
             _g = Graphics.FromImage(_bmp);
             Load(_vertexArray, _indexArray);
-            Texture = new Texture(pixelWidth, pixelHeight) { PixelFormat = TexturePixelFormat.Bgra };
+            Texture = new Texture(pixelWidth, pixelHeight);
         }
 
         public void DrawString(string text, Font font, Brush brush, PointF point)

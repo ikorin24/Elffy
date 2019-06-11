@@ -22,44 +22,55 @@ namespace Elffy
         private static readonly int EMPTY_TEXTURE_HEIGHT = 1;
         #endregion
 
-        public int Width { get; private set; }
-        public int Height { get; private set; }
-
         /// <summary>テクスチャの拡大・縮小方法</summary>
         public TextureExpansionMode ExpansionMode { get; private set; } = TextureExpansionMode.Bilinear;    // public set できるようにすべき？
 
-        internal TexturePixelFormat PixelFormat { get; set; } = TexturePixelFormat.Rgba;
-        private PixelFormat _pixelFormat => (PixelFormat)PixelFormat;
+        private readonly PixelFormat _pixelFormat = PixelFormat.Bgra;
 
         #region constructor
         /// <summary>真っ白のテクスチャ (size: 1x1) を作成します</summary>
         internal Texture()
         {
             _texture = GL.GenTexture();                     // テクスチャ用バッファを確保
-            Width = EMPTY_TEXTURE_WIDTH;
-            Height = EMPTY_TEXTURE_HEIGHT;
-            SetTexture(TextureExpansionMode.Bilinear, EMPTY_TEXTURE, Width, Height);
+            SetTexture(TextureExpansionMode.Bilinear, EMPTY_TEXTURE, EMPTY_TEXTURE_WIDTH, EMPTY_TEXTURE_HEIGHT);
         }
 
         internal Texture(int width, int height)
         {
             _texture = GL.GenTexture();                     // テクスチャ用バッファを確保
-            Width = width;
-            Height = height;
             var pixels = new byte[width * height * 4];      // TODO: Unmanagedメモリを使って、GCに負荷をかけないように
             for(int i = 0; i < pixels.Length; i++) {
                 pixels[i] = 0xFF;
             }
-            SetTexture(TextureExpansionMode.Bilinear, pixels, Width, Height);
+            SetTexture(TextureExpansionMode.Bilinear, pixels, width, height);
         }
 
         public Texture(string resource, TextureExpansionMode expansionMode)
         {
             var pixels = LoadFromResource(resource, out var width, out var height);
             _texture = GL.GenTexture();                             // テクスチャ用バッファを確保
-            Width = width;
-            Height = height;
-            SetTexture(expansionMode, pixels, Width, Height);
+            SetTexture(expansionMode, pixels, width, height);
+        }
+
+        public Texture(string file)     // TODO: 消す テスト用
+        {
+            byte[] GetPixels(IntPtr ptr, int width, int height)
+            {
+                const int BYTE_PAR_PIXEL = 4;
+                var buf = new byte[width * height * BYTE_PAR_PIXEL];
+                for(int i = 0; i < height; i++) {
+                    var row = height - i - 1;
+                    var head = ptr + width * row * BYTE_PAR_PIXEL;
+                    System.Runtime.InteropServices.Marshal.Copy(head, buf, i * width * BYTE_PAR_PIXEL, width * BYTE_PAR_PIXEL);
+                }
+                return buf;
+            }
+
+            var bmp = new Bitmap(file);
+            var bmpData = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppPArgb);
+            var pixels = GetPixels(bmpData.Scan0, bmp.Width, bmp.Height);
+            bmp.UnlockBits(bmpData);
+            SetTexture(TextureExpansionMode.Bilinear, pixels, bmp.Width, bmp.Height);
         }
         #endregion
 
@@ -77,8 +88,6 @@ namespace Elffy
         {
             GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);
             GL.DeleteTexture(_texture);                             // テクスチャバッファを削除
-            Width = width;
-            Height = height;
             SetTexture(ExpansionMode, pixels, width, height);       // 新たにテクスチャバッファを再取得
         }
 
@@ -159,12 +168,4 @@ namespace Elffy
         NearestNeighbor,
     }
     #endregion enum TextureExpansionMode
-
-    #region enum TexturePixelFormat
-    internal enum TexturePixelFormat
-    {
-        Rgba = PixelFormat.Rgba,
-        Bgra = PixelFormat.Bgra,
-    }
-    #endregion
 }

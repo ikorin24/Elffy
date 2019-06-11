@@ -58,7 +58,7 @@ namespace Elffy.UI
 
             Load(_vertexArray, _indexArray);
 
-            Texture = new Texture(pixelWidth, pixelHeight) { PixelFormat = TexturePixelFormat.Bgra };
+            Texture = new Texture(pixelWidth, pixelHeight);
         }
         #endregion
 

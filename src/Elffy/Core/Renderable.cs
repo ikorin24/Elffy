@@ -102,6 +102,7 @@ namespace Elffy.Core
             GL.EnableClientState(ArrayCap.VertexArray);
             GL.EnableClientState(ArrayCap.NormalArray);
             GL.EnableClientState(ArrayCap.ColorArray);
+            GL.EnableClientState(ArrayCap.TextureCoordArray);
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBuffer);
             Vertex.GLSetStructLayout();                          // 頂点構造体のレイアウトを指定
             GL.BindBuffer(BufferTarget.ArrayBuffer, Consts.NULL);

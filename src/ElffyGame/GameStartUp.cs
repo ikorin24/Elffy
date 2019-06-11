@@ -41,7 +41,7 @@ namespace ElffyGame
 
             // ---------------------------------------
 
-            Light.CreateDirectLight(new Vector3(-1, 0, -3), Color4.White);
+            //Light.CreateDirectLight(new Vector3(-1, 0, -3), Color4.White);
 
             var canvas = new Canvas2(300, 300) { Position = new Vector3(0, 0, -5) };
             canvas.Clear(Color.Blue);
