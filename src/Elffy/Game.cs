@@ -22,6 +22,15 @@ namespace Elffy
 
         public static Game Instance { get; private set; }
         public static Size ClientSize => Instance?._window?.ClientSize ?? throw NewGameNotRunningException();
+
+        public static float AspectRatio
+        {
+            get
+            {
+                var clientSize = ClientSize;
+                return (float)clientSize.Width / clientSize.Height;
+            }
+        }
         
         /// <summary>現在のフレームがゲーム開始から何フレーム目かを取得します(Rendering Frame)</summary>
         public static long CurrentFrame { get; internal set; }
