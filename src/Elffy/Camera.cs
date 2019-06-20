@@ -11,7 +11,7 @@ namespace Elffy
     public class Camera
     {
         private const int MAIN_CAMERA = 0;
-        private const float Z_NEAR = 0.5f;
+        private const float NEAR = 0.1f;
         private static int _numGenerator = MAIN_CAMERA;
         private static readonly Dictionary<int, Camera> _cameras = new Dictionary<int, Camera>();
 
@@ -59,7 +59,7 @@ namespace Elffy
         internal Matrix4 Projection { get; private set; } = Matrix4.Identity;
 
         #region Fovy
-        /// <summary>視野角</summary>
+        /// <summary>Y方向視野角(度)[0 ~ 180]</summary>
         public float Fovy
         {
             get { return _fovy; }
@@ -68,25 +68,25 @@ namespace Elffy
                 _fovy = value;
                 var radian = _fovy / 180f * (float)Math.PI;
                 if(radian <= 0 || radian > Math.PI) { throw new ArgumentException("Value must be 0 ~ 180. (not include 0)"); }
-                SetProjection(radian, _zfar);
+                SetProjection(radian, _far);
             }
         }
-        private float _fovy = 80;
+        private float _fovy = 90;
         #endregion
 
-        #region Zfar
-        public float Zfar
+        #region Far
+        public float Far
         {
-            get { return _zfar; }
+            get { return _far; }
             set
             {
-                if(value <= Z_NEAR) { throw new ArgumentException("Value must be bigger than 0. (or value is too small.)"); }
-                _zfar = value;
+                if(value <= NEAR) { throw new ArgumentException("Value must be bigger than 0. (or value is too small.)"); }
+                _far = value;
                 var radian = _fovy / 180f * (float)Math.PI;
-                SetProjection(radian, _zfar);
+                SetProjection(radian, _far);
             }
         }
-        private float _zfar = 20f;
+        private float _far = 100f;
         #endregion
 
         #region コンストラクタ
@@ -100,7 +100,7 @@ namespace Elffy
         private Camera()
         {
             Num = _numGenerator++;
-            SetProjection(_fovy / 180f * (float)Math.PI, _zfar);
+            SetProjection(_fovy / 180f * (float)Math.PI, _far);
             SetMatrix(_position, _direction, _up);
         }
         #endregion
@@ -158,9 +158,9 @@ namespace Elffy
             Matrix = Matrix4.LookAt(pos, pos + dir, up);
         }
 
-        private void SetProjection(float radian, float zfar)
+        private void SetProjection(float radian, float far)
         {
-            Projection = Matrix4.CreatePerspectiveFieldOfView(radian, Game.ClientSize.Width / Game.ClientSize.Height, Z_NEAR, zfar);
+            Projection = Matrix4.CreatePerspectiveFieldOfView(radian, Game.AspectRatio, NEAR, far);
         }
     }
 }

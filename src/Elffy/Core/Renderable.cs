@@ -50,9 +50,20 @@ namespace Elffy.Core
         {
             OnRendering();
 
-            // 座標を適用
+            // 座標と回転を適用
             GL.MatrixMode(MatrixMode.Modelview);
-            GL.LoadMatrix(ref _modelView);
+            var identity = Matrix4.Identity;
+            GL.LoadMatrix(ref identity);
+
+            var model = ModelMatrix;
+            GL.MultMatrix(ref model);
+            var rot = Matrix4.CreateFromQuaternion(Rotation);
+            GL.MultMatrix(ref rot);
+            //var model = ModelMatrix;
+            //GL.MultMatrix(ref model);
+
+            var view = Camera.Current.Matrix;//.Inverted();
+            GL.MultMatrix(ref view);
 
             // マテリアルの適用
             Material?.Apply();
@@ -102,6 +113,7 @@ namespace Elffy.Core
             GL.EnableClientState(ArrayCap.VertexArray);
             GL.EnableClientState(ArrayCap.NormalArray);
             GL.EnableClientState(ArrayCap.ColorArray);
+            GL.EnableClientState(ArrayCap.TextureCoordArray);
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBuffer);
             Vertex.GLSetStructLayout();                          // 頂点構造体のレイアウトを指定
             GL.BindBuffer(BufferTarget.ArrayBuffer, Consts.NULL);

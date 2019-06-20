@@ -62,7 +62,8 @@ namespace Elffy.Animation
         {
             if(_animObj == null) {
                 _animObj = new AnimationObject();
-                Game.AddFrameObject(_animObj);
+                _animObj.Activate();
+                //Game.AddFrameObject(_animObj);
             }
             return _animObj;
         }

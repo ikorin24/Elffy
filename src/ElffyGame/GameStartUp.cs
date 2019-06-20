@@ -42,58 +42,37 @@ namespace ElffyGame
             // ---------------------------------------
 
             //Light.CreateDirectLight(new Vector3(-1, 0, -3), Color4.White);
-
-            var canvas = new Canvas(300, 300);
-            canvas.Position = new Vector3(0, 0, -5);
-            //canvas.Clear(Color.Blue);
-            canvas.Activate();
+            var canvas = new Canvas2(300, 300) { Position = new Vector3(0, 0, -5) };
+            canvas.Clear(Color.Blue);
+            //canvas.DrawString("test", new Font(FontFamily.GenericSansSerif, 20), Brushes.Green, new PointF());
+            //canvas.Test();
+            //canvas.Activate();
             var a = Game.CurrentFrame;
             var font = new Font(FontFamily.GenericSerif, 20);
-            Animation.Create().Wait(1).Do(f => {
-                //canvas.DrawString("test", font, Brushes.Red, new Point());
-                //canvas.DrawPoint();
-                DebugManager.Append($"test @ {Game.CurrentFrame}");
-            });
+            //Animation.Create().Wait(1).Do(f => {
+            //    DebugManager.Append($"test @ {Game.CurrentFrame}");
+            //});
+
 
             var cube = new Cube();
-            //_cube.Texture = new Texture();
+            //cube.Position = new Vector3(2, 2, -3);
+            cube.Position = new Vector3(0, 0, -5);
 
-            //_cube.Material = new Material(new Color4(0.24725f, 0.1995f, 0.0225f, 1.0f), 
-            //                              new Color4(0.75164f, 0.60648f, 0.22648f, 1.0f),
-            //                              new Color4(0.628281f, 0.555802f, 0.366065f, 1.0f), 
-            //                              50f);
-            //_cube.Material = new Material();
-            cube.Position = new Vector3(2, 2, -9);
-            Animation.Create().While(() => true, info => {
-                var pos = cube.Position;
-                cube.Position = new Vector3((info.FrameNum % 60) / 10f - 4, ((info.FrameNum + 15) % 80) / 10f - 4, pos.Z);
-            });
+            //Animation.Create().While(() => true, info => {
+            //    cube.Rotate(Quaternion.FromAxisAngle(new Vector3(1, 2, 3), 1f / 180 * MathHelper.Pi));
+            //    cube.Rotate(Quaternion.FromAxisAngle(new Vector3(0, 0, 1), 0.8f / 180 * MathHelper.Pi));
+            //});
+            //Animation.Create().While(() => true, info => {
+            //    var pos = cube.Position;
+            //    cube.Position = new Vector3((info.FrameNum % 60) / 10f - 4, ((info.FrameNum + 15) % 80) / 10f - 4, pos.Z);
+            //});
             cube.Activate();
-            //_cube.IsVisible = false;
 
-            DebugManager.AppendIf(Input.GetStateDown(Controller.A), Controller.A);
-            DebugManager.AppendIf(Input.GetStateDown(Controller.B), Controller.B);
-            DebugManager.AppendIf(Input.GetStateDown(Controller.Y), Controller.Y);
-
-            //DebugManager.Append($"Left Trigger : {Input.GetTrigger("LTrigger")}");
-            //DebugManager.Append($"Right Trigger : {Input.GetTrigger("RTrigger")}");
-
-            // https://blog.miz-ar.info/2017/12/opengl-projection-matrix/
-
-            var p = 0.02f;
-            var x = Input.GetAxis(Controller.AXIS_X) * p;
-            var y = Input.GetAxis(Controller.AXIS_Y) * p;
-            var z = -Input.GetAxis(Controller.SUB_AXIS_Y) * p;
-            //DebugManager.Append(Camera.Current.P);
-            //DebugManager.Append(Environment.NewLine);
-            //DebugManager.Append(Camera.Current.Position);
-            //DebugManager.Append(_canvas.Position);
-            //DebugManager.Append(Environment.NewLine);
-            //Camera.Move(x, y, z);
-            Camera.Move(x, y, 0);
-            //_canvas.Translate(0, 0, -z);
-
-            //Input.PadDump();
+            Animation.Create().While(() => true, info => {
+                //if(Input.GetAxis(Controller.AXIS_X))
+                Camera.Current.Position = Camera.Current.Position + new Vector3(Input.GetAxis(Controller.AXIS_X) * 0.1f, 0, 0);
+                DebugManager.Append(Camera.Current.Position);
+            });
         }
     }
 }

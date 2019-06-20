@@ -12,30 +12,59 @@ namespace Elffy.Shape
 {
     public class Cube : Renderable
     {
-        private static readonly Vertex[] _vertexArray = new Vertex[8]
-        {
-            new Vertex(new Vector3(-1, 1, 1),   new Vector3(-1, 1, 1),   Color4.White, new Vector2(-1, 1)),
-            new Vertex(new Vector3(-1, -1, 1),  new Vector3(-1, -1, 1),  Color4.White, new Vector2(-1, -1)),
-            new Vertex(new Vector3(1, -1, 1),   new Vector3(1, 1, 1),    Color4.White, new Vector2(1, -1)),
-            new Vertex(new Vector3(1, 1, 1),    new Vector3(1, -1, 1),   Color4.White, new Vector2(1, 1)),
-            new Vertex(new Vector3(-1, 1, -1),  new Vector3(-1, 1, -1),  Color4.White, new Vector2(-1, 1)),
-            new Vertex(new Vector3(-1, -1, -1), new Vector3(-1, -1, -1), Color4.White, new Vector2(-1, -1)),
-            new Vertex(new Vector3(1, -1, -1),  new Vector3(1, -1, -1),  Color4.White, new Vector2(1, -1)),
-            new Vertex(new Vector3(1, 1, -1),   new Vector3(1, 1, -1),   Color4.White, new Vector2(1, 1)),
+        private const float zero = 0.0f;
+        private const float one = 1 / 3.0f;
+        private const float two = 2 / 3.0f;
+        private const float three = 1.0f;
+
+        // TODO: 法線が正しくセットされていない
+
+        private static readonly Vertex[] _vertexArray = new Vertex[36] {
+            new Vertex(new Vector3(-1, -1, -1), new Vector3(), Color4.White, new Vector2(zero, three)),
+            new Vertex(new Vector3(-1, -1, 1),  new Vector3(), Color4.White, new Vector2(zero, two)),
+            new Vertex(new Vector3(-1, 1, 1),   new Vector3(), Color4.White, new Vector2(one, two)),
+            new Vertex(new Vector3(1, 1, -1),   new Vector3(), Color4.White, new Vector2(three, three)),
+            new Vertex(new Vector3(-1, -1, -1), new Vector3(), Color4.White, new Vector2(two, two)),
+            new Vertex(new Vector3(-1, 1, -1),  new Vector3(), Color4.White, new Vector2(three, two)),
+            new Vertex(new Vector3(1, -1, 1),   new Vector3(), Color4.White, new Vector2(two, two)),
+            new Vertex(new Vector3(-1, -1, -1), new Vector3(), Color4.White, new Vector2(one, one)),
+            new Vertex(new Vector3(1, -1, -1),  new Vector3(), Color4.White, new Vector2(two, one)),
+            new Vertex(new Vector3(1, 1, -1),   new Vector3(), Color4.White, new Vector2(three, three)),
+            new Vertex(new Vector3(1, -1, -1),  new Vector3(), Color4.White, new Vector2(two, three)),
+            new Vertex(new Vector3(-1, -1, -1), new Vector3(), Color4.White, new Vector2(two, two)),
+            new Vertex(new Vector3(-1, -1, -1), new Vector3(), Color4.White, new Vector2(zero, three)),
+            new Vertex(new Vector3(-1, 1, 1),   new Vector3(), Color4.White, new Vector2(one, two)),
+            new Vertex(new Vector3(-1, 1, -1),  new Vector3(), Color4.White, new Vector2(one, three)),
+            new Vertex(new Vector3(1, -1, 1),   new Vector3(), Color4.White, new Vector2(two, two)),
+            new Vertex(new Vector3(-1, -1, 1),  new Vector3(), Color4.White, new Vector2(one, two)),
+            new Vertex(new Vector3(-1, -1, -1), new Vector3(), Color4.White, new Vector2(one, one)),
+            new Vertex(new Vector3(-1, 1, 1),   new Vector3(), Color4.White, new Vector2(three, one)),
+            new Vertex(new Vector3(-1, -1, 1),  new Vector3(), Color4.White, new Vector2(three, two)),
+            new Vertex(new Vector3(1, -1, 1),   new Vector3(), Color4.White, new Vector2(two, two)),
+            new Vertex(new Vector3(1, 1, 1),    new Vector3(), Color4.White, new Vector2(two, three)),
+            new Vertex(new Vector3(1, -1, -1),  new Vector3(), Color4.White, new Vector2(one, two)),
+            new Vertex(new Vector3(1, 1, -1),   new Vector3(), Color4.White, new Vector2(two, two)),
+            new Vertex(new Vector3(1, -1, -1),  new Vector3(), Color4.White, new Vector2(one, two)),
+            new Vertex(new Vector3(1, 1, 1),    new Vector3(), Color4.White, new Vector2(two, three)),
+            new Vertex(new Vector3(1, -1, 1),   new Vector3(), Color4.White, new Vector2(one, three)),
+            new Vertex(new Vector3(1, 1, 1),    new Vector3(), Color4.White, new Vector2(zero, two)),
+            new Vertex(new Vector3(1, 1, -1),   new Vector3(), Color4.White, new Vector2(zero, one)),
+            new Vertex(new Vector3(-1, 1, -1),  new Vector3(), Color4.White, new Vector2(one, one)),
+            new Vertex(new Vector3(1, 1, 1),    new Vector3(), Color4.White, new Vector2(zero, two)),
+            new Vertex(new Vector3(-1, 1, -1),  new Vector3(), Color4.White, new Vector2(one, one)),
+            new Vertex(new Vector3(-1, 1, 1),   new Vector3(), Color4.White, new Vector2(one, two)),
+            new Vertex(new Vector3(1, 1, 1),    new Vector3(), Color4.White, new Vector2(two, one)),
+            new Vertex(new Vector3(-1, 1, 1),   new Vector3(), Color4.White, new Vector2(three, one)),
+            new Vertex(new Vector3(1, -1, 1),   new Vector3(), Color4.White, new Vector2(two, two)),
         };
-        private static readonly int[] _indexArray = new int[36]
-        {
-            0, 1, 2, 2, 3, 0,
-            0, 4, 5, 5, 1, 0,
-            1, 5, 6, 6, 2, 1,
-            2, 6, 7, 7, 3, 2,
-            3, 7, 4, 4, 0, 3,
-            5, 4, 7, 7, 6, 5,
-        };
+        private static readonly int[] _indexArray = Enumerable.Range(0, _vertexArray.Length).ToArray();
 
         public Cube()
         {
             Load(_vertexArray, _indexArray);
+
+            // TODO: 消す
+            Texture = new Texture("uvtemplate.png");
         }
     }
 }
