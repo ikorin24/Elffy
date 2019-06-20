@@ -75,6 +75,7 @@
     <Compile Include="Shape\Cube.cs" />
     <Compile Include="Texture.cs" />
     <Compile Include="UI\Canvas2.cs" />
+    <Compile Include="UI\Plain.cs" />
     <Compile Include="UI\UISetting.cs" />
     <Compile Include="WindowStyle.cs" />
     <Compile Include="DebugManager.cs" />

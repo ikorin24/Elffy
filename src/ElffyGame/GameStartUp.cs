@@ -42,21 +42,19 @@ namespace ElffyGame
             // ---------------------------------------
 
             //Light.CreateDirectLight(new Vector3(-1, 0, -3), Color4.White);
-            var canvas = new Canvas2(300, 300) { Position = new Vector3(0, 0, -5) };
+            var canvas = new Canvas2(300, 300) { Position = new Vector3(0, 0, 0) };
             canvas.Clear(Color.Blue);
-            //canvas.DrawString("test", new Font(FontFamily.GenericSansSerif, 20), Brushes.Green, new PointF());
+            canvas.DrawString("test", new Font(FontFamily.GenericSansSerif, 20), Brushes.Green, new PointF());
             //canvas.Test();
-            //canvas.Activate();
-            var a = Game.CurrentFrame;
-            var font = new Font(FontFamily.GenericSerif, 20);
+            canvas.Activate();
             //Animation.Create().Wait(1).Do(f => {
             //    DebugManager.Append($"test @ {Game.CurrentFrame}");
             //});
 
 
-            var cube = new Cube();
+            //var cube = new Cube();
             //cube.Position = new Vector3(2, 2, -3);
-            cube.Position = new Vector3(0, 0, -5);
+            //cube.Position = new Vector3(0, 0, -5);
 
             //Animation.Create().While(() => true, info => {
             //    cube.Rotate(Quaternion.FromAxisAngle(new Vector3(1, 2, 3), 1f / 180 * MathHelper.Pi));
@@ -66,7 +64,10 @@ namespace ElffyGame
             //    var pos = cube.Position;
             //    cube.Position = new Vector3((info.FrameNum % 60) / 10f - 4, ((info.FrameNum + 15) % 80) / 10f - 4, pos.Z);
             //});
-            cube.Activate();
+            //cube.Activate();
+            //Animation.Create().Wait(100).Do(_ => cube.Destroy());
+            //Animation.Create().Do(_ => cube.Destroy());
+            //Animation.Create().Wait(100).Do(_ => GC.Collect());
 
             Animation.Create().While(() => true, info => {
                 //if(Input.GetAxis(Controller.AXIS_X))

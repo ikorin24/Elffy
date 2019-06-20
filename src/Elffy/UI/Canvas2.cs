@@ -14,18 +14,10 @@ using System.Runtime.InteropServices;
 
 namespace Elffy.UI
 {
-    public class Canvas2 : Renderable, IDisposable
+    public class Canvas2 : Plain, IDisposable
     {
         private const int BYTE_PER_PIXEL = 4;
 
-        private static readonly Vertex[] _vertexArray = new Vertex[4]
-        {
-            new Vertex(new Vector3(-1, 1, 0),   new Vector3(-1, 1, 0),   Color4.White, new Vector2(-1, 1)),
-            new Vertex(new Vector3(-1, -1, 0),  new Vector3(-1, -1, 0),  Color4.White, new Vector2(-1, -1)),
-            new Vertex(new Vector3(1, -1, 0),   new Vector3(1, 1, 0),    Color4.White, new Vector2(1, -1)),
-            new Vertex(new Vector3(1, 1, 0),    new Vector3(1, -1, 0),   Color4.White, new Vector2(1, 1)),
-        };
-        private static readonly int[] _indexArray = new int[6] { 0, 1, 2, 2, 3, 0 };
         private Bitmap _bmp;
         private Graphics _g;
         private bool _isDisposed;
@@ -39,7 +31,6 @@ namespace Elffy.UI
         {
             _bmp = new Bitmap(pixelWidth, pixelHeight);
             _g = Graphics.FromImage(_bmp);
-            Load(_vertexArray, _indexArray);
             Texture = new Texture(pixelWidth, pixelHeight);
         }
 
@@ -48,15 +39,6 @@ namespace Elffy.UI
             using(var g = Graphics.FromImage(_bmp)) {
                 g.DrawString(text, font, brush, point);
             }
-            _bmp.Save("hoge.png");
-        }
-
-        public void Test()
-        {
-            using(var g = Graphics.FromImage(_bmp)) {
-                g.DrawRectangle(new Pen(Brushes.Green), new Rectangle(0, 0, 80, 90));
-            }
-            _bmp.Save("hoge.png");
         }
 
         public void Clear(Color color)
@@ -64,7 +46,6 @@ namespace Elffy.UI
             using(var g = Graphics.FromImage(_bmp)) {
                 g.Clear(color);
             }
-            _bmp.Save("hoge.png");
         }
 
         protected override void OnRendering()
@@ -74,7 +55,18 @@ namespace Elffy.UI
             if(_buf == null) {
                 _buf = new byte[_bmp.Width * _bmp.Height * BYTE_PER_PIXEL];
             }
-            Marshal.Copy(ptr, _buf, 0, _buf.Length);
+
+            // 上下反転
+            const int BYTE_PAR_PIXEL = 4;
+            var width = _bmp.Width;
+            var height = _bmp.Height;
+            for(int i = 0; i < height; i++) {
+                var row = height - i - 1;
+                var head = ptr + width * row * BYTE_PAR_PIXEL;
+                Marshal.Copy(head, _buf, i * width * BYTE_PAR_PIXEL, width * BYTE_PAR_PIXEL);
+            }
+            //Marshal.Copy(ptr, _buf, 0, _buf.Length);
+
             _bmp.UnlockBits(data);
             Texture.UpdateTexture(_buf, new Rectangle(0, 0, _bmp.Width, _bmp.Height));
         }
