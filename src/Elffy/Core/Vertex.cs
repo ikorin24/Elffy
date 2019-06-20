@@ -35,7 +35,7 @@ namespace Elffy.Core
             GL.VertexPointer(3, VertexPointerType.Float, Size, 0);                          // 頂点の位置
             GL.NormalPointer(NormalPointerType.Float, Size, Vector3.SizeInBytes);           // 頂点の法線
             GL.ColorPointer(4, ColorPointerType.Float, Size, Vector3.SizeInBytes * 2);      // 頂点の色
-            GL.TexCoordPointer(4, TexCoordPointerType.Float, Size, Vector3.SizeInBytes * 2 + _color4Size);  // テクスチャ座標
+            GL.TexCoordPointer(2, TexCoordPointerType.Float, Size, Vector3.SizeInBytes * 2 + _color4Size);  // テクスチャ座標
         }
     }
 }
