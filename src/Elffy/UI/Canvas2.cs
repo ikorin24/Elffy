@@ -34,6 +34,8 @@ namespace Elffy.UI
             Texture = new Texture(pixelWidth, pixelHeight);
         }
 
+        //~Canvas2() => Dispose(false);
+
         public void DrawString(string text, Font font, Brush brush, PointF point)
         {
             using(var g = Graphics.FromImage(_bmp)) {
@@ -85,8 +87,8 @@ namespace Elffy.UI
                     _bmp.Dispose();
                     _g.Dispose();
                     _buf = null;
-                    base.Dispose(true);
                 }
+                base.Dispose(manual);
                 _isDisposed = true;
             }
         }

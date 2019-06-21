@@ -145,8 +145,8 @@ namespace Elffy.UI
                     _bmp.Dispose();
                     _g.Dispose();
                     _buf = null;
-                    base.Dispose(true);
                 }
+                base.Dispose(manual);
                 _isDisposed = true;
             }
         }
