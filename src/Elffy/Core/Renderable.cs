@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using OpenTK.Graphics.OpenGL;
 using System.Runtime.InteropServices;
+using Elffy.Threading;
 
 namespace Elffy.Core
 {
@@ -82,6 +83,7 @@ namespace Elffy.Core
         protected void Load(string resource)
         {
             throw new NotImplementedException();        // TODO: リソースからの3Dモデルのロード
+            //ThrowIfNotMainThread(nameof(Load));
             //_isLoaded = true;
         }
 
@@ -92,6 +94,7 @@ namespace Elffy.Core
         {
             _vertexArray = vertexArray ?? throw new ArgumentNullException(nameof(vertexArray));
             _indexArray = indexArray ?? throw new ArgumentNullException(nameof(indexArray));
+            ThrowIfNotMainThread(nameof(Load));
 
             // 頂点バッファ(VBO)生成
             _vertexBuffer = GL.GenBuffer();
@@ -144,6 +147,11 @@ namespace Elffy.Core
         }
         #endregion
 
+        private void ThrowIfNotMainThread(string funcName)
+        {
+            if(GameThread.IsMainThread() == false) { throw new InvalidOperationException($"'{funcName}' must be called from Main Thread."); }
+        }
+
         #region Dispose
         protected virtual void Dispose(bool disposing)
         {
@@ -155,9 +163,16 @@ namespace Elffy.Core
 
                 // Release unmanaged resource
                 if(_isLoaded) {
-                    GL.DeleteBuffer(_vertexBuffer);
-                    GL.DeleteBuffer(_indexBuffer);
-                    GL.DeleteVertexArray(_vao);
+                    // OpenGLのバッファの削除はメインスレッドで行う必要がある
+                    var vbo = _vertexBuffer;
+                    var ibo = _indexBuffer;
+                    var vao = _vao;
+                    GameThread.Invoke(() => {
+                        GL.DeleteBuffer(vbo);
+                        GL.DeleteBuffer(ibo);
+                        GL.DeleteVertexArray(vao);
+                        DebugManager.Append($"{GetType().Name} is disposed.");
+                    });
                 }
                 _disposed = true;
             }

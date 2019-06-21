@@ -10,6 +10,7 @@ using Elffy.UI;
 using Elffy.Core;
 using System.Drawing;
 using System.IO;
+using Elffy.Threading;
 
 namespace Elffy
 {
@@ -150,6 +151,8 @@ namespace Elffy
         #region OnLoaded
         private static void OnLoaded(object sender, EventArgs e)
         {
+            GameThread.SetMainThreadID();
+
             GL.ClearColor(Color4.Gray);
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Texture2D);
@@ -233,6 +236,9 @@ namespace Elffy
             foreach(var frameObject in renderables.Where(x => x.Layer == ObjectLayer.UI && x.IsVisible)) {
                 frameObject.Render();
             }
+
+            // Invokeされた処理を実行
+            GameThread.DoInvokedAction();
 
             Instance._window.SwapBuffers();
 

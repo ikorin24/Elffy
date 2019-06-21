@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Elffy.Core;
 using System.Drawing;
+using Elffy.Threading;
 
 namespace Elffy
 {
@@ -150,7 +151,10 @@ namespace Elffy
                 if(disposing) {
                     // Release managed resource here.
                 }
-                GL.DeleteTexture(_texture);
+
+                // OpenGLのバッファの削除はメインスレッドで行う必要がある
+                var texture = _texture;
+                GameThread.Invoke(() => { GL.DeleteTexture(_texture); });
                 _disposed = true;
             }
         }

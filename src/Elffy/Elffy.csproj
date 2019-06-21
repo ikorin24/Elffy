@@ -74,6 +74,7 @@
     <Compile Include="ObjectLayer.cs" />
     <Compile Include="Shape\Cube.cs" />
     <Compile Include="Texture.cs" />
+    <Compile Include="Threading\GameThread.cs" />
     <Compile Include="UI\Canvas2.cs" />
     <Compile Include="UI\Plain.cs" />
     <Compile Include="UI\UISetting.cs" />
