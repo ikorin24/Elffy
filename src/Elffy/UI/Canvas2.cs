@@ -41,6 +41,29 @@ namespace Elffy.UI
             }
         }
 
+        public void DrawLine(Pen pen, float x1, float y1, float x2, float y2)
+        {
+            using(var g = Graphics.FromImage(_bmp)) {
+                g.DrawLine(pen, x1, y1, x2, y2);
+            }
+        }
+
+        public void DrawLines(Pen pen, Point[] points)
+        {
+            if(points == null) { throw new ArgumentNullException(nameof(points)); }
+            using(var g = Graphics.FromImage(_bmp)) {
+                g.DrawLines(pen, points);
+            }
+        }
+
+        public void DrawLines(Pen pen, PointF[] points)
+        {
+            if(points == null) { throw new ArgumentNullException(nameof(points)); }
+            using(var g = Graphics.FromImage(_bmp)) {
+                g.DrawLines(pen, points);
+            }
+        }
+
         public void Clear(Color color)
         {
             using(var g = Graphics.FromImage(_bmp)) {
