@@ -18,64 +18,29 @@ namespace Elffy
     public sealed class Texture : IDisposable
     {
         #region private member
+        private const int BYTE_PER_PIXEL = 4;
         private bool _disposed;
         private int _texture;
-        private static readonly byte[] EMPTY_TEXTURE = new byte[4] { 0xFF, 0xFF, 0xFF, 0xFF };
-        private static readonly int EMPTY_TEXTURE_WIDTH = 1;
-        private static readonly int EMPTY_TEXTURE_HEIGHT = 1;
         #endregion
-
-        /// <summary>テクスチャの拡大・縮小方法</summary>
-        public TextureExpansionMode ExpansionMode { get; private set; } = TextureExpansionMode.Bilinear;    // public set できるようにすべき？
 
         private readonly PixelFormat _pixelFormat = PixelFormat.Bgra;
 
         #region constructor
-        /// <summary>真っ白のテクスチャ (size: 1x1) を作成します</summary>
-        internal Texture()
-        {
-            _texture = GL.GenTexture();                     // テクスチャ用バッファを確保
-            SetTexture(TextureExpansionMode.Bilinear, EMPTY_TEXTURE, EMPTY_TEXTURE_WIDTH, EMPTY_TEXTURE_HEIGHT);
-        }
-
         internal Texture(int width, int height)
         {
             _texture = GL.GenTexture();                     // テクスチャ用バッファを確保
-            var pixels = new byte[width * height * 4];      // TODO: Unmanagedメモリを使って、GCに負荷をかけないように
+            var pixels = new UnmanagedArray<byte>(width * height * 4);
             for(int i = 0; i < pixels.Length; i++) {
                 pixels[i] = 0xFF;
             }
-            SetTexture(TextureExpansionMode.Bilinear, pixels, width, height);
+            SetTexture(TextureExpansionMode.Bilinear, TextureExpansionMode.Bilinear, pixels.Ptr, width, height);
         }
 
-        public Texture(string resource, TextureExpansionMode expansionMode)
+        public Texture(string resource)
         {
             var pixels = LoadFromResource(resource, out var width, out var height);
             _texture = GL.GenTexture();                             // テクスチャ用バッファを確保
-            SetTexture(expansionMode, pixels, width, height);
-        }
-
-        public Texture(string file)     // TODO: 消す テスト用
-        {
-            //byte[] GetPixels(IntPtr ptr, int width, int height)
-            //{
-            //    const int BYTE_PAR_PIXEL = 4;
-            //    var buf = new byte[width * height * BYTE_PAR_PIXEL];
-            //    for(int i = 0; i < height; i++) {
-            //        var row = height - i - 1;
-            //        var head = ptr + width * row * BYTE_PAR_PIXEL;
-            //        System.Runtime.InteropServices.Marshal.Copy(head, buf, i * width * BYTE_PAR_PIXEL, width * BYTE_PAR_PIXEL);
-            //    }
-            //    return buf;
-            //}
-
-            var bmp = new Bitmap(file);
-            var bmpData = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppPArgb);
-            //var pixels = GetPixels(bmpData.Scan0, bmp.Width, bmp.Height);
-            var pixels = ReverseYAxis(bmpData.Scan0, bmp.Width, bmp.Height);
-            bmp.UnlockBits(bmpData);
-            SetTexture(TextureExpansionMode.Bilinear, pixels.Ptr, bmp.Width, bmp.Height);
-            pixels.Free();
+            SetTexture(TextureExpansionMode.Bilinear, TextureExpansionMode.Bilinear, pixels.Ptr, width, height);
         }
         #endregion
 
@@ -89,13 +54,6 @@ namespace Elffy
             GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);
         }
 
-        public void ChangeSize(int width, int height, byte[] pixels)
-        {
-            GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);
-            GL.DeleteTexture(_texture);                             // テクスチャバッファを削除
-            SetTexture(ExpansionMode, pixels, width, height);       // 新たにテクスチャバッファを再取得
-        }
-
         #region SwitchToThis
         /// <summary>
         /// 現在のOpenGLのTextureをこのインスタンスのテクスチャに切り替えます<para/>
@@ -107,60 +65,68 @@ namespace Elffy
         }
         #endregion
 
-        private UnmanagedArray<byte> ReverseYAxis(IntPtr ptr, int width, int height)
+        #region ReverseYAxis
+        /// <summary>画像のY軸を反転させます</summary>
+        /// <param name="ptr">ピクセル配</param>
+        /// <param name="width">画像幅</param>
+        /// <param name="height">画像高</param>
+        /// <param name="pixels">反転させたピクセル配列</param>
+        internal static void ReverseYAxis(IntPtr ptr, int width, int height, out UnmanagedArray<byte> pixels)
         {
-            const int BYTE_PER_PIXEL = 4;
-            var buf = new UnmanagedArray<byte>(width * height * BYTE_PER_PIXEL);
+            pixels = new UnmanagedArray<byte>(width * height * BYTE_PER_PIXEL);
             for(int i = 0; i < height; i++) {
                 var row = height - i - 1;
                 var head = ptr + width * row * BYTE_PER_PIXEL;
-                buf.CopyFrom(head, i * width * BYTE_PER_PIXEL, width * BYTE_PER_PIXEL);
+                pixels.CopyFrom(head, i * width * BYTE_PER_PIXEL, width * BYTE_PER_PIXEL);
             }
-            return buf;
         }
 
-        #region SetTexture
-        /// <summary>バッファにTextureを読み込みます</summary>
-        /// <param name="expansionMode">拡大縮小方法</param>
-        /// <param name="pixels">テクスチャのピクセル配列</param>
-        /// <param name="pixelWidth">テクスチャのピクセル幅</param>
-        /// <param name="pixelHeight">テクスチャのピクセル高</param>
-        private void SetTexture(TextureExpansionMode expansionMode, byte[] pixels, int pixelWidth, int pixelHeight)
+        /// <summary>画像のY軸を反転させます</summary>
+        /// <param name="ptr">ピクセル配</param>
+        /// <param name="width">画像幅</param>
+        /// <param name="height">画像高</param>
+        /// <param name="pixels">反転させたピクセル配列</param>
+        internal static void ReverseYAxis(IntPtr ptr, int width, int height, byte[] pixels)
         {
-            GL.BindTexture(TextureTarget.Texture2D, _texture);
-            var param = TexExpansionModeToParam(expansionMode);         // テクスチャ拡大縮小の方法
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, param);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, param);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, pixelWidth, pixelHeight, 0, _pixelFormat, PixelType.UnsignedByte, pixels);
-            GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);       // バインド解除
-        }
-
-        private void SetTexture(TextureExpansionMode expansionMode, IntPtr pixels, int pixelWidth, int pixelHeight)
-        {
-            GL.BindTexture(TextureTarget.Texture2D, _texture);
-            var param = TexExpansionModeToParam(expansionMode);         // テクスチャ拡大縮小の方法
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, param);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, param);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, pixelWidth, pixelHeight, 0, _pixelFormat, PixelType.UnsignedByte, pixels);
-            GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);       // バインド解除
+            for(int i = 0; i < height; i++) {
+                var row = height - i - 1;
+                var head = ptr + width * row * BYTE_PER_PIXEL;
+                Marshal.Copy(head, pixels, i * width * BYTE_PER_PIXEL, width * BYTE_PER_PIXEL);
+            }
         }
         #endregion
 
-        #region TexExpansionModeToParam
-        private int TexExpansionModeToParam(TextureExpansionMode mode)
+        #region SetTexture
+        /// <summary>バッファにTextureを読み込みます</summary>
+        /// <param name="minMode">縮小方法</param>
+        /// <param name="magMode">拡大方法</param>
+        /// <param name="pixels">テクスチャのピクセル配列</param>
+        /// <param name="pixelWidth">テクスチャのピクセル幅</param>
+        /// <param name="pixelHeight">テクスチャのピクセル高</param>
+        private void SetTexture(TextureExpansionMode minMode, TextureExpansionMode magMode, IntPtr pixels, int pixelWidth, int pixelHeight)
         {
-            switch(mode) {
-                case TextureExpansionMode.Bilinear: return (int)TextureMinFilter.Linear;
-                case TextureExpansionMode.NearestNeighbor: return (int)TextureMinFilter.Nearest;
-                default: throw new NotSupportedException();
-            }
+            GL.BindTexture(TextureTarget.Texture2D, _texture);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)minMode);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)magMode);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, pixelWidth, pixelHeight, 0, _pixelFormat, PixelType.UnsignedByte, pixels);
+            GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);       // バインド解除
         }
         #endregion
 
         #region LoadFromResource
-        private byte[] LoadFromResource(string resource, out int pixelWidth, out int pixelHeigh)
+        private UnmanagedArray<byte> LoadFromResource(string resource, out int pixelWidth, out int pixelHeigh)
         {
-            throw new NotImplementedException();        // TODO: リソースからの画像読み取り
+            using(var stream = Resources.LoadStream(resource))
+            using(var bmp = new Bitmap(stream)) {
+                pixelWidth = bmp.Width;
+                pixelHeigh = bmp.Height;
+                var bmpData = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), 
+                                           System.Drawing.Imaging.ImageLockMode.ReadOnly, 
+                                           System.Drawing.Imaging.PixelFormat.Format32bppPArgb);
+                ReverseYAxis(bmpData.Scan0, bmp.Width, bmp.Height, out var pixels);
+                bmp.UnlockBits(bmpData);
+                return pixels;
+            }
         }
         #endregion
 
@@ -193,9 +159,9 @@ namespace Elffy
     public enum TextureExpansionMode
     {
         /// <summary>線形補間</summary>
-        Bilinear,
+        Bilinear = TextureMinFilter.Linear,
         /// <summary>最近傍補間</summary>
-        NearestNeighbor,
+        NearestNeighbor = TextureMinFilter.Nearest,
     }
     #endregion enum TextureExpansionMode
 }

@@ -34,8 +34,6 @@ namespace Elffy.UI
             Texture = new Texture(pixelWidth, pixelHeight);
         }
 
-        //~Canvas2() => Dispose(false);
-
         public void DrawString(string text, Font font, Brush brush, PointF point)
         {
             using(var g = Graphics.FromImage(_bmp)) {
@@ -57,18 +55,7 @@ namespace Elffy.UI
             if(_buf == null) {
                 _buf = new byte[_bmp.Width * _bmp.Height * BYTE_PER_PIXEL];
             }
-
-            // 上下反転
-            const int BYTE_PAR_PIXEL = 4;
-            var width = _bmp.Width;
-            var height = _bmp.Height;
-            for(int i = 0; i < height; i++) {
-                var row = height - i - 1;
-                var head = ptr + width * row * BYTE_PAR_PIXEL;
-                Marshal.Copy(head, _buf, i * width * BYTE_PAR_PIXEL, width * BYTE_PAR_PIXEL);
-            }
-            //Marshal.Copy(ptr, _buf, 0, _buf.Length);
-
+            Texture.ReverseYAxis(data.Scan0, _bmp.Width, _bmp.Height, _buf);    // 上下反転
             _bmp.UnlockBits(data);
             Texture.UpdateTexture(_buf, new Rectangle(0, 0, _bmp.Width, _bmp.Height));
         }

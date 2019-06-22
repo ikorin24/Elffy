@@ -60,9 +60,6 @@ namespace Elffy.Shape
         public Cube()
         {
             Load(_vertexArray, _indexArray);
-
-            // TODO: 消す
-            Texture = new Texture("uvtemplate.png");
         }
     }
 }
