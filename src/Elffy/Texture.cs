@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using Elffy.Core;
 using System.Drawing;
 using Elffy.Threading;
+using Elffy.Effective;
+using System.Runtime.InteropServices;
 
 namespace Elffy
 {
@@ -55,23 +57,25 @@ namespace Elffy
 
         public Texture(string file)     // TODO: 消す テスト用
         {
-            byte[] GetPixels(IntPtr ptr, int width, int height)
-            {
-                const int BYTE_PAR_PIXEL = 4;
-                var buf = new byte[width * height * BYTE_PAR_PIXEL];
-                for(int i = 0; i < height; i++) {
-                    var row = height - i - 1;
-                    var head = ptr + width * row * BYTE_PAR_PIXEL;
-                    System.Runtime.InteropServices.Marshal.Copy(head, buf, i * width * BYTE_PAR_PIXEL, width * BYTE_PAR_PIXEL);
-                }
-                return buf;
-            }
+            //byte[] GetPixels(IntPtr ptr, int width, int height)
+            //{
+            //    const int BYTE_PAR_PIXEL = 4;
+            //    var buf = new byte[width * height * BYTE_PAR_PIXEL];
+            //    for(int i = 0; i < height; i++) {
+            //        var row = height - i - 1;
+            //        var head = ptr + width * row * BYTE_PAR_PIXEL;
+            //        System.Runtime.InteropServices.Marshal.Copy(head, buf, i * width * BYTE_PAR_PIXEL, width * BYTE_PAR_PIXEL);
+            //    }
+            //    return buf;
+            //}
 
             var bmp = new Bitmap(file);
             var bmpData = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppPArgb);
-            var pixels = GetPixels(bmpData.Scan0, bmp.Width, bmp.Height);
+            //var pixels = GetPixels(bmpData.Scan0, bmp.Width, bmp.Height);
+            var pixels = ReverseYAxis(bmpData.Scan0, bmp.Width, bmp.Height);
             bmp.UnlockBits(bmpData);
-            SetTexture(TextureExpansionMode.Bilinear, pixels, bmp.Width, bmp.Height);
+            SetTexture(TextureExpansionMode.Bilinear, pixels.Ptr, bmp.Width, bmp.Height);
+            pixels.Free();
         }
         #endregion
 
@@ -103,6 +107,18 @@ namespace Elffy
         }
         #endregion
 
+        private UnmanagedArray<byte> ReverseYAxis(IntPtr ptr, int width, int height)
+        {
+            const int BYTE_PER_PIXEL = 4;
+            var buf = new UnmanagedArray<byte>(width * height * BYTE_PER_PIXEL);
+            for(int i = 0; i < height; i++) {
+                var row = height - i - 1;
+                var head = ptr + width * row * BYTE_PER_PIXEL;
+                buf.CopyFrom(head, i * width * BYTE_PER_PIXEL, width * BYTE_PER_PIXEL);
+            }
+            return buf;
+        }
+
         #region SetTexture
         /// <summary>バッファにTextureを読み込みます</summary>
         /// <param name="expansionMode">拡大縮小方法</param>
@@ -110,6 +126,16 @@ namespace Elffy
         /// <param name="pixelWidth">テクスチャのピクセル幅</param>
         /// <param name="pixelHeight">テクスチャのピクセル高</param>
         private void SetTexture(TextureExpansionMode expansionMode, byte[] pixels, int pixelWidth, int pixelHeight)
+        {
+            GL.BindTexture(TextureTarget.Texture2D, _texture);
+            var param = TexExpansionModeToParam(expansionMode);         // テクスチャ拡大縮小の方法
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, param);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, param);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, pixelWidth, pixelHeight, 0, _pixelFormat, PixelType.UnsignedByte, pixels);
+            GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);       // バインド解除
+        }
+
+        private void SetTexture(TextureExpansionMode expansionMode, IntPtr pixels, int pixelWidth, int pixelHeight)
         {
             GL.BindTexture(TextureTarget.Texture2D, _texture);
             var param = TexExpansionModeToParam(expansionMode);         // テクスチャ拡大縮小の方法

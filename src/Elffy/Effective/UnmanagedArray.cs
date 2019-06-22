@@ -37,6 +37,9 @@ namespace Elffy.Effective
         /// <summary>Get the type of an item in this array.</summary>
         public Type Type => typeof(T);
 
+        /// <summary>Pointer address of this array.</summary>
+        public IntPtr Ptr => _array;
+
         /// <summary>Get the specific item of specific index.</summary>
         /// <param name="i">index</param>
         /// <returns>The item of specific index</returns>
@@ -199,6 +202,36 @@ namespace Elffy.Effective
         [Obsolete("This method is not supported.", true)]
         public void Clear() => throw new NotSupportedException();
         #endregion
+
+        /// <summary>Copy from unmanaged.</summary>
+        /// <param name="source">unmanaged source pointer</param>
+        /// <param name="start">start index of destination. (destination is this instance.)</param>
+        /// <param name="length">count of copied item. (NOT length of bytes.)</param>
+        public unsafe void CopyFrom(IntPtr source, int start, int length)
+        {
+            if(source == IntPtr.Zero) { throw new ArgumentNullException("source is null"); }
+            ThrowIfFree();
+            if(start < 0 || length < 0) { throw new ArgumentOutOfRangeException(); }
+            if(start + length > Length) { throw new ArgumentOutOfRangeException(); }
+            if(IsThreadSafe) {
+                lock(_syncRoot) {
+                    for(int i = 0; i < length; i++) {
+                        var ptr = _array + (start + i) * _objsize;
+                        var value = *(T*)(source + i * _objsize);
+                        Marshal.StructureToPtr<T>(value, ptr, true);
+                    }
+                    _version++;
+                }
+            }
+            else {
+                for(int i = 0; i < length; i++) {
+                    var ptr = _array + (start + i) * _objsize;
+                    var value = *(T*)(source + i * _objsize);
+                    Marshal.StructureToPtr<T>(value, ptr, true);
+                }
+                _version++;
+            }
+        }
 
         #region Dispose
         public void Dispose()
