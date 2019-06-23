@@ -167,7 +167,6 @@ namespace Elffy.Core
                         GL.DeleteBuffer(vbo);
                         GL.DeleteBuffer(ibo);
                         GL.DeleteVertexArray(vao);
-                        DebugManager.Append($"{GetType().Name} is disposed.");
                     });
                 }
                 _disposed = true;
