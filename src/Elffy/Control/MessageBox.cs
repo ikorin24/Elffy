@@ -11,8 +11,13 @@ namespace Elffy.Control
     {
         public static MessageBoxResult Show(string text, string caption, MessageBoxType type, MessageBoxIcon icon)
         {
-            var result = WinMessageBox(IntPtr.Zero, text, caption, (int)type + (int)icon);
-            return (MessageBoxResult)result;
+            if(Environment.OSVersion.Platform == PlatformID.Win32NT) {
+                var result = WinMessageBox(IntPtr.Zero, text, caption, (int)type + (int)icon);
+                return (MessageBoxResult)result;
+            }
+            else {
+                return MessageBoxResult.Aborted;
+            }
         }
 
         [DllImport("user32.dll", EntryPoint = "MessageBox", CharSet = CharSet.Unicode)]
@@ -64,5 +69,6 @@ namespace Elffy.Control
         Cancel = 2,
         Yes = 6,
         No = 7,
+        Aborted = -1,
     }
 }
