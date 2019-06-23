@@ -38,7 +38,7 @@ namespace ElffyGame
             //cube.MultiplyScale(2, 1, 1);
             cube.Activate();
 
-            var xyCanvas = new Canvas2(500, 500);
+            var xyCanvas = new Canvas(500, 500);
             xyCanvas.ScaleX = 4f;
             xyCanvas.ScaleY = 4f;
             xyCanvas.Clear(Color.FromArgb(0, Color.Blue));
@@ -56,7 +56,7 @@ namespace ElffyGame
             xyCanvas.DrawString("Y", new Font(FontFamily.GenericSansSerif, 20), Brushes.Green, new PointF(200, 20));
             xyCanvas.Activate();
 
-            var xzCanvas = new Canvas2(500, 500);
+            var xzCanvas = new Canvas(500, 500);
             xzCanvas.Rotate(Quaternion.FromAxisAngle(new Vector3(1, 0, 0), -MathHelper.PiOver2));
             xzCanvas.ScaleX = 4f;
             xzCanvas.ScaleY = 4f;
@@ -70,7 +70,7 @@ namespace ElffyGame
             xzCanvas.Activate();
 
 
-            var canvas = new Canvas2(300, 300);
+            var canvas = new Canvas(300, 300);
             var font = new Font(FontFamily.GenericSansSerif, 50);
             var rand = new Random();
             Animation.Create().While(() => true, _ => {

@@ -76,7 +76,7 @@
     <Compile Include="Shape\Cube.cs" />
     <Compile Include="Texture.cs" />
     <Compile Include="Threading\GameThread.cs" />
-    <Compile Include="UI\Canvas2.cs" />
+    <Compile Include="UI\Canvas.cs" />
     <Compile Include="UI\Plain.cs" />
     <Compile Include="UI\UISetting.cs" />
     <Compile Include="WindowStyle.cs" />
@@ -90,7 +90,6 @@
     <Compile Include="Game.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Resources.cs" />
-    <Compile Include="UI\Canvas.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="dll\OpenTK.dll" />
