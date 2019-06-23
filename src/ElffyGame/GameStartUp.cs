@@ -69,6 +69,19 @@ namespace ElffyGame
             xzCanvas.DrawString("Z", new Font(FontFamily.GenericSansSerif, 20), Brushes.Blue, new PointF(200, 440));
             xzCanvas.Activate();
 
+
+            var canvas = new Canvas2(300, 300);
+            var font = new Font(FontFamily.GenericSansSerif, 50);
+            var rand = new Random();
+            Animation.Create().While(() => true, _ => {
+                pen.Color = Rand.Color();
+                canvas.DrawLine(pen, rand.Next(canvas.PixelWidth), rand.Next(canvas.PixelHeight), rand.Next(canvas.PixelWidth), rand.Next(canvas.PixelHeight));
+            });
+            canvas.Clear(Color.White);
+            canvas.DrawString("test", font, Brushes.Green, new Point());
+            canvas.Position = new Vector3(2, 2, 1);
+            canvas.Activate();
+
             Camera.Current.Position = new Vector3(6f, 5f, 7f);
             //Camera.Current.Position = new Vector3(0, 7, 0.01f);
             Camera.Current.Direction = Vector3.Zero - Camera.Current.Position;
