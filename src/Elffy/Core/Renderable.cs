@@ -10,6 +10,10 @@ using Elffy.Threading;
 
 namespace Elffy.Core
 {
+    /// <summary>
+    /// 画面に描画されるオブジェクトの基底クラス<para/>
+    /// 描画に関する操作を提供します<para/>
+    /// </summary>
     public abstract class Renderable : Positionable, IDisposable
     {
         #region private member
@@ -23,10 +27,9 @@ namespace Elffy.Core
         private Vertex[] _vertexArray;
         /// <summary>頂点番号配列</summary>
         private int[] _indexArray;
-
         private bool _disposed;
         private bool _isLoaded;
-        #endregion private member
+        #endregion
 
         #region Property
         /// <summary>描画処理を行うかどうか</summary>
@@ -37,6 +40,7 @@ namespace Elffy.Core
         public Texture Texture { get; set; }
         #endregion
 
+        /// <summary>static コンストラクタ</summary>
         static Renderable()
         {
             // 法線の正規化
@@ -59,7 +63,6 @@ namespace Elffy.Core
             GL.MultMatrix(ref model);
             // マテリアルの適用
             Material?.Apply();
-
             // 頂点を描画
             DrawVertexAndTexture();
         }
@@ -138,10 +141,12 @@ namespace Elffy.Core
         }
         #endregion
 
+        #region ThrowIfNotMainThread
         private void ThrowIfNotMainThread(string funcName)
         {
             if(GameThread.IsMainThread() == false) { throw new InvalidOperationException($"'{funcName}' must be called from Main Thread."); }
         }
+        #endregion
 
         #region Dispose
         protected virtual void Dispose(bool disposing)

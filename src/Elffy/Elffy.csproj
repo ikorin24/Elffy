@@ -66,6 +66,7 @@
     <Compile Include="Core\Random.cs" />
     <Compile Include="Core\Renderable.cs" />
     <Compile Include="Core\Vertex.cs" />
+    <Compile Include="Exceptions\ObjectDestroyedException.cs" />
     <Compile Include="Light.cs" />
     <Compile Include="Effective\UnmanagedArray.cs" />
     <Compile Include="Exceptions\ResourceNotFoundException.cs" />

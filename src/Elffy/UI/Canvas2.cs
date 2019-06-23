@@ -73,6 +73,8 @@ namespace Elffy.UI
 
         protected override void OnRendering()
         {
+            // TODO: 変更された場所のみを差分更新するようにする
+
             var data = _bmp.LockBits(new Rectangle(0, 0, _bmp.Width, _bmp.Height), ImageLockMode.ReadOnly, DPixelFormat.Format32bppArgb);
             var ptr = data.Scan0;
             if(_buf == null) {
