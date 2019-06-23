@@ -218,6 +218,11 @@ namespace Elffy
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
+            // 光源のためにViewMatrixを設定
+            GL.MatrixMode(MatrixMode.Modelview);
+            var view = Camera.Current.Matrix;
+            GL.LoadMatrix(ref view);
+
             Light.LightUp();        // 光源点灯
             var renderables = Instance._frameObjectList.OfType<Renderable>();
 

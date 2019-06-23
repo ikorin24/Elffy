@@ -71,7 +71,7 @@ namespace Elffy
                 SetProjection(radian, _far);
             }
         }
-        private float _fovy = 90;
+        private float _fovy = 45;
         #endregion
 
         #region Far

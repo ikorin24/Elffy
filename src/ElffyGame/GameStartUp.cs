@@ -27,56 +27,64 @@ namespace ElffyGame
             }
 
             // 入力の登録
-            Input.AddState(Controller.A, Key.Space, 0);
-            Input.AddState(Controller.B, Key.BackSpace, 2);
-            Input.AddState(Controller.X, Key.X, 1);
-            Input.AddState(Controller.Y, Key.Y, 3);
-            Input.AddAxis(Controller.AXIS_X, Key.Right, Key.Left, StickAxis.LeftStickX);
-            Input.AddAxis(Controller.AXIS_Y, Key.Up, Key.Down, StickAxis.LeftStickY);
-            Input.AddAxis(Controller.SUB_AXIS_X, Key.D, Key.A, StickAxis.RightStickX);
-            Input.AddAxis(Controller.SUB_AXIS_Y, Key.W, Key.S, StickAxis.RightStickY);
-
-            Input.AddTrigger("LTrigger", Key.O, Trigger.LeftTrigger);
-            Input.AddTrigger("RTrigger", Key.P, Trigger.RightTrigger);
-
+            Controller.Init();
             // ---------------------------------------
 
-            //Light.CreateDirectLight(new Vector3(-1, 0, -3), Color4.White);
-            var canvas = new Canvas2(300, 300) { Position = new Vector3(0, 0, -3) };
-            canvas.Clear(Color.Blue);
-            canvas.DrawString("test", new Font(FontFamily.GenericSansSerif, 20), Brushes.Green, new PointF());
-            //canvas.Test();
-            canvas.Activate();
-            //Animation.Create().Wait(60).Do(f => {
-            //    DebugManager.Append($"test @ {Game.CurrentFrame}");
-            //});
-
+            Light.CreateDirectLight(new Vector3(-1, -1, -1), Color4.White);
 
             var cube = new Cube();
-
             cube.Texture = new Texture("cube.png");
-            cube.Position = new Vector3(0, 0, -5);
-
-            Animation.Create().While(() => true, info => {
-                cube.Rotate(Quaternion.FromAxisAngle(new Vector3(1, 0, 0), 1f / 180 * MathHelper.Pi));
-                cube.Rotate(Quaternion.FromAxisAngle(new Vector3(0, 1, 0), 0.8f / 180 * MathHelper.Pi));
-
-                canvas.Rotate(Quaternion.FromAxisAngle(new Vector3(1, 0, 1), 1f / 180 * MathHelper.Pi));
-                canvas.Rotate(Quaternion.FromAxisAngle(new Vector3(0, 1, 0), 0.8f / 180 * MathHelper.Pi));
-            });
-            //Animation.Create().While(() => true, info => {
-            //    var pos = cube.Position;
-            //    cube.Position = new Vector3((info.FrameNum % 60) / 10f - 4, ((info.FrameNum + 15) % 80) / 10f - 4, pos.Z);
-            //});
+            cube.Position = new Vector3(0, 0, 0);
+            //cube.MultiplyScale(2, 1, 1);
             cube.Activate();
-            //Animation.Create().Wait(100).Do(_ => cube.Destroy());
-            //Animation.Create().Do(_ => cube.Destroy());
-            //Animation.Create().Wait(100).Do(_ => GC.Collect());
+
+            var xyCanvas = new Canvas2(500, 500);
+            xyCanvas.ScaleX = 4f;
+            xyCanvas.ScaleY = 4f;
+            xyCanvas.Clear(Color.FromArgb(0, Color.Blue));
+            var pen = new Pen(Brushes.Red, 13f);
+            var points = new Point[] {
+                new Point(250, 250), new Point(450, 250), new Point(430, 240),
+            };
+            xyCanvas.DrawLines(pen, points);
+            xyCanvas.DrawString("X", new Font(FontFamily.GenericSansSerif, 20), Brushes.Red, new PointF(430, 190));
+            pen = new Pen(Brushes.Green, 13f);
+            points = new Point[] {
+                new Point(250, 250), new Point(250, 50), new Point(240, 70),
+            };
+            xyCanvas.DrawLines(pen, points);
+            xyCanvas.DrawString("Y", new Font(FontFamily.GenericSansSerif, 20), Brushes.Green, new PointF(200, 20));
+            xyCanvas.Activate();
+
+            var xzCanvas = new Canvas2(500, 500);
+            xzCanvas.Rotate(Quaternion.FromAxisAngle(new Vector3(1, 0, 0), -MathHelper.PiOver2));
+            xzCanvas.ScaleX = 4f;
+            xzCanvas.ScaleY = 4f;
+            xzCanvas.Clear(Color.FromArgb(0, Color.Blue));
+            pen = new Pen(Brushes.Blue, 13f);
+            points = new Point[] {
+                new Point(250, 250), new Point(250, 450), new Point(240, 440),
+            };
+            xzCanvas.DrawLines(pen, points);
+            xzCanvas.DrawString("Z", new Font(FontFamily.GenericSansSerif, 20), Brushes.Blue, new PointF(200, 440));
+            xzCanvas.Activate();
+
+            Camera.Current.Position = new Vector3(6f, 5f, 7f);
+            //Camera.Current.Position = new Vector3(0, 7, 0.01f);
+            Camera.Current.Direction = Vector3.Zero - Camera.Current.Position;
 
             Animation.Create().While(() => true, info => {
-                //if(Input.GetAxis(Controller.AXIS_X))
-                Camera.Current.Position = Camera.Current.Position + new Vector3(Input.GetAxis(Controller.AXIS_X) * 0.1f, 0, 0);
-                //DebugManager.Append(Camera.Current.Position);
+                var theta = MathHelper.TwoPi * info.FrameNum / 500;
+                var cos = (float)Math.Cos(theta);
+                var sin = (float)Math.Sin(theta);
+                //Camera.Current.Position = new Vector3(5 * cos, 5, 5 * (-sin));
+                //Camera.Current.Direction = Vector3.Zero - Camera.Current.Position;
+                cube.Rotate(Quaternion.FromAxisAngle(new Vector3(1, 1, 0), 1f / 180 * MathHelper.Pi));
+            });
+
+            Animation.Create().While(() => true, info => {
+                DebugManager.AppendIf(Controller.DownA(), "A");
+                DebugManager.AppendIf(Controller.DownB(), "B");
             });
         }
     }

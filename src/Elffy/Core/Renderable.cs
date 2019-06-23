@@ -50,22 +50,13 @@ namespace Elffy.Core
         internal void Render()
         {
             OnRendering();
-
             // 座標と回転を適用
-            GL.MatrixMode(MatrixMode.Modelview);
-            var identity = Matrix4.Identity;
-            GL.LoadMatrix(ref identity);
-
-            var model = ModelMatrix;
-            GL.MultMatrix(ref model);
+            var view = Camera.Current.Matrix;
+            GL.LoadMatrix(ref view);
             var rot = Matrix4.CreateFromQuaternion(Rotation);
             GL.MultMatrix(ref rot);
-            //var model = ModelMatrix;
-            //GL.MultMatrix(ref model);
-
-            var view = Camera.Current.Matrix;//.Inverted();
-            GL.MultMatrix(ref view);
-
+            var model = ModelMatrix;
+            GL.MultMatrix(ref model);
             // マテリアルの適用
             Material?.Apply();
 
