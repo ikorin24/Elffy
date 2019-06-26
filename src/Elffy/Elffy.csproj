@@ -72,6 +72,7 @@
     <Compile Include="Exceptions\ResourceNotFoundException.cs" />
     <Compile Include="Input\Trigger.cs" />
     <Compile Include="Material.cs" />
+    <Compile Include="Mathmatics\Curve.cs" />
     <Compile Include="ObjectLayer.cs" />
     <Compile Include="Shape\Cube.cs" />
     <Compile Include="Texture.cs" />
