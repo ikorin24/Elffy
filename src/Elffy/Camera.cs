@@ -16,6 +16,7 @@ namespace Elffy
         private static readonly Dictionary<int, Camera> _cameras = new Dictionary<int, Camera>();
 
         public static Camera Current { get; private set; }
+        public static Camera MainCamera => _cameras[MAIN_CAMERA];
 
         public int Num { get; private set; }
 

@@ -75,12 +75,12 @@ namespace ElffyGame
             var rand = new Random();
             Animation.Create().While(() => true, _ => {
                 pen.Color = Rand.Color();
-                canvas.DrawLine(pen, rand.Next(canvas.PixelWidth), rand.Next(canvas.PixelHeight), rand.Next(canvas.PixelWidth), rand.Next(canvas.PixelHeight));
+                //canvas.DrawLine(pen, rand.Next(canvas.PixelWidth), rand.Next(canvas.PixelHeight), rand.Next(canvas.PixelWidth), rand.Next(canvas.PixelHeight));
             });
             canvas.Clear(Color.White);
             canvas.DrawString("test", font, Brushes.Green, new Point());
             canvas.Position = new Vector3(2, 2, 1);
-            canvas.Activate();
+            //canvas.Activate();
 
             Camera.Current.Position = new Vector3(6f, 5f, 7f);
             //Camera.Current.Position = new Vector3(0, 7, 0.01f);
@@ -99,6 +99,17 @@ namespace ElffyGame
                 DebugManager.AppendIf(Controller.DownA(), "A");
                 DebugManager.AppendIf(Controller.DownB(), "B");
             });
+            var plain = new Plain();
+            plain.Position = new Vector3(1, 1, 0.04f);
+            plain.Activate();
+            MainCamera.Init();
+            //Camera.MainCamera.Direction = new Vector3(0, 0, -1f);
+            //Camera.MainCamera.Position = new Vector3(0, 0, 5f);
+            //Camera.MainCamera.Direction = new Vector3(-1f, -1f, 0);
+            //Camera.MainCamera.Position = new Vector3(5f, 5f, 0);
+            //Animation.Create().While(() => true, _ => {
+            //    DebugManager.Append(Camera.Current.Position);
+            //});
         }
     }
 }

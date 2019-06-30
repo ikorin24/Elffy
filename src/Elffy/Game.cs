@@ -35,8 +35,8 @@ namespace Elffy
         
         /// <summary>現在のフレームがゲーム開始から何フレーム目かを取得します(Rendering Frame)</summary>
         public static long CurrentFrame { get; internal set; }
-        public static double FrameDelta => Instance?._window?.UpdatePeriod ?? throw NewGameNotRunningException();
-        public static double RenderDelta => Instance?._window?.RenderPeriod ?? throw NewGameNotRunningException();
+        public static float FrameDelta => (float?)Instance?._window?.UpdatePeriod ?? throw NewGameNotRunningException();
+        public static float RenderDelta => (float?)Instance?._window?.RenderPeriod ?? throw NewGameNotRunningException();
 
         public static event EventHandler Initialize;
 
