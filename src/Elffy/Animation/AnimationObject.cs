@@ -14,13 +14,15 @@ namespace Elffy.Animation
         private readonly Queue<BehaviorQueueObject> _animationQueue = new Queue<BehaviorQueueObject>();
         private AnimationBehavior _behavior;
         private AnimationInfo _info = new AnimationInfo();
+        private long _firstFrameTime;
+        private bool _firstFrame;
         #endregion private member
 
         public bool IsCanceled { get; set; }
 
         public void AddBehavior(int time, AnimationBehavior behavior)
         {
-            var lifeSpan = time;        // TODO:
+            var lifeSpan = time;
             _animationQueue.Enqueue(new BehaviorQueueObject(behavior, lifeSpan));
             if(_behavior == null) {
                 SetNextBehavior();
@@ -45,6 +47,11 @@ namespace Elffy.Animation
 
         public override void Update()
         {
+            if(_firstFrame) {
+                _firstFrameTime = Game.CurrentFrameTime;
+                _firstFrame = false;
+            }
+            _info.Time = (int)(Game.CurrentFrameTime - _firstFrameTime);
             // キャンセルされたら終了
             if(IsCanceled) {
                 _animationQueue.Clear();
@@ -52,10 +59,9 @@ namespace Elffy.Animation
                 Destroy();
                 return;
             }
-
             // 寿命が終了 or 継続条件がfalse なら次の動きに遷移。次がなければ終了。
-            if((_info.Mode == AnimationEndMode.LifeSpen && _info.FrameNum >= _info.LifeSpan) ||
-                _info.Mode == AnimationEndMode.Condition && !_info.Condition()) {
+              if((_info.Mode == AnimationEndMode.LifeSpen && (Game.CurrentFrameTime - _firstFrameTime) >= _info.LifeSpan) ||
+                 (_info.Mode == AnimationEndMode.Condition && !_info.Condition())) {
                 if(_animationQueue.Count == 0) {
                     _behavior = null;
                     Destroy();
@@ -79,6 +85,7 @@ namespace Elffy.Animation
             _info.LifeSpan = tmp.LifeSpan;
             _info.Mode = tmp.Mode;
             _info.FrameNum = 0;
+            _firstFrame = true;
         }
         #endregion
 

@@ -8,9 +8,19 @@ namespace Elffy.Animation
 {
     public struct AnimationInfo
     {
+        /// <summary>現在の <see cref="AnimationBehavior"/> の寿命(ms)</summary>
         public int LifeSpan { get; internal set; }
+
+        /// <summary>現在の <see cref="AnimationBehavior"/> が始まってからのフレーム数</summary>
         public int FrameNum { get; internal set; }
+
+        /// <summary>現在の <see cref="AnimationBehavior"/> が始まってからの時間(ms)</summary>
+        public int Time { get; internal set; }
+
+        /// <summary><see cref="Mode"/> が <see cref="AnimationEndMode.Condition"/> 現在の場合、この <see cref="AnimationBehavior"/> の終了条件を返します</summary>
         public Func<bool> Condition { get; internal set; }
+
+        /// <summary>この <see cref="AnimationBehavior"/> の終了モード</summary>
         public AnimationEndMode Mode { get; internal set; }
     }
 }

@@ -11,6 +11,7 @@ using Elffy.Core;
 using System.Drawing;
 using System.IO;
 using Elffy.Threading;
+using System.Diagnostics;
 
 namespace Elffy
 {
@@ -20,6 +21,7 @@ namespace Elffy
         private List<FrameObject> _frameObjectList = new List<FrameObject>();
         private List<FrameObject> _addedFrameObjectBuffer = new List<FrameObject>();
         private List<FrameObject> _removedFrameObjectBuffer = new List<FrameObject>();
+        private readonly Stopwatch _watch = new Stopwatch();
 
         public static Game Instance { get; private set; }
         public static Size ClientSize => Instance?._window?.ClientSize ?? throw NewGameNotRunningException();
@@ -37,6 +39,8 @@ namespace Elffy
         public static long CurrentFrame { get; internal set; }
         public static float FrameDelta => (float?)Instance?._window?.UpdatePeriod ?? throw NewGameNotRunningException();
         public static float RenderDelta => (float?)Instance?._window?.RenderPeriod ?? throw NewGameNotRunningException();
+        public static long CurrentFrameTime { get; private set; }
+        public static long CurrentTime => Instance?._watch?.ElapsedMilliseconds ?? throw NewGameNotRunningException();
 
         public static event EventHandler Initialize;
 
@@ -167,7 +171,7 @@ namespace Elffy
             GL.FrontFace(FrontFaceDirection.Ccw);
 
             GL.Viewport(Instance._window.ClientRectangle);
-            Instance._window.VSync = VSyncMode.Off;
+            Instance._window.VSync = VSyncMode.On;
             Instance._window.TargetRenderFrequency = DisplayDevice.Default.RefreshRate;
             Initialize?.Invoke(Instance, EventArgs.Empty);
             UpdateFrameObjectList();        // Initializeの中でのFrameObjectの変更を適用
@@ -202,8 +206,13 @@ namespace Elffy
         #region OnRendering
         private static void OnRendering(object sender, OpenTK.FrameEventArgs e)
         {
+            CurrentFrameTime = Instance._watch.ElapsedMilliseconds;
             FPSManager.Aggregate(e.Time);
             Input.Input.Update();
+            if(!Instance._watch.IsRunning) {
+                Instance._watch.Start();
+            }
+            CurrentFrame = Instance._watch.ElapsedMilliseconds;
             foreach(var frameObject in Instance._frameObjectList.Where(x => !x.IsFrozen)) {
                 if(frameObject.IsStarted == false) {
                     frameObject.Start();

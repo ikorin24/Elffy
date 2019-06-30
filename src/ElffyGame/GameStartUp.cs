@@ -74,24 +74,21 @@ namespace ElffyGame
             var font = new Font(FontFamily.GenericSansSerif, 50);
             var rand = new Random();
             Animation.Create().While(() => true, _ => {
-                pen.Color = Rand.Color();
+                //pen.Color = Rand.Color();
                 //canvas.DrawLine(pen, rand.Next(canvas.PixelWidth), rand.Next(canvas.PixelHeight), rand.Next(canvas.PixelWidth), rand.Next(canvas.PixelHeight));
             });
             canvas.Clear(Color.White);
             canvas.DrawString("test", font, Brushes.Green, new Point());
             canvas.Position = new Vector3(2, 2, 1);
-            //canvas.Activate();
+            canvas.Activate();
 
             Camera.Current.Position = new Vector3(6f, 5f, 7f);
-            //Camera.Current.Position = new Vector3(0, 7, 0.01f);
             Camera.Current.Direction = Vector3.Zero - Camera.Current.Position;
 
             Animation.Create().While(() => true, info => {
                 var theta = MathHelper.TwoPi * info.FrameNum / 500;
                 var cos = (float)Math.Cos(theta);
                 var sin = (float)Math.Sin(theta);
-                //Camera.Current.Position = new Vector3(5 * cos, 5, 5 * (-sin));
-                //Camera.Current.Direction = Vector3.Zero - Camera.Current.Position;
                 cube.Rotate(Quaternion.FromAxisAngle(new Vector3(1, 1, 0), 1f / 180 * MathHelper.Pi));
             });
 
@@ -103,13 +100,20 @@ namespace ElffyGame
             plain.Position = new Vector3(1, 1, 0.04f);
             plain.Activate();
             MainCamera.Init();
-            //Camera.MainCamera.Direction = new Vector3(0, 0, -1f);
-            //Camera.MainCamera.Position = new Vector3(0, 0, 5f);
-            //Camera.MainCamera.Direction = new Vector3(-1f, -1f, 0);
-            //Camera.MainCamera.Position = new Vector3(5f, 5f, 0);
-            //Animation.Create().While(() => true, _ => {
-            //    DebugManager.Append(Camera.Current.Position);
-            //});
+
+            Animation.Create()
+            .Begin(3000, anim => {
+                canvas.Clear(Rand.Color());
+                canvas.DrawString((anim.Time / 1000).ToString(), font, Brushes.Red, new PointF());
+            })
+            .Wait(2000)
+            .Begin(3000, anim => {
+                canvas.Clear(Rand.Color());
+                canvas.DrawString((anim.Time / 1000).ToString(), font, Brushes.Red, new PointF());
+            })
+            .Do(_ => {
+                canvas.Clear(Color.White);
+            });
         }
     }
 }

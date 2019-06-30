@@ -14,6 +14,10 @@ namespace Elffy.Animation
 
         public static Animation Create() => new Animation();
 
+        /// <summary></summary>
+        /// <param name="time">実行時間(ms)</param>
+        /// <param name="behavior">実行する処理</param>
+        /// <returns><see cref="Animation"/> オブジェクト</returns>
         public Animation Begin(int time, AnimationBehavior behavior)
         {
             if(time <= 0) { throw new ArgumentException($"{nameof(time)} must be bigger than 1."); }
