@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace Elffy.Animation
 {
+    /// <summary><see cref="Animation"/> の現在実行中の処理に渡される情報</summary>
     public struct AnimationInfo
     {
         /// <summary>現在の <see cref="AnimationBehavior"/> の寿命(ms)</summary>
