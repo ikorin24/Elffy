@@ -12,6 +12,7 @@ using System.Drawing;
 using System.IO;
 using Elffy.Threading;
 using System.Diagnostics;
+using Elffy.Core.Timer;
 
 namespace Elffy
 {
@@ -21,7 +22,7 @@ namespace Elffy
         private List<FrameObject> _frameObjectList = new List<FrameObject>();
         private List<FrameObject> _addedFrameObjectBuffer = new List<FrameObject>();
         private List<FrameObject> _removedFrameObjectBuffer = new List<FrameObject>();
-        private readonly Stopwatch _watch = new Stopwatch();
+        private readonly IGameTimer _watch = GameTimerGenerator.Create();
 
         public static Game Instance { get; private set; }
         public static Size ClientSize => Instance?._window?.ClientSize ?? throw NewGameNotRunningException();
