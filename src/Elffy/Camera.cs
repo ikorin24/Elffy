@@ -10,16 +10,18 @@ namespace Elffy
 {
     public class Camera
     {
-        private const int MAIN_CAMERA = 0;
         private const float NEAR = 0.1f;
-        private static int _numGenerator = MAIN_CAMERA;
-        private static readonly Dictionary<int, Camera> _cameras = new Dictionary<int, Camera>();
 
-        public static Camera Current { get; private set; }
-        public static Camera MainCamera => _cameras[MAIN_CAMERA];
+        #region Current
+        public static Camera Current
+        {
+            get => _current;
+            set { _current = value ?? throw new ArgumentNullException(); }
+        }
+        private static Camera _current = new Camera();
+        #endregion
 
-        public int Num { get; private set; }
-
+        #region Position
         public Vector3 Position
         {
             get { return _position; }
@@ -30,7 +32,9 @@ namespace Elffy
             }
         }
         private Vector3 _position = Vector3.UnitZ;
+        #endregion
 
+        #region Direction
         public Vector3 Direction
         {
             get { return _direction; }
@@ -42,7 +46,9 @@ namespace Elffy
             }
         }
         private Vector3 _direction = -Vector3.UnitZ;
+        #endregion
 
+        #region Up
         public Vector3 Up
         {
             get { return _up; }
@@ -54,10 +60,7 @@ namespace Elffy
             }
         }
         private Vector3 _up = Vector3.UnitY;
-
-        internal Matrix4 Matrix { get; private set; } = Matrix4.Identity;
-
-        internal Matrix4 Projection { get; private set; } = Matrix4.Identity;
+        #endregion
 
         #region Fovy
         /// <summary>Y方向視野角(度)[0 ~ 180]</summary>
@@ -72,7 +75,7 @@ namespace Elffy
                 SetProjection(radian, _far);
             }
         }
-        private float _fovy = 45;
+        private float _fovy = 25;
         #endregion
 
         #region Far
@@ -90,70 +93,21 @@ namespace Elffy
         private float _far = 100f;
         #endregion
 
-        #region コンストラクタ
-        static Camera()
-        {
-            var mainCamera = new Camera();
-            _cameras.Add(mainCamera.Num, mainCamera);
-            Current = mainCamera;
-        }
+        #region internal Property
+        internal Matrix4 Matrix { get; private set; } = Matrix4.Identity;
 
-        private Camera()
+        internal Matrix4 Projection { get; private set; } = Matrix4.Identity;
+        #endregion
+
+        #region コンストラクタ
+        public Camera()
         {
-            Num = _numGenerator++;
             SetProjection(_fovy / 180f * (float)Math.PI, _far);
             SetMatrix(_position, _direction, _up);
         }
         #endregion
 
-        public static int GenerateCamera()
-        {
-            var newCamera = new Camera();
-            _cameras.Add(newCamera.Num, newCamera);
-            return newCamera.Num;
-        }
-
-        public static void Move(float x, float y, float z)
-        {
-            if(x == 0 && y == 0 && z == 0) { return; }
-            Current.Position += new Vector3(x, y, z);
-        }
-
-        #region ChangeCamera
-        /// <summary>番号を指定してカメラを変更します</summary>
-        /// <param name="cameraNum">カメラ番号</param>
-        public static void ChangeCamera(int cameraNum)
-        {
-            if(_cameras.TryGetValue(cameraNum, out var camera)) {
-                Current = camera;
-            }
-            else { throw new ArgumentException($"The camera of number '{cameraNum}' does not exist."); }
-        }
-        #endregion
-
-        #region GetCamera
-        /// <summary>番号を指定してカメラを取得します</summary>
-        /// <param name="cameraNum">カメラ番号</param>
-        /// <returns>カメラ</returns>
-        public static Camera GetCamera(int cameraNum)
-        {
-            if(_cameras.TryGetValue(cameraNum, out var camera)) {
-                return camera;
-            }
-            else { throw new ArgumentException($"The camera of number '{cameraNum}' does not exist."); }
-        }
-        #endregion
-
-        #region RemoveCamera
-        /// <summary>番号を指定してカメラを削除します</summary>
-        /// <param name="cameraNum">カメラ番号</param>
-        public static void RemoveCamera(int cameraNum)
-        {
-            if(cameraNum == MAIN_CAMERA) { throw new ArgumentException("Main camera cannot be removed."); }
-            _cameras.Remove(cameraNum);
-        }
-        #endregion
-
+        #region private Method
         private void SetMatrix(Vector3 pos, Vector3 dir, Vector3 up)
         {
             Matrix = Matrix4.LookAt(pos, pos + dir, up);
@@ -163,5 +117,6 @@ namespace Elffy
         {
             Projection = Matrix4.CreatePerspectiveFieldOfView(radian, Game.AspectRatio, NEAR, far);
         }
+        #endregion
     }
 }

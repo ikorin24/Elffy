@@ -17,15 +17,13 @@ namespace ElffyGame
 
         static MainCamera()
         {
-            _camera = Camera.MainCamera;
+            _camera = Camera.Current;
         }
 
         public static void Init()
         {
             if(_isInit) { return; }
             _isInit = true;
-
-            var anim = Animation.Create();
 
             Animation.Create().While(() => true, _ => {
                 if(Controller.ButtonA()) {
