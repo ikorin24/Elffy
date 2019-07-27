@@ -40,13 +40,6 @@ namespace Elffy.Core
         public Texture Texture { get; set; }
         #endregion
 
-        /// <summary>static コンストラクタ</summary>
-        static Renderable()
-        {
-            // 法線の正規化
-            GL.Enable(EnableCap.Normalize);
-        }
-
         ~Renderable() => Dispose(false);
 
         #region Render
@@ -71,24 +64,15 @@ namespace Elffy.Core
         /// <summary>派生クラスでoverrideされると、このインスタンスの描画前に実行されます。overrideされない場合、何もしません。</summary>
         protected virtual void OnRendering() { }
 
-        #region Load
-        /// <summary>描画する3Dモデル(頂点データ)をロードします</summary>
-        /// <param name="resource">リソース名</param>
-        protected void Load(string resource)
-        {
-            throw new NotImplementedException();        // TODO: リソースからの3Dモデルのロード
-            //ThrowIfNotMainThread(nameof(Load));
-            //_isLoaded = true;
-        }
-
-        /// <summary>描画する3Dモデル(頂点データ)をロードします</summary>
+        #region InitGraphicBuffer
+        /// <summary>描画する3Dモデル(頂点データ)をGPUメモリにロードします</summary>
         /// <param name="vertexArray">頂点配列</param>
         /// <param name="indexArray">頂点インデックス配列</param>
-        protected void Load(Vertex[] vertexArray, int[] indexArray)
+        protected void InitGraphicBuffer(Vertex[] vertexArray, int[] indexArray)
         {
             _vertexArray = vertexArray ?? throw new ArgumentNullException(nameof(vertexArray));
             _indexArray = indexArray ?? throw new ArgumentNullException(nameof(indexArray));
-            ThrowIfNotMainThread(nameof(Load));
+            ThrowIfNotMainThread(nameof(InitGraphicBuffer));
 
             // 頂点バッファ(VBO)生成
             _vertexBuffer = GL.GenBuffer();

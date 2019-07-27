@@ -161,6 +161,7 @@ namespace Elffy
             GL.ClearColor(Color4.Gray);
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Texture2D);
+            GL.Enable(EnableCap.Normalize);
 
             // αブレンディング設定
             GL.Enable(EnableCap.Blend);

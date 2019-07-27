@@ -12,6 +12,7 @@ using OpenTK;
 using Elffy.Animation;
 using Elffy.Shape;
 using OpenTK.Graphics;
+using Elffy.Serialization;
 
 namespace ElffyGame
 {
@@ -114,6 +115,17 @@ namespace ElffyGame
             .Do(_ => {
                 canvas.Clear(Color.White);
             });
+
+            cube.IsVisible = false;
+            canvas.IsVisible = false;
+            plain.IsVisible = false;
+            xyCanvas.IsVisible = false;
+            xzCanvas.IsVisible = false;
+
+            var dice = Resources.LoadModel("Dice.fbx");
+            dice.Activate();
+            //var testCube = Resources.LoadModel("cube.fbx");
+            //testCube.Activate();
         }
     }
 }

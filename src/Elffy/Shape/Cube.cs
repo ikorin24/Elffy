@@ -57,9 +57,10 @@ namespace Elffy.Shape
         };
         private static readonly int[] _indexArray = Enumerable.Range(0, _vertexArray.Length).ToArray();
 
-        public Cube()
+        protected override void OnActivated()
         {
-            Load(_vertexArray, _indexArray);
+            base.OnActivated();
+            InitGraphicBuffer(_vertexArray, _indexArray);
         }
     }
 }

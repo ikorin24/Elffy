@@ -24,9 +24,10 @@ namespace Elffy.UI
         };
         private static readonly int[] _indexArray = new int[6] { 0, 1, 2, 2, 3, 0 };
 
-        public Plain()
+        protected override void OnActivated()
         {
-            Load(_vertexArray, _indexArray);
+            base.OnActivated();
+            InitGraphicBuffer(_vertexArray, _indexArray);
         }
     }
 }

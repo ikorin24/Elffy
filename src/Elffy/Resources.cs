@@ -6,6 +6,8 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Elffy.Exceptions;
+using Elffy.Serialization;
+using Elffy.Shape;
 
 namespace Elffy
 {
@@ -53,6 +55,18 @@ namespace Elffy
             return new ResourceStream(resource.Position, resource.Length);
         }
         #endregion
+
+        public static Model3D LoadModel(string name)
+        {
+            var stream = LoadStream(name);
+            var ext = Path.GetExtension(name).ToLower();
+            switch(ext) {
+                case ".fbx":
+                    return ModelLoader.Load(stream, ModelType.Fbx);
+                default:
+                    throw new NotSupportedException($"Extension '{ext}' is not supported.");
+            }
+        }
 
         internal static bool HasResource(string name) => 
             _resources?.ContainsKey(name) ?? throw new InvalidOperationException("Resources not Initialized");
