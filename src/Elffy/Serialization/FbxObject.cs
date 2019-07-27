@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Elffy.Serialization
 {
     /// <summary>A fbx objsct, which is root node of hierarchical tree</summary>
-    public class FbxObject : FbxNode
+    internal class FbxObject : FbxNode
     {
         /// <summary>format version of fbx file</summary>
         internal int FormatVersion { get; set; }
@@ -23,7 +23,7 @@ namespace Elffy.Serialization
 
     /// <summary>A fbx node in hierarchical tree</summary>
     [DebuggerDisplay("{Name}")]
-    public class FbxNode
+    internal class FbxNode
     {
         /// <summary>get wheter this node has children node</summary>
         public bool HasChildren => Children.Count > 0;
@@ -124,7 +124,7 @@ namespace Elffy.Serialization
     }
 
     /// <summary>A property infomation of <see cref="FbxNode"/></summary>
-    public abstract class FbxProperty
+    internal abstract class FbxProperty
     {
         /// <summary>get type of this property. (if array property, type of an item in array.)</summary>
         public Type ValueType { get; protected set; }
@@ -144,7 +144,7 @@ namespace Elffy.Serialization
 
     /// <summary>A not-array property infomation of <see cref="FbxNode"/></summary>
     /// <typeparam name="T">type of property</typeparam>
-    public abstract class FbxValueProperty<T> : FbxProperty
+    internal abstract class FbxValueProperty<T> : FbxProperty
     {
         /// <summary>get of set property value</summary>
         public T Value { get; set; }
@@ -163,7 +163,7 @@ namespace Elffy.Serialization
 
     /// <summary>An array property infomation of <see cref="FbxNode"/></summary>
     /// <typeparam name="T">type of an item in array</typeparam>
-    public abstract class FbxArrayProperty<T> : FbxProperty
+    internal abstract class FbxArrayProperty<T> : FbxProperty
     {
         /// <summary>get of set property value</summary>
         public T[] Value { get; set; }
@@ -182,7 +182,7 @@ namespace Elffy.Serialization
 
     /// <summary>an <see cref="int"/> property of <see cref="FbxNode"/></summary>
     [DebuggerDisplay("int : {Value}")]
-    public sealed class FbxIntProperty : FbxValueProperty<int>
+    internal sealed class FbxIntProperty : FbxValueProperty<int>
     {
         /// <summary>Dump summary of this <see cref="FbxIntProperty"/></summary>
         /// <returns>summary string</returns>
@@ -193,7 +193,7 @@ namespace Elffy.Serialization
 
     /// <summary>a <see cref="short"/> property of <see cref="FbxNode"/></summary>
     [DebuggerDisplay("short : {Value}")]
-    public sealed class FbxShortProperty : FbxValueProperty<short>
+    internal sealed class FbxShortProperty : FbxValueProperty<short>
     {
         /// <summary>Dump summary of this <see cref="FbxShortProperty"/></summary>
         /// <returns>summary string</returns>
@@ -204,7 +204,7 @@ namespace Elffy.Serialization
 
     /// <summary>a <see cref="long"/> property of <see cref="FbxNode"/></summary>
     [DebuggerDisplay("long : {Value}")]
-    public sealed class FbxLongProperty : FbxValueProperty<long>
+    internal sealed class FbxLongProperty : FbxValueProperty<long>
     {
         /// <summary>Dump summary of this <see cref="FbxLongProperty"/></summary>
         /// <returns>summary string</returns>
@@ -215,7 +215,7 @@ namespace Elffy.Serialization
 
     /// <summary>a <see cref="float"/> property of <see cref="FbxNode"/></summary>
     [DebuggerDisplay("float : {Value}")]
-    public sealed class FbxFloatProperty : FbxValueProperty<float>
+    internal sealed class FbxFloatProperty : FbxValueProperty<float>
     {
         /// <summary>Dump summary of this <see cref="FbxFloatProperty"/></summary>
         /// <returns>summary string</returns>
@@ -226,7 +226,7 @@ namespace Elffy.Serialization
 
     /// <summary>a <see cref="double"/> property of <see cref="FbxNode"/></summary>
     [DebuggerDisplay("double : {Value}")]
-    public sealed class FbxDoubleProperty : FbxValueProperty<double>
+    internal sealed class FbxDoubleProperty : FbxValueProperty<double>
     {
         /// <summary>Dump summary of this <see cref="FbxDoubleProperty"/></summary>
         /// <returns>summary string</returns>a
@@ -237,7 +237,7 @@ namespace Elffy.Serialization
 
     /// <summary>a <see cref="bool"/> property of <see cref="FbxNode"/></summary>
     [DebuggerDisplay("bool : {Value}")]
-    public sealed class FbxBoolProperty : FbxValueProperty<bool>
+    internal sealed class FbxBoolProperty : FbxValueProperty<bool>
     {
         /// <summary>Dump summary of this <see cref="FbxBoolProperty"/></summary>
         /// <returns>summary string</returns>
@@ -248,7 +248,7 @@ namespace Elffy.Serialization
 
     /// <summary>a <see cref="string"/> property of <see cref="FbxNode"/></summary>
     [DebuggerDisplay("string : {Value}")]
-    public sealed class FbxStringProperty : FbxValueProperty<string>
+    internal sealed class FbxStringProperty : FbxValueProperty<string>
     {
         /// <summary>Dump summary of this <see cref="FbxStringProperty"/></summary>
         /// <returns>summary string</returns>
@@ -259,7 +259,7 @@ namespace Elffy.Serialization
 
     /// <summary>an array of <see cref="int"/> property of <see cref="FbxNode"/></summary>
     [DebuggerDisplay("int[]")]
-    public sealed class FbxIntArrayProperty : FbxArrayProperty<int>
+    internal sealed class FbxIntArrayProperty : FbxArrayProperty<int>
     {
         /// <summary>Dump summary of this <see cref="FbxIntArrayProperty"/></summary>
         /// <returns>summary string</returns>
@@ -270,7 +270,7 @@ namespace Elffy.Serialization
 
     /// <summary>an array of <see cref="long"/> property of <see cref="FbxNode"/></summary>
     [DebuggerDisplay("long[]")]
-    public sealed class FbxLongArrayProperty : FbxArrayProperty<long>
+    internal sealed class FbxLongArrayProperty : FbxArrayProperty<long>
     {
         /// <summary>Dump summary of this <see cref="FbxLongArrayProperty"/></summary>
         /// <returns>summary string</returns>
@@ -281,7 +281,7 @@ namespace Elffy.Serialization
 
     /// <summary>an array of <see cref="float"/> property of <see cref="FbxNode"/></summary>
     [DebuggerDisplay("float[]")]
-    public sealed class FbxFloatArrayProperty : FbxArrayProperty<float>
+    internal sealed class FbxFloatArrayProperty : FbxArrayProperty<float>
     {
         /// <summary>Dump summary of this <see cref="FbxFloatArrayProperty"/></summary>
         /// <returns>summary string</returns>
@@ -292,7 +292,7 @@ namespace Elffy.Serialization
 
     /// <summary>an array of <see cref="double"/> property of <see cref="FbxNode"/></summary>
     [DebuggerDisplay("double[]")]
-    public sealed class FbxDoubleArrayProperty : FbxArrayProperty<double>
+    internal sealed class FbxDoubleArrayProperty : FbxArrayProperty<double>
     {
         /// <summary>Dump summary of this <see cref="FbxDoubleArrayProperty"/></summary>
         /// <returns>summary string</returns>
@@ -303,7 +303,7 @@ namespace Elffy.Serialization
 
     /// <summary>an array of <see cref="bool"/> property of <see cref="FbxNode"/></summary>
     [DebuggerDisplay("bool[]")]
-    public sealed class FbxBoolArrayProperty : FbxArrayProperty<bool>
+    internal sealed class FbxBoolArrayProperty : FbxArrayProperty<bool>
     {
         /// <summary>Dump summary of this <see cref="FbxBoolArrayProperty"/></summary>
         /// <returns>summary string</returns>
@@ -314,7 +314,7 @@ namespace Elffy.Serialization
 
     /// <summary>a raw binary property of <see cref="FbxNode"/></summary>
     [DebuggerDisplay("[Raw-Binary]")]
-    public sealed class FbxBinaryProperty : FbxArrayProperty<byte>
+    internal sealed class FbxBinaryProperty : FbxArrayProperty<byte>
     {
         /// <summary>Dump summary of this <see cref="FbxBinaryProperty"/></summary>
         /// <returns>summary string</returns>

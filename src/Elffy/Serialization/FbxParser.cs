@@ -7,7 +7,7 @@ using System.IO.Compression;
 
 namespace Elffy.Serialization
 {
-    public class FbxParser
+    internal class FbxParser
     {
         #region private member
         /// <summary>Magic Word of Binary FBX</summary>
