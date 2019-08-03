@@ -21,7 +21,7 @@ namespace Test
             // リソースのコンパイル -> デコンパイル -> デコンパイルした全ファイルと元ファイルのハッシュが一致すればOK
 
             // コンパイル実行
-            var source = new DirectoryInfo(Path.Combine(TestValues.FileDirectory, "Resources"));
+            var source = new DirectoryInfo(Path.Combine(TestValues.FileDirectory, "ElffyResources"));
             var output = Path.Combine(".");
             var args = new string[] { source.FullName, output };
             Program.Main(args);
@@ -67,7 +67,7 @@ namespace Test
             // コンパイル -> コンパイルされたリソースをロード -> もとのファイルとハッシュが一致すればOK
 
             // コンパイル実行
-            var source = new DirectoryInfo(Path.Combine(TestValues.FileDirectory, "Resources"));
+            var source = new DirectoryInfo(Path.Combine(TestValues.FileDirectory, "ElffyResources"));
             var output = Path.Combine(".");
             var args = new string[] { source.FullName, output };
             Program.Main(args);
