@@ -11,7 +11,7 @@ using OpenTK;
 using OpenTK.Graphics;
 using System.Runtime.InteropServices;
 
-namespace Elffy.UI
+namespace Elffy.Shape
 {
     public class Plain : Renderable
     {

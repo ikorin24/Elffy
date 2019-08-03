@@ -88,7 +88,7 @@
     <Compile Include="Texture.cs" />
     <Compile Include="Threading\GameThread.cs" />
     <Compile Include="UI\Canvas.cs" />
-    <Compile Include="UI\Plain.cs" />
+    <Compile Include="Shape\Plain.cs" />
     <Compile Include="UI\UISetting.cs" />
     <Compile Include="WindowStyle.cs" />
     <Compile Include="DebugManager.cs" />

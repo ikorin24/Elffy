@@ -11,6 +11,7 @@ using Elffy.Core;
 using OpenTK;
 using OpenTK.Graphics;
 using System.Runtime.InteropServices;
+using Elffy.Shape;
 
 namespace Elffy.UI
 {
