@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace ElffyResourceCompiler
 {
-    public static class ResourceManager2
+    public static class Compiler
     {
         #region private Member
         private const string FORMAT_VERSION = "1.0";
@@ -34,6 +34,8 @@ namespace ElffyResourceCompiler
         private const int HASH_LEN = 32;
         /// <summary>ファイル数の書き込み部のバイトサイズ</summary>
         private const int FILE_COUNT_BYTE_COUNT = 4;
+        /// <summary>ファイルサイズの書き込み部のバイトサイズ</summary>
+        private const int FILE_SIZE_BYTE_COUNT = 8;
         #endregion
 
         #region Compile
@@ -58,7 +60,7 @@ namespace ElffyResourceCompiler
                         WriteDirectory(dir, "", fs, ref fileCount);
                     }
                     fs.Position = FORMAT_VERSION.Length + MAGIC_WORD.Length;
-                    fs.Write(IntToBytesLittleEndian(fileCount), 0, FILE_COUNT_BYTE_COUNT);
+                    fs.Write(IntToBytesLittleEndian(fileCount), 0, FILE_COUNT_BYTE_COUNT);      // ファイル数書き込み
                 }
                 if(File.Exists(TMP_FILE)) {
                     File.Delete(TMP_FILE);
@@ -141,7 +143,7 @@ namespace ElffyResourceCompiler
                     stream.Write(hash, 0, hash.Length);
                 }
 
-                WriteToStream(stream, $"{file.Length.ToString()}:");    // ファイル長を書き込み
+                stream.Write(LongToBytesLittleEndian(file.Length), 0, FILE_SIZE_BYTE_COUNT);    // ファイルサイズ書き込み
 
                 // データの書き込み
                 using(var fs = file.OpenRead()) {
@@ -178,15 +180,19 @@ namespace ElffyResourceCompiler
                 if(stream.Read(_buf, 0, HASH_LEN) != HASH_LEN) { return false; }
 
                 // 読み取るバイト長を取得
-                bufPos = 0;
-                while(true) {
-                    var tmp = stream.ReadByte();
-                    if(tmp == -1) { return false; }     // ファイル末尾ならフォーマットエラー
-                    var b = (byte)tmp;
-                    if(b == 0x3A) { break; }        // 区切り文字 0x3A == ':' までがファイル名
-                    _buf[bufPos++] = b;
-                }
-                if(!long.TryParse(_encoding.GetString(_buf, 0, bufPos), out long filelen)) { return false; }
+                //bufPos = 0;
+                //while(true) {
+                //    var tmp = stream.ReadByte();
+                //    if(tmp == -1) { return false; }     // ファイル末尾ならフォーマットエラー
+                //    var b = (byte)tmp;
+                //    if(b == 0x3A) { break; }        // 区切り文字 0x3A == ':' までがファイル名
+                //    _buf[bufPos++] = b;
+                //}
+                //if(!long.TryParse(_encoding.GetString(_buf, 0, bufPos), out long filelen)) { return false; }
+
+                // ファイル長取得
+                if(stream.Read(_buf, 0, FILE_SIZE_BYTE_COUNT) != FILE_SIZE_BYTE_COUNT) { return false; }
+                var filelen = BytesToLongLittleEndian(_buf);
 
                 var allLen = filelen;
                 var filename = CreateDirectory(formattedFilePath, rootDir, out var dir);
@@ -237,8 +243,10 @@ namespace ElffyResourceCompiler
         }
         #endregion
 
-        private static byte[] IntToBytesLittleEndian(int x) => Enumerable.Range(0, 4).Select(i => (byte)((x >> (i * 8)) % 256)).ToArray();
-        private static int BytesToIntLittleEndian(byte[] x) => Enumerable.Range(0, 4).Select(i => x[i] << (i * 8)).Sum();
+        private static byte[] LongToBytesLittleEndian(long x) => Enumerable.Range(0, sizeof(long)).Select(i => (byte)((x >> (i * 8)) % 256)).ToArray();
+        private static byte[] IntToBytesLittleEndian(int x) => Enumerable.Range(0, sizeof(int)).Select(i => (byte)((x >> (i * 8)) % 256)).ToArray();
+        private static long BytesToLongLittleEndian(byte[] x) => Enumerable.Range(0, sizeof(long)).Select(i => ((long)x[i]) << (i * 8)).Sum();
+        private static int BytesToIntLittleEndian(byte[] x) => Enumerable.Range(0, sizeof(int)).Select(i => x[i] << (i * 8)).Sum();
         #endregion private Method
     }
 }

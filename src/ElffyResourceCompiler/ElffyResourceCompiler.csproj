@@ -50,8 +50,7 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ResourceManager.cs" />
-    <Compile Include="ResourceManager2.cs" />
+    <Compile Include="Compiler.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

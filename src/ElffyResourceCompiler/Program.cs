@@ -7,6 +7,8 @@ namespace ElffyResourceCompiler
 {
     class Program
     {
+        public const string OutputFile = "Resources.dat";
+
         public static int Main(string[] args)
         {
             if(args.Length < 1) {
@@ -28,7 +30,7 @@ namespace ElffyResourceCompiler
             //}
 
             var resourceDir = args[0];
-            var output = Path.Combine(args[1], "Resources.dat");
+            var output = Path.Combine(args[1], OutputFile);
             //var password = args[2];
 
             Console.WriteLine($"resourceDir : {resourceDir}");
@@ -37,8 +39,7 @@ namespace ElffyResourceCompiler
 
             var sw = new Stopwatch();
             sw.Start();
-            ResourceManager2.Compile(resourceDir, output);
-            //ResourceManager2.Decompile(output, "decompile");
+            Compiler.Compile(resourceDir, output);
             sw.Stop();
             Console.WriteLine($"Resouce compiled : {sw.ElapsedMilliseconds}ms");
             return 0;

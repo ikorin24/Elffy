@@ -20,6 +20,8 @@ namespace Elffy
         private const string MAGIC_WORD = "ELFFY_RESOURCE";
         /// <summary>ハッシュのバイト長</summary>
         private const int HASH_LEN = 32;
+        /// <summary>ファイルサイズのバイト長</summary>
+        private const int FILE_SIZE_LEN = 8;
         /// <summary>AESの鍵生成時のsalt</summary>
         private static readonly Encoding _encoding = Encoding.UTF8;
         private static Dictionary<string, ResourceObject> _resources;
@@ -44,10 +46,16 @@ namespace Elffy
         }
         #endregion
 
+        public static ICollection<string> GetResourceNames()
+        {
+            CheckInitialized();
+            return _resources.Keys;
+        }
+            
         #region LoadStream
         public static ResourceStream LoadStream(string name)
         {
-            if(!IsInitialized) { throw new InvalidOperationException("Resources not Initialized"); }
+            CheckInitialized();
             if(name == null) { throw new ArgumentNullException(); }
             if(!_resources.TryGetValue(name, out var resource)) {
                 throw new ResourceNotFoundException(name);
@@ -58,6 +66,7 @@ namespace Elffy
 
         public static Model3D LoadModel(string name)
         {
+            CheckInitialized();
             var stream = LoadStream(name);
             var ext = Path.GetExtension(name).ToLower();
             switch(ext) {
@@ -68,8 +77,11 @@ namespace Elffy
             }
         }
 
-        internal static bool HasResource(string name) => 
-            _resources?.ContainsKey(name) ?? throw new InvalidOperationException("Resources not Initialized");
+        internal static bool HasResource(string name)
+        {
+            CheckInitialized();
+            return _resources.ContainsKey(name);
+        }
 
         #region CreateDictionary
         private static void CreateDictionary()
@@ -93,7 +105,8 @@ namespace Elffy
                     var resource = new ResourceObject();
                     resource.Name = ReadString(fs, END_MARK);                                       // ファイル名取得
                     if(fs.Read(_buf, 0, HASH_LEN) != HASH_LEN) { throw new FormatException(); }     // ハッシュ値を読み飛ばす(使わない)
-                    resource.Length = ReadLong(fs, END_MARK);                                       // ファイル長取得
+                    //resource.Length = ReadLong(fs, END_MARK);                                       // ファイル長取得
+                    resource.Length = (fs.Read(_buf, 0, FILE_SIZE_LEN) == FILE_SIZE_LEN) ? BytesToLongLittleEndian(_buf) : throw new FormatException(); // ファイル長取得
                     resource.Position = fs.Position;
                     fs.Position += resource.Length;             // データ部を読み飛ばす
                     _resources.Add(resource.Name, resource);
@@ -123,8 +136,13 @@ namespace Elffy
         }
         #endregion
 
+        private static long BytesToLongLittleEndian(byte[] x) => Enumerable.Range(0, sizeof(long)).Select(i => ((long)x[i]) << (i * 8)).Sum();
         private static int ReadInt(Stream stream, byte endMark) => int.Parse(ReadString(stream, endMark));
         private static long ReadLong(Stream stream, byte endMark) => long.Parse(ReadString(stream, endMark));
+        private static void CheckInitialized()
+        {
+            if(!IsInitialized) { throw new InvalidOperationException("Resources not Initialized"); }
+        }
 
         #region class ResourceObject
         private class ResourceObject

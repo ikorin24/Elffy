@@ -51,12 +51,18 @@
   <ItemGroup>
     <Compile Include="FbxUnitTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TestValues.cs" />
+    <Compile Include="ResourceTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="testfile\Dice.fbx" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\ElffyResourceCompiler\ElffyResourceCompiler.csproj">
+      <Project>{e3c6ee51-9b98-45df-9bae-9453dcc7f849}</Project>
+      <Name>ElffyResourceCompiler</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Elffy\Elffy.csproj">
       <Project>{d1115639-89f4-47a3-81d1-6594fcb2ff78}</Project>
       <Name>Elffy</Name>
