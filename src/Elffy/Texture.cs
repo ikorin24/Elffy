@@ -56,12 +56,12 @@ namespace Elffy
             GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);
         }
 
-        #region SwitchToThis
+        #region SwitchBind
         /// <summary>
         /// 現在のOpenGLのTextureをこのインスタンスのテクスチャに切り替えます<para/>
         /// ※ 必要な操作を終えた後、必ず GL.BindTexture(TextureTarget.Texture2D, 0) でバインド解除をしてください。<para/>
         /// </summary>
-        internal void SwitchToThis()
+        internal void SwitchBind()
         {
             GL.BindTexture(TextureTarget.Texture2D, _texture);
         }

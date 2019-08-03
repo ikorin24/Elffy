@@ -112,7 +112,7 @@ namespace Elffy.Core
         {
             if(_isLoaded) {
                 if(Texture != null) {
-                    Texture.SwitchToThis();                     // GLのテクスチャをこのテクスチャに切り替え
+                    Texture.SwitchBind();                     // GLのテクスチャをこのテクスチャに切り替え
                 }
                 else {
                     GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);
