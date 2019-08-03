@@ -17,10 +17,10 @@ namespace Elffy.UI
     {
         private static readonly Vertex[] _vertexArray = new Vertex[4]
         {
-            new Vertex(new Vector3(-1, 1, 0),  new Vector3(0, 0, 1), Color4.White, new Vector2(0, 1)),
-            new Vertex(new Vector3(-1, -1, 0), new Vector3(0, 0, 1), Color4.White, new Vector2(0, 0)),
-            new Vertex(new Vector3(1, -1, 0),  new Vector3(0, 0, 1), Color4.White, new Vector2(1, 0)),
-            new Vertex(new Vector3(1, 1, 0),   new Vector3(0, 0, 1), Color4.White, new Vector2(1, 1)),
+            new Vertex(new Vector3(-1, 1, 0),  new Vector3(0, 0, 1), new Vector2(0, 1)),
+            new Vertex(new Vector3(-1, -1, 0), new Vector3(0, 0, 1), new Vector2(0, 0)),
+            new Vertex(new Vector3(1, -1, 0),  new Vector3(0, 0, 1), new Vector2(1, 0)),
+            new Vertex(new Vector3(1, 1, 0),   new Vector3(0, 0, 1), new Vector2(1, 1)),
         };
         private static readonly int[] _indexArray = new int[6] { 0, 1, 2, 2, 3, 0 };
 

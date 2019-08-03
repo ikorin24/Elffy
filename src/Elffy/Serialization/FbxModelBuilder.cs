@@ -239,7 +239,7 @@ namespace Elffy.Serialization
                 for(int i = 0; i < indexes.Length; i++) {
                     last[i] = indexes[i] < 0;
                     var index = last[i] ? (-indexes[i] - 1) : indexes[i];     // 負のインデックスは多角形ポリゴンの最後の頂点を表す (2の補数が元の値)
-                    vertices[i] = new Vertex(positions[index], normals[i], Color4.White, default);
+                    vertices[i] = new Vertex(positions[index], normals[i], default);
                 }
             }
             return (vertices, GenerateIndexArray(last));
