@@ -33,6 +33,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DocumentationFile>bin\Release\Elffy.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>Elffy.ico</ApplicationIcon>
@@ -56,9 +57,9 @@
     <Compile Include="Animation\AnimationObject.cs" />
     <Compile Include="Animation\AnimationInfo.cs" />
     <Compile Include="Animation\Animation.cs" />
-    <Compile Include="Camera.cs" />
+    <Compile Include="Elffy\Camera.cs" />
     <Compile Include="Control\MessageBox.cs" />
-    <Compile Include="ConfigBase.cs" />
+    <Compile Include="Elffy\ConfigBase.cs" />
     <Compile Include="Core\Consts.cs" />
     <Compile Include="Core\DataSerializer.cs" />
     <Compile Include="Core\FrameEvent.cs" />
@@ -71,36 +72,36 @@
     <Compile Include="Core\Timer\IGameTimer.cs" />
     <Compile Include="Core\Vertex.cs" />
     <Compile Include="Exceptions\ObjectDestroyedException.cs" />
-    <Compile Include="Light.cs" />
+    <Compile Include="Elffy\Light.cs" />
     <Compile Include="Effective\UnmanagedArray.cs" />
     <Compile Include="Exceptions\ResourceNotFoundException.cs" />
     <Compile Include="Input\Trigger.cs" />
-    <Compile Include="Material.cs" />
+    <Compile Include="Elffy\Material.cs" />
     <Compile Include="Mathmatics\Curve.cs" />
     <Compile Include="Mathmatics\MathTool.cs" />
-    <Compile Include="ObjectLayer.cs" />
+    <Compile Include="Elffy\ObjectLayer.cs" />
     <Compile Include="Serialization\FbxModelBuilder.cs" />
     <Compile Include="Serialization\FbxObject.cs" />
     <Compile Include="Serialization\FbxParser.cs" />
     <Compile Include="Serialization\ModelLoader.cs" />
     <Compile Include="Shape\Cube.cs" />
     <Compile Include="Shape\Model3D.cs" />
-    <Compile Include="Texture.cs" />
+    <Compile Include="Elffy\Texture.cs" />
     <Compile Include="Threading\GameThread.cs" />
     <Compile Include="UI\Canvas.cs" />
     <Compile Include="Shape\Plain.cs" />
     <Compile Include="UI\UISetting.cs" />
-    <Compile Include="WindowStyle.cs" />
-    <Compile Include="DebugManager.cs" />
-    <Compile Include="FPSManager.cs" />
-    <Compile Include="FrameObject.cs" />
+    <Compile Include="Elffy\WindowStyle.cs" />
+    <Compile Include="Elffy\DebugManager.cs" />
+    <Compile Include="Elffy\FPSManager.cs" />
+    <Compile Include="Elffy\FrameObject.cs" />
     <Compile Include="Input\Input.cs" />
     <Compile Include="Input\Key.cs" />
     <Compile Include="Input\PadState.cs" />
     <Compile Include="Input\StickAxis.cs" />
-    <Compile Include="Game.cs" />
+    <Compile Include="Elffy\Game.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Resources.cs" />
+    <Compile Include="Elffy\Resources.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="dll\OpenTK.dll" />
