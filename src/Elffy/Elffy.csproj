@@ -19,7 +19,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;SUPPORT_VERTEX_COLOR</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <LangVersion>default</LangVersion>
@@ -71,6 +71,7 @@
     <Compile Include="Core\Timer\GameTimerGenerator.cs" />
     <Compile Include="Core\Timer\IGameTimer.cs" />
     <Compile Include="Core\Vertex.cs" />
+    <Compile Include="Elffy\Sky.cs" />
     <Compile Include="Exceptions\ObjectDestroyedException.cs" />
     <Compile Include="Elffy\Light.cs" />
     <Compile Include="Effective\UnmanagedArray.cs" />

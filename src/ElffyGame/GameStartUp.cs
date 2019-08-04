@@ -31,7 +31,7 @@ namespace ElffyGame
             Controller.Init();
             // ---------------------------------------
 
-            Light.CreateDirectLight(new Vector3(-1, -1, -1), Color4.White);
+            //Light.CreateDirectLight(new Vector3(-1, -1, -1), Color4.White);
 
             var cube = new Cube();
             cube.Texture = new Texture("cube.png");
@@ -126,6 +126,10 @@ namespace ElffyGame
             dice.Activate();
             //var testCube = Resources.LoadModel("cube.fbx");
             //testCube.Activate();
+            //var sky = new Sky(Camera.Current.Far * 0.5f);
+            var sky = new Sky(3);
+            //sky.Texture = new Texture("sky.jpg");
+            sky.Activate();
         }
     }
 }
