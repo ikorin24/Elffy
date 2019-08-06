@@ -39,7 +39,7 @@ namespace ElffyGame
             var axis = Controller.Axis();
             if(axis == Vector2.Zero) { return; }
 
-            var speed = Game.RenderDelta * 3f * axis.Normalized();
+            var speed = Game.RenderDelta / 1000 * 3f * axis.Normalized();
             var direction = _camera.Direction.Normalized();
             _camera.Position += direction * speed.Y;
             var rot = Matrix3.CreateFromAxisAngle(Vector3.UnitY, -MathHelper.PiOver2);
@@ -51,9 +51,9 @@ namespace ElffyGame
         {
             var axis = Controller.Axis();
             if(axis == Vector2.Zero) { return; }
-            var theta = axis.X * MathHelper.DegreesToRadians(90f) * Game.RenderDelta;
+            var theta = axis.X * MathHelper.DegreesToRadians(90f) * Game.RenderDelta / 1000;
             _camera.Direction *= Matrix3.CreateFromAxisAngle(Vector3.UnitY, -theta);
-            var fai = axis.Y * MathHelper.DegreesToRadians(90f) * Game.RenderDelta;
+            var fai = axis.Y * MathHelper.DegreesToRadians(90f) * Game.RenderDelta / 1000;
             var rot = Matrix3.CreateFromAxisAngle(Vector3.UnitY, -MathHelper.PiOver2);
             var tmp = (_camera.Direction * rot).Xz;
             _camera.Direction *= Matrix3.CreateFromAxisAngle(new Vector3(tmp.X, 0, tmp.Y), -fai);
