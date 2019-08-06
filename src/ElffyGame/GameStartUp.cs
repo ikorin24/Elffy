@@ -125,7 +125,7 @@ namespace ElffyGame
             var dice = Resources.LoadModel("Dice2.fbx");
             dice.Activate();
             Animation.Create().WhileTrue(info => {
-                dice.Rotate(Vector3.UnitY, MathHelper.Pi * Game.RenderDelta / 5);
+                dice.Rotate(Vector3.UnitY, MathHelper.Pi * Game.RenderDelta / 5000);
             });
 
             //var testCube = Resources.LoadModel("cube.fbx");

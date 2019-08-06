@@ -38,8 +38,8 @@ namespace Elffy
         
         /// <summary>現在のフレームがゲーム開始から何フレーム目かを取得します(Rendering Frame)</summary>
         public static long CurrentFrame { get; internal set; }
-        public static float FrameDelta => (float?)Instance?._window?.UpdatePeriod ?? throw NewGameNotRunningException();
-        public static float RenderDelta => (float?)Instance?._window?.RenderPeriod ?? throw NewGameNotRunningException();
+        public static float FrameDelta => (float?)Instance?._window?.UpdatePeriod * 1000 ?? throw NewGameNotRunningException();
+        public static float RenderDelta => (float?)Instance?._window?.RenderPeriod * 1000 ?? throw NewGameNotRunningException();
         public static long CurrentFrameTime { get; private set; }
         public static long CurrentTime => Instance?._watch?.ElapsedMilliseconds ?? throw NewGameNotRunningException();
 
