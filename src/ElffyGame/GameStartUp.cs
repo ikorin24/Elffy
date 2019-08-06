@@ -74,7 +74,7 @@ namespace ElffyGame
             var canvas = new Canvas(300, 300);
             var font = new Font(FontFamily.GenericSansSerif, 50);
             var rand = new Random();
-            Animation.Create().While(() => true, _ => {
+            Animation.While(() => true, _ => {
                 //pen.Color = Rand.Color();
                 //canvas.DrawLine(pen, rand.Next(canvas.PixelWidth), rand.Next(canvas.PixelHeight), rand.Next(canvas.PixelWidth), rand.Next(canvas.PixelHeight));
             });
@@ -83,17 +83,17 @@ namespace ElffyGame
             canvas.Position = new Vector3(2, 2, 1);
             canvas.Activate();
 
-            Camera.Current.Position = new Vector3(6f, 5f, 7f);
+            Camera.Current.Position = new Vector3(20f, 12f, 30f);
             Camera.Current.Direction = Vector3.Zero - Camera.Current.Position;
 
-            Animation.Create().While(() => true, info => {
+            Animation.While(() => true, info => {
                 var theta = MathHelper.TwoPi * info.FrameNum / 500;
                 var cos = (float)Math.Cos(theta);
                 var sin = (float)Math.Sin(theta);
                 cube.Rotate(Quaternion.FromAxisAngle(new Vector3(1, 1, 0), 1f / 180 * MathHelper.Pi));
             });
 
-            Animation.Create().While(() => true, info => {
+            Animation.While(() => true, info => {
                 DebugManager.AppendIf(Controller.DownA(), "A");
                 DebugManager.AppendIf(Controller.DownB(), "B");
             });
@@ -102,8 +102,7 @@ namespace ElffyGame
             plain.Activate();
             MainCamera.Init();
 
-            Animation.Create()
-            .Begin(3000, anim => {
+            Animation.Begin(3000, anim => {
                 canvas.Clear(Rand.Color());
                 canvas.DrawString((anim.Time / 1000).ToString(), font, Brushes.Red, new PointF());
             })
@@ -122,11 +121,21 @@ namespace ElffyGame
             xyCanvas.IsVisible = false;
             xzCanvas.IsVisible = false;
 
-            var dice = Resources.LoadModel("Dice2.fbx");
-            dice.Activate();
-            Animation.Create().WhileTrue(info => {
-                dice.Rotate(Vector3.UnitY, MathHelper.Pi * Game.RenderDelta / 5000);
-            });
+            // TODO: Positionable の回転がおかしい。ワールド座標の軸に対して回転している
+
+            for(int i = 0; i < 100; i++) {
+                var dice = Resources.LoadModel("Dice.fbx");
+                dice.Position = new Vector3(Rand.Float(-15f, 15f), Rand.Float(-15f, 15f), Rand.Float(-15f, 15f));
+                dice.Activate();
+                Animation.WhileTrue(info => {
+                    dice.Rotate(Vector3.UnitY, MathHelper.Pi * Game.RenderDelta / 5000);
+                });
+            }
+            //var dice = Resources.LoadModel("Dice2.fbx");
+            //dice.Activate();
+            //Animation.WhileTrue(info => {
+            //    dice.Rotate(Vector3.UnitY, MathHelper.Pi * Game.RenderDelta / 5000);
+            //});
 
             //var testCube = Resources.LoadModel("cube.fbx");
             //testCube.Activate();

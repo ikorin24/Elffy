@@ -1,102 +1,159 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Elffy.Animation
 {
+    #region class Animation
     /// <summary>一連のアニメーションの流れを表すオブジェクト</summary>
-    public class Animation
+    public sealed class Animation
     {
-        /// <summary>この <see cref="Animation"/> の実体</summary>
-        private AnimationObject _animObj;
         /// <summary>何もしない動作を表す <see cref="AnimationBehavior"/> オブジェクト</summary>
-        private static readonly AnimationBehavior WAIT_BEHAVIOR = info => { };
+        internal static readonly AnimationBehavior WAIT_BEHAVIOR = info => { };
         /// <summary>常にtrueを返す条件</summary>
-        private static readonly Func<bool> ALWAYS_TRUE = () => true;
+        internal static readonly Func<bool> ALWAYS_TRUE = () => true;
+
+        /// <summary>この <see cref="Animation"/> の実体</summary>
+        internal AnimationObject AnimObj { get; } = new AnimationObject();
 
         /// <summary>コンストラクタ</summary>
         private Animation() { }
 
-        /// <summary>新しく一連の流れのアニメーションを生成します。</summary>
-        /// <returns>一連のアニメーションの流れを表す <see cref="Animation"/> オブジェクト</returns>
-        public static Animation Create() => new Animation();
-
+        #region public Method
         /// <summary>指定した時間だけ、指定した処理を毎フレーム実行します</summary>
         /// <param name="time">実行時間(ms)</param>
         /// <param name="behavior">実行する処理</param>
         /// <returns>一連のアニメーションの流れを表す <see cref="Animation"/> オブジェクト</returns>
-        public Animation Begin(int time, AnimationBehavior behavior)
+        public static Animation Begin(int time, AnimationBehavior behavior)
         {
             if(time <= 0) { throw new ArgumentException($"{nameof(time)} must be bigger than 1."); }
             if(behavior == null) { throw new ArgumentNullException(nameof(behavior)); }
-
-            var animObj = GetAnimationObject();
-            animObj.AddBehavior(time, behavior);
-            return this;
+            var animation = new Animation();
+            animation.AnimObj.Activate();
+            animation.AnimObj.AddBehavior(time, behavior);
+            return animation;
         }
 
         /// <summary>指定した処理を次のフレームに実行します</summary>
         /// <param name="behavior">実行する処理</param>
         /// <returns>一連のアニメーションの流れを表す <see cref="Animation"/> オブジェクト</returns>
-        public Animation Do(AnimationBehavior behavior)
+        public static Animation Do(AnimationBehavior behavior)
         {
             if(behavior == null) { throw new ArgumentNullException(nameof(behavior)); }
-
-            var animObj = GetAnimationObject();
-            animObj.AddBehavior(behavior);
-            return this;
+            var animation = new Animation();
+            animation.AnimObj.Activate();
+            animation.AnimObj.AddBehavior(behavior);
+            return animation;
         }
 
         /// <summary>指定した時間、アニメーションを停止します</summary>
         /// <param name="time">停止時間(ms)</param>
         /// <returns>一連のアニメーションの流れを表す <see cref="Animation"/> オブジェクト</returns>
-        public Animation Wait(int time)
+        public static Animation Wait(int time)
         {
             if(time < 0) { throw new ArgumentException($"Time must be bigger than 0."); }
-
-            var animObj = GetAnimationObject();
-            animObj.AddBehavior(time, WAIT_BEHAVIOR);
-            return this;
+            var animation = new Animation();
+            animation.AnimObj.Activate();
+            animation.AnimObj.AddBehavior(time, WAIT_BEHAVIOR);
+            return animation;
         }
 
         /// <summary>指定した条件を満たす間、指定した処理を毎フレーム実行します</summary>
         /// <param name="condition">処理の継続条件</param>
         /// <param name="behavior">実行する処理</param>
         /// <returns>一連のアニメーションの流れを表す <see cref="Animation"/> オブジェクト</returns>
-        public Animation While(Func<bool> condition, AnimationBehavior behavior)
+        public static Animation While(Func<bool> condition, AnimationBehavior behavior)
         {
             if(condition == null) { throw new ArgumentNullException(nameof(condition)); }
             if(behavior == null) { throw new ArgumentNullException(nameof(behavior)); }
-            var animObj = GetAnimationObject();
-            animObj.AddBehavior(condition, behavior);
-            return this;
+            var animation = new Animation();
+            animation.AnimObj.Activate();
+            animation.AnimObj.AddBehavior(condition, behavior);
+            return animation;
         }
 
         /// <summary>指定した処理を毎フレーム実行し続けます</summary>
         /// <param name="behavior">実行する処理</param>
         /// <returns>一連のアニメーションの流れを表す <see cref="Animation"/> オブジェクト</returns>
-        public Animation WhileTrue(AnimationBehavior behavior)
+        public static Animation WhileTrue(AnimationBehavior behavior)
         {
             if(behavior == null) { throw new ArgumentNullException(nameof(behavior)); }
-            var animObj = GetAnimationObject();
-            animObj.AddBehavior(ALWAYS_TRUE, behavior);
-            return this;
+            var animation = new Animation();
+            animation.AnimObj.Activate();
+            animation.AnimObj.AddBehavior(ALWAYS_TRUE, behavior);
+            return animation;
+        }
+        #endregion public Method
+    }
+    #endregion
+
+    #region class AnimatinExtension
+    public static class AnimatinExtension
+    {
+        /// <summary>指定した時間だけ、指定した処理を毎フレーム実行します</summary>
+        /// <param name="animation">動作を追加するアニメーション</param>
+        /// <param name="time">実行時間(ms)</param>
+        /// <param name="behavior">実行する処理</param>
+        /// <returns>一連のアニメーションの流れを表す <see cref="Animation"/> オブジェクト</returns>
+        public static Animation Begin(this Animation animation, int time, AnimationBehavior behavior)
+        {
+            if(time <= 0) { throw new ArgumentException($"{nameof(time)} must be bigger than 1."); }
+            if(behavior == null) { throw new ArgumentNullException(nameof(behavior)); }
+            if(!animation.AnimObj.IsActivated) { animation.AnimObj.Activate(); }
+            animation.AnimObj.AddBehavior(time, behavior);
+            return animation;
+        }
+
+        /// <summary>指定した処理を次のフレームに実行します</summary>
+        /// <param name="animation">動作を追加するアニメーション</param>
+        /// <param name="behavior">実行する処理</param>
+        /// <returns>一連のアニメーションの流れを表す <see cref="Animation"/> オブジェクト</returns>
+        public static Animation Do(this Animation animation, AnimationBehavior behavior)
+        {
+            if(behavior == null) { throw new ArgumentNullException(nameof(behavior)); }
+            if(!animation.AnimObj.IsActivated) { animation.AnimObj.Activate(); }
+            animation.AnimObj.AddBehavior(behavior);
+            return animation;
+        }
+
+        /// <summary>指定した時間、アニメーションを停止します</summary>
+        /// <param name="animation">動作を追加するアニメーション</param>
+        /// <param name="time">停止時間(ms)</param>
+        /// <returns>一連のアニメーションの流れを表す <see cref="Animation"/> オブジェクト</returns>
+        public static Animation Wait(this Animation animation, int time)
+        {
+            if(time < 0) { throw new ArgumentException($"Time must be bigger than 0."); }
+            if(!animation.AnimObj.IsActivated) { animation.AnimObj.Activate(); }
+            animation.AnimObj.AddBehavior(time, Animation.WAIT_BEHAVIOR);
+            return animation;
+        }
+
+        /// <summary>指定した条件を満たす間、指定した処理を毎フレーム実行します</summary>
+        /// <param name="animation">動作を追加するアニメーション</param>
+        /// <param name="condition">処理の継続条件</param>
+        /// <param name="behavior">実行する処理</param>
+        /// <returns>一連のアニメーションの流れを表す <see cref="Animation"/> オブジェクト</returns>
+        public static Animation While(this Animation animation, Func<bool> condition, AnimationBehavior behavior)
+        {
+            if(condition == null) { throw new ArgumentNullException(nameof(condition)); }
+            if(behavior == null) { throw new ArgumentNullException(nameof(behavior)); }
+            if(!animation.AnimObj.IsActivated) { animation.AnimObj.Activate(); }
+            animation.AnimObj.AddBehavior(condition, behavior);
+            return animation;
+        }
+
+        /// <summary>指定した処理を毎フレーム実行し続けます</summary>
+        /// <param name="animation">動作を追加するアニメーション</param>
+        /// <param name="behavior">実行する処理</param>
+        /// <returns>一連のアニメーションの流れを表す <see cref="Animation"/> オブジェクト</returns>
+        public static Animation WhileTrue(this Animation animation, AnimationBehavior behavior)
+        {
+            if(behavior == null) { throw new ArgumentNullException(nameof(behavior)); }
+            if(!animation.AnimObj.IsActivated) { animation.AnimObj.Activate(); }
+            animation.AnimObj.AddBehavior(Animation.ALWAYS_TRUE, behavior);
+            return animation;
         }
 
         /// <summary>このアニメーションの以降の動作をすべてキャンセルし停止させます</summary>
-        public void Cancel() => _animObj?.Cancel();
-
-        #region private Method
-        private AnimationObject GetAnimationObject()
-        {
-            if(_animObj == null) {
-                _animObj = new AnimationObject();
-                _animObj.Activate();
-            }
-            return _animObj;
-        }
-        #endregion
+        public static void Cancel(this Animation animation) => animation.AnimObj.Cancel();
     }
+    #endregion
 }

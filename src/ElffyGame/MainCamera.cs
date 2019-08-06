@@ -25,7 +25,7 @@ namespace ElffyGame
             if(_isInit) { return; }
             _isInit = true;
 
-            Animation.Create().While(() => true, _ => {
+            Animation.While(() => true, _ => {
                 if(Controller.ButtonA()) {
                     Rotation();
                 } else {
