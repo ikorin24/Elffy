@@ -27,7 +27,7 @@ namespace Elffy.Core
         {
             Position = position;
             Normal = normal;
-            Color = new Color4(normal.X, normal.Y, normal.Z, 1f);
+            Color = new Color4(Math.Abs(normal.X), Math.Abs(normal.Y), Math.Abs(normal.Z), 1f);
             TexCoord = texcoord;
         }
 
