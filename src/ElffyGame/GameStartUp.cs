@@ -123,8 +123,9 @@ namespace ElffyGame
 
             // TODO: Positionable の回転がおかしい。ワールド座標の軸に対して回転している
 
-            for(int i = 0; i < 100; i++) {
-                var dice = Resources.LoadModel("Dice.fbx");
+            for(int i = 0; i < 1000; i++) {
+                //var dice = Resources.LoadModel("Dice.fbx");
+                var dice = new Cube();
                 dice.Position = new Vector3(Rand.Float(-15f, 15f), Rand.Float(-15f, 15f), Rand.Float(-15f, 15f));
                 dice.Activate();
                 Animation.WhileTrue(info => {
