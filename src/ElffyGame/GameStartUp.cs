@@ -122,12 +122,16 @@ namespace ElffyGame
             xyCanvas.IsVisible = false;
             xzCanvas.IsVisible = false;
 
-            var dice = Resources.LoadModel("Dice.fbx");
+            var dice = Resources.LoadModel("Dice2.fbx");
             dice.Activate();
+            Animation.Create().WhileTrue(info => {
+                dice.Rotate(Vector3.UnitY, MathHelper.Pi * Game.RenderDelta / 5);
+            });
+
             //var testCube = Resources.LoadModel("cube.fbx");
             //testCube.Activate();
             //var sky = new Sky(Camera.Current.Far * 0.5f);
-            var sky = new Sky(3);
+            var sky = new Sky(50);
             //sky.Texture = new Texture("sky.jpg");
             sky.Activate();
         }
