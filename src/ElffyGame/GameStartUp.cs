@@ -121,17 +121,16 @@ namespace ElffyGame
             xyCanvas.IsVisible = false;
             xzCanvas.IsVisible = false;
 
-            // TODO: Positionable の回転がおかしい。ワールド座標の軸に対して回転している
-
-            for(int i = 0; i < 1000; i++) {
-                //var dice = Resources.LoadModel("Dice.fbx");
-                var dice = new Cube();
-                dice.Position = new Vector3(Rand.Float(-15f, 15f), Rand.Float(-15f, 15f), Rand.Float(-15f, 15f));
+            for(int i = 0; i < 100; i++) {
+                var dice = Resources.LoadModel("Dice.fbx");
+                //var dice = new Cube();
+                dice.Position = new Vector3(Rand.Float(-10f, 10f), Rand.Float(-10f, 10f), Rand.Float(-10f, 10f));
                 dice.Activate();
                 Animation.WhileTrue(info => {
-                    dice.Rotate(Vector3.UnitY, MathHelper.Pi * Game.RenderDelta / 5000);
+                    dice.Rotate(Vector3.UnitY, MathHelper.Pi * Game.RenderDelta / 1000);
                 });
             }
+            Animation.WhileTrue(_ => DebugManager.Append(FPSManager.GetFPS()));
             //var dice = Resources.LoadModel("Dice2.fbx");
             //dice.Activate();
             //Animation.WhileTrue(info => {

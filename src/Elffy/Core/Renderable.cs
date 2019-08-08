@@ -50,10 +50,11 @@ namespace Elffy.Core
             // 座標と回転を適用
             var view = Camera.Current.Matrix;
             GL.LoadMatrix(ref view);
+            GL.Translate(Position);
             var rot = Matrix4.CreateFromQuaternion(Rotation);
             GL.MultMatrix(ref rot);
-            var model = ModelMatrix;
-            GL.MultMatrix(ref model);
+            GL.Scale(Scale);
+
             // マテリアルの適用
             Material?.Apply();
             // 頂点を描画

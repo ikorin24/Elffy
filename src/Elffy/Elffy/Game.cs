@@ -223,20 +223,13 @@ namespace Elffy
                 frameObject.Update();
             }
 
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            Light.LightUp();                                                            // 光源点灯
+            var renderables = Instance._frameObjectList.OfType<Renderable>();
             GL.MatrixMode(MatrixMode.Projection);
             var projection = Camera.Current.Projection;
             GL.LoadMatrix(ref projection);
-
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
-            // 光源のためにViewMatrixを設定
             GL.MatrixMode(MatrixMode.Modelview);
-            var view = Camera.Current.Matrix;
-            GL.LoadMatrix(ref view);
-
-            Light.LightUp();        // 光源点灯
-            var renderables = Instance._frameObjectList.OfType<Renderable>();
-
             // Render World Object
             foreach(var frameObject in renderables.Where(x => x.Layer == ObjectLayer.World && x.IsVisible)) {
                 frameObject.Render();
