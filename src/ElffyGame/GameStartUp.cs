@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Drawing;
 using OpenTK;
-using Elffy.Animation;
+using Elffy.Framing;
 using Elffy.Shape;
 using OpenTK.Graphics;
 using Elffy.Serialization;
@@ -74,7 +74,7 @@ namespace ElffyGame
             var canvas = new Canvas(300, 300);
             var font = new Font(FontFamily.GenericSansSerif, 50);
             var rand = new Random();
-            Animation.While(() => true, _ => {
+            FrameProcess.While(() => true, _ => {
                 //pen.Color = Rand.Color();
                 //canvas.DrawLine(pen, rand.Next(canvas.PixelWidth), rand.Next(canvas.PixelHeight), rand.Next(canvas.PixelWidth), rand.Next(canvas.PixelHeight));
             });
@@ -86,14 +86,14 @@ namespace ElffyGame
             Camera.Current.Position = new Vector3(20f, 12f, 30f);
             Camera.Current.Direction = Vector3.Zero - Camera.Current.Position;
 
-            Animation.While(() => true, info => {
+            FrameProcess.While(() => true, info => {
                 var theta = MathHelper.TwoPi * info.FrameNum / 500;
                 var cos = (float)Math.Cos(theta);
                 var sin = (float)Math.Sin(theta);
                 cube.Rotate(Quaternion.FromAxisAngle(new Vector3(1, 1, 0), 1f / 180 * MathHelper.Pi));
             });
 
-            Animation.While(() => true, info => {
+            FrameProcess.While(() => true, info => {
                 DebugManager.AppendIf(Controller.DownA(), "A");
                 DebugManager.AppendIf(Controller.DownB(), "B");
             });
@@ -102,7 +102,7 @@ namespace ElffyGame
             plain.Activate();
             MainCamera.Init();
 
-            Animation.Begin(3000, anim => {
+            FrameProcess.Begin(3000, anim => {
                 canvas.Clear(Rand.Color());
                 canvas.DrawString((anim.Time / 1000).ToString(), font, Brushes.Red, new PointF());
             })
@@ -126,11 +126,11 @@ namespace ElffyGame
                 //var dice = new Cube();
                 dice.Position = new Vector3(Rand.Float(-10f, 10f), Rand.Float(-10f, 10f), Rand.Float(-10f, 10f));
                 dice.Activate();
-                Animation.WhileTrue(info => {
+                FrameProcess.WhileTrue(info => {
                     dice.Rotate(Vector3.UnitY, MathHelper.Pi * Game.RenderDelta / 1000);
                 });
             }
-            Animation.WhileTrue(_ => DebugManager.Append(FPSManager.GetFPS()));
+            FrameProcess.WhileTrue(_ => DebugManager.Append(FPSManager.GetFPS()));
             //var dice = Resources.LoadModel("Dice2.fbx");
             //dice.Activate();
             //Animation.WhileTrue(info => {

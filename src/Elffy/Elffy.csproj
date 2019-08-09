@@ -55,9 +55,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Animation\AnimationObject.cs" />
-    <Compile Include="Animation\AnimationInfo.cs" />
-    <Compile Include="Animation\Animation.cs" />
+    <Compile Include="Framing\FrameProcessObject.cs" />
+    <Compile Include="Framing\FrameProcessInfo.cs" />
+    <Compile Include="Framing\FrameProcess.cs" />
     <Compile Include="Elffy\Camera.cs" />
     <Compile Include="Control\MessageBox.cs" />
     <Compile Include="Elffy\ConfigBase.cs" />

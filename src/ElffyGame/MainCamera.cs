@@ -1,5 +1,5 @@
 ﻿using Elffy;
-using Elffy.Animation;
+using Elffy.Framing;
 using Elffy.Mathmatics;
 using OpenTK;
 using System;
@@ -25,7 +25,7 @@ namespace ElffyGame
             if(_isInit) { return; }
             _isInit = true;
 
-            Animation.While(() => true, _ => {
+            FrameProcess.While(() => true, _ => {
                 if(Controller.ButtonA()) {
                     Rotation();
                 } else {
