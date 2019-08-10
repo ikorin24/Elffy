@@ -31,7 +31,8 @@ namespace ElffyGame
             Controller.Init();
             // ---------------------------------------
 
-            //Light.CreateDirectLight(new Vector3(-1, -1, -1), Color4.White);
+            Light.CreateDirectLight(new Vector3(-1, 1, 1), Color4.White);
+            //Light.IsEnabled = true;
 
             var cube = new Cube();
             cube.Texture = new Texture("cube.png");
@@ -83,7 +84,8 @@ namespace ElffyGame
             canvas.Position = new Vector3(2, 2, 1);
             canvas.Activate();
 
-            Camera.Current.Position = new Vector3(20f, 12f, 30f);
+            //Camera.Current.Position = new Vector3(20f, 12f, 30f);
+            Camera.Current.Position = new Vector3(30f, 2.5f, 20f);
             Camera.Current.Direction = Vector3.Zero - Camera.Current.Position;
 
             FrameProcess.While(() => true, info => {
@@ -121,28 +123,24 @@ namespace ElffyGame
             xyCanvas.IsVisible = false;
             xzCanvas.IsVisible = false;
 
-            for(int i = 0; i < 100; i++) {
+            for(int i = 0; i < 5; i++) {
                 var dice = Resources.LoadModel("Dice.fbx");
                 //var dice = new Cube();
-                dice.Position = new Vector3(Rand.Float(-10f, 10f), Rand.Float(-10f, 10f), Rand.Float(-10f, 10f));
+                dice.Position = new Vector3(Rand.Float(-3f, 3f), Rand.Float(-3f, 3f), Rand.Float(-3f, 3f));
                 dice.Activate();
                 FrameProcess.WhileTrue(info => {
                     dice.Rotate(Vector3.UnitY, MathHelper.Pi * Game.RenderDelta / 1000);
                 });
             }
             FrameProcess.WhileTrue(_ => DebugManager.Append(FPSManager.GetFPS()));
-            //var dice = Resources.LoadModel("Dice2.fbx");
-            //dice.Activate();
-            //Animation.WhileTrue(info => {
-            //    dice.Rotate(Vector3.UnitY, MathHelper.Pi * Game.RenderDelta / 5000);
-            //});
-
-            //var testCube = Resources.LoadModel("cube.fbx");
-            //testCube.Activate();
-            //var sky = new Sky(Camera.Current.Far * 0.5f);
-            var sky = new Sky(50);
-            //sky.Texture = new Texture("sky.jpg");
+            var sky = new Sky(1000);
+            sky.Texture = new Texture("sky.jpg");
             sky.Activate();
+            FrameProcess.WhileTrue(frame => {
+                var camPos = Camera.Current.Position;
+                sky.PositionX = camPos.X;
+                sky.PositionZ = camPos.Z;
+            });
         }
     }
 }

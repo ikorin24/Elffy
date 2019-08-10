@@ -16,6 +16,23 @@ namespace Elffy
         /// <summary>Light list (Max number of light is 8 in OpenTK.)</summary>
         private static readonly List<DirectLight> _lightList = new List<DirectLight>(MAX_COUNT);
 
+        public static bool IsEnabled
+        {
+            get => _isEnabled;
+            set
+            {
+                if(_isEnabled == value) { return; }
+                _isEnabled = value;
+                if(_isEnabled) {
+                    GL.Enable(EnableCap.Lighting);
+                }
+                else {
+                    GL.Disable(EnableCap.Lighting);
+                }
+            }
+        }
+        private static bool _isEnabled;
+
         /// <summary>The number of light</summary>
         public static int Count => _lightList.Count;
 
@@ -43,7 +60,6 @@ namespace Elffy
         public static int CreateDirectLight(Vector3 direction, Color4 ambient, Color4 diffuse, Color4 specular)
         {
             if(!CanCreateNew) { throw new InvalidOperationException("Can not create more Light."); }
-            GL.Enable(EnableCap.Lighting);      // ライティングを有効化
             var light = new DirectLight(direction, ambient, diffuse, specular, GetLightNumber());
             _lightList.Add(light);
             return light.ID;

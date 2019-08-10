@@ -59,11 +59,15 @@ namespace Elffy.Core
             Material?.Apply();
             // 頂点を描画
             DrawVertexAndTexture();
+            OnRendered();
         }
         #endregion
 
         /// <summary>派生クラスでoverrideされると、このインスタンスの描画前に実行されます。overrideされない場合、何もしません。</summary>
         protected virtual void OnRendering() { }
+
+        /// <summary>派生クラスでoverrideされると、このインスタンスの描画後に実行されます。overrideされない場合、何もしません。</summary>
+        protected virtual void OnRendered() { }
 
         #region InitGraphicBuffer
         /// <summary>描画する3Dモデル(頂点データ)をGPUメモリにロードします</summary>

@@ -10,7 +10,7 @@ namespace Elffy
 {
     public class Camera
     {
-        private const float NEAR = 0.1f;
+        private const float NEAR = 0.3f;
 
         #region Current
         public static Camera Current
@@ -90,7 +90,7 @@ namespace Elffy
                 SetProjection(radian, _far);
             }
         }
-        private float _far = 100f;
+        private float _far = 2000f;
         #endregion
 
         #region internal Property
