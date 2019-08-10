@@ -130,9 +130,10 @@ namespace ElffyGame
                 dice.Activate();
                 FrameProcess.WhileTrue(info => {
                     dice.Rotate(Vector3.UnitY, MathHelper.Pi * Game.RenderDelta / 1000);
+                    dice.EnableVertexColor = (info.Time / 1000) % 2 == 0;
                 });
             }
-            FrameProcess.WhileTrue(_ => DebugManager.Append(FPSManager.GetFPS()));
+            FrameProcess.WhileTrue(frame => DebugManager.AppendIf(frame.FrameNum % 10 == 0, FPSManager.GetFPS()));
             var sky = new Sky(1000);
             sky.Texture = new Texture("sky.jpg");
             sky.Activate();

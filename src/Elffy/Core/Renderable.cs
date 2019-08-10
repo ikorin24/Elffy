@@ -38,6 +38,27 @@ namespace Elffy.Core
         public Material Material { get; set; }
         /// <summary>テクスチャ</summary>
         public Texture Texture { get; set; }
+        /// <summary>頂点色を使用するかどうか</summary>
+        public bool EnableVertexColor
+        {
+            get => _enableVertexColor;
+            set
+            {
+                _enableVertexColor = value;
+                if(_vao == Consts.NULL) { return; }
+                if(_enableVertexColor) {
+                    GL.BindVertexArray(_vao);
+                    GL.EnableClientState(ArrayCap.ColorArray);
+                    GL.BindVertexArray(Consts.NULL);
+                }
+                else {
+                    GL.BindVertexArray(_vao);
+                    GL.DisableClientState(ArrayCap.ColorArray);
+                    GL.BindVertexArray(Consts.NULL);
+                }
+            }
+        }
+        private bool _enableVertexColor;
         #endregion
 
         ~Renderable() => Dispose(false);
@@ -98,7 +119,7 @@ namespace Elffy.Core
             GL.BindVertexArray(_vao);
             GL.EnableClientState(ArrayCap.VertexArray);
             GL.EnableClientState(ArrayCap.NormalArray);
-            GL.EnableClientState(ArrayCap.ColorArray);
+            if(EnableVertexColor) { GL.EnableClientState(ArrayCap.ColorArray); }
             GL.EnableClientState(ArrayCap.TextureCoordArray);
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBuffer);
             Vertex.GLSetStructLayout();                          // 頂点構造体のレイアウトを指定
