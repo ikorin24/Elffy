@@ -4,7 +4,7 @@ using Elffy.Serialization;
 
 namespace Elffy
 {
-    public abstract class Scene
+    public abstract class GameScene
     {
         internal ICollection<FrameObject> FrameObjects { get; set; }
 
@@ -13,14 +13,14 @@ namespace Elffy
         public event SceneEventHandler Loaded;
 
         /// <summary>指定したシーンを読み込みます</summary>
-        /// <typeparam name="T">読み込みを行う <see cref="Scene"/> 継承クラス</typeparam>
-        public static void Load<T>() where T : Scene, new()
+        /// <typeparam name="T">読み込みを行う <see cref="GameScene"/> 継承クラス</typeparam>
+        public static void Load<T>() where T : GameScene, new()
         {
             var scene = LoadWithoutInitializing<T>();
             scene.InitializeComponent();
         }
 
-        public static T LoadWithoutInitializing<T>() where T : Scene, new()
+        public static T LoadWithoutInitializing<T>() where T : GameScene, new()
         {
             var parser = new SceneParser();
             var scene = parser.Parse<T>($"Scene/{typeof(T).Name}.xml");
@@ -32,7 +32,6 @@ namespace Elffy
             foreach(var obj in FrameObjects) {
                 obj.Activate();
             }
-            FrameObjects.Clear();
             FrameObjects = null;
             Loaded?.Invoke();
         }

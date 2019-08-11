@@ -106,7 +106,7 @@ namespace Test
 
             // シーンのロード
             Resources.Initialize();
-            var scene = Scene.LoadWithoutInitializing<TestScene>();
+            var scene = GameScene.LoadWithoutInitializing<TestScene>();
         }
 
         private (DirectoryInfo source, string output, DirectoryInfo optional1) Compile()

@@ -4,7 +4,7 @@ using Elffy;
 
 namespace Test
 {
-    public class TestScene : Scene
+    public class TestScene : GameScene
     {
         public void OnLoaded()
         {

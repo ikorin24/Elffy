@@ -14,11 +14,11 @@ namespace Elffy.Serialization
     internal class SceneParser
     {
         #region Parse
-        /// <summary>指定した <see cref="Scene"/> を指定した隠しリソースから読み込みます</summary>
-        /// <typeparam name="T">読み込む <see cref="Scene"/> のクラス</typeparam>
+        /// <summary>指定した <see cref="GameScene"/> を指定した隠しリソースから読み込みます</summary>
+        /// <typeparam name="T">読み込む <see cref="GameScene"/> のクラス</typeparam>
         /// <param name="name">隠しリソース名</param>
-        /// <returns>読み込んだ <see cref="Scene"/></returns>
-        public T Parse<T>(string name) where T : Scene, new()
+        /// <returns>読み込んだ <see cref="GameScene"/></returns>
+        public T Parse<T>(string name) where T : GameScene, new()
         {
             var scene = new T();
             using(var stream = Resources.LoadHiddenStream(name)) {

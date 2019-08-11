@@ -3,7 +3,7 @@ using Elffy;
 
 namespace ElffyGame.Scene
 {
-    public class MainScene : Elffy.Scene
+    public class MainScene : GameScene
     {
         public void OnLoaded()
         {

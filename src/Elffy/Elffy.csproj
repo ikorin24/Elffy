@@ -55,7 +55,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Elffy\Scene.cs" />
+    <Compile Include="Elffy\GameScene.cs" />
     <Compile Include="Framing\FrameProcessObject.cs" />
     <Compile Include="Framing\FrameProcessInfo.cs" />
     <Compile Include="Framing\FrameProcess.cs" />

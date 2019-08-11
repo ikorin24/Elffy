@@ -13,6 +13,7 @@ using Elffy.Framing;
 using Elffy.Shape;
 using OpenTK.Graphics;
 using Elffy.Serialization;
+using ElffyGame.Scene;
 
 namespace ElffyGame
 {
@@ -142,6 +143,12 @@ namespace ElffyGame
                 sky.PositionX = camPos.X;
                 sky.PositionZ = camPos.Z;
             });
+
+            var sw = new System.Diagnostics.Stopwatch();
+            sw.Start();
+            GameScene.Load<MainScene>();
+            sw.Stop();
+            DebugManager.Append(sw.ElapsedMilliseconds + "ms");
         }
     }
 }
