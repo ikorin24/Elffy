@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Scene xmlns:s="clr-namespace:Elffy.Shape" Loaded="OnLoaded">
+    <s:Cube Position="2,0,2"/>
+</Scene>

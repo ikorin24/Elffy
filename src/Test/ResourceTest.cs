@@ -21,10 +21,7 @@ namespace Test
             // リソースのコンパイル -> デコンパイル -> デコンパイルした全ファイルと元ファイルのハッシュが一致すればOK
 
             // コンパイル実行
-            var source = new DirectoryInfo(Path.Combine(TestValues.FileDirectory, "ElffyResources"));
-            var output = Path.Combine(".");
-            var args = new string[] { source.FullName, output };
-            Program.Main(args);
+            var (source, output, optional1) = Compile();
 
             // デコンパイル実行
             var decompiled = new DirectoryInfo("decompiled");
@@ -42,6 +39,7 @@ namespace Test
                         .ToList();
             var pair = GetAllChildren(decompiled)
                         .Select(x => (Uri: GetDirUri(decompiled).MakeRelativeUri(GetFileUri(x)), File: x))
+                        .Where(x => x.Uri.ToString().Split('/')[1] != "!")                                  // オプションディレクトリは無視
                         .Select(x => (Result: x.File, Source: s.Find(y => UriEqual(x.Uri, y.Uri)).File))
                         .ToList();
             foreach(var item in pair) {
@@ -67,10 +65,7 @@ namespace Test
             // コンパイル -> コンパイルされたリソースをロード -> もとのファイルとハッシュが一致すればOK
 
             // コンパイル実行
-            var source = new DirectoryInfo(Path.Combine(TestValues.FileDirectory, "ElffyResources"));
-            var output = Path.Combine(".");
-            var args = new string[] { source.FullName, output };
-            Program.Main(args);
+            var (source, output, optional1) = Compile();
 
             IEnumerable<FileInfo> GetAllChildren(DirectoryInfo di) => di.GetFiles().Concat(di.GetDirectories().SelectMany(GetAllChildren));
             Uri GetDirUri(DirectoryInfo di) => new Uri($"{di.FullName}");
@@ -85,7 +80,9 @@ namespace Test
             
             // リソースと元ファイルのペアを作り、そのハッシュ値の一致を確認
             Resources.Initialize();
-            var pair = Resources.GetResourceNames().Select(x => (Resource: x, Original: sourceNames.Find(y => x == y))).ToArray();
+            var pair = Resources.GetResourceNames()
+                                .Where(x => x.Split('/')[0] != "?")     // 隠しリソースは無視
+                                .Select(x => (Resource: x, Original: sourceNames.Find(y => x == y))).ToArray();
             foreach(var (resouce, original) in pair) {
                 byte[] hash1;
                 byte[] hash2;
@@ -99,6 +96,28 @@ namespace Test
                     throw new Exception(resouce);
                 }
             }
+        }
+
+        [TestMethod]
+        public void SceneLoad()
+        {
+            // コンパイル実行
+            var (source, output, optional1) = Compile();
+
+            // シーンのロード
+            Resources.Initialize();
+            var scene = Scene.LoadWithoutInitializing<TestScene>();
+        }
+
+        private (DirectoryInfo source, string output, DirectoryInfo optional1) Compile()
+        {
+            // コンパイル実行
+            var source = new DirectoryInfo(Path.Combine(TestValues.FileDirectory, "ElffyResources"));
+            var output = Path.Combine(".");
+            var optional = new DirectoryInfo(Path.Combine(TestValues.FileDirectory, "Scene"));
+            var args = new string[] { source.FullName, output }.Concat(new string[] { optional.FullName }).ToArray();
+            Program.Main(args);
+            return (source, output, optional);
         }
     }
 }

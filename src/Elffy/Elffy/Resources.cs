@@ -27,6 +27,8 @@ namespace Elffy
         private static Dictionary<string, ResourceObject> _resources;
         private static byte[] _bufEntity;
         private static byte[] _buf => _bufEntity ?? (_bufEntity = new byte[1024 * 1024]);
+
+        private const string HIDDEN_ROOT = "?";
         #endregion
 
         internal static bool IsInitialized { get; private set; }
@@ -77,6 +79,15 @@ namespace Elffy
             }
         }
 
+        /// <summary>隠しリソースのストリームを取得します</summary>
+        /// <param name="name">隠しリソース名</param>
+        /// <returns>ストリーム</returns>
+        internal static ResourceStream LoadHiddenStream(string name)
+        {
+            CheckInitialized();
+            return LoadStream($"{HIDDEN_ROOT}/{name}");
+        }
+
         internal static bool HasResource(string name)
         {
             CheckInitialized();
@@ -105,7 +116,6 @@ namespace Elffy
                     var resource = new ResourceObject();
                     resource.Name = ReadString(fs, END_MARK);                                       // ファイル名取得
                     if(fs.Read(_buf, 0, HASH_LEN) != HASH_LEN) { throw new FormatException(); }     // ハッシュ値を読み飛ばす(使わない)
-                    //resource.Length = ReadLong(fs, END_MARK);                                       // ファイル長取得
                     resource.Length = (fs.Read(_buf, 0, FILE_SIZE_LEN) == FILE_SIZE_LEN) ? BytesToLongLittleEndian(_buf) : throw new FormatException(); // ファイル長取得
                     resource.Position = fs.Position;
                     fs.Position += resource.Length;             // データ部を読み飛ばす
@@ -137,8 +147,6 @@ namespace Elffy
         #endregion
 
         private static long BytesToLongLittleEndian(byte[] x) => Enumerable.Range(0, sizeof(long)).Select(i => ((long)x[i]) << (i * 8)).Sum();
-        private static int ReadInt(Stream stream, byte endMark) => int.Parse(ReadString(stream, endMark));
-        private static long ReadLong(Stream stream, byte endMark) => long.Parse(ReadString(stream, endMark));
         private static void CheckInitialized()
         {
             if(!IsInitialized) { throw new InvalidOperationException("Resources not Initialized"); }

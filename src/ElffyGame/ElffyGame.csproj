@@ -80,6 +80,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SaveData.cs" />
+    <Compile Include="Scene\MainScene.xml.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -124,6 +125,7 @@
   <ItemGroup>
     <Content Include="Elffy.ico" />
     <Content Include="externalExe\ElffyResourceCompiler.exe" />
+    <Content Include="Scene\MainScene.xml" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

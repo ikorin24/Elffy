@@ -31,15 +31,21 @@ namespace ElffyResourceCompiler
 
             var resourceDir = args[0];
             var output = Path.Combine(args[1], OutputFile);
+            var optionalDirs = (args.Length > 2) ? args.Skip(2).ToArray() : null;
             //var password = args[2];
 
             Console.WriteLine($"resourceDir : {resourceDir}");
             Console.WriteLine($"output : {output}");
+            if(optionalDirs != null) { Console.WriteLine($"optionalDir : {string.Join(", ", optionalDirs)}"); }
             //Console.WriteLine($"password : {password}");
 
             var sw = new Stopwatch();
             sw.Start();
-            Compiler.Compile(resourceDir, output);
+            var setting = new CompileSetting();
+            setting.TargetDir = resourceDir;
+            setting.OutputPath = output;
+            setting.OptilnalDir = optionalDirs;
+            Compiler.Compile(setting);
             sw.Stop();
             Console.WriteLine($"Resouce compiled : {sw.ElapsedMilliseconds}ms");
             return 0;
