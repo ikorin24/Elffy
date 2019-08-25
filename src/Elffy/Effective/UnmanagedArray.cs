@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -182,24 +183,29 @@ namespace Elffy.Effective
         /// <param name="index"></param>
         /// <param name="item"></param>
         [Obsolete("This method is not supported.", true)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public void Insert(int index, T item) => throw new NotSupportedException();
 
         /// <summary>Not Supported in this class.</summary>
         /// <param name="index"></param>
         [Obsolete("This method is not supported.", true)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public void RemoveAt(int index) => throw new NotSupportedException();
 
         /// <summary>Not Supported in this class.</summary>
         /// <param name="item"></param>
         [Obsolete("This method is not supported.", true)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public void Add(T item) => throw new NotSupportedException();
 
         /// <summary>Not Supported in this class.</summary>
         [Obsolete("This method is not supported.", true)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public bool Remove(T item) => throw new NotSupportedException();
 
         /// <summary>Not Supported in this class.</summary>
         [Obsolete("This method is not supported.", true)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public void Clear() => throw new NotSupportedException();
         #endregion
 

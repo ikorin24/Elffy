@@ -54,6 +54,7 @@
     <Compile Include="testfile\Scene\TestScene.xml.cs" />
     <Compile Include="TestValues.cs" />
     <Compile Include="ResourceTest.cs" />
+    <Compile Include="UnmanagedArrayTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
