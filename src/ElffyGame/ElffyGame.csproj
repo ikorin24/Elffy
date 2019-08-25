@@ -130,10 +130,10 @@
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>"$(ProjectDir)externalExe\ElffyResourceCompiler.exe" "$(ProjectDir)ElffyResources" "$(ProjectDir)$(OutDir)\" "$(ProjectDir)Scene"</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PreBuildEvent>
-    </PreBuildEvent>
+    <PreBuildEvent>"$(ProjectDir)externalExe\ElffyResourceCompiler.exe" "$(ProjectDir)ElffyResources" "$(ProjectDir)$(OutDir)\" "$(ProjectDir)Scene"</PreBuildEvent>
   </PropertyGroup>
 </Project>
