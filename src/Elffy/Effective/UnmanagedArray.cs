@@ -98,7 +98,7 @@ namespace Elffy.Effective
         /// <param name="length">Length of array</param>
         public UnmanagedArray(int length, bool threadSafe)
         {
-            if(length < 0) { throw new InvalidOperationException(); }
+            if(length < 0) { throw new ArgumentException(); }
             IsThreadSafe = threadSafe;
             if(threadSafe) {
                 _syncRoot = new object();
