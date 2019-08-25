@@ -50,6 +50,11 @@ namespace Test
             {
                 var array = new UnmanagedArray<float>(10);
                 array.Free();
+                try {
+                    array[0] = 3;
+                    throw new Exception();
+                }
+                catch(Exception) { }
                 array.Free();
             }
 
