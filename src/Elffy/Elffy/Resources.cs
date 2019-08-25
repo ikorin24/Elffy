@@ -193,7 +193,9 @@ namespace Elffy
         {
             _head = head;
             _length = length;
-            _innerStream = new FileStream(Resources.RESOURCE_FILE_NAME, FileMode.Open) { Position = _head };
+            var stream = File.OpenRead(Resources.RESOURCE_FILE_NAME);
+            stream.Position = _head;
+            _innerStream = stream;
         }
 
         public override int Read(byte[] buffer, int offset, int count)
