@@ -33,10 +33,13 @@ namespace Test
                 Assert(array.Type == typeof(short));
                 Assert(array.IsReadOnly == false);
                 Assert(array.IsThreadSafe == false);
+                AssertException<IndexOutOfRangeException>(() => array[-1] = 4);
+                AssertException<IndexOutOfRangeException>(() => array[array.Length] = 4);
             }
             using(var array = new UnmanagedArray<uint>(2, true)) {
                 Assert(array.IsThreadSafe);
             }
+
 
             // 要素数
             for(int i = 0; i < 10; i++) {
@@ -50,11 +53,7 @@ namespace Test
             {
                 var array = new UnmanagedArray<float>(10);
                 array.Free();
-                try {
-                    array[0] = 3;
-                    throw new Exception();
-                }
-                catch(Exception) { }
+                AssertException<InvalidOperationException>(() => array[0] = 3);
                 array.Free();
             }
 
@@ -90,6 +89,7 @@ namespace Test
             }
 
             // その他メソッド
+            AssertException<ArgumentException>(() => new UnmanagedArray<ulong>(-4));
             using(var array = Enumerable.Range(10, 10).ToUnmanagedArray()) {
                 Assert(array.IndexOf(14) == 4);
                 Assert(array.Contains(179) == false);
@@ -104,9 +104,33 @@ namespace Test
             }
         }
 
+        /// <summary>値がtrueであることを保証します</summary>
+        /// <param name="value"></param>
         private void Assert(bool value)
         {
             if(!value) { throw new Exception(); }
+        }
+
+        /// <summary>例外を投げることを保証します</summary>
+        /// <param name="action"></param>
+        private void AssertException(Action action)
+        {
+            try {
+                action();
+                throw new Exception();
+            }
+            catch(Exception) { }
+        }
+
+        /// <summary>例外を投げることを保証します</summary>
+        /// <param name="action"></param>
+        private void AssertException<T>(Action action) where T : Exception
+        {
+            try {
+                action();
+                throw new Exception();
+            }
+            catch(T) { }
         }
     }
 }
