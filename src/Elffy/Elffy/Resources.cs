@@ -184,7 +184,7 @@ namespace Elffy
             get => _innerStream.Position - _head;
             set
             {
-                if(value >= _length || value <= 0) { throw new ArgumentOutOfRangeException(); }
+                if(value >= _length || value < 0) { throw new ArgumentOutOfRangeException(); }
                 _innerStream.Position =  _head + value;
             }
         }
