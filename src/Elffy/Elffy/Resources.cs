@@ -177,18 +177,29 @@ namespace Elffy
 
         public override bool CanWrite => false;
 
-        public override long Length => _length;
+        public override long Length
+        {
+            get
+            {
+                if(_disposed) { throw new ObjectDisposedException(nameof(ResourceStream)); }
+                return _length;
+            }
+        }
 
         public override long Position
         {
-            get => _innerStream.Position - _head;
+            get
+            {
+                if(_disposed) { throw new ObjectDisposedException(nameof(ResourceStream)); }
+                return _innerStream.Position - _head;
+            }
             set
             {
                 if(value >= _length || value < 0) { throw new ArgumentOutOfRangeException(); }
-                _innerStream.Position =  _head + value;
+                _innerStream.Position = _head + value;
             }
         }
-        
+
         internal ResourceStream(long head, long length)
         {
             _head = head;
@@ -198,12 +209,20 @@ namespace Elffy
             _innerStream = stream;
         }
 
+        ~ResourceStream() => Dispose(false);
+
         public override int Read(byte[] buffer, int offset, int count)
         {
             if(_disposed) { throw new ObjectDisposedException(nameof(ResourceStream)); }
             var current = _innerStream.Position;
             var available = (int)(_head + _length - current);
             return _innerStream.Read(buffer, offset, Math.Min(count, available));
+        }
+
+        void IDisposable.Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         protected override void Dispose(bool disposing)
