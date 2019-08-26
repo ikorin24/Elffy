@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Elffy.Effective;
 using System.Linq;
+using static Test.TestHelper;
 
 namespace Test
 {
@@ -27,19 +28,20 @@ namespace Test
         public void BasicAPI()
         {
             // UnmanagedArrayの提供するpublicなAPIを網羅的にテストします
-
+            
             // プロパティ
             using(var array = new UnmanagedArray<short>(10000)) {
                 Assert(array.Type == typeof(short));
                 Assert(array.IsReadOnly == false);
                 Assert(array.IsThreadSafe == false);
                 AssertException<IndexOutOfRangeException>(() => array[-1] = 4);
+                AssertException<InvalidOperationException, int>(() => array[-8]);
                 AssertException<IndexOutOfRangeException>(() => array[array.Length] = 4);
+                AssertException<IndexOutOfRangeException, int>(() => array[array.Length]);
             }
             using(var array = new UnmanagedArray<uint>(2, true)) {
                 Assert(array.IsThreadSafe);
             }
-
 
             // 要素数
             for(int i = 0; i < 10; i++) {
@@ -53,6 +55,7 @@ namespace Test
                 var array = new UnmanagedArray<float>(10);
                 array.Free();
                 AssertException<InvalidOperationException>(() => array[0] = 3);
+                AssertException<InvalidOperationException, float>(() => array[7]);
                 array.Free();
             }
 
@@ -101,35 +104,6 @@ namespace Test
                     Assert(array2.Skip(2).SequenceEqual(array.Take(8)));
                 }
             }
-        }
-
-        /// <summary>値がtrueであることを保証します</summary>
-        /// <param name="value"></param>
-        private void Assert(bool value)
-        {
-            if(!value) { throw new Exception(); }
-        }
-
-        /// <summary>例外を投げることを保証します</summary>
-        /// <param name="action"></param>
-        private void AssertException(Action action)
-        {
-            try {
-                action();
-                throw new Exception();
-            }
-            catch(Exception) { }
-        }
-
-        /// <summary>例外を投げることを保証します</summary>
-        /// <param name="action"></param>
-        private void AssertException<T>(Action action) where T : Exception
-        {
-            try {
-                action();
-                throw new Exception();
-            }
-            catch(T) { }
         }
     }
 }

@@ -52,6 +52,7 @@
     <Compile Include="FbxUnitTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="testfile\Scene\TestScene.xml.cs" />
+    <Compile Include="TestHelper.cs" />
     <Compile Include="TestValues.cs" />
     <Compile Include="ResourceTest.cs" />
     <Compile Include="UnmanagedArrayTest.cs" />
