@@ -45,7 +45,6 @@ namespace Test
             for(int i = 0; i < 10; i++) {
                 using(var array = new UnmanagedArray<double>(i)) {
                     Assert(array.Length == i);
-                    Assert(array.Count == i);
                 }
             }
 

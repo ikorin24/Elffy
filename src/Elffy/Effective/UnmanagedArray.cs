@@ -86,6 +86,7 @@ namespace Elffy.Effective
         public int Length => _length;
 
         /// <summary>Length of this array (ICollection implementation)</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
         public int Count => _length;
 
         /// <summary>Get wheater this array is readonly.</summary>
