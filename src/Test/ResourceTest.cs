@@ -58,6 +58,54 @@ namespace Test
         }
         #endregion
 
+        #region CommandLineArgParserTest
+        /// <summary>コマンドライン引数のParserが正常に機能していることをテストします</summary>
+        [TestMethod]
+        public void CommandLineArgParserTest()
+        {
+            // 正常入力テスト
+            var testCase = new string[] {
+                "",
+                "4",
+                "5 -o -t 12:30",
+                "--help",
+                "hoge piyo meu -i input -o output",
+                "-a ikorin 24 -b hoge --hoge --time 3:34 piyo",
+            };
+            var answers = new CommandLineArgument[] {
+                new CommandLineArgument(new string[0], new Dictionary<string, string>()),
+                new CommandLineArgument(new []{ "4" }, new Dictionary<string, string>()),
+                new CommandLineArgument(new []{ "5" }, new Dictionary<string, string>(){ { "-o", "" }, { "-t", "12:30"} }),
+                new CommandLineArgument(new string[0], new Dictionary<string, string>(){ { "--help", "" } }),
+                new CommandLineArgument(new []{ "hoge", "piyo", "meu" }, new Dictionary<string, string>(){ { "-i", "input" }, { "-o", "output"} }),
+                new CommandLineArgument(new []{ "24", "piyo", }, 
+                                        new Dictionary<string, string>(){ { "-a", "ikorin" }, { "-b", "hoge"}, { "--hoge", ""}, { "--time", "3:34"} }),
+            };
+            var parser = new CommandLineArgParser();
+            foreach(var (param, answer) in testCase.Zip(answers, (test, ans) => (test, ans))) {
+                var args = param.Split(new []{ ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                var parsed = parser.Parse(args);
+                TestHelper.Assert(parsed.Args.SequenceEqual(answer.Args));
+                TestHelper.Assert(parsed.OptionalArgs.SequenceEqual(answer.OptionalArgs));
+            }
+
+            // エラー入力テスト
+            var errorCase = new string[] {
+                null,
+                "-o -o",
+            };
+            var errors = new Action<Action>[] {
+                action => TestHelper.AssertException<ArgumentNullException>(action),
+                action => TestHelper.AssertException<ArgumentException>(action),
+            };
+            foreach(var (param, assertError) in errorCase.Zip(errors, (test, err) => (test, err))) {
+                var args = param?.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                assertError(() => parser.Parse(args));
+            }
+        }
+        #endregion
+
+        #region ResourceLoadTest
         /// <summary>リソースのロードができているかをテストします。</summary>
         [TestMethod]
         public void ResourceLoadTest()
@@ -97,7 +145,9 @@ namespace Test
                 }
             }
         }
+        #endregion
 
+        #region SceneLoad
         [TestMethod]
         public void SceneLoad()
         {
@@ -108,6 +158,7 @@ namespace Test
             Resources.Initialize();
             var scene = GameScene.LoadWithoutInitializing<TestScene>();
         }
+        #endregion
 
         private (DirectoryInfo source, string output, DirectoryInfo optional1) Compile()
         {
