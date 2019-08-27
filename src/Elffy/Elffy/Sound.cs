@@ -15,6 +15,7 @@ namespace Elffy
     public class Sound : IDisposable
     {
         #region private member
+        private static readonly TimeSpan SOUND_END_MARGIN = TimeSpan.FromMilliseconds(100);
         private bool _isLoaded;
         private WaveStream _reader;
         private WaveChannel32 _pcm;
@@ -48,16 +49,20 @@ namespace Elffy
         /// <summary>現在の再生位置</summary>
         public TimeSpan Position
         {
-            get {
+            get
+            {
                 if(!_isLoaded) { return TimeSpan.Zero; }
-                return _reader.CurrentTime;
+                return TimeSpan.FromTicks((long)((double)_pcm.Position / _pcm.Length * _pcm.TotalTime.Ticks));
             }
-            set {
+            set
+            {
                 if(!_isLoaded) { return; }
-                _reader.CurrentTime = value;
+                _pcm.Position = (long)((double)value.Ticks / _pcm.TotalTime.Ticks * _pcm.Length);
             }
         }
         #endregion
+
+        public TimeSpan TotalTime => _isLoaded ? _pcm.TotalTime : TimeSpan.Zero;
 
         #region Load
         /// <summary>音声ファイルを読み込みます</summary>
@@ -84,6 +89,7 @@ namespace Elffy
                 DisposeAllResource();
                 _sound = new DirectSoundOut();
                 _pcm = new WaveChannel32(_reader);
+                //_pcm.Sample += OnSample;
                 _sound.Init(_pcm);
                 _disposables.Push(_reader);
                 _disposables.Push(_sound);
@@ -183,6 +189,23 @@ namespace Elffy
             }
         }
         #endregion private Method
+
+        //private void OnSample(object sender, SampleEventArgs e)
+        //{
+        //    var pcm = sender as WaveChannel32;
+        //    if(pcm.TotalTime - pcm.CurrentTime < SOUND_END_MARGIN) {
+        //        var oldState = State;
+        //        _sound.Stop();
+        //        StateChanged += Sound_StateChanged;
+        //        RaiseIfStateChanged(oldState, State);
+        //        StateChanged -= Sound_StateChanged;
+        //    }
+        //}
+
+        //private void Sound_StateChanged(object sender, SoundStateChangedEventArgs e)
+        //{
+        //    if(e.NewState == SoundState.Stopped) { Position = TimeSpan.Zero; }
+        //}
     }
     #endregion class Sound
 
