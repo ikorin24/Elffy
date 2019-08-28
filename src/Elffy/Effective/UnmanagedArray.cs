@@ -48,6 +48,7 @@ namespace Elffy.Effective
         {
             get
             {
+                if(i < 0 || i >= _length) { throw new IndexOutOfRangeException(); }
                 if(IsThreadSafe) {
                     lock(_syncRoot) {
                         ThrowIfFree();
@@ -65,6 +66,7 @@ namespace Elffy.Effective
             }
             set
             {
+                if(i < 0 || i >= _length) { throw new IndexOutOfRangeException(); }
                 if(IsThreadSafe) {
                     lock(_syncRoot) {
                         ThrowIfFree();

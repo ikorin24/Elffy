@@ -28,14 +28,14 @@ namespace Test
         public void BasicAPI()
         {
             // UnmanagedArrayの提供するpublicなAPIを網羅的にテストします
-            
+
             // プロパティ
             using(var array = new UnmanagedArray<short>(10000)) {
                 Assert(array.Type == typeof(short));
                 Assert(array.IsReadOnly == false);
                 Assert(array.IsThreadSafe == false);
                 AssertException<IndexOutOfRangeException>(() => array[-1] = 4);
-                AssertException<InvalidOperationException, int>(() => array[-8]);
+                AssertException<IndexOutOfRangeException, int>(() => array[-8]);
                 AssertException<IndexOutOfRangeException>(() => array[array.Length] = 4);
                 AssertException<IndexOutOfRangeException, int>(() => array[array.Length]);
             }

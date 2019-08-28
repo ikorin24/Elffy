@@ -21,8 +21,9 @@ namespace Test
         {
             try {
                 action();
-                throw new Exception();
+                throw new TestException();
             }
+            catch(TestException) { throw new Exception(); }
             catch(Exception) { }
         }
 
@@ -32,8 +33,9 @@ namespace Test
         {
             try {
                 action();
-                throw new Exception();
+                throw new TestException();
             }
+            catch(TestException) { throw new Exception(); }
             catch(T) { }
         }
 
@@ -42,11 +44,17 @@ namespace Test
             var result = default(TResult);
             try {
                 result = func();
-                throw new Exception();
+                throw new TestException();
             }
+            catch(TestException) { throw new Exception(); }
             catch(T) {
                 return result;
             }
+        }
+
+        private class TestException : Exception
+        {
+
         }
     }
 }
