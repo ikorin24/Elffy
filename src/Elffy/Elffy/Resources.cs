@@ -28,7 +28,8 @@ namespace Elffy
         private static byte[] _bufEntity;
         private static byte[] _buf => _bufEntity ?? (_bufEntity = new byte[1024 * 1024]);
 
-        private const string HIDDEN_ROOT = "?";
+        private const string RESOURCE_ROOT = "Resource";
+        private const string SCENE_ROOT = "Scene";
         #endregion
 
         internal static bool IsInitialized { get; private set; }
@@ -48,28 +49,32 @@ namespace Elffy
         }
         #endregion
 
-        public static ICollection<string> GetResourceNames()
+        internal static ICollection<string> GetResourceNames()
         {
             CheckInitialized();
-            return _resources.Keys;
+            return _resources.Keys.Where(k => k.StartsWith(RESOURCE_ROOT)).Select(k => k.Substring(RESOURCE_ROOT.Length + 1)).ToArray();
         }
-            
-        #region LoadStream
-        public static ResourceStream LoadStream(string name)
+
+        internal static ICollection<string> GetSceneNames()
+        {
+            CheckInitialized();
+            return _resources.Keys.Where(k => k.StartsWith(SCENE_ROOT)).Select(k => k.Substring(SCENE_ROOT.Length + 1)).ToArray();
+        }
+         
+        /// <summary>リソースを読み込むストリームを取得します</summary>
+        /// <param name="name">リソース名</param>
+        /// <returns>リソースのストリーム</returns>
+        public static ResourceStream GetStream(string name)
         {
             CheckInitialized();
             if(name == null) { throw new ArgumentNullException(); }
-            if(!_resources.TryGetValue(name, out var resource)) {
-                throw new ResourceNotFoundException(name);
-            }
-            return new ResourceStream(resource.Position, resource.Length);
+            return GetResourceStreamPrivate($"{RESOURCE_ROOT}/{name}");
         }
-        #endregion
 
         public static Model3D LoadModel(string name)
         {
             CheckInitialized();
-            var stream = LoadStream(name);
+            var stream = GetStream(name);
             var ext = Path.GetExtension(name).ToLower();
             switch(ext) {
                 case ".fbx":
@@ -79,13 +84,13 @@ namespace Elffy
             }
         }
 
-        /// <summary>隠しリソースのストリームを取得します</summary>
-        /// <param name="name">隠しリソース名</param>
+        /// <summary>シーンリソースのストリームを取得します</summary>
+        /// <param name="name">リソース名</param>
         /// <returns>ストリーム</returns>
-        internal static ResourceStream LoadHiddenStream(string name)
+        internal static ResourceStream GetSceneStream(string name)
         {
             CheckInitialized();
-            return LoadStream($"{HIDDEN_ROOT}/{name}");
+            return GetResourceStreamPrivate($"{SCENE_ROOT}/{name}");
         }
 
         internal static bool HasResource(string name)
@@ -93,6 +98,21 @@ namespace Elffy
             CheckInitialized();
             return _resources.ContainsKey(name);
         }
+
+        #region GetResourceStreamPrivate
+        /// <summary>ResourceStreamを取得します</summary>
+        /// <param name="name">ルートディレクトリ名を含めたリソース名</param>
+        /// <returns>ResourceStream</returns>
+        private static ResourceStream GetResourceStreamPrivate(string name)
+        {
+            CheckInitialized();
+            if(name == null) { throw new ArgumentNullException(); }
+            if(!_resources.TryGetValue(name, out var resource)) {
+                throw new ResourceNotFoundException(name);
+            }
+            return new ResourceStream(resource.Position, resource.Length);
+        }
+        #endregion
 
         #region CreateDictionary
         private static void CreateDictionary()

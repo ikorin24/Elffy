@@ -122,7 +122,7 @@ namespace Elffy
             Icon icon = null;
             if(iconResourcePath != null) {
                 if(Resources.HasResource(iconResourcePath)) {
-                    using(var stream = Resources.LoadStream(iconResourcePath)) {
+                    using(var stream = Resources.GetStream(iconResourcePath)) {
                         icon = new Icon(stream);
                     }
                 }

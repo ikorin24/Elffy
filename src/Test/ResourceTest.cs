@@ -21,7 +21,7 @@ namespace Test
             // リソースのコンパイル -> デコンパイル -> デコンパイルした全ファイルと元ファイルのハッシュが一致すればOK
 
             // コンパイル実行
-            var (source, output, optional1) = Compile();
+            var (resource, output, scene) = Compile();
 
             // デコンパイル実行
             var decompiled = new DirectoryInfo("decompiled");
@@ -33,26 +33,36 @@ namespace Test
             Uri GetFileUri(FileInfo fi) => new Uri($"{fi.FullName}");
             bool UriEqual(Uri x, Uri y) => x.ToString().Split('/').Skip(1).SequenceEqual(y.ToString().Split('/').Skip(1));
 
-            // デコンパイルしたファイルと元ファイルを組にして、そのハッシュの一致を確かめる
-            var s = GetAllChildren(source)
-                        .Select(x => (Uri: GetDirUri(source).MakeRelativeUri(GetFileUri(x)), File: x))
+            var decompiledResource = decompiled.GetDirectories().First(d => d.Name == "Resource");
+            var decompiledScene = decompiled.GetDirectories().First(d => d.Name == "Scene");
+
+            var checkTargets = new []
+            {
+                (Original: resource, DecompiledTarget: decompiledResource),
+                (Original: scene, DecompiledTarget: decompiledScene),
+            };
+
+            foreach(var (original, decompiledTarget) in checkTargets) {
+                // デコンパイルしたファイルと元ファイルを組にして、そのハッシュの一致を確かめる
+                var s = GetAllChildren(original)
+                        .Select(x => (Uri: GetDirUri(original).MakeRelativeUri(GetFileUri(x)), File: x))
                         .ToList();
-            var pair = GetAllChildren(decompiled)
-                        .Select(x => (Uri: GetDirUri(decompiled).MakeRelativeUri(GetFileUri(x)), File: x))
-                        .Where(x => x.Uri.ToString().Split('/')[1] != "!")                                  // オプションディレクトリは無視
-                        .Select(x => (Result: x.File, Source: s.Find(y => UriEqual(x.Uri, y.Uri)).File))
-                        .ToList();
-            foreach(var item in pair) {
-                byte[] hash1;
-                byte[] hash2;
-                using(var stream = item.Source.OpenRead()) {
-                    hash1 = hashfunc.ComputeHash(stream);
-                }
-                using(var stream = item.Result.OpenRead()) {
-                    hash2 = hashfunc.ComputeHash(stream);
-                }
-                if(hash1.SequenceEqual(hash2) == false) {
-                    throw new Exception(GetFileUri(item.Result).ToString());
+                var pair = GetAllChildren(decompiledTarget)
+                            .Select(x => (Uri: GetDirUri(decompiledTarget).MakeRelativeUri(GetFileUri(x)), File: x))
+                            .Select(x => (Result: x.File, Source: s.Find(y => UriEqual(x.Uri, y.Uri)).File))
+                            .ToList();
+                foreach(var item in pair) {
+                    byte[] hash1;
+                    byte[] hash2;
+                    using(var stream = item.Source.OpenRead()) {
+                        hash1 = hashfunc.ComputeHash(stream);
+                    }
+                    using(var stream = item.Result.OpenRead()) {
+                        hash2 = hashfunc.ComputeHash(stream);
+                    }
+                    if(hash1.SequenceEqual(hash2) == false) {
+                        throw new Exception(GetFileUri(item.Result).ToString());
+                    }
                 }
             }
         }
@@ -113,7 +123,7 @@ namespace Test
             // コンパイル -> コンパイルされたリソースをロード -> もとのファイルとハッシュが一致すればOK
 
             // コンパイル実行
-            var (source, output, optional1) = Compile();
+            var (resource, output, scene) = Compile();
 
             IEnumerable<FileInfo> GetAllChildren(DirectoryInfo di) => di.GetFiles().Concat(di.GetDirectories().SelectMany(GetAllChildren));
             Uri GetDirUri(DirectoryInfo di) => new Uri($"{di.FullName}");
@@ -122,26 +132,34 @@ namespace Test
             var hashfunc = new SHA256CryptoServiceProvider();
 
             // 元ファイルの一覧を取得
-            var sourceNames = GetAllChildren(source).Select(x => GetDirUri(source).MakeRelativeUri(GetFileUri(x)))
-                                                    .Select(x => string.Join("/", x.ToString().Split('/').Skip(1)))
-                                                    .ToList();
+            var sourceNames = GetAllChildren(resource).Select(x => GetDirUri(resource).MakeRelativeUri(GetFileUri(x)))
+                                                      .Concat(
+                              GetAllChildren(scene).Select(x => GetDirUri(scene).MakeRelativeUri(GetFileUri(x)))
+                                                      )
+                                                      .Select(x => string.Join("/", x.ToString().Split('/').Skip(1)))
+                                                      .ToList();
             
             // リソースと元ファイルのペアを作り、そのハッシュ値の一致を確認
             Resources.Initialize();
-            var pair = Resources.GetResourceNames()
-                                .Where(x => x.Split('/')[0] != "?")     // 隠しリソースは無視
-                                .Select(x => (Resource: x, Original: sourceNames.Find(y => x == y))).ToArray();
-            foreach(var (resouce, original) in pair) {
+            var pair = Resources.GetResourceNames().Select(x => (Resource: x, Original: sourceNames.Find(y => x == y), Type: "Resource"))
+                                .Concat(
+                                    Resources.GetSceneNames().Select(x => (Resource: x, Original: sourceNames.Find(y => x == y), Type: "Scene"))
+                                ).ToArray();
+            foreach(var (name, original, type) in pair) {
                 byte[] hash1;
                 byte[] hash2;
-                using(var stream = Resources.LoadStream(resouce)) {
-                    hash1 = hashfunc.ComputeHash(stream);
+                var stream1 = (type == "Resource") ? Resources.GetStream(name) : 
+                              (type == "Scene") ?    Resources.GetSceneStream(name) : throw new Exception();
+                var stream2 = (type == "Resource") ? File.OpenRead(Path.Combine(resource.FullName, original)) :
+                              (type == "Scene") ?    File.OpenRead(Path.Combine(scene.FullName, original)) : throw new Exception();
+                using(stream1) {
+                    hash1 = hashfunc.ComputeHash(stream1);
                 }
-                using(var stream = File.OpenRead(Path.Combine(source.FullName, original))) {
-                    hash2 = hashfunc.ComputeHash(stream);
+                using(stream2) {
+                    hash2 = hashfunc.ComputeHash(stream2);
                 }
                 if(hash1.SequenceEqual(hash2) == false) {
-                    throw new Exception(resouce);
+                    throw new Exception(name);
                 }
             }
         }
@@ -152,7 +170,7 @@ namespace Test
         public void SceneLoad()
         {
             // コンパイル実行
-            var (source, output, optional1) = Compile();
+            Compile();
 
             // シーンのロード
             Resources.Initialize();
@@ -160,15 +178,16 @@ namespace Test
         }
         #endregion
 
-        private (DirectoryInfo source, string output, DirectoryInfo optional1) Compile()
+        private (DirectoryInfo resource, string output, DirectoryInfo scene) Compile()
         {
             // コンパイル実行
-            var source = new DirectoryInfo(Path.Combine(TestValues.FileDirectory, "ElffyResources"));
+            var resource = new DirectoryInfo(Path.Combine(TestValues.FileDirectory, "ElffyResources"));
             var output = Path.Combine(".");
-            var optional = new DirectoryInfo(Path.Combine(TestValues.FileDirectory, "Scene"));
-            var args = new string[] { source.FullName, output }.Concat(new string[] { optional.FullName }).ToArray();
+            var scene = new DirectoryInfo(Path.Combine(TestValues.FileDirectory, "Scene"));
+            //var arg = $"-r {resource.FullName} -s {scene.FullName} {output}";
+            var args = new[] { "-r", resource.FullName, "-s", scene.FullName, output };
             Program.Main(args);
-            return (source, output, optional);
+            return (resource, output, scene);
         }
     }
 }

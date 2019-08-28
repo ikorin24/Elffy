@@ -36,8 +36,12 @@ namespace ElffyResourceCompiler
         private const int FILE_COUNT_BYTE_COUNT = 4;
         /// <summary>ファイルサイズの書き込み部のバイトサイズ</summary>
         private const int FILE_SIZE_BYTE_COUNT = 8;
-        private const string HIDDEN_ROOT = "?";
-        private const string HIDDEN_ROOT_DECOMPILED = "!";
+
+        private const string RESOURCE_ROOT = "Resource/";
+        private const string SCENE_ROOT = "Scene/";
+
+        //private const string HIDDEN_ROOT = "?";
+        //private const string HIDDEN_ROOT_DECOMPILED = "!";
         #endregion
 
         #region Compile
@@ -47,9 +51,9 @@ namespace ElffyResourceCompiler
         public static void Compile(CompileSetting setting)
         {
             if(setting == null) { throw new ArgumentNullException(nameof(setting)); }
-            var targetDir = setting.TargetDir ?? throw new ArgumentException();
             var outputPath = setting.OutputPath ?? throw new ArgumentException();
-            var optionalDir = setting.OptilnalDir ?? new string[0];
+            var resourceDir = setting.ResourceDir;
+            var sceneDir = setting.SceneDir;
             try {
                 _buf = new byte[BUF_LEN];
                 if(File.Exists(outputPath)) { File.Delete(outputPath); }
@@ -57,19 +61,28 @@ namespace ElffyResourceCompiler
                 using(var fs = File.OpenWrite(outputPath)) {
                     WriteToStream(fs, FORMAT_VERSION);                  // フォーマットバージョンを出力へ書きこむ
                     WriteToStream(fs, MAGIC_WORD);                      // マジックワードを書き込む
+                    var fileCountPosition = fs.Position;                // ファイル数を書き込むための場所
                     int fileCount = 0;
                     fs.Position += FILE_COUNT_BYTE_COUNT;
-                    var dir = new DirectoryInfo(targetDir);
-                    if(Directory.Exists(dir.FullName)) {
-                        WriteDirectory(dir, "", fs, ref fileCount);
-                    }
-                    var dirs = optionalDir.Select(x => new DirectoryInfo(x));
-                    foreach(var d in dirs) {
-                        if(Directory.Exists(d.FullName)) {
-                            WriteDirectory(d, $"{HIDDEN_ROOT}/{d.Name}/", fs, ref fileCount);
+
+                    // Resourceの書き込み
+                    if(resourceDir != null) {
+                        var dir = new DirectoryInfo(resourceDir);
+                        if(Directory.Exists(dir.FullName)) {
+                            WriteDirectory(dir, RESOURCE_ROOT, fs, ref fileCount);
                         }
                     }
-                    fs.Position = FORMAT_VERSION.Length + MAGIC_WORD.Length;
+
+                    // Sceneの書き込み
+                    if(sceneDir != null) {
+                        var dir = new DirectoryInfo(sceneDir);
+                        if(Directory.Exists(dir.FullName)) {
+                            WriteDirectory(dir, SCENE_ROOT, fs, ref fileCount);
+                        }
+                    }
+
+                    // ファイル数書き込み
+                    fs.Position = fileCountPosition;                                            // ファイル数を書き込む場所へ移動
                     fs.Write(IntToBytesLittleEndian(fileCount), 0, FILE_COUNT_BYTE_COUNT);      // ファイル数書き込み
                 }
                 if(File.Exists(TMP_FILE)) {
@@ -90,20 +103,20 @@ namespace ElffyResourceCompiler
         #region Decompile
         /// <summary>リソースを解凍します</summary>
         /// <param name="inputPath">解凍するリソースのパス</param>
-        /// <param name="outputDirectory">出力ディレクトリ</param>
+        /// <param name="outputDir">出力ディレクトリ</param>
         /// <returns></returns>
-        public static bool Decompile(string inputPath, string outputDirectory)
+        public static bool Decompile(string inputPath, string outputDir)
         {
-            if(outputDirectory == null) { throw new ArgumentNullException(nameof(outputDirectory)); }
+            if(outputDir == null) { throw new ArgumentNullException(nameof(outputDir)); }
             if(inputPath == null) { throw new ArgumentNullException(nameof(inputPath)); }
             if(!File.Exists(inputPath)) { throw new FileNotFoundException($"file : {inputPath}"); }
             try {
                 _buf = new byte[BUF_LEN];
-                if(Directory.Exists(outputDirectory)) {
+                if(Directory.Exists(outputDir)) {
                     if(Directory.Exists(TMP_DIR)) { Directory.Delete(TMP_DIR, true); }
-                    Directory.Move(outputDirectory, TMP_DIR);       // 出力先ディレクトリが既に存在するなら一時退避
+                    Directory.Move(outputDir, TMP_DIR);       // 出力先ディレクトリが既に存在するなら一時退避
                 }
-                Directory.CreateDirectory(outputDirectory);
+                Directory.CreateDirectory(outputDir);
                 
                 using(var fs = File.OpenRead(inputPath)) {
                     // フォーマットバージョンの確認
@@ -116,12 +129,12 @@ namespace ElffyResourceCompiler
                     if(fs.Read(_buf, 0, FILE_COUNT_BYTE_COUNT) != FILE_COUNT_BYTE_COUNT) { return false; }
                     var filecount = BytesToIntLittleEndian(_buf);
                     // ディレクトリへの展開
-                    ReadDirectory(fs, new DirectoryInfo(outputDirectory));
+                    ReadDirectory(fs, new DirectoryInfo(outputDir));
                 }
             }
             catch(Exception ex) {
                 if(Directory.Exists(TMP_DIR)) {
-                    Directory.Move(TMP_DIR, outputDirectory);       // 退避させた元のディレクトリを復元
+                    Directory.Move(TMP_DIR, outputDir);       // 退避させた元のディレクトリを復元
                 }
                 throw ex;
             }
@@ -230,7 +243,7 @@ namespace ElffyResourceCompiler
         #region CreateDirectory
         private static string CreateDirectory(string formattedFilePath, DirectoryInfo root, out DirectoryInfo directory)
         {
-            var path = formattedFilePath.Replace(HIDDEN_ROOT, HIDDEN_ROOT_DECOMPILED).Split('/');
+            var path = formattedFilePath.Split('/');
             if(path.Length > 1) {
                 var dir = Path.Combine(new string[1]{ root.Name }.Concat(path.Take(path.Length - 1)).ToArray());
                 directory = Directory.CreateDirectory(dir);
@@ -238,7 +251,7 @@ namespace ElffyResourceCompiler
             else {
                 directory = root;
             }
-            return path[path.Length - 1];
+            return path[path.Length - 1];       // return filename
         }
         #endregion
 

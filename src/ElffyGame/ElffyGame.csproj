@@ -134,6 +134,6 @@
     </PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PreBuildEvent>"$(ProjectDir)externalExe\ElffyResourceCompiler.exe" "$(ProjectDir)ElffyResources" "$(ProjectDir)$(OutDir)\" "$(ProjectDir)Scene"</PreBuildEvent>
+    <PreBuildEvent>"$(ProjectDir)externalExe\erc.exe" "-r" "$(ProjectDir)ElffyResources" "-s" "$(ProjectDir)Scene" "$(ProjectDir)$(OutDir)\"</PreBuildEvent>
   </PropertyGroup>
 </Project>

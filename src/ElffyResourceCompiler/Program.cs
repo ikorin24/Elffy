@@ -2,53 +2,56 @@
 using System.Diagnostics;
 using System.Linq;
 using System.IO;
+using System.Reflection;
 
 namespace ElffyResourceCompiler
 {
     class Program
     {
-        public const string OutputFile = "Resources.dat";
+        private static readonly string[] VALID_OPTION = new[] { "-r", "-s", "-h" };
+        internal const string OutputFile = "Resources.dat";
 
         public static int Main(string[] args)
         {
-            if(args.Length < 1) {
-                Console.WriteLine("Please set resource directory as arg[0].");
-                Console.WriteLine("[ERROR] Resource is not compiled !!");
+            // Arguments
+            // "-r <resource-dir> -s <scene-dir> <output-dir>"
+            var parser = new CommandLineArgParser();
+            var param = parser.Parse(args);
+            if(param.OptionalArgs.ContainsKey("-h")) {
+                ShowHelp();
+                return 0;
+            }
+            var invalidOption = param.OptionalArgs.Keys.Where(option => !VALID_OPTION.Contains(option)).FirstOrDefault();
+            if(invalidOption != null) {
+                Console.WriteLine($"Known option '{invalidOption}'");
+                ShowHelp();
                 return -1;
             }
-
-            if(args.Length < 2) {
-                Console.WriteLine("Please set output directory as arg[1].");
-                Console.WriteLine("[ERROR] Resource is not compiled !!");
+            if(param.Args.Count < 1) {
+                Console.WriteLine("Argument not sufficient");
+                ShowHelp();
                 return -1;
             }
-
-            //if(args.Length < 3) {
-            //    Console.WriteLine("Please set password which compile resources as arg[2].");
-            //    Console.WriteLine("[ERROR] Resource is not compiled !!");
-            //    return -1;
-            //}
-
-            var resourceDir = args[0];
-            var output = Path.Combine(args[1], OutputFile);
-            var optionalDirs = (args.Length > 2) ? args.Skip(2).ToArray() : null;
-            //var password = args[2];
-
-            Console.WriteLine($"resourceDir : {resourceDir}");
-            Console.WriteLine($"output : {output}");
-            if(optionalDirs != null) { Console.WriteLine($"optionalDir : {string.Join(", ", optionalDirs)}"); }
-            //Console.WriteLine($"password : {password}");
-
+            param.OptionalArgs.TryGetValue("-r", out var resourceDir);
+            param.OptionalArgs.TryGetValue("-s", out var sceneDir);
+            var output = Path.Combine(param.Args[0], OutputFile);
             var sw = new Stopwatch();
             sw.Start();
-            var setting = new CompileSetting();
-            setting.TargetDir = resourceDir;
-            setting.OutputPath = output;
-            setting.OptilnalDir = optionalDirs;
+            var setting = new CompileSetting() {
+                ResourceDir = resourceDir,
+                SceneDir = sceneDir,
+                OutputPath = output,
+            };
             Compiler.Compile(setting);
             sw.Stop();
             Console.WriteLine($"Resouce compiled : {sw.ElapsedMilliseconds}ms");
             return 0;
+        }
+
+        private static void ShowHelp()
+        {
+            var exe = Path.GetFileName(Assembly.GetEntryAssembly().Location);
+            Console.WriteLine($"usage : {exe} [-h] [-r <resource-dir>] [-s <scene-dir>] output-dir");
         }
     }
 }

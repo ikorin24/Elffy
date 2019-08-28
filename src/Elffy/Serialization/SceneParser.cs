@@ -21,7 +21,7 @@ namespace Elffy.Serialization
         public T Parse<T>(string name) where T : GameScene, new()
         {
             var scene = new T();
-            using(var stream = Resources.LoadHiddenStream(name)) {
+            using(var stream = Resources.GetSceneStream(name)) {
                 scene.FrameObjects = XElement.Load(stream).Elements().Select(MakeFrameObject).ToArray();
                 // TODO: シーンのイベント
             }

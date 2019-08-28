@@ -23,7 +23,7 @@ namespace Elffy
         public static T LoadWithoutInitializing<T>() where T : GameScene, new()
         {
             var parser = new SceneParser();
-            var scene = parser.Parse<T>($"Scene/{typeof(T).Name}.xml");
+            var scene = parser.Parse<T>($"{typeof(T).Name}.xml");
             return scene;
         }
 

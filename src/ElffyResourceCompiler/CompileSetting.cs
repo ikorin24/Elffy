@@ -8,8 +8,8 @@ namespace ElffyResourceCompiler
 {
     public class CompileSetting
     {
-        public string TargetDir { get; set; }
-        public string[] OptilnalDir { get; set; } 
+        public string ResourceDir { get; set; }
+        public string SceneDir { get; set; }
         public string OutputPath { get; set; }
     }
 }

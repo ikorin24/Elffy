@@ -118,7 +118,7 @@ namespace Elffy
         #region LoadFromResource
         private UnmanagedArray<byte> LoadFromResource(string resource, out int pixelWidth, out int pixelHeigh)
         {
-            using(var stream = Resources.LoadStream(resource))
+            using(var stream = Resources.GetStream(resource))
             using(var bmp = new Bitmap(stream)) {
                 pixelWidth = bmp.Width;
                 pixelHeigh = bmp.Height;
