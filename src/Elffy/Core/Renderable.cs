@@ -75,7 +75,12 @@ namespace Elffy.Core
             GL.Scale(Scale);
 
             // マテリアルの適用
-            Material?.Apply();
+            if(Material != null) {
+                Material.Apply();
+            }
+            else {
+                Material.ClearMaterial();
+            }
             // 頂点を描画
             DrawVertexAndTexture();
             if(HasChild) {

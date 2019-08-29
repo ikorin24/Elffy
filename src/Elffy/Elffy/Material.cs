@@ -12,6 +12,7 @@ namespace Elffy
     public sealed class Material
     {
         private const float DEFAULT_SHININESS = 30f;
+        private static bool _isClear;
 
         public Color4 Ambient { get; set; }
 
@@ -41,6 +42,18 @@ namespace Elffy
             GL.Material(MaterialFace.Front, MaterialParameter.Diffuse, Diffuse);
             GL.Material(MaterialFace.Front, MaterialParameter.Specular, Specular);
             GL.Material(MaterialFace.Front, MaterialParameter.Shininess, Shininess);
+            _isClear = false;
+        }
+
+        internal static void ClearMaterial()
+        {
+            if(!_isClear) {
+                GL.Material(MaterialFace.Front, MaterialParameter.Ambient, new Color4(0.2f, 0.2f, 0.2f, 1f));
+                GL.Material(MaterialFace.Front, MaterialParameter.Diffuse, new Color4(0.8f, 0.8f, 0.8f, 1f));
+                GL.Material(MaterialFace.Front, MaterialParameter.Specular, new Color4(0f, 0f, 0f, 1f));
+                GL.Material(MaterialFace.Front, MaterialParameter.Shininess, 0);
+                _isClear = true;
+            }
         }
     }
 }
