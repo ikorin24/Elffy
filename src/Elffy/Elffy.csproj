@@ -88,6 +88,10 @@
     <Compile Include="Mathmatics\Curve.cs" />
     <Compile Include="Mathmatics\MathTool.cs" />
     <Compile Include="Elffy\ObjectLayer.cs" />
+    <Compile Include="Physics\CubeRigidbody.cs" />
+    <Compile Include="Physics\Rigidbody.cs" />
+    <Compile Include="Physics\Rigidbody3D.cs" />
+    <Compile Include="Physics\SphereRigidbody.cs" />
     <Compile Include="Serialization\FbxModelBuilder.cs" />
     <Compile Include="Serialization\FbxObject.cs" />
     <Compile Include="Serialization\FbxParser.cs" />

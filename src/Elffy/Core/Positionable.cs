@@ -1,4 +1,5 @@
-﻿using OpenTK;
+﻿using Elffy.Physics;
+using OpenTK;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,6 +19,8 @@ namespace Elffy.Core
         public Quaternion Rotation { get; set; } = Quaternion.Identity;
 
         public ObjectLayer Layer { get; set; }
+
+        public Rigidbody3D Rigidbody { get; set; }
 
         /// <summary>この <see cref="Positionable"/> のツリー構造の親を取得します</summary>
         public Positionable Parent
