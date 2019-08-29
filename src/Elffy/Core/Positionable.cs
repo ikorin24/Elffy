@@ -23,7 +23,7 @@ namespace Elffy.Core
         public Positionable Parent
         {
             get => _parent;
-            set
+            internal set
             {
                 if(_parent == null) {
                     _parent = value;
