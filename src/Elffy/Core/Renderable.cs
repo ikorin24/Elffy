@@ -71,7 +71,7 @@ namespace Elffy.Core
             // 座標と回転を適用
             var view = Camera.Current.Matrix;
             GL.LoadMatrix(ref view);
-            GL.Translate(Position);
+            GL.Translate(WorldPosition);
             var rot = Matrix4.CreateFromQuaternion(Rotation);
             GL.MultMatrix(ref rot);
             GL.Scale(Scale);
