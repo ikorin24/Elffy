@@ -69,9 +69,7 @@ namespace Elffy.Core
         {
             OnRendering();
             // 座標と回転を適用
-            var view = Camera.Current.Matrix;
-            GL.LoadMatrix(ref view);
-            GL.Translate(WorldPosition);
+            GL.Translate(Position);
             var rot = Matrix4.CreateFromQuaternion(Rotation);
             GL.MultMatrix(ref rot);
             GL.Scale(Scale);
@@ -80,6 +78,13 @@ namespace Elffy.Core
             Material?.Apply();
             // 頂点を描画
             DrawVertexAndTexture();
+            if(HasChild) {
+                foreach(var child in Children.OfType<Renderable>()) {
+                    GL.PushMatrix();
+                    child.Render();
+                    GL.PopMatrix();
+                }
+            }
             OnRendered();
         }
         #endregion
