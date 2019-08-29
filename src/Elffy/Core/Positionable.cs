@@ -19,14 +19,51 @@ namespace Elffy.Core
 
         public ObjectLayer Layer { get; set; }
 
+        /// <summary>この <see cref="Positionable"/> のツリー構造の親を取得します</summary>
+        public Positionable Parent
+        {
+            get => _parent;
+            set
+            {
+                if(_parent == null) {
+                    _parent = value;
+                }
+                else if(_parent != null && value == null) {
+                    _parent = value;
+                }
+                else { throw new InvalidOperationException($"The instance is already a child of another object. Can not has multi parents."); }
+            }
+        }
+        private Positionable _parent;
+
+        /// <summary>この <see cref="Positionable"/> のツリー構造の子要素を取得します</summary>
+        public PositionableCollection Children { get; }
+
+        /// <summary>この <see cref="Positionable"/> がツリー構造の Root かどうかを取得します</summary>
+        public bool IsRoot => Parent == null;
+
+        /// <summary>この <see cref="Positionable"/> が子要素の <see cref="Positionable"/> を持っているかどうかを取得します</summary>
+        public bool HasChild => Children.Count > 0;
+
         #region Position
-        /// <summary>オブジェクトの座標</summary>
+        /// <summary>
+        /// オブジェクトのローカル座標<para/>
+        /// <see cref="IsRoot"/> が true の場合は <see cref="WorldPosition"/> と同じ値。false の場合は親の <see cref="Position"/> を基準とした相対座標。
+        /// </summary>
         public Vector3 Position
         {
             get => _position;
-            set { _position = value; }
+            set
+            {
+                var vec = value - _position;
+                _position += vec;
+                _worldPosition += vec;
+                foreach(var child in GetOffspring()) {
+                    child._worldPosition += vec;
+                }
+            }
         }
-        internal Vector3 _position;
+        private Vector3 _position;
         #endregion
 
         #region PositionX
@@ -34,7 +71,15 @@ namespace Elffy.Core
         public float PositionX
         {
             get => _position.X;
-            set { _position.X = value; }
+            set
+            {
+                var diff = value - _position.X;
+                _position.X += diff;
+                _worldPosition.X += diff;
+                foreach(var child in GetOffspring()) {
+                    child._worldPosition.X += diff;
+                }
+            }
         }
         #endregion
 
@@ -43,7 +88,15 @@ namespace Elffy.Core
         public float PositionY
         {
             get => _position.Y;
-            set { _position.Y = value; }
+            set
+            {
+                var diff = value - _position.Y;
+                _position.Y += diff;
+                _worldPosition.X += diff;
+                foreach(var child in GetOffspring()) {
+                    child._worldPosition.Y += diff;
+                }
+            }
         }
         #endregion
 
@@ -52,7 +105,84 @@ namespace Elffy.Core
         public float PositionZ
         {
             get => _position.Z;
-            set { _position.Z = value; }
+            set
+            {
+                var diff = value - _position.Z;
+                _position.Z += diff;
+                _worldPosition.Z += diff;
+                foreach(var child in GetOffspring()) {
+                    child._worldPosition.Z += diff;
+                }
+            }
+        }
+        #endregion
+
+        #region WorldPosition
+        /// <summary>オブジェクトのワールド座標</summary>
+        public Vector3 WorldPosition
+        {
+            get => _worldPosition;
+            set
+            {
+                var vec = value - _worldPosition;
+                _worldPosition += vec;
+                _position += vec;
+                foreach(var child in GetOffspring()) {
+                    child._worldPosition += vec;
+                }
+            }
+        }
+        private Vector3 _worldPosition;
+        #endregion
+
+        #region WorldPositionX
+        /// <summary>ワールド座標のX座標</summary>
+        public float WorldPositionX
+        {
+            get => _worldPosition.X;
+            set
+            {
+                var diff = value - _worldPosition.X;
+                _worldPosition.X += diff;
+                _position.X += diff;
+                foreach(var child in GetOffspring()) {
+                    child._worldPosition.X += diff;
+                }
+            }
+        }
+        #endregion
+
+        #region WorldPositionY
+        /// <summary>ワールド座標のY座標</summary>
+        public float WorldPositionY
+        {
+            get => _worldPosition.Y;
+            set
+            {
+                var diff = value - _worldPosition.Y;
+                _worldPosition.Y += diff;
+                _position.Y += diff;
+                foreach(var child in GetOffspring()) {
+                    child._worldPosition.Y += diff;
+                }
+            }
+        }
+        #endregion
+
+        #region WorldPositionZ
+        /// <summary>ワールド座標のZ座標</summary>
+        public float WorldPositionZ
+        {
+            get => _worldPosition.Z;
+            set
+            {
+                var diff = value - _worldPosition.Z;
+                _worldPosition.Z += diff;
+                _position.Z += diff;
+                foreach(var child in GetOffspring()) {
+                    child._worldPosition.Z += diff;
+                }
+            }
         }
         #endregion
 
@@ -63,7 +193,7 @@ namespace Elffy.Core
             get => _scale;
             set { _scale = value; }
         }
-        internal Vector3 _scale = Vector3.One;
+        private Vector3 _scale = Vector3.One;
         #endregion
 
         #region ScaleX
@@ -93,6 +223,11 @@ namespace Elffy.Core
         }
         #endregion
         #endregion
+
+        public Positionable()
+        {
+            Children = new PositionableCollection(this);
+        }
 
         #region Translate
         /// <summary>オブジェクトを移動させます</summary>
@@ -143,5 +278,17 @@ namespace Elffy.Core
             Rotation *= quaternion;
         }
         #endregion
+
+        /// <summary>このオブジェクトの <see cref="Children"/> 以下に存在する全ての子孫を取得します。</summary>
+        /// <returns>全ての子孫オブジェクト</returns>
+        public IEnumerable<Positionable> GetOffspring()
+        {
+            foreach(var child in Children) {
+                yield return child;
+                foreach(var offspring in child.GetOffspring()) {
+                    yield return offspring;
+                }
+            }
+        }
     }
 }

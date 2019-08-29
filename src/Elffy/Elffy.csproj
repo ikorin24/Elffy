@@ -58,6 +58,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Core\PositionableCollection.cs" />
     <Compile Include="Elffy\GameScene.cs" />
     <Compile Include="Elffy\Sound.cs" />
     <Compile Include="Framing\FrameProcessObject.cs" />
