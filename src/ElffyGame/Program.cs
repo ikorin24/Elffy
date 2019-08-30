@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Elffy;
 using Elffy.Control;
 
@@ -14,6 +11,11 @@ namespace ElffyGame
         /// </summary>
         [STAThread]
         static void Main()
+        {
+            ProcessHelper.SingleLaunch(GameStart);
+        }
+
+        static void GameStart()
         {
             try {
                 Game.Initialize += GameStartUp.Initialize;

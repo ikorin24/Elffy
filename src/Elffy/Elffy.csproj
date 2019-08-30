@@ -61,6 +61,7 @@
     <Compile Include="Core\PositionableCollection.cs" />
     <Compile Include="Elffy\GameScene.cs" />
     <Compile Include="Elffy\Materials.cs" />
+    <Compile Include="Elffy\ProcessHelper.cs" />
     <Compile Include="Elffy\Sound.cs" />
     <Compile Include="Framing\FrameProcessObject.cs" />
     <Compile Include="Framing\FrameProcessInfo.cs" />
