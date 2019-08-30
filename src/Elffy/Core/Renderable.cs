@@ -79,7 +79,7 @@ namespace Elffy.Core
                 Material.Apply();
             }
             else {
-                Material.ClearMaterial();
+                Material.Default.Apply();
             }
             // 頂点を描画
             DrawVertexAndTexture();
