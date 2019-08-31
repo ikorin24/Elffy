@@ -96,7 +96,13 @@ namespace Elffy
         internal static bool HasResource(string name)
         {
             CheckInitialized();
-            return _resources.ContainsKey(name);
+            return _resources.ContainsKey($"{RESOURCE_ROOT}/{name}");
+        }
+
+        internal static bool HasScene(string name)
+        {
+            CheckInitialized();
+            return _resources.ContainsKey($"{SCENE_ROOT}/{name}");
         }
 
         #region GetResourceStreamPrivate
