@@ -12,7 +12,7 @@ namespace Elffy.Core
     /// 空間に置くことができるオブジェクトの基底クラス<para/>
     /// 座標・サイズ・回転等に関する操作を提供します。<para/>
     /// </summary>
-    public abstract class Positionable : FrameObject
+    public abstract class Positionable : ComponentOwner
     {
         #region Proeprty
         /// <summary>オブジェクトの回転を表すクオータニオン</summary>

@@ -53,6 +53,7 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ComponentOwnerTest.cs" />
     <Compile Include="FbxUnitTest.cs" />
     <Compile Include="PositionableTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
