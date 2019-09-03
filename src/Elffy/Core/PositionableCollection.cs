@@ -33,7 +33,10 @@ namespace Elffy.Core
             _list = new List<Positionable>();
         }
 
-        /// <summary>要素を追加します</summary>
+        /// <summary>
+        /// 要素を追加します<para/>
+        /// ※パフォーマンスのため <see cref="Positionable"/> の親子関係は循環を検知しません。ツリーの循環は予期せぬ例外や無限ループに陥る可能性があります。
+        /// </summary>
         /// <param name="item">追加する要素</param>
         public void Add(Positionable item)
         {
