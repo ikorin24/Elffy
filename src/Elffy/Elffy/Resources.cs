@@ -43,7 +43,7 @@ namespace Elffy
             catch(Exception ex) {
                 _resources?.Clear();
                 _resources = null;
-                throw new FormatException("Failed in creating resource dic.",ex);
+                throw new FormatException("Failed in creating resource dic.", ex);
             }
             IsInitialized = true;
         }

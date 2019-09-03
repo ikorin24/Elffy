@@ -50,25 +50,25 @@ namespace Elffy
         }
 
         #region Run
-        public static GameExitResult Run(int width, int heigh, string title, WindowStyle windowStyle)
+        public static void Run(int width, int heigh, string title, WindowStyle windowStyle)
         {
             if(Instance != null) { throw new InvalidOperationException("Game is already Running"); }
             try {
                 Resources.Initialize();
             }
-            catch(Exception) { return GameExitResult.FailedInInitializingResource; }
-            return RunPrivate(width, heigh, title, windowStyle, null);
+            catch(Exception) { throw; }
+            RunPrivate(width, heigh, title, windowStyle, null);
         }
 
-        public static GameExitResult Run(int width, int heigh, string title, WindowStyle windowStyle, string icon)
+        public static void Run(int width, int heigh, string title, WindowStyle windowStyle, string icon)
         {
             if(Instance != null) { throw new InvalidOperationException("Game is already Running"); }
             if(string.IsNullOrEmpty(icon)) { throw new ArgumentException($"Icon is null or empty"); }
             try {
                 Resources.Initialize();
             }
-            catch(Exception) { return GameExitResult.FailedInInitializingResource; }
-            return RunPrivate(width, heigh, title, windowStyle, icon);
+            catch(Exception) { throw; }
+            RunPrivate(width, heigh, title, windowStyle, icon);
         }
         #endregion Run
         
@@ -117,7 +117,7 @@ namespace Elffy
         /// <param name="windowStyle">ウィンドウスタイル</param>
         /// <param name="iconResourcePath">ウィンドウアイコンのリソースパス(nullならアイコン不使用)</param>
         /// <returns></returns>
-        private static GameExitResult RunPrivate(int width, int heigh, string title, WindowStyle windowStyle, string iconResourcePath)
+        private static void RunPrivate(int width, int heigh, string title, WindowStyle windowStyle, string iconResourcePath)
         {
             Icon icon = null;
             if(iconResourcePath != null) {
@@ -138,7 +138,7 @@ namespace Elffy
                     window.UpdateFrame += OnFrameUpdating;
                     window.Closed += OnClosed;
                     window.Run();
-                    return GameExitResult.SuccessfulCompletion;
+                    return;
                 }
             }
             finally {
@@ -288,11 +288,5 @@ namespace Elffy
         }
 
         private static Exception NewGameNotRunningException() => new InvalidOperationException("Game is Not Running");
-    }
-
-    public enum GameExitResult
-    {
-        SuccessfulCompletion,
-        FailedInInitializingResource,
     }
 }
