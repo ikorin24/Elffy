@@ -282,7 +282,7 @@ namespace Elffy.Core
         }
         #endregion
 
-        /// <summary>このオブジェクトの <see cref="Children"/> 以下に存在する全ての子孫を取得します。</summary>
+        /// <summary>このオブジェクトの <see cref="Children"/> 以下に存在する全ての子孫を取得します。列挙順は深さ優先探索 (DFS; depth-first search) です。</summary>
         /// <returns>全ての子孫オブジェクト</returns>
         public IEnumerable<Positionable> GetOffspring()
         {
@@ -292,6 +292,25 @@ namespace Elffy.Core
                     yield return offspring;
                 }
             }
+        }
+
+        /// <summary>このオブジェクトの <see cref="Parent"/> 以上に存在する全ての先祖を取得します。列挙順は自身の親からRoot方向への順です。</summary>
+        /// <returns>全ての先祖オブジェクト</returns>
+        public IEnumerable<Positionable> GetAncestor()
+        {
+            var target = this;
+            while(!target.IsRoot) {
+                yield return target.Parent;
+                target = target.Parent;
+            }
+        }
+
+        /// <summary>このオブジェクトの Root オブジェクトを取得します。</summary>
+        /// <returns>Root オブジェクト</returns>
+        public Positionable GetRoot()
+        {
+            if(IsRoot) { return this; }
+            return GetAncestor().Last();
         }
     }
 }

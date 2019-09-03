@@ -104,8 +104,12 @@
     <Compile Include="Shape\Model3D.cs" />
     <Compile Include="Elffy\Texture.cs" />
     <Compile Include="Threading\GameThread.cs" />
+    <Compile Include="UI\Button.cs" />
     <Compile Include="UI\Canvas.cs" />
     <Compile Include="Shape\Plain.cs" />
+    <Compile Include="UI\Executable.cs" />
+    <Compile Include="UI\Page.cs" />
+    <Compile Include="UI\UIBase.cs" />
     <Compile Include="UI\UISetting.cs" />
     <Compile Include="Elffy\WindowStyle.cs" />
     <Compile Include="Elffy\DebugManager.cs" />

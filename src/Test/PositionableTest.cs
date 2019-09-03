@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Elffy.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using OpenTK;
@@ -106,6 +107,20 @@ namespace Test
             TestHelper.Assert(Equal(e.WorldPosition, pos7 + pos4 + pos5));
             TestHelper.Assert(Equal(f.WorldPosition, pos7 + pos6));
             #endregion
+
+            // Get offspring, depth-first search test (If breadth-first search or other order, exception.)
+            Assert.IsTrue(a.GetOffspring().SequenceEqual(new [] { b, c, d, e, f }));
+
+            // Get Ancestor test
+            Assert.IsTrue(e.GetAncestor().SequenceEqual(new[] { d, c, a }));
+            Assert.IsTrue(f.GetAncestor().SequenceEqual(new[] { c, a }));
+
+            Assert.AreEqual(a.GetRoot(), a);
+            Assert.AreEqual(b.GetRoot(), a);
+            Assert.AreEqual(c.GetRoot(), a);
+            Assert.AreEqual(d.GetRoot(), a);
+            Assert.AreEqual(e.GetRoot(), a);
+            Assert.AreEqual(f.GetRoot(), a);
         }
 
         private bool Equal(Vector3 v1, Vector3 v2)

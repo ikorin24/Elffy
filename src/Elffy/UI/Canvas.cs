@@ -57,6 +57,15 @@ namespace Elffy.UI
             AddDirtyRegion(GetBounds(points));
         }
 
+        public void DrawImage(Bitmap image, Point point)
+        {
+            if(image == null) { throw new ArgumentNullException(nameof(image)); }
+            _g.DrawImage(image, point);
+            var point2 = new Point(point.X + image.Width, point.Y + image.Height);
+            var updateRegion = GetBounds(point, point2);
+            AddDirtyRegion(updateRegion);
+        }
+
         public void Clear(Color color)
         {
             _g.Clear(color);
