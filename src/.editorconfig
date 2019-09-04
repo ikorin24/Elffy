@@ -4,10 +4,16 @@ root = true
 [*]
 end_of_line = crlf
 
+[*.md]
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+
 [*.xml]
 indent_size = 4
 indent_style = space
 tab_width = 4
+insert_final_newline = true
 
 # CSharp formatting settings:
 [*.cs]
@@ -18,7 +24,7 @@ tab_width = 4
 
 # 改行設定
 end_of_line = crlf
-insert_final_newline = false
+insert_final_newline = true
 
 #### .NET コーディング規則 ####
 
