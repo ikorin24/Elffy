@@ -36,6 +36,8 @@ namespace Elffy
             return scene;
         }
 
+        protected virtual void Initialize() { }
+
         private void InitializeComponent()
         {
             foreach(var obj in FrameObjects) {
