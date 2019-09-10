@@ -1,4 +1,4 @@
-# Credit
+# Credits
 
 - [OpenTK](https://github.com/opentk/opentk)
 
