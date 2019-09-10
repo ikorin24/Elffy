@@ -1,4 +1,18 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<Scene xmlns:s="clr-namespace:Elffy.Shape" Loaded="OnLoaded">
-    <s:Cube Position="2,0,2"/>
-</Scene>
+<?xml version="1.0" encoding="utf-8" ?>
+<GameScene xmlns:x="elffy-xmltool"
+           xmlns:s="clr-namespace:ElffyGame.Sample" Loaded="OnLoaded">
+    <Cube Position="2,0,2"/>
+    <Page SizeMode="Fixed" Width="800" Height="450" Split="1:*">
+        <Panel Split="1:1:1">
+            <!--<Image Source="?TitleImage.jpg" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            <Image Source="??https://i.imgur.com/L009cDd.jpg" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            <Image Source="hoge/piyo.jpg" HorizontalAlignment="Center" VerticalAlignment="Center"/>-->
+        </Panel>
+        <Panel>
+            <Button Width="90" Height="30" Content="Start" HorizontalAlignment="Center" VerticalAlignment="Bottom" Offset="150,0"/>
+            <Button Width="90" Height="30" Content="Exit" HorizontalAlignment="Center" Offset="100,0"/>
+        </Panel>
+    </Page>
+    <!--<Model3D Source="?Model/hoge.fbx" Position="0,10,0" x:Name="hoge"/>-->
+    <!--<s:SampleItem Position="0,0,0"/>-->
+</GameScene>

@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace Elffy.UI
 {
     /// <summary>UI の Root となるオブジェクト</summary>
-    public class Page : Renderable
+    public class Page : Panel
     {
         /// <summary>この <see cref="Page"/> が レイアウト済みかどうかを取得します</summary>
         public bool IsLayouted { get; private set; }
