@@ -101,7 +101,6 @@
     <Compile Include="Serialization\FbxObject.cs" />
     <Compile Include="Serialization\FbxParser.cs" />
     <Compile Include="Serialization\ModelLoader.cs" />
-    <Compile Include="Serialization\SceneParser.cs" />
     <Compile Include="Shape\Cube.cs" />
     <Compile Include="Shape\Model3D.cs" />
     <Compile Include="Elffy\Texture.cs" />

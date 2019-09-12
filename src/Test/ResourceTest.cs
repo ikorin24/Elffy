@@ -174,7 +174,7 @@ namespace Test
 
             // シーンのロード
             Resources.Initialize();
-            var scene = GameScene.LoadWithoutInitializing<TestScene>();
+            var scene = GameScene.LoadWithoutActivating<TestScene>();
         }
         #endregion
 

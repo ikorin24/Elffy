@@ -87,7 +87,7 @@ namespace SceneGenerator
 
             CreateDirectory(outputFile);
             using(var writer = new StreamWriter(outputFile)) {
-                var str1 = 
+                var str0 =
 $@"// ====================================
 // 
 // DO NOT MODIFY MANUALLY !!
@@ -102,20 +102,44 @@ namespace {codeNamespace}
 {{
     partial class {sceneClass} : {nameof(Elffy)}.{nameof(GameScene)}
     {{
+";
+                var str1 = 
+$@"
+
         protected override void Initialize()
         {{
 ";
                 var str2 =
 $@"        }}
+
+        public override void Activate()
+        {{
+";
+                var str3 =
+$@"        }}
     }}
 }}
 ";
-                var indent = "            ";
-                writer.Write(str1);
+                var variables = new List<(Type type, string name)>();
+                writer.Write(str0);
+                writer.WriteLine($"        private bool _isInitialized;");
                 foreach(var (element, i) in GetAllElements(xml).Skip(1).Select((e, i) => (e, i))) {      // Skip root element
-                    WriteElement(writer, element, indent, i);
+                    var type = GetObjectType(element);
+                    var variable = $"_variable{i}";
+                    writer.WriteLine($"        private {type.FullName} {variable};");
+                    variables.Add((type, variable));
                 }
+                writer.Write(str1);
+                foreach(var (type, variable) in variables) {
+                    writer.WriteLine($"            {variable} = new {type.FullName}();");
+                }
+                writer.WriteLine($"            _isInitialized = true;");
                 writer.Write(str2);
+                writer.WriteLine($"            if(!_isInitialized) {{ return; }}");
+                foreach(var (_, variable) in variables) {
+                    writer.WriteLine($"            {variable}.{nameof(FrameObject.Activate)}();");
+                }
+                writer.Write(str3);
             }
         }
         #endregion
@@ -147,20 +171,6 @@ $@"        }}
             if(Directory.Exists(dir) == false) {
                 Directory.CreateDirectory(dir);
             }
-        }
-        #endregion
-
-        #region WriteElement
-        /// <summary>xml の1つのノードに対応する生成コードを書き込みます</summary>
-        /// <param name="writer">書き込み先</param>
-        /// <param name="element">xml のノード</param>
-        /// <param name="indent">生成コードのインデント</param>
-        private void WriteElement(StreamWriter writer, XElement element, string indent, int variableNum)
-        {
-            var type = GetObjectType(element);
-            var variable = $"variable{variableNum}";
-            writer.WriteLine($"{indent}var {variable} = new {type.FullName}();");
-            writer.WriteLine($"{indent}{variable}.{nameof(FrameObject.Activate)}();");
         }
         #endregion
 
