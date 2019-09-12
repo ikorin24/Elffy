@@ -4,7 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
 using System.Xml.Linq;
+using System.Text.RegularExpressions;
 using Elffy;
 
 namespace SceneGenerator
@@ -12,6 +14,8 @@ namespace SceneGenerator
     public class CodeGenerator
     {
         #region private member
+        private const string SCENE_FILE_EXT = ".xml";
+        private const string GENERATED_FILE_SUFFIX = "-elffygen.cs";
         private static readonly string[] _elffyNamespaces = new string[]
         {
             nameof(Elffy),
@@ -19,11 +23,8 @@ namespace SceneGenerator
             $"{nameof(Elffy)}.{nameof(Elffy.Shape)}",
         };
         private static readonly Dictionary<string, Type> _elffyTypes;
-        private string _sceneClass;
-        private string _codeNamespace;
-        private int variableNum;
-        private string _outputFile;
-        private XElement _xml;
+        private readonly HashAlgorithm _hashProvider = new SHA1CryptoServiceProvider();
+        private const string HASH_TYPE = "SHA1";
         #endregion
 
         #region constructor
@@ -37,39 +38,44 @@ namespace SceneGenerator
                                   .Where(t => _elffyNamespaces.Contains(t.Namespace))
                                   .ToDictionary(t => t.Name);
         }
-
-        /// <summary>Constructor of <see cref="CodeGenerator"/></summary>
-        /// <param name="sceneFile">scene file name</param>
-        /// <param name="outputFile">output file name</param>
-        public CodeGenerator(string sceneFile, string outputFile)
-        {
-            if(sceneFile == null) { throw new ArgumentNullException(nameof(sceneFile)); }
-            if(outputFile == null) { throw new ArgumentNullException(nameof(outputFile)); }
-            using(var sceneFileStream = File.OpenRead(sceneFile)) {
-                _xml = XElement.Load(sceneFileStream);
-            }
-            _outputFile = outputFile;
-            var pairFileName = $"{sceneFile}.cs";
-            _sceneClass = GetSceneClassName(pairFileName);
-            _codeNamespace = GetCodeNamespace(pairFileName);
-        }
         #endregion constructor
 
         public static void GenerateAll(DirectoryInfo sceneDir, DirectoryInfo outputDir)
         {
             if(sceneDir == null) { throw new ArgumentNullException(nameof(sceneDir)); }
             if(outputDir == null) { throw new ArgumentNullException(nameof(outputDir)); }
-            foreach(var sceneFile in sceneDir.GetFiles("*.xml")) {
-                var output = Path.Combine(outputDir.FullName, $"{sceneFile}.elffy-gen.cs");
-                var generator = new CodeGenerator(sceneFile.FullName, output);
-                generator.Generate();
+
+            var generator = new CodeGenerator();
+            foreach(var sceneFile in sceneDir.GetFiles($"*{SCENE_FILE_EXT}")) {
+                var output = Path.Combine(outputDir.FullName, $"{sceneFile.Name}{GENERATED_FILE_SUFFIX}");
+                generator.Generate(sceneFile.FullName, output);
             }
         }
 
         #region Generate
         /// <summary>Generate c# code</summary>
-        public void Generate()
+        /// <param name="sceneFile">scene file name</param>
+        /// <param name="outputFile">output file name</param>
+        public void Generate(string sceneFile, string outputFile)
         {
+            if(sceneFile == null) { throw new ArgumentNullException(nameof(sceneFile)); }
+            if(outputFile == null) { throw new ArgumentNullException(nameof(outputFile)); }
+
+            XElement xml;
+            string hash;
+            using(var sceneFileStream = File.OpenRead(sceneFile)) {
+                hash = string.Join("", _hashProvider.ComputeHash(sceneFileStream).Select(b => b.ToString("x2")));
+                if(ModifiedCheck(hash, outputFile) == false) {
+                    return;
+                }
+                sceneFileStream.Position = 0;
+                xml = XElement.Load(sceneFileStream);
+            }
+            var pairFileName = $"{sceneFile}.cs";
+            var sceneClass = GetSceneClassName(pairFileName);
+            var codeNamespace = GetCodeNamespace(pairFileName);
+
+            #region func GetAllElements
             IEnumerable<XElement> GetAllElements(XElement root)
             {
                 yield return root;
@@ -77,48 +83,91 @@ namespace SceneGenerator
                     yield return element;
                 }
             }
-            CreateDirectory();
-            using(var writer = new StreamWriter(_outputFile)) {
+            #endregion
+
+            CreateDirectory(outputFile);
+            using(var writer = new StreamWriter(outputFile)) {
                 var str1 = 
-$@"namespace {_codeNamespace}
+$@"// ====================================
+// 
+// DO NOT MODIFY MANUALLY !!
+// 
+// This source file is auto-generated.
+//
+// ------------------------------------
+// hash:{HASH_TYPE}={hash}
+// ====================================
+
+namespace {codeNamespace}
 {{
-    public partial class {_sceneClass} : {nameof(Elffy)}.{nameof(GameScene)}
+    partial class {sceneClass} : {nameof(Elffy)}.{nameof(GameScene)}
     {{
         protected override void Initialize()
         {{
 ";
                 var str2 =
-$@"
-        }}
+$@"        }}
     }}
 }}
 ";
                 var indent = "            ";
                 writer.Write(str1);
-                foreach(var element in GetAllElements(_xml).Skip(1)) {      // Skip root element
-                    WriteElement(writer, element, indent);
+                foreach(var (element, i) in GetAllElements(xml).Skip(1).Select((e, i) => (e, i))) {      // Skip root element
+                    WriteElement(writer, element, indent, i);
                 }
                 writer.Write(str2);
             }
         }
         #endregion
 
-        private void CreateDirectory()
+        private bool ModifiedCheck(string sceneFileHash, string outputFilePath)
         {
-            var dir = new FileInfo(_outputFile).Directory.FullName;
+            string currentHash = default;
+            if(File.Exists(outputFilePath) == false) {
+                return true;
+            }
+            using(var reader = new StreamReader(outputFilePath)) {
+                while(!reader.EndOfStream) {
+                    var line = reader.ReadLine();
+                    if(line.Contains("hash:")) {
+                        currentHash = line.Split(new[] { '=' }).Last().Trim();
+                        break;
+                    }
+                }
+            }
+            return sceneFileHash != currentHash;
+        }
+
+        #region CreateDirectory
+        /// <summary>出力先のディレクトリを作成します</summary>
+        /// <param name="outputFile"></param>
+        private void CreateDirectory(string outputFile)
+        {
+            var dir = new FileInfo(outputFile).Directory.FullName;
             if(Directory.Exists(dir) == false) {
                 Directory.CreateDirectory(dir);
             }
         }
+        #endregion
 
-        private void WriteElement(StreamWriter writer, XElement element, string indent)
+        #region WriteElement
+        /// <summary>xml の1つのノードに対応する生成コードを書き込みます</summary>
+        /// <param name="writer">書き込み先</param>
+        /// <param name="element">xml のノード</param>
+        /// <param name="indent">生成コードのインデント</param>
+        private void WriteElement(StreamWriter writer, XElement element, string indent, int variableNum)
         {
             var type = GetObjectType(element);
-            var variable = $"variable{variableNum++}";
+            var variable = $"variable{variableNum}";
             writer.WriteLine($"{indent}var {variable} = new {type.FullName}();");
             writer.WriteLine($"{indent}{variable}.{nameof(FrameObject.Activate)}();");
         }
+        #endregion
 
+        #region GetObjectType
+        /// <summary>xml のノードから、生成コードのクラスを取得します</summary>
+        /// <param name="element"></param>
+        /// <returns></returns>
         private Type GetObjectType(XElement element)
         {
             var isElffyType = string.IsNullOrEmpty(element.Name.NamespaceName);
@@ -139,7 +188,12 @@ $@"
             }
             return type;
         }
+        #endregion
 
+        #region GetSceneClassName
+        /// <summary>生成コードに出力するクラス名を取得します</summary>
+        /// <param name="pairFileName">xml のペアファイルのパス</param>
+        /// <returns></returns>
         private string GetSceneClassName(string pairFileName)
         {
             // 対象のクラス名を取得する
@@ -148,7 +202,12 @@ $@"
 
             return Path.GetFileName(pairFileName).Split(new[] { '.' })[0];
         }
+        #endregion
 
+        #region GetCodeNamespace
+        /// <summary>生成コードに出力するクラスの名前空間を取得します</summary>
+        /// <param name="pairFileName">xml のペアファイルのパス</param>
+        /// <returns></returns>
         private string GetCodeNamespace(string pairFileName)
         {
             // ソースコードの namespace を見つける
@@ -167,6 +226,7 @@ $@"
                 }
             }
         }
+        #endregion
     }
 
     #region class SceneParseException

@@ -12,7 +12,7 @@ namespace Test
         public void SceneCodeGenerate()
         {
             var sceneDir = new DirectoryInfo(Path.Combine(TestValues.FileDirectory, "TestScene"));
-            var outputDir = new DirectoryInfo("SceneOutput");
+            var outputDir = new DirectoryInfo(@".elffy\auto-generated");
             CodeGenerator.GenerateAll(sceneDir, outputDir);
         }
     }

@@ -260,5 +260,8 @@ paket-files/
 __pycache__/
 *.pyc
 
+# Elffy
+.elffy/
+
 # Custom (only for this project)
 src/ElffyResourceCompiler/Resources
