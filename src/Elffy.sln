@@ -20,6 +20,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SceneGenerator", "SceneGenerator\SceneGenerator.csproj", "{115C7043-E249-403B-AEB0-5F9B0ACD3D98}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DefinitionGenerator", "DefinitionGenerator\DefinitionGenerator.csproj", "{6A9B9549-59FF-4446-990C-F9C58AEFF5D5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -98,6 +100,18 @@ Global
 		{115C7043-E249-403B-AEB0-5F9B0ACD3D98}.Release|x64.Build.0 = Release|Any CPU
 		{115C7043-E249-403B-AEB0-5F9B0ACD3D98}.Release|x86.ActiveCfg = Release|Any CPU
 		{115C7043-E249-403B-AEB0-5F9B0ACD3D98}.Release|x86.Build.0 = Release|Any CPU
+		{6A9B9549-59FF-4446-990C-F9C58AEFF5D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A9B9549-59FF-4446-990C-F9C58AEFF5D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A9B9549-59FF-4446-990C-F9C58AEFF5D5}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6A9B9549-59FF-4446-990C-F9C58AEFF5D5}.Debug|x64.Build.0 = Debug|Any CPU
+		{6A9B9549-59FF-4446-990C-F9C58AEFF5D5}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6A9B9549-59FF-4446-990C-F9C58AEFF5D5}.Debug|x86.Build.0 = Debug|Any CPU
+		{6A9B9549-59FF-4446-990C-F9C58AEFF5D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A9B9549-59FF-4446-990C-F9C58AEFF5D5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6A9B9549-59FF-4446-990C-F9C58AEFF5D5}.Release|x64.ActiveCfg = Release|Any CPU
+		{6A9B9549-59FF-4446-990C-F9C58AEFF5D5}.Release|x64.Build.0 = Release|Any CPU
+		{6A9B9549-59FF-4446-990C-F9C58AEFF5D5}.Release|x86.ActiveCfg = Release|Any CPU
+		{6A9B9549-59FF-4446-990C-F9C58AEFF5D5}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
