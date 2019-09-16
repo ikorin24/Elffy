@@ -11,12 +11,14 @@ namespace DefinitionGenerator
     {
         public ReadOnlyCollection<Using> Usings { get; private set; }
         public ReadOnlyCollection<Variable> Variables { get; private set; }
+        public ReadOnlyCollection<string> PropertySetStrings { get; private set; }
         public ReadOnlyCollection<Dependency> Dependencies { get; private set; }
 
-        public DefinitionContent(IList<Using> usings, IList<Variable> variables, IList<Dependency> dependencies)
+        public DefinitionContent(IList<Using> usings, IList<Variable> variables, IList<string> propertySetStrings, IList<Dependency> dependencies)
         {
             Usings = new ReadOnlyCollection<Using>(usings);
             Variables = new ReadOnlyCollection<Variable>(variables);
+            PropertySetStrings = new ReadOnlyCollection<string>(propertySetStrings);
             Dependencies = new ReadOnlyCollection<Dependency>(dependencies);
         }
     }

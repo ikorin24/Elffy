@@ -19,15 +19,15 @@ namespace DefinitionGenerator
         private const string GENERIC_ATTRIBUTE = "Generic";
         private const string ARRAY_ATTRIBUTE = "Array";
 
-        public static DefinitionContent Parse(string filename)
+        public static DefinitionContent Parse(string filename, IList<Assembly> assemblies)
         {
             if(filename == null) { throw new ArgumentNullException(nameof(filename)); }
             using(var stream = File.OpenRead(filename)) {
-                return Parse(stream);
+                return Parse(stream, assemblies);
             }
         }
 
-        public static DefinitionContent Parse(Stream stream)
+        public static DefinitionContent Parse(Stream stream, IList<Assembly> assemblies)
         {
             if(stream == null) { throw new ArgumentNullException(nameof(stream)); }
             var xml = XElement.Load(stream);
@@ -42,12 +42,11 @@ namespace DefinitionGenerator
             }
 
             var elements = GetAllElements(xml).ToArray();
-            var usings = CreateUsings(elements);
-            var (variables, dependencies) = CreateVariables(elements);
-            var content = new DefinitionContent(usings, variables, dependencies);
+            var content = CreateContent(elements, assemblies);
             return content;
         }
 
+        #region CreateUsings
         private static Using[] CreateUsings(IList<XElement> elements)
         {
             var usingRoot = elements.FirstOrDefault(elem => elem.Name.Namespace == META_TAG && elem.Name.LocalName == USINGS_NODE);
@@ -59,20 +58,38 @@ namespace DefinitionGenerator
                                              .ToArray();
             return usings;
         }
+        #endregion
 
-        private static (Variable[], Dependency[]) CreateVariables(IList<XElement> elements)
+        private static DefinitionContent CreateContent(IList<XElement> elements, IList<Assembly> assemblies)
         {
+            assemblies = GetAssemblies();
+
+            var usings = CreateUsings(elements);
+
             // 変数になるもの
             var variables = elements.Skip(1)
-                                    .Where(element => element.Name.NamespaceName != META_TAG)
-                                    .Where(element => !element.Name.LocalName.Contains('.'))
+                                    .Where(element => element.Name.NamespaceName != META_TAG)       // メタ情報を除く
+                                    .Where(element => !element.Name.LocalName.Contains('.'))        // プロパティノードを除く
                                     .Select((element, i) => 
             {
-                var typeName = GetTypeName(element);
+                var typeName = GetTypeName(element, assemblies, usings);
                 var variable = new Variable($"_var{i}", typeName);
                 variable.Accessability = GetAccessability(element);
                 return (variable, element);
             }).ToDictionary(x => x.element, x => x.variable);
+
+
+            //Assembly.LoadFrom("hoge").
+
+            var setProperties = variables.SelectMany(x =>
+            {
+                var variable = x.Value;
+                var element = x.Key;
+                return element.Attributes()
+                              .Where(a => a.Name.NamespaceName != META_TAG)
+                              .Select(a => (PropName: a.Name.LocalName, Value: a.Value))
+                              .Select(p => $"{variable.Name}.{p.PropName} = new {variable.TypeName}().FromAltString(\"{p.Value}\");");
+            }).ToArray();
 
             // どのプロパティにどのオブジェクトが代入されるかの依存関係
             var dependencies = elements.Skip(1)
@@ -84,6 +101,7 @@ namespace DefinitionGenerator
                 return element.Elements().Select(child => new Dependency(variables[element.Parent], propertyName, variables[child]));
             }).ToArray();
 
+            // 同じプロパティ名に代入しているものをまとめる
             //dependencies.GroupBy(d => $"{d.Owner.Name}.{d.Property}")
             //            .Select(g => 
             //{
@@ -95,10 +113,10 @@ namespace DefinitionGenerator
             //    }
             //})
 
-            return (variables.Values.ToArray(), dependencies);
+            return new DefinitionContent(usings, variables.Values.ToArray(), setProperties, dependencies);
         }
 
-        private static string GetTypeName(XElement element)
+        private static string GetTypeName(XElement element, IList<Assembly> assemblies, IList<Using> usings)
         {
             // <List x:Generic="int" x:Array="True"/>
             // ↓
@@ -111,6 +129,12 @@ namespace DefinitionGenerator
             // <List x:Generic="int[]" x:Array="True"/>
             // ↓
             // List<int[]>[]
+
+            var type = assemblies.SelectMany(assem => usings.Select(u => assem.GetType($"{u.Namespace}.{element.Name.LocalName}")))
+                                 .Concat(usings.Select(u => Type.GetType($"{u.Namespace}.{element.Name.LocalName}")))
+                                 .FirstOrDefault(t => t != null);
+
+            //  assem.GetType("typename")).First(t => t != null);
 
             var genericType = element.Attribute(XName.Get(GENERIC_ATTRIBUTE, META_TAG))?.Value;
             var isArray = element.Attribute(XName.Get(ARRAY_ATTRIBUTE, META_TAG))?.Value?.ToLower() == "true";
@@ -133,10 +157,45 @@ namespace DefinitionGenerator
             }
         }
 
+        private static void GetPropertyValue(XElement element, Using[] usings)
+        {
+            var type = element.Name.LocalName;
+            var props = element.Attributes()
+                               .Where(x => x.Name.NamespaceName != META_TAG)
+                               .Select(x => (PropName: x.Name.LocalName, Value: x.Value))
+                               .ToArray();
+            // hoge.Property = new type().FromAltString({prop.Value});
+
+            //Assembly.LoadFrom("hoge").
+        }
+
         private static string GetAccessability(XElement element)
         {
             // NOTE: 現在は private のみ
             return "private";
+        }
+
+        private static Assembly[] GetAssemblies()
+        {
+            // TODO: csproj ファイルのパス
+            var csprojPath = @"C:\Users\Hiroki\Documents\Visual Studio 2019\Projects\Elffy\src\ElffyGame\ElffyGame.csproj";
+            var csproj = XElement.Load(csprojPath);
+            var reference = csproj.Elements()
+                                  .Where(elem => elem.Name.LocalName == "ItemGroup")
+                                  .FirstOrDefault(elem => elem.Elements().FirstOrDefault()?.Name?.LocalName == "Reference");
+            if(reference == null) { throw new Exception(); }
+
+            var assemblies = reference.Elements().Where(elem => elem.Name.LocalName == "Reference").Select(re =>
+            {
+                if(re.HasElements) {
+                    var path = re.Elements().FirstOrDefault(elem => elem.Name.LocalName == "HintPath")?.Value;
+                    return Assembly.LoadFrom(Path.Combine(Path.GetDirectoryName(csprojPath), path));
+                }
+                else {
+                    return null;
+                }
+            }).Where(a => a != null).ToArray();
+            return assemblies;
         }
     }
 }

@@ -104,6 +104,11 @@ $@"// ====================================
             foreach(var variable in Content.Variables) {
                 write($"{variable.Name} = new {variable.TypeName}();");
             }
+
+            foreach(var setProp in Content.PropertySetStrings) {
+                write(setProp);
+            }
+
             foreach(var dep in Content.Dependencies) {
                 write($"{dep.Owner.Name}.{dep.Property} = {dep.Value.Name};");
             }

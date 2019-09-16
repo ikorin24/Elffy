@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using System.Reflection;
 
 namespace DefinitionGenerator
 {
@@ -13,7 +14,8 @@ namespace DefinitionGenerator
         {
             var dir = new DirectoryInfo(".");
             var output = new DirectoryInfo(@".elffy\auto-generated\");
-            CodeGenerator.GenerateAll(dir, output);
+            var assemblies = new[] { Assembly.GetExecutingAssembly() };
+            CodeGenerator.GenerateAll(dir, output, assemblies);
         }
     }
 }
