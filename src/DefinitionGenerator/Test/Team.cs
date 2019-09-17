@@ -28,14 +28,15 @@ namespace DefinitionGenerator.Test
         public int Age { get; set; }
     }
 
-    public static class AltStringExtension
+    public static class TestExtension
     {
         public static People FromAltString(this People source, string alt)
         {
             var param = alt.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            source.Name = param[0].Trim();
-            source.Age = int.Parse(param[1].Trim());
-            return source;
+            var people = new People();
+            people.Name = param[0].Trim();
+            people.Age = int.Parse(param[1].Trim());
+            return people;
         }
     }
 }

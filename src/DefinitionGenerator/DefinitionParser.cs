@@ -19,15 +19,15 @@ namespace DefinitionGenerator
         private const string GENERIC_ATTRIBUTE = "Generic";
         private const string ARRAY_ATTRIBUTE = "Array";
 
-        public static DefinitionContent Parse(string filename, IList<Assembly> assemblies)
+        public static DefinitionContent Parse(string filename)
         {
             if(filename == null) { throw new ArgumentNullException(nameof(filename)); }
             using(var stream = File.OpenRead(filename)) {
-                return Parse(stream, assemblies);
+                return Parse(stream);
             }
         }
 
-        public static DefinitionContent Parse(Stream stream, IList<Assembly> assemblies)
+        public static DefinitionContent Parse(Stream stream)
         {
             if(stream == null) { throw new ArgumentNullException(nameof(stream)); }
             var xml = XElement.Load(stream);
@@ -42,7 +42,7 @@ namespace DefinitionGenerator
             }
 
             var elements = GetAllElements(xml).ToArray();
-            var content = CreateContent(elements, assemblies);
+            var content = CreateContent(elements);
             return content;
         }
 
@@ -60,10 +60,8 @@ namespace DefinitionGenerator
         }
         #endregion
 
-        private static DefinitionContent CreateContent(IList<XElement> elements, IList<Assembly> assemblies)
+        private static DefinitionContent CreateContent(IList<XElement> elements)
         {
-            assemblies = GetAssemblies();
-
             var usings = CreateUsings(elements);
 
             // 変数になるもの
@@ -72,7 +70,7 @@ namespace DefinitionGenerator
                                     .Where(element => !element.Name.LocalName.Contains('.'))        // プロパティノードを除く
                                     .Select((element, i) => 
             {
-                var typeName = GetTypeName(element, assemblies, usings);
+                var typeName = GetTypeName(element, usings);
                 var variable = new Variable($"_var{i}", typeName);
                 variable.Accessability = GetAccessability(element);
                 return (variable, element);
@@ -88,7 +86,7 @@ namespace DefinitionGenerator
                 return element.Attributes()
                               .Where(a => a.Name.NamespaceName != META_TAG)
                               .Select(a => (PropName: a.Name.LocalName, Value: a.Value))
-                              .Select(p => $"{variable.Name}.{p.PropName} = new {variable.TypeName}().FromAltString(\"{p.Value}\");");
+                              .Select(p => $"{variable.Name}.{p.PropName} = {variable.Name}.{p.PropName}.FromAltString(\"{p.Value}\");");
             }).ToArray();
 
             // どのプロパティにどのオブジェクトが代入されるかの依存関係
@@ -116,7 +114,7 @@ namespace DefinitionGenerator
             return new DefinitionContent(usings, variables.Values.ToArray(), setProperties, dependencies);
         }
 
-        private static string GetTypeName(XElement element, IList<Assembly> assemblies, IList<Using> usings)
+        private static string GetTypeName(XElement element, IList<Using> usings)
         {
             // <List x:Generic="int" x:Array="True"/>
             // ↓
@@ -129,12 +127,6 @@ namespace DefinitionGenerator
             // <List x:Generic="int[]" x:Array="True"/>
             // ↓
             // List<int[]>[]
-
-            var type = assemblies.SelectMany(assem => usings.Select(u => assem.GetType($"{u.Namespace}.{element.Name.LocalName}")))
-                                 .Concat(usings.Select(u => Type.GetType($"{u.Namespace}.{element.Name.LocalName}")))
-                                 .FirstOrDefault(t => t != null);
-
-            //  assem.GetType("typename")).First(t => t != null);
 
             var genericType = element.Attribute(XName.Get(GENERIC_ATTRIBUTE, META_TAG))?.Value;
             var isArray = element.Attribute(XName.Get(ARRAY_ATTRIBUTE, META_TAG))?.Value?.ToLower() == "true";
@@ -173,29 +165,6 @@ namespace DefinitionGenerator
         {
             // NOTE: 現在は private のみ
             return "private";
-        }
-
-        private static Assembly[] GetAssemblies()
-        {
-            // TODO: csproj ファイルのパス
-            var csprojPath = @"C:\Users\Hiroki\Documents\Visual Studio 2019\Projects\Elffy\src\ElffyGame\ElffyGame.csproj";
-            var csproj = XElement.Load(csprojPath);
-            var reference = csproj.Elements()
-                                  .Where(elem => elem.Name.LocalName == "ItemGroup")
-                                  .FirstOrDefault(elem => elem.Elements().FirstOrDefault()?.Name?.LocalName == "Reference");
-            if(reference == null) { throw new Exception(); }
-
-            var assemblies = reference.Elements().Where(elem => elem.Name.LocalName == "Reference").Select(re =>
-            {
-                if(re.HasElements) {
-                    var path = re.Elements().FirstOrDefault(elem => elem.Name.LocalName == "HintPath")?.Value;
-                    return Assembly.LoadFrom(Path.Combine(Path.GetDirectoryName(csprojPath), path));
-                }
-                else {
-                    return null;
-                }
-            }).Where(a => a != null).ToArray();
-            return assemblies;
         }
     }
 }

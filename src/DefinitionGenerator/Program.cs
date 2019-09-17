@@ -14,8 +14,7 @@ namespace DefinitionGenerator
         {
             var dir = new DirectoryInfo(".");
             var output = new DirectoryInfo(@".elffy\auto-generated\");
-            var assemblies = new[] { Assembly.GetExecutingAssembly() };
-            CodeGenerator.GenerateAll(dir, output, assemblies);
+            CodeGenerator.GenerateAll(dir, output);
         }
     }
 }

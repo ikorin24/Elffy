@@ -18,11 +18,10 @@ namespace DefinitionGenerator
         private const string GENERATED_FILE_SUFFIX = "-elffygen.cs";
         #endregion
 
-        public static void GenerateAll(DirectoryInfo definitionDir, DirectoryInfo outputDir, IList<Assembly> assemblies)
+        public static void GenerateAll(DirectoryInfo definitionDir, DirectoryInfo outputDir)
         {
             if(definitionDir == null) { throw new ArgumentNullException(nameof(definitionDir)); }
             if(outputDir == null) { throw new ArgumentNullException(nameof(outputDir)); }
-            if(assemblies == null) { throw new ArgumentNullException(nameof(assemblies)); }
 
             var generator = new CodeGenerator();
 
@@ -30,7 +29,7 @@ namespace DefinitionGenerator
                 var pairFileName = $"{definitionFile.FullName}.cs";
                 if(!File.Exists(pairFileName)) { continue; }
                 var output = Path.Combine(outputDir.FullName, $"{definitionFile.Name}{GENERATED_FILE_SUFFIX}");
-                generator.Generate(definitionFile.FullName, pairFileName, output, assemblies);
+                generator.Generate(definitionFile.FullName, pairFileName, output);
             }
         }
 
@@ -38,11 +37,10 @@ namespace DefinitionGenerator
         /// <summary>Generate c# code</summary>
         /// <param name="definitionFile">scene file name</param>
         /// <param name="outputFile">output file name</param>
-        public void Generate(string definitionFile, string pairFile, string outputFile, IList<Assembly> assemblies)
+        public void Generate(string definitionFile, string pairFile, string outputFile)
         {
             if(definitionFile == null) { throw new ArgumentNullException(nameof(definitionFile)); }
             if(outputFile == null) { throw new ArgumentNullException(nameof(outputFile)); }
-            if(assemblies == null) { throw new ArgumentNullException(nameof(assemblies)); }
 
             //if(!ModifiedChecker.IsModified(definitionFile, outputFile, out var hash)) {
             //    return;             // 未変更ならコード生成しない
@@ -53,7 +51,7 @@ namespace DefinitionGenerator
 
             var className = GetClassName(pairFile);
             var codeNamespace = GetCodeNamespace(pairFile);
-            var content = DefinitionParser.Parse(definitionFile, assemblies);
+            var content = DefinitionParser.Parse(definitionFile);
 
             using(var writer = new StreamWriter(outputFile)) {
                 var classCode = new ClassCode(ModifiedChecker.HashType, hash, codeNamespace, className, content);
