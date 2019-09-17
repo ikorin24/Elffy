@@ -19,6 +19,7 @@ namespace DefinitionGenerator
         private const string GENERIC_ATTRIBUTE = "Generic";
         private const string ARRAY_ATTRIBUTE = "Array";
 
+        #region Parse
         public static DefinitionContent Parse(string filename)
         {
             if(filename == null) { throw new ArgumentNullException(nameof(filename)); }
@@ -31,20 +32,10 @@ namespace DefinitionGenerator
         {
             if(stream == null) { throw new ArgumentNullException(nameof(stream)); }
             var xml = XElement.Load(stream);
-
-            // Depth-first search
-            IEnumerable<XElement> GetAllElements(XElement root)
-            {
-                yield return root;
-                foreach(var element in root.Elements().SelectMany(e => GetAllElements(e))) {
-                    yield return element;
-                }
-            }
-
-            var elements = GetAllElements(xml).ToArray();
-            var content = CreateContent(elements);
+            var content = CreateContent(xml);
             return content;
         }
+        #endregion
 
         #region CreateUsings
         private static Using[] CreateUsings(IList<XElement> elements)
@@ -60,8 +51,20 @@ namespace DefinitionGenerator
         }
         #endregion
 
-        private static DefinitionContent CreateContent(IList<XElement> elements)
+        #region CreateContent
+        private static DefinitionContent CreateContent(XElement xml)
         {
+            // Depth-first search
+            IEnumerable<XElement> GetAllElements(XElement root)
+            {
+                yield return root;
+                foreach(var element in root.Elements().SelectMany(e => GetAllElements(e))) {
+                    yield return element;
+                }
+            }
+
+            var elements = GetAllElements(xml).ToArray();
+
             var usings = CreateUsings(elements);
 
             // 変数になるもの
@@ -70,14 +73,11 @@ namespace DefinitionGenerator
                                     .Where(element => !element.Name.LocalName.Contains('.'))        // プロパティノードを除く
                                     .Select((element, i) => 
             {
-                var typeName = GetTypeName(element, usings);
+                var typeName = GetTypeName(element);
                 var variable = new Variable($"_var{i}", typeName);
                 variable.Accessability = GetAccessability(element);
                 return (variable, element);
             }).ToDictionary(x => x.element, x => x.variable);
-
-
-            //Assembly.LoadFrom("hoge").
 
             var setProperties = variables.SelectMany(x =>
             {
@@ -113,8 +113,13 @@ namespace DefinitionGenerator
 
             return new DefinitionContent(usings, variables.Values.ToArray(), setProperties, dependencies);
         }
+        #endregion
 
-        private static string GetTypeName(XElement element, IList<Using> usings)
+        #region GetTypeName
+        /// <summary><see cref="XElement"/> から型名を取得します</summary>
+        /// <param name="element">型名を取得する <see cref="XElement"/></param>
+        /// <returns>型名</returns>
+        private static string GetTypeName(XElement element)
         {
             // <List x:Generic="int" x:Array="True"/>
             // ↓
@@ -148,6 +153,7 @@ namespace DefinitionGenerator
                 }
             }
         }
+        #endregion
 
         private static void GetPropertyValue(XElement element, Using[] usings)
         {

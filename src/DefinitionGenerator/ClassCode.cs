@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using Elffy;
 
@@ -11,12 +10,18 @@ namespace DefinitionGenerator
         private const string INITIALIZE_METHOD = "Initialize";
         private const string IS_INIT = "_isInitialized";
 
+        #region Property
+        /// <summary>ハッシュのタイプ</summary>
         public string HashType { get; private set; }
+        /// <summary>このファイルの元 xml ファイルのハッシュ</summary>
         public string FileHash { get; private set; }
+        /// <summary>このクラスの名前空間</summary>
         public string NameSpace { get; private set; }
+        /// <summary>このクラスの名前</summary>
         public string ClassName { get; private set; }
-
+        /// <summary>このクラスの内容</summary>
         public DefinitionContent Content { get; private set; }
+        #endregion Property
 
         public ClassCode(string hashType, string fileHash, string codeNamespace, string className, DefinitionContent content)
         {
@@ -27,6 +32,9 @@ namespace DefinitionGenerator
             NameSpace = codeNamespace ?? throw new ArgumentNullException(nameof(codeNamespace));
         }
 
+        #region Dump
+        /// <summary>このクラスコードをファイルに出力します</summary>
+        /// <param name="writer">出力用の <see cref="StreamWriter"/></param>
         public void Dump(StreamWriter writer)
         {
             if(writer == null) { throw new ArgumentNullException(nameof(writer)); }
@@ -40,7 +48,12 @@ namespace DefinitionGenerator
             DumpUsing(writeLineWithIndent);
             DumpNamespace(writeLineWithIndent, ref indentNum);
         }
+        #endregion
 
+        #region private Method
+        #region DumpHeader
+        /// <summary>ファイルヘッダを出力します</summary>
+        /// <param name="write">出力用関数</param>
         private void DumpHeader(Action<string> write)
         {
             var header =
@@ -56,7 +69,11 @@ $@"// ====================================
             write(header);
             write("");
         }
+        #endregion
 
+        #region DumpUsing
+        /// <summary>名前空間の using を出力します</summary>
+        /// <param name="write">出力用関数</param>
         private void DumpUsing(Action<string> write)
         {
             foreach(var usingNamespace in Content.Usings) {
@@ -64,7 +81,12 @@ $@"// ====================================
             }
             write("");
         }
+        #endregion
 
+        #region DumpNamespace
+        /// <summary>クラスの名前空間ブロック内部を出力します</summary>
+        /// <param name="write">出力用関数</param>
+        /// <param name="indentNum">インデント数</param>
         private void DumpNamespace(Action<string> write, ref int indentNum)
         {
             write($"namespace {NameSpace}");
@@ -74,7 +96,12 @@ $@"// ====================================
             indentNum--;
             write("}");
         }
+        #endregion
 
+        #region DumpClass
+        /// <summary>クラスを出力します</summary>
+        /// <param name="write">出力用関数</param>
+        /// <param name="indentNum">インデント数</param>
         private void DumpClass(Action<string> write, ref int indentNum)
         {
             write($"partial class {ClassName} : {nameof(Elffy)}.{nameof(Definition)}");
@@ -86,7 +113,11 @@ $@"// ====================================
             indentNum--;
             write("}");
         }
+        #endregion
 
+        #region DumpVariables
+        /// <summary>変数定義を出力します</summary>
+        /// <param name="write">出力用関数</param>
         private void DumpVariables(Action<string> write)
         {
             write($"private bool {IS_INIT};");
@@ -94,7 +125,12 @@ $@"// ====================================
                 write($"{variable.Accessability} {variable.TypeName} {variable.Name};");
             }
         }
+        #endregion
 
+        #region DumpInitializeMethod
+        /// <summary>初期化関数を出力します</summary>
+        /// <param name="write">出力用関数</param>
+        /// <param name="indentNum">インデント数</param>
         private void DumpInitializeMethod(Action<string> write, ref int indentNum)
         {
             write("");
@@ -116,18 +152,26 @@ $@"// ====================================
             indentNum--;
             write("}");
         }
+        #endregion
 
+        #region DumpActivateMethod
+        /// <summary>Activateメソッドを出力します</summary>
+        /// <param name="write">出力用関数</param>
+        /// <param name="indentNum">インデント数</param>
         private void DumpActivateMethod(Action<string> write, ref int indentNum)
         {
             write("");
             write($"protected override void {nameof(Definition.Activate)}()");
             write("{");
             indentNum++;
+            write($"if(!{IS_INIT}) {{ throw new System.InvalidOperationException(\"Instance is not initialized.\"); }}");
             foreach(var variable in Content.Variables) {
                 write($"{variable.Name}.{nameof(FrameObject.Activate)}();");
             }
             indentNum--;
             write("}");
         }
+        #endregion
+        #endregion private Method
     }
 }

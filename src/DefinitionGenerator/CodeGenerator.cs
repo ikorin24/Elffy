@@ -11,6 +11,7 @@ using Elffy;
 
 namespace DefinitionGenerator
 {
+    #region class CodeGenerator
     public class CodeGenerator
     {
         #region private member
@@ -18,6 +19,7 @@ namespace DefinitionGenerator
         private const string GENERATED_FILE_SUFFIX = "-elffygen.cs";
         #endregion
 
+        #region GenerateAll
         public static void GenerateAll(DirectoryInfo definitionDir, DirectoryInfo outputDir)
         {
             if(definitionDir == null) { throw new ArgumentNullException(nameof(definitionDir)); }
@@ -32,10 +34,11 @@ namespace DefinitionGenerator
                 generator.Generate(definitionFile.FullName, pairFileName, output);
             }
         }
+        #endregion
 
         #region Generate
         /// <summary>Generate c# code</summary>
-        /// <param name="definitionFile">scene file name</param>
+        /// <param name="definitionFile">definition file name</param>
         /// <param name="outputFile">output file name</param>
         public void Generate(string definitionFile, string pairFile, string outputFile)
         {
@@ -72,7 +75,7 @@ namespace DefinitionGenerator
         }
         #endregion
 
-        #region GetSceneClassName
+        #region GetClassName
         /// <summary>生成コードに出力するクラス名を取得します</summary>
         /// <param name="pairFileName">xml のペアファイルのパス</param>
         /// <returns></returns>
@@ -110,6 +113,7 @@ namespace DefinitionGenerator
         }
         #endregion
     }
+    #endregion
 
     #region class SceneParseException
     public class DefinitionParseException : Exception
