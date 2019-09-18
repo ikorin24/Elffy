@@ -49,6 +49,7 @@
     <Compile Include="DefinitionContent.cs" />
     <Compile Include="DefinitionParser.cs" />
     <Compile Include="Dependency.cs" />
+    <Compile Include="MetaData.cs" />
     <Compile Include="ModifiedChecker.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -145,9 +145,9 @@ $@"// ====================================
                 write(setProp);
             }
 
-            foreach(var dep in Content.Dependencies) {
-                write($"{dep.Owner.Name}.{dep.Property} = {dep.Value.Name};");
-            }
+            //foreach(var dep in Content.Dependencies) {
+            //    write($"{dep.Owner.Name}.{dep.Property} = {dep.Value.Name};");
+            //}
             write($"{IS_INIT} = true;");
             indentNum--;
             write("}");

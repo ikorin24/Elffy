@@ -13,12 +13,6 @@ namespace DefinitionGenerator
 {
     public static class DefinitionParser
     {
-        private const string META_TAG = "elffy-tool";
-        private const string USINGS_NODE = "Usings";
-        private const string NAMESPACE = "Namespace";
-        private const string GENERIC_ATTRIBUTE = "Generic";
-        private const string ARRAY_ATTRIBUTE = "Array";
-
         #region Parse
         public static DefinitionContent Parse(string filename)
         {
@@ -40,12 +34,12 @@ namespace DefinitionGenerator
         #region CreateUsings
         private static Using[] CreateUsings(IList<XElement> elements)
         {
-            var usingRoot = elements.FirstOrDefault(elem => elem.Name.Namespace == META_TAG && elem.Name.LocalName == USINGS_NODE);
+            var usingRoot = elements.FirstOrDefault(MetaData.IsUsingsNode);
             if(usingRoot == null) {
                 return new Using[0];
             }
-            var usings = usingRoot.Elements().Where(elem => elem.Name.Namespace == META_TAG && elem.Name.LocalName == nameof(Using))
-                                             .Select(elem => new Using(elem.Attribute(NAMESPACE).Value))
+            var usings = usingRoot.Elements().Where(MetaData.IsUsingNode)
+                                             .Select(MetaData.GetUsing)
                                              .ToArray();
             return usings;
         }
@@ -69,13 +63,14 @@ namespace DefinitionGenerator
 
             // 変数になるもの
             var variables = elements.Skip(1)
-                                    .Where(element => element.Name.NamespaceName != META_TAG)       // メタ情報を除く
-                                    .Where(element => !element.Name.LocalName.Contains('.'))        // プロパティノードを除く
+                                    .Where(element => !MetaData.IsMetaDataNode(element))        // メタ情報を除く
+                                    .Where(element => !element.Name.LocalName.Contains('.'))    // プロパティノードを除く
                                     .Select((element, i) => 
             {
                 var typeName = GetTypeName(element);
-                var variable = new Variable($"_var{i}", typeName);
-                variable.Accessability = GetAccessability(element);
+                var variableName = MetaData.GetVariableName(element) ?? $"__var{i}";
+                var variable = new Variable(variableName, typeName);
+                variable.Accessability = MetaData.GetModifier(element) ?? "private";
                 return (variable, element);
             }).ToDictionary(x => x.element, x => x.variable);
 
@@ -84,32 +79,33 @@ namespace DefinitionGenerator
                 var variable = x.Value;
                 var element = x.Key;
                 return element.Attributes()
-                              .Where(a => a.Name.NamespaceName != META_TAG)
+                              .Where(a => !MetaData.IsMetaDataAttribute(a))
                               .Select(a => (PropName: a.Name.LocalName, Value: a.Value))
-                              .Select(p => $"{variable.Name}.{p.PropName} = {variable.Name}.{p.PropName}.FromAltString(\"{p.Value}\");");
-            }).ToArray();
+                              .Select(p => $"{variable.Name}.{p.PropName} = {variable.Name}.{p.PropName}.{nameof(DefinitionExtension.FromAltString)}(\"{p.Value}\");");
+            })
+            .Concat(
+                elements.Skip(1)
+                        .Where(element => !MetaData.IsMetaDataNode(element))
+                        .Where(element => element.Name.LocalName.Contains('.'))         // プロパティノードについて
+                        .Select(element =>
+            {
+                var owner = variables[element.Parent];
+                var propertyName = element.Name.LocalName.Split('.')[1];
+                var value = variables[element.Elements().First()];
+                return $"{owner.Name}.{propertyName} = {value.Name};";
+            }))
+            .ToArray();
+
 
             // どのプロパティにどのオブジェクトが代入されるかの依存関係
             var dependencies = elements.Skip(1)
-                                       .Where(element => element.Name.NamespaceName != META_TAG)
+                                       .Where(element => !MetaData.IsMetaDataNode(element))
                                        .Where(element => element.Name.LocalName.Contains('.'))
                                        .SelectMany(element =>
             {
                 var propertyName = element.Name.LocalName.Split('.')[1];
                 return element.Elements().Select(child => new Dependency(variables[element.Parent], propertyName, variables[child]));
             }).ToArray();
-
-            // 同じプロパティ名に代入しているものをまとめる
-            //dependencies.GroupBy(d => $"{d.Owner.Name}.{d.Property}")
-            //            .Select(g => 
-            //{
-            //    if(g.Count() == 1) {
-            //        return g.First();
-            //    }
-            //    else {
-
-            //    }
-            //})
 
             return new DefinitionContent(usings, variables.Values.ToArray(), setProperties, dependencies);
         }
@@ -133,8 +129,8 @@ namespace DefinitionGenerator
             // ↓
             // List<int[]>[]
 
-            var genericType = element.Attribute(XName.Get(GENERIC_ATTRIBUTE, META_TAG))?.Value;
-            var isArray = element.Attribute(XName.Get(ARRAY_ATTRIBUTE, META_TAG))?.Value?.ToLower() == "true";
+            var genericType = MetaData.GetGenericType(element);
+            var isArray = MetaData.IsArray(element);
 
             if(genericType != null) {
                 if(isArray) {
@@ -154,23 +150,5 @@ namespace DefinitionGenerator
             }
         }
         #endregion
-
-        private static void GetPropertyValue(XElement element, Using[] usings)
-        {
-            var type = element.Name.LocalName;
-            var props = element.Attributes()
-                               .Where(x => x.Name.NamespaceName != META_TAG)
-                               .Select(x => (PropName: x.Name.LocalName, Value: x.Value))
-                               .ToArray();
-            // hoge.Property = new type().FromAltString({prop.Value});
-
-            //Assembly.LoadFrom("hoge").
-        }
-
-        private static string GetAccessability(XElement element)
-        {
-            // NOTE: 現在は private のみ
-            return "private";
-        }
     }
 }

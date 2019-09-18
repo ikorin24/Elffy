@@ -39,6 +39,8 @@ namespace Elffy
 
         public static decimal FromAltString(this decimal source, string alt) => decimal.Parse(alt);
 
+        public static bool FromAltString(this bool source, string alt) => bool.Parse(alt);
+
         public static T FromAltString<T>(this T source, string alt) where T : Enum => (T)Enum.Parse(typeof(T), alt);
     }
 }
