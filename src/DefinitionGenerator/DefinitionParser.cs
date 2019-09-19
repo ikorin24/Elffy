@@ -81,7 +81,7 @@ namespace DefinitionGenerator
                 return element.Attributes()
                               .Where(a => !MetaData.IsMetaDataAttribute(a))
                               .Select(a => (PropName: a.Name.LocalName, Value: a.Value))
-                              .Select(p => $"{variable.Name}.{p.PropName} = {variable.Name}.{p.PropName}.{nameof(DefinitionExtension.FromAltString)}(\"{p.Value}\");");
+                              .Select(p => $"{Definition.ValueConverterMethodName}(\"{p.Value}\", __ => {variable.Name} = __);");
             })
             .Concat(
                 elements.Skip(1)
