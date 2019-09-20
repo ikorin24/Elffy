@@ -21,7 +21,7 @@ namespace Test
             // リソースのコンパイル -> デコンパイル -> デコンパイルした全ファイルと元ファイルのハッシュが一致すればOK
 
             // コンパイル実行
-            var (resource, output, scene) = Compile();
+            var (resource, output) = Compile();
 
             // デコンパイル実行
             var decompiled = new DirectoryInfo("decompiled");
@@ -34,12 +34,10 @@ namespace Test
             bool UriEqual(Uri x, Uri y) => x.ToString().Split('/').Skip(1).SequenceEqual(y.ToString().Split('/').Skip(1));
 
             var decompiledResource = decompiled.GetDirectories().First(d => d.Name == "Resource");
-            var decompiledScene = decompiled.GetDirectories().First(d => d.Name == "Scene");
 
             var checkTargets = new []
             {
                 (Original: resource, DecompiledTarget: decompiledResource),
-                (Original: scene, DecompiledTarget: decompiledScene),
             };
 
             foreach(var (original, decompiledTarget) in checkTargets) {
@@ -123,7 +121,7 @@ namespace Test
             // コンパイル -> コンパイルされたリソースをロード -> もとのファイルとハッシュが一致すればOK
 
             // コンパイル実行
-            var (resource, output, scene) = Compile();
+            var (resource, output) = Compile();
 
             IEnumerable<FileInfo> GetAllChildren(DirectoryInfo di) => di.GetFiles().Concat(di.GetDirectories().SelectMany(GetAllChildren));
             Uri GetDirUri(DirectoryInfo di) => new Uri($"{di.FullName}");
@@ -133,25 +131,18 @@ namespace Test
 
             // 元ファイルの一覧を取得
             var sourceNames = GetAllChildren(resource).Select(x => GetDirUri(resource).MakeRelativeUri(GetFileUri(x)))
-                                                      .Concat(
-                              GetAllChildren(scene).Select(x => GetDirUri(scene).MakeRelativeUri(GetFileUri(x)))
-                                                      )
                                                       .Select(x => string.Join("/", x.ToString().Split('/').Skip(1)))
                                                       .ToList();
             
             // リソースと元ファイルのペアを作り、そのハッシュ値の一致を確認
             Resources.Initialize();
             var pair = Resources.GetResourceNames().Select(x => (Resource: x, Original: sourceNames.Find(y => x == y), Type: "Resource"))
-                                .Concat(
-                                    Resources.GetSceneNames().Select(x => (Resource: x, Original: sourceNames.Find(y => x == y), Type: "Scene"))
-                                ).ToArray();
+                                .ToArray();
             foreach(var (name, original, type) in pair) {
                 byte[] hash1;
                 byte[] hash2;
-                var stream1 = (type == "Resource") ? Resources.GetStream(name) : 
-                              (type == "Scene") ?    Resources.GetSceneStream(name) : throw new Exception();
-                var stream2 = (type == "Resource") ? File.OpenRead(Path.Combine(resource.FullName, original)) :
-                              (type == "Scene") ?    File.OpenRead(Path.Combine(scene.FullName, original)) : throw new Exception();
+                var stream1 = (type == "Resource") ? Resources.GetStream(name) : throw new Exception();
+                var stream2 = (type == "Resource") ? File.OpenRead(Path.Combine(resource.FullName, original)) : throw new Exception();
                 using(stream1) {
                     hash1 = hashfunc.ComputeHash(stream1);
                 }
@@ -165,29 +156,15 @@ namespace Test
         }
         #endregion
 
-        #region SceneLoad
-        [TestMethod]
-        public void SceneLoad()
-        {
-            // コンパイル実行
-            Compile();
-
-            // シーンのロード
-            Resources.Initialize();
-            var scene = GameScene.LoadWithoutActivating<TestScene>();
-        }
-        #endregion
-
-        private (DirectoryInfo resource, string output, DirectoryInfo scene) Compile()
+        private (DirectoryInfo resource, string output) Compile()
         {
             // コンパイル実行
             var resource = new DirectoryInfo(Path.Combine(TestValues.FileDirectory, "ElffyResources"));
             var output = Path.Combine(".");
-            var scene = new DirectoryInfo(Path.Combine(TestValues.FileDirectory, "Scene"));
             //var arg = $"-r {resource.FullName} -s {scene.FullName} {output}";
-            var args = new[] { "-r", resource.FullName, "-s", scene.FullName, output };
+            var args = new[] { "-r", resource.FullName, output };
             Program.Main(args);
-            return (resource, output, scene);
+            return (resource, output);
         }
     }
 }

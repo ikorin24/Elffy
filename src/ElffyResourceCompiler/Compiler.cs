@@ -53,7 +53,6 @@ namespace ElffyResourceCompiler
             if(setting == null) { throw new ArgumentNullException(nameof(setting)); }
             var outputPath = setting.OutputPath ?? throw new ArgumentException();
             var resourceDir = setting.ResourceDir;
-            var sceneDir = setting.SceneDir;
             try {
                 _buf = new byte[BUF_LEN];
                 if(File.Exists(outputPath)) { File.Delete(outputPath); }
@@ -70,14 +69,6 @@ namespace ElffyResourceCompiler
                         var dir = new DirectoryInfo(resourceDir);
                         if(Directory.Exists(dir.FullName)) {
                             WriteDirectory(dir, RESOURCE_ROOT, fs, ref fileCount);
-                        }
-                    }
-
-                    // Sceneの書き込み
-                    if(sceneDir != null) {
-                        var dir = new DirectoryInfo(sceneDir);
-                        if(Directory.Exists(dir.FullName)) {
-                            WriteDirectory(dir, SCENE_ROOT, fs, ref fileCount);
                         }
                     }
 

@@ -9,7 +9,6 @@ namespace ElffyResourceCompiler
     public class CompileSetting
     {
         public string ResourceDir { get; set; }
-        public string SceneDir { get; set; }
         public string OutputPath { get; set; }
     }
 }

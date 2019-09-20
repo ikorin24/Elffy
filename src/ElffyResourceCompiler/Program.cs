@@ -8,13 +8,13 @@ namespace ElffyResourceCompiler
 {
     class Program
     {
-        private static readonly string[] VALID_OPTION = new[] { "-r", "-s", "-h" };
+        private static readonly string[] VALID_OPTION = new[] { "-r", "-h" };
         internal const string OutputFile = "Resources.dat";
 
         public static int Main(string[] args)
         {
             // Arguments
-            // "-r <resource-dir> -s <scene-dir> <output-dir>"
+            // "-r <resource-dir> <output-dir>"
             var parser = new CommandLineArgParser();
             var param = parser.Parse(args);
             if(param.OptionalArgs.ContainsKey("-h")) {
@@ -33,13 +33,11 @@ namespace ElffyResourceCompiler
                 return -1;
             }
             param.OptionalArgs.TryGetValue("-r", out var resourceDir);
-            param.OptionalArgs.TryGetValue("-s", out var sceneDir);
             var output = Path.Combine(param.Args[0], OutputFile);
             var sw = new Stopwatch();
             sw.Start();
             var setting = new CompileSetting() {
                 ResourceDir = resourceDir,
-                SceneDir = sceneDir,
                 OutputPath = output,
             };
             Compiler.Compile(setting);
@@ -51,7 +49,7 @@ namespace ElffyResourceCompiler
         private static void ShowHelp()
         {
             var exe = Path.GetFileName(Assembly.GetEntryAssembly().Location);
-            Console.WriteLine($"usage : {exe} [-h] [-r <resource-dir>] [-s <scene-dir>] output-dir");
+            Console.WriteLine($"usage : {exe} [-h] [-r <resource-dir>] output-dir");
         }
     }
 }

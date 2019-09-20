@@ -29,7 +29,6 @@ namespace Elffy
         private static byte[] _buf => _bufEntity ?? (_bufEntity = new byte[1024 * 1024]);
 
         private const string RESOURCE_ROOT = "Resource";
-        private const string SCENE_ROOT = "Scene";
         #endregion
 
         internal static bool IsInitialized { get; private set; }
@@ -49,16 +48,10 @@ namespace Elffy
         }
         #endregion
 
-        internal static ICollection<string> GetResourceNames()
+        internal static string[] GetResourceNames()
         {
             CheckInitialized();
             return _resources.Keys.Where(k => k.StartsWith(RESOURCE_ROOT)).Select(k => k.Substring(RESOURCE_ROOT.Length + 1)).ToArray();
-        }
-
-        internal static ICollection<string> GetSceneNames()
-        {
-            CheckInitialized();
-            return _resources.Keys.Where(k => k.StartsWith(SCENE_ROOT)).Select(k => k.Substring(SCENE_ROOT.Length + 1)).ToArray();
         }
          
         /// <summary>リソースを読み込むストリームを取得します</summary>
@@ -84,25 +77,10 @@ namespace Elffy
             }
         }
 
-        /// <summary>シーンリソースのストリームを取得します</summary>
-        /// <param name="name">リソース名</param>
-        /// <returns>ストリーム</returns>
-        internal static ResourceStream GetSceneStream(string name)
-        {
-            CheckInitialized();
-            return GetResourceStreamPrivate($"{SCENE_ROOT}/{name}");
-        }
-
         internal static bool HasResource(string name)
         {
             CheckInitialized();
             return _resources.ContainsKey($"{RESOURCE_ROOT}/{name}");
-        }
-
-        internal static bool HasScene(string name)
-        {
-            CheckInitialized();
-            return _resources.ContainsKey($"{SCENE_ROOT}/{name}");
         }
 
         #region GetResourceStreamPrivate
