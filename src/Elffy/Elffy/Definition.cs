@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,36 +12,44 @@ namespace Elffy
         protected virtual void Initialize() { }
 
         public virtual void Activate() { }
+
+        protected static void AddContents(object target, params object[] contents)
+        {
+            if(target == null) { throw new ArgumentNullException(nameof(target)); }
+            if(contents == null) { throw new ArgumentNullException(nameof(contents)); }
+            if(target is IList list) {
+                foreach(var item in contents) {
+                    list.Add(item);
+                }
+            }
+            else if(target is IAddContents parent) {
+                foreach(var item in contents) {
+                    parent.AddContent(item);
+                }
+            }
+            else {
+                throw new ArgumentException($"Can not add {nameof(contents)} to ${target}.");
+            }
+        }
+
+        protected static string FromAltString(string source, string alt) => alt;
+        protected static int FromAltString(int source, string alt) => int.Parse(alt);
+        protected static uint FromAltString(uint source, string alt) => uint.Parse(alt);
+        protected static short FromAltString(short source, string alt) => short.Parse(alt);
+        protected static ushort FromAltString(ushort source, string alt) => ushort.Parse(alt);
+        protected static long FromAltString(long source, string alt) => long.Parse(alt);
+        protected static ulong FromAltString(ulong source, string alt) => ulong.Parse(alt);
+        protected static byte FromAltString(byte source, string alt) => byte.Parse(alt);
+        protected static char FromAltString(char source, string alt) => char.Parse(alt);
+        protected static float FromAltString(float source, string alt) => float.Parse(alt);
+        protected static double FromAltString(double source, string alt) => double.Parse(alt);
+        protected static decimal FromAltString(decimal source, string alt) => decimal.Parse(alt);
+        protected static bool FromAltString(bool source, string alt) => bool.Parse(alt);
+        protected static T FromAltString<T>(T source, string alt) where T : Enum => (T)Enum.Parse(typeof(T), alt);
     }
 
-    public static class DefinitionExtension
+    public interface IAddContents
     {
-        public static string FromAltString(this string source, string alt) => alt;
-
-        public static int FromAltString(this int source, string alt) => int.Parse(alt);
-
-        public static uint FromAltString(this uint source, string alt) => uint.Parse(alt);
-
-        public static short FromAltString(this short source, string alt) => short.Parse(alt);
-
-        public static ushort FromAltString(this ushort source, string alt) => ushort.Parse(alt);
-
-        public static long FromAltString(this long source, string alt) => long.Parse(alt);
-
-        public static ulong FromAltString(this ulong source, string alt) => ulong.Parse(alt);
-
-        public static byte FromAltString(this byte source, string alt) => byte.Parse(alt);
-
-        public static char FromAltString(this char source, string alt) => char.Parse(alt);
-
-        public static float FromAltString(this float source, string alt) => float.Parse(alt);
-
-        public static double FromAltString(this double source, string alt) => double.Parse(alt);
-
-        public static decimal FromAltString(this decimal source, string alt) => decimal.Parse(alt);
-
-        public static bool FromAltString(this bool source, string alt) => bool.Parse(alt);
-
-        public static T FromAltString<T>(this T source, string alt) where T : Enum => (T)Enum.Parse(typeof(T), alt);
+        void AddContent(object contents);
     }
 }
