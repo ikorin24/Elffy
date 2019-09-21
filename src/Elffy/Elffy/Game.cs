@@ -134,6 +134,7 @@ namespace Elffy
                 }
             }
             Instance = new Game();
+            GameThread.SetMainThreadID();
             try {
                 using(var window = new GameWindow(width, heigh, GraphicsMode.Default, title, (GameWindowFlags)windowStyle)) {
                     Instance._window = window;
@@ -163,8 +164,6 @@ namespace Elffy
         #region OnLoaded
         private static void OnLoaded(object sender, EventArgs e)
         {
-            GameThread.SetMainThreadID();
-
             GL.ClearColor(Color4.Gray);
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Texture2D);
@@ -251,19 +250,7 @@ namespace Elffy
 
             Light.TurnOff();        // 光源消灯
 
-            //GL.MatrixMode(MatrixMode.Projection);
-            //var uiProjection = Instance._uiTree.Projection;
-            //GL.LoadMatrix(ref uiProjection);
-            //GL.MatrixMode(MatrixMode.Modelview);
-            //var identity = Matrix4.Identity;
-            //GL.LoadMatrix(ref identity);
-            //GL.Translate(-Instance._uiTree.UIWidth / 2, -Instance._uiTree.UIHeight / 2, 0);
-
-            //// Render UI Object
-            //foreach(var frameObject in renderables.Where(x => x.IsVisible)) {
-            //    frameObject.Render();
-            //}
-            Instance._uiTree.RenderUI();
+            Instance._uiTree.RenderUI();        // UI 描画
 
             Instance._window.SwapBuffers();
 

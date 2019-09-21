@@ -9,13 +9,10 @@ using System.Threading.Tasks;
 
 namespace Elffy.UI
 {
-    public class UITree
+    public sealed class UITree
     {
         const float FAR = 1.01f;
         const float NEAR = -0.01f;
-        private List<FrameObject> _frameObjectList = new List<FrameObject>();
-        private List<FrameObject> _addedFrameObjectBuffer = new List<FrameObject>();
-        private List<FrameObject> _removedFrameObjectBuffer = new List<FrameObject>();
         private readonly Page _uiRoot = new Page();
         private Matrix4 _projection = Matrix4.Identity;
 
@@ -54,18 +51,9 @@ namespace Elffy.UI
         {
             UIWidth = width;
             UIHeight = height;
+            //_uiRoot.Renderer.Activate();        // TODO: Destroyする
         }
         #endregion
-
-        internal void AddFrameObject(FrameObject frameObject)
-        {
-            _addedFrameObjectBuffer.Add(frameObject);
-        }
-
-        internal void RemoveFrameObject(FrameObject frameObject)
-        {
-            _removedFrameObjectBuffer.Add(frameObject);
-        }
 
         internal void RenderUI()
         {
@@ -73,20 +61,24 @@ namespace Elffy.UI
             GL.LoadMatrix(ref _projection);
             GL.MatrixMode(MatrixMode.Modelview);
             GL.LoadIdentity();
-            GL.Translate(-UIWidth / 2, -UIHeight / 2, 0);
-
-            // Render UI Object
-            if(_uiRoot.Renderer.IsVisible) {
-                _uiRoot.Renderer.Render();
-            }
-            foreach(var renderer in _uiRoot.GetOffspring().Select(c => c.Renderer).Where(r => r.IsVisible)) {
+            foreach(var renderer in GetAllUIRenderer().Where(r => r.IsVisible)) {
+                GL.PushMatrix();
                 renderer.Render();
+                GL.PopMatrix();
+            }
+        }
+
+        private IEnumerable<IUIRenderer> GetAllUIRenderer()
+        {
+            yield return _uiRoot.Renderer;
+            foreach(var renderer in _uiRoot.GetOffspring()) {
+                yield return renderer.Renderer;
             }
         }
 
         private void CalcProjection()
         {
-            _projection = Matrix4.CreateOrthographic(_uiRoot.Width, _uiRoot.Height, NEAR, FAR);
+            _projection = Matrix4.CreateOrthographicOffCenter(0, UIWidth, 0, UIHeight, NEAR, FAR);
         }
     }
 }

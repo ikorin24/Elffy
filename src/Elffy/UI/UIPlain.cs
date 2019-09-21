@@ -21,6 +21,7 @@ namespace Elffy.UI
 
         public UIPlain(UIBase control)
         {
+            RenderingLayer = RenderingLayer.UI;
             IsFrozen = true;
             Control = control ?? throw new ArgumentNullException(nameof(control));
         }
@@ -57,7 +58,6 @@ namespace Elffy.UI
         protected override void OnActivated()
         {
             base.OnActivated();
-            RenderingLayer = RenderingLayer.UI;
             SetPolygon(Control.Width, Control.Height, Control.OffsetX, Control.OffsetY);
             InitGraphicBuffer(_vertexArray.Ptr, _vertexArray.Length, _indexArray.Ptr, _indexArray.Length);
         }
