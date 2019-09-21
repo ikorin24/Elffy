@@ -70,8 +70,7 @@ namespace Elffy.UI
         /// <param name="offsetY">Y方向のオフセット</param>
         private void SetPolygon(int width, int height, int offsetX, int offsetY)
         {
-            var offset = new Vector3(offsetX, offsetY, 0);
-            var p0 = Position + offset;
+            var p0 = new Vector3(offsetX, offsetY, 0);
             var p1 = p0 + new Vector3(width, 0, 0);
             var p2 = p0 + new Vector3(width, height, 0);
             var p3 = p0 + new Vector3(0, height, 0);
