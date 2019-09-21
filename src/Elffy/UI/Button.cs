@@ -9,22 +9,6 @@ namespace Elffy.UI
     {
         private const int DEFAULT_WIDTH = 90;
         private const int DEFAULT_HEIGHT = 30;
-        private readonly Canvas _canvas;
-
-        #region Content
-        /// <summary>ボタンのコンテンツ</summary>
-        public Bitmap Content
-        {
-            get => _content;
-            set
-            {
-                _content = value;
-                _canvas.Clear(Color.Transparent);
-                _canvas.DrawImage(_content, new Point());
-            }
-        }
-        private Bitmap _content;
-        #endregion
 
         #region コンストラクタ
         /// <summary>コンストラクタ</summary>

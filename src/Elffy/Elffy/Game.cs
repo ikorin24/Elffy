@@ -18,6 +18,7 @@ namespace Elffy
 {
     public class Game
     {
+        private UISetting _uiSetting;
         private GameWindow _window;
         private List<FrameObject> _frameObjectList = new List<FrameObject>();
         private List<FrameObject> _addedFrameObjectBuffer = new List<FrameObject>();
@@ -137,6 +138,7 @@ namespace Elffy
                     window.RenderFrame += OnRendering;
                     window.UpdateFrame += OnFrameUpdating;
                     window.Closed += OnClosed;
+                    Instance._uiSetting = new UISetting(width, heigh);
                     window.Run();
                     return;
                 }
@@ -223,6 +225,9 @@ namespace Elffy
                 frameObject.Update();
             }
 
+            // Invokeされた処理を実行
+            GameThread.DoInvokedAction();
+
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             Light.LightUp();                                                            // 光源点灯
             var renderables = Instance._frameObjectList.OfType<Renderable>().Where(x => x.IsRoot);
@@ -242,16 +247,17 @@ namespace Elffy
             Light.TurnOff();        // 光源消灯
 
             GL.MatrixMode(MatrixMode.Projection);
-            var uiProjection = UISetting.Projection;
+            var uiProjection = Instance._uiSetting.Projection;
             GL.LoadMatrix(ref uiProjection);
+            GL.MatrixMode(MatrixMode.Modelview);
+            var identity = Matrix4.Identity;
+            GL.LoadMatrix(ref identity);
+            GL.Translate(-Instance._uiSetting.Width / 2, -Instance._uiSetting.Height / 2, 0);
 
             // Render UI Object
             foreach(var frameObject in renderables.Where(x => x.Layer == ObjectLayer.UI && x.IsVisible)) {
                 frameObject.Render();
             }
-
-            // Invokeされた処理を実行
-            GameThread.DoInvokedAction();
 
             Instance._window.SwapBuffers();
 

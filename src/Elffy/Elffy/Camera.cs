@@ -31,7 +31,7 @@ namespace Elffy
                 SetMatrix(_position, _direction, _up);
             }
         }
-        private Vector3 _position = Vector3.UnitZ;
+        private Vector3 _position = new Vector3(0, 0, 10);
         #endregion
 
         #region Direction

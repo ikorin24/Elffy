@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Elffy.UI
 {
-    public static class UISetting
+    public class UISetting
     {
         const float FAR = 1.01f;
         const float NEAR = -0.01f;
@@ -16,7 +16,7 @@ namespace Elffy.UI
 
         #region Width
         /// <summary>UI Layer Width</summary>
-        public static int Width
+        public int Width
         {
             get => _width;
             set
@@ -26,12 +26,12 @@ namespace Elffy.UI
                 CalcProjection();
             }
         }
-        private static int _width;
+        private int _width;
         #endregion
 
         #region Height
         /// <summary>UI Layer Height</summary>
-        public static int Height
+        public int Height
         {
             get => _height;
             set
@@ -41,20 +41,20 @@ namespace Elffy.UI
                 CalcProjection();
             }
         }
-        private static int _height;
+        private int _height;
         #endregion
 
-        public static Matrix4 Projection { get; private set; } = Matrix4.Identity;
+        public Matrix4 Projection { get; private set; } = Matrix4.Identity;
 
         #region constructor
-        static UISetting()
+        internal UISetting(int width, int height)
         {
-            Width = Game.ClientSize.Width;
-            Height = Game.ClientSize.Height;
+            Width = width;
+            Height = height;
         }
         #endregion
 
-        private static void CalcProjection()
+        private void CalcProjection()
         {
             Projection = Matrix4.CreateOrthographic(_width, _height, NEAR, FAR);
         }

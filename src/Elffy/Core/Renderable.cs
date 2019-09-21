@@ -17,16 +17,13 @@ namespace Elffy.Core
     public abstract class Renderable : Positionable, IDisposable
     {
         #region private member
+        private int _indexArrayLength;
         /// <summary>VBOバッファ番号</summary>
         private int _vertexBuffer;
         /// <summary>IBO番号</summary>
         private int _indexBuffer;
         /// <summary>VAO</summary>
         private int _vao;
-        /// <summary>頂点配列</summary>
-        private Vertex[] _vertexArray;
-        /// <summary>頂点番号配列</summary>
-        private int[] _indexArray;
         private bool _disposed;
         private bool _isLoaded;
         #endregion
@@ -106,22 +103,43 @@ namespace Elffy.Core
         /// <param name="indexArray">頂点インデックス配列</param>
         protected void InitGraphicBuffer(Vertex[] vertexArray, int[] indexArray)
         {
-            _vertexArray = vertexArray ?? throw new ArgumentNullException(nameof(vertexArray));
-            _indexArray = indexArray ?? throw new ArgumentNullException(nameof(indexArray));
+            if(vertexArray == null) { throw new ArgumentNullException(nameof(vertexArray)); }
+            if(indexArray == null) { throw new ArgumentNullException(nameof(indexArray)); }
             ThrowIfNotMainThread(nameof(InitGraphicBuffer));
+            unsafe {
+                fixed(Vertex* vertexPtr = vertexArray)
+                fixed(int* indexPtr = indexArray) {
+                    InitGraphicBufferPrivate((IntPtr)vertexPtr, vertexArray.Length, (IntPtr)indexPtr, indexArray.Length);
+                }
+            }
+        }
 
+        /// <summary>描画する3Dモデル(頂点データ)をGPUメモリにロードします</summary>
+        /// <param name="vertexArray">頂点配列</param>
+        /// <param name="indexArray">頂点インデックス配列</param>
+        protected void InitGraphicBuffer(IntPtr vertexArray, int vertexArrayLength, IntPtr indexArray, int indexArrayLength)
+        {
+            ThrowIfNotMainThread(nameof(InitGraphicBuffer));
+            InitGraphicBufferPrivate(vertexArray, vertexArrayLength, indexArray, indexArrayLength);
+        }
+        #endregion
+
+        #region InitGraphicBufferPrivate
+        private void InitGraphicBufferPrivate(IntPtr vertexArray, int vertexArrayLength, IntPtr indexArray, int indexArrayLength)
+        {
+            _indexArrayLength = indexArrayLength;
             // 頂点バッファ(VBO)生成
             _vertexBuffer = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBuffer);
-            int vertexSize = _vertexArray.Length * Vertex.Size;
-            GL.BufferData(BufferTarget.ArrayBuffer, vertexSize, _vertexArray, BufferUsageHint.StaticDraw);
+            int vertexSize = vertexArrayLength * Vertex.Size;
+            GL.BufferData(BufferTarget.ArrayBuffer, vertexSize, vertexArray, BufferUsageHint.StaticDraw);
             GL.BindBuffer(BufferTarget.ArrayBuffer, Consts.NULL);
 
             // 頂点indexバッファ(IBO)生成
             _indexBuffer = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBuffer);
-            int indexSize = _indexArray.Length * sizeof(int);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, indexSize, _indexArray, BufferUsageHint.StaticDraw);
+            int indexSize = indexArrayLength * sizeof(int);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, indexSize, indexArray, BufferUsageHint.StaticDraw);
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, Consts.NULL);
 
             // VAO
@@ -153,7 +171,7 @@ namespace Elffy.Core
                 }
                 GL.BindVertexArray(_vao);
                 GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBuffer);
-                GL.DrawElements(BeginMode.Triangles, _indexArray.Length, DrawElementsType.UnsignedInt, 0);
+                GL.DrawElements(BeginMode.Triangles, _indexArrayLength, DrawElementsType.UnsignedInt, 0);
                 GL.BindBuffer(BufferTarget.ElementArrayBuffer, Consts.NULL);
                 GL.BindVertexArray(Consts.NULL);
                 GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);   // テクスチャのバインド解除
