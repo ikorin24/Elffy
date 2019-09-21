@@ -92,7 +92,6 @@
     <Compile Include="Elffy\Material.cs" />
     <Compile Include="Mathmatics\Curve.cs" />
     <Compile Include="Mathmatics\MathTool.cs" />
-    <Compile Include="Elffy\ObjectLayer.cs" />
     <Compile Include="Physics\CubeRigidbody.cs" />
     <Compile Include="Physics\Rigidbody.cs" />
     <Compile Include="Physics\Rigidbody3D.cs" />
@@ -113,7 +112,9 @@
     <Compile Include="UI\Panel.cs" />
     <Compile Include="UI\Split.cs" />
     <Compile Include="UI\UIBase.cs" />
-    <Compile Include="UI\UISetting.cs" />
+    <Compile Include="UI\UIBaseCollection.cs" />
+    <Compile Include="UI\UIPlain.cs" />
+    <Compile Include="UI\UITree.cs" />
     <Compile Include="Elffy\WindowStyle.cs" />
     <Compile Include="Elffy\DebugManager.cs" />
     <Compile Include="Elffy\FPSManager.cs" />

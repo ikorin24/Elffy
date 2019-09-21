@@ -18,7 +18,7 @@ namespace Elffy
 {
     public class Game
     {
-        private UISetting _uiSetting;
+        private UITree _uiTree;
         private GameWindow _window;
         private List<FrameObject> _frameObjectList = new List<FrameObject>();
         private List<FrameObject> _addedFrameObjectBuffer = new List<FrameObject>();
@@ -36,7 +36,8 @@ namespace Elffy
                 return (float)clientSize.Width / clientSize.Height;
             }
         }
-        
+
+        public static UITree UI => Instance?._uiTree ?? throw NewGameNotRunningException();
         /// <summary>現在のフレームがゲーム開始から何フレーム目かを取得します(Rendering Frame)</summary>
         public static long CurrentFrame { get; internal set; }
         public static float FrameDelta => (float?)Instance?._window?.UpdatePeriod * 1000 ?? throw NewGameNotRunningException();
@@ -81,7 +82,9 @@ namespace Elffy
         {
             if(Instance == null) { return false; }
             if(frameObject == null) { return false; }
-            Instance._addedFrameObjectBuffer.Add(frameObject);
+            if(frameObject is IUIRenderer == false) {
+                Instance._addedFrameObjectBuffer.Add(frameObject);
+            }
             return true;
         }
         #endregion
@@ -91,7 +94,9 @@ namespace Elffy
         {
             if(Instance == null) { return false; }
             if(frameObject == null) { return false; }
-            Instance._removedFrameObjectBuffer.Add(frameObject);
+            if(frameObject is IUIRenderer == false) {
+                Instance._removedFrameObjectBuffer.Add(frameObject);
+            }
             return true;
         }
         #endregion
@@ -138,7 +143,7 @@ namespace Elffy
                     window.RenderFrame += OnRendering;
                     window.UpdateFrame += OnFrameUpdating;
                     window.Closed += OnClosed;
-                    Instance._uiSetting = new UISetting(width, heigh);
+                    Instance._uiTree = new UITree(width, heigh);
                     window.Run();
                     return;
                 }
@@ -238,7 +243,7 @@ namespace Elffy
             // Render World Object
             var view = Camera.Current.Matrix;
             GL.LoadMatrix(ref view);
-            foreach(var frameObject in renderables.Where(x => x.Layer == ObjectLayer.World && x.IsVisible)) {
+            foreach(var frameObject in renderables.Where(x => x.IsVisible)) {
                 GL.PushMatrix();
                 frameObject.Render();
                 GL.PopMatrix();
@@ -246,18 +251,19 @@ namespace Elffy
 
             Light.TurnOff();        // 光源消灯
 
-            GL.MatrixMode(MatrixMode.Projection);
-            var uiProjection = Instance._uiSetting.Projection;
-            GL.LoadMatrix(ref uiProjection);
-            GL.MatrixMode(MatrixMode.Modelview);
-            var identity = Matrix4.Identity;
-            GL.LoadMatrix(ref identity);
-            GL.Translate(-Instance._uiSetting.Width / 2, -Instance._uiSetting.Height / 2, 0);
+            //GL.MatrixMode(MatrixMode.Projection);
+            //var uiProjection = Instance._uiTree.Projection;
+            //GL.LoadMatrix(ref uiProjection);
+            //GL.MatrixMode(MatrixMode.Modelview);
+            //var identity = Matrix4.Identity;
+            //GL.LoadMatrix(ref identity);
+            //GL.Translate(-Instance._uiTree.UIWidth / 2, -Instance._uiTree.UIHeight / 2, 0);
 
-            // Render UI Object
-            foreach(var frameObject in renderables.Where(x => x.Layer == ObjectLayer.UI && x.IsVisible)) {
-                frameObject.Render();
-            }
+            //// Render UI Object
+            //foreach(var frameObject in renderables.Where(x => x.IsVisible)) {
+            //    frameObject.Render();
+            //}
+            Instance._uiTree.RenderUI();
 
             Instance._window.SwapBuffers();
 

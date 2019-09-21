@@ -50,12 +50,13 @@ namespace ElffyGame
             cube.Activate();
 
             var button = new Button(90, 30);
+            button.Position = new Vector2(10, 30);
             button.KeyUp += (sender, e) =>
             {
                 System.Diagnostics.Debug.WriteLine("Go to Next Scenario");
                 Scenario.GoToNext(new StartScenario());
             };
-            button.Activate();
+            Game.UI.RootChildren.Add(button);
         }
     }
 }

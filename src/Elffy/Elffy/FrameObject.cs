@@ -46,11 +46,6 @@ namespace Elffy
             if(!Game.AddFrameObject(this)) { throw new InvalidOperationException("Can not activate. Game is not running."); }
             IsActivated = true;
             OnActivated();
-            if(this is Positionable positionable) {
-                foreach(var offspring in positionable.GetOffspring()) {
-                    offspring.Activate();
-                }
-            }
         }
 
         protected virtual void OnActivated() { }

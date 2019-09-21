@@ -3,6 +3,7 @@ using OpenTK;
 using System;
 using System.Drawing;
 using Elffy.Effective;
+using System.Collections.Generic;
 
 namespace Elffy.UI
 {
@@ -10,12 +11,102 @@ namespace Elffy.UI
     /// <summary>
     /// UI の要素の基底クラス。UI への配置, フォーカス処理, ヒットテストの処理を提供します<para/>
     /// </summary>
-    public abstract class UIBase : Renderable, IDisposable
+    /// 
+    /// <remarks>
+    /// <see cref="UIBase"/> はUIを構成する論理的なコントロールとしての機能のみを提供します。
+    /// 画面への描画に関する処理は、このクラスと対になる <see cref="Renderable"/> 継承クラス <see cref="UIPlain"/> のインスタンスに任されます。
+    /// <see cref="UIPlain"/> による描画は <see cref="UIBase"/> によって完全に隠蔽され、外部からは描画を気にすることなく論理的 UI 構造を扱えます。
+    /// 
+    /// <see cref="UIBase"/> の木構造は、描画を担当する <see cref="Renderable"/> オブジェクトの木構造とは独立しています。
+    /// <see cref="UIBase"/> が親子関係の木構造を形成している場合でも、その描画オブジェクトは常に木構造を作りません。
+    /// </remarks>
+    public abstract class UIBase
     {
-        private bool _disposed;
-        private readonly UnmanagedArray<Vertex> _vertexArray = new UnmanagedArray<Vertex>(4);
-        private readonly UnmanagedArray<int> _indexArray = new UnmanagedArray<int>(6);
+        #region Property
+        /// <summary>この <see cref="UIBase"/> を描画するオブジェクト</summary>
+        internal IUIRenderer Renderer => _renderer;
+        private readonly UIPlain _renderer;
 
+        /// <summary>この <see cref="UIBase"/> のツリー構造の子要素を取得します</summary>
+        public UIBaseCollection Children { get; }
+
+        #region Parent
+        /// <summary>この <see cref="UIBase"/> のツリー構造の親を取得します</summary>
+        public UIBase Parent
+        {
+            get => _parent;
+            internal set
+            {
+                if(_parent == null) {
+                    _parent = value;
+                }
+                else if(_parent != null && value == null) {
+                    _parent = value;
+                }
+                else { throw new InvalidOperationException($"The instance is already a child of another object. Can not has multi parents."); }
+            }
+        }
+        private UIBase _parent;
+        #endregion
+
+        #region Position
+        public Vector2 Position
+        {
+            get => _renderer.Position.Xy;
+            set
+            {
+                var vec = value - _renderer.Position.Xy;
+                _renderer.Position += new Vector3(vec);
+                _absolutePosition += vec;
+                foreach(var child in GetOffspring()) {
+                    child._absolutePosition += vec;
+                }
+            }
+        }
+        #endregion
+
+        #region PositionX
+        public float PositionX
+        {
+            get => _renderer.PositionX;
+            set
+            {
+                var diff = value - _renderer.PositionX;
+                _renderer.PositionX += diff;
+                _absolutePosition.X += diff;
+                foreach(var child in GetOffspring()) {
+                    child._absolutePosition.X += diff;
+                }
+            }
+        }
+        #endregion
+
+        #region PositionY
+        /// <summary>オブジェクトのY座標</summary>
+        public float PositionY
+        {
+            get => _renderer.PositionY;
+            set
+            {
+                var diff = value - _renderer.PositionY;
+                _renderer.PositionY += diff;
+                _absolutePosition.Y += diff;
+                foreach(var child in GetOffspring()) {
+                    child._absolutePosition.Y += diff;
+                }
+            }
+        }
+        #endregion
+
+        #region AbsolutePosition
+        public Vector2 AbsolutePosition
+        {
+            get => _absolutePosition;
+        }
+        private Vector2 _absolutePosition;
+        #endregion
+
+        #region Width
         /// <summary>get or set Width of <see cref="UIBase"/></summary>
         public int Width
         {
@@ -27,6 +118,9 @@ namespace Elffy.UI
             }
         }
         private int _width;
+        #endregion
+
+        #region Height
         /// <summary>get or set Height of <see cref="UIBase"/></summary>
         public int Height
         {
@@ -38,6 +132,8 @@ namespace Elffy.UI
             }
         }
         private int _height;
+        #endregion
+
         /// <summary>get or set offset position X of layout</summary>
         public int OffsetX { get; set; }
         /// <summary>get or set offset position Y of layout</summary>
@@ -54,6 +150,8 @@ namespace Elffy.UI
         public bool IsHitTestVisible { get; set; }
         /// <summary>get whether the mouse is over this <see cref="UIBase"/></summary>
         public bool IsMouseOver { get; private set; }
+        #endregion Property
+
         /// <summary>Focus enter event</summary>
         public event EventHandler FocusEnter;
         /// <summary>Focus lost event</summary>
@@ -63,81 +161,33 @@ namespace Elffy.UI
         /// <summary>Mouse leave event</summary>
         public event EventHandler MouseLeave;
 
+        #region constructor
         /// <summary>constructor of <see cref="UIBase"/></summary>
         public UIBase()
         {
-            Layer = ObjectLayer.UI;
+            Children = new UIBaseCollection(this);
+            _renderer = new UIPlain(this);
         }
+        #endregion
 
-        ~UIBase() => Dispose(false);
-
-        protected override void Dispose(bool disposing)
+        #region GetOffspring
+        /// <summary>このオブジェクトの <see cref="Children"/> 以下に存在する全ての子孫を取得します。列挙順は深さ優先探索 (DFS; depth-first search) です。</summary>
+        /// <returns>全ての子孫オブジェクト</returns>
+        public IEnumerable<UIBase> GetOffspring()
         {
-            if(!_disposed) {
-                if(disposing) {
-                    // Release managed resource here.
-                    _vertexArray.Free();
-                    _indexArray.Free();
-                    base.Dispose(true);
+            foreach(var child in Children) {
+                yield return child;
+                foreach(var offspring in child.GetOffspring()) {
+                    yield return offspring;
                 }
-                // Release unmanaged resource
-                _disposed = true;
             }
         }
-
-        public override void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
+        #endregion
 
         internal bool HitTest()
         {
             throw new NotImplementedException();        // TODO: HitTest
         }
-
-        protected override void OnActivated()
-        {
-            SetPolygon(Width, Height, OffsetX, OffsetY);
-            InitGraphicBuffer(_vertexArray.Ptr, _vertexArray.Length, _indexArray.Ptr, _indexArray.Length);
-            //if(Width > 0 && Height > 0) {
-
-            //}
-        }
-
-        #region SetPolygon
-        /// <summary>頂点配列とインデックス配列をセットします</summary>
-        /// <param name="width">幅</param>
-        /// <param name="height">高さ</param>
-        /// <param name="offsetX">X方向のオフセット</param>
-        /// <param name="offsetY">Y方向のオフセット</param>
-        private void SetPolygon(int width, int height, int offsetX, int offsetY)
-        {
-            var offset = new Vector3(offsetX, offsetY, 0);
-            var p0 = Position + offset;
-            var p1 = p0 + new Vector3(width, 0, 0);
-            var p2 = p0 + new Vector3(width, height, 0);
-            var p3 = p0 + new Vector3(0, height, 0);
-
-            var t0 = new Vector2(0, 0);
-            var t1 = new Vector2(1, 0);
-            var t2 = new Vector2(1, 1);
-            var t3 = new Vector2(0, 1);
-
-            var normal = Vector3.UnitZ;
-
-            _vertexArray[0] = new Vertex(p0, normal, t0);
-            _vertexArray[1] = new Vertex(p1, normal, t1);
-            _vertexArray[2] = new Vertex(p2, normal, t2);
-            _vertexArray[3] = new Vertex(p3, normal, t3);
-            _indexArray[0] = 0;
-            _indexArray[1] = 1;
-            _indexArray[2] = 2;
-            _indexArray[3] = 2;
-            _indexArray[4] = 3;
-            _indexArray[5] = 0;
-        }
-        #endregion
     }
     #endregion
 
