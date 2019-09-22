@@ -15,6 +15,7 @@ namespace Elffy.UI
         const float NEAR = -0.01f;
         private readonly Page _uiRoot = new Page();
         private Matrix4 _projection = Matrix4.Identity;
+        internal Matrix4 Projection => _projection;
 
         #region UIWidth
         /// <summary>UI Layer Width</summary>
@@ -51,30 +52,8 @@ namespace Elffy.UI
         {
             UIWidth = width;
             UIHeight = height;
-            //_uiRoot.Renderer.Activate();        // TODO: Destroyする
         }
         #endregion
-
-        internal void RenderUI()
-        {
-            GL.MatrixMode(MatrixMode.Projection);
-            GL.LoadMatrix(ref _projection);
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.LoadIdentity();
-            foreach(var renderer in GetAllUIRenderer().Where(r => r.IsVisible)) {
-                GL.PushMatrix();
-                renderer.Render();
-                GL.PopMatrix();
-            }
-        }
-
-        private IEnumerable<IUIRenderable> GetAllUIRenderer()
-        {
-            yield return _uiRoot.Renderable;
-            foreach(var renderer in _uiRoot.GetOffspring()) {
-                yield return renderer.Renderable;
-            }
-        }
 
         private void CalcProjection()
         {

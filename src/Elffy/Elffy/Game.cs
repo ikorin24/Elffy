@@ -171,7 +171,7 @@ namespace Elffy
             Instance._window.VSync = VSyncMode.On;
             Instance._window.TargetRenderFrequency = DisplayDevice.Default.RefreshRate;
             Initialize?.Invoke(Instance, EventArgs.Empty);
-            Instance._objectStore.ApplyChanging();      // Initializeの中でのFrameObjectの変更を適用
+            Instance._objectStore.ApplyChanging();              // Initializeの中でのFrameObjectの変更を適用
         }
         #endregion
 
@@ -214,9 +214,9 @@ namespace Elffy
             GameThread.DoInvokedAction();       // Invokeされた処理を実行
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             Light.LightUp();                                        // 光源点灯
-            Instance._objectStore.Render();
+            Instance._objectStore.Render(Camera.Current.Projection, Camera.Current.Matrix);
             Light.TurnOff();                                        // 光源消灯
-            Instance._uiTree.RenderUI();                            // UI 描画
+            Instance._objectStore.RenderUI(Instance._uiTree.Projection);
             Instance._window.SwapBuffers();
             Instance._objectStore.ApplyChanging();
             DebugManager.Next();
