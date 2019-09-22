@@ -19,10 +19,8 @@ namespace Elffy
     public class Game
     {
         private UITree _uiTree;
+        private FrameObjectStore _objectStore;
         private GameWindow _window;
-        private List<FrameObject> _frameObjectList = new List<FrameObject>();
-        private List<FrameObject> _addedFrameObjectBuffer = new List<FrameObject>();
-        private List<FrameObject> _removedFrameObjectBuffer = new List<FrameObject>();
         private readonly IGameTimer _watch = GameTimerGenerator.Create();
 
         public static Game Instance { get; private set; }
@@ -77,41 +75,31 @@ namespace Elffy
         /// <summary>Exit this game.</summary>
         public static void Exit() => Instance?._window?.Close();
 
-        #region AddFrameObject
-        internal static bool AddFrameObject(FrameObject frameObject)
+        public static bool AddFrameObject(FrameObject frameObject)
         {
-            if(Instance == null) { return false; }
-            if(frameObject == null) { return false; }
-            if(frameObject is IUIRenderer == false) {
-                Instance._addedFrameObjectBuffer.Add(frameObject);
-            }
-            return true;
+            if(Instance == null) { throw NewGameNotRunningException(); }
+            return Instance._objectStore.AddFrameObject(frameObject);
         }
-        #endregion
 
-        #region RemoveFrameObject
-        internal static bool RemoveFrameObject(FrameObject frameObject)
+        public static bool RemoveFrameObject(FrameObject frameObject)
         {
-            if(Instance == null) { return false; }
-            if(frameObject == null) { return false; }
-            if(frameObject is IUIRenderer == false) {
-                Instance._removedFrameObjectBuffer.Add(frameObject);
-            }
-            return true;
+            if(Instance == null) { throw NewGameNotRunningException(); }
+            return Instance._objectStore.RemoveFrameObject(frameObject);
         }
-        #endregion
 
         #region FindObject
         public static FrameObject FindObject(string tag)
         {
-            return Instance?._frameObjectList?.Find(x => x.Tag == tag);
+            if(Instance == null) { throw NewGameNotRunningException(); }
+            return Instance._objectStore.FindObject(tag);
         }
         #endregion
 
         #region FindAllObject
         public static List<FrameObject> FindAllObject(string tag)
         {
-            return Instance?._frameObjectList?.FindAll(x => x.Tag == tag) ?? new List<FrameObject>();
+            if(Instance == null) { throw NewGameNotRunningException(); }
+            return Instance._objectStore.FindAllObject(tag);
         }
         #endregion
 
@@ -145,6 +133,7 @@ namespace Elffy
                     window.UpdateFrame += OnFrameUpdating;
                     window.Closed += OnClosed;
                     Instance._uiTree = new UITree(width, heigh);
+                    Instance._objectStore = new FrameObjectStore();
                     window.Run();
                     return;
                 }
@@ -182,7 +171,7 @@ namespace Elffy
             Instance._window.VSync = VSyncMode.On;
             Instance._window.TargetRenderFrequency = DisplayDevice.Default.RefreshRate;
             Initialize?.Invoke(Instance, EventArgs.Empty);
-            UpdateFrameObjectList();        // Initializeの中でのFrameObjectの変更を適用
+            Instance._objectStore.ApplyChanging();      // Initializeの中でのFrameObjectの変更を適用
         }
         #endregion
 
@@ -221,41 +210,15 @@ namespace Elffy
                 Instance._watch.Start();
             }
             CurrentFrame = Instance._watch.ElapsedMilliseconds;
-            foreach(var frameObject in Instance._frameObjectList.Where(x => !x.IsFrozen)) {
-                if(frameObject.IsStarted == false) {
-                    frameObject.Start();
-                    frameObject.IsStarted = true;
-                }
-                frameObject.Update();
-            }
-
-            // Invokeされた処理を実行
-            GameThread.DoInvokedAction();
-
+            Instance._objectStore.Update();
+            GameThread.DoInvokedAction();       // Invokeされた処理を実行
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            Light.LightUp();                                                            // 光源点灯
-            var renderables = Instance._frameObjectList.OfType<Renderable>().Where(x => x.IsRoot);
-            GL.MatrixMode(MatrixMode.Projection);
-            var projection = Camera.Current.Projection;
-            GL.LoadMatrix(ref projection);
-            GL.MatrixMode(MatrixMode.Modelview);
-            // Render World Object
-            var view = Camera.Current.Matrix;
-            GL.LoadMatrix(ref view);
-            foreach(var frameObject in renderables.Where(x => x.IsVisible)) {
-                GL.PushMatrix();
-                frameObject.Render();
-                GL.PopMatrix();
-            }
-
-            Light.TurnOff();        // 光源消灯
-
-            Instance._uiTree.RenderUI();        // UI 描画
-
+            Light.LightUp();                                        // 光源点灯
+            Instance._objectStore.Render();
+            Light.TurnOff();                                        // 光源消灯
+            Instance._uiTree.RenderUI();                            // UI 描画
             Instance._window.SwapBuffers();
-
-            UpdateFrameObjectList();
-
+            Instance._objectStore.ApplyChanging();
             DebugManager.Next();
             CurrentFrame++;
         }
@@ -264,27 +227,10 @@ namespace Elffy
         #region OnClosed
         private static void OnClosed(object sender, EventArgs e)
         {
-            foreach(var item in Instance._frameObjectList) {
-                item.Destroy();
-            }
-            Instance._frameObjectList.Clear();
-            Instance._addedFrameObjectBuffer.Clear();
-            Instance._removedFrameObjectBuffer.Clear();
+            if(Instance == null) { throw NewGameNotRunningException(); }
+            Instance._objectStore.Clear();
         }
         #endregion
-
-        private static void UpdateFrameObjectList()
-        {
-            if(Instance._removedFrameObjectBuffer.Count > 0) {
-                foreach(var item in Instance._removedFrameObjectBuffer) {
-                    Instance._frameObjectList.Remove(item);
-                }
-            }
-            if(Instance._addedFrameObjectBuffer.Count > 0) {
-                Instance._frameObjectList.AddRange(Instance._addedFrameObjectBuffer);
-                Instance._addedFrameObjectBuffer.Clear();
-            }
-        }
 
         private static Exception NewGameNotRunningException() => new InvalidOperationException("Game is Not Running");
     }

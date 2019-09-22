@@ -60,6 +60,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Core\PositionableCollection.cs" />
+    <Compile Include="Core\FrameObjectStore.cs" />
     <Compile Include="Elffy\Definition.cs" />
     <Compile Include="Core\ComponentOwner.cs" />
     <Compile Include="Elffy\Materials.cs" />

@@ -68,11 +68,11 @@ namespace Elffy.UI
             }
         }
 
-        private IEnumerable<IUIRenderer> GetAllUIRenderer()
+        private IEnumerable<IUIRenderable> GetAllUIRenderer()
         {
-            yield return _uiRoot.Renderer;
+            yield return _uiRoot.Renderable;
             foreach(var renderer in _uiRoot.GetOffspring()) {
-                yield return renderer.Renderer;
+                yield return renderer.Renderable;
             }
         }
 

@@ -14,18 +14,18 @@ namespace Elffy.UI
     /// 
     /// <remarks>
     /// <see cref="UIBase"/> はUIを構成する論理的なコントロールとしての機能のみを提供します。
-    /// 画面への描画に関する処理は、このクラスと対になる <see cref="Renderable"/> 継承クラス <see cref="UIPlain"/> のインスタンスに任されます。
+    /// 画面への描画に関する処理は、このクラスと対になる <see cref="Core.Renderable"/> 継承クラス <see cref="UIPlain"/> のインスタンスに任されます。
     /// <see cref="UIPlain"/> による描画は <see cref="UIBase"/> によって完全に隠蔽され、外部からは描画を気にすることなく論理的 UI 構造を扱えます。
     /// 
-    /// <see cref="UIBase"/> の木構造は、描画を担当する <see cref="Renderable"/> オブジェクトの木構造とは独立しています。
+    /// <see cref="UIBase"/> の木構造は、描画を担当する <see cref="Core.Renderable"/> オブジェクトの木構造とは独立しています。
     /// <see cref="UIBase"/> が親子関係の木構造を形成している場合でも、その描画オブジェクトは常に木構造を作りません。
     /// </remarks>
     public abstract class UIBase
     {
         #region Property
         /// <summary>この <see cref="UIBase"/> を描画するオブジェクト</summary>
-        internal IUIRenderer Renderer => _renderer;
-        private readonly UIPlain _renderer;
+        internal IUIRenderable Renderable => _renderable;
+        private readonly UIPlain _renderable;
 
         /// <summary>この <see cref="UIBase"/> のツリー構造の子要素を取得します</summary>
         public UIBaseCollection Children { get; }
@@ -52,11 +52,11 @@ namespace Elffy.UI
         #region Position
         public Vector2 Position
         {
-            get => _renderer.Position.Xy;
+            get => _renderable.Position.Xy;
             set
             {
-                var vec = value - _renderer.Position.Xy;
-                _renderer.Position += new Vector3(vec);
+                var vec = value - _renderable.Position.Xy;
+                _renderable.Position += new Vector3(vec);
                 _absolutePosition += vec;
                 foreach(var child in GetOffspring()) {
                     child._absolutePosition += vec;
@@ -68,11 +68,11 @@ namespace Elffy.UI
         #region PositionX
         public float PositionX
         {
-            get => _renderer.PositionX;
+            get => _renderable.PositionX;
             set
             {
-                var diff = value - _renderer.PositionX;
-                _renderer.PositionX += diff;
+                var diff = value - _renderable.PositionX;
+                _renderable.PositionX += diff;
                 _absolutePosition.X += diff;
                 foreach(var child in GetOffspring()) {
                     child._absolutePosition.X += diff;
@@ -85,11 +85,11 @@ namespace Elffy.UI
         /// <summary>オブジェクトのY座標</summary>
         public float PositionY
         {
-            get => _renderer.PositionY;
+            get => _renderable.PositionY;
             set
             {
-                var diff = value - _renderer.PositionY;
-                _renderer.PositionY += diff;
+                var diff = value - _renderable.PositionY;
+                _renderable.PositionY += diff;
                 _absolutePosition.Y += diff;
                 foreach(var child in GetOffspring()) {
                     child._absolutePosition.Y += diff;
@@ -166,7 +166,7 @@ namespace Elffy.UI
         public UIBase()
         {
             Children = new UIBaseCollection(this);
-            _renderer = new UIPlain(this);
+            _renderable = new UIPlain(this);
         }
         #endregion
 

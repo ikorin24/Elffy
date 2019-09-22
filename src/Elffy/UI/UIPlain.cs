@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace Elffy.UI
 {
     /// <summary><see cref="UIBase"/> を描画するためのオブジェクト。対象の <see cref="UIBase"/> のインスタンスと一対一の関係を持つ</summary>
-    internal sealed class UIPlain : Renderable, IDisposable, IUIRenderer
+    internal sealed class UIPlain : Renderable, IDisposable, IUIRenderable
     {
         private bool _disposed;
         private readonly UnmanagedArray<Vertex> _vertexArray = new UnmanagedArray<Vertex>(4);
@@ -28,10 +28,10 @@ namespace Elffy.UI
 
         ~UIPlain() => Dispose(false);
 
-        void IUIRenderer.Render() => Render();
-        bool IUIRenderer.IsVisible => IsVisible;
-        void IUIRenderer.Activate() => Activate();
-        void IUIRenderer.Destroy() => Destroy();
+        void IUIRenderable.Render() => Render();
+        bool IUIRenderable.IsVisible => IsVisible;
+        void IUIRenderable.Activate() => Activate();
+        void IUIRenderable.Destroy() => Destroy();
 
         #region Dispose pattern
         protected override void Dispose(bool disposing)
@@ -97,7 +97,7 @@ namespace Elffy.UI
     }
 
     /// <summary>UI 要素を描画するためのインターフェース</summary>
-    internal interface IUIRenderer
+    internal interface IUIRenderable
     {
         /// <summary>このオブジェクトが描画されるかどうかを取得します</summary>
         bool IsVisible { get; }

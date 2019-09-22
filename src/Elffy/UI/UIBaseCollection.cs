@@ -42,7 +42,7 @@ namespace Elffy.UI
         {
             if(item == null) { throw new ArgumentNullException(nameof(item)); }
             item.Parent = _owner;
-            item.Renderer.Activate();
+            item.Renderable.Activate();
             _list.Add(item);
         }
 
@@ -55,7 +55,7 @@ namespace Elffy.UI
             if(evaluated.Contains(null)) { throw new ArgumentException($"{items} contain 'null'. Can not add null."); }
             foreach(var item in evaluated) {
                 item.Parent = _owner;
-                item.Renderer.Activate();
+                item.Renderable.Activate();
             }
             _list.AddRange(evaluated);
         }
@@ -66,7 +66,7 @@ namespace Elffy.UI
             _list.ForEach(x =>
             {
                 x.Parent = null;
-                x.Renderer.Destroy();
+                x.Renderable.Destroy();
             });
             _list.Clear();
         }
@@ -99,7 +99,7 @@ namespace Elffy.UI
             if(index < 0 || index > _list.Count) { throw new ArgumentOutOfRangeException(nameof(index), index, "value is out of range."); }
             item.Parent = _owner;
             _list.Insert(index, item);
-            item.Renderer.Activate();
+            item.Renderable.Activate();
         }
 
         /// <summary>要素をリストから削除します</summary>
@@ -111,7 +111,7 @@ namespace Elffy.UI
             var result = _list.Remove(item);
             if(result) {
                 item.Parent = null;
-                item.Renderer.Destroy();
+                item.Renderable.Destroy();
             }
             return result;
         }
@@ -122,7 +122,7 @@ namespace Elffy.UI
         {
             if(index < 0 || index >= _list.Count) { throw new ArgumentOutOfRangeException(nameof(index)); }
             _list[index].Parent = null;
-            _list[index].Renderer.Destroy();
+            _list[index].Renderable.Destroy();
             _list.RemoveAt(index);
         }
 
