@@ -11,7 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Elffy
+namespace Elffy.Core
 {
     /// <summary>
     /// OpenGL が描画を行う領域を扱うクラスです。

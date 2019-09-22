@@ -1,5 +1,6 @@
 ﻿using System;
 using Elffy;
+using Elffy.Core;
 using Elffy.Platforms.Windows;
 
 namespace ElffyGame

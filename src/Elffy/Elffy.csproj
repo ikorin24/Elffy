@@ -65,9 +65,9 @@
     <Compile Include="Core\ComponentOwner.cs" />
     <Compile Include="Elffy\IGameScreen.cs" />
     <Compile Include="Elffy\Materials.cs" />
-    <Compile Include="Elffy\ProcessHelper.cs" />
+    <Compile Include="Core\ProcessHelper.cs" />
     <Compile Include="Elffy\Sound.cs" />
-    <Compile Include="Elffy\RenderingArea.cs" />
+    <Compile Include="Core\RenderingArea.cs" />
     <Compile Include="Elffy\Window.cs" />
     <Compile Include="Exceptions\SceneParseException.cs" />
     <Compile Include="Framing\FrameProcessObject.cs" />

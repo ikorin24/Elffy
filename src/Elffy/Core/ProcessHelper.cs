@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Elffy
+namespace Elffy.Core
 {
     /// <summary>アプリケーションのプロセスに関する処理を提供します</summary>
     public static class ProcessHelper
