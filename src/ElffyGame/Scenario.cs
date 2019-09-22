@@ -44,10 +44,10 @@ namespace ElffyGame
     {
         protected override void Start()
         {
-            var cube = new Cube();
-            cube.Texture = new Texture("cube.png");
-            cube.Position = new Vector3(0, 0, 0);
-            cube.Activate();
+            //var cube = new Cube();
+            //cube.Texture = new Texture("cube.png");
+            //cube.Position = new Vector3(0, 0, 0);
+            //cube.Activate();
 
             var button = new Button(100, 100);
             button.KeyUp += (sender, e) =>
@@ -55,11 +55,11 @@ namespace ElffyGame
                 System.Diagnostics.Debug.WriteLine("Go to Next Scenario");
                 Scenario.GoToNext(new StartScenario());
             };
-            Game.UI.RootChildren.Add(button);
+            Game.UIRoot.Children.Add(button);
 
             var b2 = new Button(100, 100);
             b2.Position = new Vector2(100, 100);
-            Game.UI.RootChildren.Add(b2);
+            Game.UIRoot.Children.Add(b2);
         }
     }
 }

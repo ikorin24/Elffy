@@ -66,6 +66,7 @@
     <Compile Include="Elffy\Materials.cs" />
     <Compile Include="Elffy\ProcessHelper.cs" />
     <Compile Include="Elffy\Sound.cs" />
+    <Compile Include="Elffy\RenderingArea.cs" />
     <Compile Include="Exceptions\SceneParseException.cs" />
     <Compile Include="Framing\FrameProcessObject.cs" />
     <Compile Include="Framing\FrameProcessInfo.cs" />
@@ -115,7 +116,6 @@
     <Compile Include="UI\UIBase.cs" />
     <Compile Include="UI\UIBaseCollection.cs" />
     <Compile Include="UI\UIPlain.cs" />
-    <Compile Include="UI\UITree.cs" />
     <Compile Include="Elffy\WindowStyle.cs" />
     <Compile Include="Elffy\DebugManager.cs" />
     <Compile Include="Elffy\FPSManager.cs" />

@@ -18,12 +18,14 @@ namespace Elffy
 {
     public class Game
     {
-        private UITree _uiTree;
-        private FrameObjectStore _objectStore;
         private GameWindow _window;
         private readonly IGameTimer _watch = GameTimerGenerator.Create();
+        private readonly RenderingArea _renderingArea = new RenderingArea();
 
         public static Game Instance { get; private set; }
+
+        public static IUIRoot UIRoot => Instance?._renderingArea?.UIRoot ?? throw NewGameNotRunningException();
+
         public static Size ClientSize => Instance?._window?.ClientSize ?? throw NewGameNotRunningException();
 
         public static float AspectRatio
@@ -35,7 +37,6 @@ namespace Elffy
             }
         }
 
-        public static UITree UI => Instance?._uiTree ?? throw NewGameNotRunningException();
         /// <summary>現在のフレームがゲーム開始から何フレーム目かを取得します(Rendering Frame)</summary>
         public static long CurrentFrame { get; internal set; }
         public static float FrameDelta => (float?)Instance?._window?.UpdatePeriod * 1000 ?? throw NewGameNotRunningException();
@@ -78,20 +79,20 @@ namespace Elffy
         public static bool AddFrameObject(FrameObject frameObject)
         {
             if(Instance == null) { throw NewGameNotRunningException(); }
-            return Instance._objectStore.AddFrameObject(frameObject);
+            return Instance._renderingArea.AddFrameObject(frameObject);
         }
 
         public static bool RemoveFrameObject(FrameObject frameObject)
         {
             if(Instance == null) { throw NewGameNotRunningException(); }
-            return Instance._objectStore.RemoveFrameObject(frameObject);
+            return Instance._renderingArea.RemoveFrameObject(frameObject);
         }
 
         #region FindObject
         public static FrameObject FindObject(string tag)
         {
             if(Instance == null) { throw NewGameNotRunningException(); }
-            return Instance._objectStore.FindObject(tag);
+            return Instance._renderingArea.FindObject(tag);
         }
         #endregion
 
@@ -99,7 +100,7 @@ namespace Elffy
         public static List<FrameObject> FindAllObject(string tag)
         {
             if(Instance == null) { throw NewGameNotRunningException(); }
-            return Instance._objectStore.FindAllObject(tag);
+            return Instance._renderingArea.FindAllObject(tag);
         }
         #endregion
 
@@ -122,18 +123,18 @@ namespace Elffy
                 }
             }
             Instance = new Game();
+            Instance._renderingArea.Initialized += (sender, e) => { Initialize?.Invoke(Instance, EventArgs.Empty); };
             GameThread.SetMainThreadID();
             try {
                 using(var window = new GameWindow(width, heigh, GraphicsMode.Default, title, (GameWindowFlags)windowStyle)) {
                     Instance._window = window;
                     window.ClientSize = new Size(width, heigh);
                     window.Icon = icon;
+                    window.Resize += OnResized;
                     window.Load += OnLoaded;
                     window.RenderFrame += OnRendering;
                     window.UpdateFrame += OnFrameUpdating;
                     window.Closed += OnClosed;
-                    Instance._uiTree = new UITree(width, heigh);
-                    Instance._objectStore = new FrameObjectStore();
                     window.Run();
                     return;
                 }
@@ -148,30 +149,19 @@ namespace Elffy
                 Instance = null;
             }
         }
+
+        private static void OnResized(object sender, EventArgs e)
+        {
+            Instance._renderingArea.Size = Instance._window.ClientSize;
+        }
         #endregion
 
         #region OnLoaded
         private static void OnLoaded(object sender, EventArgs e)
         {
-            GL.ClearColor(Color4.Gray);
-            GL.Enable(EnableCap.DepthTest);
-            GL.Enable(EnableCap.Texture2D);
-            GL.Enable(EnableCap.Normalize);
-
-            // αブレンディング設定
-            GL.Enable(EnableCap.Blend);
-            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-
-            // 裏面削除 反時計回りが表でカリング
-            GL.Enable(EnableCap.CullFace);
-            GL.CullFace(CullFaceMode.Back);
-            GL.FrontFace(FrontFaceDirection.Ccw);
-
-            GL.Viewport(Instance._window.ClientRectangle);
             Instance._window.VSync = VSyncMode.On;
             Instance._window.TargetRenderFrequency = DisplayDevice.Default.RefreshRate;
-            Initialize?.Invoke(Instance, EventArgs.Empty);
-            Instance._objectStore.ApplyChanging();              // Initializeの中でのFrameObjectの変更を適用
+            Instance._renderingArea.Initialize();
         }
         #endregion
 
@@ -205,22 +195,12 @@ namespace Elffy
         {
             CurrentFrameTime = Instance._watch.ElapsedMilliseconds;
             FPSManager.Aggregate(e.Time);
-            Input.Input.Update();
             if(!Instance._watch.IsRunning) {
                 Instance._watch.Start();
             }
-            CurrentFrame = Instance._watch.ElapsedMilliseconds;
-            Instance._objectStore.Update();
-            GameThread.DoInvokedAction();       // Invokeされた処理を実行
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            Light.LightUp();                                        // 光源点灯
-            Instance._objectStore.Render(Camera.Current.Projection, Camera.Current.Matrix);
-            Light.TurnOff();                                        // 光源消灯
-            Instance._objectStore.RenderUI(Instance._uiTree.Projection);
+            Instance._renderingArea.RenderFrame();
             Instance._window.SwapBuffers();
-            Instance._objectStore.ApplyChanging();
             DebugManager.Next();
-            CurrentFrame++;
         }
         #endregion
 
@@ -228,7 +208,7 @@ namespace Elffy
         private static void OnClosed(object sender, EventArgs e)
         {
             if(Instance == null) { throw NewGameNotRunningException(); }
-            Instance._objectStore.Clear();
+            Instance._renderingArea.Clear();
         }
         #endregion
 

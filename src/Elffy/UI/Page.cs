@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace Elffy.UI
 {
     /// <summary>UI の Root となるオブジェクト</summary>
-    public class Page : Panel
+    internal class Page : Panel, IUIRoot
     {
         /// <summary>この <see cref="Page"/> が レイアウト済みかどうかを取得します</summary>
         public bool IsLayouted { get; private set; }
@@ -63,5 +63,10 @@ namespace Elffy.UI
             IsLayouted = true;
         }
         #endregion
+    }
+
+    public interface IUIRoot
+    {
+        UIBaseCollection Children { get; }
     }
 }
