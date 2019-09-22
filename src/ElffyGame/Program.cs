@@ -19,7 +19,7 @@ namespace ElffyGame
         {
             try {
                 //Game.Initialize += GameStartUp.Initialize;
-                Game.Initialize += (sender, e) => { Scenario.Start(new StartScenario()); };
+                Game.Initialized += (sender, e) => { Scenario.Start(new StartScenario()); };
                 Game.Run(800, 450, "Game", WindowStyle.FixedWindow, "icon.ico");
             }
             catch(Exception) {

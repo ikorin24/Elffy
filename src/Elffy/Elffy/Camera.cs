@@ -115,7 +115,7 @@ namespace Elffy
 
         private void SetProjection(float radian, float far)
         {
-            Projection = Matrix4.CreatePerspectiveFieldOfView(radian, Game.AspectRatio, NEAR, far);
+            Projection = Matrix4.CreatePerspectiveFieldOfView(radian, (float)Game.ClientSize.Width / Game.ClientSize.Height, NEAR, far);
         }
         #endregion
     }

@@ -63,10 +63,12 @@
     <Compile Include="Core\FrameObjectStore.cs" />
     <Compile Include="Elffy\Definition.cs" />
     <Compile Include="Core\ComponentOwner.cs" />
+    <Compile Include="Elffy\IGameScreen.cs" />
     <Compile Include="Elffy\Materials.cs" />
     <Compile Include="Elffy\ProcessHelper.cs" />
     <Compile Include="Elffy\Sound.cs" />
     <Compile Include="Elffy\RenderingArea.cs" />
+    <Compile Include="Elffy\Window.cs" />
     <Compile Include="Exceptions\SceneParseException.cs" />
     <Compile Include="Framing\FrameProcessObject.cs" />
     <Compile Include="Framing\FrameProcessInfo.cs" />
@@ -98,6 +100,8 @@
     <Compile Include="Physics\Rigidbody.cs" />
     <Compile Include="Physics\Rigidbody3D.cs" />
     <Compile Include="Physics\SphereRigidbody.cs" />
+    <Compile Include="Platforms\Platform.cs" />
+    <Compile Include="Platforms\PlatformType.cs" />
     <Compile Include="Serialization\FbxModelBuilder.cs" />
     <Compile Include="Serialization\FbxObject.cs" />
     <Compile Include="Serialization\FbxParser.cs" />
