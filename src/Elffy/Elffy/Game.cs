@@ -130,8 +130,7 @@ namespace Elffy
             GameThread.SetMainThreadID();
             try {
                 Instance = new Game();
-                var platform = Platform.GetPlatformType();
-                switch(platform) {
+                switch(Platform.PlatformType) {
                     case PlatformType.Windows:
                         Instance._gameScreen = GetWindowGameScreen(width, height, title, windowStyle, iconResourcePath);
                         break;
@@ -140,7 +139,7 @@ namespace Elffy
                     case PlatformType.Android:
                     case PlatformType.Other:
                     default:
-                        throw new PlatformNotSupportedException($"Game can not run on this platform; Platform Type : '{platform}'");
+                        throw Platform.NewPlatformNotSupportedException();
                 }
                 foreach(var handler in _temporaryHandlers) {
                     Instance._gameScreen.Initialized += handler;

@@ -5,19 +5,17 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Elffy.Control
+namespace Elffy.Platforms.Windows
 {
     public static class MessageBox
     {
         public static MessageBoxResult Show(string text, string caption, MessageBoxType type, MessageBoxIcon icon)
         {
-            if(Environment.OSVersion.Platform == PlatformID.Win32NT) {
+            if(Platform.PlatformType == PlatformType.Windows) {
                 var result = WinMessageBox(IntPtr.Zero, text, caption, (int)type + (int)icon);
                 return (MessageBoxResult)result;
             }
-            else {
-                return MessageBoxResult.Aborted;
-            }
+            else { throw Platform.NewPlatformNotSupportedException(); }
         }
 
         [DllImport("user32.dll", EntryPoint = "MessageBox", CharSet = CharSet.Unicode)]
