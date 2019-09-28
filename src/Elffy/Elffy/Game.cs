@@ -17,23 +17,55 @@ using Elffy.Platforms;
 
 namespace Elffy
 {
+    /// <summary>ゲームを実行するためのクラス</summary>
     public class Game
     {
+        /// <summary>ゲーム描画領域オブジェクト</summary>
         private IGameScreen _gameScreen;
+        /// <summary>ゲームの実行時間計測用タイマー</summary>
         private readonly IGameTimer _watch = GameTimerGenerator.Create();
-        private static readonly List<EventHandler> _temporaryHandlers = new List<EventHandler>();
+        /// <summary>ゲーム起動前に追加されたイベントハンドラーを保持しておくためのバッファ</summary>
+        private static readonly List<EventHandler> _temporaryInitializedHandlers = new List<EventHandler>();
 
+        /// <summary><see cref="Game"/> のシングルトンインスタンス</summary>
         public static Game Instance { get; private set; }
+        /// <summary>ゲームが起動しているかどうかを取得します</summary>
         public static bool IsRunning => Instance != null;
-        public static IUIRoot UIRoot => Instance?._gameScreen?.UIRoot ?? throw NewGameNotRunningException();
-        public static Size ClientSize => Instance?._gameScreen?.ClientSize ?? throw NewGameNotRunningException();
+        public static IUIRoot UIRoot
+        {
+            get
+            {
+                ThrowIfGameNotRunning();
+                return Instance._gameScreen.UIRoot;
+            }
+        }
+
+        /// <summary>ゲームの描画領域のピクセルサイズ</summary>
+        public static Size ClientSize
+        {
+            get
+            {
+                ThrowIfGameNotRunning();
+                return Instance._gameScreen.ClientSize;
+            }
+        }
+
         /// <summary>現在のフレームがゲーム開始から何フレーム目かを取得します(Rendering Frame)</summary>
         public static long CurrentFrame { get; internal set; }
         //public static float RenderDelta => (float?)Instance?._window?.RenderPeriod * 1000 ?? throw NewGameNotRunningException();
         public static float RenderDelta => throw new NotImplementedException();     // TODO: 実装
         public static long CurrentFrameTime { get; private set; }
-        public static long CurrentTime => Instance?._watch?.ElapsedMilliseconds ?? throw NewGameNotRunningException();
+        public static long CurrentTime
+        {
+            get
+            {
+                ThrowIfGameNotRunning();
+                return Instance._watch.ElapsedMilliseconds;
+            }
+        }
 
+        #region event Initialized
+        /// <summary>ゲーム初期化後に呼ばれるイベント</summary>
         public static event EventHandler Initialized
         {
             add
@@ -42,7 +74,7 @@ namespace Elffy
                     Instance._gameScreen.Initialized += value;
                 }
                 else {
-                    _temporaryHandlers.Add(value);
+                    _temporaryInitializedHandlers.Add(value);
                 }
             }
             remove
@@ -51,18 +83,23 @@ namespace Elffy
                     Instance._gameScreen.Initialized -= value;
                 }
                 else {
-                    _temporaryHandlers.Remove(value);
+                    _temporaryInitializedHandlers.Remove(value);
                 }
             }
         }
-
+        #endregion
 
         private Game(){ }
 
         #region Run
+        /// <summary>ゲームを開始します</summary>
+        /// <param name="width">描画領域の幅</param>
+        /// <param name="heigh">描画領域の高さ</param>
+        /// <param name="title">タイトル</param>
+        /// <param name="windowStyle">ウィンドウのスタイル (Windowを用いないプラットフォームでは無効)</param>
         public static void Run(int width, int heigh, string title, WindowStyle windowStyle)
         {
-            if(Instance != null) { throw new InvalidOperationException("Game is already Running"); }
+            ThrowIfGameAlreadyRunning();
             try {
                 Resources.Initialize();
             }
@@ -70,9 +107,15 @@ namespace Elffy
             RunPrivate(width, heigh, title, windowStyle, null);
         }
 
+        /// <summary>ゲームを開始します</summary>
+        /// <param name="width">描画領域の幅</param>
+        /// <param name="heigh">描画領域の高さ</param>
+        /// <param name="title">タイトル</param>
+        /// <param name="windowStyle">ウィンドウのスタイル (Windowを用いないプラットフォームでは無効)</param>
+        /// <param name="icon">アイコン</param>
         public static void Run(int width, int heigh, string title, WindowStyle windowStyle, string icon)
         {
-            if(Instance != null) { throw new InvalidOperationException("Game is already Running"); }
+            ThrowIfGameAlreadyRunning();
             if(string.IsNullOrEmpty(icon)) { throw new ArgumentException($"Icon is null or empty"); }
             try {
                 Resources.Initialize();
@@ -82,29 +125,35 @@ namespace Elffy
         }
         #endregion Run
 
+        #region Exit
         /// <summary>Exit this game.</summary>
         public static void Exit()
         {
-            if(Instance == null) { throw NewGameNotRunningException(); }
+            ThrowIfGameNotRunning();
             Instance._gameScreen.Close();
         }
+        #endregion
 
+        #region AddFrameObject
         public static bool AddFrameObject(FrameObject frameObject)
         {
-            if(Instance == null) { throw NewGameNotRunningException(); }
+            ThrowIfGameNotRunning();
             return Instance._gameScreen.AddFrameObject(frameObject);
         }
+        #endregion
 
+        #region RemoveFrameObject
         public static bool RemoveFrameObject(FrameObject frameObject)
         {
-            if(Instance == null) { throw NewGameNotRunningException(); }
+            ThrowIfGameNotRunning();
             return Instance._gameScreen.RemoveFrameObject(frameObject);
         }
+        #endregion
 
         #region FindObject
         public static FrameObject FindObject(string tag)
         {
-            if(Instance == null) { throw NewGameNotRunningException(); }
+            ThrowIfGameNotRunning();
             return Instance._gameScreen.FindObject(tag);
         }
         #endregion
@@ -112,7 +161,7 @@ namespace Elffy
         #region FindAllObject
         public static List<FrameObject> FindAllObject(string tag)
         {
-            if(Instance == null) { throw NewGameNotRunningException(); }
+            ThrowIfGameNotRunning();
             return Instance._gameScreen.FindAllObject(tag);
         }
         #endregion
@@ -132,19 +181,19 @@ namespace Elffy
                 Instance = new Game();
                 switch(Platform.PlatformType) {
                     case PlatformType.Windows:
-                        Instance._gameScreen = GetWindowGameScreen(width, height, title, windowStyle, iconResourcePath);
-                        break;
                     case PlatformType.MacOSX:
                     case PlatformType.Unix:
+                        Instance._gameScreen = GetWindowGameScreen(width, height, title, windowStyle, iconResourcePath);
+                        break;
                     case PlatformType.Android:
                     case PlatformType.Other:
                     default:
                         throw Platform.NewPlatformNotSupportedException();
                 }
-                foreach(var handler in _temporaryHandlers) {
+                foreach(var handler in _temporaryInitializedHandlers) {
                     Instance._gameScreen.Initialized += handler;
                 }
-                _temporaryHandlers.Clear();
+                _temporaryInitializedHandlers.Clear();
                 Instance._gameScreen.Run();
             }
             finally {
@@ -154,6 +203,10 @@ namespace Elffy
         }
         #endregion
 
+        #region OnScreenRendering
+        /// <summary>フレーム描画前実行処理</summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private static void OnScreenRendering(object sender, EventArgs e)
         {
             CurrentFrameTime = Instance._watch.ElapsedMilliseconds;
@@ -162,11 +215,17 @@ namespace Elffy
                 Instance._watch.Start();
             }
         }
+        #endregion
 
+        #region OnScreenRendered
+        /// <summary>フレーム描画後処理</summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private static void OnScreenRendered(object sender, EventArgs e)
         {
             DebugManager.Next();
         }
+        #endregion
 
         #region GetWindowGameScreen
         /// <summary>ウィンドウを用いる OS での <see cref="IGameScreen"/> を取得します</summary>
@@ -195,6 +254,20 @@ namespace Elffy
         }
         #endregion
 
-        private static Exception NewGameNotRunningException() => new InvalidOperationException("Game is Not Running");
+        #region ThrowIfGameNotRunning
+        /// <summary>ゲームが起動していない場合に例外を投げます</summary>
+        private static void ThrowIfGameNotRunning()
+        {
+            if(!IsRunning) { throw new InvalidOperationException("Game is Not Running"); }
+        }
+        #endregion
+
+        #region ThrowIfGameAlreadyRunning
+        /// <summary>ゲームが既に起動している間合いに例外を投げます</summary>
+        private static void ThrowIfGameAlreadyRunning()
+        {
+            if(IsRunning) { throw new InvalidOperationException("Game is already Running"); }
+        }
+        #endregion
     }
 }
