@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
 using Elffy;
 using Elffy.Shape;
 using Elffy.Threading;
 using Elffy.UI;
+using Elffy.Framing;
 using OpenTK;
 
 namespace ElffyGame
@@ -34,7 +36,7 @@ namespace ElffyGame
         private static void GoToNextPrivate(Scenario scenario)
         {
             Current = scenario;
-            GameThread.Invoke(scenario.Start);
+            Dispatcher.Invoke(scenario.Start);
         }
 
         protected abstract void Start();

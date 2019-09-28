@@ -176,7 +176,8 @@ namespace Elffy
         /// <returns></returns>
         private static void RunPrivate(int width, int height, string title, WindowStyle windowStyle, string iconResourcePath)
         {
-            GameThread.SetMainThreadID();
+            Dispatcher.SetMainThreadID();
+            ElffySynchronizationContext.InstallIfNeeded();
             try {
                 Instance = new Game();
                 switch(Platform.PlatformType) {
@@ -199,7 +200,7 @@ namespace Elffy
             finally {
                 Instance?._gameScreen?.Dispose();
                 Instance = null;
-            }            
+            }
         }
         #endregion
 
@@ -224,6 +225,7 @@ namespace Elffy
         private static void OnScreenRendered(object sender, EventArgs e)
         {
             DebugManager.Next();
+            CurrentFrame++;
         }
         #endregion
 

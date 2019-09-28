@@ -28,7 +28,7 @@ namespace Elffy
         #region constructor
         internal Texture(int width, int height)
         {
-            if(GameThread.IsMainThread() == false) { throw new InvalidOperationException("Current thread must be Main Thread."); }
+            if(Dispatcher.IsMainThread() == false) { throw new InvalidOperationException("Current thread must be Main Thread."); }
             _texture = GL.GenTexture();                     // テクスチャ用バッファを確保
             var pixels = new UnmanagedArray<byte>(width * height * 4);
             for(int i = 0; i < pixels.Length; i++) {
@@ -39,7 +39,7 @@ namespace Elffy
 
         public Texture(string resource)
         {
-            if(GameThread.IsMainThread() == false) { throw new InvalidOperationException("Current thread must be Main Thread."); }
+            if(Dispatcher.IsMainThread() == false) { throw new InvalidOperationException("Current thread must be Main Thread."); }
             var pixels = LoadFromResource(resource, out var width, out var height);
             _texture = GL.GenTexture();                             // テクスチャ用バッファを確保
             SetTexture(TextureExpansionMode.Bilinear, TextureExpansionMode.Bilinear, pixels.Ptr, width, height);
@@ -148,7 +148,7 @@ namespace Elffy
 
                 // OpenGLのバッファの削除はメインスレッドで行う必要がある
                 var texture = _texture;
-                GameThread.Invoke(() => { GL.DeleteTexture(_texture); });
+                Dispatcher.Invoke(() => { GL.DeleteTexture(_texture); });
                 _disposed = true;
             }
         }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -7,10 +8,11 @@ using System.Threading.Tasks;
 
 namespace Elffy.Threading
 {
-    public static class GameThread
+    public static class Dispatcher
     {
         private static readonly Queue<Action> _invokedActions = new Queue<Action>();
         private static readonly object _syncRoot = new object();
+        private static bool _hasMainThreadID;
         private static int _mainThreadID;
 
         /// <summary>指定した処理をメインスレッドで行わせます。</summary>
@@ -30,12 +32,18 @@ namespace Elffy.Threading
 
         /// <summary>現在のスレッドがメインスレッドかどうかを返します。</summary>
         /// <returns>メインスレッドかどうか</returns>
-        public static bool IsMainThread() => Thread.CurrentThread.ManagedThreadId == _mainThreadID;
+        public static bool IsMainThread()
+        {
+            ThrowIfNotInitialized();
+            return Thread.CurrentThread.ManagedThreadId == _mainThreadID;
+        }
 
         /// <summary>メインスレッドIDを初期化します。最初にメインスレッドから1度だけ呼ばれます。</summary>
         internal static void SetMainThreadID()
         {
+            Debug.Assert(_hasMainThreadID == false);
             _mainThreadID = Thread.CurrentThread.ManagedThreadId;
+            _hasMainThreadID = true;
         }
 
         /// <summary>Invokedキューの内容を処理します</summary>
@@ -48,6 +56,13 @@ namespace Elffy.Threading
                     action();
                 }
                 _invokedActions.Clear();
+            }
+        }
+
+        private static void ThrowIfNotInitialized()
+        {
+            if(!_hasMainThreadID) {
+                throw new InvalidOperationException("Main Thread ID is not set.");
             }
         }
     }

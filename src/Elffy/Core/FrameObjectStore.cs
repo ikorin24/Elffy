@@ -41,6 +41,9 @@ namespace Elffy.Core
                         break;
                 }
             }
+            else {
+                _addedBuf.Add(frameObject);
+            }
             return true;
         }
         #endregion
@@ -63,6 +66,9 @@ namespace Elffy.Core
                     default:
                         break;
                 }
+            }
+            else {
+                _removedBuf.Remove(frameObject);
             }
             return true;
         }

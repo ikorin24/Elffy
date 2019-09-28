@@ -184,7 +184,7 @@ namespace Elffy.Core
         #region ThrowIfNotMainThread
         private void ThrowIfNotMainThread(string funcName)
         {
-            if(GameThread.IsMainThread() == false) { throw new InvalidOperationException($"'{funcName}' must be called from Main Thread."); }
+            if(Dispatcher.IsMainThread() == false) { throw new InvalidOperationException($"'{funcName}' must be called from Main Thread."); }
         }
         #endregion
 
@@ -203,7 +203,7 @@ namespace Elffy.Core
                     var vbo = _vertexBuffer;
                     var ibo = _indexBuffer;
                     var vao = _vao;
-                    GameThread.Invoke(() => {
+                    Dispatcher.Invoke(() => {
                         GL.DeleteBuffer(vbo);
                         GL.DeleteBuffer(ibo);
                         GL.DeleteVertexArray(vao);

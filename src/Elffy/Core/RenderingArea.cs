@@ -103,7 +103,7 @@ namespace Elffy.Core
         {
             Input.Input.Update();
             _objectStore.Update();
-            GameThread.DoInvokedAction();                           // Invokeされた処理を実行
+            Dispatcher.DoInvokedAction();                           // Invokeされた処理を実行
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             Light.LightUp();                                        // 光源点灯
             _objectStore.Render(Camera.Current.Projection, Camera.Current.Matrix);
