@@ -7,6 +7,7 @@ using System.Security.Permissions;
 
 namespace Elffy.Threading
 {
+    /// <summary>スレッドの同期コンテキストクラスです</summary>
     public sealed class ElffySynchronizationContext : SynchronizationContext
     {
         /// <summary>現在のスレッドの <see cref="SynchronizationContext"/> を生成中かどうか (このメンバはスレッドごとに独立した値を持ちます)</summary>
@@ -37,7 +38,7 @@ namespace Elffy.Threading
         private WeakReference _destinationThread;
 
         /// <summary>現在のスレッドに紐づけられた同期コンテキストを生成します</summary>
-        internal ElffySynchronizationContext()
+        private ElffySynchronizationContext()
         {
             DestinationThread = Thread.CurrentThread;
         }
@@ -61,8 +62,8 @@ namespace Elffy.Threading
             return new ElffySynchronizationContext(DestinationThread);
         }
 
-        /// <summary>同期コンテキストを生成する必要がある場合、生成します</summary>
-        internal static void InstallIfNeeded()
+        /// <summary>現在のスレッドに同期コンテキストを生成する必要がある場合、生成します</summary>
+        internal static void CreateIfNeeded()
         {
             if(_inInstallation) { return; }
 
@@ -83,8 +84,8 @@ namespace Elffy.Threading
             }
         }
 
-        /// <summary>同期コンテキストが <see cref="ElffySynchronizationContext"/> の場合、同期コンテキストを削除します</summary>
-        internal static void Uninstall()
+        /// <summary>現在のスレッドの同期コンテキストが <see cref="ElffySynchronizationContext"/> の場合、同期コンテキストを削除します</summary>
+        internal static void Delete()
         {
             if(AsyncOperationManager.SynchronizationContext is ElffySynchronizationContext) {
                 AsyncOperationManager.SynchronizationContext = _previousSyncContext ?? new SynchronizationContext();
