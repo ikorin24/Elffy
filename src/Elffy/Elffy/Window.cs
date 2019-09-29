@@ -9,6 +9,7 @@ namespace Elffy
 {
     public class Window : GameWindow, IGameScreen
     {
+        private const string DEFAULT_WINDOW_TITLE = "Window";
         private readonly RenderingArea _renderingArea = new RenderingArea();
 
         public IUIRoot UIRoot => _renderingArea.UIRoot;
@@ -21,9 +22,9 @@ namespace Elffy
         public event EventHandler Rendering;
         public event EventHandler Rendered;
 
-        public Window() : this(800, 450, "Window", WindowStyle.Default) { }
+        public Window() : this(800, 450, DEFAULT_WINDOW_TITLE, WindowStyle.Default) { }
 
-        public Window(WindowStyle windowStyle) : this(800, 450, "Window", windowStyle) { }
+        public Window(WindowStyle windowStyle) : this(800, 450, DEFAULT_WINDOW_TITLE, windowStyle) { }
 
         public Window(int width, int height, string title, WindowStyle windowStyle) : base(width, height, GraphicsMode.Default, title, (GameWindowFlags)windowStyle)
         {

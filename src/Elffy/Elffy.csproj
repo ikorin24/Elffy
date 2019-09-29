@@ -64,6 +64,8 @@
     <Compile Include="Elffy\Definition.cs" />
     <Compile Include="Core\ComponentOwner.cs" />
     <Compile Include="Elffy\IGameScreen.cs" />
+    <Compile Include="Elffy\Layer.cs" />
+    <Compile Include="Elffy\LayerCollection.cs" />
     <Compile Include="Elffy\Materials.cs" />
     <Compile Include="Core\ProcessHelper.cs" />
     <Compile Include="Elffy\Sound.cs" />

@@ -172,5 +172,9 @@ namespace Elffy.Core
             _removedBuf.Clear();
         }
         #endregion
+
+        public IEnumerable<Renderable> GetRenderables => _renderables;
+
+        public IEnumerable<IUIRenderable> GetUIRenderable => _uiList;
     }
 }
