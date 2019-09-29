@@ -38,6 +38,13 @@ namespace Elffy.Threading
             return Thread.CurrentThread.ManagedThreadId == _mainThreadID;
         }
 
+        /// <summary>現在のスレッドがメインスレッドでない場合、例外を投げます</summary>
+        /// <exception cref="InvalidOperationException">現在のスレッドがメインスレッドでないことを示す例外</exception>
+        public static void ThrowIfNotMainThread()
+        {
+            if(IsMainThread() == false) { throw new InvalidOperationException("Current thread must be Main Thread."); }
+        }
+
         /// <summary>メインスレッドIDを初期化します。最初にメインスレッドから1度だけ呼ばれます。</summary>
         internal static void SetMainThreadID()
         {

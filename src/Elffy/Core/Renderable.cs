@@ -107,7 +107,7 @@ namespace Elffy.Core
         {
             if(vertexArray == null) { throw new ArgumentNullException(nameof(vertexArray)); }
             if(indexArray == null) { throw new ArgumentNullException(nameof(indexArray)); }
-            ThrowIfNotMainThread(nameof(InitGraphicBuffer));
+            Dispatcher.ThrowIfNotMainThread();
             unsafe {
                 fixed(Vertex* vertexPtr = vertexArray)
                 fixed(int* indexPtr = indexArray) {
@@ -121,7 +121,7 @@ namespace Elffy.Core
         /// <param name="indexArray">頂点インデックス配列</param>
         protected void InitGraphicBuffer(IntPtr vertexArray, int vertexArrayLength, IntPtr indexArray, int indexArrayLength)
         {
-            ThrowIfNotMainThread(nameof(InitGraphicBuffer));
+            Dispatcher.ThrowIfNotMainThread();
             InitGraphicBufferPrivate(vertexArray, vertexArrayLength, indexArray, indexArrayLength);
         }
         #endregion
@@ -178,13 +178,6 @@ namespace Elffy.Core
                 GL.BindVertexArray(Consts.NULL);
                 GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);   // テクスチャのバインド解除
             }
-        }
-        #endregion
-
-        #region ThrowIfNotMainThread
-        private void ThrowIfNotMainThread(string funcName)
-        {
-            if(Dispatcher.IsMainThread() == false) { throw new InvalidOperationException($"'{funcName}' must be called from Main Thread."); }
         }
         #endregion
 

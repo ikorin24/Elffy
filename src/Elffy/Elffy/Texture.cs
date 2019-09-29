@@ -28,7 +28,7 @@ namespace Elffy
         #region constructor
         internal Texture(int width, int height)
         {
-            if(Dispatcher.IsMainThread() == false) { throw new InvalidOperationException("Current thread must be Main Thread."); }
+            Dispatcher.ThrowIfNotMainThread();
             _texture = GL.GenTexture();                     // テクスチャ用バッファを確保
             var pixels = new UnmanagedArray<byte>(width * height * 4);
             for(int i = 0; i < pixels.Length; i++) {
@@ -39,7 +39,7 @@ namespace Elffy
 
         public Texture(string resource)
         {
-            if(Dispatcher.IsMainThread() == false) { throw new InvalidOperationException("Current thread must be Main Thread."); }
+            Dispatcher.ThrowIfNotMainThread();
             var pixels = LoadFromResource(resource, out var width, out var height);
             _texture = GL.GenTexture();                             // テクスチャ用バッファを確保
             SetTexture(TextureExpansionMode.Bilinear, TextureExpansionMode.Bilinear, pixels.Ptr, width, height);
