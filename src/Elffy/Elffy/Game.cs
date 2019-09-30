@@ -50,6 +50,15 @@ namespace Elffy
             }
         }
 
+        public static LayerCollection Layers
+        {
+            get
+            {
+                ThrowIfGameNotRunning();
+                return Instance._gameScreen.Layers;
+            }
+        }
+
         /// <summary>現在のフレームがゲーム開始から何フレーム目かを取得します(Rendering Frame)</summary>
         public static long CurrentFrame { get; internal set; }
         //public static float RenderDelta => (float?)Instance?._window?.RenderPeriod * 1000 ?? throw NewGameNotRunningException();
@@ -131,38 +140,6 @@ namespace Elffy
         {
             ThrowIfGameNotRunning();
             Instance._gameScreen.Close();
-        }
-        #endregion
-
-        #region AddFrameObject
-        public static bool AddFrameObject(FrameObject frameObject)
-        {
-            ThrowIfGameNotRunning();
-            return Instance._gameScreen.AddFrameObject(frameObject);
-        }
-        #endregion
-
-        #region RemoveFrameObject
-        public static bool RemoveFrameObject(FrameObject frameObject)
-        {
-            ThrowIfGameNotRunning();
-            return Instance._gameScreen.RemoveFrameObject(frameObject);
-        }
-        #endregion
-
-        #region FindObject
-        public static FrameObject FindObject(string tag)
-        {
-            ThrowIfGameNotRunning();
-            return Instance._gameScreen.FindObject(tag);
-        }
-        #endregion
-
-        #region FindAllObject
-        public static List<FrameObject> FindAllObject(string tag)
-        {
-            ThrowIfGameNotRunning();
-            return Instance._gameScreen.FindAllObject(tag);
         }
         #endregion
 

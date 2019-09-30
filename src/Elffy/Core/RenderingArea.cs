@@ -20,14 +20,11 @@ namespace Elffy.Core
     {
         const float UI_FAR = 1.01f;
         const float UI_NEAR = -0.01f;
-        private readonly FrameObjectStore _objectStore = new FrameObjectStore();
         private Matrix4 _uiProjection = Matrix4.Identity;
 
+        public LayerCollection Layers { get; } = new LayerCollection();
         public IUIRoot UIRoot => _uiRoot;
         private readonly Page _uiRoot = new Page();
-
-        /// <summary>現在のフレームが開始から何フレーム目かを取得します</summary>
-        public long CurrentFrame { get; private set; }
 
         public event EventHandler Initialized;
 
@@ -77,6 +74,7 @@ namespace Elffy.Core
         /// <summary>描画に関する初期設定を行います</summary>
         public void Initialize()
         {
+            // TODO: GL の初期設定はもっと基底処理部に移動するべき、このメソッドは何度も呼ばれる可能性があるので
             GL.ClearColor(Color4.Gray);
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Texture2D);
@@ -91,9 +89,10 @@ namespace Elffy.Core
             GL.CullFace(CullFaceMode.Back);
             GL.FrontFace(FrontFaceDirection.Ccw);
 
-            //_uiRoot.Renderable.Activate();
             Initialized?.Invoke(this, EventArgs.Empty);
-            _objectStore.ApplyChanging();
+            foreach(var layer in Layers) {
+                layer.ObjectStore.ApplyChanging();
+            }
         }
         #endregion
 
@@ -102,27 +101,24 @@ namespace Elffy.Core
         public void RenderFrame()
         {
             Input.Input.Update();
-            _objectStore.Update();
+            foreach(var layer in Layers) {
+                layer.ObjectStore.Update();
+            }
             Dispatcher.DoInvokedAction();                           // Invokeされた処理を実行
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             Light.LightUp();                                        // 光源点灯
-            _objectStore.Render(Camera.Current.Projection, Camera.Current.Matrix);
+            foreach(var layer in Layers) {
+                layer.ObjectStore.Render(Camera.Current.Projection, Camera.Current.Matrix);
+            }
             Light.TurnOff();                                        // 光源消灯
-            _objectStore.RenderUI(_uiProjection);
-            _objectStore.ApplyChanging();
-            CurrentFrame++;
+            foreach(var layer in Layers) {
+                layer.ObjectStore.RenderUI(_uiProjection);
+            }
+            foreach(var layer in Layers) {
+                layer.ObjectStore.ApplyChanging();
+            }
         }
         #endregion
-
-        public bool AddFrameObject(FrameObject frameObject) => _objectStore.AddFrameObject(frameObject);
-
-        public bool RemoveFrameObject(FrameObject frameObject) => _objectStore.RemoveFrameObject(frameObject);
-
-        public FrameObject FindObject(string tag) => _objectStore.FindObject(tag);
-
-        public List<FrameObject> FindAllObject(string tag) => _objectStore.FindAllObject(tag);
-
-        public void Clear() => _objectStore.Clear();
 
         private void OnSizeChanged(int x, int y, int width, int height)
         {

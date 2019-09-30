@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,42 +7,120 @@ using System.Threading.Tasks;
 
 namespace Elffy
 {
-    public class LayerCollection
+    /// <summary><see cref="Layer"/>のリストを表すクラスです。</summary>
+    public class LayerCollection : IList<Layer>, IReadOnlyList<Layer>, IReadOnlyCollection<Layer>, ICollection<Layer>, IEnumerable<Layer>, IEnumerable
     {
         private const string UI_LAYER_NAME = "UILayer";
         private const string WORLD_LAYER_NAME = "WorldLayer";
         private readonly List<Layer> _list = new List<Layer>();
 
-        public Layer UILayer { get; }
-        public Layer WorldLayer { get; }
+        /// <summary>UI レイヤーを取得します</summary>
+        public Layer UILayer { get; } = new Layer(UI_LAYER_NAME, RenderingMode.Orthographic);
+        /// <summary>ワールドレイヤーを取得します</summary>
+        public Layer WorldLayer { get; } = new Layer(WORLD_LAYER_NAME, RenderingMode.Perspective);
+        /// <summary>レイヤーの数を取得します</summary>
+        public int Count => _list.Count;
+        /// <summary>このリストが読み取り専用かどうかを取得します。常に false を返します。</summary>
+        public bool IsReadOnly => false;
+
+        /// <summary>インデックスを指定して、レイヤーを取得、設定します</summary>
+        /// <param name="index">インデックス</param>
+        /// <returns>レイヤー</returns>
+        public Layer this[int index]
+        {
+            get
+            {
+                if(index < 0 || index > _list.Count - 1) { throw new ArgumentOutOfRangeException(nameof(index), index, "value is out of range."); }
+                return _list[index];
+            }
+            set
+            {
+                if(value == null) { throw new ArgumentNullException(nameof(value)); }
+                _list[index] = value;
+            }
+        }
 
         internal LayerCollection()
         {
-            UILayer = new Layer(UI_LAYER_NAME, RenderingMode.Orthographic);
-            WorldLayer = new Layer(WORLD_LAYER_NAME, RenderingMode.Perspective);
             AddDefaltLayers();
         }
 
+        /// <summary>
+        /// レイヤーを追加します<para/>
+        /// </summary>
+        /// <param name="layer">追加する要素</param>
         public void Add(Layer layer)
         {
             if(layer == null) { throw new ArgumentNullException(nameof(layer)); }
-            throw new NotImplementedException();
+            _list.Add(layer);
         }
 
-        private bool Remove(Layer layer)
+        /// <summary>レイヤーを複数追加します</summary>
+        /// <param name="layers">追加するレイヤー</param>
+        public void AddRange(IEnumerable<Layer> layers)
         {
-            if(layer == null) { throw new ArgumentNullException(nameof(layer)); }
-            if(layer == UILayer || layer == WorldLayer) {
-                return false;
-            }
-            return _list.Remove(layer);
+            if(layers == null) { throw new ArgumentNullException(nameof(layers)); }
+            var evaluated = (layers is ICollection) ? layers : layers.ToArray();
+            if(evaluated.Contains(null)) { throw new ArgumentException($"{layers} contain 'null'. Can not add null."); }
+            _list.AddRange(evaluated);
         }
 
+        /// <summary>レイヤーをクリアします (デフォルトのレイヤーはクリアされません)</summary>
         public void Clear()
         {
             _list.Clear();
             AddDefaltLayers();
         }
+
+        /// <summary>リスト中にレイヤーが含まれているかを取得します</summary>
+        /// <param name="layer">確認するレイヤー</param>
+        /// <returns>リスト中に指定レイヤーが含まれているか</returns>
+        public bool Contains(Layer layer) => _list.Contains(layer);
+
+        /// <summary>リストのレイヤーを配列にコピーします</summary>
+        /// <param name="array">コピー先の配列</param>
+        /// <param name="arrayIndex">コピー先の配列のコピーを開始するインデックス</param>
+        public void CopyTo(Layer[] array, int arrayIndex) => _list.CopyTo(array, arrayIndex);
+
+        /// <summary>列挙子を取得します</summary>
+        /// <returns>列挙子</returns>
+        public IEnumerator<Layer> GetEnumerator() => _list.GetEnumerator();
+
+        /// <summary>指定レイヤーのインデックスを取得します</summary>
+        /// <param name="layer">インデックスを取得するレイヤー</param>
+        /// <returns>レイヤーのインデックス</returns>
+        public int IndexOf(Layer layer) => _list.IndexOf(layer);
+
+        /// <summary>インデックスを指定してレイヤーを追加します</summary>
+        /// <param name="index">インデックス</param>
+        /// <param name="layer">追加するレイヤー</param>
+        public void Insert(int index, Layer layer)
+        {
+            if(layer == null) { throw new ArgumentNullException(nameof(layer)); }
+            if(index < 0 || index > _list.Count) { throw new ArgumentOutOfRangeException(nameof(index), index, "value is out of range."); }
+            _list.Insert(index, layer);
+        }
+
+        /// <summary>レイヤーをリストから削除します</summary>
+        /// <param name="layer">削除するレイヤー</param>
+        /// <returns>削除に成功したか (指定した要素が存在しない場合 false)</returns>
+        public bool Remove(Layer layer)
+        {
+            if(layer == null) { throw new ArgumentNullException(nameof(layer)); }
+            return _list.Remove(layer);
+        }
+
+        /// <summary>指定のインデックスのレイヤーを削除します</summary>
+        /// <param name="index">インデックス</param>
+        public void RemoveAt(int index)
+        {
+            if(index < 0 || index >= _list.Count) { throw new ArgumentOutOfRangeException(nameof(index)); }
+            _list.RemoveAt(index);
+        }
+
+        /// <summary>列挙子を取得します</summary>
+        /// <returns>列挙子</returns>
+        IEnumerator IEnumerable.GetEnumerator() => (_list as IEnumerable).GetEnumerator();
 
         private void AddDefaltLayers()
         {

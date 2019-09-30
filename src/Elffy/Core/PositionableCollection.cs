@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace Elffy.Core
 {
     /// <summary><see cref="Positionable"/> のツリー構造を表現するための <see cref="Positionable"/> のリスト</summary>
-    public class PositionableCollection : IReadOnlyList<Positionable>, IReadOnlyCollection<Positionable>, ICollection<Positionable>, IEnumerable<Positionable>, IEnumerable
+    public class PositionableCollection : IList<Positionable>, IReadOnlyList<Positionable>, IReadOnlyCollection<Positionable>, ICollection<Positionable>, IEnumerable<Positionable>, IEnumerable
     {
         /// <summary>この <see cref="PositionableCollection"/> インスタンスを持つ <see cref="Positionable"/> オブジェクト</summary>
         private Positionable _owner;
@@ -17,7 +17,17 @@ namespace Elffy.Core
         /// <summary>インデックスを指定してリストの要素にアクセスします</summary>
         /// <param name="index">インデックス</param>
         /// <returns>指定した要素</returns>
-        public Positionable this[int index] => _list[index];
+        public Positionable this[int index]
+        {
+            get => _list[index];
+            set
+            {
+                if(index < 0 || index > _list.Count - 1) { throw new ArgumentOutOfRangeException(nameof(index), index, "value is out of range."); }
+                if(value == null) { throw new ArgumentNullException(nameof(value)); }
+                value.Parent = _owner;
+                _list[index] = value;
+            }
+        }
 
         /// <summary>リストの要素数</summary>
         public int Count => _list.Count;

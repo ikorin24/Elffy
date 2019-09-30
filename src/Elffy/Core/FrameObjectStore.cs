@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 
 namespace Elffy.Core
 {
+    /// <summary><see cref="FrameObject"/> を保持しておくためのクラスです。</summary>
     internal class FrameObjectStore
     {
         #region private member
@@ -24,9 +25,11 @@ namespace Elffy.Core
         #endregion
 
         #region AddFrameObject
-        public bool AddFrameObject(FrameObject frameObject)
+        /// <summary>オブジェクトを追加します</summary>
+        /// <param name="frameObject">追加するオブジェクト</param>
+        public void AddFrameObject(FrameObject frameObject)
         {
-            if(frameObject == null) { return false; }
+            if(frameObject == null) { throw new ArgumentNullException(nameof(frameObject)); }
             if(frameObject is Renderable renderable) {
                 switch(renderable.RenderingLayer) {
                     case RenderingLayer.World:
@@ -44,14 +47,14 @@ namespace Elffy.Core
             else {
                 _addedBuf.Add(frameObject);
             }
-            return true;
         }
         #endregion
 
         #region RemoveFrameObject
+        
         public bool RemoveFrameObject(FrameObject frameObject)
         {
-            if(frameObject == null) { return false; }
+            if(frameObject == null) { throw new ArgumentNullException(nameof(frameObject)); }
             if(frameObject is Renderable renderable) {
                 switch(renderable.RenderingLayer) {
                     case RenderingLayer.World:
@@ -75,6 +78,7 @@ namespace Elffy.Core
         #endregion
 
         #region ApplyChanging
+        /// <summary>オブジェクトの追加と削除の変更を適用します</summary>
         public void ApplyChanging()
         {
             if(_removedBuf.Count > 0) {
@@ -105,6 +109,9 @@ namespace Elffy.Core
         #endregion
 
         #region FindObject
+        /// <summary>タグを指定して <see cref="FrameObject"/> を取得します (指定されたオブジェクトが見つからない場合 null を返します)</summary>
+        /// <param name="tag">検索する <see cref="FrameObject"/> のタグ</param>
+        /// <returns>検索で得られた <see cref="FrameObject"/></returns>
         public FrameObject FindObject(string tag)
         {
             return _list.Find(x => x.Tag == tag);
@@ -112,6 +119,9 @@ namespace Elffy.Core
         #endregion
 
         #region FindAllObject
+        /// <summary>指定されたタグを持つ <see cref="FrameObject"/> を全て取得します (見つからない場合、要素数0のリストを返します)</summary>
+        /// <param name="tag">検索する <see cref="FrameObject"/> のタグ</param>
+        /// <returns>検索で得られた <see cref="FrameObject"/> のリスト</returns>
         public List<FrameObject> FindAllObject(string tag)
         {
             return _list.FindAll(x => x.Tag == tag) ?? new List<FrameObject>();
@@ -119,6 +129,7 @@ namespace Elffy.Core
         #endregion
 
         #region Update
+        /// <summary>フレームの更新を行います</summary>
         public void Update()
         {
             foreach(var frameObject in _list.Where(x => !x.IsFrozen)) {
@@ -132,12 +143,16 @@ namespace Elffy.Core
         #endregion
 
         #region Render
+        /// <summary>画面への投影行列とカメラ行列を指定して、描画を実行します</summary>
+        /// <param name="projection">投影行列</param>
+        /// <param name="view">カメラ行列</param>
         public void Render(Matrix4 projection, Matrix4 view)
         {
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadMatrix(ref projection);
             GL.MatrixMode(MatrixMode.Modelview);
             GL.LoadMatrix(ref view);
+            // TODO: OpenGL の行列スタックの深さを確認
             foreach(var renderable in _renderables.Where(x => x.IsVisible)) {
                 GL.PushMatrix();
                 renderable.Render();
@@ -147,12 +162,15 @@ namespace Elffy.Core
         #endregion
 
         #region RenderUI
+        /// <summary>画面への投影行列を指定して、描画を実行します</summary>
+        /// <param name="projection">投影行列</param>
         public void RenderUI(Matrix4 projection)
         {
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadMatrix(ref projection);
             GL.MatrixMode(MatrixMode.Modelview);
             GL.LoadIdentity();
+            // TODO: OpenGL の行列スタックの深さを確認
             foreach(var uiRenderable in _uiList.Where(r => r.IsVisible)) {
                 GL.PushMatrix();
                 uiRenderable.Render();
@@ -162,19 +180,23 @@ namespace Elffy.Core
         #endregion
 
         #region Clear
+        /// <summary>保持している <see cref="FrameObject"/> を全て破棄し、リストをクリアします</summary>
         public void Clear()
         {
+            _addedBuf.Clear();          // 追加オブジェクトのリストを先にクリア
             foreach(var item in _list) {
-                item.Destroy();
+                item.Destroy();         // 生きているオブジェクトをすべて破棄
             }
+            ApplyChanging();            // 変更を全て適用
+
+            // 全リストをクリア
             _list.Clear();
-            _addedBuf.Clear();
             _removedBuf.Clear();
+            _renderables.Clear();
+            _uiList.Clear();
+            _addedUIBuf.Clear();
+            _removedUIBuf.Clear();
         }
         #endregion
-
-        public IEnumerable<Renderable> GetRenderables => _renderables;
-
-        public IEnumerable<IUIRenderable> GetUIRenderable => _uiList;
     }
 }

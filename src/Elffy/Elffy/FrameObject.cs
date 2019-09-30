@@ -43,7 +43,7 @@ namespace Elffy
         {
             if(IsDestroyed) { throw new ObjectDestroyedException(this); }
             if(IsActivated) { return; }
-            if(!Game.AddFrameObject(this)) { throw new InvalidOperationException("Can not activate. Game is not running."); }
+            Game.Layers.UILayer.AddFrameObject(this);
             IsActivated = true;
             OnActivated();
         }
@@ -54,7 +54,8 @@ namespace Elffy
         public virtual void Destroy()
         {
             if(IsDestroyed) { throw new ObjectDestroyedException(this); }
-            Game.RemoveFrameObject(this);
+            //Game.RemoveFrameObject(this);
+            Game.Layers.UILayer.RemoveFrameObject(this);
             IsDestroyed = true;
             (this as IDisposable)?.Dispose();
         }

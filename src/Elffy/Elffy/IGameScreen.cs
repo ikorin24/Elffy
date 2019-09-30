@@ -15,18 +15,11 @@ namespace Elffy
         double TargetRenderFrequency { get; set; }
         IUIRoot UIRoot { get; }
         Size ClientSize { get; }
+        LayerCollection Layers { get; }
 
         event EventHandler Initialized;
         event EventHandler Rendering;
         event EventHandler Rendered;
-
-        bool AddFrameObject(FrameObject frameObject);
-
-        bool RemoveFrameObject(FrameObject frameObject);
-
-        FrameObject FindObject(string tag);
-
-        List<FrameObject> FindAllObject(string tag);
 
         void Run();
         void Close();

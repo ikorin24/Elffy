@@ -13,6 +13,7 @@ namespace Elffy
         private readonly RenderingArea _renderingArea = new RenderingArea();
 
         public IUIRoot UIRoot => _renderingArea.UIRoot;
+        public LayerCollection Layers => _renderingArea.Layers;
 
         public event EventHandler Initialized
         {
@@ -31,14 +32,6 @@ namespace Elffy
             VSync = VSyncMode.On;
             TargetRenderFrequency = DisplayDevice.Default.RefreshRate;
         }
-
-        public bool AddFrameObject(FrameObject frameObject) => _renderingArea.AddFrameObject(frameObject);
-
-        public bool RemoveFrameObject(FrameObject frameObject) => _renderingArea.RemoveFrameObject(frameObject);
-
-        public FrameObject FindObject(string tag) => _renderingArea.FindObject(tag);
-
-        public List<FrameObject> FindAllObject(string tag) => _renderingArea.FindAllObject(tag);
 
         protected override void OnLoad(EventArgs e)
         {
@@ -64,7 +57,7 @@ namespace Elffy
         protected override void OnClosed(EventArgs e)
         {
             base.OnClosed(e);
-            _renderingArea.Clear();
+            _renderingArea.Layers.Clear();
         }
     }
 }

@@ -9,7 +9,7 @@ namespace Elffy
 {
     public class Layer
     {
-        private readonly FrameObjectStore _objectStore = new FrameObjectStore();
+        internal FrameObjectStore ObjectStore { get; private set; } = new FrameObjectStore();
 
         public string Name { get; set; }
 
@@ -22,6 +22,16 @@ namespace Elffy
             Name = name;
             RenderingMode = renderingMode;
         }
+
+        public void AddFrameObject(FrameObject frameObject) => ObjectStore.AddFrameObject(frameObject);
+
+        public bool RemoveFrameObject(FrameObject frameObject) => ObjectStore.RemoveFrameObject(frameObject);
+
+        public FrameObject FindObject(string tag) => ObjectStore.FindObject(tag);
+
+        public List<FrameObject> FindAllObject(string tag) => ObjectStore.FindAllObject(tag);
+
+        public void Clear() => ObjectStore.Clear();
     }
 
     public enum RenderingMode
