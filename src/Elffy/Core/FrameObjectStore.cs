@@ -15,9 +15,13 @@ namespace Elffy.Core
     internal class FrameObjectStore
     {
         #region private member
+        /// <summary>現在生きている全オブジェクトのリスト</summary>
         private readonly List<FrameObject> _list = new List<FrameObject>();
+        /// <summary>このフレームで追加されたオブジェクトのリスト (次のフレームの最初に <see cref="_list"/> に追加されます)</summary>
         private readonly List<FrameObject> _addedBuf = new List<FrameObject>();
+        /// <summary>このフレームで削除されたオブジェクトのリスト (次のフレームの最初に <see cref="_list"/> から削除されます)</summary>
         private readonly List<FrameObject> _removedBuf = new List<FrameObject>();
+        /// <summary><see cref="_list"/> に含まれるオブジェクトのうち、<see cref="Renderable"/> を継承しているもののリスト</summary>
         private readonly List<Renderable> _renderables = new List<Renderable>();
         private readonly List<IUIRenderable> _uiList = new List<IUIRenderable>();
         private readonly List<IUIRenderable> _addedUIBuf = new List<IUIRenderable>();
@@ -25,7 +29,7 @@ namespace Elffy.Core
         #endregion
 
         #region AddFrameObject
-        /// <summary>オブジェクトを追加します</summary>
+        /// <summary>指定した<see cref="FrameObject"/>を追加します</summary>
         /// <param name="frameObject">追加するオブジェクト</param>
         public void AddFrameObject(FrameObject frameObject)
         {
@@ -51,7 +55,9 @@ namespace Elffy.Core
         #endregion
 
         #region RemoveFrameObject
-        
+        /// <summary>指定した<see cref="FrameObject"/>を削除します</summary>
+        /// <param name="frameObject">削除するオブジェクト</param>
+        /// <returns>削除できたかどうか</returns>
         public bool RemoveFrameObject(FrameObject frameObject)
         {
             if(frameObject == null) { throw new ArgumentNullException(nameof(frameObject)); }
@@ -181,7 +187,7 @@ namespace Elffy.Core
 
         #region Clear
         /// <summary>保持している <see cref="FrameObject"/> を全て破棄し、リストをクリアします</summary>
-        public void Clear()
+        public void ClearFrameObject()
         {
             _addedBuf.Clear();          // 追加オブジェクトのリストを先にクリア
             foreach(var item in _list) {

@@ -315,7 +315,7 @@ namespace Elffy.Core
         {
             base.OnActivated();
             foreach(var offspring in GetOffspring()) {
-                offspring.Activate();
+                offspring.Activate(Layer);
             }
         }
     }

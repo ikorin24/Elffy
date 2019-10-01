@@ -29,6 +29,9 @@ namespace Elffy
 
         /// <summary>このオブジェクトが、ゲームによって管理されるオブジェクトリストから破棄されているかどうかを返します</summary>
         public bool IsDestroyed { get; private set; }
+
+        /// <summary>このオブジェクトが所属するレイヤー</summary>
+        public LayerBase Layer { get; private set; }
         #endregion
 
         #region Method
@@ -39,11 +42,13 @@ namespace Elffy
         public virtual void Update() { }
 
         /// <summary>このオブジェクトをゲーム管理下におきます</summary>
-        public void Activate()
+        public void Activate(LayerBase layer)
         {
+            if(layer == null) { throw new ArgumentNullException(nameof(layer)); }
             if(IsDestroyed) { throw new ObjectDestroyedException(this); }
             if(IsActivated) { return; }
-            Game.Layers.UILayer.AddFrameObject(this);
+            Layer = layer;
+            layer.AddFrameObject(this);
             IsActivated = true;
             OnActivated();
         }
@@ -54,8 +59,8 @@ namespace Elffy
         public virtual void Destroy()
         {
             if(IsDestroyed) { throw new ObjectDestroyedException(this); }
-            //Game.RemoveFrameObject(this);
-            Game.Layers.UILayer.RemoveFrameObject(this);
+            Layer.RemoveFrameObject(this);
+            Layer = null;
             IsDestroyed = true;
             (this as IDisposable)?.Dispose();
         }

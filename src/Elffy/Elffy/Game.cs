@@ -21,7 +21,7 @@ namespace Elffy
     public class Game
     {
         /// <summary>ゲーム描画領域オブジェクト</summary>
-        private IGameScreen _gameScreen;
+        private IScreenHost _gameScreen;
         /// <summary>ゲームの実行時間計測用タイマー</summary>
         private readonly IGameTimer _watch = GameTimerGenerator.Create();
         /// <summary>ゲーム起動前に追加されたイベントハンドラーを保持しておくためのバッファ</summary>
@@ -154,7 +154,6 @@ namespace Elffy
         private static void RunPrivate(int width, int height, string title, WindowStyle windowStyle, string iconResourcePath)
         {
             Dispatcher.SetMainThreadID();
-            ElffySynchronizationContext.CreateIfNeeded();
             try {
                 Instance = new Game();
                 switch(Platform.PlatformType) {
@@ -208,14 +207,14 @@ namespace Elffy
         #endregion
 
         #region GetWindowGameScreen
-        /// <summary>ウィンドウを用いる OS での <see cref="IGameScreen"/> を取得します</summary>
+        /// <summary>ウィンドウを用いる OS での <see cref="IScreenHost"/> を取得します</summary>
         /// <param name="width">描画領域の幅</param>
         /// <param name="height">描画領域の高さ</param>
         /// <param name="title">ウィンドウのタイトル</param>
         /// <param name="windowStyle">ウィンドウのスタイル</param>
         /// <param name="iconResourcePath">ウィンドウのアイコンのリソースのパス (nullの場合アイコンなし)</param>
-        /// <returns>ウィンドウの <see cref="IGameScreen"/></returns>
-        private static IGameScreen GetWindowGameScreen(int width, int height, string title, WindowStyle windowStyle, string iconResourcePath)
+        /// <returns>ウィンドウの <see cref="IScreenHost"/></returns>
+        private static IScreenHost GetWindowGameScreen(int width, int height, string title, WindowStyle windowStyle, string iconResourcePath)
         {
             var window = new Window(windowStyle);
             Instance._gameScreen = window;

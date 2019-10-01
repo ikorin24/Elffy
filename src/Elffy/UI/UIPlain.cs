@@ -14,11 +14,16 @@ namespace Elffy.UI
     internal sealed class UIPlain : Renderable, IDisposable, IUIRenderable
     {
         private bool _disposed;
+        /// <summary>頂点配列</summary>
         private readonly UnmanagedArray<Vertex> _vertexArray = new UnmanagedArray<Vertex>(4);
+        /// <summary>頂点インデックス配列</summary>
         private readonly UnmanagedArray<int> _indexArray = new UnmanagedArray<int>(6);
 
+        /// <summary>このインスタンスの描画対象である論理 UI コントロール</summary>
         public UIBase Control { get; private set; }
 
+        /// <summary><see cref="UIBase"/> の描画オブジェクトを作成します。</summary>
+        /// <param name="control">描画対象の論理 UI コントロール</param>
         public UIPlain(UIBase control)
         {
             RenderingLayer = RenderingLayer.UI;
@@ -30,8 +35,15 @@ namespace Elffy.UI
 
         void IUIRenderable.Render() => Render();
         bool IUIRenderable.IsVisible => IsVisible;
-        void IUIRenderable.Activate() => Activate();
+        void IUIRenderable.Activate() => Activate(Control.Root.UILayer);
         void IUIRenderable.Destroy() => Destroy();
+
+        protected override void OnActivated()
+        {
+            base.OnActivated();
+            SetPolygon(Control.Width, Control.Height, Control.OffsetX, Control.OffsetY);
+            InitGraphicBuffer(_vertexArray.Ptr, _vertexArray.Length, _indexArray.Ptr, _indexArray.Length);
+        }
 
         #region Dispose pattern
         protected override void Dispose(bool disposing)
@@ -54,13 +66,6 @@ namespace Elffy.UI
             GC.SuppressFinalize(this);
         }
         #endregion
-
-        protected override void OnActivated()
-        {
-            base.OnActivated();
-            SetPolygon(Control.Width, Control.Height, Control.OffsetX, Control.OffsetY);
-            InitGraphicBuffer(_vertexArray.Ptr, _vertexArray.Length, _indexArray.Ptr, _indexArray.Length);
-        }
 
         #region SetPolygon
         /// <summary>頂点配列とインデックス配列をセットします</summary>
@@ -94,18 +99,5 @@ namespace Elffy.UI
             _indexArray[5] = 0;
         }
         #endregion
-    }
-
-    /// <summary>UI 要素を描画するためのインターフェース</summary>
-    internal interface IUIRenderable
-    {
-        /// <summary>このオブジェクトが描画されるかどうかを取得します</summary>
-        bool IsVisible { get; }
-        /// <summary>このオブジェクトを描画します</summary>
-        void Render();
-
-        void Activate();
-
-        void Destroy();
     }
 }

@@ -13,20 +13,18 @@ using System.Threading.Tasks;
 
 namespace Elffy.Core
 {
-    /// <summary>
-    /// OpenGL が描画を行う領域を扱うクラスです。
-    /// </summary>
+    /// <summary>OpenGL が描画を行う領域を扱うクラスです</summary>
     internal class RenderingArea
     {
         const float UI_FAR = 1.01f;
         const float UI_NEAR = -0.01f;
-        private Matrix4 _uiProjection = Matrix4.Identity;
+        /// <summary>UI の投影行列</summary>
+        private Matrix4 _uiProjection;
 
+        /// <summary>レイヤーのリスト</summary>
         public LayerCollection Layers { get; } = new LayerCollection();
-        public IUIRoot UIRoot => _uiRoot;
-        private readonly Page _uiRoot = new Page();
-
-        public event EventHandler Initialized;
+        /// <summary>UI tree の Root</summary>
+        public IUIRoot UIRoot { get; }
 
         #region Width
         public int Width
@@ -70,11 +68,15 @@ namespace Elffy.Core
         }
         #endregion
 
-        #region Initialize
-        /// <summary>描画に関する初期設定を行います</summary>
-        public void Initialize()
+        public RenderingArea()
         {
-            // TODO: GL の初期設定はもっと基底処理部に移動するべき、このメソッドは何度も呼ばれる可能性があるので
+            UIRoot = new Page(Layers.UILayer);
+        }
+
+        #region InitializeGL
+        /// <summary>OpenTL の描画に関する初期設定を行います</summary>
+        public void InitializeGL()
+        {
             GL.ClearColor(Color4.Gray);
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Texture2D);
@@ -88,11 +90,6 @@ namespace Elffy.Core
             GL.Enable(EnableCap.CullFace);
             GL.CullFace(CullFaceMode.Back);
             GL.FrontFace(FrontFaceDirection.Ccw);
-
-            Initialized?.Invoke(this, EventArgs.Empty);
-            foreach(var layer in Layers) {
-                layer.ObjectStore.ApplyChanging();
-            }
         }
         #endregion
 
@@ -100,21 +97,20 @@ namespace Elffy.Core
         /// <summary>フレームを更新して描画します</summary>
         public void RenderFrame()
         {
-            Input.Input.Update();
-            foreach(var layer in Layers) {
+            foreach(var layer in Layers.GetAllLayer()) {
                 layer.ObjectStore.Update();
             }
             Dispatcher.DoInvokedAction();                           // Invokeされた処理を実行
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             Light.LightUp();                                        // 光源点灯
-            foreach(var layer in Layers) {
+            foreach(var layer in Layers.GetAllLayer()) {
                 layer.ObjectStore.Render(Camera.Current.Projection, Camera.Current.Matrix);
             }
             Light.TurnOff();                                        // 光源消灯
-            foreach(var layer in Layers) {
+            foreach(var layer in Layers.GetAllLayer()) {
                 layer.ObjectStore.RenderUI(_uiProjection);
             }
-            foreach(var layer in Layers) {
+            foreach(var layer in Layers.GetAllLayer()) {
                 layer.ObjectStore.ApplyChanging();
             }
         }

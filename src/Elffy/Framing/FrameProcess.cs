@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Elffy.Core;
+using System;
 
 namespace Elffy.Framing
 {
@@ -6,6 +7,14 @@ namespace Elffy.Framing
     /// <summary>一連のフレームプロセスの流れを表すオブジェクト</summary>
     public sealed class FrameProcess
     {
+        /// <summary><see cref="ProcessObj"/> を有効にするレイヤー</summary>
+        /// <remarks>
+        /// ※ もしゲーム用途以外でこの <see cref="FrameProcess"/> を使いたい場合、
+        /// その <see cref="IScreenHost"/> での <see cref="IScreenHost.Layers"/> の <see cref="LayerCollection.SystemLayer"/> を使うように
+        /// 実装を変える必要がある
+        /// </remarks>
+        internal static readonly LayerBase TARGET_LAYER = Game.Layers.SystemLayer;
+
         /// <summary>何もしない動作を表す <see cref="FrameProcessBehavior"/> オブジェクト</summary>
         internal static readonly FrameProcessBehavior WAIT_BEHAVIOR = info => { };
         /// <summary>常にtrueを返す条件</summary>
@@ -27,7 +36,7 @@ namespace Elffy.Framing
             if(time <= 0) { throw new ArgumentException($"{nameof(time)} must be bigger than 1."); }
             if(behavior == null) { throw new ArgumentNullException(nameof(behavior)); }
             var frameProcess = new FrameProcess();
-            frameProcess.ProcessObj.Activate();
+            frameProcess.ProcessObj.Activate(TARGET_LAYER);
             frameProcess.ProcessObj.AddBehavior(time, behavior);
             return frameProcess;
         }
@@ -39,7 +48,7 @@ namespace Elffy.Framing
         {
             if(behavior == null) { throw new ArgumentNullException(nameof(behavior)); }
             var frameProcess = new FrameProcess();
-            frameProcess.ProcessObj.Activate();
+            frameProcess.ProcessObj.Activate(TARGET_LAYER);
             frameProcess.ProcessObj.AddBehavior(behavior);
             return frameProcess;
         }
@@ -51,7 +60,7 @@ namespace Elffy.Framing
         {
             if(time < 0) { throw new ArgumentException($"Time must be bigger than 0."); }
             var frameProcess = new FrameProcess();
-            frameProcess.ProcessObj.Activate();
+            frameProcess.ProcessObj.Activate(TARGET_LAYER);
             frameProcess.ProcessObj.AddBehavior(time, WAIT_BEHAVIOR);
             return frameProcess;
         }
@@ -65,7 +74,7 @@ namespace Elffy.Framing
             if(condition == null) { throw new ArgumentNullException(nameof(condition)); }
             if(behavior == null) { throw new ArgumentNullException(nameof(behavior)); }
             var frameProcess = new FrameProcess();
-            frameProcess.ProcessObj.Activate();
+            frameProcess.ProcessObj.Activate(TARGET_LAYER);
             frameProcess.ProcessObj.AddBehavior(condition, behavior);
             return frameProcess;
         }
@@ -77,7 +86,7 @@ namespace Elffy.Framing
         {
             if(behavior == null) { throw new ArgumentNullException(nameof(behavior)); }
             var frameProcess = new FrameProcess();
-            frameProcess.ProcessObj.Activate();
+            frameProcess.ProcessObj.Activate(TARGET_LAYER);
             frameProcess.ProcessObj.AddBehavior(ALWAYS_TRUE, behavior);
             return frameProcess;
         }
@@ -97,7 +106,7 @@ namespace Elffy.Framing
         {
             if(time <= 0) { throw new ArgumentException($"{nameof(time)} must be bigger than 1."); }
             if(behavior == null) { throw new ArgumentNullException(nameof(behavior)); }
-            if(!frameProcess.ProcessObj.IsActivated) { frameProcess.ProcessObj.Activate(); }
+            if(!frameProcess.ProcessObj.IsActivated) { frameProcess.ProcessObj.Activate(FrameProcess.TARGET_LAYER); }
             frameProcess.ProcessObj.AddBehavior(time, behavior);
             return frameProcess;
         }
@@ -109,7 +118,7 @@ namespace Elffy.Framing
         public static FrameProcess Do(this FrameProcess frameProcess, FrameProcessBehavior behavior)
         {
             if(behavior == null) { throw new ArgumentNullException(nameof(behavior)); }
-            if(!frameProcess.ProcessObj.IsActivated) { frameProcess.ProcessObj.Activate(); }
+            if(!frameProcess.ProcessObj.IsActivated) { frameProcess.ProcessObj.Activate(FrameProcess.TARGET_LAYER); }
             frameProcess.ProcessObj.AddBehavior(behavior);
             return frameProcess;
         }
@@ -121,7 +130,7 @@ namespace Elffy.Framing
         public static FrameProcess Wait(this FrameProcess frameProcess, int time)
         {
             if(time < 0) { throw new ArgumentException($"Time must be bigger than 0."); }
-            if(!frameProcess.ProcessObj.IsActivated) { frameProcess.ProcessObj.Activate(); }
+            if(!frameProcess.ProcessObj.IsActivated) { frameProcess.ProcessObj.Activate(FrameProcess.TARGET_LAYER); }
             frameProcess.ProcessObj.AddBehavior(time, FrameProcess.WAIT_BEHAVIOR);
             return frameProcess;
         }
@@ -135,7 +144,7 @@ namespace Elffy.Framing
         {
             if(condition == null) { throw new ArgumentNullException(nameof(condition)); }
             if(behavior == null) { throw new ArgumentNullException(nameof(behavior)); }
-            if(!frameProcess.ProcessObj.IsActivated) { frameProcess.ProcessObj.Activate(); }
+            if(!frameProcess.ProcessObj.IsActivated) { frameProcess.ProcessObj.Activate(FrameProcess.TARGET_LAYER); }
             frameProcess.ProcessObj.AddBehavior(condition, behavior);
             return frameProcess;
         }
@@ -147,7 +156,7 @@ namespace Elffy.Framing
         public static FrameProcess WhileTrue(this FrameProcess frameProcess, FrameProcessBehavior behavior)
         {
             if(behavior == null) { throw new ArgumentNullException(nameof(behavior)); }
-            if(!frameProcess.ProcessObj.IsActivated) { frameProcess.ProcessObj.Activate(); }
+            if(!frameProcess.ProcessObj.IsActivated) { frameProcess.ProcessObj.Activate(FrameProcess.TARGET_LAYER); }
             frameProcess.ProcessObj.AddBehavior(FrameProcess.ALWAYS_TRUE, behavior);
             return frameProcess;
         }

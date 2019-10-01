@@ -7,36 +7,23 @@ using System.Threading.Tasks;
 
 namespace Elffy
 {
-    public class Layer
+    /// <summary><see cref="FrameObject"/> のレイヤークラス</summary>
+    public class Layer : LayerBase
     {
-        internal FrameObjectStore ObjectStore { get; private set; } = new FrameObjectStore();
+        /// <summary>このレイヤーの描画モード</summary>
+        public ProjectionMode RenderingMode { get; private set; }
 
-        public string Name { get; set; }
+        /// <summary>投影モードを指定して <see cref="Layer"/> を作成します</summary>
+        /// <param name="renderingMode">このレイヤーの投影モード</param>
+        public Layer(ProjectionMode renderingMode) : this(null, renderingMode) { }
 
-        public RenderingMode RenderingMode { get; set; }
-
-        public Layer(RenderingMode renderingMode) : this(null, renderingMode) { }
-
-        public Layer(string name, RenderingMode renderingMode)
+        /// <summary>レイヤー名と投影モードを指定して <see cref="Layer"/> を作成します</summary>
+        /// <param name="name">レイヤー名</param>
+        /// <param name="renderingMode">投影モード</param>
+        public Layer(string name, ProjectionMode renderingMode)
         {
             Name = name;
             RenderingMode = renderingMode;
         }
-
-        public void AddFrameObject(FrameObject frameObject) => ObjectStore.AddFrameObject(frameObject);
-
-        public bool RemoveFrameObject(FrameObject frameObject) => ObjectStore.RemoveFrameObject(frameObject);
-
-        public FrameObject FindObject(string tag) => ObjectStore.FindObject(tag);
-
-        public List<FrameObject> FindAllObject(string tag) => ObjectStore.FindAllObject(tag);
-
-        public void Clear() => ObjectStore.Clear();
-    }
-
-    public enum RenderingMode
-    {
-        Perspective,
-        Orthographic,
     }
 }

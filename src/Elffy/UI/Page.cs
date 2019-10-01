@@ -9,11 +9,22 @@ using System.Threading.Tasks;
 
 namespace Elffy.UI
 {
-    /// <summary>UI の Root となるオブジェクト</summary>
+    /// <summary>UI tree の Root となるオブジェクト</summary>
     internal class Page : Panel, IUIRoot
     {
         /// <summary>この <see cref="Page"/> が レイアウト済みかどうかを取得します</summary>
         public bool IsLayouted { get; private set; }
+
+        /// <summary><see cref="IUIRoot"/> 実装。この <see cref="Page"/> とその子孫を描画する <see cref="Layer"/></summary>
+        public Layer UILayer { get; }
+
+        /// <summary>コンストラクタ</summary>
+        /// <param name="uiLayer">この <see cref="Page"/> と子孫を描画する UI レイヤー</param>
+        internal Page(Layer uiLayer)
+        {
+            UILayer = uiLayer ?? throw new ArgumentNullException(nameof(uiLayer));
+            Root = this;
+        }
 
         #region Layout
         /// <summary>Layout を実行します</summary>
@@ -63,10 +74,5 @@ namespace Elffy.UI
             IsLayouted = true;
         }
         #endregion
-    }
-
-    public interface IUIRoot
-    {
-        UIBaseCollection Children { get; }
     }
 }

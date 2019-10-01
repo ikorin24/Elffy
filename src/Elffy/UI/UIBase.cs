@@ -39,15 +39,20 @@ namespace Elffy.UI
             {
                 if(_parent == null) {
                     _parent = value;
+                    Root = value?.Root;
                 }
                 else if(_parent != null && value == null) {
-                    _parent = value;
+                    _parent = null;
+                    Root = null;
                 }
                 else { throw new InvalidOperationException($"The instance is already a child of another object. Can not has multi parents."); }
             }
         }
         private UIBase _parent;
         #endregion
+
+        /// <summary>この <see cref="UIBase"/> を持つ UI tree の Root</summary>
+        public IUIRoot Root { get; protected private set; }
 
         #region Position
         public Vector2 Position

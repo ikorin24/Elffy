@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Elffy.Core;
 
 namespace Elffy
 {
@@ -12,14 +13,21 @@ namespace Elffy
     {
         private const string UI_LAYER_NAME = "UILayer";
         private const string WORLD_LAYER_NAME = "WorldLayer";
+        private const string SYSTEM_LAYER_NAME = "SystemLayer";
         private readonly List<Layer> _list = new List<Layer>();
 
         /// <summary>UI レイヤーを取得します</summary>
-        public Layer UILayer { get; } = new Layer(UI_LAYER_NAME, RenderingMode.Orthographic);
+        public Layer UILayer { get; } = new Layer(UI_LAYER_NAME, ProjectionMode.Orthographic);
+
         /// <summary>ワールドレイヤーを取得します</summary>
-        public Layer WorldLayer { get; } = new Layer(WORLD_LAYER_NAME, RenderingMode.Perspective);
+        public Layer WorldLayer { get; } = new Layer(WORLD_LAYER_NAME, ProjectionMode.Perspective);
+
+        /// <summary>システムレイヤー (このレイヤーはリストには含まれません。インスタンスを public にも公開しないでください)</summary>
+        internal InternalLayer SystemLayer { get; } = new InternalLayer(SYSTEM_LAYER_NAME);
+
         /// <summary>レイヤーの数を取得します</summary>
         public int Count => _list.Count;
+
         /// <summary>このリストが読み取り専用かどうかを取得します。常に false を返します。</summary>
         public bool IsReadOnly => false;
 
@@ -43,6 +51,16 @@ namespace Elffy
         internal LayerCollection()
         {
             AddDefaltLayers();
+        }
+
+        /// <summary>システム用のレイヤーを含めて、全レイヤーを取得します</summary>
+        /// <returns>全レイヤー</returns>
+        internal IEnumerable<LayerBase> GetAllLayer()
+        {
+            yield return SystemLayer;
+            foreach(var layer in _list) {
+                yield return layer;
+            }
         }
 
         /// <summary>
