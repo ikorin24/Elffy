@@ -17,13 +17,13 @@ namespace Elffy
         private readonly List<Layer> _list = new List<Layer>();
 
         /// <summary>UI レイヤーを取得します</summary>
-        public Layer UILayer { get; } = new Layer(UI_LAYER_NAME, ProjectionMode.Orthographic);
+        public Layer UILayer { get; } = new UILayer(UI_LAYER_NAME);
 
         /// <summary>ワールドレイヤーを取得します</summary>
-        public Layer WorldLayer { get; } = new Layer(WORLD_LAYER_NAME, ProjectionMode.Perspective);
+        public Layer WorldLayer { get; } = new Layer(WORLD_LAYER_NAME);
 
         /// <summary>システムレイヤー (このレイヤーはリストには含まれません。インスタンスを public にも公開しないでください)</summary>
-        internal InternalLayer SystemLayer { get; } = new InternalLayer(SYSTEM_LAYER_NAME);
+        internal InternaInvisiblelLayer SystemLayer { get; } = new InternaInvisiblelLayer(SYSTEM_LAYER_NAME);
 
         /// <summary>レイヤーの数を取得します</summary>
         public int Count => _list.Count;

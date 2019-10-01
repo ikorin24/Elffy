@@ -14,8 +14,8 @@ namespace Elffy.UI
     /// 
     /// <remarks>
     /// <see cref="UIBase"/> はUIを構成する論理的なコントロールとしての機能のみを提供します。
-    /// 画面への描画に関する処理は、このクラスと対になる <see cref="Core.Renderable"/> 継承クラス <see cref="UIPlain"/> のインスタンスに任されます。
-    /// <see cref="UIPlain"/> による描画は <see cref="UIBase"/> によって完全に隠蔽され、外部からは描画を気にすることなく論理的 UI 構造を扱えます。
+    /// 画面への描画に関する処理は、このクラスと対になる <see cref="Core.Renderable"/> 継承クラス <see cref="UIRenderable"/> のインスタンスに任されます。
+    /// <see cref="UIRenderable"/> による描画は <see cref="UIBase"/> によって完全に隠蔽され、外部からは描画を気にすることなく論理的 UI 構造を扱えます。
     /// 
     /// <see cref="UIBase"/> の木構造は、描画を担当する <see cref="Core.Renderable"/> オブジェクトの木構造とは独立しています。
     /// <see cref="UIBase"/> が親子関係の木構造を形成している場合でも、その描画オブジェクトは常に木構造を作りません。
@@ -25,7 +25,7 @@ namespace Elffy.UI
         #region Property
         /// <summary>この <see cref="UIBase"/> を描画するオブジェクト</summary>
         internal IUIRenderable Renderable => _renderable;
-        private readonly UIPlain _renderable;
+        private readonly UIRenderable _renderable;
 
         /// <summary>この <see cref="UIBase"/> のツリー構造の子要素を取得します</summary>
         public UIBaseCollection Children { get; }
@@ -171,7 +171,7 @@ namespace Elffy.UI
         public UIBase()
         {
             Children = new UIBaseCollection(this);
-            _renderable = new UIPlain(this);
+            _renderable = new UIRenderable(this);
         }
         #endregion
 

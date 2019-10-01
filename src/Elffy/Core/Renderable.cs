@@ -29,8 +29,6 @@ namespace Elffy.Core
         #endregion
 
         #region Property
-        public RenderingLayer RenderingLayer { get; private protected set; } = RenderingLayer.World;
-
         /// <summary>描画処理を行うかどうか</summary>
         public bool IsVisible { get; set; } = true;
         /// <summary>マテリアル</summary>
@@ -212,11 +210,5 @@ namespace Elffy.Core
             GC.SuppressFinalize(this);
         }
         #endregion
-    }
-
-    public enum RenderingLayer
-    {
-        World,
-        UI,
     }
 }

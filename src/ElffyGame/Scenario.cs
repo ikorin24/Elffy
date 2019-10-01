@@ -46,10 +46,15 @@ namespace ElffyGame
     {
         protected override void Start()
         {
-            //var cube = new Cube();
-            //cube.Texture = new Texture("cube.png");
-            //cube.Position = new Vector3(0, 0, 0);
-            //cube.Activate();
+            var cube = new Cube();
+            cube.Texture = new Texture("cube.png");
+            cube.Position = new Vector3(0, 0, 0);
+            cube.Activate(Game.Layers.WorldLayer);
+
+            FrameProcess.WhileTrue(process =>
+            {
+                cube.Rotate(new Vector3(1, 2, 3), MathHelper.Pi / 60 / 2);
+            });
 
             var button = new Button(100, 100);
             button.KeyUp += (sender, e) =>
@@ -62,6 +67,11 @@ namespace ElffyGame
             var b2 = new Button(100, 100);
             b2.Position = new Vector2(100, 100);
             Game.UIRoot.Children.Add(b2);
+
+            FrameProcess.Begin(2000, process =>
+            {
+                b2.Position += new Vector2(1, 1);
+            });
         }
     }
 }

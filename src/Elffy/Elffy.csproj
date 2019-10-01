@@ -59,10 +59,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Core\InternalLayer.cs" />
+    <Compile Include="Core\InternaInvisiblelLayer.cs" />
     <Compile Include="Core\LayerBase.cs" />
     <Compile Include="Core\PositionableCollection.cs" />
     <Compile Include="Core\FrameObjectStore.cs" />
+    <Compile Include="Core\UILayer.cs" />
     <Compile Include="Elffy\Definition.cs" />
     <Compile Include="Core\ComponentOwner.cs" />
     <Compile Include="Elffy\IScreenHost.cs" />
@@ -123,11 +124,10 @@
     <Compile Include="UI\IUIRoot.cs" />
     <Compile Include="UI\Page.cs" />
     <Compile Include="UI\Panel.cs" />
-    <Compile Include="Elffy\ProjectionMode.cs" />
     <Compile Include="UI\Split.cs" />
     <Compile Include="UI\UIBase.cs" />
     <Compile Include="UI\UIBaseCollection.cs" />
-    <Compile Include="UI\UIPlain.cs" />
+    <Compile Include="UI\UIRenderable.cs" />
     <Compile Include="Elffy\WindowStyle.cs" />
     <Compile Include="Elffy\DebugManager.cs" />
     <Compile Include="Elffy\FPSManager.cs" />

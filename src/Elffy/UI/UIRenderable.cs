@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace Elffy.UI
 {
     /// <summary><see cref="UIBase"/> を描画するためのオブジェクト。対象の <see cref="UIBase"/> のインスタンスと一対一の関係を持つ</summary>
-    internal sealed class UIPlain : Renderable, IDisposable, IUIRenderable
+    internal sealed class UIRenderable : Renderable, IDisposable, IUIRenderable
     {
         private bool _disposed;
         /// <summary>頂点配列</summary>
@@ -24,14 +24,13 @@ namespace Elffy.UI
 
         /// <summary><see cref="UIBase"/> の描画オブジェクトを作成します。</summary>
         /// <param name="control">描画対象の論理 UI コントロール</param>
-        public UIPlain(UIBase control)
+        public UIRenderable(UIBase control)
         {
-            RenderingLayer = RenderingLayer.UI;
             IsFrozen = true;
             Control = control ?? throw new ArgumentNullException(nameof(control));
         }
 
-        ~UIPlain() => Dispose(false);
+        ~UIRenderable() => Dispose(false);
 
         void IUIRenderable.Render() => Render();
         bool IUIRenderable.IsVisible => IsVisible;

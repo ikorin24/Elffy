@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Elffy.Core
 {
-    internal sealed class InternalLayer : LayerBase
+    internal sealed class InternaInvisiblelLayer : LayerBase
     {
-        public InternalLayer(string name)
+        public InternaInvisiblelLayer(string name)
         {
             Name = name;
         }

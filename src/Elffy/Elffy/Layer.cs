@@ -10,20 +10,14 @@ namespace Elffy
     /// <summary><see cref="FrameObject"/> のレイヤークラス</summary>
     public class Layer : LayerBase
     {
-        /// <summary>このレイヤーの描画モード</summary>
-        public ProjectionMode RenderingMode { get; private set; }
+        /// <summary>このレイヤーのライティングを有効にするかどうか</summary>
+        public bool IsLightingEnabled { get; set; }
 
-        /// <summary>投影モードを指定して <see cref="Layer"/> を作成します</summary>
-        /// <param name="renderingMode">このレイヤーの投影モード</param>
-        public Layer(ProjectionMode renderingMode) : this(null, renderingMode) { }
-
-        /// <summary>レイヤー名と投影モードを指定して <see cref="Layer"/> を作成します</summary>
+        /// <summary>レイヤー名を指定して <see cref="Layer"/> を作成します</summary>
         /// <param name="name">レイヤー名</param>
-        /// <param name="renderingMode">投影モード</param>
-        public Layer(string name, ProjectionMode renderingMode)
+        public Layer(string name)
         {
             Name = name;
-            RenderingMode = renderingMode;
         }
     }
 }

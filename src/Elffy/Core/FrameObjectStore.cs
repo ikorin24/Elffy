@@ -23,9 +23,9 @@ namespace Elffy.Core
         private readonly List<FrameObject> _removedBuf = new List<FrameObject>();
         /// <summary><see cref="_list"/> に含まれるオブジェクトのうち、<see cref="Renderable"/> を継承しているもののリスト</summary>
         private readonly List<Renderable> _renderables = new List<Renderable>();
-        private readonly List<IUIRenderable> _uiList = new List<IUIRenderable>();
-        private readonly List<IUIRenderable> _addedUIBuf = new List<IUIRenderable>();
-        private readonly List<IUIRenderable> _removedUIBuf = new List<IUIRenderable>();
+        //private readonly List<IUIRenderable> _uiList = new List<IUIRenderable>();
+        //private readonly List<IUIRenderable> _addedUIBuf = new List<IUIRenderable>();
+        //private readonly List<IUIRenderable> _removedUIBuf = new List<IUIRenderable>();
         #endregion
 
         #region AddFrameObject
@@ -34,23 +34,7 @@ namespace Elffy.Core
         public void AddFrameObject(FrameObject frameObject)
         {
             if(frameObject == null) { throw new ArgumentNullException(nameof(frameObject)); }
-            if(frameObject is Renderable renderable) {
-                switch(renderable.RenderingLayer) {
-                    case RenderingLayer.World:
-                        _addedBuf.Add(renderable);
-                        break;
-                    case RenderingLayer.UI:
-                        if(renderable is IUIRenderable ui) {
-                            _addedUIBuf.Add(ui);
-                        }
-                        break;
-                    default:
-                        break;
-                }
-            }
-            else {
-                _addedBuf.Add(frameObject);
-            }
+            _addedBuf.Add(frameObject);
         }
         #endregion
 
@@ -58,28 +42,10 @@ namespace Elffy.Core
         /// <summary>指定した<see cref="FrameObject"/>を削除します</summary>
         /// <param name="frameObject">削除するオブジェクト</param>
         /// <returns>削除できたかどうか</returns>
-        public bool RemoveFrameObject(FrameObject frameObject)
+        public void RemoveFrameObject(FrameObject frameObject)
         {
             if(frameObject == null) { throw new ArgumentNullException(nameof(frameObject)); }
-            if(frameObject is Renderable renderable) {
-                switch(renderable.RenderingLayer) {
-                    case RenderingLayer.World:
-                        _removedBuf.Add(frameObject);
-                        break;
-                    case RenderingLayer.UI:
-                        _removedUIBuf.Add((IUIRenderable)frameObject);
-                        if(renderable is IUIRenderable ui) {
-                            _removedUIBuf.Add(ui);
-                        }
-                        break;
-                    default:
-                        break;
-                }
-            }
-            else {
-                _removedBuf.Add(frameObject);
-            }
-            return true;
+            _removedBuf.Add(frameObject);
         }
         #endregion
 
@@ -100,16 +66,6 @@ namespace Elffy.Core
                 _list.AddRange(_addedBuf);
                 _renderables.AddRange(_addedBuf.OfType<Renderable>());
                 _addedBuf.Clear();
-            }
-            if(_removedUIBuf.Count > 0) {
-                foreach(var item in _removedUIBuf) {
-                    _uiList.Remove(item);
-                }
-                _removedUIBuf.Clear();
-            }
-            if(_addedUIBuf.Count > 0) {
-                _uiList.AddRange(_addedUIBuf);
-                _addedUIBuf.Clear();
             }
         }
         #endregion
@@ -149,6 +105,10 @@ namespace Elffy.Core
         #endregion
 
         #region Render
+        /// <summary>画面への投影行列を指定して、描画を実行します</summary>
+        /// <param name="projection"></param>
+        public void Render(Matrix4 projection) => Render(projection, Matrix4.Identity);
+
         /// <summary>画面への投影行列とカメラ行列を指定して、描画を実行します</summary>
         /// <param name="projection">投影行列</param>
         /// <param name="view">カメラ行列</param>
@@ -167,23 +127,23 @@ namespace Elffy.Core
         }
         #endregion
 
-        #region RenderUI
-        /// <summary>画面への投影行列を指定して、描画を実行します</summary>
-        /// <param name="projection">投影行列</param>
-        public void RenderUI(Matrix4 projection)
-        {
-            GL.MatrixMode(MatrixMode.Projection);
-            GL.LoadMatrix(ref projection);
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.LoadIdentity();
-            // TODO: OpenGL の行列スタックの深さを確認
-            foreach(var uiRenderable in _uiList.Where(r => r.IsVisible)) {
-                GL.PushMatrix();
-                uiRenderable.Render();
-                GL.PopMatrix();
-            }
-        }
-        #endregion
+        //#region RenderUI
+        ///// <summary>画面への投影行列を指定して、描画を実行します</summary>
+        ///// <param name="projection">投影行列</param>
+        //public void RenderUI(Matrix4 projection)
+        //{
+        //    GL.MatrixMode(MatrixMode.Projection);
+        //    GL.LoadMatrix(ref projection);
+        //    GL.MatrixMode(MatrixMode.Modelview);
+        //    GL.LoadIdentity();
+        //    // TODO: OpenGL の行列スタックの深さを確認
+        //    foreach(var uiRenderable in _uiList.Where(r => r.IsVisible)) {
+        //        GL.PushMatrix();
+        //        uiRenderable.Render();
+        //        GL.PopMatrix();
+        //    }
+        //}
+        //#endregion
 
         #region Clear
         /// <summary>保持している <see cref="FrameObject"/> を全て破棄し、リストをクリアします</summary>
@@ -199,9 +159,9 @@ namespace Elffy.Core
             _list.Clear();
             _removedBuf.Clear();
             _renderables.Clear();
-            _uiList.Clear();
-            _addedUIBuf.Clear();
-            _removedUIBuf.Clear();
+            //_uiList.Clear();
+            //_addedUIBuf.Clear();
+            //_removedUIBuf.Clear();
         }
         #endregion
     }

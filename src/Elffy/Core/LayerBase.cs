@@ -22,7 +22,7 @@ namespace Elffy.Core
         /// <summary>このレイヤーから <see cref="FrameObject"/> を削除します</summary>
         /// <param name="frameObject">削除する <see cref="FrameObject"/></param>
         /// <returns></returns>
-        internal bool RemoveFrameObject(FrameObject frameObject) => ObjectStore.RemoveFrameObject(frameObject);
+        internal void RemoveFrameObject(FrameObject frameObject) => ObjectStore.RemoveFrameObject(frameObject);
 
         /// <summary><see cref="FrameObject"/> のタグを使って、このレイヤーに含まれる <see cref="FrameObject"/> を探します (存在しない場合 null を返します)</summary>
         /// <param name="tag"><see cref="FrameObject"/> のタグ</param>

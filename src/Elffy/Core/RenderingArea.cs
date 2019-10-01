@@ -97,19 +97,30 @@ namespace Elffy.Core
         /// <summary>フレームを更新して描画します</summary>
         public void RenderFrame()
         {
+            // レイヤー更新
             foreach(var layer in Layers.GetAllLayer()) {
                 layer.ObjectStore.Update();
             }
             Dispatcher.DoInvokedAction();                           // Invokeされた処理を実行
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            Light.LightUp();                                        // 光源点灯
-            foreach(var layer in Layers.GetAllLayer()) {
-                layer.ObjectStore.Render(Camera.Current.Projection, Camera.Current.Matrix);
+
+            // レイヤー描画処理
+            foreach(var layer in Layers) {
+                if(layer.IsLightingEnabled) {
+                    Light.LightUp();                // 光源点灯
+                }
+                else {
+                    Light.TurnOff();                // 光源消灯
+                }
+                if(layer is UILayer) {
+                    layer.ObjectStore.Render(_uiProjection);
+                }
+                else {
+                    layer.ObjectStore.Render(Camera.Current.Projection, Camera.Current.Matrix);
+                }
             }
-            Light.TurnOff();                                        // 光源消灯
-            foreach(var layer in Layers.GetAllLayer()) {
-                layer.ObjectStore.RenderUI(_uiProjection);
-            }
+
+            // レイヤー変更適用
             foreach(var layer in Layers.GetAllLayer()) {
                 layer.ObjectStore.ApplyChanging();
             }
