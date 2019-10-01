@@ -77,7 +77,7 @@ namespace Elffy.Core
                 }
             }
             else {
-                _removedBuf.Remove(frameObject);
+                _removedBuf.Add(frameObject);
             }
             return true;
         }
