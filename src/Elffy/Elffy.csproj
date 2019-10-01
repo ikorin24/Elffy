@@ -67,6 +67,7 @@
     <Compile Include="Elffy\Definition.cs" />
     <Compile Include="Core\ComponentOwner.cs" />
     <Compile Include="Elffy\IScreenHost.cs" />
+    <Compile Include="Elffy\Ray.cs" />
     <Compile Include="Elffy\Layer.cs" />
     <Compile Include="Elffy\LayerCollection.cs" />
     <Compile Include="Elffy\Materials.cs" />
@@ -79,6 +80,7 @@
     <Compile Include="Framing\FrameProcessInfo.cs" />
     <Compile Include="Framing\FrameProcess.cs" />
     <Compile Include="Elffy\Camera.cs" />
+    <Compile Include="Input\MouseInput.cs" />
     <Compile Include="Platforms\Windows\MessageBox.cs" />
     <Compile Include="Elffy\ConfigBase.cs" />
     <Compile Include="Core\Consts.cs" />
