@@ -11,16 +11,16 @@ namespace Elffy.Elffy
     public class Ray
     {
         /// <summary>この直線が通る点</summary>
-        public Vector3 Intersection
+        public Vector3 Intercept
         {
-            get => _intersection;
+            get => _intercept;
             set
             {
                 ThrowIfContainsInifinityOrNaN(value);
-                _intersection = value;
+                _intercept = value;
             }
         }
-        private Vector3 _intersection;
+        private Vector3 _intercept;
 
         /// <summary>この直線の方向</summary>
         public Vector3 Direction
@@ -36,19 +36,19 @@ namespace Elffy.Elffy
         private Vector3 _direction = Vector3.UnitZ;
 
         /// <summary>通過点と方向を指定して3次元空間上の直線を生成します</summary>
-        /// <param name="intersection">この直線が通る点</param>
+        /// <param name="intercept">この直線が通る点</param>
         /// <param name="direction">この直線の方向</param>
-        public Ray(Vector3 intersection, Vector3 direction)
+        public Ray(Vector3 intercept, Vector3 direction)
         {
-            Intersection = intersection;
+            Intercept = intercept;
             Direction = direction;
         }
 
         /// <summary>通過点と方向を指定して3次元空間上の直線を生成します</summary>
-        /// <param name="intersection">直線の通過点</param>
+        /// <param name="intercept">直線の通過点</param>
         /// <param name="direction">直線の方向</param>
         /// <returns>直線</returns>
-        public static Ray FromPointAndDirection(Vector3 intersection, Vector3 direction) => new Ray(intersection, direction);
+        public static Ray FromPointAndDirection(Vector3 intercept, Vector3 direction) => new Ray(intercept, direction);
 
         /// <summary>2点を指定して、3次元空間上の直線を生成します</summary>
         /// <param name="point1">直線の通過点1</param>
@@ -66,9 +66,9 @@ namespace Elffy.Elffy
         public Vector3 SpecifiedX(float x)
         {
             ThrowIfInifinityOrNaN(x);
-            var tmp = (x - Intersection.X) / Direction.X;
-            var y = tmp * Direction.Y - Intersection.Y;
-            var z = tmp * Direction.Z - Intersection.Z;
+            var tmp = (x - Intercept.X) / Direction.X;
+            var y = tmp * Direction.Y - Intercept.Y;
+            var z = tmp * Direction.Z - Intercept.Z;
             return new Vector3(x, y, z);
         }
 
@@ -78,9 +78,9 @@ namespace Elffy.Elffy
         public Vector3 SpecifiedY(float y)
         {
             ThrowIfInifinityOrNaN(y);
-            var tmp = (y - Intersection.Y) / Direction.Y;
-            var x = tmp * Direction.X - Intersection.X;
-            var z = tmp * Direction.Z - Intersection.Z;
+            var tmp = (y - Intercept.Y) / Direction.Y;
+            var x = tmp * Direction.X - Intercept.X;
+            var z = tmp * Direction.Z - Intercept.Z;
             return new Vector3(x, y, z);
         }
 
@@ -90,9 +90,9 @@ namespace Elffy.Elffy
         public Vector3 SpecifiedZ(float z)
         {
             ThrowIfInifinityOrNaN(z);
-            var tmp = (z - Intersection.Z) / Direction.Z;
-            var x = tmp * Direction.X - Intersection.X;
-            var y = tmp * Direction.Y - Intersection.Y;
+            var tmp = (z - Intercept.Z) / Direction.Z;
+            var x = tmp * Direction.X - Intercept.X;
+            var y = tmp * Direction.Y - Intercept.Y;
             return new Vector3(x, y, z);
         }
 
