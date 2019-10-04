@@ -53,7 +53,7 @@ namespace Elffy
             _renderingArea.InitializeGL();
             Initialized?.Invoke(this, EventArgs.Empty);
             foreach(var layer in Layers.GetAllLayer()) {
-                layer.ObjectStore.ApplyChanging();
+                layer.ApplyChanging();
             }
         }
 

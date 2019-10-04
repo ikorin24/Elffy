@@ -99,7 +99,7 @@ namespace Elffy.Core
         {
             // レイヤー更新
             foreach(var layer in Layers.GetAllLayer()) {
-                layer.ObjectStore.Update();
+                layer.Update();
             }
             Dispatcher.DoInvokedAction();                           // Invokeされた処理を実行
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
@@ -113,16 +113,16 @@ namespace Elffy.Core
                     Light.TurnOff();                // 光源消灯
                 }
                 if(layer is UILayer) {
-                    layer.ObjectStore.Render(_uiProjection);
+                    layer.Render(_uiProjection);
                 }
                 else {
-                    layer.ObjectStore.Render(Camera.Current.Projection, Camera.Current.Matrix);
+                    layer.Render(Camera.Current.Projection, Camera.Current.Matrix);
                 }
             }
 
             // レイヤー変更適用
             foreach(var layer in Layers.GetAllLayer()) {
-                layer.ObjectStore.ApplyChanging();
+                layer.ApplyChanging();
             }
         }
         #endregion

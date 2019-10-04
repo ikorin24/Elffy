@@ -9,6 +9,8 @@ namespace Elffy.UI
     /// <summary>UI 要素を描画するためのインターフェース</summary>
     internal interface IUIRenderable
     {
+        /// <summary>このオブジェクトの描画対象である論理 UI コントロール</summary>
+        UIBase Control { get; }
         /// <summary>このオブジェクトが描画されるかどうかを取得します</summary>
         bool IsVisible { get; }
 

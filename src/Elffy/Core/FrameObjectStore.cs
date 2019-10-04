@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace Elffy.Core
 {
     /// <summary><see cref="FrameObject"/> を保持しておくためのクラスです。</summary>
-    internal class FrameObjectStore
+    public abstract class FrameObjectStore
     {
         #region private member
         /// <summary>現在生きている全オブジェクトのリスト</summary>
@@ -23,9 +23,20 @@ namespace Elffy.Core
         private readonly List<FrameObject> _removedBuf = new List<FrameObject>();
         /// <summary><see cref="_list"/> に含まれるオブジェクトのうち、<see cref="Renderable"/> を継承しているもののリスト</summary>
         private readonly List<Renderable> _renderables = new List<Renderable>();
-        //private readonly List<IUIRenderable> _uiList = new List<IUIRenderable>();
-        //private readonly List<IUIRenderable> _addedUIBuf = new List<IUIRenderable>();
-        //private readonly List<IUIRenderable> _removedUIBuf = new List<IUIRenderable>();
+        #endregion
+
+        #region Property
+        /// <summary>現在生きている全オブジェクトを取得します</summary>
+        protected IEnumerable<FrameObject> List => _list;
+
+        /// <summary>現在のフレームで追加されたオブジェクトを取得します</summary>
+        protected IEnumerable<FrameObject> Added => _addedBuf;
+
+        /// <summary>現在のフレームで削除されたオブジェクトを取得します</summary>
+        protected IEnumerable<FrameObject> Removed => _removedBuf;
+
+        /// <summary><see cref="List"/> に含まれるオブジェクトのうち、<see cref="Renderable"/> を継承しているものを取得します</summary>
+        protected IEnumerable<Renderable> Renderables => _renderables;
         #endregion
 
         #region AddFrameObject
@@ -103,47 +114,6 @@ namespace Elffy.Core
             }
         }
         #endregion
-
-        #region Render
-        /// <summary>画面への投影行列を指定して、描画を実行します</summary>
-        /// <param name="projection"></param>
-        public void Render(Matrix4 projection) => Render(projection, Matrix4.Identity);
-
-        /// <summary>画面への投影行列とカメラ行列を指定して、描画を実行します</summary>
-        /// <param name="projection">投影行列</param>
-        /// <param name="view">カメラ行列</param>
-        public void Render(Matrix4 projection, Matrix4 view)
-        {
-            GL.MatrixMode(MatrixMode.Projection);
-            GL.LoadMatrix(ref projection);
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.LoadMatrix(ref view);
-            // TODO: OpenGL の行列スタックの深さを確認
-            foreach(var renderable in _renderables.Where(x => x.IsVisible)) {
-                GL.PushMatrix();
-                renderable.Render();
-                GL.PopMatrix();
-            }
-        }
-        #endregion
-
-        //#region RenderUI
-        ///// <summary>画面への投影行列を指定して、描画を実行します</summary>
-        ///// <param name="projection">投影行列</param>
-        //public void RenderUI(Matrix4 projection)
-        //{
-        //    GL.MatrixMode(MatrixMode.Projection);
-        //    GL.LoadMatrix(ref projection);
-        //    GL.MatrixMode(MatrixMode.Modelview);
-        //    GL.LoadIdentity();
-        //    // TODO: OpenGL の行列スタックの深さを確認
-        //    foreach(var uiRenderable in _uiList.Where(r => r.IsVisible)) {
-        //        GL.PushMatrix();
-        //        uiRenderable.Render();
-        //        GL.PopMatrix();
-        //    }
-        //}
-        //#endregion
 
         #region Clear
         /// <summary>保持している <see cref="FrameObject"/> を全て破棄し、リストをクリアします</summary>

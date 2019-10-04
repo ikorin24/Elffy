@@ -4,6 +4,7 @@ using System;
 using System.Drawing;
 using Elffy.Effective;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Elffy.UI
 {
@@ -149,8 +150,26 @@ namespace Elffy.UI
         public VerticalAlignment VerticalAlignment { get; set; }
         /// <summary>get or set whether this <see cref="UIBase"/> can be focused</summary>
         public bool IsFocusable { get; set; }
+
         /// <summary>get whether this <see cref="UIBase"/> is focused</summary>
-        public bool IsFocused { get; private set; }
+        public bool IsFocused
+        {
+            get => _isFocused;
+            internal set
+            {
+                if(_isFocused == value) { return; }
+                _isFocused = value;
+                if(_isFocused) {
+                    Debug.Assert(IsFocusable);
+                    FocusEnter?.Invoke(this, EventArgs.Empty);
+                }
+                else {
+                    FocusLost?.Invoke(this, EventArgs.Empty);
+                }
+            }
+        }
+        private bool _isFocused;
+
         /// <summary>get or set whether this <see cref="UIBase"/> is enable in HitTest</summary>
         public bool IsHitTestVisible { get; set; }
         /// <summary>get whether the mouse is over this <see cref="UIBase"/></summary>
