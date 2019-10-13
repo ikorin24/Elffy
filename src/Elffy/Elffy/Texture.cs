@@ -63,7 +63,7 @@ namespace Elffy
         /// <summary>テクスチャの一部を更新します</summary>
         /// <param name="newPixels">新しいピクセル配列 (テクスチャ全体のピクセル配列)</param>
         /// <param name="dirtyRegion">変更部分</param>
-        internal void UpdateTexture(byte[] newPixels, Rectangle dirtyRegion)
+        internal void UpdateTexture(IntPtr newPixels, Rectangle dirtyRegion)
         {
             GL.BindTexture(TextureTarget.Texture2D, _texture);
             GL.TexSubImage2D(TextureTarget.Texture2D, 0, dirtyRegion.X, dirtyRegion.Y, dirtyRegion.Width, dirtyRegion.Height, _pixelFormat, PixelType.UnsignedByte, newPixels);
@@ -87,27 +87,12 @@ namespace Elffy
         /// <param name="width">画像幅</param>
         /// <param name="height">画像高</param>
         /// <param name="pixels">反転させたピクセル配列</param>
-        internal static void ReverseYAxis(IntPtr ptr, int width, int height, out UnmanagedArray<byte> pixels)
+        internal static void ReverseYAxis(IntPtr ptr, int width, int height, UnmanagedArray<byte> pixels)
         {
-            pixels = new UnmanagedArray<byte>(width * height * BYTE_PER_PIXEL);
             for(int i = 0; i < height; i++) {
                 var row = height - i - 1;
                 var head = ptr + width * row * BYTE_PER_PIXEL;
                 pixels.CopyFrom(head, i * width * BYTE_PER_PIXEL, width * BYTE_PER_PIXEL);
-            }
-        }
-
-        /// <summary>画像のY軸を反転させます</summary>
-        /// <param name="ptr">ピクセル配</param>
-        /// <param name="width">画像幅</param>
-        /// <param name="height">画像高</param>
-        /// <param name="pixels">反転させたピクセル配列</param>
-        internal static void ReverseYAxis(IntPtr ptr, int width, int height, byte[] pixels)
-        {
-            for(int i = 0; i < height; i++) {
-                var row = height - i - 1;
-                var head = ptr + width * row * BYTE_PER_PIXEL;
-                Marshal.Copy(head, pixels, i * width * BYTE_PER_PIXEL, width * BYTE_PER_PIXEL);
             }
         }
         #endregion
@@ -139,7 +124,8 @@ namespace Elffy
                 var bmpData = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), 
                                            System.Drawing.Imaging.ImageLockMode.ReadOnly, 
                                            System.Drawing.Imaging.PixelFormat.Format32bppPArgb);
-                ReverseYAxis(bmpData.Scan0, bmp.Width, bmp.Height, out var pixels);
+                var pixels = new UnmanagedArray<byte>(bmp.Width * bmp.Height * BYTE_PER_PIXEL);
+                ReverseYAxis(bmpData.Scan0, bmp.Width, bmp.Height, pixels);
                 bmp.UnlockBits(bmpData);
                 return pixels;
             }

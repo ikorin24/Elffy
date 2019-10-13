@@ -12,6 +12,7 @@ using OpenTK;
 using OpenTK.Graphics;
 using System.Runtime.InteropServices;
 using Elffy.Shape;
+using Elffy.Effective;
 
 namespace Elffy.UI
 {
@@ -22,7 +23,7 @@ namespace Elffy.UI
         private Bitmap _bmp;
         private Graphics _g;
         private bool _isDisposed;
-        private byte[] _buf;
+        private UnmanagedArray<byte> _buf;
 
         public int PixelWidth => _bmp.Width;
         public int PixelHeight => _bmp.Height;
@@ -34,6 +35,8 @@ namespace Elffy.UI
             _g = Graphics.FromImage(_bmp);
             Texture = new Texture(pixelWidth, pixelHeight);
         }
+
+        ~Canvas() => Dispose(false);
 
         public void DrawString(string text, Font font, Brush brush, PointF point)
         {
@@ -74,14 +77,15 @@ namespace Elffy.UI
 
         protected override void OnRendering()
         {
+            // キャンバスの描画に更新部分があった場合、更新部分をテクスチャに反映させます
             if(_dirtyRegion.IsEmpty) { return; }
             var data = _bmp.LockBits(new Rectangle(0, 0, _bmp.Width, _bmp.Height), ImageLockMode.ReadOnly, DPixelFormat.Format32bppArgb);
             if(_buf == null) {
-                _buf = new byte[_bmp.Width * _bmp.Height * BYTE_PER_PIXEL];
+                _buf = new UnmanagedArray<byte>(_bmp.Width * _bmp.Height * BYTE_PER_PIXEL);
             }
             Texture.ReverseYAxis(data.Scan0, _bmp.Width, _bmp.Height, _buf);    // 上下反転
             _bmp.UnlockBits(data);
-            Texture.UpdateTexture(_buf, new Rectangle(0, 0, _bmp.Width, _bmp.Height));
+            Texture.UpdateTexture(_buf.Ptr, new Rectangle(0, 0, _bmp.Width, _bmp.Height));
             _dirtyRegion = Rectangle.Empty;
         }
 
