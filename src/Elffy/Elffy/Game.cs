@@ -113,6 +113,8 @@ namespace Elffy
         public static void Run(int width, int heigh, string title, WindowStyle windowStyle, string icon)
         {
             ThrowIfGameAlreadyRunning();
+            if(width < 0) { throw new ArgumentOutOfRangeException(nameof(width)); }
+            if(heigh < 0) { throw new ArgumentOutOfRangeException(nameof(heigh)); }
             if(string.IsNullOrEmpty(icon)) { throw new ArgumentException($"Icon is null or empty"); }
             try {
                 Resources.Initialize();
