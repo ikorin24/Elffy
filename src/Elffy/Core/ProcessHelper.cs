@@ -18,14 +18,19 @@ namespace Elffy.Core
 
         /// <summary>Mutex を用いてアプリケーションの多重起動を防止します</summary>
         /// <param name="startAction">起動する処理</param>
-        public static void SingleLaunch(Action startAction)
+        public static void SingleLaunch(Action startAction) => SingleLaunch(startAction, DoNothing);
+
+        /// <summary>Mutex を用いてアプリケーションの多重起動を防止します</summary>
+        /// <param name="startAction">起動する処理</param>
+        /// <param name="multiLaunch">多重起動時に実行される処理</param>
+        public static void SingleLaunch(Action startAction, Action multiLaunch)
         {
             var assemblyName = Assembly.GetEntryAssembly().GetName();
             var uniqueName = $"{assemblyName.Name}-{assemblyName.Version.ToString()}";      // 最低1文字 (Empty では Mutex が機能しないため)
             if(uniqueName.Length > MUTEX_NAME_MAX_LEN) {
                 uniqueName = uniqueName.Substring(0, MUTEX_NAME_MAX_LEN);                   // 名前付きMutexの名前は文字数制限があるため
             }
-            SingleLaunch(uniqueName, startAction, DoNothing);
+            SingleLaunch(uniqueName, startAction, multiLaunch);
         }
 
         /// <summary>Mutex を用いてアプリケーションの多重起動を防止します</summary>
