@@ -97,6 +97,8 @@ namespace Elffy
         public static void Run(int width, int heigh, string title, WindowStyle windowStyle)
         {
             ThrowIfGameAlreadyRunning();
+            if(width < 0) { throw new ArgumentOutOfRangeException(nameof(width)); }
+            if(heigh < 0) { throw new ArgumentOutOfRangeException(nameof(heigh)); }
             try {
                 Resources.Initialize();
             }
