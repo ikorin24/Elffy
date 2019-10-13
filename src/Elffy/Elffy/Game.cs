@@ -14,6 +14,8 @@ using Elffy.Threading;
 using System.Diagnostics;
 using Elffy.Core.Timer;
 using Elffy.Platforms;
+using OpenTK.Input;
+using Mouse = Elffy.Input.Mouse;
 
 namespace Elffy
 {
@@ -28,50 +30,33 @@ namespace Elffy
         private static readonly List<EventHandler> _temporaryInitializedHandlers = new List<EventHandler>();
 
         /// <summary><see cref="Game"/> のシングルトンインスタンス</summary>
-        public static Game Instance { get; private set; }
-        /// <summary>ゲームが起動しているかどうかを取得します</summary>
-        public static bool IsRunning => Instance != null;
-        public static IUIRoot UIRoot
+        private static Game Instance
         {
             get
             {
                 ThrowIfGameNotRunning();
-                return Instance._gameScreen.UIRoot;
+                return _instance;
             }
         }
+        private static Game _instance;
+        /// <summary>ゲームが起動しているかどうかを取得します</summary>
+        public static bool IsRunning => _instance != null;
+        public static IUIRoot UIRoot => Instance._gameScreen.UIRoot;
 
         /// <summary>ゲームの描画領域のピクセルサイズ</summary>
-        public static Size ClientSize
-        {
-            get
-            {
-                ThrowIfGameNotRunning();
-                return Instance._gameScreen.ClientSize;
-            }
-        }
+        public static Size GameScreenSize => Instance._gameScreen.ClientSize;
 
-        public static LayerCollection Layers
-        {
-            get
-            {
-                ThrowIfGameNotRunning();
-                return Instance._gameScreen.Layers;
-            }
-        }
+        public static LayerCollection Layers => Instance._gameScreen.Layers;
+
+        /// <summary>マウスを取得します</summary>
+        public static Mouse Mouse => Instance._gameScreen.Mouse;
 
         /// <summary>現在のフレームがゲーム開始から何フレーム目かを取得します(Rendering Frame)</summary>
         public static long CurrentFrame { get; internal set; }
         //public static float RenderDelta => (float?)Instance?._window?.RenderPeriod * 1000 ?? throw NewGameNotRunningException();
         public static float RenderDelta => throw new NotImplementedException();     // TODO: 実装
         public static long CurrentFrameTime { get; private set; }
-        public static long CurrentTime
-        {
-            get
-            {
-                ThrowIfGameNotRunning();
-                return Instance._watch.ElapsedMilliseconds;
-            }
-        }
+        public static long CurrentTime => Instance._watch.ElapsedMilliseconds;
 
         #region event Initialized
         /// <summary>ゲーム初期化後に呼ばれるイベント</summary>
@@ -138,7 +123,6 @@ namespace Elffy
         /// <summary>Exit this game.</summary>
         public static void Exit()
         {
-            ThrowIfGameNotRunning();
             Instance._gameScreen.Close();
         }
         #endregion
@@ -155,12 +139,12 @@ namespace Elffy
         {
             Dispatcher.SetMainThreadID();
             try {
-                Instance = new Game();
+                _instance = new Game();
                 switch(Platform.PlatformType) {
                     case PlatformType.Windows:
                     case PlatformType.MacOSX:
                     case PlatformType.Unix:
-                        Instance._gameScreen = GetWindowGameScreen(width, height, title, windowStyle, iconResourcePath);
+                        _instance._gameScreen = GetWindowGameScreen(width, height, title, windowStyle, iconResourcePath);
                         break;
                     case PlatformType.Android:
                     case PlatformType.Other:
@@ -168,14 +152,14 @@ namespace Elffy
                         throw Platform.NewPlatformNotSupportedException();
                 }
                 foreach(var handler in _temporaryInitializedHandlers) {
-                    Instance._gameScreen.Initialized += handler;
+                    _instance._gameScreen.Initialized += handler;
                 }
                 _temporaryInitializedHandlers.Clear();
-                Instance._gameScreen.Run();
+                _instance._gameScreen.Run();
             }
             finally {
-                Instance?._gameScreen?.Dispose();
-                Instance = null;
+                _instance?._gameScreen?.Dispose();
+                _instance = null;
                 ElffySynchronizationContext.Delete();
             }
         }

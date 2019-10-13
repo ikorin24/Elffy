@@ -5,6 +5,9 @@ using System.Collections.Generic;
 using Elffy.UI;
 using Elffy.Core;
 using Elffy.Threading;
+using OpenTK.Input;
+using Mouse = Elffy.Input.Mouse;
+using System.Drawing;
 
 namespace Elffy
 {
@@ -19,6 +22,8 @@ namespace Elffy
         public IUIRoot UIRoot => _renderingArea.UIRoot;
         /// <summary>このウィンドウのレイヤー</summary>
         public LayerCollection Layers => _renderingArea.Layers;
+
+        public Mouse Mouse { get; private set; } = new Mouse();
 
         /// <summary>初期化時イベント</summary>
         public event EventHandler Initialized;
@@ -73,6 +78,44 @@ namespace Elffy
             Rendered?.Invoke(this, EventArgs.Empty);
             SwapBuffers();
         }
+
+        #region Mouse State Updating
+        protected override void OnMouseMove(MouseMoveEventArgs e)
+        {
+            base.OnMouseMove(e);
+            Mouse.Update(e.Mouse);
+        }
+
+        protected override void OnMouseWheel(MouseWheelEventArgs e)
+        {
+            base.OnMouseWheel(e);
+            Mouse.Update(e.Mouse);
+        }
+
+        protected override void OnMouseDown(MouseButtonEventArgs e)
+        {
+            base.OnMouseDown(e);
+            Mouse.Update(e.Mouse);
+        }
+
+        protected override void OnMouseUp(MouseButtonEventArgs e)
+        {
+            base.OnMouseUp(e);
+            Mouse.Update(e.Mouse);
+        }
+
+        protected override void OnMouseEnter(EventArgs e)
+        {
+            base.OnMouseEnter(e);
+            Mouse.Update(true);
+        }
+
+        protected override void OnMouseLeave(EventArgs e)
+        {
+            base.OnMouseLeave(e);
+            Mouse.Update(false);
+        }
+        #endregion
 
         protected override void OnClosed(EventArgs e)
         {

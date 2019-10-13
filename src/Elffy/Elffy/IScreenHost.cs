@@ -1,4 +1,5 @@
-﻿using Elffy.UI;
+﻿using Elffy.Input;
+using Elffy.UI;
 using OpenTK;
 using System;
 using System.Collections.Generic;
@@ -12,6 +13,8 @@ namespace Elffy
     /// <summary>プラットフォームごとの画面を抽象化するためのインターフェース</summary>
     internal interface IScreenHost : IDisposable
     {
+        Mouse Mouse { get; }
+
         /// <summary>垂直同期モード</summary>
         VSyncMode VSync { get; set; }
         /// <summary>レンダリングのリフレッシュレート [Hz]</summary>

@@ -80,6 +80,7 @@
     <Compile Include="Framing\FrameProcessInfo.cs" />
     <Compile Include="Framing\FrameProcess.cs" />
     <Compile Include="Elffy\Camera.cs" />
+    <Compile Include="Input\Mouse.cs" />
     <Compile Include="Platforms\Windows\MessageBox.cs" />
     <Compile Include="Elffy\ConfigBase.cs" />
     <Compile Include="Core\Consts.cs" />
