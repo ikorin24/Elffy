@@ -25,7 +25,7 @@ namespace Elffy.Framing
         /// <summary>現在実行中の処理に渡される情報</summary>
         private FrameProcessBehaviorInfo _info = new FrameProcessBehaviorInfo();
         /// <summary>各処理の開始時刻</summary>
-        private long _firstFrameTime;
+        private TimeSpan _firstFrameTime;
         /// <summary>現在のフレームが処理の最初のフレームかどうか</summary>
         private bool _isFirstFrame;
         /// <summary>このフレームプロセスがキャンセルされたかどうか</summary>
@@ -34,9 +34,9 @@ namespace Elffy.Framing
 
         #region AddBehavior
         /// <summary>キューに処理を追加します</summary>
-        /// <param name="time">処理の寿命(ms)</param>
+        /// <param name="time">処理の寿命</param>
         /// <param name="behavior">処理</param>
-        public void AddBehavior(int time, FrameProcessBehavior behavior)
+        public void AddBehavior(TimeSpan time, FrameProcessBehavior behavior)
         {
             var lifeSpan = time;
             _behaviorQueue.Enqueue(new BehaviorQueueObject(behavior, lifeSpan));
@@ -73,10 +73,10 @@ namespace Elffy.Framing
         public override void Update()
         {
             if(_isFirstFrame) {
-                _firstFrameTime = Game.CurrentFrameTime;
+                _firstFrameTime = Game.Time;
                 _isFirstFrame = false;
             }
-            _info.Time = (int)(Game.CurrentFrameTime - _firstFrameTime);
+            _info.Time = Game.Time - _firstFrameTime;
             // キャンセルされたら終了
             if(_isCanceled) {
                 _behaviorQueue.Clear();
@@ -85,15 +85,46 @@ namespace Elffy.Framing
                 return;
             }
             // 寿命が終了 or 継続条件がfalse なら次の動きに遷移。次がなければ終了。
-              if((_info.Mode == FrameProcessEndMode.LifeSpen && (Game.CurrentFrameTime - _firstFrameTime) >= _info.LifeSpan) ||
-                 (_info.Mode == FrameProcessEndMode.Condition && !_info.Condition())) {
-                if(_behaviorQueue.Count == 0) {
-                    _currentBehavior = null;
-                    Destroy();
-                    return;
+            //if((_info.Mode == FrameProcessEndMode.LifeSpen && (Game.Time - _firstFrameTime) >= _info.LifeSpan) ||
+            //   (_info.Mode == FrameProcessEndMode.Condition && !_info.Condition())) {
+            //    if(_behaviorQueue.Count == 0) {
+            //        _currentBehavior = null;
+            //        Destroy();
+            //        return;
+            //    }
+            //    else {
+            //        SetNextBehavior();
+            //    }
+            //}
+
+            while(true){
+                bool end;
+                switch(_info.Mode) {
+                    case FrameProcessEndMode.LifeSpen:
+                        end = _info.Time >= _info.LifeSpan;
+                        break;
+                    case FrameProcessEndMode.Condition:
+                        end = !_info.Condition();
+                        break;
+                    case FrameProcessEndMode.FrameSpan:
+                        end = true;
+                        break;
+                    default:
+                        end = true;
+                        break;
+                }
+                if(end) {
+                    if(_behaviorQueue.Count == 0) {
+                        _currentBehavior = null;
+                        Destroy();
+                        return;
+                    }
+                    else {
+                        SetNextBehavior();
+                    }
                 }
                 else {
-                    SetNextBehavior();
+                    break;
                 }
             }
 
@@ -125,7 +156,9 @@ namespace Elffy.Framing
             /// <summary>処理</summary>
             public FrameProcessBehavior Behavior { get; private set; }
             /// <summary>寿命 (ない場合は0)</summary>
-            public int LifeSpan { get; private set; }
+            public TimeSpan LifeSpan { get; private set; }
+            /// <summary>寿命フレーム (ない場合0)</summary>
+            public int FrameSpan { get; private set; }
             /// <summary>継続条件 (ない場合はnull)</summary>
             public Func<bool> Condition { get; private set; }
             /// <summary>終了モード</summary>
@@ -134,11 +167,24 @@ namespace Elffy.Framing
             /// <summary>寿命付き処理のオブジェクトを生成</summary>
             /// <param name="behavior">処理</param>
             /// <param name="lifeSpan">寿命</param>
-            public BehaviorQueueObject(FrameProcessBehavior behavior, int lifeSpan)
+            public BehaviorQueueObject(FrameProcessBehavior behavior, TimeSpan lifeSpan)
             {
                 Behavior = behavior;
                 LifeSpan = lifeSpan;
+                FrameSpan = 0;
                 Mode = FrameProcessEndMode.LifeSpen;
+                Condition = null;
+            }
+
+            /// <summary>寿命付き処理のオブジェクトを生成</summary>
+            /// <param name="behavior">処理</param>
+            /// <param name="lifeSpan">寿命</param>
+            public BehaviorQueueObject(FrameProcessBehavior behavior, int frameSpan)
+            {
+                Behavior = behavior;
+                LifeSpan = TimeSpan.Zero;
+                FrameSpan = frameSpan;
+                Mode = FrameProcessEndMode.FrameSpan;
                 Condition = null;
             }
 
@@ -148,7 +194,8 @@ namespace Elffy.Framing
             public BehaviorQueueObject(FrameProcessBehavior behavior, Func<bool> condition)
             {
                 Behavior = behavior;
-                LifeSpan = 0;
+                LifeSpan = TimeSpan.Zero;
+                FrameSpan = 0;
                 Mode = FrameProcessEndMode.Condition;
                 Condition = condition;
             }
@@ -160,8 +207,12 @@ namespace Elffy.Framing
     #region enum FrameProcessEndMode
     public enum FrameProcessEndMode
     {
+        /// <summary>寿命時間で終了します</summary>
         LifeSpen,
+        /// <summary>終了条件で終了します</summary>
         Condition,
+        /// <summary>指定のフレーム回数で終了します</summary>
+        FrameSpan,
     }
     #endregion enum FrameProcessEndMode
 }

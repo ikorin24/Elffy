@@ -28,12 +28,12 @@ namespace Elffy.Framing
 
         #region public Method
         /// <summary>指定した時間だけ、指定した処理を毎フレーム実行します</summary>
-        /// <param name="time">実行時間(ms)</param>
+        /// <param name="time">実行時間</param>
         /// <param name="behavior">実行する処理</param>
         /// <returns>一連のフレームプロセスの流れを表す <see cref="FrameProcess"/> オブジェクト</returns>
-        public static FrameProcess Begin(int time, FrameProcessBehavior behavior)
+        public static FrameProcess Begin(TimeSpan time, FrameProcessBehavior behavior)
         {
-            if(time <= 0) { throw new ArgumentException($"{nameof(time)} must be bigger than 1."); }
+            if(time <= TimeSpan.Zero) { throw new ArgumentException($"{nameof(time)} is 0 or negative."); }
             if(behavior == null) { throw new ArgumentNullException(nameof(behavior)); }
             var frameProcess = new FrameProcess();
             frameProcess.ProcessObj.Activate(TARGET_LAYER);
@@ -54,11 +54,11 @@ namespace Elffy.Framing
         }
 
         /// <summary>指定した時間、フレームプロセスを停止します</summary>
-        /// <param name="time">停止時間(ms)</param>
+        /// <param name="time">停止時間</param>
         /// <returns>一連のフレームプロセスの流れを表す <see cref="FrameProcess"/> オブジェクト</returns>
-        public static FrameProcess Wait(int time)
+        public static FrameProcess Wait(TimeSpan time)
         {
-            if(time < 0) { throw new ArgumentException($"Time must be bigger than 0."); }
+            if(time < TimeSpan.Zero) { throw new ArgumentException($"{nameof(time)} is 0 or negative."); }
             var frameProcess = new FrameProcess();
             frameProcess.ProcessObj.Activate(TARGET_LAYER);
             frameProcess.ProcessObj.AddBehavior(time, WAIT_BEHAVIOR);
@@ -99,12 +99,12 @@ namespace Elffy.Framing
     {
         /// <summary>指定した時間だけ、指定した処理を毎フレーム実行します</summary>
         /// <param name="frameProcess">動作を追加するフレームプロセス</param>
-        /// <param name="time">実行時間(ms)</param>
+        /// <param name="time">実行時間</param>
         /// <param name="behavior">実行する処理</param>
         /// <returns>一連のフレームプロセスの流れを表す <see cref="FrameProcess"/> オブジェクト</returns>
-        public static FrameProcess Begin(this FrameProcess frameProcess, int time, FrameProcessBehavior behavior)
+        public static FrameProcess Begin(this FrameProcess frameProcess, TimeSpan time, FrameProcessBehavior behavior)
         {
-            if(time <= 0) { throw new ArgumentException($"{nameof(time)} must be bigger than 1."); }
+            if(time <= TimeSpan.Zero) { throw new ArgumentException($"{nameof(time)} is 0 or negative."); }
             if(behavior == null) { throw new ArgumentNullException(nameof(behavior)); }
             if(!frameProcess.ProcessObj.IsActivated) { frameProcess.ProcessObj.Activate(FrameProcess.TARGET_LAYER); }
             frameProcess.ProcessObj.AddBehavior(time, behavior);
@@ -125,11 +125,11 @@ namespace Elffy.Framing
 
         /// <summary>指定した時間、フレームプロセスを停止します</summary>
         /// <param name="frameProcess">動作を追加するフレームプロセス</param>
-        /// <param name="time">停止時間(ms)</param>
+        /// <param name="time">停止時間</param>
         /// <returns>一連のフレームプロセスの流れを表す <see cref="FrameProcess"/> オブジェクト</returns>
-        public static FrameProcess Wait(this FrameProcess frameProcess, int time)
+        public static FrameProcess Wait(this FrameProcess frameProcess, TimeSpan time)
         {
-            if(time < 0) { throw new ArgumentException($"Time must be bigger than 0."); }
+            if(time < TimeSpan.Zero) { throw new ArgumentException($"{time} is 0 or negative."); }
             if(!frameProcess.ProcessObj.IsActivated) { frameProcess.ProcessObj.Activate(FrameProcess.TARGET_LAYER); }
             frameProcess.ProcessObj.AddBehavior(time, FrameProcess.WAIT_BEHAVIOR);
             return frameProcess;

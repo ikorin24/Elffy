@@ -11,6 +11,7 @@ using Elffy.UI;
 using Elffy.Framing;
 using OpenTK;
 using Elffy.Input;
+using Elffy.Mathmatics;
 
 namespace ElffyGame
 {
@@ -49,8 +50,8 @@ namespace ElffyGame
         {
             var cube = new Cube();
             cube.Texture = new Texture("cube.png");
-            cube.Position = new Vector3(0, 0, 0);
-            cube.Activate(Game.Layers.WorldLayer);
+            cube.Position = new Vector3(10, 0, 0);
+            //cube.Activate(Game.Layers.WorldLayer);
 
             FrameProcess.WhileTrue(process =>
             {
@@ -69,12 +70,37 @@ namespace ElffyGame
             b2.Position = new Vector2(100, 100);
             Game.UIRoot.Children.Add(b2);
 
-            FrameProcess.Begin(2000, process =>
+            FrameProcess.Begin(TimeSpan.FromSeconds(2), process =>
             {
                 b2.Position += new Vector2(1, 1);
             });
 
             //FrameProcess.WhileTrue(process => System.Diagnostics.Debug.WriteLine($"{Game.Mouse.Position}, {Game.Mouse.OnScreen}"));
+
+            var cubes = Enumerable.Range(0, 90).Select(i => new Cube() { Texture = cube.Texture }).ToArray();
+            for(int i = 0; i < cubes.Length; i++) {
+                cubes[i].Position = new Vector3(1, 0.1f, 0);
+                cubes[i].Rotate(Vector3.UnitY, 8f.ToRadian());
+                cubes[i].Activate(Game.Layers.WorldLayer);
+            }
+
+            for(int i = 0; i < cubes.Length; i++) {
+                if(i == 0) {
+                    cube.Children.Add(cubes[i]);
+                }
+                else {
+                    cubes[i - 1].Children.Add(cubes[i]);
+                }
+                if(i == cubes.Length - 1) {
+                    cubes[i].Rotate(Vector3.UnitX, 45f.ToRadian());
+                }
+            }
+
+            cube.Activate(Game.Layers.WorldLayer);
+
+            var camera = Game.Camera;
+            camera.Position = new Vector3(30, 30, 30);
+            camera.Direction = -camera.Position;
         }
     }
 }

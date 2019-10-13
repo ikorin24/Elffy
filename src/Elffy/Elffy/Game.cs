@@ -41,11 +41,12 @@ namespace Elffy
         private static Game _instance;
         /// <summary>ゲームが起動しているかどうかを取得します</summary>
         public static bool IsRunning => _instance != null;
+        /// <summary>UI を構成する <see cref="UIBase"/> のルートオブジェクト</summary>
         public static IUIRoot UIRoot => Instance._gameScreen.UIRoot;
 
         /// <summary>ゲームの描画領域のピクセルサイズ</summary>
         public static Size GameScreenSize => Instance._gameScreen.ClientSize;
-
+        /// <summary><see cref="FrameObject"/> を格納するレイヤーを取得します</summary>
         public static LayerCollection Layers => Instance._gameScreen.Layers;
 
         /// <summary>マウスを取得します</summary>
@@ -54,12 +55,27 @@ namespace Elffy
         /// <summary>カメラを取得します</summary>
         public static Camera Camera => Instance._gameScreen.Camera;
 
-        /// <summary>現在のフレームがゲーム開始から何フレーム目かを取得します(Rendering Frame)</summary>
-        public static long CurrentFrame { get; internal set; }
-        //public static float RenderDelta => (float?)Instance?._window?.RenderPeriod * 1000 ?? throw NewGameNotRunningException();
-        public static float RenderDelta => throw new NotImplementedException();     // TODO: 実装
-        public static long CurrentFrameTime { get; private set; }
-        public static long CurrentTime => Instance._watch.ElapsedMilliseconds;
+        /// <summary>現在のフレームがゲーム開始から何フレーム目かを取得します</summary>
+        public static long FrameNum { get; internal set; }
+
+        /// <summary>フレームの間隔</summary>
+        public static TimeSpan FrameDelta
+        {
+            get => _frameDelta;
+            set
+            {
+                if(value <= TimeSpan.Zero) { throw new ArgumentOutOfRangeException("value is 0 or negative."); }
+                _frameDelta = value;
+                if(IsRunning) {
+                    _instance._gameScreen.TargetRenderPeriod = value.TotalSeconds;
+                }
+            }
+        }
+        private static TimeSpan _frameDelta = TimeSpan.FromSeconds(1d / 60d);
+        /// <summary>ゲームが始まってから現在のフレームまでの時間</summary>
+        public static TimeSpan Time { get; private set; }
+        /// <summary>ゲームが始まってからの実時間</summary>
+        public static TimeSpan RealTime => Instance._watch.Elapsed;
 
         #region event Initialized
         /// <summary>ゲーム初期化後に呼ばれるイベント</summary>
@@ -147,21 +163,26 @@ namespace Elffy
             Dispatcher.SetMainThreadID();
             try {
                 _instance = new Game();
+                IScreenHost gameScreen;
                 switch(Platform.PlatformType) {
                     case PlatformType.Windows:
                     case PlatformType.MacOSX:
                     case PlatformType.Unix:
-                        _instance._gameScreen = GetWindowGameScreen(width, height, title, windowStyle, iconResourcePath);
+                        gameScreen = GetWindowGameScreen(width, height, title, windowStyle, iconResourcePath);
                         break;
                     case PlatformType.Android:
                     case PlatformType.Other:
                     default:
                         throw Platform.NewPlatformNotSupportedException();
                 }
+                gameScreen.TargetRenderPeriod = FrameDelta.TotalSeconds;
+                gameScreen.Rendering += OnScreenRendering;
+                gameScreen.Rendered += OnScreenRendered;
                 foreach(var handler in _temporaryInitializedHandlers) {
-                    _instance._gameScreen.Initialized += handler;
+                    gameScreen.Initialized += handler;
                 }
                 _temporaryInitializedHandlers.Clear();
+                _instance._gameScreen = gameScreen;
                 _instance._gameScreen.Run();
             }
             finally {
@@ -178,8 +199,6 @@ namespace Elffy
         /// <param name="e"></param>
         private static void OnScreenRendering(object sender, EventArgs e)
         {
-            CurrentFrameTime = Instance._watch.ElapsedMilliseconds;
-            //FPSManager.Aggregate(e.Time);
             if(!Instance._watch.IsRunning) {
                 Instance._watch.Start();
             }
@@ -193,7 +212,8 @@ namespace Elffy
         private static void OnScreenRendered(object sender, EventArgs e)
         {
             DebugManager.Next();
-            CurrentFrame++;
+            Time += FrameDelta;
+            FrameNum++;
         }
         #endregion
 
@@ -217,8 +237,6 @@ namespace Elffy
             }
             window.Title = title;
             window.ClientSize = new Size(width, height);
-            window.Rendering += OnScreenRendering;
-            window.Rendered += OnScreenRendered;
             return window;
         }
         #endregion
