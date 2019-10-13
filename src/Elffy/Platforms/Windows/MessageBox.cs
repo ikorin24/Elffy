@@ -1,21 +1,51 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Elffy.Platforms.Windows
 {
+    /// <summary>Windows のメッセージボックスを扱うクラスです</summary>
     public static class MessageBox
     {
+        /// <summary>メッセージボックスを表示します</summary>
+        /// <param name="text">表示するテキスト</param>
+        /// <returns>メッセージボックスの結果</returns>
+        public static MessageBoxResult Show(string text)
+        {
+            if(Platform.PlatformType != PlatformType.Windows) { throw Platform.NewPlatformNotSupportedException(); }
+            return (MessageBoxResult)WinMessageBox(IntPtr.Zero, text, "", 0);
+        }
+
+        /// <summary>メッセージボックスを表示します</summary>
+        /// <param name="text">表示するテキスト</param>
+        /// <param name="caption">メッセージボックスのキャプション</param>
+        /// <returns>メッセージボックスの結果</returns>
+        public static MessageBoxResult Show(string text, string caption)
+        {
+            if(Platform.PlatformType != PlatformType.Windows) { throw Platform.NewPlatformNotSupportedException(); }
+            return (MessageBoxResult)WinMessageBox(IntPtr.Zero, text, caption ?? "", 0);
+        }
+
+        /// <summary>メッセージボックスを表示します</summary>
+        /// <param name="text">表示するテキスト</param>
+        /// <param name="caption">メッセージボックスのキャプション</param>
+        /// <param name="type">メッセージボックスのタイプ</param>
+        /// <returns>メッセージボックスの結果</returns>
+        public static MessageBoxResult Show(string text, string caption, MessageBoxType type)
+        {
+            if(Platform.PlatformType != PlatformType.Windows) { throw Platform.NewPlatformNotSupportedException(); }
+            return (MessageBoxResult)WinMessageBox(IntPtr.Zero, text, caption ?? "", (int)type);
+        }
+
+        /// <summary>メッセージボックスを表示します</summary>
+        /// <param name="text">表示するテキスト</param>
+        /// <param name="caption">メッセージボックスのキャプション</param>
+        /// <param name="type">メッセージボックスのタイプ</param>
+        /// <param name="icon">メッセージボックスのアイコン</param>
+        /// <returns>メッセージボックスの結果</returns>
         public static MessageBoxResult Show(string text, string caption, MessageBoxType type, MessageBoxIcon icon)
         {
-            if(Platform.PlatformType == PlatformType.Windows) {
-                var result = WinMessageBox(IntPtr.Zero, text, caption, (int)type + (int)icon);
-                return (MessageBoxResult)result;
-            }
-            else { throw Platform.NewPlatformNotSupportedException(); }
+            if(Platform.PlatformType != PlatformType.Windows) { throw Platform.NewPlatformNotSupportedException(); }
+            return (MessageBoxResult)WinMessageBox(IntPtr.Zero, text, caption, (int)type + (int)icon);
         }
 
         [DllImport("user32.dll", EntryPoint = "MessageBox", CharSet = CharSet.Unicode)]
