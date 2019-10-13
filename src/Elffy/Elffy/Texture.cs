@@ -29,20 +29,34 @@ namespace Elffy
         internal Texture(int width, int height)
         {
             Dispatcher.ThrowIfNotMainThread();
-            _texture = GL.GenTexture();                     // テクスチャ用バッファを確保
-            var pixels = new UnmanagedArray<byte>(width * height * 4);
-            for(int i = 0; i < pixels.Length; i++) {
-                pixels[i] = 0xFF;
+            try {
+                using(var pixels = new UnmanagedArray<byte>(width * height * 4)) {
+                    for(int i = 0; i < pixels.Length; i++) {
+                        pixels[i] = 0xFF;
+                    }
+                    _texture = GL.GenTexture();                     // テクスチャ用バッファを確保
+                    SetTexture(TextureExpansionMode.Bilinear, TextureExpansionMode.Bilinear, pixels.Ptr, width, height);
+                }
             }
-            SetTexture(TextureExpansionMode.Bilinear, TextureExpansionMode.Bilinear, pixels.Ptr, width, height);
+            catch(Exception ex) {
+                GL.DeleteTexture(_texture);
+                throw ex;
+            }
         }
 
         public Texture(string resource)
         {
             Dispatcher.ThrowIfNotMainThread();
-            var pixels = LoadFromResource(resource, out var width, out var height);
-            _texture = GL.GenTexture();                             // テクスチャ用バッファを確保
-            SetTexture(TextureExpansionMode.Bilinear, TextureExpansionMode.Bilinear, pixels.Ptr, width, height);
+            try {
+                using(var pixels = LoadFromResource(resource, out var width, out var height)) {
+                    _texture = GL.GenTexture();                             // テクスチャ用バッファを確保
+                    SetTexture(TextureExpansionMode.Bilinear, TextureExpansionMode.Bilinear, pixels.Ptr, width, height);
+                }
+            }
+            catch(Exception ex) {
+                GL.DeleteTexture(_texture);
+                throw ex;
+            }
         }
         #endregion
 
