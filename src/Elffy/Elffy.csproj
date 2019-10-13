@@ -119,7 +119,7 @@
     <Compile Include="Threading\ElffySynchronizationContext.cs" />
     <Compile Include="Threading\Dispatcher.cs" />
     <Compile Include="UI\Button.cs" />
-    <Compile Include="UI\Canvas.cs" />
+    <Compile Include="Shape\Canvas.cs" />
     <Compile Include="Shape\Plain.cs" />
     <Compile Include="UI\Executable.cs" />
     <Compile Include="UI\IUIRenderable.cs" />

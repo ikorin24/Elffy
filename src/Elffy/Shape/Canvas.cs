@@ -11,10 +11,9 @@ using Elffy.Core;
 using OpenTK;
 using OpenTK.Graphics;
 using System.Runtime.InteropServices;
-using Elffy.Shape;
 using Elffy.Effective;
 
-namespace Elffy.UI
+namespace Elffy.Shape
 {
     public class Canvas : Plain, IDisposable
     {
