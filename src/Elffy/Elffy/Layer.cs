@@ -37,7 +37,7 @@ namespace Elffy
             GL.MatrixMode(MatrixMode.Modelview);
             GL.LoadMatrix(ref view);
             // TODO: OpenGL の行列スタックの深さを確認
-            foreach(var renderable in Renderables.Where(x => x.IsVisible)) {
+            foreach(var renderable in Renderables.Where(x => x.IsRoot && x.IsVisible)) {
                 GL.PushMatrix();
                 renderable.Render();
                 GL.PopMatrix();
