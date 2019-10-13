@@ -37,9 +37,8 @@ namespace Elffy
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadMatrix(ref projection);
             GL.MatrixMode(MatrixMode.Modelview);
-            GL.LoadMatrix(ref view);
-
             foreach(var renderable in Renderables.Where(x => x.IsRoot && x.IsVisible)) {
+                GL.LoadMatrix(ref view);
                 renderable.Render();
             }
         }
