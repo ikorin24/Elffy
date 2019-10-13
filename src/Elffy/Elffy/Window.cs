@@ -23,7 +23,11 @@ namespace Elffy
         /// <summary>このウィンドウのレイヤー</summary>
         public LayerCollection Layers => _renderingArea.Layers;
 
-        public Mouse Mouse { get; private set; } = new Mouse();
+        /// <summary>マウスを取得します</summary>
+        public Mouse Mouse { get; } = new Mouse();
+
+        /// <summary>カメラを取得します</summary>
+        public Camera Camera { get; } = new Camera();
 
         /// <summary>初期化時イベント</summary>
         public event EventHandler Initialized;
@@ -67,6 +71,7 @@ namespace Elffy
             Dispatcher.ThrowIfNotMainThread();
             base.OnResize(e);
             _renderingArea.Size = ClientSize;
+            Camera.ChangeScreenSize(ClientSize.Width, ClientSize.Height);
         }
 
         protected override void OnRenderFrame(OpenTK.FrameEventArgs e)
@@ -74,7 +79,8 @@ namespace Elffy
             base.OnRenderFrame(e);
             Input.Input.Update();
             Rendering?.Invoke(this, EventArgs.Empty);
-            _renderingArea.RenderFrame();
+            var camera = Camera;
+            _renderingArea.RenderFrame(camera.Projection, camera.View);
             Rendered?.Invoke(this, EventArgs.Empty);
             SwapBuffers();
         }

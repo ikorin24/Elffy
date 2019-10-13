@@ -21,7 +21,7 @@ namespace ElffyGame
             try {
                 //Game.Initialize += GameStartUp.Initialize;
                 Game.Initialized += (sender, e) => { Scenario.Start(new StartScenario()); };
-                Game.Run(800, 450, "Game", WindowStyle.FixedWindow, "icon.ico");
+                Game.Run(800, 450, "Game", WindowStyle.Default, "icon.ico");
             }
             catch(Exception) {
                 MessageBox.Show("Fatal Error (CODE : 0)", "Error", MessageBoxType.Ok, MessageBoxIcon.Error);

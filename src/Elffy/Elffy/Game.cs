@@ -51,6 +51,9 @@ namespace Elffy
         /// <summary>マウスを取得します</summary>
         public static Mouse Mouse => Instance._gameScreen.Mouse;
 
+        /// <summary>カメラを取得します</summary>
+        public static Camera Camera => Instance._gameScreen.Camera;
+
         /// <summary>現在のフレームがゲーム開始から何フレーム目かを取得します(Rendering Frame)</summary>
         public static long CurrentFrame { get; internal set; }
         //public static float RenderDelta => (float?)Instance?._window?.RenderPeriod * 1000 ?? throw NewGameNotRunningException();

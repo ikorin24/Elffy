@@ -95,7 +95,9 @@ namespace Elffy.Core
 
         #region RenderFrame
         /// <summary>フレームを更新して描画します</summary>
-        public void RenderFrame()
+        /// <param name="projection">投影行列</param>
+        /// <param name="view">カメラ行列</param>
+        public void RenderFrame(Matrix4 projection, Matrix4 view)
         {
             // レイヤー更新
             foreach(var layer in Layers.GetAllLayer()) {
@@ -116,7 +118,7 @@ namespace Elffy.Core
                     layer.Render(_uiProjection);
                 }
                 else {
-                    layer.Render(Camera.Current.Projection, Camera.Current.Matrix);
+                    layer.Render(projection, view);
                 }
             }
 

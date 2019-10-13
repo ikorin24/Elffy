@@ -11,15 +11,7 @@ namespace Elffy
     public class Camera
     {
         private const float NEAR = 0.3f;
-
-        #region Current
-        public static Camera Current
-        {
-            get => _current;
-            set { _current = value ?? throw new ArgumentNullException(); }
-        }
-        private static Camera _current = new Camera();
-        #endregion
+        private float _aspect = 1f;
 
         #region Position
         public Vector3 Position
@@ -72,7 +64,7 @@ namespace Elffy
                 _fovy = value;
                 var radian = _fovy / 180f * (float)Math.PI;
                 if(radian <= 0 || radian > Math.PI) { throw new ArgumentException("Value must be 0 ~ 180. (not include 0)"); }
-                SetProjection(radian, _far);
+                SetProjection(radian, _far, _aspect);
             }
         }
         private float _fovy = 25;
@@ -87,35 +79,46 @@ namespace Elffy
                 if(value <= NEAR) { throw new ArgumentException("Value must be bigger than 0. (or value is too small.)"); }
                 _far = value;
                 var radian = _fovy / 180f * (float)Math.PI;
-                SetProjection(radian, _far);
+                SetProjection(radian, _far, _aspect);
             }
         }
         private float _far = 2000f;
         #endregion
 
         #region internal Property
-        internal Matrix4 Matrix { get; private set; } = Matrix4.Identity;
+        internal Matrix4 View { get; private set; } = Matrix4.Identity;
 
         internal Matrix4 Projection { get; private set; } = Matrix4.Identity;
         #endregion
 
         #region コンストラクタ
-        public Camera()
+        internal Camera()
         {
-            SetProjection(_fovy / 180f * (float)Math.PI, _far);
+            SetProjection(_fovy / 180f * (float)Math.PI, _far, _aspect);
             SetMatrix(_position, _direction, _up);
         }
         #endregion
 
+        /// <summary>描画先のサイズを変更します。<see cref="Projection"/> が変更されます</summary>
+        /// <param name="width">幅</param>
+        /// <param name="height">高さ</param>
+        internal void ChangeScreenSize(int width, int height)
+        {
+            if(width < 0) { throw new ArgumentOutOfRangeException(nameof(width), width, "value is negative."); }
+            if(height < 0) { throw new ArgumentOutOfRangeException(nameof(height), height, "value is negative"); }
+            _aspect = (float)width / height;
+            SetProjection(_fovy / 180f * (float)Math.PI, _far, _aspect);
+        }
+
         #region private Method
         private void SetMatrix(Vector3 pos, Vector3 dir, Vector3 up)
         {
-            Matrix = Matrix4.LookAt(pos, pos + dir, up);
+            View = Matrix4.LookAt(pos, pos + dir, up);
         }
 
-        private void SetProjection(float radian, float far)
+        private void SetProjection(float radian, float far, float aspect)
         {
-            Projection = Matrix4.CreatePerspectiveFieldOfView(radian, (float)Game.GameScreenSize.Width / Game.GameScreenSize.Height, NEAR, far);
+            Projection = Matrix4.CreatePerspectiveFieldOfView(radian, aspect, NEAR, far);
         }
         #endregion
     }

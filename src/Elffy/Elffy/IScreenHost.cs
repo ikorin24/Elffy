@@ -13,8 +13,10 @@ namespace Elffy
     /// <summary>プラットフォームごとの画面を抽象化するためのインターフェース</summary>
     internal interface IScreenHost : IDisposable
     {
+        /// <summary>マウスを取得します</summary>
         Mouse Mouse { get; }
-
+        /// <summary>カメラを取得します</summary>
+        Camera Camera { get; }
         /// <summary>垂直同期モード</summary>
         VSyncMode VSync { get; set; }
         /// <summary>レンダリングのリフレッシュレート [Hz]</summary>

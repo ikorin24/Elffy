@@ -74,7 +74,7 @@ namespace ElffyGame
                 b2.Position += new Vector2(1, 1);
             });
 
-            FrameProcess.WhileTrue(process => System.Diagnostics.Debug.WriteLine($"{Game.Mouse.Position}, {Game.Mouse.OnScreen}"));
+            //FrameProcess.WhileTrue(process => System.Diagnostics.Debug.WriteLine($"{Game.Mouse.Position}, {Game.Mouse.OnScreen}"));
         }
     }
 }

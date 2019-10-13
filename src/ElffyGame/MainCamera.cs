@@ -17,7 +17,7 @@ namespace ElffyGame
 
         static MainCamera()
         {
-            _camera = Camera.Current;
+            _camera = Game.Camera;
         }
 
         public static void Init()
