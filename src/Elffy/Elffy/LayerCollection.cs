@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,6 +10,8 @@ using Elffy.Core;
 namespace Elffy
 {
     /// <summary><see cref="Layer"/>のリストを表すクラスです。</summary>
+    [DebuggerTypeProxy(typeof(LayerCollectionDebuggerTypeProxy))]
+    [DebuggerDisplay("LayerCollection (Count = {Count})")]
     public class LayerCollection : IList<Layer>, IReadOnlyList<Layer>, IReadOnlyCollection<Layer>, ICollection<Layer>, IEnumerable<Layer>, IEnumerable
     {
         private const string UI_LAYER_NAME = "UILayer";
@@ -146,4 +149,25 @@ namespace Elffy
             _list.Add(WorldLayer);
         }
     }
+
+    #region class LayerCollectionDebuggerTypeProxy
+    internal class LayerCollectionDebuggerTypeProxy
+    {
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private LayerCollection _entity;
+
+        [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+        public Layer[] Layers
+        {
+            get
+            {
+                var layers = new Layer[_entity.Count];
+                _entity.CopyTo(layers, 0);
+                return layers;
+            }
+        }
+
+        public LayerCollectionDebuggerTypeProxy(LayerCollection entity) => _entity = entity;
+    }
+    #endregion class LayerCollectionDebuggerTypeProxy<T>
 }

@@ -28,6 +28,8 @@ namespace Elffy.Core
         #region Property
         /// <summary>現在生きている全オブジェクトを取得します</summary>
         protected IEnumerable<FrameObject> List => _list;
+        /// <summary>現在生きている全オブジェクトの数を取得します</summary>
+        protected int ObjectCount => _list.Count;
 
         /// <summary>現在のフレームで追加されたオブジェクトを取得します</summary>
         protected IEnumerable<FrameObject> Added => _addedBuf;

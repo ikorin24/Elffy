@@ -6,10 +6,12 @@ using System.Text;
 using System.Threading.Tasks;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
+using System.Diagnostics;
 
 namespace Elffy
 {
     /// <summary><see cref="FrameObject"/> のレイヤークラス</summary>
+    [DebuggerDisplay("Layer: {Name} (ObjectCount = {ObjectCount})", Type = nameof(Layer), TargetTypeName = nameof(Layer))]
     public class Layer : LayerBase
     {
         /// <summary>このレイヤーのライティングを有効にするかどうか</summary>
