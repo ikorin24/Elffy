@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Elffy.Core;
 using OpenTK;
+using Elffy.Mathmatics;
 
 namespace Elffy
 {
@@ -55,19 +56,18 @@ namespace Elffy
         #endregion
 
         #region Fovy
-        /// <summary>Y方向視野角(度)[0 ~ 180]</summary>
+        /// <summary>Y方向視野角(ラジアン)[0 ~ π]</summary>
         public float Fovy
         {
             get { return _fovy; }
             set
             {
+                if(value <= 0 || value > MathTool.Pi) { throw new ArgumentException("Value must be 0 ~ π. (not include 0)"); }
                 _fovy = value;
-                var radian = _fovy / 180f * (float)Math.PI;
-                if(radian <= 0 || radian > Math.PI) { throw new ArgumentException("Value must be 0 ~ 180. (not include 0)"); }
-                SetProjection(radian, _far, _aspect);
+                SetProjection(_fovy, _far, _aspect);
             }
         }
-        private float _fovy = 25;
+        private float _fovy = 25f.ToRadian();
         #endregion
 
         #region Far
@@ -78,8 +78,7 @@ namespace Elffy
             {
                 if(value <= NEAR) { throw new ArgumentException("Value must be bigger than 0. (or value is too small.)"); }
                 _far = value;
-                var radian = _fovy / 180f * (float)Math.PI;
-                SetProjection(radian, _far, _aspect);
+                SetProjection(_fovy, _far, _aspect);
             }
         }
         private float _far = 2000f;
@@ -94,7 +93,7 @@ namespace Elffy
         #region コンストラクタ
         internal Camera()
         {
-            SetProjection(_fovy / 180f * (float)Math.PI, _far, _aspect);
+            SetProjection(_fovy, _far, _aspect);
             SetMatrix(_position, _direction, _up);
         }
         #endregion
@@ -107,7 +106,7 @@ namespace Elffy
             if(width < 0) { throw new ArgumentOutOfRangeException(nameof(width), width, "value is negative."); }
             if(height < 0) { throw new ArgumentOutOfRangeException(nameof(height), height, "value is negative"); }
             _aspect = (float)width / height;
-            SetProjection(_fovy / 180f * (float)Math.PI, _far, _aspect);
+            SetProjection(_fovy, _far, _aspect);
         }
 
         #region private Method
