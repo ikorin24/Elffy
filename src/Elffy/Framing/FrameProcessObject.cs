@@ -85,18 +85,6 @@ namespace Elffy.Framing
                 return;
             }
             // 寿命が終了 or 継続条件がfalse なら次の動きに遷移。次がなければ終了。
-            //if((_info.Mode == FrameProcessEndMode.LifeSpen && (Game.Time - _firstFrameTime) >= _info.LifeSpan) ||
-            //   (_info.Mode == FrameProcessEndMode.Condition && !_info.Condition())) {
-            //    if(_behaviorQueue.Count == 0) {
-            //        _currentBehavior = null;
-            //        Destroy();
-            //        return;
-            //    }
-            //    else {
-            //        SetNextBehavior();
-            //    }
-            //}
-
             while(true){
                 bool end;
                 switch(_info.Mode) {
