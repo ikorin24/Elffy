@@ -12,6 +12,9 @@ namespace Elffy.Framing
         /// <summary>現在の <see cref="FrameProcessBehavior"/> の寿命</summary>
         public TimeSpan LifeSpan { get; internal set; }
 
+        /// <summary>現在の <see cref="FrameProcessBehavior"/> の寿命フレーム</summary>
+        public int FrameSpan { get; internal set; }
+
         /// <summary>現在の <see cref="FrameProcessBehavior"/> が始まってからのフレーム数</summary>
         public int FrameNum { get; internal set; }
 

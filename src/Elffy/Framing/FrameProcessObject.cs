@@ -60,8 +60,8 @@ namespace Elffy.Framing
         /// <param name="behavior">処理</param>
         public void AddBehavior(FrameProcessBehavior behavior)
         {
-            const int lifespan = 1;     // 寿命は1フレーム
-            _behaviorQueue.Enqueue(new BehaviorQueueObject(behavior, lifespan));
+            const int frameSpan = 1;     // 寿命は1フレーム
+            _behaviorQueue.Enqueue(new BehaviorQueueObject(behavior, frameSpan));
             if(_currentBehavior == null) {
                 SetNextBehavior();
             }
@@ -107,7 +107,7 @@ namespace Elffy.Framing
                         end = !_info.Condition();
                         break;
                     case FrameProcessEndMode.FrameSpan:
-                        end = true;
+                        end = _info.FrameNum >= _info.FrameSpan;
                         break;
                     default:
                         end = true;
@@ -143,6 +143,7 @@ namespace Elffy.Framing
             _currentBehavior = tmp.Behavior;
             _info.Condition = tmp.Condition;
             _info.LifeSpan = tmp.LifeSpan;
+            _info.FrameSpan = tmp.FrameSpan;
             _info.Mode = tmp.Mode;
             _info.FrameNum = 0;
             _isFirstFrame = true;
