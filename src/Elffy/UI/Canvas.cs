@@ -85,7 +85,7 @@ namespace Elffy.UI
             }
             Texture.ReverseYAxis(data.Scan0, _bmp.Width, _bmp.Height, _buf);    // 上下反転
             _bmp.UnlockBits(data);
-            Texture.UpdateTexture(_buf.Ptr, new Rectangle(0, 0, _bmp.Width, _bmp.Height));
+            Texture.UpdateTexture(_buf.Ptr, new Rectangle(0, 0, _bmp.Width, _bmp.Height));      // TODO: 差分更新
             _dirtyRegion = Rectangle.Empty;
         }
 
