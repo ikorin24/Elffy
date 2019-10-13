@@ -201,7 +201,6 @@ namespace Elffy
         private static IScreenHost GetWindowGameScreen(int width, int height, string title, WindowStyle windowStyle, string iconResourcePath)
         {
             var window = new Window(windowStyle);
-            Instance._gameScreen = window;
             if(iconResourcePath != null) {
                 if(Resources.HasResource(iconResourcePath)) {
                     using(var stream = Resources.GetStream(iconResourcePath)) {
