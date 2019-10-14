@@ -130,16 +130,16 @@ namespace Elffy
 
         #region SetTexture
         /// <summary>ミップマップを生成せずに、バッファに Texture を読み込みます</summary>
-        /// <param name="minMode">縮小方法</param>
-        /// <param name="magMode">拡大方法</param>
+        /// <param name="shrinkMode">縮小方法</param>
+        /// <param name="expansionMode">拡大方法</param>
         /// <param name="pixels">テクスチャのピクセル配列</param>
         /// <param name="pixelWidth">テクスチャのピクセル幅</param>
         /// <param name="pixelHeight">テクスチャのピクセル高</param>
-        private void SetTexture(TextureShrinkMode minMode, TextureExpansionMode magMode, IntPtr pixels, int pixelWidth, int pixelHeight)
+        private void SetTexture(TextureShrinkMode shrinkMode, TextureExpansionMode expansionMode, IntPtr pixels, int pixelWidth, int pixelHeight)
         {
             GL.BindTexture(TextureTarget.Texture2D, _texture);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)minMode);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)magMode);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, ShrinkMode(shrinkMode));
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, ExpansionMode(expansionMode));
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, pixelWidth, pixelHeight, 0, _pixelFormat, PixelType.UnsignedByte, pixels);
             GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
             GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);       // バインド解除
