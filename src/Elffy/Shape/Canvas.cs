@@ -19,8 +19,8 @@ namespace Elffy.Shape
     {
         private const int BYTE_PER_PIXEL = 4;
         private Rectangle _dirtyRegion;
-        private Bitmap _bmp;
-        private Graphics _g;
+        private readonly Bitmap _bmp;
+        private readonly Graphics _g;
         private bool _isDisposed;
         private UnmanagedArray<byte> _buf;
 
@@ -32,7 +32,7 @@ namespace Elffy.Shape
         {
             _bmp = new Bitmap(pixelWidth, pixelHeight);
             _g = Graphics.FromImage(_bmp);
-            Texture = new Texture(pixelWidth, pixelHeight);
+            Texture = new Texture(pixelWidth, pixelHeight);     // TODO: インスタンス上書き対策
         }
 
         ~Canvas() => Dispose(false);
@@ -84,7 +84,7 @@ namespace Elffy.Shape
             }
             Texture.ReverseYAxis(data.Scan0, _bmp.Width, _bmp.Height, _buf);    // 上下反転
             _bmp.UnlockBits(data);
-            Texture.UpdateTexture(_buf.Ptr, new Rectangle(0, 0, _bmp.Width, _bmp.Height));      // TODO: 差分更新
+            Texture?.UpdateTexture(_buf.Ptr, new Rectangle(0, 0, _bmp.Width, _bmp.Height));    // TODO: 差分更新
             _dirtyRegion = Rectangle.Empty;
         }
 

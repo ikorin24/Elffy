@@ -1,59 +1,66 @@
-﻿using OpenTK;
-using OpenTK.Graphics;
-using OpenTK.Graphics.OpenGL;
+﻿using OpenTK.Graphics.OpenGL;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Elffy.Core;
 using System.Drawing;
 using Elffy.Threading;
 using Elffy.Effective;
-using System.Runtime.InteropServices;
 
 namespace Elffy
 {
     #region class Texture
+    /// <summary><see cref="Renderable"/> に適用するのテクスチャクラス</summary>
     public sealed class Texture : IDisposable
     {
-        #region private member
         private const int BYTE_PER_PIXEL = 4;
+        /// <summary>ピクセル配列のピクセルの</summary>
         private const PixelFormat PIXEL_FORMAT = PixelFormat.Bgra;
         private bool _disposed;
-        private int _texture;
+        /// <summary>OpenGL の Texture のバッファ識別番号</summary>
+        private int _textureBuffer;
+
+        #region Property
+        /// <summary>テクスチャの縮小モードを取得します</summary>
+        public TextureShrinkMode ShrinkMode { get; }
+
+        /// <summary>テクスチャの拡大モードを取得します</summary>
+        public TextureExpansionMode ExpansionMode { get; }
+        /// <summary>テクスチャのミップマップモードを取得します (ミップマップ不使用の場合は null)</summary>
+        public TextureMipmapMode MipmapMode { get; }
+        /// <summary>テクスチャがミップマップを持っているかどうかを取得します</summary>
+        public bool HasMipmap => MipmapMode != TextureMipmapMode.None;
+        /// <summary>テクスチャのピクセル幅を取得します</summary>
+        public int PixelWidth { get; }
+        /// <summary>テクスチャのピクセル高さを取得します</summary>
+        public int PixelHeight { get; }
         #endregion
 
-        /// <summary>テクスチャの縮小モードを取得します</summary>
-        public TextureShrinkMode ShrinkMode { get; private set; }
-        /// <summary>テクスチャの拡大モードを取得します</summary>
-        public TextureExpansionMode ExpansionMode { get; private set; }
-        /// <summary>テクスチャのミップマップモードを取得します (ミップマップ不使用の場合は null)</summary>
-        public TextureMipmapMode? MipmapMode { get; private set; }
-        /// <summary>テクスチャがミップマップを持っているかどうかを取得します</summary>
-        public bool HasMipmap => MipmapMode != null;
-        /// <summary>テクスチャのピクセル幅を取得します</summary>
-        public int PixelWidth { get; private set; }
-        /// <summary>テクスチャのピクセル高さを取得します</summary>
-        public int PixelHeight { get; private set; }
-
         #region constructor
-        internal Texture(int width, int height)
+        public Texture(int width, int height) : this(width, height, Color.White) { }
+
+        /// <summary>ピクセルサイズを指定して指定色で塗りつぶしたテクスチャを生成します</summary>
+        /// <param name="width">テクスチャのピクセル幅</param>
+        /// <param name="height">テクスチャのピクセル高</param>
+        /// <param name="fill">塗りつぶし色</param>
+        public Texture(int width, int height, Color fill)
         {
             if(width <= 0) { throw new ArgumentOutOfRangeException(nameof(width)); }
             if(height <= 0) { throw new ArgumentOutOfRangeException(nameof(height)); }
             Dispatcher.ThrowIfNotMainThread();
             try {
-                using(var pixels = new UnmanagedArray<byte>(width * height * 4)) {
-                    for(int i = 0; i < pixels.Length; i++) {
-                        pixels[i] = 0xFF;
+                var pixelCount = width * height;
+                using(var pixels = new UnmanagedArray<byte>(pixelCount * BYTE_PER_PIXEL)) {
+                    for(int i = 0; i < pixelCount; i++) {
+                        pixels[i * BYTE_PER_PIXEL + 0] = fill.B;
+                        pixels[i * BYTE_PER_PIXEL + 1] = fill.G;
+                        pixels[i * BYTE_PER_PIXEL + 2] = fill.R;
+                        pixels[i * BYTE_PER_PIXEL + 3] = fill.A;
                     }
-                    _texture = GL.GenTexture();
-                    SetTexture(TextureShrinkMode.Bilinear, TextureExpansionMode.Bilinear, pixels.Ptr, width, height);
+                    _textureBuffer = GL.GenTexture();
+                    SetTexture(TextureShrinkMode.Bilinear, TextureMipmapMode.None, TextureExpansionMode.Bilinear, pixels.Ptr, width, height);
                 }
             }
             catch(Exception ex) {
-                GL.DeleteTexture(_texture);
+                GL.DeleteTexture(_textureBuffer);
                 throw ex;
             }
         }
@@ -61,59 +68,33 @@ namespace Elffy
         /// <summary>リソース名を指定してミップマップありのテクスチャを生成します</summary>
         /// <param name="resource">リソース名</param>
         public Texture(string resource)
-            => Init(resource, TextureShrinkMode.Bilinear, TextureMipmapMode.Bilinear, TextureExpansionMode.Bilinear);
+            : this(resource, TextureShrinkMode.Bilinear, TextureMipmapMode.Bilinear, TextureExpansionMode.Bilinear) { }
 
         /// <summary>リソース名とミップマップの有無を指定してテクスチャを生成します</summary>
         /// <param name="resource">リソース名</param>
         /// <param name="useMipmap">ミップマップを使用するかどうか</param>
         public Texture(string resource, bool useMipmap)
-            => Init(resource, TextureShrinkMode.Bilinear, useMipmap ? TextureMipmapMode.Bilinear : (TextureMipmapMode?)null, TextureExpansionMode.Bilinear);
+            : this(resource, TextureShrinkMode.Bilinear, useMipmap ? TextureMipmapMode.Bilinear : TextureMipmapMode.None, TextureExpansionMode.Bilinear) { }
+
+        /// <summary>リソース名と拡大縮小方法を指定してミップマップなしのテクスチャを生成します</summary>
+        /// <param name="resource">リソース名</param>
+        /// <param name="shrinkMode">縮小方法</param>
+        /// <param name="expansionMode">拡大方法</param>
+        public Texture(string resource, TextureShrinkMode shrinkMode, TextureExpansionMode expansionMode)
+            : this(resource, shrinkMode, TextureMipmapMode.None, expansionMode) { }
 
         /// <summary>リソース名と拡大縮小方法とミップマップのモードを指定してテクスチャを生成します</summary>
         /// <param name="resource">リソース名</param>
         /// <param name="shrinkMode">縮小方法</param>
         /// <param name="mipmapMode">ミップマップのモード</param>
         /// <param name="expansionMode">拡大方法</param>
-        public Texture(string resource, TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode, TextureExpansionMode expansionMode) 
-            => Init(resource, shrinkMode, mipmapMode, expansionMode);
-
-        /// <summary>リソース名と拡大縮小方法を指定してミップマップなしのテクスチャを生成します</summary>
-        /// <param name="resource">リソース名</param>
-        /// <param name="shrinkMode">縮小方法</param>
-        /// <param name="expansionMode">拡大方法</param>
-        public Texture(string resource, TextureShrinkMode shrinkMode, TextureExpansionMode expansionMode) 
-            => Init(resource, shrinkMode, null, expansionMode);
-        #endregion
-
-        ~Texture() => Dispose(false);
-
-        /// <summary>テクスチャの一部を更新します</summary>
-        /// <param name="newPixels">新しいピクセル配列 (テクスチャ全体のピクセル配列)</param>
-        /// <param name="dirtyRegion">変更部分</param>
-        internal void UpdateTexture(IntPtr newPixels, Rectangle dirtyRegion)
-        {
-            GL.BindTexture(TextureTarget.Texture2D, _texture);
-            GL.TexSubImage2D(TextureTarget.Texture2D, 0, dirtyRegion.X, dirtyRegion.Y, dirtyRegion.Width, dirtyRegion.Height, PIXEL_FORMAT, PixelType.UnsignedByte, newPixels);
-            GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);
-        }
-
-        /// <summary>このインスタンスを初期化します</summary>
-        /// <param name="resource">リソース名</param>
-        /// <param name="shrinkMode">縮小モード</param>
-        /// <param name="mipmapMode">ミップマップモード (ミップマップ不使用の場合は null)</param>
-        /// <param name="expansionMode">拡大モード</param>
-        private void Init(string resource, TextureShrinkMode shrinkMode, TextureMipmapMode? mipmapMode, TextureExpansionMode expansionMode)
+        public Texture(string resource, TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode, TextureExpansionMode expansionMode)
         {
             Dispatcher.ThrowIfNotMainThread();
             try {
                 using(var pixels = LoadFromResource(resource, out var width, out var height)) {
-                    _texture = GL.GenTexture();
-                    if(mipmapMode != null) {
-                        SetTexture(shrinkMode, mipmapMode.Value, expansionMode, pixels.Ptr, width, height);
-                    }
-                    else {
-                        SetTexture(shrinkMode, expansionMode, pixels.Ptr, width, height);
-                    }
+                    _textureBuffer = GL.GenTexture();
+                    SetTexture(shrinkMode, mipmapMode, expansionMode, pixels.Ptr, width, height);
                     PixelWidth = width;
                     PixelHeight = height;
                     ShrinkMode = shrinkMode;
@@ -122,21 +103,33 @@ namespace Elffy
                 }
             }
             catch(Exception ex) {
-                GL.DeleteTexture(_texture);
+                GL.DeleteTexture(_textureBuffer);
                 throw ex;
             }
         }
+        #endregion
 
-        #region SwitchBind
+        ~Texture() => Dispose(false);
+
+        /// <summary>テクスチャの一部を更新します</summary>
+        /// <param name="newPixels">新しいピクセル配列 (テクスチャ全体のピクセル配列)</param>
+        /// <param name="dirtyRegion">変更部分</param>
+        public void UpdateTexture(IntPtr newPixels, Rectangle dirtyRegion)
+        {
+            Dispatcher.ThrowIfNotMainThread();
+            GL.BindTexture(TextureTarget.Texture2D, _textureBuffer);
+            GL.TexSubImage2D(TextureTarget.Texture2D, 0, dirtyRegion.X, dirtyRegion.Y, dirtyRegion.Width, dirtyRegion.Height, PIXEL_FORMAT, PixelType.UnsignedByte, newPixels);
+            GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);
+        }
+
         /// <summary>
         /// 現在のOpenGLのTextureをこのインスタンスのテクスチャに切り替えます<para/>
         /// ※ 必要な操作を終えた後、必ず GL.BindTexture(TextureTarget.Texture2D, 0) でバインド解除をしてください。<para/>
         /// </summary>
         internal void SwitchBind()
         {
-            GL.BindTexture(TextureTarget.Texture2D, _texture);
+            GL.BindTexture(TextureTarget.Texture2D, _textureBuffer);
         }
-        #endregion
 
         #region ReverseYAxis
         /// <summary>画像のY軸を反転させます</summary>
@@ -154,23 +147,6 @@ namespace Elffy
         }
         #endregion
 
-        #region SetTexture
-        /// <summary>ミップマップを生成せずに、バッファに Texture を読み込みます</summary>
-        /// <param name="shrinkMode">縮小方法</param>
-        /// <param name="expansionMode">拡大方法</param>
-        /// <param name="pixels">テクスチャのピクセル配列</param>
-        /// <param name="pixelWidth">テクスチャのピクセル幅</param>
-        /// <param name="pixelHeight">テクスチャのピクセル高</param>
-        private void SetTexture(TextureShrinkMode shrinkMode, TextureExpansionMode expansionMode, IntPtr pixels, int pixelWidth, int pixelHeight)
-        {
-            GL.BindTexture(TextureTarget.Texture2D, _texture);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, GetMinParameter(shrinkMode));
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, GetMagParameter(expansionMode));
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, pixelWidth, pixelHeight, 0, PIXEL_FORMAT, PixelType.UnsignedByte, pixels);
-            GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
-            GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);       // バインド解除
-        }
-
         /// <summary>ミップマップを生成して、バッファに Texture を読み込みます</summary>
         /// <param name="shrinkMode">縮小方法</param>
         /// <param name="mipmapMode">ミップマップのモード</param>
@@ -180,14 +156,13 @@ namespace Elffy
         /// <param name="pixelHeight">テクスチャのピクセル高</param>
         private void SetTexture(TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode, TextureExpansionMode expansionMode, IntPtr pixels, int pixelWidth, int pixelHeight)
         {
-            GL.BindTexture(TextureTarget.Texture2D, _texture);
+            GL.BindTexture(TextureTarget.Texture2D, _textureBuffer);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, GetMinParameter(shrinkMode, mipmapMode));
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, GetMagParameter(expansionMode));
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, pixelWidth, pixelHeight, 0, PIXEL_FORMAT, PixelType.UnsignedByte, pixels);
             GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
             GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);       // バインド解除
         }
-        #endregion
 
         #region LoadFromResource
         private UnmanagedArray<byte> LoadFromResource(string resource, out int pixelWidth, out int pixelHeigh)
@@ -222,42 +197,33 @@ namespace Elffy
             }
         }
 
-        /// <summary>OpenGL に設定するテクスチャの縮小のパラメータを取得します</summary>
-        /// <param name="shrinkMode">縮小モード</param>
-        /// <returns>OpenGL に設定するテクスチャの縮小パラメータ</returns>
-        private int GetMinParameter(TextureShrinkMode shrinkMode)
-        {
-            switch(shrinkMode) {
-                case TextureShrinkMode.Bilinear:
-                    return (int)TextureMinFilter.Linear;
-                case TextureShrinkMode.NearestNeighbor:
-                    return (int)TextureMinFilter.Nearest;
-                default:
-                    throw new ArgumentException();
-            }
-        }
-
         /// <summary>OpenGL に設定するテクスチャの縮小とミップマップのパラメータを取得します</summary>
         /// <param name="shrinkMode">縮小のモード</param>
         /// <param name="mipmapMode">ミップマップのモード</param>
         /// <returns>OpenGL に設定するテクスチャの縮小とミップマップのパラメータ</returns>
         private int GetMinParameter(TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode)
         {
-            if(shrinkMode == TextureShrinkMode.Bilinear) {
-                if(mipmapMode == TextureMipmapMode.Bilinear) {
-                    return (int)TextureMinFilter.LinearMipmapLinear;
-                }
-                else if(mipmapMode == TextureMipmapMode.NearestNeighbor) {
-                    return (int)TextureMinFilter.LinearMipmapNearest;
-                }
-            }
-            else if(shrinkMode == TextureShrinkMode.NearestNeighbor) {
-                if(mipmapMode == TextureMipmapMode.Bilinear) {
-                    return (int)TextureMinFilter.NearestMipmapLinear;
-                }
-                else if(mipmapMode == TextureMipmapMode.NearestNeighbor) {
-                    return (int)TextureMinFilter.NearestMipmapNearest;
-                }
+            switch(shrinkMode) {
+                case TextureShrinkMode.Bilinear:
+                    switch(mipmapMode) {
+                        case TextureMipmapMode.None:
+                            return (int)TextureMinFilter.Linear;
+                        case TextureMipmapMode.Bilinear:
+                            return (int)TextureMinFilter.LinearMipmapLinear;
+                        case TextureMipmapMode.NearestNeighbor:
+                            return (int)TextureMinFilter.LinearMipmapNearest;
+                    }
+                    break;
+                case TextureShrinkMode.NearestNeighbor:
+                    switch(mipmapMode) {
+                        case TextureMipmapMode.None:
+                            return (int)TextureMinFilter.Nearest;
+                        case TextureMipmapMode.Bilinear:
+                            return (int)TextureMinFilter.NearestMipmapLinear;
+                        case TextureMipmapMode.NearestNeighbor:
+                            return (int)TextureMinFilter.NearestMipmapNearest;
+                    }
+                    break;
             }
             throw new ArgumentException();
         }
@@ -277,8 +243,8 @@ namespace Elffy
                 }
 
                 // OpenGLのバッファの削除はメインスレッドで行う必要がある
-                var texture = _texture;
-                Dispatcher.Invoke(() => { GL.DeleteTexture(_texture); });
+                var texture = _textureBuffer;
+                Dispatcher.Invoke(() => { GL.DeleteTexture(_textureBuffer); });
                 _disposed = true;
             }
         }
@@ -307,6 +273,8 @@ namespace Elffy
     /// <summary>テクスチャのミップマップモード</summary>
     public enum TextureMipmapMode
     {
+        /// <summary>ミップマップを使用しません</summary>
+        None,
         /// <summary>線形補間</summary>
         Bilinear,
         /// <summary>最近傍補間</summary>
