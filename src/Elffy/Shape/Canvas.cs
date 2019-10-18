@@ -32,7 +32,9 @@ namespace Elffy.Shape
         {
             _bmp = new Bitmap(pixelWidth, pixelHeight);
             _g = Graphics.FromImage(_bmp);
-            Texture = new Texture(pixelWidth, pixelHeight);     // TODO: インスタンス上書き対策
+            var fill = Color.White;
+            _g.Clear(fill);
+            Texture = new Texture(pixelWidth, pixelHeight, fill, TextureShrinkMode.NearestNeighbor, TextureExpansionMode.NearestNeighbor);     // TODO: インスタンス上書き対策
         }
 
         ~Canvas() => Dispose(false);
