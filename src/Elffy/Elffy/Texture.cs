@@ -35,13 +35,24 @@ namespace Elffy
         #endregion
 
         #region constructor
+        /// <summary>ピクセルサイズを指定してテクスチャを生成します</summary>
+        /// <param name="width">テクスチャのピクセル幅</param>
+        /// <param name="height">テクスチャのピクセル高</param>
         public Texture(int width, int height) : this(width, height, Color.White) { }
 
         /// <summary>ピクセルサイズを指定して指定色で塗りつぶしたテクスチャを生成します</summary>
         /// <param name="width">テクスチャのピクセル幅</param>
         /// <param name="height">テクスチャのピクセル高</param>
         /// <param name="fill">塗りつぶし色</param>
-        public Texture(int width, int height, Color fill)
+        public Texture(int width, int height, Color fill) : this(width, height, fill, TextureShrinkMode.Bilinear, TextureExpansionMode.Bilinear) { }
+
+        /// <summary>ピクセルサイズと拡大縮小モードを指定して、指定色で塗りつぶしたテクスチャを生成します。</summary>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        /// <param name="fill"></param>
+        /// <param name="shrinkMode"></param>
+        /// <param name="expansionMode"></param>
+        public Texture(int width, int height, Color fill, TextureShrinkMode shrinkMode, TextureExpansionMode expansionMode)
         {
             if(width <= 0) { throw new ArgumentOutOfRangeException(nameof(width)); }
             if(height <= 0) { throw new ArgumentOutOfRangeException(nameof(height)); }
@@ -56,7 +67,7 @@ namespace Elffy
                         pixels[i * BYTE_PER_PIXEL + 3] = fill.A;
                     }
                     _textureBuffer = GL.GenTexture();
-                    SetTexture(TextureShrinkMode.Bilinear, TextureMipmapMode.None, TextureExpansionMode.Bilinear, pixels.Ptr, width, height);
+                    SetTexture(shrinkMode, TextureMipmapMode.None, expansionMode, pixels.Ptr, width, height);
                 }
             }
             catch(Exception ex) {
