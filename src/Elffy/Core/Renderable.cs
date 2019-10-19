@@ -46,12 +46,12 @@ namespace Elffy.Core
                 if(_enableVertexColor) {
                     GL.BindVertexArray(_vao);
                     GL.EnableClientState(ArrayCap.ColorArray);
-                    GL.BindVertexArray(Consts.NULL);
+                    //GL.BindVertexArray(Consts.NULL);
                 }
                 else {
                     GL.BindVertexArray(_vao);
                     GL.DisableClientState(ArrayCap.ColorArray);
-                    GL.BindVertexArray(Consts.NULL);
+                    //GL.BindVertexArray(Consts.NULL);
                 }
             }
         }
@@ -133,14 +133,14 @@ namespace Elffy.Core
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBuffer);
             int vertexSize = vertexArrayLength * Vertex.Size;
             GL.BufferData(BufferTarget.ArrayBuffer, vertexSize, vertexArray, BufferUsageHint.StaticDraw);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, Consts.NULL);
+            //GL.BindBuffer(BufferTarget.ArrayBuffer, Consts.NULL);
 
             // 頂点indexバッファ(IBO)生成
             _indexBuffer = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBuffer);
             int indexSize = indexArrayLength * sizeof(int);
             GL.BufferData(BufferTarget.ElementArrayBuffer, indexSize, indexArray, BufferUsageHint.StaticDraw);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, Consts.NULL);
+            //GL.BindBuffer(BufferTarget.ElementArrayBuffer, Consts.NULL);
 
             // VAO
             _vao = GL.GenVertexArray();
@@ -151,8 +151,8 @@ namespace Elffy.Core
             GL.EnableClientState(ArrayCap.TextureCoordArray);
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBuffer);
             Vertex.GLSetStructLayout();                          // 頂点構造体のレイアウトを指定
-            GL.BindBuffer(BufferTarget.ArrayBuffer, Consts.NULL);
-            GL.BindVertexArray(Consts.NULL);
+            //GL.BindBuffer(BufferTarget.ArrayBuffer, Consts.NULL);
+            //GL.BindVertexArray(Consts.NULL);
 
             _isLoaded = true;
         }
@@ -172,9 +172,9 @@ namespace Elffy.Core
                 GL.BindVertexArray(_vao);
                 GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBuffer);
                 GL.DrawElements(BeginMode.Triangles, _indexArrayLength, DrawElementsType.UnsignedInt, 0);
-                GL.BindBuffer(BufferTarget.ElementArrayBuffer, Consts.NULL);
-                GL.BindVertexArray(Consts.NULL);
-                GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);   // テクスチャのバインド解除
+                //GL.BindBuffer(BufferTarget.ElementArrayBuffer, Consts.NULL);
+                //GL.BindVertexArray(Consts.NULL);
+                //GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);   // テクスチャのバインド解除
             }
         }
         #endregion

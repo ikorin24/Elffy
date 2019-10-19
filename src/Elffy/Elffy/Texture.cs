@@ -130,7 +130,7 @@ namespace Elffy
             Dispatcher.ThrowIfNotMainThread();
             GL.BindTexture(TextureTarget.Texture2D, _textureBuffer);
             GL.TexSubImage2D(TextureTarget.Texture2D, 0, dirtyRegion.X, dirtyRegion.Y, dirtyRegion.Width, dirtyRegion.Height, PIXEL_FORMAT, PixelType.UnsignedByte, newPixels);
-            GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);
+            //GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);
         }
 
         /// <summary>
@@ -172,7 +172,7 @@ namespace Elffy
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, GetMagParameter(expansionMode));
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, pixelWidth, pixelHeight, 0, PIXEL_FORMAT, PixelType.UnsignedByte, pixels);
             GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
-            GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);       // バインド解除
+            //GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);       // バインド解除
         }
 
         #region LoadFromResource
