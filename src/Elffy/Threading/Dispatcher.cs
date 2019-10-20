@@ -58,11 +58,13 @@ namespace Elffy.Threading
         {
             var count = _invokedActions.Count;
             if(count == 0) { return; }
+            Action[] actions;
             lock(_syncRoot) {
-                foreach(var action in _invokedActions) {
-                    action();
-                }
+                actions = _invokedActions.ToArray();        // TODO: [至急] 省メモリ化
                 _invokedActions.Clear();
+            }
+            foreach(var action in actions) {
+                action();
             }
         }
 
