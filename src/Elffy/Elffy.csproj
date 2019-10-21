@@ -118,6 +118,7 @@
     <Compile Include="Elffy\Texture.cs" />
     <Compile Include="Threading\ElffySynchronizationContext.cs" />
     <Compile Include="Threading\Dispatcher.cs" />
+    <Compile Include="Threading\NonCaptureContextTaskFactory.cs" />
     <Compile Include="UI\Button.cs" />
     <Compile Include="Shape\Canvas.cs" />
     <Compile Include="Shape\Plain.cs" />
