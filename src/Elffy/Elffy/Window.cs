@@ -133,6 +133,8 @@ namespace Elffy
                 layer.ClearFrameObject();
             }
             _renderingArea.Layers.Clear();
+
+            // TODO: 全オブジェクト破棄後に Dispatcher.DoInvokedAction() をする。しかしここに書くべきではない？
         }
     }
 }
