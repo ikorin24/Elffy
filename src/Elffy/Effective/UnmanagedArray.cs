@@ -95,10 +95,13 @@ namespace Elffy.Effective
         public bool IsReadOnly => false;
 
         #region constructor
+        /// <summary>UnmanagedArray Constructor</summary>
+        /// <param name="length">Length of array</param>
         public UnmanagedArray(int length) : this(length, false) { }
 
         /// <summary>UnmanagedArray Constructor</summary>
         /// <param name="length">Length of array</param>
+        /// <param name="threadSafe">Support thread-safe accessing</param>
         public UnmanagedArray(int length, bool threadSafe)
         {
             if(length < 0) { throw new ArgumentException(); }
