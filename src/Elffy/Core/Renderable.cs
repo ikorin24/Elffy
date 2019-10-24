@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using OpenTK.Graphics.OpenGL;
 using System.Runtime.InteropServices;
 using Elffy.Threading;
+using Elffy.Exceptions;
 
 namespace Elffy.Core
 {
@@ -122,8 +123,8 @@ namespace Elffy.Core
         /// <param name="indexArray">頂点インデックス配列</param>
         protected void InitGraphicBuffer(Vertex[] vertexArray, int[] indexArray)
         {
-            if(vertexArray == null) { throw new ArgumentNullException(nameof(vertexArray)); }
-            if(indexArray == null) { throw new ArgumentNullException(nameof(indexArray)); }
+            ExceptionManager.ThrowIfNullArg(vertexArray, nameof(vertexArray));
+            ExceptionManager.ThrowIfNullArg(indexArray, nameof(indexArray));
             Dispatcher.ThrowIfNotMainThread();
             unsafe {
                 fixed(Vertex* vertexPtr = vertexArray)

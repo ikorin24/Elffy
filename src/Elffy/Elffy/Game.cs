@@ -16,6 +16,7 @@ using Elffy.Core.Timer;
 using Elffy.Platforms;
 using OpenTK.Input;
 using Mouse = Elffy.Input.Mouse;
+using Elffy.Exceptions;
 
 namespace Elffy
 {
@@ -64,7 +65,7 @@ namespace Elffy
             get => _frameDelta;
             set
             {
-                if(value <= TimeSpan.Zero) { throw new ArgumentOutOfRangeException("value is 0 or negative."); }
+                ExceptionManager.ThrowIf(value <= TimeSpan.Zero, new ArgumentOutOfRangeException("value is 0 or negative."));
                 _frameDelta = value;
                 if(IsRunning) {
                     _instance._gameScreen.TargetRenderPeriod = value.TotalSeconds;
@@ -107,38 +108,38 @@ namespace Elffy
         #region Run
         /// <summary>ゲームを開始します</summary>
         /// <param name="width">描画領域の幅</param>
-        /// <param name="heigh">描画領域の高さ</param>
+        /// <param name="height">描画領域の高さ</param>
         /// <param name="title">タイトル</param>
         /// <param name="windowStyle">ウィンドウのスタイル (Windowを用いないプラットフォームでは無効)</param>
-        public static void Run(int width, int heigh, string title, WindowStyle windowStyle)
+        public static void Run(int width, int height, string title, WindowStyle windowStyle)
         {
             ThrowIfGameAlreadyRunning();
-            if(width < 0) { throw new ArgumentOutOfRangeException(nameof(width)); }
-            if(heigh < 0) { throw new ArgumentOutOfRangeException(nameof(heigh)); }
+            ExceptionManager.ThrowIf(width < 0, new ArgumentOutOfRangeException(nameof(width)));
+            ExceptionManager.ThrowIf(height < 0, new ArgumentOutOfRangeException(nameof(height)));
             try {
                 Resources.Initialize();
             }
             catch(Exception) { throw; }
-            RunPrivate(width, heigh, title, windowStyle, null);
+            RunPrivate(width, height, title, windowStyle, null);
         }
 
         /// <summary>ゲームを開始します</summary>
         /// <param name="width">描画領域の幅</param>
-        /// <param name="heigh">描画領域の高さ</param>
+        /// <param name="height">描画領域の高さ</param>
         /// <param name="title">タイトル</param>
         /// <param name="windowStyle">ウィンドウのスタイル (Windowを用いないプラットフォームでは無効)</param>
         /// <param name="icon">アイコン</param>
-        public static void Run(int width, int heigh, string title, WindowStyle windowStyle, string icon)
+        public static void Run(int width, int height, string title, WindowStyle windowStyle, string icon)
         {
             ThrowIfGameAlreadyRunning();
-            if(width < 0) { throw new ArgumentOutOfRangeException(nameof(width)); }
-            if(heigh < 0) { throw new ArgumentOutOfRangeException(nameof(heigh)); }
-            if(string.IsNullOrEmpty(icon)) { throw new ArgumentException($"Icon is null or empty"); }
+            ExceptionManager.ThrowIf(width < 0, new ArgumentOutOfRangeException(nameof(width)));
+            ExceptionManager.ThrowIf(height < 0, new ArgumentOutOfRangeException(nameof(height)));
+            ExceptionManager.ThrowIf(string.IsNullOrEmpty(icon), new ArgumentException($"Icon is null or empty"));
             try {
                 Resources.Initialize();
             }
             catch(Exception) { throw; }
-            RunPrivate(width, heigh, title, windowStyle, icon);
+            RunPrivate(width, height, title, windowStyle, icon);
         }
         #endregion Run
 

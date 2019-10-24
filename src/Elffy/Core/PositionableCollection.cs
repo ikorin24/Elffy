@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Elffy.Exceptions;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,8 +23,8 @@ namespace Elffy.Core
             get => _list[index];
             set
             {
-                if(index < 0 || index > _list.Count - 1) { throw new ArgumentOutOfRangeException(nameof(index), index, "value is out of range."); }
-                if(value == null) { throw new ArgumentNullException(nameof(value)); }
+                ExceptionManager.ThrowIf(index < 0 || index > _list.Count - 1, new ArgumentOutOfRangeException(nameof(index), index, "value is out of range."));
+                ExceptionManager.ThrowIfNullArg(value, nameof(value));
                 value.Parent = _owner;
                 _list[index] = value;
             }
@@ -39,7 +40,8 @@ namespace Elffy.Core
         /// <param name="owner">この <see cref="PositionableCollection"/> を持つ <see cref="Positionable"/> オブジェクト</param>
         internal PositionableCollection(Positionable owner)
         {
-            _owner = owner ?? throw new ArgumentNullException(nameof(owner));
+            ExceptionManager.ThrowIfNullArg(owner, nameof(owner));
+            _owner = owner;
             _list = new List<Positionable>();
         }
 
@@ -50,7 +52,7 @@ namespace Elffy.Core
         /// <param name="item">追加する要素</param>
         public void Add(Positionable item)
         {
-            if(item == null) { throw new ArgumentNullException(nameof(item)); }
+            ExceptionManager.ThrowIfNullArg(item, nameof(item));
             item.Parent = _owner;
             _list.Add(item);
         }
@@ -59,9 +61,9 @@ namespace Elffy.Core
         /// <param name="items">追加する要素</param>
         public void AddRange(IEnumerable<Positionable> items)
         {
-            if(items == null) { throw new ArgumentNullException(nameof(items)); }
+            ExceptionManager.ThrowIfNullArg(items, nameof(items));
             var evaluated = (items is ICollection) ? items : items.ToArray();
-            if(evaluated.Contains(null)) { throw new ArgumentException($"{items} contain 'null'. Can not add null."); }
+            ExceptionManager.ThrowIf(evaluated.Contains(null), new ArgumentException($"{items} contain 'null'. Can not add null."));
             foreach(var item in evaluated) {
                 item.Parent = _owner;
             }
@@ -99,8 +101,8 @@ namespace Elffy.Core
         /// <param name="item">追加する要素</param>
         public void Insert(int index, Positionable item)
         {
-            if(item == null) { throw new ArgumentNullException(nameof(item)); }
-            if(index < 0 || index > _list.Count) { throw new ArgumentOutOfRangeException(nameof(index), index, "value is out of range."); }
+            ExceptionManager.ThrowIfNullArg(item, nameof(item));
+            ExceptionManager.ThrowIf(index < 0 || index > _list.Count, new ArgumentOutOfRangeException(nameof(index), index, "value is out of range."));
             item.Parent = _owner;
             _list.Insert(index, item);
         }
@@ -110,7 +112,7 @@ namespace Elffy.Core
         /// <returns>削除に成功したか (指定した要素が存在しない場合 false)</returns>
         public bool Remove(Positionable item)
         {
-            if(item == null) { throw new ArgumentNullException(nameof(item)); }
+            ExceptionManager.ThrowIfNullArg(item, nameof(item));
             var result = _list.Remove(item);
             if(result) {
                 item.Parent = null;
@@ -122,7 +124,7 @@ namespace Elffy.Core
         /// <param name="index">インデックス</param>
         public void RemoveAt(int index)
         {
-            if(index < 0 || index >= _list.Count) { throw new ArgumentOutOfRangeException(nameof(index)); }
+            ExceptionManager.ThrowIf(index < 0 || index >= _list.Count, new ArgumentOutOfRangeException(nameof(index)));
             _list[index].Parent = null;
             _list.RemoveAt(index);
         }

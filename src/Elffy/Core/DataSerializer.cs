@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Elffy.Exceptions;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -21,8 +22,7 @@ namespace Elffy.Core
         /// <returns>シリアライズに成功したか</returns>
         public bool Serialize<T>(string path, T data)
         {
-            if(path == null) { throw new ArgumentNullException(nameof(path)); }
-
+            ExceptionManager.ThrowIfNullArg(path, nameof(path));
             var ws = new XmlWriterSettings();
             ws.Encoding = _encoding;
             ws.Indent = true;

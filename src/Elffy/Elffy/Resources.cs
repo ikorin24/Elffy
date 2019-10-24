@@ -60,7 +60,7 @@ namespace Elffy
         public static ResourceStream GetStream(string name)
         {
             CheckInitialized();
-            if(name == null) { throw new ArgumentNullException(); }
+            ExceptionManager.ThrowIfNullArg(name, nameof(name));
             return GetResourceStreamPrivate($"{RESOURCE_ROOT}/{name}");
         }
 
@@ -90,7 +90,7 @@ namespace Elffy
         private static ResourceStream GetResourceStreamPrivate(string name)
         {
             CheckInitialized();
-            if(name == null) { throw new ArgumentNullException(); }
+            ExceptionManager.ThrowIfNullArg(name, nameof(name));
             if(!_resources.TryGetValue(name, out var resource)) {
                 throw new ResourceNotFoundException(name);
             }

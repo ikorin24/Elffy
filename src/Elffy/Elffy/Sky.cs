@@ -1,4 +1,5 @@
 ﻿using Elffy.Core;
+using Elffy.Exceptions;
 using OpenTK;
 using System;
 using System.Collections.Generic;
@@ -16,7 +17,7 @@ namespace Elffy
 
         public Sky(float r)
         {
-            if(r <= 0) { throw new ArgumentException(); }
+            ExceptionManager.ThrowIf(r <= 0, new ArgumentOutOfRangeException());
             const int a = 16;
             const int b = 16;
             GenerateVertex(r, a, b, out _vertexArray, out _indexArray);

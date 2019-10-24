@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using NAudio.Wave;
+using Elffy.Exceptions;
 
 namespace Elffy
 {
@@ -71,7 +72,7 @@ namespace Elffy
         /// <exception cref="ArgumentNullException"></exception>
         public void Load(string filename)
         {
-            if(filename == null) { throw new ArgumentNullException(nameof(filename)); }
+            ExceptionManager.ThrowIfNullArg(filename, nameof(filename));
             var ext = Path.GetExtension(filename);
             Load(File.OpenRead(filename), GetSoundTypeFromExtension(ext));
         }
@@ -83,7 +84,7 @@ namespace Elffy
         /// <exception cref="ArgumentNullException"></exception>
         public void Load(Stream stream, SoundType type)
         {
-            if(stream == null) { throw new ArgumentNullException(nameof(stream)); }
+            ExceptionManager.ThrowIfNullArg(stream, nameof(stream));
             lock(_sync) {
                 _reader = OpenReader(stream, type);
                 DisposeAllResource();
