@@ -66,6 +66,7 @@
     <Compile Include="Core\FrameObjectStore.cs" />
     <Compile Include="Core\TextureBase.cs" />
     <Compile Include="Core\UILayer.cs" />
+    <Compile Include="Elffy\Sprite.cs" />
     <Compile Include="Elffy\TextureEnums.cs" />
     <Compile Include="Elffy\Definition.cs" />
     <Compile Include="Core\ComponentOwner.cs" />

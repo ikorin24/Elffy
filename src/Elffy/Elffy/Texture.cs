@@ -6,6 +6,8 @@ using System.Drawing.Imaging;
 using Elffy.Threading;
 using Elffy.Effective;
 using System.Threading.Tasks;
+using Elffy.Exceptions;
+using System.Linq;
 
 namespace Elffy
 {
@@ -19,26 +21,26 @@ namespace Elffy
         private bool IsLoaded => _textureBuffer != Consts.NULL;
 
         #region constructor
-        /// <summary>リソース名を指定してミップマップありのテクスチャを生成します</summary>
+        /// <summary>ミップマップありのテクスチャを生成します</summary>
         private Texture()
             : this(TextureShrinkMode.Bilinear, TextureMipmapMode.Bilinear, TextureExpansionMode.Bilinear) { }
 
-        /// <summary>リソース名とミップマップの有無を指定してテクスチャを生成します</summary>
+        /// <summary>ミップマップの有無を指定してテクスチャを生成します</summary>
         /// <param name="useMipmap">ミップマップを使用するかどうか</param>
         private Texture(bool useMipmap)
             : this(TextureShrinkMode.Bilinear, useMipmap ? TextureMipmapMode.Bilinear : TextureMipmapMode.None, TextureExpansionMode.Bilinear) { }
 
-        /// <summary>リソース名と拡大縮小方法を指定してミップマップなしのテクスチャを生成します</summary>
+        /// <summary>拡大縮小方法を指定してミップマップなしのテクスチャを生成します</summary>
         /// <param name="shrinkMode">縮小方法</param>
         /// <param name="expansionMode">拡大方法</param>
         private Texture(TextureShrinkMode shrinkMode, TextureExpansionMode expansionMode)
             : this(shrinkMode, TextureMipmapMode.None, expansionMode) { }
 
-        /// <summary>リソース名と拡大縮小方法とミップマップのモードを指定してテクスチャを生成します</summary>
+        /// <summary>拡大縮小方法とミップマップのモードを指定してテクスチャを生成します</summary>
         /// <param name="shrinkMode">縮小方法</param>
         /// <param name="mipmapMode">ミップマップのモード</param>
         /// <param name="expansionMode">拡大方法</param>
-        private Texture(TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode, TextureExpansionMode expansionMode) 
+        private Texture(TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode, TextureExpansionMode expansionMode)
             : base(shrinkMode, mipmapMode, expansionMode) { }
         #endregion
 
@@ -46,10 +48,11 @@ namespace Elffy
 
         /// <summary>リソースからテクスチャロードします</summary>
         /// <param name="resource">リソース名</param>
+        /// <returns>ロードしたテクスチャ</returns>
         public static Texture LoadFrom(string resource)
         {
             var texture = new Texture();
-            var pixels = texture.LoadResourceBitmap(resource, out int w, out int h);
+            var pixels = LoadResourceBitmap(resource, out int w, out int h);
             texture.PixelWidth = w;
             texture.PixelHeight = h;
             Dispatcher.Invoke(() =>
@@ -62,13 +65,63 @@ namespace Elffy
         }
 
         /// <summary>非同期でリソースからテクスチャをロードします</summary>
-        /// <param name="resource"></param>
-        /// <returns></returns>
+        /// <param name="resource">リソース名</param>
+        /// <returns>ロードしたテクスチャ</returns>
         public static async Task<Texture> LoadFromAsync(string resource)
         {
             return await NonCaptureContextTaskFactory.StartNew(() => LoadFrom(resource));
         }
-        
+
+        /// <summary>複数画像を内部に持つ画像リソースから、それらのテクスチャをロードします</summary>
+        /// <param name="resource">リソース名</param>
+        /// <param name="xCount">x方向の画像枚数</param>
+        /// <param name="yCount">y方向の画像枚数</param>
+        /// <param name="pageCount">画像の数</param>
+        /// <returns>ロードしたテクスチャ配列</returns>
+        internal static Texture[] LoadFrom(string resource, int xCount, int yCount, int pageCount)
+        {
+            ExceptionManager.ThrowIf(xCount <= 0, new ArgumentOutOfRangeException(nameof(xCount)));
+            ExceptionManager.ThrowIf(yCount <= 0, new ArgumentOutOfRangeException(nameof(yCount)));
+            ExceptionManager.ThrowIf(pageCount <= 0 || pageCount > xCount * yCount, new ArgumentOutOfRangeException(nameof(pageCount)));
+            var textures = new Texture[xCount * yCount];
+            UnmanagedArray<byte>[] pixelsArray;
+            int width;              // 1つのテクスチャのピクセル幅
+            int height;             // 1つのテクスチャのピクセル高
+
+            // 1枚の画像(ピクセル配列)に統合されている複数枚の画像を分離する
+            using(var pixels = LoadResourceBitmap(resource, out width, out height)) {
+                var rowLineByteLen = width * BYTE_PER_PIXEL;
+                var textureByteLen = height * rowLineByteLen;
+                pixelsArray = Enumerable.Range(0, textures.Length).Select(i => new UnmanagedArray<byte>(textureByteLen)).ToArray();
+                unsafe {        // 境界値チェック無効化で高速化のため
+                    throw new NotImplementedException();
+                }
+            }
+
+            // 分離した画像(ピクセル配列)のそれぞれをテクスチャに適用する
+            foreach(var (texture, pixels) in textures.Zip(pixelsArray, (t, p) => (t, p))) {
+                texture.PixelWidth = width;
+                texture.PixelHeight = height;
+                Dispatcher.Invoke(() =>
+                {
+                    using(pixels) {
+                        texture.SetPixels(pixels.Ptr);
+                    }
+                });
+            }
+
+            return textures;
+        }
+
+        /// <summary>拡大縮小方法とミップマップのモードを指定して空のテクスチャを生成します</summary>
+        /// <param name="shrinkMode">縮小方法</param>
+        /// <param name="mipmapMode">ミップマップのモード</param>
+        /// <param name="expansionMode">拡大方法</param>
+        internal static Texture GenerateEmpty(TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode, TextureExpansionMode expansionMode)
+        {
+            return new Texture(shrinkMode, mipmapMode, expansionMode);
+        }
+
         /// <summary>現在のOpenGLのTextureをこのインスタンスのテクスチャに切り替えます</summary>
         internal override void SwitchBind()
         {
@@ -81,7 +134,7 @@ namespace Elffy
         /// <param name="pixelWidth">ピクセル幅</param>
         /// <param name="pixelHeight">ピクセル高</param>
         /// <returns>ピクセル配列</returns>
-        private UnmanagedArray<byte> LoadResourceBitmap(string resource, out int pixelWidth, out int pixelHeight)
+        private static UnmanagedArray<byte> LoadResourceBitmap(string resource, out int pixelWidth, out int pixelHeight)
         {
             using(var stream = Resources.GetStream(resource))
             using(var bmp = new Bitmap(stream)) {
