@@ -32,9 +32,30 @@ namespace Elffy.Core
         /// <summary>描画処理を行うかどうか</summary>
         public bool IsVisible { get; set; } = true;
         /// <summary>マテリアル</summary>
-        public Material Material { get; set; }
+        public Material Material
+        {
+            get => _material;
+            set
+            {
+                if(value != null && _material != value) {
+                    MaterialAttached?.Invoke(this, EventArgs.Empty);
+                }
+            }
+        }
+        private Material _material;
         /// <summary>テクスチャ</summary>
-        public Texture Texture { get; set; }
+        public TextureBase Texture
+        {
+            get => _texture;
+            set
+            {
+                _texture = value;
+                if(value != null && _texture != value) {
+                    TextureAttached?.Invoke(this, EventArgs.Empty);
+                }
+            }
+        }
+        private TextureBase _texture;
         /// <summary>頂点色を使用するかどうか</summary>
         public bool EnableVertexColor
         {
@@ -57,6 +78,9 @@ namespace Elffy.Core
         }
         private bool _enableVertexColor;
         #endregion
+
+        public event EventHandler MaterialAttached;
+        public event EventHandler TextureAttached;
 
         ~Renderable() => Dispose(false);
 
