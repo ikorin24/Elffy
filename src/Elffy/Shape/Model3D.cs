@@ -16,11 +16,11 @@ namespace Elffy.Shape
         {
             _vertexArray = vertices;
             _indexArray = index;
+            Activated += OnActivated;
         }
 
-        protected override void OnActivated()
+        private void OnActivated()
         {
-            base.OnActivated();
             InitGraphicBuffer(_vertexArray, _indexArray);
         }
     }

@@ -67,12 +67,10 @@ namespace Elffy.Core
                 if(_enableVertexColor) {
                     GL.BindVertexArray(_vao);
                     GL.EnableClientState(ArrayCap.ColorArray);
-                    //GL.BindVertexArray(Consts.NULL);
                 }
                 else {
                     GL.BindVertexArray(_vao);
                     GL.DisableClientState(ArrayCap.ColorArray);
-                    //GL.BindVertexArray(Consts.NULL);
                 }
             }
         }

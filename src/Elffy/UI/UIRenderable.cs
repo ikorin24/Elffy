@@ -28,6 +28,7 @@ namespace Elffy.UI
         {
             IsFrozen = true;
             Control = control ?? throw new ArgumentNullException(nameof(control));
+            Activated += OnActivated;
         }
 
         ~UIRenderable() => Dispose(false);
@@ -37,9 +38,8 @@ namespace Elffy.UI
         void IUIRenderable.Activate() => Activate(Control.Root.UILayer);
         void IUIRenderable.Destroy() => Destroy();
 
-        protected override void OnActivated()
+        private void OnActivated()
         {
-            base.OnActivated();
             SetPolygon(Control.Width, Control.Height, Control.OffsetX, Control.OffsetY);
             InitGraphicBuffer(_vertexArray.Ptr, _vertexArray.Length, _indexArray.Ptr, _indexArray.Length);
         }

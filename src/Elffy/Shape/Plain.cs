@@ -38,6 +38,7 @@ namespace Elffy.Shape
         /// <summary>平面の3Dオブジェクトを生成します</summary>
         public Plain()
         {
+            Activated += OnActivated;
         }
 
         /// <summary>平面の3Dオブジェクトを生成します</summary>
@@ -47,9 +48,8 @@ namespace Elffy.Shape
             _isTexCoordYInversed = isTexCoordYInversed;
         }
 
-        protected override void OnActivated()
+        private void OnActivated()
         {
-            base.OnActivated();
             var vertexArray = _isTexCoordYInversed ? _inverseTexCoordYVertexArray : _vertexArray;
             InitGraphicBuffer(vertexArray, _indexArray);
         }

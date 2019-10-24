@@ -18,8 +18,6 @@ namespace Elffy.Core
         /// <summary>オブジェクトの回転を表すクオータニオン</summary>
         public Quaternion Rotation { get; set; } = Quaternion.Identity;
 
-        public Rigidbody3D Rigidbody { get; set; }
-
         /// <summary>この <see cref="Positionable"/> のツリー構造の親を取得します</summary>
         public Positionable Parent
         {
@@ -228,6 +226,7 @@ namespace Elffy.Core
         public Positionable()
         {
             Children = new PositionableCollection(this);
+            Activated += OnActivated;
         }
 
         #region Translate
@@ -311,9 +310,8 @@ namespace Elffy.Core
             return GetAncestor().Last();
         }
 
-        protected override void OnActivated()
+        private void OnActivated()
         {
-            base.OnActivated();
             foreach(var offspring in GetOffspring()) {
                 offspring.Activate(Layer);
             }
