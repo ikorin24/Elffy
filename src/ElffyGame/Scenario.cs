@@ -46,10 +46,11 @@ namespace ElffyGame
 
     public class StartScenario : Scenario
     {
-        protected override void Start()
+        protected override async void Start()
         {
             var cube = new Cube();
-            cube.Texture = new Texture("cube.png");
+            //cube.Texture = new Texture("cube.png");
+            cube.Texture = await Texture.LoadFromAsync("cube.png");
             cube.Position = new Vector3(10, 0, 0);
             //cube.Activate(Game.Layers.WorldLayer);
 

@@ -209,7 +209,7 @@ namespace Elffy.Core
             if(!_disposed) {
                 if(disposing) {
                     // Release managed resource here.
-                    Texture?.Dispose();
+                    (Texture as IDisposable)?.Dispose();
                 }
 
                 // Release unmanaged resource

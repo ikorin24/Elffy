@@ -63,7 +63,9 @@
     <Compile Include="Core\LayerBase.cs" />
     <Compile Include="Core\PositionableCollection.cs" />
     <Compile Include="Core\FrameObjectStore.cs" />
+    <Compile Include="Core\TextureBase.cs" />
     <Compile Include="Core\UILayer.cs" />
+    <Compile Include="Elffy\TextureEnums.cs" />
     <Compile Include="Elffy\Definition.cs" />
     <Compile Include="Core\ComponentOwner.cs" />
     <Compile Include="Elffy\IScreenHost.cs" />
@@ -75,6 +77,7 @@
     <Compile Include="Elffy\Sound.cs" />
     <Compile Include="Core\RenderingArea.cs" />
     <Compile Include="Elffy\Window.cs" />
+    <Compile Include="Elffy\WritableTexture.cs" />
     <Compile Include="Exceptions\SceneParseException.cs" />
     <Compile Include="Framing\FrameProcessObject.cs" />
     <Compile Include="Framing\FrameProcessInfo.cs" />
@@ -120,7 +123,6 @@
     <Compile Include="Threading\Dispatcher.cs" />
     <Compile Include="Threading\NonCaptureContextTaskFactory.cs" />
     <Compile Include="UI\Button.cs" />
-    <Compile Include="Shape\Canvas.cs" />
     <Compile Include="Shape\Plain.cs" />
     <Compile Include="UI\Executable.cs" />
     <Compile Include="UI\IUIRenderable.cs" />
