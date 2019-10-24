@@ -15,7 +15,7 @@ namespace Elffy.Exceptions
         /// <param name="paramName">引数の名前</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [Conditional(CHECK_ARG)]
-        public static void ThrowIfNullArg<T>(T arg, string paramName) where T : class
+        public static void ThrowIfNullArg<T>(T arg, string paramName)
         {
             if(arg == null) { throw new ArgumentNullException(paramName); }
         }
