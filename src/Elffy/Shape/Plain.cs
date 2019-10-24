@@ -48,7 +48,7 @@ namespace Elffy.Shape
             _isTexCoordYInversed = isTexCoordYInversed;
         }
 
-        private void OnActivated()
+        private void OnActivated(FrameObject frameObject)
         {
             var vertexArray = _isTexCoordYInversed ? _inverseTexCoordYVertexArray : _vertexArray;
             InitGraphicBuffer(vertexArray, _indexArray);

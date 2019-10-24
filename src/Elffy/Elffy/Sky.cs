@@ -21,6 +21,8 @@ namespace Elffy
             const int b = 16;
             GenerateVertex(r, a, b, out _vertexArray, out _indexArray);
             Activated += OnActivated;
+            Rendering += OnRendering;
+            Rendered += OnRendered;
         }
 
         private void GenerateVertex(float r, int a, int b, out Vertex[] vertexArray, out int[] indexArray)
@@ -54,18 +56,18 @@ namespace Elffy
             }
         }
 
-        private void OnActivated()
+        private void OnActivated(FrameObject frameObject)
         {
             InitGraphicBuffer(_vertexArray, _indexArray);
         }
 
-        protected override void OnRendering()
+        private void OnRendering(Renderable renderable)
         {
             _lightStateBuffer = Light.IsEnabled;
             Light.IsEnabled = false;
         }
 
-        protected override void OnRendered()
+        private void OnRendered(Renderable renderable)
         {
             Light.IsEnabled = _lightStateBuffer;
         }

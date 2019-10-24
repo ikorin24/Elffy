@@ -37,8 +37,9 @@ namespace Elffy.Core
             get => _material;
             set
             {
+                _material = value;
                 if(value != null && _material != value) {
-                    MaterialAttached?.Invoke(this, EventArgs.Empty);
+                    MaterialAttached?.Invoke(this);
                 }
             }
         }
@@ -51,7 +52,7 @@ namespace Elffy.Core
             {
                 _texture = value;
                 if(value != null && _texture != value) {
-                    TextureAttached?.Invoke(this, EventArgs.Empty);
+                    TextureAttached?.Invoke(this);
                 }
             }
         }
@@ -77,8 +78,10 @@ namespace Elffy.Core
         private bool _enableVertexColor;
         #endregion
 
-        public event EventHandler MaterialAttached;
-        public event EventHandler TextureAttached;
+        public event ActionEventHandler<Renderable> MaterialAttached;
+        public event ActionEventHandler<Renderable> TextureAttached;
+        public event ActionEventHandler<Renderable> Rendering;
+        public event ActionEventHandler<Renderable> Rendered;
 
         ~Renderable() => Dispose(false);
 
@@ -86,7 +89,7 @@ namespace Elffy.Core
         /// <summary>このインスタンスを描画します</summary>
         internal void Render()
         {
-            OnRendering();
+            Rendering?.Invoke(this);
             // 座標と回転を適用
             GL.Translate(Position);
             var rot = Matrix4.CreateFromQuaternion(Rotation);
@@ -109,15 +112,9 @@ namespace Elffy.Core
                     GL.PopMatrix();
                 }
             }
-            OnRendered();
+            Rendered?.Invoke(this);
         }
         #endregion
-
-        /// <summary>派生クラスでoverrideされると、このインスタンスの描画前に実行されます。overrideされない場合、何もしません。</summary>
-        protected virtual void OnRendering() { }
-
-        /// <summary>派生クラスでoverrideされると、このインスタンスの描画後に実行されます。overrideされない場合、何もしません。</summary>
-        protected virtual void OnRendered() { }
 
         #region InitGraphicBuffer
         /// <summary>描画する3Dモデル(頂点データ)をGPUメモリにロードします</summary>

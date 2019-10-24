@@ -38,7 +38,7 @@ namespace Elffy.UI
         void IUIRenderable.Activate() => Activate(Control.Root.UILayer);
         void IUIRenderable.Destroy() => Destroy();
 
-        private void OnActivated()
+        private void OnActivated(FrameObject frameObject)
         {
             SetPolygon(Control.Width, Control.Height, Control.OffsetX, Control.OffsetY);
             InitGraphicBuffer(_vertexArray.Ptr, _vertexArray.Length, _indexArray.Ptr, _indexArray.Length);

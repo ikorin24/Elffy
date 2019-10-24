@@ -62,7 +62,7 @@ namespace Elffy.Shape
             Activated += OnActivated;
         }
 
-        private void OnActivated()
+        private void OnActivated(FrameObject frameObject)
         {
             InitGraphicBuffer(_vertexArray, _indexArray);
         }

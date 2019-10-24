@@ -310,7 +310,7 @@ namespace Elffy.Core
             return GetAncestor().Last();
         }
 
-        private void OnActivated()
+        private void OnActivated(FrameObject frameObject)
         {
             foreach(var offspring in GetOffspring()) {
                 offspring.Activate(Layer);

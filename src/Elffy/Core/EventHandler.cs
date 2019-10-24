@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace Elffy.Core
 {
-    /// <summary>引数を取らないデリゲードクラス</summary>
-    public delegate void ActionEventHandler();
+    public delegate void ActionEventHandler<T>(T sender);
+
+    public delegate void ActionEventHandler<T, TArg>(T sender, TArg e) where TArg : EventArgs ;
 }

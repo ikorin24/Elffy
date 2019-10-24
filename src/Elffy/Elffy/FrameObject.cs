@@ -35,7 +35,7 @@ namespace Elffy
         #endregion
 
         /// <summary>このオブジェクトがアクティブになった時のイベント</summary>
-        public event ActionEventHandler Activated;
+        public event ActionEventHandler<FrameObject> Activated;
 
         #region Method
         /// <summary>このオブジェクトが更新される最初のフレームに1度のみ実行される処理</summary>
@@ -53,7 +53,7 @@ namespace Elffy
             Layer = layer;
             layer.AddFrameObject(this);
             IsActivated = true;
-            Activated?.Invoke();
+            Activated?.Invoke(this);
         }
 
         /// <summary>このオブジェクトをゲーム管理下から外して破棄します</summary>
