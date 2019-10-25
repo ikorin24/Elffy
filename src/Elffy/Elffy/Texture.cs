@@ -83,22 +83,33 @@ namespace Elffy
             ExceptionManager.ThrowIf(xCount <= 0, new ArgumentOutOfRangeException(nameof(xCount)));
             ExceptionManager.ThrowIf(yCount <= 0, new ArgumentOutOfRangeException(nameof(yCount)));
             ExceptionManager.ThrowIf(pageCount <= 0 || pageCount > xCount * yCount, new ArgumentOutOfRangeException(nameof(pageCount)));
-            var textures = new Texture[xCount * yCount];
-            UnmanagedArray<byte>[] pixelsArray;
-            int width;              // 1つのテクスチャのピクセル幅
-            int height;             // 1つのテクスチャのピクセル高
+
+            var textures = new Texture[xCount * yCount];    // 各画像のテクスチャ
+            UnmanagedArray<byte>[] pixelsArray;             // 統合画像のピクセル配列
+            int width;                                      // 1つのテクスチャのピクセル幅
+            int height;                                     // 1つのテクスチャのピクセル高
 
             // 1枚の画像(ピクセル配列)に統合されている複数枚の画像を分離する
             using(var pixels = LoadResourceBitmap(resource, out width, out height)) {
-                var rowLineByteLen = width * BYTE_PER_PIXEL;
-                var textureByteLen = height * rowLineByteLen;
-                pixelsArray = Enumerable.Range(0, textures.Length).Select(i => new UnmanagedArray<byte>(textureByteLen)).ToArray();
-                unsafe {        // 境界値チェック無効化で高速化のため
-                    throw new NotImplementedException();
+                var pageRowLineByteLen = width * BYTE_PER_PIXEL;        // 1つのページの1行のバイトサイズ
+                var pageByteLen = height * pageRowLineByteLen;          // 1つのページのバイトサイズ
+
+                // ページの枚数分、アンマネージにメモリアロケート
+                pixelsArray = Enumerable.Range(0, textures.Length).Select(i => new UnmanagedArray<byte>(pageByteLen)).ToArray();
+
+                // 各ページについて、統合画像からそのページのピクセル部分だけをコピーしてくる
+                unsafe {        // Array の index 境界値チェック無効化で高速化のため unsafe
+                    for(int pageNum = 0; pageNum < pixelsArray.Length; pageNum++) {
+                        for(int row = 0; row < height; row++) {
+                            var start = row * pageRowLineByteLen;       // このページ内での開始位置
+                            var offset = pageNum * pageByteLen + start;    // 統合画像のピクセル配列内での位置
+                            pixelsArray[pageNum].CopyFrom(pixels.Ptr + offset, start, pageRowLineByteLen);
+                        }
+                    }
                 }
             }
 
-            // 分離した画像(ピクセル配列)のそれぞれをテクスチャに適用する
+            // 分離した画像(ピクセル配列)をそれぞれをテクスチャに適用する
             foreach(var (texture, pixels) in textures.Zip(pixelsArray, (t, p) => (t, p))) {
                 texture.PixelWidth = width;
                 texture.PixelHeight = height;
