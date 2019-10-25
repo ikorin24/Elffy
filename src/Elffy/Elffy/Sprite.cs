@@ -89,7 +89,10 @@ namespace Elffy
         internal override void SwitchBind()
         {
             var page = PageChangingAlgorithm();
-            _textures[page].SwitchBind();
+            ExceptionManager.ThrowIf(page < 0 || page >= _textures.Length, new ArgumentOutOfRangeException($"Page number which {nameof(PageChangingAlgorithm)} returns is out of range."));
+            unsafe {
+                _textures[page].SwitchBind();
+            }
         }
 
         /// <summary>スプライトの情報を読み取ります</summary>
