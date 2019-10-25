@@ -31,7 +31,9 @@ namespace Elffy.Core
             ns.Add("", "");
             var dir = Path.GetDirectoryName(path);
             var tmpfile = Path.Combine(dir, "___tmp___file___");
-            Directory.CreateDirectory(dir);
+            if(dir != "") {
+                Directory.CreateDirectory(dir);
+            }
             try {
                 if(File.Exists(path)) {
                     File.Move(path, tmpfile);
