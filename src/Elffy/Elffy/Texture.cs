@@ -8,6 +8,8 @@ using Elffy.Effective;
 using System.Threading.Tasks;
 using Elffy.Exceptions;
 using System.Linq;
+using Elffy.Core.Metadata;
+using PixelFormat = System.Drawing.Imaging.PixelFormat;
 
 namespace Elffy
 {
@@ -73,55 +75,48 @@ namespace Elffy
         }
 
         /// <summary>複数画像を内部に持つ画像リソースから、それらのテクスチャをロードします</summary>
-        /// <param name="resource">リソース名</param>
-        /// <param name="xCount">x方向の画像枚数</param>
-        /// <param name="yCount">y方向の画像枚数</param>
-        /// <param name="pageCount">画像の数</param>
+        /// <param name="spriteInfo">スプライト情報</param>
         /// <returns>ロードしたテクスチャ配列</returns>
-        internal static Texture[] LoadFrom(string resource, int xCount, int yCount, int pageCount)
+        internal static Texture[] LoadFrom(SpriteInfo spriteInfo)
         {
-            ExceptionManager.ThrowIf(xCount <= 0, new ArgumentOutOfRangeException(nameof(xCount)));
-            ExceptionManager.ThrowIf(yCount <= 0, new ArgumentOutOfRangeException(nameof(yCount)));
-            ExceptionManager.ThrowIf(pageCount <= 0 || pageCount > xCount * yCount, new ArgumentOutOfRangeException(nameof(pageCount)));
+            ExceptionManager.ThrowIfNullArg(spriteInfo, nameof(spriteInfo));
+            using(var stream = Resources.GetStream(spriteInfo.TextureResource))
+            using(var bmp = new Bitmap(stream)) {
+                var textures = new Texture[spriteInfo.PageCount];
 
-            var textures = new Texture[xCount * yCount];    // 各画像のテクスチャ
-            UnmanagedArray<byte>[] pixelsArray;             // 統合画像のピクセル配列
-            int width;                                      // 1つのテクスチャのピクセル幅
-            int height;                                     // 1つのテクスチャのピクセル高
-
-            // 1枚の画像(ピクセル配列)に統合されている複数枚の画像を分離する
-            using(var pixels = LoadResourceBitmap(resource, out width, out height)) {
-                var pageRowLineByteLen = width * BYTE_PER_PIXEL;        // 1つのページの1行のバイトサイズ
-                var pageByteLen = height * pageRowLineByteLen;          // 1つのページのバイトサイズ
-
-                // ページの枚数分、アンマネージにメモリアロケート
-                pixelsArray = Enumerable.Range(0, textures.Length).Select(i => new UnmanagedArray<byte>(pageByteLen)).ToArray();
-
-                // 各ページについて、統合画像からそのページのピクセル部分だけをコピーしてくる
-                unsafe {        // Array の index 境界値チェック無効化で高速化のため unsafe
-                    for(int pageNum = 0; pageNum < pixelsArray.Length; pageNum++) {
-                        for(int row = 0; row < height; row++) {
-                            var start = row * pageRowLineByteLen;       // このページ内での開始位置
-                            var offset = pageNum * pageByteLen + start;    // 統合画像のピクセル配列内での位置
-                            pixelsArray[pageNum].CopyFrom(pixels.Ptr + offset, start, pageRowLineByteLen);
-                        }
-                    }
-                }
-            }
-
-            // 分離した画像(ピクセル配列)をそれぞれをテクスチャに適用する
-            foreach(var (texture, pixels) in textures.Zip(pixelsArray, (t, p) => (t, p))) {
-                texture.PixelWidth = width;
-                texture.PixelHeight = height;
-                Dispatcher.Invoke(() =>
+                // 1枚の画像に統合されている複数枚の画像を分離する
+                var images = Enumerable.Range(0, spriteInfo.PageCount)
+                                     .Select(i => 
                 {
-                    using(pixels) {
-                        texture.SetPixels(pixels.Ptr);
+                    var rect = new Rectangle(i % spriteInfo.XCount * spriteInfo.PixelWidth,
+                                               i / spriteInfo.XCount * spriteInfo.PixelHeight,
+                                               spriteInfo.PixelWidth,
+                                               spriteInfo.PixelHeight);
+                    var pixels = new UnmanagedArray<byte>(rect.Width * rect.Height * BYTE_PER_PIXEL);
+                    using(var subBmp = bmp.Clone(rect, PixelFormat.Format32bppPArgb)) {
+                        subBmp.RotateFlip(RotateFlipType.RotateNoneFlipY);
+                        var bmpData = subBmp.LockBits(new Rectangle(0, 0, subBmp.Width, subBmp.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppPArgb);
+                        pixels.CopyFrom(bmpData.Scan0, 0, pixels.Length);
+                        subBmp.UnlockBits(bmpData);
                     }
+                    var texture = new Texture();
+                    texture.PixelWidth = rect.Width;
+                    texture.PixelHeight = rect.Height;
+                    return (i, texture, pixels);
                 });
-            }
 
-            return textures;
+                // 各テクスチャにピクセルをセットする
+                foreach(var (i, texture, pixels) in images) {
+                    textures[i] = texture;
+                    Dispatcher.Invoke(() =>
+                    {
+                        using(pixels) {
+                            texture.SetPixels(pixels.Ptr);
+                        }
+                    });
+                }
+                return textures;
+            }
         }
 
         /// <summary>拡大縮小方法とミップマップのモードを指定して空のテクスチャを生成します</summary>
@@ -153,7 +148,7 @@ namespace Elffy
                 var pixels = new UnmanagedArray<byte>(bmp.Width * bmp.Height * BYTE_PER_PIXEL);
                 var bmpData = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height),
                                            ImageLockMode.ReadOnly,
-                                           System.Drawing.Imaging.PixelFormat.Format32bppPArgb);
+                                           PixelFormat.Format32bppPArgb);
                 pixels.CopyFrom(bmpData.Scan0, 0, pixels.Length);
                 bmp.UnlockBits(bmpData);
                 pixelWidth = bmp.Width;

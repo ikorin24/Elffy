@@ -9,12 +9,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using OpenTK.Graphics.OpenGL;
+using System.Xml.Serialization;
+using Elffy.Core.Metadata;
 
 namespace Elffy
 {
     /// <summary><see cref="Renderable"/> に適用するスプライトクラス</summary>
     public sealed class Sprite : TextureBase, IDisposable
     {
+        private static DataSerializer _serializer;
         private bool _disposed;
         /// <summary>このスプライトが持つテクスチャ</summary>
         private Texture[] _textures;
@@ -74,7 +77,7 @@ namespace Elffy
             var sprite = new Sprite(TextureShrinkMode.Bilinear, TextureMipmapMode.Bilinear, TextureExpansionMode.Bilinear);
             sprite.PixelWidth = info.PixelWidth;
             sprite.PixelHeight = info.PixelHeight;
-            sprite._textures = Texture.LoadFrom(info.TextureResourceName, info.XCount, info.YCount, info.PageCount);
+            sprite._textures = Texture.LoadFrom(info);
             return sprite;
         }
 
@@ -99,9 +102,24 @@ namespace Elffy
         /// <param name="stream">スプライトの情報のストリーム</param>
         private static SpriteInfo ParseSprite(Stream stream)
         {
-            throw new NotImplementedException();    // TODO: 実装
-            //ExceptionManager.ThrowIf(xCount <= 0, new InvalidDataException($"{nameof(xCount)} is 0 or negative."));
-            //ExceptionManager.ThrowIf(yCount <= 0, new InvalidDataException($"{nameof(yCount)} is 0 or negative."));
+            if(_serializer == null) {
+                _serializer = new DataSerializer();
+            }
+            var result = _serializer.Deserialize<MetaFile>(stream, out var data);
+
+            ExceptionManager.ThrowIf(result == false, new FormatException($"{nameof(MetaFile)} format is invalid."));
+            ExceptionManager.ThrowIf(data.FileType != MetaFileType.Sprite, new InvalidDataException($"{nameof(MetaFile)}.{nameof(MetaFile.FileType)} must be {nameof(MetaFileType.Sprite)}."));
+            ExceptionManager.ThrowIf(!data.IsSupportedVersion(), new FormatException($"Not supported format version : '{data.FormatVersion}'"));
+
+            var info = (SpriteInfo)data.Metadata[0];
+
+            ExceptionManager.ThrowIf(info.XCount <= 0, new InvalidDataException($"{nameof(info.XCount)} is 0 or negative."));
+            ExceptionManager.ThrowIf(info.YCount <= 0, new InvalidDataException($"{nameof(info.YCount)} is 0 or negative."));
+            ExceptionManager.ThrowIf(info.PageCount <= 0, new InvalidDataException($"{nameof(info.PageCount)} is 0 or negative."));
+            ExceptionManager.ThrowIf(info.PixelWidth <= 0, new InvalidDataException($"{nameof(info.PixelWidth)} is 0 or negative."));
+            ExceptionManager.ThrowIf(info.PixelHeight <= 0, new InvalidDataException($"{nameof(info.PixelHeight)} is 0 or negative."));
+
+            return info;
         }
 
         #region Dispose
@@ -129,15 +147,5 @@ namespace Elffy
             }
         }
         #endregion
-
-        private struct SpriteInfo
-        {
-            public int PageCount { get; set; }
-            public int XCount { get; set; }
-            public int YCount { get; set; }
-            public int PixelWidth { get; set; }
-            public int PixelHeight { get; set; }
-            public string TextureResourceName { get; set; }
-        }
     }
 }
