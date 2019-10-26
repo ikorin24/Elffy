@@ -70,10 +70,21 @@ namespace Elffy.Core
                 data = default(T);
                 return false;
             }
+            using(var stream = File.OpenRead(path)) {
+                return Deserialize(stream, out data);
+            }
+        }
+
+        /// <summary>xmlデシリアライズを実行します</summary>
+        /// <typeparam name="T">対象の型</typeparam>
+        /// <param name="stream">ストリーム</param>
+        /// <param name="data">デシリアライズ対象</param>
+        /// <returns>デシリアライズに成功したか</returns>
+        public bool Deserialize<T>(Stream stream, out T data)
+        {
             try {
-                using(var stream = File.Open(path, FileMode.Open))
                 using(var reader = XmlReader.Create(stream)) {
-                    var serializer = new XmlSerializer(typeof(T),typeof(T).GetNestedTypes());
+                    var serializer = new XmlSerializer(typeof(T), typeof(T).GetNestedTypes());
                     data = (T)serializer.Deserialize(reader);
                     return true;
                 }
