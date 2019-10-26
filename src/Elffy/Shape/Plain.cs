@@ -36,16 +36,14 @@ namespace Elffy.Shape
         private bool _isTexCoordYInversed;
 
         /// <summary>平面の3Dオブジェクトを生成します</summary>
-        public Plain()
-        {
-            Activated += OnActivated;
-        }
+        public Plain() : this(false) { }
 
         /// <summary>平面の3Dオブジェクトを生成します</summary>
         /// <param name="isTexCoordYInversed">テクスチャのY軸方向を反転させる場合 true</param>
         public Plain(bool isTexCoordYInversed)
         {
             _isTexCoordYInversed = isTexCoordYInversed;
+            Activated += OnActivated;
         }
 
         private void OnActivated(FrameObject frameObject)
