@@ -23,8 +23,7 @@ namespace Elffy.Core.MetaFile
             if(_serializer == null) {
                 _serializer = new DataSerializer();
             }
-            var result = _serializer.Deserialize<MetadataDeserialized>(stream, out var data);
-            ExceptionManager.ThrowIf(result == false, new FormatException($"{nameof(MetadataDeserialized)} format is invalid."));
+            var data = _serializer.Deserialize<MetadataDeserialized>(stream);
             var metaFile = new T();
             metaFile.InitializeFromDeserialized(data);
             return metaFile;

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using Elffy.Serialization;
 
 namespace Elffy
@@ -26,21 +27,18 @@ namespace Elffy
 
         /// <summary>Configを保存します</summary>
         /// <returns>保存成功したか</returns>
-        public bool Save()
+        public void Save()
         {
-            return _serializer.Serialize(_path, Default);
+            _serializer.Serialize(_path, Default);
         }
 
         /// <summary>Configを読み込みます</summary>
         /// <returns>読み込み成功したか</returns>
-        public bool Load()
+        public void Load()
         {
-            T data;
-            var result = _serializer.Deserialize(_path, out data);
-            if(result == true) {
-                Default = data;
+            if(File.Exists(_path)) {
+                Default = _serializer.Deserialize<T>(_path);
             }
-            return result;
         }
     }
 }

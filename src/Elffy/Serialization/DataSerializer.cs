@@ -18,8 +18,7 @@ namespace Elffy.Serialization
         /// <typeparam name="T">対象の型</typeparam>
         /// <param name="path">ファイルパス</param>
         /// <param name="data">シリアライズ対象のオブジェクト</param>
-        /// <returns>シリアライズに成功したか</returns>
-        public bool Serialize<T>(string path, T data)
+        public void Serialize<T>(string path, T data)
         {
             if(path == null) { throw new ArgumentNullException(nameof(path)); }
 
@@ -45,53 +44,48 @@ namespace Elffy.Serialization
                     if(File.Exists(tmpfile)) {
                         File.Delete(tmpfile);
                     }
-                    return true;
                 }
             }
-            catch(Exception) {
+            catch(Exception ex) {
                 if(File.Exists(path)) {
                     File.Delete(path);
                 }
                 if(File.Exists(tmpfile)) {
                     File.Move(tmpfile, path);
                 }
-                return false;
+                throw ex;
             }
         }
 
         /// <summary>xmlデシリアライズを実行します</summary>
         /// <typeparam name="T">対象の型</typeparam>
         /// <param name="path">ファイルパス</param>
-        /// <param name="data">デシリアライズ対象</param>
-        /// <returns>デシリアライズに成功したか</returns>
-        public bool Deserialize<T>(string path, out T data)
+        /// <returns>デシリアライズしたデータ</returns>
+        public T Deserialize<T>(string path)
         {
             if(!File.Exists(path)) {
-                data = default(T);
-                return false;
+                throw new FileNotFoundException(path);
             }
             using(var stream = File.OpenRead(path)) {
-                return Deserialize(stream, out data);
+                return Deserialize<T>(stream);
             }
         }
 
         /// <summary>xmlデシリアライズを実行します</summary>
         /// <typeparam name="T">対象の型</typeparam>
         /// <param name="stream">ストリーム</param>
-        /// <param name="data">デシリアライズ対象</param>
-        /// <returns>デシリアライズに成功したか</returns>
-        public bool Deserialize<T>(Stream stream, out T data)
+        /// <returns>デシリアライズしたデータ</returns>
+        public T Deserialize<T>(Stream stream)
         {
             try {
                 using(var reader = XmlReader.Create(stream)) {
                     var serializer = new XmlSerializer(typeof(T), typeof(T).GetNestedTypes());
-                    data = (T)serializer.Deserialize(reader);
-                    return true;
+                    var data = (T)serializer.Deserialize(reader);
+                    return data;
                 }
             }
-            catch(Exception) {
-                data = default(T);
-                return false;
+            catch(Exception ex) {
+                throw new InvalidDataException("Deserializing failure.", ex);
             }
         }
     }
