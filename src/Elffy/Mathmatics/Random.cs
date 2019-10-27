@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Drawing;
 
-namespace Elffy.Core
+namespace Elffy.Mathmatics
 {
     public static class Rand
     {

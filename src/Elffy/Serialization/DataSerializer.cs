@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
 
-namespace Elffy.Core
+namespace Elffy.Serialization
 {
     /// <summary>Xmlシリアライザクラス</summary>
     internal class DataSerializer

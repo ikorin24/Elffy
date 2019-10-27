@@ -95,10 +95,10 @@
     <Compile Include="Platforms\Windows\MessageBox.cs" />
     <Compile Include="Elffy\ConfigBase.cs" />
     <Compile Include="Core\Consts.cs" />
-    <Compile Include="Core\DataSerializer.cs" />
+    <Compile Include="Serialization\DataSerializer.cs" />
     <Compile Include="Core\FrameEvent.cs" />
     <Compile Include="Core\Positionable.cs" />
-    <Compile Include="Core\Random.cs" />
+    <Compile Include="Mathmatics\Random.cs" />
     <Compile Include="Core\Renderable.cs" />
     <Compile Include="Core\Timer\DebugGameTimer.cs" />
     <Compile Include="Core\Timer\GameTimer.cs" />
