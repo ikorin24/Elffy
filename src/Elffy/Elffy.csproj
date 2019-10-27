@@ -59,6 +59,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AssemblyService\AssemblyState.cs" />
     <Compile Include="Core\EventHandler.cs" />
     <Compile Include="Core\InternaInvisiblelLayer.cs" />
     <Compile Include="Core\LayerBase.cs" />
