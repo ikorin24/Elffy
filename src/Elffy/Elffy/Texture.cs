@@ -8,7 +8,7 @@ using Elffy.Effective;
 using System.Threading.Tasks;
 using Elffy.Exceptions;
 using System.Linq;
-using Elffy.Core.Metadata;
+using Elffy.Core.MetaFile;
 using PixelFormat = System.Drawing.Imaging.PixelFormat;
 
 namespace Elffy
@@ -75,23 +75,23 @@ namespace Elffy
         }
 
         /// <summary>複数画像を内部に持つ画像リソースから、それらのテクスチャをロードします</summary>
-        /// <param name="spriteInfo">スプライト情報</param>
+        /// <param name="spriteData">スプライト情報</param>
         /// <returns>ロードしたテクスチャ配列</returns>
-        internal static Texture[] LoadFrom(SpriteInfo spriteInfo)
+        internal static Texture[] LoadFrom(SpriteMetadata spriteData)
         {
-            ExceptionManager.ThrowIfNullArg(spriteInfo, nameof(spriteInfo));
-            using(var stream = Resources.GetStream(spriteInfo.TextureResource))
+            ExceptionManager.ThrowIfNullArg(spriteData, nameof(spriteData));
+            using(var stream = Resources.GetStream(spriteData.TextureResource))
             using(var bmp = new Bitmap(stream)) {
-                var textures = new Texture[spriteInfo.PageCount];
+                var textures = new Texture[spriteData.PageCount];
 
                 // 1枚の画像に統合されている複数枚の画像を分離する
-                var images = Enumerable.Range(0, spriteInfo.PageCount)
+                var images = Enumerable.Range(0, spriteData.PageCount)
                                      .Select(i => 
                 {
-                    var rect = new Rectangle(i % spriteInfo.XCount * spriteInfo.PixelWidth,
-                                               i / spriteInfo.XCount * spriteInfo.PixelHeight,
-                                               spriteInfo.PixelWidth,
-                                               spriteInfo.PixelHeight);
+                    var rect = new Rectangle(i % spriteData.XCount * spriteData.PixelWidth,
+                                               i / spriteData.XCount * spriteData.PixelHeight,
+                                               spriteData.PixelWidth,
+                                               spriteData.PixelHeight);
                     var pixels = new UnmanagedArray<byte>(rect.Width * rect.Height * BYTE_PER_PIXEL);
                     using(var subBmp = bmp.Clone(rect, PixelFormat.Format32bppPArgb)) {
                         subBmp.RotateFlip(RotateFlipType.RotateNoneFlipY);

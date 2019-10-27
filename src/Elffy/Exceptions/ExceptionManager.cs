@@ -29,5 +29,18 @@ namespace Elffy.Exceptions
         {
             if(condition) { throw ex; }
         }
+
+
+        /// <summary>指定の型にキャスト不可である場合、例外を投げます</summary>
+        /// <typeparam name="TDesired">希望する型</typeparam>
+        /// <typeparam name="TData">データの型</typeparam>
+        /// <param name="arg">データ</param>
+        /// <param name="paramName">引数の名前</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Conditional(CHECK_ARG)]
+        public static void CheckType<TDesired, TData>(TData arg, string paramName)
+        {
+            if(arg is TDesired == false) { throw new InvalidCastException(paramName); }
+        }
     }
 }

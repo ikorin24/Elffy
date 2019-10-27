@@ -10,7 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using OpenTK.Graphics.OpenGL;
 using System.Xml.Serialization;
-using Elffy.Core.Metadata;
+using Elffy.Core.MetaFile;
 
 namespace Elffy
 {
@@ -70,14 +70,14 @@ namespace Elffy
         /// <returns>ロードしたスプライト</returns>
         public static Sprite LoadFrom(string resource)
         {
-            SpriteInfo info;
+            SpriteMetadata spriteInfo;
             using(var stream = Resources.GetStream(resource)) {
-                info = ParseSprite(stream);
+                spriteInfo = Metadata.LoadFromStream<SpriteMetadata>(stream);
             }
             var sprite = new Sprite(TextureShrinkMode.Bilinear, TextureMipmapMode.Bilinear, TextureExpansionMode.Bilinear);
-            sprite.PixelWidth = info.PixelWidth;
-            sprite.PixelHeight = info.PixelHeight;
-            sprite._textures = Texture.LoadFrom(info);
+            sprite.PixelWidth = spriteInfo.PixelWidth;
+            sprite.PixelHeight = spriteInfo.PixelHeight;
+            sprite._textures = Texture.LoadFrom(spriteInfo);
             return sprite;
         }
 
@@ -96,30 +96,6 @@ namespace Elffy
             unsafe {
                 _textures[page].SwitchBind();
             }
-        }
-
-        /// <summary>スプライトの情報を読み取ります</summary>
-        /// <param name="stream">スプライトの情報のストリーム</param>
-        private static SpriteInfo ParseSprite(Stream stream)
-        {
-            if(_serializer == null) {
-                _serializer = new DataSerializer();
-            }
-            var result = _serializer.Deserialize<MetaFile>(stream, out var data);
-
-            ExceptionManager.ThrowIf(result == false, new FormatException($"{nameof(MetaFile)} format is invalid."));
-            ExceptionManager.ThrowIf(data.FileType != MetaFileType.Sprite, new InvalidDataException($"{nameof(MetaFile)}.{nameof(MetaFile.FileType)} must be {nameof(MetaFileType.Sprite)}."));
-            ExceptionManager.ThrowIf(!data.IsSupportedVersion(), new FormatException($"Not supported format version : '{data.FormatVersion}'"));
-
-            var info = (SpriteInfo)data.Metadata[0];
-
-            ExceptionManager.ThrowIf(info.XCount <= 0, new InvalidDataException($"{nameof(info.XCount)} is 0 or negative."));
-            ExceptionManager.ThrowIf(info.YCount <= 0, new InvalidDataException($"{nameof(info.YCount)} is 0 or negative."));
-            ExceptionManager.ThrowIf(info.PageCount <= 0, new InvalidDataException($"{nameof(info.PageCount)} is 0 or negative."));
-            ExceptionManager.ThrowIf(info.PixelWidth <= 0, new InvalidDataException($"{nameof(info.PixelWidth)} is 0 or negative."));
-            ExceptionManager.ThrowIf(info.PixelHeight <= 0, new InvalidDataException($"{nameof(info.PixelHeight)} is 0 or negative."));
-
-            return info;
         }
 
         #region Dispose

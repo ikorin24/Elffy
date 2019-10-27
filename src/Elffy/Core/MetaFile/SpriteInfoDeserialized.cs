@@ -1,10 +1,10 @@
 ﻿using System.Xml.Serialization;
 
-namespace Elffy.Core.Metadata
+namespace Elffy.Core.MetaFile
 {
-    /// <summary>スプライト画像情報を表す <see cref="MetaFile"/> 用のメタデータ</summary>
+    /// <summary>スプライト画像情報を表す <see cref="MetadataDeserialized"/> の <see cref="MetadataDeserialized.DataContents"/> </summary>
     [XmlType("SpriteInfo")]
-    public class SpriteInfo
+    public class SpriteInfoDeserialized
     {
         /// <summary>テクスチャのリソース名</summary>
         [XmlElement("TextureResource")]
@@ -29,5 +29,9 @@ namespace Elffy.Core.Metadata
         /// <summary>スプライトのピクセル高 (統合画像内の1つの画像のピクセル高)</summary>
         [XmlElement("PixelHeight")]
         public int PixelHeight { get; set; }
+
+        internal SpriteInfoDeserialized()
+        {
+        }
     }
 }

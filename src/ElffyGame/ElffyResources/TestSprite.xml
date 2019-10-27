@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<MetaFile FormatVersion="1.0">
-  <FileType>Sprite</FileType>
-  <Metadata>
+<Metadata FormatVersion="1.0">
+  <DataType>Sprite</DataType>
+  <DataContents>
     <SpriteInfo>
       <TextureResource>TestSprite.png</TextureResource>
       <PageCount>18</PageCount>
@@ -10,5 +10,5 @@
       <PixelWidth>100</PixelWidth>
       <PixelHeight>100</PixelHeight>
     </SpriteInfo>
-  </Metadata>
-</MetaFile>
+  </DataContents>
+</Metadata>

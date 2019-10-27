@@ -60,11 +60,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Core\EventHandler.cs" />
-    <Compile Include="Core\Metadata\MetaFile.cs" />
+    <Compile Include="Core\MetaFile\Metadata.cs" />
     <Compile Include="Core\InternaInvisiblelLayer.cs" />
     <Compile Include="Core\LayerBase.cs" />
-    <Compile Include="Core\Metadata\MetaFileType.cs" />
-    <Compile Include="Core\Metadata\SpriteInfo.cs" />
+    <Compile Include="Core\MetaFile\MetadataDeserialized.cs" />
+    <Compile Include="Core\MetaFile\MetadataType.cs" />
+    <Compile Include="Core\MetaFile\SpriteInfoDeserialized.cs" />
+    <Compile Include="Core\MetaFile\SpriteMetadata.cs" />
     <Compile Include="Core\PositionableCollection.cs" />
     <Compile Include="Core\FrameObjectStore.cs" />
     <Compile Include="Core\TextureBase.cs" />
