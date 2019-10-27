@@ -2,14 +2,7 @@
 using Elffy.Exceptions;
 using Elffy.Threading;
 using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using OpenTK.Graphics.OpenGL;
-using System.Xml.Serialization;
 using Elffy.Core.MetaFile;
 
 namespace Elffy
@@ -17,7 +10,6 @@ namespace Elffy
     /// <summary><see cref="Renderable"/> に適用するスプライトクラス</summary>
     public sealed class Sprite : TextureBase, IDisposable
     {
-        private static DataSerializer _serializer;
         private bool _disposed;
         /// <summary>このスプライトが持つテクスチャ</summary>
         private Texture[] _textures;
