@@ -231,7 +231,7 @@ namespace Elffy
 
         protected override void Dispose(bool disposing)
         {
-            if(_disposed) { throw new ObjectDisposedException(nameof(ResourceStream)); }
+            if(_disposed) { return; }
             if(disposing) {
                 // マネージリソース解放
                 _innerStream.Dispose();
