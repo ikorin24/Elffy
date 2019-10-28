@@ -8,6 +8,7 @@ using System.Xml.Linq;
 using System.Xml;
 using System.Xml.Serialization;
 using Elffy.Core;
+using Elffy.Exceptions;
 
 namespace Elffy
 {
@@ -24,7 +25,7 @@ namespace Elffy
             get { return _path; }
             set
             {
-                if(_path == null) { throw new ArgumentNullException(); }
+                ExceptionManager.ThrowIfNullArg(value, nameof(value));
                 _path = value;
             }
         }

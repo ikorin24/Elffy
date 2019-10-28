@@ -1,4 +1,5 @@
-﻿using Elffy.Shape;
+﻿using Elffy.Exceptions;
+using Elffy.Shape;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,7 +18,7 @@ namespace Elffy.Serialization
         /// <returns>読み込んだ3Dモデル</returns>
         public static Model3D Load(Stream stream, ModelType type)
         {
-            if(stream == null) { throw new ArgumentNullException(nameof(stream)); }
+            ExceptionManager.ThrowIfNullArg(stream, nameof(stream));
             try {
                 switch(type) {
                     case ModelType.Fbx:

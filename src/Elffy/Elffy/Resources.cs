@@ -199,7 +199,7 @@ namespace Elffy
             }
             set
             {
-                if(value >= _length || value < 0) { throw new ArgumentOutOfRangeException(); }
+                ExceptionManager.ThrowIf(value >= _length || value < 0, new ArgumentOutOfRangeException());
                 _innerStream.Position = _head + value;
             }
         }

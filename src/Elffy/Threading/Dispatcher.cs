@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Elffy.Exceptions;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -24,7 +25,7 @@ namespace Elffy.Threading
         /// <param name="action">実行する処理</param>
         public static void Invoke(Action action)
         {
-            if(action == null) { throw new ArgumentNullException(); }
+            ExceptionManager.ThrowIfNullArg(action, nameof(action));
             if(IsMainThread()) {
                 action();
             }

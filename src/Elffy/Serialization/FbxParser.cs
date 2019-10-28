@@ -4,6 +4,7 @@ using System.Text;
 using System.IO;
 using System.Diagnostics;
 using System.IO.Compression;
+using Elffy.Exceptions;
 
 namespace Elffy.Serialization
 {
@@ -41,8 +42,8 @@ namespace Elffy.Serialization
         /// <returns>fbx object</returns>
         public FbxObject Parse(string filepath)
         {
-            if (filepath == null) { throw new ArgumentNullException(filepath); }
-            if (!File.Exists(filepath)) { throw new FileNotFoundException("file not found", filepath); }
+            ExceptionManager.ThrowIfNullArg(filepath, nameof(filepath));
+            ExceptionManager.ThrowIf(!File.Exists(filepath), new FileNotFoundException("file not found", filepath));
             using (var stream = File.OpenRead(filepath))
             using (var reader = new BinaryReader(stream))
             {
@@ -57,7 +58,7 @@ namespace Elffy.Serialization
         /// <returns>fbx object</returns>
         public FbxObject Parse(Stream stream)
         {
-            if (stream == null) { throw new ArgumentNullException(nameof(stream)); }
+            ExceptionManager.ThrowIfNullArg(stream, nameof(stream));
             using (var reader = new BinaryReader(stream))
             {
                 var fbxObj = new FbxObject();

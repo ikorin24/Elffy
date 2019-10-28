@@ -26,8 +26,9 @@ namespace Elffy.UI
         /// <param name="control">描画対象の論理 UI コントロール</param>
         public UIRenderable(UIBase control)
         {
+            ExceptionManager.ThrowIfNullArg(control, nameof(control));
             IsFrozen = true;
-            Control = control ?? throw new ArgumentNullException(nameof(control));
+            Control = control;
             Activated += OnActivated;
         }
 

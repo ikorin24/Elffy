@@ -30,7 +30,7 @@ namespace Elffy.Core
         {
             ExceptionManager.ThrowIfNullArg(component, nameof(component));
             var type = typeof(T);
-            if(_types.Contains(type)) { throw new ArgumentException($"Component type '{type.FullName}' already exists."); }
+            ExceptionManager.ThrowIf(_types.Contains(type), new ArgumentException($"Component type '{type.FullName}' already exists."));
 
             // _types と _component は同じ index は同じ要素に対応している前提
             // 同じ型の Component は複数存在しない前提
