@@ -47,6 +47,9 @@ namespace Elffy.Core
             if(string.IsNullOrEmpty(uniqueName)) { throw new ArgumentException($"{nameof(uniqueName)} is null or empty."); }
             if(startAction == null) { throw new ArgumentNullException(nameof(startAction)); }
             if(multiLaunch == null) { throw new ArgumentNullException(nameof(multiLaunch)); }
+            if(uniqueName.Length > MUTEX_NAME_MAX_LEN) {
+                throw new ArgumentException($"{nameof(uniqueName)} is too long. Length must be between 0 and {MUTEX_NAME_MAX_LEN}.");
+            }
             Mutex mutex = null;
             try {
                 mutex = new Mutex(true, uniqueName, out var createdNew);
