@@ -71,6 +71,8 @@
     <Compile Include="Core\FrameObjectStore.cs" />
     <Compile Include="Core\TextureBase.cs" />
     <Compile Include="Core\UILayer.cs" />
+    <Compile Include="Elffy\FragmentShader.cs" />
+    <Compile Include="Elffy\ShaderProgram.cs" />
     <Compile Include="Elffy\Sprite.cs" />
     <Compile Include="Elffy\TextureEnums.cs" />
     <Compile Include="Elffy\Definition.cs" />
@@ -83,6 +85,7 @@
     <Compile Include="Core\ProcessHelper.cs" />
     <Compile Include="Elffy\Sound.cs" />
     <Compile Include="Core\RenderingArea.cs" />
+    <Compile Include="Elffy\VertexShader.cs" />
     <Compile Include="Elffy\Window.cs" />
     <Compile Include="Elffy\WritableTexture.cs" />
     <Compile Include="Exceptions\ExceptionManager.cs" />

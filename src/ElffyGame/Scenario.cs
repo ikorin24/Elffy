@@ -111,6 +111,13 @@ namespace ElffyGame
             a.Texture = sprite;
             //a.Texture = Texture.LoadFrom("cube.png");
             a.Activate(Game.Layers.WorldLayer);
+
+            using(var fragShader = FragmentShader.LoadFromResource("TestFragShader.frag"))
+            using(var vertShader = VertexShader.LoadFromResource("TestVertShader.vert")) {
+                var shader = ShaderProgram.Create();
+                shader.Link(vertShader, fragShader);
+                a.Shader = shader;
+            }
         }
     }
 }

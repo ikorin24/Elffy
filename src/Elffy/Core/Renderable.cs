@@ -57,6 +57,9 @@ namespace Elffy.Core
             }
         }
         private TextureBase _texture;
+
+        public ShaderProgram Shader { get; set; }
+
         /// <summary>頂点色を使用するかどうか</summary>
         public bool EnableVertexColor
         {
@@ -188,6 +191,13 @@ namespace Elffy.Core
                 else {
                     GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);
                 }
+                if(Shader != null) {
+                    Shader.Apply();
+                }
+                else {
+                    ShaderProgram.Clear();
+                }
+
                 GL.BindVertexArray(_vao);
                 GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBuffer);
                 GL.DrawElements(BeginMode.Triangles, _indexArrayLength, DrawElementsType.UnsignedInt, 0);
