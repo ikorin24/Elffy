@@ -28,9 +28,9 @@ namespace Elffy.Core
         /// <param name="component">component object</param>
         public void AddComponent<T>(T component)
         {
-            ExceptionManager.ThrowIfNullArg(component, nameof(component));
+            ArgumentChecker.ThrowIfNullArg(component, nameof(component));
             var type = typeof(T);
-            ExceptionManager.ThrowIf(_types.Contains(type), new ArgumentException($"Component type '{type.FullName}' already exists."));
+            ArgumentChecker.ThrowIf(_types.Contains(type), new ArgumentException($"Component type '{type.FullName}' already exists."));
 
             // _types と _component は同じ index は同じ要素に対応している前提
             // 同じ型の Component は複数存在しない前提

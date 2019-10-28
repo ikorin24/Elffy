@@ -19,9 +19,9 @@ namespace Elffy.UI
 
         public Split(ICollection<float> propotion)
         {
-            ExceptionManager.ThrowIfNullArg(propotion, nameof(propotion));
+            ArgumentChecker.ThrowIfNullArg(propotion, nameof(propotion));
             var tmp = propotion.ToArray();
-            ExceptionManager.ThrowIf(tmp.Any(value => value < 0), new ArgumentException($"negative propotion is not allowed"));
+            ArgumentChecker.ThrowIf(tmp.Any(value => value < 0), new ArgumentException($"negative propotion is not allowed"));
             _propotion = tmp;
             Propotion = new ReadOnlyCollection<float>(_propotion);
         }
@@ -32,7 +32,7 @@ namespace Elffy.UI
             // " 3, 3  ,  32  "
             if(source == null) { return null; }
             var propotion = source.Split(new[] { ',' }).Select(x => x.Trim()).Cast<float>().ToArray();
-            ExceptionManager.ThrowIf(propotion.Any(value => value < 0), new ArgumentException($"negative propotion is not allowed"));
+            ArgumentChecker.ThrowIf(propotion.Any(value => value < 0), new ArgumentException($"negative propotion is not allowed"));
             var split = new Split();
             split._propotion = propotion;
             split.Propotion = new ReadOnlyCollection<float>(propotion);

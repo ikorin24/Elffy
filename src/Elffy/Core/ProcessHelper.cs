@@ -45,9 +45,9 @@ namespace Elffy.Core
         /// <param name="multiLaunch">多重起動時に実行される処理</param>
         public static void SingleLaunch(string uniqueName, Action startAction, Action multiLaunch)
         {
-            ExceptionManager.ThrowIf(string.IsNullOrEmpty(uniqueName), new ArgumentException($"{nameof(uniqueName)} is null or empty."));
-            ExceptionManager.ThrowIfNullArg(startAction, nameof(startAction));
-            ExceptionManager.ThrowIfNullArg(multiLaunch, nameof(multiLaunch));
+            ArgumentChecker.ThrowIf(string.IsNullOrEmpty(uniqueName), new ArgumentException($"{nameof(uniqueName)} is null or empty."));
+            ArgumentChecker.ThrowIfNullArg(startAction, nameof(startAction));
+            ArgumentChecker.ThrowIfNullArg(multiLaunch, nameof(multiLaunch));
             Mutex mutex = null;
             try {
                 mutex = new Mutex(true, uniqueName, out var createdNew);

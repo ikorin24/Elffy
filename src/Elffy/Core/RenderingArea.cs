@@ -33,7 +33,7 @@ namespace Elffy.Core
             get => _width;
             set
             {
-                ExceptionManager.ThrowIf(value < 0, new ArgumentOutOfRangeException());
+                ArgumentChecker.ThrowIf(value < 0, new ArgumentOutOfRangeException());
                 _width = value;
                 OnSizeChanged(0, 0, _width, _height);
             }
@@ -47,7 +47,7 @@ namespace Elffy.Core
             get => _height;
             set
             {
-                ExceptionManager.ThrowIf(value < 0, new ArgumentOutOfRangeException());
+                ArgumentChecker.ThrowIf(value < 0, new ArgumentOutOfRangeException());
                 _height = value;
                 OnSizeChanged(0, 0, _width, _height);
             }
@@ -61,7 +61,7 @@ namespace Elffy.Core
             get => new Size(_width, _height);
             set
             {
-                ExceptionManager.ThrowIf(value.Width < 0 || value.Height < 0, new ArgumentOutOfRangeException());
+                ArgumentChecker.ThrowIf(value.Width < 0 || value.Height < 0, new ArgumentOutOfRangeException());
                 _width = value.Width;
                 _height = value.Height;
                 OnSizeChanged(0, 0, _width, _height);

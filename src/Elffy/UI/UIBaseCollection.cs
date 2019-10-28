@@ -30,7 +30,7 @@ namespace Elffy.UI
         /// <param name="owner">この <see cref="UIBaseCollection"/> を持つ <see cref="UIBase"/> オブジェクト</param>
         internal UIBaseCollection(UIBase owner)
         {
-            ExceptionManager.ThrowIfNullArg(owner, nameof(owner));
+            ArgumentChecker.ThrowIfNullArg(owner, nameof(owner));
             _owner = owner;
             _list = new List<UIBase>();
         }
@@ -42,7 +42,7 @@ namespace Elffy.UI
         /// <param name="item">追加する要素</param>
         public void Add(UIBase item)
         {
-            ExceptionManager.ThrowIfNullArg(item, nameof(item));
+            ArgumentChecker.ThrowIfNullArg(item, nameof(item));
             item.Parent = _owner;
             item.Renderable.Activate();
             _list.Add(item);
@@ -52,9 +52,9 @@ namespace Elffy.UI
         /// <param name="items">追加する要素</param>
         public void AddRange(IEnumerable<UIBase> items)
         {
-            ExceptionManager.ThrowIfNullArg(items, nameof(items));
+            ArgumentChecker.ThrowIfNullArg(items, nameof(items));
             var evaluated = (items is ICollection) ? items : items.ToArray();
-            ExceptionManager.ThrowIf(evaluated.Contains(null), new ArgumentException($"{items} contain 'null'. Can not add null."));
+            ArgumentChecker.ThrowIf(evaluated.Contains(null), new ArgumentException($"{items} contain 'null'. Can not add null."));
             foreach(var item in evaluated) {
                 item.Parent = _owner;
                 item.Renderable.Activate();
@@ -97,8 +97,8 @@ namespace Elffy.UI
         /// <param name="item">追加する要素</param>
         public void Insert(int index, UIBase item)
         {
-            ExceptionManager.ThrowIfNullArg(item, nameof(item));
-            ExceptionManager.ThrowIf(index < 0 || index > _list.Count, new ArgumentOutOfRangeException(nameof(index), index, "value is out of range."));
+            ArgumentChecker.ThrowIfNullArg(item, nameof(item));
+            ArgumentChecker.ThrowIf(index < 0 || index > _list.Count, new ArgumentOutOfRangeException(nameof(index), index, "value is out of range."));
             item.Parent = _owner;
             _list.Insert(index, item);
             item.Renderable.Activate();
@@ -109,7 +109,7 @@ namespace Elffy.UI
         /// <returns>削除に成功したか (指定した要素が存在しない場合 false)</returns>
         public bool Remove(UIBase item)
         {
-            ExceptionManager.ThrowIfNullArg(item, nameof(item));
+            ArgumentChecker.ThrowIfNullArg(item, nameof(item));
             var result = _list.Remove(item);
             if(result) {
                 item.Parent = null;
@@ -122,7 +122,7 @@ namespace Elffy.UI
         /// <param name="index">インデックス</param>
         public void RemoveAt(int index)
         {
-            ExceptionManager.ThrowIf(index < 0 || index >= _list.Count, new ArgumentOutOfRangeException(nameof(index), index, "value is out of range."));
+            ArgumentChecker.ThrowIf(index < 0 || index >= _list.Count, new ArgumentOutOfRangeException(nameof(index), index, "value is out of range."));
             _list[index].Parent = null;
             _list[index].Renderable.Destroy();
             _list.RemoveAt(index);

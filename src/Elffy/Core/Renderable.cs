@@ -123,8 +123,8 @@ namespace Elffy.Core
         /// <param name="indexArray">頂点インデックス配列</param>
         protected void InitGraphicBuffer(Vertex[] vertexArray, int[] indexArray)
         {
-            ExceptionManager.ThrowIfNullArg(vertexArray, nameof(vertexArray));
-            ExceptionManager.ThrowIfNullArg(indexArray, nameof(indexArray));
+            ArgumentChecker.ThrowIfNullArg(vertexArray, nameof(vertexArray));
+            ArgumentChecker.ThrowIfNullArg(indexArray, nameof(indexArray));
             Dispatcher.ThrowIfNotMainThread();
             unsafe {
                 fixed(Vertex* vertexPtr = vertexArray)

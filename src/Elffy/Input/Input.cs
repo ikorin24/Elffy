@@ -46,7 +46,7 @@ namespace Elffy.Input
         /// <returns>入力状態</returns>
         public static bool GetState(string name)
         {
-            var result = ExceptionManager.GetDicValue(_currentState, name, new KeyNotFoundException($"入力状態 '{name}' は登録されていません。"));
+            var result = ArgumentChecker.GetDicValue(_currentState, name, new KeyNotFoundException($"入力状態 '{name}' は登録されていません。"));
             return result;
         }
         #endregion
@@ -57,8 +57,8 @@ namespace Elffy.Input
         /// <returns>入力状態</returns>
         public static bool GetStateDown(string name)
         {
-            var current = ExceptionManager.GetDicValue(_currentState, name, new KeyNotFoundException($"入力状態 '{name}' は登録されていません。"));
-            var prev = ExceptionManager.GetDicValue(_previousState, name, new KeyNotFoundException($"入力状態 '{name}' は登録されていません。"));
+            var current = ArgumentChecker.GetDicValue(_currentState, name, new KeyNotFoundException($"入力状態 '{name}' は登録されていません。"));
+            var prev = ArgumentChecker.GetDicValue(_previousState, name, new KeyNotFoundException($"入力状態 '{name}' は登録されていません。"));
             return current && !prev;        // 立ち上がりを検出
         }
         #endregion
@@ -69,8 +69,8 @@ namespace Elffy.Input
         /// <returns>結果</returns>
         public static bool GetStateUp(string name)
         {
-            var current = ExceptionManager.GetDicValue(_currentState, name, new KeyNotFoundException($"入力状態 '{name}' は登録されていません。"));
-            var prev = ExceptionManager.GetDicValue(_previousState, name, new KeyNotFoundException($"入力状態 '{name}' は登録されていません。"));
+            var current = ArgumentChecker.GetDicValue(_currentState, name, new KeyNotFoundException($"入力状態 '{name}' は登録されていません。"));
+            var prev = ArgumentChecker.GetDicValue(_previousState, name, new KeyNotFoundException($"入力状態 '{name}' は登録されていません。"));
             return !current && prev;        // 立ち下がりを検出
         }
         #endregion
@@ -81,14 +81,14 @@ namespace Elffy.Input
         /// <returns>入力値</returns>
         public static float GetAxis(string name)
         {
-            var value = ExceptionManager.GetDicValue(_currentAxis, name, new KeyNotFoundException($"入力状態 '{name}' は登録されていません。"));
+            var value = ArgumentChecker.GetDicValue(_currentAxis, name, new KeyNotFoundException($"入力状態 '{name}' は登録されていません。"));
             return value;
         }
         #endregion
 
         public static float GetTrigger(string name)
         {
-            var value = ExceptionManager.GetDicValue(_currentTrigger, name, new KeyNotFoundException($"入力状態 '{name}' は登録されていません。"));
+            var value = ArgumentChecker.GetDicValue(_currentTrigger, name, new KeyNotFoundException($"入力状態 '{name}' は登録されていません。"));
             return value;
         }
 
@@ -99,9 +99,9 @@ namespace Elffy.Input
         /// <param name="gamepadButton">関連させるゲームパッドのボタン番号</param>
         public static void AddState(string name, Key key, int gamepadButton)
         {
-            ExceptionManager.ThrowIfNullArg(name, nameof(name));
-            ExceptionManager.ThrowIf(gamepadButton < 0 || gamepadButton >= PadState.BUTTON_COUNT, new ArgumentException($"'{gamepadButton}' は0以上{PadState.BUTTON_COUNT - 1}以下を指定してください"));
-            ExceptionManager.ThrowIf(_stateNames.ContainsKey(name), new ArgumentException($"入力状態 '{name}' は既に登録されています。"));
+            ArgumentChecker.ThrowIfNullArg(name, nameof(name));
+            ArgumentChecker.ThrowIf(gamepadButton < 0 || gamepadButton >= PadState.BUTTON_COUNT, new ArgumentException($"'{gamepadButton}' は0以上{PadState.BUTTON_COUNT - 1}以下を指定してください"));
+            ArgumentChecker.ThrowIf(_stateNames.ContainsKey(name), new ArgumentException($"入力状態 '{name}' は既に登録されています。"));
             _stateNames.Add(name, new StateNameObject(name, key, gamepadButton));
             _currentState.Add(name, false);
             _previousState.Add(name, false);
@@ -125,9 +125,9 @@ namespace Elffy.Input
         /// <param name="minValue">軸が反応する最小値</param>
         public static void AddAxis(string name, Key positiveKey, Key negativeKey, StickAxis stickAxis, float minValue)
         {
-            ExceptionManager.ThrowIfNullArg(name, nameof(name));
-            ExceptionManager.ThrowIf(minValue < 0 || minValue > 1, new ArgumentException($"'{minValue}' は0～1でなければなりません。"));
-            ExceptionManager.ThrowIf(_axisNames.ContainsKey(name), new ArgumentException($"入力状態 '{name}' は既に登録されています。"));
+            ArgumentChecker.ThrowIfNullArg(name, nameof(name));
+            ArgumentChecker.ThrowIf(minValue < 0 || minValue > 1, new ArgumentException($"'{minValue}' は0～1でなければなりません。"));
+            ArgumentChecker.ThrowIf(_axisNames.ContainsKey(name), new ArgumentException($"入力状態 '{name}' は既に登録されています。"));
             _axisNames.Add(name, new AxisNameObject(name, positiveKey, negativeKey, stickAxis, minValue));
             _currentAxis.Add(name, 0);
             _previousAxis.Add(name, 0);
@@ -139,9 +139,9 @@ namespace Elffy.Input
 
         public static void AddTrigger(string name, Key key, Trigger trigger, float minValue)
         {
-            ExceptionManager.ThrowIfNullArg(name, nameof(name));
-            ExceptionManager.ThrowIf(minValue < 0 || minValue > 1, new ArgumentException($"'{minValue}' は0～1でなければなりません。"));
-            ExceptionManager.ThrowIf(_triggerNames.ContainsKey(name), new ArgumentException($"入力状態 '{name}' は既に登録されています。"));
+            ArgumentChecker.ThrowIfNullArg(name, nameof(name));
+            ArgumentChecker.ThrowIf(minValue < 0 || minValue > 1, new ArgumentException($"'{minValue}' は0～1でなければなりません。"));
+            ArgumentChecker.ThrowIf(_triggerNames.ContainsKey(name), new ArgumentException($"入力状態 '{name}' は既に登録されています。"));
             _triggerNames.Add(name, new TriggerNameObject(name, key, trigger, minValue));
             _currentTrigger.Add(name, 0);
             _previousTrigger.Add(name, 0);

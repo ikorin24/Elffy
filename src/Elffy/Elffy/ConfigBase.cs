@@ -25,7 +25,7 @@ namespace Elffy
             get { return _path; }
             set
             {
-                ExceptionManager.ThrowIfNullArg(value, nameof(value));
+                ArgumentChecker.ThrowIfNullArg(value, nameof(value));
                 _path = value;
             }
         }

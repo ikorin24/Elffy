@@ -80,7 +80,7 @@
     <Compile Include="Core\RenderingArea.cs" />
     <Compile Include="Elffy\Window.cs" />
     <Compile Include="Elffy\WritableTexture.cs" />
-    <Compile Include="Exceptions\ExceptionManager.cs" />
+    <Compile Include="Exceptions\ArgumentChecker.cs" />
     <Compile Include="Exceptions\SceneParseException.cs" />
     <Compile Include="Framing\FrameProcessObject.cs" />
     <Compile Include="Framing\FrameProcessInfo.cs" />

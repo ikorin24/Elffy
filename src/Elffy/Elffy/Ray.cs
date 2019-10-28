@@ -29,7 +29,7 @@ namespace Elffy.Elffy
             get => _direction;
             set
             {
-                ExceptionManager.ThrowIf(value.Length == 0, new ArgumentException($"A vector which length is 0 can not be '{Direction}'"));
+                ArgumentChecker.ThrowIf(value.Length == 0, new ArgumentException($"A vector which length is 0 can not be '{Direction}'"));
                 ThrowIfContainsInifinityOrNaN(value);
                 _direction = value;
             }
@@ -101,7 +101,7 @@ namespace Elffy.Elffy
         /// <param name="value">値</param>
         private void ThrowIfContainsInifinityOrNaN(Vector3 value)
         {
-            ExceptionManager.ThrowIf(float.IsNaN(value.X) || float.IsNaN(value.Y) || float.IsNaN(value.Z) ||
+            ArgumentChecker.ThrowIf(float.IsNaN(value.X) || float.IsNaN(value.Y) || float.IsNaN(value.Z) ||
                                      float.IsInfinity(value.X) || float.IsInfinity(value.Y) || float.IsInfinity(value.Z) ||
                                      float.IsNegativeInfinity(value.X) || float.IsNegativeInfinity(value.Y) || float.IsNegativeInfinity(value.Z),
                 new ArgumentException($"value of X, Y, or Z is {float.NaN}, {float.PositiveInfinity}, or {float.NegativeInfinity}"));
@@ -111,7 +111,7 @@ namespace Elffy.Elffy
         /// <param name="value">値</param>
         private void ThrowIfInifinityOrNaN(float value)
         {
-            ExceptionManager.ThrowIf(float.IsNaN(value) || float.IsInfinity(value) || float.IsNegativeInfinity(value),
+            ArgumentChecker.ThrowIf(float.IsNaN(value) || float.IsInfinity(value) || float.IsNegativeInfinity(value),
                 new ArgumentException($"value is {float.NaN}, {float.PositiveInfinity}, or {float.NegativeInfinity}"));
         }
     }

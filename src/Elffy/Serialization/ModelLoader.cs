@@ -18,7 +18,7 @@ namespace Elffy.Serialization
         /// <returns>読み込んだ3Dモデル</returns>
         public static Model3D Load(Stream stream, ModelType type)
         {
-            ExceptionManager.ThrowIfNullArg(stream, nameof(stream));
+            ArgumentChecker.ThrowIfNullArg(stream, nameof(stream));
             try {
                 switch(type) {
                     case ModelType.Fbx:

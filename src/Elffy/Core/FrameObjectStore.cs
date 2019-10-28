@@ -47,7 +47,7 @@ namespace Elffy.Core
         /// <param name="frameObject">追加するオブジェクト</param>
         public void AddFrameObject(FrameObject frameObject)
         {
-            ExceptionManager.ThrowIfNullArg(frameObject, nameof(frameObject));
+            ArgumentChecker.ThrowIfNullArg(frameObject, nameof(frameObject));
             _addedBuf.Add(frameObject);
         }
         #endregion
@@ -58,7 +58,7 @@ namespace Elffy.Core
         /// <returns>削除できたかどうか</returns>
         public void RemoveFrameObject(FrameObject frameObject)
         {
-            ExceptionManager.ThrowIfNullArg(frameObject, nameof(frameObject));
+            ArgumentChecker.ThrowIfNullArg(frameObject, nameof(frameObject));
             _removedBuf.Add(frameObject);
         }
         #endregion

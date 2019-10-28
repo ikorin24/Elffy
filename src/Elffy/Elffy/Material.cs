@@ -28,7 +28,7 @@ namespace Elffy
             get => _default;
             set
             {
-                ExceptionManager.ThrowIfNullArg(value, nameof(value));
+                ArgumentChecker.ThrowIfNullArg(value, nameof(value));
                 _default = value;
             }
         }

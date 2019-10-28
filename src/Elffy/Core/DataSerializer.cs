@@ -22,7 +22,7 @@ namespace Elffy.Core
         /// <returns>シリアライズに成功したか</returns>
         public bool Serialize<T>(string path, T data)
         {
-            ExceptionManager.ThrowIfNullArg(path, nameof(path));
+            ArgumentChecker.ThrowIfNullArg(path, nameof(path));
             var ws = new XmlWriterSettings();
             ws.Encoding = _encoding;
             ws.Indent = true;

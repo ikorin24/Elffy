@@ -65,7 +65,7 @@ namespace Elffy
             get => _frameDelta;
             set
             {
-                ExceptionManager.ThrowIf(value <= TimeSpan.Zero, new ArgumentOutOfRangeException("value is 0 or negative."));
+                ArgumentChecker.ThrowIf(value <= TimeSpan.Zero, new ArgumentOutOfRangeException("value is 0 or negative."));
                 _frameDelta = value;
                 if(IsRunning) {
                     _instance._gameScreen.TargetRenderPeriod = value.TotalSeconds;
@@ -114,8 +114,8 @@ namespace Elffy
         public static void Run(int width, int height, string title, WindowStyle windowStyle)
         {
             ThrowIfGameAlreadyRunning();
-            ExceptionManager.ThrowIf(width < 0, new ArgumentOutOfRangeException(nameof(width)));
-            ExceptionManager.ThrowIf(height < 0, new ArgumentOutOfRangeException(nameof(height)));
+            ArgumentChecker.ThrowIf(width < 0, new ArgumentOutOfRangeException(nameof(width)));
+            ArgumentChecker.ThrowIf(height < 0, new ArgumentOutOfRangeException(nameof(height)));
             try {
                 Resources.Initialize();
             }
@@ -132,9 +132,9 @@ namespace Elffy
         public static void Run(int width, int height, string title, WindowStyle windowStyle, string icon)
         {
             ThrowIfGameAlreadyRunning();
-            ExceptionManager.ThrowIf(width < 0, new ArgumentOutOfRangeException(nameof(width)));
-            ExceptionManager.ThrowIf(height < 0, new ArgumentOutOfRangeException(nameof(height)));
-            ExceptionManager.ThrowIf(string.IsNullOrEmpty(icon), new ArgumentException($"Icon is null or empty"));
+            ArgumentChecker.ThrowIf(width < 0, new ArgumentOutOfRangeException(nameof(width)));
+            ArgumentChecker.ThrowIf(height < 0, new ArgumentOutOfRangeException(nameof(height)));
+            ArgumentChecker.ThrowIf(string.IsNullOrEmpty(icon), new ArgumentException($"Icon is null or empty"));
             try {
                 Resources.Initialize();
             }

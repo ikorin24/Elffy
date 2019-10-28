@@ -42,8 +42,8 @@ namespace Elffy.Serialization
         /// <returns>fbx object</returns>
         public FbxObject Parse(string filepath)
         {
-            ExceptionManager.ThrowIfNullArg(filepath, nameof(filepath));
-            ExceptionManager.ThrowIf(!File.Exists(filepath), new FileNotFoundException("file not found", filepath));
+            ArgumentChecker.ThrowIfNullArg(filepath, nameof(filepath));
+            ArgumentChecker.ThrowIf(!File.Exists(filepath), new FileNotFoundException("file not found", filepath));
             using (var stream = File.OpenRead(filepath))
             using (var reader = new BinaryReader(stream))
             {
@@ -58,7 +58,7 @@ namespace Elffy.Serialization
         /// <returns>fbx object</returns>
         public FbxObject Parse(Stream stream)
         {
-            ExceptionManager.ThrowIfNullArg(stream, nameof(stream));
+            ArgumentChecker.ThrowIfNullArg(stream, nameof(stream));
             using (var reader = new BinaryReader(stream))
             {
                 var fbxObj = new FbxObject();

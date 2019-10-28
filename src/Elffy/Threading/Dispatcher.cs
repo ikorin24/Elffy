@@ -25,7 +25,7 @@ namespace Elffy.Threading
         /// <param name="action">実行する処理</param>
         public static void Invoke(Action action)
         {
-            ExceptionManager.ThrowIfNullArg(action, nameof(action));
+            ArgumentChecker.ThrowIfNullArg(action, nameof(action));
             if(IsMainThread()) {
                 action();
             }

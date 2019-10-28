@@ -47,7 +47,7 @@ namespace Elffy
         /// <summary>このオブジェクトをゲーム管理下におきます</summary>
         public void Activate(LayerBase layer)
         {
-            ExceptionManager.ThrowIfNullArg(layer, nameof(layer));
+            ArgumentChecker.ThrowIfNullArg(layer, nameof(layer));
             if(IsDestroyed) { throw new ObjectDestroyedException(this); }
             if(IsActivated) { return; }
             Layer = layer;

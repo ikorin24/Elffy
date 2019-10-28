@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 namespace Elffy.Exceptions
 {
     /// <summary>引数確認で例外を投げるためのクラス。条件付きコンパイルで制御できます</summary>
-    internal static class ExceptionManager
+    internal static class ArgumentChecker
     {
         private const string CHECK_ARG = "CHECK_ARG";
 
