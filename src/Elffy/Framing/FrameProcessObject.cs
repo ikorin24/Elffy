@@ -140,7 +140,7 @@ namespace Elffy.Framing
 
         #region strcut BehaviorQueueObject
         /// <summary>フレームプロセスの処理キューに入れるオブジェクト</summary>
-        private struct BehaviorQueueObject
+        private struct BehaviorQueueObject      // TODO: struct である意味を要再検討。ないなら class に
         {
             /// <summary>処理</summary>
             public FrameProcessBehavior Behavior { get; private set; }
