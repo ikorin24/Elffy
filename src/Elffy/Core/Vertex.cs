@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace Elffy.Core
 {
     [DebuggerDisplay("{Position}")]
-    public struct Vertex
+    public struct Vertex : IEquatable<Vertex>
     {
         private static readonly int _color4Size = Marshal.SizeOf<Color4>();
 
@@ -46,6 +46,39 @@ namespace Elffy.Core
             GL.NormalPointer(NormalPointerType.Float, Size, Vector3.SizeInBytes);           // 頂点の法線
             GL.ColorPointer(4, ColorPointerType.Float, Size, Vector3.SizeInBytes * 2);      // 頂点の色
             GL.TexCoordPointer(2, TexCoordPointerType.Float, Size, Vector3.SizeInBytes * 2 + _color4Size);  // テクスチャ座標
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is Vertex vertex && Equals(vertex);
+        }
+
+        public bool Equals(Vertex other)
+        {
+            return Position.Equals(other.Position) &&
+                   Normal.Equals(other.Normal) &&
+                   Color.Equals(other.Color) &&
+                   TexCoord.Equals(other.TexCoord);
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = 220393015;
+            hashCode = hashCode * -1521134295 + EqualityComparer<Vector3>.Default.GetHashCode(Position);
+            hashCode = hashCode * -1521134295 + EqualityComparer<Vector3>.Default.GetHashCode(Normal);
+            hashCode = hashCode * -1521134295 + EqualityComparer<Color4>.Default.GetHashCode(Color);
+            hashCode = hashCode * -1521134295 + EqualityComparer<Vector2>.Default.GetHashCode(TexCoord);
+            return hashCode;
+        }
+
+        public static bool operator ==(Vertex left, Vertex right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(Vertex left, Vertex right)
+        {
+            return !(left == right);
         }
     }
 }
