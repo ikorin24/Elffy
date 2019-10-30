@@ -4,6 +4,12 @@ root = true
 [*]
 end_of_line = crlf
 
+[*.md,*.xml,*.cs,*.xaml,*.glsl,*.vert,*.frag]
+# for any text-based file
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+
 [*.md]
 indent_style = space
 indent_size = 4
