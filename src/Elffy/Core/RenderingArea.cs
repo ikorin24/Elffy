@@ -1,4 +1,5 @@
 ﻿using Elffy.Core;
+using Elffy.Exceptions;
 using Elffy.Threading;
 using Elffy.UI;
 using OpenTK;
@@ -32,7 +33,7 @@ namespace Elffy.Core
             get => _width;
             set
             {
-                if(value < 0) { throw new ArgumentOutOfRangeException(); }
+                ArgumentChecker.ThrowIf(value < 0, new ArgumentOutOfRangeException());
                 _width = value;
                 OnSizeChanged(0, 0, _width, _height);
             }
@@ -46,7 +47,7 @@ namespace Elffy.Core
             get => _height;
             set
             {
-                if(value < 0) { throw new ArgumentOutOfRangeException(); }
+                ArgumentChecker.ThrowIf(value < 0, new ArgumentOutOfRangeException());
                 _height = value;
                 OnSizeChanged(0, 0, _width, _height);
             }
@@ -60,7 +61,7 @@ namespace Elffy.Core
             get => new Size(_width, _height);
             set
             {
-                if(value.Width < 0 || value.Height < 0) { throw new ArgumentOutOfRangeException(); }
+                ArgumentChecker.ThrowIf(value.Width < 0 || value.Height < 0, new ArgumentOutOfRangeException());
                 _width = value.Width;
                 _height = value.Height;
                 OnSizeChanged(0, 0, _width, _height);

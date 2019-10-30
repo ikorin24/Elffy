@@ -1,4 +1,5 @@
 ﻿using Elffy.Core;
+using Elffy.Exceptions;
 using System;
 
 namespace Elffy.Framing
@@ -33,8 +34,8 @@ namespace Elffy.Framing
         /// <returns>一連のフレームプロセスの流れを表す <see cref="FrameProcess"/> オブジェクト</returns>
         public static FrameProcess Begin(TimeSpan time, FrameProcessBehavior behavior)
         {
-            if(time <= TimeSpan.Zero) { throw new ArgumentException($"{nameof(time)} is 0 or negative."); }
-            if(behavior == null) { throw new ArgumentNullException(nameof(behavior)); }
+            ArgumentChecker.ThrowIf(time < TimeSpan.Zero, new ArgumentException($"{nameof(time)} is negative."));
+            ArgumentChecker.ThrowIfNullArg(behavior, nameof(behavior));
             var frameProcess = new FrameProcess();
             frameProcess.ProcessObj.Activate(TARGET_LAYER);
             frameProcess.ProcessObj.AddBehavior(time, behavior);
@@ -46,7 +47,7 @@ namespace Elffy.Framing
         /// <returns>一連のフレームプロセスの流れを表す <see cref="FrameProcess"/> オブジェクト</returns>
         public static FrameProcess Do(FrameProcessBehavior behavior)
         {
-            if(behavior == null) { throw new ArgumentNullException(nameof(behavior)); }
+            ArgumentChecker.ThrowIfNullArg(behavior, nameof(behavior));
             var frameProcess = new FrameProcess();
             frameProcess.ProcessObj.Activate(TARGET_LAYER);
             frameProcess.ProcessObj.AddBehavior(behavior);
@@ -58,7 +59,7 @@ namespace Elffy.Framing
         /// <returns>一連のフレームプロセスの流れを表す <see cref="FrameProcess"/> オブジェクト</returns>
         public static FrameProcess Wait(TimeSpan time)
         {
-            if(time < TimeSpan.Zero) { throw new ArgumentException($"{nameof(time)} is 0 or negative."); }
+            ArgumentChecker.ThrowIf(time < TimeSpan.Zero, new ArgumentException($"{nameof(time)} is negative."));
             var frameProcess = new FrameProcess();
             frameProcess.ProcessObj.Activate(TARGET_LAYER);
             frameProcess.ProcessObj.AddBehavior(time, WAIT_BEHAVIOR);
@@ -71,8 +72,8 @@ namespace Elffy.Framing
         /// <returns>一連のフレームプロセスの流れを表す <see cref="FrameProcess"/> オブジェクト</returns>
         public static FrameProcess While(Func<bool> condition, FrameProcessBehavior behavior)
         {
-            if(condition == null) { throw new ArgumentNullException(nameof(condition)); }
-            if(behavior == null) { throw new ArgumentNullException(nameof(behavior)); }
+            ArgumentChecker.ThrowIfNullArg(condition, nameof(condition));
+            ArgumentChecker.ThrowIfNullArg(behavior, nameof(behavior));
             var frameProcess = new FrameProcess();
             frameProcess.ProcessObj.Activate(TARGET_LAYER);
             frameProcess.ProcessObj.AddBehavior(condition, behavior);
@@ -84,7 +85,7 @@ namespace Elffy.Framing
         /// <returns>一連のフレームプロセスの流れを表す <see cref="FrameProcess"/> オブジェクト</returns>
         public static FrameProcess WhileTrue(FrameProcessBehavior behavior)
         {
-            if(behavior == null) { throw new ArgumentNullException(nameof(behavior)); }
+            ArgumentChecker.ThrowIfNullArg(behavior, nameof(behavior));
             var frameProcess = new FrameProcess();
             frameProcess.ProcessObj.Activate(TARGET_LAYER);
             frameProcess.ProcessObj.AddBehavior(ALWAYS_TRUE, behavior);
@@ -104,8 +105,8 @@ namespace Elffy.Framing
         /// <returns>一連のフレームプロセスの流れを表す <see cref="FrameProcess"/> オブジェクト</returns>
         public static FrameProcess Begin(this FrameProcess frameProcess, TimeSpan time, FrameProcessBehavior behavior)
         {
-            if(time <= TimeSpan.Zero) { throw new ArgumentException($"{nameof(time)} is 0 or negative."); }
-            if(behavior == null) { throw new ArgumentNullException(nameof(behavior)); }
+            ArgumentChecker.ThrowIf(time < TimeSpan.Zero, new ArgumentException($"{nameof(time)} is negative."));
+            ArgumentChecker.ThrowIfNullArg(behavior, nameof(behavior));
             if(!frameProcess.ProcessObj.IsActivated) { frameProcess.ProcessObj.Activate(FrameProcess.TARGET_LAYER); }
             frameProcess.ProcessObj.AddBehavior(time, behavior);
             return frameProcess;
@@ -117,7 +118,7 @@ namespace Elffy.Framing
         /// <returns>一連のフレームプロセスの流れを表す <see cref="FrameProcess"/> オブジェクト</returns>
         public static FrameProcess Do(this FrameProcess frameProcess, FrameProcessBehavior behavior)
         {
-            if(behavior == null) { throw new ArgumentNullException(nameof(behavior)); }
+            ArgumentChecker.ThrowIfNullArg(behavior, nameof(behavior));
             if(!frameProcess.ProcessObj.IsActivated) { frameProcess.ProcessObj.Activate(FrameProcess.TARGET_LAYER); }
             frameProcess.ProcessObj.AddBehavior(behavior);
             return frameProcess;
@@ -129,7 +130,7 @@ namespace Elffy.Framing
         /// <returns>一連のフレームプロセスの流れを表す <see cref="FrameProcess"/> オブジェクト</returns>
         public static FrameProcess Wait(this FrameProcess frameProcess, TimeSpan time)
         {
-            if(time < TimeSpan.Zero) { throw new ArgumentException($"{time} is 0 or negative."); }
+            ArgumentChecker.ThrowIf(time < TimeSpan.Zero, new ArgumentException($"{nameof(time)} is negative."));
             if(!frameProcess.ProcessObj.IsActivated) { frameProcess.ProcessObj.Activate(FrameProcess.TARGET_LAYER); }
             frameProcess.ProcessObj.AddBehavior(time, FrameProcess.WAIT_BEHAVIOR);
             return frameProcess;
@@ -142,8 +143,8 @@ namespace Elffy.Framing
         /// <returns>一連のフレームプロセスの流れを表す <see cref="FrameProcess"/> オブジェクト</returns>
         public static FrameProcess While(this FrameProcess frameProcess, Func<bool> condition, FrameProcessBehavior behavior)
         {
-            if(condition == null) { throw new ArgumentNullException(nameof(condition)); }
-            if(behavior == null) { throw new ArgumentNullException(nameof(behavior)); }
+            ArgumentChecker.ThrowIfNullArg(condition, nameof(condition));
+            ArgumentChecker.ThrowIfNullArg(behavior, nameof(behavior));
             if(!frameProcess.ProcessObj.IsActivated) { frameProcess.ProcessObj.Activate(FrameProcess.TARGET_LAYER); }
             frameProcess.ProcessObj.AddBehavior(condition, behavior);
             return frameProcess;
@@ -155,7 +156,7 @@ namespace Elffy.Framing
         /// <returns>一連のフレームプロセスの流れを表す <see cref="FrameProcess"/> オブジェクト</returns>
         public static FrameProcess WhileTrue(this FrameProcess frameProcess, FrameProcessBehavior behavior)
         {
-            if(behavior == null) { throw new ArgumentNullException(nameof(behavior)); }
+            ArgumentChecker.ThrowIfNullArg(behavior, nameof(behavior));
             if(!frameProcess.ProcessObj.IsActivated) { frameProcess.ProcessObj.Activate(FrameProcess.TARGET_LAYER); }
             frameProcess.ProcessObj.AddBehavior(FrameProcess.ALWAYS_TRUE, behavior);
             return frameProcess;

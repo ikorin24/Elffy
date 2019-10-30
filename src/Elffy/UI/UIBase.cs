@@ -5,6 +5,7 @@ using System.Drawing;
 using Elffy.Effective;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Elffy.Exceptions;
 
 namespace Elffy.UI
 {
@@ -119,7 +120,7 @@ namespace Elffy.UI
             get => _width;
             set
             {
-                if(value < 0) { throw new ArgumentOutOfRangeException(nameof(value), value, "value is invalid."); }
+                ArgumentChecker.ThrowIf(value < 0, new ArgumentOutOfRangeException(nameof(value), value, "value is invalid."));
                 _width = value;
             }
         }
@@ -133,7 +134,7 @@ namespace Elffy.UI
             get => _height;
             set
             {
-                if(value < 0) { throw new ArgumentOutOfRangeException(nameof(value), value, "value is invalid."); }
+                ArgumentChecker.ThrowIf(value < 0, new ArgumentOutOfRangeException(nameof(value), value, "value is invalid."));
                 _height = value;
             }
         }

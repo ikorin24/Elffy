@@ -97,10 +97,10 @@ namespace Elffy
         {
             ThrowIfDisposed();
             Dispatcher.ThrowIfNotMainThread();
-            ExceptionManager.ThrowIfNullArg(vertexShader, nameof(vertexShader));
-            ExceptionManager.ThrowIfNullArg(fragmentShader, nameof(fragmentShader));
-            ExceptionManager.ThrowIf(vertexShader.IsCompiled == false, new ArgumentException($"{nameof(vertexShader)} is not compiled."));
-            ExceptionManager.ThrowIf(fragmentShader.IsCompiled == false, new ArgumentException($"{nameof(fragmentShader)} is not compiled."));
+            ArgumentChecker.ThrowIfNullArg(vertexShader, nameof(vertexShader));
+            ArgumentChecker.ThrowIfNullArg(fragmentShader, nameof(fragmentShader));
+            ArgumentChecker.ThrowIf(vertexShader.IsCompiled == false, new ArgumentException($"{nameof(vertexShader)} is not compiled."));
+            ArgumentChecker.ThrowIf(fragmentShader.IsCompiled == false, new ArgumentException($"{nameof(fragmentShader)} is not compiled."));
             if(IsShaderLinked) { throw new InvalidOperationException("Shaders are already linked."); }
             LinkShaders(vertexShader.ShaderID, fragmentShader.ShaderID);
         }
@@ -114,8 +114,8 @@ namespace Elffy
         {
             ThrowIfDisposed();
             Dispatcher.ThrowIfNotMainThread();
-            ExceptionManager.ThrowIfNullArg(vertexShader, nameof(vertexShader));
-            ExceptionManager.ThrowIf(vertexShader.IsCompiled == false, new ArgumentException($"{nameof(vertexShader)} is not compiled."));
+            ArgumentChecker.ThrowIfNullArg(vertexShader, nameof(vertexShader));
+            ArgumentChecker.ThrowIf(vertexShader.IsCompiled == false, new ArgumentException($"{nameof(vertexShader)} is not compiled."));
             if(IsShaderLinked) { throw new InvalidOperationException("Shaders are already linked."); }
             LinkShaders(vertexShader.ShaderID, null);
         }
@@ -129,8 +129,8 @@ namespace Elffy
         {
             ThrowIfDisposed();
             Dispatcher.ThrowIfNotMainThread();
-            ExceptionManager.ThrowIfNullArg(fragmentShader, nameof(fragmentShader));
-            ExceptionManager.ThrowIf(fragmentShader.IsCompiled == false, new ArgumentException($"{nameof(fragmentShader)} is not compiled."));
+            ArgumentChecker.ThrowIfNullArg(fragmentShader, nameof(fragmentShader));
+            ArgumentChecker.ThrowIf(fragmentShader.IsCompiled == false, new ArgumentException($"{nameof(fragmentShader)} is not compiled."));
             if(IsShaderLinked) { throw new InvalidOperationException("Shaders are already linked."); }
             LinkShaders(fragmentShader.ShaderID, null);
         }

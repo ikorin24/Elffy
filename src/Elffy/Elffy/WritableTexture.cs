@@ -7,6 +7,7 @@ using Elffy.Threading;
 using Elffy.Effective;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Elffy.Exceptions;
 
 namespace Elffy
 {
@@ -46,8 +47,8 @@ namespace Elffy
         public WritableTexture(int width, int height, Color background, TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode, TextureExpansionMode expansionMode) 
             : base(shrinkMode, mipmapMode, expansionMode)
         {
-            if(width <= 0) { throw new ArgumentOutOfRangeException(nameof(width)); }
-            if(height <= 0) { throw new ArgumentOutOfRangeException(nameof(height)); }
+            ArgumentChecker.ThrowIf(width <= 0, new ArgumentOutOfRangeException(nameof(width)));
+            ArgumentChecker.ThrowIf(height <= 0, new ArgumentOutOfRangeException(nameof(height)));
             _bitmap = new Bitmap(width, height);
             _g = Graphics.FromImage(_bitmap);
             _g.Clear(background);
@@ -73,7 +74,7 @@ namespace Elffy
         {
             Dispatcher.ThrowIfNotMainThread();
             ThrowIfDisposed();
-            if(font == null) { throw new ArgumentNullException(nameof(font)); }
+            ArgumentChecker.ThrowIfNullArg(font, nameof(font));
             _g.DrawString(text, font, Brushes.Green, point.X, point.Y);
             var size = _g.MeasureString(text, font);
             AddDirtyRegion(new Rectangle((int)point.X, (int)point.Y, (int)size.Width + 2, (int)size.Height + 2));
@@ -89,7 +90,7 @@ namespace Elffy
         {
             Dispatcher.ThrowIfNotMainThread();
             ThrowIfDisposed();
-            if(pen == null) { throw new ArgumentNullException(nameof(pen)); }
+            ArgumentChecker.ThrowIfNullArg(pen, nameof(pen));
             _g.DrawLine(pen, x1, y1, x2, y2);
             var updateRegion = GetBounds(new Point(x1, y1), new Point(x2, y2));
             AddDirtyRegion(updateRegion);
@@ -102,9 +103,9 @@ namespace Elffy
         {
             Dispatcher.ThrowIfNotMainThread();
             ThrowIfDisposed();
-            if(pen == null) { throw new ArgumentNullException(nameof(pen)); }
-            if(points == null) { throw new ArgumentNullException(nameof(points)); }
-            if(points.Length < 2) { throw new ArgumentException($"Length of {nameof(points)} must be bigger than 2."); }
+            ArgumentChecker.ThrowIfNullArg(pen, nameof(pen));
+            ArgumentChecker.ThrowIfNullArg(points, nameof(points));
+            ArgumentChecker.ThrowIf(points.Length < 2, new ArgumentException($"Length of {nameof(points)} must be bigger than 2."));
             _g.DrawLines(pen, points);
             AddDirtyRegion(GetBounds(points));
         }
@@ -116,7 +117,7 @@ namespace Elffy
         {
             Dispatcher.ThrowIfNotMainThread();
             ThrowIfDisposed();
-            if(image == null) { throw new ArgumentNullException(nameof(image)); }
+            ArgumentChecker.ThrowIfNullArg(image, nameof(image));
             _g.DrawImage(image, point);
             var point2 = new Point(point.X + image.Width, point.Y + image.Height);
             var updateRegion = GetBounds(point, point2);

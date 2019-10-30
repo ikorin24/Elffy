@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace Elffy.Exceptions
 {
     /// <summary>引数確認で例外を投げるためのクラス。条件付きコンパイルで制御できます</summary>
-    internal static class ExceptionManager
+    internal static class ArgumentChecker
     {
         private const string CHECK_ARG = "CHECK_ARG";
 
@@ -28,6 +29,26 @@ namespace Elffy.Exceptions
         public static void ThrowIf(bool condition, Exception ex)
         {
             if(condition) { throw ex; }
+        }
+
+        /// <summary>辞書から指定のキーの要素を取得します。キーが存在しない場合は指定の例外を投げます</summary>
+        /// <typeparam name="TKey">キーの型</typeparam>
+        /// <typeparam name="TValue">要素の型</typeparam>
+        /// <param name="dic">辞書</param>
+        /// <param name="key">キー</param>
+        /// <param name="ex">例外</param>
+        /// <returns>取得した要素</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static TValue GetDicValue<TKey, TValue>(IDictionary<TKey, TValue> dic, TKey key, Exception ex)
+        {
+#if CHECK_ARG
+            if(!dic.TryGetValue(key, out var value)) {
+                throw ex;
+            }
+            return value;
+#else
+            return dic[key];
+#endif
         }
 
 

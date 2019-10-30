@@ -23,7 +23,7 @@ namespace Elffy
             get => _pageChangingAlgorithm;
             set
             {
-                ExceptionManager.ThrowIfNullArg(value, nameof(value));
+                ArgumentChecker.ThrowIfNullArg(value, nameof(value));
                 _pageChangingAlgorithm = value;
             }
         }
@@ -84,7 +84,7 @@ namespace Elffy
         internal override void SwitchBind()
         {
             var page = PageChangingAlgorithm();
-            ExceptionManager.ThrowIf(page < 0 || page >= _textures.Length, new ArgumentOutOfRangeException($"Page number which {nameof(PageChangingAlgorithm)} returns is out of range."));
+            ArgumentChecker.ThrowIf(page < 0 || page >= _textures.Length, new ArgumentOutOfRangeException($"Page number which {nameof(PageChangingAlgorithm)} returns is out of range."));
             unsafe {
                 _textures[page].SwitchBind();
             }

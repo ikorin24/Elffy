@@ -59,6 +59,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AssemblyService\AssemblyState.cs" />
     <Compile Include="Core\EventHandler.cs" />
     <Compile Include="Core\MetaFile\Metadata.cs" />
     <Compile Include="Core\InternaInvisiblelLayer.cs" />
@@ -88,7 +89,7 @@
     <Compile Include="Elffy\VertexShader.cs" />
     <Compile Include="Elffy\Window.cs" />
     <Compile Include="Elffy\WritableTexture.cs" />
-    <Compile Include="Exceptions\ExceptionManager.cs" />
+    <Compile Include="Exceptions\ArgumentChecker.cs" />
     <Compile Include="Exceptions\SceneParseException.cs" />
     <Compile Include="Framing\FrameProcessObject.cs" />
     <Compile Include="Framing\FrameProcessInfo.cs" />

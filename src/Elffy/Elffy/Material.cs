@@ -3,6 +3,7 @@ using System.Diagnostics;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using Elffy.Core;
+using Elffy.Exceptions;
 
 namespace Elffy
 {
@@ -25,7 +26,11 @@ namespace Elffy
         public static Material Default
         {
             get => _default;
-            set { _default = value ?? throw new ArgumentNullException(); }
+            set
+            {
+                ArgumentChecker.ThrowIfNullArg(value, nameof(value));
+                _default = value;
+            }
         }
         private static Material _default = Materials.Plain;
 

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Elffy.Core;
 using OpenTK;
 using Elffy.Mathmatics;
+using Elffy.Exceptions;
 
 namespace Elffy
 {
@@ -33,7 +34,7 @@ namespace Elffy
             get { return _direction; }
             set
             {
-                if(value.X == 0 && value.Y == 0 && value.Z == 0) { throw new ArgumentException("Value must be non-Zero vector."); }
+                ArgumentChecker.ThrowIf(value.X == 0 && value.Y == 0 && value.Z == 0, new ArgumentException("Value must be non-Zero vector."));
                 _direction = value;
                 SetMatrix(_position, _direction, _up);
             }
@@ -47,7 +48,7 @@ namespace Elffy
             get { return _up; }
             set
             {
-                if(value.X == 0 && value.Y == 0 && value.Z == 0) { throw new ArgumentException("Value must be non-Zero vector."); }
+                ArgumentChecker.ThrowIf(value.X == 0 && value.Y == 0 && value.Z == 0, new ArgumentException("Value must be non-Zero vector."));
                 _up = value;
                 SetMatrix(_position, _direction, _up);
             }
@@ -62,7 +63,7 @@ namespace Elffy
             get { return _fovy; }
             set
             {
-                if(value <= 0 || value > MathTool.Pi) { throw new ArgumentException("Value must be 0 ~ π. (not include 0)"); }
+                ArgumentChecker.ThrowIf(value <= 0 || value > MathTool.Pi, new ArgumentException("Value must be 0 ~ π. (not include 0)"));
                 _fovy = value;
                 SetProjection(_fovy, _far, _aspect);
             }
@@ -76,7 +77,7 @@ namespace Elffy
             get { return _far; }
             set
             {
-                if(value <= NEAR) { throw new ArgumentException("Value must be bigger than 0. (or value is too small.)"); }
+                ArgumentChecker.ThrowIf(value <= NEAR, new ArgumentException("Value must be bigger than 0. (or value is too small.)"));
                 _far = value;
                 SetProjection(_fovy, _far, _aspect);
             }
@@ -103,8 +104,8 @@ namespace Elffy
         /// <param name="height">高さ</param>
         internal void ChangeScreenSize(int width, int height)
         {
-            if(width < 0) { throw new ArgumentOutOfRangeException(nameof(width), width, "value is negative."); }
-            if(height < 0) { throw new ArgumentOutOfRangeException(nameof(height), height, "value is negative"); }
+            ArgumentChecker.ThrowIf(width < 0, new ArgumentOutOfRangeException(nameof(width), width, "value is negative."));
+            ArgumentChecker.ThrowIf(height < 0, new ArgumentOutOfRangeException(nameof(height), height, "value is negative"));
             _aspect = (float)width / height;
             SetProjection(_fovy, _far, _aspect);
         }

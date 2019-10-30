@@ -1,4 +1,5 @@
-﻿using Elffy.Threading;
+﻿using Elffy.Exceptions;
+using Elffy.Threading;
 using Elffy.UI;
 using OpenTK;
 using OpenTK.Graphics;
@@ -46,7 +47,7 @@ namespace Elffy.Core
         /// <param name="frameObject">追加するオブジェクト</param>
         public void AddFrameObject(FrameObject frameObject)
         {
-            if(frameObject == null) { throw new ArgumentNullException(nameof(frameObject)); }
+            ArgumentChecker.ThrowIfNullArg(frameObject, nameof(frameObject));
             _addedBuf.Add(frameObject);
         }
         #endregion
@@ -57,7 +58,7 @@ namespace Elffy.Core
         /// <returns>削除できたかどうか</returns>
         public void RemoveFrameObject(FrameObject frameObject)
         {
-            if(frameObject == null) { throw new ArgumentNullException(nameof(frameObject)); }
+            ArgumentChecker.ThrowIfNullArg(frameObject, nameof(frameObject));
             _removedBuf.Add(frameObject);
         }
         #endregion

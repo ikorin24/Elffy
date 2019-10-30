@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Elffy.Core;
+using Elffy.Exceptions;
 
 namespace Elffy
 {
@@ -41,12 +42,12 @@ namespace Elffy
         {
             get
             {
-                if(index < 0 || index > _list.Count - 1) { throw new ArgumentOutOfRangeException(nameof(index), index, "value is out of range."); }
+                ArgumentChecker.ThrowIf(index < 0 || index > _list.Count - 1, new ArgumentOutOfRangeException(nameof(index), index, "value is out of range."));
                 return _list[index];
             }
             set
             {
-                if(value == null) { throw new ArgumentNullException(nameof(value)); }
+                ArgumentChecker.ThrowIfNullArg(value, nameof(value));
                 _list[index] = value;
             }
         }
@@ -72,7 +73,7 @@ namespace Elffy
         /// <param name="layer">追加する要素</param>
         public void Add(Layer layer)
         {
-            if(layer == null) { throw new ArgumentNullException(nameof(layer)); }
+            ArgumentChecker.ThrowIfNullArg(layer, nameof(layer));
             _list.Add(layer);
         }
 
@@ -80,9 +81,9 @@ namespace Elffy
         /// <param name="layers">追加するレイヤー</param>
         public void AddRange(IEnumerable<Layer> layers)
         {
-            if(layers == null) { throw new ArgumentNullException(nameof(layers)); }
+            ArgumentChecker.ThrowIfNullArg(layers, nameof(layers));
             var evaluated = (layers is ICollection) ? layers : layers.ToArray();
-            if(evaluated.Contains(null)) { throw new ArgumentException($"{layers} contain 'null'. Can not add null."); }
+            ArgumentChecker.ThrowIf(evaluated.Contains(null), new ArgumentException($"{layers} contain 'null'. Can not add null."));
             _list.AddRange(evaluated);
         }
 
@@ -117,8 +118,8 @@ namespace Elffy
         /// <param name="layer">追加するレイヤー</param>
         public void Insert(int index, Layer layer)
         {
-            if(layer == null) { throw new ArgumentNullException(nameof(layer)); }
-            if(index < 0 || index > _list.Count) { throw new ArgumentOutOfRangeException(nameof(index), index, "value is out of range."); }
+            ArgumentChecker.ThrowIfNullArg(layer, nameof(layer));
+            ArgumentChecker.ThrowIf(index < 0 || index > _list.Count, new ArgumentOutOfRangeException(nameof(index), index, "value is out of range."));
             _list.Insert(index, layer);
         }
 
@@ -127,7 +128,7 @@ namespace Elffy
         /// <returns>削除に成功したか (指定した要素が存在しない場合 false)</returns>
         public bool Remove(Layer layer)
         {
-            if(layer == null) { throw new ArgumentNullException(nameof(layer)); }
+            ArgumentChecker.ThrowIfNullArg(layer, nameof(layer));
             return _list.Remove(layer);
         }
 
@@ -135,7 +136,7 @@ namespace Elffy
         /// <param name="index">インデックス</param>
         public void RemoveAt(int index)
         {
-            if(index < 0 || index >= _list.Count) { throw new ArgumentOutOfRangeException(nameof(index)); }
+            ArgumentChecker.ThrowIf(index < 0 || index >= _list.Count, new ArgumentOutOfRangeException(nameof(index)));
             _list.RemoveAt(index);
         }
 

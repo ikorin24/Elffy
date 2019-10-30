@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Elffy.Exceptions;
+using System;
 using System.Collections.Generic;
 
 namespace Elffy.Core
@@ -27,9 +28,9 @@ namespace Elffy.Core
         /// <param name="component">component object</param>
         public void AddComponent<T>(T component)
         {
-            if(component == null) { throw new ArgumentNullException(nameof(component)); }
+            ArgumentChecker.ThrowIfNullArg(component, nameof(component));
             var type = typeof(T);
-            if(_types.Contains(type)) { throw new ArgumentException($"Component type '{type.FullName}' already exists."); }
+            ArgumentChecker.ThrowIf(_types.Contains(type), new ArgumentException($"Component type '{type.FullName}' already exists."));
 
             // _types と _component は同じ index は同じ要素に対応している前提
             // 同じ型の Component は複数存在しない前提

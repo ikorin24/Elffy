@@ -79,7 +79,7 @@ namespace Elffy
         /// <returns>ロードしたテクスチャ配列</returns>
         internal static Texture[] LoadFrom(SpriteMetadata spriteData)
         {
-            ExceptionManager.ThrowIfNullArg(spriteData, nameof(spriteData));
+            ArgumentChecker.ThrowIfNullArg(spriteData, nameof(spriteData));
             using(var stream = Resources.GetStream(spriteData.TextureResource))
             using(var bmp = new Bitmap(stream)) {
                 var textures = new Texture[spriteData.PageCount];

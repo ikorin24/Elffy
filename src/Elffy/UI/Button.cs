@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Elffy.Exceptions;
+using System;
 using System.Drawing;
 
 namespace Elffy.UI
@@ -23,8 +24,8 @@ namespace Elffy.UI
         /// <param name="height">ボタンの高さ</param>
         public Button(int width, int height)
         {
-            if(width <= 0) { throw new ArgumentOutOfRangeException(nameof(width), width, "value is 0 or negative."); }
-            if(height <= 0) { throw new ArgumentOutOfRangeException(nameof(height), height, "value is 0 or negative"); }
+            ArgumentChecker.ThrowIf(width <= 0, new ArgumentOutOfRangeException(nameof(width), width, "value is 0 or negative."));
+            ArgumentChecker.ThrowIf(height <= 0, new ArgumentOutOfRangeException(nameof(height), height, "value is 0 or negative"));
             Width = width;
             Height = height;
         }

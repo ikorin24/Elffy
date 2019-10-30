@@ -1,4 +1,5 @@
 ﻿using Elffy.Core;
+using Elffy.Exceptions;
 using OpenTK;
 using System;
 using System.Collections.Generic;
@@ -22,7 +23,8 @@ namespace Elffy.UI
         /// <param name="uiLayer">この <see cref="Page"/> と子孫を描画する UI レイヤー</param>
         internal Page(Layer uiLayer)
         {
-            UILayer = uiLayer ?? throw new ArgumentNullException(nameof(uiLayer));
+            ArgumentChecker.ThrowIfNullArg(uiLayer, nameof(uiLayer));
+            UILayer = uiLayer;
             Root = this;
         }
 
@@ -30,7 +32,7 @@ namespace Elffy.UI
         /// <summary>Layout を実行します</summary>
         public void Layout()
         {
-            if(IsLayouted) { throw new ArgumentException($"Already layouted."); }
+            if(IsLayouted) { throw new InvalidOperationException($"Already layouted."); }
 
             // 深さ優先探索で列挙されるため子より親が先に Position が決定する
             foreach(var target in GetOffspring()) {

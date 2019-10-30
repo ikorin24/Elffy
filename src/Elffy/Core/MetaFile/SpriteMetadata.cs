@@ -34,16 +34,16 @@ namespace Elffy.Core.MetaFile
         protected override void InitializeFromDeserialized(MetadataDeserialized data)
         {
             base.InitializeFromDeserialized(data);
-            ExceptionManager.ThrowIf(data.DataType != MetadataType.Sprite, new InvalidDataException());
-            ExceptionManager.ThrowIf(data.DataContents?.Length != 1, new InvalidDataException());
-            ExceptionManager.CheckType<SpriteInfoDeserialized, object>(data.DataContents[0], $"Metadata type is invalid.");
+            ArgumentChecker.ThrowIf(data.DataType != MetadataType.Sprite, new InvalidDataException());
+            ArgumentChecker.ThrowIf(data.DataContents?.Length != 1, new InvalidDataException());
+            ArgumentChecker.CheckType<SpriteInfoDeserialized, object>(data.DataContents[0], $"Metadata type is invalid.");
 
             var info = (SpriteInfoDeserialized)data.DataContents[0];
-            ExceptionManager.ThrowIf(info.XCount <= 0, new InvalidDataException($"{nameof(info.XCount)} is 0 or negative."));
-            ExceptionManager.ThrowIf(info.YCount <= 0, new InvalidDataException($"{nameof(info.YCount)} is 0 or negative."));
-            ExceptionManager.ThrowIf(info.PageCount <= 0, new InvalidDataException($"{nameof(info.PageCount)} is 0 or negative."));
-            ExceptionManager.ThrowIf(info.PixelWidth <= 0, new InvalidDataException($"{nameof(info.PixelWidth)} is 0 or negative."));
-            ExceptionManager.ThrowIf(info.PixelHeight <= 0, new InvalidDataException($"{nameof(info.PixelHeight)} is 0 or negative."));
+            ArgumentChecker.ThrowIf(info.XCount <= 0, new InvalidDataException($"{nameof(info.XCount)} is 0 or negative."));
+            ArgumentChecker.ThrowIf(info.YCount <= 0, new InvalidDataException($"{nameof(info.YCount)} is 0 or negative."));
+            ArgumentChecker.ThrowIf(info.PageCount <= 0, new InvalidDataException($"{nameof(info.PageCount)} is 0 or negative."));
+            ArgumentChecker.ThrowIf(info.PixelWidth <= 0, new InvalidDataException($"{nameof(info.PixelWidth)} is 0 or negative."));
+            ArgumentChecker.ThrowIf(info.PixelHeight <= 0, new InvalidDataException($"{nameof(info.PixelHeight)} is 0 or negative."));
             TextureResource = info.TextureResource;
             PageCount = info.PageCount;
             XCount = info.XCount;

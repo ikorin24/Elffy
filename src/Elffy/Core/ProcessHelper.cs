@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Elffy.Exceptions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -44,9 +45,9 @@ namespace Elffy.Core
         /// <param name="multiLaunch">多重起動時に実行される処理</param>
         public static void SingleLaunch(string uniqueName, Action startAction, Action multiLaunch)
         {
-            if(string.IsNullOrEmpty(uniqueName)) { throw new ArgumentException($"{nameof(uniqueName)} is null or empty."); }
-            if(startAction == null) { throw new ArgumentNullException(nameof(startAction)); }
-            if(multiLaunch == null) { throw new ArgumentNullException(nameof(multiLaunch)); }
+            ArgumentChecker.ThrowIf(string.IsNullOrEmpty(uniqueName), new ArgumentException($"{nameof(uniqueName)} is null or empty."));
+            ArgumentChecker.ThrowIfNullArg(startAction, nameof(startAction));
+            ArgumentChecker.ThrowIfNullArg(multiLaunch, nameof(multiLaunch));
             if(uniqueName.Length > MUTEX_NAME_MAX_LEN) {
                 throw new ArgumentException($"{nameof(uniqueName)} is too long. Length must be between 0 and {MUTEX_NAME_MAX_LEN}.");
             }
