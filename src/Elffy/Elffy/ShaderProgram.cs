@@ -199,7 +199,7 @@ namespace Elffy
         /// <param name="disposing"><see cref="Dispose"/> メソッドからの呼び出しかどうか</param>
         protected void Dispose(bool disposing)
         {
-            if(_disposed) {
+            if(!_disposed) {
                 if(disposing) {
                     // Release managed resource here.
                 }
