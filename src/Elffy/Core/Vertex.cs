@@ -63,12 +63,14 @@ namespace Elffy.Core
 
         public override int GetHashCode()
         {
-            var hashCode = 220393015;
-            hashCode = hashCode * -1521134295 + EqualityComparer<Vector3>.Default.GetHashCode(Position);
-            hashCode = hashCode * -1521134295 + EqualityComparer<Vector3>.Default.GetHashCode(Normal);
-            hashCode = hashCode * -1521134295 + EqualityComparer<Color4>.Default.GetHashCode(Color);
-            hashCode = hashCode * -1521134295 + EqualityComparer<Vector2>.Default.GetHashCode(TexCoord);
-            return hashCode;
+            unchecked {
+                var hashCode = 220393015;
+                hashCode = hashCode * -1521134295 + EqualityComparer<Vector3>.Default.GetHashCode(Position);
+                hashCode = hashCode * -1521134295 + EqualityComparer<Vector3>.Default.GetHashCode(Normal);
+                hashCode = hashCode * -1521134295 + EqualityComparer<Color4>.Default.GetHashCode(Color);
+                hashCode = hashCode * -1521134295 + EqualityComparer<Vector2>.Default.GetHashCode(TexCoord);
+                return hashCode;
+            }
         }
 
         public static bool operator ==(Vertex left, Vertex right)
