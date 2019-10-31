@@ -7,24 +7,11 @@ using Elffy.Core;
 namespace Elffy
 {
     /// <summary>GLSL の頂点シェーダーを表すクラス</summary>
-    public class VertexShader : IDisposable
+    public sealed class VertexShader : IDisposable
     {
         private const int COMPILE_FAILED = 0;
 
         private bool _disposed;
-
-        #region Property
-        /// <summary>この頂点シェーダーがコンパイルされているかどうかを取得します</summary>
-        public bool IsCompiled
-        {
-            get
-            {
-                ThrowIfDisposed();
-                return _isCompiled;
-            }
-            private set => _isCompiled = value;
-        }
-        private bool _isCompiled;
 
         /// <summary>このシェーダーの OpenGL の識別番号</summary>
         internal int ShaderID
@@ -37,7 +24,6 @@ namespace Elffy
             private set => _shaderID = value;
         }
         private int _shaderID;
-        #endregion
 
         private VertexShader()
         {
@@ -63,19 +49,13 @@ namespace Elffy
         {
             ThrowIfDisposed();
             Dispatcher.ThrowIfNotMainThread();
-            if(IsCompiled) { throw new InvalidOperationException($"{nameof(VertexShader)} is already compiled."); }
             ShaderID = GL.CreateShader(ShaderType.VertexShader);
             GL.ShaderSource(ShaderID, shaderSource);
             GL.CompileShader(ShaderID);
-
-            // コンパイル結果のチェック
             GL.GetShader(ShaderID, ShaderParameter.CompileStatus, out int compileStatus);
             if(compileStatus == COMPILE_FAILED) {
-                GL.DeleteShader(ShaderID);
-                throw new ArgumentException("Compiling vertex shader is Failed");
+                throw new InvalidDataException("Compiling vertex shader is Failed");
             }
-
-            IsCompiled = true;
         }
 
         #region Dispose pattern
@@ -88,17 +68,20 @@ namespace Elffy
 
         /// <summary>この頂点シェーダーを破棄します</summary>
         /// <param name="disposing"><see cref="Dispose"/> からの呼び出しかどうか</param>
-        protected void Dispose(bool disposing)
+        private void Dispose(bool disposing)
         {
             if(!_disposed) {
                 if(disposing) {
                     // Release managed resource here.
                 }
                 // Release unmanaged resource here.
-                if(ShaderID != Consts.NULL) {
-                    GL.DeleteShader(ShaderID);
-                    ShaderID = Consts.NULL;
-                }
+                Dispatcher.Invoke(() =>
+                {
+                    if(ShaderID != Consts.NULL) {
+                        GL.DeleteShader(ShaderID);
+                        ShaderID = Consts.NULL;
+                    }
+                });
                 _disposed = true;
             }
         }

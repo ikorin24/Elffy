@@ -114,9 +114,7 @@ namespace ElffyGame
 
             using(var fragShader = FragmentShader.LoadFromResource("TestFragShader.frag"))
             using(var vertShader = VertexShader.LoadFromResource("TestVertShader.vert")) {
-                var shader = ShaderProgram.Create();
-                shader.Link(vertShader, fragShader);
-                a.Shader = shader;
+                a.Shader = ShaderProgram.Create(vertShader, fragShader);
             }
         }
     }
