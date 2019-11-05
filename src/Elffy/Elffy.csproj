@@ -72,6 +72,7 @@
     <Compile Include="Core\FrameObjectStore.cs" />
     <Compile Include="Core\TextureBase.cs" />
     <Compile Include="Core\UILayer.cs" />
+    <Compile Include="Effective\StringExtension.cs" />
     <Compile Include="Elffy\FragmentShader.cs" />
     <Compile Include="Elffy\ShaderProgram.cs" />
     <Compile Include="Elffy\Sprite.cs" />
