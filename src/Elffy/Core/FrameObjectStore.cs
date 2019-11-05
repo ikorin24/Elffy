@@ -42,30 +42,25 @@ namespace Elffy.Core
         protected IEnumerable<Renderable> Renderables => _renderables;
         #endregion
 
-        #region AddFrameObject
         /// <summary>指定した<see cref="FrameObject"/>を追加します</summary>
         /// <param name="frameObject">追加するオブジェクト</param>
-        public void AddFrameObject(FrameObject frameObject)
+        internal void AddFrameObject(FrameObject frameObject)
         {
             ArgumentChecker.ThrowIfNullArg(frameObject, nameof(frameObject));
             _addedBuf.Add(frameObject);
         }
-        #endregion
 
-        #region RemoveFrameObject
         /// <summary>指定した<see cref="FrameObject"/>を削除します</summary>
         /// <param name="frameObject">削除するオブジェクト</param>
         /// <returns>削除できたかどうか</returns>
-        public void RemoveFrameObject(FrameObject frameObject)
+        internal void RemoveFrameObject(FrameObject frameObject)
         {
             ArgumentChecker.ThrowIfNullArg(frameObject, nameof(frameObject));
             _removedBuf.Add(frameObject);
         }
-        #endregion
 
-        #region ApplyChanging
         /// <summary>オブジェクトの追加と削除の変更を適用します</summary>
-        public void ApplyChanging()
+        internal void ApplyChanging()
         {
             if(_removedBuf.Count > 0) {
                 foreach(var item in _removedBuf) {
@@ -82,31 +77,9 @@ namespace Elffy.Core
                 _addedBuf.Clear();
             }
         }
-        #endregion
 
-        #region FindObject
-        /// <summary>タグを指定して <see cref="FrameObject"/> を取得します (指定されたオブジェクトが見つからない場合 null を返します)</summary>
-        /// <param name="tag">検索する <see cref="FrameObject"/> のタグ</param>
-        /// <returns>検索で得られた <see cref="FrameObject"/></returns>
-        public FrameObject FindObject(string tag)
-        {
-            return _list.Find(x => x.Tag == tag);
-        }
-        #endregion
-
-        #region FindAllObject
-        /// <summary>指定されたタグを持つ <see cref="FrameObject"/> を全て取得します (見つからない場合、要素数0のリストを返します)</summary>
-        /// <param name="tag">検索する <see cref="FrameObject"/> のタグ</param>
-        /// <returns>検索で得られた <see cref="FrameObject"/> のリスト</returns>
-        public List<FrameObject> FindAllObject(string tag)
-        {
-            return _list.FindAll(x => x.Tag == tag) ?? new List<FrameObject>();
-        }
-        #endregion
-
-        #region Update
         /// <summary>フレームの更新を行います</summary>
-        public void Update()
+        internal void Update()
         {
             foreach(var frameObject in _list.Where(x => !x.IsFrozen)) {
                 if(frameObject.IsStarted == false) {
@@ -116,11 +89,9 @@ namespace Elffy.Core
                 frameObject.Update();
             }
         }
-        #endregion
 
-        #region Clear
         /// <summary>保持している <see cref="FrameObject"/> を全て破棄し、リストをクリアします</summary>
-        public void ClearFrameObject()
+        internal void ClearFrameObject()
         {
             _addedBuf.Clear();          // 追加オブジェクトのリストを先にクリア
             foreach(var item in _list) {
@@ -132,10 +103,6 @@ namespace Elffy.Core
             _list.Clear();
             _removedBuf.Clear();
             _renderables.Clear();
-            //_uiList.Clear();
-            //_addedUIBuf.Clear();
-            //_removedUIBuf.Clear();
         }
-        #endregion
     }
 }

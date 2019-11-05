@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Elffy.Core;
 using Elffy.Exceptions;
 
@@ -37,23 +33,27 @@ namespace Elffy
         /// <summary>このオブジェクトがアクティブになった時のイベント</summary>
         public event ActionEventHandler<FrameObject> Activated;
 
-        #region Method
         /// <summary>このオブジェクトが更新される最初のフレームに1度のみ実行される処理</summary>
         public virtual void Start() { }
 
         /// <summary>フレームの更新ごとに実行される更新処理</summary>
         public virtual void Update() { }
 
-        /// <summary>このオブジェクトをゲーム管理下におきます</summary>
+        /// <summary>このオブジェクトをワールドレイヤーでアクティブにします</summary>
+        public void Activate()
+        {
+            if(IsDestroyed) { throw new ObjectDestroyedException(this); }
+            if(IsActivated) { return; }
+            ActivatePrivate(Game.Layers.WorldLayer);
+        }
+
+        /// <summary>このオブジェクトを指定のレイヤーでアクティブにします</summary>
         public void Activate(LayerBase layer)
         {
             ArgumentChecker.ThrowIfNullArg(layer, nameof(layer));
             if(IsDestroyed) { throw new ObjectDestroyedException(this); }
             if(IsActivated) { return; }
-            Layer = layer;
-            layer.AddFrameObject(this);
-            IsActivated = true;
-            Activated?.Invoke(this);
+            ActivatePrivate(layer);
         }
 
         /// <summary>このオブジェクトをゲーム管理下から外して破棄します</summary>
@@ -65,6 +65,13 @@ namespace Elffy
             IsDestroyed = true;
             (this as IDisposable)?.Dispose();
         }
-        #endregion
+
+        private void ActivatePrivate(LayerBase layer)
+        {
+            Layer = layer;
+            layer.AddFrameObject(this);
+            IsActivated = true;
+            Activated?.Invoke(this);
+        }
     }
 }
