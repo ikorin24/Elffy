@@ -49,14 +49,18 @@ namespace ElffyGame
     {
         protected override async void Start()
         {
-            //var cube = new Cube();
-            //cube.Texture = await Texture.LoadFromAsync("cube.png");
-            //cube.Position = new Vector3(10, 0, 0);
+            var l = Light.CreateDirectLight();
+            var light = Light.GetLight(l);
+            Light.IsEnabled = true;
 
-            //FrameProcess.WhileTrue(process =>
-            //{
-            //    cube.Rotate(new Vector3(1, 2, 3), MathHelper.Pi / 60 / 2);
-            //});
+            var cube = new Cube();
+            cube.Texture = await Texture.LoadFromAsync("cube.png");
+            cube.Position = new Vector3(0, 0, -25);
+
+            FrameProcess.WhileTrue(process =>
+            {
+                cube.Rotate(new Vector3(1, 2, 3), MathHelper.Pi / 60 / 2);
+            });
 
             var button = new Button(100, 100);
             button.KeyUp += (sender, e) =>
@@ -75,26 +79,26 @@ namespace ElffyGame
                 b2.Position += new Vector2(1, 1);
             });
 
-            //var cubes = Enumerable.Range(0, 90).Select(i => new Cube() { Texture = cube.Texture }).ToArray();
-            //for(int i = 0; i < cubes.Length; i++) {
-            //    cubes[i].Position = new Vector3(1, 0.1f, 0);
-            //    cubes[i].Rotate(Vector3.UnitY, 8f.ToRadian());
-            //    cubes[i].Activate(Game.Layers.WorldLayer);
-            //}
+            var cubes = Enumerable.Range(0, 90).Select(i => new Cube() { Texture = cube.Texture }).ToArray();
+            for(int i = 0; i < cubes.Length; i++) {
+                cubes[i].Position = new Vector3(1, 0.1f, 0);
+                cubes[i].Rotate(Vector3.UnitY, 8f.ToRadian());
+                cubes[i].Activate(Game.Layers.WorldLayer);
+            }
 
-            //for(int i = 0; i < cubes.Length; i++) {
-            //    if(i == 0) {
-            //        cube.Children.Add(cubes[i]);
-            //    }
-            //    else {
-            //        cubes[i - 1].Children.Add(cubes[i]);
-            //    }
-            //    if(i == cubes.Length - 1) {
-            //        cubes[i].Rotate(Vector3.UnitX, 45f.ToRadian());
-            //    }
-            //}
+            for(int i = 0; i < cubes.Length; i++) {
+                if(i == 0) {
+                    cube.Children.Add(cubes[i]);
+                }
+                else {
+                    cubes[i - 1].Children.Add(cubes[i]);
+                }
+                if(i == cubes.Length - 1) {
+                    cubes[i].Rotate(Vector3.UnitX, 45f.ToRadian());
+                }
+            }
 
-            //cube.Activate(Game.Layers.WorldLayer);
+            cube.Activate(Game.Layers.WorldLayer);
 
             var camera = Game.Camera;
             camera.Position = new Vector3(0, 0, 10);
@@ -109,13 +113,24 @@ namespace ElffyGame
                 return (int)Game.FrameNum / 3 % sprite.PageCount;
             };
             a.Texture = sprite;
-            //a.Texture = Texture.LoadFrom("cube.png");
-            a.Activate(Game.Layers.WorldLayer);
+            a.Texture = Texture.LoadFrom("cube.png");
+            a.Activate();
 
             using(var fragShader = FragmentShader.LoadFromResource("TestFragShader.frag"))
             using(var vertShader = VertexShader.LoadFromResource("TestVertShader.vert")) {
                 a.Shader = ShaderProgram.Create(vertShader, fragShader);
             }
+
+            FrameProcess.WhileTrue(process =>
+            {
+                var r = MathTool.TwoPi * (float)process.Time.TotalSeconds / 5;
+                var rot = new Matrix3(MathTool.Cos(r), MathTool.Sin(r), 0,
+                                      -MathTool.Sin(r), MathTool.Cos(r), 0,
+                                      0, 0, 1);
+                a.Position = new Vector3(1, 0, 0) * rot;
+            });
+
+            //a.Shader = ShaderProgram.Default;
         }
     }
 }
