@@ -37,8 +37,8 @@ namespace Elffy.Core
             set
             {
                 ArgumentChecker.ThrowIfNullArg(value, nameof(value));
-                _material = value;
                 if(_material != value) {
+                    _material = value;
                     MaterialAttached?.Invoke(this);
                 }
             }
@@ -53,15 +53,29 @@ namespace Elffy.Core
             set
             {
                 ArgumentChecker.ThrowIfNullArg(value, nameof(value));
-                _texture = value;
                 if(_texture != value) {
+                    _texture = value;
                     TextureAttached?.Invoke(this);
                 }
             }
         }
         private TextureBase _texture = TextureBase.Empty;
 
-        public ShaderProgram Shader { get; set; }
+        /// <summary>シェーダー</summary>
+        /// <exception cref="ArgumentNullException"></exception>
+        public ShaderProgram Shader
+        {
+            get => _shader;
+            set
+            {
+                ArgumentChecker.ThrowIfNullArg(value, nameof(value));
+                if(_shader != value) {
+                    _shader = value;
+                    ShaderAttached?.Invoke(this);
+                }
+            }
+        }
+        private ShaderProgram _shader = ShaderProgram.Default;
 
         /// <summary>頂点色を使用するかどうか</summary>
         public bool EnableVertexColor
@@ -86,6 +100,7 @@ namespace Elffy.Core
 
         public event ActionEventHandler<Renderable> MaterialAttached;
         public event ActionEventHandler<Renderable> TextureAttached;
+        public event ActionEventHandler<Renderable> ShaderAttached;
         public event ActionEventHandler<Renderable> Rendering;
         public event ActionEventHandler<Renderable> Rendered;
 

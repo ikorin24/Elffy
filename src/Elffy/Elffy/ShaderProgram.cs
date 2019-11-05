@@ -20,12 +20,16 @@ namespace Elffy
         private static int _currentProgramID;
 
         /// <summary>このシェーダープログラムの OpenGL の識別番号</summary>
-        private int _programID;
+        private int _programID = Consts.NULL;
 
         /// <summary>シェーダープログラムを生成します</summary>
         private ShaderProgram()
         {
         }
+
+        /// <summary>デフォルトのシェーダーを取得します</summary>
+        public static ShaderProgram Default => _default ?? (_default = CreateDefault());
+        private static ShaderProgram _default;
 
         ~ShaderProgram() => Dispose(false);
 
@@ -72,6 +76,12 @@ namespace Elffy
             if(linkStatus == LINK_FAILED) {
                 throw new InvalidOperationException("Linking shader is failed.");
             }
+        }
+
+        private static ShaderProgram CreateDefault()
+        {
+            var program = new ShaderProgram();
+            return program;
         }
 
         /// <summary>このインスタンスが既に破棄されている場合例外を投げます</summary>
