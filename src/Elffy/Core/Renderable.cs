@@ -100,15 +100,33 @@ namespace Elffy.Core
             GL.MultMatrix(ref rot);
             GL.Scale(Scale);
 
-            // マテリアルの適用
-            if(Material != null) {
-                Material.Apply();
+            if(_isLoaded) {
+                // マテリアルの適用
+                if(Material != null) {
+                    Material.Apply();
+                }
+                else {
+                    Material.Default.Apply();
+                }
+                // テクスチャの適用
+                if(Texture != null) {
+                    Texture.SwitchBind();
+                }
+                else {
+                    TextureBase.Clear();
+                }
+                // シェーダーの適用
+                if(Shader != null) {
+                    Shader.Apply();
+                }
+                else {
+                    ShaderProgram.Clear();
+                }
+                GL.BindVertexArray(_vao);
+                GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBuffer);
+                GL.DrawElements(BeginMode.Triangles, _indexArrayLength, DrawElementsType.UnsignedInt, 0);
             }
-            else {
-                Material.Default.Apply();
-            }
-            // 頂点を描画
-            DrawVertexAndTexture();
+
             if(HasChild) {
                 foreach(var child in Children.OfType<Renderable>()) {
                     GL.PushMatrix();
@@ -147,7 +165,6 @@ namespace Elffy.Core
         }
         #endregion
 
-        #region InitGraphicBufferPrivate
         private void InitGraphicBufferPrivate(IntPtr vertexArray, int vertexArrayLength, IntPtr indexArray, int indexArrayLength)
         {
             _indexArrayLength = indexArrayLength;
@@ -156,14 +173,12 @@ namespace Elffy.Core
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBuffer);
             int vertexSize = vertexArrayLength * Vertex.Size;
             GL.BufferData(BufferTarget.ArrayBuffer, vertexSize, vertexArray, BufferUsageHint.StaticDraw);
-            //GL.BindBuffer(BufferTarget.ArrayBuffer, Consts.NULL);
 
             // 頂点indexバッファ(IBO)生成
             _indexBuffer = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBuffer);
             int indexSize = indexArrayLength * sizeof(int);
             GL.BufferData(BufferTarget.ElementArrayBuffer, indexSize, indexArray, BufferUsageHint.StaticDraw);
-            //GL.BindBuffer(BufferTarget.ElementArrayBuffer, Consts.NULL);
 
             // VAO
             _vao = GL.GenVertexArray();
@@ -174,40 +189,9 @@ namespace Elffy.Core
             GL.EnableClientState(ArrayCap.TextureCoordArray);
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBuffer);
             Vertex.GLSetStructLayout();                          // 頂点構造体のレイアウトを指定
-            //GL.BindBuffer(BufferTarget.ArrayBuffer, Consts.NULL);
-            //GL.BindVertexArray(Consts.NULL);
 
             _isLoaded = true;
         }
-        #endregion
-
-        #region DrawVertexAndTexture
-        /// <summary>Vertex および Textureを描画します</summary>
-        private void DrawVertexAndTexture()
-        {
-            if(_isLoaded) {
-                if(Texture != null) {
-                    Texture.SwitchBind();                     // GLのテクスチャをこのテクスチャに切り替え
-                }
-                else {
-                    GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);
-                }
-                if(Shader != null) {
-                    Shader.Apply();
-                }
-                else {
-                    ShaderProgram.Clear();
-                }
-
-                GL.BindVertexArray(_vao);
-                GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBuffer);
-                GL.DrawElements(BeginMode.Triangles, _indexArrayLength, DrawElementsType.UnsignedInt, 0);
-                //GL.BindBuffer(BufferTarget.ElementArrayBuffer, Consts.NULL);
-                //GL.BindVertexArray(Consts.NULL);
-                //GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);   // テクスチャのバインド解除
-            }
-        }
-        #endregion
 
         #region Dispose
         protected virtual void Dispose(bool disposing)

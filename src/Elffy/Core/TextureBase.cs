@@ -48,6 +48,12 @@ namespace Elffy.Core
         /// <summary>現在のOpenGLのTextureをこのインスタンスのテクスチャに切り替えます</summary>
         internal abstract void SwitchBind();
 
+        /// <summary>現在 OpenGL に適用されているテクスチャをクリアします</summary>
+        internal static void Clear()
+        {
+            GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);
+        }
+
         /// <summary>バッファに Texture を読み込みます</summary>
         /// <param name="textureBuffer">OpenGL のテクスチャのバッファ</param>
         /// <param name="shrinkMode">縮小方法</param>
