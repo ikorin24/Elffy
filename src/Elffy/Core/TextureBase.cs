@@ -15,13 +15,10 @@ namespace Elffy.Core
     /// <summary><see cref="Renderable"/> が持つテクスチャの基底クラス</summary>
     public abstract class TextureBase
     {
-        private static TextureBase _emptyInstance;
-
         protected const int BYTE_PER_PIXEL = 4;
         /// <summary>ピクセル配列のピクセルの</summary>
         protected const PixelFormat PIXEL_FORMAT = PixelFormat.Bgra;
 
-        #region Property
         /// <summary>テクスチャの縮小モードを取得します</summary>
         public TextureShrinkMode ShrinkMode { get; }
         /// <summary>テクスチャの拡大モードを取得します</summary>
@@ -34,7 +31,10 @@ namespace Elffy.Core
         public int PixelWidth { get; protected set; }
         /// <summary>テクスチャのピクセル高さを取得します</summary>
         public int PixelHeight { get; protected set; }
-        #endregion
+
+        /// <summary>空のテクスチャを取得します</summary>
+        internal static TextureBase Empty => _empty ?? (_empty = new EmptyTexture());
+        private static TextureBase _empty;
 
         /// <summary>コンストラクタ</summary>
         /// <param name="shrinkMode">テクスチャの縮小モード</param>
@@ -49,13 +49,6 @@ namespace Elffy.Core
 
         /// <summary>現在のOpenGLのTextureをこのインスタンスのテクスチャに切り替えます</summary>
         internal abstract void SwitchBind();
-
-        /// <summary>空のテクスチャを取得します</summary>
-        /// <returns>空テクスチャ</returns>
-        internal static TextureBase GetEmpty()
-        {
-            return _emptyInstance ?? (_emptyInstance = new EmptyTexture());
-        }
 
         /// <summary>バッファに Texture を読み込みます</summary>
         /// <param name="textureBuffer">OpenGL のテクスチャのバッファ</param>

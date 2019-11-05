@@ -59,7 +59,7 @@ namespace Elffy.Core
                 }
             }
         }
-        private TextureBase _texture = TextureBase.GetEmpty();
+        private TextureBase _texture = TextureBase.Empty;
 
         public ShaderProgram Shader { get; set; }
 
