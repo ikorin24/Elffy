@@ -8,13 +8,15 @@ using Elffy.Core;
 using System.Drawing;
 using Elffy.Threading;
 using Elffy.Effective;
-
+using System.Diagnostics;
 
 namespace Elffy.Core
 {
     /// <summary><see cref="Renderable"/> が持つテクスチャの基底クラス</summary>
     public abstract class TextureBase
     {
+        private static TextureBase _emptyInstance;
+
         protected const int BYTE_PER_PIXEL = 4;
         /// <summary>ピクセル配列のピクセルの</summary>
         protected const PixelFormat PIXEL_FORMAT = PixelFormat.Bgra;
@@ -48,10 +50,11 @@ namespace Elffy.Core
         /// <summary>現在のOpenGLのTextureをこのインスタンスのテクスチャに切り替えます</summary>
         internal abstract void SwitchBind();
 
-        /// <summary>現在 OpenGL に適用されているテクスチャをクリアします</summary>
-        internal static void Clear()
+        /// <summary>空のテクスチャを取得します</summary>
+        /// <returns>空テクスチャ</returns>
+        internal static TextureBase GetEmpty()
         {
-            GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);
+            return _emptyInstance ?? (_emptyInstance = new EmptyTexture());
         }
 
         /// <summary>バッファに Texture を読み込みます</summary>
@@ -115,6 +118,22 @@ namespace Elffy.Core
                     break;
             }
             throw new ArgumentException();
+        }
+
+
+        /// <summary>空のテクスチャを表すテクスチャクラス</summary>
+        [DebuggerDisplay("EmptyTexture")]
+        private sealed class EmptyTexture : TextureBase
+        {
+            internal EmptyTexture()
+                : base(TextureShrinkMode.NearestNeighbor, TextureMipmapMode.NearestNeighbor, TextureExpansionMode.NearestNeighbor)
+            {
+            }
+
+            internal override void SwitchBind()
+            {
+                GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);
+            }
         }
     }
 }

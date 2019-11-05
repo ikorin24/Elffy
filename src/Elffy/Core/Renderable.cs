@@ -1,11 +1,7 @@
 ﻿using OpenTK;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using OpenTK.Graphics.OpenGL;
-using System.Runtime.InteropServices;
 using Elffy.Threading;
 using Elffy.Exceptions;
 
@@ -32,32 +28,38 @@ namespace Elffy.Core
         #region Property
         /// <summary>描画処理を行うかどうか</summary>
         public bool IsVisible { get; set; } = true;
-        /// <summary>マテリアル</summary>
+
+        /// <summary>マテリアルを取得または設定します</summary>
+        /// <exception cref="ArgumentNullException"></exception>
         public Material Material
         {
             get => _material;
             set
             {
+                ArgumentChecker.ThrowIfNullArg(value, nameof(value));
                 _material = value;
-                if(value != null && _material != value) {
+                if(_material != value) {
                     MaterialAttached?.Invoke(this);
                 }
             }
         }
-        private Material _material;
+        private Material _material = Material.Default;
+
         /// <summary>テクスチャ</summary>
+        /// <exception cref="ArgumentNullException"></exception>
         public TextureBase Texture
         {
             get => _texture;
             set
             {
+                ArgumentChecker.ThrowIfNullArg(value, nameof(value));
                 _texture = value;
-                if(value != null && _texture != value) {
+                if(_texture != value) {
                     TextureAttached?.Invoke(this);
                 }
             }
         }
-        private TextureBase _texture;
+        private TextureBase _texture = TextureBase.GetEmpty();
 
         public ShaderProgram Shader { get; set; }
 
@@ -101,20 +103,8 @@ namespace Elffy.Core
             GL.Scale(Scale);
 
             if(_isLoaded) {
-                // マテリアルの適用
-                if(Material != null) {
-                    Material.Apply();
-                }
-                else {
-                    Material.Default.Apply();
-                }
-                // テクスチャの適用
-                if(Texture != null) {
-                    Texture.SwitchBind();
-                }
-                else {
-                    TextureBase.Clear();
-                }
+                Material.Apply();           // マテリアルの適用
+                Texture.SwitchBind();       // テクスチャの適用
                 // シェーダーの適用
                 if(Shader != null) {
                     Shader.Apply();

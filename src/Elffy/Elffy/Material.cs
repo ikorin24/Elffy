@@ -23,16 +23,7 @@ namespace Elffy
         public float Shininess { get; set; }
 
         /// <summary>Default material. (If <see cref="Renderable.Material"/> is null, it is rendered by this material.)</summary>
-        public static Material Default
-        {
-            get => _default;
-            set
-            {
-                ArgumentChecker.ThrowIfNullArg(value, nameof(value));
-                _default = value;
-            }
-        }
-        private static Material _default = Materials.Plain;
+        public static Material Default => Materials.Plain;
 
         /// <summary>constructor of specified color material</summary>
         /// <param name="color">color of material</param>
