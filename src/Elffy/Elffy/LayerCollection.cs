@@ -24,7 +24,7 @@ namespace Elffy
         public Layer UILayer { get; } = new UILayer(UI_LAYER_NAME);
 
         /// <summary>ワールドレイヤーを取得します</summary>
-        public Layer WorldLayer { get; } = new Layer(WORLD_LAYER_NAME);
+        public Layer WorldLayer { get; } = new Layer(WORLD_LAYER_NAME) { IsLightingEnabled = true };
 
         /// <summary>システムレイヤー (このレイヤーはリストには含まれません。インスタンスを public にも公開しないでください)</summary>
         internal InternaInvisiblelLayer SystemLayer { get; } = new InternaInvisiblelLayer(SYSTEM_LAYER_NAME);
