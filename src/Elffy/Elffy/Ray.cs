@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Elffy.Elffy
+namespace Elffy
 {
     /// <summary>3次元空間上の直線を表すクラス</summary>
     public class Ray
