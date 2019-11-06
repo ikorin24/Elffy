@@ -1,4 +1,7 @@
-﻿namespace Elffy.Core
+﻿using System;
+using System.Collections.Generic;
+
+namespace Elffy.Core
 {
     /// <summary>delegate of generic-type sender</summary>
     /// <typeparam name="T">type of sender</typeparam>
@@ -14,7 +17,7 @@
 
     /// <summary>event args of value changed</summary>
     /// <typeparam name="T">type of values</typeparam>
-    public struct ValueChangedEventArgs<T>
+    public struct ValueChangedEventArgs<T> : IEquatable<ValueChangedEventArgs<T>>
     {
         /// <summary>old value of the value changed event</summary>
         public T OldValue { get; private set; }
@@ -28,6 +31,35 @@
         {
             OldValue = oldValue;
             NewValue = newValue;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is ValueChangedEventArgs<T> args && Equals(args);
+        }
+
+        public bool Equals(ValueChangedEventArgs<T> other)
+        {
+            return EqualityComparer<T>.Default.Equals(OldValue, other.OldValue) &&
+                   EqualityComparer<T>.Default.Equals(NewValue, other.NewValue);
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = -279159539;
+            hashCode = hashCode * -1521134295 + EqualityComparer<T>.Default.GetHashCode(OldValue);
+            hashCode = hashCode * -1521134295 + EqualityComparer<T>.Default.GetHashCode(NewValue);
+            return hashCode;
+        }
+
+        public static bool operator ==(ValueChangedEventArgs<T> left, ValueChangedEventArgs<T> right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(ValueChangedEventArgs<T> left, ValueChangedEventArgs<T> right)
+        {
+            return !(left == right);
         }
     }
 }
