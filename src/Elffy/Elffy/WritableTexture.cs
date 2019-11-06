@@ -134,10 +134,9 @@ namespace Elffy
             AddDirtyRegion(new Rectangle(0, 0, _bitmap.Width, _bitmap.Height));
         }
 
-        /// <summary>現在のOpenGLのTextureをこのインスタンスのテクスチャに切り替えます</summary>
-        internal override void SwitchBind()
+        internal override void Apply()
         {
-            GL.BindTexture(TextureTarget.Texture2D, _textureBuffer);
+            base.Apply();
 
             // 変更されていた場合、変更をOpenGLに送信
             if(!_dirtyRegion.IsEmpty) {
@@ -147,6 +146,8 @@ namespace Elffy
                 _dirtyRegion = Rectangle.Empty;
             }
         }
+
+        protected internal override int TextureID => _textureBuffer;
 
         #region private Method
         /// <summary>OpenGL のテクスチャバッファを確保してピクセル配列を送ります</summary>

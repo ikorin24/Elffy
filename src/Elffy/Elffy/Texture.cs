@@ -128,11 +128,7 @@ namespace Elffy
             return new Texture(shrinkMode, mipmapMode, expansionMode);
         }
 
-        /// <summary>現在のOpenGLのTextureをこのインスタンスのテクスチャに切り替えます</summary>
-        internal override void SwitchBind()
-        {
-            GL.BindTexture(TextureTarget.Texture2D, _textureBuffer);
-        }
+        protected internal override int TextureID => _textureBuffer;
 
         #region private Method
         /// <summary>画像リソースのピクセル配列を取得します</summary>

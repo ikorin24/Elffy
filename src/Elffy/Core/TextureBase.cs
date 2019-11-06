@@ -15,6 +15,8 @@ namespace Elffy.Core
     /// <summary><see cref="Renderable"/> が持つテクスチャの基底クラス</summary>
     public abstract class TextureBase
     {
+        private static int _current;
+
         protected const int BYTE_PER_PIXEL = 4;
         /// <summary>ピクセル配列のピクセルの</summary>
         protected const PixelFormat PIXEL_FORMAT = PixelFormat.Bgra;
@@ -32,6 +34,8 @@ namespace Elffy.Core
         /// <summary>テクスチャのピクセル高さを取得します</summary>
         public int PixelHeight { get; protected set; }
 
+        protected internal abstract int TextureID { get; }
+
         /// <summary>空のテクスチャを取得します</summary>
         internal static TextureBase Empty => _empty ?? (_empty = new EmptyTexture());
         private static TextureBase _empty;
@@ -47,8 +51,10 @@ namespace Elffy.Core
             ExpansionMode = expansionMode;
         }
 
-        /// <summary>現在のOpenGLのTextureをこのインスタンスのテクスチャに切り替えます</summary>
-        internal abstract void SwitchBind();
+        internal virtual void Apply()
+        {
+            ChangeTextureBind(TextureID);
+        }
 
         /// <summary>バッファに Texture を読み込みます</summary>
         /// <param name="textureBuffer">OpenGL のテクスチャのバッファ</param>
@@ -60,7 +66,7 @@ namespace Elffy.Core
         /// <param name="pixelHeight">テクスチャのピクセル高</param>
         protected void SetTexture(int textureBuffer, TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode, TextureExpansionMode expansionMode, IntPtr pixels, int pixelWidth, int pixelHeight)
         {
-            GL.BindTexture(TextureTarget.Texture2D, textureBuffer);
+            ChangeTextureBind(textureBuffer);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, GetMinParameter(shrinkMode, mipmapMode));
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, GetMagParameter(expansionMode));
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, pixelWidth, pixelHeight, 0, PIXEL_FORMAT, PixelType.UnsignedByte, pixels);
@@ -113,6 +119,14 @@ namespace Elffy.Core
             throw new ArgumentException();
         }
 
+        private void ChangeTextureBind(int buffer)
+        {
+            if(_current != buffer) {
+                _current = buffer;
+                GL.BindTexture(TextureTarget.Texture2D, _current);
+            }
+        }
+
 
         /// <summary>空のテクスチャを表すテクスチャクラス</summary>
         [DebuggerDisplay("EmptyTexture")]
@@ -123,10 +137,7 @@ namespace Elffy.Core
             {
             }
 
-            internal override void SwitchBind()
-            {
-                GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);
-            }
+            protected internal override int TextureID => Consts.NULL;
         }
     }
 }

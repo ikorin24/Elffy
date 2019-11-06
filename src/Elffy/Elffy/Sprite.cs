@@ -81,12 +81,15 @@ namespace Elffy
             return await NonCaptureContextTaskFactory.StartNew(() => LoadFrom(resource));
         }
 
-        internal override void SwitchBind()
+        protected internal override int TextureID
         {
-            var page = PageChangingAlgorithm();
-            ArgumentChecker.ThrowIf(page < 0 || page >= _textures.Length, new ArgumentOutOfRangeException($"Page number which {nameof(PageChangingAlgorithm)} returns is out of range."));
-            unsafe {
-                _textures[page].SwitchBind();
+            get
+            {
+                var page = PageChangingAlgorithm();
+                ArgumentChecker.ThrowIf(page < 0 || page >= _textures.Length, new ArgumentOutOfRangeException($"Page number which {nameof(PageChangingAlgorithm)} returns is out of range."));
+                unsafe {
+                    return _textures[page].TextureID;
+                }
             }
         }
 

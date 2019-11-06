@@ -119,7 +119,7 @@ namespace Elffy.Core
 
             if(_isLoaded) {
                 Material.Apply();
-                Texture.SwitchBind();
+                Texture.Apply();
                 Shader.Apply();
                 GL.BindVertexArray(_vao);
                 GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBuffer);
