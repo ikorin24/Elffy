@@ -118,15 +118,9 @@ namespace Elffy.Core
             GL.Scale(Scale);
 
             if(_isLoaded) {
-                Material.Apply();           // マテリアルの適用
-                Texture.SwitchBind();       // テクスチャの適用
-                // シェーダーの適用
-                if(Shader != null) {
-                    Shader.Apply();
-                }
-                else {
-                    ShaderProgram.Clear();
-                }
+                Material.Apply();
+                Texture.SwitchBind();
+                Shader.Apply();
                 GL.BindVertexArray(_vao);
                 GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBuffer);
                 GL.DrawElements(BeginMode.Triangles, _indexArrayLength, DrawElementsType.UnsignedInt, 0);

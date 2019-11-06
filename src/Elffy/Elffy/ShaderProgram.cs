@@ -57,15 +57,6 @@ namespace Elffy
             }
         }
 
-        /// <summary>現在 OpenGL に適用されているシェーダープログラムをクリアします</summary>
-        internal static void Clear()
-        {
-            if(_currentProgramID != Consts.NULL) {
-                _currentProgramID = Consts.NULL;
-                GL.UseProgram(Consts.NULL);
-            }
-        }
-
         private void LinkShaders(int vertexShaderID, int fragmentShaderID)
         {
             _programID = GL.CreateProgram();
