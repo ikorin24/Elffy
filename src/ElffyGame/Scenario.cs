@@ -76,11 +76,11 @@ namespace ElffyGame
                 System.Diagnostics.Debug.WriteLine("Go to Next Scenario");
                 Scenario.GoToNext(new StartScenario());
             };
-            Game.UIRoot.Children.Add(button);
+            Game.UI.Add(button);
 
             var b2 = new Button(100, 100);
             b2.Position = new Vector2(100, 100);
-            Game.UIRoot.Children.Add(b2);
+            Game.UI.Add(b2);
 
             FrameProcess.Begin(TimeSpan.FromSeconds(2), process =>
             {
@@ -138,7 +138,7 @@ namespace ElffyGame
                 a.Position = new Vector3(1, 0, 0) * rot;
             });
 
-            //a.Shader = ShaderProgram.Default;
+            a.Shader = ShaderProgram.Default;
         }
     }
 }

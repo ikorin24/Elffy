@@ -42,8 +42,8 @@ namespace Elffy
         private static Game _instance;
         /// <summary>ゲームが起動しているかどうかを取得します</summary>
         public static bool IsRunning => _instance != null;
-        /// <summary>UI を構成する <see cref="UIBase"/> のルートオブジェクト</summary>
-        public static IUIRoot UIRoot => Instance._gameScreen.UIRoot;
+        /// <summary>UI を構成する <see cref="UIBase"/> のコレクション</summary>
+        public static UIBaseCollection UI => Instance._gameScreen.UIRoot.Children;
 
         /// <summary>ゲームの描画領域のピクセルサイズ</summary>
         public static Size GameScreenSize => Instance._gameScreen.ClientSize;
