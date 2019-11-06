@@ -37,10 +37,10 @@ namespace Elffy.Core
             set
             {
                 ArgumentChecker.ThrowIfNullArg(value, nameof(value));
-                if(_material != value) {
-                    _material = value;
-                    MaterialAttached?.Invoke(this);
-                }
+                if(_material == value) { return; }
+                var old = _material;
+                _material = value;
+                MaterialChanged?.Invoke(this, new ValueChangedEventArgs<Material>(old, value));
             }
         }
         private Material _material = Material.Default;
@@ -53,10 +53,10 @@ namespace Elffy.Core
             set
             {
                 ArgumentChecker.ThrowIfNullArg(value, nameof(value));
-                if(_texture != value) {
-                    _texture = value;
-                    TextureAttached?.Invoke(this);
-                }
+                if(_texture == value) { return; }
+                var old = _texture;
+                _texture = value;
+                TextureChanged?.Invoke(this, new ValueChangedEventArgs<TextureBase>(old, value));
             }
         }
         private TextureBase _texture = TextureBase.Empty;
@@ -69,10 +69,10 @@ namespace Elffy.Core
             set
             {
                 ArgumentChecker.ThrowIfNullArg(value, nameof(value));
-                if(_shader != value) {
-                    _shader = value;
-                    ShaderAttached?.Invoke(this);
-                }
+                if(_shader == value) { return; }
+                var old = _shader;
+                _shader = value;
+                ShaderChanged?.Invoke(this, new ValueChangedEventArgs<ShaderProgram>(old, value));
             }
         }
         private ShaderProgram _shader = ShaderProgram.Default;
@@ -98,10 +98,15 @@ namespace Elffy.Core
         private bool _enableVertexColor;
         #endregion
 
-        public event ActionEventHandler<Renderable> MaterialAttached;
-        public event ActionEventHandler<Renderable> TextureAttached;
-        public event ActionEventHandler<Renderable> ShaderAttached;
+        /// <summary>Material changed event</summary>
+        public event ActionEventHandler<Renderable, ValueChangedEventArgs<Material>> MaterialChanged;
+        /// <summary>Texture changed event</summary>
+        public event ActionEventHandler<Renderable, ValueChangedEventArgs<TextureBase>> TextureChanged;
+        /// <summary>Shader changed event</summary>
+        public event ActionEventHandler<Renderable, ValueChangedEventArgs<ShaderProgram>> ShaderChanged;
+        /// <summary>Before-rendering event</summary>
         public event ActionEventHandler<Renderable> Rendering;
+        /// <summary>After-rendering event</summary>
         public event ActionEventHandler<Renderable> Rendered;
 
         ~Renderable() => Dispose(false);
