@@ -241,6 +241,20 @@ namespace Elffy.Effective
             }
         }
 
+        /// <summary>Create new <see cref="UnmanagedArray{T}"/> whose values are initialized by memory layout of specified structure</summary>
+        /// <typeparam name="TStruct">type of source structure</typeparam>
+        /// <param name="obj">source structure</param>
+        /// <returns>instance of <see cref="UnmanagedArray{T}"/> whose values are initialized by <paramref name="obj"/></returns>
+        public static unsafe UnmanagedArray<T> CreateFromStruct<TStruct>(TStruct obj) where TStruct : unmanaged
+        {
+            var structSize = sizeof(TStruct);
+            var itemSize = sizeof(T);
+            var arrayLen = structSize / itemSize + (structSize % itemSize > 0 ? 1 : 0);
+            var array = new UnmanagedArray<T>(arrayLen);
+            Buffer.MemoryCopy(&obj, (void*)array._array, structSize, structSize);
+            return array;
+        }
+
         #region Dispose
         public void Dispose()
         {

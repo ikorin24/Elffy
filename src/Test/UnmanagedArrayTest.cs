@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Elffy.Effective;
 using System.Linq;
 using static Test.TestHelper;
+using System.Runtime.InteropServices;
 
 namespace Test
 {
@@ -104,6 +105,52 @@ namespace Test
                     Assert(array2.Skip(2).SequenceEqual(array.Take(8)));
                 }
             }
+
+            var data = new TestStruct()
+            {
+                A = 10,
+                B = 5,
+                C = 90,
+                D = new TestSubStruct()
+                {
+                    A = 32,
+                    B = 50,
+                    C = 0xAABBCCDDEEFF0011,
+                }
+            };
+            using(var array = UnmanagedArray<uint>.CreateFromStruct(data)) {
+                Assert(array[0] == 10);
+                Assert(array[1] == 5);
+                Assert(array[2] == 90);
+                Assert(array[3] == 32);
+                Assert(array[4] == 50);
+                Assert(array[5] == 0xEEFF0011);
+                Assert(array[6] == 0xAABBCCDD);
+            }
+        }
+
+        [StructLayout(LayoutKind.Explicit)]
+        struct TestStruct
+        {
+            [FieldOffset(0)]
+            public int A;
+            [FieldOffset(4)]
+            public int B;
+            [FieldOffset(8)]
+            public int C;
+            [FieldOffset(12)]
+            public TestSubStruct D;
+        }
+
+        [StructLayout(LayoutKind.Explicit)]
+        struct TestSubStruct
+        {
+            [FieldOffset(0)]
+            public int A;
+            [FieldOffset(4)]
+            public int B;
+            [FieldOffset(8)]
+            public ulong C;
         }
     }
 }
