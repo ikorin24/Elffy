@@ -24,15 +24,14 @@ namespace Elffy
             Name = name;
         }
 
-        #region Render
         /// <summary>画面への投影行列を指定して、描画を実行します</summary>
         /// <param name="projection"></param>
-        public void Render(Matrix4 projection) => Render(projection, Matrix4.Identity);
+        internal void Render(Matrix4 projection) => Render(projection, Matrix4.Identity);
 
         /// <summary>画面への投影行列とカメラ行列を指定して、描画を実行します</summary>
         /// <param name="projection">投影行列</param>
         /// <param name="view">カメラ行列</param>
-        public void Render(Matrix4 projection, Matrix4 view)
+        internal void Render(Matrix4 projection, Matrix4 view)
         {
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadMatrix(ref projection);
@@ -42,6 +41,5 @@ namespace Elffy
                 renderable.Render();
             }
         }
-        #endregion
     }
 }
