@@ -6,7 +6,7 @@ using System.IO;
 namespace Elffy.Core.MetaFile
 {
     /// <summary>メタデータを表すクラス</summary>
-    public class Metadata
+    public abstract class Metadata
     {
         private static DataSerializer _serializer;
 
@@ -39,7 +39,7 @@ namespace Elffy.Core.MetaFile
 
         /// <summary>この <see cref="MetadataDeserialized"/> のフォーマットバージョンがサポートされているかを取得します</summary>
         /// <returns>フォーマットバージョンがサポートされているかどうか</returns>
-        public bool IsSupportedVersion(MetadataDeserialized data)
+        private bool IsSupportedVersion(MetadataDeserialized data)
         {
             const string SUPPORTED = "1.0";
             return data.FormatVersion == SUPPORTED;
