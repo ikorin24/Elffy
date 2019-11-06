@@ -18,7 +18,7 @@ namespace Elffy
         private bool _disposed;
         /// <summary>現在適用されている <see cref="ShaderProgram"/> の識別番号</summary>
         private static int _currentProgramID;
-
+        private bool _isDefaultShader;
         /// <summary>このシェーダープログラムの OpenGL の識別番号</summary>
         private int _programID = Consts.NULL;
 
@@ -72,6 +72,7 @@ namespace Elffy
         private static ShaderProgram CreateDefault()
         {
             var program = new ShaderProgram();
+            program._isDefaultShader = true;
             return program;
         }
 
@@ -85,6 +86,7 @@ namespace Elffy
         /// <summary>このシェーダープログラムを破棄します</summary>
         public void Dispose()
         {
+            if(_isDefaultShader) { return; }        // デフォルトのインスタンスは破棄させない
             Dispose(true);
             GC.SuppressFinalize(this);
         }
