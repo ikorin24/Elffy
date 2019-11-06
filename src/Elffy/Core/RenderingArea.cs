@@ -104,16 +104,16 @@ namespace Elffy.Core
             foreach(var layer in Layers.GetAllLayer()) {
                 layer.Update();
             }
-            Dispatcher.DoInvokedAction();                           // Invokeされた処理を実行
+            Dispatcher.DoInvokedAction();
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             // レイヤー描画処理
             foreach(var layer in Layers) {
                 if(layer.IsLightingEnabled) {
-                    Light.LightUp();                // 光源点灯
+                    Light.IsEnabled = true;
                 }
                 else {
-                    Light.TurnOff();                // 光源消灯
+                    Light.IsEnabled = false;
                 }
                 if(layer is UILayer) {
                     layer.Render(_uiProjection);

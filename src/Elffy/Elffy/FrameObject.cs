@@ -8,7 +8,7 @@ namespace Elffy
     /// ゲームによって管理され、ゲームのフレームに関わるオブジェクトの基底クラス<para/>
     /// ゲームのフレームに関する操作・ゲームによって管理されるための操作を提供します。<para/>
     /// </summary>
-    public abstract class FrameObject
+    public abstract class FrameObject : IDestroyable
     {
         #region Proeprty
         /// <summary>このオブジェクトがゲームによって管理されているかどうかを返します</summary>

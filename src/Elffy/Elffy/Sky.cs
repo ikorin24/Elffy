@@ -13,7 +13,6 @@ namespace Elffy
     {
         private readonly Vertex[] _vertexArray;
         private readonly int[] _indexArray;
-        private bool _lightStateBuffer;
 
         public Sky(float r)
         {
@@ -22,8 +21,6 @@ namespace Elffy
             const int b = 16;
             GenerateVertex(r, a, b, out _vertexArray, out _indexArray);
             Activated += OnActivated;
-            Rendering += OnRendering;
-            Rendered += OnRendered;
         }
 
         private void GenerateVertex(float r, int a, int b, out Vertex[] vertexArray, out int[] indexArray)
@@ -60,17 +57,6 @@ namespace Elffy
         private void OnActivated(FrameObject frameObject)
         {
             InitGraphicBuffer(_vertexArray, _indexArray);
-        }
-
-        private void OnRendering(Renderable renderable)
-        {
-            _lightStateBuffer = Light.IsEnabled;
-            Light.IsEnabled = false;
-        }
-
-        private void OnRendered(Renderable renderable)
-        {
-            Light.IsEnabled = _lightStateBuffer;
         }
     }
 }

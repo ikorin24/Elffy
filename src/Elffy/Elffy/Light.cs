@@ -1,22 +1,26 @@
-﻿using OpenTK;
+﻿using Elffy.Exceptions;
+using Elffy.Threading;
+using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Diagnostics;
+using Elffy.Core;
 
 namespace Elffy
 {
     public static class Light
     {
-        private static int MAX_COUNT = 8;
+        /// <summary>Max count of light</summary>
+        public const int MaxCount = 8;
         /// <summary>Light list (Max number of light is 8 in OpenTK.)</summary>
-        private static readonly List<DirectLight> _lightList = new List<DirectLight>(MAX_COUNT);
+        private static readonly List<DirectLight> _lightList = new List<DirectLight>(MaxCount);
 
-        public static bool IsEnabled
+        /// <summary>Get whether this can create a new light</summary>
+        private static bool CanCreateNew => _lightList.Count < MaxCount;
+
+        internal static bool IsEnabled
         {
             get => _isEnabled;
             set
@@ -36,59 +40,22 @@ namespace Elffy
         /// <summary>The number of light</summary>
         public static int Count => _lightList.Count;
 
-        /// <summary>Get whether this can create a new light</summary>
-        public static bool CanCreateNew => _lightList.Count < MAX_COUNT;
-
-        #region CreateDirectLight
-        /// <summary>Create a direct light</summary>
-        public static int CreateDirectLight() => CreateDirectLight(-Vector3.UnitY, Color4.White, Color4.White, Color4.White);
-        
-        /// <summary>Create a direct light</summary>
-        /// <param name="direction">direction of light</param>
-        public static int CreateDirectLight(Vector3 direction) => CreateDirectLight(direction, Color4.White, Color4.White, Color4.White);
-
-        /// <summary>Create a direct light</summary>
-        /// <param name="direction">direction of light</param>
-        /// <param name="color">color of light</param>
-        public static int CreateDirectLight(Vector3 direction, Color4 color) => CreateDirectLight(direction, color, color, color);
-
-        /// <summary>Create a direct light</summary>
-        /// <param name="direction">direction of light</param>
-        /// <param name="ambient">color of ambient light</param>
-        /// <param name="diffuse">color of diffuse light</param>
-        /// <param name="specular">color of specular light</param>
-        public static int CreateDirectLight(Vector3 direction, Color4 ambient, Color4 diffuse, Color4 specular)
-        {
-            if(!CanCreateNew) { throw new InvalidOperationException("Can not create more Light."); }
-            var light = new DirectLight(direction, ambient, diffuse, specular, GetLightNumber());
-            _lightList.Add(light);
-            return light.ID;
-        }
-        #endregion
-
-        #region LightUp
-        internal static void LightUp()
-        {
-            foreach(var light in _lightList) {
-                light.LightUp();
-            }
-        }
-        #endregion
-
-        #region TurnOff
-        internal static void TurnOff()
-        {
-            foreach(var light in _lightList) {
-                light.TurnOff();
-            }
-        }
-        #endregion
-
         public static DirectLight GetLight(int id) => _lightList.Find(x => x.ID == id);
 
-        public static void RemoveLight(DirectLight light) => _lightList.Remove(light);
+        internal static void AddLight(DirectLight light)
+        {
+            Debug.Assert(Dispatcher.IsMainThread());
+            if(!CanCreateNew) { throw new InvalidOperationException("Can not add more Light."); }
+            light.LightName = GetLightNumber();
+            _lightList.Add(light);
+        }
 
-        #region GetLightNumber
+        internal static void RemoveLight(DirectLight light)
+        {
+            Debug.Assert(Dispatcher.IsMainThread());
+            _lightList.Remove(light);
+        }
+
         private static LightName GetLightNumber()
         {
             switch(_lightList.Count) {
@@ -104,14 +71,18 @@ namespace Elffy
                     throw new InvalidOperationException();
             }
         }
-        #endregion
     }
 
     #region class DirectLight
-    public class DirectLight
+    public sealed class DirectLight : IDestroyable
     {
-        private LightName _lightNumber;
         private Vector4 _position;
+
+        public bool IsActivated { get; private set; }
+
+        public bool IsDestroyed { get; private set; }
+
+        internal LightName LightName { get; set; }
 
         public Vector3 Direction
         {
@@ -125,29 +96,66 @@ namespace Elffy
         public Color4 Diffuse { get; set; }
         public Color4 Specular { get; set; }
 
-        public int ID => (int)(_lightNumber - LightName.Light0);
+        public int ID => (int)(LightName - LightName.Light0);
 
-        internal DirectLight(Vector3 direction, Color4 ambient, Color4 diffuse, Color4 specular, LightName number)
+        public DirectLight() : this(-Vector3.UnitY, Color4.White, Color4.White, Color4.White) { }
+
+        public DirectLight(Vector3 direction) : this(direction, Color4.White, Color4.White, Color4.White) { }
+
+        public DirectLight(Vector3 direction, Color4 color) : this(direction, color, color, color) { }
+
+        public DirectLight(Vector3 direction, Color4 ambient, Color4 diffuse, Color4 specular)
         {
-            _lightNumber = number;
             Direction = direction;
             Ambient = ambient;
             Diffuse = diffuse;
             Specular = specular;
         }
 
-        internal void LightUp()
+        public void Activate()
         {
-            GL.Enable((EnableCap)_lightNumber);
-            GL.Light(_lightNumber, LightParameter.Position, _position);
-            GL.Light(_lightNumber, LightParameter.Ambient, Ambient);
-            GL.Light(_lightNumber, LightParameter.Diffuse, Diffuse);
-            GL.Light(_lightNumber, LightParameter.Specular, Specular);
+            ThrowIfDestroyed();
+            if(IsActivated) { return; }
+            Dispatcher.Invoke(() =>
+            {
+                IsActivated = true;
+                Light.AddLight(this);
+                LightUp();
+            });
         }
 
-        internal void TurnOff()
+        public void Destroy()
         {
-            GL.Disable((EnableCap)_lightNumber);
+            ThrowIfDestroyed();
+            Dispatcher.Invoke(() =>
+            {
+                IsDestroyed = true;
+                Light.RemoveLight(this);
+                TurnOff();
+            });
+        }
+
+        public void LightUp()
+        {
+            ThrowIfDestroyed();
+            Dispatcher.ThrowIfNotMainThread();
+            GL.Enable((EnableCap)LightName);
+            GL.Light(LightName, LightParameter.Position, _position);
+            GL.Light(LightName, LightParameter.Ambient, Ambient);
+            GL.Light(LightName, LightParameter.Diffuse, Diffuse);
+            GL.Light(LightName, LightParameter.Specular, Specular);
+        }
+
+        public void TurnOff()
+        {
+            ThrowIfDestroyed();
+            Dispatcher.ThrowIfNotMainThread();
+            GL.Disable((EnableCap)LightName);
+        }
+
+        private void ThrowIfDestroyed()
+        {
+            if(IsDestroyed) { throw new ObjectDestroyedException(this); }
         }
     }
     #endregion

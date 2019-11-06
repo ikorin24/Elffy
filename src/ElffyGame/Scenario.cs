@@ -49,9 +49,17 @@ namespace ElffyGame
     {
         protected override async void Start()
         {
-            var l = Light.CreateDirectLight();
-            var light = Light.GetLight(l);
-            Light.IsEnabled = true;
+            var light = new DirectLight();
+            light.Activate();
+            FrameProcess.WhileTrue(process =>
+            {
+                if((int)(process.Time.TotalSeconds) % 2 == 0) {
+                    light.LightUp();
+                }
+                else {
+                    light.TurnOff();
+                }
+            });
 
             var cube = new Cube();
             cube.Texture = await Texture.LoadFromAsync("cube.png");
