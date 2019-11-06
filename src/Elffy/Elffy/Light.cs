@@ -56,6 +56,10 @@ namespace Elffy
             {
                 Dispatcher.ThrowIfNotMainThread();
                 if(_globalAmbient != value) {
+                    value.R = (value.R < 0f) ? 0f : value.R;
+                    value.G = (value.G < 0f) ? 0f : value.G;
+                    value.B = (value.B < 0f) ? 0f : value.B;
+                    value.A = (value.A < 0f) ? 0f : value.A;
                     _globalAmbient = value;
                     _globalAmbientChanged = true;
                 }
