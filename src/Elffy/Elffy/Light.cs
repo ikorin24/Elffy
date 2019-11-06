@@ -149,11 +149,11 @@ namespace Elffy
 
         public int ID => (int)(LightName - LightName.Light0);
 
-        public DirectLight() : this(-Vector3.UnitY, Color4.White, Color4.White, Color4.White) { }
+        public DirectLight() : this(new Vector3(-1f, -1f, 0f), Color4.Black, Color4.White, Color4.White) { }
 
-        public DirectLight(Vector3 direction) : this(direction, Color4.White, Color4.White, Color4.White) { }
+        public DirectLight(Vector3 direction) : this(direction, Color4.Black, Color4.White, Color4.White) { }
 
-        public DirectLight(Vector3 direction, Color4 color) : this(direction, color, color, color) { }
+        public DirectLight(Vector3 direction, Color4 color) : this(direction, Color4.Black, color, color) { }
 
         public DirectLight(Vector3 direction, Color4 ambient, Color4 diffuse, Color4 specular)
         {
