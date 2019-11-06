@@ -7,6 +7,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Elffy.Core;
+using Elffy.Effective;
+using System.Runtime.InteropServices;
 
 namespace Elffy
 {
@@ -16,6 +18,7 @@ namespace Elffy
         public const int MaxCount = 8;
         /// <summary>Light list (Max number of light is 8 in OpenTK.)</summary>
         private static readonly List<DirectLight> _lightList = new List<DirectLight>(MaxCount);
+        private static bool _globalAmbientChanged;
 
         /// <summary>Get whether this can create a new light</summary>
         private static bool CanCreateNew => _lightList.Count < MaxCount;
@@ -29,6 +32,10 @@ namespace Elffy
                 _isEnabled = value;
                 if(_isEnabled) {
                     GL.Enable(EnableCap.Lighting);
+                    if(_globalAmbientChanged) {
+                        SendGlobalAmbient(_globalAmbient);
+                        _globalAmbientChanged = false;
+                    }
                 }
                 else {
                     GL.Disable(EnableCap.Lighting);
@@ -36,6 +43,25 @@ namespace Elffy
             }
         }
         private static bool _isEnabled;
+
+        /// <summary>光源から独立した環境光を設定または取得します</summary>
+        public static Color4 GlobalAmbient
+        {
+            get
+            {
+                Dispatcher.ThrowIfNotMainThread();
+                return _globalAmbient;
+            }
+            set
+            {
+                Dispatcher.ThrowIfNotMainThread();
+                if(_globalAmbient != value) {
+                    _globalAmbient = value;
+                    _globalAmbientChanged = true;
+                }
+            }
+        }
+        private static Color4 _globalAmbient = new Color4(0.2f, 0.2f, 0.2f, 1f);    // default value of OpenGL
 
         /// <summary>The number of light</summary>
         public static int Count => _lightList.Count;
@@ -69,6 +95,27 @@ namespace Elffy
                 case 7: return LightName.Light7;
                 default:
                     throw new InvalidOperationException();
+            }
+        }
+
+        private static void SendGlobalAmbient(Color4 color)
+        {
+            unsafe {
+                var ptr = IntPtr.Zero;
+                try {
+                    ptr = Marshal.AllocHGlobal(sizeof(float) * 4);
+                    var array = (float*)ptr;
+                    array[0] = color.R;
+                    array[1] = color.G;
+                    array[2] = color.B;
+                    array[3] = color.A;
+                    GL.LightModel(LightModelParameter.LightModelAmbient, array);
+                }
+                finally {
+                    if(ptr != IntPtr.Zero) {
+                        Marshal.FreeHGlobal(ptr);
+                    }
+                }
             }
         }
     }
