@@ -69,6 +69,18 @@ namespace Elffy.Core
         }
         #endregion
 
+        /// <summary>get or set color of clearing rendering area on beginning of each frames.</summary>
+        public Color4 ClearColor
+        {
+            get => _clearColor;
+            set
+            {
+                _clearColor = value;
+                GL.ClearColor(_clearColor);
+            }
+        }
+        private Color4 _clearColor;
+
         public RenderingArea()
         {
             UIRoot = new Page(Layers.UILayer);
@@ -78,7 +90,7 @@ namespace Elffy.Core
         /// <summary>OpenTL の描画に関する初期設定を行います</summary>
         public void InitializeGL()
         {
-            GL.ClearColor(Color4.Gray);
+            ClearColor = Color4.Gray;
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Texture2D);
             GL.Enable(EnableCap.Normalize);
