@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -147,7 +148,7 @@ namespace Elffy.Serialization
     internal abstract class FbxValueProperty<T> : FbxProperty
     {
         /// <summary>get of set property value</summary>
-        public T Value { get; set; }
+        public T Value { get; set; } = default;
 
         /// <summary>constructor of <see cref="FbxValueProperty{T}"/></summary>
         public FbxValueProperty()
@@ -158,7 +159,7 @@ namespace Elffy.Serialization
 
         /// <summary>get value which this <see cref="FbxProperty"/> has.</summary>
         /// <returns>value of this <see cref="FbxProperty"/></returns>
-        public override object GetValue() => Value as object;
+        public override object? GetValue() => Value;
     }
 
     /// <summary>An array property infomation of <see cref="FbxNode"/></summary>

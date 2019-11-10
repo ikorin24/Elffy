@@ -30,7 +30,6 @@ namespace Elffy.UI
         {
             // "4,5,3"
             // " 3, 3  ,  32  "
-            if(source == null) { return null; }
             var propotion = source.Split(new[] { ',' }).Select(x => x.Trim()).Cast<float>().ToArray();
             ArgumentChecker.ThrowIf(propotion.Any(value => value < 0), new ArgumentException($"negative propotion is not allowed"));
             var split = new Split();

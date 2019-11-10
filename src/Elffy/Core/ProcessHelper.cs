@@ -1,4 +1,5 @@
-﻿using Elffy.Exceptions;
+﻿#nullable enable
+using Elffy.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -51,7 +52,7 @@ namespace Elffy.Core
             if(uniqueName.Length > MUTEX_NAME_MAX_LEN) {
                 throw new ArgumentException($"{nameof(uniqueName)} is too long. Length must be between 0 and {MUTEX_NAME_MAX_LEN}.");
             }
-            Mutex mutex = null;
+            Mutex? mutex = null;
             try {
                 mutex = new Mutex(true, uniqueName, out var createdNew);
                 if(createdNew) {

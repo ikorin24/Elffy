@@ -36,7 +36,7 @@ namespace Elffy.UI
 
             // 深さ優先探索で列挙されるため子より親が先に Position が決定する
             foreach(var target in GetOffspring()) {
-                var parent = target.Parent;
+                UIBase parent = target.Parent;
                 Debug.Assert(target.Parent != null);
 
                 // 座標が NaN ならレイアウトを計算する。

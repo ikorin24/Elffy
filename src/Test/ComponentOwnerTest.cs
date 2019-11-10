@@ -83,7 +83,7 @@ namespace Test
             // owner's component == [ comp1{ Name = "foo"}, comp2{ Name = "piyo" }, comp3{ Name = "bar" } ]
 
             Assert.IsTrue(owner.RemoveComponent<Component2>());
-            Assert.IsNull(owner.GetComponentOrDefault<Component2>());
+            Assert.IsFalse(owner.HasComponent<Component2>());
         }
 
         class Component1

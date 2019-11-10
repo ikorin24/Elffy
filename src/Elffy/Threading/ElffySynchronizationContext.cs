@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Threading;
 using System.Diagnostics;
 using System.ComponentModel;
@@ -19,7 +20,7 @@ namespace Elffy.Threading
         private static SynchronizationContext _previousSyncContext;
 
         /// <summary>この <see cref="ElffySynchronizationContext"/> インスタンスが紐づいている <see cref="Thread"/></summary>
-        private Thread DestinationThread
+        private Thread? DestinationThread
         {
             get
             {
@@ -28,26 +29,20 @@ namespace Elffy.Threading
                 }
                 return null;
             }
-            set
-            {
-                if(value != null) {
-                    _destinationThread = new WeakReference(value);
-                }
-            }
         }
-        private WeakReference _destinationThread;
+        private readonly WeakReference _destinationThread;
 
         /// <summary>現在のスレッドに紐づけられた同期コンテキストを生成します</summary>
         private ElffySynchronizationContext()
         {
-            DestinationThread = Thread.CurrentThread;
+            _destinationThread = new WeakReference(Thread.CurrentThread);
         }
 
         /// <summary>スレッドを指定して同期コンテキストを生成します</summary>
         /// <param name="destinationThread"></param>
         private ElffySynchronizationContext(Thread destinationThread)
         {
-            DestinationThread = destinationThread;
+            _destinationThread = new WeakReference(destinationThread);
         }
 
         public override void Post(SendOrPostCallback d, object state)

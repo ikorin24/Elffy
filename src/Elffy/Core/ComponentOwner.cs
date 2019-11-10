@@ -1,4 +1,5 @@
-﻿using Elffy.Exceptions;
+﻿#nullable enable
+using Elffy.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -17,14 +18,6 @@ namespace Elffy.Core
         {
             if(!ComponentStore<T>.HasComponentOf(this)) { throw new InvalidOperationException($"No component of type '{typeof(T).FullName}'"); }
             return ComponentStore<T>.Get(this);
-        }
-
-        /// <summary>Get component of specified type. If no component whose type is <typeparamref name="T"/>, return default(<typeparamref name="T"/>)</summary>
-        /// <typeparam name="T">component type</typeparam>
-        /// <returns>component of type <typeparamref name="T"/>. If no component, default(<typeparamref name="T"/>)</returns>
-        public T GetComponentOrDefault<T>() where T : class
-        {
-            return ComponentStore<T>.GetOrDefault(this);
         }
 
         /// <summary>Add component object</summary>
@@ -117,19 +110,6 @@ namespace Elffy.Core
                 }
                 else {
                     throw new KeyNotFoundException();
-                }
-            }
-
-            /// <summary>Get component of specified owner. If not exist, return default</summary>
-            /// <param name="owner">the owner of the component.</param>
-            /// <returns>the component</returns>
-            public static T GetOrDefault(ComponentOwner owner)
-            {
-                if(_components.TryGetValue(owner, out var component)) {
-                    return component;
-                }
-                else {
-                    return default;
                 }
             }
 

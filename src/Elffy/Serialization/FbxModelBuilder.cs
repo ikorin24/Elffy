@@ -1,4 +1,5 @@
-﻿using Elffy.Core;
+﻿#nullable enable
+using Elffy.Core;
 using Elffy.Shape;
 using OpenTK;
 using OpenTK.Graphics;
@@ -39,32 +40,37 @@ namespace Elffy.Serialization
 
             #region ポリゴン情報取得
             var geometries = objectNode.Children.FindAll(x => x.Name == GEOMETRY).Select(geometry => {
-                var id = (geometry.Properties[0] as FbxLongProperty).Value;
-                var name = (geometry.Properties[1] as FbxStringProperty).Value;
-                double[] vertPositions = null;
-                int[] indexes = null;
-                double[] normals = null;
-                int[] materialIndex = null;
+                var id = ((FbxLongProperty)geometry.Properties[0]).Value;
+                var name = ((FbxStringProperty)geometry.Properties[1]).Value;
+                double[]? vertPositions = default;
+                int[]? indexes = default;
+                double[]? normals = default;
+                int[]? materialIndex = default;
 
                 foreach(var node in geometry.Children) {
                     switch(node.Name) {
                         case VERTICES:
                             // TODO: マイナスのインデックス
-                            vertPositions = (node.Properties[0] as FbxDoubleArrayProperty).Value;
+                            vertPositions = ((FbxDoubleArrayProperty)node.Properties[0]).Value;
                             break;
                         case VERTEX_INDEX:
-                            indexes = (node.Properties[0] as FbxIntArrayProperty).Value;
+                            indexes = ((FbxIntArrayProperty)node.Properties[0]).Value;
                             break;
                         case NORMAL_INFO:
-                            normals = (node.Children.Find(x => x.Name == NORMAL).Properties[0] as FbxDoubleArrayProperty).Value;
+                            normals = ((FbxDoubleArrayProperty)node.Children.Find(x => x.Name == NORMAL).Properties[0]).Value;
                             break;
                         case MATERIAL_INFO:
-                            materialIndex = (node.Children.Find(x => x.Name == MATERIAL_INDEX).Properties[0] as FbxIntArrayProperty).Value;
+                            materialIndex = ((FbxIntArrayProperty)node.Children.Find(x => x.Name == MATERIAL_INDEX).Properties[0]).Value;
                             break;
                         default:
                             break;
                     }
                 }
+
+                if(vertPositions == null) { throw new FormatException("No vertex points"); }
+                if(indexes == null) { throw new FormatException("No indexes"); }
+                if(normals == null) { throw new FormatException("No normals"); }
+                if(materialIndex == null) { throw new FormatException("No material Index"); }
 
                 return (id, name, vertPositions, indexes, normals, materialIndex);
             });
@@ -72,9 +78,9 @@ namespace Elffy.Serialization
 
             #region マテリアル情報取得
             var materials = objectNode.Children.FindAll(x => x.Name == MATERIAL_DEFINITION).Select(material => {
-                var id = (material.Properties[0] as FbxLongProperty).Value;
-                var name = (material.Properties[1] as FbxStringProperty).Value;
-                string shadingModel = null;
+                var id = ((FbxLongProperty)material.Properties[0]).Value;
+                var name = ((FbxStringProperty)material.Properties[1]).Value;
+                string? shadingModel = default;
 
                 Color4 emitColor = default;
                 double emit = default;
@@ -88,7 +94,7 @@ namespace Elffy.Serialization
                 foreach(var node in material.Children) {
                     switch(node.Name) {
                         case SHADING_MODEL:
-                            shadingModel = (node.Properties[0] as FbxStringProperty).Value;
+                            shadingModel = ((FbxStringProperty)node.Properties[0]).Value;
                             break;
                         case MATERIAL_DATA:
                             (emitColor, emit, ambientColor, diffuseColor, diffuse, specularColor, specular, shininess) = GetMaterialValues(node);
@@ -144,15 +150,15 @@ namespace Elffy.Serialization
             #region local func
             Color4 GetColor(FbxNode node)
             {
-                var r = (float)(node.Properties[4] as FbxDoubleProperty).Value;
-                var g = (float)(node.Properties[5] as FbxDoubleProperty).Value;
-                var b = (float)(node.Properties[6] as FbxDoubleProperty).Value;
+                var r = (float)((FbxDoubleProperty)node.Properties[4]).Value;
+                var g = (float)((FbxDoubleProperty)node.Properties[5]).Value;
+                var b = (float)((FbxDoubleProperty)node.Properties[6]).Value;
                 return new Color4(r, g, b, 1f);
             }
 
             double GetDouble(FbxNode node)
             {
-                return (node.Properties[4] as FbxDoubleProperty).Value;
+                return ((FbxDoubleProperty)node.Properties[4]).Value;
             }
             #endregion
 
