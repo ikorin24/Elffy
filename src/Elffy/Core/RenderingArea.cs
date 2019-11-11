@@ -114,7 +114,8 @@ namespace Elffy.Core
         public void RenderFrame(Matrix4 projection, Matrix4 view)
         {
             // レイヤー更新
-            foreach(var layer in Layers.GetAllLayer()) {
+            Layers.SystemLayer.Update();
+            foreach(var layer in Layers) {
                 layer.Update();
             }
             Dispatcher.DoInvokedAction();
@@ -137,7 +138,8 @@ namespace Elffy.Core
             }
 
             // レイヤー変更適用
-            foreach(var layer in Layers.GetAllLayer()) {
+            Layers.SystemLayer.ApplyChanging();
+            foreach(var layer in Layers) {
                 layer.ApplyChanging();
             }
         }

@@ -61,7 +61,8 @@ namespace Elffy
             ElffySynchronizationContext.CreateIfNeeded();       // スレッドの同期コンテキスト作成
             _renderingArea.InitializeGL();
             Initialized?.Invoke(this, EventArgs.Empty);
-            foreach(var layer in Layers.GetAllLayer()) {
+            Layers.SystemLayer.ApplyChanging();
+            foreach(var layer in Layers) {
                 layer.ApplyChanging();
             }
         }
@@ -129,7 +130,8 @@ namespace Elffy
             base.OnClosed(e);
 
             // 全てのレイヤーに含まれるオブジェクトを破棄し、レイヤーを削除
-            foreach(var layer in _renderingArea.Layers.GetAllLayer()) {
+            _renderingArea.Layers.SystemLayer.ClearFrameObject();
+            foreach(var layer in _renderingArea.Layers) {
                 layer.ClearFrameObject();
             }
             _renderingArea.Layers.Clear();
