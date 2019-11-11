@@ -47,8 +47,8 @@ namespace Elffy
         public WritableTexture(int width, int height, Color background, TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode, TextureExpansionMode expansionMode) 
             : base(shrinkMode, mipmapMode, expansionMode)
         {
-            ArgumentChecker.ThrowIf(width <= 0, new ArgumentOutOfRangeException(nameof(width)));
-            ArgumentChecker.ThrowIf(height <= 0, new ArgumentOutOfRangeException(nameof(height)));
+            ArgumentChecker.ThrowOutOfRangeIf(width <= 0, nameof(width), width, $"{nameof(width)} is out of range");
+            ArgumentChecker.ThrowOutOfRangeIf(height <= 0, nameof(height), height, $"{nameof(height)} is out of range");
             _bitmap = new Bitmap(width, height);
             _g = Graphics.FromImage(_bitmap);
             _g.Clear(background);
@@ -105,7 +105,7 @@ namespace Elffy
             ThrowIfDisposed();
             ArgumentChecker.ThrowIfNullArg(pen, nameof(pen));
             ArgumentChecker.ThrowIfNullArg(points, nameof(points));
-            ArgumentChecker.ThrowIf(points.Length < 2, new ArgumentException($"Length of {nameof(points)} must be bigger than 2."));
+            ArgumentChecker.ThrowArgumentIf(points.Length < 2, $"Length of {nameof(points)} must be bigger than 2.");
             _g.DrawLines(pen, points);
             AddDirtyRegion(GetBounds(points));
         }

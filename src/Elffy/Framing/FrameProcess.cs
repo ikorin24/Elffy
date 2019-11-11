@@ -34,7 +34,7 @@ namespace Elffy.Framing
         /// <returns>一連のフレームプロセスの流れを表す <see cref="FrameProcess"/> オブジェクト</returns>
         public static FrameProcess Begin(TimeSpan time, FrameProcessBehavior behavior)
         {
-            ArgumentChecker.ThrowIf(time < TimeSpan.Zero, new ArgumentException($"{nameof(time)} is negative."));
+            ArgumentChecker.ThrowArgumentIf(time < TimeSpan.Zero, $"{nameof(time)} is negative.");
             ArgumentChecker.ThrowIfNullArg(behavior, nameof(behavior));
             var frameProcess = new FrameProcess();
             frameProcess.ProcessObj.Activate(TARGET_LAYER);
@@ -59,7 +59,7 @@ namespace Elffy.Framing
         /// <returns>一連のフレームプロセスの流れを表す <see cref="FrameProcess"/> オブジェクト</returns>
         public static FrameProcess Wait(TimeSpan time)
         {
-            ArgumentChecker.ThrowIf(time < TimeSpan.Zero, new ArgumentException($"{nameof(time)} is negative."));
+            ArgumentChecker.ThrowArgumentIf(time < TimeSpan.Zero, $"{nameof(time)} is negative.");
             var frameProcess = new FrameProcess();
             frameProcess.ProcessObj.Activate(TARGET_LAYER);
             frameProcess.ProcessObj.AddBehavior(time, WAIT_BEHAVIOR);
@@ -105,7 +105,7 @@ namespace Elffy.Framing
         /// <returns>一連のフレームプロセスの流れを表す <see cref="FrameProcess"/> オブジェクト</returns>
         public static FrameProcess Begin(this FrameProcess frameProcess, TimeSpan time, FrameProcessBehavior behavior)
         {
-            ArgumentChecker.ThrowIf(time < TimeSpan.Zero, new ArgumentException($"{nameof(time)} is negative."));
+            ArgumentChecker.ThrowArgumentIf(time < TimeSpan.Zero, $"{nameof(time)} is negative.");
             ArgumentChecker.ThrowIfNullArg(behavior, nameof(behavior));
             if(!frameProcess.ProcessObj.IsActivated) { frameProcess.ProcessObj.Activate(FrameProcess.TARGET_LAYER); }
             frameProcess.ProcessObj.AddBehavior(time, behavior);
@@ -130,7 +130,7 @@ namespace Elffy.Framing
         /// <returns>一連のフレームプロセスの流れを表す <see cref="FrameProcess"/> オブジェクト</returns>
         public static FrameProcess Wait(this FrameProcess frameProcess, TimeSpan time)
         {
-            ArgumentChecker.ThrowIf(time < TimeSpan.Zero, new ArgumentException($"{nameof(time)} is negative."));
+            ArgumentChecker.ThrowArgumentIf(time < TimeSpan.Zero, $"{nameof(time)} is negative.");
             if(!frameProcess.ProcessObj.IsActivated) { frameProcess.ProcessObj.Activate(FrameProcess.TARGET_LAYER); }
             frameProcess.ProcessObj.AddBehavior(time, FrameProcess.WAIT_BEHAVIOR);
             return frameProcess;

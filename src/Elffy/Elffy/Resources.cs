@@ -199,7 +199,7 @@ namespace Elffy
             }
             set
             {
-                ArgumentChecker.ThrowIf(value >= _length || value < 0, new ArgumentOutOfRangeException());
+                ArgumentChecker.ThrowOutOfRangeIf(value >= _length || value < 0, nameof(value), value, "value is out of range");
                 _innerStream.Position = _head + value;
             }
         }

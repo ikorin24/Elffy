@@ -29,7 +29,7 @@ namespace Elffy
             get => _direction;
             set
             {
-                ArgumentChecker.ThrowIf(value.Length == 0, new ArgumentException($"A vector which length is 0 can not be '{Direction}'"));
+                ArgumentChecker.ThrowArgumentIf(value.Length == 0, $"A vector which length is 0 can not be {nameof(Direction)}");
                 ThrowIfContainsInifinityOrNaN(value);
                 _direction = value;
             }
@@ -101,18 +101,18 @@ namespace Elffy
         /// <param name="value">値</param>
         private void ThrowIfContainsInifinityOrNaN(Vector3 value)
         {
-            ArgumentChecker.ThrowIf(float.IsNaN(value.X) || float.IsNaN(value.Y) || float.IsNaN(value.Z) ||
-                                     float.IsInfinity(value.X) || float.IsInfinity(value.Y) || float.IsInfinity(value.Z) ||
-                                     float.IsNegativeInfinity(value.X) || float.IsNegativeInfinity(value.Y) || float.IsNegativeInfinity(value.Z),
-                new ArgumentException($"value of X, Y, or Z is {float.NaN}, {float.PositiveInfinity}, or {float.NegativeInfinity}"));
+            ArgumentChecker.ThrowArgumentIf(
+                float.IsNaN(value.X) || float.IsNaN(value.Y) || float.IsNaN(value.Z) ||
+                float.IsInfinity(value.X) || float.IsInfinity(value.Y) || float.IsInfinity(value.Z) ||
+                float.IsNegativeInfinity(value.X) || float.IsNegativeInfinity(value.Y) || float.IsNegativeInfinity(value.Z),
+                "value of X, Y, or Z is Nan, +Inf, -Inf");
         }
 
         /// <summary>+∞ または -∞ または NaN なら例外を投げます</summary>
         /// <param name="value">値</param>
         private void ThrowIfInifinityOrNaN(float value)
         {
-            ArgumentChecker.ThrowIf(float.IsNaN(value) || float.IsInfinity(value) || float.IsNegativeInfinity(value),
-                new ArgumentException($"value is {float.NaN}, {float.PositiveInfinity}, or {float.NegativeInfinity}"));
+            ArgumentChecker.ThrowArgumentIf(float.IsNaN(value) || float.IsInfinity(value) || float.IsNegativeInfinity(value), "value is Nan, +Inf, -Inf");
         }
     }
 }

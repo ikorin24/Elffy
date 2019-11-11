@@ -24,8 +24,8 @@ namespace Elffy.UI
         /// <param name="height">ボタンの高さ</param>
         public Button(int width, int height)
         {
-            ArgumentChecker.ThrowIf(width <= 0, new ArgumentOutOfRangeException(nameof(width), width, "value is 0 or negative."));
-            ArgumentChecker.ThrowIf(height <= 0, new ArgumentOutOfRangeException(nameof(height), height, "value is 0 or negative"));
+            ArgumentChecker.ThrowOutOfRangeIf(width <= 0, nameof(width), width, "value is 0 or negative.");
+            ArgumentChecker.ThrowOutOfRangeIf(height <= 0, nameof(height), height, "value is 0 or negative");
             Width = width;
             Height = height;
         }

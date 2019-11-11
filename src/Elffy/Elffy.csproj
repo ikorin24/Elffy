@@ -20,7 +20,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;CHECK_ARG</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;CHECK_ARG;CHECK_DATA</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <LangVersion>8.0</LangVersion>
@@ -31,7 +31,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;CHECK_ARG</DefineConstants>
+    <DefineConstants>TRACE;CHECK_ARG;CHECK_DATA</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -94,6 +94,7 @@
     <Compile Include="Elffy\Window.cs" />
     <Compile Include="Elffy\WritableTexture.cs" />
     <Compile Include="Exceptions\ArgumentChecker.cs" />
+    <Compile Include="Exceptions\DataChecker.cs" />
     <Compile Include="Exceptions\SceneParseException.cs" />
     <Compile Include="Framing\FrameProcessObject.cs" />
     <Compile Include="Framing\FrameProcessInfo.cs" />

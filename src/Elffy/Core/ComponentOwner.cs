@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using Elffy.Effective;
 using Elffy.Exceptions;
 using System;
 using System.Collections.Generic;
@@ -26,7 +27,7 @@ namespace Elffy.Core
         public void AddComponent<T>(T component) where T : class
         {
             ArgumentChecker.ThrowIfNullArg(component, nameof(component));
-            ArgumentChecker.ThrowIf(ComponentStore<T>.HasComponentOf(this), new ArgumentException($"Component type '{typeof(T).FullName}' already exists."));
+            ArgumentChecker.ThrowArgumentIf(ComponentStore<T>.HasComponentOf(this), $"Component type '{typeof(T).FullName.AsInterned()}' already exists.".AsInterned());
             ComponentStore<T>.Add(this, component);
         }
 

@@ -16,7 +16,7 @@ namespace Elffy
 
         public Sky(float r)
         {
-            ArgumentChecker.ThrowIf(r <= 0, new ArgumentOutOfRangeException());
+            ArgumentChecker.ThrowOutOfRangeIf(r <= 0, nameof(r), r, $"{nameof(r)} is out of range");
             const int a = 16;
             const int b = 16;
             GenerateVertex(r, a, b, out _vertexArray, out _indexArray);

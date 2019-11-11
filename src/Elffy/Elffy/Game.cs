@@ -65,7 +65,7 @@ namespace Elffy
             get => _frameDelta;
             set
             {
-                ArgumentChecker.ThrowIf(value <= TimeSpan.Zero, new ArgumentOutOfRangeException("value is 0 or negative."));
+                ArgumentChecker.ThrowOutOfRangeIf(value <= TimeSpan.Zero, nameof(value), value, "value is 0 or negative.");
                 _frameDelta = value;
                 if(IsRunning) {
                     _instance._gameScreen.TargetRenderPeriod = value.TotalSeconds;
@@ -114,8 +114,8 @@ namespace Elffy
         public static void Run(int width, int height, string title, WindowStyle windowStyle)
         {
             ThrowIfGameAlreadyRunning();
-            ArgumentChecker.ThrowIf(width < 0, new ArgumentOutOfRangeException(nameof(width)));
-            ArgumentChecker.ThrowIf(height < 0, new ArgumentOutOfRangeException(nameof(height)));
+            ArgumentChecker.ThrowOutOfRangeIf(width < 0, nameof(width), width, $"{nameof(width)} is out of range");
+            ArgumentChecker.ThrowOutOfRangeIf(height < 0, nameof(height), height, $"{nameof(height)} is out of range");
             try {
                 Resources.Initialize();
             }
@@ -132,9 +132,9 @@ namespace Elffy
         public static void Run(int width, int height, string title, WindowStyle windowStyle, string icon)
         {
             ThrowIfGameAlreadyRunning();
-            ArgumentChecker.ThrowIf(width < 0, new ArgumentOutOfRangeException(nameof(width)));
-            ArgumentChecker.ThrowIf(height < 0, new ArgumentOutOfRangeException(nameof(height)));
-            ArgumentChecker.ThrowIf(string.IsNullOrEmpty(icon), new ArgumentException($"Icon is null or empty"));
+            ArgumentChecker.ThrowOutOfRangeIf(width < 0, nameof(width), width, $"{nameof(width)} is out of range");
+            ArgumentChecker.ThrowOutOfRangeIf(height < 0, nameof(height), height, $"{nameof(height)} is out of range");
+            ArgumentChecker.ThrowArgumentIf(string.IsNullOrEmpty(icon), "Icon is null or empty");
             try {
                 Resources.Initialize();
             }

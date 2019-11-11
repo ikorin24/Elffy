@@ -21,7 +21,7 @@ namespace Elffy.UI
         {
             ArgumentChecker.ThrowIfNullArg(propotion, nameof(propotion));
             var tmp = propotion.ToArray();
-            ArgumentChecker.ThrowIf(tmp.Any(value => value < 0), new ArgumentException($"negative propotion is not allowed"));
+            ArgumentChecker.ThrowArgumentIf(tmp.Any(value => value < 0), "negative propotion is not allowed");
             _propotion = tmp;
             Propotion = new ReadOnlyCollection<float>(_propotion);
         }
@@ -31,7 +31,7 @@ namespace Elffy.UI
             // "4,5,3"
             // " 3, 3  ,  32  "
             var propotion = source.Split(new[] { ',' }).Select(x => x.Trim()).Cast<float>().ToArray();
-            ArgumentChecker.ThrowIf(propotion.Any(value => value < 0), new ArgumentException($"negative propotion is not allowed"));
+            ArgumentChecker.ThrowArgumentIf(propotion.Any(value => value < 0), "negative propotion is not allowed");
             var split = new Split();
             split._propotion = propotion;
             split.Propotion = new ReadOnlyCollection<float>(propotion);

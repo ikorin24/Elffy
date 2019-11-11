@@ -1,34 +1,67 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace Elffy.Exceptions
 {
-    /// <summary>引数確認で例外を投げるためのクラス。条件付きコンパイルで制御できます</summary>
+    /// <summary>Argument checker class. Switch enable/disable checking by conditional compiler.</summary>
     internal static class ArgumentChecker
     {
+        /// <summary>Symbol of conditional compiling</summary>
         private const string CHECK_ARG = "CHECK_ARG";
 
-        /// <summary>指定の引数がnullの場合 <see cref="ArgumentNullException"/> を投げます</summary>
-        /// <typeparam name="T">引数の型</typeparam>
-        /// <param name="arg">nullチェックする引数</param>
-        /// <param name="paramName">引数の名前</param>
+        /// <summary>Throw <see cref="ArgumentNullException"/> if specified argument is null.</summary>
+        /// <typeparam name="T">type of argument</typeparam>
+        /// <param name="arg">null-checked argument</param>
+        /// <param name="paramName">argument name</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [Conditional(CHECK_ARG)]
-        public static void ThrowIfNullArg<T>(T arg, string paramName)
+        public static void ThrowIfNullArg<T>(T arg, string paramName) where T : class
         {
             if(arg == null) { throw new ArgumentNullException(paramName); }
         }
 
-        /// <summary>条件がtrueなら指定した例外を投げます</summary>
-        /// <param name="condition">例外を投げる条件</param>
-        /// <param name="ex">投げる例外</param>
+        /// <summary>Throw <see cref="ArgumentException"/> if <paramref name="condition"/> is true.</summary>
+        /// <param name="condition">condition where exception is thrown</param>
+        /// <param name="message">message of exception</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [Conditional(CHECK_ARG)]
-        public static void ThrowIf(bool condition, Exception ex)
+        public static void ThrowArgumentIf(bool condition, string message)
         {
-            if(condition) { throw ex; }
+            if(condition) {
+                throw new ArgumentException(message);
+            }
+        }
+
+        /// <summary>Throw <see cref="ArgumentOutOfRangeException"/> if <paramref name="condition"/> is true.</summary>
+        /// <typeparam name="TValue">type of value</typeparam>
+        /// <param name="condition">condition where exception is thrown</param>
+        /// <param name="paramName">name of parameter</param>
+        /// <param name="actualValue">actual value</param>
+        /// <param name="message">message of exception</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Conditional(CHECK_ARG)]
+        public static void ThrowOutOfRangeIf<TValue>(bool condition, string paramName, TValue actualValue, string message) where TValue : struct
+        {
+            if(condition) {
+                throw new ArgumentOutOfRangeException(paramName, actualValue, message);
+            }
+        }
+
+        /// <summary>Throw <see cref="FileNotFoundException"/> if <paramref name="condition"/> is true.</summary>
+        /// <param name="condition">condition where exception is thrown</param>
+        /// <param name="message">message of exception</param>
+        /// <param name="filename">file name</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Conditional(CHECK_ARG)]
+        public static void ThrowFileNotFoundIf(bool condition, string message, string filename)
+        {
+            if(condition) {
+                throw new FileNotFoundException(message, filename);
+            }
         }
 
         /// <summary>辞書から指定のキーの要素を取得します。キーが存在しない場合は指定の例外を投げます</summary>
@@ -50,7 +83,6 @@ namespace Elffy.Exceptions
             return dic[key];
 #endif
         }
-
 
         /// <summary>指定の型にキャスト不可である場合、例外を投げます</summary>
         /// <typeparam name="TDesired">希望する型</typeparam>

@@ -120,7 +120,7 @@ namespace Elffy.UI
             get => _width;
             set
             {
-                ArgumentChecker.ThrowIf(value < 0, new ArgumentOutOfRangeException(nameof(value), value, "value is invalid."));
+                ArgumentChecker.ThrowOutOfRangeIf(value < 0, nameof(value), value, "value is invalid");
                 _width = value;
             }
         }
@@ -134,7 +134,7 @@ namespace Elffy.UI
             get => _height;
             set
             {
-                ArgumentChecker.ThrowIf(value < 0, new ArgumentOutOfRangeException(nameof(value), value, "value is invalid."));
+                ArgumentChecker.ThrowOutOfRangeIf(value < 0, nameof(value), value, "value is invalid");
                 _height = value;
             }
         }

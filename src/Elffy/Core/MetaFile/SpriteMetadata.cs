@@ -34,16 +34,15 @@ namespace Elffy.Core.MetaFile
         protected override void InitializeFromDeserialized(MetadataDeserialized data)
         {
             base.InitializeFromDeserialized(data);
-            ArgumentChecker.ThrowIf(data.DataType != MetadataType.Sprite, new InvalidDataException());
-            ArgumentChecker.ThrowIf(data.DataContents?.Length != 1, new InvalidDataException());
-            ArgumentChecker.CheckType<SpriteInfoDeserialized, object>(data.DataContents[0], $"Metadata type is invalid.");
-
+            DataChecker.ThrowInvalidDataIf(data.DataType != MetadataType.Sprite, "meta data is not sprite");
+            DataChecker.ThrowInvalidDataIf(data.DataContents?.Length != 1, "invalid data format");
+            ArgumentChecker.CheckType<SpriteInfoDeserialized, object>(data.DataContents[0], "Metadata type is invalid.");
             var info = (SpriteInfoDeserialized)data.DataContents[0];
-            ArgumentChecker.ThrowIf(info.XCount <= 0, new InvalidDataException($"{nameof(info.XCount)} is 0 or negative."));
-            ArgumentChecker.ThrowIf(info.YCount <= 0, new InvalidDataException($"{nameof(info.YCount)} is 0 or negative."));
-            ArgumentChecker.ThrowIf(info.PageCount <= 0, new InvalidDataException($"{nameof(info.PageCount)} is 0 or negative."));
-            ArgumentChecker.ThrowIf(info.PixelWidth <= 0, new InvalidDataException($"{nameof(info.PixelWidth)} is 0 or negative."));
-            ArgumentChecker.ThrowIf(info.PixelHeight <= 0, new InvalidDataException($"{nameof(info.PixelHeight)} is 0 or negative."));
+            DataChecker.ThrowInvalidDataIf(info.XCount <= 0, $"{nameof(info.XCount)} is 0 or negative.");
+            DataChecker.ThrowInvalidDataIf(info.YCount <= 0, $"{nameof(info.YCount)} is 0 or negative.");
+            DataChecker.ThrowInvalidDataIf(info.PageCount <= 0, $"{nameof(info.PageCount)} is 0 or negative.");
+            DataChecker.ThrowInvalidDataIf(info.PixelWidth <= 0, $"{nameof(info.PixelWidth)} is 0 or negative.");
+            DataChecker.ThrowInvalidDataIf(info.PixelHeight <= 0, $"{nameof(info.PixelHeight)} is 0 or negative.");
             TextureResource = info.TextureResource;
             PageCount = info.PageCount;
             XCount = info.XCount;

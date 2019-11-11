@@ -54,7 +54,7 @@ namespace Elffy.UI
         {
             ArgumentChecker.ThrowIfNullArg(items, nameof(items));
             var evaluated = (items is ICollection) ? items : items.ToArray();
-            ArgumentChecker.ThrowIf(evaluated.Contains(null), new ArgumentException($"{items} contain 'null'. Can not add null."));
+            ArgumentChecker.ThrowArgumentIf(evaluated.Contains(null), $"{nameof(items)} contains null. Can not add null");
             foreach(var item in evaluated) {
                 item.Parent = _owner;
                 item.Renderable.Activate();
@@ -98,7 +98,7 @@ namespace Elffy.UI
         public void Insert(int index, UIBase item)
         {
             ArgumentChecker.ThrowIfNullArg(item, nameof(item));
-            ArgumentChecker.ThrowIf(index < 0 || index > _list.Count, new ArgumentOutOfRangeException(nameof(index), index, "value is out of range."));
+            ArgumentChecker.ThrowOutOfRangeIf(index < 0 || index > _list.Count, nameof(index), index, $"{nameof(index)} is out of range");
             item.Parent = _owner;
             _list.Insert(index, item);
             item.Renderable.Activate();
@@ -122,7 +122,7 @@ namespace Elffy.UI
         /// <param name="index">インデックス</param>
         public void RemoveAt(int index)
         {
-            ArgumentChecker.ThrowIf(index < 0 || index >= _list.Count, new ArgumentOutOfRangeException(nameof(index), index, "value is out of range."));
+            ArgumentChecker.ThrowOutOfRangeIf(index < 0 || index >= _list.Count, nameof(index), index, $"{nameof(index)} is out of range");
             _list[index].Parent = null;
             _list[index].Renderable.Destroy();
             _list.RemoveAt(index);

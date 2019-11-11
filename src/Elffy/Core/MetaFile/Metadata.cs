@@ -1,4 +1,5 @@
-﻿using Elffy.Exceptions;
+﻿using Elffy.Effective;
+using Elffy.Exceptions;
 using Elffy.Serialization;
 using System;
 using System.IO;
@@ -33,7 +34,7 @@ namespace Elffy.Core.MetaFile
         /// <param name="data">デシリアライズされたデータ</param>
         protected virtual void InitializeFromDeserialized(MetadataDeserialized data)
         {
-            ArgumentChecker.ThrowIf(!IsSupportedVersion(data), new FormatException($"Not supported format version : '{data.FormatVersion}'"));
+            DataChecker.ThrowFormatIf(!IsSupportedVersion(data), $"Not supported format version : '{data.FormatVersion}'".AsInterned());
             DataType = data.DataType;
         }
 

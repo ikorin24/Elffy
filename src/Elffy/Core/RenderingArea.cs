@@ -33,7 +33,7 @@ namespace Elffy.Core
             get => _width;
             set
             {
-                ArgumentChecker.ThrowIf(value < 0, new ArgumentOutOfRangeException());
+                ArgumentChecker.ThrowOutOfRangeIf(value < 0, nameof(value), value, $"{nameof(value)} is out of range.");
                 _width = value;
                 OnSizeChanged(0, 0, _width, _height);
             }
@@ -47,7 +47,7 @@ namespace Elffy.Core
             get => _height;
             set
             {
-                ArgumentChecker.ThrowIf(value < 0, new ArgumentOutOfRangeException());
+                ArgumentChecker.ThrowOutOfRangeIf(value < 0, nameof(value), value, $"{nameof(value)} is out of range.");
                 _height = value;
                 OnSizeChanged(0, 0, _width, _height);
             }
@@ -61,7 +61,8 @@ namespace Elffy.Core
             get => new Size(_width, _height);
             set
             {
-                ArgumentChecker.ThrowIf(value.Width < 0 || value.Height < 0, new ArgumentOutOfRangeException());
+                ArgumentChecker.ThrowOutOfRangeIf(value.Width < 0, nameof(value.Width), value.Width, "value is out of range.");
+                ArgumentChecker.ThrowOutOfRangeIf(value.Height < 0, nameof(value.Height), value.Height, "value is out of range.");
                 _width = value.Width;
                 _height = value.Height;
                 OnSizeChanged(0, 0, _width, _height);

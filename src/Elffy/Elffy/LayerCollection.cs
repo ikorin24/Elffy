@@ -42,7 +42,7 @@ namespace Elffy
         {
             get
             {
-                ArgumentChecker.ThrowIf(index < 0 || index > _list.Count - 1, new ArgumentOutOfRangeException(nameof(index), index, "value is out of range."));
+                ArgumentChecker.ThrowOutOfRangeIf(index < 0 || index > _list.Count - 1, nameof(index), index, "value is out of range");
                 return _list[index];
             }
             set
@@ -83,7 +83,7 @@ namespace Elffy
         {
             ArgumentChecker.ThrowIfNullArg(layers, nameof(layers));
             var evaluated = (layers is ICollection) ? layers : layers.ToArray();
-            ArgumentChecker.ThrowIf(evaluated.Contains(null), new ArgumentException($"{layers} contain 'null'. Can not add null."));
+            ArgumentChecker.ThrowArgumentIf(evaluated.Contains(null), $"{nameof(layers)} contain 'null'. Can not add null.");
             _list.AddRange(evaluated);
         }
 
@@ -119,7 +119,7 @@ namespace Elffy
         public void Insert(int index, Layer layer)
         {
             ArgumentChecker.ThrowIfNullArg(layer, nameof(layer));
-            ArgumentChecker.ThrowIf(index < 0 || index > _list.Count, new ArgumentOutOfRangeException(nameof(index), index, "value is out of range."));
+            ArgumentChecker.ThrowOutOfRangeIf(index < 0 || index > _list.Count, nameof(index), index, "value is out of range.");
             _list.Insert(index, layer);
         }
 
@@ -136,7 +136,7 @@ namespace Elffy
         /// <param name="index">インデックス</param>
         public void RemoveAt(int index)
         {
-            ArgumentChecker.ThrowIf(index < 0 || index >= _list.Count, new ArgumentOutOfRangeException(nameof(index)));
+            ArgumentChecker.ThrowOutOfRangeIf(index < 0 || index >= _list.Count, nameof(index), index, $"{nameof(index)} is out of range");
             _list.RemoveAt(index);
         }
 

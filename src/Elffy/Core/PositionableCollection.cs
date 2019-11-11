@@ -23,7 +23,7 @@ namespace Elffy.Core
             get => _list[index];
             set
             {
-                ArgumentChecker.ThrowIf(index < 0 || index > _list.Count - 1, new ArgumentOutOfRangeException(nameof(index), index, "value is out of range."));
+                ArgumentChecker.ThrowOutOfRangeIf(index < 0 || index > _list.Count - 1, nameof(index), index, "value is out of range.");
                 ArgumentChecker.ThrowIfNullArg(value, nameof(value));
                 value.Parent = _owner;
                 _list[index] = value;
@@ -63,7 +63,7 @@ namespace Elffy.Core
         {
             ArgumentChecker.ThrowIfNullArg(items, nameof(items));
             var evaluated = (items is ICollection) ? items : items.ToArray();
-            ArgumentChecker.ThrowIf(evaluated.Contains(null), new ArgumentException($"{items} contain 'null'. Can not add null."));
+            ArgumentChecker.ThrowArgumentIf(evaluated.Contains(null), $"{nameof(items)} contain 'null'. Can not add null.");
             foreach(var item in evaluated) {
                 item.Parent = _owner;
             }
@@ -102,7 +102,7 @@ namespace Elffy.Core
         public void Insert(int index, Positionable item)
         {
             ArgumentChecker.ThrowIfNullArg(item, nameof(item));
-            ArgumentChecker.ThrowIf(index < 0 || index > _list.Count, new ArgumentOutOfRangeException(nameof(index), index, "value is out of range."));
+            ArgumentChecker.ThrowOutOfRangeIf(index < 0 || index > _list.Count, nameof(index), index, "value is out of range.");
             item.Parent = _owner;
             _list.Insert(index, item);
         }
@@ -124,7 +124,7 @@ namespace Elffy.Core
         /// <param name="index">インデックス</param>
         public void RemoveAt(int index)
         {
-            ArgumentChecker.ThrowIf(index < 0 || index >= _list.Count, new ArgumentOutOfRangeException(nameof(index)));
+            ArgumentChecker.ThrowOutOfRangeIf(index < 0 || index >= _list.Count, nameof(index), index, $"{nameof(index)} is out of range");
             _list[index].Parent = null;
             _list.RemoveAt(index);
         }

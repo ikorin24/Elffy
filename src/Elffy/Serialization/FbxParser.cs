@@ -43,7 +43,7 @@ namespace Elffy.Serialization
         public FbxObject Parse(string filepath)
         {
             ArgumentChecker.ThrowIfNullArg(filepath, nameof(filepath));
-            ArgumentChecker.ThrowIf(!File.Exists(filepath), new FileNotFoundException("file not found", filepath));
+            ArgumentChecker.ThrowFileNotFoundIf(!File.Exists(filepath), "file not found", filepath);
             using (var stream = File.OpenRead(filepath))
             using (var reader = new BinaryReader(stream))
             {

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text;
+using Elffy.Effective;
 using OpenTK;
 using OpenTK.Input;
 
@@ -11,6 +12,7 @@ namespace Elffy.Input
     class PadState
     {
         public const int BUTTON_COUNT = 15;
+
         private bool[] _button = new bool[BUTTON_COUNT];
         public IReadOnlyList<bool> Button { get; private set; }
         public bool IsAnyButtonPressed { get; private set; }

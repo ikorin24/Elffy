@@ -1,4 +1,5 @@
-﻿using Elffy.Exceptions;
+﻿using Elffy.Effective;
+using Elffy.Exceptions;
 using OpenTK;
 using OpenTK.Input;
 using System;
@@ -100,8 +101,8 @@ namespace Elffy.Input
         public static void AddState(string name, Key key, int gamepadButton)
         {
             ArgumentChecker.ThrowIfNullArg(name, nameof(name));
-            ArgumentChecker.ThrowIf(gamepadButton < 0 || gamepadButton >= PadState.BUTTON_COUNT, new ArgumentException($"'{gamepadButton}' は0以上{PadState.BUTTON_COUNT - 1}以下を指定してください"));
-            ArgumentChecker.ThrowIf(_stateNames.ContainsKey(name), new ArgumentException($"入力状態 '{name}' は既に登録されています。"));
+            ArgumentChecker.ThrowOutOfRangeIf(gamepadButton < 0 || gamepadButton >= PadState.BUTTON_COUNT, nameof(gamepadButton), gamepadButton, $"{nameof(gamepadButton)} is out of range.");
+            ArgumentChecker.ThrowArgumentIf(_stateNames.ContainsKey(name), $"Input state '{name}' already exists".AsInterned());
             _stateNames.Add(name, new StateNameObject(name, key, gamepadButton));
             _currentState.Add(name, false);
             _previousState.Add(name, false);
@@ -126,8 +127,8 @@ namespace Elffy.Input
         public static void AddAxis(string name, Key positiveKey, Key negativeKey, StickAxis stickAxis, float minValue)
         {
             ArgumentChecker.ThrowIfNullArg(name, nameof(name));
-            ArgumentChecker.ThrowIf(minValue < 0 || minValue > 1, new ArgumentException($"'{minValue}' は0～1でなければなりません。"));
-            ArgumentChecker.ThrowIf(_axisNames.ContainsKey(name), new ArgumentException($"入力状態 '{name}' は既に登録されています。"));
+            ArgumentChecker.ThrowOutOfRangeIf(minValue < 0 || minValue > 1, nameof(minValue), minValue, $"{nameof(minValue)} must be between 0 and 1");
+            ArgumentChecker.ThrowArgumentIf(_axisNames.ContainsKey(name), $"Input state '{name}' already exists".AsInterned());
             _axisNames.Add(name, new AxisNameObject(name, positiveKey, negativeKey, stickAxis, minValue));
             _currentAxis.Add(name, 0);
             _previousAxis.Add(name, 0);
@@ -140,8 +141,8 @@ namespace Elffy.Input
         public static void AddTrigger(string name, Key key, Trigger trigger, float minValue)
         {
             ArgumentChecker.ThrowIfNullArg(name, nameof(name));
-            ArgumentChecker.ThrowIf(minValue < 0 || minValue > 1, new ArgumentException($"'{minValue}' は0～1でなければなりません。"));
-            ArgumentChecker.ThrowIf(_triggerNames.ContainsKey(name), new ArgumentException($"入力状態 '{name}' は既に登録されています。"));
+            ArgumentChecker.ThrowOutOfRangeIf(minValue < 0 || minValue > 1, nameof(minValue), minValue, $"{nameof(minValue)} must be between 0 and 1");
+            ArgumentChecker.ThrowArgumentIf(_triggerNames.ContainsKey(name), $"Input state '{name}' already exists".AsInterned());
             _triggerNames.Add(name, new TriggerNameObject(name, key, trigger, minValue));
             _currentTrigger.Add(name, 0);
             _previousTrigger.Add(name, 0);
