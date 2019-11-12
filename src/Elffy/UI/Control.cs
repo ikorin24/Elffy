@@ -1,40 +1,36 @@
-﻿using Elffy.Core;
-using OpenTK;
+﻿using OpenTK;
 using System;
 using System.Drawing;
-using Elffy.Effective;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Elffy.Exceptions;
 
 namespace Elffy.UI
 {
-    #region class UIBase
     /// <summary>
     /// UI の要素の基底クラス。UI への配置, フォーカス処理, ヒットテストの処理を提供します<para/>
     /// </summary>
     /// 
     /// <remarks>
-    /// <see cref="UIBase"/> はUIを構成する論理的なコントロールとしての機能のみを提供します。
+    /// <see cref="Control"/> はUIを構成する論理的なコントロールとしての機能のみを提供します。
     /// 画面への描画に関する処理は、このクラスと対になる <see cref="Core.Renderable"/> 継承クラス <see cref="UIRenderable"/> のインスタンスに任されます。
-    /// <see cref="UIRenderable"/> による描画は <see cref="UIBase"/> によって完全に隠蔽され、外部からは描画を気にすることなく論理的 UI 構造を扱えます。
+    /// <see cref="UIRenderable"/> による描画は <see cref="Control"/> によって完全に隠蔽され、外部からは描画を気にすることなく論理的 UI 構造を扱えます。
     /// 
-    /// <see cref="UIBase"/> の木構造は、描画を担当する <see cref="Core.Renderable"/> オブジェクトの木構造とは独立しています。
-    /// <see cref="UIBase"/> が親子関係の木構造を形成している場合でも、その描画オブジェクトは常に木構造を作りません。
+    /// <see cref="Control"/> の木構造は、描画を担当する <see cref="Core.Renderable"/> オブジェクトの木構造とは独立しています。
+    /// <see cref="Control"/> が親子関係の木構造を形成している場合でも、その描画オブジェクトは常に木構造を作りません。
     /// </remarks>
-    public abstract class UIBase
+    public abstract class Control
     {
         #region Property
-        /// <summary>この <see cref="UIBase"/> を描画するオブジェクト</summary>
+        /// <summary>この <see cref="Control"/> を描画するオブジェクト</summary>
         internal IUIRenderable Renderable => _renderable;
         private readonly UIRenderable _renderable;
 
-        /// <summary>この <see cref="UIBase"/> のツリー構造の子要素を取得します</summary>
-        public UIBaseCollection Children { get; }
+        /// <summary>この <see cref="Control"/> のツリー構造の子要素を取得します</summary>
+        public ControlCollection Children { get; }
 
-        #region Parent
-        /// <summary>この <see cref="UIBase"/> のツリー構造の親を取得します</summary>
-        public UIBase Parent
+        /// <summary>この <see cref="Control"/> のツリー構造の親を取得します</summary>
+        public Control Parent
         {
             get => _parent;
             internal set
@@ -50,13 +46,11 @@ namespace Elffy.UI
                 else { throw new InvalidOperationException($"The instance is already a child of another object. Can not has multi parents."); }
             }
         }
-        private UIBase _parent;
-        #endregion
+        private Control _parent;
 
-        /// <summary>この <see cref="UIBase"/> を持つ UI tree の Root</summary>
+        /// <summary>この <see cref="Control"/> を持つ UI tree の Root</summary>
         public IUIRoot Root { get; protected private set; }
 
-        #region Position
         public Vector2 Position
         {
             get => _renderable.Position.Xy;
@@ -70,9 +64,7 @@ namespace Elffy.UI
                 }
             }
         }
-        #endregion
 
-        #region PositionX
         public float PositionX
         {
             get => _renderable.PositionX;
@@ -86,9 +78,7 @@ namespace Elffy.UI
                 }
             }
         }
-        #endregion
 
-        #region PositionY
         /// <summary>オブジェクトのY座標</summary>
         public float PositionY
         {
@@ -103,18 +93,14 @@ namespace Elffy.UI
                 }
             }
         }
-        #endregion
 
-        #region AbsolutePosition
         public Vector2 AbsolutePosition
         {
             get => _absolutePosition;
         }
         private Vector2 _absolutePosition;
-        #endregion
 
-        #region Width
-        /// <summary>get or set Width of <see cref="UIBase"/></summary>
+        /// <summary>get or set Width of <see cref="Control"/></summary>
         public int Width
         {
             get => _width;
@@ -125,10 +111,8 @@ namespace Elffy.UI
             }
         }
         private int _width;
-        #endregion
 
-        #region Height
-        /// <summary>get or set Height of <see cref="UIBase"/></summary>
+        /// <summary>get or set Height of <see cref="Control"/></summary>
         public int Height
         {
             get => _height;
@@ -139,7 +123,6 @@ namespace Elffy.UI
             }
         }
         private int _height;
-        #endregion
 
         /// <summary>get or set offset position X of layout</summary>
         public int OffsetX { get; set; }
@@ -149,10 +132,10 @@ namespace Elffy.UI
         public HorizontalAlignment HorizontalAlignment { get; set; }
         /// <summary>get or set vertical alignment of layout</summary>
         public VerticalAlignment VerticalAlignment { get; set; }
-        /// <summary>get or set whether this <see cref="UIBase"/> can be focused</summary>
+        /// <summary>get or set whether this <see cref="Control"/> can be focused</summary>
         public bool IsFocusable { get; set; }
 
-        /// <summary>get whether this <see cref="UIBase"/> is focused</summary>
+        /// <summary>get whether this <see cref="Control"/> is focused</summary>
         public bool IsFocused
         {
             get => _isFocused;
@@ -171,9 +154,9 @@ namespace Elffy.UI
         }
         private bool _isFocused;
 
-        /// <summary>get or set whether this <see cref="UIBase"/> is enable in HitTest</summary>
+        /// <summary>get or set whether this <see cref="Control"/> is enable in HitTest</summary>
         public bool IsHitTestVisible { get; set; }
-        /// <summary>get whether the mouse is over this <see cref="UIBase"/></summary>
+        /// <summary>get whether the mouse is over this <see cref="Control"/></summary>
         public bool IsMouseOver { get; private set; }
         #endregion Property
 
@@ -187,10 +170,10 @@ namespace Elffy.UI
         public event EventHandler MouseLeave;
 
         #region constructor
-        /// <summary>constructor of <see cref="UIBase"/></summary>
-        public UIBase()
+        /// <summary>constructor of <see cref="Control"/></summary>
+        public Control()
         {
-            Children = new UIBaseCollection(this);
+            Children = new ControlCollection(this);
             _renderable = new UIRenderable(this);
         }
         #endregion
@@ -198,7 +181,7 @@ namespace Elffy.UI
         #region GetOffspring
         /// <summary>このオブジェクトの <see cref="Children"/> 以下に存在する全ての子孫を取得します。列挙順は深さ優先探索 (DFS; depth-first search) です。</summary>
         /// <returns>全ての子孫オブジェクト</returns>
-        public IEnumerable<UIBase> GetOffspring()
+        public IEnumerable<Control> GetOffspring()
         {
             foreach(var child in Children) {
                 yield return child;
@@ -214,7 +197,6 @@ namespace Elffy.UI
             throw new NotImplementedException();        // TODO: HitTest
         }
     }
-    #endregion
 
     #region enum HorizontalAlignment
     /// <summary>Layout horizontal alignment</summary>

@@ -9,8 +9,8 @@ namespace Elffy.Core
 {
     internal sealed class UILayer : Layer
     {
-        /// <summary>現在フォーカスがある <see cref="UIBase"/></summary>
-        private UIBase _focusedControl;
+        /// <summary>現在フォーカスがある <see cref="Control"/></summary>
+        private Control _focusedControl;
 
         public UILayer(string name) : base(name)
         {

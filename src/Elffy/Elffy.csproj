@@ -147,8 +147,8 @@
     <Compile Include="UI\Page.cs" />
     <Compile Include="UI\Panel.cs" />
     <Compile Include="UI\Split.cs" />
-    <Compile Include="UI\UIBase.cs" />
-    <Compile Include="UI\UIBaseCollection.cs" />
+    <Compile Include="UI\Control.cs" />
+    <Compile Include="UI\ControlCollection.cs" />
     <Compile Include="UI\UIRenderable.cs" />
     <Compile Include="Elffy\WindowStyle.cs" />
     <Compile Include="Elffy\DebugManager.cs" />

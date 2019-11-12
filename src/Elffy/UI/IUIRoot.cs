@@ -13,6 +13,6 @@ namespace Elffy.UI
         Layer UILayer { get; }
 
         /// <summary>この <see cref="IUIRoot"/> の UI tree 構造の子供</summary>
-        UIBaseCollection Children { get; }
+        ControlCollection Children { get; }
     }
 }

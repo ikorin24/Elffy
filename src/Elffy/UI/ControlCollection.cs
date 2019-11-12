@@ -9,16 +9,16 @@ using System.Threading.Tasks;
 
 namespace Elffy.UI
 {
-    public class UIBaseCollection : IReadOnlyList<UIBase>, IReadOnlyCollection<UIBase>, ICollection<UIBase>, IEnumerable<UIBase>, IEnumerable
+    public class ControlCollection : IReadOnlyList<Control>, IReadOnlyCollection<Control>, ICollection<Control>, IEnumerable<Control>, IEnumerable
     {
-        /// <summary>この <see cref="UIBaseCollection"/> インスタンスを持つ <see cref="UIBase"/> オブジェクト</summary>
-        private UIBase _owner;
-        private List<UIBase> _list;
+        /// <summary>この <see cref="ControlCollection"/> インスタンスを持つ <see cref="Control"/> オブジェクト</summary>
+        private Control _owner;
+        private List<Control> _list;
 
         /// <summary>インデックスを指定してリストの要素にアクセスします</summary>
         /// <param name="index">インデックス</param>
         /// <returns>指定した要素</returns>
-        public UIBase this[int index] => _list[index];
+        public Control this[int index] => _list[index];
 
         /// <summary>リストの要素数</summary>
         public int Count => _list.Count;
@@ -27,20 +27,20 @@ namespace Elffy.UI
         public bool IsReadOnly => false;
 
         /// <summary>コンストラクタ</summary>
-        /// <param name="owner">この <see cref="UIBaseCollection"/> を持つ <see cref="UIBase"/> オブジェクト</param>
-        internal UIBaseCollection(UIBase owner)
+        /// <param name="owner">この <see cref="ControlCollection"/> を持つ <see cref="Control"/> オブジェクト</param>
+        internal ControlCollection(Control owner)
         {
             ArgumentChecker.ThrowIfNullArg(owner, nameof(owner));
             _owner = owner;
-            _list = new List<UIBase>();
+            _list = new List<Control>();
         }
 
         /// <summary>
         /// 要素を追加します<para/>
-        /// ※パフォーマンスのため <see cref="UIBase"/> の親子関係は循環を検知しません。ツリーの循環は予期せぬ例外や無限ループに陥る可能性があります。
+        /// ※パフォーマンスのため <see cref="Control"/> の親子関係は循環を検知しません。ツリーの循環は予期せぬ例外や無限ループに陥る可能性があります。
         /// </summary>
         /// <param name="item">追加する要素</param>
-        public void Add(UIBase item)
+        public void Add(Control item)
         {
             ArgumentChecker.ThrowIfNullArg(item, nameof(item));
             item.Parent = _owner;
@@ -50,7 +50,7 @@ namespace Elffy.UI
 
         /// <summary>要素を複数追加します</summary>
         /// <param name="items">追加する要素</param>
-        public void AddRange(IEnumerable<UIBase> items)
+        public void AddRange(IEnumerable<Control> items)
         {
             ArgumentChecker.ThrowIfNullArg(items, nameof(items));
             var evaluated = (items is ICollection) ? items : items.ToArray();
@@ -76,26 +76,26 @@ namespace Elffy.UI
         /// <summary>リスト中に要素が含まれているかを取得します</summary>
         /// <param name="item">確認する要素</param>
         /// <returns>リスト中に指定要素が含まれているか</returns>
-        public bool Contains(UIBase item) => _list.Contains(item);
+        public bool Contains(Control item) => _list.Contains(item);
 
         /// <summary>リストの要素を配列にコピーします</summary>
         /// <param name="array">コピー先の配列</param>
         /// <param name="arrayIndex">コピー先の配列のコピーを開始するインデックス</param>
-        public void CopyTo(UIBase[] array, int arrayIndex) => _list.CopyTo(array, arrayIndex);
+        public void CopyTo(Control[] array, int arrayIndex) => _list.CopyTo(array, arrayIndex);
 
         /// <summary>列挙子を取得します</summary>
         /// <returns>列挙子</returns>
-        public IEnumerator<UIBase> GetEnumerator() => _list.GetEnumerator();
+        public IEnumerator<Control> GetEnumerator() => _list.GetEnumerator();
 
         /// <summary>指定要素のインデックスを取得します</summary>
         /// <param name="item">インデックスを取得する要素</param>
         /// <returns>要素のインデックス</returns>
-        public int IndexOf(UIBase item) => _list.IndexOf(item);
+        public int IndexOf(Control item) => _list.IndexOf(item);
 
         /// <summary>インデックスを指定して要素を追加します</summary>
         /// <param name="index">インデックス</param>
         /// <param name="item">追加する要素</param>
-        public void Insert(int index, UIBase item)
+        public void Insert(int index, Control item)
         {
             ArgumentChecker.ThrowIfNullArg(item, nameof(item));
             ArgumentChecker.ThrowOutOfRangeIf(index < 0 || index > _list.Count, nameof(index), index, $"{nameof(index)} is out of range");
@@ -107,7 +107,7 @@ namespace Elffy.UI
         /// <summary>要素をリストから削除します</summary>
         /// <param name="item">削除する要素</param>
         /// <returns>削除に成功したか (指定した要素が存在しない場合 false)</returns>
-        public bool Remove(UIBase item)
+        public bool Remove(Control item)
         {
             ArgumentChecker.ThrowIfNullArg(item, nameof(item));
             var result = _list.Remove(item);

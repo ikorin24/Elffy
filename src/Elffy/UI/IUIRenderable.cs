@@ -10,7 +10,7 @@ namespace Elffy.UI
     internal interface IUIRenderable
     {
         /// <summary>このオブジェクトの描画対象である論理 UI コントロール</summary>
-        UIBase Control { get; }
+        Control Control { get; }
         /// <summary>このオブジェクトが描画されるかどうかを取得します</summary>
         bool IsVisible { get; }
 

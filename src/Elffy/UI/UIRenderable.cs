@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Elffy.UI
 {
-    /// <summary><see cref="UIBase"/> を描画するためのオブジェクト。対象の <see cref="UIBase"/> のインスタンスと一対一の関係を持つ</summary>
+    /// <summary><see cref="UI.Control"/> を描画するためのオブジェクト。対象の <see cref="UI.Control"/> のインスタンスと一対一の関係を持つ</summary>
     internal sealed class UIRenderable : Renderable, IDisposable, IUIRenderable
     {
         private bool _disposed;
@@ -20,11 +20,11 @@ namespace Elffy.UI
         private readonly UnmanagedArray<int> _indexArray = new UnmanagedArray<int>(6);
 
         /// <summary>このインスタンスの描画対象である論理 UI コントロール</summary>
-        public UIBase Control { get; private set; }
+        public Control Control { get; private set; }
 
-        /// <summary><see cref="UIBase"/> の描画オブジェクトを作成します。</summary>
+        /// <summary><see cref="UI.Control"/> の描画オブジェクトを作成します。</summary>
         /// <param name="control">描画対象の論理 UI コントロール</param>
-        public UIRenderable(UIBase control)
+        public UIRenderable(Control control)
         {
             ArgumentChecker.ThrowIfNullArg(control, nameof(control));
             IsFrozen = true;

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Elffy.UI
 {
-    public class Panel : UIBase
+    public class Panel : Control
     {
 
     }

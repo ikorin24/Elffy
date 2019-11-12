@@ -4,7 +4,7 @@ namespace Elffy.UI
 {
     #region class Executable
     /// <summary>実行可能なUIの基底クラス</summary>
-    public abstract class Executable : UIBase
+    public abstract class Executable : Control
     {
         /// <summary>Key down event</summary>
         public event EventHandler KeyDown;
