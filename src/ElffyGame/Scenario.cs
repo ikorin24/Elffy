@@ -71,7 +71,7 @@ namespace ElffyGame
             });
 
             var button = new Button(100, 100);
-            button.KeyUp += (sender, e) =>
+            button.KeyUp += (sender) =>
             {
                 System.Diagnostics.Debug.WriteLine("Go to Next Scenario");
                 Scenario.GoToNext(new StartScenario());

@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Elffy.Exceptions;
+using Elffy.Core;
 
 namespace Elffy.UI
 {
@@ -145,10 +146,10 @@ namespace Elffy.UI
                 _isFocused = value;
                 if(_isFocused) {
                     Debug.Assert(IsFocusable);
-                    FocusEnter?.Invoke(this, EventArgs.Empty);
+                    FocusEnter?.Invoke(this);
                 }
                 else {
-                    FocusLost?.Invoke(this, EventArgs.Empty);
+                    FocusLost?.Invoke(this);
                 }
             }
         }
@@ -161,13 +162,13 @@ namespace Elffy.UI
         #endregion Property
 
         /// <summary>Focus enter event</summary>
-        public event EventHandler FocusEnter;
+        public event ActionEventHandler<Control> FocusEnter;
         /// <summary>Focus lost event</summary>
-        public event EventHandler FocusLost;
+        public event ActionEventHandler<Control> FocusLost;
         /// <summary>Mouse enter event</summary>
-        public event EventHandler MouseEnter;
+        public event ActionEventHandler<Control, MouseEventArgs> MouseEnter;
         /// <summary>Mouse leave event</summary>
-        public event EventHandler MouseLeave;
+        public event ActionEventHandler<Control, MouseEventArgs> MouseLeave;
 
         #region constructor
         /// <summary>constructor of <see cref="Control"/></summary>
@@ -226,7 +227,7 @@ namespace Elffy.UI
 
     #region class MouseEventArgs
     /// <summary>Mouse event argument class</summary>
-    public class MouseEventArgs : EventArgs
+    public struct MouseEventArgs
     {
         /// <summary>mouse position</summary>
         public Point MousePosition { get; }
