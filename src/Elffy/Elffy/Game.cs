@@ -28,7 +28,7 @@ namespace Elffy
         /// <summary>ゲームの実行時間計測用タイマー</summary>
         private readonly IGameTimer _watch = GameTimerGenerator.Create();
         /// <summary>ゲーム起動前に追加されたイベントハンドラーを保持しておくためのバッファ</summary>
-        private static readonly List<EventHandler> _temporaryInitializedHandlers = new List<EventHandler>();
+        private static readonly List<ActionEventHandler<IScreenHost>> _temporaryInitializedHandlers = new List<ActionEventHandler<IScreenHost>>();
 
         /// <summary><see cref="Game"/> のシングルトンインスタンス</summary>
         private static Game Instance
@@ -80,7 +80,7 @@ namespace Elffy
 
         #region event Initialized
         /// <summary>ゲーム初期化後に呼ばれるイベント</summary>
-        public static event EventHandler Initialized
+        public static event ActionEventHandler<IScreenHost> Initialized
         {
             add
             {
@@ -184,10 +184,9 @@ namespace Elffy
                 }
                 _temporaryInitializedHandlers.Clear();
                 _instance._gameScreen = gameScreen;
-                _instance._gameScreen.Run();
+                _instance._gameScreen.Show();
             }
             finally {
-                _instance?._gameScreen?.Dispose();
                 _instance = null;
                 ElffySynchronizationContext.Delete();
             }
@@ -198,7 +197,7 @@ namespace Elffy
         /// <summary>フレーム描画前実行処理</summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private static void OnScreenRendering(object sender, EventArgs e)
+        private static void OnScreenRendering(IScreenHost sender)
         {
             if(!Instance._watch.IsRunning) {
                 Instance._watch.Start();
@@ -210,7 +209,7 @@ namespace Elffy
         /// <summary>フレーム描画後処理</summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private static void OnScreenRendered(object sender, EventArgs e)
+        private static void OnScreenRendered(IScreenHost sender)
         {
             DebugManager.Next();
             Time += FrameDelta;
