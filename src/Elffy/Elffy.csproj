@@ -105,7 +105,6 @@
     <Compile Include="Elffy\ConfigBase.cs" />
     <Compile Include="Core\Consts.cs" />
     <Compile Include="Serialization\DataSerializer.cs" />
-    <Compile Include="Core\FrameEvent.cs" />
     <Compile Include="Core\Positionable.cs" />
     <Compile Include="Mathmatics\Random.cs" />
     <Compile Include="Core\Renderable.cs" />
