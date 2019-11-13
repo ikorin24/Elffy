@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Elffy.Core
+namespace Elffy
 {
     /// <summary>delegate of generic-type sender</summary>
     /// <typeparam name="T">type of sender</typeparam>

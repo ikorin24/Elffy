@@ -61,7 +61,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyService\AssemblyState.cs" />
-    <Compile Include="Core\EventHandler.cs" />
+    <Compile Include="Elffy\EventHandler.cs" />
     <Compile Include="Core\IDestroyable.cs" />
     <Compile Include="Core\MetaFile\Metadata.cs" />
     <Compile Include="Core\InternaInvisiblelLayer.cs" />
