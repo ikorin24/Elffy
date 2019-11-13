@@ -35,7 +35,7 @@ namespace Elffy.Serialization
         /// <summary>get properties of this node</summary>
         public List<FbxProperty> Properties { get; }
         /// <summary>get of set name of this node</summary>
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         /// <summary>constructor of <see cref="FbxNode"/></summary>
         public FbxNode()
@@ -128,7 +128,7 @@ namespace Elffy.Serialization
     internal abstract class FbxProperty
     {
         /// <summary>get type of this property. (if array property, type of an item in array.)</summary>
-        public Type ValueType { get; protected set; }
+        public Type ValueType { get; protected set; } = null!;
         /// <summary>get wheter this <see cref="FbxProperty"/> is array type.</summary>
         public bool IsArray { get; protected set; }
 
@@ -148,7 +148,7 @@ namespace Elffy.Serialization
     internal abstract class FbxValueProperty<T> : FbxProperty
     {
         /// <summary>get of set property value</summary>
-        public T Value { get; set; } = default;
+        public T Value { get; set; } = default!;
 
         /// <summary>constructor of <see cref="FbxValueProperty{T}"/></summary>
         public FbxValueProperty()
@@ -159,7 +159,7 @@ namespace Elffy.Serialization
 
         /// <summary>get value which this <see cref="FbxProperty"/> has.</summary>
         /// <returns>value of this <see cref="FbxProperty"/></returns>
-        public override object? GetValue() => Value;
+        public override object GetValue() => Value!;
     }
 
     /// <summary>An array property infomation of <see cref="FbxNode"/></summary>
@@ -167,7 +167,7 @@ namespace Elffy.Serialization
     internal abstract class FbxArrayProperty<T> : FbxProperty
     {
         /// <summary>get of set property value</summary>
-        public T[] Value { get; set; }
+        public T[] Value { get; set; } = Array.Empty<T>();
 
         /// <summary>constructor of <see cref="FbxArrayProperty{T}"/></summary>
         public FbxArrayProperty()

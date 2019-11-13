@@ -1,4 +1,5 @@
-﻿using OpenTK.Graphics.OpenGL;
+﻿#nullable enable
+using OpenTK.Graphics.OpenGL;
 using System;
 using Elffy.Core;
 using System.Drawing;
@@ -19,8 +20,8 @@ namespace Elffy
         private int _textureBuffer;
         /// <summary>OpenGL の Texture バッファにデータが読み込まれているかどうか</summary>
         private bool IsLoaded => _textureBuffer != Consts.NULL;
-        private Bitmap _bitmap;
-        private Graphics _g;
+        private Bitmap _bitmap = null!;
+        private Graphics _g = null!;
         private Rectangle _dirtyRegion;
 
         #region constructor
@@ -231,9 +232,9 @@ namespace Elffy
                 if(disposing) {
                     // Release managed resource here.
                     _bitmap.Dispose();
-                    _bitmap = null;
+                    _bitmap = null!;
                     _g.Dispose();
-                    _g = null;
+                    _g = null!;
                 }
                 // Release unmanaged resource here.
 

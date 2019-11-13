@@ -13,7 +13,7 @@ namespace Elffy.Exceptions
 
         /// <summary><see cref="ObjectDestroyedException"/> コンストラクタ</summary>
         /// <param name="obj">この例外を発した <see cref="IDestroyable"/></param>
-        public ObjectDestroyedException(IDestroyable obj) : base($"This object is already destroyed. (Object type : '{obj?.GetType().Name}')")
+        public ObjectDestroyedException(IDestroyable obj) : base($"This object is already destroyed. (Object type : '{obj.GetType().Name}')")
         {
             TargetObject = obj;
         }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using Elffy.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -88,17 +89,17 @@ namespace Test
 
         class Component1
         {
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
         }
 
         class Component2
         {
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
         }
 
         class Component3
         {
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
         }
 
         class SampleOwner : ComponentOwner

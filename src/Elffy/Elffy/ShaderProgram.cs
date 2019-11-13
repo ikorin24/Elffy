@@ -1,9 +1,9 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using Elffy.Core;
 using Elffy.Threading;
 using Elffy.Exceptions;
 using OpenTK.Graphics.OpenGL;
-using System.Diagnostics;
 
 namespace Elffy
 {
@@ -28,8 +28,8 @@ namespace Elffy
         }
 
         /// <summary>デフォルトのシェーダーを取得します</summary>
-        public static ShaderProgram Default => _default ?? (_default = CreateDefault());
-        private static ShaderProgram _default;
+        public static ShaderProgram Default => (_default ??= CreateDefault());
+        private static ShaderProgram? _default;
 
         ~ShaderProgram() => Dispose(false);
 

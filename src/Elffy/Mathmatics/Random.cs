@@ -1,14 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿#nullable enable
+using System;
 using System.Drawing;
 
 namespace Elffy.Mathmatics
 {
     public static class Rand
     {
-        private static Random _r;
-        private static Random _rand { get { return _r ?? (_r = new Random()); } }
+        private static Random? _r;
+        private static Random _rand => (_r ??= new Random());
 
         public static Color Color() => 
             System.Drawing.Color.FromArgb(_rand.Next(255), _rand.Next(255), _rand.Next(255));

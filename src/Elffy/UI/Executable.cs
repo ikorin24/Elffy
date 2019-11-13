@@ -1,5 +1,4 @@
-﻿using Elffy.Core;
-using System;
+﻿#nullable enable
 
 namespace Elffy.UI
 {
@@ -7,11 +6,11 @@ namespace Elffy.UI
     public abstract class Executable : Control
     {
         /// <summary>Key down event</summary>
-        public event ActionEventHandler<Executable> KeyDown;
+        public event ActionEventHandler<Executable>? KeyDown;
         /// <summary>Key press event</summary>
-        public event ActionEventHandler<Executable> KeyPress;
+        public event ActionEventHandler<Executable>? KeyPress;
         /// <summary>Key up event</summary>
-        public event ActionEventHandler<Executable> KeyUp;
+        public event ActionEventHandler<Executable>? KeyUp;
 
         internal void Execute(ExecutableExecuteType type)
         {

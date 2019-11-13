@@ -1,10 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.Threading;
-using System.Diagnostics;
 using System.ComponentModel;
-using System.Security;
-using System.Security.Permissions;
 
 namespace Elffy.Threading
 {
@@ -17,7 +14,7 @@ namespace Elffy.Threading
 
         /// <summary>今のコンテキストをセットする前のコンテキスト (このメンバはスレッドごとに独立した値を持ちます)</summary>
         [ThreadStatic]
-        private static SynchronizationContext _previousSyncContext;
+        private static SynchronizationContext? _previousSyncContext;
 
         /// <summary>この <see cref="ElffySynchronizationContext"/> インスタンスが紐づいている <see cref="Thread"/></summary>
         private Thread? DestinationThread
@@ -40,7 +37,7 @@ namespace Elffy.Threading
 
         /// <summary>スレッドを指定して同期コンテキストを生成します</summary>
         /// <param name="destinationThread"></param>
-        private ElffySynchronizationContext(Thread destinationThread)
+        private ElffySynchronizationContext(Thread? destinationThread)
         {
             _destinationThread = new WeakReference(destinationThread);
         }

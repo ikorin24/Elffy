@@ -1,16 +1,13 @@
-﻿using Elffy.UI;
-using System;
-using System.Collections.Generic;
+﻿#nullable enable
+using Elffy.UI;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Elffy.Core
 {
     internal sealed class UILayer : Layer
     {
         /// <summary>現在フォーカスがある <see cref="Control"/></summary>
-        private Control _focusedControl;
+        private Control? _focusedControl;
 
         public UILayer(string name) : base(name)
         {

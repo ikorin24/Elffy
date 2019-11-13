@@ -1,8 +1,6 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Elffy.Framing
 {
@@ -21,7 +19,7 @@ namespace Elffy.Framing
         /// <summary>このフレームプロセスの処理のキュー</summary>
         private readonly Queue<BehaviorQueueObject> _behaviorQueue = new Queue<BehaviorQueueObject>();
         /// <summary>このフレームプロセスの現在実行中の処理</summary>
-        private FrameProcessBehavior _currentBehavior;
+        private FrameProcessBehavior? _currentBehavior;
         /// <summary>現在実行中の処理に渡される情報</summary>
         private FrameProcessBehaviorInfo _info = new FrameProcessBehaviorInfo();
         /// <summary>各処理の開始時刻</summary>
@@ -116,7 +114,7 @@ namespace Elffy.Framing
                 }
             }
 
-            _currentBehavior(_info);     // フレームプロセスの実行
+            _currentBehavior!(_info);     // フレームプロセスの実行
             _info.FrameNum++;
         }
         #endregion
@@ -149,7 +147,7 @@ namespace Elffy.Framing
             /// <summary>寿命フレーム (ない場合0)</summary>
             public int FrameSpan { get; private set; }
             /// <summary>継続条件 (ない場合はnull)</summary>
-            public Func<bool> Condition { get; private set; }
+            public Func<bool>? Condition { get; private set; }
             /// <summary>終了モード</summary>
             public FrameProcessEndMode Mode { get; private set; }
 

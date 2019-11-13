@@ -1,10 +1,8 @@
-﻿using Elffy.Physics;
+﻿#nullable enable
 using OpenTK;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Elffy.Core
 {
@@ -19,7 +17,7 @@ namespace Elffy.Core
         public Quaternion Rotation { get; set; } = Quaternion.Identity;
 
         /// <summary>この <see cref="Positionable"/> のツリー構造の親を取得します</summary>
-        public Positionable Parent
+        public Positionable? Parent
         {
             get => _parent;
             internal set
@@ -33,7 +31,7 @@ namespace Elffy.Core
                 else { throw new InvalidOperationException($"The instance is already a child of another object. Can not has multi parents."); }
             }
         }
-        private Positionable _parent;
+        private Positionable? _parent;
 
         /// <summary>この <see cref="Positionable"/> のツリー構造の子要素を取得します</summary>
         public PositionableCollection Children { get; }
@@ -295,9 +293,9 @@ namespace Elffy.Core
         /// <returns>全ての先祖オブジェクト</returns>
         public IEnumerable<Positionable> GetAncestor()
         {
-            var target = this;
-            while(!target.IsRoot) {
-                yield return target.Parent;
+            Positionable? target = this;
+            while(target!.IsRoot == false) {
+                yield return target.Parent!;
                 target = target.Parent;
             }
         }
@@ -312,8 +310,9 @@ namespace Elffy.Core
 
         private void OnActivated(FrameObject frameObject)
         {
+            var layer = Layer!;
             foreach(var offspring in GetOffspring()) {
-                offspring.Activate(Layer);
+                offspring.Activate(layer);
             }
         }
     }

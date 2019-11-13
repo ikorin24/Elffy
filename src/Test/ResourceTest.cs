@@ -1,8 +1,8 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.IO;
 using System.Security.Cryptography;
 using System.Linq;
-using System.Collections;
 using System.Collections.Generic;
 using ElffyResourceCompiler;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -98,7 +98,7 @@ namespace Test
             }
 
             // エラー入力テスト
-            var errorCase = new string[] {
+            var errorCase = new string?[] {
                 null,
                 "-o -o",
             };

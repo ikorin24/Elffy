@@ -41,7 +41,7 @@ namespace Test
 
         public static TResult AssertException<T, TResult>(Func<TResult> func) where T : Exception
         {
-            var result = default(TResult);
+            var result = default(TResult)!;
             try {
                 result = func();
                 throw new TestException();

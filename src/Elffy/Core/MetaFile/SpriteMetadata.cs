@@ -1,10 +1,5 @@
-﻿using Elffy.Exceptions;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿#nullable enable
+using Elffy.Exceptions;
 
 namespace Elffy.Core.MetaFile
 {
@@ -12,7 +7,7 @@ namespace Elffy.Core.MetaFile
     public class SpriteMetadata : Metadata
     {
         /// <summary>テクスチャのリソース名</summary>
-        public string TextureResource { get; private set; }
+        public string TextureResource { get; private set; } = string.Empty;
 
         /// <summary>スプライトの画像数</summary>
         public int PageCount { get; private set; }
@@ -36,7 +31,7 @@ namespace Elffy.Core.MetaFile
             base.InitializeFromDeserialized(data);
             DataChecker.ThrowInvalidDataIf(data.DataType != MetadataType.Sprite, "meta data is not sprite");
             DataChecker.ThrowInvalidDataIf(data.DataContents?.Length != 1, "invalid data format");
-            ArgumentChecker.CheckType<SpriteInfoDeserialized, object>(data.DataContents[0], "Metadata type is invalid.");
+            ArgumentChecker.CheckType<SpriteInfoDeserialized, object>(data.DataContents![0], "Metadata type is invalid.");
             var info = (SpriteInfoDeserialized)data.DataContents[0];
             DataChecker.ThrowInvalidDataIf(info.XCount <= 0, $"{nameof(info.XCount)} is 0 or negative.");
             DataChecker.ThrowInvalidDataIf(info.YCount <= 0, $"{nameof(info.YCount)} is 0 or negative.");

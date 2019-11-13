@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Linq;
 using System.Text;
 using System.IO;
@@ -78,7 +79,7 @@ namespace Elffy.Serialization
             while (true)
             {
                 if (!ParseNodeRecord(reader, fbxObj, out var node)) { break; }
-                fbxObj.Children.Add(node);
+                fbxObj.Children.Add(node!);
             }
             ParseFooter(reader, fbxObj);
         }
@@ -102,7 +103,7 @@ namespace Elffy.Serialization
         /// <param name="reader">Binary Reader</param>
         /// <param name="root">root node</param>
         /// <param name="node">current node</param>
-        private bool ParseNodeRecord(BinaryReader reader, FbxObject root, out FbxNode node)
+        private bool ParseNodeRecord(BinaryReader reader, FbxObject root, out FbxNode? node)
         {
             // read node infomation
             ulong endOfRecord;
@@ -151,7 +152,7 @@ namespace Elffy.Serialization
                 while (true)
                 {
                     if (!ParseNodeRecord(reader, root, out var child)) { break; }
-                    node.Children.Add(child);
+                    node.Children.Add(child!);
                 }
             }
             return true;

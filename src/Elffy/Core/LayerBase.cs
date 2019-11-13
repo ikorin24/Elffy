@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿#nullable enable
 
 namespace Elffy.Core
 {
@@ -10,6 +6,6 @@ namespace Elffy.Core
     public abstract class LayerBase : FrameObjectStore
     {
         /// <summary>レイヤーの名前</summary>
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
     }
 }

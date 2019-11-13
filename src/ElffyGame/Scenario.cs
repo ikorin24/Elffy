@@ -1,18 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
+﻿#nullable enable
+using System;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Threading;
 using Elffy;
 using Elffy.Shape;
 using Elffy.Threading;
 using Elffy.UI;
 using Elffy.Framing;
 using OpenTK;
-using Elffy.Input;
 using Elffy.Mathmatics;
-using Elffy.Core;
 
 namespace ElffyGame
 {
@@ -20,7 +15,7 @@ namespace ElffyGame
     {
         public static bool IsRunning => Current != null;
 
-        public static Scenario Current { get; private set; }
+        public static Scenario? Current { get; private set; }
 
         public static void Start(Scenario scenario)
         {

@@ -1,10 +1,10 @@
-﻿using OpenTK;
+﻿#nullable enable
+using OpenTK;
 using System;
 using System.Drawing;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Elffy.Exceptions;
-using Elffy.Core;
 
 namespace Elffy.UI
 {
@@ -31,7 +31,7 @@ namespace Elffy.UI
         public ControlCollection Children { get; }
 
         /// <summary>この <see cref="Control"/> のツリー構造の親を取得します</summary>
-        public Control Parent
+        public Control? Parent
         {
             get => _parent;
             internal set
@@ -47,10 +47,10 @@ namespace Elffy.UI
                 else { throw new InvalidOperationException($"The instance is already a child of another object. Can not has multi parents."); }
             }
         }
-        private Control _parent;
+        private Control? _parent;
 
         /// <summary>この <see cref="Control"/> を持つ UI tree の Root</summary>
-        public IUIRoot Root { get; protected private set; }
+        public IUIRoot? Root { get; protected private set; }
 
         public Vector2 Position
         {
@@ -162,13 +162,13 @@ namespace Elffy.UI
         #endregion Property
 
         /// <summary>Focus enter event</summary>
-        public event ActionEventHandler<Control> FocusEnter;
+        public event ActionEventHandler<Control>? FocusEnter;
         /// <summary>Focus lost event</summary>
-        public event ActionEventHandler<Control> FocusLost;
+        public event ActionEventHandler<Control>? FocusLost;
         /// <summary>Mouse enter event</summary>
-        public event ActionEventHandler<Control, MouseEventArgs> MouseEnter;
+        public event ActionEventHandler<Control, MouseEventArgs>? MouseEnter;
         /// <summary>Mouse leave event</summary>
-        public event ActionEventHandler<Control, MouseEventArgs> MouseLeave;
+        public event ActionEventHandler<Control, MouseEventArgs>? MouseLeave;
 
         #region constructor
         /// <summary>constructor of <see cref="Control"/></summary>

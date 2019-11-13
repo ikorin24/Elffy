@@ -1,4 +1,5 @@
-﻿using System.Xml.Serialization;
+﻿#nullable enable
+using System.Xml.Serialization;
 
 namespace Elffy.Core.MetaFile
 {
@@ -8,7 +9,7 @@ namespace Elffy.Core.MetaFile
     {
         /// <summary>テクスチャのリソース名</summary>
         [XmlElement("TextureResource")]
-        public string TextureResource { get; set; }
+        public string TextureResource { get; set; } = string.Empty;
 
         /// <summary>スプライトの画像数</summary>
         [XmlElement("PageCount")]

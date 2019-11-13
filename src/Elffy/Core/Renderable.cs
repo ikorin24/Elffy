@@ -1,4 +1,5 @@
-﻿using OpenTK;
+﻿#nullable enable
+using OpenTK;
 using System;
 using System.Linq;
 using OpenTK.Graphics.OpenGL;
@@ -99,15 +100,15 @@ namespace Elffy.Core
         #endregion
 
         /// <summary>Material changed event</summary>
-        public event ActionEventHandler<Renderable, ValueChangedEventArgs<Material>> MaterialChanged;
+        public event ActionEventHandler<Renderable, ValueChangedEventArgs<Material>>? MaterialChanged;
         /// <summary>Texture changed event</summary>
-        public event ActionEventHandler<Renderable, ValueChangedEventArgs<TextureBase>> TextureChanged;
+        public event ActionEventHandler<Renderable, ValueChangedEventArgs<TextureBase>>? TextureChanged;
         /// <summary>Shader changed event</summary>
-        public event ActionEventHandler<Renderable, ValueChangedEventArgs<ShaderProgram>> ShaderChanged;
+        public event ActionEventHandler<Renderable, ValueChangedEventArgs<ShaderProgram>>? ShaderChanged;
         /// <summary>Before-rendering event</summary>
-        public event ActionEventHandler<Renderable> Rendering;
+        public event ActionEventHandler<Renderable>? Rendering;
         /// <summary>After-rendering event</summary>
-        public event ActionEventHandler<Renderable> Rendered;
+        public event ActionEventHandler<Renderable>? Rendered;
 
         ~Renderable() => Dispose(false);
 

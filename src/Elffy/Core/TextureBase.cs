@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿#nullable enable
+using System;
 using OpenTK.Graphics.OpenGL;
-using Elffy.Core;
-using System.Drawing;
-using Elffy.Threading;
-using Elffy.Effective;
 using System.Diagnostics;
 
 namespace Elffy.Core
@@ -37,8 +30,8 @@ namespace Elffy.Core
         protected internal abstract int TextureID { get; }
 
         /// <summary>空のテクスチャを取得します</summary>
-        internal static TextureBase Empty => _empty ?? (_empty = new EmptyTexture());
-        private static TextureBase _empty;
+        internal static TextureBase Empty => (_empty ??= new EmptyTexture());
+        private static TextureBase? _empty;
 
         /// <summary>コンストラクタ</summary>
         /// <param name="shrinkMode">テクスチャの縮小モード</param>

@@ -1,8 +1,5 @@
-﻿using System;
+﻿#nullable enable
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Serialization;
 using Elffy;
 using System.Reflection;
@@ -27,6 +24,6 @@ namespace ElffyGame
     public class SaveBlock
     {
         [XmlElement("Name")]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
     }
 }

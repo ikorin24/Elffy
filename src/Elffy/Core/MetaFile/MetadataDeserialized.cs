@@ -1,4 +1,5 @@
-﻿using System.Xml.Serialization;
+﻿#nullable enable
+using System.Xml.Serialization;
 
 namespace Elffy.Core.MetaFile
 {
@@ -18,7 +19,7 @@ namespace Elffy.Core.MetaFile
         /// <summary>この <see cref="MetadataDeserialized"/> が持つデータ</summary>
         [XmlArray("DataContents")]
         [XmlArrayItem(typeof(SpriteInfoDeserialized))]
-        public object[] DataContents { get; set; }
+        public object[]? DataContents { get; set; }
 
         internal MetadataDeserialized()
         {

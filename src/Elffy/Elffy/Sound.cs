@@ -1,8 +1,6 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
 using NAudio.Wave;
 using Elffy.Exceptions;
@@ -18,15 +16,15 @@ namespace Elffy
         #region private member
         private static readonly TimeSpan SOUND_END_MARGIN = TimeSpan.FromMilliseconds(100);
         private bool _isLoaded;
-        private WaveStream _reader;
-        private WaveChannel32 _pcm;
-        private DirectSoundOut _sound;
+        private WaveStream _reader = null!;
+        private WaveChannel32 _pcm = null!;
+        private DirectSoundOut _sound = null!;
         private readonly Stack<IDisposable> _disposables = new Stack<IDisposable>();
         private readonly object _sync = new object();
         #endregion
 
         /// <summary>音声の状態変化時イベント</summary>
-        public event EventHandler<SoundStateChangedEventArgs> StateChanged;
+        public event EventHandler<SoundStateChangedEventArgs>? StateChanged;
 
         /// <summary>音声の状態</summary>
         public SoundState State => (SoundState)(_sound?.PlaybackState ?? PlaybackState.Stopped);

@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using Elffy.Core;
 using Elffy.Exceptions;
 
@@ -21,17 +22,17 @@ namespace Elffy
         public bool IsFrozen { get; set; }
 
         /// <summary>このオブジェクトに付けられたタグ</summary>
-        public string Tag { get; set; }
+        public string Tag { get; set; } = string.Empty;
 
         /// <summary>このオブジェクトが、ゲームによって管理されるオブジェクトリストから破棄されているかどうかを返します</summary>
         public bool IsDestroyed { get; private set; }
 
         /// <summary>このオブジェクトが所属するレイヤー</summary>
-        public LayerBase Layer { get; private set; }
+        public LayerBase? Layer { get; private set; }
         #endregion
 
         /// <summary>このオブジェクトがアクティブになった時のイベント</summary>
-        public event ActionEventHandler<FrameObject> Activated;
+        public event ActionEventHandler<FrameObject>? Activated;
 
         /// <summary>このオブジェクトが更新される最初のフレームに1度のみ実行される処理</summary>
         public virtual void Start() { }
@@ -60,7 +61,7 @@ namespace Elffy
         public virtual void Destroy()
         {
             if(IsDestroyed) { throw new ObjectDestroyedException(this); }
-            Layer.RemoveFrameObject(this);
+            Layer?.RemoveFrameObject(this);
             Layer = null;
             IsDestroyed = true;
             (this as IDisposable)?.Dispose();

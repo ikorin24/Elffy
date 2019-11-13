@@ -1,4 +1,5 @@
-﻿using Elffy.Effective;
+﻿#nullable enable
+using Elffy.Effective;
 using Elffy.Exceptions;
 using Elffy.Serialization;
 using System;
@@ -9,7 +10,8 @@ namespace Elffy.Core.MetaFile
     /// <summary>メタデータを表すクラス</summary>
     public abstract class Metadata
     {
-        private static DataSerializer _serializer;
+        private static DataSerializer _serializer => (_s ??= new DataSerializer());
+        private static DataSerializer? _s;
 
         /// <summary>メタデータのタイプを取得します</summary>
         public MetadataType DataType { get; private set; }
@@ -21,9 +23,6 @@ namespace Elffy.Core.MetaFile
         public static T LoadFromStream<T>(Stream stream) where T : Metadata, new()
         {
             ArgumentChecker.ThrowIfNullArg(stream, nameof(stream));
-            if(_serializer == null) {
-                _serializer = new DataSerializer();
-            }
             var data = _serializer.Deserialize<MetadataDeserialized>(stream);
             var metaFile = new T();
             metaFile.InitializeFromDeserialized(data);

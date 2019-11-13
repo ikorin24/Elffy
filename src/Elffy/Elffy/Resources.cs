@@ -1,10 +1,9 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 using Elffy.Exceptions;
 using Elffy.Serialization;
 using Elffy.Shape;
@@ -24,9 +23,9 @@ namespace Elffy
         private const int FILE_SIZE_LEN = 8;
         /// <summary>AESの鍵生成時のsalt</summary>
         private static readonly Encoding _encoding = Encoding.UTF8;
-        private static Dictionary<string, ResourceObject> _resources;
-        private static byte[] _bufEntity;
-        private static byte[] _buf => _bufEntity ?? (_bufEntity = new byte[1024 * 1024]);
+        private static Dictionary<string, ResourceObject>? _resources;
+        private static byte[]? _bufEntity;
+        private static byte[] _buf => (_bufEntity ??= new byte[1024 * 1024]);
 
         private const string RESOURCE_ROOT = "Resource";
         #endregion
@@ -51,7 +50,7 @@ namespace Elffy
         internal static string[] GetResourceNames()
         {
             CheckInitialized();
-            return _resources.Keys.Where(k => k.StartsWith(RESOURCE_ROOT)).Select(k => k.Substring(RESOURCE_ROOT.Length + 1)).ToArray();
+            return _resources!.Keys.Where(k => k.StartsWith(RESOURCE_ROOT)).Select(k => k.Substring(RESOURCE_ROOT.Length + 1)).ToArray();
         }
          
         /// <summary>リソースを読み込むストリームを取得します</summary>
@@ -80,7 +79,7 @@ namespace Elffy
         internal static bool HasResource(string name)
         {
             CheckInitialized();
-            return _resources.ContainsKey($"{RESOURCE_ROOT}/{name}");
+            return _resources!.ContainsKey($"{RESOURCE_ROOT}/{name}");
         }
 
         #region GetResourceStreamPrivate
@@ -91,7 +90,7 @@ namespace Elffy
         {
             CheckInitialized();
             ArgumentChecker.ThrowIfNullArg(name, nameof(name));
-            if(!_resources.TryGetValue(name, out var resource)) {
+            if(!_resources!.TryGetValue(name, out var resource)) {
                 throw new ResourceNotFoundException(name);
             }
             return new ResourceStream(resource.Position, resource.Length);
@@ -159,7 +158,7 @@ namespace Elffy
         #region class ResourceObject
         private class ResourceObject
         {
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
             public long Length { get; set; }
             public long Position { get; set; }
             public override string ToString() => $"'{Name}', Length:{Length}, Position:{Position}";
@@ -171,7 +170,7 @@ namespace Elffy
     public sealed class ResourceStream : Stream, IDisposable
     {
         private bool _disposed = false;
-        private FileStream _innerStream;
+        private FileStream _innerStream = null!;
         private readonly long _head;
         private readonly long _length;
 
@@ -235,7 +234,7 @@ namespace Elffy
             if(disposing) {
                 // マネージリソース解放
                 _innerStream.Dispose();
-                _innerStream = null;
+                _innerStream = null!;
             }
             // アンマネージドリソースがある場合ここに解放処理を書く
             _disposed = true;

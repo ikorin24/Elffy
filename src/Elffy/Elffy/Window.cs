@@ -1,4 +1,5 @@
-﻿using OpenTK;
+﻿#nullable enable
+using OpenTK;
 using OpenTK.Graphics;
 using System;
 using Elffy.UI;
@@ -39,11 +40,11 @@ namespace Elffy
         public string Title { get => _window.Title; set => _window.Title = value; }
 
         /// <summary>初期化時イベント</summary>
-        public event ActionEventHandler<IScreenHost> Initialized;
+        public event ActionEventHandler<IScreenHost>? Initialized;
         /// <summary>描画前イベント</summary>
-        public event ActionEventHandler<IScreenHost> Rendering;
+        public event ActionEventHandler<IScreenHost>? Rendering;
         /// <summary>描画後イベント</summary>
-        public event ActionEventHandler<IScreenHost> Rendered;
+        public event ActionEventHandler<IScreenHost>? Rendered;
 
         /// <summary>ウィンドウを作成します</summary>
         public Window() : this(800, 450, DEFAULT_WINDOW_TITLE, WindowStyle.Default) { }
@@ -94,7 +95,7 @@ namespace Elffy
             Camera.ChangeScreenSize(_window.ClientSize.Width, _window.ClientSize.Height);
         }
 
-        protected virtual void OnRenderFrame(OpenTK.FrameEventArgs e)
+        protected virtual void OnRenderFrame(FrameEventArgs? e)
         {
             Input.Input.Update();
             Rendering?.Invoke(this);

@@ -36,7 +36,7 @@ namespace Elffy.UI
 
         void IUIRenderable.Render() => Render();
         bool IUIRenderable.IsVisible => IsVisible;
-        void IUIRenderable.Activate() => Activate(Control.Root.UILayer);
+        void IUIRenderable.Activate() => Activate(Control.Root!.UILayer);
         void IUIRenderable.Destroy() => Destroy();
 
         private void OnActivated(FrameObject frameObject)

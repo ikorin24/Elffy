@@ -1,12 +1,7 @@
-﻿using Elffy.Core;
+﻿#nullable enable
 using Elffy.Exceptions;
-using OpenTK;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Elffy.UI
 {
@@ -36,7 +31,7 @@ namespace Elffy.UI
 
             // 深さ優先探索で列挙されるため子より親が先に Position が決定する
             foreach(var target in GetOffspring()) {
-                Control parent = target.Parent;
+                Control parent = target.Parent!;
                 Debug.Assert(target.Parent != null);
 
                 // 座標が NaN ならレイアウトを計算する。

@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿#nullable enable
+using System;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Threading;
@@ -14,8 +12,8 @@ namespace Elffy.Core.Timer
         private TimeSpan _baseTime = TimeSpan.Zero;
         private TimeSpan _time;
         private readonly Stopwatch _watch = new Stopwatch();
-        private Task _task;
-        private CancellationTokenSource _tokenSource;
+        private Task? _task;
+        private CancellationTokenSource? _tokenSource;
 
         public TimeSpan Elapsed
         {
@@ -51,11 +49,12 @@ namespace Elffy.Core.Timer
 
         public void Stop()
         {
+            if(!IsRunning) { return; }
             IsRunning = false;
             _watch.Stop();
-            _tokenSource.Cancel();
+            _tokenSource!.Cancel();
             try {
-                _task.Wait();
+                _task!.Wait();
             }
             finally {
                 _task = null;

@@ -1,20 +1,11 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Collections.Generic;
-using System.Text;
-using OpenTK;
-using OpenTK.Graphics;
-using OpenTK.Graphics.OpenGL;
-using System.Linq;
-using Elffy.Input;
 using Elffy.UI;
-using Elffy.Core;
 using System.Drawing;
-using System.IO;
 using Elffy.Threading;
-using System.Diagnostics;
 using Elffy.Core.Timer;
 using Elffy.Platforms;
-using OpenTK.Input;
 using Mouse = Elffy.Input.Mouse;
 using Elffy.Exceptions;
 
@@ -24,7 +15,7 @@ namespace Elffy
     public class Game
     {
         /// <summary>ゲーム描画領域オブジェクト</summary>
-        private IScreenHost _gameScreen;
+        private IScreenHost _gameScreen = null!;
         /// <summary>ゲームの実行時間計測用タイマー</summary>
         private readonly IGameTimer _watch = GameTimerGenerator.Create();
         /// <summary>ゲーム起動前に追加されたイベントハンドラーを保持しておくためのバッファ</summary>
@@ -36,10 +27,10 @@ namespace Elffy
             get
             {
                 ThrowIfGameNotRunning();
-                return _instance;
+                return _instance!;
             }
         }
-        private static Game _instance;
+        private static Game? _instance;
         /// <summary>ゲームが起動しているかどうかを取得します</summary>
         public static bool IsRunning => _instance != null;
         /// <summary>UI を構成する <see cref="Control"/> のコレクション</summary>
@@ -68,7 +59,7 @@ namespace Elffy
                 ArgumentChecker.ThrowOutOfRangeIf(value <= TimeSpan.Zero, nameof(value), value, "value is 0 or negative.");
                 _frameDelta = value;
                 if(IsRunning) {
-                    _instance._gameScreen.TargetRenderPeriod = value.TotalSeconds;
+                    _instance!._gameScreen.TargetRenderPeriod = value.TotalSeconds;
                 }
             }
         }
@@ -159,7 +150,7 @@ namespace Elffy
         /// <param name="windowStyle">ウィンドウスタイル</param>
         /// <param name="iconResourcePath">ウィンドウアイコンのリソースパス(nullならアイコン不使用)</param>
         /// <returns></returns>
-        private static void RunPrivate(int width, int height, string title, WindowStyle windowStyle, string iconResourcePath)
+        private static void RunPrivate(int width, int height, string title, WindowStyle windowStyle, string? iconResourcePath)
         {
             Dispatcher.SetMainThreadID();
             try {
@@ -225,7 +216,7 @@ namespace Elffy
         /// <param name="windowStyle">ウィンドウのスタイル</param>
         /// <param name="iconResourcePath">ウィンドウのアイコンのリソースのパス (nullの場合アイコンなし)</param>
         /// <returns>ウィンドウの <see cref="IScreenHost"/></returns>
-        private static IScreenHost GetWindowGameScreen(int width, int height, string title, WindowStyle windowStyle, string iconResourcePath)
+        private static IScreenHost GetWindowGameScreen(int width, int height, string title, WindowStyle windowStyle, string? iconResourcePath)
         {
             var window = new Window(windowStyle);
             if(iconResourcePath != null) {
