@@ -1,4 +1,6 @@
-﻿using Elffy.Exceptions;
+﻿#nullable enable
+using Elffy.Effective;
+using Elffy.Exceptions;
 using Elffy.Threading;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
@@ -14,7 +16,7 @@ namespace Elffy
         /// <summary>Max count of light</summary>
         public const int MaxCount = 8;
         /// <summary>Light list (Max number of light is 8 in OpenTK.)</summary>
-        private static readonly Dictionary<int, DirectLight> _lightList = new Dictionary<int, DirectLight>(MaxCount);
+        private static readonly Dictionary<int, ILight> _lightList = new Dictionary<int, ILight>(MaxCount);
 
         private static bool _globalAmbientChanged;
 
@@ -71,12 +73,12 @@ namespace Elffy
         /// <summary>get light of specified id</summary>
         /// <param name="id">id of the light</param>
         /// <returns>light</returns>
-        public static DirectLight GetLight(int id) 
-            => ArgumentChecker.GetDicValue(_lightList, id, new KeyNotFoundException($"the light of ID={id} is not found."));
+        public static ILight GetLight(int id)
+            => ArgumentChecker.GetDicValue(_lightList, id, new KeyNotFoundException($"the light of ID={id} is not found.".AsInterned()));
 
         /// <summary>add light to list</summary>
         /// <param name="light">light</param>
-        internal static void AddLight(DirectLight light)
+        internal static void AddLight(ILight light)
         {
             Debug.Assert(Dispatcher.IsMainThread());
             if(!CanCreateNew) { throw new InvalidOperationException("Can not add more Light."); }
@@ -86,7 +88,7 @@ namespace Elffy
 
         /// <summary>remove light from list</summary>
         /// <param name="light">light</param>
-        internal static void RemoveLight(DirectLight light)
+        internal static void RemoveLight(ILight light)
         {
             Debug.Assert(Dispatcher.IsMainThread());
             _lightList.Remove(light.ID);

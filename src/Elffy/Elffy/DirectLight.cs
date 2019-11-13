@@ -1,4 +1,5 @@
-﻿using Elffy.Exceptions;
+﻿#nullable enable
+using Elffy.Exceptions;
 using Elffy.Threading;
 using OpenTK;
 using OpenTK.Graphics;
@@ -8,46 +9,53 @@ using Elffy.Core;
 namespace Elffy
 {
     /// <summary>Direct light class</summary>
-    public sealed class DirectLight : IDestroyable
+    public sealed class DirectLight : ILight
     {
-        /// <summary>
-        /// The position of this light.<para/>
-        /// [NOTE] <para/>
-        /// The position of a light is four dimentional like (x, y, z, w). <para/>
-        /// Actual position is three dimentional, that is (x/w, y/w, z/w). <para/>
-        /// w == 0 means the infinite point directed by (x, y, z). That is Direct light. <para/>
-        /// </summary>
-        private Vector4 _position;
-
-        /// <summary>whether this light is lit up</summary>
-        private bool _isLitUp;
+        private readonly LightImpl _lightImpl = new LightImpl();
 
         /// <summary>get whether this light is activated</summary>
-        public bool IsActivated { get; private set; }
+        public bool IsActivated
+        { 
+            get => _lightImpl.IsActivated;
+            private set => _lightImpl.IsActivated = value;
+        }
 
         /// <summary>get whether this light is destroyed</summary>
-        public bool IsDestroyed { get; private set; }
+        public bool IsDestroyed => _lightImpl.IsDestroyed;
 
         /// <summary>light name</summary>
-        internal LightName LightName { get; set; }
+        LightName ILight.LightName
+        {
+            get => _lightImpl.LightName;
+            set => _lightImpl.LightName = value;
+        }
 
         /// <summary>get or set direction of this light</summary>
         public Vector3 Direction
         {
-            get => -_position.Xyz;
-            set
-            {
-                _position = new Vector4(-value);
-            }
+            get => -_lightImpl.Position.Xyz;
+            set => _lightImpl.Position = new Vector4(-value);
         }
         /// <summary>get or set ambient value of this light</summary>
-        public Color4 Ambient { get; set; }
+        public Color4 Ambient
+        {
+            get => _lightImpl.Ambient;
+            set => _lightImpl.Ambient = value;
+        }
         /// <summary>get or set diffuse value of this light</summary>
-        public Color4 Diffuse { get; set; }
+        public Color4 Diffuse
+        {
+            get => _lightImpl.Diffuse;
+            set => _lightImpl.Diffuse = value;
+        }
         /// <summary>get or set specular value of this light</summary>
-        public Color4 Specular { get; set; }
+        public Color4 Specular
+        {
+            get => _lightImpl.Specular;
+            set => _lightImpl.Specular = value;
+        }
         /// <summary>get ID of this light</summary>
-        public int ID => (int)(LightName - LightName.Light0);
+        public int ID => (int)(_lightImpl.LightName - LightName.Light0);
 
         /// <summary>
         /// Create <see cref="DirectLight"/> instance.<para/>
@@ -91,9 +99,7 @@ namespace Elffy
             if(IsActivated) { return; }
             Dispatcher.Invoke(() =>
             {
-                IsActivated = true;
-                Light.AddLight(this);
-                LightUp();
+                _lightImpl.Activate(this);
             });
         }
 
@@ -103,9 +109,7 @@ namespace Elffy
             ThrowIfDestroyed();
             Dispatcher.Invoke(() =>
             {
-                IsDestroyed = true;
-                Light.RemoveLight(this);
-                TurnOff();
+                _lightImpl.Destroy(this);
             });
         }
 
@@ -114,14 +118,7 @@ namespace Elffy
         {
             ThrowIfDestroyed();
             Dispatcher.ThrowIfNotMainThread();
-            if(_isLitUp == false) {
-                GL.Enable((EnableCap)LightName);
-                GL.Light(LightName, LightParameter.Position, _position);
-                GL.Light(LightName, LightParameter.Ambient, Ambient);
-                GL.Light(LightName, LightParameter.Diffuse, Diffuse);
-                GL.Light(LightName, LightParameter.Specular, Specular);
-                _isLitUp = true;
-            }
+            _lightImpl.LightUp();
         }
 
         /// <summary>Turn off this light</summary>
@@ -129,10 +126,7 @@ namespace Elffy
         {
             ThrowIfDestroyed();
             Dispatcher.ThrowIfNotMainThread();
-            if(_isLitUp) {
-                GL.Disable((EnableCap)LightName);
-                _isLitUp = false;
-            }
+            _lightImpl.TurnOff();
         }
 
         /// <summary>Throw exception if the instance is destroyed.</summary>

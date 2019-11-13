@@ -61,6 +61,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyService\AssemblyState.cs" />
+    <Compile Include="Core\LightImpl.cs" />
     <Compile Include="Elffy\EventHandler.cs" />
     <Compile Include="Core\IDestroyable.cs" />
     <Compile Include="Core\MetaFile\Metadata.cs" />
@@ -77,6 +78,7 @@
     <Compile Include="Effective\StringExtension.cs" />
     <Compile Include="Elffy\DirectLight.cs" />
     <Compile Include="Elffy\FragmentShader.cs" />
+    <Compile Include="Elffy\ILight.cs" />
     <Compile Include="Elffy\ShaderProgram.cs" />
     <Compile Include="Elffy\Sprite.cs" />
     <Compile Include="Elffy\TextureEnums.cs" />
