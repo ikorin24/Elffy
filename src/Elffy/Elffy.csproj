@@ -124,10 +124,6 @@
     <Compile Include="Elffy\Material.cs" />
     <Compile Include="Mathmatics\Curve.cs" />
     <Compile Include="Mathmatics\MathTool.cs" />
-    <Compile Include="Physics\CubeRigidbody.cs" />
-    <Compile Include="Physics\Rigidbody.cs" />
-    <Compile Include="Physics\Rigidbody3D.cs" />
-    <Compile Include="Physics\SphereRigidbody.cs" />
     <Compile Include="Platforms\Platform.cs" />
     <Compile Include="Platforms\PlatformType.cs" />
     <Compile Include="Serialization\FbxModelBuilder.cs" />
