@@ -97,7 +97,6 @@
     <Compile Include="Elffy\WritableTexture.cs" />
     <Compile Include="Exceptions\ArgumentChecker.cs" />
     <Compile Include="Exceptions\DataChecker.cs" />
-    <Compile Include="Exceptions\SceneParseException.cs" />
     <Compile Include="Framing\FrameProcessObject.cs" />
     <Compile Include="Framing\FrameProcessInfo.cs" />
     <Compile Include="Framing\FrameProcess.cs" />
