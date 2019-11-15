@@ -202,7 +202,6 @@ namespace Elffy
         /// <param name="e"></param>
         private static void OnScreenRendered(IScreenHost sender)
         {
-            DebugManager.Next();
             Time += FrameDelta;
             FrameNum++;
         }

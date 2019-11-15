@@ -3,6 +3,7 @@ using System.Diagnostics;
 
 namespace Elffy
 {
+#if false
     public static class DebugManager
     {
         private const string SPACE = "  ";
@@ -131,4 +132,5 @@ namespace Elffy
             }
         }
     }
+#endif
 }

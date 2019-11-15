@@ -4,7 +4,6 @@ using Elffy.Exceptions;
 using OpenTK.Input;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using OpenTKKey = OpenTK.Input.Key;
 
 namespace Elffy.Input
@@ -211,20 +210,18 @@ namespace Elffy.Input
         }
         #endregion
 
-        #region PadDump
-        /// <summary>デバッグ用</summary>
-        [Conditional("DEBUG")]
-        public static void PadDump()
-        {
-            _pad.Parse(GamePad.GetState(0));
-            foreach(var b in _pad.Button) {
-                DebugManager.Append(b ? 1 : 0);
-            }
-            DebugManager.Append($"({_pad.LeftStick.X:N2},{_pad.LeftStick.Y:N2})");
-            DebugManager.Append($"({_pad.RightStick.X:N2},{_pad.RightStick.Y:N2})");
-            DebugManager.Append($"({_pad.LeftTrigger:N2}, {_pad.RightTrigger:N2})");
-        }
-        #endregion
+        ///// <summary>デバッグ用</summary>
+        //[Conditional("DEBUG")]
+        //public static void PadDump()
+        //{
+        //    _pad.Parse(GamePad.GetState(0));
+        //    foreach(var b in _pad.Button) {
+        //        DebugManager.Append(b ? 1 : 0);
+        //    }
+        //    DebugManager.Append($"({_pad.LeftStick.X:N2},{_pad.LeftStick.Y:N2})");
+        //    DebugManager.Append($"({_pad.RightStick.X:N2},{_pad.RightStick.Y:N2})");
+        //    DebugManager.Append($"({_pad.LeftTrigger:N2}, {_pad.RightTrigger:N2})");
+        //}
         #endregion
 
         #region class StateNameObject
