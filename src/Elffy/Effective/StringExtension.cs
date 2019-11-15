@@ -1,4 +1,6 @@
-﻿namespace Elffy.Effective
+﻿#nullable enable
+
+namespace Elffy.Effective
 {
     /// <summary><see cref="string"/> 型の拡張メソッド用クラス</summary>
     public static class StringExtension

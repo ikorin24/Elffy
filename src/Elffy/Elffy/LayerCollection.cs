@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -47,7 +48,7 @@ namespace Elffy
                 return _syncRoot;
             }
         }
-        private object _syncRoot;
+        private object? _syncRoot;
 
         bool ICollection.IsSynchronized => false;
 
@@ -101,7 +102,7 @@ namespace Elffy
         {
             ArgumentChecker.ThrowIfNullArg(layers, nameof(layers));
             var evaluated = (layers is ICollection) ? layers : layers.ToArray();
-            ArgumentChecker.ThrowArgumentIf(evaluated.Contains(null), $"{nameof(layers)} contain 'null'. Can not add null.");
+            ArgumentChecker.ThrowArgumentIf(evaluated.Contains(null!), $"{nameof(layers)} contain 'null'. Can not add null.");
             _list.AddRange(evaluated);
         }
 

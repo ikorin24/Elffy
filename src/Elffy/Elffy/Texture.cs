@@ -1,4 +1,5 @@
-﻿using OpenTK.Graphics.OpenGL;
+﻿#nullable enable
+using OpenTK.Graphics.OpenGL;
 using System;
 using Elffy.Core;
 using System.Drawing;

@@ -1,11 +1,8 @@
-﻿using Elffy.Exceptions;
-using System;
+﻿#nullable enable
+using Elffy.Exceptions;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Elffy.UI
 {
@@ -54,7 +51,7 @@ namespace Elffy.UI
         {
             ArgumentChecker.ThrowIfNullArg(items, nameof(items));
             var evaluated = (items is ICollection) ? items : items.ToArray();
-            ArgumentChecker.ThrowArgumentIf(evaluated.Contains(null), $"{nameof(items)} contains null. Can not add null");
+            ArgumentChecker.ThrowArgumentIf(evaluated.Contains(null!), $"{nameof(items)} contains null. Can not add null");
             foreach(var item in evaluated) {
                 item.Parent = _owner;
                 item.Renderable.Activate();

@@ -1,13 +1,11 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Elffy.Effective
 {
@@ -23,7 +21,7 @@ namespace Elffy.Effective
         where T : unmanaged
     {
         #region private member
-        private readonly object _syncRoot;
+        private readonly object? _syncRoot;
         private int _length;
         private int _version;
         private bool _disposed;
@@ -50,7 +48,7 @@ namespace Elffy.Effective
             {
                 if(i < 0 || i >= _length) { throw new IndexOutOfRangeException(); }
                 if(IsThreadSafe) {
-                    lock(_syncRoot) {
+                    lock(_syncRoot!) {
                         ThrowIfFree();
                         unsafe {
                             return *(T*)(_array + i * _objsize);
@@ -68,7 +66,7 @@ namespace Elffy.Effective
             {
                 if(i < 0 || i >= _length) { throw new IndexOutOfRangeException(); }
                 if(IsThreadSafe) {
-                    lock(_syncRoot) {
+                    lock(_syncRoot!) {
                         ThrowIfFree();
                         var ptr = _array + i * _objsize;
                         Marshal.StructureToPtr<T>(value, ptr, true);
@@ -130,7 +128,7 @@ namespace Elffy.Effective
         public void Free()
         {
             if(IsThreadSafe) {
-                lock(_syncRoot) {
+                lock(_syncRoot!) {
                     if(!_isFree) {
                         Marshal.FreeHGlobal(_array);
                         _isFree = true;
@@ -228,7 +226,7 @@ namespace Elffy.Effective
             if(start < 0 || length < 0) { throw new ArgumentOutOfRangeException(); }
             if(start + length > Length) { throw new ArgumentOutOfRangeException(); }
             if(IsThreadSafe) {
-                lock(_syncRoot) {
+                lock(_syncRoot!) {
                     var byteLen = (long)(length * _objsize);
                     Buffer.MemoryCopy((void*)source, (void*)(_array + start * _objsize), byteLen, byteLen);
                     _version++;

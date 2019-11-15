@@ -1,8 +1,6 @@
-﻿using System;
+﻿#nullable enable
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Text;
-using Elffy.Effective;
 using OpenTK;
 using OpenTK.Input;
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.IO;
 using Elffy.Threading;
 using OpenTK.Graphics.OpenGL;

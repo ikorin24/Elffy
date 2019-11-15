@@ -1,9 +1,6 @@
-﻿using Elffy.Core;
-using System;
-using System.Collections.Generic;
+﻿#nullable enable
+using Elffy.Core;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using System.Diagnostics;

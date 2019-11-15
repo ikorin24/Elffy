@@ -1,9 +1,5 @@
-﻿using Elffy.Core;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿#nullable enable
+using Elffy.Core;
 
 namespace Elffy.Shape
 {

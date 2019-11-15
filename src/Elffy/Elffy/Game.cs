@@ -6,8 +6,8 @@ using System.Drawing;
 using Elffy.Threading;
 using Elffy.Core.Timer;
 using Elffy.Platforms;
-using Mouse = Elffy.Input.Mouse;
 using Elffy.Exceptions;
+using Elffy.Input;
 
 namespace Elffy
 {

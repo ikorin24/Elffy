@@ -1,17 +1,14 @@
-﻿using Elffy.Exceptions;
-using System;
+﻿#nullable enable
+using Elffy.Exceptions;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Elffy.UI
 {
     public partial class Split
     {
-        private float[] _propotion;
-        public ReadOnlyCollection<float> Propotion { get; private set; }
+        public ReadOnlyCollection<float> Propotion { get; private set; } = null!;
 
         private Split()
         {
@@ -22,8 +19,7 @@ namespace Elffy.UI
             ArgumentChecker.ThrowIfNullArg(propotion, nameof(propotion));
             var tmp = propotion.ToArray();
             ArgumentChecker.ThrowArgumentIf(tmp.Any(value => value < 0), "negative propotion is not allowed");
-            _propotion = tmp;
-            Propotion = new ReadOnlyCollection<float>(_propotion);
+            Propotion = new ReadOnlyCollection<float>(tmp);
         }
 
         public static explicit operator Split (string source)
@@ -33,7 +29,6 @@ namespace Elffy.UI
             var propotion = source.Split(new[] { ',' }).Select(x => x.Trim()).Cast<float>().ToArray();
             ArgumentChecker.ThrowArgumentIf(propotion.Any(value => value < 0), "negative propotion is not allowed");
             var split = new Split();
-            split._propotion = propotion;
             split.Propotion = new ReadOnlyCollection<float>(propotion);
             return new Split();
         }

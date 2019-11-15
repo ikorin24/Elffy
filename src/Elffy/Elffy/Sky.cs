@@ -1,11 +1,8 @@
-﻿using Elffy.Core;
+﻿#nullable enable
+using Elffy.Core;
 using Elffy.Exceptions;
 using OpenTK;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Elffy
 {

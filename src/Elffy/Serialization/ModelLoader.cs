@@ -1,11 +1,8 @@
-﻿using Elffy.Exceptions;
+﻿#nullable enable
+using Elffy.Exceptions;
 using Elffy.Shape;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Elffy.Serialization
 {

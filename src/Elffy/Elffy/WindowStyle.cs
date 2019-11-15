@@ -1,4 +1,6 @@
-﻿namespace Elffy
+﻿#nullable enable
+
+namespace Elffy
 {
     public enum WindowStyle
     {

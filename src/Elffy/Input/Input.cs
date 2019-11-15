@@ -1,12 +1,10 @@
-﻿using Elffy.Effective;
+﻿#nullable enable
+using Elffy.Effective;
 using Elffy.Exceptions;
-using OpenTK;
 using OpenTK.Input;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Text;
 using OpenTKKey = OpenTK.Input.Key;
 
 namespace Elffy.Input

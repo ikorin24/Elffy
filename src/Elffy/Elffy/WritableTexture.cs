@@ -5,8 +5,6 @@ using Elffy.Core;
 using System.Drawing;
 using System.Drawing.Imaging;
 using Elffy.Threading;
-using Elffy.Effective;
-using System.Threading.Tasks;
 using System.Collections.Generic;
 using Elffy.Exceptions;
 

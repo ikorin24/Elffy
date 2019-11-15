@@ -1,4 +1,5 @@
-﻿using Elffy.Core;
+﻿#nullable enable
+using Elffy.Core;
 using Elffy.Exceptions;
 using Elffy.Threading;
 using System;
@@ -12,7 +13,7 @@ namespace Elffy
     {
         private bool _disposed;
         /// <summary>このスプライトが持つテクスチャ</summary>
-        private Texture[] _textures;
+        private Texture[] _textures = null!;
 
         /// <summary>このスプライトのページ数を取得します</summary>
         public int PageCount => _textures?.Length ?? 0;
@@ -111,7 +112,7 @@ namespace Elffy
                     foreach(var texture in _textures) {
                         texture.Dispose();
                     }
-                    _textures = null;
+                    _textures = null!;
                 }
                 // Release unmanaged resource here.
 

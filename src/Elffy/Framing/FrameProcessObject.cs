@@ -90,7 +90,7 @@ namespace Elffy.Framing
                         end = _info.Time >= _info.LifeSpan;
                         break;
                     case FrameProcessEndMode.Condition:
-                        end = !_info.Condition();
+                        end = !_info.Condition!();
                         break;
                     case FrameProcessEndMode.FrameSpan:
                         end = _info.FrameNum >= _info.FrameSpan;

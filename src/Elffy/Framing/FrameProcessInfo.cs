@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -22,7 +23,7 @@ namespace Elffy.Framing
         public TimeSpan Time { get; internal set; }
 
         /// <summary><see cref="Mode"/> が <see cref="FrameProcessEndMode.Condition"/> 現在の場合、この <see cref="FrameProcessBehavior"/> の終了条件を返します</summary>
-        public Func<bool> Condition { get; internal set; }
+        public Func<bool>? Condition { get; internal set; }
 
         /// <summary>この <see cref="FrameProcessBehavior"/> の終了モード</summary>
         public FrameProcessEndMode Mode { get; internal set; }

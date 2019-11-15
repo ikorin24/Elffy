@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿#nullable enable
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using OpenTK;
-using OpenTK.Graphics;
-using OpenTK.Graphics.OpenGL;
 using Elffy.Core;
 
 namespace Elffy.Shape

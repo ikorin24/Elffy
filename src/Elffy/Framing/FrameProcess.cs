@@ -1,4 +1,5 @@
-﻿using Elffy.Core;
+﻿#nullable enable
+using Elffy.Core;
 using Elffy.Exceptions;
 using System;
 

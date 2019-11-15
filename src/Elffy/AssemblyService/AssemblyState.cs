@@ -1,4 +1,6 @@
-﻿namespace Elffy.AssemblyService
+﻿#nullable enable
+
+namespace Elffy.AssemblyService
 {
     /// <summary>アセンブリの状態を提供するクラス</summary>
     public static class AssemblyState

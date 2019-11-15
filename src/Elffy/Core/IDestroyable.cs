@@ -1,4 +1,5 @@
-﻿namespace Elffy.Core
+﻿#nullable enable
+namespace Elffy.Core
 {
     public interface IDestroyable
     {
