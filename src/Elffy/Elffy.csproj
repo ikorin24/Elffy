@@ -82,7 +82,6 @@
     <Compile Include="Elffy\ShaderProgram.cs" />
     <Compile Include="Elffy\Sprite.cs" />
     <Compile Include="Elffy\TextureEnums.cs" />
-    <Compile Include="Elffy\Definition.cs" />
     <Compile Include="Core\ComponentOwner.cs" />
     <Compile Include="Elffy\IScreenHost.cs" />
     <Compile Include="Elffy\Ray.cs" />
