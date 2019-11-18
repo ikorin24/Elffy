@@ -79,6 +79,7 @@
     <Compile Include="Elffy\DirectLight.cs" />
     <Compile Include="Elffy\FragmentShader.cs" />
     <Compile Include="Elffy\ILight.cs" />
+    <Compile Include="Elffy\PointLight.cs" />
     <Compile Include="Elffy\ShaderProgram.cs" />
     <Compile Include="Elffy\Sprite.cs" />
     <Compile Include="Elffy\TextureEnums.cs" />
