@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using Elffy.Effective;
 using Elffy.Exceptions;
 using Elffy.Threading;
 using OpenTK.Graphics;
