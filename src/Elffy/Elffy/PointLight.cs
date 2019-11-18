@@ -4,7 +4,6 @@ using Elffy.Threading;
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
-using Elffy.Core;
 
 namespace Elffy
 {
@@ -12,7 +11,7 @@ namespace Elffy
     public class PointLight : ILight
     {
         /// <summary>Implementation of the light</summary>
-        private readonly LightImpl _lightImpl = new LightImpl();
+        private readonly Light.LightImpl _lightImpl = new Light.LightImpl();
 
         /// <summary>get whether this light is activated</summary>
         public bool IsActivated
