@@ -12,6 +12,12 @@ namespace Elffy.UI
         /// <summary>Key up event</summary>
         public event ActionEventHandler<Executable>? KeyUp;
 
+        public Executable()
+        {
+            Renderable.IsFrozen = false;
+            Renderable.Updated += OnUpdated;
+        }
+
         internal void Execute(ExecutableExecuteType type)
         {
             switch(type) {
@@ -27,6 +33,10 @@ namespace Elffy.UI
                 default:
                     break;
             }
+        }
+
+        private void OnUpdated(FrameObject sender)
+        {
         }
     }
 

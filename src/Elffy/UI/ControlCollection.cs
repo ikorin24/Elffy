@@ -41,7 +41,7 @@ namespace Elffy.UI
         {
             ArgumentChecker.ThrowIfNullArg(item, nameof(item));
             item.Parent = _owner;
-            item.Renderable.Activate();
+            item.Renderable.Activate(item.Root!.UILayer);
             _list.Add(item);
         }
 
@@ -54,7 +54,7 @@ namespace Elffy.UI
             ArgumentChecker.ThrowArgumentIf(evaluated.Contains(null!), $"{nameof(items)} contains null. Can not add null");
             foreach(var item in evaluated) {
                 item.Parent = _owner;
-                item.Renderable.Activate();
+                item.Renderable.Activate(item.Root!.UILayer);
             }
             _list.AddRange(evaluated);
         }
@@ -98,7 +98,7 @@ namespace Elffy.UI
             ArgumentChecker.ThrowOutOfRangeIf(index < 0 || index > _list.Count, nameof(index), index, $"{nameof(index)} is out of range");
             item.Parent = _owner;
             _list.Insert(index, item);
-            item.Renderable.Activate();
+            item.Renderable.Activate(item.Root!.UILayer);
         }
 
         /// <summary>要素をリストから削除します</summary>

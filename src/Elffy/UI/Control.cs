@@ -24,8 +24,7 @@ namespace Elffy.UI
     {
         #region Property
         /// <summary>この <see cref="Control"/> を描画するオブジェクト</summary>
-        internal IUIRenderable Renderable => _renderable;
-        private readonly UIRenderable _renderable;
+        internal UIRenderable Renderable { get; private set; }
 
         /// <summary>この <see cref="Control"/> のツリー構造の子要素を取得します</summary>
         public ControlCollection Children { get; }
@@ -54,11 +53,11 @@ namespace Elffy.UI
 
         public Vector2 Position
         {
-            get => _renderable.Position.Xy;
+            get => Renderable.Position.Xy;
             set
             {
-                var vec = value - _renderable.Position.Xy;
-                _renderable.Position += new Vector3(vec);
+                var vec = value - Renderable.Position.Xy;
+                Renderable.Position += new Vector3(vec);
                 _absolutePosition += vec;
                 foreach(var child in GetOffspring()) {
                     child._absolutePosition += vec;
@@ -68,11 +67,11 @@ namespace Elffy.UI
 
         public float PositionX
         {
-            get => _renderable.PositionX;
+            get => Renderable.PositionX;
             set
             {
-                var diff = value - _renderable.PositionX;
-                _renderable.PositionX += diff;
+                var diff = value - Renderable.PositionX;
+                Renderable.PositionX += diff;
                 _absolutePosition.X += diff;
                 foreach(var child in GetOffspring()) {
                     child._absolutePosition.X += diff;
@@ -83,11 +82,11 @@ namespace Elffy.UI
         /// <summary>オブジェクトのY座標</summary>
         public float PositionY
         {
-            get => _renderable.PositionY;
+            get => Renderable.PositionY;
             set
             {
-                var diff = value - _renderable.PositionY;
-                _renderable.PositionY += diff;
+                var diff = value - Renderable.PositionY;
+                Renderable.PositionY += diff;
                 _absolutePosition.Y += diff;
                 foreach(var child in GetOffspring()) {
                     child._absolutePosition.Y += diff;
@@ -175,7 +174,7 @@ namespace Elffy.UI
         public Control()
         {
             Children = new ControlCollection(this);
-            _renderable = new UIRenderable(this);
+            Renderable = new UIRenderable(this);
         }
         #endregion
 
