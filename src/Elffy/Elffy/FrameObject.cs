@@ -33,12 +33,22 @@ namespace Elffy
 
         /// <summary>このオブジェクトがアクティブになった時のイベント</summary>
         public event ActionEventHandler<FrameObject>? Activated;
+        /// <summary>開始時イベント</summary>
+        public event ActionEventHandler<FrameObject>? Started;
+        /// <summary>更新時イベント</summary>
+        public event ActionEventHandler<FrameObject>? Updated;
 
         /// <summary>このオブジェクトが更新される最初のフレームに1度のみ実行される処理</summary>
-        public virtual void Start() { }
+        internal void Start()
+        {
+            Started?.Invoke(this);
+        }
 
         /// <summary>フレームの更新ごとに実行される更新処理</summary>
-        public virtual void Update() { }
+        internal void Update()
+        {
+            Updated?.Invoke(this);
+        }
 
         /// <summary>このオブジェクトをワールドレイヤーでアクティブにします</summary>
         public void Activate()

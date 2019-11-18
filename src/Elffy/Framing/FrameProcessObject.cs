@@ -30,6 +30,11 @@ namespace Elffy.Framing
         private bool _isCanceled;
         #endregion private member
 
+        public FrameProcessObject()
+        {
+            Updated += OnUpdated;
+        }
+
         #region AddBehavior
         /// <summary>キューに処理を追加します</summary>
         /// <param name="time">処理の寿命</param>
@@ -66,9 +71,11 @@ namespace Elffy.Framing
         }
         #endregion
 
-        #region Update
+        /// <summary>このフレームプロセスをキャンセルします</summary>
+        public void Cancel() => _isCanceled = true;
+
         /// <summary>フレーム毎の更新処理</summary>
-        public override void Update()
+        private void OnUpdated(FrameObject sender)
         {
             if(_isFirstFrame) {
                 _firstFrameTime = Game.Time;
@@ -117,10 +124,6 @@ namespace Elffy.Framing
             _currentBehavior!(_info);     // フレームプロセスの実行
             _info.FrameNum++;
         }
-        #endregion
-
-        /// <summary>このフレームプロセスをキャンセルします</summary>
-        public void Cancel() => _isCanceled = true;
 
         #region SetNextBehavior
         private void SetNextBehavior()
