@@ -14,27 +14,27 @@ namespace Elffy.Input
         /// <summary>Axisのデフォルトの最小値</summary>
         private const float DEFAULT_AXIS_MIN_VALUE = 0.1f;
         /// <summary>ゲームパッドの状態</summary>
-        private static PadState _pad = new PadState();
+        private static readonly PadState _pad = new PadState();
         /// <summary>キーボードの状態</summary>
         private static KeyboardState _keyboard;
         /// <summary>入力状態名と関連情報</summary>
-        private static Dictionary<string, StateNameObject> _stateNames = new Dictionary<string, StateNameObject>();
+        private static readonly Dictionary<string, StateNameObject> _stateNames = new Dictionary<string, StateNameObject>();
         /// <summary>入力軸状態名と関連情報</summary>
-        private static Dictionary<string, AxisNameObject> _axisNames = new Dictionary<string, AxisNameObject>();
+        private static readonly Dictionary<string, AxisNameObject> _axisNames = new Dictionary<string, AxisNameObject>();
         /// <summary>入力トリガー状態名と関連情報</summary>
-        private static Dictionary<string, TriggerNameObject> _triggerNames = new Dictionary<string, TriggerNameObject>();
+        private static readonly Dictionary<string, TriggerNameObject> _triggerNames = new Dictionary<string, TriggerNameObject>();
         /// <summary>各入力状態の現在の状態</summary>
-        private static Dictionary<string, bool> _currentState = new Dictionary<string, bool>();
+        private static readonly Dictionary<string, bool> _currentState = new Dictionary<string, bool>();
         /// <summary>各入力状態の前回の状態</summary>
-        private static Dictionary<string, bool> _previousState = new Dictionary<string, bool>();
+        private static readonly Dictionary<string, bool> _previousState = new Dictionary<string, bool>();
         /// <summary各入力軸状態の現在の状態</summary>
-        private static Dictionary<string, float> _currentAxis = new Dictionary<string, float>();
+        private static readonly Dictionary<string, float> _currentAxis = new Dictionary<string, float>();
         /// <summary>各入力軸状態の前回の状態</summary>
-        private static Dictionary<string, float> _previousAxis = new Dictionary<string, float>();
+        private static readonly Dictionary<string, float> _previousAxis = new Dictionary<string, float>();
         /// <summary>各入力トリガーの現在の状態</summary>
-        private static Dictionary<string, float> _currentTrigger = new Dictionary<string, float>();
+        private static readonly Dictionary<string, float> _currentTrigger = new Dictionary<string, float>();
         /// <summary>各入力トリガーの前回の状態</summary>
-        private static Dictionary<string, float> _previousTrigger = new Dictionary<string, float>();
+        private static readonly Dictionary<string, float> _previousTrigger = new Dictionary<string, float>();
         #endregion private member
 
         #region public Method
