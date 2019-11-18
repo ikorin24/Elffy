@@ -74,6 +74,10 @@ namespace Elffy.Exceptions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static TValue GetValueWithKeyChecking<TKey, TValue>(this Dictionary<TKey, TValue> dic, TKey key, string message)
         {
+            // ** NOTE **
+            // For method inlining, the type of dic is Dictionary, NOT IDictionary.
+            // DO NOT change IDictionary.
+
 #if CHECK_ARG
             if(!dic.TryGetValue(key, out var value)) {
                 throw new KeyNotFoundException($"Key : {key}; {message}");
