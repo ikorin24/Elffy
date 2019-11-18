@@ -64,19 +64,19 @@ namespace Elffy.Exceptions
             }
         }
 
-        /// <summary>辞書から指定のキーの要素を取得します。キーが存在しない場合は指定の例外を投げます</summary>
+        /// <summary>辞書から指定のキーの要素を取得します。キーが存在しない場合はキーの値と指定のメッセージをメッセージに持った例外を投げます</summary>
         /// <typeparam name="TKey">キーの型</typeparam>
         /// <typeparam name="TValue">要素の型</typeparam>
         /// <param name="dic">辞書</param>
         /// <param name="key">キー</param>
-        /// <param name="ex">例外</param>
+        /// <param name="message">メッセージ</param>
         /// <returns>取得した要素</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static TValue GetDicValue<TKey, TValue>(IDictionary<TKey, TValue> dic, TKey key, Exception ex)
+        public static TValue GetValueWithKeyChecking<TKey, TValue>(this Dictionary<TKey, TValue> dic, TKey key, string message)
         {
 #if CHECK_ARG
             if(!dic.TryGetValue(key, out var value)) {
-                throw ex;
+                throw new KeyNotFoundException($"Key : {key}; {message}");
             }
             return value;
 #else

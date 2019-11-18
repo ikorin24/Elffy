@@ -74,7 +74,7 @@ namespace Elffy
         /// <param name="id">id of the light</param>
         /// <returns>light</returns>
         public static ILight GetLight(int id)
-            => ArgumentChecker.GetDicValue(_lightList, id, new KeyNotFoundException($"the light of ID={id} is not found.".AsInterned()));
+            => _lightList.GetValueWithKeyChecking(id, "the light of specified ID is not found.");
 
         /// <summary>add light to list</summary>
         /// <param name="light">light</param>

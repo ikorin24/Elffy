@@ -44,7 +44,7 @@ namespace Elffy.Input
         /// <returns>入力状態</returns>
         public static bool GetState(string name)
         {
-            var result = ArgumentChecker.GetDicValue(_currentState, name, new KeyNotFoundException($"入力状態 '{name}' は登録されていません。"));
+            var result = _currentState.GetValueWithKeyChecking(name, "Specified input state is not registered.");
             return result;
         }
         #endregion
@@ -55,8 +55,8 @@ namespace Elffy.Input
         /// <returns>入力状態</returns>
         public static bool GetStateDown(string name)
         {
-            var current = ArgumentChecker.GetDicValue(_currentState, name, new KeyNotFoundException($"入力状態 '{name}' は登録されていません。"));
-            var prev = ArgumentChecker.GetDicValue(_previousState, name, new KeyNotFoundException($"入力状態 '{name}' は登録されていません。"));
+            var current = _currentState.GetValueWithKeyChecking(name, "Specified input state is not registered.");
+            var prev = _previousState.GetValueWithKeyChecking(name, "Specified input state is not registered.");
             return current && !prev;        // 立ち上がりを検出
         }
         #endregion
@@ -67,8 +67,8 @@ namespace Elffy.Input
         /// <returns>結果</returns>
         public static bool GetStateUp(string name)
         {
-            var current = ArgumentChecker.GetDicValue(_currentState, name, new KeyNotFoundException($"入力状態 '{name}' は登録されていません。"));
-            var prev = ArgumentChecker.GetDicValue(_previousState, name, new KeyNotFoundException($"入力状態 '{name}' は登録されていません。"));
+            var current = _currentState.GetValueWithKeyChecking(name, "Specified input state is not registered.");
+            var prev = _previousState.GetValueWithKeyChecking(name, "Specified input state is not registered.");
             return !current && prev;        // 立ち下がりを検出
         }
         #endregion
@@ -79,14 +79,14 @@ namespace Elffy.Input
         /// <returns>入力値</returns>
         public static float GetAxis(string name)
         {
-            var value = ArgumentChecker.GetDicValue(_currentAxis, name, new KeyNotFoundException($"入力状態 '{name}' は登録されていません。"));
+            var value = _currentAxis.GetValueWithKeyChecking(name, "Specified input state is not registered.");
             return value;
         }
         #endregion
 
         public static float GetTrigger(string name)
         {
-            var value = ArgumentChecker.GetDicValue(_currentTrigger, name, new KeyNotFoundException($"入力状態 '{name}' は登録されていません。"));
+            var value = _currentTrigger.GetValueWithKeyChecking(name, "Specified input state is not registered.");
             return value;
         }
 
