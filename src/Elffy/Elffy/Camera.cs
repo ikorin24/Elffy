@@ -5,54 +5,52 @@ using Elffy.Exceptions;
 
 namespace Elffy
 {
+    /// <summary>Camera class</summary>
     public class Camera
     {
         private const float NEAR = 0.3f;
+        /// <summary>Aspect ratio (width / height)</summary>
         private float _aspect = 1f;
 
-        #region Position
+        /// <summary>Get or set position of the camera.</summary>
         public Vector3 Position
         {
             get { return _position; }
             set
             {
                 _position = value;
-                SetMatrix(_position, _direction, _up);
+                SetViewMatrix(_position, _direction, _up);
             }
         }
         private Vector3 _position = new Vector3(0, 0, 10);
-        #endregion
 
-        #region Direction
+        /// <summary>Get or set direction of the camera eye.</summary>
         public Vector3 Direction
         {
             get { return _direction; }
             set
             {
-                ArgumentChecker.ThrowArgumentIf(value.X == 0 && value.Y == 0 && value.Z == 0, "Value must be non-Zero vector.");
+                if(value == Vector3.Zero) { return; }
                 _direction = value;
-                SetMatrix(_position, _direction, _up);
+                SetViewMatrix(_position, _direction, _up);
             }
         }
         private Vector3 _direction = -Vector3.UnitZ;
-        #endregion
 
-        #region Up
+        /// <summary>Get or set direction of up.</summary>
         public Vector3 Up
         {
             get { return _up; }
             set
             {
-                ArgumentChecker.ThrowArgumentIf(value.X == 0 && value.Y == 0 && value.Z == 0, "Value must be non-Zero vector.");
+                if(value == Vector3.Zero) { return; }
                 _up = value;
-                SetMatrix(_position, _direction, _up);
+                SetViewMatrix(_position, _direction, _up);
             }
         }
         private Vector3 _up = Vector3.UnitY;
-        #endregion
 
-        #region Fovy
-        /// <summary>Y方向視野角(ラジアン)[0 ~ π]</summary>
+        /// <summary>Get or set radian Y field of view of the camera. [0 ~ π]</summary>
         public float Fovy
         {
             get { return _fovy; }
@@ -60,13 +58,12 @@ namespace Elffy
             {
                 ArgumentChecker.ThrowArgumentIf(value <= 0 || value > MathTool.Pi, "Value must be 0 ~ π. (not include 0)");
                 _fovy = value;
-                SetProjection(_fovy, _far, _aspect);
+                SetProjectionMatrix(_fovy, _far, _aspect);
             }
         }
         private float _fovy = 25f.ToRadian();
-        #endregion
 
-        #region Far
+        /// <summary>Get or set max distance from the camera.</summary>
         public float Far
         {
             get { return _far; }
@@ -74,25 +71,54 @@ namespace Elffy
             {
                 ArgumentChecker.ThrowArgumentIf(value <= NEAR, "Value must be bigger than 0. (or value is too small.)");
                 _far = value;
-                SetProjection(_fovy, _far, _aspect);
+                SetProjectionMatrix(_fovy, _far, _aspect);
             }
         }
         private float _far = 2000f;
-        #endregion
 
-        #region internal Property
+        /// <summary>Get View Matrix</summary>
         internal Matrix4 View { get; private set; } = Matrix4.Identity;
 
+        /// <summary>Get projection Matrix</summary>
         internal Matrix4 Projection { get; private set; } = Matrix4.Identity;
-        #endregion
 
-        #region コンストラクタ
+        /// <summary>Constructor</summary>
         internal Camera()
         {
-            SetProjection(_fovy, _far, _aspect);
-            SetMatrix(_position, _direction, _up);
+            SetProjectionMatrix(_fovy, _far, _aspect);
+            SetViewMatrix(_position, _direction, _up);
         }
-        #endregion
+
+        /// <summary>Look at the specified target position.</summary>
+        /// <param name="target">position of target</param>
+        public void LookAt(Vector3 target) => LookAt(target, Position);
+
+        /// <summary>Look at the specified target position from specified camera position.</summary>
+        /// <param name="target">position of target</param>
+        /// <param name="cameraPos">position of camera</param>
+        public void LookAt(Vector3 target, Vector3 cameraPos)
+        {
+            var vec = target - cameraPos;
+            if(vec == Vector3.Zero) { return; }
+            _direction = vec;
+            SetViewMatrix(_position, _direction, _up);
+        }
+
+        /// <summary>
+        /// Change fovy with same screen region.<para/>
+        /// [NOTE] Position of the camera is changed in this method.<para/>
+        /// </summary>
+        /// <param name="fovy">Y field of view radian. 0 ~ π</param>
+        /// <param name="target">target position where screen region is same as current.</param>
+        public void ChangeFovy(float fovy, Vector3 target)
+        {
+            ArgumentChecker.ThrowArgumentIf(fovy <= 0 || fovy > MathTool.Pi, $"{nameof(fovy)} must be 0 ~ π. (not include 0)");
+            var pos = (1 - MathTool.Tan(_fovy / 2f) / MathTool.Tan(fovy / 2f)) * (target - Position);
+            _position += pos;
+            _fovy = fovy;
+            SetProjectionMatrix(_fovy, _far, _aspect);
+            SetViewMatrix(_position, _direction, _up);
+        }
 
         /// <summary>描画先のサイズを変更します。<see cref="Projection"/> が変更されます</summary>
         /// <param name="width">幅</param>
@@ -102,19 +128,17 @@ namespace Elffy
             ArgumentChecker.ThrowOutOfRangeIf(width < 0, nameof(width), width, "value is negative.");
             ArgumentChecker.ThrowOutOfRangeIf(height < 0, nameof(height), height, "value is negative");
             _aspect = (float)width / height;
-            SetProjection(_fovy, _far, _aspect);
+            SetProjectionMatrix(_fovy, _far, _aspect);
         }
 
-        #region private Method
-        private void SetMatrix(Vector3 pos, Vector3 dir, Vector3 up)
+        private void SetViewMatrix(Vector3 pos, Vector3 dir, Vector3 up)
         {
             View = Matrix4.LookAt(pos, pos + dir, up);
         }
 
-        private void SetProjection(float radian, float far, float aspect)
+        private void SetProjectionMatrix(float radian, float far, float aspect)
         {
             Projection = Matrix4.CreatePerspectiveFieldOfView(radian, aspect, NEAR, far);
         }
-        #endregion
     }
 }
