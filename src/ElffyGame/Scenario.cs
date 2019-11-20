@@ -101,11 +101,10 @@ namespace ElffyGame
                 }
             }
 
-            cube.Activate(Game.Layers.WorldLayer);
+            cube.Activate();
 
             var camera = Game.Camera;
-            camera.Position = new Vector3(0, 0, 10);
-            camera.Direction = -camera.Position;
+            Game.Camera.LookAt(Vector3.Zero, new Vector3(0, 0, 10));
 
             //cube.IsVisible = false;
             var a = new Plain();
@@ -134,6 +133,12 @@ namespace ElffyGame
             });
 
             a.Shader = ShaderProgram.Default;
+
+            FrameProcess.WhileTrue(process =>
+            {
+                var fovy = 25f + 15f * MathTool.Sin((float)process.Time.TotalSeconds / 2 * MathTool.TwoPi);
+                Game.Camera.ChangeFovy(fovy.ToRadian(), a.Position);
+            });
         }
     }
 }
