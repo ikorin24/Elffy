@@ -14,9 +14,9 @@ namespace Elffy.Platforms
             PlatformType = GetPlatformType();
         }
 
-        /// <summary>特定の機能がこのプラットフォームでサポートされないことを示す例外を新しく取得します</summary>
+        /// <summary>特定の機能がこのプラットフォームでサポートされないことを示す例外を取得します</summary>
         /// <returns><see cref="PlatformNotSupportedException"/> のインスタンス</returns>
-        public static Exception NewPlatformNotSupportedException() 
+        public static PlatformNotSupportedException PlatformNotSupported() 
             => new PlatformNotSupportedException($"Game can not run on this platform; Platform Type : '{PlatformType}'");
 
         private static PlatformType GetPlatformType()

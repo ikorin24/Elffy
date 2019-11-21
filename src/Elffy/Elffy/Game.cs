@@ -155,18 +155,13 @@ namespace Elffy
             Dispatcher.SetMainThreadID();
             try {
                 _instance = new Game();
-                IScreenHost gameScreen;
-                switch(Platform.PlatformType) {
-                    case PlatformType.Windows:
-                    case PlatformType.MacOSX:
-                    case PlatformType.Unix:
-                        gameScreen = GetWindowGameScreen(width, height, title, windowStyle, iconResourcePath);
-                        break;
-                    case PlatformType.Android:
-                    case PlatformType.Other:
-                    default:
-                        throw Platform.NewPlatformNotSupportedException();
-                }
+                var gameScreen = Platform.PlatformType switch
+                {
+                    PlatformType.Windows => GetWindowGameScreen(width, height, title, windowStyle, iconResourcePath),
+                    PlatformType.MacOSX =>  GetWindowGameScreen(width, height, title, windowStyle, iconResourcePath),
+                    PlatformType.Unix =>    GetWindowGameScreen(width, height, title, windowStyle, iconResourcePath),
+                    _ => throw Platform.PlatformNotSupported()
+                };
                 gameScreen.TargetRenderPeriod = FrameDelta.TotalSeconds;
                 gameScreen.Rendering += OnScreenRendering;
                 gameScreen.Rendered += OnScreenRendered;
