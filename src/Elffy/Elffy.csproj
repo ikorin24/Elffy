@@ -60,7 +60,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AssemblyService\AssemblyState.cs" />
+    <Compile Include="AssemblyServices\AssemblyState.cs" />
     <Compile Include="Elffy\EventHandler.cs" />
     <Compile Include="Core\IDestroyable.cs" />
     <Compile Include="Core\MetaFile\Metadata.cs" />
@@ -100,8 +100,8 @@
     <Compile Include="Framing\FrameProcessInfo.cs" />
     <Compile Include="Framing\FrameProcess.cs" />
     <Compile Include="Elffy\Camera.cs" />
-    <Compile Include="Input\Mouse.cs" />
-    <Compile Include="Input\MouseButton.cs" />
+    <Compile Include="InputSystem\Mouse.cs" />
+    <Compile Include="InputSystem\MouseButton.cs" />
     <Compile Include="Platforms\Windows\MessageBox.cs" />
     <Compile Include="Elffy\ConfigBase.cs" />
     <Compile Include="Core\Consts.cs" />
@@ -119,7 +119,7 @@
     <Compile Include="Elffy\Light.cs" />
     <Compile Include="Effective\UnmanagedArray.cs" />
     <Compile Include="Exceptions\ResourceNotFoundException.cs" />
-    <Compile Include="Input\Trigger.cs" />
+    <Compile Include="InputSystem\Trigger.cs" />
     <Compile Include="Elffy\Material.cs" />
     <Compile Include="Mathmatics\Curve.cs" />
     <Compile Include="Mathmatics\MathTool.cs" />
@@ -151,10 +151,10 @@
     <Compile Include="Elffy\DebugManager.cs" />
     <Compile Include="Elffy\FPSManager.cs" />
     <Compile Include="Elffy\FrameObject.cs" />
-    <Compile Include="Input\Input.cs" />
-    <Compile Include="Input\Key.cs" />
-    <Compile Include="Input\PadState.cs" />
-    <Compile Include="Input\StickAxis.cs" />
+    <Compile Include="InputSystem\Input.cs" />
+    <Compile Include="InputSystem\Key.cs" />
+    <Compile Include="InputSystem\PadState.cs" />
+    <Compile Include="InputSystem\StickAxis.cs" />
     <Compile Include="Elffy\Game.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Elffy\Resources.cs" />

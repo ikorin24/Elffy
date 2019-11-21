@@ -9,7 +9,7 @@ using Elffy.Framing;
 using OpenTK;
 using Elffy.Mathmatics;
 using System.Diagnostics;
-using Elffy.Input;
+using Elffy.InputSystem;
 
 namespace ElffyGame
 {

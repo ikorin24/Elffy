@@ -1,5 +1,5 @@
 ﻿#nullable enable
-using Elffy.Input;
+using Elffy.InputSystem;
 using Elffy.UI;
 using OpenTK;
 using System.Drawing;

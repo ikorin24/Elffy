@@ -6,11 +6,10 @@ using System;
 using System.Collections.Generic;
 using OpenTKKey = OpenTK.Input.Key;
 
-namespace Elffy.Input
+namespace Elffy.InputSystem
 {
     public static class Input
     {
-        #region private member
         /// <summary>Axisのデフォルトの最小値</summary>
         private const float DEFAULT_AXIS_MIN_VALUE = 0.1f;
         /// <summary>ゲームパッドの状態</summary>
@@ -35,9 +34,7 @@ namespace Elffy.Input
         private static readonly Dictionary<string, float> _currentTrigger = new Dictionary<string, float>();
         /// <summary>各入力トリガーの前回の状態</summary>
         private static readonly Dictionary<string, float> _previousTrigger = new Dictionary<string, float>();
-        #endregion private member
 
-        #region public Method
         #region GetState
         /// <summary>現在の入力状態を取得します</summary>
         /// <param name="name">状態名</param>
@@ -144,7 +141,6 @@ namespace Elffy.Input
             _currentTrigger.Add(name, 0);
             _previousTrigger.Add(name, 0);
         }
-        #endregion
         #endregion
 
         #region internal Method

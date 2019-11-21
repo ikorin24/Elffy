@@ -1,5 +1,5 @@
 ﻿#nullable enable
-namespace Elffy.Input
+namespace Elffy.InputSystem
 {
     public enum Trigger
     {

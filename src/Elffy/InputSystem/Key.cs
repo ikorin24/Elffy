@@ -1,6 +1,6 @@
 ﻿#nullable enable
 
-namespace Elffy.Input
+namespace Elffy.InputSystem
 {
     // (OpenTK.Input.Key から移植)
 

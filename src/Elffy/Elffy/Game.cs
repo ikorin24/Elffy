@@ -7,7 +7,7 @@ using Elffy.Threading;
 using Elffy.Core.Timer;
 using Elffy.Platforms;
 using Elffy.Exceptions;
-using Elffy.Input;
+using Elffy.InputSystem;
 
 namespace Elffy
 {

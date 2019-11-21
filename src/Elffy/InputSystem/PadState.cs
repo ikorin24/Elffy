@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 using OpenTK;
 using OpenTK.Input;
 
-namespace Elffy.Input
+namespace Elffy.InputSystem
 {
     #region class PadState
     class PadState

@@ -5,7 +5,7 @@ using System;
 using Elffy.UI;
 using Elffy.Core;
 using Elffy.Threading;
-using Elffy.Input;
+using Elffy.InputSystem;
 using System.Drawing;
 using TKMouseButton = OpenTK.Input.MouseButton;
 using MouseButtonEventArgs = OpenTK.Input.MouseButtonEventArgs;
@@ -129,7 +129,7 @@ namespace Elffy
 
         private void OnRenderFrame(object sender, FrameEventArgs e)
         {
-            Input.Input.Update();
+            Input.Update();
             Mouse.InitFrame();
             Rendering?.Invoke(this);
             var camera = Camera;

@@ -1,5 +1,5 @@
 ﻿using Elffy;
-using Elffy.Input;
+using Elffy.InputSystem;
 using Elffy.Core;
 using Elffy.UI;
 using System;

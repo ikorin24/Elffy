@@ -3,7 +3,7 @@ using System;
 using System.Drawing;
 using Elffy.Effective;
 
-namespace Elffy.Input
+namespace Elffy.InputSystem
 {
     /// <summary>マウスの状態を表すクラスです</summary>
     public class Mouse

@@ -1,6 +1,6 @@
 ﻿#nullable enable
 
-namespace Elffy.Input
+namespace Elffy.InputSystem
 {
     /// <summary>Mouse button type</summary>
     public enum MouseButton
