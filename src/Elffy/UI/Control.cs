@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Elffy.Exceptions;
+using Elffy.InputSystem;
 
 namespace Elffy.UI
 {
@@ -155,7 +156,7 @@ namespace Elffy.UI
         private bool _isFocused;
 
         /// <summary>get or set whether this <see cref="Control"/> is enable in HitTest</summary>
-        public bool IsHitTestVisible { get; set; }
+        public bool IsHitTestVisible { get; set; } = true;
         /// <summary>get whether the mouse is over this <see cref="Control"/></summary>
         public bool IsMouseOver { get; private set; }
         #endregion Property
@@ -192,9 +193,25 @@ namespace Elffy.UI
         }
         #endregion
 
-        internal bool HitTest()
+        internal bool MouseOverTest(Mouse mouse)
         {
-            throw new NotImplementedException();        // TODO: HitTest
+            return new Rectangle((int)AbsolutePosition.X, (int)AbsolutePosition.Y, Width, Height).Contains(mouse.Position);
+        }
+
+        internal void NotifyHitTestResult(bool isHit, Mouse mouse)
+        {
+            var isMouseOverPrev = IsMouseOver;
+            IsMouseOver = isHit;
+            if(isHit) {
+                if(isMouseOverPrev == false) {
+                    MouseEnter?.Invoke(this, new MouseEventArgs(mouse.Position));
+                }
+            }
+            else {
+                if(isMouseOverPrev) {
+                    MouseLeave?.Invoke(this, new MouseEventArgs(mouse.Position));
+                }
+            }
         }
     }
 

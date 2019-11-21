@@ -22,7 +22,7 @@ namespace Elffy
         private readonly RenderingArea _renderingArea = new RenderingArea();
 
         /// <summary>ウィンドウの UI の Root</summary>
-        public IUIRoot UIRoot => _renderingArea.UIRoot;
+        public IUIRoot UIRoot => _renderingArea.Layers.UILayer.UIRoot;
         /// <summary>このウィンドウのレイヤー</summary>
         public LayerCollection Layers => _renderingArea.Layers;
 
@@ -49,7 +49,7 @@ namespace Elffy
         public event ActionEventHandler<IScreenHost>? Rendered;
 
         /// <summary>ウィンドウを作成します</summary>
-        public Window() : this(800, 450, DEFAULT_WINDOW_TITLE, WindowStyle.Default) { }
+        public Window() : this(WindowStyle.Default) { }
 
         /// <summary>スタイルを指定してウィンドウを作成します</summary>
         /// <param name="windowStyle">ウィンドウのスタイル</param>
@@ -85,7 +85,7 @@ namespace Elffy
                 Mouse.ChangePressedState(button.Value, e.IsPressed);
             };
 
-            _window.MouseMove += (sender, e) => Mouse.ChangePosition(new Point(e.Mouse.X, e.Mouse.Y));
+            _window.MouseMove += (sender, e) => Mouse.ChangePosition(new Point(e.X, e.Y));
             _window.MouseWheel += (sender, e) => Mouse.ChangeWheel(e.Mouse.WheelPrecise);
             _window.MouseDown += MouseButtonStateChanged;
             _window.MouseUp += MouseButtonStateChanged;
@@ -131,6 +131,7 @@ namespace Elffy
         {
             Input.Update();
             Mouse.InitFrame();
+            _renderingArea.Layers.UILayer.HitTest(Mouse);
             Rendering?.Invoke(this);
             var camera = Camera;
             _renderingArea.RenderFrame(camera.Projection, camera.View);

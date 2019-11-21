@@ -21,7 +21,7 @@ namespace Elffy
         private readonly List<Layer> _list = new List<Layer>();
 
         /// <summary>UI レイヤーを取得します</summary>
-        public Layer UILayer { get; } = new UILayer(UI_LAYER_NAME);
+        internal UILayer UILayer { get; } = new UILayer(UI_LAYER_NAME);
 
         /// <summary>ワールドレイヤーを取得します</summary>
         public Layer WorldLayer { get; } = new Layer(WORLD_LAYER_NAME) { IsLightingEnabled = true };

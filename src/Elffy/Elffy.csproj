@@ -158,6 +158,7 @@
     <Compile Include="Elffy\Game.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Elffy\Resources.cs" />
+    <Compile Include="UI\YAxisDirection.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="dll\OpenTK.dll" />

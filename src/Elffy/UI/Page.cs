@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using Elffy.Core;
 using Elffy.Exceptions;
 using System;
 using System.Diagnostics;
@@ -12,11 +13,13 @@ namespace Elffy.UI
         public bool IsLayouted { get; private set; }
 
         /// <summary><see cref="IUIRoot"/> 実装。この <see cref="Page"/> とその子孫を描画する <see cref="Layer"/></summary>
-        public Layer UILayer { get; }
+        public UILayer UILayer { get; }
+
+        Layer IUIRoot.UILayer => UILayer;
 
         /// <summary>コンストラクタ</summary>
         /// <param name="uiLayer">この <see cref="Page"/> と子孫を描画する UI レイヤー</param>
-        internal Page(Layer uiLayer)
+        internal Page(UILayer uiLayer)
         {
             ArgumentChecker.ThrowIfNullArg(uiLayer, nameof(uiLayer));
             UILayer = uiLayer;

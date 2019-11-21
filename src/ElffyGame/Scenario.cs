@@ -73,6 +73,10 @@ namespace ElffyGame
                 System.Diagnostics.Debug.WriteLine("Go to Next Scenario");
                 Scenario.GoToNext(new StartScenario());
             };
+            button.MouseEnter += (sender, e) =>
+            {
+                Debug.WriteLine("Mouse Enter");
+            };
             Game.UI.Add(button);
 
             var b2 = new Button(100, 100);
@@ -142,18 +146,18 @@ namespace ElffyGame
                 Game.Camera.ChangeFovy(fovy.ToRadian(), a.Position);
             });
 
-            FrameProcess.WhileTrue(_ =>
-            {
-                var mouse = Game.Mouse;
-                var pos = mouse.Position;
-                var wheel = mouse.Wheel();
-                var l = mouse.IsDown(MouseButton.Left)   ? 'd' : mouse.IsUp(MouseButton.Left)   ? 'u' : mouse.IsPressed(MouseButton.Left)   ? '|' : ' ';
-                var r = mouse.IsDown(MouseButton.Right)  ? 'd' : mouse.IsUp(MouseButton.Right)  ? 'u' : mouse.IsPressed(MouseButton.Right)  ? '|' : ' ';
-                var m = mouse.IsDown(MouseButton.Middle) ? 'd' : mouse.IsUp(MouseButton.Middle) ? 'u' : mouse.IsPressed(MouseButton.Middle) ? '|' : ' ';
+            //FrameProcess.WhileTrue(_ =>
+            //{
+            //    var mouse = Game.Mouse;
+            //    var pos = mouse.Position;
+            //    var wheel = mouse.Wheel();
+            //    var l = mouse.IsDown(MouseButton.Left)   ? 'd' : mouse.IsUp(MouseButton.Left)   ? 'u' : mouse.IsPressed(MouseButton.Left)   ? '|' : ' ';
+            //    var r = mouse.IsDown(MouseButton.Right)  ? 'd' : mouse.IsUp(MouseButton.Right)  ? 'u' : mouse.IsPressed(MouseButton.Right)  ? '|' : ' ';
+            //    var m = mouse.IsDown(MouseButton.Middle) ? 'd' : mouse.IsUp(MouseButton.Middle) ? 'u' : mouse.IsPressed(MouseButton.Middle) ? '|' : ' ';
 
-                var onscreen = mouse.OnScreen ? "in " : "out";
-                Debug.WriteLine($"{onscreen}, ({pos.X:000}, {pos.Y:000}), {wheel}, [{l},{m},{r}]");
-            });
+            //    var onscreen = mouse.OnScreen ? "in " : "out";
+            //    Debug.WriteLine($"{onscreen}, ({pos.X:000}, {pos.Y:000}), {wheel}, [{l},{m},{r}]");
+            //});
         }
     }
 }

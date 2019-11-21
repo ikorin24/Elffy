@@ -19,8 +19,6 @@ namespace Elffy.Core
 
         /// <summary>レイヤーのリスト</summary>
         public LayerCollection Layers { get; } = new LayerCollection();
-        /// <summary>UI tree の Root</summary>
-        public IUIRoot UIRoot { get; }
 
         #region Width
         public int Width
@@ -79,7 +77,6 @@ namespace Elffy.Core
 
         public RenderingArea()
         {
-            UIRoot = new Page(Layers.UILayer);
         }
 
         #region InitializeGL

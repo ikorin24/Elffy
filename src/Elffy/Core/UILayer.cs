@@ -1,6 +1,6 @@
 ﻿#nullable enable
+using Elffy.InputSystem;
 using Elffy.UI;
-using System.Linq;
 
 namespace Elffy.Core
 {
@@ -9,26 +9,36 @@ namespace Elffy.Core
         /// <summary>現在フォーカスがある <see cref="Control"/></summary>
         private Control? _focusedControl;
 
+        /// <summary>UI tree の Root</summary>
+        public Page UIRoot { get; }
+
+        public YAxisDirection YAxisDirection { get; set; }
+
         public UILayer(string name) : base(name)
         {
+            UIRoot = new Page(this);
         }
 
-        #region HitTest
-        /// <summary>このレイヤーに含まれる <see cref="IUIRenderable"/> にヒットテストを実行します</summary>
-        public void HitTest()
+        public bool IsHitTestEnabled { get; set; } = true;
+
+        /// <summary><see cref="UILayer"/> 内の <see cref="Control"/> に対してマウスヒットテストを行います</summary>
+        /// <param name="mouse">マウスオブジェクト</param>
+        public void HitTest(Mouse mouse)
         {
-            var hit = Renderables.OfType<IUIRenderable>()
-                                 .Select(x => x.Control)
-                                 .Where(control => control.IsHitTestVisible)
-                                 .LastOrDefault(control => control.HitTest());
-            if(_focusedControl != null) {
-                _focusedControl.IsFocused = false;
+            var uiRoot = UIRoot;
+            if(IsHitTestEnabled == false) { return; }
+            if(mouse.OnScreen == false) { return; }
+
+            // Hit control is the last control where mouse over test is true
+            var hitControl = default(Control);
+            foreach(var control in uiRoot.Children) {
+                if(control.IsHitTestVisible && control.MouseOverTest(mouse)) {
+                    hitControl = control;
+                }
             }
-            if(hit != null) {
-                hit.IsFocused = true;
+            foreach(var control in uiRoot.Children) {
+                control.NotifyHitTestResult(control == hitControl, mouse);
             }
-            _focusedControl = hit;
         }
-        #endregion
     }
 }
