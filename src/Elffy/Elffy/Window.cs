@@ -7,6 +7,8 @@ using Elffy.Core;
 using Elffy.Threading;
 using Elffy.Input;
 using System.Drawing;
+using TKMouseButton = OpenTK.Input.MouseButton;
+using MouseButtonEventArgs = OpenTK.Input.MouseButtonEventArgs;
 
 namespace Elffy
 {
@@ -64,45 +66,31 @@ namespace Elffy
             _window.VSync = VSyncMode.On;
             _window.TargetRenderFrequency = DisplayDevice.Default.RefreshRate;
 
-            // event
-            _window.Load += (sender, e) => OnLoad(EventArgs.Empty);
-            _window.Resize += (sender, e) => OnResize(EventArgs.Empty);
-            _window.RenderFrame += (sender, e) => OnRenderFrame(null);
-            _window.MouseMove += (sender, e) => Mouse.Update(e.Mouse);
-            _window.MouseWheel += (sender, e) => Mouse.Update(e.Mouse);
-            _window.MouseDown += (sender, e) => Mouse.Update(e.Mouse);
-            _window.MouseUp += (sender, e) => Mouse.Update(e.Mouse);
-            _window.MouseEnter += (sender, e) => Mouse.Update(true);
-            _window.MouseLeave += (sender, e) => Mouse.Update(false);
-        }
+            _window.Load += OnLoad;
+            _window.Resize += OnResize;
+            _window.RenderFrame += OnRenderFrame;
 
-        protected virtual void OnLoad(EventArgs e)
-        {
-            Dispatcher.ThrowIfNotMainThread();
-            ElffySynchronizationContext.CreateIfNeeded();
-            _renderingArea.InitializeGL();
-            Initialized?.Invoke(this);
-            Layers.SystemLayer.ApplyChanging();
-            foreach(var layer in Layers) {
-                layer.ApplyChanging();
-            }
-        }
+            MouseButton? GetMouseButton(TKMouseButton button) => button switch
+            {
+                TKMouseButton.Left => MouseButton.Left,
+                TKMouseButton.Right => MouseButton.Right,
+                TKMouseButton.Middle => MouseButton.Middle,
+                _ => (MouseButton?)null
+            };
 
-        protected virtual void OnResize(EventArgs e)
-        {
-            Dispatcher.ThrowIfNotMainThread();
-            _renderingArea.Size = _window.ClientSize;
-            Camera.ChangeScreenSize(_window.ClientSize.Width, _window.ClientSize.Height);
-        }
+            void MouseButtonStateChanged(object sender, MouseButtonEventArgs e)
+            {
+                var button = GetMouseButton(e.Button);
+                if(button == null) { return; }
+                Mouse.ChangePressedState(button.Value, e.IsPressed);
+            };
 
-        protected virtual void OnRenderFrame(FrameEventArgs? e)
-        {
-            Input.Input.Update();
-            Rendering?.Invoke(this);
-            var camera = Camera;
-            _renderingArea.RenderFrame(camera.Projection, camera.View);
-            Rendered?.Invoke(this);
-            _window.SwapBuffers();
+            _window.MouseMove += (sender, e) => Mouse.ChangePosition(new Point(e.Mouse.X, e.Mouse.Y));
+            _window.MouseWheel += (sender, e) => Mouse.ChangeWheel(e.Mouse.WheelPrecise);
+            _window.MouseDown += MouseButtonStateChanged;
+            _window.MouseUp += MouseButtonStateChanged;
+            _window.MouseEnter += (sender, e) => Mouse.ChangeOnScreen(true);
+            _window.MouseLeave += (sender, e) => Mouse.ChangeOnScreen(false);
         }
 
         public void Close()
@@ -118,6 +106,36 @@ namespace Elffy
         {
             ThrowIfClosed();
             _window.Run();
+        }
+
+        private void OnLoad(object sender, EventArgs e)
+        {
+            Dispatcher.ThrowIfNotMainThread();
+            ElffySynchronizationContext.CreateIfNeeded();
+            _renderingArea.InitializeGL();
+            Initialized?.Invoke(this);
+            Layers.SystemLayer.ApplyChanging();
+            foreach(var layer in Layers) {
+                layer.ApplyChanging();
+            }
+        }
+
+        private void OnResize(object sender, EventArgs e)
+        {
+            Dispatcher.ThrowIfNotMainThread();
+            _renderingArea.Size = _window.ClientSize;
+            Camera.ChangeScreenSize(_window.ClientSize.Width, _window.ClientSize.Height);
+        }
+
+        private void OnRenderFrame(object sender, FrameEventArgs e)
+        {
+            Input.Input.Update();
+            Mouse.InitFrame();
+            Rendering?.Invoke(this);
+            var camera = Camera;
+            _renderingArea.RenderFrame(camera.Projection, camera.View);
+            Rendered?.Invoke(this);
+            _window.SwapBuffers();
         }
 
         private void ReleaseResource()

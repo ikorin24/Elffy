@@ -1,55 +1,161 @@
 ﻿#nullable enable
 using System;
 using System.Drawing;
-using OpenTK.Input;
-using TKMouseButton = OpenTK.Input.MouseButton;
+using Elffy.Effective;
 
 namespace Elffy.Input
 {
     /// <summary>マウスの状態を表すクラスです</summary>
     public class Mouse
     {
-        private MouseState _state;
+        private KeyBuffer _leftPressed;
+        private KeyBuffer _rightPressed;
+        private KeyBuffer _middlePressed;
+        private WheelBuffer _wheel;
+
         /// <summary>マウスが <see cref="IScreenHost"/> の描画領域内にあるかどうかを取得します</summary>
         public bool OnScreen { get; private set; }
 
         /// <summary>Top-Left を基点とする、マウスの <see cref="IScreenHost"/> 内での座標を取得します</summary>
-        public Point Position => new Point(_state.X, _state.Y);
+        public Point Position { get; private set; }
 
-        internal Mouse()
-        {
-        }
+        internal Mouse() { }
 
-        /// <summary>現在の状態を更新します</summary>
-        /// <param name="state">マウスの状態</param>
-        internal void Update(MouseState state)
-        {
-            _state = state;
-        }
+        internal void ChangePosition(Point position) => Position = position;
 
-        /// <summary>現在のマウスが <see cref="IScreenHost"/> の描画領域内にあるかどうかを更新します</summary>
-        /// <param name="onScreen">マウスが領域内にあるかどうか</param>
-        internal void Update(bool onScreen)
-        {
-            OnScreen = onScreen;
-        }
-
-        public bool IsPressed(MouseButton button)
+        internal void ChangePressedState(MouseButton button, bool isPressed)
         {
             switch(button) {
                 case MouseButton.Left:
-                    return _state.IsButtonDown(TKMouseButton.Left);
+                    _leftPressed.SetValue(isPressed);
+                    return;
                 case MouseButton.Right:
-                    return _state.IsButtonDown(TKMouseButton.Right);
+                    _rightPressed.SetValue(isPressed);
+                    return;
+                case MouseButton.Middle:
+                    _middlePressed.SetValue(isPressed);
+                    return;
                 default:
-                    throw new NotSupportedException($"Unknown type '{button}'");
+                    throw UnknownButtonException(button);
             }
         }
-    }
 
-    public enum MouseButton
-    {
-        Left,
-        Right,
+        internal void ChangeWheel(float value) => _wheel.SetValue(value);
+
+        /// <summary>現在のマウスが <see cref="IScreenHost"/> の描画領域内にあるかどうかを更新します</summary>
+        /// <param name="onScreen">マウスが領域内にあるかどうか</param>
+        internal void ChangeOnScreen(bool onScreen) => OnScreen = onScreen;
+
+        internal void InitFrame()
+        {
+            _leftPressed.InitFrame();
+            _rightPressed.InitFrame();
+            _middlePressed.InitFrame();
+            _wheel.InitFrame();
+        }
+
+        /// <summary>Get whether specified mouse button is donw. (Return true if the button got pressed on this frame.)</summary>
+        /// <param name="button">mouse button</param>
+        /// <returns>button down state</returns>
+        public bool IsDown(MouseButton button)
+        {
+            return (button switch
+            {
+                MouseButton.Left => _leftPressed,
+                MouseButton.Right => _rightPressed,
+                MouseButton.Middle => _middlePressed,
+                _ => throw UnknownButtonException(button),
+            }).IsKeyDown();
+        }
+
+        /// <summary>Get whether specified mouse button is pressed.</summary>
+        /// <param name="button">mouse button</param>
+        /// <returns>button pressed state</returns>
+        public bool IsPressed(MouseButton button)
+        {
+            return (button switch
+            {
+                MouseButton.Left => _leftPressed,
+                MouseButton.Right => _rightPressed,
+                MouseButton.Middle => _middlePressed,
+                _ => throw UnknownButtonException(button),
+            }).IsKeyPressed();
+        }
+
+        /// <summary>Get whether specified mouse button Tis up. (Return true if the button got released on this frame.)</summary>
+        /// <param name="button">mouse button</param>
+        /// <returns>button up state</returns>
+        public bool IsUp(MouseButton button)
+        {
+            return (button switch
+            {
+                MouseButton.Left => _leftPressed,
+                MouseButton.Right => _rightPressed,
+                MouseButton.Middle => _middlePressed,
+                _ => throw UnknownButtonException(button),
+            }).IsKeyUp();
+        }
+
+        /// <summary>Get wheel value difference from previouse frame.</summary>
+        /// <returns>wheel value</returns>
+        public float Wheel() => _wheel.GetDiff();
+
+        private NotSupportedException UnknownButtonException(MouseButton button) 
+            => throw new NotSupportedException($"Unknown button type '{button}'".AsInterned());
+
+        private struct KeyBuffer
+        {
+            private bool _current;
+            private bool _prev;
+            private bool _changed;
+
+            public void SetValue(bool value)
+            {
+                _prev = _current;
+                _current = value;
+                _changed = true;
+            }
+
+            public bool IsKeyPressed() => _current;
+
+            public bool IsKeyDown() => _current && !_prev;
+
+            public bool IsKeyUp() => !_current && _prev;
+
+            public void InitFrame()
+            {
+                if(_changed == false) {
+                    _prev = _current;
+                }
+                _changed = false;
+            }
+        }
+
+        private struct WheelBuffer
+        {
+            private float _current;
+            private float _prev;
+            private bool _changed;
+
+            public void SetValue(float value)
+            {
+                _prev = _current;
+                _current = value;
+                _changed = true;
+            }
+
+            public float GetDiff()
+            {
+                return _current - _prev;
+            }
+
+            public void InitFrame()
+            {
+                if(_changed == false) {
+                    _prev = _current;
+                }
+                _changed = false;
+            }
+        }
     }
 }

@@ -3,14 +3,12 @@ using Elffy.Exceptions;
 
 namespace Elffy.UI
 {
-    #region class Button
     /// <summary>処理を実行可能な UI 要素の Button クラス</summary>
     public class Button : Executable
     {
         private const int DEFAULT_WIDTH = 90;
         private const int DEFAULT_HEIGHT = 30;
 
-        #region コンストラクタ
         /// <summary>コンストラクタ</summary>
         public Button()
         {
@@ -28,7 +26,5 @@ namespace Elffy.UI
             Width = width;
             Height = height;
         }
-        #endregion
     }
-    #endregion
 }

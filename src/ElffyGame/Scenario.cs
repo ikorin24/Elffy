@@ -8,6 +8,8 @@ using Elffy.UI;
 using Elffy.Framing;
 using OpenTK;
 using Elffy.Mathmatics;
+using System.Diagnostics;
+using Elffy.Input;
 
 namespace ElffyGame
 {
@@ -138,6 +140,19 @@ namespace ElffyGame
             {
                 var fovy = 25f + 15f * MathTool.Sin((float)process.Time.TotalSeconds / 2 * MathTool.TwoPi);
                 Game.Camera.ChangeFovy(fovy.ToRadian(), a.Position);
+            });
+
+            FrameProcess.WhileTrue(_ =>
+            {
+                var mouse = Game.Mouse;
+                var pos = mouse.Position;
+                var wheel = mouse.Wheel();
+                var l = mouse.IsDown(MouseButton.Left)   ? 'd' : mouse.IsUp(MouseButton.Left)   ? 'u' : mouse.IsPressed(MouseButton.Left)   ? '|' : ' ';
+                var r = mouse.IsDown(MouseButton.Right)  ? 'd' : mouse.IsUp(MouseButton.Right)  ? 'u' : mouse.IsPressed(MouseButton.Right)  ? '|' : ' ';
+                var m = mouse.IsDown(MouseButton.Middle) ? 'd' : mouse.IsUp(MouseButton.Middle) ? 'u' : mouse.IsPressed(MouseButton.Middle) ? '|' : ' ';
+
+                var onscreen = mouse.OnScreen ? "in " : "out";
+                Debug.WriteLine($"{onscreen}, ({pos.X:000}, {pos.Y:000}), {wheel}, [{l},{m},{r}]");
             });
         }
     }

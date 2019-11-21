@@ -101,6 +101,7 @@
     <Compile Include="Framing\FrameProcess.cs" />
     <Compile Include="Elffy\Camera.cs" />
     <Compile Include="Input\Mouse.cs" />
+    <Compile Include="Input\MouseButton.cs" />
     <Compile Include="Platforms\Windows\MessageBox.cs" />
     <Compile Include="Elffy\ConfigBase.cs" />
     <Compile Include="Core\Consts.cs" />
@@ -137,6 +138,7 @@
     <Compile Include="UI\Button.cs" />
     <Compile Include="Shape\Plain.cs" />
     <Compile Include="UI\Executable.cs" />
+    <Compile Include="UI\ExecutableExecutionType.cs" />
     <Compile Include="UI\IUIRenderable.cs" />
     <Compile Include="UI\IUIRoot.cs" />
     <Compile Include="UI\Page.cs" />

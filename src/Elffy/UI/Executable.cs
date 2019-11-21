@@ -18,16 +18,16 @@ namespace Elffy.UI
             Renderable.Updated += OnUpdated;
         }
 
-        internal void Execute(ExecutableExecuteType type)
+        internal void Execute(ExecutableExecutionType type)
         {
             switch(type) {
-                case ExecutableExecuteType.KeyDown:
+                case ExecutableExecutionType.KeyDown:
                     KeyDown?.Invoke(this);
                     break;
-                case ExecutableExecuteType.KeyPress:
+                case ExecutableExecutionType.KeyPress:
                     KeyPress?.Invoke(this);
                     break;
-                case ExecutableExecuteType.KeyUp:
+                case ExecutableExecutionType.KeyUp:
                     KeyUp?.Invoke(this);
                     break;
                 default:
@@ -38,13 +38,5 @@ namespace Elffy.UI
         private void OnUpdated(FrameObject sender)
         {
         }
-    }
-
-    /// <summary><see cref="Executable"/> の実行のタイプ</summary>
-    internal enum ExecutableExecuteType
-    {
-        KeyDown,
-        KeyPress,
-        KeyUp
     }
 }
