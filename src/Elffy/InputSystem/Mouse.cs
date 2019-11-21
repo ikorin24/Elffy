@@ -2,38 +2,39 @@
 using System;
 using System.Drawing;
 using Elffy.Effective;
+using OpenTK;
 
 namespace Elffy.InputSystem
 {
     /// <summary>マウスの状態を表すクラスです</summary>
     public class Mouse
     {
-        private KeyBuffer _leftPressed;
-        private KeyBuffer _rightPressed;
-        private KeyBuffer _middlePressed;
+        private KeyBuffer _leftButton;
+        private KeyBuffer _rightButton;
+        private KeyBuffer _middleButton;
         private WheelBuffer _wheel;
 
         /// <summary>マウスが <see cref="IScreenHost"/> の描画領域内にあるかどうかを取得します</summary>
         public bool OnScreen { get; private set; }
 
         /// <summary>Top-Left を基点とする、マウスの <see cref="IScreenHost"/> 内での座標を取得します</summary>
-        public Point Position { get; private set; }
+        public Vector2 Position { get; private set; }
 
         internal Mouse() { }
 
-        internal void ChangePosition(Point position) => Position = position;
+        internal void ChangePosition(Vector2 position) => Position = position;
 
         internal void ChangePressedState(MouseButton button, bool isPressed)
         {
             switch(button) {
                 case MouseButton.Left:
-                    _leftPressed.SetValue(isPressed);
+                    _leftButton.SetValue(isPressed);
                     return;
                 case MouseButton.Right:
-                    _rightPressed.SetValue(isPressed);
+                    _rightButton.SetValue(isPressed);
                     return;
                 case MouseButton.Middle:
-                    _middlePressed.SetValue(isPressed);
+                    _middleButton.SetValue(isPressed);
                     return;
                 default:
                     throw UnknownButtonException(button);
@@ -48,10 +49,25 @@ namespace Elffy.InputSystem
 
         internal void InitFrame()
         {
-            _leftPressed.InitFrame();
-            _rightPressed.InitFrame();
-            _middlePressed.InitFrame();
+            _leftButton.InitFrame();
+            _rightButton.InitFrame();
+            _middleButton.InitFrame();
             _wheel.InitFrame();
+        }
+
+        public bool IsAnyDown()
+        {
+            return _leftButton.IsKeyDown() || _rightButton.IsKeyDown() || _middleButton.IsKeyDown();
+        }
+
+        public bool IsAnyPressed()
+        {
+            return _leftButton.IsKeyPressed() || _rightButton.IsKeyPressed() || _middleButton.IsKeyPressed();
+        }
+
+        public bool IsAnyUp()
+        {
+            return _leftButton.IsKeyUp() || _rightButton.IsKeyUp() || _middleButton.IsKeyUp();
         }
 
         /// <summary>Get whether specified mouse button is donw. (Return true if the button got pressed on this frame.)</summary>
@@ -61,9 +77,9 @@ namespace Elffy.InputSystem
         {
             return (button switch
             {
-                MouseButton.Left => _leftPressed,
-                MouseButton.Right => _rightPressed,
-                MouseButton.Middle => _middlePressed,
+                MouseButton.Left => _leftButton,
+                MouseButton.Right => _rightButton,
+                MouseButton.Middle => _middleButton,
                 _ => throw UnknownButtonException(button),
             }).IsKeyDown();
         }
@@ -75,9 +91,9 @@ namespace Elffy.InputSystem
         {
             return (button switch
             {
-                MouseButton.Left => _leftPressed,
-                MouseButton.Right => _rightPressed,
-                MouseButton.Middle => _middlePressed,
+                MouseButton.Left => _leftButton,
+                MouseButton.Right => _rightButton,
+                MouseButton.Middle => _middleButton,
                 _ => throw UnknownButtonException(button),
             }).IsKeyPressed();
         }
@@ -89,9 +105,9 @@ namespace Elffy.InputSystem
         {
             return (button switch
             {
-                MouseButton.Left => _leftPressed,
-                MouseButton.Right => _rightPressed,
-                MouseButton.Middle => _middlePressed,
+                MouseButton.Left => _leftButton,
+                MouseButton.Right => _rightButton,
+                MouseButton.Middle => _middleButton,
                 _ => throw UnknownButtonException(button),
             }).IsKeyUp();
         }
