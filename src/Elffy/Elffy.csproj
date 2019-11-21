@@ -132,7 +132,7 @@
     <Compile Include="Shape\Cube.cs" />
     <Compile Include="Shape\Model3D.cs" />
     <Compile Include="Elffy\Texture.cs" />
-    <Compile Include="Threading\ElffySynchronizationContext.cs" />
+    <Compile Include="Threading\CustomSynchronizationContext.cs" />
     <Compile Include="Threading\Dispatcher.cs" />
     <Compile Include="Threading\NonCaptureContextTaskFactory.cs" />
     <Compile Include="UI\Button.cs" />

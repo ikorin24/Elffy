@@ -174,7 +174,7 @@ namespace Elffy
             }
             finally {
                 _instance = null;
-                ElffySynchronizationContext.Delete();
+                CustomSynchronizationContext.Delete();
             }
         }
         #endregion

@@ -111,7 +111,7 @@ namespace Elffy
         private void OnLoad(object sender, EventArgs e)
         {
             Dispatcher.ThrowIfNotMainThread();
-            ElffySynchronizationContext.CreateIfNeeded();
+            CustomSynchronizationContext.CreateIfNeeded();
             _renderingArea.InitializeGL();
             Initialized?.Invoke(this);
             Layers.SystemLayer.ApplyChanging();
