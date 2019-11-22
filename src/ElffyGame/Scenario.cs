@@ -68,6 +68,7 @@ namespace ElffyGame
             });
 
             var button = new Button(100, 100);
+            button.Texture = Texture.LoadFrom("cube.png");
             button.KeyUp += (sender) =>
             {
                 System.Diagnostics.Debug.WriteLine("Go to Next Scenario");
@@ -81,12 +82,15 @@ namespace ElffyGame
 
             var b2 = new Button(100, 100);
             b2.Position = new Vector2(100, 100);
+            b2.Texture = Texture.LoadFrom("cube.png");
             Game.UI.Add(b2);
 
             FrameProcess.Begin(TimeSpan.FromSeconds(2), process =>
             {
                 b2.Position += new Vector2(1, 1);
             });
+
+            FrameProcess.WhileTrue(process => b2.IsVisible = (int)process.Time.TotalSeconds % 2 == 0);
 
             var cubes = Enumerable.Range(0, 90).Select(i => new Cube() { Texture = cube.Texture }).ToArray();
             for(int i = 0; i < cubes.Length; i++) {

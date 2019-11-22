@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using Elffy.Exceptions;
 using Elffy.InputSystem;
+using Elffy.Core;
+using OpenTK.Graphics;
 
 namespace Elffy.UI
 {
@@ -23,7 +25,6 @@ namespace Elffy.UI
     /// </remarks>
     public abstract class Control
     {
-        #region Property
         /// <summary>この <see cref="Control"/> を描画するオブジェクト</summary>
         internal UIRenderable Renderable { get; private set; }
 
@@ -159,7 +160,24 @@ namespace Elffy.UI
         public bool IsHitTestVisible { get; set; } = true;
         /// <summary>get whether the mouse is over this <see cref="Control"/></summary>
         public bool IsMouseOver { get; private set; }
-        #endregion Property
+
+        /// <summary>get or set <see cref="Control"/> is visible on rendering.</summary>
+        public bool IsVisible { get => Renderable.IsVisible; set => Renderable.IsVisible = value; }
+
+        /// <summary>Get or set background color. This value is <see cref="Material.Ambient"/>.</summary>
+        public Color4 Background
+        {
+            get => Renderable.Material.Ambient;
+            set => Renderable.Material.Ambient = value;
+        }
+
+        /// <summary>Get or set texture</summary>
+        /// <exception cref="ArgumentNullException"></exception>
+        public TextureBase Texture { get => Renderable.Texture; set => Renderable.Texture = value; }
+
+        /// <summary>Get or set shader</summary>
+        /// <exception cref="ArgumentNullException"></exception>
+        public ShaderProgram Shader { get => Renderable.Shader; set => Renderable.Shader = value; }
 
         /// <summary>Focus enter event</summary>
         public event ActionEventHandler<Control>? FocusEnter;
@@ -170,16 +188,13 @@ namespace Elffy.UI
         /// <summary>Mouse leave event</summary>
         public event ActionEventHandler<Control, MouseEventArgs>? MouseLeave;
 
-        #region constructor
         /// <summary>constructor of <see cref="Control"/></summary>
         public Control()
         {
             Children = new ControlCollection(this);
             Renderable = new UIRenderable(this);
         }
-        #endregion
 
-        #region GetOffspring
         /// <summary>このオブジェクトの <see cref="Children"/> 以下に存在する全ての子孫を取得します。列挙順は深さ優先探索 (DFS; depth-first search) です。</summary>
         /// <returns>全ての子孫オブジェクト</returns>
         public IEnumerable<Control> GetOffspring()
@@ -191,13 +206,18 @@ namespace Elffy.UI
                 }
             }
         }
-        #endregion
 
+        /// <summary>マウスオーバーしているかを取得します</summary>
+        /// <param name="mouse">マウス情報</param>
+        /// <returns>マウスオーバーしているか</returns>
         internal bool MouseOverTest(Mouse mouse)
         {
-            return IsHitTestVisible && new Rectangle((int)AbsolutePosition.X, (int)AbsolutePosition.Y, Width, Height).Contains(mouse.Position);
+            return IsVisible && IsHitTestVisible && new Rectangle((int)AbsolutePosition.X, (int)AbsolutePosition.Y, Width, Height).Contains(mouse.Position);
         }
 
+        /// <summary>ヒットテストの結果を通知します</summary>
+        /// <param name="isHit">ヒットテスト結果</param>
+        /// <param name="mouse">マウス情報</param>
         internal void NotifyHitTestResult(bool isHit, Mouse mouse)
         {
             var isMouseOverPrev = IsMouseOver;
