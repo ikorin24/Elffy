@@ -10,6 +10,7 @@ using OpenTK;
 using Elffy.Mathmatics;
 using System.Diagnostics;
 using Elffy.InputSystem;
+using System.Drawing;
 
 namespace ElffyGame
 {
@@ -81,13 +82,14 @@ namespace ElffyGame
             Game.UI.Add(button);
 
             var b2 = new Button(100, 100);
-            b2.Position = new Vector2(100, 100);
+            b2.Position = new Point(100, 100);
             b2.Texture = Texture.LoadFrom("cube.png");
             Game.UI.Add(b2);
 
             FrameProcess.Begin(TimeSpan.FromSeconds(2), process =>
             {
-                b2.Position += new Vector2(1, 1);
+                b2.PositionX += 1;
+                b2.PositionY += 1;
             });
 
             FrameProcess.WhileTrue(process => b2.IsVisible = (int)process.Time.TotalSeconds % 2 == 0);

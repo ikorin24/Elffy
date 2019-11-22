@@ -54,26 +54,29 @@ namespace Elffy.UI
         /// <summary>この <see cref="Control"/> を持つ UI tree の Root</summary>
         public IUIRoot? Root { get; protected private set; }
 
-        public Vector2 Position
+        public Point Position
         {
-            get => Renderable.Position.Xy;
+            get => new Point((int)Renderable.PositionX, (int)Renderable.PositionY);
             set
             {
-                var vec = value - Renderable.Position.Xy;
-                Renderable.Position += new Vector3(vec);
-                _absolutePosition += vec;
+                var vecX = value.X - PositionX;
+                var vecY = value.Y - PositionY;
+                Renderable.Position += new Vector3(vecX, vecY, 0);
+                _absolutePosition.X += vecX;
+                _absolutePosition.Y += vecY;
                 foreach(var child in GetOffspring()) {
-                    child._absolutePosition += vec;
+                    child._absolutePosition.X += vecX;
+                    child._absolutePosition.Y += vecY;
                 }
             }
         }
 
-        public float PositionX
+        public int PositionX
         {
-            get => Renderable.PositionX;
+            get => (int)Renderable.PositionX;
             set
             {
-                var diff = value - Renderable.PositionX;
+                var diff = value - PositionX;
                 Renderable.PositionX += diff;
                 _absolutePosition.X += diff;
                 foreach(var child in GetOffspring()) {
@@ -83,12 +86,12 @@ namespace Elffy.UI
         }
 
         /// <summary>オブジェクトのY座標</summary>
-        public float PositionY
+        public int PositionY
         {
-            get => Renderable.PositionY;
+            get => (int)Renderable.PositionY;
             set
             {
-                var diff = value - Renderable.PositionY;
+                var diff = value - PositionY;
                 Renderable.PositionY += diff;
                 _absolutePosition.Y += diff;
                 foreach(var child in GetOffspring()) {
@@ -97,11 +100,11 @@ namespace Elffy.UI
             }
         }
 
-        public Vector2 AbsolutePosition
+        public Point AbsolutePosition
         {
             get => _absolutePosition;
         }
-        private Vector2 _absolutePosition;
+        private Point _absolutePosition;
 
         /// <summary>get or set Width of <see cref="Control"/></summary>
         public int Width
@@ -213,7 +216,7 @@ namespace Elffy.UI
         /// <returns>マウスオーバーしているか</returns>
         internal bool MouseOverTest(Mouse mouse)
         {
-            return IsVisible && IsHitTestVisible && new Rectangle((int)AbsolutePosition.X, (int)AbsolutePosition.Y, Width, Height).Contains(mouse.Position);
+            return IsVisible && IsHitTestVisible && new Rectangle(AbsolutePosition.X, AbsolutePosition.Y, Width, Height).Contains(mouse.Position);
         }
 
         /// <summary>ヒットテストの結果を通知します</summary>
