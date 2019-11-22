@@ -195,7 +195,7 @@ namespace Elffy.UI
 
         internal bool MouseOverTest(Mouse mouse)
         {
-            return new Rectangle((int)AbsolutePosition.X, (int)AbsolutePosition.Y, Width, Height).Contains(mouse.Position);
+            return IsHitTestVisible && new Rectangle((int)AbsolutePosition.X, (int)AbsolutePosition.Y, Width, Height).Contains(mouse.Position);
         }
 
         internal void NotifyHitTestResult(bool isHit, Mouse mouse)

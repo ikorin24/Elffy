@@ -32,7 +32,7 @@ namespace Elffy.Core
             // Hit control is the last control where mouse over test is true
             var hitControl = default(Control);
             foreach(var control in uiRoot.Children) {
-                if(control.IsHitTestVisible && control.MouseOverTest(mouse)) {
+                if(control.MouseOverTest(mouse)) {
                     hitControl = control;
                 }
             }
