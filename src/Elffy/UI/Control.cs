@@ -21,7 +21,8 @@ namespace Elffy.UI
     /// <see cref="UIRenderable"/> による描画は <see cref="Control"/> によって完全に隠蔽され、外部からは描画を気にすることなく論理的 UI 構造を扱えます。
     /// 
     /// <see cref="Control"/> の木構造は、描画を担当する <see cref="Core.Renderable"/> オブジェクトの木構造とは独立しています。
-    /// <see cref="Control"/> が親子関係の木構造を形成している場合でも、その描画オブジェクトは常に木構造を作りません。
+    /// <see cref="Control"/> が親子関係の木構造を形成している場合でも、その描画オブジェクトは木構造を作らず、
+    /// 常に <see cref="UIRenderable"/> は Root に存在します。
     /// </remarks>
     public abstract class Control
     {
