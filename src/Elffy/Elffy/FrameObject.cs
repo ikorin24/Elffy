@@ -27,7 +27,10 @@ namespace Elffy
         /// <summary>このオブジェクトが、ゲームによって管理されるオブジェクトリストから破棄されているかどうかを返します</summary>
         public bool IsDestroyed { get; private set; }
 
-        /// <summary>このオブジェクトが所属するレイヤー</summary>
+        /// <summary>
+        /// このオブジェクトが所属するレイヤー<para/>
+        /// <see cref="IsActivated"/> == true かつ <see cref="IsDestroyed"/> == false の場合常にインスタンスを持ち、そうでない場合常に null です<para/>
+        /// </summary>
         public LayerBase? Layer { get; private set; }
         #endregion
 

@@ -12,7 +12,7 @@ namespace Elffy.Core
         /// <summary>UI tree の Root</summary>
         public Page UIRoot { get; }
 
-        public YAxisDirection YAxisDirection { get; set; }
+        public YAxisDirection YAxisDirection { get; set; } = YAxisDirection.DownToTop;
 
         public UILayer(string name) : base(name)
         {

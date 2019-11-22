@@ -4,6 +4,7 @@ using Elffy.Effective;
 using Elffy.Exceptions;
 using OpenTK;
 using System;
+using System.ComponentModel;
 
 namespace Elffy.UI
 {
@@ -38,7 +39,9 @@ namespace Elffy.UI
 
         private void OnActivated(FrameObject frameObject)
         {
-            SetPolygon(Control.Width, Control.Height, Control.OffsetX, Control.OffsetY);
+            // Layer is always UILayer
+            var yAxisDir = ((UILayer)frameObject.Layer!).YAxisDirection;
+            SetPolygon(Control.Width, Control.Height, Control.OffsetX, Control.OffsetY, yAxisDir);
             InitGraphicBuffer(_vertexArray.Ptr, _vertexArray.Length, _indexArray.Ptr, _indexArray.Length);
         }
 
@@ -70,17 +73,35 @@ namespace Elffy.UI
         /// <param name="height">高さ</param>
         /// <param name="offsetX">X方向のオフセット</param>
         /// <param name="offsetY">Y方向のオフセット</param>
-        private void SetPolygon(int width, int height, int offsetX, int offsetY)
+        /// <param name="yAxisDirection">Y軸方向</param>
+        private void SetPolygon(int width, int height, int offsetX, int offsetY, YAxisDirection yAxisDirection)
         {
             var p0 = new Vector3(offsetX, offsetY, 0);
             var p1 = p0 + new Vector3(width, 0, 0);
             var p2 = p0 + new Vector3(width, height, 0);
             var p3 = p0 + new Vector3(0, height, 0);
 
-            var t0 = new Vector2(0, 0);
-            var t1 = new Vector2(1, 0);
-            var t2 = new Vector2(1, 1);
-            var t3 = new Vector2(0, 1);
+
+            Vector2 t0;
+            Vector2 t1;
+            Vector2 t2;
+            Vector2 t3;
+            switch(yAxisDirection) {
+                case YAxisDirection.TopToDown:
+                    t0 = new Vector2(0, 1);
+                    t1 = new Vector2(1, 1);
+                    t2 = new Vector2(1, 0);
+                    t3 = new Vector2(0, 0);
+                    break;
+                case YAxisDirection.DownToTop:
+                    t0 = new Vector2(0, 0);
+                    t1 = new Vector2(1, 0);
+                    t2 = new Vector2(1, 1);
+                    t3 = new Vector2(0, 1);
+                    break;
+                default:
+                    throw new InvalidEnumArgumentException(nameof(yAxisDirection), (int)yAxisDirection, typeof(YAxisDirection));
+            }
 
             var normal = Vector3.UnitZ;
 
