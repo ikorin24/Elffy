@@ -25,9 +25,9 @@ namespace Elffy.Core
         /// <param name="mouse">マウスオブジェクト</param>
         public void HitTest(Mouse mouse)
         {
-            var uiRoot = UIRoot;
             if(IsHitTestEnabled == false) { return; }
             if(mouse.OnScreen == false) { return; }
+            var uiRoot = UIRoot;
 
             // Hit control is the last control where mouse over test is true
             var hitControl = default(Control);
