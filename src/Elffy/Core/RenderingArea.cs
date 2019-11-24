@@ -18,7 +18,7 @@ namespace Elffy.Core
         private Matrix4 _uiProjection;
 
         /// <summary>レイヤーのリスト</summary>
-        public LayerCollection Layers { get; } = new LayerCollection();
+        public LayerCollection Layers { get; }
 
         #region Width
         public int Width
@@ -75,8 +75,9 @@ namespace Elffy.Core
         }
         private Color4 _clearColor;
 
-        public RenderingArea()
+        public RenderingArea(YAxisDirection uiYAxisDirection)
         {
+            Layers = new LayerCollection(uiYAxisDirection);
         }
 
         #region InitializeGL

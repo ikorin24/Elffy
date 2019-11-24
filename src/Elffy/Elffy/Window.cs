@@ -19,7 +19,7 @@ namespace Elffy
         private const string DEFAULT_WINDOW_TITLE = "Window";
         private readonly GameWindow _window;
         /// <summary>描画領域に関する処理を行うオブジェクト</summary>
-        private readonly RenderingArea _renderingArea = new RenderingArea();
+        private readonly RenderingArea _renderingArea;
 
         /// <summary>ウィンドウの UI の Root</summary>
         public IUIRoot UIRoot => _renderingArea.Layers.UILayer.UIRoot;
@@ -53,16 +53,19 @@ namespace Elffy
 
         /// <summary>スタイルを指定してウィンドウを作成します</summary>
         /// <param name="windowStyle">ウィンドウのスタイル</param>
-        public Window(WindowStyle windowStyle) : this(800, 450, DEFAULT_WINDOW_TITLE, windowStyle) { }
+        public Window(WindowStyle windowStyle) : this(800, 450, DEFAULT_WINDOW_TITLE, windowStyle, YAxisDirection.TopToBottom) { }
 
         /// <summary>サイズとタイトルとスタイルを指定して、ウィンドウを作成します</summary>
         /// <param name="width">ウィンドウの幅</param>
         /// <param name="height">ウィンドウの高さ</param>
         /// <param name="title">ウィンドウのタイトル</param>
         /// <param name="windowStyle">ウィンドウのスタイル</param>
-        public Window(int width, int height, string title, WindowStyle windowStyle)
+        /// <param name="yAxisDirection">Y軸の方向</param>
+        public Window(int width, int height, string title, WindowStyle windowStyle, YAxisDirection yAxisDirection)
         {
+            _renderingArea = new RenderingArea(yAxisDirection);
             _window = new GameWindow(width, height, GraphicsMode.Default, title, (GameWindowFlags)windowStyle);
+            _window.ClientSize = new Size(width, height);
             _window.VSync = VSyncMode.On;
             _window.TargetRenderFrequency = DisplayDevice.Default.RefreshRate;
 
@@ -131,10 +134,9 @@ namespace Elffy
         {
             Input.Update();
             Mouse.InitFrame();
-            _renderingArea.Layers.UILayer.HitTest(Mouse);
             Rendering?.Invoke(this);
-            var camera = Camera;
-            _renderingArea.RenderFrame(camera.Projection, camera.View);
+            _renderingArea.RenderFrame(Camera.Projection, Camera.View);
+            _renderingArea.Layers.UILayer.HitTest(Mouse);
             Rendered?.Invoke(this);
             _window.SwapBuffers();
         }

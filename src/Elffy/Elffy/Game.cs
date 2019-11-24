@@ -102,7 +102,8 @@ namespace Elffy
         /// <param name="height">描画領域の高さ</param>
         /// <param name="title">タイトル</param>
         /// <param name="windowStyle">ウィンドウのスタイル (Windowを用いないプラットフォームでは無効)</param>
-        public static void Run(int width, int height, string title, WindowStyle windowStyle)
+        /// /// <param name="uiYAxisDirection">UIのY軸方向</param>
+        public static void Run(int width, int height, string title, WindowStyle windowStyle, YAxisDirection uiYAxisDirection)
         {
             ThrowIfGameAlreadyRunning();
             ArgumentChecker.ThrowOutOfRangeIf(width < 0, nameof(width), width, $"{nameof(width)} is out of range");
@@ -111,7 +112,7 @@ namespace Elffy
                 Resources.Initialize();
             }
             catch(Exception) { throw; }
-            RunPrivate(width, height, title, windowStyle, null);
+            RunPrivate(width, height, title, windowStyle, uiYAxisDirection, null);
         }
 
         /// <summary>ゲームを開始します</summary>
@@ -119,8 +120,9 @@ namespace Elffy
         /// <param name="height">描画領域の高さ</param>
         /// <param name="title">タイトル</param>
         /// <param name="windowStyle">ウィンドウのスタイル (Windowを用いないプラットフォームでは無効)</param>
+        /// <param name="uiYAxisDirection">UIのY軸方向</param>
         /// <param name="icon">アイコン</param>
-        public static void Run(int width, int height, string title, WindowStyle windowStyle, string icon)
+        public static void Run(int width, int height, string title, WindowStyle windowStyle, YAxisDirection uiYAxisDirection, string icon)
         {
             ThrowIfGameAlreadyRunning();
             ArgumentChecker.ThrowOutOfRangeIf(width < 0, nameof(width), width, $"{nameof(width)} is out of range");
@@ -130,7 +132,7 @@ namespace Elffy
                 Resources.Initialize();
             }
             catch(Exception) { throw; }
-            RunPrivate(width, height, title, windowStyle, icon);
+            RunPrivate(width, height, title, windowStyle, uiYAxisDirection, icon);
         }
         #endregion Run
 
@@ -148,18 +150,19 @@ namespace Elffy
         /// <param name="height">ウィンドウ高さ</param>
         /// <param name="title">ウィンドウタイトル</param>
         /// <param name="windowStyle">ウィンドウスタイル</param>
+        /// <param name="uiYAxisDirection">UI のY軸方向</param>
         /// <param name="iconResourcePath">ウィンドウアイコンのリソースパス(nullならアイコン不使用)</param>
         /// <returns></returns>
-        private static void RunPrivate(int width, int height, string title, WindowStyle windowStyle, string? iconResourcePath)
+        private static void RunPrivate(int width, int height, string title, WindowStyle windowStyle, YAxisDirection uiYAxisDirection, string? iconResourcePath)
         {
             Dispatcher.SetMainThreadID();
             try {
                 _instance = new Game();
                 var gameScreen = Platform.PlatformType switch
                 {
-                    PlatformType.Windows => GetWindowGameScreen(width, height, title, windowStyle, iconResourcePath),
-                    PlatformType.MacOSX =>  GetWindowGameScreen(width, height, title, windowStyle, iconResourcePath),
-                    PlatformType.Unix =>    GetWindowGameScreen(width, height, title, windowStyle, iconResourcePath),
+                    PlatformType.Windows => GetWindowGameScreen(width, height, title, windowStyle, uiYAxisDirection, iconResourcePath),
+                    PlatformType.MacOSX =>  GetWindowGameScreen(width, height, title, windowStyle, uiYAxisDirection, iconResourcePath),
+                    PlatformType.Unix =>    GetWindowGameScreen(width, height, title, windowStyle, uiYAxisDirection, iconResourcePath),
                     _ => throw Platform.PlatformNotSupported()
                 };
                 gameScreen.TargetRenderPeriod = FrameDelta.TotalSeconds;
@@ -208,11 +211,12 @@ namespace Elffy
         /// <param name="height">描画領域の高さ</param>
         /// <param name="title">ウィンドウのタイトル</param>
         /// <param name="windowStyle">ウィンドウのスタイル</param>
+        /// <param name="uiYAxisDirection">UIのY軸方向</param>
         /// <param name="iconResourcePath">ウィンドウのアイコンのリソースのパス (nullの場合アイコンなし)</param>
         /// <returns>ウィンドウの <see cref="IScreenHost"/></returns>
-        private static IScreenHost GetWindowGameScreen(int width, int height, string title, WindowStyle windowStyle, string? iconResourcePath)
+        private static IScreenHost GetWindowGameScreen(int width, int height, string title, WindowStyle windowStyle, YAxisDirection uiYAxisDirection, string? iconResourcePath)
         {
-            var window = new Window(windowStyle);
+            var window = new Window(width, height, title, windowStyle, uiYAxisDirection);
             if(iconResourcePath != null) {
                 if(Resources.HasResource(iconResourcePath)) {
                     using(var stream = Resources.GetStream(iconResourcePath)) {
@@ -220,8 +224,6 @@ namespace Elffy
                     }
                 }
             }
-            window.Title = title;
-            window.ClientSize = new Size(width, height);
             return window;
         }
         #endregion

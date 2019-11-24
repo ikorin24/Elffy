@@ -16,11 +16,12 @@ namespace Elffy.Core
         /// <summary>UI tree の Root</summary>
         public Page UIRoot { get; }
 
-        public YAxisDirection YAxisDirection { get; set; } = YAxisDirection.TopToBottom;
+        public YAxisDirection YAxisDirection { get; }
 
-        public UILayer(string name) : base(name)
+        public UILayer(string name, YAxisDirection yAxisDirection) : base(name)
         {
             UIRoot = new Page(this);
+            YAxisDirection = yAxisDirection;
         }
 
         public bool IsHitTestEnabled { get; set; } = true;

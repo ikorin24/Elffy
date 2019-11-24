@@ -11,6 +11,7 @@ using Elffy.Mathmatics;
 using System.Diagnostics;
 using Elffy.InputSystem;
 using System.Drawing;
+using OpenTK.Graphics;
 
 namespace ElffyGame
 {
@@ -68,8 +69,11 @@ namespace ElffyGame
                 cube.Rotate(new Vector3(1, 2, 3), MathHelper.Pi / 60 / 2);
             });
 
+
+            var tex1 = Texture.LoadFrom("cube.png");
+            var tex2 = Texture.LoadFrom("sky.jpg");
             var button = new Button(100, 100);
-            button.Texture = Texture.LoadFrom("cube.png");
+            button.Texture = tex1;
             button.KeyUp += (sender) =>
             {
                 System.Diagnostics.Debug.WriteLine("Go to Next Scenario");
@@ -78,6 +82,11 @@ namespace ElffyGame
             button.MouseEnter += (sender, e) =>
             {
                 Debug.WriteLine("Mouse Enter");
+                sender.Texture = tex2;
+            };
+            button.MouseLeave += (sender, e) =>
+            {
+                sender.Texture = tex1;
             };
             Game.UI.Add(button);
 

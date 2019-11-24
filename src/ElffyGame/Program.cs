@@ -2,6 +2,7 @@
 using Elffy;
 using Elffy.Core;
 using Elffy.Platforms.Windows;
+using Elffy.UI;
 
 namespace ElffyGame
 {
@@ -11,17 +12,13 @@ namespace ElffyGame
         /// アプリケーションのメイン エントリ ポイントです。
         /// </summary>
         [STAThread]
-        static void Main()
-        {
-            ProcessHelper.SingleLaunch(GameStart);
-        }
+        static void Main() => ProcessHelper.SingleLaunch(GameStart);
 
         static void GameStart()
         {
             try {
-                //Game.Initialize += GameStartUp.Initialize;
                 Game.Initialized += sender => Scenario.Start(new StartScenario());
-                Game.Run(800, 450, "Game", WindowStyle.Default, "icon.ico");
+                Game.Run(800, 450, "Game", WindowStyle.Default, YAxisDirection.TopToBottom, "icon.ico");
             }
             catch(Exception) {
                 MessageBox.Show("Fatal Error (CODE : 0)", "Error", MessageBoxType.Ok, MessageBoxIcon.Error);

@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading;
 using Elffy.Core;
 using Elffy.Exceptions;
+using Elffy.UI;
 
 namespace Elffy
 {
@@ -21,7 +22,7 @@ namespace Elffy
         private readonly List<Layer> _list = new List<Layer>();
 
         /// <summary>UI レイヤーを取得します</summary>
-        internal UILayer UILayer { get; } = new UILayer(UI_LAYER_NAME);
+        internal UILayer UILayer { get; }
 
         /// <summary>ワールドレイヤーを取得します</summary>
         public Layer WorldLayer { get; } = new Layer(WORLD_LAYER_NAME) { IsLightingEnabled = true };
@@ -74,8 +75,9 @@ namespace Elffy
             set => this[index] = (Layer)value;
         }
 
-        internal LayerCollection()
+        internal LayerCollection(YAxisDirection uiYAxisDirection)
         {
+            UILayer = new UILayer(UI_LAYER_NAME, uiYAxisDirection);
             AddDefaltLayers();
         }
 
