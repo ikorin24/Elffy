@@ -17,7 +17,7 @@ namespace Elffy.InputSystem
         /// <summary>マウスが <see cref="IScreenHost"/> の描画領域内にあるかどうかを取得します</summary>
         public bool OnScreen { get; private set; }
 
-        /// <summary>Top-Left を基点とする、マウスの <see cref="IScreenHost"/> 内での座標を取得します</summary>
+        /// <summary>Top-Left を基点としY軸下方向でのマウスの <see cref="IScreenHost"/> 内での座標を取得します</summary>
         public Point Position { get; private set; }
 
         internal Mouse() { }

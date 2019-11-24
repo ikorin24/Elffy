@@ -212,28 +212,28 @@ namespace Elffy.UI
         }
 
         /// <summary>マウスオーバーしているかを取得します</summary>
-        /// <param name="mouse">マウス情報</param>
+        /// <param name="mousePos">マウス座標</param>
         /// <returns>マウスオーバーしているか</returns>
-        internal bool MouseOverTest(Mouse mouse)
+        internal bool MouseOverTest(Point mousePos)
         {
-            return IsVisible && IsHitTestVisible && new Rectangle(AbsolutePosition.X, AbsolutePosition.Y, Width, Height).Contains(mouse.Position);
+            return IsVisible && IsHitTestVisible && new Rectangle(AbsolutePosition.X, AbsolutePosition.Y, Width, Height).Contains(mousePos);
         }
 
         /// <summary>ヒットテストの結果を通知します</summary>
         /// <param name="isHit">ヒットテスト結果</param>
-        /// <param name="mouse">マウス情報</param>
-        internal void NotifyHitTestResult(bool isHit, Mouse mouse)
+        /// <param name="mousePos">マウス座標</param>
+        internal void NotifyHitTestResult(bool isHit, Point mousePos)
         {
             var isMouseOverPrev = IsMouseOver;
             IsMouseOver = isHit;
             if(isHit) {
                 if(isMouseOverPrev == false) {
-                    MouseEnter?.Invoke(this, new MouseEventArgs(mouse.Position));
+                    MouseEnter?.Invoke(this, new MouseEventArgs(mousePos));
                 }
             }
             else {
                 if(isMouseOverPrev) {
-                    MouseLeave?.Invoke(this, new MouseEventArgs(mouse.Position));
+                    MouseLeave?.Invoke(this, new MouseEventArgs(mousePos));
                 }
             }
         }
