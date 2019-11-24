@@ -18,7 +18,7 @@ namespace Elffy
         /// <summary>レンダリングの間隔 [sec]</summary>
         double TargetRenderPeriod { get; set; }
         /// <summary>UIのルートオブジェクト</summary>
-        IUIRoot UIRoot { get; }
+        Page UIRoot { get; }
         /// <summary>描画領域のサイズ [pixel]</summary>
         Size ClientSize { get; set; }
         /// <summary><see cref="FrameObject"/> を保持するためのレイヤーのリスト</summary>

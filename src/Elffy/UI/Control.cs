@@ -52,7 +52,7 @@ namespace Elffy.UI
         private Control? _parent;
 
         /// <summary>この <see cref="Control"/> を持つ UI tree の Root</summary>
-        public IUIRoot? Root { get; protected private set; }
+        public Page? Root { get; protected private set; }
 
         public Point Position
         {

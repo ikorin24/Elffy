@@ -20,7 +20,6 @@ namespace Elffy.Core
         /// <summary>レイヤーのリスト</summary>
         public LayerCollection Layers { get; }
 
-        #region Width
         public int Width
         {
             get => _width;
@@ -32,9 +31,7 @@ namespace Elffy.Core
             }
         }
         private int _width;
-        #endregion
 
-        #region Height
         public int Height
         {
             get => _height;
@@ -46,9 +43,7 @@ namespace Elffy.Core
             }
         }
         private int _height;
-        #endregion
 
-        #region Size
         public Size Size
         {
             get => new Size(_width, _height);
@@ -61,7 +56,6 @@ namespace Elffy.Core
                 OnSizeChanged(0, 0, _width, _height);
             }
         }
-        #endregion
 
         /// <summary>get or set color of clearing rendering area on beginning of each frames.</summary>
         public Color4 ClearColor
@@ -111,30 +105,24 @@ namespace Elffy.Core
             foreach(var layer in Layers) {
                 layer.Update();
             }
+            Layers.UILayer.Update();
             Dispatcher.DoInvokedAction();
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             // レイヤー描画処理
             foreach(var layer in Layers) {
-                if(layer.IsLightingEnabled) {
-                    Light.IsEnabled = true;
-                }
-                else {
-                    Light.IsEnabled = false;
-                }
-                if(layer is UILayer uILayer) {
-                    uILayer.Render(_uiProjection);
-                }
-                else {
-                    layer.Render(projection, view);
-                }
+                Light.IsEnabled = layer.IsLightingEnabled;
+                layer.Render(projection, view);
             }
+            Light.IsEnabled = false;
+            Layers.UILayer.Render(_uiProjection);
 
             // レイヤー変更適用
             Layers.SystemLayer.ApplyChanging();
             foreach(var layer in Layers) {
                 layer.ApplyChanging();
             }
+            Layers.UILayer.ApplyChanging();
         }
         #endregion
 

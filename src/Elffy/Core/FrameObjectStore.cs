@@ -6,9 +6,8 @@ using System.Linq;
 namespace Elffy.Core
 {
     /// <summary><see cref="FrameObject"/> を保持しておくためのクラスです。</summary>
-    public abstract class FrameObjectStore
+    internal class FrameObjectStore
     {
-        #region private member
         /// <summary>現在生きている全オブジェクトのリスト</summary>
         private readonly List<FrameObject> _list = new List<FrameObject>();
         /// <summary>このフレームで追加されたオブジェクトのリスト (次のフレームの最初に <see cref="_list"/> に追加されます)</summary>
@@ -17,27 +16,24 @@ namespace Elffy.Core
         private readonly List<FrameObject> _removedBuf = new List<FrameObject>();
         /// <summary><see cref="_list"/> に含まれるオブジェクトのうち、<see cref="Renderable"/> を継承しているもののリスト</summary>
         private readonly List<Renderable> _renderables = new List<Renderable>();
-        #endregion
 
-        #region Property
         /// <summary>現在生きている全オブジェクトを取得します</summary>
-        protected IEnumerable<FrameObject> List => _list;
+        public IEnumerable<FrameObject> List => _list;
         /// <summary>現在生きている全オブジェクトの数を取得します</summary>
-        protected int ObjectCount => _list.Count;
+        public int ObjectCount => _list.Count;
 
         /// <summary>現在のフレームで追加されたオブジェクトを取得します</summary>
-        protected IEnumerable<FrameObject> Added => _addedBuf;
+        public IEnumerable<FrameObject> Added => _addedBuf;
 
         /// <summary>現在のフレームで削除されたオブジェクトを取得します</summary>
-        protected IEnumerable<FrameObject> Removed => _removedBuf;
+        public IEnumerable<FrameObject> Removed => _removedBuf;
 
         /// <summary><see cref="List"/> に含まれるオブジェクトのうち、<see cref="Renderable"/> を継承しているものを取得します</summary>
-        protected IEnumerable<Renderable> Renderables => _renderables;
-        #endregion
+        public IEnumerable<Renderable> Renderables => _renderables;
 
         /// <summary>指定した<see cref="FrameObject"/>を追加します</summary>
         /// <param name="frameObject">追加するオブジェクト</param>
-        internal void AddFrameObject(FrameObject frameObject)
+        public void AddFrameObject(FrameObject frameObject)
         {
             ArgumentChecker.ThrowIfNullArg(frameObject, nameof(frameObject));
             _addedBuf.Add(frameObject);
@@ -46,14 +42,14 @@ namespace Elffy.Core
         /// <summary>指定した<see cref="FrameObject"/>を削除します</summary>
         /// <param name="frameObject">削除するオブジェクト</param>
         /// <returns>削除できたかどうか</returns>
-        internal void RemoveFrameObject(FrameObject frameObject)
+        public void RemoveFrameObject(FrameObject frameObject)
         {
             ArgumentChecker.ThrowIfNullArg(frameObject, nameof(frameObject));
             _removedBuf.Add(frameObject);
         }
 
         /// <summary>オブジェクトの追加と削除の変更を適用します</summary>
-        internal void ApplyChanging()
+        public void ApplyChanging()
         {
             if(_removedBuf.Count > 0) {
                 foreach(var item in _removedBuf) {
@@ -72,7 +68,7 @@ namespace Elffy.Core
         }
 
         /// <summary>フレームの更新を行います</summary>
-        internal void Update()
+        public void Update()
         {
             foreach(var frameObject in _list.Where(x => !x.IsFrozen)) {
                 if(frameObject.IsStarted == false) {
@@ -84,7 +80,7 @@ namespace Elffy.Core
         }
 
         /// <summary>保持している <see cref="FrameObject"/> を全て破棄し、リストをクリアします</summary>
-        internal void ClearFrameObject()
+        public void ClearFrameObject()
         {
             _addedBuf.Clear();          // 追加オブジェクトのリストを先にクリア
             foreach(var item in _list) {

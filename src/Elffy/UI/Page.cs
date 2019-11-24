@@ -7,15 +7,13 @@ using System.Diagnostics;
 namespace Elffy.UI
 {
     /// <summary>UI tree の Root となるオブジェクト</summary>
-    internal class Page : Panel, IUIRoot
+    public class Page : Panel
     {
         /// <summary>この <see cref="Page"/> が レイアウト済みかどうかを取得します</summary>
         public bool IsLayouted { get; private set; }
 
-        /// <summary><see cref="IUIRoot"/> 実装。この <see cref="Page"/> とその子孫を描画する <see cref="Layer"/></summary>
-        public UILayer UILayer { get; }
-
-        Layer IUIRoot.UILayer => UILayer;
+        /// <summary>この <see cref="Page"/> とその子孫を描画するレイヤー</summary>
+        internal UILayer UILayer { get; }
 
         /// <summary>コンストラクタ</summary>
         /// <param name="uiLayer">この <see cref="Page"/> と子孫を描画する UI レイヤー</param>

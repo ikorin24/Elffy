@@ -16,19 +16,17 @@ namespace Elffy
     [DebuggerDisplay("LayerCollection (Count = {Count})")]
     public class LayerCollection : IList<Layer>, IReadOnlyList<Layer>, IReadOnlyCollection<Layer>, IList
     {
-        private const string UI_LAYER_NAME = "UILayer";
-        private const string WORLD_LAYER_NAME = "WorldLayer";
-        private const string SYSTEM_LAYER_NAME = "SystemLayer";
+        private const string WORLD_LAYER_NAME = "World";
         private readonly List<Layer> _list = new List<Layer>();
 
-        /// <summary>UI レイヤーを取得します</summary>
+        /// <summary>UI レイヤーを取得します (このレイヤーはリストには含まれません。インスタンスを public にも公開しないでください)</summary>
         internal UILayer UILayer { get; }
 
         /// <summary>ワールドレイヤーを取得します</summary>
         public Layer WorldLayer { get; } = new Layer(WORLD_LAYER_NAME) { IsLightingEnabled = true };
 
         /// <summary>システムレイヤー (このレイヤーはリストには含まれません。インスタンスを public にも公開しないでください)</summary>
-        internal InternaInvisiblelLayer SystemLayer { get; } = new InternaInvisiblelLayer(SYSTEM_LAYER_NAME);
+        internal SystemLayer SystemLayer { get; } = new SystemLayer();
 
         /// <summary>レイヤーの数を取得します</summary>
         public int Count => _list.Count;
@@ -77,7 +75,7 @@ namespace Elffy
 
         internal LayerCollection(YAxisDirection uiYAxisDirection)
         {
-            UILayer = new UILayer(UI_LAYER_NAME, uiYAxisDirection);
+            UILayer = new UILayer(uiYAxisDirection);
             AddDefaltLayers();
         }
 
@@ -183,7 +181,6 @@ namespace Elffy
 
         private void AddDefaltLayers()
         {
-            _list.Add(UILayer);
             _list.Add(WorldLayer);
         }
     }

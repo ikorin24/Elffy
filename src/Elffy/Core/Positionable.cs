@@ -310,9 +310,9 @@ namespace Elffy.Core
 
         private void OnActivated(FrameObject frameObject)
         {
-            var layer = Layer!;
+            var l = Layer!;
             foreach(var offspring in GetOffspring()) {
-                offspring.Activate(layer);
+                offspring.Activate(l);
             }
         }
     }

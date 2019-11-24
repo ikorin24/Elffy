@@ -22,7 +22,7 @@ namespace Elffy
         private readonly RenderingArea _renderingArea;
 
         /// <summary>ウィンドウの UI の Root</summary>
-        public IUIRoot UIRoot => _renderingArea.Layers.UILayer.UIRoot;
+        public Page UIRoot => _renderingArea.Layers.UILayer.UIRoot;
         /// <summary>このウィンドウのレイヤー</summary>
         public LayerCollection Layers => _renderingArea.Layers;
 

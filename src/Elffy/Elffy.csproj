@@ -61,11 +61,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyServices\AssemblyState.cs" />
+    <Compile Include="Core\ILayer.cs" />
     <Compile Include="Elffy\EventHandler.cs" />
     <Compile Include="Core\IDestroyable.cs" />
     <Compile Include="Core\MetaFile\Metadata.cs" />
-    <Compile Include="Core\InternaInvisiblelLayer.cs" />
-    <Compile Include="Core\LayerBase.cs" />
+    <Compile Include="Core\SystemLayer.cs" />
     <Compile Include="Core\MetaFile\MetadataDeserialized.cs" />
     <Compile Include="Core\MetaFile\MetadataType.cs" />
     <Compile Include="Core\MetaFile\SpriteInfoDeserialized.cs" />
@@ -140,7 +140,6 @@
     <Compile Include="UI\Executable.cs" />
     <Compile Include="UI\ExecutableExecutionType.cs" />
     <Compile Include="UI\IUIRenderable.cs" />
-    <Compile Include="UI\IUIRoot.cs" />
     <Compile Include="UI\Page.cs" />
     <Compile Include="UI\Panel.cs" />
     <Compile Include="UI\Split.cs" />
