@@ -108,7 +108,7 @@ namespace Elffy
             ThrowIfTerminated();
             Dispatcher.Invoke(() =>
             {
-                _lightImpl.Destroy(this);
+                _lightImpl.Terminate(this);
             });
         }
 

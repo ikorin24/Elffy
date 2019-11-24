@@ -34,6 +34,8 @@ namespace Elffy
 
         /// <summary>このオブジェクトがアクティブになった時のイベント</summary>
         public event ActionEventHandler<FrameObject>? Activated;
+        /// <summary>このオブジェクトが終了した時のイベント</summary>
+        public event ActionEventHandler<FrameObject>? Terminated;
         /// <summary>開始時イベント</summary>
         public event ActionEventHandler<FrameObject>? Started;
         /// <summary>更新時イベント</summary>
@@ -51,7 +53,7 @@ namespace Elffy
             Updated?.Invoke(this);
         }
 
-        /// <summary>このオブジェクトをワールドレイヤーでアクティブにします</summary>
+        /// <summary>このオブジェクトをデフォルトのレイヤーでアクティブにします</summary>
         public void Activate()
         {
             if(IsTerminated) { throw new ObjectTerminatedException(this); }
@@ -109,13 +111,14 @@ namespace Elffy
         }
 
         /// <summary>このオブジェクトをゲーム管理下から外して破棄します</summary>
-        public virtual void Terminate()
+        public void Terminate()
         {
             if(IsTerminated) { throw new ObjectTerminatedException(this); }
             Layer?.RemoveFrameObject(this);
             Layer = null;
             IsTerminated = true;
             (this as IDisposable)?.Dispose();
+            Terminated?.Invoke(this);
         }
     }
 }

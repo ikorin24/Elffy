@@ -196,7 +196,7 @@ namespace Elffy
                 LightUp();
             }
 
-            public void Destroy(ILight light)
+            public void Terminate(ILight light)
             {
                 IsDestroyed = true;
                 Light.RemoveLight(light);
