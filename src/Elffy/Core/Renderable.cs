@@ -106,9 +106,9 @@ namespace Elffy.Core
         /// <summary>Shader changed event</summary>
         public event ActionEventHandler<Renderable, ValueChangedEventArgs<ShaderProgram>>? ShaderChanged;
         /// <summary>Before-rendering event</summary>
-        public event ActionEventHandler<Renderable>? Rendering;
+        protected event ActionEventHandler<Renderable>? Rendering;
         /// <summary>After-rendering event</summary>
-        public event ActionEventHandler<Renderable>? Rendered;
+        protected event ActionEventHandler<Renderable>? Rendered;
 
         ~Renderable() => Dispose(false);
 
@@ -116,20 +116,21 @@ namespace Elffy.Core
         /// <summary>このインスタンスを描画します</summary>
         internal void Render()
         {
-            Rendering?.Invoke(this);
-            // 座標と回転を適用
-            GL.Translate(Position);
-            var rot = Matrix4.CreateFromQuaternion(Rotation);
-            GL.MultMatrix(ref rot);
-            GL.Scale(Scale);
-
             if(_isLoaded) {
+                // 座標と回転を適用
+                GL.Translate(Position);
+                var rot = Matrix4.CreateFromQuaternion(Rotation);
+                GL.MultMatrix(ref rot);
+                GL.Scale(Scale);
+                Rendering?.Invoke(this);
+
                 Material.Apply();
                 Texture.Apply();
                 Shader.Apply();
                 GL.BindVertexArray(_vao);
                 GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBuffer);
                 GL.DrawElements(BeginMode.Triangles, _indexArrayLength, DrawElementsType.UnsignedInt, 0);
+                Rendered?.Invoke(this);
             }
 
             if(HasChild) {
@@ -139,7 +140,6 @@ namespace Elffy.Core
                     GL.PopMatrix();
                 }
             }
-            Rendered?.Invoke(this);
         }
         #endregion
 

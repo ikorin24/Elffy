@@ -1,6 +1,10 @@
 ﻿#nullable enable
 using Elffy.InputSystem;
 using Elffy.UI;
+using OpenTK;
+using OpenTK.Graphics.OpenGL;
+using System;
+using System.Linq;
 
 namespace Elffy.Core
 {
@@ -12,7 +16,7 @@ namespace Elffy.Core
         /// <summary>UI tree の Root</summary>
         public Page UIRoot { get; }
 
-        public YAxisDirection YAxisDirection { get; set; } = YAxisDirection.DownToTop;
+        public YAxisDirection YAxisDirection { get; set; } = YAxisDirection.TopToBottom;
 
         public UILayer(string name) : base(name)
         {
@@ -20,6 +24,28 @@ namespace Elffy.Core
         }
 
         public bool IsHitTestEnabled { get; set; } = true;
+
+        /// <summary>画面への投影行列を指定して、描画を実行します</summary>
+        /// <param name="projection"></param>
+        internal void Render(Matrix4 projection)
+        {
+            var view = YAxisDirection switch
+            {
+                YAxisDirection.TopToBottom => new Matrix4(1, 0,   0, 0,
+                                                          0, -1,  0, 0,
+                                                          0, 0,   1, 0,
+                                                          0, 450, 0, 1),   // TODO: 高さを画面の高さにする
+                YAxisDirection.BottomToTop => Matrix4.Identity,
+                _ => throw new NotSupportedException(),
+            };
+            GL.MatrixMode(MatrixMode.Projection);
+            GL.LoadMatrix(ref projection);
+            GL.MatrixMode(MatrixMode.Modelview);
+            foreach(var renderable in Renderables.Where(x => x.IsRoot && x.IsVisible)) {
+                GL.LoadMatrix(ref view);
+                renderable.Render();
+            }
+        }
 
         /// <summary><see cref="UILayer"/> 内の <see cref="Control"/> に対してマウスヒットテストを行います</summary>
         /// <param name="mouse">マウスオブジェクト</param>

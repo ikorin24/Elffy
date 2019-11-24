@@ -121,8 +121,8 @@ namespace Elffy.Core
                 else {
                     Light.IsEnabled = false;
                 }
-                if(layer is UILayer) {
-                    layer.Render(_uiProjection);
+                if(layer is UILayer uILayer) {
+                    uILayer.Render(_uiProjection);
                 }
                 else {
                     layer.Render(projection, view);

@@ -21,10 +21,6 @@ namespace Elffy
             Name = name;
         }
 
-        /// <summary>画面への投影行列を指定して、描画を実行します</summary>
-        /// <param name="projection"></param>
-        internal void Render(Matrix4 projection) => Render(projection, Matrix4.Identity);
-
         /// <summary>画面への投影行列とカメラ行列を指定して、描画を実行します</summary>
         /// <param name="projection">投影行列</param>
         /// <param name="view">カメラ行列</param>

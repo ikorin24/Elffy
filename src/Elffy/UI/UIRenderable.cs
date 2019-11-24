@@ -3,6 +3,7 @@ using Elffy.Core;
 using Elffy.Effective;
 using Elffy.Exceptions;
 using OpenTK;
+using OpenTK.Graphics.OpenGL;
 using System;
 using System.ComponentModel;
 
@@ -37,10 +38,10 @@ namespace Elffy.UI
         void IUIRenderable.Activate() => Activate(Control.Root!.UILayer);
         void IUIRenderable.Destroy() => Destroy();
 
-        private void OnActivated(FrameObject frameObject)
+        private void OnActivated(FrameObject _)
         {
             // Layer is always UILayer
-            var yAxisDir = ((UILayer)frameObject.Layer!).YAxisDirection;
+            var yAxisDir = ((UILayer)Layer!).YAxisDirection;
             SetPolygon(Control.Width, Control.Height, Control.OffsetX, Control.OffsetY, yAxisDir);
             InitGraphicBuffer(_vertexArray.Ptr, _vertexArray.Length, _indexArray.Ptr, _indexArray.Length);
         }
@@ -81,40 +82,38 @@ namespace Elffy.UI
             var p2 = p0 + new Vector3(width, height, 0);
             var p3 = p0 + new Vector3(0, height, 0);
 
-
-            Vector2 t0;
-            Vector2 t1;
-            Vector2 t2;
-            Vector2 t3;
+            Vector2 t0, t1, t2, t3;
+            int i0, i1, i2, i3, i4, i5;
             switch(yAxisDirection) {
-                case YAxisDirection.TopToDown:
-                    t0 = new Vector2(0, 1);
-                    t1 = new Vector2(1, 1);
-                    t2 = new Vector2(1, 0);
-                    t3 = new Vector2(0, 0);
+                case YAxisDirection.TopToBottom:
+                    t3 = new Vector2(0, 0); t0 = new Vector2(0, 1);
+                    t2 = new Vector2(1, 0); t1 = new Vector2(1, 1);
+
+                    i0 = 0; i1 = 2; i2 = 1;
+                    i3 = 2; i4 = 0; i5 = 3;
                     break;
-                case YAxisDirection.DownToTop:
-                    t0 = new Vector2(0, 0);
-                    t1 = new Vector2(1, 0);
-                    t2 = new Vector2(1, 1);
-                    t3 = new Vector2(0, 1);
+                case YAxisDirection.BottomToTop:
+                    t3 = new Vector2(0, 1); t2 = new Vector2(1, 1);
+                    t0 = new Vector2(0, 0); t1 = new Vector2(1, 0);
+
+                    i0 = 0; i1 = 1; i2 = 2;
+                    i3 = 2; i4 = 3; i5 = 0;
                     break;
                 default:
                     throw new InvalidEnumArgumentException(nameof(yAxisDirection), (int)yAxisDirection, typeof(YAxisDirection));
             }
-
             var normal = Vector3.UnitZ;
 
             _vertexArray[0] = new Vertex(p0, normal, t0);
             _vertexArray[1] = new Vertex(p1, normal, t1);
             _vertexArray[2] = new Vertex(p2, normal, t2);
             _vertexArray[3] = new Vertex(p3, normal, t3);
-            _indexArray[0] = 0;
-            _indexArray[1] = 1;
-            _indexArray[2] = 2;
-            _indexArray[3] = 2;
-            _indexArray[4] = 3;
-            _indexArray[5] = 0;
+            _indexArray[0] = i0;
+            _indexArray[1] = i1;
+            _indexArray[2] = i2;
+            _indexArray[3] = i3;
+            _indexArray[4] = i4;
+            _indexArray[5] = i5;
         }
         #endregion
     }
