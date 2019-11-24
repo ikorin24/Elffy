@@ -6,7 +6,7 @@ using OpenTK.Graphics.OpenGL;
 namespace Elffy
 {
     /// <summary>Light interface</summary>
-    public interface ILight : IDestroyable
+    public interface ILight : ITerminatable
     {
         /// <summary>[internal] get or set light name of OpenGL</summary>
         internal LightName LightName { get; set; }

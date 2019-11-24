@@ -21,7 +21,7 @@ namespace Elffy
         }
 
         /// <summary>get whether this light is destroyed</summary>
-        public bool IsDestroyed => _lightImpl.IsDestroyed;
+        public bool IsTerminated => _lightImpl.IsDestroyed;
 
         /// <summary>get or set position of this light</summary>
         public Vector3 Position
@@ -104,7 +104,7 @@ namespace Elffy
             });
         }
 
-        public void Destroy()
+        public void Terminate()
         {
             ThrowIfDestroyed();
             Dispatcher.Invoke(() =>
@@ -130,7 +130,7 @@ namespace Elffy
         /// <summary>Throw exception if the instance is destroyed.</summary>
         private void ThrowIfDestroyed()
         {
-            if(IsDestroyed) { throw new ObjectDestroyedException(this); }
+            if(IsTerminated) { throw new ObjectTerminatedException(this); }
         }
     }
 }

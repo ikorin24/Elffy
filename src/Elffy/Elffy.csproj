@@ -63,7 +63,7 @@
     <Compile Include="AssemblyServices\AssemblyState.cs" />
     <Compile Include="Core\ILayer.cs" />
     <Compile Include="Elffy\EventHandler.cs" />
-    <Compile Include="Core\IDestroyable.cs" />
+    <Compile Include="Core\ITerminatable.cs" />
     <Compile Include="Core\MetaFile\Metadata.cs" />
     <Compile Include="Core\SystemLayer.cs" />
     <Compile Include="Core\MetaFile\MetadataDeserialized.cs" />
@@ -115,7 +115,7 @@
     <Compile Include="Core\Timer\IGameTimer.cs" />
     <Compile Include="Core\Vertex.cs" />
     <Compile Include="Elffy\Sky.cs" />
-    <Compile Include="Exceptions\ObjectDestroyedException.cs" />
+    <Compile Include="Exceptions\ObjectTerminatedException.cs" />
     <Compile Include="Elffy\Light.cs" />
     <Compile Include="Effective\UnmanagedArray.cs" />
     <Compile Include="Exceptions\ResourceNotFoundException.cs" />

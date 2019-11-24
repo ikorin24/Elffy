@@ -84,7 +84,7 @@ namespace Elffy.Core
         {
             _addedBuf.Clear();          // 追加オブジェクトのリストを先にクリア
             foreach(var item in _list) {
-                item.Destroy();         // 生きているオブジェクトをすべて破棄
+                item.Terminate();         // 生きているオブジェクトをすべて破棄
             }
             ApplyChanging();            // 変更を全て適用
 

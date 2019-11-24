@@ -86,7 +86,7 @@ namespace Elffy.Framing
             if(_isCanceled) {
                 _behaviorQueue.Clear();
                 _currentBehavior = null;
-                Destroy();
+                Terminate();
                 return;
             }
             // 寿命が終了 or 継続条件がfalse なら次の動きに遷移。次がなければ終了。
@@ -109,7 +109,7 @@ namespace Elffy.Framing
                 if(end) {
                     if(_behaviorQueue.Count == 0) {
                         _currentBehavior = null;
-                        Destroy();
+                        Terminate();
                         return;
                     }
                     else {

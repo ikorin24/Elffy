@@ -20,7 +20,7 @@ namespace Elffy
         }
 
         /// <summary>get whether this light is destroyed</summary>
-        public bool IsDestroyed => _lightImpl.IsDestroyed;
+        public bool IsTerminated => _lightImpl.IsDestroyed;
 
         /// <summary>light name</summary>
         LightName ILight.LightName
@@ -94,7 +94,7 @@ namespace Elffy
         /// <summary>Activate this light</summary>
         public void Activate()
         {
-            ThrowIfDestroyed();
+            ThrowIfTerminated();
             if(IsActivated) { return; }
             Dispatcher.Invoke(() =>
             {
@@ -103,9 +103,9 @@ namespace Elffy
         }
 
         /// <summary>Destroy this light</summary>
-        public void Destroy()
+        public void Terminate()
         {
-            ThrowIfDestroyed();
+            ThrowIfTerminated();
             Dispatcher.Invoke(() =>
             {
                 _lightImpl.Destroy(this);
@@ -115,7 +115,7 @@ namespace Elffy
         /// <summary>Light up this light</summary>
         public void LightUp()
         {
-            ThrowIfDestroyed();
+            ThrowIfTerminated();
             Dispatcher.ThrowIfNotMainThread();
             _lightImpl.LightUp();
         }
@@ -123,15 +123,15 @@ namespace Elffy
         /// <summary>Turn off this light</summary>
         public void TurnOff()
         {
-            ThrowIfDestroyed();
+            ThrowIfTerminated();
             Dispatcher.ThrowIfNotMainThread();
             _lightImpl.TurnOff();
         }
 
-        /// <summary>Throw exception if the instance is destroyed.</summary>
-        private void ThrowIfDestroyed()
+        /// <summary>Throw exception if the instance is terminated.</summary>
+        private void ThrowIfTerminated()
         {
-            if(IsDestroyed) { throw new ObjectDestroyedException(this); }
+            if(IsTerminated) { throw new ObjectTerminatedException(this); }
         }
     }
 }

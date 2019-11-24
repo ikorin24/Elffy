@@ -65,7 +65,7 @@ namespace Elffy.UI
             _list.ForEach(x =>
             {
                 x.Parent = null;
-                x.Renderable.Destroy();
+                x.Renderable.Terminate();
             });
             _list.Clear();
         }
@@ -110,7 +110,7 @@ namespace Elffy.UI
             var result = _list.Remove(item);
             if(result) {
                 item.Parent = null;
-                item.Renderable.Destroy();
+                item.Renderable.Terminate();
             }
             return result;
         }
@@ -121,7 +121,7 @@ namespace Elffy.UI
         {
             ArgumentChecker.ThrowOutOfRangeIf(index < 0 || index >= _list.Count, nameof(index), index, $"{nameof(index)} is out of range");
             _list[index].Parent = null;
-            _list[index].Renderable.Destroy();
+            _list[index].Renderable.Terminate();
             _list.RemoveAt(index);
         }
 

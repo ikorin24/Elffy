@@ -9,7 +9,7 @@ namespace Elffy
     /// ゲームによって管理され、ゲームのフレームに関わるオブジェクトの基底クラス<para/>
     /// ゲームのフレームに関する操作・ゲームによって管理されるための操作を提供します。<para/>
     /// </summary>
-    public abstract class FrameObject : IDestroyable
+    public abstract class FrameObject : ITerminatable
     {
         /// <summary>このオブジェクトがゲームによって管理されているかどうかを返します</summary>
         public bool IsActivated { get; private set; }
@@ -24,11 +24,11 @@ namespace Elffy
         public string Tag { get; set; } = string.Empty;
 
         /// <summary>このオブジェクトが、ゲームによって管理されるオブジェクトリストから破棄されているかどうかを返します</summary>
-        public bool IsDestroyed { get; private set; }
+        public bool IsTerminated { get; private set; }
 
         /// <summary>
         /// このオブジェクトが所属するレイヤー<para/>
-        /// <see cref="IsActivated"/> == true かつ <see cref="IsDestroyed"/> == false の場合常にインスタンスを持ち、そうでない場合常に null です<para/>
+        /// <see cref="IsActivated"/> == true かつ <see cref="IsTerminated"/> == false の場合常にインスタンスを持ち、そうでない場合常に null です<para/>
         /// </summary>
         public ILayer? Layer { get; private set; }
 
@@ -54,7 +54,7 @@ namespace Elffy
         /// <summary>このオブジェクトをワールドレイヤーでアクティブにします</summary>
         public void Activate()
         {
-            if(IsDestroyed) { throw new ObjectDestroyedException(this); }
+            if(IsTerminated) { throw new ObjectTerminatedException(this); }
             if(IsActivated) { return; }
             var worldLayer = Game.Layers.WorldLayer;
             Layer = worldLayer;
@@ -67,7 +67,7 @@ namespace Elffy
         public void Activate(Layer layer)
         {
             ArgumentChecker.ThrowIfNullArg(layer, nameof(layer));
-            if(IsDestroyed) { throw new ObjectDestroyedException(this); }
+            if(IsTerminated) { throw new ObjectTerminatedException(this); }
             if(IsActivated) { return; }
             Layer = layer;
             layer.AddFrameObject(this);
@@ -78,7 +78,7 @@ namespace Elffy
         internal void Activate(SystemLayer layer)
         {
             ArgumentChecker.ThrowIfNullArg(layer, nameof(layer));
-            if(IsDestroyed) { throw new ObjectDestroyedException(this); }
+            if(IsTerminated) { throw new ObjectTerminatedException(this); }
             if(IsActivated) { return; }
             Layer = layer;
             layer.AddFrameObject(this);
@@ -89,7 +89,7 @@ namespace Elffy
         internal void Activate(UILayer layer)
         {
             ArgumentChecker.ThrowIfNullArg(layer, nameof(layer));
-            if(IsDestroyed) { throw new ObjectDestroyedException(this); }
+            if(IsTerminated) { throw new ObjectTerminatedException(this); }
             if(IsActivated) { return; }
             Layer = layer;
             layer.AddFrameObject(this);
@@ -100,7 +100,7 @@ namespace Elffy
         public void Activate(ILayer layer)
         {
             ArgumentChecker.ThrowIfNullArg(layer, nameof(layer));
-            if(IsDestroyed) { throw new ObjectDestroyedException(this); }
+            if(IsTerminated) { throw new ObjectTerminatedException(this); }
             if(IsActivated) { return; }
             Layer = layer;
             layer.AddFrameObject(this);
@@ -109,12 +109,12 @@ namespace Elffy
         }
 
         /// <summary>このオブジェクトをゲーム管理下から外して破棄します</summary>
-        public virtual void Destroy()
+        public virtual void Terminate()
         {
-            if(IsDestroyed) { throw new ObjectDestroyedException(this); }
+            if(IsTerminated) { throw new ObjectTerminatedException(this); }
             Layer?.RemoveFrameObject(this);
             Layer = null;
-            IsDestroyed = true;
+            IsTerminated = true;
             (this as IDisposable)?.Dispose();
         }
     }
