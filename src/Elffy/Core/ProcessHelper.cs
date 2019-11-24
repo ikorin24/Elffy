@@ -48,18 +48,13 @@ namespace Elffy.Core
             if(uniqueName.Length > MUTEX_NAME_MAX_LEN) {
                 throw new ArgumentException($"{nameof(uniqueName)} is too long. Length must be between 0 and {MUTEX_NAME_MAX_LEN}.");
             }
-            Mutex? mutex = null;
-            try {
-                mutex = new Mutex(true, uniqueName, out var createdNew);
+            using(var mutex = new Mutex(true, uniqueName, out var createdNew)) {
                 if(createdNew) {
                     startAction();
                 }
                 else {
                     multiLaunch();
                 }
-            }
-            finally {
-                mutex?.ReleaseMutex();
             }
         }
     }
