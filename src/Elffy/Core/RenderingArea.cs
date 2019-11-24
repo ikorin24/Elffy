@@ -130,6 +130,9 @@ namespace Elffy.Core
         {
             GL.Viewport(x, y, width, height);
             _uiProjection = Matrix4.CreateOrthographicOffCenter(x, x + width, y, y + height, UI_NEAR, UI_FAR);
+            var uiRoot = Layers.UILayer.UIRoot;
+            uiRoot.Width = width;
+            uiRoot.Height = height;
         }
     }
 }

@@ -58,7 +58,7 @@ namespace Elffy.Core
                 YAxisDirection.TopToBottom => new Matrix4(1, 0,   0, 0,
                                                           0, -1,  0, 0,
                                                           0, 0,   1, 0,
-                                                          0, 450, 0, 1),   // TODO: 高さを画面の高さにする
+                                                          0, UIRoot.Height, 0, 1),
                 YAxisDirection.BottomToTop => Matrix4.Identity,
                 _ => throw new NotSupportedException(),
             };
@@ -79,6 +79,9 @@ namespace Elffy.Core
             if(mouse.OnScreen == false) { return; }
             var uiRoot = UIRoot;
             var pos = mouse.Position;
+            if(YAxisDirection == YAxisDirection.BottomToTop) {
+                pos.Y = UIRoot.Height - pos.Y;
+            }
 
             // Hit control is the last control where mouse over test is true
             var hitControl = default(Control);
