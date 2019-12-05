@@ -16,7 +16,7 @@ namespace Elffy.Effective
     /// <typeparam name="T">type of array</typeparam>
     [DebuggerTypeProxy(typeof(UnmanagedArrayDebuggerTypeProxy<>))]
     [DebuggerDisplay("UnmanagedArray<{Type.Name}>[{Length}]")]
-    public sealed class UnmanagedArray<T> : IList<T>, IReadOnlyList<T>, IReadOnlyCollection<T>, IDisposable
+    public sealed class UnmanagedArray<T> : IList<T>, IReadOnlyList<T>, IList, IReadOnlyCollection<T>, IDisposable
         where T : unmanaged
     {
         private int _length;
@@ -28,6 +28,8 @@ namespace Elffy.Effective
 
         /// <summary>Pointer address of this array.</summary>
         public IntPtr Ptr => _array;
+
+        public Type Type => typeof(T);
 
         /// <summary>Get the specific item of specific index.</summary>
         /// <param name="i">index</param>
@@ -61,6 +63,19 @@ namespace Elffy.Effective
 
         /// <summary>Get wheater this array is readonly.</summary>
         public bool IsReadOnly => false;
+
+        bool IList.IsReadOnly => false;
+
+        bool IList.IsFixedSize => false;
+
+        int ICollection.Count => _length;
+
+        object ICollection.SyncRoot => _syncRoot ?? (_syncRoot = new object());
+        private object? _syncRoot;
+
+        bool ICollection.IsSynchronized => false;
+
+        object IList.this[int index] { get => this[index]; set => this[index] = (T)value; }
 
         /// <summary>UnmanagedArray Constructor</summary>
         /// <param name="length">Length of array</param>
@@ -142,34 +157,11 @@ namespace Elffy.Effective
             }
         }
 
-        /// <summary>Not Supported in this class.</summary>
-        /// <param name="index"></param>
-        /// <param name="item"></param>
-        [Obsolete("This method is not supported.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public void Insert(int index, T item) => throw new NotSupportedException();
-
-        /// <summary>Not Supported in this class.</summary>
-        /// <param name="index"></param>
-        [Obsolete("This method is not supported.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public void RemoveAt(int index) => throw new NotSupportedException();
-
-        /// <summary>Not Supported in this class.</summary>
-        /// <param name="item"></param>
-        [Obsolete("This method is not supported.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public void Add(T item) => throw new NotSupportedException();
-
-        /// <summary>Not Supported in this class.</summary>
-        [Obsolete("This method is not supported.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public bool Remove(T item) => throw new NotSupportedException();
-
-        /// <summary>Not Supported in this class.</summary>
-        [Obsolete("This method is not supported.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public void Clear() => throw new NotSupportedException();
+        void IList<T>.Insert(int index, T item) => throw new NotSupportedException();
+        void IList<T>.RemoveAt(int index) => throw new NotSupportedException();
+        void ICollection<T>.Add(T item) => throw new NotSupportedException();
+        bool ICollection<T>.Remove(T item) => throw new NotSupportedException();
+        void ICollection<T>.Clear() => throw new NotSupportedException();
 
         /// <summary>Copy from unmanaged.</summary>
         /// <param name="source">unmanaged source pointer</param>
@@ -221,6 +213,15 @@ namespace Elffy.Effective
         {
             if(_isFree) { throw new InvalidOperationException("Memory of Array is already free."); }
         }
+
+        int IList.Add(object value) => throw new NotSupportedException();
+        void IList.Clear() => throw new NotSupportedException();
+        void IList.Insert(int index, object value) => throw new NotSupportedException();
+        void IList.Remove(object value) => throw new NotSupportedException();
+        void IList.RemoveAt(int index) => throw new NotSupportedException();
+        bool IList.Contains(object value) => (value is T v) ? Contains(v) : false;
+        int IList.IndexOf(object value) => (value is T v) ? IndexOf(v) : -1;
+        void ICollection.CopyTo(Array array, int index) => CopyTo((T[])array, index);
 
         [Serializable]
         public struct Enumerator : IEnumerator<T>, IEnumerator
