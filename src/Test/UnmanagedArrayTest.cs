@@ -32,16 +32,11 @@ namespace Test
 
             // プロパティ
             using(var array = new UnmanagedArray<short>(10000)) {
-                Assert(array.Type == typeof(short));
                 Assert(array.IsReadOnly == false);
-                Assert(array.IsThreadSafe == false);
                 AssertException<IndexOutOfRangeException>(() => array[-1] = 4);
                 AssertException<IndexOutOfRangeException, int>(() => array[-8]);
                 AssertException<IndexOutOfRangeException>(() => array[array.Length] = 4);
                 AssertException<IndexOutOfRangeException, int>(() => array[array.Length]);
-            }
-            using(var array = new UnmanagedArray<uint>(2, true)) {
-                Assert(array.IsThreadSafe);
             }
 
             // 要素数
