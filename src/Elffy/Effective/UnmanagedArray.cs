@@ -64,10 +64,10 @@ namespace Elffy.Effective
 
         /// <summary>UnmanagedArray Constructor</summary>
         /// <param name="length">Length of array</param>
-        public UnmanagedArray(int length)
+        public unsafe UnmanagedArray(int length)
         {
             if(length < 0) { throw new ArgumentException(); }
-            _objsize = Marshal.SizeOf<T>();
+            _objsize = sizeof(T);
             _array = Marshal.AllocHGlobal(length * _objsize);
             _length = length;
 
