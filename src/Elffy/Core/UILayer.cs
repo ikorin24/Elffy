@@ -76,22 +76,27 @@ namespace Elffy.Core
         public void HitTest(Mouse mouse)
         {
             if(IsHitTestEnabled == false) { return; }
-            if(mouse.OnScreen == false) { return; }
             var uiRoot = UIRoot;
             var pos = mouse.Position;
             if(YAxisDirection == YAxisDirection.BottomToTop) {
                 pos.Y = UIRoot.Height - pos.Y;
             }
-
-            // Hit control is the last control where mouse over test is true
-            var hitControl = default(Control);
-            foreach(var control in uiRoot.Children) {
-                if(control.MouseOverTest(pos)) {
-                    hitControl = control;
+            if(mouse.OnScreen) {
+                // Hit control is the last control where mouse over test is true
+                var hitControl = default(Control);
+                foreach(var control in uiRoot.Children) {
+                    if(control.MouseOverTest(pos)) {
+                        hitControl = control;
+                    }
+                }
+                foreach(var control in uiRoot.Children) {
+                    control.NotifyHitTestResult(control == hitControl, pos);
                 }
             }
-            foreach(var control in uiRoot.Children) {
-                control.NotifyHitTestResult(control == hitControl, pos);
+            else {
+                foreach(var control in uiRoot.Children) {
+                    control.NotifyHitTestResult(false, pos);
+                }
             }
         }
     }
