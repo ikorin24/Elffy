@@ -27,22 +27,22 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.glControl = new Elffy.Platforms.Windows.GLControl();
+            this.formScreen1 = new Elffy.Platforms.Windows.FormScreen();
             this.SuspendLayout();
             // 
-            // glControl1
+            // formScreen1
             // 
-            this.glControl.Location = new System.Drawing.Point(0, 0);
-            this.glControl.Name = "glControl1";
-            this.glControl.Size = new System.Drawing.Size(377, 335);
-            this.glControl.TabIndex = 0;
+            this.formScreen1.Location = new System.Drawing.Point(77, 43);
+            this.formScreen1.Name = "formScreen1";
+            this.formScreen1.Size = new System.Drawing.Size(505, 375);
+            this.formScreen1.TabIndex = 0;
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Controls.Add(this.glControl);
+            this.Controls.Add(this.formScreen1);
             this.Name = "Form1";
             this.Text = "Form1";
             this.ResumeLayout(false);
@@ -51,7 +51,7 @@
 
         #endregion
 
-        private Elffy.Platforms.Windows.GLControl glControl;
+        private Elffy.Platforms.Windows.FormScreen formScreen1;
     }
 }
 

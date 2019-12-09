@@ -64,6 +64,8 @@ namespace Elffy.Platforms.Windows
         private IGLControlImpl Implementation { get { ValidateState(); return _implementation!; } }
         private IGraphicsContext Context { get { ValidateState(); return _context!; } }
 
+        protected bool IsDesignMode => _isDesignMode;
+
         /// <summary>
         /// Gets a value indicating whether the current thread contains pending system messages.
         /// </summary>
@@ -191,7 +193,7 @@ namespace Elffy.Platforms.Windows
         {
             ValidateState();
             if(_isDesignMode) {
-                e.Graphics.Clear(BackColor);
+                e.Graphics.Clear(Color.Gray);
             }
             base.OnPaint(e);
         }

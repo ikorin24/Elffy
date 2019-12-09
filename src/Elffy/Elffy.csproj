@@ -103,6 +103,9 @@
     <Compile Include="Elffy\Camera.cs" />
     <Compile Include="InputSystem\Mouse.cs" />
     <Compile Include="InputSystem\MouseButton.cs" />
+    <Compile Include="Platforms\Windows\FormScreen.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
     <Compile Include="Platforms\Windows\GLControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
