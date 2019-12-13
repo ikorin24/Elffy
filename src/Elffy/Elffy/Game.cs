@@ -69,7 +69,8 @@ namespace Elffy
         /// <summary>ゲームが始まってからの実時間</summary>
         public static TimeSpan RealTime => Instance._watch.Elapsed;
 
-        #region event Initialized
+        public static Dispatcher Dispatcher => Instance._gameScreen.Dispatcher;
+
         /// <summary>ゲーム初期化後に呼ばれるイベント</summary>
         public static event ActionEventHandler<IScreenHost> Initialized
         {
@@ -92,11 +93,9 @@ namespace Elffy
                 }
             }
         }
-        #endregion
 
         private Game(){ }
 
-        #region Run
         /// <summary>ゲームを開始します</summary>
         /// <param name="width">描画領域の幅</param>
         /// <param name="height">描画領域の高さ</param>
@@ -134,17 +133,13 @@ namespace Elffy
             catch(Exception) { throw; }
             RunPrivate(width, height, title, windowStyle, uiYAxisDirection, icon);
         }
-        #endregion Run
 
-        #region Exit
         /// <summary>Exit this game.</summary>
         public static void Exit()
         {
             Instance._gameScreen.Close();
         }
-        #endregion
 
-        #region RunPrivate
         /// <summary>ゲームウィンドウを開始します</summary>
         /// <param name="width">ウィンドウ幅</param>
         /// <param name="height">ウィンドウ高さ</param>
@@ -155,7 +150,6 @@ namespace Elffy
         /// <returns></returns>
         private static void RunPrivate(int width, int height, string title, WindowStyle windowStyle, YAxisDirection uiYAxisDirection, string? iconResourcePath)
         {
-            Dispatcher.SetMainThreadID();
             try {
                 _instance = new Game();
                 var gameScreen = Platform.PlatformType switch
@@ -173,16 +167,15 @@ namespace Elffy
                 }
                 _temporaryInitializedHandlers.Clear();
                 _instance._gameScreen = gameScreen;
+                _instance._gameScreen.Dispatcher.SetMainThreadID();
                 _instance._gameScreen.Show();
             }
             finally {
-                _instance = null;
+                //_instance = null;
                 CustomSynchronizationContext.Delete();
             }
         }
-        #endregion
 
-        #region OnScreenRendering
         /// <summary>フレーム描画前実行処理</summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -192,9 +185,7 @@ namespace Elffy
                 Instance._watch.Start();
             }
         }
-        #endregion
 
-        #region OnScreenRendered
         /// <summary>フレーム描画後処理</summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -203,9 +194,7 @@ namespace Elffy
             Time += FrameDelta;
             FrameNum++;
         }
-        #endregion
 
-        #region GetWindowGameScreen
         /// <summary>ウィンドウを用いる OS での <see cref="IScreenHost"/> を取得します</summary>
         /// <param name="width">描画領域の幅</param>
         /// <param name="height">描画領域の高さ</param>
@@ -226,22 +215,17 @@ namespace Elffy
             }
             return window;
         }
-        #endregion
 
-        #region ThrowIfGameNotRunning
         /// <summary>ゲームが起動していない場合に例外を投げます</summary>
         private static void ThrowIfGameNotRunning()
         {
             if(!IsRunning) { throw new InvalidOperationException("Game is Not Running"); }
         }
-        #endregion
 
-        #region ThrowIfGameAlreadyRunning
         /// <summary>ゲームが既に起動している間合いに例外を投げます</summary>
         private static void ThrowIfGameAlreadyRunning()
         {
             if(IsRunning) { throw new InvalidOperationException("Game is already Running"); }
         }
-        #endregion
     }
 }

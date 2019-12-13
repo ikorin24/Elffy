@@ -38,7 +38,7 @@ namespace ElffyGame
         private static void GoToNextPrivate(Scenario scenario)
         {
             Current = scenario;
-            Dispatcher.Invoke(scenario.Start);
+            Game.Dispatcher.Invoke(scenario.Start);
         }
 
         protected abstract void Start();

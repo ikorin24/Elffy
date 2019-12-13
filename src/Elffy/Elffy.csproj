@@ -63,6 +63,7 @@
   <ItemGroup>
     <Compile Include="AssemblyServices\AssemblyState.cs" />
     <Compile Include="Core\ILayer.cs" />
+    <Compile Include="Core\SyncContextReciever.cs" />
     <Compile Include="Elffy\EventHandler.cs" />
     <Compile Include="Core\ITerminatable.cs" />
     <Compile Include="Core\MetaFile\Metadata.cs" />

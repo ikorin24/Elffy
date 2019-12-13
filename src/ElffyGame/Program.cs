@@ -1,4 +1,6 @@
-﻿using System;
+﻿#nullable enable
+using System;
+using System.Diagnostics;
 using Elffy;
 using Elffy.Core;
 using Elffy.Platforms.Windows;
@@ -20,7 +22,8 @@ namespace ElffyGame
                 Game.Initialized += sender => Scenario.Start(new StartScenario());
                 Game.Run(800, 450, "Game", WindowStyle.Default, YAxisDirection.TopToBottom, "icon.ico");
             }
-            catch(Exception) {
+            catch(Exception ex) {
+                Debug.WriteLine(ex);
                 MessageBox.Show("Fatal Error (CODE : 0)", "Error", MessageBoxType.Ok, MessageBoxIcon.Error);
                 // TODO: ロギング
                 return;

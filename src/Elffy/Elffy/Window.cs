@@ -20,6 +20,7 @@ namespace Elffy
         private readonly GameWindow _window;
         /// <summary>描画領域に関する処理を行うオブジェクト</summary>
         private readonly RenderingArea _renderingArea;
+        private readonly SyncContextReceiver _syncContextReciever = new SyncContextReceiver();
 
         /// <summary>ウィンドウの UI の Root</summary>
         public Page UIRoot => _renderingArea.Layers.UILayer.UIRoot;
@@ -40,6 +41,8 @@ namespace Elffy
         public Icon Icon { get => _window.Icon; set => _window.Icon = value; }
 
         public string Title { get => _window.Title; set => _window.Title = value; }
+
+        public Dispatcher Dispatcher { get; } = new Dispatcher();
 
         /// <summary>初期化時イベント</summary>
         public event ActionEventHandler<IScreenHost>? Initialized;
@@ -114,7 +117,7 @@ namespace Elffy
         private void OnLoad(object sender, EventArgs e)
         {
             Dispatcher.ThrowIfNotMainThread();
-            CustomSynchronizationContext.CreateIfNeeded();
+            CustomSynchronizationContext.CreateIfNeeded(_syncContextReciever);
             _renderingArea.InitializeGL();
             Initialized?.Invoke(this);
             Layers.SystemLayer.ApplyChanging();
@@ -136,6 +139,7 @@ namespace Elffy
             Mouse.InitFrame();
             Rendering?.Invoke(this);
             _renderingArea.RenderFrame(Camera.Projection, Camera.View);
+            _syncContextReciever.DoAll();
             _renderingArea.Layers.UILayer.HitTest(Mouse);
             Rendered?.Invoke(this);
             _window.SwapBuffers();

@@ -7,12 +7,16 @@ using System.Threading;
 
 namespace Elffy.Threading
 {
-    public static class Dispatcher
+    public class Dispatcher
     {
         /// <summary>メインスレッドに Invoke された処理を保持しておくためのスレッドセーフなキュー</summary>
-        private static readonly ConcurrentQueue<Action> _invokedActions = new ConcurrentQueue<Action>();
-        private static bool _hasMainThreadID;
-        private static int _mainThreadID;
+        private readonly ConcurrentQueue<Action> _invokedActions = new ConcurrentQueue<Action>();
+        private bool _hasMainThreadID;
+        private int _mainThreadID;
+
+        internal Dispatcher()
+        {
+        }
 
         /// <summary>指定した処理をメインスレッドで行わせます。</summary>
         /// <remarks>
@@ -20,7 +24,7 @@ namespace Elffy.Threading
         /// それ以外のスレッドからの呼び出しの場合、処理はキューに追加されます。<para/>
         /// </remarks>
         /// <param name="action">実行する処理</param>
-        public static void Invoke(Action action)
+        public void Invoke(Action action)
         {
             ArgumentChecker.ThrowIfNullArg(action, nameof(action));
             if(IsMainThread()) {
@@ -33,7 +37,7 @@ namespace Elffy.Threading
 
         /// <summary>現在のスレッドがメインスレッドかどうかを返します。</summary>
         /// <returns>メインスレッドかどうか</returns>
-        public static bool IsMainThread()
+        public bool IsMainThread()
         {
             ThrowIfNotInitialized();
             return Thread.CurrentThread.ManagedThreadId == _mainThreadID;
@@ -41,13 +45,13 @@ namespace Elffy.Threading
 
         /// <summary>現在のスレッドがメインスレッドでない場合、例外を投げます</summary>
         /// <exception cref="InvalidOperationException">現在のスレッドがメインスレッドでないことを示す例外</exception>
-        public static void ThrowIfNotMainThread()
+        public void ThrowIfNotMainThread()
         {
             if(IsMainThread() == false) { throw new InvalidOperationException("Current thread must be Main Thread."); }
         }
 
         /// <summary>メインスレッドIDを初期化します。最初にメインスレッドから1度だけ呼ばれます。</summary>
-        internal static void SetMainThreadID()
+        internal void SetMainThreadID()
         {
             Debug.Assert(_hasMainThreadID == false);
             _mainThreadID = Thread.CurrentThread.ManagedThreadId;
@@ -55,7 +59,7 @@ namespace Elffy.Threading
         }
 
         /// <summary>Invokedキューの内容を処理します</summary>
-        internal static void DoInvokedAction()
+        internal void DoInvokedAction()
         {
             // 現時点で既にキュー内にある処理までを実行する。それ以降は次回に処理実行する。
             var count = _invokedActions.Count;
@@ -65,7 +69,7 @@ namespace Elffy.Threading
             }
         }
 
-        private static void ThrowIfNotInitialized()
+        private void ThrowIfNotInitialized()
         {
             if(!_hasMainThreadID) {
                 throw new InvalidOperationException("Main Thread ID is not set.");

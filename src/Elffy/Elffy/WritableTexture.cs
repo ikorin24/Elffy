@@ -53,7 +53,7 @@ namespace Elffy
             _g.Clear(background);
             PixelWidth = _bitmap.Width;
             PixelHeight = _bitmap.Height;
-            Dispatcher.Invoke(() =>
+            Game.Dispatcher.Invoke(() =>
             {
                 var bmpData = _bitmap.LockBits(new Rectangle(0, 0, _bitmap.Width, _bitmap.Height),
                                                ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppPArgb);
@@ -71,7 +71,7 @@ namespace Elffy
         /// <param name="point">描画位置</param>
         public void DrawString(string text, Font font, PointF point)
         {
-            Dispatcher.ThrowIfNotMainThread();
+            Game.Dispatcher.ThrowIfNotMainThread();
             ThrowIfDisposed();
             ArgumentChecker.ThrowIfNullArg(font, nameof(font));
             _g.DrawString(text, font, Brushes.Green, point.X, point.Y);
@@ -87,7 +87,7 @@ namespace Elffy
         /// <param name="y2">点2のY座標</param>
         public void DrawLine(Pen pen, int x1, int y1, int x2, int y2)
         {
-            Dispatcher.ThrowIfNotMainThread();
+            Game.Dispatcher.ThrowIfNotMainThread();
             ThrowIfDisposed();
             ArgumentChecker.ThrowIfNullArg(pen, nameof(pen));
             _g.DrawLine(pen, x1, y1, x2, y2);
@@ -100,7 +100,7 @@ namespace Elffy
         /// <param name="points"></param>
         public void DrawLines(Pen pen, Point[] points)
         {
-            Dispatcher.ThrowIfNotMainThread();
+            Game.Dispatcher.ThrowIfNotMainThread();
             ThrowIfDisposed();
             ArgumentChecker.ThrowIfNullArg(pen, nameof(pen));
             ArgumentChecker.ThrowIfNullArg(points, nameof(points));
@@ -114,7 +114,7 @@ namespace Elffy
         /// <param name="point">座標</param>
         public void DrawImage(Bitmap image, Point point)
         {
-            Dispatcher.ThrowIfNotMainThread();
+            Game.Dispatcher.ThrowIfNotMainThread();
             ThrowIfDisposed();
             ArgumentChecker.ThrowIfNullArg(image, nameof(image));
             _g.DrawImage(image, point);
@@ -127,7 +127,7 @@ namespace Elffy
         /// <param name="color">テクスチャを塗りつぶす色</param>
         public void Clear(Color color)
         {
-            Dispatcher.ThrowIfNotMainThread();
+            Game.Dispatcher.ThrowIfNotMainThread();
             ThrowIfDisposed();
             _g.Clear(color);
             AddDirtyRegion(new Rectangle(0, 0, _bitmap.Width, _bitmap.Height));
@@ -237,7 +237,7 @@ namespace Elffy
                 // Release unmanaged resource here.
 
                 // OpenGLのバッファの削除はメインスレッドで行う必要がある
-                Dispatcher.Invoke(() => GL.DeleteTexture(_textureBuffer));
+                Game.Dispatcher.Invoke(() => GL.DeleteTexture(_textureBuffer));
                 _disposed = true;
             }
         }

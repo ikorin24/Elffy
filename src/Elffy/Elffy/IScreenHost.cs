@@ -3,6 +3,7 @@ using Elffy.InputSystem;
 using Elffy.UI;
 using OpenTK;
 using System.Drawing;
+using Elffy.Threading;
 
 namespace Elffy
 {
@@ -23,6 +24,8 @@ namespace Elffy
         Size ClientSize { get; set; }
         /// <summary><see cref="FrameObject"/> を保持するためのレイヤーのリスト</summary>
         LayerCollection Layers { get; }
+
+        Dispatcher Dispatcher { get; }
 
         /// <summary>初期化時イベント</summary>
         event ActionEventHandler<IScreenHost> Initialized;
