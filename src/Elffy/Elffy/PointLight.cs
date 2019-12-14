@@ -98,7 +98,7 @@ namespace Elffy
         {
             ThrowIfDestroyed();
             if(IsActivated) { return; }
-            Game.Dispatcher.Invoke(() =>
+            Engine.CurrentScreen.Dispatcher.Invoke(() =>
             {
                 _lightImpl.Activate(this);
             });
@@ -107,7 +107,7 @@ namespace Elffy
         public void Terminate()
         {
             ThrowIfDestroyed();
-            Game.Dispatcher.Invoke(() =>
+            Engine.CurrentScreen.Dispatcher.Invoke(() =>
             {
                 _lightImpl.Terminate(this);
             });
@@ -116,14 +116,14 @@ namespace Elffy
         public void LightUp()
         {
             ThrowIfDestroyed();
-            Game.Dispatcher.ThrowIfNotMainThread();
+            Engine.CurrentScreen.Dispatcher.ThrowIfNotMainThread();
             _lightImpl.LightUp();
         }
 
         public void TurnOff()
         {
             ThrowIfDestroyed();
-            Game.Dispatcher.ThrowIfNotMainThread();
+            Engine.CurrentScreen.Dispatcher.ThrowIfNotMainThread();
             _lightImpl.TurnOff();
         }
 

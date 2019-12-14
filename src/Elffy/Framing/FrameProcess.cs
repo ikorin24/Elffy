@@ -11,11 +11,10 @@ namespace Elffy.Framing
     {
         /// <summary><see cref="ProcessObj"/> を有効にするレイヤー</summary>
         /// <remarks>
-        /// ※ もしゲーム用途以外でこの <see cref="FrameProcess"/> を使いたい場合、
-        /// その <see cref="IScreenHost"/> での <see cref="IScreenHost.Layers"/> の <see cref="LayerCollection.SystemLayer"/> を使うように
+        /// TODO: 複数の <see cref="IScreenHost"/> がある場合、その <see cref="IScreenHost.Layers"/> の <see cref="LayerCollection.SystemLayer"/> を使うように
         /// 実装を変える必要がある
         /// </remarks>
-        internal static readonly SystemLayer TARGET_LAYER = Game.Layers.SystemLayer;
+        internal static readonly SystemLayer TARGET_LAYER = Engine.CurrentScreen.Layers.SystemLayer;
 
         /// <summary>何もしない動作を表す <see cref="FrameProcessBehavior"/> オブジェクト</summary>
         internal static readonly FrameProcessBehavior WAIT_BEHAVIOR = info => { };

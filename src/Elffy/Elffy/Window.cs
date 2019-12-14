@@ -9,6 +9,7 @@ using Elffy.InputSystem;
 using System.Drawing;
 using TKMouseButton = OpenTK.Input.MouseButton;
 using MouseButtonEventArgs = OpenTK.Input.MouseButtonEventArgs;
+using Elffy.Core.Timer;
 
 namespace Elffy
 {
@@ -43,6 +44,16 @@ namespace Elffy
         public string Title { get => _window.Title; set => _window.Title = value; }
 
         public Dispatcher Dispatcher { get; } = new Dispatcher();
+
+        public TimeSpan Time { get; private set; }
+
+        public long FrameNum { get; private set; }
+
+        IGameTimer IScreenHost.Watch => _watch;
+        private IGameTimer _watch = GameTimerGenerator.Create();
+
+        public TimeSpan FrameDelta { get; private set; } = TimeSpan.FromSeconds(1.0 / 60.0);
+        TimeSpan IScreenHost.FrameDelta => FrameDelta;
 
         /// <summary>初期化時イベント</summary>
         public event ActionEventHandler<IScreenHost>? Initialized;
@@ -119,6 +130,7 @@ namespace Elffy
             Dispatcher.ThrowIfNotMainThread();
             CustomSynchronizationContext.CreateIfNeeded(_syncContextReciever);
             _renderingArea.InitializeGL();
+            _watch.Start();
             Initialized?.Invoke(this);
             Layers.SystemLayer.ApplyChanging();
             foreach(var layer in Layers) {
@@ -142,6 +154,8 @@ namespace Elffy
             _syncContextReciever.DoAll();
             _renderingArea.Layers.UILayer.HitTest(Mouse);
             Rendered?.Invoke(this);
+            Time += FrameDelta;
+            FrameNum++;
             _window.SwapBuffers();
         }
 

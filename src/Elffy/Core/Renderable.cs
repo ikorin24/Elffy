@@ -151,7 +151,7 @@ namespace Elffy.Core
         {
             ArgumentChecker.ThrowIfNullArg(vertexArray, nameof(vertexArray));
             ArgumentChecker.ThrowIfNullArg(indexArray, nameof(indexArray));
-            Game.Dispatcher.ThrowIfNotMainThread();
+            Engine.CurrentScreen.Dispatcher.ThrowIfNotMainThread();
             unsafe {
                 fixed(Vertex* vertexPtr = vertexArray)
                 fixed(int* indexPtr = indexArray) {
@@ -165,7 +165,7 @@ namespace Elffy.Core
         /// <param name="indexArray">頂点インデックス配列</param>
         protected void InitGraphicBuffer(IntPtr vertexArray, int vertexArrayLength, IntPtr indexArray, int indexArrayLength)
         {
-            Game.Dispatcher.ThrowIfNotMainThread();
+            Engine.CurrentScreen.Dispatcher.ThrowIfNotMainThread();
             InitGraphicBufferPrivate(vertexArray, vertexArrayLength, indexArray, indexArrayLength);
         }
         #endregion
@@ -212,7 +212,7 @@ namespace Elffy.Core
                     var vbo = _vertexBuffer;
                     var ibo = _indexBuffer;
                     var vao = _vao;
-                    Game.Dispatcher.Invoke(() => {
+                    Engine.CurrentScreen.Dispatcher.Invoke(() => {
                         GL.DeleteBuffer(vbo);
                         GL.DeleteBuffer(ibo);
                         GL.DeleteVertexArray(vao);

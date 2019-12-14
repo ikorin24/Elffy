@@ -39,7 +39,7 @@ namespace Elffy
         /// <returns>シェーダープログラム</returns>
         public static ShaderProgram Create(VertexShader vertexShader, FragmentShader fragmentShader)
         {
-            Game.Dispatcher.ThrowIfNotMainThread();
+            Engine.CurrentScreen.Dispatcher.ThrowIfNotMainThread();
             ArgumentChecker.ThrowIfNullArg(vertexShader, nameof(vertexShader));
             ArgumentChecker.ThrowIfNullArg(fragmentShader, nameof(fragmentShader));
             var program = new ShaderProgram();
@@ -100,7 +100,7 @@ namespace Elffy
                     // Release managed resource here.
                 }
                 // release unmanaged resource here
-                Game.Dispatcher.Invoke(() =>
+                Engine.CurrentScreen.Dispatcher.Invoke(() =>
                 {
                     if(_programID != Consts.NULL) {
                         GL.DeleteProgram(_programID);

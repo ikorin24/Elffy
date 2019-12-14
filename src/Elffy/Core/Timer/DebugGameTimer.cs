@@ -42,7 +42,7 @@ namespace Elffy.Core.Timer
                     if(token.IsCancellationRequested) { return; }
                     Refresh();
                     _time = _watch.Elapsed;
-                    Thread.Sleep(1);
+                    Thread.Sleep(1);            // TODO: スレッドブロックしないように
                 }
             }, token);
         }

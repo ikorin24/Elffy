@@ -38,7 +38,7 @@ namespace ElffyGame
         private static void GoToNextPrivate(Scenario scenario)
         {
             Current = scenario;
-            Game.Dispatcher.Invoke(scenario.Start);
+            Engine.CurrentScreen.Dispatcher.Invoke(scenario.Start);
         }
 
         protected abstract void Start();
@@ -88,12 +88,12 @@ namespace ElffyGame
             {
                 sender.Texture = tex1;
             };
-            Game.UI.Add(button);
+            Engine.CurrentScreen.UIRoot.Children.Add(button);
 
             var b2 = new Button(100, 100);
             b2.Position = new Point(100, 100);
             b2.Texture = Texture.LoadFrom("cube.png");
-            Game.UI.Add(b2);
+            Engine.CurrentScreen.UIRoot.Children.Add(b2);
 
             FrameProcess.Begin(TimeSpan.FromSeconds(2), process =>
             {
@@ -107,7 +107,7 @@ namespace ElffyGame
             for(int i = 0; i < cubes.Length; i++) {
                 cubes[i].Position = new Vector3(1, 0.1f, 0);
                 cubes[i].Rotate(Vector3.UnitY, 8f.ToRadian());
-                cubes[i].Activate(Game.Layers.WorldLayer);
+                cubes[i].Activate();
             }
 
             for(int i = 0; i < cubes.Length; i++) {
@@ -124,8 +124,7 @@ namespace ElffyGame
 
             cube.Activate();
 
-            var camera = Game.Camera;
-            Game.Camera.LookAt(Vector3.Zero, new Vector3(0, 0, 10));
+            Engine.CurrentScreen.Camera.LookAt(Vector3.Zero, new Vector3(0, 0, 10));
 
             //cube.IsVisible = false;
             var a = new Plain();
@@ -133,7 +132,7 @@ namespace ElffyGame
             var sprite = Sprite.LoadFrom("TestSprite.xml");
             sprite.PageChangingAlgorithm = () =>
             {
-                return (int)Game.FrameNum / 3 % sprite.PageCount;
+                return (int)Engine.CurrentScreen.FrameNum / 3 % sprite.PageCount;
             };
             a.Texture = sprite;
             a.Texture = Texture.LoadFrom("cube.png");
@@ -158,7 +157,7 @@ namespace ElffyGame
             FrameProcess.WhileTrue(process =>
             {
                 var fovy = 25f + 15f * MathTool.Sin((float)process.Time.TotalSeconds / 2 * MathTool.TwoPi);
-                Game.Camera.ChangeFovy(fovy.ToRadian(), a.Position);
+                Engine.CurrentScreen.Camera.ChangeFovy(fovy.ToRadian(), a.Position);
             });
 
             //FrameProcess.WhileTrue(_ =>

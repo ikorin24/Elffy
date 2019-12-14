@@ -77,11 +77,12 @@ namespace Elffy.Framing
         /// <summary>フレーム毎の更新処理</summary>
         private void OnUpdated(FrameObject sender)
         {
+            var currentTime = Engine.CurrentScreen.Time;
             if(_isFirstFrame) {
-                _firstFrameTime = Game.Time;
+                _firstFrameTime = currentTime;
                 _isFirstFrame = false;
             }
-            _info.Time = Game.Time - _firstFrameTime;
+            _info.Time = currentTime - _firstFrameTime;
             // キャンセルされたら終了
             if(_isCanceled) {
                 _behaviorQueue.Clear();

@@ -4,6 +4,8 @@ using Elffy.UI;
 using OpenTK;
 using System.Drawing;
 using Elffy.Threading;
+using Elffy.Core.Timer;
+using System;
 
 namespace Elffy
 {
@@ -26,6 +28,14 @@ namespace Elffy
         LayerCollection Layers { get; }
 
         Dispatcher Dispatcher { get; }
+
+        TimeSpan Time { get; }
+
+        long FrameNum { get; }
+
+        internal IGameTimer Watch { get; }
+
+        internal TimeSpan FrameDelta { get; }
 
         /// <summary>初期化時イベント</summary>
         event ActionEventHandler<IScreenHost> Initialized;

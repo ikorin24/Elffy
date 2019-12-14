@@ -19,13 +19,12 @@ namespace ElffyGame
         static void GameStart()
         {
             try {
-                Game.Initialized += sender => Scenario.Start(new StartScenario());
-                Game.Run(800, 450, "Game", WindowStyle.Default, YAxisDirection.TopToBottom, "icon.ico");
+                Engine.SingleScreenRun(800, 450, "Game", WindowStyle.Default, YAxisDirection.TopToBottom, "icon.ico", 
+                                       _ => Scenario.Start(new StartScenario()));
             }
             catch(Exception ex) {
                 Debug.WriteLine(ex);
-                MessageBox.Show("Fatal Error (CODE : 0)", "Error", MessageBoxType.Ok, MessageBoxIcon.Error);
-                // TODO: ロギング
+                MessageBox.Show(ex.ToString(), "Error", MessageBoxType.Ok, MessageBoxIcon.Error);
                 return;
             }
         }

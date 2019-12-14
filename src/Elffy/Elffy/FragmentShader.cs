@@ -47,7 +47,7 @@ namespace Elffy
         private void Compile(string shaderSource)
         {
             ThrowIfDisposed();
-            Game.Dispatcher.ThrowIfNotMainThread();
+            Engine.CurrentScreen.Dispatcher.ThrowIfNotMainThread();
             ShaderID = GL.CreateShader(ShaderType.FragmentShader);
             GL.ShaderSource(ShaderID, shaderSource);
             GL.CompileShader(ShaderID);
@@ -76,7 +76,7 @@ namespace Elffy
                     // Release managed resource here.
                 }
                 // Release unmanaged resource here.
-                Game.Dispatcher.Invoke(() =>
+                Engine.CurrentScreen.Dispatcher.Invoke(() =>
                 {
                     if(ShaderID != Consts.NULL) {
                         GL.DeleteShader(ShaderID);

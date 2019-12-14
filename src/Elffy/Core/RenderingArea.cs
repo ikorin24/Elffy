@@ -106,7 +106,7 @@ namespace Elffy.Core
                 layer.Update();
             }
             Layers.UILayer.Update();
-            Game.Dispatcher.DoInvokedAction();
+            Engine.CurrentScreen.Dispatcher.DoInvokedAction();
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             // レイヤー描画処理
