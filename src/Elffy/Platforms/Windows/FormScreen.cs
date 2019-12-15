@@ -24,7 +24,6 @@ namespace Elffy.Platforms.Windows
 
         public Camera Camera { get; } = new Camera();
 
-        public VSyncMode VSync { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
         public double TargetRenderPeriod { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
         public Page UIRoot => _renderingArea.Layers.UILayer.UIRoot;

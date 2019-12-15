@@ -34,6 +34,7 @@ using OpenTK.Graphics;
 using System.Security;
 using System.Runtime.InteropServices;
 using System.Drawing;
+using OpenTK;
 
 namespace Elffy.Platforms.Windows
 {
@@ -85,6 +86,29 @@ namespace Elffy.Platforms.Windows
         /// </summary>
         public IWindowInfo WindowInfo => Implementation.WindowInfo;
 
+        public VSyncMode VSync
+        {
+            get
+            {
+                ValidateState();
+                var swapInterval = Context.SwapInterval;
+                return swapInterval < 0 ? VSyncMode.Adaptive :
+                       swapInterval == 0 ? VSyncMode.Off :
+                                           VSyncMode.On;
+            }
+            set
+            {
+                ValidateState();
+                Context.SwapInterval = value switch
+                {
+                    VSyncMode.On => 1,
+                    VSyncMode.Off => 0,
+                    VSyncMode.Adaptive => -1,
+                    _ => throw new ArgumentException(),
+                };
+            }
+        }
+
         /// <summary>
         /// Constructs a new instance.
         /// </summary>
@@ -115,6 +139,7 @@ namespace Elffy.Platforms.Windows
             SetStyle(ControlStyles.UserPaint, true);
             SetStyle(ControlStyles.AllPaintingInWmPaint, true);
             DoubleBuffered = false;
+            _initialVsyncValue = true;
 
             // Note: the DesignMode property may be incorrect when nesting controls.
             // We use LicenseManager.UsageMode as a workaround (this only works in
