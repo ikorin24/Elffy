@@ -11,8 +11,8 @@ namespace Elffy.Threading
     {
         /// <summary>メインスレッドに Invoke された処理を保持しておくためのスレッドセーフなキュー</summary>
         private readonly ConcurrentQueue<Action> _invokedActions = new ConcurrentQueue<Action>();
-        private bool _hasMainThreadID;
-        private int _mainThreadID;
+        private static bool _hasMainThreadID;
+        private static int _mainThreadID;
 
         internal Dispatcher()
         {
@@ -51,7 +51,7 @@ namespace Elffy.Threading
         }
 
         /// <summary>メインスレッドIDを初期化します。最初にメインスレッドから1度だけ呼ばれます。</summary>
-        internal void SetMainThreadID()
+        internal static void SetMainThreadID()
         {
             Debug.Assert(_hasMainThreadID == false);
             _mainThreadID = Thread.CurrentThread.ManagedThreadId;
@@ -69,7 +69,7 @@ namespace Elffy.Threading
             }
         }
 
-        private void ThrowIfNotInitialized()
+        private static void ThrowIfNotInitialized()
         {
             if(!_hasMainThreadID) {
                 throw new InvalidOperationException("Main Thread ID is not set.");

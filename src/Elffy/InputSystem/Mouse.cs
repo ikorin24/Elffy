@@ -14,10 +14,10 @@ namespace Elffy.InputSystem
         private KeyBuffer _middleButton;
         private WheelBuffer _wheel;
 
-        /// <summary>マウスが <see cref="IScreenHost"/> の描画領域内にあるかどうかを取得します</summary>
+        /// <summary>マウスが <see cref="IHostScreen"/> の描画領域内にあるかどうかを取得します</summary>
         public bool OnScreen { get; private set; }
 
-        /// <summary>Top-Left を基点としY軸下方向でのマウスの <see cref="IScreenHost"/> 内での座標を取得します</summary>
+        /// <summary>Top-Left を基点としY軸下方向でのマウスの <see cref="IHostScreen"/> 内での座標を取得します</summary>
         public Point Position { get; private set; }
 
         internal Mouse() { }
@@ -43,7 +43,7 @@ namespace Elffy.InputSystem
 
         internal void ChangeWheel(float value) => _wheel.SetValue(value);
 
-        /// <summary>現在のマウスが <see cref="IScreenHost"/> の描画領域内にあるかどうかを更新します</summary>
+        /// <summary>現在のマウスが <see cref="IHostScreen"/> の描画領域内にあるかどうかを更新します</summary>
         /// <param name="onScreen">マウスが領域内にあるかどうか</param>
         internal void ChangeOnScreen(bool onScreen) => OnScreen = onScreen;
 

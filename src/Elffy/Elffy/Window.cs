@@ -14,7 +14,7 @@ using Elffy.Core.Timer;
 namespace Elffy
 {
     /// <summary>クロスプラットフォーム ウィンドウクラス</summary>
-    public class Window : IScreenHost
+    public class Window : IHostScreen
     {
         private bool _isClosed;
         private const string DEFAULT_WINDOW_TITLE = "Window";
@@ -49,18 +49,18 @@ namespace Elffy
 
         public long FrameNum { get; private set; }
 
-        IGameTimer IScreenHost.Watch => _watch;
+        IGameTimer IHostScreen.Watch => _watch;
         private IGameTimer _watch = GameTimerGenerator.Create();
 
         public TimeSpan FrameDelta { get; private set; } = TimeSpan.FromSeconds(1.0 / 60.0);
-        TimeSpan IScreenHost.FrameDelta => FrameDelta;
+        TimeSpan IHostScreen.FrameDelta => FrameDelta;
 
         /// <summary>初期化時イベント</summary>
-        public event ActionEventHandler<IScreenHost>? Initialized;
+        public event ActionEventHandler<IHostScreen>? Initialized;
         /// <summary>描画前イベント</summary>
-        public event ActionEventHandler<IScreenHost>? Rendering;
+        public event ActionEventHandler<IHostScreen>? Rendering;
         /// <summary>描画後イベント</summary>
-        public event ActionEventHandler<IScreenHost>? Rendered;
+        public event ActionEventHandler<IHostScreen>? Rendered;
 
         /// <summary>ウィンドウを作成します</summary>
         public Window() : this(WindowStyle.Default) { }

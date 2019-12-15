@@ -2,69 +2,165 @@
 using System;
 using System.Drawing;
 using System.Windows.Forms;
+using Elffy.Core;
+using Elffy.Core.Timer;
+using Elffy.InputSystem;
+using Elffy.Threading;
+using Elffy.UI;
 using OpenTK;
-using OpenTK.Graphics;
-using OpenTK.Graphics.OpenGL;
+using FormMouseEventArgs = System.Windows.Forms.MouseEventArgs;
 
 namespace Elffy.Platforms.Windows
 {
-    public class FormScreen : GLControl
+    public class FormScreen : GLControl, IHostScreen
     {
+        private bool _disposed;
+        private readonly RenderingArea _renderingArea;
+        private readonly SyncContextReceiver _syncContextReciever = new SyncContextReceiver();
+
         public bool IsRunning { get; private set; }
 
-        public FormScreen() : base()
+        public Mouse Mouse { get; } = new Mouse();
+
+        public Camera Camera { get; } = new Camera();
+
+        public VSyncMode VSync { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public double TargetRenderPeriod { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+        public Page UIRoot => _renderingArea.Layers.UILayer.UIRoot;
+
+        public LayerCollection Layers => _renderingArea.Layers;
+
+        public Dispatcher Dispatcher => new Dispatcher();
+
+        public TimeSpan Time { get; private set; }
+
+        public long FrameNum { get; private set; }
+
+        IGameTimer IHostScreen.Watch => _watch;
+        private IGameTimer _watch = GameTimerGenerator.Create();
+
+        public TimeSpan FrameDelta { get; private set; } = TimeSpan.FromSeconds(1.0 / 60.0);
+        TimeSpan IHostScreen.FrameDelta => FrameDelta;
+
+        public event ActionEventHandler<IHostScreen>? Initialized;
+        public event ActionEventHandler<IHostScreen>? Rendering;
+        public event ActionEventHandler<IHostScreen>? Rendered;
+
+        public FormScreen() : this(YAxisDirection.TopToBottom) { }
+
+        public FormScreen(YAxisDirection uiYAxisDirection)
         {
+            _renderingArea = new RenderingArea(uiYAxisDirection);
+
+            void MouseButtonDown(object sender, FormMouseEventArgs e)
+            {
+                var button = e.Button switch
+                {
+                    MouseButtons.Left => MouseButton.Left,
+                    MouseButtons.Right => MouseButton.Right,
+                    MouseButtons.Middle => MouseButton.Middle,
+                    _ => (MouseButton?)null,
+                };
+                if(button == null) { return; }
+                Mouse.ChangePressedState(button.Value, true);
+            };
+
+            void MouseButtonUp(object sender, FormMouseEventArgs e)
+            {
+                var button = e.Button switch
+                {
+                    MouseButtons.Left => MouseButton.Left,
+                    MouseButtons.Right => MouseButton.Right,
+                    MouseButtons.Middle => MouseButton.Middle,
+                    _ => (MouseButton?)null,
+                };
+                if(button == null) { return; }
+                Mouse.ChangePressedState(button.Value, true);
+            };
+
+            Resize += OnResize;
+            Paint += OnPaint;
+            MouseMove += (sender, e) => Mouse.ChangePosition(new Point(e.X, e.Y));
+            MouseWheel += (sender, e) => Mouse.ChangeWheel(e.Delta);
+            MouseDown += MouseButtonDown;
+            MouseUp += MouseButtonUp;
+            MouseEnter += (sender, e) => Mouse.ChangeOnScreen(true);
+            MouseLeave += (sender, e) => Mouse.ChangeOnScreen(false);
         }
 
-        public void Run()
+        public void Run(ActionEventHandler<IHostScreen> switchScreenMethod)
         {
+            if(switchScreenMethod == null) { throw new ArgumentNullException(); }
             if(IsDesignMode) { return; }
+            Dispatcher.ThrowIfNotMainThread();
             IsRunning = true;
-            GL.ClearColor(Color.Black);
-            GL.Enable(EnableCap.DepthTest);
-            SetProjection();
+            SetScreenSize();
+            Rendering += switchScreenMethod;
+            switchScreenMethod(this);
+            _renderingArea.InitializeGL();
+            _watch.Start();
+            Initialized?.Invoke(this);
+            Layers.SystemLayer.ApplyChanging();
+            foreach(var layer in Layers) {
+                layer.ApplyChanging();
+            }
             Invalidate();
         }
 
-        protected override void OnResize(EventArgs e)
+        public void Close()
         {
-            base.OnResize(e);
-            if(!IsRunning) { return; }
-            SetProjection();
+            Dispatcher.ThrowIfNotMainThread();
+            Dispose();
         }
 
-        protected override void OnPaint(PaintEventArgs e)
+        protected override void Dispose(bool disposing)
         {
-            base.OnPaint(e);
+            if(!_disposed) {
+                if(disposing) {
+                    // Release managed resources here.
+                    // 全てのレイヤーに含まれるオブジェクトを破棄し、レイヤーを削除
+                    _renderingArea.Layers.SystemLayer.ClearFrameObject();
+                    foreach(var layer in _renderingArea.Layers) {
+                        layer.ClearFrameObject();
+                    }
+                    _renderingArea.Layers.Clear();
+                    // TODO: 全オブジェクト破棄後に Dispatcher.DoInvokedAction() をする。しかしここに書くべきではない？
+
+                    base.Dispose(disposing);
+                }
+                // Release unmanaged resource
+                _disposed = true;
+            }
+        }
+
+        private void OnResize(object sender, EventArgs e)
+        {
+            if(!IsRunning) { return; }
+            SetScreenSize();
+        }
+
+        private void OnPaint(object sender, PaintEventArgs e)
+        {
             if(!IsRunning) { return; }
 
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
-            GL.MatrixMode(MatrixMode.Modelview);
-            Matrix4 modelview = Matrix4.LookAt(Vector3.Zero, Vector3.UnitZ, Vector3.UnitY);
-            GL.LoadMatrix(ref modelview);
-
-            GL.Begin(PrimitiveType.Quads);
-
-            GL.Color4(Color4.White);
-            GL.Vertex3(-1.0f, 1.0f, 4.0f);
-            GL.Color4(Color4.Red);
-            GL.Vertex3(-1.0f, -1.0f, 4.0f);
-            GL.Color4(Color4.Lime);
-            GL.Vertex3(1.0f, -1.0f, 4.0f);
-            GL.Color4(Color4.Blue);
-            GL.Vertex3(1.0f, 1.0f, 4.0f);
-
-            GL.End();
+            Input.Update();
+            Mouse.InitFrame();
+            Rendering?.Invoke(this);
+            _renderingArea.RenderFrame(Camera.Projection, Camera.View);
+            _syncContextReciever.DoAll();
+            _renderingArea.Layers.UILayer.HitTest(Mouse);
+            Rendered?.Invoke(this);
+            Time += FrameDelta;
+            FrameNum++;
             SwapBuffers();
+            Invalidate();
         }
 
-        private void SetProjection()
+        private void SetScreenSize()
         {
-            GL.Viewport(0, 0, Width, Height);
-            GL.MatrixMode(MatrixMode.Projection);
-            Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI / 4, (float)Width / (float)Height, 1.0f, 64.0f);
-            GL.LoadMatrix(ref projection);
+            _renderingArea.Size = ClientSize;
+            Camera.ChangeScreenSize(ClientSize.Width, ClientSize.Height);
         }
     }
 }

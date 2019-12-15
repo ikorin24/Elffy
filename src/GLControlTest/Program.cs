@@ -1,4 +1,6 @@
-﻿using System;
+﻿#nullable enable
+using Elffy;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -14,6 +16,7 @@ namespace GLControlTest
         [STAThread]
         static void Main()
         {
+            Engine.RunAsMultiScreenBackend();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1());

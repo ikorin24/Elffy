@@ -11,7 +11,7 @@ namespace Elffy.Framing
     {
         /// <summary><see cref="ProcessObj"/> を有効にするレイヤー</summary>
         /// <remarks>
-        /// TODO: 複数の <see cref="IScreenHost"/> がある場合、その <see cref="IScreenHost.Layers"/> の <see cref="LayerCollection.SystemLayer"/> を使うように
+        /// TODO: 複数の <see cref="IHostScreen"/> がある場合、その <see cref="IHostScreen.Layers"/> の <see cref="LayerCollection.SystemLayer"/> を使うように
         /// 実装を変える必要がある
         /// </remarks>
         internal static readonly SystemLayer TARGET_LAYER = Engine.CurrentScreen.Layers.SystemLayer;

@@ -32,18 +32,22 @@
             // 
             // formScreen1
             // 
-            this.formScreen1.Location = new System.Drawing.Point(77, 43);
+            this.formScreen1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.formScreen1.Location = new System.Drawing.Point(145, 61);
             this.formScreen1.Name = "formScreen1";
-            this.formScreen1.Size = new System.Drawing.Size(505, 375);
+            this.formScreen1.Size = new System.Drawing.Size(965, 613);
             this.formScreen1.TabIndex = 0;
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
+            this.ClientSize = new System.Drawing.Size(1235, 742);
             this.Controls.Add(this.formScreen1);
             this.Name = "Form1";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Form1";
             this.ResumeLayout(false);
 

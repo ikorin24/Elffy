@@ -10,7 +10,7 @@ using System;
 namespace Elffy
 {
     /// <summary>プラットフォームごとの画面を抽象化するためのインターフェース</summary>
-    public interface IScreenHost
+    public interface IHostScreen
     {
         /// <summary>マウスを取得します</summary>
         Mouse Mouse { get; }
@@ -38,15 +38,15 @@ namespace Elffy
         internal TimeSpan FrameDelta { get; }
 
         /// <summary>初期化時イベント</summary>
-        event ActionEventHandler<IScreenHost> Initialized;
+        event ActionEventHandler<IHostScreen> Initialized;
         /// <summary>描画前イベント</summary>
-        event ActionEventHandler<IScreenHost> Rendering;
+        event ActionEventHandler<IHostScreen> Rendering;
         /// <summary>描画後イベント</summary>
-        event ActionEventHandler<IScreenHost> Rendered;
+        event ActionEventHandler<IHostScreen> Rendered;
 
-        /// <summary><see cref="IScreenHost"/> を起動します</summary>
+        /// <summary><see cref="IHostScreen"/> を起動します</summary>
         void Show();
-        /// <summary><see cref="IScreenHost"/> を閉じます</summary>
+        /// <summary><see cref="IHostScreen"/> を閉じます</summary>
         void Close();
     }
 }
