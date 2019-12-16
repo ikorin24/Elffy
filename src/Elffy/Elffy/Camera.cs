@@ -138,7 +138,9 @@ namespace Elffy
 
         private void SetProjectionMatrix(float radian, float far, float aspect)
         {
-            Projection = Matrix4.CreatePerspectiveFieldOfView(radian, aspect, NEAR, far);
+            if(aspect > 0) {
+                Projection = Matrix4.CreatePerspectiveFieldOfView(radian, aspect, NEAR, far);
+            }
         }
     }
 }
