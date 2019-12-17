@@ -100,13 +100,13 @@ namespace Elffy
                     // Release managed resource here.
                 }
                 // release unmanaged resource here
-                Engine.CurrentScreen.Dispatcher.Invoke(() =>
-                {
-                    if(_programID != Consts.NULL) {
+                if(_programID != Consts.NULL) {
+                    Engine.CurrentScreen.Dispatcher.Invoke(() =>
+                    {
                         GL.DeleteProgram(_programID);
                         _programID = Consts.NULL;
-                    }
-                });
+                    });
+                }
                 _disposed = true;
             }
         }
