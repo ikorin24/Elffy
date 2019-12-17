@@ -107,9 +107,37 @@ namespace Elffy.Platforms.Windows
             Invalidate();
         }
 
-        public void Close()
+        void IHostScreen.Show()
+        {
+            var form = new Form();
+            form.SuspendLayout();
+            form.ClientSize = new Size(800, 450);
+            form.StartPosition = FormStartPosition.CenterScreen;
+            form.Text = "Game !!";
+            Tag = form;
+            Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            Location = new Point(0, 0);
+            Size = form.ClientSize;
+            TabIndex = 0;
+            form.Controls.Add(this);
+            form.ResumeLayout(false);
+            form.Load += (sender, e) => Run(Engine.SwitchScreen);
+
+            if(Application.OpenForms.Count == 0) {
+                Application.Run(form);
+            }
+            else {
+                form.Show();
+            }
+        }
+
+        void IHostScreen.Close()
         {
             Dispatcher.ThrowIfNotMainThread();
+            if(Tag == Parent) {
+                Tag = null;
+                Parent.Controls.Remove(this);
+            }
             Dispose();
         }
 
