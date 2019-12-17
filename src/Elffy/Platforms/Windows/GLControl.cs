@@ -48,10 +48,10 @@ namespace Elffy.Platforms.Windows
     {
         private IGraphicsContext? _context;
         private IGLControlImpl? _implementation;
-        private GraphicsMode _format;
-        private int _major;
-        private int _minor;
-        private GraphicsContextFlags _flags;
+        private readonly GraphicsMode _format;
+        private readonly int _major;
+        private readonly int _minor;
+        private readonly GraphicsContextFlags _flags;
         private bool? _initialVsyncValue;
         // Indicates that OnResize was called before OnHandleCreated.
         // To avoid issues with missing OpenGL contexts, we suppress
@@ -90,7 +90,6 @@ namespace Elffy.Platforms.Windows
         {
             get
             {
-                ValidateState();
                 var swapInterval = Context.SwapInterval;
                 return swapInterval < 0 ? VSyncMode.Adaptive :
                        swapInterval == 0 ? VSyncMode.Off :
@@ -98,7 +97,6 @@ namespace Elffy.Platforms.Windows
             }
             set
             {
-                ValidateState();
                 Context.SwapInterval = value switch
                 {
                     VSyncMode.On => 1,
