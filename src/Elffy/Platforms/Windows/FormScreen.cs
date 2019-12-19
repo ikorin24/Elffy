@@ -30,7 +30,7 @@ namespace Elffy.Platforms.Windows
 
         public LayerCollection Layers => _renderingArea.Layers;
 
-        public Dispatcher Dispatcher => new Dispatcher();
+        public Dispatcher Dispatcher { get; } = new Dispatcher();
 
         public TimeSpan Time { get; private set; }
 
