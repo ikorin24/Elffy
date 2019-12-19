@@ -23,10 +23,8 @@ namespace GLControlTest
         [STAThread]
         static void Main()
         {
-            Engine.RunAsMultiScreenBackend();
-            var screen = new FormScreen() as IHostScreen;
-            screen.Initialized += SampleRun;
-            screen.Show();
+            Engine.Run();
+            Engine.ShowScreen(800, 450, "Game !!", WindowStyle.Default, YAxisDirection.TopToBottom, "icon.ico", SampleRun);
         }
 
 
