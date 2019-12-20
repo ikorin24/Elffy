@@ -19,8 +19,8 @@ namespace ElffyGame
         static void GameStart()
         {
             try {
-                Engine.SingleScreenRun(800, 450, "Game", WindowStyle.Default, YAxisDirection.TopToBottom, "icon.ico", 
-                                       _ => Scenario.Start(new StartScenario()));
+                Engine.Run();
+                Engine.ShowScreen(800, 450, "Game", Resources.LoadIcon("icon.ico"), WindowStyle.Default, YAxisDirection.TopToBottom, _ => Scenario.Start(new StartScenario()));
             }
             catch(Exception ex) {
                 Debug.WriteLine(ex);
