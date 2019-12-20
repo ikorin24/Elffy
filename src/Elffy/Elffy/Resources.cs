@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -73,6 +74,13 @@ namespace Elffy
                     return ModelLoader.Load(stream, ModelType.Fbx);
                 default:
                     throw new NotSupportedException($"Extension '{ext}' is not supported.");
+            }
+        }
+
+        public static Icon LoadIcon(string name)
+        {
+            using(var stream = GetStream(name)) {
+                return new Icon(stream);
             }
         }
 

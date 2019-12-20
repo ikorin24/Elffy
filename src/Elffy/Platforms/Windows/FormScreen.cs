@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 using Elffy.Core;
@@ -7,7 +8,7 @@ using Elffy.Core.Timer;
 using Elffy.InputSystem;
 using Elffy.Threading;
 using Elffy.UI;
-using OpenTK;
+using Elffy.Effective;
 using FormMouseEventArgs = System.Windows.Forms.MouseEventArgs;
 
 namespace Elffy.Platforms.Windows
@@ -107,13 +108,33 @@ namespace Elffy.Platforms.Windows
             Invalidate();
         }
 
-        void IHostScreen.Show()
+        void IHostScreen.Show(int width, int height, string title, Icon? icon, WindowStyle windowStyle)
         {
             var form = new Form();
             form.SuspendLayout();
-            form.ClientSize = new Size(800, 450);
+            form.ClientSize = new Size(width, height);
             form.StartPosition = FormStartPosition.CenterScreen;
-            form.Text = "Game !!";
+            form.Text = title;
+            form.Icon = icon;
+            switch(windowStyle) {
+                case WindowStyle.Default: {
+                    form.FormBorderStyle = FormBorderStyle.Sizable;
+                    form.WindowState = FormWindowState.Normal;
+                    break;
+                }
+                case WindowStyle.Fullscreen:
+                    form.FormBorderStyle = FormBorderStyle.None;
+                    form.WindowState = FormWindowState.Maximized;
+                    form.MaximizeBox = false;
+                    break;
+                case WindowStyle.FixedWindow:
+                    form.FormBorderStyle = FormBorderStyle.Sizable;
+                    form.WindowState = FormWindowState.Normal;
+                    form.MaximizeBox = false;
+                    break;
+                default:
+                    break;
+            }
             Tag = form;
             Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             Location = new Point(0, 0);
@@ -121,7 +142,7 @@ namespace Elffy.Platforms.Windows
             TabIndex = 0;
             form.Controls.Add(this);
             form.ResumeLayout(false);
-            form.Load += (sender, e) => Run(Engine.SwitchScreen);
+            form.Load += (sender, e) => Run(default(CurriedDelegateDummy).SwitchScreen);
 
             if(Application.OpenForms.Count == 0) {
                 Application.Run(form);
@@ -139,6 +160,18 @@ namespace Elffy.Platforms.Windows
                 Parent.Controls.Remove(this);
             }
             Dispose();
+        }
+
+        protected override void WndProc(ref Message m)
+        {
+            const int WM_SYSKEYDOWN = 0x0104;
+            const int VK_F4 = 0x73;
+            if(Tag == Parent && m.Msg == WM_SYSKEYDOWN && m.WParam.ToInt32() == VK_F4) {
+                m.Result = IntPtr.Zero;     // Disable alt+F4 to close
+            }
+            else {
+                base.WndProc(ref m);
+            }
         }
 
         protected override void Dispose(bool disposing)

@@ -45,8 +45,13 @@ namespace Elffy
         event ActionEventHandler<IHostScreen> Rendered;
 
         /// <summary><see cref="IHostScreen"/> を起動します</summary>
-        void Show();
+        /// <param name="width">width of <see cref="IHostScreen"/></param>
+        /// <param name="height">height of <see cref="IHostScreen"/></param>
+        /// <param name="title">title of <see cref="IHostScreen"/></param>
+        /// <param name="icon">icon of <see cref="IHostScreen"/> (null if no icon.)</param>
+        /// <param name="windowStyle">window style of <see cref="IHostScreen"/>. (Only if the platform uses window.)</param>
+        internal void Show(int width, int height, string title, Icon? icon, WindowStyle windowStyle);
         /// <summary><see cref="IHostScreen"/> を閉じます</summary>
-        void Close();
+        internal void Close();
     }
 }

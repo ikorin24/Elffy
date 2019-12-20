@@ -64,6 +64,7 @@
     <Compile Include="AssemblyServices\AssemblyState.cs" />
     <Compile Include="Core\ILayer.cs" />
     <Compile Include="Core\SyncContextReciever.cs" />
+    <Compile Include="Effective\CurriedDelegateDummy.cs" />
     <Compile Include="Elffy\Engine.cs" />
     <Compile Include="Elffy\EventHandler.cs" />
     <Compile Include="Core\ITerminatable.cs" />

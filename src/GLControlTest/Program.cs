@@ -24,7 +24,7 @@ namespace GLControlTest
         static void Main()
         {
             Engine.Run();
-            Engine.ShowScreen(800, 450, "Game !!", WindowStyle.Default, YAxisDirection.TopToBottom, "icon.ico", SampleRun);
+            Engine.ShowScreen(800, 450, "Game", Resources.LoadIcon("icon.ico"), WindowStyle.Default, YAxisDirection.TopToBottom, SampleRun);
         }
 
 

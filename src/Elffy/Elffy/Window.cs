@@ -10,6 +10,7 @@ using System.Drawing;
 using TKMouseButton = OpenTK.Input.MouseButton;
 using MouseButtonEventArgs = OpenTK.Input.MouseButtonEventArgs;
 using Elffy.Core.Timer;
+using Elffy.Effective;
 
 namespace Elffy
 {
@@ -65,6 +66,8 @@ namespace Elffy
         /// <summary>ウィンドウを作成します</summary>
         public Window() : this(WindowStyle.Default) { }
 
+        public Window(YAxisDirection uiYAxisDirection) : this(800, 450, DEFAULT_WINDOW_TITLE, WindowStyle.Default, uiYAxisDirection) { }
+
         /// <summary>スタイルを指定してウィンドウを作成します</summary>
         /// <param name="windowStyle">ウィンドウのスタイル</param>
         public Window(WindowStyle windowStyle) : this(800, 450, DEFAULT_WINDOW_TITLE, windowStyle, YAxisDirection.TopToBottom) { }
@@ -79,10 +82,11 @@ namespace Elffy
         {
             _renderingArea = new RenderingArea(yAxisDirection);
             _window = new GameWindow(width, height, GraphicsMode.Default, title, (GameWindowFlags)windowStyle);
-            _window.ClientSize = new Size(width, height);
+            if(windowStyle != WindowStyle.Fullscreen) {
+                _window.ClientSize = new Size(width, height);
+            }
             _window.VSync = VSyncMode.On;
             _window.TargetRenderFrequency = DisplayDevice.Default.RefreshRate;
-
             _window.Load += OnLoad;
             _window.Resize += OnResize;
             _window.RenderFrame += OnRenderFrame;
@@ -110,7 +114,7 @@ namespace Elffy
             _window.MouseLeave += (sender, e) => Mouse.ChangeOnScreen(false);
         }
 
-        public void Close()
+        void IHostScreen.Close()
         {
             Dispatcher.ThrowIfNotMainThread();
             if(_isClosed) { return; }
@@ -119,9 +123,30 @@ namespace Elffy
             ReleaseResource();
         }
 
-        public void Show()
+        void IHostScreen.Show(int width, int height, string title, Icon? icon, WindowStyle windowStyle)
         {
-            ThrowIfClosed();
+            Title = title;
+            if(icon != null) { Icon = icon; }
+            Rendering += default(CurriedDelegateDummy).SwitchScreen;
+            switch(windowStyle) {
+                case WindowStyle.Default: {
+                    _window.WindowBorder = WindowBorder.Resizable;
+                    _window.WindowState = WindowState.Normal;
+                    break;
+                }
+                case WindowStyle.Fullscreen: {
+                    _window.WindowBorder = WindowBorder.Fixed;
+                    _window.WindowState = WindowState.Fullscreen;
+                    break;
+                }
+                case WindowStyle.FixedWindow: {
+                    _window.WindowBorder = WindowBorder.Fixed;
+                    _window.WindowState = WindowState.Normal;
+                    break;
+                }
+                default:
+                    break;
+            }
             _window.Run();
         }
 
@@ -131,6 +156,7 @@ namespace Elffy
             CustomSynchronizationContext.CreateIfNeeded(_syncContextReciever);
             _renderingArea.InitializeGL();
             _watch.Start();
+            Engine.SwitchScreen(default, this);
             Initialized?.Invoke(this);
             Layers.SystemLayer.ApplyChanging();
             foreach(var layer in Layers) {
