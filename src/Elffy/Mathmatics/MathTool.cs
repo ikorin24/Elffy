@@ -30,41 +30,46 @@ namespace Elffy.Mathmatics
         /// <summary>Log_2 E</summary>
         public const float Log2E = 1.442695F;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float Sin(int value) => (float)Math.Sin(value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float Sin(float value)
-        {
-            return (float)Math.Sin(value);
-        }
+        public static float Sin(float value) => (float)Math.Sin(value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float Cos(float value)
-        {
-            return (float)Math.Cos(value);
-        }
+        public static float Cos(int value) => (float)Math.Cos(value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float Tan(float value)
-        {
-            return (float)Math.Tan(value);
-        }
+        public static float Cos(float value) => (float)Math.Cos(value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float Tan(int value) => (float)Math.Tan(value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float Tan(float value) => (float)Math.Tan(value);
 
         /// <summary>Convert degree to radian</summary>
         /// <param name="degree">degree value</param>
         /// <returns>radian value</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float ToRadian(this float degree)
-        {
-            return degree * PiOver180;
-        }
+        public static float ToRadian(this int degree) => ToRadian((float)degree);
+
+        /// <summary>Convert degree to radian</summary>
+        /// <param name="degree">degree value</param>
+        /// <returns>radian value</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float ToRadian(this float degree) => degree * PiOver180;
 
         /// <summary>Convert radian to degree</summary>
         /// <param name="radian">radian value</param>
         /// <returns>degree value</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float ToDegree(this float radian)
-        {
-            return radian / PiOver180;
-        }
+        public static float ToDegree(this int radian) => (float)radian / PiOver180;
+
+        /// <summary>Convert radian to degree</summary>
+        /// <param name="radian">radian value</param>
+        /// <returns>degree value</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float ToDegree(this float radian) => radian / PiOver180;
     }
 }
