@@ -101,6 +101,7 @@ namespace Elffy
             var vec = target - cameraPos;
             if(vec == Vector3.Zero) { return; }
             _direction = vec;
+            _position = cameraPos;
             SetViewMatrix(_position, _direction, _up);
         }
 
