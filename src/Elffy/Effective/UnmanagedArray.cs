@@ -34,22 +34,19 @@ namespace Elffy.Effective
         /// <summary>Get the specific item of specific index.</summary>
         /// <param name="i">index</param>
         /// <returns>The item of specific index</returns>
-        public T this[int i]
+        public unsafe T this[int i]
         {
             get
             {
                 if((uint)i >= (uint)_length) { throw new IndexOutOfRangeException(); }
                 ThrowIfFree();
-                unsafe {
-                    return *(T*)(_array + i * _objsize);
-                }
+                return ((T*)_array)[i];
             }
             set
             {
                 if((uint)i >= (uint)_length) { throw new IndexOutOfRangeException(); }
                 ThrowIfFree();
-                var ptr = _array + i * _objsize;
-                Marshal.StructureToPtr<T>(value, ptr, true);
+                ((T*)_array)[i] = value;
                 _version++;
             }
         }
@@ -57,16 +54,16 @@ namespace Elffy.Effective
         /// <summary>Length of this array</summary>
         public int Length => _length;
 
-        /// <summary>Length of this array (ICollection implementation)</summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public int Count => _length;
-
         /// <summary>Get wheater this array is readonly.</summary>
         public bool IsReadOnly => false;
 
         bool IList.IsReadOnly => false;
 
         bool IList.IsFixedSize => false;
+
+        int ICollection<T>.Count => _length;
+
+        int IReadOnlyCollection<T>.Count => _length;
 
         int ICollection.Count => _length;
 
@@ -89,6 +86,25 @@ namespace Elffy.Effective
             // initialize all block as zero
             for(int i = 0; i < _objsize * length; i++) {
                 Marshal.WriteByte(_array + i, 0x00);
+            }
+        }
+
+        /// <summary>Create new <see cref="UnmanagedArray{T}"/>, those elements are copied from <see cref="Span{T}"/>.</summary>
+        /// <param name="span">Elements of the <see cref="UnmanagedArray{T}"/> are initialized by this <see cref="Span{T}"/>.</param>
+        public unsafe UnmanagedArray(Span<T> span)
+        {
+            _objsize = sizeof(T);
+            _array = Marshal.AllocHGlobal(span.Length * _objsize);
+            _length = span.Length;
+
+            // initialize all block as zero
+            for(int i = 0; i < span.Length * _objsize; i++) {
+                Marshal.WriteByte(_array + i, 0x00);
+            }
+
+            var array = (T*)_array;
+            for(int i = 0; i < Length; i++) {
+                array[i] = span[i];
             }
         }
 
@@ -171,12 +187,29 @@ namespace Elffy.Effective
         {
             ThrowIfFree();
             if(source == IntPtr.Zero) { throw new ArgumentNullException("source is null"); }
-            ThrowIfFree();
             if(start < 0 || length < 0) { throw new ArgumentOutOfRangeException(); }
             if(start + length > Length) { throw new ArgumentOutOfRangeException(); }
             var byteLen = (long)(length * _objsize);
             Buffer.MemoryCopy((void*)source, (void*)(_array + start * _objsize), byteLen, byteLen);
             _version++;
+        }
+
+        public unsafe void CopyFrom(Span<T> source, int start)
+        {
+            ThrowIfFree();
+            if(start < 0) { throw new ArgumentOutOfRangeException(); }
+            if(start + source.Length > Length) { throw new ArgumentOutOfRangeException(); }
+            fixed(T* ptr = source) {
+                var byteLen = (long)(source.Length * _objsize);
+                Buffer.MemoryCopy(ptr, (void*)(_array + start * _objsize), byteLen, byteLen);
+                _version++;
+            }
+        }
+
+        public unsafe Span<T> AsSpan()
+        {
+            ThrowIfFree();
+            return new Span<T>((T*)_array, _length);
         }
 
         /// <summary>Create new <see cref="UnmanagedArray{T}"/> whose values are initialized by memory layout of specified structure</summary>
