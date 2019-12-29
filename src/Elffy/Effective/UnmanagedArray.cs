@@ -2,7 +2,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -11,7 +10,7 @@ namespace Elffy.Effective
 {
     /// <summary>
     /// Array class which is allocated in unmanaged memory.<para/>
-    /// Only for unmanaged type. (e.g. int, float, recursive-unmanaged struct, and so on.)
+    /// Only for unmanaged types. (e.g. int, float, recursive-unmanaged struct, and so on.)
     /// </summary>
     /// <typeparam name="T">type of array</typeparam>
     [DebuggerTypeProxy(typeof(UnmanagedArrayDebuggerTypeProxy<>))]
@@ -19,17 +18,21 @@ namespace Elffy.Effective
     public sealed class UnmanagedArray<T> : IList<T>, IReadOnlyList<T>, IList, IReadOnlyCollection<T>, IDisposable
         where T : unmanaged
     {
-        private int _length;
+        private readonly int _length;
         private int _version;
         private bool _disposed;
         private bool _isFree;
         private readonly IntPtr _array;
         private readonly int _objsize;
+        private Type? _objType;
 
-        /// <summary>Pointer address of this array.</summary>
-        public IntPtr Ptr => _array;
 
-        public Type Type => typeof(T);
+        // Do not remove this property. Used in DebuggerDisplay Attribute.
+        /// <summary>Get type of array elements.</summary>
+        public Type Type => _objType ?? (_objType = typeof(T));
+
+        /// <summary>Get pointer address of this array.</summary>
+        public IntPtr Ptr { get { ThrowIfFree(); return _array; } }
 
         /// <summary>Get the specific item of specific index.</summary>
         /// <param name="i">index</param>
@@ -51,8 +54,8 @@ namespace Elffy.Effective
             }
         }
 
-        /// <summary>Length of this array</summary>
-        public int Length => _length;
+        /// <summary>Get length of this array</summary>
+        public int Length { get { ThrowIfFree(); return _length; } }
 
         /// <summary>Get wheater this array is readonly.</summary>
         public bool IsReadOnly => false;
@@ -61,11 +64,11 @@ namespace Elffy.Effective
 
         bool IList.IsFixedSize => false;
 
-        int ICollection<T>.Count => _length;
+        int ICollection<T>.Count { get { ThrowIfFree(); return _length; } }
 
-        int IReadOnlyCollection<T>.Count => _length;
+        int IReadOnlyCollection<T>.Count { get { ThrowIfFree(); return _length; } }
 
-        int ICollection.Count => _length;
+        int ICollection.Count { get { ThrowIfFree(); return _length; } }
 
         object ICollection.SyncRoot => _syncRoot ?? (_syncRoot = new object());
         private object? _syncRoot;
@@ -103,22 +106,34 @@ namespace Elffy.Effective
             }
 
             var array = (T*)_array;
-            for(int i = 0; i < Length; i++) {
+            for(int i = 0; i < _length; i++) {
                 array[i] = span[i];
             }
         }
 
         ~UnmanagedArray() => Dispose(false);
 
+        /// <summary>Get enumerator instance.</summary>
+        /// <returns></returns>
         public Enumerator GetEnumerator()
         {
             ThrowIfFree();
             return new Enumerator(this);
         }
 
-        IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
+        IEnumerator<T> IEnumerable<T>.GetEnumerator()
+        {
+            ThrowIfFree();
+            // Avoid boxing by using class enumerator.
+            return new EnumeratorClass(this);
+        }
 
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            ThrowIfFree();
+            // Avoid boxing by using class enumerator.
+            return new EnumeratorClass(this);
+        }
 
         /// <summary>
         /// Free the allocated memory of this instance. <para/>
@@ -181,24 +196,27 @@ namespace Elffy.Effective
 
         /// <summary>Copy from unmanaged.</summary>
         /// <param name="source">unmanaged source pointer</param>
-        /// <param name="start">start index of destination. (destination is this instance.)</param>
+        /// <param name="start">start index of destination. (destination is this <see cref="UnmanagedArray{T}"/>.)</param>
         /// <param name="length">count of copied item. (NOT length of bytes.)</param>
         public unsafe void CopyFrom(IntPtr source, int start, int length)
         {
             ThrowIfFree();
             if(source == IntPtr.Zero) { throw new ArgumentNullException("source is null"); }
             if(start < 0 || length < 0) { throw new ArgumentOutOfRangeException(); }
-            if(start + length > Length) { throw new ArgumentOutOfRangeException(); }
+            if(start + length > _length) { throw new ArgumentOutOfRangeException(); }
             var byteLen = (long)(length * _objsize);
             Buffer.MemoryCopy((void*)source, (void*)(_array + start * _objsize), byteLen, byteLen);
             _version++;
         }
 
+        /// <summary>Copy from <see cref="Span{T}"/>.</summary>
+        /// <param name="source"><see cref="Span{T}"/> object.</param>
+        /// <param name="start">start index of destination. (destination is this <see cref="UnmanagedArray{T}"/>.)</param>
         public unsafe void CopyFrom(Span<T> source, int start)
         {
             ThrowIfFree();
             if(start < 0) { throw new ArgumentOutOfRangeException(); }
-            if(start + source.Length > Length) { throw new ArgumentOutOfRangeException(); }
+            if(start + source.Length > _length) { throw new ArgumentOutOfRangeException(); }
             fixed(T* ptr = source) {
                 var byteLen = (long)(source.Length * _objsize);
                 Buffer.MemoryCopy(ptr, (void*)(_array + start * _objsize), byteLen, byteLen);
@@ -206,13 +224,15 @@ namespace Elffy.Effective
             }
         }
 
+        /// <summary>Return <see cref="Span{T}"/> of this <see cref="UnmanagedArray{T}"/>.</summary>
+        /// <returns></returns>
         public unsafe Span<T> AsSpan()
         {
             ThrowIfFree();
             return new Span<T>((T*)_array, _length);
         }
 
-        /// <summary>Create new <see cref="UnmanagedArray{T}"/> whose values are initialized by memory layout of specified structure</summary>
+        /// <summary>Create new <see cref="UnmanagedArray{T}"/> whose values are initialized by memory layout of specified structure.</summary>
         /// <typeparam name="TStruct">type of source structure</typeparam>
         /// <param name="obj">source structure</param>
         /// <returns>instance of <see cref="UnmanagedArray{T}"/> whose values are initialized by <paramref name="obj"/></returns>
@@ -226,6 +246,7 @@ namespace Elffy.Effective
             return array;
         }
 
+        /// <summary>Dispose this instance and release unmanaged memory.</summary>
         public void Dispose()
         {
             Dispose(true);
@@ -276,17 +297,22 @@ namespace Elffy.Effective
 
             public bool MoveNext()
             {
-                var localList = _array;
-                if(_version == localList._version && ((uint)_index < (uint)localList._length)) {
-                    Current = localList[_index];
+                var localArray = _array;
+                if(_version == localArray._version && ((uint)_index < (uint)localArray._length)) {
+                    Current = localArray[_index];
                     _index++;
                     return true;
                 }
+                return MoveNextRare();
+            }
 
-                if(_version != _array._version) {
+            private bool MoveNextRare()
+            {
+                var localArray = _array;
+                if(_version != localArray._version) {
                     throw new InvalidOperationException();
                 }
-                _index = _array._length + 1;
+                _index = localArray._length + 1;
                 Current = default;
                 return false;
             }
@@ -294,6 +320,67 @@ namespace Elffy.Effective
             object IEnumerator.Current
             {
                 get {
+                    if(_index == 0 || _index == _array._length + 1) {
+                        throw new InvalidOperationException();
+                    }
+                    return Current;
+                }
+            }
+
+            void IEnumerator.Reset()
+            {
+                if(_version != _array._version) {
+                    throw new InvalidOperationException();
+                }
+                _index = 0;
+                Current = default;
+            }
+        }
+
+        [Serializable]
+        public class EnumeratorClass : IEnumerator<T>, IEnumerator
+        {
+            private readonly UnmanagedArray<T> _array;
+            private readonly int _version;
+            private int _index;
+            public T Current { get; private set; }
+
+            internal EnumeratorClass(UnmanagedArray<T> array)
+            {
+                _array = array;
+                _index = 0;
+                _version = _array._version;
+                Current = default;
+            }
+
+            public void Dispose() { }
+
+            public bool MoveNext()
+            {
+                var localArray = _array;
+                if(_version == localArray._version && ((uint)_index < (uint)localArray._length)) {
+                    Current = localArray[_index];
+                    _index++;
+                    return true;
+                }
+                return MoveNextRare();
+            }
+
+            private bool MoveNextRare()
+            {
+                var localArray = _array;
+                if(_version != localArray._version) {
+                    throw new InvalidOperationException();
+                }
+                _index = localArray._length + 1;
+                Current = default;
+                return false;
+            }
+
+            object IEnumerator.Current
+            {
+                get
+                {
                     if(_index == 0 || _index == _array._length + 1) {
                         throw new InvalidOperationException();
                     }
