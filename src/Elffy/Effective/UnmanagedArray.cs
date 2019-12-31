@@ -14,7 +14,7 @@ namespace Elffy.Effective
     /// </summary>
     /// <typeparam name="T">type of array</typeparam>
     [DebuggerTypeProxy(typeof(UnmanagedArrayDebuggerTypeProxy<>))]
-    [DebuggerDisplay("UnmanagedArray<{Type.Name}>[{Length}]")]
+    [DebuggerDisplay("UnmanagedArray<{_type.Name}>[{_length}]")]
     public sealed class UnmanagedArray<T> : IList<T>, IReadOnlyList<T>, IList, IReadOnlyCollection<T>, IDisposable
         where T : unmanaged
     {
@@ -24,12 +24,8 @@ namespace Elffy.Effective
         private bool _isFree;
         private readonly IntPtr _array;
         private readonly int _objsize;
-        private Type? _objType;
-
-
-        // Do not remove this property. Used in DebuggerDisplay Attribute.
-        /// <summary>Get type of array elements.</summary>
-        public Type Type => _objType ?? (_objType = typeof(T));
+        // Do not remove this field. Used in DebuggerDisplay Attribute.
+        private Type _type = typeof(T);
 
         /// <summary>Get pointer address of this array.</summary>
         public IntPtr Ptr { get { ThrowIfFree(); return _array; } }
