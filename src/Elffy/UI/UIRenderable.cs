@@ -52,8 +52,8 @@ namespace Elffy.UI
             if(!_disposed) {
                 if(disposing) {
                     // Release managed resource here.
-                    _vertexArray.Free();
-                    _indexArray.Free();
+                    _vertexArray.Dispose();
+                    _indexArray.Dispose();
                     base.Dispose(true);
                 }
                 // Release unmanaged resource

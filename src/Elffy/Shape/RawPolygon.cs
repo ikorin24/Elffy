@@ -35,8 +35,8 @@ namespace Elffy.Shape
             if(!_disposed) {
                 if(disposing) {
                     // Release managed resource here.
-                    _vertexArray.Free();
-                    _indexArray.Free();
+                    _vertexArray.Dispose();
+                    _indexArray.Dispose();
                     base.Dispose(true);
                 }
                 _disposed = true;

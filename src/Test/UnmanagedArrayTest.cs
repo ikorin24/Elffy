@@ -22,7 +22,7 @@ namespace Test
             for(int i = 0; i < len; i++) {
                 if(array[i] != i * i) { throw new Exception(); }
             }
-            array.Free();
+            array.Dispose();
         }
 
         [TestMethod]
@@ -32,7 +32,6 @@ namespace Test
 
             // プロパティ
             using(var array = new UnmanagedArray<short>(10000)) {
-                Assert(array.IsReadOnly == false);
                 AssertException<IndexOutOfRangeException>(() => array[-1] = 4);
                 AssertException<IndexOutOfRangeException, int>(() => array[-8]);
                 AssertException<IndexOutOfRangeException>(() => array[array.Length] = 4);
@@ -49,10 +48,10 @@ namespace Test
             // 手動解放/二重解放防止
             {
                 var array = new UnmanagedArray<float>(10);
-                array.Free();
+                array.Dispose();
                 AssertException<InvalidOperationException>(() => array[0] = 3);
                 AssertException<InvalidOperationException, float>(() => array[7]);
-                array.Free();
+                array.Dispose();
             }
 
             // 配列との相互変換
@@ -113,7 +112,7 @@ namespace Test
                     C = 0xAABBCCDDEEFF0011,
                 }
             };
-            using(var array = UnmanagedArray<uint>.CreateFromStruct(data)) {
+            using(var array = UnmanagedArray<uint>.CreateFromStruct(ref data)) {
                 Assert(array[0] == 10);
                 Assert(array[1] == 5);
                 Assert(array[2] == 90);

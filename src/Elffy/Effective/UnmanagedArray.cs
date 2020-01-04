@@ -14,21 +14,17 @@ namespace Elffy.Effective
     /// </summary>
     /// <typeparam name="T">type of array</typeparam>
     [DebuggerTypeProxy(typeof(UnmanagedArrayDebuggerTypeProxy<>))]
-    [DebuggerDisplay("UnmanagedArray<{_type.Name}>[{_length}]")]
+    [DebuggerDisplay("UnmanagedArray<{typeof(T).Name}>[{_length}]")]
     public sealed class UnmanagedArray<T> : IList<T>, IReadOnlyList<T>, IList, IReadOnlyCollection<T>, IDisposable
         where T : unmanaged
     {
         private readonly int _length;
         private int _version;
         private bool _disposed;
-        private bool _isFree;
         private readonly IntPtr _array;
-        private readonly int _objsize;
-        // Do not remove this field. Used in DebuggerDisplay Attribute.
-        private Type _type = typeof(T);
 
         /// <summary>Get pointer address of this array.</summary>
-        public IntPtr Ptr { get { ThrowIfFree(); return _array; } }
+        public IntPtr Ptr { get { ThrowIfDisposed(); return _array; } }
 
         /// <summary>Get the specific item of specific index.</summary>
         /// <param name="i">index</param>
@@ -38,33 +34,32 @@ namespace Elffy.Effective
             get
             {
                 if((uint)i >= (uint)_length) { throw new IndexOutOfRangeException(); }
-                ThrowIfFree();
+                ThrowIfDisposed();
                 return ((T*)_array)[i];
             }
             set
             {
                 if((uint)i >= (uint)_length) { throw new IndexOutOfRangeException(); }
-                ThrowIfFree();
+                ThrowIfDisposed();
                 ((T*)_array)[i] = value;
                 _version++;
             }
         }
 
         /// <summary>Get length of this array</summary>
-        public int Length { get { ThrowIfFree(); return _length; } }
+        public int Length { get { ThrowIfDisposed(); return _length; } }
 
-        /// <summary>Get wheater this array is readonly.</summary>
-        public bool IsReadOnly => false;
+        bool ICollection<T>.IsReadOnly => false;
 
         bool IList.IsReadOnly => false;
 
         bool IList.IsFixedSize => false;
 
-        int ICollection<T>.Count { get { ThrowIfFree(); return _length; } }
+        int ICollection<T>.Count { get { ThrowIfDisposed(); return _length; } }
 
-        int IReadOnlyCollection<T>.Count { get { ThrowIfFree(); return _length; } }
+        int IReadOnlyCollection<T>.Count { get { ThrowIfDisposed(); return _length; } }
 
-        int ICollection.Count { get { ThrowIfFree(); return _length; } }
+        int ICollection.Count { get { ThrowIfDisposed(); return _length; } }
 
         object ICollection.SyncRoot => _syncRoot ?? (_syncRoot = new object());
         private object? _syncRoot;
@@ -78,13 +73,14 @@ namespace Elffy.Effective
         public unsafe UnmanagedArray(int length)
         {
             if(length < 0) { throw new ArgumentException(); }
-            _objsize = sizeof(T);
-            _array = Marshal.AllocHGlobal(length * _objsize);
+            var objsize = sizeof(T);
+            _array = Marshal.AllocHGlobal(length * objsize);
             _length = length;
 
-            // initialize all block as zero
-            for(int i = 0; i < _objsize * length; i++) {
-                Marshal.WriteByte(_array + i, 0x00);
+            // initialize all bytes as zero
+            var array = (byte*)_array;
+            for(int i = 0; i < objsize * length; i++) {
+                array[i] = 0x00;
             }
         }
 
@@ -92,12 +88,12 @@ namespace Elffy.Effective
         /// <param name="span">Elements of the <see cref="UnmanagedArray{T}"/> are initialized by this <see cref="Span{T}"/>.</param>
         public unsafe UnmanagedArray(Span<T> span)
         {
-            _objsize = sizeof(T);
-            _array = Marshal.AllocHGlobal(span.Length * _objsize);
+            var objsize = sizeof(T);
+            _array = Marshal.AllocHGlobal(span.Length * objsize);
             _length = span.Length;
 
-            // initialize all block as zero
-            for(int i = 0; i < span.Length * _objsize; i++) {
+            // initialize all bytes as zero
+            for(int i = 0; i < span.Length * objsize; i++) {
                 Marshal.WriteByte(_array + i, 0x00);
             }
 
@@ -113,34 +109,22 @@ namespace Elffy.Effective
         /// <returns></returns>
         public Enumerator GetEnumerator()
         {
-            ThrowIfFree();
+            ThrowIfDisposed();
             return new Enumerator(this);
         }
 
         IEnumerator<T> IEnumerable<T>.GetEnumerator()
         {
-            ThrowIfFree();
+            ThrowIfDisposed();
             // Avoid boxing by using class enumerator.
             return new EnumeratorClass(this);
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            ThrowIfFree();
+            ThrowIfDisposed();
             // Avoid boxing by using class enumerator.
             return new EnumeratorClass(this);
-        }
-
-        /// <summary>
-        /// Free the allocated memory of this instance. <para/>
-        /// If already free, do nothing.<para/>
-        /// </summary>
-        public void Free()
-        {
-            if(!_isFree) {
-                Marshal.FreeHGlobal(_array);
-                _isFree = true;
-            }
         }
 
         /// <summary>Get index of the item</summary>
@@ -148,7 +132,7 @@ namespace Elffy.Effective
         /// <returns>index (if not contain, value is -1)</returns>
         public int IndexOf(T item)
         {
-            ThrowIfFree();
+            ThrowIfDisposed();
             for(int i = 0; i < _length; i++) {
                 if(item.Equals(this[i])) { return i; }
             }
@@ -160,7 +144,7 @@ namespace Elffy.Effective
         /// <returns>true: This array contains the target item. false: not contain</returns>
         public bool Contains(T item)
         {
-            ThrowIfFree();
+            ThrowIfDisposed();
             for(int i = 0; i < _length; i++) {
                 if(item.Equals(this[i])) { return true; }
             }
@@ -172,13 +156,14 @@ namespace Elffy.Effective
         /// <param name="arrayIndex">start index of destination array</param>
         public void CopyTo(T[] array, int arrayIndex)
         {
-            ThrowIfFree();
+            ThrowIfDisposed();
             if(array == null) { throw new ArgumentNullException(nameof(array)); }
             if(arrayIndex + _length > array.Length) { throw new ArgumentException("There is not enouph length of destination array"); }
             unsafe {
+                var objsize = sizeof(T);
                 fixed(T* arrayPtr = array) {
-                    var byteLen = (long)(_length * _objsize);
-                    var dest = new IntPtr(arrayPtr) + arrayIndex * _objsize;
+                    var byteLen = (long)(_length * objsize);
+                    var dest = new IntPtr(arrayPtr) + arrayIndex * objsize;
                     Buffer.MemoryCopy((void*)_array, (void*)dest, byteLen, byteLen);
                 }
             }
@@ -190,18 +175,26 @@ namespace Elffy.Effective
         bool ICollection<T>.Remove(T item) => throw new NotSupportedException();
         void ICollection<T>.Clear() => throw new NotSupportedException();
 
+        public unsafe IntPtr GetPtrIndexOf(int index)
+        {
+            ThrowIfDisposed();
+            if((uint)index >= (uint)_length) { throw new IndexOutOfRangeException(); }
+            return new IntPtr((T*)_array + index);
+        }
+
         /// <summary>Copy from unmanaged.</summary>
         /// <param name="source">unmanaged source pointer</param>
         /// <param name="start">start index of destination. (destination is this <see cref="UnmanagedArray{T}"/>.)</param>
         /// <param name="length">count of copied item. (NOT length of bytes.)</param>
         public unsafe void CopyFrom(IntPtr source, int start, int length)
         {
-            ThrowIfFree();
+            ThrowIfDisposed();
             if(source == IntPtr.Zero) { throw new ArgumentNullException("source is null"); }
             if(start < 0 || length < 0) { throw new ArgumentOutOfRangeException(); }
             if(start + length > _length) { throw new ArgumentOutOfRangeException(); }
-            var byteLen = (long)(length * _objsize);
-            Buffer.MemoryCopy((void*)source, (void*)(_array + start * _objsize), byteLen, byteLen);
+            var objsize = sizeof(T);
+            var byteLen = (long)(length * objsize);
+            Buffer.MemoryCopy((void*)source, (void*)(_array + start * objsize), byteLen, byteLen);
             _version++;
         }
 
@@ -210,21 +203,22 @@ namespace Elffy.Effective
         /// <param name="start">start index of destination. (destination is this <see cref="UnmanagedArray{T}"/>.)</param>
         public unsafe void CopyFrom(Span<T> source, int start)
         {
-            ThrowIfFree();
+            ThrowIfDisposed();
             if(start < 0) { throw new ArgumentOutOfRangeException(); }
             if(start + source.Length > _length) { throw new ArgumentOutOfRangeException(); }
+            var objsize = sizeof(T);
             fixed(T* ptr = source) {
-                var byteLen = (long)(source.Length * _objsize);
-                Buffer.MemoryCopy(ptr, (void*)(_array + start * _objsize), byteLen, byteLen);
+                var byteLen = (long)(source.Length * objsize);
+                Buffer.MemoryCopy(ptr, (void*)(_array + start * objsize), byteLen, byteLen);
                 _version++;
             }
         }
 
         /// <summary>Return <see cref="Span{T}"/> of this <see cref="UnmanagedArray{T}"/>.</summary>
-        /// <returns></returns>
+        /// <returns><see cref="Span{T}"/></returns>
         public unsafe Span<T> AsSpan()
         {
-            ThrowIfFree();
+            ThrowIfDisposed();
             return new Span<T>((T*)_array, _length);
         }
 
@@ -232,17 +226,22 @@ namespace Elffy.Effective
         /// <typeparam name="TStruct">type of source structure</typeparam>
         /// <param name="obj">source structure</param>
         /// <returns>instance of <see cref="UnmanagedArray{T}"/> whose values are initialized by <paramref name="obj"/></returns>
-        public static unsafe UnmanagedArray<T> CreateFromStruct<TStruct>(TStruct obj) where TStruct : unmanaged
+        public static unsafe UnmanagedArray<T> CreateFromStruct<TStruct>(ref TStruct obj) where TStruct : unmanaged
         {
             var structSize = sizeof(TStruct);
             var itemSize = sizeof(T);
             var arrayLen = structSize / itemSize + (structSize % itemSize > 0 ? 1 : 0);
             var array = new UnmanagedArray<T>(arrayLen);
-            Buffer.MemoryCopy(&obj, (void*)array._array, structSize, structSize);
+            fixed(TStruct* ptr = &obj) {
+                Buffer.MemoryCopy(ptr, (void*)array._array, structSize, structSize);
+            }
             return array;
         }
 
-        /// <summary>Dispose this instance and release unmanaged memory.</summary>
+        /// <summary>
+        /// Dispose this instance and release unmanaged memory.<para/>
+        /// If already disposed, do nothing.<para/>
+        /// </summary>
         public void Dispose()
         {
             Dispose(true);
@@ -255,13 +254,13 @@ namespace Elffy.Effective
             if(disposing) {
                 // relase managed resource here.
             }
-            Free();
+            Marshal.FreeHGlobal(_array);
             _disposed = true;
         }
 
-        private void ThrowIfFree()
+        private void ThrowIfDisposed()
         {
-            if(_isFree) { throw new InvalidOperationException("Memory of Array is already free."); }
+            if(_disposed) { throw new ObjectDisposedException(nameof(UnmanagedArray<T>), "Memory of array is already free."); }
         }
 
         int IList.Add(object value) => throw new NotSupportedException();
@@ -430,8 +429,6 @@ namespace Elffy.Effective
                 return items;
             }
         }
-
-        public bool IsReadOnly => _entity.IsReadOnly;
 
         public UnmanagedArrayDebuggerTypeProxy(UnmanagedArray<T> entity) => _entity = entity;
     }
