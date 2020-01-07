@@ -272,7 +272,6 @@ namespace Elffy.Effective
         int IList.IndexOf(object value) => (value is T v) ? IndexOf(v) : -1;
         void ICollection.CopyTo(Array array, int index) => CopyTo((T[])array, index);
 
-        [Serializable]
         public struct Enumerator : IEnumerator<T>, IEnumerator
         {
             private readonly UnmanagedArray<T> _array;
@@ -332,7 +331,6 @@ namespace Elffy.Effective
             }
         }
 
-        [Serializable]
         public class EnumeratorClass : IEnumerator<T>, IEnumerator
         {
             private readonly UnmanagedArray<T> _array;
