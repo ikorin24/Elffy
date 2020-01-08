@@ -8,7 +8,6 @@ namespace Elffy.Serialization
 {
     public static class ModelLoader
     {
-        #region Load
         /// <summary>3Dモデルファイルの種類を指定して、ストリームから3Dモデルを読み込みます</summary>
         /// <param name="stream">ストリーム</param>
         /// <param name="type">3Dモデルの種類</param>
@@ -16,29 +15,23 @@ namespace Elffy.Serialization
         public static Model3D Load(Stream stream, ModelType type)
         {
             ArgumentChecker.ThrowIfNullArg(stream, nameof(stream));
-            try {
-                switch(type) {
-                    case ModelType.Fbx:
-                        return FbxModelBuilder.LoadModel(stream);
-                    default:
-                        throw new NotSupportedException($"Model type '{type}' is not supported.");
-                }
-            }
-            catch(Exception ex) {
-                throw new FormatException("Failed in loading.", ex);
-            }
+            return type switch
+            {
+                ModelType.Fbx => FbxModelBuilder.LoadModel(stream),
+                ModelType.Pmx => PmxModelBuilder.LoadModel(stream),
+                _ => throw new NotSupportedException($"Model type '{type}' is not supported."),
+            };
         }
-        #endregion
     }
 
-    #region enum ModelType
     /// <summary>3Dモデルの種類を表します</summary>
     public enum ModelType
     {
         /// <summary>fbx ファイル</summary>
         Fbx,
+        /// <summary>pmx file</summary>
+        Pmx,
         /// <summary>obj ファイル</summary>
         Obj,
     }
-    #endregion
 }
