@@ -416,7 +416,7 @@ namespace Elffy.Effective
     internal class UnmanagedArrayDebuggerTypeProxy<T> where T : unmanaged
     {
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private UnmanagedArray<T> _entity;
+        private readonly UnmanagedArray<T> _entity;
 
         [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
         public T[] Items
