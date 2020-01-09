@@ -26,6 +26,9 @@ namespace Elffy.Effective
         /// <summary>Get pointer address of this array.</summary>
         public IntPtr Ptr { get { ThrowIfDisposed(); return _array; } }
 
+        /// <summary>Get <see cref="UnmanagedArray{T}"/> is disposed.</summary>
+        public bool IsDisposed => _disposed;
+
         /// <summary>Get the specific item of specific index.</summary>
         /// <param name="i">index</param>
         /// <returns>The item of specific index</returns>
