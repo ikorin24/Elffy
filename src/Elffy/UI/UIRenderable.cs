@@ -1,6 +1,6 @@
 ﻿#nullable enable
 using Elffy.Core;
-using Elffy.Effective;
+using System.Collections.Generic;
 using Elffy.Exceptions;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;

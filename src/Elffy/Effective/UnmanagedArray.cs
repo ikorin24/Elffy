@@ -6,7 +6,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 
-namespace Elffy.Effective
+namespace System.Collections.Generic
 {
     /// <summary>
     /// Array class which is allocated in unmanaged memory.<para/>
