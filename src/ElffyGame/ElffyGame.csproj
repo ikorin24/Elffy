@@ -101,11 +101,11 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Elffy.ico" />
-    <Content Include="externalExe\ElffyResourceCompiler.exe" />
+    <Content Include="externalExe\erc.exe" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Elffy\Elffy.csproj">
-      <Project>{d1115639-89f4-47a3-81d1-6594fcb2ff78}</Project>
+      <Project>{efa362d3-efdb-45b7-85ef-b97f14cdbbdf}</Project>
       <Name>Elffy</Name>
     </ProjectReference>
   </ItemGroup>
