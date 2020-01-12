@@ -57,7 +57,6 @@
     <Compile Include="TestHelper.cs" />
     <Compile Include="TestValues.cs" />
     <Compile Include="ResourceTest.cs" />
-    <Compile Include="UnmanagedArrayTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="testfile\Dice.fbx" />
