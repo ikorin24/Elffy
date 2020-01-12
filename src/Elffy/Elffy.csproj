@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <PackageReference Include="NAudio" Version="1.9.0" />
+    <PackageReference Include="PMXParser" Version="1.0.1" />
     <PackageReference Include="System.Memory" Version="4.5.3" />
     <PackageReference Include="UnmanagedArray" Version="1.0.1" />
   </ItemGroup>

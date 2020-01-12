@@ -67,11 +67,13 @@ namespace Elffy
         public static Model3D LoadModel(string name)
         {
             CheckInitialized();
-            var stream = GetStream(name);
+            using var stream = GetStream(name);
             var ext = Path.GetExtension(name).ToLower();
             switch(ext) {
                 case ".fbx":
                     return ModelLoader.Load(stream, ModelType.Fbx);
+                case ".pmx":
+                    return ModelLoader.Load(stream, ModelType.Pmx);
                 default:
                     throw new NotSupportedException($"Extension '{ext}' is not supported.");
             }
