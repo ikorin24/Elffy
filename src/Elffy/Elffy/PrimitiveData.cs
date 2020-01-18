@@ -37,6 +37,8 @@ namespace Elffy.DoNotUse_NowDeveloping         // TODO:
         public bool Equals(Vector2 other) => X == other.X && Y == other.Y;
         public override int GetHashCode() => HashCode.Combine(X, Y);
         public override string ToString() => $"({X}, {Y})";
+
+        public static Vector2 operator -(Vector2 vec) => new Vector2(-vec.X, -vec.Y);
         public static bool operator ==(Vector2 left, Vector2 right) => left.Equals(right);
         public static bool operator !=(Vector2 left, Vector2 right) => !(left == right);
         public static Vector2 operator +(Vector2 vec1, Vector2 vec2) => new Vector2(vec1.X + vec2.X, vec1.Y + vec2.Y);
@@ -100,9 +102,10 @@ namespace Elffy.DoNotUse_NowDeveloping         // TODO:
         public bool Equals(Vector3 other) => X == other.X && Y == other.Y && Z == other.Z;
         public override int GetHashCode() => HashCode.Combine(X, Y, Z);
         public override string ToString() => $"({X}, {Y}, {Z})";
+
+        public static Vector3 operator -(Vector3 vec) => new Vector3(-vec.X, -vec.Y, -vec.Z);
         public static bool operator ==(Vector3 left, Vector3 right) => left.Equals(right);
         public static bool operator !=(Vector3 left, Vector3 right) => !(left == right);
-
         public static Vector3 operator +(Vector3 vec1, Vector3 vec2) => new Vector3(vec1.X + vec2.X, vec1.Y + vec2.Y, vec1.Z + vec2.Z);
         public static Vector3 operator +(Vector3 vec1, float right) => new Vector3(vec1.X + right, vec1.Y + right, vec1.Z + right);
         public static Vector3 operator -(Vector3 vec1, Vector3 vec2) => new Vector3(vec1.X - vec2.X, vec1.Y - vec2.Y, vec1.Z - vec2.Z);
@@ -147,9 +150,10 @@ namespace Elffy.DoNotUse_NowDeveloping         // TODO:
         public bool Equals(Vector4 other) => X == other.X && Y == other.Y && Z == other.Z &&W == other.W;
         public override int GetHashCode() => HashCode.Combine(X, Y, Z, W);
         public override string ToString() => $"({X}, {Y}, {Z}, {W})";
+
+        public static Vector4 operator -(Vector4 vec) => new Vector4(-vec.X, -vec.Y, -vec.Z, -vec.W);
         public static bool operator ==(Vector4 left, Vector4 right) => left.Equals(right);
         public static bool operator !=(Vector4 left, Vector4 right) => !(left == right);
-
         public static Vector4 operator +(Vector4 vec1, Vector4 vec2) => new Vector4(vec1.X + vec2.X, vec1.Y + vec2.Y, vec1.Z + vec2.Z, vec1.W + vec2.W);
         public static Vector4 operator +(Vector4 vec1, float right) => new Vector4(vec1.X + right, vec1.Y + right, vec1.Z + right, vec1.W + right);
         public static Vector4 operator -(Vector4 vec1, Vector4 vec2) => new Vector4(vec1.X - vec2.X, vec1.Y - vec2.Y, vec1.Z - vec2.Z, vec1.W - vec2.W);
