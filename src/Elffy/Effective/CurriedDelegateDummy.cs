@@ -6,5 +6,7 @@ namespace Elffy.Effective
     internal class CurriedDelegateDummy
     {
         // No implementation. This is dummy class.
+
+        private CurriedDelegateDummy() { }
     }
 }
