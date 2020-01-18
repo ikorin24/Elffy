@@ -6,7 +6,7 @@ using Elffy.Threading;
 using Elffy.Platforms;
 using Elffy.Exceptions;
 using Elffy.Platforms.Windows;
-using Elffy.Effective;
+using Elffy.Effective.Internal;
 
 namespace Elffy
 {

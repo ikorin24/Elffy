@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using Elffy.Shape;
 using Elffy.Effective;
+using Elffy.Effective.Internal;
 using System.Linq;
 using MMDTools;
 using ElffyVertex = Elffy.Core.Vertex;
@@ -62,7 +63,8 @@ namespace Elffy.Serialization
             var buf = new UnmanagedArray<ElffyVertex>(vertexArray.Length);
             try {
                 for(int i = 0; i < vertexArray.Length; i++) {
-                    buf[i] = new ElffyVertex(GetVector(vertexArray[i].Position), GetVector(vertexArray[i].Normal), GetVector(vertexArray[i].UV));
+                    //buf[i] = new ElffyVertex(GetVector(vertexArray[i].Position), GetVector(vertexArray[i].Normal), GetVector(vertexArray[i].UV));
+                    buf[i] = new ElffyVertex(vertexArray[i].Position.AsVector3(), vertexArray[i].Normal.AsVector3(), vertexArray[i].UV.AsVector2());
                 }
                 return buf;
             }

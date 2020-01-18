@@ -8,7 +8,7 @@ using Elffy.Core.Timer;
 using Elffy.InputSystem;
 using Elffy.Threading;
 using Elffy.UI;
-using Elffy.Effective;
+using Elffy.Effective.Internal;
 using FormMouseEventArgs = System.Windows.Forms.MouseEventArgs;
 
 namespace Elffy.Platforms.Windows

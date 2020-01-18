@@ -2,7 +2,8 @@
 using System.Linq;
 using Elffy.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using OpenTK;
+//using OpenTK;
+using Elffy;
 
 namespace Test
 {

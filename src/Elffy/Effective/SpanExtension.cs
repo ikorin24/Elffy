@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 
 namespace Elffy.Effective
 {
-    internal static class SpanExtension
+    public static class SpanExtension
     {
         /// <summary>
         /// Cast whole <see cref="Span{T}"/> to another type of <see cref="Span{T}"/>.      <para/>

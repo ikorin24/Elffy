@@ -7,7 +7,7 @@ using TKVector3 = OpenTK.Vector3;
 using TKVector4 = OpenTK.Vector4;
 using TKColor4 = OpenTK.Graphics.Color4;
 
-namespace Elffy.DoNotUse_NowDeveloping         // TODO:
+namespace Elffy
 {
     [StructLayout(LayoutKind.Explicit)]
     public struct Vector2 : IEquatable<Vector2>

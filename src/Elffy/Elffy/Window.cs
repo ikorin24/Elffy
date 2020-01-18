@@ -10,7 +10,7 @@ using System.Drawing;
 using TKMouseButton = OpenTK.Input.MouseButton;
 using MouseButtonEventArgs = OpenTK.Input.MouseButtonEventArgs;
 using Elffy.Core.Timer;
-using Elffy.Effective;
+using Elffy.Effective.Internal;
 
 namespace Elffy
 {
