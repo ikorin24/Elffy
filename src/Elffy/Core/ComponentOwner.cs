@@ -17,8 +17,10 @@ namespace Elffy.Core
         /// <returns>component object</returns>
         public T GetComponent<T>() where T : class
         {
-            if(!ComponentStore<T>.HasComponentOf(this)) { throw new InvalidOperationException($"No component of type '{typeof(T).FullName}'"); }
-            return ComponentStore<T>.Get(this);
+            if(!ComponentStore<T>.TryGet(this, out var component)) {
+                throw new InvalidOperationException($"No component of type '{typeof(T).FullName}'");
+            }
+            return component;
         }
 
         /// <summary>Add component object</summary>
@@ -104,14 +106,9 @@ namespace Elffy.Core
             /// <summary>Get component of specified owner.</summary>
             /// <param name="owner">the owner of the component</param>
             /// <returns>the component</returns>
-            public static T Get(ComponentOwner owner)
+            public static bool TryGet(ComponentOwner owner, out T value)
             {
-                if(_components.TryGetValue(owner, out var component)) {
-                    return component;
-                }
-                else {
-                    throw new KeyNotFoundException();
-                }
+                return _components.TryGetValue(owner, out value);
             }
 
             /// <summary>Remove component of specified owner.</summary>
