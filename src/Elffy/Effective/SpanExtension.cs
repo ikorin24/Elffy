@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace Elffy.Effective
@@ -38,6 +39,12 @@ namespace Elffy.Effective
                                                                                                  where TTo : struct
         {
             return MemoryMarshal.Cast<TFrom, TTo>(source);
+        }
+
+        // TODO: dll パッケージに入れる
+        internal static UnmanagedArray<T> ToUnmanagedArray<T>(this ReadOnlySpan<T> source) where T : unmanaged
+        {
+            return new UnmanagedArray<T>(source);
         }
     }
 }

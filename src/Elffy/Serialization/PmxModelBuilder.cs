@@ -35,9 +35,6 @@ namespace Elffy.Serialization
             return root;
         }
 
-        private static TKVector3 GetVector(Vector3 v) => new TKVector3(v.X, v.Y, v.Z);
-        private static TKVector2 GetVector(Vector2 v) => new TKVector2(v.X, v.Y);
-
         private static ReadOnlySpan<UnmanagedArray<int>> GetPartsIndexArray(ReadOnlySpan<MMDTools.Material> materials, ReadOnlySpan<int> allIndex)
         {
             // パーツごとに頂点インデックス配列を生成
@@ -72,14 +69,6 @@ namespace Elffy.Serialization
                 buf.Dispose();
                 throw;
             }
-        }
-    }
-
-    internal static class UnmanagedArrayExtension       // TODO: packaging to dll
-    {
-        internal static UnmanagedArray<T> ToUnmanagedArray<T>(this ReadOnlySpan<T> source) where T : unmanaged
-        {
-            return new UnmanagedArray<T>(source);
         }
     }
 }
