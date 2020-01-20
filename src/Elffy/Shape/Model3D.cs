@@ -12,13 +12,6 @@ namespace Elffy.Shape
         private readonly UnmanagedArray<Vertex> _vertexArray;
         private readonly UnmanagedArray<int> _indexArray;
 
-        internal Model3D(IList<Vertex> vertices, IList<int> index)      // TODO: 廃止予定
-        {
-            _vertexArray = vertices.ToUnmanagedArray();
-            _indexArray = index.ToUnmanagedArray();
-            Activated += OnActivated;
-        }
-
         internal Model3D(ReadOnlySpan<Vertex> vertexArray, ReadOnlySpan<int> indexArray)
         {
             _vertexArray = new UnmanagedArray<Vertex>(vertexArray);

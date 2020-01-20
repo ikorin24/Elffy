@@ -9,10 +9,6 @@ using System.Linq;
 using MMDTools;
 using ElffyVertex = Elffy.Core.Vertex;
 
-using TKVector2 = OpenTK.Vector2;
-using TKVector3 = OpenTK.Vector3;
-using TKVector4 = OpenTK.Vector4;
-
 namespace Elffy.Serialization
 {
     internal static class PmxModelBuilder
@@ -28,7 +24,7 @@ namespace Elffy.Serialization
             using(var vertexArray = GetVertexArray(allVertex)) {
                 foreach(var indexArray in GetPartsIndexArray(materials, allIndex)) {
                     using(indexArray) {
-                        root.Children.Add(new Model3D(vertexArray, indexArray));
+                        root.Children.Add(new Model3D(vertexArray.AsSpan(), indexArray.AsSpan()));
                     }
                 }
             }
@@ -60,7 +56,6 @@ namespace Elffy.Serialization
             var buf = new UnmanagedArray<ElffyVertex>(vertexArray.Length);
             try {
                 for(int i = 0; i < vertexArray.Length; i++) {
-                    //buf[i] = new ElffyVertex(GetVector(vertexArray[i].Position), GetVector(vertexArray[i].Normal), GetVector(vertexArray[i].UV));
                     buf[i] = new ElffyVertex(vertexArray[i].Position.AsVector3(), vertexArray[i].Normal.AsVector3(), vertexArray[i].UV.AsVector2());
                 }
                 return buf;

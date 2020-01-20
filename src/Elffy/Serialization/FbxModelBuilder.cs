@@ -127,7 +127,8 @@ namespace Elffy.Serialization
                 indexOffset = modelVertices.Count;
                 modelIndexes.AddRange(indexes);
             }
-            var model = new Model3D(modelVertices, modelIndexes);
+            // パフォーマンスとかもう少し考える必要がある (Span<T>)
+            var model = new Model3D(modelVertices.ToArray().AsSpan(), modelIndexes.ToArray().AsSpan());
             return model;
         }
         #endregion
