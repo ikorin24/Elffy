@@ -6,6 +6,7 @@ using Elffy.Shape;
 using Elffy.Effective;
 using Elffy.Effective.Internal;
 using Elffy.Components;
+using Elffy.Core;
 using System.Linq;
 using MMDTools;
 
@@ -21,67 +22,34 @@ namespace Elffy.Serialization
             var materials = pmx.MaterialList.ExtractInnerArray();
             var boneList = pmx.BoneList.ExtractInnerArray();
 
-            //var root = new Model3D(ReadOnlySpan<Core.Vertex>.Empty, ReadOnlySpan<int>.Empty);
-            //using(var vertexArray = GetVertexArray(allVertex)) {
-            //    foreach(var indexArray in GetPartsIndexArray(materials, allIndex)) {
-            //        using(indexArray) {
-            //            root.Children.Add(new Model3D(vertexArray.AsSpan(), indexArray.AsSpan()));
-            //        }
-            //    }
-            //}
+            Core.WeightTransformType ToWeightType(MMDTools.WeightTransformType t)
+                => t switch
+                {
+                    MMDTools.WeightTransformType.BDEF1 => Core.WeightTransformType.BDEF1,
+                    MMDTools.WeightTransformType.BDEF2 => Core.WeightTransformType.BDEF2,
+                    MMDTools.WeightTransformType.BDEF4 => Core.WeightTransformType.BDEF4,
+                    _ => throw new NotSupportedException($"Not supported weight type. Type : {t}"),
+                };
 
-            using(var vertexArray = allVertex.SelectToUnmanagedArray(v => new Core.Vertex(v.Position.AsVector3(), v.Normal.AsVector3(), v.UV.AsVector2()))) {
+            Core.Vertex GetVertex(MMDTools.Vertex v)
+                => new Core.Vertex(v.Position.AsVector3(), v.Normal.AsVector3(), v.UV.AsVector2());
+
+            BoneTreeElement GetBoneTreeElement(MMDTools.Bone b, int i)
+                => new BoneTreeElement(i, (b.ParentBone != 65535) ? b.ParentBone : (int?)null, b.Position.AsVector3());
+
+            Core.BoneWeight GetBoneWeight(MMDTools.Vertex v)
+                => new Core.BoneWeight(v.BoneIndex1, v.BoneIndex2, v.BoneIndex3, v.BoneIndex4,
+                                       v.Weight1, v.Weight2, v.Weight3, v.Weight4, ToWeightType(v.WeightTransformType));
+
+            using(var vertexArray = allVertex.SelectToUnmanagedArray(GetVertex))
+            using(var weightArray = allVertex.SelectToUnmanagedArray(GetBoneWeight))
+            using(var boneTreeElements = boneList.SelectToUnmanagedArray(GetBoneTreeElement)) {
                 var model = new Model3D(vertexArray.AsSpan(), allIndex);
-
-                using(var infoArray = new UnmanagedArray<Core.VertexBoneInfo>(allVertex.Length)) {
-                    var bone = new Components.Bone(GetBoneTree(boneList), infoArray.AsSpan());
-                    model.AddComponent(bone);
-                }
-
+                var bone = new Components.Bone(boneTreeElements.AsSpan(), weightArray.AsSpan());
+                model.AddComponent(bone);
                 return model;
             }
         }
-
-        private static BoneTreeElement GetBoneTree(ReadOnlySpan<MMDTools.Bone> boneList)
-        {
-            var s = boneList.FirstOrDefault(b => b.ParentBone == 65535);
-            return new BoneTreeElement(0);
-        }
-
-        //private static ReadOnlySpan<UnmanagedArray<int>> GetPartsIndexArray(ReadOnlySpan<MMDTools.Material> materials, ReadOnlySpan<int> allIndex)
-        //{
-        //    // パーツごとに頂点インデックス配列を生成
-        //    var partsIndexArray = new UnmanagedArray<int>[materials.Length];
-        //    try {
-        //        var pos = 0;
-        //        for(int i = 0; i < partsIndexArray.Length; i++) {
-        //            partsIndexArray[i] = allIndex.Slice(pos, materials[i].VertexCount).ToUnmanagedArray();
-        //            pos += materials[i].VertexCount;
-        //        }
-        //    }
-        //    catch(Exception) {
-        //        foreach(var umArray in partsIndexArray) {
-        //            umArray?.Dispose();
-        //        }
-        //        throw;
-        //    }
-        //    return partsIndexArray;
-        //}
-
-        //private static UnmanagedArray<Elffy.Core.Vertex> GetVertexArray(ReadOnlySpan<MMDTools.Vertex> vertexArray)
-        //{
-        //    var buf = new UnmanagedArray<Elffy.Core.Vertex>(vertexArray.Length);
-        //    try {
-        //        for(int i = 0; i < vertexArray.Length; i++) {
-        //            buf[i] = new Elffy.Core.Vertex(vertexArray[i].Position.AsVector3(), vertexArray[i].Normal.AsVector3(), vertexArray[i].UV.AsVector2());
-        //        }
-        //        return buf;
-        //    }
-        //    catch(Exception) {
-        //        buf.Dispose();
-        //        throw;
-        //    }
-        //}
     }
 }
 

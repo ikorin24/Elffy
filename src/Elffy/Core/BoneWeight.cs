@@ -1,13 +1,9 @@
 ﻿#nullable enable
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Elffy.Core
 {
-    public readonly struct VertexBoneInfo : IEquatable<VertexBoneInfo>
+    public readonly struct BoneWeight : IEquatable<BoneWeight>
     {
         public readonly int RefBone0;
         public readonly int RefBone1;
@@ -17,13 +13,27 @@ namespace Elffy.Core
         public readonly float Weight1;
         public readonly float Weight2;
         public readonly float Weight3;
+        public readonly WeightTransformType Type;
+
+        public BoneWeight(int refBone0, int refBone1, int refBone2, int refBone3, float weight0, float weight1, float weight2, float weight3, WeightTransformType type)
+        {
+            RefBone0 = refBone0;
+            RefBone1 = refBone1;
+            RefBone2 = refBone2;
+            RefBone3 = refBone3;
+            Weight0 = weight0;
+            Weight1 = weight1;
+            Weight2 = weight2;
+            Weight3 = weight3;
+            Type = type;
+        }
 
         public override bool Equals(object? obj)
         {
-            return obj is VertexBoneInfo info && Equals(info);
+            return obj is BoneWeight info && Equals(info);
         }
 
-        public bool Equals(VertexBoneInfo other)
+        public bool Equals(BoneWeight other)
         {
             return RefBone0 == other.RefBone0 &&
                    RefBone1 == other.RefBone1 &&
@@ -39,5 +49,12 @@ namespace Elffy.Core
         {
             return HashCode.Combine(RefBone0, RefBone1, RefBone2, RefBone3, Weight0, Weight1, Weight2, Weight3);
         }
+    }
+
+    public enum WeightTransformType
+    {
+        BDEF1,
+        BDEF2,
+        BDEF4,
     }
 }

@@ -105,6 +105,25 @@ namespace Elffy.Effective
             }
         }
 
+        public static unsafe UnmanagedArray<TTo> SelectToUnmanagedArray<TFrom, TTo>(this Span<TFrom> source, Func<TFrom, int, TTo> selector) where TTo : unmanaged
+            => SelectToUnmanagedArray((ReadOnlySpan<TFrom>)source, selector);
+
+        public static unsafe UnmanagedArray<TTo> SelectToUnmanagedArray<TFrom, TTo>(this ReadOnlySpan<TFrom> source, Func<TFrom, int, TTo> selector) where TTo : unmanaged
+        {
+            var umArray = new UnmanagedArray<TTo>(source.Length);
+            try {
+                var ptr = (TTo*)umArray.Ptr;
+                for(int i = 0; i < source.Length; i++) {
+                    ptr[i] = selector(source[i], i);
+                }
+                return umArray;
+            }
+            catch(Exception) {
+                umArray.Dispose();
+                throw;
+            }
+        }
+
         public static T FirstOrDefault<T>(this Span<T> source, Func<T, bool> selector) => FirstOrDefault((ReadOnlySpan<T>)source, selector);
 
         public static T FirstOrDefault<T>(this ReadOnlySpan<T> source, Func<T, bool> selector)

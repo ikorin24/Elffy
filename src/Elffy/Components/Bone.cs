@@ -6,9 +6,6 @@ using Elffy.Shape;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Elffy.Components
 {
@@ -18,21 +15,23 @@ namespace Elffy.Components
         private bool _disposed;
         private UnmanagedArray<Vertex> _vertexArray;
         private UnmanagedArray<int> _indexArray;
-        private UnmanagedArray<VertexBoneInfo> _vertexInfoArray;
+        private UnmanagedArray<BoneWeight> _weightArray;
+        private UnmanagedArray<BoneTreeElement> _treeElements;
+        private int _rootIndex = -1;
 
-        public BoneTreeElement TreeRoot { get; }
-
-        public Bone(BoneTreeElement root, ReadOnlySpan<VertexBoneInfo> vertexInfoArray)
+        public Bone(ReadOnlySpan<BoneTreeElement> treeElements, ReadOnlySpan<BoneWeight> vertexInfoArray)
         {
-            TreeRoot = root ?? throw new ArgumentNullException(nameof(root));
-            _vertexInfoArray = vertexInfoArray.ToUnmanagedArray() ?? throw new ArgumentNullException(nameof(vertexInfoArray));
+            for(int i = 0; i < treeElements.Length; i++) {
+                if(treeElements[i].ParentID == null) {
+                    _rootIndex = i;
+                    break;
+                }
+            }
+            ArgumentChecker.ThrowArgumentIf(_rootIndex < 0, "Can not find root element of bone tree");
+            _treeElements = treeElements.ToUnmanagedArray();
+            _weightArray = vertexInfoArray.ToUnmanagedArray() ?? throw new ArgumentNullException(nameof(vertexInfoArray));
             _vertexArray = default!;
             _indexArray = default!;
-        }
-
-        public void Apply()
-        {
-            
         }
 
         public void OnAttached(ComponentOwner owner)
@@ -44,11 +43,10 @@ namespace Elffy.Components
             _owner = model;
 
             // 2重に持つ必要ある？
-            var sss = model.GetVertexArray();
             _vertexArray = model.GetVertexArray().ToUnmanagedArray();
             _indexArray = model.GetIndexArray().ToUnmanagedArray();
 
-            if(_vertexArray.Length != _vertexInfoArray.Length) { throw new InvalidOperationException(); }
+            if(_vertexArray.Length != _weightArray.Length) { throw new InvalidOperationException(); }
         }
 
         public void OnDetached(ComponentOwner owner)
@@ -58,8 +56,12 @@ namespace Elffy.Components
 
             _vertexArray.Dispose();
             _indexArray.Dispose();
+            _weightArray.Dispose();
+            _treeElements.Dispose();
             _vertexArray = null!;
             _indexArray = null!;
+            _weightArray = null!;
+            _treeElements = null!;
         }
 
         ~Bone() => Dispose(false);
@@ -76,22 +78,26 @@ namespace Elffy.Components
                 if(disposing) {
                     _vertexArray?.Dispose();
                     _indexArray?.Dispose();
+                    _weightArray?.Dispose();
+                    _treeElements?.Dispose();
                 }
                 _disposed = true;
             }
         }
     }
 
-    public class BoneTreeElement
+    public struct BoneTreeElement
     {
         public int ID { get; }
-        public List<BoneTreeElement> Children { get; private set; } = new List<BoneTreeElement>();
+        public int? ParentID { get; }
 
         public Vector3 Position { get; set; }
 
-        public BoneTreeElement(int id)
+        public BoneTreeElement(int id, int? parentID, Vector3 position)
         {
             ID = id;
+            ParentID = parentID;
+            Position = position;
         }
     }
 }
