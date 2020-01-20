@@ -195,7 +195,8 @@ namespace Elffy
 
         private static readonly float MaxValueAsFloat = byte.MaxValue;
 
-        public Color4(float r, float g, float b) => (R, G, B, A) = (r, g, b, 0f);
+        public Color4(float r, float g, float b) => (R, G, B, A) = (r, g, b, 1f);
+        public Color4(float value) => (R, G, B, A) = (value, value, value, 1f);
         public Color4(float r, float g, float b, float a) => (R, G, B, A) = (r, g, b, a);
 
         public override bool Equals(object? obj) => obj is Color4 color && Equals(color);
