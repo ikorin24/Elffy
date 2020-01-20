@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Elffy.Effective
@@ -17,6 +18,7 @@ namespace Elffy.Effective
         /// <typeparam name="TTo">type of destination <see cref="Span{T}"/> item</typeparam>
         /// <param name="source">source <see cref="Span{T}"/></param>
         /// <returns>destination <see cref="Span{T}"/></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Span<TTo> MarshalCast<TFrom, TTo>(this Span<TFrom> source) where TFrom : struct
                                                                                  where TTo : struct
         {
@@ -34,10 +36,35 @@ namespace Elffy.Effective
         /// <typeparam name="TTo">type of destination <see cref="ReadOnlySpan{T}"/> item</typeparam>
         /// <param name="source">source <see cref="ReadOnlySpan{T}"/></param>
         /// <returns>destination <see cref="ReadOnlySpan{T}"/></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ReadOnlySpan<TTo> MarshalCast<TFrom, TTo>(this ReadOnlySpan<TFrom> source) where TFrom : struct
                                                                                                  where TTo : struct
         {
             return MemoryMarshal.Cast<TFrom, TTo>(source);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe T* AsPointer<T>(this Span<T> source) where T : unmanaged
+        {
+            fixed(T* p = source) {
+                return p;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe T* AsPointer<T>(this Span<T> source, int index) where T : unmanaged
+        {
+            fixed(T* p = source.Slice(index)) {
+                return p;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe Span<TTo> AsSpan<TFrom, TTo>(this TFrom source) where TFrom : unmanaged
+                                                                             where TTo : unmanaged
+        {
+            var arrayLen = sizeof(TFrom) / sizeof(TTo) + (sizeof(TFrom) % sizeof(TTo) > 0 ? 1 : 0);
+            return new Span<TTo>(&source, arrayLen);
         }
     }
 }
