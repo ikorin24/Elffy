@@ -45,7 +45,10 @@ namespace Elffy.Effective
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe T* AsPointer<T>(this Span<T> source) where T : unmanaged
+        public static unsafe T* AsPointer<T>(this Span<T> source) where T : unmanaged => AsPointer((ReadOnlySpan<T>)source);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe T* AsPointer<T>(this ReadOnlySpan<T> source) where T : unmanaged
         {
             fixed(T* p = source) {
                 return p;
@@ -53,7 +56,10 @@ namespace Elffy.Effective
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe T* AsPointer<T>(this Span<T> source, int index) where T : unmanaged
+        public static unsafe T* AsPointer<T>(this Span<T> source, int index) where T : unmanaged => AsPointer((ReadOnlySpan<T>)source, index);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe T* AsPointer<T>(this ReadOnlySpan<T> source, int index) where T : unmanaged
         {
             fixed(T* p = source.Slice(index)) {
                 return p;
@@ -69,12 +75,46 @@ namespace Elffy.Effective
         }
 
 
-
         // TODO: dll パッケージに入れる
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static UnmanagedArray<T> ToUnmanagedArray<T>(this Span<T> source) where T : unmanaged => ToUnmanagedArray((ReadOnlySpan<T>)source);
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static UnmanagedArray<T> ToUnmanagedArray<T>(this ReadOnlySpan<T> source) where T : unmanaged
         {
             return new UnmanagedArray<T>(source);
+        }
+
+        public static unsafe UnmanagedArray<TTo> SelectToUnmanagedArray<TFrom, TTo>(this Span<TFrom> source, Func<TFrom, TTo> selector) where TTo : unmanaged
+            => SelectToUnmanagedArray((ReadOnlySpan<TFrom>)source, selector);
+
+        public static unsafe UnmanagedArray<TTo> SelectToUnmanagedArray<TFrom, TTo>(this ReadOnlySpan<TFrom> source, Func<TFrom, TTo> selector) where TTo : unmanaged
+        {
+            var umArray = new UnmanagedArray<TTo>(source.Length);
+            try {
+                var ptr = (TTo*)umArray.Ptr;
+                for(int i = 0; i < source.Length; i++) {
+                    ptr[i] = selector(source[i]);
+                }
+                return umArray;
+            }
+            catch(Exception) {
+                umArray.Dispose();
+                throw;
+            }
+        }
+
+        public static T FirstOrDefault<T>(this Span<T> source, Func<T, bool> selector) => FirstOrDefault((ReadOnlySpan<T>)source, selector);
+
+        public static T FirstOrDefault<T>(this ReadOnlySpan<T> source, Func<T, bool> selector)
+        {
+            foreach(var item in source) {
+                if(selector(item)) {
+                    return item;
+                }
+            }
+            return default!;
         }
     }
 }

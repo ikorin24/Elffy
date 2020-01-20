@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using Elffy.Effective;
 using Elffy.Exceptions;
+using Elffy.Components;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -15,7 +16,7 @@ namespace Elffy.Core
         /// <summary>Get component of specified type</summary>
         /// <typeparam name="T">component type</typeparam>
         /// <returns>component object</returns>
-        public T GetComponent<T>() where T : class
+        public T GetComponent<T>() where T : class, IComponent
         {
             if(!ComponentStore<T>.TryGet(this, out var component)) {
                 throw new InvalidOperationException($"No component of type '{typeof(T).FullName}'");
@@ -26,27 +27,32 @@ namespace Elffy.Core
         /// <summary>Add component object</summary>
         /// <typeparam name="T">component type</typeparam>
         /// <param name="component">component object</param>
-        public void AddComponent<T>(T component) where T : class
+        public void AddComponent<T>(T component) where T : class, IComponent
         {
             ArgumentChecker.ThrowIfNullArg(component, nameof(component));
             ArgumentChecker.ThrowArgumentIf(ComponentStore<T>.HasComponentOf(this), $"Component type '{typeof(T).FullName.AsInterned()}' already exists.".AsInterned());
             ComponentStore<T>.Add(this, component);
+            component.OnAttached(this);
         }
 
         /// <summary>Add or replace component whose type is <typeparamref name="T"/>. Return true if replaced, otherwize false.</summary>
         /// <typeparam name="T">component type</typeparam>
         /// <param name="component">the component</param>
         /// <returns>Return true if replaced, otherwize false.</returns>
-        public bool AddOrReplaceComponent<T>(T component) where T : class
+        public bool AddOrReplaceComponent<T>(T component) where T : class, IComponent
         {
             ArgumentChecker.ThrowIfNullArg(component, nameof(component));
-            return ComponentStore<T>.AddOrReplace(this, component);
+            var addNew = ComponentStore<T>.AddOrReplace(this, component);
+            if(addNew) {
+                component.OnAttached(this);
+            }
+            return addNew;
         }
 
         /// <summary>Get whether <see cref="ComponentOwner"/> has a component of specified type</summary>
         /// <typeparam name="T">component type</typeparam>
         /// <returns>True if <see cref="ComponentOwner"/> has the component; otherwise, false</returns>
-        public bool HasComponent<T>() where T : class
+        public bool HasComponent<T>() where T : class, IComponent
         {
             return ComponentStore<T>.HasComponentOf(this);
         }
@@ -54,9 +60,13 @@ namespace Elffy.Core
         /// <summary>Remove the component of specified type.</summary>
         /// <typeparam name="T">component type</typeparam>
         /// <returns>True if the component is removed. False if the component does not exist.</returns>
-        public bool RemoveComponent<T>() where T : class
+        public bool RemoveComponent<T>() where T : class, IComponent
         {
-            return ComponentStore<T>.Remove(this);
+            var removed = ComponentStore<T>.Remove(this, out var component);
+            if(removed) {
+                component.OnDetached(this);
+            }
+            return removed;
         }
 
 
@@ -65,7 +75,7 @@ namespace Elffy.Core
         /// The reference to an instance of dictionary key is weak refarence.<para/>
         /// </summary>
         /// <typeparam name="T">component type</typeparam>
-        private static class ComponentStore<T> where T : class
+        private static class ComponentStore<T> where T : class, IComponent
         {
             /// <summary>weak reference dictionary of (owner, component) pair.</summary>
             private static readonly ConditionalWeakTable<ComponentOwner, T> _components = new ConditionalWeakTable<ComponentOwner, T>();
@@ -113,9 +123,11 @@ namespace Elffy.Core
 
             /// <summary>Remove component of specified owner.</summary>
             /// <param name="owner">the owner of the component</param>
+            /// <param name="value">removed component</param>
             /// <returns>Return true if removed. Return false when the owner has no component.</returns>
-            public static bool Remove(ComponentOwner owner)
+            public static bool Remove(ComponentOwner owner, out T value)
             {
+                _components.TryGetValue(owner, out value);
                 return _components.Remove(owner);
             }
         }

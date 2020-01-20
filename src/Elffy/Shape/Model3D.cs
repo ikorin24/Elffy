@@ -14,10 +14,14 @@ namespace Elffy.Shape
 
         internal Model3D(ReadOnlySpan<Vertex> vertexArray, ReadOnlySpan<int> indexArray)
         {
-            _vertexArray = new UnmanagedArray<Vertex>(vertexArray);
-            _indexArray = new UnmanagedArray<int>(indexArray);
+            _vertexArray = vertexArray.ToUnmanagedArray();
+            _indexArray = indexArray.ToUnmanagedArray();
             Activated += OnActivated;
         }
+
+        public ReadOnlySpan<Vertex> GetVertexArray() => _vertexArray.AsSpan();
+
+        public ReadOnlySpan<int> GetIndexArray() => _indexArray.AsSpan();
 
         private void OnActivated(FrameObject frameObject)
         {

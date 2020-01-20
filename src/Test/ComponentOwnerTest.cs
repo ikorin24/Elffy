@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 using Elffy.Core;
+using Elffy.Components;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Test
@@ -87,19 +88,41 @@ namespace Test
             Assert.IsFalse(owner.HasComponent<Component2>());
         }
 
-        class Component1
+        class Component1 : IComponent
         {
             public string Name { get; set; } = string.Empty;
+
+            public void OnAttached(ComponentOwner owner)
+            {
+            }
+
+            public void OnDetached(ComponentOwner owner)
+            {
+            }
         }
 
-        class Component2
+        class Component2 : IComponent
         {
             public string Name { get; set; } = string.Empty;
+            public void OnAttached(ComponentOwner owner)
+            {
+            }
+
+            public void OnDetached(ComponentOwner owner)
+            {
+            }
         }
 
-        class Component3
+        class Component3 : IComponent
         {
             public string Name { get; set; } = string.Empty;
+            public void OnAttached(ComponentOwner owner)
+            {
+            }
+
+            public void OnDetached(ComponentOwner owner)
+            {
+            }
         }
 
         class SampleOwner : ComponentOwner
