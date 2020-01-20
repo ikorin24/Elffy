@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using Elffy.Exceptions;
 using Elffy.Threading;
+using Elffy.Effective;
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
@@ -112,25 +113,9 @@ namespace Elffy
 
         /// <summary>Send global ambient value to OpenGL</summary>
         /// <param name="color">global ambient value</param>
-        private static void SendGlobalAmbient(Color4 color)
+        private static unsafe void SendGlobalAmbient(Color4 color)
         {
-            unsafe {
-                var ptr = IntPtr.Zero;
-                try {
-                    ptr = Marshal.AllocHGlobal(sizeof(float) * 4);
-                    var array = (float*)ptr;
-                    array[0] = color.R;
-                    array[1] = color.G;
-                    array[2] = color.B;
-                    array[3] = color.A;
-                    GL.LightModel(LightModelParameter.LightModelAmbient, array);
-                }
-                finally {
-                    if(ptr != IntPtr.Zero) {
-                        Marshal.FreeHGlobal(ptr);
-                    }
-                }
-            }
+            GL.LightModel(LightModelParameter.LightModelAmbient, color.AsSpan<Color4, float>().AsPointer());
         }
 
 
