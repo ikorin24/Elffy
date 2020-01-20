@@ -67,5 +67,14 @@ namespace Elffy.Effective
             var arrayLen = sizeof(TFrom) / sizeof(TTo) + (sizeof(TFrom) % sizeof(TTo) > 0 ? 1 : 0);
             return new Span<TTo>(&source, arrayLen);
         }
+
+
+
+        // TODO: dll パッケージに入れる
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static UnmanagedArray<T> ToUnmanagedArray<T>(this ReadOnlySpan<T> source) where T : unmanaged
+        {
+            return new UnmanagedArray<T>(source);
+        }
     }
 }
