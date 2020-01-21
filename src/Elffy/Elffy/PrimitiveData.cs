@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using TKVector2 = OpenTK.Vector2;
@@ -211,6 +212,8 @@ namespace Elffy
 
         public static implicit operator TKColor4(Color4 color) => Unsafe.As<Color4, TKColor4>(ref color);
         public static implicit operator Color4(TKColor4 color) => Unsafe.As<TKColor4, Color4>(ref color);
+        public static explicit operator Color(Color4 color) => (Color)(TKColor4)color;
+        public static implicit operator Color4(Color color) => (TKColor4)color;
 
         private static byte ToByte(float value)
         {

@@ -9,11 +9,8 @@ namespace Elffy.Mathmatics
         private static Random? _r;
         private static Random _rand => (_r ??= new Random());
 
-        public static Color Color() => 
-            System.Drawing.Color.FromArgb(_rand.Next(255), _rand.Next(255), _rand.Next(255));
-
-        public static Color AlphaColor() =>
-            System.Drawing.Color.FromArgb(_rand.Next(255), _rand.Next(255), _rand.Next(255), _rand.Next(255));
+        public static Color4 Color4() => new Color4((float)_rand.NextDouble(), (float)_rand.NextDouble(), (float)_rand.NextDouble());
+        public static Color4 AlphaColor4() => new Color4((float)_rand.NextDouble(), (float)_rand.NextDouble(), (float)_rand.NextDouble(), (float)_rand.NextDouble());
 
         public static int Int() => _rand.Next();
         public static int Int(int max) => _rand.Next(max);
