@@ -170,6 +170,23 @@ namespace Elffy.Core
         }
         #endregion
 
+        /// <summary>描画する頂点データを GPU メモリにロードします</summary>
+        /// <param name="vertexArray"></param>
+        /// <param name="vertexArrayLength"></param>
+        /// <param name="indexArray"></param>
+        /// <param name="indexArrayLength"></param>
+        protected void UpdateGraphicBuffer(IntPtr vertexArray, int vertexArrayLength, IntPtr indexArray, int indexArrayLength)
+        {
+            Engine.CurrentScreen.Dispatcher.ThrowIfNotMainThread();
+            if(!_isLoaded) { throw new InvalidOperationException("Not initialized graphic buffer"); }
+            GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBuffer);
+            GL.BufferData(BufferTarget.ArrayBuffer, vertexArrayLength * Vertex.Size, vertexArray, BufferUsageHint.StaticDraw);
+
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBuffer);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, indexArrayLength * sizeof(int), indexArray, BufferUsageHint.StaticDraw);
+        }
+
+
         private void InitGraphicBufferPrivate(IntPtr vertexArray, int vertexArrayLength, IntPtr indexArray, int indexArrayLength)
         {
             _indexArrayLength = indexArrayLength;
