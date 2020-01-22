@@ -43,7 +43,7 @@ namespace Elffy.UI
             // Layer is always UILayer
             var yAxisDir = ((UILayer)Layer!).YAxisDirection;
             SetPolygon(Control.Width, Control.Height, Control.OffsetX, Control.OffsetY, yAxisDir);
-            InitGraphicBuffer(_vertexArray.Ptr, _vertexArray.Length, _indexArray.Ptr, _indexArray.Length);
+            LoadGraphicBuffer(_vertexArray.Ptr, _vertexArray.Length, _indexArray.Ptr, _indexArray.Length);
         }
 
         #region Dispose pattern

@@ -17,15 +17,21 @@ namespace Elffy.Shape
             _vertexArray = vertexArray.ToUnmanagedArray();
             _indexArray = indexArray.ToUnmanagedArray();
             Activated += OnActivated;
+            Updated += OnUpdate;
         }
 
         public ReadOnlySpan<Vertex> GetVertexArray() => _vertexArray.AsSpan();
 
         public ReadOnlySpan<int> GetIndexArray() => _indexArray.AsSpan();
 
+        public void UpdateVertex(ReadOnlySpan<Vertex> vertexArray, ReadOnlySpan<int> indexArray)
+        {
+            LoadGraphicBuffer(vertexArray, indexArray);
+        }
+
         private void OnActivated(FrameObject frameObject)
         {
-            InitGraphicBuffer(_vertexArray.Ptr, _vertexArray.Length, _indexArray.Ptr, _indexArray.Length);
+            LoadGraphicBuffer(_vertexArray.Ptr, _vertexArray.Length, _indexArray.Ptr, _indexArray.Length);
         }
 
         protected override void Dispose(bool disposing)

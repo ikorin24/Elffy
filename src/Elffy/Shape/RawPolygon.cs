@@ -27,7 +27,7 @@ namespace Elffy.Shape
 
         private void OnActivated(FrameObject frameObject)
         {
-            InitGraphicBuffer(_vertexArray.Ptr, _vertexArray.Length, _indexArray.Ptr, _indexArray.Length);
+            LoadGraphicBuffer(_vertexArray.Ptr, _vertexArray.Length, _indexArray.Ptr, _indexArray.Length);
         }
 
         protected override void Dispose(bool disposing)

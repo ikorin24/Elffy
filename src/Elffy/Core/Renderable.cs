@@ -137,42 +137,35 @@ namespace Elffy.Core
             }
         }
 
-        protected unsafe void InitGraphicBuffer(ReadOnlySpan<Vertex> vertexArray, ReadOnlySpan<int> indexArray)
+        protected unsafe void LoadGraphicBuffer(ReadOnlySpan<Vertex> vertexArray, ReadOnlySpan<int> indexArray)
         {
             Engine.CurrentScreen.Dispatcher.ThrowIfNotMainThread();
             fixed(Vertex* va = vertexArray)
             fixed(int* ia = indexArray) {
-                InitGraphicBufferPrivate((IntPtr)va, vertexArray.Length, (IntPtr)ia, indexArray.Length);
+                if(_isLoaded) {
+                    UpdateBuffer((IntPtr)va, vertexArray.Length, (IntPtr)ia, indexArray.Length);
+                }
+                else {
+                    InitBuffer((IntPtr)va, vertexArray.Length, (IntPtr)ia, indexArray.Length);
+                }
             }
         }
 
         /// <summary>描画する3Dモデル(頂点データ)をGPUメモリにロードします</summary>
         /// <param name="vertexArray">頂点配列</param>
         /// <param name="indexArray">頂点インデックス配列</param>
-        protected void InitGraphicBuffer(IntPtr vertexArray, int vertexArrayLength, IntPtr indexArray, int indexArrayLength)
+        protected void LoadGraphicBuffer(IntPtr vertexArray, int vertexArrayLength, IntPtr indexArray, int indexArrayLength)
         {
             Engine.CurrentScreen.Dispatcher.ThrowIfNotMainThread();
-            InitGraphicBufferPrivate(vertexArray, vertexArrayLength, indexArray, indexArrayLength);
+            if(_isLoaded) {
+                UpdateBuffer(vertexArray, vertexArrayLength, indexArray, indexArrayLength);
+            }
+            else {
+                InitBuffer(vertexArray, vertexArrayLength, indexArray, indexArrayLength);
+            }
         }
 
-        /// <summary>描画する頂点データを GPU メモリにロードします</summary>
-        /// <param name="vertexArray"></param>
-        /// <param name="vertexArrayLength"></param>
-        /// <param name="indexArray"></param>
-        /// <param name="indexArrayLength"></param>
-        protected void UpdateGraphicBuffer(IntPtr vertexArray, int vertexArrayLength, IntPtr indexArray, int indexArrayLength)
-        {
-            Engine.CurrentScreen.Dispatcher.ThrowIfNotMainThread();
-            if(!_isLoaded) { throw new InvalidOperationException("Not initialized graphic buffer"); }
-            GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBuffer);
-            GL.BufferData(BufferTarget.ArrayBuffer, vertexArrayLength * Vertex.Size, vertexArray, BufferUsageHint.StaticDraw);
-
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBuffer);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, indexArrayLength * sizeof(int), indexArray, BufferUsageHint.StaticDraw);
-        }
-
-
-        private void InitGraphicBufferPrivate(IntPtr vertexArray, int vertexArrayLength, IntPtr indexArray, int indexArrayLength)
+        private void InitBuffer(IntPtr vertexArray, int vertexArrayLength, IntPtr indexArray, int indexArrayLength)
         {
             _indexArrayLength = indexArrayLength;
             // 頂点バッファ(VBO)生成
@@ -198,6 +191,15 @@ namespace Elffy.Core
             Vertex.GLSetStructLayout();                          // 頂点構造体のレイアウトを指定
 
             _isLoaded = true;
+        }
+
+        private void UpdateBuffer(IntPtr vertexArray, int vertexArrayLength, IntPtr indexArray, int indexArrayLength)
+        {
+            _indexArrayLength = indexArrayLength;
+            GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBuffer);
+            GL.BufferData(BufferTarget.ArrayBuffer, vertexArrayLength * Vertex.Size, vertexArray, BufferUsageHint.StaticDraw);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBuffer);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, indexArrayLength * sizeof(int), indexArray, BufferUsageHint.StaticDraw);
         }
 
         #region Dispose
