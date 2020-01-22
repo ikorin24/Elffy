@@ -38,13 +38,10 @@ namespace Elffy.Shape
             Activated += OnActivated;
         }
 
-        private unsafe void OnActivated(FrameObject frameObject)
+        private void OnActivated(FrameObject frameObject)
         {
             var vertexArray = _isTexCoordYInversed ? _inverseTexCoordYVertexArray : _vertexArray;
-            fixed(Vertex* va = vertexArray.Span)
-            fixed(int* ia = _indexArray.Span) {
-                InitGraphicBuffer((IntPtr)va, vertexArray.Length, (IntPtr)ia, _indexArray.Length);
-            }
+            InitGraphicBuffer(vertexArray.Span, _indexArray.Span);
         }
     }
 }

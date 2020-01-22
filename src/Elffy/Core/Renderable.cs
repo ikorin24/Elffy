@@ -14,7 +14,6 @@ namespace Elffy.Core
     /// </summary>
     public abstract class Renderable : Positionable, IDisposable
     {
-        #region private member
         private int _indexArrayLength;
         /// <summary>VBOバッファ番号</summary>
         private int _vertexBuffer;
@@ -24,9 +23,7 @@ namespace Elffy.Core
         private int _vao;
         private bool _disposed;
         private bool _isLoaded;
-        #endregion
 
-        #region Property
         /// <summary>描画処理を行うかどうか</summary>
         public bool IsVisible { get; set; } = true;
 
@@ -97,7 +94,6 @@ namespace Elffy.Core
             }
         }
         private bool _enableVertexColor;
-        #endregion
 
         /// <summary>Material changed event</summary>
         public event ActionEventHandler<Renderable, ValueChangedEventArgs<Material>>? MaterialChanged;
@@ -112,7 +108,6 @@ namespace Elffy.Core
 
         ~Renderable() => Dispose(false);
 
-        #region Render
         /// <summary>このインスタンスを描画します</summary>
         internal void Render()
         {
@@ -141,7 +136,15 @@ namespace Elffy.Core
                 }
             }
         }
-        #endregion
+
+        protected unsafe void InitGraphicBuffer(ReadOnlySpan<Vertex> vertexArray, ReadOnlySpan<int> indexArray)
+        {
+            Engine.CurrentScreen.Dispatcher.ThrowIfNotMainThread();
+            fixed(Vertex* va = vertexArray)
+            fixed(int* ia = indexArray) {
+                InitGraphicBufferPrivate((IntPtr)va, vertexArray.Length, (IntPtr)ia, indexArray.Length);
+            }
+        }
 
         /// <summary>描画する3Dモデル(頂点データ)をGPUメモリにロードします</summary>
         /// <param name="vertexArray">頂点配列</param>

@@ -60,12 +60,9 @@ namespace Elffy.Shape
             Activated += OnActivated;
         }
 
-        private unsafe void OnActivated(FrameObject frameObject)
+        private void OnActivated(FrameObject frameObject)
         {
-            fixed(Vertex* va = _vertexArray.Span)
-            fixed(int* ia = _indexArray.Span){
-                InitGraphicBuffer((IntPtr)va, _vertexArray.Length, (IntPtr)ia, _indexArray.Length);
-            }
+            InitGraphicBuffer(_vertexArray.Span, _indexArray.Span);
         }
     }
 }
