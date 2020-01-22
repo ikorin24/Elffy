@@ -3,14 +3,11 @@ using Elffy.Effective;
 using Elffy.Exceptions;
 using Elffy.Components;
 using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace Elffy.Core
 {
-    /// <summary>
-    /// Component を持つことができるクラスの基底
-    /// </summary>
+    /// <summary>Base class that has components.</summary>
     public abstract class ComponentOwner : FrameObject
     {
         /// <summary>Get component of specified type</summary>
@@ -77,7 +74,10 @@ namespace Elffy.Core
         /// <typeparam name="T">component type</typeparam>
         private static class ComponentStore<T> where T : class, IComponent
         {
-            /// <summary>weak reference dictionary of (owner, component) pair.</summary>
+            /// <summary>
+            /// Weak reference dictionary of (owner, component) pair.<para/>
+            /// Reference to key is weak reference. The table is removed automatically when whose key is collected by GC.<para/>
+            /// </summary>
             private static readonly ConditionalWeakTable<ComponentOwner, T> _components = new ConditionalWeakTable<ComponentOwner, T>();
 
             /// <summary>Get whether specified owner has component whose type is <typeparamref name="T"/>.</summary>
