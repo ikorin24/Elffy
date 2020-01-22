@@ -143,23 +143,6 @@ namespace Elffy.Core
         }
         #endregion
 
-        #region InitGraphicBuffer
-        /// <summary>描画する3Dモデル(頂点データ)をGPUメモリにロードします</summary>
-        /// <param name="vertexArray">頂点配列</param>
-        /// <param name="indexArray">頂点インデックス配列</param>
-        protected void InitGraphicBuffer(Vertex[] vertexArray, int[] indexArray)
-        {
-            ArgumentChecker.ThrowIfNullArg(vertexArray, nameof(vertexArray));
-            ArgumentChecker.ThrowIfNullArg(indexArray, nameof(indexArray));
-            Engine.CurrentScreen.Dispatcher.ThrowIfNotMainThread();
-            unsafe {
-                fixed(Vertex* vertexPtr = vertexArray)
-                fixed(int* indexPtr = indexArray) {
-                    InitGraphicBufferPrivate((IntPtr)vertexPtr, vertexArray.Length, (IntPtr)indexPtr, indexArray.Length);
-                }
-            }
-        }
-
         /// <summary>描画する3Dモデル(頂点データ)をGPUメモリにロードします</summary>
         /// <param name="vertexArray">頂点配列</param>
         /// <param name="indexArray">頂点インデックス配列</param>
@@ -168,7 +151,6 @@ namespace Elffy.Core
             Engine.CurrentScreen.Dispatcher.ThrowIfNotMainThread();
             InitGraphicBufferPrivate(vertexArray, vertexArrayLength, indexArray, indexArrayLength);
         }
-        #endregion
 
         /// <summary>描画する頂点データを GPU メモリにロードします</summary>
         /// <param name="vertexArray"></param>

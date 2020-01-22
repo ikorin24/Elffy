@@ -2,6 +2,7 @@
 using System.Linq;
 using OpenTK;
 using Elffy.Core;
+using System;
 
 namespace Elffy.Shape
 {
@@ -12,7 +13,9 @@ namespace Elffy.Shape
         private const float two = 2 / 3.0f;
         private const float three = 1.0f;
 
-        private static readonly Vertex[] _vertexArray = new Vertex[36] {
+        //private static readonly ReadOnlyMemory<Vertex>
+
+        private static readonly ReadOnlyMemory<Vertex> _vertexArray = new Vertex[36] {
             new Vertex(new Vector3(-1, -1, -1), new Vector3(-1, 0, 0), new Vector2(zero, three)),
             new Vertex(new Vector3(-1, -1, 1),  new Vector3(-1, 0, 0), new Vector2(zero, two)),
             new Vertex(new Vector3(-1, 1, 1),   new Vector3(-1, 0, 0), new Vector2(one, two)),
@@ -50,16 +53,19 @@ namespace Elffy.Shape
             new Vertex(new Vector3(-1, 1, 1),   new Vector3(0, 0, 1),  new Vector2(three, one)),
             new Vertex(new Vector3(1, -1, 1),   new Vector3(0, 0, 1),  new Vector2(two, two)),
         };
-        private static readonly int[] _indexArray = Enumerable.Range(0, _vertexArray.Length).ToArray();
+        private static readonly ReadOnlyMemory<int> _indexArray = Enumerable.Range(0, _vertexArray.Length).ToArray();
 
         public Cube()
         {
             Activated += OnActivated;
         }
 
-        private void OnActivated(FrameObject frameObject)
+        private unsafe void OnActivated(FrameObject frameObject)
         {
-            InitGraphicBuffer(_vertexArray, _indexArray);
+            fixed(Vertex* va = _vertexArray.Span)
+            fixed(int* ia = _indexArray.Span){
+                InitGraphicBuffer((IntPtr)va, _vertexArray.Length, (IntPtr)ia, _indexArray.Length);
+            }
         }
     }
 }

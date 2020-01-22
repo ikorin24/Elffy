@@ -1,20 +1,21 @@
 ﻿#nullable enable
 using Elffy.Core;
 using OpenTK;
+using System;
 
 namespace Elffy.Shape
 {
     /// <summary>正方形の平面の3Dオブジェクトクラス</summary>
     public class Plain : Renderable
     {
-        private static readonly Vertex[] _vertexArray = new Vertex[4]
+        private static readonly ReadOnlyMemory<Vertex> _vertexArray = new Vertex[4]
         {
             new Vertex(new Vector3(-1, 1, 0),  new Vector3(0, 0, 1), new Vector2(0, 1)),
             new Vertex(new Vector3(-1, -1, 0), new Vector3(0, 0, 1), new Vector2(0, 0)),
             new Vertex(new Vector3(1, -1, 0),  new Vector3(0, 0, 1), new Vector2(1, 0)),
             new Vertex(new Vector3(1, 1, 0),   new Vector3(0, 0, 1), new Vector2(1, 1)),
         };
-        private static readonly Vertex[] _inverseTexCoordYVertexArray = new Vertex[4]
+        private static readonly ReadOnlyMemory<Vertex> _inverseTexCoordYVertexArray = new Vertex[4]
         {
             new Vertex(new Vector3(-1, 1, 0),  new Vector3(0, 0, 1), new Vector2(0, 0)),
             new Vertex(new Vector3(-1, -1, 0), new Vector3(0, 0, 1), new Vector2(0, 1)),
@@ -22,7 +23,7 @@ namespace Elffy.Shape
             new Vertex(new Vector3(1, 1, 0),   new Vector3(0, 0, 1), new Vector2(1, 0)),
         };
 
-        private static readonly int[] _indexArray = new int[6] { 0, 1, 2, 2, 3, 0 };
+        private static readonly ReadOnlyMemory<int> _indexArray = new int[6] { 0, 1, 2, 2, 3, 0 };
 
         private bool _isTexCoordYInversed;
 
@@ -37,10 +38,13 @@ namespace Elffy.Shape
             Activated += OnActivated;
         }
 
-        private void OnActivated(FrameObject frameObject)
+        private unsafe void OnActivated(FrameObject frameObject)
         {
             var vertexArray = _isTexCoordYInversed ? _inverseTexCoordYVertexArray : _vertexArray;
-            InitGraphicBuffer(vertexArray, _indexArray);
+            fixed(Vertex* va = vertexArray.Span)
+            fixed(int* ia = _indexArray.Span) {
+                InitGraphicBuffer((IntPtr)va, vertexArray.Length, (IntPtr)ia, _indexArray.Length);
+            }
         }
     }
 }
