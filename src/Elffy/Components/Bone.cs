@@ -9,6 +9,7 @@ using System.Diagnostics;
 
 namespace Elffy.Components
 {
+    /// <summary>Bone component</summary>
     public sealed class Bone : IComponent, IDisposable
     {
         private Model3D? _owner;
@@ -86,6 +87,7 @@ namespace Elffy.Components
         }
     }
 
+    [DebuggerDisplay("{ID}, Parent={ParentID}, ({Position.X}, {Position.Y}, {Position.Z})")]
     public struct BoneTreeElement
     {
         public int ID { get; }

@@ -1,8 +1,10 @@
 ﻿#nullable enable
 using System;
+using System.Diagnostics;
 
 namespace Elffy.Core
 {
+    [DebuggerDisplay("{Type}, [{RefBone0}] {Weight0.ToString(\"F9\")}, [{RefBone1}], {Weight1.ToString(\"F9\")}, [{RefBone2}],{Weight2.ToString(\"F9\")}, [{RefBone0}],{Weight3.ToString(\"F9\")}")]
     public readonly struct BoneWeight : IEquatable<BoneWeight>
     {
         public readonly int RefBone0;
