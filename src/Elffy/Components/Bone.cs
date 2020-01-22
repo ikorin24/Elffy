@@ -48,12 +48,16 @@ namespace Elffy.Components
             _indexArray = model.GetIndexArray().ToUnmanagedArray();
 
             if(_vertexArray.Length != _weightArray.Length) { throw new InvalidOperationException(); }
+
+            model.Updated += OnOwnerUpdated;
         }
 
         public void OnDetached(ComponentOwner owner)
         {
             if(_owner == null) { throw new InvalidOperationException("The component is not attatched."); }
             ArgumentChecker.ThrowArgumentIf(_owner != owner, "owner is invalid");
+
+            owner.Updated -= OnOwnerUpdated;
 
             _vertexArray.Dispose();
             _indexArray.Dispose();
@@ -83,6 +87,31 @@ namespace Elffy.Components
                     _treeElements?.Dispose();
                 }
                 _disposed = true;
+            }
+        }
+
+        private void OnOwnerUpdated(FrameObject frameObject)
+        {
+            return;
+            // TODO: 消す テスト用
+            Debug.WriteLine("Bone Update");
+            using(var v = new UnmanagedArray<Vertex>(_vertexArray.Length)) {
+                for(int i = 0; i < v.Length; i++) {
+                    var b0 = _treeElements[_weightArray[i].RefBone0].Position;
+                    var b1 = _treeElements[_weightArray[i].RefBone1].Position;
+                    var b2 = _treeElements[_weightArray[i].RefBone2].Position;
+                    var b3 = _treeElements[_weightArray[i].RefBone3].Position;
+                    var w0 = _weightArray[i].Weight0;
+                    var w1 = _weightArray[i].Weight1;
+                    var w2 = _weightArray[i].Weight2;
+                    var w3 = _weightArray[i].Weight3;
+                    var pos = _vertexArray[i].Position;
+
+                    var resultPos = pos + (b0 * w0) + (b1 * w1);
+                    v[i] = new Vertex(resultPos, v[i].Normal, v[i].Color, v[i].TexCoord);
+
+                }
+                _owner!.UpdateVertex(v.AsSpan(), _indexArray.AsSpan());
             }
         }
     }

@@ -29,6 +29,15 @@ namespace Elffy.Shape
             LoadGraphicBuffer(vertexArray, indexArray);
         }
 
+        private void OnUpdate(FrameObject sender)
+        {
+            // TODO: 消す テスト用
+            for(int i = 0; i < _vertexArray.Length; i++) {
+                _vertexArray[i] = new Vertex(_vertexArray[i].Position + 0.1f, _vertexArray[i].Normal, _vertexArray[i].Color, _vertexArray[i].TexCoord);
+            }
+            LoadGraphicBuffer(_vertexArray.Ptr, _vertexArray.Length, _indexArray.Ptr, _indexArray.Length);
+        }
+
         private void OnActivated(FrameObject frameObject)
         {
             LoadGraphicBuffer(_vertexArray.Ptr, _vertexArray.Length, _indexArray.Ptr, _indexArray.Length);
