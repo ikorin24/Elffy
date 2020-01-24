@@ -18,7 +18,7 @@ namespace Elffy.Mathmatics
 
         /// <summary>Create new instance of <see cref="Xorshift32"/> initialized specified seed.</summary>
         /// <param name="seed">seed value</param>
-        public Xorshift32(uint seed) => _seed = seed;
+        public Xorshift32(int seed) => _seed = (uint)seed;
 
         /// <summary>Get next random value of <see cref="uint"/>, ranged by 0 &lt;= value &lt;= <see cref="uint.MaxValue"/> .</summary>
         /// <returns>generated value of <see cref="uint"/>.</returns>
