@@ -38,6 +38,10 @@ namespace Elffy.Mathmatics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float Float(float max) => _bit32.Single() * max;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float Float(float min, float max) => min + _bit32.Single() * (max - min);
+        public static float Float(float min, float max)
+        {
+            var range = max - min;
+            return (range >= 0) ? (min + _bit32.Single() * (max - min)) : throw new ArgumentOutOfRangeException();
+        }
     }
 }
