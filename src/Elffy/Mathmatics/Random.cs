@@ -7,6 +7,7 @@ namespace Elffy.Mathmatics
     public static class Rand
     {
         private static Xorshift32 _bit32 = new Xorshift32();
+        private static Xorshift64 _bit64 = new Xorshift64();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Color4 Color4() => new Color4(_bit32.Single(), _bit32.Single(), _bit32.Single());
@@ -42,6 +43,17 @@ namespace Elffy.Mathmatics
         {
             var range = max - min;
             return (range >= 0) ? (min + _bit32.Single() * (max - min)) : throw new ArgumentOutOfRangeException();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double Double() => _bit64.Double();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double Double(double max) => _bit64.Double() * max;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double Double(double min, double max)
+        {
+            var range = max - min;
+            return (range >= 0) ? (min + _bit64.Double() * (max - min)) : throw new ArgumentOutOfRangeException();
         }
     }
 }
