@@ -38,9 +38,8 @@ namespace Elffy.Mathmatics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Int32() => (int)Uint32();
 
-
         /// <summary>Get next random value of <see cref="float"/>, ranged by 0 &lt;= value &lt;= 1 .</summary>
-        /// <returns></returns>
+        /// <returns>generated value of <see cref="float"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float Single() => Uint32() / (float)uint.MaxValue;
     }
