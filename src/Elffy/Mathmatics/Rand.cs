@@ -57,18 +57,18 @@ namespace Elffy.Mathmatics
             return (range >= 0) ? (min + Int() % (max - min)) : throw new ArgumentOutOfRangeException();
         }
 
-        /// <summary>Get random <see cref="float"/> value ranged by 0 &lt;= value &lt;= 1</summary>
+        /// <summary>Get random <see cref="float"/> value ranged by 0 &lt; value &lt;= 1</summary>
         /// <returns>random value</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float Float() => _xorshift32.Single();
 
-        /// <summary>Get random <see cref="float"/> value ranged by 0 &lt;= value &lt;= <paramref name="max"/></summary>
+        /// <summary>Get random <see cref="float"/> value ranged by 0 &lt; value &lt;= <paramref name="max"/></summary>
         /// <param name="max">max value of range</param>
         /// <returns>random value</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float Float(float max) => _xorshift32.Single() * max;
 
-        /// <summary>Get random <see cref="float"/> value ranged by <paramref name="min"/> &lt;= value &lt;= <paramref name="max"/></summary>
+        /// <summary>Get random <see cref="float"/> value ranged by <paramref name="min"/> &lt; value &lt;= <paramref name="max"/></summary>
         /// <param name="min">min value of range</param>
         /// <param name="max">max value of range. (must be bigger than <paramref name="min"/> or equals.)</param>
         /// <returns></returns>
@@ -79,18 +79,18 @@ namespace Elffy.Mathmatics
             return (range >= 0) ? (min + _xorshift32.Single() * (max - min)) : throw new ArgumentOutOfRangeException();
         }
 
-        /// <summary>Get random <see cref="double"/> value ranged 0 &lt;= value &lt;= 1 .</summary>
+        /// <summary>Get random <see cref="double"/> value ranged 0 &lt; value &lt;= 1 .</summary>
         /// <returns>random value</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double Double() => _xorshift64.Double();
 
-        /// <summary>Get random <see cref="double"/> value ranged by 0 &lt;= value &lt;= <paramref name="max"/></summary>
+        /// <summary>Get random <see cref="double"/> value ranged by 0 &lt; value &lt;= <paramref name="max"/></summary>
         /// <param name="max">max value of range</param>
         /// <returns>random value</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double Double(double max) => _xorshift64.Double() * max;
 
-        /// <summary>Get random <see cref="double"/> value ranged by <paramref name="min"/> &lt;= value &lt;= <paramref name="max"/></summary>
+        /// <summary>Get random <see cref="double"/> value ranged by <paramref name="min"/> &lt; value &lt;= <paramref name="max"/></summary>
         /// <param name="min">min value of range</param>
         /// <param name="max">max value of range. (must be bigger than <paramref name="min"/> or equals.)</param>
         /// <returns>random value</returns>
