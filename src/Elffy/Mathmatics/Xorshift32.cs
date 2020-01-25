@@ -5,18 +5,13 @@ using System.Runtime.CompilerServices;
 namespace Elffy.Mathmatics
 {
     /// <summary>Pseudorandom number generator based on 32 bits Xorshift algorithm.</summary>
-    public sealed class Xorshift32
+    internal struct Xorshift32
     {
         private uint _seed;
 
-        /// <summary>Create new instance of <see cref="Xorshift32"/> whose seed is initialized from current time.</summary>
-        public Xorshift32()
-        {
-            // get lower 32 bits value of 64 bits
-            _seed = (uint)DateTime.Now.Ticks;
-            // avoid seed == 0. (It does not work if seed is 0)
-            _seed = (_seed == 0) ? 1 : _seed;
-        }
+        // [NOTICE]
+        // An instance created by default constructor DOES NOT WORK !!!!
+        // Seed must not be 0.
 
         /// <summary>Create new instance of <see cref="Xorshift32"/> initialized specified seed.</summary>
         /// <param name="seed">seed value (not zero)</param>
@@ -24,6 +19,17 @@ namespace Elffy.Mathmatics
         {
             if(seed == 0) { throw new ArgumentException("0 is invalid seed"); }
             _seed = (uint)seed;
+        }
+
+        /// <summary>Create new instance of <see cref="Xorshift32"/> whose seed is initialized from current time.</summary>
+        public static Xorshift32 GetDefault()
+        {
+            // get lower 32 bits value of 64 bits
+            var seed = (int)DateTime.Now.Ticks;
+            // avoid seed == 0. (It does not work if seed is 0)
+            seed = (seed == 0) ? 1 : seed;
+
+            return new Xorshift32(seed);
         }
 
         /// <summary>Get next random value of <see cref="uint"/>, ranged by 0 &lt; value &lt;= <see cref="uint.MaxValue"/> .</summary>
