@@ -7,6 +7,7 @@ using System.Drawing.Imaging;
 using Elffy.Threading;
 using System.Collections.Generic;
 using Elffy.Exceptions;
+using System.Runtime.CompilerServices;
 
 namespace Elffy
 {
@@ -210,6 +211,7 @@ namespace Elffy
             _dirtyRegion = Rectangle.Intersect(updateRegion, new Rectangle(0, 0, _bitmap.Width, _bitmap.Height));
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ThrowIfDisposed()
         {
             if(_disposed) { throw new ObjectDisposedException(nameof(WritableTexture)); }

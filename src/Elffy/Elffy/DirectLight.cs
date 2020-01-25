@@ -4,6 +4,7 @@ using Elffy.Threading;
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
+using System.Runtime.CompilerServices;
 
 namespace Elffy
 {
@@ -129,6 +130,7 @@ namespace Elffy
         }
 
         /// <summary>Throw exception if the instance is terminated.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ThrowIfTerminated()
         {
             if(IsTerminated) { throw new ObjectTerminatedException(this); }

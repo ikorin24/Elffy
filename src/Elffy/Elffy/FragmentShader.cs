@@ -4,6 +4,7 @@ using System.IO;
 using Elffy.Threading;
 using OpenTK.Graphics.OpenGL;
 using Elffy.Core;
+using System.Runtime.CompilerServices;
 
 namespace Elffy
 {
@@ -89,6 +90,7 @@ namespace Elffy
         #endregion
 
         /// <summary>このインスタンスが既に破棄されている場合例外を投げます</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ThrowIfDisposed()
         {
             if(_disposed) { throw new ObjectDisposedException(nameof(ShaderProgram)); }

@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using Elffy.Exceptions;
 using OpenTK;
+using System.Runtime.CompilerServices;
 
 namespace Elffy
 {
@@ -95,6 +96,7 @@ namespace Elffy
 
         /// <summary>各軸の値が +∞ または -∞ または NaN なら例外を投げます</summary>
         /// <param name="value">値</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ThrowIfContainsInifinityOrNaN(Vector3 value)
         {
             ArgumentChecker.ThrowArgumentIf(
@@ -106,6 +108,7 @@ namespace Elffy
 
         /// <summary>+∞ または -∞ または NaN なら例外を投げます</summary>
         /// <param name="value">値</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ThrowIfInifinityOrNaN(float value)
         {
             ArgumentChecker.ThrowArgumentIf(float.IsNaN(value) || float.IsInfinity(value) || float.IsNegativeInfinity(value), "value is Nan, +Inf, -Inf");

@@ -3,6 +3,7 @@ using Elffy.Exceptions;
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Elffy.Threading
@@ -51,6 +52,7 @@ namespace Elffy.Threading
 
         /// <summary>現在のスレッドがメインスレッドでない場合、例外を投げます</summary>
         /// <exception cref="InvalidOperationException">現在のスレッドがメインスレッドでないことを示す例外</exception>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ThrowIfNotMainThread()
         {
             if(IsMainThread() == false) { throw new InvalidOperationException("Current thread must be Main Thread."); }
@@ -75,6 +77,7 @@ namespace Elffy.Threading
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void ThrowIfNotInitialized()
         {
             if(!_hasMainThreadID) {

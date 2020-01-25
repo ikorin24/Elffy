@@ -196,10 +196,5 @@ namespace Elffy
 
             // TODO: 全オブジェクト破棄後に Dispatcher.DoInvokedAction() をする。しかしここに書くべきではない？
         }
-
-        private void ThrowIfClosed()
-        {
-            if(_isClosed) { throw new InvalidOperationException("Window is already closed."); }
-        }
     }
 }
