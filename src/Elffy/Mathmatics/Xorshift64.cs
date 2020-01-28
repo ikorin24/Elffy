@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Elffy.Mathmatics
 {
@@ -21,11 +22,23 @@ namespace Elffy.Mathmatics
             _seed = (ulong)seed;
         }
 
-        /// <summary>Create new instance of <see cref="Xorshift64"/> whose seed is initialized from current time.</summary>
-        public static Xorshift64 GetDefault()
+        /// <summary>Create new instance of <see cref="Xorshift64"/></summary>
+        public static unsafe Xorshift64 GetDefault()
         {
-            // get lower 32 bits value of 64 bits
-            var seed = (int)DateTime.Now.Ticks;
+            var seed = DateTime.Now.Ticks;
+
+            // get undefined value from new allocked unmanaged heap.
+            var ptr = default(IntPtr);
+            try {
+                ptr = Marshal.AllocHGlobal(sizeof(long));
+                seed ^= ((long*)ptr)[0];
+            }
+            finally {
+                if(ptr != default) {
+                    Marshal.FreeHGlobal(ptr);
+                }
+            }
+
             // avoid seed == 0. (It does not work if seed is 0)
             seed = (seed == 0) ? 1 : seed;
 
