@@ -67,15 +67,32 @@ namespace Elffy.Core
             }
         }
 
-        /// <summary>フレームの更新を行います</summary>
-        public void Update()
+        public void EarlyUpdate()
         {
-            foreach(var frameObject in _list.Where(x => !x.IsFrozen)) {
+            foreach(var frameObject in _list) {
+                if(frameObject.IsFrozen) { continue; }
                 if(frameObject.IsStarted == false) {
                     frameObject.Start();
                     frameObject.IsStarted = true;
                 }
+                frameObject.EarlyUpdate();
+            }
+        }
+
+        /// <summary>フレームの更新を行います</summary>
+        public void Update()
+        {
+            foreach(var frameObject in _list) {
+                if(frameObject.IsFrozen) { continue; }
                 frameObject.Update();
+            }
+        }
+
+        public void LateUpdate()
+        {
+            foreach(var frameObject in _list) {
+                if(frameObject.IsFrozen) { continue; }
+                frameObject.LateUpdate();
             }
         }
 

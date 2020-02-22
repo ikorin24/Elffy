@@ -21,8 +21,12 @@ namespace Elffy.Core
         /// <summary>オブジェクトの追加と削除の変更を適用します</summary>
         internal void ApplyChanging() => _store.ApplyChanging();
 
+        internal void EarlyUpdate() => _store.EarlyUpdate();
+
         /// <summary>フレームの更新を行います</summary>
         internal void Update() => _store.Update();
+
+        internal void LateUpdate() => _store.LateUpdate();
 
         /// <summary>保持している <see cref="FrameObject"/> を全て破棄し、リストをクリアします</summary>
         public void ClearFrameObject() => _store.ClearFrameObject();

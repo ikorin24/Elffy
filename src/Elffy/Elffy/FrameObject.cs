@@ -38,8 +38,12 @@ namespace Elffy
         public event ActionEventHandler<FrameObject>? Terminated;
         /// <summary>開始時イベント</summary>
         public event ActionEventHandler<FrameObject>? Started;
+        /// <summary>事前更新時イベント</summary>
+        public event ActionEventHandler<FrameObject>? EarlyUpdated;
         /// <summary>更新時イベント</summary>
         public event ActionEventHandler<FrameObject>? Updated;
+        /// <summary>事後更新時イベント</summary>
+        public event ActionEventHandler<FrameObject>? LateUpdated;
 
         /// <summary>このオブジェクトが更新される最初のフレームに1度のみ実行される処理</summary>
         internal void Start()
@@ -47,10 +51,20 @@ namespace Elffy
             Started?.Invoke(this);
         }
 
+        internal void EarlyUpdate()
+        {
+            EarlyUpdated?.Invoke(this);
+        }
+
         /// <summary>フレームの更新ごとに実行される更新処理</summary>
         internal void Update()
         {
             Updated?.Invoke(this);
+        }
+
+        internal void LateUpdate()
+        {
+            LateUpdated?.Invoke(this);
         }
 
         /// <summary>このオブジェクトをデフォルトのレイヤーでアクティブにします</summary>

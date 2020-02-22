@@ -94,37 +94,53 @@ namespace Elffy.Core
         }
         #endregion
 
-        #region RenderFrame
         /// <summary>フレームを更新して描画します</summary>
         /// <param name="projection">投影行列</param>
         /// <param name="view">カメラ行列</param>
         public void RenderFrame(Matrix4 projection, Matrix4 view)
         {
+            var systemLayer = Layers.SystemLayer;
+            var uiLayer = Layers.UILayer;
+
+            // 事前レイヤー更新
+            systemLayer.EarlyUpdate();
+            foreach(var layer in Layers) {
+                layer.EarlyUpdate();
+            }
+            uiLayer.EarlyUpdate();
+
             // レイヤー更新
-            Layers.SystemLayer.Update();
+            systemLayer.Update();
             foreach(var layer in Layers) {
                 layer.Update();
             }
-            Layers.UILayer.Update();
+            uiLayer.Update();
+
+            // 事後レイヤー更新
+            systemLayer.LateUpdate();
+            foreach(var layer in Layers) {
+                layer.LateUpdate();
+            }
+            uiLayer.LateUpdate();
+
             Engine.CurrentScreen.Dispatcher.DoInvokedAction();
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             // レイヤー描画処理
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             foreach(var layer in Layers) {
                 Light.IsEnabled = layer.IsLightingEnabled;
                 layer.Render(projection, view);
             }
             Light.IsEnabled = false;
-            Layers.UILayer.Render(_uiProjection);
+            uiLayer.Render(_uiProjection);
 
             // レイヤー変更適用
-            Layers.SystemLayer.ApplyChanging();
+            systemLayer.ApplyChanging();
             foreach(var layer in Layers) {
                 layer.ApplyChanging();
             }
-            Layers.UILayer.ApplyChanging();
+            uiLayer.ApplyChanging();
         }
-        #endregion
 
         private void OnSizeChanged(int x, int y, int width, int height)
         {
