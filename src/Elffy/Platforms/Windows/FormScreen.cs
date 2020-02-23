@@ -76,7 +76,7 @@ namespace Elffy.Platforms.Windows
                     _ => (MouseButton?)null,
                 };
                 if(button == null) { return; }
-                Mouse.ChangePressedState(button.Value, true);
+                Mouse.ChangePressedState(button.Value, false);
             };
 
             Resize += OnResize;
