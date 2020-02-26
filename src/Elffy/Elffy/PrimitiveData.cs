@@ -7,16 +7,17 @@ using TKVector2 = OpenTK.Vector2;
 using TKVector3 = OpenTK.Vector3;
 using TKVector4 = OpenTK.Vector4;
 using TKColor4 = OpenTK.Graphics.Color4;
+using Elffy.Mathmatics;
 
 namespace Elffy
 {
     [StructLayout(LayoutKind.Explicit)]
-    public struct Vector2 : IEquatable<Vector2>
+    public readonly struct Vector2 : IEquatable<Vector2>
     {
         [FieldOffset(0)]
-        public float X;
+        public readonly float X;
         [FieldOffset(4)]
-        public float Y;
+        public readonly float Y;
 
         public static readonly Vector2 UnitX = new Vector2(1, 0);
         public static readonly Vector2 UnitY = new Vector2(0, 1);
@@ -24,36 +25,38 @@ namespace Elffy
         public static readonly Vector2 One = new Vector2(1, 1);
         public static unsafe readonly int SizeInBytes = sizeof(Vector2);
 
-        public Vector2 Yx => new Vector2(Y, X);
+        public readonly Vector2 Yx => new Vector2(Y, X);
 
-        public float LengthSquared => (X * X) + (Y * Y);
-        public float Length => (float)Math.Sqrt(LengthSquared);
+        public readonly float LengthSquared => (X * X) + (Y * Y);
+        public readonly float Length => (float)Math.Sqrt(LengthSquared);
 
         public Vector2(float x, float y) => (X, Y) = (x, y);
         public Vector2(float value) => (X, Y) = (value, value);
 
-        public Vector2 Dot(Vector2 vec) => this * vec;
-        public static Vector2 Dot(Vector2 vec1, Vector2 vec2) => vec1 * vec2;
-        public Vector2 Normalized() => ((TKVector2)this).Normalized();
-        public override bool Equals(object? obj) => obj is Vector2 vector && Equals(vector);
-        public bool Equals(Vector2 other) => X == other.X && Y == other.Y;
-        public override int GetHashCode() => HashCode.Combine(X, Y);
-        public override string ToString() => $"({X}, {Y})";
+        public readonly Vector2 Dot(in Vector2 vec) => this * vec;
+        public static Vector2 Dot(in Vector2 vec1, in Vector2 vec2) => vec1 * vec2;
+        public readonly Vector2 Normalized() => ((TKVector2)this).Normalized();
+        public readonly override bool Equals(object? obj) => obj is Vector2 vector && Equals(vector);
+        public readonly bool Equals(Vector2 other) => X == other.X && Y == other.Y;
+        public readonly override int GetHashCode() => HashCode.Combine(X, Y);
+        public readonly override string ToString() => $"({X}, {Y})";
 
-        public static Vector2 operator -(Vector2 vec) => new Vector2(-vec.X, -vec.Y);
-        public static bool operator ==(Vector2 left, Vector2 right) => left.Equals(right);
-        public static bool operator !=(Vector2 left, Vector2 right) => !(left == right);
-        public static Vector2 operator +(Vector2 vec1, Vector2 vec2) => new Vector2(vec1.X + vec2.X, vec1.Y + vec2.Y);
-        public static Vector2 operator +(Vector2 vec1, float right) => new Vector2(vec1.X + right, vec1.Y + right);
-        public static Vector2 operator -(Vector2 vec1, Vector2 vec2) => new Vector2(vec1.X - vec2.X, vec1.Y - vec2.Y);
-        public static Vector2 operator -(Vector2 vec1, float right) => new Vector2(vec1.X - right, vec1.Y - right);
-        public static Vector2 operator *(Vector2 vec1, Vector2 vec2) => new Vector2(vec1.X * vec2.X, vec1.Y * vec2.Y);
-        public static Vector2 operator *(Vector2 vec1, float right) => new Vector2(vec1.X * right, vec1.Y * right);
-        public static Vector2 operator *(float right, Vector2 vec1) => new Vector2(vec1.X * right, vec1.Y * right);
-        public static Vector2 operator /(Vector2 vec1, float right) => new Vector2(vec1.X / right, vec1.Y / right);
-        public static Vector2 operator /(float right, Vector2 vec1) => new Vector2(vec1.X / right, vec1.Y / right);
+        public static Vector2 operator -(in Vector2 vec) => new Vector2(-vec.X, -vec.Y);
+        public static bool operator ==(in Vector2 left, in Vector2 right) => left.Equals(right);
+        public static bool operator !=(in Vector2 left, in Vector2 right) => !(left == right);
+        public static Vector2 operator +(in Vector2 vec1, in Vector2 vec2) => new Vector2(vec1.X + vec2.X, vec1.Y + vec2.Y);
+        public static Vector2 operator +(in Vector2 vec1, float right) => new Vector2(vec1.X + right, vec1.Y + right);
+        public static Vector2 operator -(in Vector2 vec1, in Vector2 vec2) => new Vector2(vec1.X - vec2.X, vec1.Y - vec2.Y);
+        public static Vector2 operator -(in Vector2 vec1, float right) => new Vector2(vec1.X - right, vec1.Y - right);
+        public static Vector2 operator *(in Vector2 vec1, in Vector2 vec2) => new Vector2(vec1.X * vec2.X, vec1.Y * vec2.Y);
+        public static Vector2 operator *(in Vector2 vec1, float right) => new Vector2(vec1.X * right, vec1.Y * right);
+        public static Vector2 operator *(float right, in Vector2 vec1) => new Vector2(vec1.X * right, vec1.Y * right);
+        public static Vector2 operator /(in Vector2 vec1, float right) => new Vector2(vec1.X / right, vec1.Y / right);
+        public static Vector2 operator /(float right, in Vector2 vec1) => new Vector2(vec1.X / right, vec1.Y / right);
         public static implicit operator TKVector2(Vector2 vec) => Unsafe.As<Vector2, TKVector2>(ref vec);
         public static implicit operator Vector2(TKVector2 vec) => Unsafe.As<TKVector2, Vector2>(ref vec);
+        public static implicit operator Vector2(in Point point) => new Vector2(point.X, point.Y);
+        public static explicit operator Point(in Vector2 vec) => new Point((int)vec.X, (int)vec.Y);
     }
 
     [StructLayout(LayoutKind.Explicit)]
@@ -73,52 +76,52 @@ namespace Elffy
         public static readonly Vector3 One = new Vector3(1, 1, 1);
         public static unsafe readonly int SizeInBytes = sizeof(Vector3);
 
-        public Vector2 Xy => new Vector2(X, Y);
-        public Vector2 Xz => new Vector2(X, Z);
-        public Vector2 Yx => new Vector2(Y, X);
-        public Vector2 Yz => new Vector2(Y, Z);
-        public Vector2 Zx => new Vector2(Z, X);
-        public Vector2 Zy => new Vector2(Z, Y);
-        public Vector3 Xzy => new Vector3(X, Z, Y);
-        public Vector3 Yxz => new Vector3(Y, X, Z);
-        public Vector3 Yzx => new Vector3(Y, Z, X);
-        public Vector3 Zxy => new Vector3(Z, X, Y);
-        public Vector3 Zyx => new Vector3(Z, Y, X);
+        public readonly Vector2 Xy => new Vector2(X, Y);
+        public readonly Vector2 Xz => new Vector2(X, Z);
+        public readonly Vector2 Yx => new Vector2(Y, X);
+        public readonly Vector2 Yz => new Vector2(Y, Z);
+        public readonly Vector2 Zx => new Vector2(Z, X);
+        public readonly Vector2 Zy => new Vector2(Z, Y);
+        public readonly Vector3 Xzy => new Vector3(X, Z, Y);
+        public readonly Vector3 Yxz => new Vector3(Y, X, Z);
+        public readonly Vector3 Yzx => new Vector3(Y, Z, X);
+        public readonly Vector3 Zxy => new Vector3(Z, X, Y);
+        public readonly Vector3 Zyx => new Vector3(Z, Y, X);
 
-        public float LengthSquared => (X * X) + (Y * Y) + (Z * Z);
-        public float Length => (float)Math.Sqrt(LengthSquared);
+        public readonly float LengthSquared => (X * X) + (Y * Y) + (Z * Z);
+        public readonly float Length => (float)Math.Sqrt(LengthSquared);
 
         public Vector3(float x, float y, float z) => (X, Y, Z) = (x, y, z);
         public Vector3(Vector3 v) => this = v;
         public Vector3(Vector2 v) => (X, Y, Z) = (v.X, v.Y, 0);
         public Vector3(Vector2 v, float z) => (X, Y, Z) = (v.X, v.Y, z);
-        public Vector3(Vector4 v) => (X, Y, Z) = (v.X, v.Y, v.Z);
+        public Vector3(in Vector4 v) => (X, Y, Z) = (v.X, v.Y, v.Z);
         public Vector3(float value) => (X, Y, Z) = (value, value, value);
 
-        public Vector3 Dot(Vector3 vec) => this * vec;
-        public static Vector3 Dot(Vector3 vec1, Vector3 vec2) => vec1 * vec2;
-        public Vector3 Cross(Vector3 vec) => Cross(this, vec);
-        public static Vector3 Cross(Vector3 vec1, Vector3 vec2) => new Vector3(vec1.Y * vec2.Z - vec1.Z * vec2.Y,
+        public readonly Vector3 Dot(in Vector3 vec) => this * vec;
+        public static Vector3 Dot(in Vector3 vec1, in Vector3 vec2) => vec1 * vec2;
+        public readonly Vector3 Cross(in Vector3 vec) => Cross(this, vec);
+        public static Vector3 Cross(in Vector3 vec1, in Vector3 vec2) => new Vector3(vec1.Y * vec2.Z - vec1.Z * vec2.Y,
                                                                                vec1.Z * vec2.X - vec1.X * vec2.Z,
                                                                                vec1.X * vec2.Y - vec1.Y * vec2.X);
-        public Vector3 Normalized() => ((TKVector3)this).Normalized();
-        public override bool Equals(object? obj) => obj is Vector3 vector && Equals(vector);
-        public bool Equals(Vector3 other) => X == other.X && Y == other.Y && Z == other.Z;
-        public override int GetHashCode() => HashCode.Combine(X, Y, Z);
-        public override string ToString() => $"({X}, {Y}, {Z})";
+        public readonly Vector3 Normalized() => ((TKVector3)this).Normalized();
+        public readonly override bool Equals(object? obj) => obj is Vector3 vector && Equals(vector);
+        public readonly bool Equals(Vector3 other) => X == other.X && Y == other.Y && Z == other.Z;
+        public readonly override int GetHashCode() => HashCode.Combine(X, Y, Z);
+        public readonly override string ToString() => $"({X}, {Y}, {Z})";
 
-        public static Vector3 operator -(Vector3 vec) => new Vector3(-vec.X, -vec.Y, -vec.Z);
-        public static bool operator ==(Vector3 left, Vector3 right) => left.Equals(right);
-        public static bool operator !=(Vector3 left, Vector3 right) => !(left == right);
-        public static Vector3 operator +(Vector3 vec1, Vector3 vec2) => new Vector3(vec1.X + vec2.X, vec1.Y + vec2.Y, vec1.Z + vec2.Z);
-        public static Vector3 operator +(Vector3 vec1, float right) => new Vector3(vec1.X + right, vec1.Y + right, vec1.Z + right);
-        public static Vector3 operator -(Vector3 vec1, Vector3 vec2) => new Vector3(vec1.X - vec2.X, vec1.Y - vec2.Y, vec1.Z - vec2.Z);
-        public static Vector3 operator -(Vector3 vec1, float right) => new Vector3(vec1.X - right, vec1.Y - right, vec1.Z - right);
-        public static Vector3 operator *(Vector3 vec1, Vector3 vec2) => new Vector3(vec1.X * vec2.X, vec1.Y * vec2.Y, vec1.Z * vec2.Z);
-        public static Vector3 operator *(Vector3 vec1, float right) => new Vector3(vec1.X * right, vec1.Y * right, vec1.Z * right);
-        public static Vector3 operator *(float right, Vector3 vec1) => new Vector3(vec1.X * right, vec1.Y * right, vec1.Z * right);
-        public static Vector3 operator /(Vector3 vec1, float right) => new Vector3(vec1.X / right, vec1.Y / right, vec1.Z / right);
-        public static Vector3 operator /(float right, Vector3 vec1) => new Vector3(vec1.X / right, vec1.Y / right, vec1.Z / right);
+        public static Vector3 operator -(in Vector3 vec) => new Vector3(-vec.X, -vec.Y, -vec.Z);
+        public static bool operator ==(in Vector3 left, in Vector3 right) => left.Equals(right);
+        public static bool operator !=(in Vector3 left, in Vector3 right) => !(left == right);
+        public static Vector3 operator +(in Vector3 vec1, in Vector3 vec2) => new Vector3(vec1.X + vec2.X, vec1.Y + vec2.Y, vec1.Z + vec2.Z);
+        public static Vector3 operator +(in Vector3 vec1, float right) => new Vector3(vec1.X + right, vec1.Y + right, vec1.Z + right);
+        public static Vector3 operator -(in Vector3 vec1, in Vector3 vec2) => new Vector3(vec1.X - vec2.X, vec1.Y - vec2.Y, vec1.Z - vec2.Z);
+        public static Vector3 operator -(in Vector3 vec1, float right) => new Vector3(vec1.X - right, vec1.Y - right, vec1.Z - right);
+        public static Vector3 operator *(in Vector3 vec1, in Vector3 vec2) => new Vector3(vec1.X * vec2.X, vec1.Y * vec2.Y, vec1.Z * vec2.Z);
+        public static Vector3 operator *(in Vector3 vec1, float right) => new Vector3(vec1.X * right, vec1.Y * right, vec1.Z * right);
+        public static Vector3 operator *(float right, in Vector3 vec1) => new Vector3(vec1.X * right, vec1.Y * right, vec1.Z * right);
+        public static Vector3 operator /(in Vector3 vec1, float right) => new Vector3(vec1.X / right, vec1.Y / right, vec1.Z / right);
+        public static Vector3 operator /(float right, in Vector3 vec1) => new Vector3(vec1.X / right, vec1.Y / right, vec1.Z / right);
 
         public static implicit operator TKVector3(Vector3 vec) => Unsafe.As<Vector3, TKVector3>(ref vec);
         public static implicit operator Vector3(TKVector3 vec) => Unsafe.As<TKVector3, Vector3>(ref vec);
@@ -145,38 +148,38 @@ namespace Elffy
         public static unsafe readonly int SizeInBytes = sizeof(Vector4);
 
         // TODO: その他の組み合わせのプロパティ
-        public Vector3 Xyz => new Vector3(X, Y, Z);
+        public readonly Vector3 Xyz => new Vector3(X, Y, Z);
 
-        public float LengthSquared => (X * X) + (Y * Y) + (Z * Z) + (W * W);
-        public float Length => (float)Math.Sqrt(LengthSquared);
+        public readonly float LengthSquared => (X * X) + (Y * Y) + (Z * Z) + (W * W);
+        public readonly float Length => (float)Math.Sqrt(LengthSquared);
         public Vector4(float x, float y, float z, float w) => (X, Y, Z, W) = (x, y, z, w);
         public Vector4(Vector4 v) => this = v;
-        public Vector4(Vector3 v) => (X, Y, Z, W) = (v.X, v.Y, v.Z, 0);
-        public Vector4(Vector3 v, float w) => (X, Y, Z, W) = (v.X, v.Y, v.Z, w);
-        public Vector4(Vector2 v) => (X, Y, Z, W) = (v.X, v.Y, 0, 0);
-        public Vector4(Vector2 v, float z, float w) => (X, Y, Z, W) = (v.X, v.Y, z, w);
+        public Vector4(in Vector3 v) => (X, Y, Z, W) = (v.X, v.Y, v.Z, 0);
+        public Vector4(in Vector3 v, float w) => (X, Y, Z, W) = (v.X, v.Y, v.Z, w);
+        public Vector4(in Vector2 v) => (X, Y, Z, W) = (v.X, v.Y, 0, 0);
+        public Vector4(in Vector2 v, float z, float w) => (X, Y, Z, W) = (v.X, v.Y, z, w);
         public Vector4(float value) => (X, Y, Z, W) = (value, value, value, value);
 
-        public Vector4 Dot(Vector4 vec) => this * vec;
-        public static Vector4 Dot(Vector4 vec1, Vector4 vec2) => vec1 * vec2;
-        public Vector4 Normalized() => ((TKVector4)this).Normalized();
-        public override bool Equals(object? obj) => obj is Vector4 vector && Equals(vector);
-        public bool Equals(Vector4 other) => X == other.X && Y == other.Y && Z == other.Z && W == other.W;
-        public override int GetHashCode() => HashCode.Combine(X, Y, Z, W);
-        public override string ToString() => $"({X}, {Y}, {Z}, {W})";
+        public readonly Vector4 Dot(in Vector4 vec) => this * vec;
+        public static Vector4 Dot(in Vector4 vec1, in Vector4 vec2) => vec1 * vec2;
+        public readonly Vector4 Normalized() => ((TKVector4)this).Normalized();
+        public readonly override bool Equals(object? obj) => obj is Vector4 vector && Equals(vector);
+        public readonly bool Equals(Vector4 other) => X == other.X && Y == other.Y && Z == other.Z && W == other.W;
+        public readonly override int GetHashCode() => HashCode.Combine(X, Y, Z, W);
+        public readonly override string ToString() => $"({X}, {Y}, {Z}, {W})";
 
-        public static Vector4 operator -(Vector4 vec) => new Vector4(-vec.X, -vec.Y, -vec.Z, -vec.W);
-        public static bool operator ==(Vector4 left, Vector4 right) => left.Equals(right);
-        public static bool operator !=(Vector4 left, Vector4 right) => !(left == right);
-        public static Vector4 operator +(Vector4 vec1, Vector4 vec2) => new Vector4(vec1.X + vec2.X, vec1.Y + vec2.Y, vec1.Z + vec2.Z, vec1.W + vec2.W);
-        public static Vector4 operator +(Vector4 vec1, float right) => new Vector4(vec1.X + right, vec1.Y + right, vec1.Z + right, vec1.W + right);
-        public static Vector4 operator -(Vector4 vec1, Vector4 vec2) => new Vector4(vec1.X - vec2.X, vec1.Y - vec2.Y, vec1.Z - vec2.Z, vec1.W - vec2.W);
-        public static Vector4 operator -(Vector4 vec1, float right) => new Vector4(vec1.X - right, vec1.Y - right, vec1.Z - right, vec1.W - right);
-        public static Vector4 operator *(Vector4 vec1, Vector4 vec2) => new Vector4(vec1.X * vec2.X, vec1.Y * vec2.Y, vec1.Z * vec2.Z, vec1.W * vec2.W);
-        public static Vector4 operator *(Vector4 vec1, float right) => new Vector4(vec1.X * right, vec1.Y * right, vec1.Z * right, vec1.W * right);
-        public static Vector4 operator *(float right, Vector4 vec1) => new Vector4(vec1.X * right, vec1.Y * right, vec1.Z * right, vec1.W * right);
-        public static Vector4 operator /(Vector4 vec1, float right) => new Vector4(vec1.X / right, vec1.Y / right, vec1.Z / right, vec1.W / right);
-        public static Vector4 operator /(float right, Vector4 vec1) => new Vector4(vec1.X / right, vec1.Y / right, vec1.Z / right, vec1.W / right);
+        public static Vector4 operator -(in Vector4 vec) => new Vector4(-vec.X, -vec.Y, -vec.Z, -vec.W);
+        public static bool operator ==(in Vector4 left, in Vector4 right) => left.Equals(right);
+        public static bool operator !=(in Vector4 left, in Vector4 right) => !(left == right);
+        public static Vector4 operator +(in Vector4 vec1, in Vector4 vec2) => new Vector4(vec1.X + vec2.X, vec1.Y + vec2.Y, vec1.Z + vec2.Z, vec1.W + vec2.W);
+        public static Vector4 operator +(in Vector4 vec1, float right) => new Vector4(vec1.X + right, vec1.Y + right, vec1.Z + right, vec1.W + right);
+        public static Vector4 operator -(in Vector4 vec1, in Vector4 vec2) => new Vector4(vec1.X - vec2.X, vec1.Y - vec2.Y, vec1.Z - vec2.Z, vec1.W - vec2.W);
+        public static Vector4 operator -(in Vector4 vec1, float right) => new Vector4(vec1.X - right, vec1.Y - right, vec1.Z - right, vec1.W - right);
+        public static Vector4 operator *(in Vector4 vec1, in Vector4 vec2) => new Vector4(vec1.X * vec2.X, vec1.Y * vec2.Y, vec1.Z * vec2.Z, vec1.W * vec2.W);
+        public static Vector4 operator *(in Vector4 vec1, float right) => new Vector4(vec1.X * right, vec1.Y * right, vec1.Z * right, vec1.W * right);
+        public static Vector4 operator *(float right, in Vector4 vec1) => new Vector4(vec1.X * right, vec1.Y * right, vec1.Z * right, vec1.W * right);
+        public static Vector4 operator /(in Vector4 vec1, float right) => new Vector4(vec1.X / right, vec1.Y / right, vec1.Z / right, vec1.W / right);
+        public static Vector4 operator /(float right, in Vector4 vec1) => new Vector4(vec1.X / right, vec1.Y / right, vec1.Z / right, vec1.W / right);
 
         public static implicit operator TKVector4(Vector4 vec) => Unsafe.As<Vector4, TKVector4>(ref vec);
         public static implicit operator Vector4(TKVector4 vec) => Unsafe.As<TKVector4, Vector4>(ref vec);
@@ -200,20 +203,20 @@ namespace Elffy
         public Color4(float value) => (R, G, B, A) = (value, value, value, 1f);
         public Color4(float r, float g, float b, float a) => (R, G, B, A) = (r, g, b, a);
 
-        public override bool Equals(object? obj) => obj is Color4 color && Equals(color);
+        public readonly override bool Equals(object? obj) => obj is Color4 color && Equals(color);
 
-        public bool Equals(Color4 other) => R == other.R && G == other.G && B == other.B && A == other.A;
+        public readonly bool Equals(Color4 other) => R == other.R && G == other.G && B == other.B && A == other.A;
 
-        public override int GetHashCode() => HashCode.Combine(R, G, B, A);
-        public override string ToString() => $"(R, G, B, A) = ({R}, {G}, {B}, {A}) = ({ToByte(R)}, {ToByte(G)}, {ToByte(B)}, {ToByte(A)})";
-        public static bool operator ==(Color4 left, Color4 right) => left.Equals(right);
+        public readonly override int GetHashCode() => HashCode.Combine(R, G, B, A);
+        public readonly override string ToString() => $"(R, G, B, A) = ({R}, {G}, {B}, {A}) = ({ToByte(R)}, {ToByte(G)}, {ToByte(B)}, {ToByte(A)})";
+        public static bool operator ==(in Color4 left, in Color4 right) => left.Equals(right);
 
-        public static bool operator !=(Color4 left, Color4 right) => !(left == right);
+        public static bool operator !=(in Color4 left, in Color4 right) => !(left == right);
 
         public static implicit operator TKColor4(Color4 color) => Unsafe.As<Color4, TKColor4>(ref color);
         public static implicit operator Color4(TKColor4 color) => Unsafe.As<TKColor4, Color4>(ref color);
-        public static explicit operator Color(Color4 color) => (Color)(TKColor4)color;
-        public static implicit operator Color4(Color color) => (TKColor4)color;
+        public static explicit operator Color(in Color4 color) => (Color)(TKColor4)color;
+        public static implicit operator Color4(in Color color) => (TKColor4)color;
 
         private static byte ToByte(float value)
         {
@@ -364,5 +367,177 @@ namespace Elffy
         public static Color4 DeepSkyBlue => TKColor4.DeepSkyBlue;
         public static Color4 DarkSlateBlue => TKColor4.DarkSlateBlue;
         public static Color4 DimGray => TKColor4.DimGray;
+    }
+
+    [StructLayout(LayoutKind.Explicit)]
+    public struct Matrix2 : IEquatable<Matrix2>
+    {
+        [FieldOffset(0)]
+        public float M00;
+        [FieldOffset(4)]
+        public float M01;
+        [FieldOffset(8)]
+        public float M10;
+        [FieldOffset(12)]
+        public float M11;
+
+        public Matrix2(float m00, float m01, float m10, float m11)
+        {
+            M00 = m00;
+            M01 = m01;
+            M10 = m10;
+            M11 = m11;
+        }
+
+        public void Transpose()
+        {
+            var tmp = M01;
+            M01 = M10;
+            M10 = tmp;
+        }
+
+        public readonly Matrix2 Transposed()
+        {
+            return new Matrix2(M00, M10, M01, M11);
+        }
+
+        public static Matrix2 Rotate(float theta)
+        {
+            var cos = MathTool.Cos(theta);
+            var sin = MathTool.Sin(theta);
+            return new Matrix2(cos, sin,
+                               -sin, cos);
+        }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is Matrix2 matrix && Equals(matrix);
+        }
+
+        public bool Equals(Matrix2 other)
+        {
+            return M00 == other.M00 &&
+                   M01 == other.M01 &&
+                   M10 == other.M10 &&
+                   M11 == other.M11;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(M00, M01, M10, M11);
+        }
+
+        public static Vector2 operator *(in Vector2 vec, in Matrix2 matrix)
+        {
+            return new Vector2(matrix.M00 * vec.X + matrix.M10 * vec.Y,
+                               matrix.M01 * vec.X + matrix.M11 * vec.Y);
+        }
+
+        public static bool operator ==(Matrix2 left, Matrix2 right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(Matrix2 left, Matrix2 right)
+        {
+            return !(left == right);
+        }
+    }
+
+    [StructLayout(LayoutKind.Explicit)]
+    public struct Matrix3 : IEquatable<Matrix3>
+    {
+        [FieldOffset(0)]
+        public float M00;
+        [FieldOffset(4)]
+        public float M01;
+        [FieldOffset(8)]
+        public float M02;
+        [FieldOffset(12)]
+        public float M10;
+        [FieldOffset(16)]
+        public float M11;
+        [FieldOffset(20)]
+        public float M12;
+        [FieldOffset(24)]
+        public float M20;
+        [FieldOffset(28)]
+        public float M21;
+        [FieldOffset(32)]
+        public float M22;
+
+        public Matrix3(float m00, float m01, float m02,
+                       float m10, float m11, float m12,
+                       float m20, float m21, float m22)
+        {
+            M00 = m00;
+            M01 = m01;
+            M02 = m02;
+            M10 = m10;
+            M11 = m11;
+            M12 = m12;
+            M20 = m20;
+            M21 = m21;
+            M22 = m22;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is Matrix3 matrix && Equals(matrix);
+        }
+
+        public bool Equals(Matrix3 other)
+        {
+            return M00 == other.M00 &&
+                   M01 == other.M01 &&
+                   M02 == other.M02 &&
+                   M10 == other.M10 &&
+                   M11 == other.M11 &&
+                   M12 == other.M12 &&
+                   M20 == other.M20 &&
+                   M21 == other.M21 &&
+                   M22 == other.M22;
+        }
+
+        public override int GetHashCode()
+        {
+            var hash = new HashCode();
+            hash.Add(M00);
+            hash.Add(M01);
+            hash.Add(M02);
+            hash.Add(M10);
+            hash.Add(M11);
+            hash.Add(M12);
+            hash.Add(M20);
+            hash.Add(M21);
+            hash.Add(M22);
+            return hash.ToHashCode();
+        }
+
+        public static Vector3 operator *(in Vector3 vec, in Matrix3 matrix)
+        {
+            return new Vector3(matrix.M00 * vec.X + matrix.M10 * vec.Y + matrix.M20 * vec.Z,
+                               matrix.M01 * vec.X + matrix.M11 * vec.Y + matrix.M21 * vec.Z,
+                               matrix.M02 * vec.X + matrix.M12 * vec.Y + matrix.M22 * vec.Z);
+        }
+
+        public static Matrix3 operator *(in Matrix3 m1, in Matrix3 m2)
+        {
+            return new Matrix3(m1.M00 * m2.M00 + m1.M01 * m2.M10 + m1.M02 * m2.M20,   m1.M00 * m2.M01 + m1.M01 * m2.M11 + m1.M02 * m2.M21,   m1.M00 * m2.M02 + m1.M01 * m2.M12 + m1.M02 * m2.M22,
+
+                               m1.M10 * m2.M00 + m1.M11 * m2.M10 + m1.M12 * m2.M20,   m1.M10 * m2.M01 + m1.M11 * m2.M11 + m1.M12 * m2.M21,   m1.M10 * m2.M02 + m1.M11 * m2.M12 + m1.M12 * m2.M22,
+
+                               m1.M20 * m2.M00 + m1.M21 * m2.M10 + m1.M22 * m2.M20,   m1.M20 * m2.M01 + m1.M21 * m2.M11 + m1.M22 * m2.M21,   m1.M20 * m2.M02 + m1.M21 * m2.M12 + m1.M22 * m2.M22);
+        }
+
+        public static bool operator ==(Matrix3 left, Matrix3 right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(Matrix3 left, Matrix3 right)
+        {
+            return !(left == right);
+        }
     }
 }

@@ -57,7 +57,11 @@ namespace ElffyGame
             var c = new Cube();
             c.Activate();
 
+            var cc = new Cube() { Position = new Vector3(0, 10, 0), Material = Materials.RedPlastic };
+            cc.Activate();
             Engine.CurrentScreen.Camera.LookAt(new Vector3(0, 10, 0), new Vector3(40, 40, -40));
+            var cm = new CameraMouse(Engine.CurrentScreen.Camera, Engine.CurrentScreen.Mouse, new Vector3(0, 0, 0));
+            cm.Activate();
             //var light = new DirectLight();
             //light.Activate();
             //FrameProcess.WhileTrue(process =>
