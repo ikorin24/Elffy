@@ -13,8 +13,6 @@ namespace Elffy.Shape
         private const float two = 2 / 3.0f;
         private const float three = 1.0f;
 
-        //private static readonly ReadOnlyMemory<Vertex>
-
         private static readonly ReadOnlyMemory<Vertex> _vertexArray = new Vertex[36] {
             new Vertex(new Vector3(-1, -1, -1), new Vector3(-1, 0, 0), new Vector2(zero, three)),
             new Vertex(new Vector3(-1, -1, 1),  new Vector3(-1, 0, 0), new Vector2(zero, two)),
