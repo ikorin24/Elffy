@@ -68,7 +68,7 @@ namespace Elffy
             return obj is Matrix3 matrix && Equals(matrix);
         }
 
-        public bool Equals(Matrix3 other)
+        public readonly bool Equals(Matrix3 other)
         {
             return M00 == other.M00 &&
                    M01 == other.M01 &&
@@ -112,12 +112,12 @@ namespace Elffy
                                m1.M20 * m2.M00 + m1.M21 * m2.M10 + m1.M22 * m2.M20, m1.M20 * m2.M01 + m1.M21 * m2.M11 + m1.M22 * m2.M21, m1.M20 * m2.M02 + m1.M21 * m2.M12 + m1.M22 * m2.M22);
         }
 
-        public static bool operator ==(Matrix3 left, Matrix3 right)
+        public static bool operator ==(in Matrix3 left, in Matrix3 right)
         {
             return left.Equals(right);
         }
 
-        public static bool operator !=(Matrix3 left, Matrix3 right)
+        public static bool operator !=(in Matrix3 left, in Matrix3 right)
         {
             return !(left == right);
         }
