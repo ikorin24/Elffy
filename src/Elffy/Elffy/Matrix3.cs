@@ -29,9 +29,9 @@ namespace Elffy
         //  | y1 | = | M10 M11 M12 | * | y0 |
         //  | z1 |   | M20 M21 M22 |   | z0 |
         //
-        //           | M00*x0 + M01*y0 + M02 * z0 |
-        //         = | M10*x0 + M11*y0 + M12 * z0 |
-        //           | M20*x0 + M21*y0 + M22 * z0 |
+        //           | M00*x0 + M01*y0 + M02*z0 |
+        //         = | M10*x0 + M11*y0 + M12*z0 |
+        //           | M20*x0 + M21*y0 + M22*z0 |
         // =================================================
 
         [FieldOffset(0)]
@@ -52,6 +52,8 @@ namespace Elffy
         public float M12;
         [FieldOffset(32)]
         public float M22;
+
+        public static readonly Matrix3 Identity = new Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1);
 
         /// <summary>
         /// Create new <see cref="Matrix3"/><para/>

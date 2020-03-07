@@ -98,6 +98,7 @@ namespace Elffy
         public Vector4(float value) => (X, Y, Z, W) = (value, value, value, value);
 
         public readonly (float X, float Y, float Z, float W) ToTuple() => (X, Y, Z, W);
+        public readonly float SumElement() => X + Y + Z + W;
         public readonly Vector4 Dot(in Vector4 vec) => this * vec;
         public static Vector4 Dot(in Vector4 vec1, in Vector4 vec2) => vec1 * vec2;
         public readonly Vector4 Normalized() => ((TKVector4)this).Normalized();

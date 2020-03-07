@@ -39,6 +39,7 @@ namespace Elffy
         public readonly float Length => (float)Math.Sqrt(LengthSquared);
 
         public Vector3(float x, float y, float z) => (X, Y, Z) = (x, y, z);
+        public readonly float SumElement() => X + Y + Z;
         public Vector3(Vector3 v) => this = v;
         public Vector3(Vector2 v) => (X, Y, Z) = (v.X, v.Y, 0);
         public Vector3(Vector2 v, float z) => (X, Y, Z) = (v.X, v.Y, z);

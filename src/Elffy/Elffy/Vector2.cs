@@ -30,6 +30,7 @@ namespace Elffy
         public Vector2(float value) => (X, Y) = (value, value);
 
         public readonly (float X, float Y) ToTuple() => (X, Y);
+        public readonly float SumElement() => X + Y;
         public readonly Vector2 Dot(in Vector2 vec) => this * vec;
         public static Vector2 Dot(in Vector2 vec1, in Vector2 vec2) => vec1 * vec2;
         public readonly Vector2 Normalized() => ((TKVector2)this).Normalized();
