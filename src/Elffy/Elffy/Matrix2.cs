@@ -11,7 +11,9 @@ namespace Elffy
     {
         // =================================================
         // [Field Order]
-        // Field order is row-major order.
+        // Field order is column-major order. (same as opengl)
+        // 
+        // matrix = [M00, M10, M01, M11]
         // | M00 M01 |
         // | M10 M11 |
         //
@@ -33,18 +35,35 @@ namespace Elffy
         [FieldOffset(0)]
         public float M00;
         [FieldOffset(4)]
-        public float M01;
-        [FieldOffset(8)]
         public float M10;
+        [FieldOffset(8)]
+        public float M01;
         [FieldOffset(12)]
         public float M11;
 
+        /// <summary>
+        /// Create new <see cref="Matrix2"/><para/>
+        /// [NOTE] Argument order is NOT same as memory layout order !!! (Memory layout is column-major order.)<para/>
+        /// </summary>
+        /// <param name="m00">element of row=0, col=0</param>
+        /// <param name="m01">element of row=0, col=1</param>
+        /// <param name="m10">element of row=1, col=0</param>
+        /// <param name="m11">element of row=1, col=1</param>
         public Matrix2(float m00, float m01, float m10, float m11)
         {
             M00 = m00;
             M01 = m01;
             M10 = m10;
             M11 = m11;
+        }
+
+        public Matrix2(ReadOnlySpan<float> matrix)
+        {
+            if(matrix.Length < 4) { throw new ArgumentException("Length >= 4 is needed."); }
+            M00 = matrix[0];
+            M10 = matrix[1];
+            M01 = matrix[2];
+            M11 = matrix[3];
         }
 
         public void Transpose()
@@ -83,6 +102,11 @@ namespace Elffy
         public override int GetHashCode()
         {
             return HashCode.Combine(M00, M01, M10, M11);
+        }
+
+        public override string ToString()
+        {
+            return $"|{M00}, {M01}|{Environment.NewLine}|{M10}, {M11}|";
         }
 
         public static Matrix2 operator *(in Matrix2 m1, in Matrix2 m2)

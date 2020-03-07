@@ -10,7 +10,9 @@ namespace Elffy
     {
         // =================================================
         // [Field Order]
-        // Field order is row-major order.
+        // Field order is column-major order. (same as opengl)
+        // 
+        // matrix = [M00, M10, M20, M01, M11, M21, M02, M12, M22]
         // | M00 M01 M02 |
         // | M10 M11 M12 |
         // | M20 M21 M22 |
@@ -35,22 +37,35 @@ namespace Elffy
         [FieldOffset(0)]
         public float M00;
         [FieldOffset(4)]
-        public float M01;
-        [FieldOffset(8)]
-        public float M02;
-        [FieldOffset(12)]
         public float M10;
+        [FieldOffset(8)]
+        public float M20;
+        [FieldOffset(12)]
+        public float M01;
         [FieldOffset(16)]
         public float M11;
         [FieldOffset(20)]
-        public float M12;
-        [FieldOffset(24)]
-        public float M20;
-        [FieldOffset(28)]
         public float M21;
+        [FieldOffset(24)]
+        public float M02;
+        [FieldOffset(28)]
+        public float M12;
         [FieldOffset(32)]
         public float M22;
 
+        /// <summary>
+        /// Create new <see cref="Matrix3"/><para/>
+        /// [NOTE] Argument order is NOT same as memory layout order !!! (Memory layout is column-major order.)<para/>
+        /// </summary>
+        /// <param name="m00">element of row=0, col=0</param>
+        /// <param name="m01">element of row=0, col=1</param>
+        /// <param name="m02">element of row=0, col=2</param>
+        /// <param name="m10">element of row=1, col=0</param>
+        /// <param name="m11">element of row=1, col=1</param>
+        /// <param name="m12">element of row=1, col=2</param>
+        /// <param name="m20">element of row=2, col=0</param>
+        /// <param name="m21">element of row=2, col=1</param>
+        /// <param name="m22">element of row=2, col=2</param>
         public Matrix3(float m00, float m01, float m02,
                        float m10, float m11, float m12,
                        float m20, float m21, float m22)
@@ -64,6 +79,20 @@ namespace Elffy
             M20 = m20;
             M21 = m21;
             M22 = m22;
+        }
+
+        public Matrix3(ReadOnlySpan<float> matrix)
+        {
+            if(matrix.Length < 9) { throw new ArgumentException("Length >= 9 is needed."); }
+            M00 = matrix[0];
+            M10 = matrix[1];
+            M20 = matrix[2];
+            M01 = matrix[3];
+            M11 = matrix[4];
+            M21 = matrix[5];
+            M02 = matrix[6];
+            M12 = matrix[7];
+            M22 = matrix[8];
         }
 
         public override bool Equals(object? obj)
@@ -97,6 +126,11 @@ namespace Elffy
             hash.Add(M21);
             hash.Add(M22);
             return hash.ToHashCode();
+        }
+
+        public override string ToString()
+        {
+            return $"|{M00}, {M01}, {M02}|{Environment.NewLine}|{M10}, {M11}, {M12}|{Environment.NewLine}|{M20}, {M21}, {M22}|";
         }
 
         public static Vector3 operator *(in Matrix3 matrix, in Vector3 vec)
