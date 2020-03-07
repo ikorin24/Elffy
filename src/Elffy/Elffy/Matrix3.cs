@@ -1,0 +1,125 @@
+﻿#nullable enable
+using System;
+using System.Runtime.InteropServices;
+
+namespace Elffy
+{
+    /// <summary>Matrix of 3x3</summary>
+    [StructLayout(LayoutKind.Explicit)]
+    public struct Matrix3 : IEquatable<Matrix3>
+    {
+        // =================================================
+        // [Field Order]
+        // Field order is row-major order.
+        // | M00 M01 M02 |
+        // | M10 M11 M12 |
+        // | M20 M21 M22 |
+
+        // [Mathmatical Order]
+        // Mathmatical order is row-major order.
+        // This is the reverse of popular mathmatical way.
+        // 
+        // (ex) vector transformation
+        // Multiply matrix from backward
+        // vec1 = vec0 * matrix
+        //                               | M00 M01 M02 |
+        // [x1, y1, z1] = [x0, y0, z0] * | M10 M11 M12 |
+        //                               | M20 M21 M22 |
+        //
+        //              = [x0*M00 + y0*M10 + z0*M20,   x0*M01 + y0*M11 + z0*M21,   x0*M02 + y0*M12 + z0*M22]
+        // =================================================
+
+        [FieldOffset(0)]
+        public float M00;
+        [FieldOffset(4)]
+        public float M01;
+        [FieldOffset(8)]
+        public float M02;
+        [FieldOffset(12)]
+        public float M10;
+        [FieldOffset(16)]
+        public float M11;
+        [FieldOffset(20)]
+        public float M12;
+        [FieldOffset(24)]
+        public float M20;
+        [FieldOffset(28)]
+        public float M21;
+        [FieldOffset(32)]
+        public float M22;
+
+        public Matrix3(float m00, float m01, float m02,
+                       float m10, float m11, float m12,
+                       float m20, float m21, float m22)
+        {
+            M00 = m00;
+            M01 = m01;
+            M02 = m02;
+            M10 = m10;
+            M11 = m11;
+            M12 = m12;
+            M20 = m20;
+            M21 = m21;
+            M22 = m22;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is Matrix3 matrix && Equals(matrix);
+        }
+
+        public bool Equals(Matrix3 other)
+        {
+            return M00 == other.M00 &&
+                   M01 == other.M01 &&
+                   M02 == other.M02 &&
+                   M10 == other.M10 &&
+                   M11 == other.M11 &&
+                   M12 == other.M12 &&
+                   M20 == other.M20 &&
+                   M21 == other.M21 &&
+                   M22 == other.M22;
+        }
+
+        public override int GetHashCode()
+        {
+            var hash = new HashCode();
+            hash.Add(M00);
+            hash.Add(M01);
+            hash.Add(M02);
+            hash.Add(M10);
+            hash.Add(M11);
+            hash.Add(M12);
+            hash.Add(M20);
+            hash.Add(M21);
+            hash.Add(M22);
+            return hash.ToHashCode();
+        }
+
+        public static Vector3 operator *(in Vector3 vec, in Matrix3 matrix)
+        {
+            return new Vector3(matrix.M00 * vec.X + matrix.M10 * vec.Y + matrix.M20 * vec.Z,
+                               matrix.M01 * vec.X + matrix.M11 * vec.Y + matrix.M21 * vec.Z,
+                               matrix.M02 * vec.X + matrix.M12 * vec.Y + matrix.M22 * vec.Z);
+        }
+
+        public static Matrix3 operator *(in Matrix3 m1, in Matrix3 m2)
+        {
+            return new Matrix3(m1.M00 * m2.M00 + m1.M01 * m2.M10 + m1.M02 * m2.M20, m1.M00 * m2.M01 + m1.M01 * m2.M11 + m1.M02 * m2.M21, m1.M00 * m2.M02 + m1.M01 * m2.M12 + m1.M02 * m2.M22,
+
+                               m1.M10 * m2.M00 + m1.M11 * m2.M10 + m1.M12 * m2.M20, m1.M10 * m2.M01 + m1.M11 * m2.M11 + m1.M12 * m2.M21, m1.M10 * m2.M02 + m1.M11 * m2.M12 + m1.M12 * m2.M22,
+
+                               m1.M20 * m2.M00 + m1.M21 * m2.M10 + m1.M22 * m2.M20, m1.M20 * m2.M01 + m1.M21 * m2.M11 + m1.M22 * m2.M21, m1.M20 * m2.M02 + m1.M21 * m2.M12 + m1.M22 * m2.M22);
+        }
+
+        public static bool operator ==(Matrix3 left, Matrix3 right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(Matrix3 left, Matrix3 right)
+        {
+            return !(left == right);
+        }
+    }
+}
