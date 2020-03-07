@@ -24,7 +24,7 @@ namespace Elffy
         /// <summary>Get whether this can create a new light</summary>
         private static bool CanCreateNew => _lightList.Count < MaxCount;
 
-        internal static bool IsEnabled
+        internal static unsafe bool IsEnabled
         {
             get => _isEnabled;
             set
@@ -34,7 +34,8 @@ namespace Elffy
                 if(_isEnabled) {
                     GL.Enable(EnableCap.Lighting);
                     if(_globalAmbientChanged) {
-                        SendGlobalAmbient(_globalAmbient);
+                        var globalAmbient = _globalAmbient;
+                        GL.LightModel(LightModelParameter.LightModelAmbient, (float*)&globalAmbient);
                         _globalAmbientChanged = false;
                     }
                 }
@@ -46,7 +47,7 @@ namespace Elffy
         private static bool _isEnabled;
 
         /// <summary>光源から独立した環境光を設定または取得します</summary>
-        public static Color4 GlobalAmbient
+        public static Color4 GlobalAmbient      // TODO: staticなので複数スクリーンに対応してない
         {
             get
             {
@@ -110,14 +111,6 @@ namespace Elffy
                     throw new InvalidOperationException();
             }
         }
-
-        /// <summary>Send global ambient value to OpenGL</summary>
-        /// <param name="color">global ambient value</param>
-        private static unsafe void SendGlobalAmbient(Color4 color)
-        {
-            GL.LightModel(LightModelParameter.LightModelAmbient, color.AsSpan<Color4, float>().AsPointer());
-        }
-
 
         /// <summary>
         /// Implementation of <see cref="ILight"/>

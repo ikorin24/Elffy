@@ -45,28 +45,6 @@ namespace Elffy.Effective
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe T* AsPointer<T>(this Span<T> source) where T : unmanaged => AsPointer((ReadOnlySpan<T>)source);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe T* AsPointer<T>(this ReadOnlySpan<T> source) where T : unmanaged
-        {
-            fixed(T* p = source) {
-                return p;
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe T* AsPointer<T>(this Span<T> source, int index) where T : unmanaged => AsPointer((ReadOnlySpan<T>)source, index);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe T* AsPointer<T>(this ReadOnlySpan<T> source, int index) where T : unmanaged
-        {
-            fixed(T* p = source.Slice(index)) {
-                return p;
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe Span<TTo> AsSpan<TFrom, TTo>(this TFrom source) where TFrom : unmanaged
                                                                              where TTo : unmanaged
         {
@@ -105,11 +83,13 @@ namespace Elffy.Effective
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe UnmanagedArray<TTo> SelectToUnmanagedArray<TFrom, TTo>(this Span<TFrom> source, Func<TFrom, int, TTo> selector) where TTo : unmanaged
             => SelectToUnmanagedArray((ReadOnlySpan<TFrom>)source, selector);
 
         public static unsafe UnmanagedArray<TTo> SelectToUnmanagedArray<TFrom, TTo>(this ReadOnlySpan<TFrom> source, Func<TFrom, int, TTo> selector) where TTo : unmanaged
         {
+            if(selector == null) { throw new ArgumentNullException(nameof(selector)); }
             var umArray = new UnmanagedArray<TTo>(source.Length);
             try {
                 var ptr = (TTo*)umArray.Ptr;
@@ -124,6 +104,7 @@ namespace Elffy.Effective
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T FirstOrDefault<T>(this Span<T> source, Func<T, bool> selector) => FirstOrDefault((ReadOnlySpan<T>)source, selector);
 
         public static T FirstOrDefault<T>(this ReadOnlySpan<T> source, Func<T, bool> selector)
