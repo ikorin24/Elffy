@@ -14,19 +14,22 @@ namespace Elffy
         // | M00 M01 M02 |
         // | M10 M11 M12 |
         // | M20 M21 M22 |
-
+        //
         // [Mathmatical Order]
-        // Mathmatical order is row-major order.
-        // This is the reverse of popular mathmatical way.
+        // Mathmatical order is column-major order.
+        // This is popular mathmatical way.
         // 
         // (ex) vector transformation
-        // Multiply matrix from backward
-        // vec1 = vec0 * matrix
-        //                               | M00 M01 M02 |
-        // [x1, y1, z1] = [x0, y0, z0] * | M10 M11 M12 |
-        //                               | M20 M21 M22 |
+        // Multiply matrix from forward
+        // vec1 = matrix * vec0
+        // 
+        //  | x1 |   | M00 M01 M02 |   | x0 |
+        //  | y1 | = | M10 M11 M12 | * | y0 |
+        //  | z1 |   | M20 M21 M22 |   | z0 |
         //
-        //              = [x0*M00 + y0*M10 + z0*M20,   x0*M01 + y0*M11 + z0*M21,   x0*M02 + y0*M12 + z0*M22]
+        //           | M00*x0 + M01*y0 + M02 * z0 |
+        //         = | M10*x0 + M11*y0 + M12 * z0 |
+        //           | M20*x0 + M21*y0 + M22 * z0 |
         // =================================================
 
         [FieldOffset(0)]
@@ -96,20 +99,20 @@ namespace Elffy
             return hash.ToHashCode();
         }
 
-        public static Vector3 operator *(in Vector3 vec, in Matrix3 matrix)
+        public static Vector3 operator *(in Matrix3 matrix, in Vector3 vec)
         {
-            return new Vector3(matrix.M00 * vec.X + matrix.M10 * vec.Y + matrix.M20 * vec.Z,
-                               matrix.M01 * vec.X + matrix.M11 * vec.Y + matrix.M21 * vec.Z,
-                               matrix.M02 * vec.X + matrix.M12 * vec.Y + matrix.M22 * vec.Z);
+            return new Vector3(matrix.M00 * vec.X + matrix.M01 * vec.Y + matrix.M02 * vec.Z,
+                               matrix.M10 * vec.X + matrix.M11 * vec.Y + matrix.M12 * vec.Z,
+                               matrix.M20 * vec.X + matrix.M21 * vec.Y + matrix.M22 * vec.Z);
         }
 
         public static Matrix3 operator *(in Matrix3 m1, in Matrix3 m2)
         {
-            return new Matrix3(m1.M00 * m2.M00 + m1.M01 * m2.M10 + m1.M02 * m2.M20, m1.M00 * m2.M01 + m1.M01 * m2.M11 + m1.M02 * m2.M21, m1.M00 * m2.M02 + m1.M01 * m2.M12 + m1.M02 * m2.M22,
-
-                               m1.M10 * m2.M00 + m1.M11 * m2.M10 + m1.M12 * m2.M20, m1.M10 * m2.M01 + m1.M11 * m2.M11 + m1.M12 * m2.M21, m1.M10 * m2.M02 + m1.M11 * m2.M12 + m1.M12 * m2.M22,
-
-                               m1.M20 * m2.M00 + m1.M21 * m2.M10 + m1.M22 * m2.M20, m1.M20 * m2.M01 + m1.M21 * m2.M11 + m1.M22 * m2.M21, m1.M20 * m2.M02 + m1.M21 * m2.M12 + m1.M22 * m2.M22);
+            return new Matrix3(m1.M00 * m2.M00 + m1.M01 * m2.M10 + m1.M02 * m2.M20,   m1.M00 * m2.M01 + m1.M01 * m2.M11 + m1.M02 * m2.M21,   m1.M00 * m2.M02 + m1.M01 * m2.M12 + m1.M02 * m2.M22,
+                                                                                                                                            
+                               m1.M10 * m2.M00 + m1.M11 * m2.M10 + m1.M12 * m2.M20,   m1.M10 * m2.M01 + m1.M11 * m2.M11 + m1.M12 * m2.M21,   m1.M10 * m2.M02 + m1.M11 * m2.M12 + m1.M12 * m2.M22,
+                                                                                                                                            
+                               m1.M20 * m2.M00 + m1.M21 * m2.M10 + m1.M22 * m2.M20,   m1.M20 * m2.M01 + m1.M21 * m2.M11 + m1.M22 * m2.M21,   m1.M20 * m2.M02 + m1.M21 * m2.M12 + m1.M22 * m2.M22);
         }
 
         public static bool operator ==(in Matrix3 left, in Matrix3 right)

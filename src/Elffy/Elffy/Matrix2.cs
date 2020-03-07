@@ -1,12 +1,6 @@
 ﻿#nullable enable
 using System;
-using System.Drawing;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using TKVector2 = OpenTK.Vector2;
-using TKVector3 = OpenTK.Vector3;
-using TKVector4 = OpenTK.Vector4;
-using TKColor4 = OpenTK.Graphics.Color4;
 using Elffy.Mathmatics;
 
 namespace Elffy
@@ -20,19 +14,20 @@ namespace Elffy
         // Field order is row-major order.
         // | M00 M01 |
         // | M10 M11 |
-
+        //
         // [Mathmatical Order]
-        // Mathmatical order is row-major order.
-        // This is the reverse of popular mathmatical way.
+        // Mathmatical order is column-major order.
+        // This is popular mathmatical way.
         // 
         // (ex) vector transformation
-        // Multiply matrix from backward
-        // vec1 = vec0 * matrix
+        // Multiply matrix from forward
+        // vec1 = matrix * vec0
         //
-        // [x1, y1] = [x0, y0] * | M00 M01 |
-        //                       | M10 M11 |
-        //
-        //          = [x0*M00 + y0*M10,   x0*M01 + y0*M11]
+        //  | x1 | = | M00 M01 | * | x0 |
+        //  | y1 |   | M10 M11 |   | y0 |
+        // 
+        //         = | M00 * x0 + M01 * y0 |
+        //           | M10 * x0 + M11 * y0 |
         // =================================================
 
         [FieldOffset(0)]
@@ -64,12 +59,12 @@ namespace Elffy
             return new Matrix2(M00, M10, M01, M11);
         }
 
-        public static Matrix2 Rotate(float theta)
+        public static Matrix2 GetRotateMatrix(float theta)
         {
             var cos = MathTool.Cos(theta);
             var sin = MathTool.Sin(theta);
-            return new Matrix2(cos, sin,
-                               -sin, cos);
+            return new Matrix2(cos, -sin,
+                               sin, cos);
         }
 
         public override bool Equals(object? obj)
@@ -90,10 +85,16 @@ namespace Elffy
             return HashCode.Combine(M00, M01, M10, M11);
         }
 
-        public static Vector2 operator *(in Vector2 vec, in Matrix2 matrix)
+        public static Matrix2 operator *(in Matrix2 m1, in Matrix2 m2)
         {
-            return new Vector2(matrix.M00 * vec.X + matrix.M10 * vec.Y,
-                               matrix.M01 * vec.X + matrix.M11 * vec.Y);
+            return new Matrix2(m1.M00 * m2.M00 + m1.M01 * m2.M10,    m1.M00 * m2.M01 + m1.M01 * m2.M11,
+                               m1.M10 * m2.M00 + m1.M11 * m2.M10,    m1.M10 * m2.M01 + m1.M11 * m2.M11);
+        }
+
+        public static Vector2 operator *(in Matrix2 matrix, in Vector2 vec)
+        {
+            return new Vector2(matrix.M00 * vec.X + matrix.M01 * vec.Y,
+                               matrix.M10 * vec.X + matrix.M11 * vec.Y);
         }
 
         public static bool operator ==(Matrix2 left, Matrix2 right)

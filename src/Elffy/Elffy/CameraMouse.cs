@@ -40,6 +40,9 @@ namespace Elffy
             _mousePos = _mouse.Position;
         }
 
+        /// <summary><see cref="Target"/>を中心にカメラを回転させます</summary>
+        /// <param name="thetaRad">水平方向(経度)回転角[rad]</param>
+        /// <param name="phiRad">垂直方向(緯度)回転角[rad]</param>
         private void MoveCamera(float thetaRad, float phiRad)
         {
             var target = Target;
@@ -48,25 +51,21 @@ namespace Elffy
             var phi = new Angle(phiRad);                    // 垂直方向の回転角
             var alpha = new Angle(p0.X / p0.Xz.Length, p0.Z / p0.Xz.Length);    // XZ平面への正射影ベクトルとZ軸との角 (経度)
 
-            // 経度0まで
-            var matrix = 
-            // 垂直方向回転 (経度0へ水平方向回転 → 垂直方向回転 → 元の経度まで水平方向回転)
-                new Matrix3(alpha.Cos, 0, alpha.Sin,
-                            0, 1, 0,
-                            -alpha.Sin, 0, alpha.Cos)
-               * new Matrix3(1, 0, 0,
-                             0, phi.Cos, -phi.Sin,
-                             0, phi.Sin, phi.Cos)
-               * new Matrix3(alpha.Cos, 0, -alpha.Sin,
-                             0, 1, 0,
-                             alpha.Sin, 0, alpha.Cos)
-            // 水平方向回転
-               * new Matrix3(theta.Cos, 0, -theta.Sin,
-                             0, 1, 0,
-                             theta.Sin, 0, theta.Cos);
+            var matrix = new Matrix3(theta.Cos, 0, theta.Sin,   // 水平方向回転
+                                     0, 1, 0,
+                                     -theta.Sin, 0, theta.Cos)  //  ↑
+                       * new Matrix3(alpha.Cos, 0, alpha.Sin,   // 元の経度へ
+                                     0, 1, 0,
+                                     -alpha.Sin, 0, alpha.Cos)  //  ↑
+                       * new Matrix3(1, 0, 0,                   // 垂直方向回転
+                                     0, phi.Cos, phi.Sin,
+                                     0, -phi.Sin, phi.Cos)      //  ↑
+                       * new Matrix3(alpha.Cos, 0, -alpha.Sin,  // 経度0 (Z軸正方向)へ水平方向回転
+                                     0, 1, 0,
+                                     alpha.Sin, 0, alpha.Cos);
 
-            _camera.Direction = _camera.Direction * matrix;
-            _camera.Position = target + p0 * matrix;
+            _camera.Direction = matrix * _camera.Direction;
+            _camera.Position = target + matrix * p0;
         }
 
         private readonly struct Angle
