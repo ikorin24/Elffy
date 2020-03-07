@@ -3,6 +3,7 @@ using OpenTK;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TKQuaternion = OpenTK.Quaternion;
 
 namespace Elffy.Core
 {
@@ -14,7 +15,7 @@ namespace Elffy.Core
     {
         #region Proeprty
         /// <summary>オブジェクトの回転を表すクオータニオン</summary>
-        public Quaternion Rotation { get; set; } = Quaternion.Identity;
+        public TKQuaternion Rotation { get; set; } = TKQuaternion.Identity;
 
         /// <summary>この <see cref="Positionable"/> のツリー構造の親を取得します</summary>
         public Positionable? Parent
@@ -267,11 +268,11 @@ namespace Elffy.Core
         /// <summary>オブジェクトを回転させます</summary>
         /// <param name="axis">回転軸</param>
         /// <param name="angle">回転角(ラジアン)</param>
-        public void Rotate(Vector3 axis, float angle) => Rotate(Quaternion.FromAxisAngle(axis, angle));
+        public void Rotate(Vector3 axis, float angle) => Rotate(TKQuaternion.FromAxisAngle(axis, angle));
 
         /// <summary>オブジェクトを回転させます</summary>
         /// <param name="quaternion">回転させるクオータニオン</param>
-        public void Rotate(Quaternion quaternion)
+        public void Rotate(TKQuaternion quaternion)
         {
             Rotation *= quaternion;
         }

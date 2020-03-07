@@ -52,6 +52,12 @@ namespace Elffy
         public static Vector3 Cross(in Vector3 vec1, in Vector3 vec2) => new Vector3(vec1.Y * vec2.Z - vec1.Z * vec2.Y,
                                                                                vec1.Z * vec2.X - vec1.X * vec2.Z,
                                                                                vec1.X * vec2.Y - vec1.Y * vec2.X);
+        public readonly Vector3 Rotate(in Quaternion quaternion)
+        {
+            var q = quaternion * new Quaternion(X, Y, Z, 0) * quaternion.Inversed();
+            return q.Xyz;
+        }
+
         public readonly Vector3 Normalized() => ((TKVector3)this).Normalized();
         public readonly override bool Equals(object? obj) => obj is Vector3 vector && Equals(vector);
         public readonly bool Equals(Vector3 other) => X == other.X && Y == other.Y && Z == other.Z;
