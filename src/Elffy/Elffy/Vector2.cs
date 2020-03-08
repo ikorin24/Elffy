@@ -31,8 +31,10 @@ namespace Elffy
 
         public readonly (float X, float Y) ToTuple() => (X, Y);
         public readonly float SumElement() => X + Y;
-        public readonly Vector2 Dot(in Vector2 vec) => this * vec;
-        public static Vector2 Dot(in Vector2 vec1, in Vector2 vec2) => vec1 * vec2;
+        public readonly float Dot(in Vector2 vec) => Mult(this, vec).SumElement();
+        public static float Dot(in Vector2 vec1, in Vector2 vec2) => vec1.Dot(vec2);
+        public readonly Vector2 Mult(in Vector2 vec) => new Vector2(X * vec.X, Y * vec.Y);
+        public static Vector2 Mult(in Vector2 vec1, in Vector2 vec2) => vec1.Mult(vec2);
         public readonly Vector2 Normalized() => ((TKVector2)this).Normalized();
         public readonly override bool Equals(object? obj) => obj is Vector2 vector && Equals(vector);
         public readonly bool Equals(Vector2 other) => X == other.X && Y == other.Y;
@@ -46,7 +48,6 @@ namespace Elffy
         public static Vector2 operator +(in Vector2 vec1, float right) => new Vector2(vec1.X + right, vec1.Y + right);
         public static Vector2 operator -(in Vector2 vec1, in Vector2 vec2) => new Vector2(vec1.X - vec2.X, vec1.Y - vec2.Y);
         public static Vector2 operator -(in Vector2 vec1, float right) => new Vector2(vec1.X - right, vec1.Y - right);
-        public static Vector2 operator *(in Vector2 vec1, in Vector2 vec2) => new Vector2(vec1.X * vec2.X, vec1.Y * vec2.Y);
         public static Vector2 operator *(in Vector2 vec1, float right) => new Vector2(vec1.X * right, vec1.Y * right);
         public static Vector2 operator *(float right, in Vector2 vec1) => new Vector2(vec1.X * right, vec1.Y * right);
         public static Vector2 operator /(in Vector2 vec1, float right) => new Vector2(vec1.X / right, vec1.Y / right);

@@ -260,7 +260,7 @@ namespace Elffy.Core
         /// <param name="z">z軸方向の倍率</param>
         public void MultiplyScale(float x, float y, float z)
         {
-            _scale *= new Vector3(x, y, z);
+            _scale = _scale.Mult(new Vector3(x, y, z));
         }
         #endregion
 

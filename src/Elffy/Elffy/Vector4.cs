@@ -99,8 +99,10 @@ namespace Elffy
 
         public readonly (float X, float Y, float Z, float W) ToTuple() => (X, Y, Z, W);
         public readonly float SumElement() => X + Y + Z + W;
-        public readonly Vector4 Dot(in Vector4 vec) => this * vec;
-        public static Vector4 Dot(in Vector4 vec1, in Vector4 vec2) => vec1 * vec2;
+        public readonly float Dot(in Vector4 vec) => Mult(this, vec).SumElement();
+        public static float Dot(in Vector4 vec1, in Vector4 vec2) => vec1.Dot(vec2);
+        public readonly Vector4 Mult(in Vector4 vec) => new Vector4(X * vec.X, Y * vec.Y, Z * vec.Z, W * vec.W);
+        public static Vector4 Mult(in Vector4 vec1, in Vector4 vec2) => vec1.Mult(vec2);
         public readonly Vector4 Normalized() => ((TKVector4)this).Normalized();
         public readonly override bool Equals(object? obj) => obj is Vector4 vector && Equals(vector);
         public readonly bool Equals(Vector4 other) => X == other.X && Y == other.Y && Z == other.Z && W == other.W;
@@ -114,7 +116,6 @@ namespace Elffy
         public static Vector4 operator +(in Vector4 vec1, float right) => new Vector4(vec1.X + right, vec1.Y + right, vec1.Z + right, vec1.W + right);
         public static Vector4 operator -(in Vector4 vec1, in Vector4 vec2) => new Vector4(vec1.X - vec2.X, vec1.Y - vec2.Y, vec1.Z - vec2.Z, vec1.W - vec2.W);
         public static Vector4 operator -(in Vector4 vec1, float right) => new Vector4(vec1.X - right, vec1.Y - right, vec1.Z - right, vec1.W - right);
-        public static Vector4 operator *(in Vector4 vec1, in Vector4 vec2) => new Vector4(vec1.X * vec2.X, vec1.Y * vec2.Y, vec1.Z * vec2.Z, vec1.W * vec2.W);
         public static Vector4 operator *(in Vector4 vec1, float right) => new Vector4(vec1.X * right, vec1.Y * right, vec1.Z * right, vec1.W * right);
         public static Vector4 operator *(float right, in Vector4 vec1) => new Vector4(vec1.X * right, vec1.Y * right, vec1.Z * right, vec1.W * right);
         public static Vector4 operator /(in Vector4 vec1, float right) => new Vector4(vec1.X / right, vec1.Y / right, vec1.Z / right, vec1.W / right);

@@ -160,9 +160,9 @@ namespace Elffy
             ref var m2Col2 = ref m2.Col2();
             ref var m2Col3 = ref m2.Col3();
 
-            return new AffineMatrix3((m1Row0 * m2Col0).SumElement(), (m1Row0 * m2Col1).SumElement(), (m1Row0 * m2Col2).SumElement(), (m1Row0 * m2Col3).SumElement() + m1.X,
-                                     (m1Row1 * m2Col0).SumElement(), (m1Row1 * m2Col1).SumElement(), (m1Row1 * m2Col2).SumElement(), (m1Row1 * m2Col3).SumElement() + m1.Y,
-                                     (m1Row2 * m2Col0).SumElement(), (m1Row2 * m2Col1).SumElement(), (m1Row2 * m2Col2).SumElement(), (m1Row2 * m2Col3).SumElement() + m1.Z);
+            return new AffineMatrix3(m1Row0.Dot(m2Col0), m1Row0.Dot(m2Col1), m1Row0.Dot(m2Col2), m1Row0.Dot(m2Col3) + m1.X,
+                                     m1Row1.Dot(m2Col0), m1Row1.Dot(m2Col1), m1Row1.Dot(m2Col2), m1Row1.Dot(m2Col3) + m1.Y,
+                                     m1Row2.Dot(m2Col0), m1Row2.Dot(m2Col1), m1Row2.Dot(m2Col2), m1Row2.Dot(m2Col3) + m1.Z);
         }
 
         public static Vector3 operator *(in AffineMatrix3 m, in Vector3 v) => m.Matrix3() * v + m.Col3();

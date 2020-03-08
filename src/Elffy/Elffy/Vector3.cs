@@ -47,8 +47,10 @@ namespace Elffy
         public Vector3(float value) => (X, Y, Z) = (value, value, value);
 
         public readonly (float X, float Y, float Z) ToTuple() => (X, Y, Z);
-        public readonly Vector3 Dot(in Vector3 vec) => this * vec;
-        public static Vector3 Dot(in Vector3 vec1, in Vector3 vec2) => vec1 * vec2;
+        public readonly float Dot(in Vector3 vec) => Mult(this, vec).SumElement();
+        public static float Dot(in Vector3 vec1, in Vector3 vec2) => vec1.Dot(vec2);
+        public readonly Vector3 Mult(in Vector3 vec) => new Vector3(X * vec.X, Y * vec.Y, Z * vec.Z);
+        public static Vector3 Mult(in Vector3 vec1, in Vector3 vec2) => vec1.Mult(vec2);
         public readonly Vector3 Cross(in Vector3 vec) => Cross(this, vec);
         public static Vector3 Cross(in Vector3 vec1, in Vector3 vec2) => new Vector3(vec1.Y * vec2.Z - vec1.Z * vec2.Y,
                                                                                vec1.Z * vec2.X - vec1.X * vec2.Z,
@@ -72,7 +74,6 @@ namespace Elffy
         public static Vector3 operator +(in Vector3 vec1, float right) => new Vector3(vec1.X + right, vec1.Y + right, vec1.Z + right);
         public static Vector3 operator -(in Vector3 vec1, in Vector3 vec2) => new Vector3(vec1.X - vec2.X, vec1.Y - vec2.Y, vec1.Z - vec2.Z);
         public static Vector3 operator -(in Vector3 vec1, float right) => new Vector3(vec1.X - right, vec1.Y - right, vec1.Z - right);
-        public static Vector3 operator *(in Vector3 vec1, in Vector3 vec2) => new Vector3(vec1.X * vec2.X, vec1.Y * vec2.Y, vec1.Z * vec2.Z);
         public static Vector3 operator *(in Vector3 vec1, float right) => new Vector3(vec1.X * right, vec1.Y * right, vec1.Z * right);
         public static Vector3 operator *(float right, in Vector3 vec1) => new Vector3(vec1.X * right, vec1.Y * right, vec1.Z * right);
         public static Vector3 operator /(in Vector3 vec1, float right) => new Vector3(vec1.X / right, vec1.Y / right, vec1.Z / right);
