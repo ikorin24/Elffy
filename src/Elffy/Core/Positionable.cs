@@ -1,9 +1,7 @@
 ﻿#nullable enable
-using OpenTK;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TKQuaternion = OpenTK.Quaternion;
 
 namespace Elffy.Core
 {
@@ -15,7 +13,7 @@ namespace Elffy.Core
     {
         #region Proeprty
         /// <summary>オブジェクトの回転を表すクオータニオン</summary>
-        public TKQuaternion Rotation { get; set; } = TKQuaternion.Identity;
+        public Quaternion Rotation { get; private set; } = Quaternion.Identity;
 
         /// <summary>この <see cref="Positionable"/> のツリー構造の親を取得します</summary>
         public Positionable? Parent
@@ -228,7 +226,6 @@ namespace Elffy.Core
             Activated += OnActivated;
         }
 
-        #region Translate
         /// <summary>オブジェクトを移動させます</summary>
         /// <param name="x">x軸方向移動量</param>
         /// <param name="y">y軸方向移動量</param>
@@ -244,9 +241,7 @@ namespace Elffy.Core
         {
             Position += vector;
         }
-        #endregion
 
-        #region MultiplyScale
         /// <summary>オブジェクトのサイズを変更します</summary>
         /// <param name="scale">倍率</param>
         public void MultiplyScale(float scale)
@@ -262,21 +257,18 @@ namespace Elffy.Core
         {
             _scale = _scale.Mult(new Vector3(x, y, z));
         }
-        #endregion
 
-        #region Rotate
         /// <summary>オブジェクトを回転させます</summary>
         /// <param name="axis">回転軸</param>
         /// <param name="angle">回転角(ラジアン)</param>
-        public void Rotate(Vector3 axis, float angle) => Rotate(TKQuaternion.FromAxisAngle(axis, angle));
+        public void Rotate(Vector3 axis, float angle) => Rotate(new Quaternion(axis, angle));
 
         /// <summary>オブジェクトを回転させます</summary>
         /// <param name="quaternion">回転させるクオータニオン</param>
-        public void Rotate(TKQuaternion quaternion)
+        public void Rotate(Quaternion quaternion)
         {
-            Rotation *= quaternion;
+            Rotation = quaternion * Rotation;
         }
-        #endregion
 
         /// <summary>このオブジェクトの <see cref="Children"/> 以下に存在する全ての子孫を取得します。列挙順は深さ優先探索 (DFS; depth-first search) です。</summary>
         /// <returns>全ての子孫オブジェクト</returns>
