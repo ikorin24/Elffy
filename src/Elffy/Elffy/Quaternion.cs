@@ -81,6 +81,8 @@ namespace Elffy
                                2 * (xz - yw),        2 * (yz + xw),       -x2 - y2 + z2 + w2);
         }
 
+        public readonly AffineMatrix3 ToAffineMatrix3() => new AffineMatrix3(ToMatrix3());
+
         public readonly override string ToString() => $"V:({X}, {Y}, {Z}), W:{W}";
 
         public readonly override bool Equals(object? obj) => obj is Quaternion quaternion && Equals(quaternion);
@@ -102,5 +104,6 @@ namespace Elffy
         }
 
         public static explicit operator Vector4(in Quaternion quaternion) => Unsafe.As<Quaternion, Vector4>(ref Unsafe.AsRef(quaternion));
+        public static implicit operator TKQuaternion(Quaternion q) => Unsafe.As<Quaternion, TKQuaternion>(ref q);
     }
 }
