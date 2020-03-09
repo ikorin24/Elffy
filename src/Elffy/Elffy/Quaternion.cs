@@ -62,6 +62,25 @@ namespace Elffy
 
         public readonly Quaternion Inversed() => new Quaternion(-X, -Y, -Z, W);
 
+        public readonly Matrix3 ToMatrix3()
+        {
+            var x2 = X * X;
+            var y2 = Y * Y;
+            var z2 = Z * Z;
+            var w2 = W * W;
+
+            var xy = X * Y;
+            var xz = X * Z;
+            var xw = X * W;
+            var yz = Y * Z;
+            var yw = Y * W;
+            var zw = Z * W;
+
+            return new Matrix3(x2 - y2 - z2 + w2,    2 * (xy - zw),       2 * (xz + yw),
+                               2 * (xy + zw),        -x2 + y2 - z2 + w2,  2 * (yz - xw),
+                               2 * (xz - yw),        2 * (yz + xw),       -x2 - y2 + z2 + w2);
+        }
+
         public readonly override string ToString() => $"V:({X}, {Y}, {Z}), W:{W}";
 
         public readonly override bool Equals(object? obj) => obj is Quaternion quaternion && Equals(quaternion);
