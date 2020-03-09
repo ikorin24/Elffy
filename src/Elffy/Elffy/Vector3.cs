@@ -61,6 +61,13 @@ namespace Elffy
             return q.Xyz;
         }
 
+        public void Normalize()
+        {
+            var len = Length;
+            X /= len;
+            Y /= len;
+            Z /= len;
+        }
         public readonly Vector3 Normalized() => ((TKVector3)this).Normalized();
         public readonly override bool Equals(object? obj) => obj is Vector3 vector && Equals(vector);
         public readonly bool Equals(Vector3 other) => X == other.X && Y == other.Y && Z == other.Z;
