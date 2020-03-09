@@ -41,6 +41,8 @@ namespace Elffy
         [FieldOffset(12)]
         public float M11;
 
+        public static readonly Matrix2 Identity = new Matrix2(1, 0, 0, 1);
+
         /// <summary>
         /// Create new <see cref="Matrix2"/><para/>
         /// [NOTE] Argument order is NOT same as memory layout order !!! (Memory layout is column-major order.)<para/>
@@ -73,10 +75,7 @@ namespace Elffy
             M10 = tmp;
         }
 
-        public readonly Matrix2 Transposed()
-        {
-            return new Matrix2(M00, M10, M01, M11);
-        }
+        public readonly Matrix2 Transposed() => new Matrix2(M00, M10, M01, M11);
 
         public static Matrix2 GetRotateMatrix(float theta)
         {
@@ -86,12 +85,9 @@ namespace Elffy
                                sin, cos);
         }
 
-        public override bool Equals(object? obj)
-        {
-            return obj is Matrix2 matrix && Equals(matrix);
-        }
+        public readonly override bool Equals(object? obj) => obj is Matrix2 matrix && Equals(matrix);
 
-        public bool Equals(Matrix2 other)
+        public readonly bool Equals(Matrix2 other)
         {
             return M00 == other.M00 &&
                    M01 == other.M01 &&
@@ -99,36 +95,20 @@ namespace Elffy
                    M11 == other.M11;
         }
 
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(M00, M01, M10, M11);
-        }
+        public readonly override int GetHashCode() => HashCode.Combine(M00, M01, M10, M11);
 
-        public override string ToString()
-        {
-            return $"|{M00}, {M01}|{Environment.NewLine}|{M10}, {M11}|";
-        }
+        public readonly override string ToString() => $"|{M00}, {M01}|{Environment.NewLine}|{M10}, {M11}|";
 
         public static Matrix2 operator *(in Matrix2 m1, in Matrix2 m2)
-        {
-            return new Matrix2(m1.M00 * m2.M00 + m1.M01 * m2.M10,    m1.M00 * m2.M01 + m1.M01 * m2.M11,
-                               m1.M10 * m2.M00 + m1.M11 * m2.M10,    m1.M10 * m2.M01 + m1.M11 * m2.M11);
-        }
+            => new Matrix2(m1.M00 * m2.M00 + m1.M01 * m2.M10,    m1.M00 * m2.M01 + m1.M01 * m2.M11,
+                           m1.M10 * m2.M00 + m1.M11 * m2.M10,    m1.M10 * m2.M01 + m1.M11 * m2.M11);
 
-        public static Vector2 operator *(in Matrix2 matrix, in Vector2 vec)
-        {
-            return new Vector2(matrix.M00 * vec.X + matrix.M01 * vec.Y,
-                               matrix.M10 * vec.X + matrix.M11 * vec.Y);
-        }
+        public static Vector2 operator *(in Matrix2 matrix, in Vector2 vec) 
+            => new Vector2(matrix.M00 * vec.X + matrix.M01 * vec.Y,
+                           matrix.M10 * vec.X + matrix.M11 * vec.Y);
 
-        public static bool operator ==(Matrix2 left, Matrix2 right)
-        {
-            return left.Equals(right);
-        }
+        public static bool operator ==(Matrix2 left, Matrix2 right) => left.Equals(right);
 
-        public static bool operator !=(Matrix2 left, Matrix2 right)
-        {
-            return !(left == right);
-        }
+        public static bool operator !=(Matrix2 left, Matrix2 right) => !(left == right);
     }
 }

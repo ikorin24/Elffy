@@ -30,11 +30,12 @@ namespace Elffy
         //  | x1 |   | M00 M01 M02  X |   | x0 |
         //  | y1 | = | M10 M11 M12  Y | * | y0 |
         //  | z1 |   | M20 M21 M22  Z |   | z0 |
-        //  | 1  |   |  0   0   0   1 |   | 1  |
+        //  |(1) |   |  0   0   0   1 |   |(1) |
         // 
         //           | M00*x0 + M01*y0 + M02*z0 + X |
         //         = | M10*x0 + M11*y0 + M12*z0 + Y |
         //           | M20*x0 + M21*y0 + M22*z0 + Z |
+        //           |              (1)             |
         // =================================================
 
         [FieldOffset(0)]
@@ -105,9 +106,9 @@ namespace Elffy
             Z = translate.Z;
         }
 
-        public override bool Equals(object? obj) => obj is AffineMatrix3 matrix && Equals(matrix);
+        public readonly override bool Equals(object? obj) => obj is AffineMatrix3 matrix && Equals(matrix);
 
-        public bool Equals(AffineMatrix3 other)
+        public readonly bool Equals(AffineMatrix3 other)
         {
             return M00 == other.M00 &&
                    M10 == other.M10 &&
@@ -123,7 +124,7 @@ namespace Elffy
                    Z == other.Z;
         }
 
-        public override int GetHashCode()
+        public readonly override int GetHashCode()
         {
             var hash = new HashCode();
             hash.Add(M00);
@@ -141,7 +142,7 @@ namespace Elffy
             return hash.ToHashCode();
         }
 
-        public override string ToString()
+        public readonly override string ToString()
         {
             return $"|{M00}, {M01}, {M02}, {X}|{Environment.NewLine}|{M10}, {M11}, {M12}, {Y}|{Environment.NewLine}|{M20}, {M21}, {M22}, {Z}|{Environment.NewLine}|0, 0, 0, 1|";
         }
@@ -166,6 +167,8 @@ namespace Elffy
         }
 
         public static Vector3 operator *(in AffineMatrix3 m, in Vector3 v) => m.Matrix3() * v + m.Col3();
+
+        public static explicit operator AffineMatrix3(in Matrix3 matrix) => new AffineMatrix3(matrix);
     }
 
     internal static class AffineMatrix3Extension

@@ -97,10 +97,13 @@ namespace Elffy
             M22 = matrix[8];
         }
 
-        public override bool Equals(object? obj)
-        {
-            return obj is Matrix3 matrix && Equals(matrix);
-        }
+        public void Transpose() => (M01, M02, M10, M12, M20, M21) = (M10, M20, M01, M21, M02, M12);
+
+        public readonly Matrix3 Transposed() => new Matrix3(M00, M10, M20,
+                                                            M01, M11, M21,
+                                                            M02, M12, M22);
+
+        public override bool Equals(object? obj) => obj is Matrix3 matrix && Equals(matrix);
 
         public readonly bool Equals(Matrix3 other)
         {

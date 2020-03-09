@@ -56,5 +56,7 @@ namespace Elffy
         public static implicit operator Vector2(TKVector2 vec) => Unsafe.As<TKVector2, Vector2>(ref vec);
         public static implicit operator Vector2(in Point point) => new Vector2(point.X, point.Y);
         public static explicit operator Point(in Vector2 vec) => new Point((int)vec.X, (int)vec.Y);
+        public static implicit operator PointF(Vector2 vec) => Unsafe.As<Vector2, PointF>(ref vec);
+        public static implicit operator Vector2(PointF point) => Unsafe.As<PointF, Vector2>(ref point);
     }
 }
