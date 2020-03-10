@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using Elffy.Mathmatics;
 
 namespace Elffy
 {
@@ -210,6 +211,52 @@ namespace Elffy
         public static bool operator ==(Matrix4 left, Matrix4 right) => left.Equals(right);
 
         public static bool operator !=(Matrix4 left, Matrix4 right) => !(left == right);
+
+        public static void OrthographicProjection(float left, float right, float bottom, float top, float depthNear, float depthFar, out Matrix4 result)
+        {
+            var invRL = 1.0f / (right - left);
+            var invTB = 1.0f / (top - bottom);
+            var invFN = 1.0f / (depthFar - depthNear);
+
+            result = new Matrix4(2 * invRL, 0,         0,          -(right + left) * invRL,
+                                 0,         2 * invTB, 0,          -(top + bottom) * invTB,
+                                 0,         0,         -2 * invFN, -(depthFar + depthNear) * invFN,
+                                 0,         0,         0,          1);
+        }
+
+        public static void PerspectiveProjection(float left, float right, float bottom, float top, float depthNear, float depthFar, out Matrix4 result)
+        {
+            if(depthNear <= 0) { throw new ArgumentOutOfRangeException(nameof(depthNear)); }
+            if(depthFar <= 0) { throw new ArgumentOutOfRangeException(nameof(depthFar));}
+            if(depthNear >= depthFar) { throw new ArgumentOutOfRangeException(nameof(depthNear)); }
+
+            var x = 2.0f * depthNear / (right - left);
+            var y = 2.0f * depthNear / (top - bottom);
+            var a = (right + left) / (right - left);
+            var b = (top + bottom) / (top - bottom);
+            var c = -(depthFar + depthNear) / (depthFar - depthNear);
+            var d = -(2.0f * depthFar * depthNear) / (depthFar - depthNear);
+
+            result = new Matrix4(x, 0, a, 0,
+                                 0, y, b, 0,
+                                 0, 0, c, d,
+                                 0, 0, -1, 0);
+        }
+
+        public static void PerspectiveProjection(float fovy, float aspect, float depthNear, float depthFar, out Matrix4 result)
+        {
+            if(fovy <= 0 || fovy > MathTool.Pi) { throw new ArgumentOutOfRangeException(nameof(fovy)); }
+            if(aspect <= 0) { throw new ArgumentOutOfRangeException(nameof(aspect)); }
+            if(depthNear <= 0) { throw new ArgumentOutOfRangeException(nameof(depthNear)); }
+            if(depthFar <= 0) { throw new ArgumentOutOfRangeException(nameof(depthFar)); }
+
+            var maxY = depthNear * MathTool.Tan(0.5f * fovy);
+            var minY = -maxY;
+            var minX = minY * aspect;
+            var maxX = maxY * aspect;
+
+            PerspectiveProjection(minX, maxX, minY, maxY, depthNear, depthFar, out result);
+        }
     }
 
     internal static class Matrix4Extension
