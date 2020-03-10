@@ -1,5 +1,7 @@
 ﻿#nullable enable
 using Elffy.Exceptions;
+using Elffy.Effective.Internal;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -18,18 +20,18 @@ namespace Elffy.Core
         private readonly List<Renderable> _renderables = new List<Renderable>();
 
         /// <summary>現在生きている全オブジェクトを取得します</summary>
-        public IEnumerable<FrameObject> List => _list;
+        public ReadOnlySpan<FrameObject> List => _list.AsReadOnlySpan();
         /// <summary>現在生きている全オブジェクトの数を取得します</summary>
         public int ObjectCount => _list.Count;
 
         /// <summary>現在のフレームで追加されたオブジェクトを取得します</summary>
-        public IEnumerable<FrameObject> Added => _addedBuf;
+        public ReadOnlySpan<FrameObject> Added => _addedBuf.AsReadOnlySpan();
 
         /// <summary>現在のフレームで削除されたオブジェクトを取得します</summary>
-        public IEnumerable<FrameObject> Removed => _removedBuf;
+        public ReadOnlySpan<FrameObject> Removed => _removedBuf.AsReadOnlySpan();
 
         /// <summary><see cref="List"/> に含まれるオブジェクトのうち、<see cref="Renderable"/> を継承しているものを取得します</summary>
-        public IEnumerable<Renderable> Renderables => _renderables;
+        public ReadOnlySpan<Renderable> Renderables => _renderables.AsReadOnlySpan();
 
         /// <summary>指定した<see cref="FrameObject"/>を追加します</summary>
         /// <param name="frameObject">追加するオブジェクト</param>

@@ -68,7 +68,8 @@ namespace Elffy.Core
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadMatrix((float*)&projection);
             GL.MatrixMode(MatrixMode.Modelview);
-            foreach(var renderable in _store.Renderables.Where(x => x.IsRoot && x.IsVisible)) {
+            foreach(var renderable in _store.Renderables) {
+                if(!renderable.IsRoot || !renderable.IsVisible) { continue; }
                 GL.LoadMatrix((float*)&view);
                 renderable.Render();
             }
