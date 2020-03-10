@@ -1,11 +1,9 @@
 ﻿#nullable enable
 using Elffy.Core;
 using System.Linq;
-using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using System.Diagnostics;
 using Elffy.Exceptions;
-using TKMatrix4 = OpenTK.Matrix4;
 
 namespace Elffy
 {
@@ -56,24 +54,15 @@ namespace Elffy
         /// <summary>画面への投影行列とカメラ行列を指定して、描画を実行します</summary>
         /// <param name="projection">投影行列</param>
         /// <param name="view">カメラ行列</param>
-        internal void Render(TKMatrix4 projection, TKMatrix4 view)
+        internal unsafe void Render(Matrix4 projection, Matrix4 view)
         {
             GL.MatrixMode(MatrixMode.Projection);
-            GL.LoadMatrix(ref projection);
+            GL.LoadMatrix((float*)&projection);
             GL.MatrixMode(MatrixMode.Modelview);
             foreach(var renderable in _store.Renderables.Where(x => x.IsRoot && x.IsVisible)) {
-                GL.LoadMatrix(ref view);
+                GL.LoadMatrix((float*)&view);
                 renderable.Render();
             }
-
-            //GL.MatrixMode(MatrixMode.Projection);
-            //GL.LoadMatrix(ref projection);
-            //GL.MatrixMode(MatrixMode.Modelview);
-            //foreach(var renderable in _store.Renderables.Where(x => x.IsRoot && x.IsVisible)) {
-            //    GL.LoadIdentity();
-            //    renderable.Render();
-            //    GL.MultMatrix(ref view);
-            //}
         }
     }
 }

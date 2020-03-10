@@ -1,11 +1,9 @@
 ﻿#nullable enable
 using Elffy.InputSystem;
 using Elffy.UI;
-using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using System;
 using System.Linq;
-using TKMatrix4 = OpenTK.Matrix4;
 
 namespace Elffy.Core
 {
@@ -56,22 +54,22 @@ namespace Elffy.Core
 
         /// <summary>画面への投影行列を指定して、描画を実行します</summary>
         /// <param name="projection"></param>
-        internal void Render(TKMatrix4 projection)
+        internal unsafe void Render(Matrix4 projection)
         {
             var view = YAxisDirection switch
             {
-                YAxisDirection.TopToBottom => new TKMatrix4(1, 0,   0, 0,
-                                                          0, -1,  0, 0,
-                                                          0, 0,   1, 0,
-                                                          0, UIRoot.Height, 0, 1),
-                YAxisDirection.BottomToTop => TKMatrix4.Identity,
+                YAxisDirection.TopToBottom => new Matrix4(1, 0,  0, 0,
+                                                          0, -1, 0, UIRoot.Height,
+                                                          0, 0,  1, 0,
+                                                          0, 0,  0, 1),
+                YAxisDirection.BottomToTop => Matrix4.Identity,
                 _ => throw new NotSupportedException(),
             };
             GL.MatrixMode(MatrixMode.Projection);
-            GL.LoadMatrix(ref projection);
+            GL.LoadMatrix((float*)&projection);
             GL.MatrixMode(MatrixMode.Modelview);
             foreach(var renderable in _store.Renderables.Where(x => x.IsRoot && x.IsVisible)) {
-                GL.LoadMatrix(ref view);
+                GL.LoadMatrix((float*)&view);
                 renderable.Render();
             }
         }

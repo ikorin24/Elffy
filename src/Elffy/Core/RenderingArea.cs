@@ -1,12 +1,8 @@
 ﻿#nullable enable
 using Elffy.Exceptions;
-using Elffy.Threading;
 using Elffy.UI;
-using OpenTK;
-using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using System.Drawing;
-using TKMatrix4 = OpenTK.Matrix4;
 
 namespace Elffy.Core
 {
@@ -16,7 +12,7 @@ namespace Elffy.Core
         const float UI_FAR = 1.01f;
         const float UI_NEAR = -0.01f;
         /// <summary>UI の投影行列</summary>
-        private TKMatrix4 _uiProjection;
+        private Matrix4 _uiProjection;
 
         /// <summary>レイヤーのリスト</summary>
         public LayerCollection Layers { get; }
@@ -98,7 +94,7 @@ namespace Elffy.Core
         /// <summary>フレームを更新して描画します</summary>
         /// <param name="projection">投影行列</param>
         /// <param name="view">カメラ行列</param>
-        public void RenderFrame(TKMatrix4 projection, TKMatrix4 view)
+        public void RenderFrame(Matrix4 projection, Matrix4 view)
         {
             var systemLayer = Layers.SystemLayer;
             var uiLayer = Layers.UILayer;
@@ -146,7 +142,7 @@ namespace Elffy.Core
         private void OnSizeChanged(int x, int y, int width, int height)
         {
             GL.Viewport(x, y, width, height);
-            _uiProjection = TKMatrix4.CreateOrthographicOffCenter(x, x + width, y, y + height, UI_NEAR, UI_FAR);
+            Matrix4.OrthographicProjection(x, x + width, y, y + height, UI_NEAR, UI_FAR, out _uiProjection);
             var uiRoot = Layers.UILayer.UIRoot;
             uiRoot.Width = width;
             uiRoot.Height = height;

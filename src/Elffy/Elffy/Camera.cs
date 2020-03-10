@@ -1,8 +1,6 @@
 ﻿#nullable enable
-using OpenTK;
 using Elffy.Mathmatics;
 using Elffy.Exceptions;
-using TKMatrix4 = OpenTK.Matrix4;
 
 namespace Elffy
 {
@@ -78,10 +76,10 @@ namespace Elffy
         private float _far = 2000f;
 
         /// <summary>Get View Matrix</summary>
-        internal TKMatrix4 View { get; private set; } = TKMatrix4.Identity;
+        internal Matrix4 View { get; private set; } = Matrix4.Identity;
 
         /// <summary>Get projection Matrix</summary>
-        internal TKMatrix4 Projection { get; private set; } = TKMatrix4.Identity;
+        internal Matrix4 Projection { get; private set; } = Matrix4.Identity;
 
         /// <summary>Constructor</summary>
         internal Camera()
@@ -135,13 +133,15 @@ namespace Elffy
 
         private void SetViewMatrix(Vector3 pos, Vector3 dir, Vector3 up)
         {
-            View = TKMatrix4.LookAt(pos, pos + dir, up);
+            Matrix4.LookAt(pos, pos + dir, up, out var view);
+            View = view;
         }
 
         private void SetProjectionMatrix(float radian, float far, float aspect)
         {
             if(aspect > 0) {
-                Projection = TKMatrix4.CreatePerspectiveFieldOfView(radian, aspect, NEAR, far);
+                Matrix4.PerspectiveProjection(radian, aspect, NEAR, far, out var projection);
+                Projection = projection;
             }
         }
     }
