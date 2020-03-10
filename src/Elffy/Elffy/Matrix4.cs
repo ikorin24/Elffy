@@ -257,6 +257,17 @@ namespace Elffy
 
             PerspectiveProjection(minX, maxX, minY, maxY, depthNear, depthFar, out result);
         }
+
+        public static void LookAt(Vector3 eye, Vector3 target, Vector3 up, out Matrix4 result)
+        {
+            var z = (eye - target).Normalized();
+            var x = up.Cross(z).Normalized();
+            var y = z.Cross(x).Normalized();
+            result = new Matrix4(x.X, x.Y, x.Z, -x.Dot(eye),
+                                 y.X, y.Y, y.Z, -y.Dot(eye),
+                                 z.X, z.Y, z.Z, -z.Dot(eye),
+                                 0,   0,   0,   1);
+        }
     }
 
     internal static class Matrix4Extension
