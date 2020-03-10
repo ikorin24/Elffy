@@ -169,6 +169,11 @@ namespace Elffy
         public static Vector3 operator *(in AffineMatrix3 m, in Vector3 v) => m.Matrix3() * v + m.Col3();
 
         public static explicit operator AffineMatrix3(in Matrix3 matrix) => new AffineMatrix3(matrix);
+
+        public static explicit operator Matrix4(in AffineMatrix3 affine3) => new Matrix4(affine3.M00, affine3.M01, affine3.M02, affine3.X,
+                                                                                         affine3.M10, affine3.M11, affine3.M12, affine3.Y,
+                                                                                         affine3.M20, affine3.M21, affine3.M22, affine3.Z,
+                                                                                         0,           0,           0,           1);
     }
 
     internal static class AffineMatrix3Extension

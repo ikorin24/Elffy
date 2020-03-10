@@ -114,11 +114,8 @@ namespace Elffy.Core
             if(_isLoaded) {
                 // 座標と回転を適用
                 GL.Translate(Position);
-                //var rot = Matrix4.CreateFromQuaternion(Rotation);
-                //GL.MultMatrix(ref rot);
-                var m = Rotation.ToMatrix3();
-                float* rot = stackalloc float[16] { m.M00, m.M10, m.M20, 0f, m.M01, m.M11, m.M21, 0f, m.M02, m.M12, m.M22, 0f, 0f, 0f, 0f, 1f };
-                GL.MultMatrix(rot);
+                var rot = Rotation.ToMatrix4();
+                GL.MultMatrix((float*)&rot);
                 GL.Scale(Scale);
                 Rendering?.Invoke(this);
 

@@ -83,6 +83,8 @@ namespace Elffy
 
         public readonly AffineMatrix3 ToAffineMatrix3() => new AffineMatrix3(ToMatrix3());
 
+        internal readonly Matrix4 ToMatrix4() => new Matrix4(ToMatrix3());
+
         public readonly override string ToString() => $"V:({X}, {Y}, {Z}), W:{W}";
 
         public readonly override bool Equals(object? obj) => obj is Quaternion quaternion && Equals(quaternion);

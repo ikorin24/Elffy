@@ -2,6 +2,7 @@
 using OpenTK;
 using Elffy.Mathmatics;
 using Elffy.Exceptions;
+using TKMatrix4 = OpenTK.Matrix4;
 
 namespace Elffy
 {
@@ -77,10 +78,10 @@ namespace Elffy
         private float _far = 2000f;
 
         /// <summary>Get View Matrix</summary>
-        internal Matrix4 View { get; private set; } = Matrix4.Identity;
+        internal TKMatrix4 View { get; private set; } = TKMatrix4.Identity;
 
         /// <summary>Get projection Matrix</summary>
-        internal Matrix4 Projection { get; private set; } = Matrix4.Identity;
+        internal TKMatrix4 Projection { get; private set; } = TKMatrix4.Identity;
 
         /// <summary>Constructor</summary>
         internal Camera()
@@ -134,13 +135,13 @@ namespace Elffy
 
         private void SetViewMatrix(Vector3 pos, Vector3 dir, Vector3 up)
         {
-            View = Matrix4.LookAt(pos, pos + dir, up);
+            View = TKMatrix4.LookAt(pos, pos + dir, up);
         }
 
         private void SetProjectionMatrix(float radian, float far, float aspect)
         {
             if(aspect > 0) {
-                Projection = Matrix4.CreatePerspectiveFieldOfView(radian, aspect, NEAR, far);
+                Projection = TKMatrix4.CreatePerspectiveFieldOfView(radian, aspect, NEAR, far);
             }
         }
     }
