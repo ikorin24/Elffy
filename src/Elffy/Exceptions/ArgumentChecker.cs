@@ -51,6 +51,13 @@ namespace Elffy.Exceptions
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Conditional(CHECK_ARG)]
+        public static void ThrowOutOfRangeIf(bool condition)
+        {
+            if(condition) { throw new ArgumentOutOfRangeException(); }
+        }
+
         /// <summary>Throw <see cref="FileNotFoundException"/> if <paramref name="condition"/> is true.</summary>
         /// <param name="condition">condition where exception is thrown</param>
         /// <param name="message">message of exception</param>
