@@ -173,7 +173,7 @@ namespace Elffy
         /// <summary>複数点を囲む矩形を取得します</summary>
         /// <param name="points">複数の点</param>
         /// <returns>矩形</returns>
-        private Rectangle GetBounds(IEnumerable<Point> points)
+        private Rectangle GetBounds(ReadOnlySpan<Point> points)
         {
             var minX = int.MaxValue;
             var minY = int.MaxValue;
