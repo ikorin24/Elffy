@@ -50,7 +50,7 @@ namespace Elffy.Framing
         /// <summary>指定した処理を毎フレーム実行し続けます</summary>
         /// <param name="action">実行する処理</param>
         /// <returns>一連のフレームストリームの流れを表す <see cref="FrameStream"/> オブジェクト</returns>
-        public static FrameStream WhileTrue(FrameBehaviorDelegate action) => new FrameStream().WhileTrue(action);
+        public static FrameStream Endless(FrameBehaviorDelegate action) => new FrameStream().Endless(action);
     }
 
     public static class FrameStreamExtension
@@ -124,7 +124,7 @@ namespace Elffy.Framing
         /// <param name="action">実行する処理</param>
         /// <returns>一連のフレームストリームの流れを表す <see cref="FrameStream"/> オブジェクト</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static FrameStream WhileTrue(this FrameStream frameStream, FrameBehaviorDelegate action)
+        public static FrameStream Endless(this FrameStream frameStream, FrameBehaviorDelegate action)
         {
             ArgumentChecker.ThrowIfNullArg(action, nameof(action));
 
