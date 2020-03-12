@@ -35,8 +35,36 @@ namespace Elffy
         public readonly Vector3 Zxy => new Vector3(Z, X, Y);
         public readonly Vector3 Zyx => new Vector3(Z, Y, X);
 
-        public readonly float LengthSquared => (X * X) + (Y * Y) + (Z * Z);
-        public readonly float Length => (float)Math.Sqrt(LengthSquared);
+        public readonly float LengthSquared
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => (X * X) + (Y * Y) + (Z * Z);
+        }
+        public readonly float Length
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => (float)Math.Sqrt(LengthSquared);
+        }
+
+        public readonly bool IsZero
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => this == Zero;
+        }
+
+        /// <summary>Return true if vector contains NaN, +Infinity or -Infinity. Otherwise false.</summary>
+        public readonly bool IsInvalid
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => float.IsNaN(X) || float.IsNaN(Y) || float.IsNaN(Z) || float.IsInfinity(X) || float.IsInfinity(Y) || float.IsInfinity(Z);
+        }
+
+        /// <summary>Return (<see cref="IsZero"/> || <see cref="IsInvalid"/>)</summary>
+        public readonly bool IsZeroOrInvalid
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => IsZero || IsInvalid;
+        }
 
         public Vector3(float x, float y, float z) => (X, Y, Z) = (x, y, z);
         public readonly float SumElement() => X + Y + Z;
