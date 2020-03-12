@@ -24,27 +24,27 @@ namespace Elffy.Framing
 
         /// <summary>キューに処理を追加します</summary>
         /// <param name="time">処理の寿命</param>
-        /// <param name="behavior">処理</param>
-        public void AddLifeSpanBehavior(TimeSpan time, FrameBehaviorDelegate behavior)
+        /// <param name="action">処理</param>
+        public void AddLifeSpanBehavior(TimeSpan time, FrameBehaviorDelegate action)
         {
-            _queue.Enqueue(new FrameBehavior(behavior, FrameBehaviorInfo.LifeSpanMode(time)));
+            _queue.Enqueue(new FrameBehavior(action, FrameBehaviorInfo.LifeSpanMode(time)));
             _current ??= _queue.Dequeue();
         }
 
         /// <summary>継続条件を指定してキューに処理を追加</summary>
         /// <param name="condition">継続条件</param>
-        /// <param name="behavior">処理</param>
-        public void AddConditionalBehavior(Func<bool> condition, FrameBehaviorDelegate behavior)
+        /// <param name="action">処理</param>
+        public void AddConditionalBehavior(Func<bool> condition, FrameBehaviorDelegate action)
         {
-            _queue.Enqueue(new FrameBehavior(behavior, FrameBehaviorInfo.ConditionalMode(condition)));
+            _queue.Enqueue(new FrameBehavior(action, FrameBehaviorInfo.ConditionalMode(condition)));
             _current ??= _queue.Dequeue();
         }
 
         /// <summary>寿命1フレームの処理をキューに追加</summary>
-        /// <param name="behavior">処理</param>
-        public void AddFrameSpanBehavior(int frameSpan, FrameBehaviorDelegate behavior)
+        /// <param name="action">処理</param>
+        public void AddFrameSpanBehavior(int frameSpan, FrameBehaviorDelegate action)
         {
-            _queue.Enqueue(new FrameBehavior(behavior, FrameBehaviorInfo.FrameSpanMode(frameSpan)));
+            _queue.Enqueue(new FrameBehavior(action, FrameBehaviorInfo.FrameSpanMode(frameSpan)));
             _current ??= _queue.Dequeue();
         }
 
