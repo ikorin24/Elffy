@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Elffy
@@ -68,6 +69,7 @@ namespace Elffy
         /// <param name="m20">element of row=2, col=0</param>
         /// <param name="m21">element of row=2, col=1</param>
         /// <param name="m22">element of row=2, col=2</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Matrix3(float m00, float m01, float m02,
                        float m10, float m11, float m12,
                        float m20, float m21, float m22)
@@ -83,6 +85,7 @@ namespace Elffy
             M22 = m22;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Matrix3(ReadOnlySpan<float> matrix)
         {
             if(matrix.Length < 9) { throw new ArgumentException("Length >= 9 is needed."); }
@@ -97,14 +100,17 @@ namespace Elffy
             M22 = matrix[8];
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Transpose() => (M01, M02, M10, M12, M20, M21) = (M10, M20, M01, M21, M02, M12);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly Matrix3 Transposed() => new Matrix3(M00, M10, M20,
                                                             M01, M11, M21,
                                                             M02, M12, M22);
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override bool Equals(object? obj) => obj is Matrix3 matrix && Equals(matrix);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly bool Equals(Matrix3 other)
         {
             return M00 == other.M00 &&
@@ -118,6 +124,7 @@ namespace Elffy
                    M22 == other.M22;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode()
         {
             var hash = new HashCode();
@@ -133,11 +140,13 @@ namespace Elffy
             return hash.ToHashCode();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override string ToString()
         {
             return $"|{M00}, {M01}, {M02}|{Environment.NewLine}|{M10}, {M11}, {M12}|{Environment.NewLine}|{M20}, {M21}, {M22}|";
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 operator *(in Matrix3 matrix, in Vector3 vec)
         {
             return new Vector3(matrix.M00 * vec.X + matrix.M01 * vec.Y + matrix.M02 * vec.Z,
@@ -145,6 +154,7 @@ namespace Elffy
                                matrix.M20 * vec.X + matrix.M21 * vec.Y + matrix.M22 * vec.Z);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Matrix3 operator *(in Matrix3 m1, in Matrix3 m2)
         {
             return new Matrix3(m1.M00 * m2.M00 + m1.M01 * m2.M10 + m1.M02 * m2.M20,   m1.M00 * m2.M01 + m1.M01 * m2.M11 + m1.M02 * m2.M21,   m1.M00 * m2.M02 + m1.M01 * m2.M12 + m1.M02 * m2.M22,
@@ -154,14 +164,10 @@ namespace Elffy
                                m1.M20 * m2.M00 + m1.M21 * m2.M10 + m1.M22 * m2.M20,   m1.M20 * m2.M01 + m1.M21 * m2.M11 + m1.M22 * m2.M21,   m1.M20 * m2.M02 + m1.M21 * m2.M12 + m1.M22 * m2.M22);
         }
 
-        public static bool operator ==(in Matrix3 left, in Matrix3 right)
-        {
-            return left.Equals(right);
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator ==(in Matrix3 left, in Matrix3 right) => left.Equals(right);
 
-        public static bool operator !=(in Matrix3 left, in Matrix3 right)
-        {
-            return !(left == right);
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator !=(in Matrix3 left, in Matrix3 right) => !(left == right);
     }
 }

@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Elffy.Mathmatics;
 
@@ -51,6 +52,7 @@ namespace Elffy
         /// <param name="m01">element of row=0, col=1</param>
         /// <param name="m10">element of row=1, col=0</param>
         /// <param name="m11">element of row=1, col=1</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Matrix2(float m00, float m01, float m10, float m11)
         {
             M00 = m00;
@@ -59,6 +61,7 @@ namespace Elffy
             M11 = m11;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Matrix2(ReadOnlySpan<float> matrix)
         {
             if(matrix.Length < 4) { throw new ArgumentException("Length >= 4 is needed."); }
@@ -68,6 +71,7 @@ namespace Elffy
             M11 = matrix[3];
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Transpose()
         {
             var tmp = M01;
@@ -75,8 +79,10 @@ namespace Elffy
             M10 = tmp;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly Matrix2 Transposed() => new Matrix2(M00, M10, M01, M11);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Matrix2 GetRotateMatrix(float theta)
         {
             var cos = MathTool.Cos(theta);
@@ -85,8 +91,10 @@ namespace Elffy
                                sin, cos);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly override bool Equals(object? obj) => obj is Matrix2 matrix && Equals(matrix);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly bool Equals(Matrix2 other)
         {
             return M00 == other.M00 &&
@@ -95,20 +103,25 @@ namespace Elffy
                    M11 == other.M11;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly override int GetHashCode() => HashCode.Combine(M00, M01, M10, M11);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly override string ToString() => $"|{M00}, {M01}|{Environment.NewLine}|{M10}, {M11}|";
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Matrix2 operator *(in Matrix2 m1, in Matrix2 m2)
             => new Matrix2(m1.M00 * m2.M00 + m1.M01 * m2.M10,    m1.M00 * m2.M01 + m1.M01 * m2.M11,
                            m1.M10 * m2.M00 + m1.M11 * m2.M10,    m1.M10 * m2.M01 + m1.M11 * m2.M11);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 operator *(in Matrix2 matrix, in Vector2 vec) 
             => new Vector2(matrix.M00 * vec.X + matrix.M01 * vec.Y,
                            matrix.M10 * vec.X + matrix.M11 * vec.Y);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(Matrix2 left, Matrix2 right) => left.Equals(right);
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(Matrix2 left, Matrix2 right) => !(left == right);
     }
 }

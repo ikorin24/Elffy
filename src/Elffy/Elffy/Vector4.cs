@@ -87,41 +87,82 @@ namespace Elffy
         public readonly Vector4 Wzyx => new Vector4(W, Z, Y, X);
 
 
-        public readonly float LengthSquared => (X * X) + (Y * Y) + (Z * Z) + (W * W);
-        public readonly float Length => (float)Math.Sqrt(LengthSquared);
+        public readonly float LengthSquared
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => (X * X) + (Y * Y) + (Z * Z) + (W * W);
+        }
+
+        public readonly float GetLength
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => (float)Math.Sqrt(LengthSquared);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector4(float x, float y, float z, float w) => (X, Y, Z, W) = (x, y, z, w);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector4(Vector4 v) => this = v;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector4(in Vector3 v) => (X, Y, Z, W) = (v.X, v.Y, v.Z, 0);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector4(in Vector3 v, float w) => (X, Y, Z, W) = (v.X, v.Y, v.Z, w);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector4(in Vector2 v) => (X, Y, Z, W) = (v.X, v.Y, 0, 0);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector4(in Vector2 v, float z, float w) => (X, Y, Z, W) = (v.X, v.Y, z, w);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector4(float value) => (X, Y, Z, W) = (value, value, value, value);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly (float X, float Y, float Z, float W) ToTuple() => (X, Y, Z, W);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly float SumElement() => X + Y + Z + W;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly float Dot(in Vector4 vec) => Mult(this, vec).SumElement();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float Dot(in Vector4 vec1, in Vector4 vec2) => vec1.Dot(vec2);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly Vector4 Mult(in Vector4 vec) => new Vector4(X * vec.X, Y * vec.Y, Z * vec.Z, W * vec.W);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 Mult(in Vector4 vec1, in Vector4 vec2) => vec1.Mult(vec2);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly Vector4 Normalized() => ((TKVector4)this).Normalized();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly override bool Equals(object? obj) => obj is Vector4 vector && Equals(vector);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly bool Equals(Vector4 other) => X == other.X && Y == other.Y && Z == other.Z && W == other.W;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly override int GetHashCode() => HashCode.Combine(X, Y, Z, W);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly override string ToString() => $"({X}, {Y}, {Z}, {W})";
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 operator -(in Vector4 vec) => new Vector4(-vec.X, -vec.Y, -vec.Z, -vec.W);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(in Vector4 left, in Vector4 right) => left.Equals(right);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(in Vector4 left, in Vector4 right) => !(left == right);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 operator +(in Vector4 vec1, in Vector4 vec2) => new Vector4(vec1.X + vec2.X, vec1.Y + vec2.Y, vec1.Z + vec2.Z, vec1.W + vec2.W);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 operator +(in Vector4 vec1, float right) => new Vector4(vec1.X + right, vec1.Y + right, vec1.Z + right, vec1.W + right);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 operator -(in Vector4 vec1, in Vector4 vec2) => new Vector4(vec1.X - vec2.X, vec1.Y - vec2.Y, vec1.Z - vec2.Z, vec1.W - vec2.W);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 operator -(in Vector4 vec1, float right) => new Vector4(vec1.X - right, vec1.Y - right, vec1.Z - right, vec1.W - right);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 operator *(in Vector4 vec1, float right) => new Vector4(vec1.X * right, vec1.Y * right, vec1.Z * right, vec1.W * right);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 operator *(float right, in Vector4 vec1) => new Vector4(vec1.X * right, vec1.Y * right, vec1.Z * right, vec1.W * right);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 operator /(in Vector4 vec1, float right) => new Vector4(vec1.X / right, vec1.Y / right, vec1.Z / right, vec1.W / right);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 operator /(float right, in Vector4 vec1) => new Vector4(vec1.X / right, vec1.Y / right, vec1.Z / right, vec1.W / right);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator TKVector4(Vector4 vec) => Unsafe.As<Vector4, TKVector4>(ref vec);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Vector4(TKVector4 vec) => Unsafe.As<TKVector4, Vector4>(ref vec);
     }
 }

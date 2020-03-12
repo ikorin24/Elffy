@@ -83,7 +83,8 @@ namespace Elffy
                                                               0, 1, 0, 0,
                                                               0, 0, 1, 0,
                                                               0, 0, 0, 1);
-
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Matrix4(float m00, float m01, float m02, float m03,
                        float m10, float m11, float m12, float m13,
                        float m20, float m21, float m22, float m23,
@@ -107,6 +108,7 @@ namespace Elffy
             M33 = m33;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Matrix4(ReadOnlySpan<float> matrix)
         {
             if(matrix.Length < 16) { throw new ArgumentException("Length >= 16 is needed."); }
@@ -128,20 +130,25 @@ namespace Elffy
             M33 = matrix[15];
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal Matrix4(Matrix3 matrix) : this(matrix.M00, matrix.M01, matrix.M02, 0,
                                                 matrix.M10, matrix.M11, matrix.M12, 0,
                                                 matrix.M20, matrix.M21, matrix.M22, 0,
                                                 0, 0, 0, 1) { }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Transpose() => (M10, M20, M30, M01, M21, M31, M02, M12, M32, M03, M13, M23) = (M01, M02, M03, M10, M12, M13, M20, M21, M23, M30, M31, M32);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly Matrix4 Transposed() => new Matrix4(M00, M10, M20, M30,
                                                             M01, M11, M21, M31,
                                                             M02, M12, M22, M32,
                                                             M03, M13, M23, M33);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override bool Equals(object? obj) => obj is Matrix4 matrix && Equals(matrix);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Equals(Matrix4 other)
         {
             return M00 == other.M00 &&
@@ -162,6 +169,7 @@ namespace Elffy
                    M33 == other.M33;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode()
         {
             var hash = new HashCode();
@@ -184,34 +192,49 @@ namespace Elffy
             return hash.ToHashCode();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly override string ToString()
         {
             return $"|{M00}, {M01}, {M02}, {M03}|{Environment.NewLine}|{M10}, {M11}, {M12}, {M13}|{Environment.NewLine}|{M20}, {M21}, {M22}, {M23}|{Environment.NewLine}|{M30}, {M31}, {M32}, {M33}|";
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 operator *(in Matrix4 matrix, in Vector4 vec)
-            => new Vector4(matrix.Row0().Dot(vec), matrix.Row1().Dot(vec), matrix.Row2().Dot(vec), matrix.Row3().Dot(vec));
+            => new Vector4(Row0(matrix).Dot(vec), Row1(matrix).Dot(vec), Row2(matrix).Dot(vec), Row3(matrix).Dot(vec));
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe Matrix4 operator *(in Matrix4 m1, in Matrix4 m2)
         {
-            var m1Row0 = m1.Row0();
-            var m1Row1 = m1.Row1();
-            var m1Row2 = m1.Row2();
-            var m1Row3 = m1.Row3();
-            ref var m2Col0 = ref m2.Col0();
-            ref var m2Col1 = ref m2.Col1();
-            ref var m2Col2 = ref m2.Col2();
-            ref var m2Col3 = ref m2.Col3();
+            //var m1Row0 = m1.Row0();
+            //var m1Row1 = m1.Row1();
+            //var m1Row2 = m1.Row2();
+            //var m1Row3 = m1.Row3();
+            //ref var m2Col0 = ref m2.Col0();
+            //ref var m2Col1 = ref m2.Col1();
+            //ref var m2Col2 = ref m2.Col2();
+            //ref var m2Col3 = ref m2.Col3();
+
+            var m1Row0 = Row0(m1);
+            var m1Row1 = Row1(m1);
+            var m1Row2 = Row2(m1);
+            var m1Row3 = Row3(m1);
+            ref var m2Col0 = ref Col0(m2);
+            ref var m2Col1 = ref Col1(m2);
+            ref var m2Col2 = ref Col2(m2);
+            ref var m2Col3 = ref Col3(m2);
+
             return new Matrix4(m1Row0.Dot(m2Col0), m1Row0.Dot(m2Col1), m1Row0.Dot(m2Col2), m1Row0.Dot(m2Col3),
                                m1Row1.Dot(m2Col0), m1Row1.Dot(m2Col1), m1Row1.Dot(m2Col2), m1Row1.Dot(m2Col3),
                                m1Row2.Dot(m2Col0), m1Row2.Dot(m2Col1), m1Row2.Dot(m2Col2), m1Row2.Dot(m2Col3),
                                m1Row3.Dot(m2Col0), m1Row3.Dot(m2Col1), m1Row3.Dot(m2Col2), m1Row3.Dot(m2Col3));
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(Matrix4 left, Matrix4 right) => left.Equals(right);
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(Matrix4 left, Matrix4 right) => !(left == right);
-
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void OrthographicProjection(float left, float right, float bottom, float top, float depthNear, float depthFar, out Matrix4 result)
         {
             var invRL = 1.0f / (right - left);
@@ -224,6 +247,7 @@ namespace Elffy
                                  0,         0,         0,          1);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PerspectiveProjection(float left, float right, float bottom, float top, float depthNear, float depthFar, out Matrix4 result)
         {
             if(depthNear <= 0) { throw new ArgumentOutOfRangeException(nameof(depthNear)); }
@@ -243,6 +267,7 @@ namespace Elffy
                                  0, 0, -1, 0);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PerspectiveProjection(float fovy, float aspect, float depthNear, float depthFar, out Matrix4 result)
         {
             if(fovy <= 0 || fovy > MathTool.Pi) { throw new ArgumentOutOfRangeException(nameof(fovy)); }
@@ -258,6 +283,7 @@ namespace Elffy
             PerspectiveProjection(minX, maxX, minY, maxY, depthNear, depthFar, out result);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void LookAt(Vector3 eye, Vector3 target, Vector3 up, out Matrix4 result)
         {
             var z = (eye - target).Normalized();
@@ -268,18 +294,14 @@ namespace Elffy
                                  z.X, z.Y, z.Z, -z.Dot(eye),
                                  0,   0,   0,   1);
         }
-    }
 
-    internal static class Matrix4Extension
-    {
-        internal static ref Vector4 Col0(in this Matrix4 matrix) => ref Unsafe.As<float, Vector4>(ref Unsafe.AsRef(matrix.M00));
-        internal static ref Vector4 Col1(in this Matrix4 matrix) => ref Unsafe.As<float, Vector4>(ref Unsafe.AsRef(matrix.M01));
-        internal static ref Vector4 Col2(in this Matrix4 matrix) => ref Unsafe.As<float, Vector4>(ref Unsafe.AsRef(matrix.M02));
-        internal static ref Vector4 Col3(in this Matrix4 matrix) => ref Unsafe.As<float, Vector4>(ref Unsafe.AsRef(matrix.M03));
-
-        internal static Vector4 Row0(in this Matrix4 matrix) => new Vector4(matrix.M00, matrix.M01, matrix.M02, matrix.M03);
-        internal static Vector4 Row1(in this Matrix4 matrix) => new Vector4(matrix.M10, matrix.M11, matrix.M12, matrix.M13);
-        internal static Vector4 Row2(in this Matrix4 matrix) => new Vector4(matrix.M20, matrix.M21, matrix.M22, matrix.M23);
-        internal static Vector4 Row3(in this Matrix4 matrix) => new Vector4(matrix.M30, matrix.M31, matrix.M32, matrix.M33);
+        private static ref Vector4 Col0(in Matrix4 matrix) => ref Unsafe.As<float, Vector4>(ref Unsafe.AsRef(matrix.M00));
+        private static ref Vector4 Col1(in Matrix4 matrix) => ref Unsafe.As<float, Vector4>(ref Unsafe.AsRef(matrix.M01));
+        private static ref Vector4 Col2(in Matrix4 matrix) => ref Unsafe.As<float, Vector4>(ref Unsafe.AsRef(matrix.M02));
+        private static ref Vector4 Col3(in Matrix4 matrix) => ref Unsafe.As<float, Vector4>(ref Unsafe.AsRef(matrix.M03));
+        private static Vector4 Row0(in Matrix4 matrix) => new Vector4(matrix.M00, matrix.M01, matrix.M02, matrix.M03);
+        private static Vector4 Row1(in Matrix4 matrix) => new Vector4(matrix.M10, matrix.M11, matrix.M12, matrix.M13);
+        private static Vector4 Row2(in Matrix4 matrix) => new Vector4(matrix.M20, matrix.M21, matrix.M22, matrix.M23);
+        private static Vector4 Row3(in Matrix4 matrix) => new Vector4(matrix.M30, matrix.M31, matrix.M32, matrix.M33);
     }
 }
