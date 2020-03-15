@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using Elffy.Exceptions;
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -22,7 +23,7 @@ namespace Elffy.Effective
         /// [NOTE] <see cref="AccessViolationException"/> may happen after inner array changed. Use this property careflly.
         /// </summary>
         /// <returns><see cref="Span{T}"/></returns>
-        public Span<T> Span
+        public readonly Span<T> Span
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => new Span<T>(_array.Ptr, _count);
@@ -69,6 +70,20 @@ namespace Elffy.Effective
             span.Slice(index + 1, _count - index - 1).CopyTo(span.Slice(index));
             _array.Ptr[_count] = default;
             _count--;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly bool TryFind(out T found, Func<T, bool> predicate)
+        {
+            ArgumentChecker.ThrowIfNullArg(predicate, nameof(predicate));
+            foreach(var item in Span) {
+                if(predicate(item)) {
+                    found = item;
+                    return true;
+                }
+            }
+            found = default;
+            return false;
         }
 
         /// <summary>
