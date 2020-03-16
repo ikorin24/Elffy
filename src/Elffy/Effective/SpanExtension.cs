@@ -105,8 +105,23 @@ namespace Elffy.Effective
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static T First<T>(this Span<T> source, Func<T, bool> selector) => First((ReadOnlySpan<T>)source, selector);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static T First<T>(this ReadOnlySpan<T> source, Func<T, bool> selector)
+        {
+            foreach(var item in source) {
+                if(selector(item)) {
+                    return item;
+                }
+            }
+            throw new InvalidOperationException();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T FirstOrDefault<T>(this Span<T> source, Func<T, bool> selector) => FirstOrDefault((ReadOnlySpan<T>)source, selector);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T FirstOrDefault<T>(this ReadOnlySpan<T> source, Func<T, bool> selector)
         {
             foreach(var item in source) {
@@ -115,6 +130,21 @@ namespace Elffy.Effective
                 }
             }
             return default!;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static T? FirstOrNull<T>(this Span<T> source, Func<T, bool> selector) where T : struct
+            => FirstOrNull((ReadOnlySpan<T>)source, selector);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static T? FirstOrNull<T>(this ReadOnlySpan<T> source, Func<T, bool> selector) where T : struct
+        {
+            foreach(var item in source) {
+                if(selector(item)) {
+                    return item;
+                }
+            }
+            return null;
         }
     }
 }
