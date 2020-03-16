@@ -58,7 +58,7 @@ namespace Elffy
             var pixels = LoadResourceBitmap(resource, out int w, out int h);
             texture.PixelWidth = w;
             texture.PixelHeight = h;
-            Engine.CurrentScreen.Dispatcher.Invoke(() =>
+            Dispatcher.Current.Invoke(() =>
             {
                 using(pixels) {
                     texture.SetPixels(pixels.Ptr);
@@ -109,7 +109,7 @@ namespace Elffy
                 // 各テクスチャにピクセルをセットする
                 foreach(var (i, texture, pixels) in images) {
                     textures[i] = texture;
-                    Engine.CurrentScreen.Dispatcher.Invoke(() =>
+                    Dispatcher.Current.Invoke(() =>
                     {
                         using(pixels) {
                             texture.SetPixels(pixels.Ptr);
@@ -158,7 +158,7 @@ namespace Elffy
         /// <param name="pixels">ピクセル配列</param>
         private void SetPixels(IntPtr pixels)
         {
-            Engine.CurrentScreen.Dispatcher.ThrowIfNotMainThread();
+            Dispatcher.Current.ThrowIfNotMainThread();
             if(IsLoaded) { throw new InvalidOperationException("Pixels are already loaded."); }
             if(_disposed) { throw new ObjectDisposedException(nameof(TextureBase)); }
             try {
@@ -189,7 +189,7 @@ namespace Elffy
                 }
 
                 // OpenGLのバッファの削除はメインスレッドで行う必要がある
-                Engine.CurrentScreen.Dispatcher.Invoke(() => GL.DeleteTexture(_textureBuffer));
+                Dispatcher.Current.Invoke(() => GL.DeleteTexture(_textureBuffer));
                 _disposed = true;
             }
         }

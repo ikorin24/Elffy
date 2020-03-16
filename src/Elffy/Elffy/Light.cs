@@ -51,12 +51,12 @@ namespace Elffy
         {
             get
             {
-                Engine.CurrentScreen.Dispatcher.ThrowIfNotMainThread();
+                Dispatcher.Current.ThrowIfNotMainThread();
                 return _globalAmbient;
             }
             set
             {
-                Engine.CurrentScreen.Dispatcher.ThrowIfNotMainThread();
+                Dispatcher.Current.ThrowIfNotMainThread();
                 if(_globalAmbient != value) {
                     value.R = (value.R < 0f) ? 0f : value.R;
                     value.G = (value.G < 0f) ? 0f : value.G;
@@ -82,7 +82,7 @@ namespace Elffy
         /// <param name="light">light</param>
         private static void AddLight(ILight light)
         {
-            Debug.Assert(Engine.CurrentScreen.Dispatcher.IsMainThread());
+            Debug.Assert(Dispatcher.Current.IsMainThread());
             if(!CanCreateNew) { throw new InvalidOperationException("Can not add more Light."); }
             light.LightName = GetLightNumber();
             _lightList.Add(light.ID, light);
@@ -92,7 +92,7 @@ namespace Elffy
         /// <param name="light">light</param>
         private static void RemoveLight(ILight light)
         {
-            Debug.Assert(Engine.CurrentScreen.Dispatcher.IsMainThread());
+            Debug.Assert(Dispatcher.Current.IsMainThread());
             _lightList.Remove(light.ID);
         }
 

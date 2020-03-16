@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using Elffy.Exceptions;
+using Elffy.Threading;
 using Elffy.UI;
 using OpenTK.Graphics.OpenGL;
 using System.Drawing;
@@ -120,7 +121,7 @@ namespace Elffy.Core
             }
             uiLayer.LateUpdate();
 
-            Engine.CurrentScreen.Dispatcher.DoInvokedAction();
+            Dispatcher.Current.DoInvokedAction();
 
             // レイヤー描画処理
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
