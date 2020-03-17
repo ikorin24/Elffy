@@ -18,6 +18,8 @@ namespace Elffy.Core
         /// <summary>レイヤーのリスト</summary>
         public LayerCollection Layers { get; }
 
+        internal Light Light { get; } = new Light();
+
         public int Width
         {
             get => _width;

@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using Elffy.Core;
-using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 
 namespace Elffy
@@ -20,8 +19,6 @@ namespace Elffy
         Color4 Diffuse { get; set; }
         /// <summary>get or set specular value of this light</summary>
         Color4 Specular { get; set; }
-        /// <summary>get ID of this light</summary>
-        public int ID { get; }
 
         /// <summary>Activate this light</summary>
         void Activate();

@@ -11,7 +11,7 @@ namespace Elffy
     /// <summary>Direct light class</summary>
     public sealed class DirectLight : ILight
     {
-        private readonly Light.LightImpl _lightImpl = new Light.LightImpl();
+        private readonly LightImpl _lightImpl = new LightImpl();
 
         /// <summary>get whether this light is activated</summary>
         public bool IsActivated
@@ -21,7 +21,7 @@ namespace Elffy
         }
 
         /// <summary>get whether this light is destroyed</summary>
-        public bool IsTerminated => _lightImpl.IsDestroyed;
+        public bool IsTerminated => _lightImpl.IsTerminated;
 
         /// <summary>light name</summary>
         LightName ILight.LightName
@@ -54,8 +54,6 @@ namespace Elffy
             get => _lightImpl.Specular;
             set => _lightImpl.Specular = value;
         }
-        /// <summary>get ID of this light</summary>
-        public int ID => (int)(_lightImpl.LightName - LightName.Light0);
 
         /// <summary>
         /// Create <see cref="DirectLight"/> instance.<para/>
@@ -97,20 +95,16 @@ namespace Elffy
         {
             ThrowIfTerminated();
             if(IsActivated) { return; }
-            Dispatcher.Current.Invoke(() =>
-            {
-                _lightImpl.Activate(this);
-            });
+            _lightImpl.Activate(this, Light.Current);
+            _lightImpl.LightUp();
         }
 
         /// <summary>Destroy this light</summary>
         public void Terminate()
         {
             ThrowIfTerminated();
-            Dispatcher.Current.Invoke(() =>
-            {
-                _lightImpl.Terminate(this);
-            });
+            _lightImpl.Terminate(this);
+            _lightImpl.TurnOff();
         }
 
         /// <summary>Light up this light</summary>

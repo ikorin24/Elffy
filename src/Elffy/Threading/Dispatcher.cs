@@ -59,7 +59,7 @@ namespace Elffy.Threading
         }
 
         /// <summary>メインスレッドIDを初期化します。最初にメインスレッドから1度だけ呼ばれます。</summary>
-        internal static void SetMainThreadID()
+        internal static void SetMainThreadID()  // TODO: static に書いてはいけない スクリーンごとに分ける
         {
             Debug.Assert(_hasMainThreadID == false);
             _mainThreadID = Thread.CurrentThread.ManagedThreadId;

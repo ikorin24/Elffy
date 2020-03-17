@@ -1,8 +1,6 @@
 ﻿#nullable enable
 using Elffy.Exceptions;
 using Elffy.Threading;
-using OpenTK;
-using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using System.Runtime.CompilerServices;
 
@@ -12,7 +10,7 @@ namespace Elffy
     public class PointLight : ILight
     {
         /// <summary>Implementation of the light</summary>
-        private readonly Light.LightImpl _lightImpl = new Light.LightImpl();
+        private readonly LightImpl _lightImpl = new LightImpl();
 
         /// <summary>get whether this light is activated</summary>
         public bool IsActivated
@@ -22,7 +20,7 @@ namespace Elffy
         }
 
         /// <summary>get whether this light is destroyed</summary>
-        public bool IsTerminated => _lightImpl.IsDestroyed;
+        public bool IsTerminated => _lightImpl.IsTerminated;
 
         /// <summary>get or set position of this light</summary>
         public Vector3 Position
@@ -49,9 +47,6 @@ namespace Elffy
             get => _lightImpl.Specular;
             set => _lightImpl.Specular = value;
         }
-
-        /// <summary>get ID of this light</summary>
-        public int ID => (int)(_lightImpl.LightName - LightName.Light0);
 
         /// <summary>light name</summary>
         LightName ILight.LightName
@@ -97,40 +92,36 @@ namespace Elffy
 
         public void Activate()
         {
-            ThrowIfDestroyed();
+            ThrowIfTerminated();
             if(IsActivated) { return; }
-            Dispatcher.Current.Invoke(() =>
-            {
-                _lightImpl.Activate(this);
-            });
+            _lightImpl.Activate(this, Light.Current);
+            _lightImpl.LightUp();
         }
 
         public void Terminate()
         {
-            ThrowIfDestroyed();
-            Dispatcher.Current.Invoke(() =>
-            {
-                _lightImpl.Terminate(this);
-            });
+            ThrowIfTerminated();
+            _lightImpl.Terminate(this);
+            _lightImpl.TurnOff();
         }
 
         public void LightUp()
         {
-            ThrowIfDestroyed();
+            ThrowIfTerminated();
             Dispatcher.Current.ThrowIfNotMainThread();
             _lightImpl.LightUp();
         }
 
         public void TurnOff()
         {
-            ThrowIfDestroyed();
+            ThrowIfTerminated();
             Dispatcher.Current.ThrowIfNotMainThread();
             _lightImpl.TurnOff();
         }
 
         /// <summary>Throw exception if the instance is destroyed.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void ThrowIfDestroyed()
+        private void ThrowIfTerminated()
         {
             if(IsTerminated) { throw new ObjectTerminatedException(this); }
         }

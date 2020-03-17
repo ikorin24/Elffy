@@ -43,6 +43,8 @@ namespace Elffy.Platforms.Windows
         public TimeSpan FrameDelta { get; private set; } = TimeSpan.FromSeconds(1.0 / 60.0);
         TimeSpan IHostScreen.FrameDelta => FrameDelta;
 
+        Light IHostScreen.Light => _renderingArea.Light;
+
         public event ActionEventHandler<IHostScreen>? Initialized;
         public event ActionEventHandler<IHostScreen>? Rendering;
         public event ActionEventHandler<IHostScreen>? Rendered;

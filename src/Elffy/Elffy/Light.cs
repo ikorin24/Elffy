@@ -1,30 +1,32 @@
 ﻿#nullable enable
+using Elffy.Effective;
 using Elffy.Exceptions;
 using Elffy.Threading;
-using Elffy.Effective;
-using OpenTK;
-using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
+using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace Elffy
 {
-    public static class Light
+    public class Light
     {
         /// <summary>Max count of light</summary>
         public const int MaxCount = 8;
+
+        public static Light Current => Engine.CurrentScreen.Light;
+
+        private bool _globalAmbientChanged;
         /// <summary>Light list (Max number of light is 8 in OpenTK.)</summary>
-        private static readonly Dictionary<int, ILight> _lightList = new Dictionary<int, ILight>(MaxCount);
-
-        private static bool _globalAmbientChanged;
-
+        private readonly ILight?[] _lightList = new ILight?[MaxCount];
         /// <summary>Get whether this can create a new light</summary>
-        private static bool CanCreateNew => _lightList.Count < MaxCount;
+        private bool CanCreateNew => Count < MaxCount;
 
-        internal static unsafe bool IsEnabled
+        /// <summary>The number of light</summary>
+        public int Count { get; private set; }
+
+        internal unsafe bool IsEnabled
         {
             get => _isEnabled;
             set
@@ -44,10 +46,10 @@ namespace Elffy
                 }
             }
         }
-        private static bool _isEnabled;
+        private bool _isEnabled;
 
         /// <summary>光源から独立した環境光を設定または取得します</summary>
-        public static Color4 GlobalAmbient      // TODO: staticなので複数スクリーンに対応してない
+        public Color4 GlobalAmbient
         {
             get
             {
@@ -67,119 +69,114 @@ namespace Elffy
                 }
             }
         }
-        private static Color4 _globalAmbient = new Color4(0.2f, 0.2f, 0.2f, 1f);    // default value of OpenGL
+        private Color4 _globalAmbient = new Color4(0.2f, 0.2f, 0.2f, 1f);    // default value of OpenGL
 
-        /// <summary>The number of light</summary>
-        public static int Count => _lightList.Count;
+#if DEBUG
+        static Light()
+        {
+            var light0 = LightName.Light0;
+            const string message = "Invalid enum value. This may be because implementation of OpenTK changes.";
+            Debug.Assert(LightName.Light0 - 0 == light0, message);
+            Debug.Assert(LightName.Light1 - 1 == light0, message);
+            Debug.Assert(LightName.Light2 - 2 == light0, message);
+            Debug.Assert(LightName.Light3 - 3 == light0, message);
+            Debug.Assert(LightName.Light4 - 4 == light0, message);
+            Debug.Assert(LightName.Light5 - 5 == light0, message);
+            Debug.Assert(LightName.Light6 - 6 == light0, message);
+            Debug.Assert(LightName.Light7 - 7 == light0, message);
+        }
+#endif
 
-        /// <summary>get light of specified id</summary>
-        /// <param name="id">id of the light</param>
-        /// <returns>light</returns>
-        public static ILight GetLight(int id)
-            => _lightList.GetValueWithKeyChecking(id, "the light of specified ID is not found.");
+        internal Light() { }
 
         /// <summary>add light to list</summary>
         /// <param name="light">light</param>
-        private static void AddLight(ILight light)
+        internal void AddLight(ILight light)
         {
             Debug.Assert(Dispatcher.Current.IsMainThread());
             if(!CanCreateNew) { throw new InvalidOperationException("Can not add more Light."); }
-            light.LightName = GetLightNumber();
-            _lightList.Add(light.ID, light);
+            light.LightName = Count + LightName.Light0;
+            _lightList[Count] = light;
+            Count++;
         }
 
         /// <summary>remove light from list</summary>
         /// <param name="light">light</param>
-        private static void RemoveLight(ILight light)
+        internal void RemoveLight(ILight light)
         {
             Debug.Assert(Dispatcher.Current.IsMainThread());
-            _lightList.Remove(light.ID);
+            _lightList[light.LightName - LightName.Light0] = null;
+            Count--;
         }
+    }
 
-        private static LightName GetLightNumber()
-        {
-            switch(_lightList.Count) {
-                case 0: return LightName.Light0;
-                case 1: return LightName.Light1;
-                case 2: return LightName.Light2;
-                case 3: return LightName.Light3;
-                case 4: return LightName.Light4;
-                case 5: return LightName.Light5;
-                case 6: return LightName.Light6;
-                case 7: return LightName.Light7;
-                default:
-                    throw new InvalidOperationException();
-            }
-        }
+    /// <summary>
+    /// Implementation of <see cref="ILight"/>
+    /// </summary>
+    /// <remarks>
+    /// This class is minimum implementation of <see cref="ILight"/>. There are no argument checking and object state checking.
+    /// </remarks>
+    internal class LightImpl
+    {
+        private Light? _manager;
 
         /// <summary>
-        /// Implementation of <see cref="ILight"/>
+        /// The position of this light.<para/>
+        /// [NOTE] <para/>
+        /// The position of a light is four dimentional like (x, y, z, w). <para/>
+        /// Actual position is three dimentional, that is (x/w, y/w, z/w). <para/>
+        /// w == 0 means the infinite point directed by (x, y, z). That is Direct light. <para/>
         /// </summary>
-        /// <remarks>
-        /// This class is minimum implementation of <see cref="ILight"/>. There are no argument checking and object state checking.
-        /// </remarks>
-        internal class LightImpl
+        internal Vector4 Position { get; set; }
+
+        /// <summary>get or set whether the light is activated</summary>
+        internal bool IsActivated { get; set; }
+
+        internal bool IsTerminated { get; set; }
+
+        /// <summary>get or set ambient value of this light</summary>
+        internal Color4 Ambient { get; set; }
+        /// <summary>get or set diffuse value of this light</summary>
+        internal Color4 Diffuse { get; set; }
+        /// <summary>get or set specular value of this light</summary>
+        internal Color4 Specular { get; set; }
+
+        internal LightName LightName { get; set; }
+
+        /// <summary>whether this light is lit up</summary>
+        internal bool IsLitUp { get; set; }
+
+        internal void LightUp()
         {
-            /// <summary>
-            /// The position of this light.<para/>
-            /// [NOTE] <para/>
-            /// The position of a light is four dimentional like (x, y, z, w). <para/>
-            /// Actual position is three dimentional, that is (x/w, y/w, z/w). <para/>
-            /// w == 0 means the infinite point directed by (x, y, z). That is Direct light. <para/>
-            /// </summary>
-            public Vector4 Position { get; set; }
-
-            /// <summary>get or set whether the light is activated</summary>
-            public bool IsActivated { get; set; }
-
-            /// <summary>get or set ambient value of this light</summary>
-            public Color4 Ambient { get; set; }
-            /// <summary>get or set diffuse value of this light</summary>
-            public Color4 Diffuse { get; set; }
-            /// <summary>get or set specular value of this light</summary>
-            public Color4 Specular { get; set; }
-
-            public LightName LightName { get; set; }
-
-            /// <summary>whether this light is lit up</summary>
-            public bool IsLitUp { get; set; }
-
-            /// <summary>get whether this light is destroyed</summary>
-            public bool IsDestroyed { get; set; }
-
-            public void LightUp()
-            {
-                if(IsLitUp == false) {
-                    GL.Enable((EnableCap)LightName);
-                    GL.Light(LightName, LightParameter.Position, Position);
-                    GL.Light(LightName, LightParameter.Ambient, Ambient);
-                    GL.Light(LightName, LightParameter.Diffuse, Diffuse);
-                    GL.Light(LightName, LightParameter.Specular, Specular);
-                    IsLitUp = true;
-                }
+            if(IsLitUp == false) {
+                GL.Enable((EnableCap)LightName);
+                GL.Light(LightName, LightParameter.Position, Position);
+                GL.Light(LightName, LightParameter.Ambient, Ambient);
+                GL.Light(LightName, LightParameter.Diffuse, Diffuse);
+                GL.Light(LightName, LightParameter.Specular, Specular);
+                IsLitUp = true;
             }
+        }
 
-            public void TurnOff()
-            {
-                if(IsLitUp) {
-                    GL.Disable((EnableCap)LightName);
-                    IsLitUp = false;
-                }
+        internal void TurnOff()
+        {
+            if(IsLitUp) {
+                GL.Disable((EnableCap)LightName);
+                IsLitUp = false;
             }
+        }
 
-            public void Activate(ILight light)
-            {
-                IsActivated = true;
-                Light.AddLight(light);
-                LightUp();
-            }
+        internal void Activate(ILight light, Light manager)
+        {
+            IsActivated = true;
+            _manager = manager;
+            manager.AddLight(light);
+        }
 
-            public void Terminate(ILight light)
-            {
-                IsDestroyed = true;
-                Light.RemoveLight(light);
-                TurnOff();
-            }
+        internal void Terminate(ILight light)
+        {
+            IsTerminated = true;
+            _manager!.RemoveLight(light);
         }
     }
 }
