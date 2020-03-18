@@ -20,7 +20,7 @@ namespace ElffyGame
         {
             try {
                 Engine.Run();
-                Engine.ShowScreen(800, 450, "Game", Resources.LoadIcon("icon.ico"), WindowStyle.Default, YAxisDirection.TopToBottom, _ => Scenario.Start(new StartScenario()));
+                Engine.ShowScreen(1600, 900, "Game", Resources.LoadIcon("icon.ico"), WindowStyle.Default, YAxisDirection.TopToBottom, _ => Scenario.Start(new StartScenario()));
             }
             catch(Exception ex) {
                 Debug.WriteLine(ex);
