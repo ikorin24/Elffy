@@ -13,6 +13,10 @@ using Elffy.InputSystem;
 using System.Drawing;
 using OpenTK.Graphics;
 using Elffy.Serialization;
+using System.Reflection.Emit;
+using Elffy.Effective;
+using System.Runtime.InteropServices;
+using System.Reflection;
 
 namespace ElffyGame
 {
@@ -39,7 +43,7 @@ namespace ElffyGame
         private static void GoToNextPrivate(Scenario scenario)
         {
             Current = scenario;
-            Engine.CurrentScreen.Dispatcher.Invoke(scenario.Start);
+            CurrentScreen.Dispatcher.Invoke(scenario.Start);
         }
 
         protected abstract void Start();
@@ -47,8 +51,10 @@ namespace ElffyGame
 
     public class StartScenario : Scenario
     {
-        protected override async void Start()
+        protected unsafe override  void Start()
         {
+            CurrentScreen.Light.GlobalAmbient = new Elffy.Color4(1, 0, 0);
+
             //Engine.CurrentScreen.Layers.WorldLayer.IsLightingEnabled = false;
             var light = new DirectLight();
             light.Activate();
@@ -59,8 +65,8 @@ namespace ElffyGame
 
             var cc = new Cube() { Position = new Vector3(0, 10, 0), Material = Materials.RedPlastic };
             cc.Activate();
-            Engine.CurrentScreen.Camera.LookAt(new Vector3(0, 10, 0), new Vector3(40, 40, -40));
-            var cm = new CameraMouse(Engine.CurrentScreen.Camera, Engine.CurrentScreen.Mouse, new Vector3(0, 0, 0));
+            CurrentScreen.Camera.LookAt(new Vector3(0, 10, 0), new Vector3(40, 40, -40));
+            var cm = new CameraMouse(CurrentScreen.Camera, CurrentScreen.Mouse, new Vector3(0, 0, 0));
             cm.Activate();
 
             var cubeArray = Enumerable.Range(0, 9).Select(i => new Cube() { Position = new Vector3(3, 0, 0) }).ToArray();

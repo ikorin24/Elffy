@@ -72,7 +72,7 @@ namespace Elffy
         {
             if(IsTerminated) { throw new ObjectTerminatedException(this); }
             if(IsActivated) { return; }
-            var worldLayer = Engine.CurrentScreen.Layers.WorldLayer;
+            var worldLayer = CurrentScreen.Layers.WorldLayer;
             Layer = worldLayer;
             worldLayer.AddFrameObject(this);
             IsActivated = true;

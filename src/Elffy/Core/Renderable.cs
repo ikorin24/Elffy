@@ -139,7 +139,7 @@ namespace Elffy.Core
 
         protected unsafe void LoadGraphicBuffer(ReadOnlySpan<Vertex> vertexArray, ReadOnlySpan<int> indexArray)
         {
-            Dispatcher.Current.ThrowIfNotMainThread();
+            CurrentScreen.Dispatcher.ThrowIfNotMainThread();
             fixed(Vertex* va = vertexArray)
             fixed(int* ia = indexArray) {
                 if(_isLoaded) {
@@ -156,7 +156,7 @@ namespace Elffy.Core
         /// <param name="indexArray">頂点インデックス配列</param>
         protected void LoadGraphicBuffer(IntPtr vertexArray, int vertexArrayLength, IntPtr indexArray, int indexArrayLength)
         {
-            Dispatcher.Current.ThrowIfNotMainThread();
+            CurrentScreen.Dispatcher.ThrowIfNotMainThread();
             if(_isLoaded) {
                 UpdateBuffer(vertexArray, vertexArrayLength, indexArray, indexArrayLength);
             }
@@ -216,7 +216,7 @@ namespace Elffy.Core
                     var vbo = _vertexBuffer;
                     var ibo = _indexBuffer;
                     var vao = _vao;
-                    Dispatcher.Current.Invoke(() => {
+                    CurrentScreen.Dispatcher.Invoke(() => {
                         GL.DeleteBuffer(vbo);
                         GL.DeleteBuffer(ibo);
                         GL.DeleteVertexArray(vao);

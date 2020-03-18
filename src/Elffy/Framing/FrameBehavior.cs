@@ -18,7 +18,7 @@ namespace Elffy.Framing
 
         internal bool UpdateFrame()
         {
-            var currentTime = Engine.CurrentScreen.Time;
+            var currentTime = CurrentScreen.Time;
             if(_isFirstFrame) {
                 _startTime = currentTime;
                 _isFirstFrame = false;

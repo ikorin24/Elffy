@@ -7,22 +7,12 @@ using Elffy.Platforms;
 using Elffy.Exceptions;
 using Elffy.Platforms.Windows;
 using Elffy.Effective.Internal;
-using System.Runtime.CompilerServices;
 
 namespace Elffy
 {
     public static class Engine
     {
         public static bool IsRunning { get; private set; }
-
-        /// <summary>Get or set current <see cref="IHostScreen"/>. This is current target screen of rendering.</summary>
-        public static IHostScreen CurrentScreen
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _currentScreen ?? throw new InvalidOperationException($"There is no {nameof(IHostScreen)} instance in {nameof(Engine)}.");
-            private set => _currentScreen = value;
-        }
-        private static IHostScreen? _currentScreen = null;
 
         public static void Run()
         {
@@ -42,7 +32,7 @@ namespace Elffy
         /// </remarks>
         internal static void SwitchScreen(this CurriedDelegateDummy? dummy, IHostScreen screen)
         {
-            CurrentScreen = screen;
+            CurrentScreen.Screen = screen;
         }
 
         public static void ShowScreen(ActionEventHandler<IHostScreen> initialized)

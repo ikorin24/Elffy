@@ -15,8 +15,6 @@ namespace Elffy
         /// <summary>Max count of light</summary>
         public const int MaxCount = 8;
 
-        public static Light Current => Engine.CurrentScreen.Light;
-
         private bool _globalAmbientChanged;
         /// <summary>Light list (Max number of light is 8 in OpenTK.)</summary>
         private readonly ILight?[] _lightList = new ILight?[MaxCount];
@@ -53,12 +51,12 @@ namespace Elffy
         {
             get
             {
-                Dispatcher.Current.ThrowIfNotMainThread();
+                CurrentScreen.Dispatcher.ThrowIfNotMainThread();
                 return _globalAmbient;
             }
             set
             {
-                Dispatcher.Current.ThrowIfNotMainThread();
+                CurrentScreen.Dispatcher.ThrowIfNotMainThread();
                 if(_globalAmbient != value) {
                     value.R = (value.R < 0f) ? 0f : value.R;
                     value.G = (value.G < 0f) ? 0f : value.G;
@@ -93,7 +91,7 @@ namespace Elffy
         /// <param name="light">light</param>
         internal void AddLight(ILight light)
         {
-            Debug.Assert(Dispatcher.Current.IsMainThread());
+            Debug.Assert(CurrentScreen.Dispatcher.IsMainThread());
             if(!CanCreateNew) { throw new InvalidOperationException("Can not add more Light."); }
             light.LightName = Count + LightName.Light0;
             _lightList[Count] = light;
@@ -104,7 +102,7 @@ namespace Elffy
         /// <param name="light">light</param>
         internal void RemoveLight(ILight light)
         {
-            Debug.Assert(Dispatcher.Current.IsMainThread());
+            Debug.Assert(CurrentScreen.Dispatcher.IsMainThread());
             _lightList[light.LightName - LightName.Light0] = null;
             Count--;
         }

@@ -15,12 +15,6 @@ namespace Elffy.Threading
         private static bool _hasMainThreadID;
         private static int _mainThreadID;
 
-        /// <summary>
-        /// Get Current <see cref="Dispatcher"/> instance.<para/>
-        /// This is <see cref="IHostScreen.Dispatcher"/> of <see cref="Engine.CurrentScreen"/>
-        /// </summary>
-        public static Dispatcher Current => Engine.CurrentScreen.Dispatcher;
-
         internal Dispatcher()
         {
         }

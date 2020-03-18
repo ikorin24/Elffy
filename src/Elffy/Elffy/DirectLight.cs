@@ -95,7 +95,7 @@ namespace Elffy
         {
             ThrowIfTerminated();
             if(IsActivated) { return; }
-            _lightImpl.Activate(this, Light.Current);
+            _lightImpl.Activate(this, CurrentScreen.Light);
             _lightImpl.LightUp();
         }
 
@@ -111,7 +111,7 @@ namespace Elffy
         public void LightUp()
         {
             ThrowIfTerminated();
-            Dispatcher.Current.ThrowIfNotMainThread();
+            CurrentScreen.Dispatcher.ThrowIfNotMainThread();
             _lightImpl.LightUp();
         }
 
@@ -119,7 +119,7 @@ namespace Elffy
         public void TurnOff()
         {
             ThrowIfTerminated();
-            Dispatcher.Current.ThrowIfNotMainThread();
+            CurrentScreen.Dispatcher.ThrowIfNotMainThread();
             _lightImpl.TurnOff();
         }
 

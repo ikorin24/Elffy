@@ -11,7 +11,7 @@ namespace Elffy.Framing
     public readonly struct FrameStream
     {
         /// <summary><see cref="StreamObj"/> を有効にするレイヤー</summary>
-        internal static SystemLayer TARGET_LAYER => Engine.CurrentScreen.Layers.SystemLayer;
+        internal static SystemLayer TARGET_LAYER => CurrentScreen.Layers.SystemLayer;
 
         /// <summary>何もしない動作を表す <see cref="FrameBehaviorDelegate"/> オブジェクト</summary>
         internal static readonly FrameBehaviorDelegate WAIT_BEHAVIOR = info => { };
