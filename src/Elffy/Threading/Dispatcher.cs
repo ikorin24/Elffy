@@ -8,7 +8,7 @@ using System.Threading;
 
 namespace Elffy.Threading
 {
-    public class Dispatcher
+    public sealed class Dispatcher
     {
         /// <summary>メインスレッドに Invoke された処理を保持しておくためのスレッドセーフなキュー</summary>
         private readonly ConcurrentQueue<Action> _invokedActions = new ConcurrentQueue<Action>();
@@ -31,6 +31,7 @@ namespace Elffy.Threading
         /// それ以外のスレッドからの呼び出しの場合、処理はキューに追加されます。<para/>
         /// </remarks>
         /// <param name="action">実行する処理</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke(Action action)
         {
             ArgumentChecker.ThrowIfNullArg(action, nameof(action));
@@ -44,9 +45,10 @@ namespace Elffy.Threading
 
         /// <summary>現在のスレッドがメインスレッドかどうかを返します。</summary>
         /// <returns>メインスレッドかどうか</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsMainThread()
         {
-            ThrowIfNotInitialized();
+            if(!_hasMainThreadID) { throw new InvalidOperationException("Main Thread ID is not set."); }
             return Thread.CurrentThread.ManagedThreadId == _mainThreadID;
         }
 
@@ -58,8 +60,11 @@ namespace Elffy.Threading
             if(IsMainThread() == false) { throw new InvalidOperationException("Current thread must be Main Thread."); }
         }
 
-        /// <summary>メインスレッドIDを初期化します。最初にメインスレッドから1度だけ呼ばれます。</summary>
-        internal static void SetMainThreadID()  // TODO: static に書いてはいけない スクリーンごとに分ける
+        /// <summary>
+        /// メインスレッドIDを初期化します。最初にメインスレッドから1度だけ呼ばれます。<para/>
+        /// <see cref="Current"/> に関わらず、最初に1度だけ呼ばれる。このスレッドが以後 OpenGL を扱う<para/>
+        /// </summary>
+        internal static void SetMainThreadID()
         {
             Debug.Assert(_hasMainThreadID == false);
             _mainThreadID = Thread.CurrentThread.ManagedThreadId;
@@ -67,6 +72,7 @@ namespace Elffy.Threading
         }
 
         /// <summary>Invokedキューの内容を処理します</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void DoInvokedAction()
         {
             // 現時点で既にキュー内にある処理までを実行する。それ以降は次回に処理実行する。
@@ -74,14 +80,6 @@ namespace Elffy.Threading
             while(count > 0 && _invokedActions.TryDequeue(out var action)) {
                 action();
                 count--;
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void ThrowIfNotInitialized()
-        {
-            if(!_hasMainThreadID) {
-                throw new InvalidOperationException("Main Thread ID is not set.");
             }
         }
     }

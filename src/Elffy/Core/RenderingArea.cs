@@ -122,7 +122,7 @@ namespace Elffy.Core
             }
             uiLayer.LateUpdate();
 
-            Dispatcher.Current.DoInvokedAction();
+            Dispatcher.DoInvokedAction();
 
             // レイヤー描画処理
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
