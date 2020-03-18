@@ -1,25 +1,21 @@
 ﻿#nullable enable
-using OpenTK;
-using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 
 namespace Elffy.Core
 {
     [DebuggerDisplay("{Position}")]
     public struct Vertex : IEquatable<Vertex>
     {
-        private static readonly int _color4Size = Marshal.SizeOf<Color4>();
+        private unsafe static readonly int _color4Size = sizeof(Color4);
 
         public Vector3 Position;
         public Vector3 Normal;
         public Color4 Color;
         public Vector2 TexCoord;
 
-        public static readonly int Size = Marshal.SizeOf<Vertex>();
+        public static unsafe readonly int Size = sizeof(Vertex);
 
         public Vertex(Vector3 position, Vector3 normal, Vector2 texcoord)
         {
@@ -37,48 +33,26 @@ namespace Elffy.Core
             TexCoord = texcoord;
         }
 
-        internal static void GLSetStructLayout()
+        internal unsafe static void GLSetStructLayout()
         {
             // 構造体のメモリレイアウトをOpenGLに設定する
             GL.VertexPointer(3, VertexPointerType.Float, Size, 0);                          // 頂点の位置
             GL.NormalPointer(NormalPointerType.Float, Size, Vector3.SizeInBytes);           // 頂点の法線
             GL.ColorPointer(4, ColorPointerType.Float, Size, Vector3.SizeInBytes * 2);      // 頂点の色
-            GL.TexCoordPointer(2, TexCoordPointerType.Float, Size, Vector3.SizeInBytes * 2 + _color4Size);  // テクスチャ座標
+            GL.TexCoordPointer(2, TexCoordPointerType.Float, Size, Vector3.SizeInBytes * 2 + sizeof(Color4));  // テクスチャ座標
         }
 
-        public override bool Equals(object obj)
-        {
-            return obj is Vertex vertex && Equals(vertex);
-        }
+        public override bool Equals(object? obj) => obj is Vertex vertex && Equals(vertex);
 
-        public bool Equals(Vertex other)
-        {
-            return Position.Equals(other.Position) &&
-                   Normal.Equals(other.Normal) &&
-                   Color.Equals(other.Color) &&
-                   TexCoord.Equals(other.TexCoord);
-        }
+        public bool Equals(Vertex other) => Position.Equals(other.Position) &&
+                                            Normal.Equals(other.Normal) &&
+                                            Color.Equals(other.Color) &&
+                                            TexCoord.Equals(other.TexCoord);
 
-        public override int GetHashCode()
-        {
-            unchecked {
-                var hashCode = 220393015;
-                hashCode = hashCode * -1521134295 + EqualityComparer<Vector3>.Default.GetHashCode(Position);
-                hashCode = hashCode * -1521134295 + EqualityComparer<Vector3>.Default.GetHashCode(Normal);
-                hashCode = hashCode * -1521134295 + EqualityComparer<Color4>.Default.GetHashCode(Color);
-                hashCode = hashCode * -1521134295 + EqualityComparer<Vector2>.Default.GetHashCode(TexCoord);
-                return hashCode;
-            }
-        }
+        public override int GetHashCode() => HashCode.Combine(Position, Normal, Color, TexCoord);
 
-        public static bool operator ==(Vertex left, Vertex right)
-        {
-            return left.Equals(right);
-        }
+        public static bool operator ==(Vertex left, Vertex right) => left.Equals(right);
 
-        public static bool operator !=(Vertex left, Vertex right)
-        {
-            return !(left == right);
-        }
+        public static bool operator !=(Vertex left, Vertex right) => !(left == right);
     }
 }
