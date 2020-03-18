@@ -73,7 +73,6 @@ namespace Elffy
                     default:
                         throw Platform.PlatformNotSupported();
                 }
-                screen.TargetRenderPeriod = screen.FrameDelta.TotalSeconds; // TODO: ???
                 screen.Initialized += initialized;
                 screen.Show(width, height, title, icon, windowStyle);
             }

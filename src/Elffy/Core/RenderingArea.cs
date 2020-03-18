@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using Elffy.Exceptions;
+using Elffy.InputSystem;
 using Elffy.Threading;
 using Elffy.UI;
 using OpenTK.Graphics.OpenGL;
@@ -16,11 +17,13 @@ namespace Elffy.Core
         private Matrix4 _uiProjection;
 
         /// <summary>レイヤーのリスト</summary>
-        public LayerCollection Layers { get; }
-
+        internal LayerCollection Layers { get; }
         internal Light Light { get; } = new Light();
+        internal Dispatcher Dispatcher { get; } = new Dispatcher();
+        internal Camera Camera { get; } = new Camera();
+        internal Mouse Mouse { get; } = new Mouse();
 
-        public int Width
+        internal int Width
         {
             get => _width;
             set
@@ -32,7 +35,7 @@ namespace Elffy.Core
         }
         private int _width;
 
-        public int Height
+        internal int Height
         {
             get => _height;
             set
@@ -44,7 +47,7 @@ namespace Elffy.Core
         }
         private int _height;
 
-        public Size Size
+        internal Size Size
         {
             get => new Size(_width, _height);
             set
@@ -58,7 +61,7 @@ namespace Elffy.Core
         }
 
         /// <summary>get or set color of clearing rendering area on beginning of each frames.</summary>
-        public Color4 ClearColor
+        internal Color4 ClearColor
         {
             get => _clearColor;
             set
@@ -69,14 +72,13 @@ namespace Elffy.Core
         }
         private Color4 _clearColor;
 
-        public RenderingArea(YAxisDirection uiYAxisDirection)
+        internal RenderingArea(YAxisDirection uiYAxisDirection)
         {
             Layers = new LayerCollection(uiYAxisDirection);
         }
 
-        #region InitializeGL
         /// <summary>OpenTL の描画に関する初期設定を行います</summary>
-        public void InitializeGL()
+        internal void InitializeGL()
         {
             ClearColor = Color4.Gray;
             GL.Enable(EnableCap.DepthTest);
@@ -92,12 +94,9 @@ namespace Elffy.Core
             GL.CullFace(CullFaceMode.Back);
             GL.FrontFace(FrontFaceDirection.Ccw);
         }
-        #endregion
 
         /// <summary>フレームを更新して描画します</summary>
-        /// <param name="projection">投影行列</param>
-        /// <param name="view">カメラ行列</param>
-        public void RenderFrame(Matrix4 projection, Matrix4 view)
+        internal void RenderFrame()
         {
             var systemLayer = Layers.SystemLayer;
             var uiLayer = Layers.UILayer;
@@ -127,6 +126,8 @@ namespace Elffy.Core
 
             // レイヤー描画処理
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            var projection = Camera.Projection;
+            var view = Camera.View;
             foreach(var layer in Layers) {
                 Light.IsEnabled = layer.IsLightingEnabled;
                 layer.Render(projection, view);
@@ -144,6 +145,10 @@ namespace Elffy.Core
 
         private void OnSizeChanged(int x, int y, int width, int height)
         {
+            // Change view and projection matrix (World).
+            Camera.ChangeScreenSize(width, height);
+
+            // Change projection matrix (UI)
             GL.Viewport(x, y, width, height);
             Matrix4.OrthographicProjection(x, x + width, y, y + height, UI_NEAR, UI_FAR, out _uiProjection);
             var uiRoot = Layers.UILayer.UIRoot;

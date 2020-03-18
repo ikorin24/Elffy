@@ -18,8 +18,6 @@ namespace Elffy
         Camera Camera { get; }
         /// <summary>垂直同期モード</summary>
         VSyncMode VSync { get; set; }
-        /// <summary>レンダリングの間隔 [sec]</summary>
-        double TargetRenderPeriod { get; set; }
         /// <summary>UIのルートオブジェクト</summary>
         Page UIRoot { get; }
         /// <summary>描画領域のサイズ [pixel]</summary>

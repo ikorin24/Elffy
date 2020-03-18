@@ -8,7 +8,7 @@ using Elffy.Threading;
 using Elffy.InputSystem;
 using System.Drawing;
 using TKMouseButton = OpenTK.Input.MouseButton;
-using MouseButtonEventArgs = OpenTK.Input.MouseButtonEventArgs;
+using TKMouseButtonEventArgs = OpenTK.Input.MouseButtonEventArgs;
 using Elffy.Core.Timer;
 using Elffy.Effective.Internal;
 
@@ -23,20 +23,24 @@ namespace Elffy
         /// <summary>描画領域に関する処理を行うオブジェクト</summary>
         private readonly RenderingArea _renderingArea;
         private readonly SyncContextReceiver _syncContextReciever = new SyncContextReceiver();
+        private readonly IGameTimer _watch = GameTimerGenerator.Create();
+        private TimeSpan _frameDelta;
 
         /// <summary>ウィンドウの UI の Root</summary>
         public Page UIRoot => _renderingArea.Layers.UILayer.UIRoot;
-        /// <summary>このウィンドウのレイヤー</summary>
-        public LayerCollection Layers => _renderingArea.Layers;
 
         /// <summary>マウスを取得します</summary>
-        public Mouse Mouse { get; } = new Mouse();
+        public Mouse Mouse => _renderingArea.Mouse;
 
+        /// <summary>このウィンドウのレイヤー</summary>
+        LayerCollection IHostScreen.Layers => _renderingArea.Layers;
         /// <summary>カメラを取得します</summary>
-        public Camera Camera { get; } = new Camera();
-        public VSyncMode VSync { get => _window.VSync; set => _window.VSync = value; }
+        Camera IHostScreen.Camera => _renderingArea.Camera;
+        TimeSpan IHostScreen.FrameDelta => _frameDelta;
+        Light IHostScreen.Light => _renderingArea.Light;
+        IGameTimer IHostScreen.Watch => _watch;
 
-        public double TargetRenderPeriod { get => _window.TargetRenderPeriod; set => _window.TargetRenderPeriod = value; }
+        public VSyncMode VSync { get => _window.VSync; set => _window.VSync = value; }
 
         public Size ClientSize { get => _window.ClientSize; set => _window.ClientSize = value; }
 
@@ -44,19 +48,11 @@ namespace Elffy
 
         public string Title { get => _window.Title; set => _window.Title = value; }
 
-        public Dispatcher Dispatcher { get; } = new Dispatcher();
+        public Dispatcher Dispatcher => _renderingArea.Dispatcher;
 
         public TimeSpan Time { get; private set; }
 
         public long FrameNum { get; private set; }
-
-        IGameTimer IHostScreen.Watch => _watch;
-        private IGameTimer _watch = GameTimerGenerator.Create();
-
-        public TimeSpan FrameDelta { get; private set; } = TimeSpan.FromSeconds(1.0 / 60.0);
-        TimeSpan IHostScreen.FrameDelta => FrameDelta;
-
-        Light IHostScreen.Light => _renderingArea.Light;
 
         /// <summary>初期化時イベント</summary>
         public event ActionEventHandler<IHostScreen>? Initialized;
@@ -89,6 +85,7 @@ namespace Elffy
             }
             _window.VSync = VSyncMode.On;
             _window.TargetRenderFrequency = DisplayDevice.Default.RefreshRate;
+            _frameDelta = TimeSpan.FromSeconds(1.0 / _window.TargetRenderFrequency);
             _window.Load += OnLoad;
             _window.Resize += OnResize;
             _window.RenderFrame += OnRenderFrame;
@@ -101,7 +98,7 @@ namespace Elffy
                 _ => (MouseButton?)null
             };
 
-            void MouseButtonStateChanged(object sender, MouseButtonEventArgs e)
+            void MouseButtonStateChanged(object sender, TKMouseButtonEventArgs e)
             {
                 var button = GetMouseButton(e.Button);
                 if(button == null) { return; }
@@ -160,8 +157,8 @@ namespace Elffy
             _watch.Start();
             Engine.SwitchScreen(default, this);
             Initialized?.Invoke(this);
-            Layers.SystemLayer.ApplyChanging();
-            foreach(var layer in Layers) {
+            _renderingArea.Layers.SystemLayer.ApplyChanging();
+            foreach(var layer in _renderingArea.Layers) {
                 layer.ApplyChanging();
             }
         }
@@ -170,7 +167,6 @@ namespace Elffy
         {
             Dispatcher.ThrowIfNotMainThread();
             _renderingArea.Size = _window.ClientSize;
-            Camera.ChangeScreenSize(_window.ClientSize.Width, _window.ClientSize.Height);
         }
 
         private void OnRenderFrame(object sender, FrameEventArgs e)
@@ -178,11 +174,11 @@ namespace Elffy
             Input.Update();
             Mouse.InitFrame();
             Rendering?.Invoke(this);
-            _renderingArea.RenderFrame(Camera.Projection, Camera.View);
+            _renderingArea.RenderFrame();
             _syncContextReciever.DoAll();
             _renderingArea.Layers.UILayer.HitTest(Mouse);
             Rendered?.Invoke(this);
-            Time += FrameDelta;
+            Time += _frameDelta;
             FrameNum++;
             _window.SwapBuffers();
         }

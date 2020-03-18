@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using System;
-using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 using Elffy.Core;
@@ -10,6 +9,7 @@ using Elffy.Threading;
 using Elffy.UI;
 using Elffy.Effective.Internal;
 using FormMouseEventArgs = System.Windows.Forms.MouseEventArgs;
+using OpenTK;
 
 namespace Elffy.Platforms.Windows
 {
@@ -18,30 +18,28 @@ namespace Elffy.Platforms.Windows
         private bool _disposed;
         private readonly RenderingArea _renderingArea;
         private readonly SyncContextReceiver _syncContextReciever = new SyncContextReceiver();
+        private IGameTimer _watch = GameTimerGenerator.Create();
+        private TimeSpan _frameDelta;
 
         public bool IsRunning { get; private set; }
 
-        public Mouse Mouse { get; } = new Mouse();
+        public Mouse Mouse => _renderingArea.Mouse;
 
-        public Camera Camera { get; } = new Camera();
-
-        public double TargetRenderPeriod { get => 1.0 / 60.0; set { } }  // TODO:
+        Camera IHostScreen.Camera => _renderingArea.Camera;
 
         public Page UIRoot => _renderingArea.Layers.UILayer.UIRoot;
 
-        public LayerCollection Layers => _renderingArea.Layers;
+        LayerCollection IHostScreen.Layers => _renderingArea.Layers;
 
-        public Dispatcher Dispatcher { get; } = new Dispatcher();
+        public Dispatcher Dispatcher => _renderingArea.Dispatcher;
 
         public TimeSpan Time { get; private set; }
 
         public long FrameNum { get; private set; }
 
         IGameTimer IHostScreen.Watch => _watch;
-        private IGameTimer _watch = GameTimerGenerator.Create();
 
-        public TimeSpan FrameDelta { get; private set; } = TimeSpan.FromSeconds(1.0 / 60.0);
-        TimeSpan IHostScreen.FrameDelta => FrameDelta;
+        TimeSpan IHostScreen.FrameDelta => _frameDelta;
 
         Light IHostScreen.Light => _renderingArea.Light;
 
@@ -54,6 +52,7 @@ namespace Elffy.Platforms.Windows
         public FormScreen(YAxisDirection uiYAxisDirection)
         {
             _renderingArea = new RenderingArea(uiYAxisDirection);
+            _frameDelta = TimeSpan.FromSeconds(1.0 / DisplayDevice.Default.RefreshRate);
 
             void MouseButtonDown(object sender, FormMouseEventArgs e)
             {
@@ -97,14 +96,14 @@ namespace Elffy.Platforms.Windows
             if(IsDesignMode) { return; }
             Dispatcher.ThrowIfNotMainThread();
             IsRunning = true;
-            SetScreenSize();
+            _renderingArea.Size = ClientSize;
             Rendering += switchScreenMethod;
             switchScreenMethod(this);
             _renderingArea.InitializeGL();
             _watch.Start();
             Initialized?.Invoke(this);
-            Layers.SystemLayer.ApplyChanging();
-            foreach(var layer in Layers) {
+            _renderingArea.Layers.SystemLayer.ApplyChanging();
+            foreach(var layer in _renderingArea.Layers) {
                 layer.ApplyChanging();
             }
             Invalidate();
@@ -199,7 +198,7 @@ namespace Elffy.Platforms.Windows
         private void OnResize(object sender, EventArgs e)
         {
             if(!IsRunning) { return; }
-            SetScreenSize();
+            _renderingArea.Size = ClientSize;
         }
 
         private void OnPaint(object sender, PaintEventArgs e)
@@ -209,20 +208,14 @@ namespace Elffy.Platforms.Windows
             Input.Update();
             Mouse.InitFrame();
             Rendering?.Invoke(this);
-            _renderingArea.RenderFrame(Camera.Projection, Camera.View);
+            _renderingArea.RenderFrame();
             _syncContextReciever.DoAll();
             _renderingArea.Layers.UILayer.HitTest(Mouse);
             Rendered?.Invoke(this);
-            Time += FrameDelta;
+            Time += _frameDelta;
             FrameNum++;
             SwapBuffers();
             Invalidate();
-        }
-
-        private void SetScreenSize()
-        {
-            _renderingArea.Size = ClientSize;
-            Camera.ChangeScreenSize(ClientSize.Width, ClientSize.Height);
         }
     }
 }
