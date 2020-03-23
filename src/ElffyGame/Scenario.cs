@@ -53,7 +53,7 @@ namespace ElffyGame
     {
         protected unsafe override  void Start()
         {
-            CurrentScreen.Light.GlobalAmbient = new Elffy.Color4(1, 0, 0);
+            //CurrentScreen.Light.GlobalAmbient = new Elffy.Color4(1, 0, 0);
 
             //Engine.CurrentScreen.Layers.WorldLayer.IsLightingEnabled = false;
             var light = new DirectLight();
@@ -64,7 +64,17 @@ namespace ElffyGame
             c.Activate();
 
             var cc = new Cube() { Position = new Vector3(0, 10, 0), Material = Materials.RedPlastic };
+
+            //using(var vert = VertexShader.LoadFromResource("TestVertShader.vert"))
+            //using(var frag = FragmentShader.LoadFromResource("TestFragShader.frag")) {
+            //    cc.Shader = ShaderProgram.Create(vert, frag);
+            //}
+            //cc.Activate();
+            cc.S = Shader.CreateFromResource("new.vert", "new.frag");
+            cc.Terminated += sender => (sender as Elffy.Core.Renderable)!.S.Dispose();
             cc.Activate();
+            
+            
             CurrentScreen.Camera.LookAt(new Vector3(0, 10, 0), new Vector3(40, 40, -40));
             var cm = new CameraMouse(CurrentScreen.Camera, CurrentScreen.Mouse, new Vector3(0, 0, 0));
             cm.Activate();
