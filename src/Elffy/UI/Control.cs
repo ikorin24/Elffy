@@ -179,9 +179,9 @@ namespace Elffy.UI
         /// <exception cref="ArgumentNullException"></exception>
         public TextureBase Texture { get => Renderable.Texture; set => Renderable.Texture = value; }
 
-        /// <summary>Get or set shader</summary>
-        /// <exception cref="ArgumentNullException"></exception>
-        public ShaderProgram Shader { get => Renderable.Shader; set => Renderable.Shader = value; }
+        ///// <summary>Get or set shader</summary>
+        ///// <exception cref="ArgumentNullException"></exception>
+        //public ShaderProgram Shader { get => Renderable.Shader; set => Renderable.Shader = value; }
 
         /// <summary>Focus enter event</summary>
         public event ActionEventHandler<Control>? FocusEnter;

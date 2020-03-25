@@ -54,15 +54,11 @@ namespace Elffy
         /// <summary>画面への投影行列とカメラ行列を指定して、描画を実行します</summary>
         /// <param name="projection">投影行列</param>
         /// <param name="view">カメラ行列</param>
-        internal unsafe void Render(Matrix4 projection, Matrix4 view)
+        internal unsafe void Render(in Matrix4 projection, in Matrix4 view)
         {
-            GL.MatrixMode(MatrixMode.Projection);
-            GL.LoadMatrix((float*)&projection);
-            GL.MatrixMode(MatrixMode.Modelview);
             foreach(var renderable in _store.Renderables) {
                 if(!renderable.IsRoot || !renderable.IsVisible) { continue; }
-                GL.LoadMatrix((float*)&view);
-                renderable.Render();
+                renderable.Render(projection, view, Matrix4.Identity);
             }
         }
     }

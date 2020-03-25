@@ -54,7 +54,7 @@ namespace Elffy.Core
 
         /// <summary>画面への投影行列を指定して、描画を実行します</summary>
         /// <param name="projection"></param>
-        internal unsafe void Render(Matrix4 projection)
+        internal unsafe void Render(in Matrix4 projection)
         {
             var view = YAxisDirection switch
             {
@@ -65,13 +65,9 @@ namespace Elffy.Core
                 YAxisDirection.BottomToTop => Matrix4.Identity,
                 _ => throw new NotSupportedException(),
             };
-            GL.MatrixMode(MatrixMode.Projection);
-            GL.LoadMatrix((float*)&projection);
-            GL.MatrixMode(MatrixMode.Modelview);
             foreach(var renderable in _store.Renderables) {
                 if(!renderable.IsRoot || !renderable.IsVisible) { continue; }
-                GL.LoadMatrix((float*)&view);
-                renderable.Render();
+                renderable.Render(projection, view, Matrix4.Identity);
             }
         }
 

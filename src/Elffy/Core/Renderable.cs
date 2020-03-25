@@ -20,9 +20,6 @@ namespace Elffy.Core
         /// <summary>IBO番号</summary>
         private int _indexBuffer;
 
-        private int _mvp;
-        private int _color;
-
         /// <summary>VAO</summary>
         private int _vao;
         private bool _disposed;
@@ -63,9 +60,23 @@ namespace Elffy.Core
         }
         private TextureBase _texture = TextureBase.Empty;
 
-        /// <summary>シェーダー</summary>
-        /// <exception cref="ArgumentNullException"></exception>
-        public ShaderProgram Shader
+        ///// <summary>シェーダー</summary>
+        ///// <exception cref="ArgumentNullException"></exception>
+        //public ShaderProgram Shader
+        //{
+        //    get => _shader;
+        //    set
+        //    {
+        //        ArgumentChecker.ThrowIfNullArg(value, nameof(value));
+        //        if(_shader == value) { return; }
+        //        var old = _shader;
+        //        _shader = value;
+        //        ShaderChanged?.Invoke(this, new ValueChangedEventArgs<ShaderProgram>(old, value));
+        //    }
+        //}
+        //private ShaderProgram _shader = ShaderProgram.Default;
+
+        public Shader S
         {
             get => _shader;
             set
@@ -74,39 +85,39 @@ namespace Elffy.Core
                 if(_shader == value) { return; }
                 var old = _shader;
                 _shader = value;
-                ShaderChanged?.Invoke(this, new ValueChangedEventArgs<ShaderProgram>(old, value));
+                ShaderChanged?.Invoke(this, new ValueChangedEventArgs<Shader>(old, value));
             }
         }
-        private ShaderProgram _shader = ShaderProgram.Default;
+        private Shader _shader;
 
-        public Shader S { get; set; }
-
-        /// <summary>頂点色を使用するかどうか</summary>
-        public bool EnableVertexColor
-        {
-            get => _enableVertexColor;
-            set
-            {
-                _enableVertexColor = value;
-                if(_vao == Consts.NULL) { return; }
-                if(_enableVertexColor) {
-                    GL.BindVertexArray(_vao);
-                    GL.EnableClientState(ArrayCap.ColorArray);
-                }
-                else {
-                    GL.BindVertexArray(_vao);
-                    GL.DisableClientState(ArrayCap.ColorArray);
-                }
-            }
-        }
-        private bool _enableVertexColor;
+        ///// <summary>頂点色を使用するかどうか</summary>
+        //public bool EnableVertexColor
+        //{
+        //    get => _enableVertexColor;
+        //    set
+        //    {
+        //        _enableVertexColor = value;
+        //        if(_vao == Consts.NULL) { return; }
+        //        if(_enableVertexColor) {
+        //            GL.BindVertexArray(_vao);
+        //            GL.EnableClientState(ArrayCap.ColorArray);
+        //        }
+        //        else {
+        //            GL.BindVertexArray(_vao);
+        //            GL.DisableClientState(ArrayCap.ColorArray);
+        //        }
+        //    }
+        //}
+        //private bool _enableVertexColor;
 
         /// <summary>Material changed event</summary>
         public event ActionEventHandler<Renderable, ValueChangedEventArgs<Material>>? MaterialChanged;
         /// <summary>Texture changed event</summary>
         public event ActionEventHandler<Renderable, ValueChangedEventArgs<TextureBase>>? TextureChanged;
-        /// <summary>Shader changed event</summary>
-        public event ActionEventHandler<Renderable, ValueChangedEventArgs<ShaderProgram>>? ShaderChanged;
+        ///// <summary>Shader changed event</summary>
+        //public event ActionEventHandler<Renderable, ValueChangedEventArgs<ShaderProgram>>? ShaderChanged;
+        public event ActionEventHandler<Renderable, ValueChangedEventArgs<Shader>>? ShaderChanged;
+
         /// <summary>Before-rendering event</summary>
         protected event ActionEventHandler<Renderable>? Rendering;
         /// <summary>After-rendering event</summary>
@@ -114,93 +125,98 @@ namespace Elffy.Core
 
         ~Renderable() => Dispose(false);
 
-        /// <summary>このインスタンスを描画します</summary>
-        internal unsafe void Render()
+        ///// <summary>このインスタンスを描画します</summary>
+        //internal unsafe void Render()
+        //{
+        //    if(_isLoaded) {
+        //        // 座標と回転を適用
+        //        GL.Translate(Position);
+        //        var rot = Rotation.ToMatrix4();
+        //        GL.MultMatrix((float*)&rot);
+        //        GL.Scale(Scale);
+        //        Rendering?.Invoke(this);
+
+        //        Material.Apply();
+        //        Texture.Apply();
+
+        //        //Shader.Apply();
+
+        //        if(S != null) {
+        //            GL.BindBuffer(BufferTarget.UniformBuffer, _mvp);
+        //            var translate = new Matrix4(1, 0, 0, Position.X,
+        //                                        0, 1, 0, Position.Y,
+        //                                        0, 0, 1, Position.Z,
+        //                                        0, 0, 0, 1);
+        //            var matrix = Rotation.ToMatrix4() * translate * CurrentScreen.Camera.View * CurrentScreen.Camera.Projection;
+        //            GL.BufferSubData(BufferTarget.UniformBuffer, IntPtr.Zero, sizeof(float) * 16, (IntPtr)(&matrix));
+
+        //            GL.BindBuffer(BufferTarget.UniformBuffer, _color);
+        //            var color = Mathmatics.Rand.Color4();
+        //            GL.BufferSubData(BufferTarget.UniformBuffer, IntPtr.Zero, sizeof(float) * 4, (IntPtr)(&color));
+
+        //            GL.BindBufferBase(BufferRangeTarget.UniformBuffer, 0, _mvp);
+        //            GL.BindBufferBase(BufferRangeTarget.UniformBuffer, 1, _color);
+        //            S?.Apply();
+        //        }
+        //        else {
+        //            GL.UseProgram(0);
+        //        }
+
+        //        GL.BindVertexArray(_vao);
+        //        GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBuffer);
+        //        GL.DrawElements(BeginMode.Triangles, _indexArrayLength, DrawElementsType.UnsignedInt, 0);
+        //        Rendered?.Invoke(this);
+        //    }
+
+        //    if(HasChild) {
+        //        foreach(var child in Children.OfType<Renderable>()) {
+        //            GL.PushMatrix();
+        //            child.Render();
+        //            GL.PopMatrix();
+        //        }
+        //    }
+        //}
+
+        internal unsafe void Render(in Matrix4 projection, in Matrix4 view, in Matrix4 modelParent)
         {
+            // 座標と回転を適用
+            var model = modelParent;
+
+            model = new Matrix4(1, 0, 0, Position.X,
+                                       0, 1, 0, Position.Y,
+                                       0, 0, 1, Position.Z,
+                                       0, 0, 0, 1) * model;
+
+            model = Rotation.ToMatrix4() * model;
+
+
+            model = new Matrix4(Scale.X, 0, 0, 0,
+                                       0, Scale.Y, 0, 0,
+                                       0, 0, Scale.Z, 0,
+                                       0, 0, 0, 1) * model;
+
             if(_isLoaded) {
-                // 座標と回転を適用
-                GL.Translate(Position);
-                var rot = Rotation.ToMatrix4();
-                GL.MultMatrix((float*)&rot);
-                GL.Scale(Scale);
                 Rendering?.Invoke(this);
-
-                Material.Apply();
-                Texture.Apply();
-
-                //Shader.Apply();
-
-                if(S != null) {
-                    GL.BindBuffer(BufferTarget.UniformBuffer, _mvp);
-                    var translate = new Matrix4(1, 0, 0, Position.X,
-                                                0, 1, 0, Position.Y,
-                                                0, 0, 1, Position.Z,
-                                                0, 0, 0, 1);
-                    var matrix = Rotation.ToMatrix4() * translate * CurrentScreen.Camera.View * CurrentScreen.Camera.Projection;
-                    GL.BufferSubData(BufferTarget.UniformBuffer, IntPtr.Zero, sizeof(float) * 16, (IntPtr)(&matrix));
-
-                    GL.BindBuffer(BufferTarget.UniformBuffer, _color);
-                    var color = Mathmatics.Rand.Color4();
-                    GL.BufferSubData(BufferTarget.UniformBuffer, IntPtr.Zero, sizeof(float) * 4, (IntPtr)(&color));
-
-                    GL.BindBufferBase(BufferRangeTarget.UniformBuffer, 0, _mvp);
-                    GL.BindBufferBase(BufferRangeTarget.UniformBuffer, 1, _color);
-                    S?.Apply();
-                }
-                else {
-                    GL.UseProgram(0);
-                }
 
                 GL.BindVertexArray(_vao);
                 GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBuffer);
                 GL.DrawElements(BeginMode.Triangles, _indexArrayLength, DrawElementsType.UnsignedInt, 0);
+                Material.Apply();
+                Texture.Apply();
+
+                S?.Apply();
+                var modelView = view * model;
+                GL.UniformMatrix4(location: 4, 1, false, (float*)&modelView);
+                fixed(Matrix4* proj = &projection) {
+                    GL.UniformMatrix4(location: 5, 1, false, (float*)proj);
+                }
+
                 Rendered?.Invoke(this);
             }
 
             if(HasChild) {
                 foreach(var child in Children.OfType<Renderable>()) {
-                    GL.PushMatrix();
-                    child.Render();
-                    GL.PopMatrix();
-                }
-            }
-        }
-
-        internal unsafe void Render(in Matrix4 viewMatrix, Matrix4* modelMatrix)
-        {
-            if(_isLoaded) {
-                // 座標と回転を適用
-
-                *modelMatrix = new Matrix4(Scale.X, 0, 0, 0,
-                                           0, Scale.Y, 0, 0,
-                                           0, 0, Scale.Z, 0,
-                                           0, 0, 0, 1) *
-                               Rotation.ToMatrix4() *
-                               new Matrix4(1, 0, 0, Position.X,
-                                           0, 1, 0, Position.Y,
-                                           0, 0, 1, Position.Z,
-                                           0, 0, 0, 1) *
-                               (*modelMatrix);
-                GL.MultMatrix((float*)modelMatrix);
-                Rendering?.Invoke(this);
-                Material.Apply();
-                Texture.Apply();
-                Shader.Apply();
-                GL.BindVertexArray(_vao);
-                GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBuffer);
-
-
-                GL.BindBufferBase(BufferRangeTarget.UniformBuffer, index: 5, buffer: _mvp);
-
-                GL.DrawElements(BeginMode.Triangles, _indexArrayLength, DrawElementsType.UnsignedInt, 0);
-                Rendered?.Invoke(this);
-            }
-
-            if(HasChild) {
-                foreach(var child in Children.OfType<Renderable>()) {
-                    GL.PushMatrix();
-                    child.Render(viewMatrix, modelMatrix);
-                    GL.PopMatrix();
+                    child.Render(projection, view, model);
                 }
             }
         }
@@ -248,27 +264,18 @@ namespace Elffy.Core
             int indexSize = indexArrayLength * sizeof(int);
             GL.BufferData(BufferTarget.ElementArrayBuffer, indexSize, indexArray, BufferUsageHint.StaticDraw);
 
-            unsafe {
-                _mvp = GL.GenBuffer();
-                GL.BindBuffer(BufferTarget.UniformBuffer, _mvp);
-                var mvp = stackalloc float[16];
-                GL.BufferData(BufferTarget.UniformBuffer, sizeof(float) * 16, (IntPtr)mvp, BufferUsageHint.DynamicDraw);
-
-                _color = GL.GenBuffer();
-                GL.BindBuffer(BufferTarget.UniformBuffer, _color);
-                var color = stackalloc float[4];
-                GL.BufferData(BufferTarget.UniformBuffer, sizeof(float) * 4, (IntPtr)color, BufferUsageHint.DynamicDraw);
-            }
-
             // VAO
             _vao = GL.GenVertexArray();
             GL.BindVertexArray(_vao);
-            GL.EnableClientState(ArrayCap.VertexArray);
-            GL.EnableClientState(ArrayCap.NormalArray);
-            if(EnableVertexColor) { GL.EnableClientState(ArrayCap.ColorArray); }
-            GL.EnableClientState(ArrayCap.TextureCoordArray);
+
+            //GL.EnableClientState(ArrayCap.VertexArray);
+            //GL.EnableClientState(ArrayCap.NormalArray);
+            //if(EnableVertexColor) { GL.EnableClientState(ArrayCap.ColorArray); }
+            //GL.EnableClientState(ArrayCap.TextureCoordArray);
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBuffer);
-            Vertex.GLSetStructLayout();                          // 頂点構造体のレイアウトを指定
+            //Vertex.GLSetStructLayout();                          // 頂点構造体のレイアウトを指定
+
+            Vertex.DefineLayout();
 
             _isLoaded = true;
         }
@@ -296,13 +303,9 @@ namespace Elffy.Core
                     var vbo = _vertexBuffer;
                     var ibo = _indexBuffer;
                     var vao = _vao;
-                    var uniform = _mvp;
-                    var color = _color;
                     CurrentScreen.Dispatcher.Invoke(() => {
                         GL.DeleteBuffer(vbo);
                         GL.DeleteBuffer(ibo);
-                        GL.DeleteBuffer(uniform);
-                        GL.DeleteBuffer(color);
                         GL.DeleteVertexArray(vao);
                     });
                 }

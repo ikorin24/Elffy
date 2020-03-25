@@ -55,13 +55,13 @@ namespace ElffyGame
         {
             //CurrentScreen.Light.GlobalAmbient = new Elffy.Color4(1, 0, 0);
 
-            //Engine.CurrentScreen.Layers.WorldLayer.IsLightingEnabled = false;
+            //CurrentScreen.Layers.WorldLayer.IsLightingEnabled = false;
             var light = new DirectLight();
             light.Activate();
             var model = Resources.LoadModel("Alicia/Alicia_solid.pmx");
             model.Activate();
-            var c = new Cube();
-            c.Activate();
+            //var c = new Cube();
+            //c.Activate();
 
             var cc = new Cube() { Position = new Vector3(0, 10, 0), Material = Materials.RedPlastic };
 
@@ -79,15 +79,15 @@ namespace ElffyGame
             var cm = new CameraMouse(CurrentScreen.Camera, CurrentScreen.Mouse, new Vector3(0, 0, 0));
             cm.Activate();
 
-            var cubeArray = Enumerable.Range(0, 9).Select(i => new Cube() { Position = new Vector3(3, 0, 0) }).ToArray();
-            foreach(var cube in cubeArray) {
-                cube.Rotate(Vector3.UnitY, 30f.ToRadian());
-                cube.Rotate(Vector3.UnitZ, 10f.ToRadian());
-            }
-            for(int i = 1; i < cubeArray.Length; i++) {
-                cubeArray[i - 1].Children.Add(cubeArray[i]);
-            }
-            cubeArray[0].Activate();
+            //var cubeArray = Enumerable.Range(0, 9).Select(i => new Cube() { Position = new Vector3(3, 0, 0) }).ToArray();
+            //foreach(var cube in cubeArray) {
+            //    cube.Rotate(Vector3.UnitY, 30f.ToRadian());
+            //    cube.Rotate(Vector3.UnitZ, 10f.ToRadian());
+            //}
+            //for(int i = 1; i < cubeArray.Length; i++) {
+            //    cubeArray[i - 1].Children.Add(cubeArray[i]);
+            //}
+            //cubeArray[0].Activate();
 
 
             //var light = new DirectLight();

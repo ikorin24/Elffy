@@ -1,13 +1,17 @@
-#version 300 es
-layout (location = 0) in vec3 position;
+#version 440
 
-layout (std140) uniform matrix {
-    mat4 mvp;
-} mat;
+layout (location = 0) in vec3 pos;
+layout (location = 1) in vec3 normal;
+layout (location = 2) in vec4 color;
+layout (location = 3) in vec2 texcoord;
 
-/* uniform float scale; */
+out vec4 vertColor;
+
+layout (location = 4) uniform mat4 modelView;
+layout (location = 5) uniform mat4 projection;
 
 void main()
 {
-    gl_Position = mat.mvp * vec4(position, 1.0);
+    gl_Position = projection * modelView * vec4(pos, 1f);
+    vertColor = color;
 }

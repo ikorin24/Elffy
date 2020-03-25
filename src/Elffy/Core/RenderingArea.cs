@@ -126,11 +126,9 @@ namespace Elffy.Core
 
             // レイヤー描画処理
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            var projection = Camera.Projection;
-            var view = Camera.View;
             foreach(var layer in Layers) {
                 Light.IsEnabled = layer.IsLightingEnabled;
-                layer.Render(projection, view);
+                layer.Render(Camera.Projection, Camera.View);
             }
             Light.IsEnabled = false;
             uiLayer.Render(_uiProjection);

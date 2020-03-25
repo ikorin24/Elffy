@@ -53,10 +53,10 @@ namespace Elffy
                     throw new InvalidOperationException($"{vertShaderFile}, {fragShaderFile} : Linking shader is failed.{Environment.NewLine}{log}");
                 }
 
-                var blockIndexVS = GL.GetUniformBlockIndex(program, "matrix");
-                var blockIndexFS = GL.GetUniformBlockIndex(program, "material");
-                GL.UniformBlockBinding(program, blockIndexVS, 0);
-                GL.UniformBlockBinding(program, blockIndexFS, 1);
+                //var blockIndexVS = GL.GetUniformBlockIndex(program, "matrix");
+                //var blockIndexFS = GL.GetUniformBlockIndex(program, "material");
+                //GL.UniformBlockBinding(program, blockIndexVS, 0);
+                //GL.UniformBlockBinding(program, blockIndexFS, 1);
 
                 return new Shader(program);
             }
@@ -118,7 +118,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ThrowIfDisposed()
         {
-            if(_disposed) { throw new ObjectDisposedException(nameof(ShaderProgram)); }
+            if(_disposed) { throw new ObjectDisposedException(nameof(Shader)); }
         }
     }
 }
