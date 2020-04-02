@@ -4,6 +4,7 @@ using Elffy.InputSystem;
 using Elffy.Threading;
 using Elffy.UI;
 using OpenTK.Graphics.OpenGL;
+using System;
 using System.Drawing;
 
 namespace Elffy.Core
@@ -15,11 +16,11 @@ namespace Elffy.Core
         const float UI_NEAR = -0.01f;
         /// <summary>UI の投影行列</summary>
         private Matrix4 _uiProjection;
+        private readonly Dispatcher _dispatcher;
 
         /// <summary>レイヤーのリスト</summary>
-        internal LayerCollection Layers { get; }
+        internal LayerCollection Layers { get; private set; }
         internal Light Light { get; } = new Light();
-        internal Dispatcher Dispatcher { get; } = new Dispatcher();
         internal Camera Camera { get; } = new Camera();
         internal Mouse Mouse { get; } = new Mouse();
 
@@ -72,9 +73,15 @@ namespace Elffy.Core
         }
         private Color4 _clearColor;
 
-        internal RenderingArea(YAxisDirection uiYAxisDirection)
+        internal RenderingArea(Dispatcher dispatcher, YAxisDirection uiYAxisDirection)
         {
+            ArgumentChecker.ThrowIfNullArg(dispatcher, nameof(dispatcher));
+            _dispatcher = dispatcher;
+
+            var tmpDispatcher = Dispatcher.Current;
+            Dispatcher.SwitchCurrent(dispatcher);
             Layers = new LayerCollection(uiYAxisDirection);
+            Dispatcher.SwitchCurrent(tmpDispatcher);
         }
 
         /// <summary>OpenTL の描画に関する初期設定を行います</summary>
@@ -122,7 +129,7 @@ namespace Elffy.Core
             }
             uiLayer.LateUpdate();
 
-            Dispatcher.DoInvokedAction();
+            _dispatcher.DoInvokedAction();
 
             // レイヤー描画処理
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);

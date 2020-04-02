@@ -31,7 +31,7 @@ namespace Elffy.Platforms.Windows
 
         LayerCollection IHostScreen.Layers => _renderingArea.Layers;
 
-        public Dispatcher Dispatcher => _renderingArea.Dispatcher;
+        public Dispatcher Dispatcher { get; } = new Dispatcher();
 
         public TimeSpan Time { get; private set; }
 
@@ -51,7 +51,12 @@ namespace Elffy.Platforms.Windows
 
         public FormScreen(YAxisDirection uiYAxisDirection)
         {
-            _renderingArea = new RenderingArea(uiYAxisDirection);
+            var tmpDispatcher = Dispatcher.Current;
+            Dispatcher.SwitchCurrent(Dispatcher);
+            _renderingArea = new RenderingArea(Dispatcher, uiYAxisDirection);
+            Dispatcher.SwitchCurrent(tmpDispatcher);
+            //Engine.SwitchScreen(this);
+
             _frameDelta = TimeSpan.FromSeconds(1.0 / DisplayDevice.Default.RefreshRate);
 
             void MouseButtonDown(object sender, FormMouseEventArgs e)
@@ -90,15 +95,19 @@ namespace Elffy.Platforms.Windows
             MouseLeave += (sender, e) => Mouse.ChangeOnScreen(false);
         }
 
-        public void Run(ActionEventHandler<IHostScreen> switchScreenMethod)
+        public void Run()
         {
-            if(switchScreenMethod == null) { throw new ArgumentNullException(); }
             if(IsDesignMode) { return; }
             Dispatcher.ThrowIfNotMainThread();
             IsRunning = true;
             _renderingArea.Size = ClientSize;
-            Rendering += switchScreenMethod;
-            switchScreenMethod(this);
+            Rendering += sender =>
+            {
+                Dispatcher.SwitchCurrent(Dispatcher);
+                Engine.SwitchScreen(this);
+            };
+            Dispatcher.SwitchCurrent(Dispatcher);
+            Engine.SwitchScreen(this);
             _renderingArea.InitializeGL();
             _watch.Start();
             Initialized?.Invoke(this);
@@ -143,7 +152,8 @@ namespace Elffy.Platforms.Windows
             TabIndex = 0;
             form.Controls.Add(this);
             form.ResumeLayout(false);
-            form.Load += (sender, e) => Run(default(CurriedDelegateDummy).SwitchScreen);
+            //form.Load += (sender, e) => Run(default(CurriedDelegateDummy).SwitchScreen);
+            form.Load += (sender, e) => Run();
 
             if(Application.OpenForms.Count == 0) {
                 Application.Run(form);

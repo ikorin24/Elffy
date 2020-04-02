@@ -168,12 +168,12 @@ namespace Elffy.UI
         /// <summary>get or set <see cref="Control"/> is visible on rendering.</summary>
         public bool IsVisible { get => Renderable.IsVisible; set => Renderable.IsVisible = value; }
 
-        /// <summary>Get or set background color. This value is <see cref="Material.Ambient"/>.</summary>
-        public Color4 Background
-        {
-            get => Renderable.Material.Ambient;
-            set => Renderable.Material.Ambient = value;
-        }
+        ///// <summary>Get or set background color. This value is <see cref="Material.Ambient"/>.</summary>
+        //public Color4 Background
+        //{
+        //    get => Renderable.Material.Ambient;
+        //    set => Renderable.Material.Ambient = value;
+        //}
 
         /// <summary>Get or set texture</summary>
         /// <exception cref="ArgumentNullException"></exception>

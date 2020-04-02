@@ -70,8 +70,8 @@ namespace ElffyGame
             //    cc.Shader = ShaderProgram.Create(vert, frag);
             //}
             //cc.Activate();
-            cc.S = Shader.CreateFromResource("new.vert", "new.frag");
-            cc.Terminated += sender => (sender as Elffy.Core.Renderable)!.S.Dispose();
+            //cc.S = Shader.CreateFromResource("new.vert", "new.frag");
+            //cc.Terminated += sender => (sender as Elffy.Core.Renderable)!.S.Dispose();
             cc.Activate();
             
             

@@ -48,7 +48,7 @@ namespace Elffy
 
         public string Title { get => _window.Title; set => _window.Title = value; }
 
-        public Dispatcher Dispatcher => _renderingArea.Dispatcher;
+        public Dispatcher Dispatcher { get; } = new Dispatcher();
 
         public TimeSpan Time { get; private set; }
 
@@ -78,7 +78,8 @@ namespace Elffy
         /// <param name="yAxisDirection">Y軸の方向</param>
         public Window(int width, int height, string title, WindowStyle windowStyle, YAxisDirection yAxisDirection)
         {
-            _renderingArea = new RenderingArea(yAxisDirection);
+            _renderingArea = new RenderingArea(Dispatcher, yAxisDirection);
+            Engine.SwitchScreen(this);
             _window = new GameWindow(width, height, GraphicsMode.Default, title, (GameWindowFlags)windowStyle);
             if(windowStyle != WindowStyle.Fullscreen) {
                 _window.ClientSize = new Size(width, height);
@@ -126,7 +127,13 @@ namespace Elffy
         {
             Title = title;
             if(icon != null) { Icon = icon; }
-            Rendering += default(CurriedDelegateDummy).SwitchScreen;
+            Rendering += sender =>
+            {
+                Dispatcher.SwitchCurrent(Dispatcher);
+                Engine.SwitchScreen(this);
+            };
+            Dispatcher.SwitchCurrent(Dispatcher);
+            Engine.SwitchScreen(this);
             switch(windowStyle) {
                 case WindowStyle.Default: {
                     _window.WindowBorder = WindowBorder.Resizable;
