@@ -10,6 +10,9 @@ namespace Elffy.Core
     /// <summary>Base class that has components.</summary>
     public abstract class ComponentOwner : FrameObject
     {
+        public event ActionEventHandler<ComponentOwner, IComponent>? ComponentAttached;
+        public event ActionEventHandler<ComponentOwner, IComponent>? ComponentDetached;
+
         /// <summary>Get component of specified type</summary>
         /// <typeparam name="T">component type</typeparam>
         /// <returns>component object</returns>
@@ -30,6 +33,7 @@ namespace Elffy.Core
             ArgumentChecker.ThrowArgumentIf(ComponentStore<T>.HasComponentOf(this), $"Component type '{typeof(T).FullName.AsInterned()}' already exists.".AsInterned());
             ComponentStore<T>.Add(this, component);
             component.OnAttached(this);
+            ComponentAttached?.Invoke(this, component);
         }
 
         /// <summary>Add or replace component whose type is <typeparamref name="T"/>. Return true if replaced, otherwize false.</summary>
@@ -42,6 +46,7 @@ namespace Elffy.Core
             var addNew = ComponentStore<T>.AddOrReplace(this, component);
             if(addNew) {
                 component.OnAttached(this);
+                ComponentAttached?.Invoke(this, component);
             }
             return addNew;
         }
@@ -61,6 +66,7 @@ namespace Elffy.Core
         {
             var removed = ComponentStore<T>.Remove(this, out var component);
             if(removed) {
+                ComponentDetached?.Invoke(this, component);
                 component.OnDetached(this);
             }
             return removed;
