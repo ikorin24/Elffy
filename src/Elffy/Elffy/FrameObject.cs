@@ -1,7 +1,9 @@
 ﻿#nullable enable
 using System;
+using System.Diagnostics;
 using Elffy.Core;
 using Elffy.Exceptions;
+using Elffy.Threading;
 
 namespace Elffy
 {
@@ -11,6 +13,8 @@ namespace Elffy
     /// </summary>
     public abstract class FrameObject : ITerminatable
     {
+        private Dispatcher? _dispatcher;
+
         /// <summary>このオブジェクトがエンジンによって管理されているかどうかを返します</summary>
         public bool IsActivated { get; private set; }
 
@@ -30,7 +34,12 @@ namespace Elffy
         /// このオブジェクトが所属するレイヤー<para/>
         /// <see cref="IsActivated"/> == true かつ <see cref="IsTerminated"/> == false の場合常にインスタンスを持ち、そうでない場合常に null です<para/>
         /// </summary>
-        public ILayer? Layer { get; private set; }
+        private protected ILayer? Layer { get; private set; }
+
+        /// <summary>Get <see cref="Elffy.Threading.Dispatcher"/> of this <see cref="FrameObject"/>.</summary>
+        /// <exception cref="InvalidOperationException"></exception>
+        public Dispatcher Dispatcher => _dispatcher ?? (_dispatcher = Layer?.Owner?.Owner?.Owner?.Dispatcher) ??
+                                        throw new InvalidOperationException($"{nameof(FrameObject)} is not activated yet or already terminated.");
 
         /// <summary>このオブジェクトがアクティブになった時のイベント</summary>
         public event ActionEventHandler<FrameObject>? Activated;
@@ -73,6 +82,7 @@ namespace Elffy
             if(IsTerminated) { throw new ObjectTerminatedException(this); }
             if(IsActivated) { return; }
             var worldLayer = CurrentScreen.Layers.WorldLayer;
+            Debug.Assert(worldLayer.Owner != null);
             Layer = worldLayer;
             worldLayer.AddFrameObject(this);
             IsActivated = true;
@@ -83,6 +93,7 @@ namespace Elffy
         public void Activate(Layer layer)
         {
             ArgumentChecker.ThrowIfNullArg(layer, nameof(layer));
+            ArgumentChecker.ThrowArgumentIf(layer.Owner == null, $"{nameof(layer)} is not associated with {nameof(IHostScreen)}.");
             if(IsTerminated) { throw new ObjectTerminatedException(this); }
             if(IsActivated) { return; }
             Layer = layer;
@@ -91,31 +102,10 @@ namespace Elffy
             Activated?.Invoke(this);
         }
 
-        internal void Activate(SystemLayer layer)
+        internal void Activate<TLayer>(TLayer layer) where TLayer : class, ILayer
         {
             ArgumentChecker.ThrowIfNullArg(layer, nameof(layer));
-            if(IsTerminated) { throw new ObjectTerminatedException(this); }
-            if(IsActivated) { return; }
-            Layer = layer;
-            layer.AddFrameObject(this);
-            IsActivated = true;
-            Activated?.Invoke(this);
-        }
-
-        internal void Activate(UILayer layer)
-        {
-            ArgumentChecker.ThrowIfNullArg(layer, nameof(layer));
-            if(IsTerminated) { throw new ObjectTerminatedException(this); }
-            if(IsActivated) { return; }
-            Layer = layer;
-            layer.AddFrameObject(this);
-            IsActivated = true;
-            Activated?.Invoke(this);
-        }
-
-        public void Activate(ILayer layer)
-        {
-            ArgumentChecker.ThrowIfNullArg(layer, nameof(layer));
+            Debug.Assert(layer.Owner != null);
             if(IsTerminated) { throw new ObjectTerminatedException(this); }
             if(IsActivated) { return; }
             Layer = layer;
@@ -131,6 +121,7 @@ namespace Elffy
             Layer?.RemoveFrameObject(this);
             Layer = null;
             IsTerminated = true;
+            _dispatcher = null;
             (this as IDisposable)?.Dispose();
             Terminated?.Invoke(this);
         }
