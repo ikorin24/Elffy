@@ -2,9 +2,9 @@
 
 namespace Elffy.Core
 {
-    public interface ILayer
+    internal interface ILayer
     {
-        internal LayerCollection? Owner { get; }
+        LayerCollection? Owner { get; }
 
         /// <summary>現在生きている全オブジェクトの数を取得します</summary>
         int ObjectCount { get; }
