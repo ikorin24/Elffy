@@ -24,7 +24,6 @@ namespace Elffy.UI
             Root = this;
         }
 
-        #region Layout
         /// <summary>Layout を実行します</summary>
         public void Layout()
         {
@@ -71,6 +70,5 @@ namespace Elffy.UI
             }
             IsLayouted = true;
         }
-        #endregion
     }
 }

@@ -35,6 +35,8 @@ namespace Elffy
             CurrentScreen.Screen = screen;
         }
 
+        internal static void SwitchScreen(IHostScreen screen) => SwitchScreen(default, screen);
+
         public static void ShowScreen(ActionEventHandler<IHostScreen> initialized)
             => ShowScreen(800, 450, "", initialized);
 

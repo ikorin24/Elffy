@@ -1,27 +1,30 @@
 ﻿#nullable enable
 using System.Diagnostics;
-using OpenTK.Graphics;
-using OpenTK.Graphics.OpenGL;
 using Elffy.Core;
+using System;
+using System.Runtime.InteropServices;
 
 namespace Elffy
 {
     /// <summary>Material of <see cref="Renderable"/> object</summary>
     [DebuggerDisplay("Ambient=({Ambient.R}, {Ambient.G}, {Ambient.B}, {Ambient.A}), Diffuse=({Diffuse.R}, {Diffuse.G}, {Diffuse.B}, {Diffuse.A}), Specular=({Specular.R}, {Specular.G}, {Specular.B}, {Specular.A}), Shininess={Shininess}")]
-    public sealed class Material
+    [StructLayout(LayoutKind.Explicit)]
+    public struct Material : IEquatable<Material>
     {
-        private static Material? _current;
-
         /// <summary>Ambient color of material</summary>
-        public Color4 Ambient { get; set; }
+        [FieldOffset(0)]
+        public Color4 Ambient;
         /// <summary>Diffuse color of material</summary>
-        public Color4 Diffuse { get; set; }
+        [FieldOffset(16)]
+        public Color4 Diffuse;
         /// <summary>Specular color of material</summary>
-        public Color4 Specular { get; set; }
+        [FieldOffset(32)]
+        public Color4 Specular;
         /// <summary>Shininess intensity of material</summary>
-        public float Shininess { get; set; }
+        [FieldOffset(48)]
+        public float Shininess;
 
-        /// <summary>Default material. (If <see cref="Renderable.Material"/> is null, it is rendered by this material.)</summary>
+        /// <summary>Default material.</summary>
         public static Material Default => Materials.Plain;
 
         /// <summary>constructor of specified color material</summary>
@@ -49,15 +52,17 @@ namespace Elffy
             Shininess = shininess;
         }
 
-        internal void Apply()
-        {
-            if(this != _current) {
-                _current = this;
-                GL.Material(MaterialFace.Front, MaterialParameter.Ambient, Ambient);
-                GL.Material(MaterialFace.Front, MaterialParameter.Diffuse, Diffuse);
-                GL.Material(MaterialFace.Front, MaterialParameter.Specular, Specular);
-                GL.Material(MaterialFace.Front, MaterialParameter.Shininess, Shininess);
-            }
-        }
+        public readonly override bool Equals(object? obj) => obj is Material material && Equals(material);
+
+        public readonly bool Equals(Material other) => Ambient.Equals(other.Ambient) &&
+                                                       Diffuse.Equals(other.Diffuse) &&
+                                                       Specular.Equals(other.Specular) &&
+                                                       Shininess == other.Shininess;
+
+        public readonly override int GetHashCode() => HashCode.Combine(Ambient, Diffuse, Specular, Shininess);
+
+        public static bool operator ==(Material left, Material right) => left.Equals(right);
+
+        public static bool operator !=(Material left, Material right) => !(left == right);
     }
 }

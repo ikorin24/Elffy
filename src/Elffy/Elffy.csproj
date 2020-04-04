@@ -24,6 +24,7 @@
     <PackageReference Include="PMXParser" Version="1.0.1" />
     <PackageReference Include="System.Memory" Version="4.5.3" />
     <PackageReference Include="UnmanagedArray" Version="1.0.2" />
+    <PackageReference Include="ZString" Version="1.0.0" />
   </ItemGroup>
 
   <ItemGroup>

@@ -10,7 +10,7 @@ using System.ComponentModel;
 namespace Elffy.UI
 {
     /// <summary><see cref="UI.Control"/> を描画するためのオブジェクト。対象の <see cref="UI.Control"/> のインスタンスと一対一の関係を持つ</summary>
-    internal sealed class UIRenderable : Renderable, IDisposable, IUIRenderable
+    internal sealed class UIRenderable : Renderable, IDisposable//, IUIRenderable
     {
         private bool _disposed;
         /// <summary>頂点配列</summary>
@@ -33,10 +33,10 @@ namespace Elffy.UI
 
         ~UIRenderable() => Dispose(false);
 
-        void IUIRenderable.Render() => Render();
-        bool IUIRenderable.IsVisible => IsVisible;
-        void IUIRenderable.Activate() => Activate(Control.Root!.UILayer);
-        void IUIRenderable.Destroy() => Terminate();
+        //void IUIRenderable.Render() => Render(,);
+        //bool IUIRenderable.IsVisible => IsVisible;
+        //void IUIRenderable.Activate() => Activate(Control.Root!.UILayer);
+        //void IUIRenderable.Destroy() => Terminate();
 
         private void OnActivated(FrameObject _)
         {
