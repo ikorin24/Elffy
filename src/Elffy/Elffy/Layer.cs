@@ -14,8 +14,9 @@ namespace Elffy
         private readonly FrameObjectStore _store = new FrameObjectStore();
 
         /// <summary>
-        /// このレイヤーを持つ親<para/>
-        /// ※ このレイヤーを親に追加する時、必ず親をこのプロパティに入れるように実装されなければならない。削除時は null を必ず入れる。<para/>
+        /// このレイヤーを持つ親 (<see cref="LayerCollection"/>)<para/>
+        /// ※ このレイヤーを <see cref="LayerCollection"/> に追加する時、必ず <see cref="LayerCollection"/> をこのプロパティに入れるように実装されなければならない。
+        /// 削除時は null を必ず入れる。<para/>
         /// </summary>
         internal LayerCollection? Owner { get; set; }
         LayerCollection? ILayer.Owner => Owner;
