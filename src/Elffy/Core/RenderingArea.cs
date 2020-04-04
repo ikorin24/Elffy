@@ -16,6 +16,8 @@ namespace Elffy.Core
         /// <summary>UI の投影行列</summary>
         private Matrix4 _uiProjection;
 
+        internal IHostScreen Owner { get; }
+
         /// <summary>レイヤーのリスト</summary>
         internal LayerCollection Layers { get; }
         internal Light Light { get; } = new Light();
@@ -72,8 +74,9 @@ namespace Elffy.Core
         }
         private Color4 _clearColor;
 
-        internal RenderingArea(YAxisDirection uiYAxisDirection)
+        internal RenderingArea(YAxisDirection uiYAxisDirection, IHostScreen screen)
         {
+            Owner = screen;
             Layers = new LayerCollection(uiYAxisDirection, this);
         }
 

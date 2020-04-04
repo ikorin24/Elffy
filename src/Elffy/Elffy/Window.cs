@@ -78,7 +78,7 @@ namespace Elffy
         /// <param name="yAxisDirection">Y軸の方向</param>
         public Window(int width, int height, string title, WindowStyle windowStyle, YAxisDirection yAxisDirection)
         {
-            _renderingArea = new RenderingArea(yAxisDirection);
+            _renderingArea = new RenderingArea(yAxisDirection, this);
             _window = new GameWindow(width, height, GraphicsMode.Default, title, (GameWindowFlags)windowStyle);
             if(windowStyle != WindowStyle.Fullscreen) {
                 _window.ClientSize = new Size(width, height);

@@ -51,7 +51,7 @@ namespace Elffy.Platforms.Windows
 
         public FormScreen(YAxisDirection uiYAxisDirection)
         {
-            _renderingArea = new RenderingArea(uiYAxisDirection);
+            _renderingArea = new RenderingArea(uiYAxisDirection, this);
             _frameDelta = TimeSpan.FromSeconds(1.0 / DisplayDevice.Default.RefreshRate);
 
             void MouseButtonDown(object sender, FormMouseEventArgs e)
