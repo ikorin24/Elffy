@@ -6,12 +6,12 @@ using Elffy.Exceptions;
 namespace Elffy
 {
     /// <summary>
-    /// ゲームによって管理され、ゲームのフレームに関わるオブジェクトの基底クラス<para/>
-    /// ゲームのフレームに関する操作・ゲームによって管理されるための操作を提供します。<para/>
+    /// フレーム更新に関わるオブジェクトの基底クラス<para/>
+    /// フレームに関する操作・エンジンによって管理されるための操作を提供します。<para/>
     /// </summary>
     public abstract class FrameObject : ITerminatable
     {
-        /// <summary>このオブジェクトがゲームによって管理されているかどうかを返します</summary>
+        /// <summary>このオブジェクトがエンジンによって管理されているかどうかを返します</summary>
         public bool IsActivated { get; private set; }
 
         /// <summary>このオブジェクトが開始しているかどうかを返します</summary>
@@ -23,7 +23,7 @@ namespace Elffy
         /// <summary>このオブジェクトに付けられたタグ</summary>
         public string Tag { get; set; } = string.Empty;
 
-        /// <summary>このオブジェクトが、ゲームによって管理されるオブジェクトリストから破棄されているかどうかを返します</summary>
+        /// <summary>このオブジェクトが、エンジンによって管理されるオブジェクトリストから破棄されているかどうかを返します</summary>
         public bool IsTerminated { get; private set; }
 
         /// <summary>
