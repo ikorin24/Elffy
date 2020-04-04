@@ -33,10 +33,10 @@ namespace Elffy.Effective.Internal
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static Memory<T> AsMemory<T>(this List<T> list) => Unsafe.As<ListDummy<T>>(list).Item.AsMemory();
+        internal static Memory<T> AsMemory<T>(this List<T> list) => Unsafe.As<ListDummy<T>>(list).Item.AsMemory(0, list.Count);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static Span<T> AsSpan<T>(this List<T> list) => Unsafe.As<ListDummy<T>>(list).Item.AsSpan();
+        internal static Span<T> AsSpan<T>(this List<T> list) => Unsafe.As<ListDummy<T>>(list).Item.AsSpan(0, list.Count);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static ReadOnlyMemory<T> AsReadOnlyMemory<T>(this List<T> list) => list.AsMemory();
