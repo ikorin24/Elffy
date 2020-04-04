@@ -14,13 +14,18 @@ namespace Elffy.Core
         /// <summary>現在フォーカスがある <see cref="Control"/></summary>
         private Control? _focusedControl;
 
+        /// <summary>このレイヤーを持つ親</summary>
+        internal LayerCollection Owner { get; }
+        LayerCollection? ILayer.Owner => Owner;
+
         /// <summary>UI tree の Root</summary>
         internal Page UIRoot { get; }
 
         internal YAxisDirection YAxisDirection { get; }
 
-        internal UILayer(YAxisDirection yAxisDirection)
+        internal UILayer(YAxisDirection yAxisDirection, LayerCollection owner)
         {
+            Owner = owner;
             UIRoot = new Page(this);
             YAxisDirection = yAxisDirection;
         }

@@ -26,10 +26,10 @@ namespace Elffy
         internal UILayer UILayer { get; }
 
         /// <summary>ワールドレイヤーを取得します</summary>
-        public Layer WorldLayer { get; } = new Layer(WORLD_LAYER_NAME) { IsLightingEnabled = true };
+        public Layer WorldLayer { get; }
 
         /// <summary>システムレイヤー (このレイヤーはリストには含まれません。インスタンスを public にも公開しないでください)</summary>
-        internal SystemLayer SystemLayer { get; } = new SystemLayer();
+        internal SystemLayer SystemLayer { get; }
 
         /// <summary>レイヤーの数を取得します</summary>
         public int Count => _list.Count;
@@ -51,7 +51,9 @@ namespace Elffy
         internal LayerCollection(YAxisDirection uiYAxisDirection, RenderingArea owner)
         {
             Owner = owner;
-            UILayer = new UILayer(uiYAxisDirection);
+            UILayer = new UILayer(uiYAxisDirection, this);
+            SystemLayer = new SystemLayer(this);
+            WorldLayer = new Layer(WORLD_LAYER_NAME, this) { IsLightingEnabled = true };
             AddDefaltLayers();
         }
 

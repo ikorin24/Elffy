@@ -13,7 +13,12 @@ namespace Elffy
     {
         private readonly FrameObjectStore _store = new FrameObjectStore();
 
+        /// <summary>
+        /// このレイヤーを持つ親<para/>
+        /// ※ このレイヤーを親に追加する時、必ず親をこのプロパティに入れるように実装されなければならない。削除時は null を必ず入れる。<para/>
+        /// </summary>
         internal LayerCollection? Owner { get; set; }
+        LayerCollection? ILayer.Owner => Owner;
 
         /// <summary>このレイヤーのライティングを有効にするかどうか</summary>
         public bool IsLightingEnabled { get; set; }
@@ -26,6 +31,13 @@ namespace Elffy
         {
             ArgumentChecker.ThrowIfNullArg(name, nameof(name));
             Name = name;
+        }
+
+        internal Layer(string name, LayerCollection owner)
+        {
+            ArgumentChecker.ThrowIfNullArg(name, nameof(name));
+            Name = name;
+            Owner = owner;
         }
 
         /// <summary>現在生きている全オブジェクトの数を取得します</summary>

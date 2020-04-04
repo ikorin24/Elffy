@@ -6,8 +6,17 @@ namespace Elffy.Core
     {
         private readonly FrameObjectStore _store = new FrameObjectStore();
 
+        /// <summary>このレイヤーを持つ親</summary>
+        internal LayerCollection Owner { get; }
+        LayerCollection? ILayer.Owner => Owner;
+
         /// <summary>現在生きている全オブジェクトの数を取得します</summary>
         public int ObjectCount => _store.ObjectCount;
+
+        internal SystemLayer(LayerCollection owner)
+        {
+            Owner = owner;
+        }
 
         /// <summary>指定した<see cref="FrameObject"/>を追加します</summary>
         /// <param name="frameObject">追加するオブジェクト</param>
