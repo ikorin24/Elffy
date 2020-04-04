@@ -76,6 +76,7 @@ namespace ElffyGame
             }
             for(int i = 1; i < cubeArray.Length; i++) {
                 cubeArray[i - 1].Children.Add(cubeArray[i]);
+                cubeArray[i].Activate();
             }
             cubeArray[0].Activate();
 
