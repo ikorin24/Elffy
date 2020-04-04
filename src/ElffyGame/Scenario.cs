@@ -22,52 +22,25 @@ namespace ElffyGame
 {
     public abstract class Scenario
     {
-        public static bool IsRunning => Current != null;
-
-        public static Scenario? Current { get; private set; }
-
-        public static void Start(Scenario scenario)
+        public static void Start(IHostScreen screen)
         {
-            if(IsRunning) { throw new InvalidOperationException($"{nameof(Scenario)} is already running."); }
-            if(scenario == null) { throw new ArgumentNullException(nameof(scenario)); }
-            GoToNextPrivate(scenario);
-        }
-
-        public static void GoToNext(Scenario scenario)
-        {
-            if(!IsRunning) { throw new InvalidOperationException($"{nameof(Scenario)} is not running."); }
-            if(scenario == null) { throw new ArgumentNullException(nameof(scenario)); }
-            GoToNextPrivate(scenario);
-        }
-
-        private static void GoToNextPrivate(Scenario scenario)
-        {
-            Current = scenario;
-            CurrentScreen.Dispatcher.Invoke(scenario.Start);
-        }
-
-        protected abstract void Start();
-    }
-
-    public class StartScenario : Scenario
-    {
-        protected unsafe override  void Start()
-        {
+            var worldLayer = screen.Layers.WorldLayer;
+            //worldLayer.AddFrameObject
             CurrentScreen.Light.GlobalAmbient = new Elffy.Color4(1, 0, 0);
 
             //Engine.CurrentScreen.Layers.WorldLayer.IsLightingEnabled = false;
             var light = new DirectLight();
             light.Activate();
             var model = Resources.LoadModel("Alicia/Alicia_solid.pmx");
-            model.Activate();
+            model.Activate(worldLayer);
             var c = new Cube();
-            c.Activate();
+            c.Activate(worldLayer);
 
             var cc = new Cube() { Position = new Vector3(0, 10, 0), Material = Materials.RedPlastic };
-            cc.Activate();
+            cc.Activate(worldLayer);
             CurrentScreen.Camera.LookAt(new Vector3(0, 10, 0), new Vector3(40, 40, -40));
             var cm = new CameraMouse(CurrentScreen.Camera, CurrentScreen.Mouse, new Vector3(0, 0, 0));
-            cm.Activate();
+            cm.Activate(worldLayer);
 
             var cubeArray = Enumerable.Range(0, 9).Select(i => new Cube() { Position = new Vector3(3, 0, 0) }).ToArray();
             foreach(var cube in cubeArray) {
@@ -76,9 +49,9 @@ namespace ElffyGame
             }
             for(int i = 1; i < cubeArray.Length; i++) {
                 cubeArray[i - 1].Children.Add(cubeArray[i]);
-                cubeArray[i].Activate();
+                cubeArray[i].Activate(worldLayer);
             }
-            cubeArray[0].Activate();
+            cubeArray[0].Activate(worldLayer);
 
 
             //var light = new DirectLight();

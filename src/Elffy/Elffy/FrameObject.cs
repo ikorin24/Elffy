@@ -77,17 +77,17 @@ namespace Elffy
         }
 
         /// <summary>このオブジェクトをデフォルトのレイヤーでアクティブにします</summary>
-        public void Activate()
-        {
-            if(IsTerminated) { throw new ObjectTerminatedException(this); }
-            if(IsActivated) { return; }
-            var worldLayer = CurrentScreen.Layers.WorldLayer;
-            Debug.Assert(worldLayer.Owner != null);
-            Layer = worldLayer;
-            worldLayer.AddFrameObject(this);
-            IsActivated = true;
-            Activated?.Invoke(this);
-        }
+        //public void Activate()
+        //{
+        //    if(IsTerminated) { throw new ObjectTerminatedException(this); }
+        //    if(IsActivated) { return; }
+        //    var worldLayer = CurrentScreen.Layers.WorldLayer;
+        //    Debug.Assert(worldLayer.Owner != null);
+        //    Layer = worldLayer;
+        //    worldLayer.AddFrameObject(this);
+        //    IsActivated = true;
+        //    Activated?.Invoke(this);
+        //}
 
         /// <summary>このオブジェクトを指定のレイヤーでアクティブにします</summary>
         public void Activate(Layer layer)
