@@ -11,7 +11,6 @@ using Elffy.Mathmatics;
 using System.Diagnostics;
 using Elffy.InputSystem;
 using System.Drawing;
-using OpenTK.Graphics;
 using Elffy.Serialization;
 using System.Reflection.Emit;
 using Elffy.Effective;
@@ -25,10 +24,8 @@ namespace ElffyGame
         public static void Start(IHostScreen screen)
         {
             var worldLayer = screen.Layers.WorldLayer;
-            //worldLayer.AddFrameObject
-            CurrentScreen.Light.GlobalAmbient = new Elffy.Color4(1, 0, 0);
+            screen.Light.GlobalAmbient = Color4.Red;
 
-            //Engine.CurrentScreen.Layers.WorldLayer.IsLightingEnabled = false;
             var light = new DirectLight();
             light.Activate();
             var model = Resources.LoadModel("Alicia/Alicia_solid.pmx");
@@ -38,8 +35,8 @@ namespace ElffyGame
 
             var cc = new Cube() { Position = new Vector3(0, 10, 0), Material = Materials.RedPlastic };
             cc.Activate(worldLayer);
-            CurrentScreen.Camera.LookAt(new Vector3(0, 10, 0), new Vector3(40, 40, -40));
-            var cm = new CameraMouse(CurrentScreen.Camera, CurrentScreen.Mouse, new Vector3(0, 0, 0));
+            screen.Camera.LookAt(new Vector3(0, 10, 0), new Vector3(40, 40, -40));
+            var cm = new CameraMouse(screen.Camera, screen.Mouse, new Vector3(0, 0, 0));
             cm.Activate(worldLayer);
 
             var cubeArray = Enumerable.Range(0, 9).Select(i => new Cube() { Position = new Vector3(3, 0, 0) }).ToArray();
