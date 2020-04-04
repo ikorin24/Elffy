@@ -223,7 +223,6 @@ namespace Elffy.Core
         public Positionable()
         {
             Children = new PositionableCollection(this);
-            Activated += OnActivated;
         }
 
         /// <summary>オブジェクトを移動させます</summary>
@@ -299,14 +298,6 @@ namespace Elffy.Core
         {
             if(IsRoot) { return this; }
             return GetAncestor().Last();
-        }
-
-        private void OnActivated(FrameObject frameObject)
-        {
-            var l = Layer!;
-            foreach(var offspring in GetOffspring()) {
-                offspring.Activate(l);
-            }
         }
     }
 }
