@@ -74,7 +74,7 @@ namespace Elffy.Core
 
         internal RenderingArea(YAxisDirection uiYAxisDirection)
         {
-            Layers = new LayerCollection(uiYAxisDirection);
+            Layers = new LayerCollection(uiYAxisDirection, this);
         }
 
         /// <summary>OpenTL の描画に関する初期設定を行います</summary>
