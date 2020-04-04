@@ -4,17 +4,18 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading;
 using Elffy.Core;
 using Elffy.Exceptions;
 using Elffy.UI;
+using Elffy.Effective;
+using Elffy.Effective.Internal;
 
 namespace Elffy
 {
     /// <summary><see cref="Layer"/>のリストを表すクラスです。</summary>
     [DebuggerTypeProxy(typeof(LayerCollectionDebuggerTypeProxy))]
     [DebuggerDisplay("LayerCollection (Count = {Count})")]
-    public class LayerCollection : IList<Layer>, IReadOnlyList<Layer>, IReadOnlyCollection<Layer>, IList
+    public class LayerCollection : IReadOnlyList<Layer>, IReadOnlyCollection<Layer>, ICollection<Layer>
     {
         private const string WORLD_LAYER_NAME = "World";
         private readonly List<Layer> _list = new List<Layer>();
@@ -31,25 +32,7 @@ namespace Elffy
         /// <summary>レイヤーの数を取得します</summary>
         public int Count => _list.Count;
 
-        /// <summary>このリストが読み取り専用かどうかを取得します。常に false を返します。</summary>
-        public bool IsReadOnly => false;
-        bool IList.IsReadOnly => false;
-
-        bool IList.IsFixedSize => false;
-
-        object ICollection.SyncRoot
-        {
-            get
-            {
-                if(_syncRoot == null) {
-                    Interlocked.CompareExchange(ref _syncRoot, new object(), null!);
-                }
-                return _syncRoot;
-            }
-        }
-        private object? _syncRoot;
-
-        bool ICollection.IsSynchronized => false;
+        bool ICollection<Layer>.IsReadOnly => false;
 
         /// <summary>インデックスを指定して、レイヤーを取得、設定します</summary>
         /// <param name="index">インデックス</param>
@@ -58,21 +41,11 @@ namespace Elffy
         {
             get
             {
-                ArgumentChecker.ThrowOutOfRangeIf(index < 0 || index > _list.Count - 1, nameof(index), index, "value is out of range");
+                ArgumentChecker.ThrowOutOfRangeIf((uint)index >= (uint)_list.Count, nameof(index), index, "value is out of range");
                 return _list[index];
             }
-            set
-            {
-                ArgumentChecker.ThrowIfNullArg(value, nameof(value));
-                _list[index] = value;
-            }
         }
-        object IList.this[int index]
-        {
-            get => this[index];
-            set => this[index] = (Layer)value;
-        }
-
+        
         internal LayerCollection(YAxisDirection uiYAxisDirection)
         {
             UILayer = new UILayer(uiYAxisDirection);
@@ -86,93 +59,44 @@ namespace Elffy
         public void Add(Layer layer)
         {
             ArgumentChecker.ThrowIfNullArg(layer, nameof(layer));
+            if(layer.Owner != null) { throw new InvalidOperationException($"指定のレイヤーは既に別の {nameof(LayerCollection)} に含まれています。"); }
+            layer.Owner = this;
             _list.Add(layer);
-        }
-
-        int IList.Add(object value)
-        {
-            Add((Layer)value);
-            return Count - 1;
-        }
-
-
-        /// <summary>レイヤーを複数追加します</summary>
-        /// <param name="layers">追加するレイヤー</param>
-        public void AddRange(IEnumerable<Layer> layers)
-        {
-            ArgumentChecker.ThrowIfNullArg(layers, nameof(layers));
-            var evaluated = (layers is ICollection) ? layers : layers.ToArray();
-            ArgumentChecker.ThrowArgumentIf(evaluated.Contains(null!), $"{nameof(layers)} contain 'null'. Can not add null.");
-            _list.AddRange(evaluated);
         }
 
         /// <summary>レイヤーをクリアします (デフォルトのレイヤーはクリアされません)</summary>
         public void Clear()
         {
+            foreach(var layer in _list.AsSpan()) {
+                layer.Owner = null;
+            }
             _list.Clear();
             AddDefaltLayers();
         }
-
-        void IList.Clear() => Clear();
 
         /// <summary>リスト中にレイヤーが含まれているかを取得します</summary>
         /// <param name="layer">確認するレイヤー</param>
         /// <returns>リスト中に指定レイヤーが含まれているか</returns>
         public bool Contains(Layer layer) => _list.Contains(layer);
 
-        bool IList.Contains(object value) => Contains((Layer)value);
-
         /// <summary>リストのレイヤーを配列にコピーします</summary>
         /// <param name="array">コピー先の配列</param>
         /// <param name="arrayIndex">コピー先の配列のコピーを開始するインデックス</param>
         public void CopyTo(Layer[] array, int arrayIndex) => _list.CopyTo(array, arrayIndex);
-
-        void ICollection.CopyTo(Array array, int index)
-        {
-            if(array is Layer[] layers) {
-                _list.CopyTo(layers, index);
-            }
-        }
-
-        /// <summary>指定レイヤーのインデックスを取得します</summary>
-        /// <param name="layer">インデックスを取得するレイヤー</param>
-        /// <returns>レイヤーのインデックス</returns>
-        public int IndexOf(Layer layer) => _list.IndexOf(layer);
-        int IList.IndexOf(object value) => (value is Layer layer) ? IndexOf(layer) : -1;
-
-        /// <summary>インデックスを指定してレイヤーを追加します</summary>
-        /// <param name="index">インデックス</param>
-        /// <param name="layer">追加するレイヤー</param>
-        public void Insert(int index, Layer layer)
-        {
-            ArgumentChecker.ThrowIfNullArg(layer, nameof(layer));
-            ArgumentChecker.ThrowOutOfRangeIf(index < 0 || index > _list.Count, nameof(index), index, "value is out of range.");
-            _list.Insert(index, layer);
-        }
-
-        void IList.Insert(int index, object value) => Insert(index, (Layer)value);
-
         /// <summary>レイヤーをリストから削除します</summary>
         /// <param name="layer">削除するレイヤー</param>
         /// <returns>削除に成功したか (指定した要素が存在しない場合 false)</returns>
         public bool Remove(Layer layer)
         {
             ArgumentChecker.ThrowIfNullArg(layer, nameof(layer));
-            return _list.Remove(layer);
-        }
-        void IList.Remove(object value) => Remove((Layer)value);
-
-        /// <summary>指定のインデックスのレイヤーを削除します</summary>
-        /// <param name="index">インデックス</param>
-        public void RemoveAt(int index)
-        {
-            ArgumentChecker.ThrowOutOfRangeIf(index < 0 || index >= _list.Count, nameof(index), index, $"{nameof(index)} is out of range");
-            _list.RemoveAt(index);
+            var removed = _list.Remove(layer);
+            if(removed) {
+                layer.Owner = null;
+            }
+            return removed;
         }
 
-        void IList.RemoveAt(int index) => RemoveAt(index);
-
-        public List<Layer>.Enumerator GetEnumerator() => _list.GetEnumerator();
+        public Span<Layer>.Enumerator GetEnumerator() => _list.AsSpan().GetEnumerator();
 
         IEnumerator<Layer> IEnumerable<Layer>.GetEnumerator() => _list.GetEnumerator();
 

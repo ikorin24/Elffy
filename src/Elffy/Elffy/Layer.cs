@@ -13,6 +13,8 @@ namespace Elffy
     {
         private readonly FrameObjectStore _store = new FrameObjectStore();
 
+        internal LayerCollection? Owner { get; set; }
+
         /// <summary>このレイヤーのライティングを有効にするかどうか</summary>
         public bool IsLightingEnabled { get; set; }
 
