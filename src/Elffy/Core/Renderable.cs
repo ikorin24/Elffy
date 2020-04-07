@@ -13,7 +13,7 @@ namespace Elffy.Core
     /// 画面に描画されるオブジェクトの基底クラス<para/>
     /// 描画に関する操作を提供します<para/>
     /// </summary>
-    public abstract class Renderable : Positionable, IDisposable
+    public abstract class Renderable : Positionable
     {
         private int _indexArrayLength;
         /// <summary>VBOバッファ番号</summary>
@@ -23,7 +23,6 @@ namespace Elffy.Core
 
         /// <summary>VAO</summary>
         private int _vao;
-        private bool _disposed;
         private bool _isLoaded;
 
         /// <summary>描画処理を行うかどうか</summary>
@@ -87,7 +86,10 @@ namespace Elffy.Core
         /// <summary>After-rendering event</summary>
         public event ActionEventHandler<Renderable>? Rendered;
 
-        ~Renderable() => Dispose(false);
+        public Renderable()
+        {
+            Terminated += OnTerminated;
+        }
 
         internal unsafe void Render(in Matrix4 projection, in Matrix4 view, in Matrix4 modelParent)
         {
@@ -185,36 +187,14 @@ namespace Elffy.Core
             GL.BufferData(BufferTarget.ElementArrayBuffer, indexArrayLength * sizeof(int), indexArray, BufferUsageHint.StaticDraw);
         }
 
-        #region Dispose
-        protected virtual void Dispose(bool disposing)
+        private void OnTerminated(FrameObject _)
         {
-            if(!_disposed) {
-                if(disposing) {
-                    // Release managed resource here.
-                }
-
-                // Release unmanaged resource
-                if(_isLoaded) {
-                    // OpenGLのバッファの削除はメインスレッドで行う必要がある
-                    var vbo = _vertexBuffer;
-                    var ibo = _indexBuffer;
-                    var vao = _vao;
-                    CurrentScreen.Dispatcher.Invoke(() => {
-                        GL.DeleteBuffer(vbo);
-                        GL.DeleteBuffer(ibo);
-                        GL.DeleteVertexArray(vao);
-                    });
-                }
-                _disposed = true;
+            if(_isLoaded) {
+                GL.DeleteBuffer(_vertexBuffer);
+                GL.DeleteBuffer(_indexBuffer);
+                GL.DeleteVertexArray(_vao);
             }
         }
-
-        public virtual void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-        #endregion
     }
 
     public delegate void RenderingEventHandler(Renderable sender, in Matrix4 model, in Matrix4 view, in Matrix4 projection);

@@ -40,6 +40,7 @@ namespace ElffyGame
             //model.AddComponent(shader);
             model.Shader = shader;
             model.Activate(worldLayer);
+            model.Terminated += _ => shader.Dispose();
             var c = new Cube();
             c.Shader = shader;
             c.Activate(worldLayer);

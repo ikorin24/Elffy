@@ -2,21 +2,17 @@
 using Elffy.Core;
 using System.Collections.Generic;
 using Elffy.Exceptions;
-using OpenTK;
-using OpenTK.Graphics.OpenGL;
-using System;
 using System.ComponentModel;
 
 namespace Elffy.UI
 {
     /// <summary><see cref="UI.Control"/> を描画するためのオブジェクト。対象の <see cref="UI.Control"/> のインスタンスと一対一の関係を持つ</summary>
-    internal sealed class UIRenderable : Renderable, IDisposable//, IUIRenderable
+    internal sealed class UIRenderable : Renderable //, IUIRenderable
     {
-        private bool _disposed;
         /// <summary>頂点配列</summary>
-        private readonly UnmanagedArray<Vertex> _vertexArray = new UnmanagedArray<Vertex>(4);
+        private UnmanagedArray<Vertex>? _vertexArray;
         /// <summary>頂点インデックス配列</summary>
-        private readonly UnmanagedArray<int> _indexArray = new UnmanagedArray<int>(6);
+        private UnmanagedArray<int>? _indexArray;
 
         /// <summary>このインスタンスの描画対象である論理 UI コントロール</summary>
         public Control Control { get; private set; }
@@ -29,9 +25,8 @@ namespace Elffy.UI
             IsFrozen = true;
             Control = control;
             Activated += OnActivated;
+            Terminated += OnTerminated;
         }
-
-        ~UIRenderable() => Dispose(false);
 
         //void IUIRenderable.Render() => Render(,);
         //bool IUIRenderable.IsVisible => IsVisible;
@@ -42,31 +37,17 @@ namespace Elffy.UI
         {
             // Layer is always UILayer
             var yAxisDir = ((UILayer)Layer!).YAxisDirection;
+            _vertexArray = new UnmanagedArray<Vertex>(4);
+            _indexArray = new UnmanagedArray<int>(6);
             SetPolygon(Control.Width, Control.Height, Control.OffsetX, Control.OffsetY, yAxisDir);
             LoadGraphicBuffer(_vertexArray.Ptr, _vertexArray.Length, _indexArray.Ptr, _indexArray.Length);
         }
 
-        #region Dispose pattern
-        protected override void Dispose(bool disposing)
+        private void OnTerminated(FrameObject _)
         {
-            if(!_disposed) {
-                if(disposing) {
-                    // Release managed resource here.
-                    _vertexArray.Dispose();
-                    _indexArray.Dispose();
-                    base.Dispose(true);
-                }
-                // Release unmanaged resource
-                _disposed = true;
-            }
+            _vertexArray?.Dispose();
+            _indexArray?.Dispose();
         }
-
-        public override void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-        #endregion
 
         #region SetPolygon
         /// <summary>頂点配列とインデックス配列をセットします</summary>

@@ -3,8 +3,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
-using System.Threading;
-using Elffy.Components;
+using Elffy.Exceptions;
 using Elffy.Core;
 using OpenTK.Graphics.OpenGL;
 
@@ -17,28 +16,11 @@ namespace Elffy.Shading
 
         private static int _currentProgram = Consts.NULL;
 
-        //private static readonly Lazy<Shader> _noShader = new Lazy<Shader>(() => new NoShader(), LazyThreadSafetyMode.ExecutionAndPublication);
-        //public static Shader NoShader => _noShader.Value;
-
         public Shader()
         {
         }
 
         ~Shader() => Dispose(false);
-
-        //public void OnAttached(ComponentOwner owner)
-        //{
-        //    if(owner is Renderable renderable) {
-        //        renderable.Rendering += Apply;
-        //    }
-        //}
-
-        //public void OnDetached(ComponentOwner owner)
-        //{
-        //    if(owner is Renderable renderable) {
-        //        renderable.Rendering -= Apply;
-        //    }
-        //}
 
         protected abstract void SendUniforms(in Matrix4 model, in Matrix4 view, in Matrix4 projection);
 
@@ -124,14 +106,15 @@ namespace Elffy.Shading
 
         protected virtual void Dispose(bool disposing)
         {
-            CurrentScreen.Dispatcher.Invoke(DeleteProgram);
-        }
-
-        private void DeleteProgram()
-        {
-            if(IsReleased) { return; }
-            GL.DeleteProgram(_program);
-            _program = Consts.NULL;
+            if(disposing) {
+                if(IsReleased) { return; }
+                GL.DeleteProgram(_program);
+                _program = Consts.NULL;
+            }
+            else {
+                // Can not release resources because finalizer is called from another thread.
+                throw new MemoryLeakException(GetType());
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

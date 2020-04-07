@@ -8,7 +8,6 @@ namespace Elffy.Shape
 {
     public class Model3D : Renderable
     {
-        private bool _disposed;
         private readonly UnmanagedArray<Vertex> _vertexArray;
         private readonly UnmanagedArray<int> _indexArray;
 
@@ -17,6 +16,7 @@ namespace Elffy.Shape
             _vertexArray = vertexArray.ToUnmanagedArray();
             _indexArray = indexArray.ToUnmanagedArray();
             Activated += OnActivated;
+            Terminated += OnTerminated;
         }
 
         public ReadOnlySpan<Vertex> GetVertexArray() => _vertexArray.AsSpan();
@@ -33,17 +33,10 @@ namespace Elffy.Shape
             LoadGraphicBuffer(_vertexArray.Ptr, _vertexArray.Length, _indexArray.Ptr, _indexArray.Length);
         }
 
-        protected override void Dispose(bool disposing)
+        private void OnTerminated(FrameObject frameObject)
         {
-            if(!_disposed) {
-                if(disposing) {
-                    // Release managed resource here.
-                    _vertexArray.Dispose();
-                    _indexArray.Dispose();
-                    base.Dispose(disposing);
-                }
-                _disposed = true;
-            }
+            _vertexArray.Dispose();
+            _indexArray.Dispose();
         }
     }
 }
