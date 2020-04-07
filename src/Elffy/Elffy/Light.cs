@@ -51,12 +51,12 @@ namespace Elffy
         {
             get
             {
-                CurrentScreen.Dispatcher.ThrowIfNotMainThread();
+                //CurrentScreen.Dispatcher.ThrowIfNotMainThread();
                 return _globalAmbient;
             }
             set
             {
-                CurrentScreen.Dispatcher.ThrowIfNotMainThread();
+                //CurrentScreen.Dispatcher.ThrowIfNotMainThread();
                 if(_globalAmbient != value) {
                     value.R = (value.R < 0f) ? 0f : value.R;
                     value.G = (value.G < 0f) ? 0f : value.G;

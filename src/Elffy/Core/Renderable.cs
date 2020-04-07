@@ -60,19 +60,19 @@ namespace Elffy.Core
         }
         private TextureBase _texture = TextureBase.Empty;
 
-        public Shader Shader
+        public Shader? Shader
         {
             get => _shader;
             set
             {
-                ArgumentChecker.ThrowIfNullArg(value, nameof(value));
+                //ArgumentChecker.ThrowIfNullArg(value, nameof(value));
                 if(_shader == value) { return; }
                 var old = _shader;
                 _shader = value;
-                ShaderChanged?.Invoke(this, new ValueChangedEventArgs<Shader>(old, value));
+                ShaderChanged?.Invoke(this, new ValueChangedEventArgs<Shader?>(old, value));
             }
         }
-        private Shader _shader = Shader.Default;
+        private Shader? _shader;
 
         /// <summary>Material changed event</summary>
         public event ActionEventHandler<Renderable, ValueChangedEventArgs<Material>>? MaterialChanged;
@@ -80,66 +80,14 @@ namespace Elffy.Core
         public event ActionEventHandler<Renderable, ValueChangedEventArgs<TextureBase>>? TextureChanged;
         ///// <summary>Shader changed event</summary>
         //public event ActionEventHandler<Renderable, ValueChangedEventArgs<ShaderProgram>>? ShaderChanged;
-        public event ActionEventHandler<Renderable, ValueChangedEventArgs<Shader>>? ShaderChanged;
+        public event ActionEventHandler<Renderable, ValueChangedEventArgs<Shader?>>? ShaderChanged;
 
         /// <summary>Before-rendering event</summary>
-        protected event ActionEventHandler<Renderable>? Rendering;
+        public event RenderingEventHandler? Rendering;
         /// <summary>After-rendering event</summary>
-        protected event ActionEventHandler<Renderable>? Rendered;
+        public event ActionEventHandler<Renderable>? Rendered;
 
         ~Renderable() => Dispose(false);
-
-        ///// <summary>このインスタンスを描画します</summary>
-        //internal unsafe void Render()
-        //{
-        //    if(_isLoaded) {
-        //        // 座標と回転を適用
-        //        GL.Translate(Position);
-        //        var rot = Rotation.ToMatrix4();
-        //        GL.MultMatrix((float*)&rot);
-        //        GL.Scale(Scale);
-        //        Rendering?.Invoke(this);
-
-        //        Material.Apply();
-        //        Texture.Apply();
-
-        //        //Shader.Apply();
-
-        //        if(S != null) {
-        //            GL.BindBuffer(BufferTarget.UniformBuffer, _mvp);
-        //            var translate = new Matrix4(1, 0, 0, Position.X,
-        //                                        0, 1, 0, Position.Y,
-        //                                        0, 0, 1, Position.Z,
-        //                                        0, 0, 0, 1);
-        //            var matrix = Rotation.ToMatrix4() * translate * CurrentScreen.Camera.View * CurrentScreen.Camera.Projection;
-        //            GL.BufferSubData(BufferTarget.UniformBuffer, IntPtr.Zero, sizeof(float) * 16, (IntPtr)(&matrix));
-
-        //            GL.BindBuffer(BufferTarget.UniformBuffer, _color);
-        //            var color = Mathmatics.Rand.Color4();
-        //            GL.BufferSubData(BufferTarget.UniformBuffer, IntPtr.Zero, sizeof(float) * 4, (IntPtr)(&color));
-
-        //            GL.BindBufferBase(BufferRangeTarget.UniformBuffer, 0, _mvp);
-        //            GL.BindBufferBase(BufferRangeTarget.UniformBuffer, 1, _color);
-        //            S?.Apply();
-        //        }
-        //        else {
-        //            GL.UseProgram(0);
-        //        }
-
-        //        GL.BindVertexArray(_vao);
-        //        GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBuffer);
-        //        GL.DrawElements(BeginMode.Triangles, _indexArrayLength, DrawElementsType.UnsignedInt, 0);
-        //        Rendered?.Invoke(this);
-        //    }
-
-        //    if(HasChild) {
-        //        foreach(var child in Children.OfType<Renderable>()) {
-        //            GL.PushMatrix();
-        //            child.Render();
-        //            GL.PopMatrix();
-        //        }
-        //    }
-        //}
 
         internal unsafe void Render(in Matrix4 projection, in Matrix4 view, in Matrix4 modelParent)
         {
@@ -158,22 +106,14 @@ namespace Elffy.Core
                                        0, Scale.Y, 0, 0,
                                        0, 0, Scale.Z, 0,
                                        0, 0, 0, 1) * model;
-
-            if(_isLoaded) {
-                Rendering?.Invoke(this);
-
+            if(_isLoaded && IsVisible && Shader != null) {
                 GL.BindVertexArray(_vao);
                 GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBuffer);
+                Rendering?.Invoke(this, in model, in view, in projection);
                 Texture.Apply();
-                //Material.Apply();
                 Shader.Apply(model, view, projection);
+                //Material.Apply();
                 GL.DrawElements(BeginMode.Triangles, _indexArrayLength, DrawElementsType.UnsignedInt, 0);
-                //var modelView = view * model;
-                //GL.UniformMatrix4(location: 4, 1, false, (float*)&modelView);
-                //fixed(Matrix4* proj = &projection) {
-                //    GL.UniformMatrix4(location: 5, 1, false, (float*)proj);
-                //}
-
                 Rendered?.Invoke(this);
             }
 
@@ -186,7 +126,7 @@ namespace Elffy.Core
 
         protected unsafe void LoadGraphicBuffer(ReadOnlySpan<Vertex> vertexArray, ReadOnlySpan<int> indexArray)
         {
-            CurrentScreen.Dispatcher.ThrowIfNotMainThread();
+            Dispatcher.ThrowIfNotMainThread();
             fixed(Vertex* va = vertexArray)
             fixed(int* ia = indexArray) {
                 if(_isLoaded) {
@@ -203,7 +143,7 @@ namespace Elffy.Core
         /// <param name="indexArray">頂点インデックス配列</param>
         protected void LoadGraphicBuffer(IntPtr vertexArray, int vertexArrayLength, IntPtr indexArray, int indexArrayLength)
         {
-            CurrentScreen.Dispatcher.ThrowIfNotMainThread();
+            Dispatcher.ThrowIfNotMainThread();
             if(_isLoaded) {
                 UpdateBuffer(vertexArray, vertexArrayLength, indexArray, indexArrayLength);
             }
@@ -276,4 +216,6 @@ namespace Elffy.Core
         }
         #endregion
     }
+
+    public delegate void RenderingEventHandler(Renderable sender, in Matrix4 model, in Matrix4 view, in Matrix4 projection);
 }

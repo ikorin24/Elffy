@@ -16,6 +16,7 @@ using System.Reflection.Emit;
 using Elffy.Effective;
 using System.Runtime.InteropServices;
 using System.Reflection;
+using Elffy.Shading;
 
 namespace ElffyGame
 {
@@ -26,11 +27,21 @@ namespace ElffyGame
             var worldLayer = screen.Layers.WorldLayer;
             screen.Light.GlobalAmbient = Color4.Red;
 
-            var light = new DirectLight();
-            light.Activate();
+            //var light = new DirectLight();
+            //light.Activate();
             var model = Resources.LoadModel("Alicia/Alicia_solid.pmx");
+            var shader = new DefaultShader();
+
+            var sw = new Stopwatch();
+            sw.Start();
+            shader.Create();
+            sw.Stop();
+            Debug.WriteLine(sw.ElapsedMilliseconds + "ms");
+            //model.AddComponent(shader);
+            model.Shader = shader;
             model.Activate(worldLayer);
             var c = new Cube();
+            c.Shader = shader;
             c.Activate(worldLayer);
 
             var cc = new Cube() { Position = new Vector3(0, 10, 0), Material = Materials.RedPlastic };

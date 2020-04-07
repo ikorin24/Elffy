@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Elffy.Components;
 using Elffy.Core;
 using OpenTK.Graphics.OpenGL;
 
@@ -12,23 +13,32 @@ namespace Elffy.Shading
     public abstract class Shader : IDisposable
     {
         private int _program = Consts.NULL;
-
-        private bool IsEmpty => _program == Consts.NULL;
-        private bool IsDefault => _program == Default._program;
+        private bool IsReleased => _program == Consts.NULL;
 
         private static int _currentProgram = Consts.NULL;
 
-        private static readonly Lazy<DefaultShader> _default = new Lazy<DefaultShader>(() => new DefaultShader(), LazyThreadSafetyMode.ExecutionAndPublication);
-        
-        /// <summary>Get default shader</summary>
-        public static Shader Default => _default.Value;
+        //private static readonly Lazy<Shader> _noShader = new Lazy<Shader>(() => new NoShader(), LazyThreadSafetyMode.ExecutionAndPublication);
+        //public static Shader NoShader => _noShader.Value;
 
         public Shader()
         {
-            CurrentScreen.Dispatcher.Invoke(LoadShader);
         }
 
         ~Shader() => Dispose(false);
+
+        //public void OnAttached(ComponentOwner owner)
+        //{
+        //    if(owner is Renderable renderable) {
+        //        renderable.Rendering += Apply;
+        //    }
+        //}
+
+        //public void OnDetached(ComponentOwner owner)
+        //{
+        //    if(owner is Renderable renderable) {
+        //        renderable.Rendering -= Apply;
+        //    }
+        //}
 
         protected abstract void SendUniforms(in Matrix4 model, in Matrix4 view, in Matrix4 projection);
 
@@ -65,24 +75,18 @@ namespace Elffy.Shading
         protected void SendUniformNoCheck(string name, in Matrix4 value)
             => GL.ProgramUniformMatrix4(_program, GL.GetUniformLocation(_program, name), 1, false, ref Unsafe.As<Matrix4, float>(ref Unsafe.AsRef(value)));
 
-        /// <summary>Apply this shader to current VAO.</summary>
-        /// <param name="model">model matrix</param>
-        /// <param name="view">view matrix</param>
-        /// <param name="projection">projection matrix</param>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void Apply(in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
-            ThrowIfEmptyProgram();
+            ThrowIfReleased();
             if(_currentProgram != _program) {
                 _currentProgram = _program;
                 GL.UseProgram(_program);
             }
-            GL.UseProgram(_program);
             SendUniforms(model, view, projection);
         }
 
         /// <summary>頂点シェーダー・フラグメントシェーダ―の読み込み、リンク、プログラムの作成を行います</summary>
-        private void LoadShader()
+        public void Create()
         {
             var vertShader = Consts.NULL;
             var fragShader = Consts.NULL;
@@ -113,28 +117,27 @@ namespace Elffy.Shading
 
         public void Dispose()
         {
-            if(IsEmpty) { return; }
+            if(IsReleased) { return; }
             Dispose(true);
             GC.SuppressFinalize(this);
         }
 
         protected virtual void Dispose(bool disposing)
         {
-            if(disposing && IsDefault) { return; };         // defaultシェーダーは破棄しない (ファイナライザ経由の時のみ破棄)
             CurrentScreen.Dispatcher.Invoke(DeleteProgram);
         }
 
         private void DeleteProgram()
         {
-            if(IsEmpty) { return; }
+            if(IsReleased) { return; }
             GL.DeleteProgram(_program);
             _program = Consts.NULL;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected void ThrowIfEmptyProgram()
+        private void ThrowIfReleased()
         {
-            if(IsEmpty) { throw new InvalidOperationException("this shader program is empty or deleted."); }
+            if(IsReleased) { throw new InvalidOperationException("this shader program is empty or deleted."); }
         }
 
         /// <summary>Compile specified type of shader source</summary>

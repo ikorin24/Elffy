@@ -3,9 +3,9 @@ using System.Runtime.CompilerServices;
 
 namespace Elffy.Shading
 {
-    internal sealed class DefaultShader : Shader
+    public sealed class DefaultShader : Shader
     {
-        internal DefaultShader()
+        public DefaultShader()
         {
         }
 
@@ -15,16 +15,14 @@ namespace Elffy.Shading
 
         protected override void SendUniforms(in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
-            ThrowIfEmptyProgram();
             // TODO: 実行テスト用 本来はライティングとマテリアルの情報も引数で渡されるようにする
-            SendUniformLight(new Vector4(-1f, -1f, 0f, 0f), new Color4(0.2f, 0.2f, 0.2f), Color4.White, Color4.White);
-            SendUniformMaterial(Material.Default);
+            SendUniformLight(new Vector4(-1f, -1f, 0f, 0f), new Color4(0.2f, 0.2f, 0.2f), new Color4(0.8f, 0.8f, 0.8f), Color4.White);
+            SendUniformMaterial(Materials.Plain);
             SendUniformModelViewProjection(model, view, projection);
         }
 
         private void SendUniformLight(in Vector4 position, in Color4 ambient, in Color4 diffuse, in Color4 specular)
         {
-            ThrowIfEmptyProgram();
             SendUniformNoCheck("LightPosition", position);
             SendUniformNoCheck("LightAmbient", Unsafe.As<Color4, Vector3>(ref Unsafe.AsRef(ambient)));
             SendUniformNoCheck("LightDiffuse", Unsafe.As<Color4, Vector3>(ref Unsafe.AsRef(diffuse)));
@@ -33,7 +31,6 @@ namespace Elffy.Shading
 
         private void SendUniformMaterial(in Material material)
         {
-            ThrowIfEmptyProgram();
             SendUniformNoCheck("MaterialAmbient", Unsafe.As<Color4, Vector3>(ref Unsafe.AsRef(material.Ambient)));
             SendUniformNoCheck("MaterialDiffuse", Unsafe.As<Color4, Vector3>(ref Unsafe.AsRef(material.Diffuse)));
             SendUniformNoCheck("MaterialSpecular", Unsafe.As<Color4, Vector3>(ref Unsafe.AsRef(material.Specular)));
@@ -42,7 +39,6 @@ namespace Elffy.Shading
 
         private void SendUniformModelViewProjection(in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
-            ThrowIfEmptyProgram();
             SendUniformNoCheck("ModelViewMatrix", view * model);
             SendUniformNoCheck("ProjectionMatrix", projection);
         }
@@ -102,19 +98,16 @@ void main()
 {
     MVP = ProjectionMatrix * ModelViewMatrix;
 
-    /*
-    モデルビュー行列の上3x3の逆行列の転置行列
-    これも多分CPU側でやったほうがいい
-    */
+
     NormalMatrix = transpose(inverse(mat3(ModelViewMatrix)));
 
 
     vec3 eyeNorm;
     vec4 eyePosition;
-    // Get the position and normal in eye space
+    /* Get the position and normal in eye space */
     getEyeSpace(eyeNorm, eyePosition);
 
-    // Evaluate the lighting equation.
+    /* Evaluate the lighting equation. */
     LightIntensity = phongModel( eyePosition, eyeNorm );
 
     gl_Position = MVP * vec4(VertexPosition,1.0);
@@ -132,6 +125,7 @@ in vec3 LightIntensity;
 void main()
 {
 	FragColor = vec4(LightIntensity, 1.0);
+    //FragColor = vec4(1f, 1f, 1f, 1f);
 }
 ";
 
