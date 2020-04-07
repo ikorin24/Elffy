@@ -113,7 +113,7 @@ namespace Elffy.Core
                 GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBuffer);
                 Rendering?.Invoke(this, in model, in view, in projection);
                 Texture.Apply();
-                Shader.Apply(model, view, projection);
+                Shader.Apply(this, model, view, projection);
                 //Material.Apply();
                 GL.DrawElements(BeginMode.Triangles, _indexArrayLength, DrawElementsType.UnsignedInt, 0);
                 Rendered?.Invoke(this);

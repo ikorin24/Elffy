@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using Elffy.Core;
 using System.Runtime.CompilerServices;
 
 namespace Elffy.Shading
@@ -13,7 +14,7 @@ namespace Elffy.Shading
 
         protected override void Dispose(bool disposing) => base.Dispose(disposing);
 
-        protected override void SendUniforms(in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        protected override void SendUniforms(Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             // TODO: 実行テスト用 本来はライティングとマテリアルの情報も引数で渡されるようにする
             SendUniformLight(new Vector4(-1f, -1f, 0f, 0f), new Color4(0.2f, 0.2f, 0.2f), new Color4(0.8f, 0.8f, 0.8f), Color4.White);

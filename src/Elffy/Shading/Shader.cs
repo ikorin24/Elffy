@@ -22,7 +22,7 @@ namespace Elffy.Shading
 
         ~Shader() => Dispose(false);
 
-        protected abstract void SendUniforms(in Matrix4 model, in Matrix4 view, in Matrix4 projection);
+        protected abstract void SendUniforms(Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection);
 
         /// <summary>
         /// 頂点シェーダーのソースコードを取得します<para/>
@@ -57,14 +57,14 @@ namespace Elffy.Shading
         protected void SendUniformNoCheck(string name, in Matrix4 value)
             => GL.ProgramUniformMatrix4(_program, GL.GetUniformLocation(_program, name), 1, false, ref Unsafe.As<Matrix4, float>(ref Unsafe.AsRef(value)));
 
-        internal void Apply(in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        internal void Apply(Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             ThrowIfReleased();
             if(_currentProgram != _program) {
                 _currentProgram = _program;
                 GL.UseProgram(_program);
             }
-            SendUniforms(model, view, projection);
+            SendUniforms(target, model, view, projection);
         }
 
         /// <summary>頂点シェーダー・フラグメントシェーダ―の読み込み、リンク、プログラムの作成を行います</summary>
