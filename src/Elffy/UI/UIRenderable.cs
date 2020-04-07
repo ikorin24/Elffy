@@ -85,16 +85,16 @@ namespace Elffy.UI
             }
             var normal = Vector3.UnitZ;
 
-            _vertexArray[0] = new Vertex(p0, normal, t0);
-            _vertexArray[1] = new Vertex(p1, normal, t1);
-            _vertexArray[2] = new Vertex(p2, normal, t2);
-            _vertexArray[3] = new Vertex(p3, normal, t3);
-            _indexArray[0] = i0;
-            _indexArray[1] = i1;
-            _indexArray[2] = i2;
-            _indexArray[3] = i3;
-            _indexArray[4] = i4;
-            _indexArray[5] = i5;
+            _vertexArray![0] = new Vertex(p0, normal, t0);
+            _vertexArray![1] = new Vertex(p1, normal, t1);
+            _vertexArray![2] = new Vertex(p2, normal, t2);
+            _vertexArray![3] = new Vertex(p3, normal, t3);
+            _indexArray![0] = i0;
+            _indexArray![1] = i1;
+            _indexArray![2] = i2;
+            _indexArray![3] = i3;
+            _indexArray![4] = i4;
+            _indexArray![5] = i5;
         }
         #endregion
     }
