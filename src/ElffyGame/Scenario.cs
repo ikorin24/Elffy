@@ -30,14 +30,12 @@ namespace ElffyGame
             //var light = new DirectLight();
             //light.Activate();
             var model = Resources.LoadModel("Alicia/Alicia_solid.pmx");
-            var shader = new DefaultShader();
 
             var sw = new Stopwatch();
             sw.Start();
-            shader.Create();
+            var shader = DefaultShaderSource.Instance.Compile();
             sw.Stop();
             Debug.WriteLine(sw.ElapsedMilliseconds + "ms");
-            //model.AddComponent(shader);
             model.Shader = shader;
             model.Activate(worldLayer);
             model.Terminated += _ => shader.Dispose();

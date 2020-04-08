@@ -4,51 +4,37 @@ using System.Runtime.CompilerServices;
 
 namespace Elffy.Shading
 {
-    public sealed class DefaultShader : Shader
+    public sealed class DefaultShaderSource : ShaderSource
     {
-        public DefaultShader()
-        {
-        }
+        private static DefaultShaderSource? _instance;
+        public static DefaultShaderSource Instance => _instance ??= new DefaultShaderSource();
 
-        ~DefaultShader() => Dispose(false);
-
-        protected override void Dispose(bool disposing) => base.Dispose(disposing);
-
-        protected override void SendUniforms(Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
-        {
-            // TODO: 実行テスト用 本来はライティングとマテリアルの情報も引数で渡されるようにする
-            SendUniformLight(new Vector4(-1f, -1f, 0f, 0f), new Color4(0.2f, 0.2f, 0.2f), new Color4(0.8f, 0.8f, 0.8f), Color4.White);
-            SendUniformMaterial(Materials.Plain);
-            SendUniformModelViewProjection(model, view, projection);
-        }
-
-        private void SendUniformLight(in Vector4 position, in Color4 ambient, in Color4 diffuse, in Color4 specular)
-        {
-            SendUniformNoCheck("LightPosition", position);
-            SendUniformNoCheck("LightAmbient", Unsafe.As<Color4, Vector3>(ref Unsafe.AsRef(ambient)));
-            SendUniformNoCheck("LightDiffuse", Unsafe.As<Color4, Vector3>(ref Unsafe.AsRef(diffuse)));
-            SendUniformNoCheck("LightSpecular", Unsafe.As<Color4, Vector3>(ref Unsafe.AsRef(specular)));
-        }
-
-        private void SendUniformMaterial(in Material material)
-        {
-            SendUniformNoCheck("MaterialAmbient", Unsafe.As<Color4, Vector3>(ref Unsafe.AsRef(material.Ambient)));
-            SendUniformNoCheck("MaterialDiffuse", Unsafe.As<Color4, Vector3>(ref Unsafe.AsRef(material.Diffuse)));
-            SendUniformNoCheck("MaterialSpecular", Unsafe.As<Color4, Vector3>(ref Unsafe.AsRef(material.Specular)));
-            SendUniformNoCheck("MaterialShininess", material.Shininess);
-        }
-
-        private void SendUniformModelViewProjection(in Matrix4 model, in Matrix4 view, in Matrix4 projection)
-        {
-            SendUniformNoCheck("ModelViewMatrix", view * model);
-            SendUniformNoCheck("ProjectionMatrix", projection);
-        }
+        private DefaultShaderSource() { }
 
         protected override string VertexShaderSource() => VertSource;
 
         protected override string FragmentShaderSource() => FragSource;
 
-        private static readonly string VertSource =
+        protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        {
+            // TODO: 実行テスト用 本来はライティングとマテリアルの情報も引数で渡されるようにする
+
+            uniform.Send("LightPosition", new Vector4(-1f, -1f, 0f, 0f));
+            uniform.Send("LightAmbient",  new Vector3(0.2f, 0.2f, 0.2f));
+            uniform.Send("LightDiffuse",  new Vector3(0.8f, 0.8f, 0.8f));
+            uniform.Send("LightSpecular", new Vector3(1f, 1f, 1f));
+
+            var material = Materials.Plain;
+            uniform.Send("MaterialAmbient", in Unsafe.As<Color4, Vector3>(ref material.Ambient));
+            uniform.Send("MaterialDiffuse", in Unsafe.As<Color4, Vector3>(ref material.Diffuse));
+            uniform.Send("MaterialSpecular", in Unsafe.As<Color4, Vector3>(ref material.Specular));
+            uniform.Send("MaterialShininess", material.Shininess);
+
+            uniform.Send("ModelViewMatrix", view * model);
+            uniform.Send("ProjectionMatrix", projection);
+        }
+
+        private const string VertSource =
 @"#version 440
 
 layout (location = 0) in vec3 VertexPosition;
