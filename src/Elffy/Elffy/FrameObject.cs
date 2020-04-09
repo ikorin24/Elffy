@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Elffy.Core;
 using Elffy.Exceptions;
 using Elffy.Threading;
@@ -13,6 +14,7 @@ namespace Elffy
     /// </summary>
     public abstract class FrameObject : ITerminatable
     {
+        private IHostScreen? _hostScreen;
         private Dispatcher? _dispatcher;
 
         /// <summary>このオブジェクトがエンジンによって管理されているかどうかを返します</summary>
@@ -36,10 +38,13 @@ namespace Elffy
         /// </summary>
         private protected ILayer? Layer { get; private set; }
 
-        /// <summary>Get <see cref="Elffy.Threading.Dispatcher"/> of this <see cref="FrameObject"/>.</summary>
+        /// <summary>Get HostScreen of this <see cref="FrameObject"/>.</summary>
         /// <exception cref="InvalidOperationException"></exception>
-        public Dispatcher Dispatcher => _dispatcher ?? (_dispatcher = Layer?.Owner?.Owner?.Owner?.Dispatcher) ??
-                                        throw new InvalidOperationException($"{nameof(FrameObject)} is not activated yet or already terminated.");
+        public IHostScreen HostScreen => Cache(ref _hostScreen, () => Layer?.Owner?.Owner?.Owner);
+
+        /// <summary>Get Dispatcher of this <see cref="FrameObject"/>.</summary>
+        /// <exception cref="InvalidOperationException"></exception>
+        public Dispatcher Dispatcher => Cache(ref _dispatcher, () => HostScreen.Dispatcher);
 
         /// <summary>このオブジェクトがアクティブになった時のイベント</summary>
         public event ActionEventHandler<FrameObject>? Activated;
@@ -76,19 +81,6 @@ namespace Elffy
             LateUpdated?.Invoke(this);
         }
 
-        /// <summary>このオブジェクトをデフォルトのレイヤーでアクティブにします</summary>
-        //public void Activate()
-        //{
-        //    if(IsTerminated) { throw new ObjectTerminatedException(this); }
-        //    if(IsActivated) { return; }
-        //    var worldLayer = CurrentScreen.Layers.WorldLayer;
-        //    Debug.Assert(worldLayer.Owner != null);
-        //    Layer = worldLayer;
-        //    worldLayer.AddFrameObject(this);
-        //    IsActivated = true;
-        //    Activated?.Invoke(this);
-        //}
-
         /// <summary>このオブジェクトを指定のレイヤーでアクティブにします</summary>
         public void Activate(Layer layer)
         {
@@ -124,6 +116,12 @@ namespace Elffy
             _dispatcher = null;
             (this as IDisposable)?.Dispose();
             Terminated?.Invoke(this);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static T Cache<T>(ref T? cached, Func<T?> factory) where T : class
+        {
+            return cached ?? (cached = factory() ?? throw new InvalidOperationException($"{nameof(FrameObject)} is not activated yet or already terminated."));
         }
     }
 }
