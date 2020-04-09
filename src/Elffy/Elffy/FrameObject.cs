@@ -114,6 +114,7 @@ namespace Elffy
             Layer = null;
             IsTerminated = true;
             _dispatcher = null;
+            _hostScreen = null;
             (this as IDisposable)?.Dispose();
             Terminated?.Invoke(this);
         }
