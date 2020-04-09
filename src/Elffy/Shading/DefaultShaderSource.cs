@@ -15,6 +15,14 @@ namespace Elffy.Shading
 
         protected override string FragmentShaderSource() => FragSource;
 
+        protected override void DefineLocation(VertexDefinition definition)
+        {
+            definition.Position("VertexPosition");
+            definition.Normal(1);
+            definition.Color(2);
+            definition.TexCoord(0);
+        }
+
         protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             // TODO: 実行テスト用 本来はライティングとマテリアルの情報も引数で渡されるようにする
@@ -37,10 +45,10 @@ namespace Elffy.Shading
         private const string VertSource =
 @"#version 440
 
-layout (location = 0) in vec3 VertexPosition;
+layout (location = 3) in vec3 VertexPosition;
 layout (location = 1) in vec3 VertexNormal;
-layout (location = 2) in vec3 VertexColor;
-layout (location = 3) in vec2 Texcoord;
+layout (location = 2) in vec4 VertexColor;
+layout (location = 0) in vec2 Texcoord;
 
 uniform vec4 LightPosition;
 uniform vec3 LightAmbient;

@@ -17,6 +17,8 @@ namespace Elffy.Shading
         /// <returns>フラグメントシェーダ―のソースコード</returns>
         protected abstract string FragmentShaderSource();
 
+        protected abstract void DefineLocation(VertexDefinition definition);
+
         /// <summary>派生クラスでオーバーライドされた場合、このシェーダーに uniform 変数を送ります。</summary>
         /// <param name="uniform"></param>
         /// <param name="target"></param>
@@ -27,6 +29,8 @@ namespace Elffy.Shading
 
         internal void SendUniformsInternal(int program, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
             => SendUniforms(new Uniform(program), target, model, view, projection);
+
+        internal void DefineLocationInternal(int program) => DefineLocation(new VertexDefinition(program));
 
         /// <summary>頂点シェーダー・フラグメントシェーダ―の読み込み、リンク、プログラムの作成を行います</summary>
         public Shader Compile()

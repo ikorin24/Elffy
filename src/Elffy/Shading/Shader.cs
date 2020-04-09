@@ -37,6 +37,12 @@ namespace Elffy.Shading
             _shaderSource!.SendUniformsInternal(_program, target, model, view, projection);
         }
 
+        internal void Init(int vbo)
+        {
+            GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
+            _shaderSource!.DefineLocationInternal(_program);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {

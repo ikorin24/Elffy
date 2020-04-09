@@ -24,6 +24,7 @@ namespace Elffy.Core
         /// <summary>VAO</summary>
         private int _vao;
         private bool _isLoaded;
+        private bool _isShaderChanged;
 
         /// <summary>描画処理を行うかどうか</summary>
         public bool IsVisible { get; set; } = true;
@@ -64,10 +65,10 @@ namespace Elffy.Core
             get => _shader;
             set
             {
-                //ArgumentChecker.ThrowIfNullArg(value, nameof(value));
                 if(_shader == value) { return; }
                 var old = _shader;
                 _shader = value;
+                _isShaderChanged = true;
                 ShaderChanged?.Invoke(this, new ValueChangedEventArgs<Shader?>(old, value));
             }
         }
@@ -78,7 +79,6 @@ namespace Elffy.Core
         /// <summary>Texture changed event</summary>
         public event ActionEventHandler<Renderable, ValueChangedEventArgs<TextureBase>>? TextureChanged;
         ///// <summary>Shader changed event</summary>
-        //public event ActionEventHandler<Renderable, ValueChangedEventArgs<ShaderProgram>>? ShaderChanged;
         public event ActionEventHandler<Renderable, ValueChangedEventArgs<Shader?>>? ShaderChanged;
 
         /// <summary>Before-rendering event</summary>
@@ -113,15 +113,20 @@ namespace Elffy.Core
                 GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBuffer);
                 Rendering?.Invoke(this, in model, in view, in projection);
                 Texture.Apply();
+                if(_isShaderChanged) {
+                    Shader.Init(_vertexBuffer);
+                    _isShaderChanged = false;
+                }
                 Shader.Apply(this, model, view, projection);
-                //Material.Apply();
                 GL.DrawElements(BeginMode.Triangles, _indexArrayLength, DrawElementsType.UnsignedInt, 0);
                 Rendered?.Invoke(this);
             }
 
             if(HasChild) {
-                foreach(var child in Children.OfType<Renderable>()) {
-                    child.Render(projection, view, model);
+                foreach(var child in Children) {
+                    if(child is Renderable renderable) {
+                        renderable.Render(projection, view, model);
+                    }
                 }
             }
         }
@@ -157,6 +162,7 @@ namespace Elffy.Core
         private unsafe void InitBuffer(IntPtr vertexArray, int vertexArrayLength, IntPtr indexArray, int indexArrayLength)
         {
             _indexArrayLength = indexArrayLength;
+
             // 頂点バッファ(VBO)生成
             _vertexBuffer = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBuffer);
@@ -172,9 +178,6 @@ namespace Elffy.Core
             // VAO
             _vao = GL.GenVertexArray();
             GL.BindVertexArray(_vao);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBuffer);
-            VertexStructLayouter<Vertex>.Layouter();
-
             _isLoaded = true;
         }
 
