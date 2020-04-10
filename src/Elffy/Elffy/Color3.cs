@@ -37,7 +37,7 @@ namespace Elffy
         public static explicit operator Color(in Color3 color) => (Color)(TKColor4)color;
         public static implicit operator Color3(in Color color) => (TKColor4)color;
         public static explicit operator Vector3(Color3 color) => Unsafe.As<Color3, Vector3>(ref color);
-        public static implicit operator Color4(Color3 color) => new Color4(color);
+        public static explicit operator Color4(Color3 color) => new Color4(color);
         public static explicit operator Color3(Color4 color) => Unsafe.As<Color4, Color3>(ref color);
 
         private static byte ToByte(float value)
