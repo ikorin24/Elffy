@@ -38,34 +38,16 @@ namespace Elffy.Shading
             uniform.Send("shininess", material.Shininess);
         }
 
+        // TODO: shininess の計算方法
         private const string VertSource =
 @"#version 440
 
 in vec3 vPos;
 in vec3 vNormal;
-out vec3 posWorld;
-out vec3 normalWorld;
+out vec3 color;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
-
-void main()
-{
-    mat4 modelView = view * model;
-    posWorld = (model * vec4(vPos, 1.0)).xyz;
-    normalWorld = (model * vec4(vNormal, 1.0)).xyz;
-    gl_Position = projection * modelView * vec4(vPos, 1.0);
-}	
-
-";
-
-        // TODO: shininess の計算方法
-        private const string FragSource =
-@"#version 440
-
-in vec3 posWorld;
-in vec3 normalWorld;
-out vec4 fragColor;
 uniform vec3 eyePos;
 uniform vec4 lPos;
 uniform vec3 la;
@@ -78,11 +60,27 @@ uniform float shininess;
 
 void main()
 {
+    gl_Position = projection * view * model * vec4(vPos, 1.0);
+
+    vec3 posWorld = (model * vec4(vPos, 1.0)).xyz;
+    vec3 normalWorld = (model * vec4(vNormal, 1.0)).xyz;
     vec3 L = (lPos.w == 0.0) ? normalize(-lPos.xyz) : normalize(posWorld - lPos.xyz / lPos.w);
     vec3 N = normalize(normalWorld);
     vec3 R = reflect(L, N);
     vec3 V = normalize(eyePos - posWorld);
-    vec3 color = (la * ma) + (ld * md * dot(N, L)) + (ls * ms * max(pow(dot(R, V), shininess), 0.0));
+    color = (la * ma) + (ld * md * dot(N, L)) + (ls * ms * max(pow(dot(R, V), shininess), 0.0));
+}	
+
+";
+
+        private const string FragSource =
+@"#version 440
+
+in vec3 color;
+out vec4 fragColor;
+
+void main()
+{
     fragColor = vec4(color, 1.0);
 }
 ";
