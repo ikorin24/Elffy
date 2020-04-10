@@ -33,7 +33,7 @@ namespace ElffyGame
 
             var sw = new Stopwatch();
             sw.Start();
-            var shader = DefaultShaderSource.Instance.Compile();
+            var shader = ShaderSource.Phong.Compile();
             sw.Stop();
             Debug.WriteLine(sw.ElapsedMilliseconds + "ms");
             model.Shader = shader;

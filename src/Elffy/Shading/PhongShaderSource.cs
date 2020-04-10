@@ -4,12 +4,12 @@ using System.Runtime.CompilerServices;
 
 namespace Elffy.Shading
 {
-    public sealed class DefaultShaderSource : ShaderSource
+    public sealed class PhongShaderSource : ShaderSource
     {
-        private static DefaultShaderSource? _instance;
-        public static DefaultShaderSource Instance => _instance ??= new DefaultShaderSource();
+        private static PhongShaderSource? _instance;
+        internal static PhongShaderSource Instance => _instance ??= new PhongShaderSource();
 
-        private DefaultShaderSource() { }
+        private PhongShaderSource() { }
 
         protected override string VertexShaderSource() => VertSource;
 
