@@ -28,6 +28,9 @@ namespace Elffy.Shading
         public void Send(string name, in Vector4 value) => Send(GL.GetUniformLocation(_program, name), value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Send(string name, in Color3 value) => Send(GL.GetUniformLocation(_program, name), value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Send(string name, in Color4 value) => Send(GL.GetUniformLocation(_program, name), value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -55,6 +58,10 @@ namespace Elffy.Shading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Send(int location, in Color4 value)
             => GL.ProgramUniform4(_program, location, 1, ref Unsafe.As<Color4, float>(ref Unsafe.AsRef(value)));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Send(int location, in Color3 value)
+            => GL.ProgramUniform3(_program, location, 1, ref Unsafe.As<Color3, float>(ref Unsafe.AsRef(value)));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Send(int location, in Matrix4 value)

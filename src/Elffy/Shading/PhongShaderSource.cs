@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using Elffy.Core;
-using System.Runtime.CompilerServices;
 
 namespace Elffy.Shading
 {
@@ -32,9 +31,9 @@ namespace Elffy.Shading
             uniform.Send("la", new Vector3(0.8f));
             uniform.Send("ld", new Vector3(0.8f));
             uniform.Send("ls", new Vector3(1f));
-            uniform.Send("ma", (Vector3)material.Ambient);
-            uniform.Send("md", (Vector3)material.Diffuse);
-            uniform.Send("ms", (Vector3)material.Specular);
+            uniform.Send("ma", (Color3)material.Ambient);
+            uniform.Send("md", (Color3)material.Diffuse);
+            uniform.Send("ms", (Color3)material.Specular);
             uniform.Send("shininess", material.Shininess);
         }
 
