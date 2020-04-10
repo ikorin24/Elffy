@@ -11,6 +11,8 @@ namespace Elffy.Shading
     {
         public static PhongShaderSource Phong => PhongShaderSource.Instance;
 
+        public static NormalShaderSource Normal => NormalShaderSource.Instance;
+
         /// <summary>派生クラスで定義された、頂点シェーダーのソースコードを取得します</summary>
         /// <returns>頂点シェーダーのソースコード</returns>
         protected abstract string VertexShaderSource();
