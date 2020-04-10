@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Elffy.Mathmatics
+namespace Elffy.Mathematics
 {
     //public struct PerlinNoise
     //{

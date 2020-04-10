@@ -1,5 +1,5 @@
 ﻿#nullable enable
-using Elffy.Mathmatics;
+using Elffy.Mathematics;
 using Elffy.Exceptions;
 
 namespace Elffy

@@ -3,7 +3,7 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Elffy.Mathmatics
+namespace Elffy.Mathematics
 {
     /// <summary>Pseudorandom number generator based on 32 bits Xorshift algorithm.</summary>
     internal struct Xorshift32

@@ -2,7 +2,7 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace Elffy.Mathmatics
+namespace Elffy.Mathematics
 {
     public static class MathTool
     {

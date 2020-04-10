@@ -2,7 +2,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Elffy.Mathmatics;
+using Elffy.Mathematics;
 
 namespace Elffy
 {

@@ -1,7 +1,7 @@
 ﻿#nullable enable
 using System;
 using Elffy.InputSystem;
-using Elffy.Mathmatics;
+using Elffy.Mathematics;
 
 namespace Elffy
 {

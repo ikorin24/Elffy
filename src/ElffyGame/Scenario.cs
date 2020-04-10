@@ -7,7 +7,7 @@ using Elffy.Threading;
 using Elffy.UI;
 using Elffy.Framing;
 //using OpenTK;
-using Elffy.Mathmatics;
+using Elffy.Mathematics;
 using System.Diagnostics;
 using Elffy.InputSystem;
 using System.Drawing;
