@@ -19,11 +19,11 @@ namespace Elffy
         [FieldOffset(12)]
         public float A;
 
-        private static readonly float MaxValueAsFloat = byte.MaxValue;
-
         public Color4(float r, float g, float b) => (R, G, B, A) = (r, g, b, 1f);
         public Color4(float value) => (R, G, B, A) = (value, value, value, 1f);
         public Color4(float r, float g, float b, float a) => (R, G, B, A) = (r, g, b, a);
+        public Color4(Color3 color) => (R, G, B, A) = (color.R, color.G, color.B, 1f);
+        public Color4(Color3 color, float a) => (R, G, B, A) = (color.R, color.G, color.B, a);
 
         public readonly override bool Equals(object? obj) => obj is Color4 color && Equals(color);
 
