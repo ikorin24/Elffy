@@ -54,7 +54,7 @@ namespace Elffy.Core
         public void ApplyChanging()
         {
             if(_removedBuf.Count > 0) {
-                foreach(var item in _removedBuf) {
+                foreach(var item in _removedBuf.AsSpan()) {
                     _list.Remove(item);
                     if(item is Renderable renderable) {
                         _renderables.Remove(renderable);
@@ -71,7 +71,7 @@ namespace Elffy.Core
 
         public void EarlyUpdate()
         {
-            foreach(var frameObject in _list) {
+            foreach(var frameObject in _list.AsSpan()) {
                 if(frameObject.IsFrozen) { continue; }
                 if(frameObject.IsStarted == false) {
                     frameObject.Start();
@@ -84,7 +84,7 @@ namespace Elffy.Core
         /// <summary>フレームの更新を行います</summary>
         public void Update()
         {
-            foreach(var frameObject in _list) {
+            foreach(var frameObject in _list.AsSpan()) {
                 if(frameObject.IsFrozen) { continue; }
                 frameObject.Update();
             }
@@ -92,7 +92,7 @@ namespace Elffy.Core
 
         public void LateUpdate()
         {
-            foreach(var frameObject in _list) {
+            foreach(var frameObject in _list.AsSpan()) {
                 if(frameObject.IsFrozen) { continue; }
                 frameObject.LateUpdate();
             }
@@ -102,7 +102,7 @@ namespace Elffy.Core
         public void ClearFrameObject()
         {
             _addedBuf.Clear();          // 追加オブジェクトのリストを先にクリア
-            foreach(var item in _list) {
+            foreach(var item in _list.AsSpan()) {
                 item.Terminate();         // 生きているオブジェクトをすべて破棄
             }
             ApplyChanging();            // 変更を全て適用
