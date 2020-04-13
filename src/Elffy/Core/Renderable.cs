@@ -123,7 +123,7 @@ namespace Elffy.Core
             }
 
             if(HasChild) {
-                foreach(var child in Children) {
+                foreach(var child in Children.AsReadOnlySpan()) {
                     if(child is Renderable renderable) {
                         renderable.Render(projection, view, model);
                     }
