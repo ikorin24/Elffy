@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace Elffy.Core
 {
@@ -41,7 +42,6 @@ namespace Elffy.Core
         /// <summary>この <see cref="Positionable"/> が子要素の <see cref="Positionable"/> を持っているかどうかを取得します</summary>
         public bool HasChild => Children.Count > 0;
 
-        #region Position
         /// <summary>
         /// オブジェクトのローカル座標<para/>
         /// <see cref="IsRoot"/> が true の場合は <see cref="WorldPosition"/> と同じ値。false の場合は親の <see cref="Position"/> を基準とした相対座標。
@@ -49,138 +49,98 @@ namespace Elffy.Core
         public Vector3 Position
         {
             get => _position;
-            set
-            {
-                var vec = value - _position;
-                _position += vec;
-                _worldPosition += vec;
-                foreach(var child in GetOffspring()) {
-                    child._worldPosition += vec;
-                }
-            }
+            set => _position = value;
         }
         private Vector3 _position;
-        #endregion
 
-        #region PositionX
         /// <summary>オブジェクトのX座標</summary>
         public float PositionX
         {
             get => _position.X;
-            set
-            {
-                var diff = value - _position.X;
-                _position.X += diff;
-                _worldPosition.X += diff;
-                foreach(var child in GetOffspring()) {
-                    child._worldPosition.X += diff;
-                }
-            }
+            set => _position.X = value;
         }
-        #endregion
 
-        #region PositionY
         /// <summary>オブジェクトのY座標</summary>
         public float PositionY
         {
             get => _position.Y;
-            set
-            {
-                var diff = value - _position.Y;
-                _position.Y += diff;
-                _worldPosition.Y += diff;
-                foreach(var child in GetOffspring()) {
-                    child._worldPosition.Y += diff;
-                }
-            }
+            set => _position.Y = value;
         }
-        #endregion
 
-        #region PositionZ
         /// <summary>オブジェクトのZ座標</summary>
         public float PositionZ
         {
             get => _position.Z;
-            set
-            {
-                var diff = value - _position.Z;
-                _position.Z += diff;
-                _worldPosition.Z += diff;
-                foreach(var child in GetOffspring()) {
-                    child._worldPosition.Z += diff;
-                }
-            }
+            set => _position.Z = value;
         }
-        #endregion
 
-        #region WorldPosition
-        /// <summary>オブジェクトのワールド座標</summary>
+        /// <summary>オブジェクトのワールド座標。get/set ともに Root までの親の数 N に対し O(N)</summary>
         public Vector3 WorldPosition
         {
-            get => _worldPosition;
-            set
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
             {
-                var vec = value - _worldPosition;
-                _worldPosition += vec;
-                _position += vec;
-                foreach(var child in GetOffspring()) {
-                    child._worldPosition += vec;
+                var worldPos = _position;
+                var current = this;
+                while(!current.IsRoot) {
+                    current = current.Parent!;
+                    worldPos += current._position;
                 }
+                return worldPos;
             }
+            set => _position += value - WorldPosition;
         }
-        private Vector3 _worldPosition;
-        #endregion
 
-        #region WorldPositionX
-        /// <summary>ワールド座標のX座標</summary>
+        /// <summary>ワールド座標のX座標。get/set ともに Root までの親の数 N に対し O(N)</summary>
         public float WorldPositionX
         {
-            get => _worldPosition.X;
-            set
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
             {
-                var diff = value - _worldPosition.X;
-                _worldPosition.X += diff;
-                _position.X += diff;
-                foreach(var child in GetOffspring()) {
-                    child._worldPosition.X += diff;
+                var worldPosX = _position.X;
+                var current = this;
+                while(!current.IsRoot) {
+                    current = current.Parent!;
+                    worldPosX += current._position.X;
                 }
+                return worldPosX;
             }
+            set => _position.X += value - WorldPositionX;
         }
-        #endregion
 
-        #region WorldPositionY
-        /// <summary>ワールド座標のY座標</summary>
+        /// <summary>ワールド座標のY座標。get/set ともに Root までの親の数 N に対し O(N)</summary>
         public float WorldPositionY
         {
-            get => _worldPosition.Y;
-            set
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
             {
-                var diff = value - _worldPosition.Y;
-                _worldPosition.Y += diff;
-                _position.Y += diff;
-                foreach(var child in GetOffspring()) {
-                    child._worldPosition.Y += diff;
+                var worldPosY = _position.Y;
+                var current = this;
+                while(!current.IsRoot) {
+                    current = current.Parent!;
+                    worldPosY += current._position.Y;
                 }
+                return worldPosY;
             }
+            set => _position.Y += value - WorldPositionY;
         }
-        #endregion
 
-        #region WorldPositionZ
-        /// <summary>ワールド座標のZ座標</summary>
+        /// <summary>ワールド座標のZ座標。get/set ともに Root までの親の数 N に対し O(N)</summary>
         public float WorldPositionZ
         {
-            get => _worldPosition.Z;
-            set
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
             {
-                var diff = value - _worldPosition.Z;
-                _worldPosition.Z += diff;
-                _position.Z += diff;
-                foreach(var child in GetOffspring()) {
-                    child._worldPosition.Z += diff;
+                var worldPosZ = _position.Z;
+                var current = this;
+                while(!current.IsRoot) {
+                    current = current.Parent!;
+                    worldPosZ += current._position.Z;
                 }
+                return worldPosZ;
             }
+            set => _position.Z += value - WorldPositionZ;
         }
-        #endregion
 
         #region Scale
         /// <summary>オブジェクトの拡大率</summary>
