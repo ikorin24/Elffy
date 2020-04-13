@@ -41,8 +41,7 @@ uniform mat4 projection;
 void main()
 {
     gl_Position = projection * view * model * vec4(vPos, 1.0);
-    vec3 normalWorld = normalize((model * vec4(vNormal, 1.0)).xyz);
-    color = normalWorld;
+    color = normalize(vNormal);
 }	
 
 ";
