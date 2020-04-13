@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using OpenTK.Graphics.OpenGL;
 using System;
 using System.Diagnostics;
 
@@ -22,7 +21,7 @@ namespace Elffy.Core
         {
             Position = position;
             Normal = normal;
-            Color = new Color4(Math.Abs(normal.X), Math.Abs(normal.Y), Math.Abs(normal.Z), 1f);
+            Color = Color4.Black;
             TexCoord = texcoord;
         }
 
