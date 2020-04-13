@@ -1,5 +1,7 @@
 ﻿#nullable enable
+using Elffy.Effective.Internal;
 using Elffy.Exceptions;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +9,7 @@ using System.Linq;
 namespace Elffy.Core
 {
     /// <summary><see cref="Positionable"/> のツリー構造を表現するための <see cref="Positionable"/> のリスト</summary>
-    public class PositionableCollection : IList<Positionable>, IReadOnlyList<Positionable>, IReadOnlyCollection<Positionable>, ICollection<Positionable>, IEnumerable<Positionable>, IEnumerable
+    public class PositionableCollection : IReadOnlyList<Positionable>, IReadOnlyCollection<Positionable>, ICollection<Positionable>
     {
         /// <summary>この <see cref="PositionableCollection"/> インスタンスを持つ <see cref="Positionable"/> オブジェクト</summary>
         private Positionable _owner;
@@ -16,23 +18,12 @@ namespace Elffy.Core
         /// <summary>インデックスを指定してリストの要素にアクセスします</summary>
         /// <param name="index">インデックス</param>
         /// <returns>指定した要素</returns>
-        public Positionable this[int index]
-        {
-            get => _list[index];
-            set
-            {
-                ArgumentChecker.ThrowOutOfRangeIf(index < 0 || index > _list.Count - 1, nameof(index), index, "value is out of range.");
-                ArgumentChecker.ThrowIfNullArg(value, nameof(value));
-                value.Parent = _owner;
-                _list[index] = value;
-            }
-        }
+        public Positionable this[int index] => _list[index];
 
         /// <summary>リストの要素数</summary>
         public int Count => _list.Count;
 
-        /// <summary><see cref="ICollection{T}.IsReadOnly"/> 実装。常に false を返します。</summary>
-        public bool IsReadOnly => false;
+        bool ICollection<Positionable>.IsReadOnly => false;
 
         /// <summary>コンストラクタ</summary>
         /// <param name="owner">この <see cref="PositionableCollection"/> を持つ <see cref="Positionable"/> オブジェクト</param>
@@ -55,19 +46,6 @@ namespace Elffy.Core
             _list.Add(item);
         }
 
-        /// <summary>要素を複数追加します</summary>
-        /// <param name="items">追加する要素</param>
-        public void AddRange(IEnumerable<Positionable> items)
-        {
-            ArgumentChecker.ThrowIfNullArg(items, nameof(items));
-            var evaluated = (items is ICollection) ? items : items.ToArray();
-            ArgumentChecker.ThrowArgumentIf(evaluated.Contains(null!), $"{nameof(items)} contain 'null'. Can not add null.");
-            foreach(var item in evaluated) {
-                item.Parent = _owner;
-            }
-            _list.AddRange(evaluated);
-        }
-
         /// <summary>要素をクリアします</summary>
         public void Clear()
         {
@@ -84,10 +62,6 @@ namespace Elffy.Core
         /// <param name="array">コピー先の配列</param>
         /// <param name="arrayIndex">コピー先の配列のコピーを開始するインデックス</param>
         public void CopyTo(Positionable[] array, int arrayIndex) => _list.CopyTo(array, arrayIndex);
-
-        /// <summary>列挙子を取得します</summary>
-        /// <returns>列挙子</returns>
-        public IEnumerator<Positionable> GetEnumerator() => _list.GetEnumerator();
 
         /// <summary>指定要素のインデックスを取得します</summary>
         /// <param name="item">インデックスを取得する要素</param>
@@ -126,6 +100,14 @@ namespace Elffy.Core
             _list[index].Parent = null;
             _list.RemoveAt(index);
         }
+
+        internal ReadOnlySpan<Positionable> AsReadOnlySpan() => _list.AsReadOnlySpan();
+
+        /// <summary>列挙子を取得します</summary>
+        /// <returns>列挙子</returns>
+        public List<Positionable>.Enumerator GetEnumerator() => _list.GetEnumerator();
+
+        IEnumerator<Positionable> IEnumerable<Positionable>.GetEnumerator() => _list.GetEnumerator();
 
         /// <summary>列挙子を取得します</summary>
         /// <returns>列挙子</returns>

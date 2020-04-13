@@ -28,7 +28,8 @@ namespace Test
             var d = new TestObject();
             var e = new TestObject();
             var f = new TestObject();
-            a.Children.AddRange(new[] { b, c });
+            a.Children.Add(b);
+            a.Children.Add(c);
             c.Children.Add(d);
             c.Children.Add(f);
             d.Children.Add(e);
@@ -41,7 +42,6 @@ namespace Test
 
             // 二重親不可
             TestHelper.AssertException<InvalidOperationException>(() => a.Children.Add(f));
-            TestHelper.AssertException<InvalidOperationException>(() => b.Children.AddRange(new[] { e, f }));
 
 
             var rand = new Random(12345);
