@@ -101,7 +101,9 @@ namespace Elffy
             return removed;
         }
 
-        public Span<Layer>.Enumerator GetEnumerator() => _list.AsSpan().GetEnumerator();
+        internal ReadOnlySpan<Layer> AsReadOnlySpan() => _list.AsReadOnlySpan();
+
+        public List<Layer>.Enumerator GetEnumerator() => _list.GetEnumerator();
 
         IEnumerator<Layer> IEnumerable<Layer>.GetEnumerator() => _list.GetEnumerator();
 

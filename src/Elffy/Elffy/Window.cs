@@ -158,7 +158,7 @@ namespace Elffy
             Engine.SwitchScreen(default, this);
             Initialized?.Invoke(this);
             _renderingArea.Layers.SystemLayer.ApplyChanging();
-            foreach(var layer in _renderingArea.Layers) {
+            foreach(var layer in _renderingArea.Layers.AsReadOnlySpan()) {
                 layer.ApplyChanging();
             }
         }
@@ -187,7 +187,7 @@ namespace Elffy
         {
             // 全てのレイヤーに含まれるオブジェクトを破棄し、レイヤーを削除
             _renderingArea.Layers.SystemLayer.ClearFrameObject();
-            foreach(var layer in _renderingArea.Layers) {
+            foreach(var layer in _renderingArea.Layers.AsReadOnlySpan()) {
                 layer.ClearFrameObject();
             }
             _renderingArea.Layers.Clear();

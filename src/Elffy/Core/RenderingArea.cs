@@ -107,21 +107,21 @@ namespace Elffy.Core
 
             // 事前レイヤー更新
             systemLayer.EarlyUpdate();
-            foreach(var layer in Layers) {
+            foreach(var layer in Layers.AsReadOnlySpan()) {
                 layer.EarlyUpdate();
             }
             uiLayer.EarlyUpdate();
 
             // レイヤー更新
             systemLayer.Update();
-            foreach(var layer in Layers) {
+            foreach(var layer in Layers.AsReadOnlySpan()) {
                 layer.Update();
             }
             uiLayer.Update();
 
             // 事後レイヤー更新
             systemLayer.LateUpdate();
-            foreach(var layer in Layers) {
+            foreach(var layer in Layers.AsReadOnlySpan()) {
                 layer.LateUpdate();
             }
             uiLayer.LateUpdate();
@@ -130,7 +130,7 @@ namespace Elffy.Core
 
             // レイヤー描画処理
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            foreach(var layer in Layers) {
+            foreach(var layer in Layers.AsReadOnlySpan()) {
                 Light.IsEnabled = layer.IsLightingEnabled;
                 layer.Render(Camera.Projection, Camera.View);
             }
@@ -139,7 +139,7 @@ namespace Elffy.Core
 
             // レイヤー変更適用
             systemLayer.ApplyChanging();
-            foreach(var layer in Layers) {
+            foreach(var layer in Layers.AsReadOnlySpan()) {
                 layer.ApplyChanging();
             }
             uiLayer.ApplyChanging();
