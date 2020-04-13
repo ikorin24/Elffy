@@ -171,7 +171,7 @@ namespace Elffy
 
         private void OnRenderFrame(object sender, FrameEventArgs e)
         {
-            Input.Update();
+            Input.Update();     // TODO: static をやめる
             Mouse.InitFrame();
             Rendering?.Invoke(this);
             _renderingArea.RenderFrame();

@@ -205,7 +205,7 @@ namespace Elffy.Platforms.Windows
         {
             if(!IsRunning) { return; }
 
-            Input.Update();
+            Input.Update();     // TODO: static をやめる
             Mouse.InitFrame();
             Rendering?.Invoke(this);
             _renderingArea.RenderFrame();
