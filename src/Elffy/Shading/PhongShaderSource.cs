@@ -22,11 +22,10 @@ namespace Elffy.Shading
 
         protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
-            var material = new Material(new Color4(0.6f), new Color4(0.35f), new Color4(0f), 0f);
+            var material = new Material(new Color4(0.6f), new Color4(0.35f), new Color4(0.5f), 10f);
             uniform.Send("model", model);
             uniform.Send("view", view);
             uniform.Send("projection", projection);
-            uniform.Send("eyePos", target.HostScreen.Camera.Position);
             uniform.Send("lPos", new Vector4(1, 1, 0, 0));
             uniform.Send("la", new Vector3(0.8f));
             uniform.Send("ld", new Vector3(0.8f));
@@ -37,7 +36,6 @@ namespace Elffy.Shading
             uniform.Send("shininess", material.Shininess);
         }
 
-        // TODO: shininess の計算方法
         private const string VertSource =
 @"#version 440
 
@@ -47,7 +45,6 @@ out vec3 color;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
-uniform vec3 eyePos;
 uniform vec4 lPos;
 uniform vec3 la;
 uniform vec3 ld;
@@ -59,15 +56,17 @@ uniform float shininess;
 
 void main()
 {
-    gl_Position = projection * view * model * vec4(vPos, 1.0);
+    mat4 modelView = view * model;
+    gl_Position = projection * modelView * vec4(vPos, 1.0);
 
-    vec3 posWorld = (model * vec4(vPos, 1.0)).xyz;
-    vec3 normalWorld = (model * vec4(vNormal, 1.0)).xyz;
-    vec3 L = (lPos.w == 0.0) ? normalize(-lPos.xyz) : normalize(posWorld - lPos.xyz / lPos.w);
-    vec3 N = normalize(normalWorld);
-    vec3 R = reflect(L, N);
-    vec3 V = normalize(eyePos - posWorld);
-    color = (la * ma) + (ld * md * dot(N, L)) + (ls * ms * max(pow(dot(R, V), shininess), 0.0));
+    vec3 posView = (modelView * vec4(vPos, 1.0)).xyz;                   // vertex pos in eye space
+    vec3 normalView = transpose(inverse(mat3(modelView))) * vNormal;    // normal in eye space
+    vec4 lPosView = view * lPos;                                        // light pos in eye space
+    vec3 L = (lPosView.w == 0.0) ? normalize(lPosView.xyz) : normalize(lPosView.xyz / lPosView.w - posView);
+    vec3 N = normalize(normalView);
+    vec3 R = reflect(-L, N);
+    vec3 V = normalize(-posView);
+    color = (la * ma) + (ld * md * dot(N, L)) + (ls * ms * max(pow(max(0.0, dot(R, V)), shininess), 0.0));
 }	
 
 ";
