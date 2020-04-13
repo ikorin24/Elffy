@@ -12,7 +12,7 @@ namespace Elffy.Shading
         private int _program = Consts.NULL;
         private ShaderSource? _shaderSource;
 
-        private bool IsReleased => _program == Consts.NULL;
+        internal bool IsReleased => _program == Consts.NULL;
 
         private static int _currentProgram = Consts.NULL;
 

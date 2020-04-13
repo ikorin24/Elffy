@@ -1,7 +1,5 @@
 ﻿#nullable enable
-using OpenTK;
 using System;
-using System.Linq;
 using OpenTK.Graphics.OpenGL;
 using Elffy.Threading;
 using Elffy.Exceptions;
@@ -17,10 +15,9 @@ namespace Elffy.Core
     {
         private int _indexArrayLength;
         /// <summary>VBOバッファ番号</summary>
-        private int _vertexBuffer;
+        private int _vbo;
         /// <summary>IBO番号</summary>
-        private int _indexBuffer;
-
+        private int _ibo;
         /// <summary>VAO</summary>
         private int _vao;
         private bool _isLoaded;
@@ -91,30 +88,30 @@ namespace Elffy.Core
             Terminated += OnTerminated;
         }
 
+        /// <summary>描画を行います</summary>
+        /// <param name="projection">投影行列</param>
+        /// <param name="view">view 行列</param>
+        /// <param name="modelParent">親の model 行列</param>
         internal unsafe void Render(in Matrix4 projection, in Matrix4 view, in Matrix4 modelParent)
         {
-            // 座標と回転を適用
-            var model = modelParent;
+            var model = new Matrix4(Scale.X, 0, 0, 0,
+                                    0, Scale.Y, 0, 0,
+                                    0, 0, Scale.Z, 0,
+                                    0, 0, 0, 1) *
+                        Rotation.ToMatrix4() *
+                        new Matrix4(1, 0, 0, Position.X,
+                                    0, 1, 0, Position.Y,
+                                    0, 0, 1, Position.Z,
+                                    0, 0, 0, 1) *
+                        modelParent;
 
-            model = new Matrix4(1, 0, 0, Position.X,
-                                       0, 1, 0, Position.Y,
-                                       0, 0, 1, Position.Z,
-                                       0, 0, 0, 1) * model;
-
-            model = Rotation.ToMatrix4() * model;
-
-
-            model = new Matrix4(Scale.X, 0, 0, 0,
-                                       0, Scale.Y, 0, 0,
-                                       0, 0, Scale.Z, 0,
-                                       0, 0, 0, 1) * model;
             if(_isLoaded && IsVisible && Shader != null) {
                 GL.BindVertexArray(_vao);
-                GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBuffer);
+                GL.BindBuffer(BufferTarget.ElementArrayBuffer, _ibo);
                 Rendering?.Invoke(this, in model, in view, in projection);
                 Texture.Apply();
                 if(_isShaderChanged) {
-                    Shader.Init(_vertexBuffer);
+                    Shader.Init(_vbo);
                     _isShaderChanged = false;
                 }
                 Shader.Apply(this, model, view, projection);
@@ -164,14 +161,14 @@ namespace Elffy.Core
             _indexArrayLength = indexArrayLength;
 
             // 頂点バッファ(VBO)生成
-            _vertexBuffer = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBuffer);
+            _vbo = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, _vbo);
             int vertexSize = vertexArrayLength * sizeof(Vertex);
             GL.BufferData(BufferTarget.ArrayBuffer, vertexSize, vertexArray, BufferUsageHint.StaticDraw);
 
             // 頂点indexバッファ(IBO)生成
-            _indexBuffer = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBuffer);
+            _ibo = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _ibo);
             int indexSize = indexArrayLength * sizeof(int);
             GL.BufferData(BufferTarget.ElementArrayBuffer, indexSize, indexArray, BufferUsageHint.StaticDraw);
 
@@ -184,17 +181,17 @@ namespace Elffy.Core
         private unsafe void UpdateBuffer(IntPtr vertexArray, int vertexArrayLength, IntPtr indexArray, int indexArrayLength)
         {
             _indexArrayLength = indexArrayLength;
-            GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBuffer);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, _vbo);
             GL.BufferData(BufferTarget.ArrayBuffer, vertexArrayLength * sizeof(Vertex), vertexArray, BufferUsageHint.StaticDraw);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _indexBuffer);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _ibo);
             GL.BufferData(BufferTarget.ElementArrayBuffer, indexArrayLength * sizeof(int), indexArray, BufferUsageHint.StaticDraw);
         }
 
         private void OnTerminated(FrameObject _)
         {
             if(_isLoaded) {
-                GL.DeleteBuffer(_vertexBuffer);
-                GL.DeleteBuffer(_indexBuffer);
+                GL.DeleteBuffer(_vbo);
+                GL.DeleteBuffer(_ibo);
                 GL.DeleteVertexArray(_vao);
             }
         }

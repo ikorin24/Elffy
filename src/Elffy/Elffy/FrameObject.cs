@@ -82,7 +82,7 @@ namespace Elffy
         }
 
         /// <summary>このオブジェクトを指定のレイヤーでアクティブにします</summary>
-        public void Activate(Layer layer)
+        public virtual void Activate(Layer layer)
         {
             ArgumentChecker.ThrowIfNullArg(layer, nameof(layer));
             ArgumentChecker.ThrowArgumentIf(layer.Owner == null, $"{nameof(layer)} is not associated with {nameof(IHostScreen)}.");
@@ -97,6 +97,7 @@ namespace Elffy
         internal void Activate<TLayer>(TLayer layer) where TLayer : class, ILayer
         {
             ArgumentChecker.ThrowIfNullArg(layer, nameof(layer));
+            Debug.Assert(layer is Layer == false, "Layer は具象型のオーバーロードを通っていないとおかしい。");
             Debug.Assert(layer.Owner != null);
             if(IsTerminated) { throw new ObjectTerminatedException(this); }
             if(IsActivated) { return; }
