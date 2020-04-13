@@ -20,10 +20,10 @@ namespace Elffy.Framing
 
         #pragma warning disable CS0649
         private readonly FrameStreamObject? _streamObj;
-        #pragma warning restore CS0649
+#pragma warning restore CS0649
 
         /// <summary>この <see cref="FrameStream"/> の実体</summary>
-        internal readonly FrameStreamObject StreamObj => _streamObj ?? UnsafeTool.SetValue(_streamObj!, new FrameStreamObject());
+        internal readonly FrameStreamObject StreamObj => _streamObj ?? (Unsafe.AsRef(_streamObj) = new FrameStreamObject());
 
         /// <summary>指定した時間だけ、指定した処理を毎フレーム実行します</summary>
         /// <param name="time">実行時間</param>

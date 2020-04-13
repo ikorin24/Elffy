@@ -83,10 +83,10 @@ namespace Elffy.Framing
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SetTime(TimeSpan value) => UnsafeTool.SetValue(Time, value);
+        internal void SetTime(TimeSpan value) => Unsafe.AsRef(Time) = value;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SetFrameNum(int value) => UnsafeTool.SetValue(FrameNum, value);
+        internal void SetFrameNum(int value) => Unsafe.AsRef(FrameNum) = value;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static FrameBehaviorInfo LifeSpanMode(TimeSpan lifeSpan) => new FrameBehaviorInfo(lifeSpan);
