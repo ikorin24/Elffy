@@ -13,6 +13,8 @@ namespace Elffy.Shading
 
         public static NormalShaderSource Normal => NormalShaderSource.Instance;
 
+        public static VertexColorShaderSource VertexColor => VertexColorShaderSource.Instance;
+
         /// <summary>派生クラスで定義された、頂点シェーダーのソースコードを取得します</summary>
         /// <returns>頂点シェーダーのソースコード</returns>
         protected abstract string VertexShaderSource();
