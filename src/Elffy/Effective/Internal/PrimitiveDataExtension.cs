@@ -5,7 +5,7 @@ namespace Elffy.Effective.Internal
 {
     internal static class PrimitiveDataExtension
     {
-        internal static Vector2 AsVector2(this MMDTools.Vector2 source) => Unsafe.As<MMDTools.Vector2, Vector2>(ref source);
-        internal static Vector3 AsVector3(this MMDTools.Vector3 source) => Unsafe.As<MMDTools.Vector3, Vector3>(ref source);
+        internal static ref Vector2 AsVector2(this in MMDTools.Vector2 source) => ref Unsafe.As<MMDTools.Vector2, Vector2>(ref Unsafe.AsRef(source));
+        internal static ref Vector3 AsVector3(this in MMDTools.Vector3 source) => ref Unsafe.As<MMDTools.Vector3, Vector3>(ref Unsafe.AsRef(source));
     }
 }
