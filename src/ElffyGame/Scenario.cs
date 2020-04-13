@@ -35,8 +35,6 @@ namespace ElffyGame
             sw.Start();
             //var shader = ShaderSource.Phong.Compile();
             var shader = ShaderSource.Normal.Compile();
-            sw.Stop();
-            Debug.WriteLine(sw.ElapsedMilliseconds + "ms");
             model.Shader = shader;
             model.Activate(worldLayer);
             model.Terminated += _ => shader.Dispose();
@@ -44,23 +42,26 @@ namespace ElffyGame
             c.Shader = shader;
             c.Activate(worldLayer);
 
-            var cc = new Cube() { Position = new Vector3(0, 10, 0), Material = Materials.RedPlastic };
+            var cc = new Cube() { Position = new Vector3(0, 10, 0), Material = Materials.RedPlastic, Shader = ShaderSource.Normal.Compile() };
+            cc.Terminated += x => (x as Cube)!.Shader?.Dispose();
             cc.Activate(worldLayer);
             screen.Camera.LookAt(new Vector3(0, 10, 0), new Vector3(40, 40, -40));
             var cm = new CameraMouse(screen.Camera, screen.Mouse, new Vector3(0, 0, 0));
             cm.Activate(worldLayer);
 
-            var cubeArray = Enumerable.Range(0, 9).Select(i => new Cube() { Position = new Vector3(3, 0, 0) }).ToArray();
+            var cubeArray = Enumerable.Range(0, 9).Select(i => new Cube() { Position = new Vector3(3, 0, 0), Shader = ShaderSource.Normal.Compile() }).ToArray();
             foreach(var cube in cubeArray) {
                 cube.Rotate(Vector3.UnitY, 30f.ToRadian());
                 cube.Rotate(Vector3.UnitZ, 10f.ToRadian());
+                cube.Terminated += x => ((Cube)x).Shader?.Dispose();
             }
             for(int i = 1; i < cubeArray.Length; i++) {
                 cubeArray[i - 1].Children.Add(cubeArray[i]);
                 cubeArray[i].Activate(worldLayer);
             }
             cubeArray[0].Activate(worldLayer);
-
+            sw.Stop();
+            Debug.WriteLine(sw.ElapsedMilliseconds + "ms");
 
             //var light = new DirectLight();
             //light.Activate();
