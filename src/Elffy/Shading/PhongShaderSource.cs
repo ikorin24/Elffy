@@ -11,9 +11,7 @@ namespace Elffy.Shading
 
         private PhongShaderSource() { }
 
-        protected override string VertexShaderSource() => VertSource;
-
-        protected override string FragmentShaderSource() => FragSource;
+        public override Shader Compile() => CompileShaderSources(VertSource, FragSource);
 
         protected override void DefineLocation(VertexDefinition definition)
         {

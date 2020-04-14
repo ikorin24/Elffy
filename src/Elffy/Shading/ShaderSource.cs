@@ -15,14 +15,6 @@ namespace Elffy.Shading
 
         public static VertexColorShaderSource VertexColor => VertexColorShaderSource.Instance;
 
-        /// <summary>派生クラスで定義された、頂点シェーダーのソースコードを取得します</summary>
-        /// <returns>頂点シェーダーのソースコード</returns>
-        protected abstract string VertexShaderSource();
-
-        /// <summary>派生クラスで定義された、フラグメントシェーダ―のソースコードを取得します</summary>
-        /// <returns>フラグメントシェーダ―のソースコード</returns>
-        protected abstract string FragmentShaderSource();
-
         protected abstract void DefineLocation(VertexDefinition definition);
 
         /// <summary>派生クラスでオーバーライドされた場合、このシェーダーに uniform 変数を送ります。</summary>
@@ -40,13 +32,15 @@ namespace Elffy.Shading
         internal void DefineLocationInternal(int program) => DefineLocation(new VertexDefinition(program));
 
         /// <summary>頂点シェーダー・フラグメントシェーダ―の読み込み、リンク、プログラムの作成を行います</summary>
-        public Shader Compile()
+        public abstract Shader Compile();
+
+        protected Shader CompileShaderSources(string vertexShaderSource, string fragmentShaderSource)
         {
             var vertShader = Consts.NULL;
             var fragShader = Consts.NULL;
             try {
-                vertShader = CompileSource(VertexShaderSource(), ShaderType.VertexShader);
-                fragShader = CompileSource(FragmentShaderSource(), ShaderType.FragmentShader);
+                vertShader = CompileSource(vertexShaderSource, ShaderType.VertexShader);
+                fragShader = CompileSource(fragmentShaderSource, ShaderType.FragmentShader);
 
                 var program = GL.CreateProgram();
                 GL.AttachShader(program, vertShader);

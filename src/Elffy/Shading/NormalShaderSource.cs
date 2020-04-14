@@ -11,15 +11,13 @@ namespace Elffy.Shading
 
         private NormalShaderSource() { }
 
+        public override Shader Compile() => CompileShaderSources(VertSource, FragSource);
+
         protected override void DefineLocation(VertexDefinition definition)
         {
             definition.Position("vPos");
             definition.Normal("vNormal");
         }
-
-        protected override string FragmentShaderSource() => FragSource;
-
-        protected override string VertexShaderSource() => VertSource;
 
         protected override void SendUniforms(Uniform uniform, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
