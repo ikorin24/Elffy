@@ -1,5 +1,7 @@
 ﻿#nullable enable
 
+using System;
+
 namespace Elffy.Core
 {
     internal sealed class SystemLayer : ILayer
@@ -9,6 +11,9 @@ namespace Elffy.Core
         /// <summary>このレイヤーを持つ親</summary>
         internal LayerCollection Owner { get; }
         LayerCollection? ILayer.Owner => Owner;
+
+        /// <summary><see cref="SystemLayer"/> has no lights</summary>
+        ReadOnlySpan<Light> ILayer.Lights => ReadOnlySpan<Light>.Empty;
 
         /// <summary>現在生きている全オブジェクトの数を取得します</summary>
         public int ObjectCount => _store.ObjectCount;

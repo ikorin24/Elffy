@@ -37,7 +37,6 @@ namespace Elffy
         /// <summary>カメラを取得します</summary>
         Camera IHostScreen.Camera => _renderingArea.Camera;
         TimeSpan IHostScreen.FrameDelta => _frameDelta;
-        Light IHostScreen.Light => _renderingArea.Light;
         IGameTimer IHostScreen.Watch => _watch;
 
         public VSyncMode VSync { get => _window.VSync; set => _window.VSync = value; }

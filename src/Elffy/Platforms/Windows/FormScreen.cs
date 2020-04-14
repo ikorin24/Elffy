@@ -41,8 +41,6 @@ namespace Elffy.Platforms.Windows
 
         TimeSpan IHostScreen.FrameDelta => _frameDelta;
 
-        Light IHostScreen.Light => _renderingArea.Light;
-
         public event ActionEventHandler<IHostScreen>? Initialized;
         public event ActionEventHandler<IHostScreen>? Rendering;
         public event ActionEventHandler<IHostScreen>? Rendered;

@@ -27,14 +27,14 @@ namespace Elffy.Shading
         ~Shader() => Dispose(false);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void Apply(Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        internal void Apply(Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             if(IsReleased) { throw new InvalidOperationException("this shader program is empty or deleted."); }
             if(_currentProgram != _program) {
                 _currentProgram = _program;
                 GL.UseProgram(_program);
             }
-            _shaderSource!.SendUniformsInternal(_program, target, model, view, projection);
+            _shaderSource!.SendUniformsInternal(_program, target, lights, model, view, projection);
         }
 
         internal void Init(int vbo)

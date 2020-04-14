@@ -114,7 +114,7 @@ namespace Elffy.Core
                     Shader.Init(_vbo);
                     _isShaderChanged = false;
                 }
-                Shader.Apply(this, model, view, projection);
+                Shader.Apply(this, Layer!.Lights, model, view, projection);
                 GL.DrawElements(BeginMode.Triangles, _indexArrayLength, DrawElementsType.UnsignedInt, 0);
                 Rendered?.Invoke(this);
             }

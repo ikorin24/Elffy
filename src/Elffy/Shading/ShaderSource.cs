@@ -28,13 +28,14 @@ namespace Elffy.Shading
         /// <summary>派生クラスでオーバーライドされた場合、このシェーダーに uniform 変数を送ります。</summary>
         /// <param name="uniform"></param>
         /// <param name="target"></param>
+        /// <param name="lights"></param>
         /// <param name="model"></param>
         /// <param name="view"></param>
         /// <param name="projection"></param>
-        protected abstract void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection);
+        protected abstract void SendUniforms(Uniform uniform, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection);
 
-        internal void SendUniformsInternal(int program, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
-            => SendUniforms(new Uniform(program), target, model, view, projection);
+        internal void SendUniformsInternal(int program, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+            => SendUniforms(new Uniform(program), target, lights, model, view, projection);
 
         internal void DefineLocationInternal(int program) => DefineLocation(new VertexDefinition(program));
 

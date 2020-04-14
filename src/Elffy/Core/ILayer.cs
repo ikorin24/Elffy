@@ -1,10 +1,14 @@
 ﻿#nullable enable
 
+using System;
+
 namespace Elffy.Core
 {
     internal interface ILayer
     {
         LayerCollection? Owner { get; }
+
+        ReadOnlySpan<Light> Lights { get; }
 
         /// <summary>現在生きている全オブジェクトの数を取得します</summary>
         int ObjectCount { get; }

@@ -19,6 +19,8 @@ namespace Elffy.Core
         /// <summary><see cref="_list"/> に含まれるオブジェクトのうち、<see cref="Renderable"/> を継承しているもののリスト</summary>
         private readonly List<Renderable> _renderables = new List<Renderable>();
 
+        private readonly List<Light> _lights = new List<Light>();
+
         /// <summary>現在生きている全オブジェクトを取得します</summary>
         public ReadOnlySpan<FrameObject> List => _list.AsReadOnlySpan();
         /// <summary>現在生きている全オブジェクトの数を取得します</summary>
@@ -32,6 +34,8 @@ namespace Elffy.Core
 
         /// <summary><see cref="List"/> に含まれるオブジェクトのうち、<see cref="Renderable"/> を継承しているものを取得します</summary>
         public ReadOnlySpan<Renderable> Renderables => _renderables.AsReadOnlySpan();
+
+        public ReadOnlySpan<Light> Lights => _lights.AsReadOnlySpan();
 
         /// <summary>指定した<see cref="FrameObject"/>を追加します</summary>
         /// <param name="frameObject">追加するオブジェクト</param>
@@ -56,8 +60,13 @@ namespace Elffy.Core
             if(_removedBuf.Count > 0) {
                 foreach(var item in _removedBuf.AsSpan()) {
                     _list.Remove(item);
-                    if(item is Renderable renderable) {
-                        _renderables.Remove(renderable);
+                    switch(item) {
+                        case Renderable renderable:
+                            _renderables.Remove(renderable);
+                            break;
+                        case Light light:
+                            _lights.Remove(light);
+                            break;
                     }
                 }
                 _removedBuf.Clear();
@@ -65,8 +74,13 @@ namespace Elffy.Core
             if(_addedBuf.Count > 0) {
                 _list.AddRange(_addedBuf);
                 foreach(var item in _addedBuf.AsSpan()) {
-                    if(item is Renderable renderable) {
-                        _renderables.Add(renderable);
+                    switch(item) {
+                        case Renderable renderable:
+                            _renderables.Add(renderable);
+                            break;
+                        case Light light:
+                            _lights.Add(light);
+                            break;
                     }
                 }
                 _addedBuf.Clear();

@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using Elffy.Core;
+using System;
 
 namespace Elffy.Shading
 {
@@ -22,7 +23,7 @@ namespace Elffy.Shading
             definition.Color("vertexColor");
         }
 
-        protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        protected override void SendUniforms(Uniform uniform, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             uniform.Send("modelViewProjection", projection * view * model);
         }

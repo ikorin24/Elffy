@@ -4,6 +4,7 @@ using System.Linq;
 using OpenTK.Graphics.OpenGL;
 using System.Diagnostics;
 using Elffy.Exceptions;
+using System;
 
 namespace Elffy
 {
@@ -21,10 +22,9 @@ namespace Elffy
         internal LayerCollection? Owner { get; set; }
         LayerCollection? ILayer.Owner => Owner;
 
-        /// <summary>このレイヤーのライティングを有効にするかどうか</summary>
-        public bool IsLightingEnabled { get; set; }
-
         public string Name { get; }
+
+        public ReadOnlySpan<Light> Lights => _store.Lights;
 
         /// <summary>レイヤー名を指定して <see cref="Layer"/> を作成します</summary>
         /// <param name="name">レイヤー名</param>

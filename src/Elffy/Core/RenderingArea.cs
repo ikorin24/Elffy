@@ -21,7 +21,6 @@ namespace Elffy.Core
 
         /// <summary>レイヤーのリスト</summary>
         internal LayerCollection Layers { get; }
-        internal Light Light { get; } = new Light();
         internal Dispatcher Dispatcher { get; } = new Dispatcher();
         internal Camera Camera { get; } = new Camera();
         internal Mouse Mouse { get; } = new Mouse();
@@ -131,10 +130,8 @@ namespace Elffy.Core
             // レイヤー描画処理
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             foreach(var layer in Layers.AsReadOnlySpan()) {
-                Light.IsEnabled = layer.IsLightingEnabled;
                 layer.Render(Camera.Projection, Camera.View);
             }
-            Light.IsEnabled = false;
             uiLayer.Render(_uiProjection);
 
             // レイヤー変更適用

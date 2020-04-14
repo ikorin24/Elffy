@@ -53,7 +53,7 @@ namespace Elffy
             Owner = owner;
             UILayer = new UILayer(uiYAxisDirection, this);
             SystemLayer = new SystemLayer(this);
-            WorldLayer = new Layer(WORLD_LAYER_NAME, this) { IsLightingEnabled = true };
+            WorldLayer = new Layer(WORLD_LAYER_NAME, this);
             AddDefaltLayers();
         }
 

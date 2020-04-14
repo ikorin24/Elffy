@@ -25,8 +25,6 @@ namespace Elffy
         /// <summary><see cref="FrameObject"/> を保持するためのレイヤーのリスト</summary>
         LayerCollection Layers { get; }
 
-        Light Light { get; }
-
         Dispatcher Dispatcher { get; }
 
         TimeSpan Time { get; }

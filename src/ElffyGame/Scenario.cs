@@ -25,7 +25,7 @@ namespace ElffyGame
         public static void Start(IHostScreen screen)
         {
             var worldLayer = screen.Layers.WorldLayer;
-            screen.Light.GlobalAmbient = Color4.Red;
+            //screen.Light.GlobalAmbient = Color4.Red;
 
             //var light = new DirectLight();
             //light.Activate();

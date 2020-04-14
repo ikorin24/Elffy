@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using Elffy.Core;
+using System;
 
 namespace Elffy.Shading
 {
@@ -20,8 +21,10 @@ namespace Elffy.Shading
             definition.Normal("vNormal");
         }
 
-        protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        protected override void SendUniforms(Uniform uniform, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
+            // TODO: lights を使う (どうやって可変長かつ抽象型をうまく扱えばいいの?)
+
             var material = new Material(new Color4(0.6f), new Color4(0.35f), new Color4(0.5f), 10f);
             uniform.Send("model", model);
             uniform.Send("view", view);

@@ -12,7 +12,7 @@ namespace Elffy
     /// フレーム更新に関わるオブジェクトの基底クラス<para/>
     /// フレームに関する操作・エンジンによって管理されるための操作を提供します。<para/>
     /// </summary>
-    public abstract class FrameObject : ITerminatable
+    public abstract class FrameObject
     {
         private IHostScreen? _hostScreen;
         private Dispatcher? _dispatcher;

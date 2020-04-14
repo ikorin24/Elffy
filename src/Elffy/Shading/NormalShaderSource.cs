@@ -1,6 +1,6 @@
 ﻿#nullable enable
 using Elffy.Core;
-using OpenTK.Graphics.OpenGL;
+using System;
 
 namespace Elffy.Shading
 {
@@ -21,7 +21,7 @@ namespace Elffy.Shading
 
         protected override string VertexShaderSource() => VertSource;
 
-        protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        protected override void SendUniforms(Uniform uniform, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             uniform.Send("model", model);
             uniform.Send("view", view);
