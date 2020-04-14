@@ -3,6 +3,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
 using Elffy.Effective.Internal;
 using System.Collections.ObjectModel;
+using System;
+using System.Collections.Generic;
 
 namespace Test
 {
@@ -17,6 +19,28 @@ namespace Test
             foreach(var item in list.AsReadOnlyMemory().Span) {
                 Assert.IsTrue(i == item);
                 i++;
+            }
+        }
+
+        [TestMethod]
+        public void ListAddRageTest()
+        {
+            {
+                var list = new List<int>();
+                var span = Enumerable.Range(0, 20).ToArray().AsSpan();
+                list.AddRange(span);
+                for(int i = 0; i < list.Count; i++) {
+                    Assert.IsTrue(i == list[i]);
+                }
+            }
+
+            {
+                var list = Enumerable.Range(0, 50).ToList();
+                var span = Enumerable.Range(50, 20).ToArray().AsSpan();
+                list.AddRange(span);
+                for(int i = 0; i < list.Count; i++) {
+                    Assert.IsTrue(i == list[i]);
+                }
             }
         }
 
