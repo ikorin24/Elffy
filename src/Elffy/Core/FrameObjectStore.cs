@@ -64,7 +64,11 @@ namespace Elffy.Core
             }
             if(_addedBuf.Count > 0) {
                 _list.AddRange(_addedBuf);
-                _renderables.AddRange(_addedBuf.OfType<Renderable>());
+                foreach(var item in _addedBuf.AsSpan()) {
+                    if(item is Renderable renderable) {
+                        _renderables.Add(renderable);
+                    }
+                }
                 _addedBuf.Clear();
             }
         }
