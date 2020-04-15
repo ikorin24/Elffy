@@ -59,16 +59,15 @@ namespace Elffy.Effective
         public static UnmanagedArray<T> ToUnmanagedArray<T>(this Span<T> source) where T : unmanaged => ToUnmanagedArray((ReadOnlySpan<T>)source);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static UnmanagedArray<T> ToUnmanagedArray<T>(this ReadOnlySpan<T> source) where T : unmanaged
-        {
-            return new UnmanagedArray<T>(source);
-        }
+        public static UnmanagedArray<T> ToUnmanagedArray<T>(this ReadOnlySpan<T> source) where T : unmanaged => new UnmanagedArray<T>(source);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe UnmanagedArray<TTo> SelectToUnmanagedArray<TFrom, TTo>(this Span<TFrom> source, Func<TFrom, TTo> selector) where TTo : unmanaged
             => SelectToUnmanagedArray((ReadOnlySpan<TFrom>)source, selector);
 
         public static unsafe UnmanagedArray<TTo> SelectToUnmanagedArray<TFrom, TTo>(this ReadOnlySpan<TFrom> source, Func<TFrom, TTo> selector) where TTo : unmanaged
         {
+            if(selector == null) { throw new ArgumentNullException(nameof(selector)); }
             var umArray = new UnmanagedArray<TTo>(source.Length);
             try {
                 var ptr = (TTo*)umArray.Ptr;
@@ -105,25 +104,54 @@ namespace Elffy.Effective
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T First<T>(this Span<T> source, Func<T, bool> selector) => First((ReadOnlySpan<T>)source, selector);
+        public static Span<TTo> SelectToSpan<TFrom, TTo>(this Span<TFrom> source, Span<TTo> buffer, Func<TFrom, TTo> selector)
+            => SelectToSpan((ReadOnlySpan<TFrom>)source, buffer, selector);
+
+        public static Span<TTo> SelectToSpan<TFrom, TTo>(this ReadOnlySpan<TFrom> source, Span<TTo> buffer, Func<TFrom, TTo> selector)
+        {
+            if(selector == null) { throw new ArgumentNullException(nameof(selector)); }
+            if(source.Length > buffer.Length) { throw new ArgumentException($"Length of {nameof(buffer)} is too short."); }
+            for(int i = 0; i < source.Length; i++) {
+                buffer[i] = selector(source[i]);
+            }
+            return buffer;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Span<TTo> SelectToSpan<TFrom, TTo>(this Span<TFrom> source, Span<TTo> buffer, Func<TFrom, int, TTo> selector)
+            => SelectToSpan((ReadOnlySpan<TFrom>)source, buffer, selector);
+
+        public static Span<TTo> SelectToSpan<TFrom, TTo>(this ReadOnlySpan<TFrom> source, Span<TTo> buffer, Func<TFrom, int, TTo> selector)
+        {
+            if(selector == null) { throw new ArgumentNullException(nameof(selector)); }
+            if(source.Length > buffer.Length) { throw new ArgumentException($"Length of {nameof(buffer)} is too short."); }
+            for(int i = 0; i < source.Length; i++) {
+                buffer[i] = selector(source[i], i);
+            }
+            return buffer;
+        }
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static T First<T>(this Span<T> source, Func<T, bool> selector) => First((ReadOnlySpan<T>)source, selector);
+
         public static T First<T>(this ReadOnlySpan<T> source, Func<T, bool> selector)
         {
+            if(selector == null) { throw new ArgumentNullException(nameof(selector)); }
             foreach(var item in source) {
                 if(selector(item)) {
                     return item;
                 }
             }
-            throw new InvalidOperationException();
+            throw new InvalidOperationException("No element matched.");
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T FirstOrDefault<T>(this Span<T> source, Func<T, bool> selector) => FirstOrDefault((ReadOnlySpan<T>)source, selector);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T FirstOrDefault<T>(this ReadOnlySpan<T> source, Func<T, bool> selector)
         {
+            if(selector == null) { throw new ArgumentNullException(nameof(selector)); }
             foreach(var item in source) {
                 if(selector(item)) {
                     return item;
@@ -136,9 +164,9 @@ namespace Elffy.Effective
         public static T? FirstOrNull<T>(this Span<T> source, Func<T, bool> selector) where T : struct
             => FirstOrNull((ReadOnlySpan<T>)source, selector);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T? FirstOrNull<T>(this ReadOnlySpan<T> source, Func<T, bool> selector) where T : struct
         {
+            if(selector == null) { throw new ArgumentNullException(nameof(selector)); }
             foreach(var item in source) {
                 if(selector(item)) {
                     return item;
