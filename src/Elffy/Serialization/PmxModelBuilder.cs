@@ -17,29 +17,10 @@ namespace Elffy.Serialization
         public static Model3D LoadModel(Stream stream)
         {
             var pmx = PMXParser.Parse(stream);
-            var allIndex = pmx.SurfaceList.ExtractInnerArray().MarshalCast<Surface, int>();
-            var allVertex = pmx.VertexList.ExtractInnerArray();
-            var materials = pmx.MaterialList.ExtractInnerArray();
-            var boneList = pmx.BoneList.ExtractInnerArray();
-
-            Core.WeightTransformType ToWeightType(MMDTools.WeightTransformType t)
-                => t switch
-                {
-                    MMDTools.WeightTransformType.BDEF1 => Core.WeightTransformType.BDEF1,
-                    MMDTools.WeightTransformType.BDEF2 => Core.WeightTransformType.BDEF2,
-                    MMDTools.WeightTransformType.BDEF4 => Core.WeightTransformType.BDEF4,
-                    _ => throw new NotSupportedException($"Not supported weight type. Type : {t}"),
-                };
-
-            Core.Vertex GetVertex(MMDTools.Vertex v)
-                => new Core.Vertex(v.Position.AsVector3(), v.Normal.AsVector3(), v.UV.AsVector2());
-
-            BoneTreeElement GetBoneTreeElement(MMDTools.Bone b, int i)
-                => new BoneTreeElement(i, (b.ParentBone != 65535) ? b.ParentBone : (int?)null, b.Position.AsVector3());
-
-            Core.BoneWeight GetBoneWeight(MMDTools.Vertex v)
-                => new Core.BoneWeight(v.BoneIndex1, v.BoneIndex2, v.BoneIndex3, v.BoneIndex4,
-                                       v.Weight1, v.Weight2, v.Weight3, v.Weight4, ToWeightType(v.WeightTransformType));
+            var allIndex = pmx.SurfaceList.AsSpan().MarshalCast<Surface, int>();
+            var allVertex = pmx.VertexList.AsSpan();
+            var materials = pmx.MaterialList.AsSpan();
+            var boneList = pmx.BoneList.AsSpan();
 
             using(var vertexArray = allVertex.SelectToUnmanagedArray(GetVertex))
             using(var weightArray = allVertex.SelectToUnmanagedArray(GetBoneWeight))
@@ -50,6 +31,27 @@ namespace Elffy.Serialization
                 return model;
             }
         }
+
+        private static Core.WeightTransformType ToWeightType(MMDTools.WeightTransformType t)
+        {
+            return t switch
+            {
+                MMDTools.WeightTransformType.BDEF1 => Core.WeightTransformType.BDEF1,
+                MMDTools.WeightTransformType.BDEF2 => Core.WeightTransformType.BDEF2,
+                MMDTools.WeightTransformType.BDEF4 => Core.WeightTransformType.BDEF4,
+                _ => throw new NotSupportedException($"Not supported weight type. Type : {t}"),
+            };
+        }
+
+        private static Core.Vertex GetVertex(MMDTools.Vertex v) 
+            => new Core.Vertex(v.Position.AsVector3(), v.Normal.AsVector3(), v.UV.AsVector2());
+
+        private static BoneTreeElement GetBoneTreeElement(MMDTools.Bone b, int i)
+            => new BoneTreeElement(i, (b.ParentBone != 65535) ? b.ParentBone : (int?)null, b.Position.AsVector3());
+
+        static BoneWeight GetBoneWeight(MMDTools.Vertex v)
+            => new BoneWeight(v.BoneIndex1, v.BoneIndex2, v.BoneIndex3, v.BoneIndex4,
+                              v.Weight1, v.Weight2, v.Weight3, v.Weight4, ToWeightType(v.WeightTransformType));
     }
 }
 

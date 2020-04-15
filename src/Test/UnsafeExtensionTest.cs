@@ -50,7 +50,7 @@ namespace Test
             {
                 var readOnlyCollection = Enumerable.Range(0, 10).ToList().AsReadOnly();
                 var i = 0;
-                foreach(var item in readOnlyCollection.ExtractInnerArray()) {
+                foreach(var item in readOnlyCollection.AsSpan()) {
                     Assert.IsTrue(i == item);
                     i++;
                 }
@@ -60,7 +60,7 @@ namespace Test
             {
                 var readOnlyCollection2 = new ReadOnlyCollection<int>(Enumerable.Range(0, 10).ToArray());
                 var i = 0;
-                foreach(var item in readOnlyCollection2.ExtractInnerArray()) {
+                foreach(var item in readOnlyCollection2.AsSpan()) {
                     Assert.IsTrue(i == item);
                     i++;
                 }

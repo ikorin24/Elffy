@@ -17,7 +17,7 @@ namespace Elffy.Effective.Internal
         /// <param name="collection"><see cref="ReadOnlyCollection{T}"/></param>
         /// <returns>Inner array of <see cref="ReadOnlyCollection{T}"/></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static Span<T> ExtractInnerArray<T>(this ReadOnlyCollection<T> collection) // TODO: Test this method on each .NET version
+        internal static Span<T> AsSpan<T>(this ReadOnlyCollection<T> collection) // TODO: Test this method on each .NET version
         {
             if(collection == null) { throw new ArgumentNullException(nameof(collection)); }
             var dummy = Unsafe.As<ReadOnlyCollectionDummy<T>>(collection);
