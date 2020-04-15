@@ -48,6 +48,7 @@ namespace Elffy.Effective.Internal
 
         internal static void InsertRange<T>(this List<T> list, int index, ReadOnlySpan<T> span)
         {
+            if(list == null) { throw new ArgumentNullException(nameof(list)); }
             static void EnsureCapacity(List<T> original, ListDummy<T> dummy, int min)
             {
                 if(dummy._items.Length < min) {
