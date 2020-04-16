@@ -28,9 +28,18 @@ namespace Elffy.Effective.Internal
                 return list.AsSpan();
             }
             else {
-                throw new InvalidCastException($"Inner field of {nameof(ReadOnlyCollection<T>)} cannot be implemented.\r\nType : {dummy.List.GetType()}");
+                throw new InvalidCastException($"Inner field of {nameof(ReadOnlyCollection<T>)} cannot be implemented. Type : {dummy.List.GetType()}");
             }
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal unsafe static Span<T> AsWritable<T>(this ReadOnlySpan<T> source) where T : unmanaged
+        {
+            fixed(T* ptr = source) {
+                return new Span<T>(ptr, source.Length);
+            }
+        }
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static Memory<T> AsMemory<T>(this List<T> list) => Unsafe.As<ListDummy<T>>(list)._items.AsMemory(0, list.Count);
@@ -44,6 +53,7 @@ namespace Elffy.Effective.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static ReadOnlySpan<T> AsReadOnlySpan<T>(this List<T> list) => list.AsSpan();
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void AddRange<T>(this List<T> list, ReadOnlySpan<T> span) => list.InsertRange(list.Count, span);
 
         internal static void InsertRange<T>(this List<T> list, int index, ReadOnlySpan<T> span)

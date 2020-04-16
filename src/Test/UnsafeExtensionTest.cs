@@ -45,6 +45,22 @@ namespace Test
         }
 
         [TestMethod]
+        public void ReadOnlySpanWriteTest()
+        {
+            var array = new int[100];
+            ReadOnlySpan<int> readOnlySpan = array.AsSpan();
+            var writable = readOnlySpan.AsWritable();
+            for(int i = 0; i < writable.Length; i++) {
+                writable[i] = i;
+            }
+
+            for(int i = 0; i < readOnlySpan.Length; i++) {
+                Assert.IsTrue(i == readOnlySpan[i]);
+                Assert.IsTrue(writable[i] == readOnlySpan[i]);
+            }
+        }
+
+        [TestMethod]
         public void ReadOnlyCollectionToSpanTest()
         {
             {
