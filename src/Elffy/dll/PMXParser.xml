@@ -1,0 +1,85 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>PMXParser</name>
+    </assembly>
+    <members>
+        <member name="T:MMDTools.PMXObject">
+            <summary>PMX data object</summary>
+        </member>
+        <member name="P:MMDTools.PMXObject.Version">
+            <summary>Get PMX file version</summary>
+        </member>
+        <member name="P:MMDTools.PMXObject.Name">
+            <summary>Get name of pmx data</summary>
+        </member>
+        <member name="P:MMDTools.PMXObject.NameEnglish">
+            <summary>Get English name of pmx data</summary>
+        </member>
+        <member name="P:MMDTools.PMXObject.Comment">
+            <summary>Get comment of pmx data</summary>
+        </member>
+        <member name="P:MMDTools.PMXObject.CommentEnglish">
+            <summary>Get English comment of pmx data</summary>
+        </member>
+        <member name="P:MMDTools.PMXObject.VertexList">
+            <summary>Get <see cref="T:MMDTools.Vertex"/> list</summary>
+        </member>
+        <member name="P:MMDTools.PMXObject.SurfaceList">
+            <summary>Get <see cref="T:MMDTools.Surface"/> list</summary>
+        </member>
+        <member name="P:MMDTools.PMXObject.TextureList">
+            <summary>Get list of texture file path</summary>
+        </member>
+        <member name="P:MMDTools.PMXObject.MaterialList">
+            <summary>Get <see cref="T:MMDTools.Material"/> list</summary>
+        </member>
+        <member name="P:MMDTools.PMXObject.BoneList">
+            <summary>Get <see cref="T:MMDTools.Bone"/> list</summary>
+        </member>
+        <member name="P:MMDTools.PMXObject.MorphList">
+            <summary>Get <see cref="T:MMDTools.Morph"/> list</summary>
+        </member>
+        <member name="P:MMDTools.PMXObject.DisplayFrameList">
+            <summary>Get <see cref="T:MMDTools.DisplayFrame"/> list</summary>
+        </member>
+        <member name="P:MMDTools.PMXObject.RigidBodyList">
+            <summary>Get <see cref="T:MMDTools.RigidBody"/> list</summary>
+        </member>
+        <member name="P:MMDTools.PMXObject.JointList">
+            <summary>Get <see cref="T:MMDTools.Joint"/> list</summary>
+        </member>
+        <member name="P:MMDTools.PMXObject.SoftBodyList">
+            <summary>Get <see cref="T:MMDTools.SoftBody"/> list</summary>
+        </member>
+        <member name="F:MMDTools.PMXVersion.V20">
+            <summary>PMX Ver 2.0</summary>
+        </member>
+        <member name="F:MMDTools.PMXVersion.V21">
+            <summary>PMX Ver 2.1</summary>
+        </member>
+        <member name="T:MMDTools.PMXParser">
+            <summary>PMX data parser class</summary>
+        </member>
+        <member name="M:MMDTools.PMXParser.GetVersion(System.String)">
+            <summary>Get PMX data version from specified file</summary>
+            <param name="fileName">file name of PMX data</param>
+            <returns>PMX file version</returns>
+        </member>
+        <member name="M:MMDTools.PMXParser.GetVersion(System.IO.Stream)">
+            <summary>Get PMX data version from specified stream</summary>
+            <param name="stream">stream of PMX data</param>
+            <returns>PMX file version</returns>
+        </member>
+        <member name="M:MMDTools.PMXParser.Parse(System.String)">
+            <summary>Parse PMX data from specified file</summary>
+            <param name="fileName">file name of PMX data</param>
+            <returns>PMX object</returns>
+        </member>
+        <member name="M:MMDTools.PMXParser.Parse(System.IO.Stream)">
+            <summary>Parse PMX data from specified stream</summary>
+            <param name="stream">stream of PMX data</param>
+            <returns>PMX object</returns>
+        </member>
+    </members>
+</doc>

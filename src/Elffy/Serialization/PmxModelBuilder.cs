@@ -17,10 +17,12 @@ namespace Elffy.Serialization
         public static Model3D LoadModel(Stream stream)
         {
             var pmx = PMXParser.Parse(stream);
-            var allIndex = pmx.SurfaceList.AsSpan().MarshalCast<Surface, int>();
-            var allVertex = pmx.VertexList.AsSpan();
-            var materials = pmx.MaterialList.AsSpan();
-            var boneList = pmx.BoneList.AsSpan();
+            var allIndex = pmx.SurfaceList.Span.MarshalCast<Surface, int>();
+            var allVertex = pmx.VertexList.Span;
+            var materials = pmx.MaterialList.Span;
+            var boneList = pmx.BoneList.Span;
+
+            Model3DTool.ReverseTrianglePolygon(allIndex.AsWritable());
 
             using(var vertexArray = allVertex.SelectToUnmanagedArray(GetVertex))
             using(var weightArray = allVertex.SelectToUnmanagedArray(GetBoneWeight))
@@ -44,10 +46,10 @@ namespace Elffy.Serialization
         }
 
         private static Core.Vertex GetVertex(MMDTools.Vertex v) 
-            => new Core.Vertex(v.Position.AsVector3(), v.Normal.AsVector3(), v.UV.AsVector2());
+            => new Core.Vertex(v.Position.ToVector3(), v.Normal.ToVector3(), v.UV.ToVector2());
 
         private static BoneTreeElement GetBoneTreeElement(MMDTools.Bone b, int i)
-            => new BoneTreeElement(i, (b.ParentBone != 65535) ? b.ParentBone : (int?)null, b.Position.AsVector3());
+            => new BoneTreeElement(i, (b.ParentBone < 0) ? b.ParentBone : (int?)null, b.Position.ToVector3());
 
         static BoneWeight GetBoneWeight(MMDTools.Vertex v)
             => new BoneWeight(v.BoneIndex1, v.BoneIndex2, v.BoneIndex3, v.BoneIndex4,
