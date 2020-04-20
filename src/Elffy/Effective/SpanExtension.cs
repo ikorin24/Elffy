@@ -104,6 +104,43 @@ namespace Elffy.Effective
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static PooledArray<TTo> SelectToPooledArray<TFrom, TTo>(this Span<TFrom> source, Func<TFrom, TTo> selector)
+            => SelectToPooledArray((ReadOnlySpan<TFrom>)source, selector);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static PooledArray<TTo> SelectToPooledArray<TFrom, TTo>(this ReadOnlySpan<TFrom> source, Func<TFrom, TTo> selector)
+        {
+            var pooled = new PooledArray<TTo>(source.Length);
+            try {
+                source.SelectToSpan(pooled.AsSpan(), selector);
+                return pooled;
+            }
+            catch(Exception) {
+                pooled.Dispose();
+                throw;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static PooledArray<TTo> SelectToPooledArray<TFrom, TTo>(this Span<TFrom> source, Func<TFrom, int, TTo> selector)
+            => SelectToPooledArray((ReadOnlySpan<TFrom>)source, selector);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static PooledArray<TTo> SelectToPooledArray<TFrom, TTo>(this ReadOnlySpan<TFrom> source, Func<TFrom, int, TTo> selector)
+        {
+            var pooled = new PooledArray<TTo>(source.Length);
+            try {
+                source.SelectToSpan(pooled.AsSpan(), selector);
+                return pooled;
+            }
+            catch(Exception) {
+                pooled.Dispose();
+                throw;
+            }
+        }
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Span<TTo> SelectToSpan<TFrom, TTo>(this Span<TFrom> source, Span<TTo> buffer, Func<TFrom, TTo> selector)
             => SelectToSpan((ReadOnlySpan<TFrom>)source, buffer, selector);
 
