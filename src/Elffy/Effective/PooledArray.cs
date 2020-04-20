@@ -26,6 +26,14 @@ namespace Elffy.Effective
             Length = length;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public PooledArray(ReadOnlySpan<T> source)
+        {
+            _array = ArrayPool<T>.Shared.Rent(source.Length);
+            Length = source.Length;
+            source.CopyTo(_array.AsSpan(0, Length));
+        }
+
         /// <summary><see cref="Span{T}"/> を取得します</summary>
         /// <returns><see cref="Span{T}"/></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
