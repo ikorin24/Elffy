@@ -14,7 +14,7 @@ namespace Elffy.Serialization
 {
     internal static class PmxModelBuilder
     {
-        public static Model3D LoadModel(Stream stream)
+        public static unsafe Model3D LoadModel(Stream stream)
         {
             var pmx = PMXParser.Parse(stream);
             var allIndex = pmx.SurfaceList.Span.MarshalCast<Surface, int>();
@@ -22,7 +22,9 @@ namespace Elffy.Serialization
             var materials = pmx.MaterialList.Span;
             var boneList = pmx.BoneList.Span;
 
-            Model3DTool.ReverseTrianglePolygon(allIndex.AsWritable());
+            fixed(int* p = allIndex) {
+                Model3DTool.ReverseTrianglePolygon(new Span<int>(p, allIndex.Length));
+            }
 
             using(var vertexArray = allVertex.SelectToUnmanagedArray(GetVertex))
             using(var weightArray = allVertex.SelectToUnmanagedArray(GetBoneWeight))

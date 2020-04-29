@@ -33,15 +33,6 @@ namespace Elffy.Effective.Internal
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal unsafe static Span<T> AsWritable<T>(this ReadOnlySpan<T> source) where T : unmanaged
-        {
-            fixed(T* ptr = source) {
-                return new Span<T>(ptr, source.Length);
-            }
-        }
-
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static Memory<T> AsMemory<T>(this List<T> list) => Unsafe.As<ListDummy<T>>(list)._items.AsMemory(0, list.Count);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
