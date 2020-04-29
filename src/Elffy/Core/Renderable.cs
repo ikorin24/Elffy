@@ -210,6 +210,7 @@ namespace Elffy.Core
             Debug.Assert(_vao != Consts.NULL);
             var shaderProgram = Shader.Compile();  // TODO: 非同期コンパイル
             shaderProgram.Init(_vbo);
+            _shaderProgram?.Dispose();
             _shaderProgram = shaderProgram;
             _isShaderChanged = false;
         }
