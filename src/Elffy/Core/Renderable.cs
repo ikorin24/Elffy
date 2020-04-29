@@ -107,7 +107,7 @@ namespace Elffy.Core
                                     0, 0, 0, 1) *
                         modelParent;
 
-            if(_isLoaded && IsVisible && Shader != null) {
+            if(_isLoaded && IsVisible) {
                 GL.BindVertexArray(_vao);
                 GL.BindBuffer(BufferTarget.ElementArrayBuffer, _ibo);
                 Rendering?.Invoke(this, in model, in view, in projection);
