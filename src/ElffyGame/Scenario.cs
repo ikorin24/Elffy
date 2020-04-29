@@ -24,6 +24,11 @@ namespace ElffyGame
     {
         public static void Start(IHostScreen screen)
         {
+            screen.Camera.LookAt(new Vector3(0, 10, 0), new Vector3(40, 40, -40));
+            new CameraMouse(screen.Camera, screen.Mouse, new Vector3(0, 0, 0)).Activate(screen.Layers.WorldLayer);
+            Base.PmxModel.LoadResource("Alicia/Alicia_solid.pmx", screen.Layers.WorldLayer);
+            return;
+
             var worldLayer = screen.Layers.WorldLayer;
             //screen.Light.GlobalAmbient = Color4.Red;
 
