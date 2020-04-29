@@ -52,7 +52,6 @@ namespace Elffy.Effective
             return new Span<TTo>(&source, arrayLen);
         }
 
-
         // TODO: dll パッケージに入れる
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -188,6 +187,10 @@ namespace Elffy.Effective
             }
             throw new InvalidOperationException("No element matched.");
         }
+
+        public static T FirstOrDefault<T>(this Span<T> source) => FirstOrDefault((ReadOnlySpan<T>)source);
+
+        public static T FirstOrDefault<T>(this ReadOnlySpan<T> source) => source.Length > 0 ? source[0] : default;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T FirstOrDefault<T>(this Span<T> source, Func<T, bool> selector) => FirstOrDefault((ReadOnlySpan<T>)source, selector);
