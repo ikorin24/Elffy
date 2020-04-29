@@ -4,6 +4,7 @@ using OpenTK.Graphics.OpenGL;
 using Elffy.Threading;
 using Elffy.Exceptions;
 using Elffy.Shading;
+using System.Diagnostics;
 
 namespace Elffy.Core
 {
@@ -22,6 +23,7 @@ namespace Elffy.Core
         private int _vao;
         private bool _isLoaded;
         private bool _isShaderChanged;
+        private Shader? _shaderProgram;
 
         /// <summary>描画処理を行うかどうか</summary>
         public bool IsVisible { get; set; } = true;
@@ -57,26 +59,26 @@ namespace Elffy.Core
         }
         private TextureBase _texture = TextureBase.Empty;
 
-        public Shader? Shader
+        public ShaderSource Shader
         {
             get => _shader;
             set
             {
+                if(value is null) { throw new ArgumentNullException(nameof(value)); }
                 if(_shader == value) { return; }
                 var old = _shader;
-                _shader = value;
                 _isShaderChanged = true;
-                ShaderChanged?.Invoke(this, new ValueChangedEventArgs<Shader?>(old, value));
+                ShaderChanged?.Invoke(this, new ValueChangedEventArgs<ShaderSource>(old, value));
             }
         }
-        private Shader? _shader;
+        private ShaderSource _shader = ShaderSource.Normal;
 
         /// <summary>Material changed event</summary>
         public event ActionEventHandler<Renderable, ValueChangedEventArgs<Material>>? MaterialChanged;
         /// <summary>Texture changed event</summary>
         public event ActionEventHandler<Renderable, ValueChangedEventArgs<TextureBase>>? TextureChanged;
         ///// <summary>Shader changed event</summary>
-        public event ActionEventHandler<Renderable, ValueChangedEventArgs<Shader?>>? ShaderChanged;
+        public event ActionEventHandler<Renderable, ValueChangedEventArgs<ShaderSource>>? ShaderChanged;
 
         /// <summary>Before-rendering event</summary>
         public event RenderingEventHandler? Rendering;
@@ -111,10 +113,9 @@ namespace Elffy.Core
                 Rendering?.Invoke(this, in model, in view, in projection);
                 Texture.Apply();
                 if(_isShaderChanged) {
-                    Shader.Init(_vbo);
-                    _isShaderChanged = false;
+                    SetShaderProgram();
                 }
-                Shader.Apply(this, Layer!.Lights, model, view, projection);
+                _shaderProgram!.Apply(this, Layer!.Lights, model, view, projection);
                 GL.DrawElements(BeginMode.Triangles, _indexArrayLength, DrawElementsType.UnsignedInt, 0);
                 Rendered?.Invoke(this);
             }
@@ -176,6 +177,9 @@ namespace Elffy.Core
             _vao = GL.GenVertexArray();
             GL.BindVertexArray(_vao);
             _isLoaded = true;
+
+            // Compile shader program
+            SetShaderProgram();
         }
 
         private unsafe void UpdateBuffer(IntPtr vertexArray, int vertexArrayLength, IntPtr indexArray, int indexArrayLength)
@@ -189,11 +193,25 @@ namespace Elffy.Core
 
         private void OnTerminated(FrameObject _)
         {
+            _shaderProgram?.Dispose();
+            _shaderProgram = null;
             if(_isLoaded) {
                 GL.DeleteBuffer(_vbo);
                 GL.DeleteBuffer(_ibo);
                 GL.DeleteVertexArray(_vao);
+                _vbo = Consts.NULL;
+                _ibo = Consts.NULL;
+                _vao = Consts.NULL;
             }
+        }
+
+        private void SetShaderProgram()
+        {
+            Debug.Assert(_vao != Consts.NULL);
+            var shaderProgram = Shader.Compile();  // TODO: 非同期コンパイル
+            shaderProgram.Init(_vbo);
+            _shaderProgram = shaderProgram;
+            _isShaderChanged = false;
         }
     }
 

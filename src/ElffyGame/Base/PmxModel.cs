@@ -71,8 +71,7 @@ namespace ElffyGame.Base
                     models[i] = new PmxModel(vertexList.AsSpan(), indexList) { Material = material };
                 }
                 foreach(var m in models) {
-                    m.Shader = ShaderSource.Phong.Compile();
-                    m.Terminated += _ => ((Renderable)_).Shader!.Dispose();
+                    m.Shader = ShaderSource.Phong;
                     m.Activate(layer);
                 }
             }
