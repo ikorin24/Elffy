@@ -204,5 +204,51 @@ namespace Elffy.Effective
             }
             return null;
         }
+
+        public static T Aggregate<T>(this Span<T> source, Func<T, T, T> func) => Aggregate((ReadOnlySpan<T>)source, func);
+
+        public static T Aggregate<T>(this ReadOnlySpan<T> source, Func<T, T, T> func)
+        {
+            if(func is null) { throw new ArgumentNullException(nameof(func)); }
+            if(source.Length == 0) { throw new InvalidOperationException("Sequence contains no elements."); }
+            T accum = source[0];
+            for(int i = 1; i < source.Length; i++) {
+                func(accum, source[i]);
+            }
+            return accum;
+        }
+
+        public static TAccumulate Aggregate<TSource, TAccumulate>(this Span<TSource> source, TAccumulate seed, Func<TAccumulate, TSource, TAccumulate> func)
+            => Aggregate((ReadOnlySpan<TSource>)source, seed, func);
+
+        public static TAccumulate Aggregate<TSource, TAccumulate>(this ReadOnlySpan<TSource> source, TAccumulate seed, Func<TAccumulate, TSource, TAccumulate> func)
+        {
+            if(func is null) { throw new ArgumentNullException(nameof(func)); }
+            var accum = seed;
+            foreach(var item in source) {
+                accum = func(accum, item);
+            }
+            return accum;
+        }
+
+        public static TResult Aggregate<TSource, TAccumulate, TResult>(this Span<TSource> source,
+                                                                       TAccumulate seed,
+                                                                       Func<TAccumulate, TSource, TAccumulate> func,
+                                                                       Func<TAccumulate, TResult> resultSelector)
+            => Aggregate((ReadOnlySpan<TSource>)source, seed, func, resultSelector);
+
+        public static TResult Aggregate<TSource, TAccumulate, TResult>(this ReadOnlySpan<TSource> source, 
+                                                                       TAccumulate seed, 
+                                                                       Func<TAccumulate, TSource, TAccumulate> func, 
+                                                                       Func<TAccumulate, TResult> resultSelector)
+        {
+            if(func is null) { throw new ArgumentNullException(nameof(func)); }
+            if(resultSelector is null) { throw new ArgumentNullException(nameof(resultSelector)); }
+            var accum = seed;
+            foreach(var item in source) {
+                accum = func(accum, item);
+            }
+            return resultSelector(accum);
+        }
     }
 }
