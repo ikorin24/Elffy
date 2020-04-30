@@ -26,6 +26,8 @@ namespace Elffy.Core
         /// <summary>描画処理を行うかどうか</summary>
         public bool IsVisible { get; set; } = true;
 
+        protected bool IsEnableRendering { get; set; } = true;
+
         /// <summary>マテリアルを取得または設定します</summary>
         public Material Material
         {
@@ -113,7 +115,9 @@ namespace Elffy.Core
                 Texture.Apply();
                 ShaderProgram!.Apply(this, Layer!.Lights, model, view, projection);
                 Rendering?.Invoke(this, in model, in view, in projection);
-                GL.DrawElements(BeginMode.Triangles, _indexArrayLength, DrawElementsType.UnsignedInt, 0);
+                if(IsEnableRendering) {
+                    GL.DrawElements(BeginMode.Triangles, _indexArrayLength, DrawElementsType.UnsignedInt, 0);
+                }
                 Rendered?.Invoke(this, in model, in view, in projection);
             }
 

@@ -6,6 +6,7 @@ using Elffy.Effective;
 using System.Runtime.CompilerServices;
 using OpenTK.Graphics.OpenGL;
 using UnmanageUtility;
+using System.Diagnostics;
 
 namespace ElffyGame.Base
 {
@@ -13,17 +14,15 @@ namespace ElffyGame.Base
     {
         private UnmanagedArray<VertexBoneInfo>? _vertexBoneInfo;
         private UnmanagedArray<Bone>? _bones;
-
         private UnmanagedArray<Material>? _materials;
-        private UnmanagedArray<Range>? _indexRanges;
-        private UnmanagedArray<int>? _ibo;
+        private UnmanagedArray<int>? _partVertexCount;
 
         private MMDTools.PMXObject? _pmxObject;
 
         private unsafe PmxModel(MMDTools.PMXObject pmxObject)
         {
-            _pmxObject = pmxObject ?? throw new ArgumentNullException(nameof(pmxObject));
-
+            Debug.WriteLine(pmxObject != null);
+            _pmxObject = pmxObject;
             Activated += OnActivated;
             Terminated += OnTerminated;
             Rendered += OnRendered;
@@ -32,54 +31,32 @@ namespace ElffyGame.Base
         private unsafe void OnRendered(Renderable sender, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             GL.BindVertexArray(VAO);
-            var ibo = _ibo!.AsSpan();
-            var range = _indexRanges!.AsSpan();
-            for(int i = 0; i < ibo.Length; i++) {
-                GL.BindBuffer(BufferTarget.ElementArrayBuffer, ibo[i]);
-                GL.DrawElements(BeginMode.Triangles, range[i].Length * sizeof(int), DrawElementsType.UnsignedInt, 0);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, IBO);
+            var partVertexCount = _partVertexCount!.AsSpan();
+            var pos = 0;
+            foreach(var count in partVertexCount) {
+                GL.DrawElements(BeginMode.Triangles, count, DrawElementsType.UnsignedInt, pos * sizeof(int));
+                pos += count;
             }
         }
 
         private unsafe void OnActivated(FrameObject frameObject)
         {
+            IsEnableRendering = false;
+
+            // TODO: 非同期
             var pmxObject = _pmxObject!;
             _pmxObject = null;
-
-            using(var verticesPooled = pmxObject.VertexList.Span.SelectToPooledArray(ToVertex)) {   // pooled
-                var vertices = verticesPooled.AsSpan();
-                fixed(Vertex* p = vertices) {
-                    LoadGraphicBuffer((IntPtr)p, vertices.Length, IntPtr.Zero, 0);
-                }
-            }
-
             _vertexBoneInfo = pmxObject.VertexList.Span.SelectToUnmanagedArray(ToVertexBoneInfo);   // alloc um
             _bones = pmxObject.BoneList.Span.SelectToUnmanagedArray(ToBone);                        // alloc um
             _materials = pmxObject.MaterialList.Span.SelectToUnmanagedArray(ToMaterial);            // alloc um
+            _partVertexCount = pmxObject.MaterialList.Span.SelectToUnmanagedArray(m => m.VertexCount);  // alloc um
 
-            var indices = pmxObject.SurfaceList.Span.MarshalCast<MMDTools.Surface, int>();
-            fixed(int* p = indices) {
-                ReverseTrianglePolygon(new Span<int>(p, indices.Length));
-            }
-
-            var materialsPmx = pmxObject.MaterialList.Span;
-            int s = 0;
-            using var indexRangesPooled = new PooledArray<Range>(pmxObject.MaterialList.Length);    // pooled
-            var indexRanges = indexRangesPooled.AsSpan();
-            for(int i = 0; i < materialsPmx.Length; i++) {
-                indexRanges[i] = new Range(s, materialsPmx[i].VertexCount);
-                s += materialsPmx[i].VertexCount;
-            }
-            _indexRanges = new UnmanagedArray<Range>(indexRanges);          // alloc um
-            _ibo = new UnmanagedArray<int>(_indexRanges.Length);            // alloc um
-
-            for(int i = 0; i < indexRanges.Length; i++) {
-                var subIndices = indices.Slice(indexRanges[i].Start, indexRanges[i].Length);
-                var ibo = GL.GenBuffer();
-                GL.BindBuffer(BufferTarget.ElementArrayBuffer, ibo);
-                fixed(int* p = subIndices) {
-                    GL.BufferData(BufferTarget.ElementArrayBuffer, subIndices.Length * sizeof(int), (IntPtr)p, BufferUsageHint.StaticDraw);
-                }
-                _ibo[i] = ibo;
+            var surfaces = pmxObject.SurfaceList.Span;
+            ReverseTrianglePolygon(surfaces);
+            var indices = surfaces.MarshalCast<MMDTools.Surface, int>();
+            using(var verticesPooled = pmxObject.VertexList.Span.SelectToPooledArray(ToVertex)) {
+                LoadGraphicBuffer(verticesPooled.AsSpan(), indices);
             }
         }
 
@@ -88,25 +65,27 @@ namespace ElffyGame.Base
             _vertexBoneInfo?.Dispose();
             _bones?.Dispose();
             _materials?.Dispose();
-            _indexRanges?.Dispose();
-            _ibo?.Dispose();
+            _partVertexCount?.Dispose();
         }
 
-        public unsafe static void LoadResource(string name, Layer layer)
+        public unsafe static PmxModel LoadResource(string name)
         {
-            using var stream = Resources.GetStream(name);
-            var pmxObject = MMDTools.PMXParser.Parse(stream);
-            var pmxModel = new PmxModel(pmxObject);
-            pmxModel.Activate(layer);
+            using(var stream = Resources.GetStream(name)) {
+                var pmxObject = MMDTools.PMXParser.Parse(stream);   // 非同期パース
+                return new PmxModel(pmxObject);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static unsafe void ReverseTrianglePolygon(Span<int> indexArray)
+        private static unsafe void ReverseTrianglePolygon(ReadOnlySpan<MMDTools.Surface> surfaceList)
         {
-            if(indexArray.Length % 3 != 0) { throw new ArgumentException($"Length of {nameof(indexArray)} must be divided by three."); }
-            var surfaces = indexArray.MarshalCast<int, Int32_3>();
-            for(int i = 0; i < surfaces.Length; i++) {
-                (surfaces[i].Num1, surfaces[i].Num2) = (surfaces[i].Num2, surfaces[i].Num1);
+            fixed(MMDTools.Surface* s = surfaceList) {
+                int* p = (int*)s;
+                for(int i = 0; i < surfaceList.Length; i++) {
+                    var i1 = i * 3 + 1;
+                    var i2 = i * 3 + 2;
+                    (p[i1], p[i2]) = (p[i2], p[i1]);
+                }
             }
         }
 
@@ -123,22 +102,6 @@ namespace ElffyGame.Base
         private static Vector3 ToVector3(MMDTools.Vector3 vector) => new Vector3(vector.X, vector.Y, -vector.Z);
 
         private static Vector2 ToVector2(MMDTools.Vector2 vector) => new Vector2(vector.X, vector.Y);
-
-
-        private struct Int32_3 : IEquatable<Int32_3>
-        {
-#pragma warning disable 0649    // disable warning "field value is not set"
-            internal int Num0;
-            internal int Num1;
-            internal int Num2;
-#pragma warning restore 0649
-
-            public readonly override bool Equals(object? obj) => obj is Int32_3 value && Equals(value);
-
-            public readonly bool Equals(Int32_3 other) => Num0 == other.Num0 && Num1 == other.Num1 && Num2 == other.Num2;
-
-            public readonly override int GetHashCode() => HashCode.Combine(Num0, Num1, Num2);
-        }
 
         private readonly struct VertexBoneInfo : IEquatable<VertexBoneInfo>
         {
@@ -196,28 +159,6 @@ namespace ElffyGame.Base
             {
                 Position = ToVector3(bone.Position);
             }
-        }
-
-        private readonly struct Range : IEquatable<Range>
-        {
-            public readonly int Start;
-            public readonly int Length;
-
-            public Range(int start, int length)
-            {
-                Start = start;
-                Length = length;
-            }
-
-            public override bool Equals(object? obj) => obj is Range range && Equals(range);
-
-            public bool Equals(Range other) => Start == other.Start && Length == other.Length;
-
-            public override int GetHashCode() => HashCode.Combine(Start, Length);
-
-            public static bool operator ==(Range left, Range right) => left.Equals(right);
-
-            public static bool operator !=(Range left, Range right) => !(left == right);
         }
     }
 }

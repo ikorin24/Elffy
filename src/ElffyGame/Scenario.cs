@@ -26,7 +26,9 @@ namespace ElffyGame
         {
             screen.Camera.LookAt(new Vector3(0, 10, 0), new Vector3(40, 40, -40));
             new CameraMouse(screen.Camera, screen.Mouse, new Vector3(0, 0, 0)).Activate(screen.Layers.WorldLayer);
-            Base.PmxModel.LoadResource("Alicia/Alicia_solid.pmx", screen.Layers.WorldLayer);
+            var m = Base.PmxModel.LoadResource("Alicia/Alicia_solid.pmx");
+            m.Shader = ShaderSource.Phong;      // TODO: 反映されていない
+            m.Activate(screen.Layers.WorldLayer);
             return;
 
             var worldLayer = screen.Layers.WorldLayer;
