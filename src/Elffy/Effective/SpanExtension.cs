@@ -45,14 +45,6 @@ namespace Elffy.Effective
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe Span<TTo> AsSpan<TFrom, TTo>(this TFrom source) where TFrom : unmanaged
-                                                                             where TTo : unmanaged
-        {
-            var arrayLen = sizeof(TFrom) / sizeof(TTo) + (sizeof(TFrom) % sizeof(TTo) > 0 ? 1 : 0);
-            return new Span<TTo>(&source, arrayLen);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe UnmanagedArray<TTo> SelectToUnmanagedArray<TFrom, TTo>(this Span<TFrom> source, Func<TFrom, TTo> selector) where TTo : unmanaged
             => SelectToUnmanagedArray((ReadOnlySpan<TFrom>)source, selector);
 
