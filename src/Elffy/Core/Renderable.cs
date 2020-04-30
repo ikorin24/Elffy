@@ -16,20 +16,17 @@ namespace Elffy.Core
     {
         private int _indexArrayLength;
         /// <summary>VBOバッファ番号</summary>
-        private int _vbo;
+        protected int VBO { get; private set; }
         /// <summary>IBO番号</summary>
-        private int _ibo;
+        protected int IBO { get; private set; }
         /// <summary>VAO</summary>
-        private int _vao;
-        private bool _isLoaded;
-        private bool _isShaderChanged;
-        private Shader? _shaderProgram;
+        protected int VAO { get; private set; }
+        protected bool IsLoaded { get; private set; }
 
         /// <summary>描画処理を行うかどうか</summary>
         public bool IsVisible { get; set; } = true;
 
         /// <summary>マテリアルを取得または設定します</summary>
-        /// <exception cref="ArgumentNullException"></exception>
         public Material Material
         {
             get => _material;
@@ -67,11 +64,14 @@ namespace Elffy.Core
                 if(value is null) { throw new ArgumentNullException(nameof(value)); }
                 if(_shader == value) { return; }
                 var old = _shader;
-                _isShaderChanged = true;
+                SetShaderProgram();
                 ShaderChanged?.Invoke(this, new ValueChangedEventArgs<ShaderSource>(old, value));
             }
         }
         private ShaderSource _shader = ShaderSource.Normal;
+
+        /// <summary>Not null if <see cref="IsLoaded"/> == true</summary>
+        protected Shader? ShaderProgram { get; private set; }
 
         /// <summary>Material changed event</summary>
         public event ActionEventHandler<Renderable, ValueChangedEventArgs<Material>>? MaterialChanged;
@@ -83,7 +83,7 @@ namespace Elffy.Core
         /// <summary>Before-rendering event</summary>
         public event RenderingEventHandler? Rendering;
         /// <summary>After-rendering event</summary>
-        public event ActionEventHandler<Renderable>? Rendered;
+        public event RenderingEventHandler? Rendered;
 
         public Renderable()
         {
@@ -107,17 +107,14 @@ namespace Elffy.Core
                                     0, 0, 0, 1) *
                         modelParent;
 
-            if(_isLoaded && IsVisible) {
-                GL.BindVertexArray(_vao);
-                GL.BindBuffer(BufferTarget.ElementArrayBuffer, _ibo);
-                Rendering?.Invoke(this, in model, in view, in projection);
+            if(IsLoaded && IsVisible) {
+                GL.BindVertexArray(VAO);
+                GL.BindBuffer(BufferTarget.ElementArrayBuffer, IBO);
                 Texture.Apply();
-                if(_isShaderChanged) {
-                    SetShaderProgram();
-                }
-                _shaderProgram!.Apply(this, Layer!.Lights, model, view, projection);
+                ShaderProgram!.Apply(this, Layer!.Lights, model, view, projection);
+                Rendering?.Invoke(this, in model, in view, in projection);
                 GL.DrawElements(BeginMode.Triangles, _indexArrayLength, DrawElementsType.UnsignedInt, 0);
-                Rendered?.Invoke(this);
+                Rendered?.Invoke(this, in model, in view, in projection);
             }
 
             if(HasChild) {
@@ -134,7 +131,7 @@ namespace Elffy.Core
             Dispatcher.ThrowIfNotMainThread();
             fixed(Vertex* va = vertexArray)
             fixed(int* ia = indexArray) {
-                if(_isLoaded) {
+                if(IsLoaded) {
                     UpdateBuffer((IntPtr)va, vertexArray.Length, (IntPtr)ia, indexArray.Length);
                 }
                 else {
@@ -149,7 +146,7 @@ namespace Elffy.Core
         protected void LoadGraphicBuffer(IntPtr vertexArray, int vertexArrayLength, IntPtr indexArray, int indexArrayLength)
         {
             Dispatcher.ThrowIfNotMainThread();
-            if(_isLoaded) {
+            if(IsLoaded) {
                 UpdateBuffer(vertexArray, vertexArrayLength, indexArray, indexArrayLength);
             }
             else {
@@ -162,21 +159,21 @@ namespace Elffy.Core
             _indexArrayLength = indexArrayLength;
 
             // 頂点バッファ(VBO)生成
-            _vbo = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ArrayBuffer, _vbo);
+            VBO = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, VBO);
             int vertexSize = vertexArrayLength * sizeof(Vertex);
             GL.BufferData(BufferTarget.ArrayBuffer, vertexSize, vertexArray, BufferUsageHint.StaticDraw);
 
             // 頂点indexバッファ(IBO)生成
-            _ibo = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _ibo);
+            IBO = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, IBO);
             int indexSize = indexArrayLength * sizeof(int);
             GL.BufferData(BufferTarget.ElementArrayBuffer, indexSize, indexArray, BufferUsageHint.StaticDraw);
 
             // VAO
-            _vao = GL.GenVertexArray();
-            GL.BindVertexArray(_vao);
-            _isLoaded = true;
+            VAO = GL.GenVertexArray();
+            GL.BindVertexArray(VAO);
+            IsLoaded = true;
 
             // Compile shader program
             SetShaderProgram();
@@ -185,34 +182,33 @@ namespace Elffy.Core
         private unsafe void UpdateBuffer(IntPtr vertexArray, int vertexArrayLength, IntPtr indexArray, int indexArrayLength)
         {
             _indexArrayLength = indexArrayLength;
-            GL.BindBuffer(BufferTarget.ArrayBuffer, _vbo);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, VBO);
             GL.BufferData(BufferTarget.ArrayBuffer, vertexArrayLength * sizeof(Vertex), vertexArray, BufferUsageHint.StaticDraw);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _ibo);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, IBO);
             GL.BufferData(BufferTarget.ElementArrayBuffer, indexArrayLength * sizeof(int), indexArray, BufferUsageHint.StaticDraw);
         }
 
         private void OnTerminated(FrameObject _)
         {
-            _shaderProgram?.Dispose();
-            _shaderProgram = null;
-            if(_isLoaded) {
-                GL.DeleteBuffer(_vbo);
-                GL.DeleteBuffer(_ibo);
-                GL.DeleteVertexArray(_vao);
-                _vbo = Consts.NULL;
-                _ibo = Consts.NULL;
-                _vao = Consts.NULL;
+            ShaderProgram?.Dispose();
+            ShaderProgram = null;
+            if(IsLoaded) {
+                GL.DeleteBuffer(VBO);
+                GL.DeleteBuffer(IBO);
+                GL.DeleteVertexArray(VAO);
+                VBO = Consts.NULL;
+                IBO = Consts.NULL;
+                VAO = Consts.NULL;
             }
         }
 
         private void SetShaderProgram()
         {
-            Debug.Assert(_vao != Consts.NULL);
+            if(VBO == Consts.NULL) { return; }
             var shaderProgram = Shader.Compile();  // TODO: 非同期コンパイル
-            shaderProgram.Init(_vbo);
-            _shaderProgram?.Dispose();
-            _shaderProgram = shaderProgram;
-            _isShaderChanged = false;
+            shaderProgram.Init(VBO);
+            ShaderProgram?.Dispose();
+            ShaderProgram = shaderProgram;
         }
     }
 

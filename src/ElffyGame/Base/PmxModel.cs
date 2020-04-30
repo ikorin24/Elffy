@@ -1,91 +1,103 @@
 ﻿#nullable enable
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Elffy;
 using Elffy.Core;
-using Elffy.Shading;
-using Elffy.Components;
-using Elffy.Serialization;
 using Elffy.Effective;
 using System.Runtime.CompilerServices;
-using System.Buffers;
+using OpenTK.Graphics.OpenGL;
 
 namespace ElffyGame.Base
 {
     public class PmxModel : Renderable
     {
-        private readonly UnmanagedArray<Vertex> _vertexArray;
-        private readonly UnmanagedArray<int> _indexArray;
-        private readonly UnmanagedArray<VertexBoneInfo> _vertexBoneInfo;
-        private readonly UnmanagedArray<Bone> _bones;
+        private UnmanagedArray<VertexBoneInfo>? _vertexBoneInfo;
+        private UnmanagedArray<Bone>? _bones;
 
-        private PmxModel(ReadOnlySpan<Vertex> vertexArray, ReadOnlySpan<int> indexArray, ReadOnlySpan<VertexBoneInfo> vertexBoneInfo, ReadOnlySpan<Bone> bones)
+        private UnmanagedArray<Material>? _materials;
+        private UnmanagedArray<Range>? _indexRanges;
+        private UnmanagedArray<int>? _ibo;
+
+        private MMDTools.PMXObject? _pmxObject;
+
+        private unsafe PmxModel(MMDTools.PMXObject pmxObject)
         {
-            _vertexArray = vertexArray.ToUnmanagedArray();
-            _indexArray = indexArray.ToUnmanagedArray();
-            _vertexBoneInfo = vertexBoneInfo.ToUnmanagedArray();
-            _bones = bones.ToUnmanagedArray();
+            _pmxObject = pmxObject ?? throw new ArgumentNullException(nameof(pmxObject));
+
             Activated += OnActivated;
             Terminated += OnTerminated;
+            Rendered += OnRendered;
         }
 
-        public void UpdateVertex(ReadOnlySpan<Vertex> vertexArray, ReadOnlySpan<int> indexArray)
+        private unsafe void OnRendered(Renderable sender, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
-            LoadGraphicBuffer(vertexArray, indexArray);
+            GL.BindVertexArray(VAO);
+            var ibo = _ibo!.AsSpan();
+            var range = _indexRanges!.AsSpan();
+            for(int i = 0; i < ibo.Length; i++) {
+                GL.BindBuffer(BufferTarget.ElementArrayBuffer, ibo[i]);
+                GL.DrawElements(BeginMode.Triangles, range[i].Length * sizeof(int), DrawElementsType.UnsignedInt, 0);
+            }
         }
 
-        private void OnActivated(FrameObject frameObject)
+        private unsafe void OnActivated(FrameObject frameObject)
         {
-            LoadGraphicBuffer(_vertexArray.Ptr, _vertexArray.Length, _indexArray.Ptr, _indexArray.Length);
+            var pmxObject = _pmxObject!;
+            _pmxObject = null;
+
+            using(var verticesPooled = pmxObject.VertexList.Span.SelectToPooledArray(ToVertex)) {   // pooled
+                var vertices = verticesPooled.AsSpan();
+                fixed(Vertex* p = vertices) {
+                    LoadGraphicBuffer((IntPtr)p, vertices.Length, IntPtr.Zero, 0);
+                }
+            }
+
+            _vertexBoneInfo = pmxObject.VertexList.Span.SelectToUnmanagedArray(ToVertexBoneInfo);   // alloc um
+            _bones = pmxObject.BoneList.Span.SelectToUnmanagedArray(ToBone);                        // alloc um
+            _materials = pmxObject.MaterialList.Span.SelectToUnmanagedArray(ToMaterial);            // alloc um
+
+            var indices = pmxObject.SurfaceList.Span.MarshalCast<MMDTools.Surface, int>();
+            fixed(int* p = indices) {
+                ReverseTrianglePolygon(new Span<int>(p, indices.Length));
+            }
+
+            var materialsPmx = pmxObject.MaterialList.Span;
+            int s = 0;
+            using var indexRangesPooled = new PooledArray<Range>(pmxObject.MaterialList.Length);    // pooled
+            var indexRanges = indexRangesPooled.AsSpan();
+            for(int i = 0; i < materialsPmx.Length; i++) {
+                indexRanges[i] = new Range(s, materialsPmx[i].VertexCount);
+                s += materialsPmx[i].VertexCount;
+            }
+            _indexRanges = new UnmanagedArray<Range>(indexRanges);          // alloc um
+            _ibo = new UnmanagedArray<int>(_indexRanges.Length);            // alloc um
+
+            for(int i = 0; i < indexRanges.Length; i++) {
+                var subIndices = indices.Slice(indexRanges[i].Start, indexRanges[i].Length);
+                var ibo = GL.GenBuffer();
+                GL.BindBuffer(BufferTarget.ElementArrayBuffer, ibo);
+                fixed(int* p = subIndices) {
+                    GL.BufferData(BufferTarget.ElementArrayBuffer, subIndices.Length * sizeof(int), (IntPtr)p, BufferUsageHint.StaticDraw);
+                }
+                _ibo[i] = ibo;
+            }
         }
 
         private void OnTerminated(FrameObject frameObject)
         {
-            _vertexArray.Dispose();
-            _indexArray.Dispose();
-            _vertexBoneInfo.Dispose();
-            _bones.Dispose();
+            _vertexBoneInfo?.Dispose();
+            _bones?.Dispose();
+            _materials?.Dispose();
+            _indexRanges?.Dispose();
+            _ibo?.Dispose();
         }
-
 
         public unsafe static void LoadResource(string name, Layer layer)
         {
             using var stream = Resources.GetStream(name);
             var pmxObject = MMDTools.PMXParser.Parse(stream);
-            var vertexListPmx = pmxObject.VertexList.Span;
-            var materialListPmx = pmxObject.MaterialList.Span;
-            var indexListPmx = pmxObject.SurfaceList.Span.MarshalCast<MMDTools.Surface, int>();
-            var boneListPmx = pmxObject.BoneList.Span;
-
-            if(materialListPmx.Length == 0) { throw new ArgumentException(); }
-
-            fixed(int* p = indexListPmx) {
-                ReverseTrianglePolygon(new Span<int>(p, indexListPmx.Length));
-            }
-
-            using(var modelsPooled = new PooledArray<PmxModel>(materialListPmx.Length))
-            using(var verticesPooled = vertexListPmx.SelectToPooledArray(ToVertex))
-            using(var vertexBoneInfoPooled = vertexListPmx.SelectToPooledArray(ToVertexBoneInfo))
-            using(var bonesPooled = boneListPmx.SelectToPooledArray(ToBone)) {
-                var models = modelsPooled.AsSpan();
-                var vertices = verticesPooled.AsSpan();
-                var vertexBoneInfo = vertexBoneInfoPooled.AsSpan();
-                var bones = bonesPooled.AsSpan();
-                var sliceStart = 0;
-                for(int i = 0; i < materialListPmx.Length; i++) {
-                    var material = ToMaterial(materialListPmx[i]);
-                    var indexList = indexListPmx.Slice(sliceStart, materialListPmx[i].VertexCount);
-                    sliceStart += materialListPmx[i].VertexCount;
-                    models[i] = new PmxModel(vertices, indexList, vertexBoneInfo, bones) { Material = material };
-                }
-                foreach(var m in models) {
-                    m.Shader = ShaderSource.Phong;
-                    m.Activate(layer);
-                }
-            }
+            var pmxModel = new PmxModel(pmxObject);
+            pmxModel.Activate(layer);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -184,6 +196,28 @@ namespace ElffyGame.Base
             {
                 Position = ToVector3(bone.Position);
             }
+        }
+
+        private readonly struct Range : IEquatable<Range>
+        {
+            public readonly int Start;
+            public readonly int Length;
+
+            public Range(int start, int length)
+            {
+                Start = start;
+                Length = length;
+            }
+
+            public override bool Equals(object? obj) => obj is Range range && Equals(range);
+
+            public bool Equals(Range other) => Start == other.Start && Length == other.Length;
+
+            public override int GetHashCode() => HashCode.Combine(Start, Length);
+
+            public static bool operator ==(Range left, Range right) => left.Equals(right);
+
+            public static bool operator !=(Range left, Range right) => !(left == right);
         }
     }
 }
