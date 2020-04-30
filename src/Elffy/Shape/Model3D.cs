@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Elffy.Core;
 using Elffy.Effective;
+using UnmanageUtility;
 
 namespace Elffy.Shape
 {

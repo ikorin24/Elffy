@@ -4,8 +4,8 @@ using Elffy.Effective;
 using Elffy.Exceptions;
 using Elffy.Shape;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
+using UnmanageUtility;
 
 namespace Elffy.Components
 {

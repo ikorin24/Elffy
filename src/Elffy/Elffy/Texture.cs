@@ -5,11 +5,11 @@ using Elffy.Core;
 using System.Drawing;
 using System.Drawing.Imaging;
 using Elffy.Threading;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Elffy.Exceptions;
 using System.Linq;
 using Elffy.Core.MetaFile;
+using UnmanageUtility;
 using PixelFormat = System.Drawing.Imaging.PixelFormat;
 
 namespace Elffy

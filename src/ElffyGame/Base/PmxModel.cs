@@ -1,11 +1,11 @@
 ﻿#nullable enable
 using System;
-using System.Collections.Generic;
 using Elffy;
 using Elffy.Core;
 using Elffy.Effective;
 using System.Runtime.CompilerServices;
 using OpenTK.Graphics.OpenGL;
+using UnmanageUtility;
 
 namespace ElffyGame.Base
 {
