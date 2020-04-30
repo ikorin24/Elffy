@@ -19,11 +19,15 @@ namespace ElffyGame.Base
     {
         private readonly UnmanagedArray<Vertex> _vertexArray;
         private readonly UnmanagedArray<int> _indexArray;
+        private readonly UnmanagedArray<VertexBoneInfo> _vertexBoneInfo;
+        private readonly UnmanagedArray<Bone> _bones;
 
-        private PmxModel(ReadOnlySpan<Vertex> vertexArray, ReadOnlySpan<int> indexArray)
+        private PmxModel(ReadOnlySpan<Vertex> vertexArray, ReadOnlySpan<int> indexArray, ReadOnlySpan<VertexBoneInfo> vertexBoneInfo, ReadOnlySpan<Bone> bones)
         {
             _vertexArray = vertexArray.ToUnmanagedArray();
             _indexArray = indexArray.ToUnmanagedArray();
+            _vertexBoneInfo = vertexBoneInfo.ToUnmanagedArray();
+            _bones = bones.ToUnmanagedArray();
             Activated += OnActivated;
             Terminated += OnTerminated;
         }
@@ -42,6 +46,8 @@ namespace ElffyGame.Base
         {
             _vertexArray.Dispose();
             _indexArray.Dispose();
+            _vertexBoneInfo.Dispose();
+            _bones.Dispose();
         }
 
 
@@ -60,15 +66,20 @@ namespace ElffyGame.Base
                 ReverseTrianglePolygon(new Span<int>(p, indexListPmx.Length));
             }
 
-            using(var pooledArray = new PooledArray<PmxModel>(materialListPmx.Length))
-            using(var vertexList = vertexListPmx.SelectToPooledArray(ToVertex)) {
-                var models = pooledArray.AsSpan();
+            using(var modelsPooled = new PooledArray<PmxModel>(materialListPmx.Length))
+            using(var verticesPooled = vertexListPmx.SelectToPooledArray(ToVertex))
+            using(var vertexBoneInfoPooled = vertexListPmx.SelectToPooledArray(ToVertexBoneInfo))
+            using(var bonesPooled = boneListPmx.SelectToPooledArray(ToBone)) {
+                var models = modelsPooled.AsSpan();
+                var vertices = verticesPooled.AsSpan();
+                var vertexBoneInfo = vertexBoneInfoPooled.AsSpan();
+                var bones = bonesPooled.AsSpan();
                 var sliceStart = 0;
                 for(int i = 0; i < materialListPmx.Length; i++) {
                     var material = ToMaterial(materialListPmx[i]);
                     var indexList = indexListPmx.Slice(sliceStart, materialListPmx[i].VertexCount);
                     sliceStart += materialListPmx[i].VertexCount;
-                    models[i] = new PmxModel(vertexList.AsSpan(), indexList) { Material = material };
+                    models[i] = new PmxModel(vertices, indexList, vertexBoneInfo, bones) { Material = material };
                 }
                 foreach(var m in models) {
                     m.Shader = ShaderSource.Phong;
@@ -87,18 +98,11 @@ namespace ElffyGame.Base
             }
         }
 
-        private static WeightTransformType ToWeightType(MMDTools.WeightTransformType t)
-        {
-            return t switch
-            {
-                MMDTools.WeightTransformType.BDEF1 => WeightTransformType.BDEF1,
-                MMDTools.WeightTransformType.BDEF2 => WeightTransformType.BDEF2,
-                MMDTools.WeightTransformType.BDEF4 => WeightTransformType.BDEF4,
-                _ => throw new NotSupportedException($"Not supported weight type. Type : {t}"),
-            };
-        }
-
         private static Material ToMaterial(MMDTools.Material m) => new Material(ToColor4(m.Ambient), ToColor4(m.Diffuse), ToColor4(m.Specular), m.Shininess);
+
+        private static Bone ToBone(MMDTools.Bone bone) => new Bone(bone);
+        
+        private static VertexBoneInfo ToVertexBoneInfo(MMDTools.Vertex v) => new VertexBoneInfo(v);
 
         private static Vertex ToVertex(MMDTools.Vertex v) => new Vertex(ToVector3(v.Position), ToVector3(v.Normal), ToVector2(v.UV));
 
@@ -122,6 +126,64 @@ namespace ElffyGame.Base
             public readonly bool Equals(Int32_3 other) => Num0 == other.Num0 && Num1 == other.Num1 && Num2 == other.Num2;
 
             public readonly override int GetHashCode() => HashCode.Combine(Num0, Num1, Num2);
+        }
+
+        private readonly struct VertexBoneInfo : IEquatable<VertexBoneInfo>
+        {
+            public readonly int Bone1;
+            public readonly int Bone2;
+            public readonly int Bone3;
+            public readonly int Bone4;
+            public readonly float Weight1;
+            public readonly float Weight2;
+            public readonly float Weight3;
+            public readonly float Weight4;
+            public readonly WeightTransformType Type;
+            public VertexBoneInfo(MMDTools.Vertex v)
+            {
+                Bone1 = v.BoneIndex1;
+                Bone2 = v.BoneIndex2;
+                Bone3 = v.BoneIndex3;
+                Bone4 = v.BoneIndex4;
+                Weight1 = v.Weight1;
+                Weight2 = v.Weight2;
+                Weight3 = v.Weight3;
+                Weight4 = v.Weight4;
+                Type = ToWeightType(v.WeightTransformType);
+            }
+
+            private static WeightTransformType ToWeightType(MMDTools.WeightTransformType t)
+            {
+                return t switch
+                {
+                    MMDTools.WeightTransformType.BDEF1 => WeightTransformType.BDEF1,
+                    MMDTools.WeightTransformType.BDEF2 => WeightTransformType.BDEF2,
+                    MMDTools.WeightTransformType.BDEF4 => WeightTransformType.BDEF4,
+                    _ => throw new NotSupportedException($"Not supported weight type. Type : {t}"),
+                };
+            }
+
+            public override bool Equals(object? obj) => obj is VertexBoneInfo info && Equals(info);
+
+            public bool Equals(VertexBoneInfo other) => (Bone1 == other.Bone1) && (Bone2 == other.Bone2) && (Bone3 == other.Bone3) && (Bone4 == other.Bone4) &&
+                                                        (Weight1 == other.Weight1) && (Weight2 == other.Weight2) && (Weight3 == other.Weight3) && (Weight4 == other.Weight4) &&
+                                                        (Type == other.Type);
+
+            public override int GetHashCode() => HashCodeEx.Combine(Bone1, Bone2, Bone3, Bone4, Weight1, Weight2, Weight3, Weight4, Type);
+
+            public static bool operator ==(VertexBoneInfo left, VertexBoneInfo right) => left.Equals(right);
+
+            public static bool operator !=(VertexBoneInfo left, VertexBoneInfo right) => !(left == right);
+        }
+
+        private readonly struct Bone
+        {
+            public readonly Vector3 Position;
+
+            public Bone(MMDTools.Bone bone)
+            {
+                Position = ToVector3(bone.Position);
+            }
         }
     }
 }
