@@ -52,14 +52,6 @@ namespace Elffy.Effective
             return new Span<TTo>(&source, arrayLen);
         }
 
-        // TODO: dll パッケージに入れる
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static UnmanagedArray<T> ToUnmanagedArray<T>(this Span<T> source) where T : unmanaged => ToUnmanagedArray((ReadOnlySpan<T>)source);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static UnmanagedArray<T> ToUnmanagedArray<T>(this ReadOnlySpan<T> source) where T : unmanaged => new UnmanagedArray<T>(source);
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe UnmanagedArray<TTo> SelectToUnmanagedArray<TFrom, TTo>(this Span<TFrom> source, Func<TFrom, TTo> selector) where TTo : unmanaged
             => SelectToUnmanagedArray((ReadOnlySpan<TFrom>)source, selector);
