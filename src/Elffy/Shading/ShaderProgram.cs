@@ -7,7 +7,7 @@ using OpenTK.Graphics.OpenGL;
 
 namespace Elffy.Shading
 {
-    public sealed class Shader : IDisposable
+    public sealed class ShaderProgram : IDisposable
     {
         private int _program = Consts.NULL;
         private ShaderSource? _shaderSource;
@@ -17,7 +17,7 @@ namespace Elffy.Shading
 
         private static int _currentProgram = Consts.NULL;
 
-        internal Shader(ShaderSource shaderSource, int program)
+        internal ShaderProgram(ShaderSource shaderSource, int program)
         {
             ArgumentChecker.ThrowIfNullArg(shaderSource, nameof(shaderSource));
             ArgumentChecker.ThrowArgumentIf(program == Consts.NULL, "invalid shader program object");
@@ -25,7 +25,7 @@ namespace Elffy.Shading
             _shaderSource = shaderSource;
         }
 
-        ~Shader() => Dispose(false);
+        ~ShaderProgram() => Dispose(false);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void Apply(Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)

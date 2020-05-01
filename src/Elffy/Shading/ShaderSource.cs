@@ -34,9 +34,9 @@ namespace Elffy.Shading
             => SendUniforms(new Uniform(program), target, lights, model, view, projection);
 
         /// <summary>頂点シェーダー・フラグメントシェーダ―の読み込み、リンク、プログラムの作成を行います</summary>
-        public abstract Shader Compile();
+        public abstract ShaderProgram Compile();
 
-        protected Shader CompileShaderSources(string vertexShaderSource, string fragmentShaderSource)
+        protected ShaderProgram CompileShaderSources(string vertexShaderSource, string fragmentShaderSource)
         {
             var vertShader = Consts.NULL;
             var fragShader = Consts.NULL;
@@ -53,7 +53,7 @@ namespace Elffy.Shading
                     var log = GL.GetProgramInfoLog(program);
                     throw new InvalidOperationException($"Linking shader is failed.{Environment.NewLine}{log}");
                 }
-                return new Shader(this, program);
+                return new ShaderProgram(this, program);
             }
             finally {
                 if(vertShader != Consts.NULL) {

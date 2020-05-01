@@ -77,7 +77,7 @@ namespace Elffy.Core
         private ShaderSource _shader = ShaderSource.Normal;
 
         /// <summary>Not null if <see cref="IsLoaded"/> == true</summary>
-        protected Shader? ShaderProgram { get; private set; }
+        protected ShaderProgram? ShaderProgram { get; private set; }
 
         /// <summary>Material changed event</summary>
         public event ActionEventHandler<Renderable, ValueChangedEventArgs<Material>>? MaterialChanged;

@@ -11,7 +11,7 @@ namespace Elffy.Shading
 
         private VertexColorShaderSource() { }
 
-        public override Shader Compile() => CompileShaderSources(VertexShader, FragmentShader);
+        public override ShaderProgram Compile() => CompileShaderSources(VertexShader, FragmentShader);
 
         protected override void DefineLocation(VertexDefinition definition)
         {
