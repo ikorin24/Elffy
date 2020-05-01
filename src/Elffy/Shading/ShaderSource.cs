@@ -15,21 +15,23 @@ namespace Elffy.Shading
 
         public static VertexColorShaderSource VertexColor => VertexColorShaderSource.Instance;
 
+        /// <summary>派生クラスでオーバーライドされた場合、このシェーダーに渡される頂点属性変数を定義します</summary>
+        /// <param name="definition">頂点属性定義用オブジェクト</param>
         protected abstract void DefineLocation(VertexDefinition definition);
 
+        internal void DefineLocation(int program) => DefineLocation(new VertexDefinition(program));
+
         /// <summary>派生クラスでオーバーライドされた場合、このシェーダーに uniform 変数を送ります。</summary>
-        /// <param name="uniform"></param>
-        /// <param name="target"></param>
-        /// <param name="lights"></param>
-        /// <param name="model"></param>
-        /// <param name="view"></param>
-        /// <param name="projection"></param>
+        /// <param name="uniform">uniform 変数の送信用オブジェクト</param>
+        /// <param name="target">描画対象の <see cref="Renderable"/></param>
+        /// <param name="lights">ライト</param>
+        /// <param name="model">model 行列</param>
+        /// <param name="view">view 行列</param>
+        /// <param name="projection">projection 行列</param>
         protected abstract void SendUniforms(Uniform uniform, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection);
 
-        internal void SendUniformsInternal(int program, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        internal void SendUniforms(int program, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
             => SendUniforms(new Uniform(program), target, lights, model, view, projection);
-
-        internal void DefineLocationInternal(int program) => DefineLocation(new VertexDefinition(program));
 
         /// <summary>頂点シェーダー・フラグメントシェーダ―の読み込み、リンク、プログラムの作成を行います</summary>
         public abstract Shader Compile();
