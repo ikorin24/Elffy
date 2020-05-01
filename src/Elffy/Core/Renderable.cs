@@ -5,6 +5,7 @@ using Elffy.Threading;
 using Elffy.Exceptions;
 using Elffy.Shading;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Elffy.Core
 {
@@ -65,8 +66,11 @@ namespace Elffy.Core
             {
                 if(value is null) { throw new ArgumentNullException(nameof(value)); }
                 if(_shader == value) { return; }
+                if(VBO != Consts.NULL) {
+                    SetShaderProgram();
+                }
                 var old = _shader;
-                SetShaderProgram();
+                _shader = value;
                 ShaderChanged?.Invoke(this, new ValueChangedEventArgs<ShaderSource>(old, value));
             }
         }
@@ -130,23 +134,24 @@ namespace Elffy.Core
             }
         }
 
+        /// <summary>指定の頂点配列とインデックス配列で VBO, IBO を作成し、VAO を作成します</summary>
+        /// <param name="vertexArray">頂点配列</param>
+        /// <param name="indexArray">インデックス配列</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected unsafe void LoadGraphicBuffer(ReadOnlySpan<Vertex> vertexArray, ReadOnlySpan<int> indexArray)
         {
-            Dispatcher.ThrowIfNotMainThread();
             fixed(Vertex* va = vertexArray)
             fixed(int* ia = indexArray) {
-                if(IsLoaded) {
-                    UpdateBuffer((IntPtr)va, vertexArray.Length, (IntPtr)ia, indexArray.Length);
-                }
-                else {
-                    InitBuffer((IntPtr)va, vertexArray.Length, (IntPtr)ia, indexArray.Length);
-                }
+                LoadGraphicBuffer((IntPtr)va, vertexArray.Length, (IntPtr)ia, indexArray.Length);
             }
         }
 
-        /// <summary>描画する3Dモデル(頂点データ)をGPUメモリにロードします</summary>
+        /// <summary>指定の頂点配列とインデックス配列で VBO, IBO を作成し、VAO を作成します</summary>
         /// <param name="vertexArray">頂点配列</param>
-        /// <param name="indexArray">頂点インデックス配列</param>
+        /// <param name="vertexArrayLength">頂点配列長</param>
+        /// <param name="indexArray">インデックス配列</param>
+        /// <param name="indexArrayLength">インデックス配列長</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected void LoadGraphicBuffer(IntPtr vertexArray, int vertexArrayLength, IntPtr indexArray, int indexArrayLength)
         {
             Dispatcher.ThrowIfNotMainThread();
@@ -208,11 +213,11 @@ namespace Elffy.Core
 
         private void SetShaderProgram()
         {
-            if(VBO == Consts.NULL) { return; }
-            var shaderProgram = Shader.Compile();  // TODO: 非同期コンパイル
-            shaderProgram.Init(VBO);
+            Debug.Assert(VBO != 0);
+            var program = _shader.Compile();
+            program.AssociateVBO(VBO);
             ShaderProgram?.Dispose();
-            ShaderProgram = shaderProgram;
+            ShaderProgram = program;
         }
     }
 
