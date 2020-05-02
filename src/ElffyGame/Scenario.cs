@@ -26,9 +26,19 @@ namespace ElffyGame
         {
             screen.Camera.LookAt(new Vector3(0, 10, 0), new Vector3(40, 40, -40));
             new CameraMouse(screen.Camera, screen.Mouse, new Vector3(0, 0, 0)).Activate(screen.Layers.WorldLayer);
-            var m = Base.PmxModel.LoadResource("Alicia/Alicia_solid.pmx");
-            m.Shader = ShaderSource.Phong;      // TODO: 反映されていない
-            m.Activate(screen.Layers.WorldLayer);
+
+            var sw2 = new Stopwatch();
+            sw2.Start();
+            Base.PmxModel.LoadResourceAsync("Alicia/Alicia_solid.pmx")
+                .ContinueWith(t => screen.Dispatcher.Invoke(() =>
+                {
+                    var m = t.Result;
+                    m.Shader = ShaderSource.Phong;
+                    m.Activate(screen.Layers.WorldLayer);
+                    //m.Terminate();                            // TODO: Activate と Terminate を同じフレームで行うと ObjectStoreに残ってしまう
+                }));
+            sw2.Stop();
+            Debug.WriteLine($"{sw2.ElapsedMilliseconds} ms");
             return;
 
             var worldLayer = screen.Layers.WorldLayer;

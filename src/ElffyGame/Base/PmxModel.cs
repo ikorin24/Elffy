@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using OpenTK.Graphics.OpenGL;
 using UnmanageUtility;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace ElffyGame.Base
 {
@@ -21,7 +22,7 @@ namespace ElffyGame.Base
 
         private unsafe PmxModel(MMDTools.PMXObject pmxObject)
         {
-            Debug.WriteLine(pmxObject != null);
+            Debug.Assert(pmxObject != null);
             _pmxObject = pmxObject;
             Activated += OnActivated;
             Terminated += OnTerminated;
@@ -40,40 +41,58 @@ namespace ElffyGame.Base
             }
         }
 
-        private unsafe void OnActivated(FrameObject frameObject)
+        private async void OnActivated(FrameObject frameObject)
         {
             IsEnableRendering = false;
+            var vertices = await Task.Factory.StartNew(() =>
+            {
+                var pmxObject = _pmxObject!;
+                // TODO: static メソッドの delegate やめる
+                _vertexBoneInfo = pmxObject.VertexList.Span.SelectToUnmanagedArray(ToVertexBoneInfo);
+                _bones = pmxObject.BoneList.Span.SelectToUnmanagedArray(ToBone);
+                _materials = pmxObject.MaterialList.Span.SelectToUnmanagedArray(ToMaterial);
+                _partVertexCount = pmxObject.MaterialList.Span.SelectToUnmanagedArray(m => m.VertexCount);
+                ReverseTrianglePolygon(pmxObject.SurfaceList.Span);
+                return pmxObject.VertexList.Span.SelectToUnmanagedArray(ToVertex);
+            }).ConfigureAwait(true);
+            // ↑ ConfigureAwait true
 
-            // TODO: 非同期
-            var pmxObject = _pmxObject!;
-            _pmxObject = null;
-            _vertexBoneInfo = pmxObject.VertexList.Span.SelectToUnmanagedArray(ToVertexBoneInfo);   // alloc um
-            _bones = pmxObject.BoneList.Span.SelectToUnmanagedArray(ToBone);                        // alloc um
-            _materials = pmxObject.MaterialList.Span.SelectToUnmanagedArray(ToMaterial);            // alloc um
-            _partVertexCount = pmxObject.MaterialList.Span.SelectToUnmanagedArray(m => m.VertexCount);  // alloc um
-
-            var surfaces = pmxObject.SurfaceList.Span;
-            ReverseTrianglePolygon(surfaces);
-            var indices = surfaces.MarshalCast<MMDTools.Surface, int>();
-            using(var verticesPooled = pmxObject.VertexList.Span.SelectToPooledArray(ToVertex)) {
-                LoadGraphicBuffer(verticesPooled.AsSpan(), indices);
+            // Hete is main thread
+            if(!IsTerminated) {
+                LoadGraphicBuffer(vertices.AsSpan(), _pmxObject!.SurfaceList.Span.MarshalCast<MMDTools.Surface, int>());
             }
+            _pmxObject = null;
+
+            // not await
+            _ = Task.Factory.StartNew(v =>
+            {
+                ((UnmanagedArray<Vertex>)v).Dispose();
+            }, vertices);
         }
 
         private void OnTerminated(FrameObject frameObject)
         {
+            //Task.Factory.StartNew(() =>
+            //{
+            //    _vertexBoneInfo?.Dispose();
+            //    _bones?.Dispose();
+            //    _materials?.Dispose();
+            //    _partVertexCount?.Dispose();
+            //});
             _vertexBoneInfo?.Dispose();
             _bones?.Dispose();
             _materials?.Dispose();
             _partVertexCount?.Dispose();
         }
 
-        public unsafe static PmxModel LoadResource(string name)
+        public static Task<PmxModel> LoadResourceAsync(string name)
         {
-            using(var stream = Resources.GetStream(name)) {
-                var pmxObject = MMDTools.PMXParser.Parse(stream);   // 非同期パース
-                return new PmxModel(pmxObject);
-            }
+            return Task.Factory.StartNew(n =>
+            {
+                using var stream = Resources.GetStream((string)n);
+                var pmx = MMDTools.PMXParser.Parse(stream);     // PMXParser.Parse is thread-independed, thread-safe.
+                return new PmxModel(pmx);
+            }, name);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
