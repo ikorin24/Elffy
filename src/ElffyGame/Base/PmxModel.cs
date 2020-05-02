@@ -20,6 +20,10 @@ namespace ElffyGame.Base
 
         private MMDTools.PMXObject? _pmxObject;
 
+        private bool _resourceReleased;
+
+        private readonly object _syncRoot = new object();
+
         private unsafe PmxModel(MMDTools.PMXObject pmxObject)
         {
             Debug.Assert(pmxObject != null);
@@ -43,46 +47,51 @@ namespace ElffyGame.Base
 
         private async void OnActivated(FrameObject frameObject)
         {
+            // Hete is main thread
             IsEnableRendering = false;
-            var vertices = await Task.Factory.StartNew(() =>
-            {
-                var pmxObject = _pmxObject!;
-                // TODO: static メソッドの delegate やめる
-                _vertexBoneInfo = pmxObject.VertexList.Span.SelectToUnmanagedArray(ToVertexBoneInfo);
-                _bones = pmxObject.BoneList.Span.SelectToUnmanagedArray(ToBone);
-                _materials = pmxObject.MaterialList.Span.SelectToUnmanagedArray(ToMaterial);
-                _partVertexCount = pmxObject.MaterialList.Span.SelectToUnmanagedArray(m => m.VertexCount);
-                ReverseTrianglePolygon(pmxObject.SurfaceList.Span);
-                return pmxObject.VertexList.Span.SelectToUnmanagedArray(ToVertex);
-            }).ConfigureAwait(true);
+
+            var vertices = await Task.Factory.StartNew(LoadData).ConfigureAwait(true);
             // ↑ ConfigureAwait true
 
             // Hete is main thread
             if(!IsTerminated) {
-                LoadGraphicBuffer(vertices.AsSpan(), _pmxObject!.SurfaceList.Span.MarshalCast<MMDTools.Surface, int>());
+                // vertices が null になるのはリソースが解放済みの時、つまり既に IsTerminated == true の時のはずなので、ここは not null
+                Debug.Assert(vertices != null);
+                LoadGraphicBuffer(vertices!.AsSpan(), _pmxObject!.SurfaceList.Span.MarshalCast<MMDTools.Surface, int>());
             }
-            _pmxObject = null;
-
             // not await
-            _ = Task.Factory.StartNew(v =>
-            {
-                ((UnmanagedArray<Vertex>)v).Dispose();
-            }, vertices);
+            _ = Task.Factory.StartNew(v => ((UnmanagedArray<Vertex>)v)?.Dispose(), vertices);
+            _pmxObject = null;
         }
 
         private void OnTerminated(FrameObject frameObject)
         {
-            //Task.Factory.StartNew(() =>
-            //{
-            //    _vertexBoneInfo?.Dispose();
-            //    _bones?.Dispose();
-            //    _materials?.Dispose();
-            //    _partVertexCount?.Dispose();
-            //});
-            _vertexBoneInfo?.Dispose();
-            _bones?.Dispose();
-            _materials?.Dispose();
-            _partVertexCount?.Dispose();
+            Task.Factory.StartNew(ReleaseResource);
+        }
+
+        private UnmanagedArray<Vertex>? LoadData()
+        {
+            var pmxObject = _pmxObject!;
+            lock(_syncRoot) {
+                if(_resourceReleased) { return null; }
+                _vertexBoneInfo = pmxObject.VertexList.Span.SelectToUnmanagedArray(ToVertexBoneInfo);
+                _bones = pmxObject.BoneList.Span.SelectToUnmanagedArray(ToBone);
+                _materials = pmxObject.MaterialList.Span.SelectToUnmanagedArray(ToMaterial);
+                _partVertexCount = pmxObject.MaterialList.Span.SelectToUnmanagedArray(m => m.VertexCount);
+            }
+            ReverseTrianglePolygon(pmxObject.SurfaceList.Span);
+            return pmxObject.VertexList.Span.SelectToUnmanagedArray(ToVertex);
+        }
+
+        private void ReleaseResource()
+        {
+            lock(_syncRoot) {
+                _resourceReleased = true;    // Writing boolean is atomic.
+                _vertexBoneInfo?.Dispose();
+                _bones?.Dispose();
+                _materials?.Dispose();
+                _partVertexCount?.Dispose();
+            }
         }
 
         public static Task<PmxModel> LoadResourceAsync(string name)

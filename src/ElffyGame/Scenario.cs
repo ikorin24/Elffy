@@ -35,7 +35,6 @@ namespace ElffyGame
                     var m = t.Result;
                     m.Shader = ShaderSource.Phong;
                     m.Activate(screen.Layers.WorldLayer);
-                    m.Terminate();
                 }));
             sw2.Stop();
             Debug.WriteLine($"{sw2.ElapsedMilliseconds} ms");
