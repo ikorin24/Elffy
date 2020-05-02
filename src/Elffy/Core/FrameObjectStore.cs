@@ -59,14 +59,19 @@ namespace Elffy.Core
         {
             if(_removedBuf.Count > 0) {
                 foreach(var item in _removedBuf.AsSpan()) {
-                    _list.Remove(item);
-                    switch(item) {
-                        case Renderable renderable:
-                            _renderables.Remove(renderable);
-                            break;
-                        case Light light:
-                            _lights.Remove(light);
-                            break;
+                    if(item.IsStarted) {
+                        _list.Remove(item);
+                        switch(item) {
+                            case Renderable renderable:
+                                _renderables.Remove(renderable);
+                                break;
+                            case Light light:
+                                _lights.Remove(light);
+                                break;
+                        }
+                    }
+                    else {
+                        _addedBuf.Remove(item);
                     }
                 }
                 _removedBuf.Clear();
