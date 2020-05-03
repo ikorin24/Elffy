@@ -182,10 +182,12 @@ namespace ElffyGame.Base
         private readonly struct Bone
         {
             public readonly Vector3 Position;
+            public readonly int Parent;
 
             public Bone(MMDTools.Bone bone)
             {
                 Position = ToVector3(bone.Position);
+                Parent = bone.ParentBone;
             }
         }
     }
