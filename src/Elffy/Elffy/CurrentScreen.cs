@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 
 namespace Elffy
 {
+    // 廃止予定
     public static class CurrentScreen
     {
         public static Mouse Mouse { get; private set; } = null!;
