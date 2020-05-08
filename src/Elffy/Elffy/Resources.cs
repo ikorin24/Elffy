@@ -53,6 +53,17 @@ namespace Elffy
             CheckInitialized();
             return _resources!.Keys.Where(k => k.StartsWith(RESOURCE_ROOT)).Select(k => k.Substring(RESOURCE_ROOT.Length + 1)).ToArray();
         }
+
+        public static ReadOnlySpan<char> GetDirectoryName(string name)
+        {
+            if(name == null) { throw new ArgumentNullException(nameof(name)); }
+            for(int i = name.Length - 1; i >= 0; i--) {
+                if(name[i] == '/') {
+                    return name.AsSpan(0, i);
+                }
+            }
+            return ReadOnlySpan<char>.Empty;
+        }
          
         /// <summary>リソースを読み込むストリームを取得します</summary>
         /// <param name="name">リソース名</param>
