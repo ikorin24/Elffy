@@ -71,6 +71,21 @@ namespace Elffy.Effective
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static PooledArray<T> ToPooledArray<T>(this ReadOnlySpan<T> source) => new PooledArray<T>(source);
 
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static TTo[] SelectToArray<TFrom, TTo>(this Span<TFrom> source, Func<TFrom, TTo> selector)
+            => SelectToArray((ReadOnlySpan<TFrom>)source, selector);
+
+        public static TTo[] SelectToArray<TFrom, TTo>(this ReadOnlySpan<TFrom> source, Func<TFrom, TTo> selector)
+        {
+            if(selector is null) { throw new ArgumentNullException(nameof(selector)); }
+            var array = new TTo[source.Length];
+            for(int i = 0; i < array.Length; i++) {
+                array[i] = selector(source[i]);
+            }
+            return array;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe UnmanagedArray<TTo> SelectToUnmanagedArray<TFrom, TTo>(this Span<TFrom> source, Func<TFrom, int, TTo> selector) where TTo : unmanaged
             => SelectToUnmanagedArray((ReadOnlySpan<TFrom>)source, selector);
