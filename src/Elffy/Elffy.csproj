@@ -27,6 +27,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Elffy.Imaging\Elffy.Imaging.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="OpenTK">
       <HintPath>dll\OpenTK.dll</HintPath>
     </Reference>

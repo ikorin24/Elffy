@@ -109,6 +109,10 @@
     <Content Include="externalExe\erc.exe" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Elffy.Imaging\Elffy.Imaging.csproj">
+      <Project>{27cde8d4-324c-45cb-b563-dc9754991998}</Project>
+      <Name>Elffy.Imaging</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Elffy\Elffy.csproj">
       <Project>{efa362d3-efdb-45b7-85ef-b97f14cdbbdf}</Project>
       <Name>Elffy</Name>
