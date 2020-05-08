@@ -1,5 +1,7 @@
 ﻿#nullable enable
 
+using System;
+
 namespace Elffy.Effective
 {
     /// <summary><see cref="string"/> 型の拡張メソッド用クラス</summary>
@@ -27,6 +29,20 @@ namespace Elffy.Effective
         public static bool IsNullOrWhiteSpace(this string source)
         {
             return string.IsNullOrWhiteSpace(source);
+        }
+
+        /// <summary>ファイルパスの拡張子を部分文字列で取得します。(ドットを含みます (ex) ".png" )</summary>
+        /// <param name="source">文字列</param>
+        /// <returns>拡張子</returns>
+        public static ReadOnlySpan<char> FilePathExtension(this string source)
+        {
+            if(source is null) { throw new ArgumentNullException(nameof(source)); }
+            for(int i = source.Length - 1; i >= 0; i--) {
+                if(source[i] == '.') {
+                    return source.AsSpan(i);
+                }
+            }
+            return ReadOnlySpan<char>.Empty;
         }
     }
 }
