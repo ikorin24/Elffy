@@ -14,7 +14,7 @@ namespace Elffy.Effective
     [DebuggerDisplay("UnmanagedBuffer<{typeof(T).Name}>[{Length}]")]
     public unsafe readonly struct UnmanagedBuffer<T> : IDisposable, IEquatable<UnmanagedBuffer<T>> where T : unmanaged
     {
-        private readonly T* _pointer;
+        private readonly IntPtr _pointer;
         private readonly int _length;
 
         /// <summary>
@@ -24,14 +24,14 @@ namespace Elffy.Effective
         public readonly int Length => _length;
 
         /// <summary>Get pointer of buffer head</summary>
-        public readonly T* Ptr => _pointer;
+        public readonly T* Ptr => (T*)_pointer;
 
         /// <summary>Get <see cref="Span{T}"/></summary>
         /// <returns><see cref="Span{T}"/></returns>
         public readonly Span<T> Span
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => new Span<T>(_pointer, _length);
+            get => new Span<T>((T*)_pointer, _length);
         }
 
         /// <summary>
@@ -43,24 +43,17 @@ namespace Elffy.Effective
         public UnmanagedBuffer(int length)
         {
             ArgumentChecker.ThrowOutOfRangeIf(length <= 0);
-            _pointer = (T*)Marshal.AllocHGlobal(sizeof(T) * length);
+            _pointer = Marshal.AllocHGlobal(sizeof(T) * length);
             _length = length;
         }
 
         /// <summary>Release memory.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Dispose() => Release(in this);
-
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void Release(in UnmanagedBuffer<T> buffer)
+        public void Dispose()
         {
-            ref var mock = ref Unsafe.As<UnmanagedBuffer<T>, Mock>(ref Unsafe.AsRef(in buffer));
-            if(mock.Length > 0) {
-                Marshal.FreeHGlobal(new IntPtr(mock.Pointer));
-                mock.Pointer = (void*)IntPtr.Zero;
-                mock.Length = 0;
-            }
+            Marshal.FreeHGlobal(_pointer);
+            Unsafe.AsRef(_pointer) = IntPtr.Zero;
+            Unsafe.AsRef(_length) = 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -70,13 +63,7 @@ namespace Elffy.Effective
         public bool Equals(UnmanagedBuffer<T> other) => EqualityComparer<IntPtr>.Default.Equals((IntPtr)_pointer, (IntPtr)other._pointer) && _length == other._length;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override int GetHashCode() => HashCode.Combine((IntPtr)_pointer, (IntPtr)_length);
-
-        private unsafe struct Mock
-        {
-            public void* Pointer;
-            public int Length;
-        }
+        public override int GetHashCode() => HashCode.Combine(_pointer, _length);
     }
 
     internal sealed class UnmanagedBufferDebuggerTypeProxy<T> where T : unmanaged
