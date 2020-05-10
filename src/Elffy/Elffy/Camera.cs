@@ -7,7 +7,7 @@ namespace Elffy
     /// <summary>Camera class</summary>
     public class Camera
     {
-        private const float NEAR = 1f;
+        private const float NEAR = 3f;
         /// <summary>Aspect ratio (width / height)</summary>
         private float _aspect = 1f;
 
