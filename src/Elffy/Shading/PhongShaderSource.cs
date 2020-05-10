@@ -17,13 +17,14 @@ namespace Elffy.Shading
         {
             definition.Position("vPos");
             definition.Normal("vNormal");
+            definition.TexCoord("vUV");
         }
 
         protected override void SendUniforms(Uniform uniform, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             // TODO: lights を使う (どうやって可変長かつ抽象型をうまく扱えばいいの?)
 
-            var material = new Material(new Color4(0.6f), new Color4(0.35f), new Color4(0.5f), 10f);
+            var material = new Material(new Color4(0.8f), new Color4(0.35f), new Color4(0.5f), 10f);
             uniform.Send("model", model);
             uniform.Send("view", view);
             uniform.Send("projection", projection);
@@ -35,6 +36,7 @@ namespace Elffy.Shading
             uniform.Send("md", (Color3)material.Diffuse);
             uniform.Send("ms", (Color3)material.Specular);
             uniform.Send("shininess", material.Shininess);
+            uniform.Send("tex_sampler", 0);
         }
 
         private const string VertSource =
@@ -42,6 +44,8 @@ namespace Elffy.Shading
 
 in vec3 vPos;
 in vec3 vNormal;
+in vec2 vUV;
+out vec2 UV;
 out vec3 color;
 uniform mat4 model;
 uniform mat4 view;
@@ -67,7 +71,9 @@ void main()
     vec3 N = normalize(normalView);
     vec3 R = reflect(-L, N);
     vec3 V = normalize(-posView);
+
     color = (la * ma) + (ld * md * dot(N, L)) + (ls * ms * max(pow(max(0.0, dot(R, V)), shininess), 0.0));
+    UV = vUV;
 }	
 
 ";
@@ -76,11 +82,13 @@ void main()
 @"#version 440
 
 in vec3 color;
+in vec2 UV;
 out vec4 fragColor;
+uniform sampler2D tex_sampler;
 
 void main()
 {
-    fragColor = vec4(color, 1.0);
+    fragColor = vec4(color, 1.0) * texture(tex_sampler, UV);
 }
 ";
 

@@ -39,24 +39,6 @@ namespace ElffyGame.Base
             Rendered += OnRendered;
         }
 
-        private unsafe void CreateTextures(ReadOnlySpan<Bitmap> images)
-        {
-            var textures = new int[images.Length];
-            for(int i = 0; i < textures.Length; i++) {
-                textures[i] = GL.GenTexture();
-                using(var pixels = images[i].GetPixels(ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb)) {
-                    GL.BindTexture(TextureTarget.Texture2D, textures[i]);
-                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
-                    GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-                    GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, pixels.Width, pixels.Height, 0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, pixels.Ptr);
-                    GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
-                    GL.BindTexture(TextureTarget.Texture2D, 0);
-                }
-            }
-            _textureBufs = textures;
-        }
-
-
         private unsafe void OnRendered(Renderable sender, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             GL.BindVertexArray(VAO);
@@ -65,10 +47,6 @@ namespace ElffyGame.Base
             var textureIndex = _textureIndex!;
             var textureBufs = _textureBufs!;
             var pos = 0;
-
-
-            //GL.ActiveTexture(TextureUnit.Texture0);       // これが uniform にわたされる sampler になる。この場合 0を渡す。実際に得られるテクスチャは Bind されたテクスチャ
-
             for(int i = 0; i < partVertexCount.Length; i++) {
                 GL.BindTexture(TextureTarget.Texture2D, textureBufs[textureIndex[i]]);
                 GL.DrawElements(BeginMode.Triangles, partVertexCount[i], DrawElementsType.UnsignedInt, pos * sizeof(int));
@@ -78,52 +56,55 @@ namespace ElffyGame.Base
 
         private async void OnActivated(FrameObject frameObject)
         {
-            // Hete is main thread
+            // Here is main thread
             IsEnableRendering = false;
 
-            var vertices = await Task.Factory.StartNew(LoadData).ConfigureAwait(true);
+            var vertices = await Task.Factory.StartNew(() =>
+            {
+                var pmx = _pmxObject!;
+                _materials = pmx.MaterialList.Span.SelectToArray(ToMaterial);
+                _partVertexCount = pmx.MaterialList.Span.SelectToArray(m => m.VertexCount);
+                _textureIndex = pmx.MaterialList.Span.SelectToArray(m => m.Texture);
+                ReverseTrianglePolygon(pmx.SurfaceList.Span);     // オリジナルのデータを書き換えているので注意、このメソッドは1回しか通らない前提
+                return pmx.VertexList.Span.SelectToUnmanagedArray(ToVertex);
+            }).ConfigureAwait(true);
             // ↑ ConfigureAwait true
 
-            // Hete is main thread
+            // Here is main thread
             if(!IsTerminated) {
-                // vertices が null になるのはリソースが解放済みの時、つまり既に IsTerminated == true の時のはずなので、ここは not null
                 Debug.Assert(vertices != null);
                 LoadGraphicBuffer(vertices!.AsSpan(), _pmxObject!.SurfaceList.Span.MarshalCast<MMDTools.Surface, int>());
-            }
 
-            var textureBitmaps = _textureBitmaps!;
-            CreateTextures(textureBitmaps);
-            foreach(var t in textureBitmaps) {
-                t.Dispose();
+                var textureBitmaps = _textureBitmaps!;
+                var textureBufs = new int[textureBitmaps.Length];
+                for(int i = 0; i < textureBufs.Length; i++) {
+                    textureBufs[i] = GL.GenTexture();
+                    using(var pixels = textureBitmaps[i].GetPixels(ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb)) {
+                        GL.ActiveTexture(TextureUnit.Texture0);
+                        GL.BindTexture(TextureTarget.Texture2D, textureBufs[i]);
+                        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
+                        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+                        GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, pixels.Width, pixels.Height, 0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, pixels.Ptr);
+                        GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+                        GL.BindTexture(TextureTarget.Texture2D, 0);
+                    }
+                    textureBitmaps[i].Dispose();
+                }
+                _textureBufs = textureBufs;
             }
 
             // not await
             _ = Task.Factory.StartNew(v => ((UnmanagedArray<Vertex>)v)?.Dispose(), vertices);
-            //_pmxObject = null;
+            _pmxObject = null;
         }
 
         private void OnTerminated(FrameObject frameObject)
         {
+            // Here is main thread
             if(_textureBufs != null) {
                 GL.DeleteTextures(_textureBufs.Length, _textureBufs);
                 _textureBufs = null;
             }
-            //Task.Factory.StartNew(ReleaseResource);
-        }
-
-        private UnmanagedArray<Vertex>? LoadData()
-        {
-            var pmxObject = _pmxObject!;
-
-            _materials = pmxObject.MaterialList.Span.SelectToArray(ToMaterial);
-            _partVertexCount = pmxObject.MaterialList.Span.SelectToArray(m => m.VertexCount);
-            _textureIndex = pmxObject.MaterialList.Span.SelectToArray(m => m.Texture);
-
-            // オリジナルのデータを書き換えているので注意
-            // このメソッドは1回しか通らない前提
-            ReverseTrianglePolygon(pmxObject.SurfaceList.Span);
-
-            return pmxObject.VertexList.Span.SelectToUnmanagedArray(ToVertex);
         }
 
         public static Task<PmxModel> LoadResourceAsync(string name)
@@ -152,8 +133,8 @@ namespace ElffyGame.Base
         private static string PathConcat(ReadOnlySpan<char> dir, ReadOnlySpan<char> name)
         {
             // This method means  $"{dir}/{name}"
-            var length = dir.Length + name.Length + 1;
 
+            var length = dir.Length + name.Length + 1;
             var sb = ZString.CreateStringBuilder();
             var buf = sb.GetSpan(length);
             dir.CopyTo(buf);
