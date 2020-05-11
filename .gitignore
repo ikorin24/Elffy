@@ -265,3 +265,4 @@ __pycache__/
 
 # Custom (only for this project)
 src/ElffyResourceCompiler/Resources
+src/ElffyGame/ElffyResources/Hidden/
