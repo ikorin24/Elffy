@@ -124,7 +124,7 @@ namespace ElffyGame.Base
                     using(var tStream = Resources.GetStream(texturePath)) {
                         bitmaps[i] = BitmapHelper.StreamToBitmap(tStream, textureNames[i].FilePathExtension());
                     }
-                    bitmaps[i].Save(textureNames[i] + ".png");
+                    //bitmaps[i].Save(textureNames[i] + ".png");
                 }
                 return new PmxModel(pmx, bitmaps);
             }, name);
@@ -132,14 +132,18 @@ namespace ElffyGame.Base
 
         private static string PathConcat(ReadOnlySpan<char> dir, ReadOnlySpan<char> name)
         {
-            // This method means  $"{dir}/{name}"
+            const char Splitter = '/';
 
-            var length = dir.Length + name.Length + 1;
+            // name = "hoge\\piyo.foo" ----> n = "hoge/piyo.foo"
+            var n = name.Replace('\\', Splitter, stackalloc char[name.Length]);
+
+            // $"{dir}/{n}"
+            var length = dir.Length + n.Length + 1;
             var sb = ZString.CreateStringBuilder();
             var buf = sb.GetSpan(length);
             dir.CopyTo(buf);
-            buf[dir.Length] = '/';
-            name.CopyTo(buf.Slice(dir.Length + 1));
+            buf[dir.Length] = Splitter;
+            n.CopyTo(buf.Slice(dir.Length + 1));
             sb.Advance(length);
             return sb.ToString();
         }
