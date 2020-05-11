@@ -265,5 +265,14 @@ namespace Elffy.Effective
             }
             return resultSelector(accum);
         }
+
+        public static ReadOnlySpan<char> Replace(this ReadOnlySpan<char> source, char oldValue, char newValue, Span<char> destBuffer)
+        {
+            if(destBuffer.Length != source.Length) { throw new ArgumentException($"Length of {nameof(destBuffer)} is not same as {nameof(source)}"); }
+            for(int i = 0; i < source.Length; i++) {
+                destBuffer[i] = (source[i] == oldValue) ? newValue : source[i];
+            }
+            return destBuffer;
+        }
     }
 }
