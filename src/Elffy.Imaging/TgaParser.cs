@@ -28,6 +28,7 @@ namespace Elffy.Imaging
                 ParseFooter(reader, header);
             }
             catch(Exception) {
+                pixels.Dispose();
                 bitmap.Dispose();
                 throw;
             }

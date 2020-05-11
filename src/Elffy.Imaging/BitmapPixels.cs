@@ -12,11 +12,18 @@ namespace Elffy.Imaging
         private readonly Bitmap _bitmap;
         private readonly BitmapData _bitmapData;
 
-        public int Stride => _bitmapData.Stride;
-        public PixelFormat PixelFormat => _bitmapData.PixelFormat;
-        public int Width => _bitmapData.Width;
-        public int Height => _bitmapData.Height;
-        public IntPtr Ptr => _bitmapData.Scan0;
+        private readonly bool IsDisposed => (_bitmap is null);
+
+        public int Stride => !IsDisposed ? _bitmapData.Stride 
+                                         : throw DisposedException();
+        public PixelFormat PixelFormat => !IsDisposed ? _bitmapData.PixelFormat 
+                                                      : throw DisposedException();
+        public int Width => !IsDisposed ? _bitmapData.Width 
+                                        : throw DisposedException();
+        public int Height => !IsDisposed ? _bitmapData.Height 
+                                         : throw DisposedException();
+        public IntPtr Ptr => !IsDisposed ? _bitmapData.Scan0 
+                                         : throw DisposedException();
 
         public BitmapPixels(Bitmap bitmap, ImageLockMode lockMode, PixelFormat format)
         {
@@ -30,13 +37,15 @@ namespace Elffy.Imaging
             _bitmapData = bitmap.LockBits(rect, lockMode, format);
         }
 
-        public unsafe T* GetPtr<T>() where T : unmanaged => (T*)_bitmapData.Scan0;
+        public unsafe T* GetPtr<T>() where T : unmanaged 
+            => !IsDisposed ? (T*)_bitmapData.Scan0 : throw DisposedException();
 
         /// <summary>バイト列を取得します。</summary>
         /// <returns>ピクセルのバイト列</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe Span<byte> AsSpan()
         {
+            if(IsDisposed) { throw DisposedException(); }
             var byteLen = Math.Abs(_bitmapData.Stride) * _bitmapData.Height;
             var ptr = (byte*)_bitmapData.Scan0;
             return new Span<byte>(ptr, byteLen);
@@ -48,6 +57,7 @@ namespace Elffy.Imaging
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe Span<byte> AsSpan(int start)
         {
+            if(IsDisposed) { throw DisposedException(); }
             var byteLen = Math.Abs(_bitmapData.Stride) * _bitmapData.Height;
             if((uint)start >= (uint)byteLen) { throw new ArgumentOutOfRangeException(nameof(start)); }
             var ptr = (byte*)_bitmapData.Scan0;
@@ -61,6 +71,7 @@ namespace Elffy.Imaging
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe Span<byte> AsSpan(int start, int length)
         {
+            if(IsDisposed) { throw DisposedException(); }
             var byteLen = Math.Abs(_bitmapData.Stride) * _bitmapData.Height;
             if((uint)start >= (uint)byteLen) { throw new ArgumentOutOfRangeException(nameof(start)); }
             if((uint)length > (uint)(byteLen - start)) { throw new ArgumentOutOfRangeException(nameof(length)); }
@@ -71,7 +82,13 @@ namespace Elffy.Imaging
         public void Dispose()
         {
             // Do not dispose bitmap
-            _bitmap.UnlockBits(_bitmapData);
+            if(!IsDisposed) {
+                _bitmap.UnlockBits(_bitmapData);
+                Unsafe.AsRef(_bitmap) = null!;
+                Unsafe.AsRef(_bitmapData) = null!;
+            }
         }
+
+        private ObjectDisposedException DisposedException() => new ObjectDisposedException(nameof(BitmapPixels));
     }
 }
