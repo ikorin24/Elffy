@@ -27,10 +27,19 @@ namespace Elffy.Imaging
                 ParseData(reader, header, pixels.AsSpan());
                 ParseFooter(reader, header);
             }
-            catch(Exception) {
+            catch(Exception ex) {
+#if DEBUG
+                // Fill all pixels white for debug.
+                Debug.Fail(
+@$"[ERROR] Fail in load tga pixels !!!
+    {ex.GetType().Name}
+Ignore to use white-filled bitmap instead.");
+                pixels.AsSpan().Fill(byte.MaxValue);
+#else
                 pixels.Dispose();
                 bitmap.Dispose();
-                throw;
+                throw ex;
+#endif
             }
             return bitmap;
         }
