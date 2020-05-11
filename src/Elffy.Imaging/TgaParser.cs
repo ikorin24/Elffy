@@ -31,9 +31,10 @@ namespace Elffy.Imaging
 #if DEBUG
                 // Fill all pixels white for debug.
                 Debug.Fail(
-@$"[ERROR] Fail in load tga pixels !!!
+@$"[ERROR] Failed loading tga image pixels !!!
     {ex.GetType().Name}
 Ignore to use white-filled bitmap instead.");
+
                 pixels.AsSpan().Fill(byte.MaxValue);
 #else
                 pixels.Dispose();
