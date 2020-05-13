@@ -1,12 +1,13 @@
 ﻿#nullable enable
 using Elffy.Core;
 using System;
+using System.Collections.Generic;
 
 namespace Elffy.Components
 {
     /// <summary>Cache field of <see cref="IComponent"/></summary>
     /// <typeparam name="T">Type of component</typeparam>
-    public struct ComponentCache<T> where T : class, IComponent
+    public struct ComponentCache<T> : IEquatable<ComponentCache<T>> where T : class, IComponent
     {
         private T? _component;
 
@@ -36,5 +37,11 @@ namespace Elffy.Components
                 _component = null;
             }
         }
+
+        public override bool Equals(object? obj) => obj is ComponentCache<T> cache && Equals(cache);
+
+        public bool Equals(ComponentCache<T> other) => EqualityComparer<T?>.Default.Equals(_component, other._component);
+
+        public override int GetHashCode() => HashCode.Combine(_component);
     }
 }
