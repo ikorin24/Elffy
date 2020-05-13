@@ -59,25 +59,25 @@
             <summary>PMX Ver 2.1</summary>
         </member>
         <member name="T:MMDTools.PMXParser">
-            <summary>PMX data parser class</summary>
+            <summary>PMX data parser class. This class is thread-safe.</summary>
         </member>
         <member name="M:MMDTools.PMXParser.GetVersion(System.String)">
-            <summary>Get PMX data version from specified file</summary>
+            <summary>Get PMX data version from specified file. This method is thread-safe.</summary>
             <param name="fileName">file name of PMX data</param>
             <returns>PMX file version</returns>
         </member>
         <member name="M:MMDTools.PMXParser.GetVersion(System.IO.Stream)">
-            <summary>Get PMX data version from specified stream</summary>
+            <summary>Get PMX data version from specified stream. This method is thread-safe.</summary>
             <param name="stream">stream of PMX data</param>
             <returns>PMX file version</returns>
         </member>
         <member name="M:MMDTools.PMXParser.Parse(System.String)">
-            <summary>Parse PMX data from specified file</summary>
+            <summary>Parse PMX data from specified file. This method is thread-safe.</summary>
             <param name="fileName">file name of PMX data</param>
             <returns>PMX object</returns>
         </member>
         <member name="M:MMDTools.PMXParser.Parse(System.IO.Stream)">
-            <summary>Parse PMX data from specified stream</summary>
+            <summary>Parse PMX data from specified stream. This method is thread-safe.</summary>
             <param name="stream">stream of PMX data</param>
             <returns>PMX object</returns>
         </member>
