@@ -16,7 +16,6 @@ namespace Elffy.Core
     /// </summary>
     public abstract class Renderable : Positionable
     {
-        private int _indexArrayLength;
         /// <summary>Vertex Buffer Object</summary>
         public VBO VBO { get; private set; }
         /// <summary>Index Buffer Object</summary>
@@ -121,7 +120,7 @@ namespace Elffy.Core
                 ShaderProgram!.Apply(this, Layer!.Lights, model, view, projection);
                 Rendering?.Invoke(this, in model, in view, in projection);
                 if(IsEnableRendering) {
-                    GL.DrawElements(BeginMode.Triangles, _indexArrayLength, DrawElementsType.UnsignedInt, 0);
+                    GL.DrawElements(BeginMode.Triangles, IBO.Length, DrawElementsType.UnsignedInt, 0);
                 }
                 Rendered?.Invoke(this, in model, in view, in projection);
             }
@@ -136,61 +135,26 @@ namespace Elffy.Core
         }
 
         /// <summary>指定の頂点配列とインデックス配列で VBO, IBO を作成し、VAO を作成します</summary>
-        /// <param name="vertexArray">頂点配列</param>
-        /// <param name="indexArray">インデックス配列</param>
+        /// <param name="vertices">頂点配列</param>
+        /// <param name="indices">インデックス配列</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected unsafe void LoadGraphicBuffer(ReadOnlySpan<Vertex> vertexArray, ReadOnlySpan<int> indexArray)
-        {
-            fixed(Vertex* va = vertexArray)
-            fixed(int* ia = indexArray) {
-                LoadGraphicBuffer((IntPtr)va, vertexArray.Length, (IntPtr)ia, indexArray.Length);
-            }
-        }
-
-        /// <summary>指定の頂点配列とインデックス配列で VBO, IBO を作成し、VAO を作成します</summary>
-        /// <param name="vertexArray">頂点配列</param>
-        /// <param name="vertexArrayLength">頂点配列長</param>
-        /// <param name="indexArray">インデックス配列</param>
-        /// <param name="indexArrayLength">インデックス配列長</param>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected void LoadGraphicBuffer(IntPtr vertexArray, int vertexArrayLength, IntPtr indexArray, int indexArrayLength)
+        protected unsafe void LoadGraphicBuffer(ReadOnlySpan<Vertex> vertices, ReadOnlySpan<int> indices)
         {
             Dispatcher.ThrowIfNotMainThread();
             if(IsLoaded) {
-                UpdateBuffer(vertexArray, vertexArrayLength, indexArray, indexArrayLength);
+                VBO.BindBufferData(vertices, BufferUsageHint.StaticDraw);
+                IBO.BindBufferData(indices, BufferUsageHint.StaticDraw);
             }
             else {
-                InitBuffer(vertexArray, vertexArrayLength, indexArray, indexArrayLength);
+                VBO = VBO.Create();
+                VBO.BindBufferData(vertices, BufferUsageHint.StaticDraw);
+                IBO = IBO.Create();
+                IBO.BindBufferData(indices, BufferUsageHint.StaticDraw);
+                VAO = VAO.Create();
+                VAO.Bind();
+                IsLoaded = true;
+                SetShaderProgram();
             }
-        }
-
-        private unsafe void InitBuffer(IntPtr vertexArray, int vertexArrayLength, IntPtr indexArray, int indexArrayLength)
-        {
-            _indexArrayLength = indexArrayLength;
-
-            // 頂点バッファ(VBO)生成
-            //VBO = GL.GenBuffer();
-            VBO = VBO.Create();
-            VBO.BindBufferData(vertexArrayLength * sizeof(Vertex), vertexArray, BufferUsageHint.StaticDraw);
-
-            // 頂点indexバッファ(IBO)生成
-            IBO = IBO.Create();
-            IBO.BindBufferData(indexArrayLength * sizeof(int), indexArray, BufferUsageHint.StaticDraw);
-
-            // VAO
-            VAO = VAO.Create();
-            VAO.Bind();
-            IsLoaded = true;
-
-            // Compile shader program
-            SetShaderProgram();
-        }
-
-        private unsafe void UpdateBuffer(IntPtr vertexArray, int vertexArrayLength, IntPtr indexArray, int indexArrayLength)
-        {
-            _indexArrayLength = indexArrayLength;
-            VBO.BindBufferData(vertexArrayLength * sizeof(Vertex), vertexArray, BufferUsageHint.StaticDraw);
-            IBO.BindBufferData(indexArrayLength * sizeof(int), indexArray, BufferUsageHint.StaticDraw);
         }
 
         private void OnTerminated(FrameObject _)

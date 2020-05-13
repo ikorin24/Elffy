@@ -31,7 +31,7 @@ namespace Elffy.Shape
 
         private void OnActivated(FrameObject frameObject)
         {
-            LoadGraphicBuffer(_vertexArray.Ptr, _vertexArray.Length, _indexArray.Ptr, _indexArray.Length);
+            LoadGraphicBuffer(_vertexArray.AsSpan(), _indexArray.AsSpan());
         }
 
         private void OnTerminated(FrameObject frameObject)

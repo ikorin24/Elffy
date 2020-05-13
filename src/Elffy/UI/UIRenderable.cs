@@ -40,7 +40,7 @@ namespace Elffy.UI
             _vertexArray = new UnmanagedArray<Vertex>(4);
             _indexArray = new UnmanagedArray<int>(6);
             SetPolygon(Control.Width, Control.Height, Control.OffsetX, Control.OffsetY, yAxisDir);
-            LoadGraphicBuffer(_vertexArray.Ptr, _vertexArray.Length, _indexArray.Ptr, _indexArray.Length);
+            LoadGraphicBuffer(_vertexArray.AsSpan(), _indexArray.AsSpan());
         }
 
         private void OnTerminated(FrameObject _)

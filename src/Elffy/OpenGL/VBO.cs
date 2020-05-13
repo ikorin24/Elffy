@@ -11,8 +11,12 @@ namespace Elffy.OpenGL
         // バッファの削除は internal にするために、IDispose.Dispose にしない。interface の実装は public になってしまう。
         // int へのキャストを実装してはいけない。(public になるため)
 
+
+#pragma warning disable 0649    // Disable 'Field is never assigned to, and is always default'
         private readonly int _vbo;
-        
+        private readonly int _length;
+#pragma warning restore 0649
+
         internal readonly int Value => _vbo;
         internal readonly bool IsEmpty => _vbo == Consts.NULL;
 
@@ -30,6 +34,7 @@ namespace Elffy.OpenGL
             if(!IsEmpty) {
                 GL.DeleteBuffer(_vbo);
                 Unsafe.AsRef(_vbo) = Consts.NULL;
+                Unsafe.AsRef(_length) = default;
             }
         }
 
@@ -43,10 +48,13 @@ namespace Elffy.OpenGL
             GL.BindBuffer(BufferTarget.ArrayBuffer, Consts.NULL);
         }
 
-        public readonly void BindBufferData(int size, IntPtr ptr, BufferUsageHint usage)
+        public readonly unsafe void BindBufferData(ReadOnlySpan<Vertex> vertices, BufferUsageHint usage)
         {
             Bind();
-            GL.BufferData(BufferTarget.ArrayBuffer, size, ptr, usage);
+            Unsafe.AsRef(_length) = vertices.Length;
+            fixed(Vertex* ptr = vertices) {
+                GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(Vertex), (IntPtr)ptr, usage);
+            }
         }
 
 

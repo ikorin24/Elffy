@@ -11,7 +11,10 @@ namespace Elffy.OpenGL
         // バッファの削除は internal にするために、IDispose.Dispose にしない。interface の実装は public になってしまう。
         // int へのキャストを実装してはいけない。(public になるため)
 
+
+#pragma warning disable 0649    // Disable 'Field is never assigned to, and is always default'
         private readonly int _vao;
+#pragma warning restore 0649
 
         internal readonly int Value => _vao;
         internal readonly bool IsEmpty => _vao == Consts.NULL;
