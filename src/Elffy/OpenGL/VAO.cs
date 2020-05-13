@@ -38,6 +38,12 @@ namespace Elffy.OpenGL
             GL.BindVertexArray(_vao);
         }
 
+        public readonly void Unbind()
+        {
+            GL.BindVertexArray(_vao);
+        }
+
+
 
 
 

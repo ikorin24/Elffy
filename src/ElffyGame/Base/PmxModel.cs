@@ -14,6 +14,7 @@ using System.Drawing.Imaging;
 using Cysharp.Text;
 using PMXParser = MMDTools.PMXParser;
 using PMXObject = MMDTools.PMXObject;
+using Elffy.Shading;
 
 namespace ElffyGame.Base
 {
@@ -21,12 +22,11 @@ namespace ElffyGame.Base
     {
         private Material[]? _materials;
         private int[]? _partVertexCount;
-
+        private int[]? _textureIndex;
         private int[]? _textureBufs;
 
         private PMXObject? _pmxObject;
         private Bitmap[]? _textureBitmaps;
-        private int[]? _textureIndex;
 
         private unsafe PmxModel(PMXObject pmxObject, Bitmap[] textureBitmaps)
         {
@@ -41,8 +41,8 @@ namespace ElffyGame.Base
 
         private unsafe void OnRendered(Renderable sender, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
-            GL.BindVertexArray(VAO);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, IBO);
+            VAO.Bind();
+            IBO.Bind();
             var partVertexCount = _partVertexCount!;
             var textureIndex = _textureIndex!;
             var textureBufs = _textureBufs!;
@@ -124,7 +124,6 @@ namespace ElffyGame.Base
                     using(var tStream = Resources.GetStream(texturePath)) {
                         bitmaps[i] = BitmapHelper.StreamToBitmap(tStream, textureNames[i].FilePathExtension());
                     }
-                    //bitmaps[i].Save(textureNames[i] + ".png");
                 }
                 return new PmxModel(pmx, bitmaps);
             }, name);

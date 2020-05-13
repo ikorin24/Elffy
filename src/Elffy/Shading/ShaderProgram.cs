@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using Elffy.Exceptions;
 using Elffy.Core;
 using OpenTK.Graphics.OpenGL;
+using Elffy.OpenGL;
 
 namespace Elffy.Shading
 {
@@ -39,9 +40,9 @@ namespace Elffy.Shading
             _shaderSource!.SendUniforms(_program, target, lights, model, view, projection);
         }
 
-        internal void AssociateVBO(int vbo)
+        internal void AssociateVBO(VBO vbo)
         {
-            GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
+            vbo.Bind();
             _shaderSource!.DefineLocation(_program);
             _vboAssociated = true;
         }

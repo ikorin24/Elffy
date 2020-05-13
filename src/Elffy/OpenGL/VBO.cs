@@ -38,6 +38,17 @@ namespace Elffy.OpenGL
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vbo);
         }
 
+        public readonly void Unbind()
+        {
+            GL.BindBuffer(BufferTarget.ArrayBuffer, Consts.NULL);
+        }
+
+        public readonly void BindBufferData(int size, IntPtr ptr, BufferUsageHint usage)
+        {
+            Bind();
+            GL.BufferData(BufferTarget.ArrayBuffer, size, ptr, usage);
+        }
+
 
 
 
