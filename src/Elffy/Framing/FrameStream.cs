@@ -21,7 +21,7 @@ namespace Elffy.Framing
         public static FrameStream GetStream(IHostScreen screen) => new FrameStream(screen);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public FrameStream Begin(TimeSpan time, FrameBehaviorDelegate action)
+        public FrameStream Do(TimeSpan time, FrameBehaviorDelegate action)
         {
             if(time < TimeSpan.Zero) { throw new ArgumentException($"{nameof(time)} is negative."); }
             if(action is null) { throw new ArgumentNullException(nameof(action)); }

@@ -44,7 +44,7 @@ namespace ElffyGame
                 {
                     Debug.WriteLine("Do");
                 })
-                .Begin(TimeSpan.FromSeconds(3), e =>
+                .Do(TimeSpan.FromSeconds(3), e =>
                 {
                     Debug.WriteLine($"Begin : {e.Time.TotalSeconds}");
                 })
