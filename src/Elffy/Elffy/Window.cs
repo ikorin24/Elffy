@@ -125,7 +125,6 @@ namespace Elffy
         {
             Title = title;
             if(icon != null) { Icon = icon; }
-            Rendering += default(CurriedDelegateDummy).SwitchScreen;
             switch(windowStyle) {
                 case WindowStyle.Default: {
                     _window.WindowBorder = WindowBorder.Resizable;
@@ -154,7 +153,6 @@ namespace Elffy
             CustomSynchronizationContext.CreateIfNeeded(_syncContextReciever);
             _renderingArea.InitializeGL();
             _watch.Start();
-            Engine.SwitchScreen(default, this);
             Initialized?.Invoke(this);
             _renderingArea.Layers.SystemLayer.ApplyChanging();
             foreach(var layer in _renderingArea.Layers.AsReadOnlySpan()) {

@@ -14,23 +14,24 @@ namespace Elffy.Framing
         {
             _action = action;
             _info = info;
+            _isFirstFrame = true;
+            _startTime = default;
         }
 
-        internal bool UpdateFrame()
+        internal static bool UpdateFrame(ref FrameBehavior behavior, TimeSpan currentTime)
         {
-            var currentTime = CurrentScreen.Time;
-            if(_isFirstFrame) {
-                _startTime = currentTime;
-                _isFirstFrame = false;
+            if(behavior._isFirstFrame) {
+                behavior._startTime = currentTime;
+                behavior._isFirstFrame = false;
             }
-            _info.SetTime(currentTime - _startTime);
+            behavior._info.SetTime(currentTime - behavior._startTime);
 
-            if(_info.IsEnd) {
+            if(behavior._info.IsEnd) {
                 return false;
             }
             else {
-                _action(_info);
-                _info.SetFrameNum(_info.FrameNum + 1);
+                behavior._action(behavior._info);
+                behavior._info.SetFrameNum(behavior._info.FrameNum + 1);
                 return true;
             }
         }

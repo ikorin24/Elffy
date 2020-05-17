@@ -22,21 +22,6 @@ namespace Elffy
             Resources.Initialize();
         }
 
-        /// <summary>Switch current screen to specified screen. This method is for delegate</summary>
-        /// <param name="dummy">dummy instance of extension method source. (null is valid because this is not used in this method.)</param>
-        /// <param name="screen">screen of switching target</param>
-        /// <remarks>
-        /// This method is called every frame from delegate.
-        /// Static method called from delegate is slower than instance one.
-        /// If Currying by extension method, it is called as faster as method of instance.
-        /// </remarks>
-        internal static void SwitchScreen(this CurriedDelegateDummy? dummy, IHostScreen screen)
-        {
-            CurrentScreen.Screen = screen;
-        }
-
-        internal static void SwitchScreen(IHostScreen screen) => SwitchScreen(default, screen);
-
         public static void ShowScreen(ActionEventHandler<IHostScreen> initialized)
             => ShowScreen(800, 450, "", initialized);
 

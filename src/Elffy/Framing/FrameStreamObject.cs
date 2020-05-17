@@ -16,10 +16,17 @@ namespace Elffy.Framing
 
         /// <summary>このフレームプロセスがキャンセルされたかどうか</summary>
         private bool _isCanceled;
+        private IHostScreen _screen;
 
-        public FrameStreamObject()
+        public FrameStreamObject(IHostScreen screen)
         {
+            _screen = screen ?? throw new ArgumentNullException(nameof(screen));
             Updated += OnUpdated;
+        }
+
+        public void Activate()
+        {
+            Activate(_screen.Layers.SystemLayer);
         }
 
         /// <summary>キューに処理を追加します</summary>
@@ -60,8 +67,7 @@ namespace Elffy.Framing
                 Terminate();
                 return;
             }
-
-            while(!_current!.UpdateFrame()) {
+            while(!FrameBehavior.UpdateFrame(ref _current!, _screen.Time)) {
                 if(_queue.Count > 0) {
                     _current = _queue.Dequeue();
                 }

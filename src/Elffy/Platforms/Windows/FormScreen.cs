@@ -88,15 +88,15 @@ namespace Elffy.Platforms.Windows
             MouseLeave += (sender, e) => Mouse.ChangeOnScreen(false);
         }
 
-        public void Run(ActionEventHandler<IHostScreen> switchScreenMethod)
+        public void Run()
         {
-            if(switchScreenMethod == null) { throw new ArgumentNullException(); }
+            //if(switchScreenMethod == null) { throw new ArgumentNullException(); }
             if(IsDesignMode) { return; }
             Dispatcher.ThrowIfNotMainThread();
             IsRunning = true;
             _renderingArea.Size = ClientSize;
-            Rendering += switchScreenMethod;
-            switchScreenMethod(this);
+            //Rendering += switchScreenMethod;
+            //switchScreenMethod(this);
             _renderingArea.InitializeGL();
             _watch.Start();
             Initialized?.Invoke(this);
@@ -141,7 +141,7 @@ namespace Elffy.Platforms.Windows
             TabIndex = 0;
             form.Controls.Add(this);
             form.ResumeLayout(false);
-            form.Load += (sender, e) => Run(default(CurriedDelegateDummy).SwitchScreen);
+            form.Load += (sender, e) => Run();
 
             if(Application.OpenForms.Count == 0) {
                 Application.Run(form);

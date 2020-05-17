@@ -38,6 +38,25 @@ namespace ElffyGame
                 }));
             sw2.Stop();
             Debug.WriteLine($"{sw2.ElapsedMilliseconds} ms");
+
+            FrameStream.GetStream(screen)
+                .Do(e =>
+                {
+                    Debug.WriteLine("Do");
+                })
+                .Begin(TimeSpan.FromSeconds(3), e =>
+                {
+                    Debug.WriteLine($"Begin : {e.Time.TotalSeconds}");
+                })
+                .Do(e =>
+                {
+                    Debug.WriteLine("Wait 3 sec");
+                })
+                .Wait(TimeSpan.FromSeconds(3))
+                .Do(e =>
+                {
+                    Debug.WriteLine("End");
+                });
             return;
 
             var worldLayer = screen.Layers.WorldLayer;
