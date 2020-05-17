@@ -81,7 +81,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Base\PmxModel.cs" />
     <Compile Include="Controller.cs" />
     <Compile Include="GameStartUp.cs" />
     <Compile Include="Program.cs" />

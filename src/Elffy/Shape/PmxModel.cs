@@ -1,22 +1,19 @@
 ﻿#nullable enable
 using System;
-using Elffy;
-using Elffy.Core;
-using Elffy.Effective;
-using Elffy.Imaging;
-using System.Runtime.CompilerServices;
-using OpenTK.Graphics.OpenGL;
-using UnmanageUtility;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Drawing;
-using System.Drawing.Imaging;
+using System.Runtime.CompilerServices;
+using Elffy.Core;
+using Elffy.Effective;
+using Elffy.Imaging;
+using Elffy.Components;
+using UnmanageUtility;
 using Cysharp.Text;
 using PMXParser = MMDTools.PMXParser;
 using PMXObject = MMDTools.PMXObject;
-using Elffy.Shading;
 
-namespace ElffyGame.Base
+namespace Elffy.Shape
 {
     public class PmxModel : MultiPartsRenderable
     {
@@ -35,8 +32,8 @@ namespace ElffyGame.Base
 
         private void OnTerminated(FrameObject sender)
         {
-            (GetComponent<Elffy.Components.IComponentInternal<Elffy.Components.MultiTexture>>() as IDisposable)?.Dispose();
-            RemoveComponent<Elffy.Components.IComponentInternal<Elffy.Components.MultiTexture>>();
+            (GetComponent<IComponentInternal<MultiTexture>>() as IDisposable)?.Dispose();
+            RemoveComponent<IComponentInternal<MultiTexture>>();
         }
 
         private async void OnActivated(FrameObject frameObject)
@@ -58,9 +55,9 @@ namespace ElffyGame.Base
                 Debug.Assert(vertices != null);
                 LoadGraphicBuffer(vertices!.AsSpan(), _pmxObject!.SurfaceList.Span.MarshalCast<MMDTools.Surface, int>());
                 SetParts(parts);
-                var texture = new Elffy.Components.MultiTexture();
+                var texture = new MultiTexture();
                 texture.Load(_textureBitmaps);
-                AddOrReplaceComponent<Elffy.Components.IComponentInternal<Elffy.Components.MultiTexture>>(texture);
+                AddOrReplaceComponent<IComponentInternal<MultiTexture>>(texture);
                 _textureBitmaps = null;
             }
 
@@ -128,7 +125,7 @@ namespace ElffyGame.Base
         //private static Material ToMaterial(MMDTools.Material m) => new Material(ToColor4(m.Ambient), ToColor4(m.Diffuse), ToColor4(m.Specular), m.Shininess);
 
         private static Bone ToBone(MMDTools.Bone bone) => new Bone(bone);
-        
+
         private static VertexBoneInfo ToVertexBoneInfo(MMDTools.Vertex v) => new VertexBoneInfo(v);
 
         private static Vertex ToVertex(MMDTools.Vertex v) => new Vertex(ToVector3(v.Position), ToVector3(v.Normal), ToVector2(v.UV));

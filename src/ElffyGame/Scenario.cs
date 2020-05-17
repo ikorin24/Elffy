@@ -29,7 +29,7 @@ namespace ElffyGame
 
             var sw2 = new Stopwatch();
             sw2.Start();
-            Base.PmxModel.LoadResourceAsync("Alicia/Alicia_solid.pmx")
+            PmxModel.LoadResourceAsync("Alicia/Alicia_solid.pmx")
                 .ContinueWith(t => screen.Dispatcher.Invoke(() =>
                 {
                     var m = t.Result;
