@@ -107,11 +107,11 @@ namespace Elffy
             Activated?.Invoke(this);
         }
 
-        /// <summary>このオブジェクトをゲーム管理下から外して破棄します</summary>
+        /// <summary>このオブジェクトをエンジン管理下から外して破棄します</summary>
         public void Terminate()
         {
-            if(IsTerminated) { throw new ObjectTerminatedException(this); }
-            Layer?.RemoveFrameObject(this);
+            if(IsTerminated) { return; }
+            Layer?.RemoveFrameObject(this);     // IsActivated == false の時は Layer は null なので呼ばれない
             Layer = null;
             IsTerminated = true;
             _dispatcher = null;
