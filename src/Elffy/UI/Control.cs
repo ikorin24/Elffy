@@ -175,9 +175,9 @@ namespace Elffy.UI
         //    set => Renderable.Material.Ambient = value;
         //}
 
-        /// <summary>Get or set texture</summary>
-        /// <exception cref="ArgumentNullException"></exception>
-        public TextureBase Texture { get => Renderable.Texture; set => Renderable.Texture = value; }
+        ///// <summary>Get or set texture</summary>
+        ///// <exception cref="ArgumentNullException"></exception>
+        //public TextureBase Texture { get => Renderable.Texture; set => Renderable.Texture = value; }
 
         ///// <summary>Get or set shader</summary>
         ///// <exception cref="ArgumentNullException"></exception>

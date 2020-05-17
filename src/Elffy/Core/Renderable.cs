@@ -29,35 +29,39 @@ namespace Elffy.Core
 
         protected bool IsEnableRendering { get; set; } = true;
 
-        /// <summary>マテリアルを取得または設定します</summary>
-        public Material Material
-        {
-            get => _material;
-            set
-            {
-                if(_material == value) { return; }
-                var old = _material;
-                _material = value;
-                MaterialChanged?.Invoke(this, new ValueChangedEventArgs<Material>(old, value));
-            }
-        }
-        private Material _material = Material.Default;
+        ///// <summary>マテリアルを取得または設定します</summary>
+        //public Material Material
+        //{
+        //    get => _material;
+        //    set
+        //    {
+        //        if(_material == value) { return; }
+        //        var old = _material;
+        //        _material = value;
+        //        MaterialChanged?.Invoke(this, new ValueChangedEventArgs<Material>(old, value));
+        //    }
+        //}
+        //private Material _material = Material.Default;
 
-        /// <summary>テクスチャ</summary>
-        /// <exception cref="ArgumentNullException"></exception>
-        public TextureBase Texture
-        {
-            get => _texture;
-            set
-            {
-                ArgumentChecker.ThrowIfNullArg(value, nameof(value));
-                if(_texture == value) { return; }
-                var old = _texture;
-                _texture = value;
-                TextureChanged?.Invoke(this, new ValueChangedEventArgs<TextureBase>(old, value));
-            }
-        }
-        private TextureBase _texture = TextureBase.Empty;
+        ///// <summary>テクスチャ</summary>
+        ///// <exception cref="ArgumentNullException"></exception>
+        //public TextureBase Texture
+        //{
+        //    get => _texture;
+        //    set
+        //    {
+        //        ArgumentChecker.ThrowIfNullArg(value, nameof(value));
+        //        if(_texture == value) { return; }
+        //        var old = _texture;
+        //        _texture = value;
+        //        TextureChanged?.Invoke(this, new ValueChangedEventArgs<TextureBase>(old, value));
+        //    }
+        //}
+        //private TextureBase _texture = TextureBase.Empty;
+
+        //private Components.Material? _m;
+
+        //private Components.Texture? _t;
 
         public ShaderSource Shader
         {
@@ -79,10 +83,10 @@ namespace Elffy.Core
         /// <summary>Not null if <see cref="IsLoaded"/> == true</summary>
         protected ShaderProgram? ShaderProgram { get; private set; }
 
-        /// <summary>Material changed event</summary>
-        public event ActionEventHandler<Renderable, ValueChangedEventArgs<Material>>? MaterialChanged;
-        /// <summary>Texture changed event</summary>
-        public event ActionEventHandler<Renderable, ValueChangedEventArgs<TextureBase>>? TextureChanged;
+        ///// <summary>Material changed event</summary>
+        //public event ActionEventHandler<Renderable, ValueChangedEventArgs<Material>>? MaterialChanged;
+        ///// <summary>Texture changed event</summary>
+        //public event ActionEventHandler<Renderable, ValueChangedEventArgs<TextureBase>>? TextureChanged;
         ///// <summary>Shader changed event</summary>
         public event ActionEventHandler<Renderable, ValueChangedEventArgs<ShaderSource>>? ShaderChanged;
 
@@ -116,7 +120,7 @@ namespace Elffy.Core
             if(IsLoaded && IsVisible) {
                 VAO.Bind();
                 IBO.Bind();
-                Texture.Apply();
+                //Texture.Apply();
                 ShaderProgram!.Apply(this, Layer!.Lights, model, view, projection);
                 Rendering?.Invoke(this, in model, in view, in projection);
                 if(IsEnableRendering) {

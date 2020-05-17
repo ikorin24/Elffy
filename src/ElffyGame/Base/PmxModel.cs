@@ -18,13 +18,8 @@ using Elffy.Shading;
 
 namespace ElffyGame.Base
 {
-    public class PmxModel : Renderable
+    public class PmxModel : MultiPartsRenderable
     {
-        private Material[]? _materials;
-        private int[]? _partVertexCount;
-        private int[]? _textureIndex;
-        private int[]? _textureBufs;
-
         private PMXObject? _pmxObject;
         private Bitmap[]? _textureBitmaps;
 
@@ -36,37 +31,25 @@ namespace ElffyGame.Base
             _textureBitmaps = textureBitmaps;
             Activated += OnActivated;
             Terminated += OnTerminated;
-            Rendered += OnRendered;
         }
 
-        private unsafe void OnRendered(Renderable sender, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        private void OnTerminated(FrameObject sender)
         {
-            VAO.Bind();
-            IBO.Bind();
-            var partVertexCount = _partVertexCount!;
-            var textureIndex = _textureIndex!;
-            var textureBufs = _textureBufs!;
-            var pos = 0;
-            for(int i = 0; i < partVertexCount.Length; i++) {
-                GL.BindTexture(TextureTarget.Texture2D, textureBufs[textureIndex[i]]);
-                GL.DrawElements(BeginMode.Triangles, partVertexCount[i], DrawElementsType.UnsignedInt, pos * sizeof(int));
-                pos += partVertexCount[i];
-            }
+            (GetComponent<Elffy.Components.IComponentInternal<Elffy.Components.MultiTexture>>() as IDisposable)?.Dispose();
+            RemoveComponent<Elffy.Components.IComponentInternal<Elffy.Components.MultiTexture>>();
         }
 
         private async void OnActivated(FrameObject frameObject)
         {
             // Here is main thread
-            IsEnableRendering = false;
 
-            var vertices = await Task.Factory.StartNew(() =>
+            var (vertices, parts) = await Task.Factory.StartNew(() =>
             {
                 var pmx = _pmxObject!;
-                _materials = pmx.MaterialList.Span.SelectToArray(ToMaterial);
-                _partVertexCount = pmx.MaterialList.Span.SelectToArray(m => m.VertexCount);
-                _textureIndex = pmx.MaterialList.Span.SelectToArray(m => m.Texture);
-                ReverseTrianglePolygon(pmx.SurfaceList.Span);     // オリジナルのデータを書き換えているので注意、このメソッドは1回しか通らない前提
-                return pmx.VertexList.Span.SelectToUnmanagedArray(ToVertex);
+                ReverseTrianglePolygon(pmx.SurfaceList.Span);       // オリジナルのデータを書き換えているので注意、このメソッドは1回しか通らない前提
+                var vertices = pmx.VertexList.Span.SelectToUnmanagedArray(ToVertex);
+                var parts = pmx.MaterialList.Span.SelectToArray(m => new RenderableParts(m.VertexCount, m.Texture));
+                return (vertices, parts);
             }).ConfigureAwait(true);
             // ↑ ConfigureAwait true
 
@@ -74,37 +57,16 @@ namespace ElffyGame.Base
             if(!IsTerminated) {
                 Debug.Assert(vertices != null);
                 LoadGraphicBuffer(vertices!.AsSpan(), _pmxObject!.SurfaceList.Span.MarshalCast<MMDTools.Surface, int>());
-
-                var textureBitmaps = _textureBitmaps!;
-                var textureBufs = new int[textureBitmaps.Length];
-                for(int i = 0; i < textureBufs.Length; i++) {
-                    textureBufs[i] = GL.GenTexture();
-                    using(var pixels = textureBitmaps[i].GetPixels(ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb)) {
-                        GL.ActiveTexture(TextureUnit.Texture0);
-                        GL.BindTexture(TextureTarget.Texture2D, textureBufs[i]);
-                        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
-                        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-                        GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, pixels.Width, pixels.Height, 0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, pixels.Ptr);
-                        GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
-                        GL.BindTexture(TextureTarget.Texture2D, 0);
-                    }
-                    textureBitmaps[i].Dispose();
-                }
-                _textureBufs = textureBufs;
+                SetParts(parts);
+                var texture = new Elffy.Components.MultiTexture();
+                texture.Load(_textureBitmaps);
+                AddOrReplaceComponent<Elffy.Components.IComponentInternal<Elffy.Components.MultiTexture>>(texture);
+                _textureBitmaps = null;
             }
 
             // not await
             _ = Task.Factory.StartNew(v => ((UnmanagedArray<Vertex>)v)?.Dispose(), vertices);
             _pmxObject = null;
-        }
-
-        private void OnTerminated(FrameObject frameObject)
-        {
-            // Here is main thread
-            if(_textureBufs != null) {
-                GL.DeleteTextures(_textureBufs.Length, _textureBufs);
-                _textureBufs = null;
-            }
         }
 
         public static Task<PmxModel> LoadResourceAsync(string name)
