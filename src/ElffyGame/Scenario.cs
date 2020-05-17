@@ -39,8 +39,8 @@ namespace ElffyGame
             sw2.Stop();
             Debug.WriteLine($"{sw2.ElapsedMilliseconds} ms");
 
-            FrameStream.GetStream(screen)
-                .Do(e =>
+            using(var frames = FrameStream.GetStream(screen)) {
+                frames.Do(e =>
                 {
                     Debug.WriteLine("Do");
                 })
@@ -57,6 +57,7 @@ namespace ElffyGame
                 {
                     Debug.WriteLine("End");
                 });
+            }
             return;
 
             var worldLayer = screen.Layers.WorldLayer;

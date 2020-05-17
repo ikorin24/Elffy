@@ -1,9 +1,10 @@
 ﻿#nullable enable
 using System;
+using System.Collections.Generic;
 
 namespace Elffy.Framing
 {
-    internal sealed class FrameBehavior
+    internal struct FrameBehavior : IEquatable<FrameBehavior>
     {
         private readonly FrameBehaviorDelegate _action;
         private readonly FrameBehaviorInfo _info;
@@ -35,6 +36,18 @@ namespace Elffy.Framing
                 return true;
             }
         }
+
+        public override bool Equals(object? obj) => obj is FrameBehavior behavior && Equals(behavior);
+
+        public bool Equals(FrameBehavior other)
+        {
+            return EqualityComparer<FrameBehaviorDelegate>.Default.Equals(_action, other._action) &&
+                   _info.Equals(other._info) &&
+                   _isFirstFrame == other._isFirstFrame &&
+                   _startTime.Equals(other._startTime);
+        }
+
+        public override int GetHashCode() => HashCode.Combine(_action, _info, _isFirstFrame, _startTime);
     }
 
 

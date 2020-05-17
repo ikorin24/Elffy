@@ -5,13 +5,17 @@ using System.Runtime.CompilerServices;
 namespace Elffy.Framing
 {
     /// <summary>一連のフレームストリームの流れを表すオブジェクト</summary>
-    public readonly struct FrameStream
+    public readonly struct FrameStream : IDisposable
     {
         private readonly FrameStreamObject _streamObj;
 
-        private FrameStreamObject StreamObj => _streamObj ?? throw new InvalidOperationException("Invalid state or already canceled.");
+        private FrameStreamObject StreamObj
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _streamObj ?? throw new ObjectDisposedException(nameof(FrameStream));
+        }
 
-        public readonly bool IsAlive => (_streamObj != null) && (!_streamObj.IsTerminated);
+        public readonly bool IsFrosen => (_streamObj == null);
 
         private FrameStream(IHostScreen screen)
         {
@@ -91,6 +95,16 @@ namespace Elffy.Framing
         {
             var obj = StreamObj;
             obj.Cancel();
+            Unsafe.AsRef(_streamObj) = null!;
+        }
+
+        /// <summary>終了処理を追加します。</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Dispose()
+        {
+            if(IsFrosen) { return; }
+            var obj = StreamObj;
+            obj.AddEndBehavior();
             Unsafe.AsRef(_streamObj) = null!;
         }
     }
