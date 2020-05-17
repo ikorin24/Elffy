@@ -4,6 +4,7 @@ using Elffy.Exceptions;
 using Elffy.Components;
 using System;
 using System.Runtime.CompilerServices;
+using System.Diagnostics;
 
 namespace Elffy.Core
 {
@@ -22,6 +23,11 @@ namespace Elffy.Core
                 throw new InvalidOperationException($"No component of type '{typeof(T).FullName}'");
             }
             return component;
+        }
+
+        public bool TryGetComponent<T>(out T component) where T : class, IComponent
+        {
+            return ComponentStore<T>.TryGet(this, out component);
         }
 
         /// <summary>Add component object</summary>
@@ -43,12 +49,15 @@ namespace Elffy.Core
         public bool AddOrReplaceComponent<T>(T component) where T : class, IComponent
         {
             ArgumentChecker.ThrowIfNullArg(component, nameof(component));
-            var addNew = ComponentStore<T>.AddOrReplace(this, component);
-            if(addNew) {
-                component.OnAttached(this);
-                ComponentAttached?.Invoke(this, component);
+            var replaced = ComponentStore<T>.AddOrReplace(this, component, out var old);
+            if(replaced) {
+                Debug.Assert(old != null);
+                ComponentDetached?.Invoke(this, old!);
+                old!.OnDetached(this);
             }
-            return addNew;
+            component.OnAttached(this);
+            ComponentAttached?.Invoke(this, component);
+            return replaced;
         }
 
         /// <summary>Get whether <see cref="ComponentOwner"/> has a component of specified type</summary>
@@ -71,7 +80,6 @@ namespace Elffy.Core
             }
             return removed;
         }
-
 
         /// <summary>
         /// Component store of type <typeparamref name="T"/>.<para/>
@@ -105,10 +113,11 @@ namespace Elffy.Core
             /// <summary>Add or replace component whose type is <typeparamref name="T"/>. Return true if replaced, otherwize false.</summary>
             /// <param name="owner">the owner of the component</param>
             /// <param name="component">the component</param>
+            /// <param name="old">old component</param>
             /// <returns>Return true if replaced, otherwize false.</returns>
-            public static bool AddOrReplace(ComponentOwner owner, T component)
+            public static bool AddOrReplace(ComponentOwner owner, T component, out T? old)
             {
-                if(_components.TryGetValue(owner, out _)) {
+                if(_components.TryGetValue(owner, out old)) {
                     _components.Remove(owner);
                     _components.Add(owner, component);
                     return true;
