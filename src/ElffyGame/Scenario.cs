@@ -56,7 +56,7 @@ namespace ElffyGame
             c.Shader = ShaderSource.Normal;
             c.Activate(worldLayer);
 
-            var cc = new Cube() { Position = new Vector3(0, 10, 0), Material = Materials.RedPlastic, Shader = ShaderSource.Normal };
+            var cc = new Cube() { Position = new Vector3(0, 10, 0), Shader = ShaderSource.Normal };
             cc.Activate(worldLayer);
             screen.Camera.LookAt(new Vector3(0, 10, 0), new Vector3(40, 40, -40));
             var cm = new CameraMouse(screen.Camera, screen.Mouse, new Vector3(0, 0, 0));
