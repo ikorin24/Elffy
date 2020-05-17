@@ -24,7 +24,7 @@ namespace Elffy.Shading
         {
             // TODO: lights を使う (どうやって可変長かつ抽象型をうまく扱えばいいの?)
 
-            var material = new Material(new Color4(0.8f), new Color4(0.35f), new Color4(0.5f), 10f);
+            var material = new Elffy.Components.MaterialValue(new Color4(0.8f), new Color4(0.35f), new Color4(0.5f), 10f);
             uniform.Send("model", model);
             uniform.Send("view", view);
             uniform.Send("projection", projection);

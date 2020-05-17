@@ -125,7 +125,7 @@ namespace ElffyGame.Base
             }
         }
 
-        private static Material ToMaterial(MMDTools.Material m) => new Material(ToColor4(m.Ambient), ToColor4(m.Diffuse), ToColor4(m.Specular), m.Shininess);
+        //private static Material ToMaterial(MMDTools.Material m) => new Material(ToColor4(m.Ambient), ToColor4(m.Diffuse), ToColor4(m.Specular), m.Shininess);
 
         private static Bone ToBone(MMDTools.Bone bone) => new Bone(bone);
         
