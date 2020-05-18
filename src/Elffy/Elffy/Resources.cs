@@ -227,7 +227,8 @@ namespace Elffy
             }
             set
             {
-                ArgumentChecker.ThrowOutOfRangeIf(value >= _length || value < 0, nameof(value), value, "value is out of range");
+                if(_disposed) { throw new ObjectDisposedException(nameof(ResourceStream)); }
+                if((ulong)value >= (ulong)_length) { throw new ArgumentOutOfRangeException(nameof(value), value, "value is out of range"); }
                 _innerStream.Position = _head + value;
             }
         }
