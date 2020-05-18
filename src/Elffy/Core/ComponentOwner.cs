@@ -46,10 +46,10 @@ namespace Elffy.Core
         /// <typeparam name="T">component type</typeparam>
         /// <param name="component">the component</param>
         /// <returns>Return true if replaced, otherwize false.</returns>
-        public bool AddOrReplaceComponent<T>(T component) where T : class, IComponent
+        public bool AddOrReplaceComponent<T>(T component, out T? old) where T : class, IComponent
         {
             ArgumentChecker.ThrowIfNullArg(component, nameof(component));
-            var replaced = ComponentStore<T>.AddOrReplace(this, component, out var old);
+            var replaced = ComponentStore<T>.AddOrReplace(this, component, out old);
             if(replaced) {
                 Debug.Assert(old != null);
                 ComponentDetached?.Invoke(this, old!);

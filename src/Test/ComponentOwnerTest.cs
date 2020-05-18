@@ -74,11 +74,11 @@ namespace Test
             Assert.IsFalse(owner.HasComponent<Component3>());
             Assert.ThrowsException<InvalidOperationException>(() => owner.GetComponent<Component3>());
 
-            Assert.IsTrue(owner.AddOrReplaceComponent(new Component1() { Name = "foo" }));
+            Assert.IsTrue(owner.AddOrReplaceComponent(new Component1() { Name = "foo" }, out _));
 
             // owner's component == [ comp1{ Name = "foo"}, comp2{ Name = "piyo" } ]
 
-            Assert.IsFalse(owner.AddOrReplaceComponent(new Component3() { Name = "bar" }));
+            Assert.IsFalse(owner.AddOrReplaceComponent(new Component3() { Name = "bar" }, out _));
             Assert.IsTrue(owner.GetComponent<Component1>().Name == "foo");
             Assert.IsTrue(owner.GetComponent<Component3>().Name == "bar");
 

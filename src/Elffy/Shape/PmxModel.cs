@@ -32,8 +32,9 @@ namespace Elffy.Shape
 
         private void OnTerminated(FrameObject sender)
         {
-            (GetComponent<IComponentInternal<MultiTexture>>() as IDisposable)?.Dispose();
+            var multiTexture = GetComponent<IComponentInternal<MultiTexture>>().Self;
             RemoveComponent<IComponentInternal<MultiTexture>>();
+            multiTexture.Dispose();
         }
 
         private async void OnActivated(FrameObject frameObject)
@@ -57,7 +58,7 @@ namespace Elffy.Shape
                 SetParts(parts);
                 var texture = new MultiTexture();
                 texture.Load(_textureBitmaps);
-                AddOrReplaceComponent<IComponentInternal<MultiTexture>>(texture);
+                AddOrReplaceComponent<IComponentInternal<MultiTexture>>(texture, out _);
             }
 
             // not await
