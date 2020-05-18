@@ -16,6 +16,7 @@ namespace Elffy.Shading
 
         internal bool IsReleased => _program == Consts.NULL;
 
+        [ThreadStatic]
         private static int _currentProgram = Consts.NULL;
 
         internal ShaderProgram(ShaderSource shaderSource, int program)
