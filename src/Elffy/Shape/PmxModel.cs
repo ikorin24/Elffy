@@ -58,11 +58,22 @@ namespace Elffy.Shape
                 var texture = new MultiTexture();
                 texture.Load(_textureBitmaps);
                 AddOrReplaceComponent<IComponentInternal<MultiTexture>>(texture);
-                _textureBitmaps = null;
             }
 
             // not await
-            _ = Task.Factory.StartNew(v => ((UnmanagedArray<Vertex>)v)?.Dispose(), vertices);
+            _ = Task.Factory.StartNew(v =>
+            {
+                // メモリ開放後始末 (非同期で問題ないので別スレッド)
+                var vertices = (UnmanagedArray<Vertex>)v;
+                vertices.Dispose();
+                var textureBitmaps = _textureBitmaps;
+                if(textureBitmaps != null) {
+                    foreach(var t in textureBitmaps) {
+                        t.Dispose();
+                    }
+                    _textureBitmaps = null;
+                }
+            }, vertices);
             _pmxObject = null;
         }
 
