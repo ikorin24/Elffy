@@ -29,7 +29,7 @@ namespace Elffy.Components
             if(_isLoaded) { throw new InvalidOperationException("Already loaded"); }
             var textures = new Texture[bitmaps.Length];
             for(int i = 0; i < textures.Length; i++) {
-                textures[i] = new Texture(TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear, TextureMipmapMode.Bilinear);
+                textures[i] = new Texture(TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear, TextureMipmapMode.None);
                 textures[i].Load(bitmaps[i]);
             }
             _textures = textures;

@@ -49,7 +49,9 @@ namespace Elffy.Components
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, GetMinParameter(ShrinkMode, MipmapMode));
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, GetMagParameter(ExpansionMode));
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, pixelWidth, pixelHeight, 0, TKPixelFormat.Bgra, PixelType.UnsignedByte, ptr);
-            GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+            if(MipmapMode != TextureMipmapMode.None) {
+                GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+            }
         }
 
         public void OnAttached(ComponentOwner owner) { }    // nop
