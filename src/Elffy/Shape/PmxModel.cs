@@ -32,9 +32,10 @@ namespace Elffy.Shape
 
         private void OnTerminated(FrameObject sender)
         {
-            var multiTexture = GetComponent<IComponentInternal<MultiTexture>>().Self;
-            RemoveComponent<IComponentInternal<MultiTexture>>();
-            multiTexture.Dispose();
+            if(TryGetComponent<IComponentInternal<MultiTexture>>(out var textures)) {
+                RemoveComponent<IComponentInternal<MultiTexture>>();
+                textures.Self.Dispose();
+            }
         }
 
         private async void OnActivated(FrameObject frameObject)
