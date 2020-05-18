@@ -8,6 +8,8 @@ using System.Text;
 using Elffy.Exceptions;
 using Elffy.Serialization;
 using Elffy.Shape;
+using Elffy.Effective;
+using System.Runtime.CompilerServices;
 
 namespace Elffy
 {
@@ -25,8 +27,6 @@ namespace Elffy
         /// <summary>AESの鍵生成時のsalt</summary>
         private static readonly Encoding _encoding = Encoding.UTF8;
         private static Dictionary<string, ResourceObject>? _resources;
-        private static byte[]? _bufEntity;
-        private static byte[] _buf => (_bufEntity ??= new byte[1024 * 1024]);
 
         private const string RESOURCE_ROOT = "Resource";
         #endregion
@@ -125,22 +125,24 @@ namespace Elffy
                 _resources = new Dictionary<string, ResourceObject>(0);
                 return;
             }
-            int BytesToIntLittleEndian(byte[] x) => Enumerable.Range(0, 4).Select(i => x[i] << (i * 8)).Sum();
+
             const byte END_MARK = 0x3A;
-            using(var fs = File.OpenRead(RESOURCE_FILE_NAME)) {
+            using(var fs = File.OpenRead(RESOURCE_FILE_NAME))
+            using(var pooledArray = new PooledArray<byte>(2048)) {
+                var buf = pooledArray.InnerArray;
                 // フォーマットバージョンの確認
-                if(ReadString(fs, 3) != FORMAT_VERSION) { throw new FormatException(); }
+                if(ReadString(fs, 3, buf) != FORMAT_VERSION) { throw new FormatException(); }
                 // マジックワードの確認
-                if(ReadString(fs, MAGIC_WORD.Length) != MAGIC_WORD) { throw new FormatException(); }
-                fs.Read(_buf, 0, 4);
-                var fileCount = BytesToIntLittleEndian(_buf);       // ファイル数取得
-                _resources = new Dictionary<string, ResourceObject>(fileCount);
+                if(ReadString(fs, MAGIC_WORD.Length, buf) != MAGIC_WORD) { throw new FormatException(); }
+                fs.Read(buf, 0, 4);
+                var fileCount = BytesToIntLittleEndian(buf);       // ファイル数取得
+                _resources = new Dictionary<string, ResourceObject>(fileCount * 5);
                 while(true) {
                     if(fs.Position == fs.Length) { break; }     // ファイル末尾で終了
                     var resource = new ResourceObject();
-                    resource.Name = ReadString(fs, END_MARK);                                       // ファイル名取得
-                    if(fs.Read(_buf, 0, HASH_LEN) != HASH_LEN) { throw new FormatException(); }     // ハッシュ値を読み飛ばす(使わない)
-                    resource.Length = (fs.Read(_buf, 0, FILE_SIZE_LEN) == FILE_SIZE_LEN) ? BytesToLongLittleEndian(_buf) : throw new FormatException(); // ファイル長取得
+                    resource.Name = ReadString(fs, END_MARK, buf);                                       // ファイル名取得
+                    if(fs.Read(buf, 0, HASH_LEN) != HASH_LEN) { throw new FormatException(); }     // ハッシュ値を読み飛ばす(使わない)
+                    resource.Length = (fs.Read(buf, 0, FILE_SIZE_LEN) == FILE_SIZE_LEN) ? BytesToLongLittleEndian(buf) : throw new FormatException(); // ファイル長取得
                     resource.Position = fs.Position;
                     fs.Position += resource.Length;             // データ部を読み飛ばす
                     _resources.Add(resource.Name, resource);
@@ -150,13 +152,13 @@ namespace Elffy
         #endregion
 
         #region ReadString
-        private static string ReadString(Stream stream, int byteCount)
+        private static string ReadString(Stream stream, int byteCount, byte[] buf)
         {
-            stream.Read(_buf, 0, byteCount);
-            return _encoding.GetString(_buf, 0, byteCount);
+            stream.Read(buf, 0, byteCount);
+            return _encoding.GetString(buf, 0, byteCount);
         }
 
-        private static string ReadString(Stream stream, byte endMark)
+        private static string ReadString(Stream stream, byte endMark, byte[] buf)
         {
             var bufPos = 0;
             while(true) {
@@ -164,13 +166,34 @@ namespace Elffy
                 if(tmp == -1) { throw new FormatException(); }     // ファイル末尾ならフォーマットエラー
                 var b = (byte)tmp;
                 if(b == endMark) { break; }        // 区切り文字なら終了
-                _buf[bufPos++] = b;
+                buf[bufPos++] = b;
             }
-            return _encoding.GetString(_buf, 0, bufPos);
+            return _encoding.GetString(buf, 0, bufPos);
         }
         #endregion
 
-        private static long BytesToLongLittleEndian(byte[] x) => Enumerable.Range(0, sizeof(long)).Select(i => ((long)x[i]) << (i * 8)).Sum();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static int BytesToIntLittleEndian(byte[] x)
+        {
+            int n = 0;
+            for(int i = 0; i < sizeof(int); i++) {
+                n += ((int)x[i]) << (i * 8);
+            }
+            return n;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static long BytesToLongLittleEndian(byte[] b)
+        {
+            long n = 0;
+            for(int i = 0; i < sizeof(long); i++) {
+                n += ((long)b[i]) << (i * 8);
+            }
+            return n;
+        }
+
+
         private static void CheckInitialized()
         {
             if(!IsInitialized) { throw new InvalidOperationException("Resources not Initialized"); }
