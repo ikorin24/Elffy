@@ -16,12 +16,16 @@ namespace Elffy.Core
     /// </summary>
     public abstract class Renderable : Positionable
     {
+        private VBO _vbo;
+        private IBO _ibo;
+        private VAO _vao;
+
         /// <summary>Vertex Buffer Object</summary>
-        public VBO VBO { get; private set; }
+        public VBO VBO => _vbo;
         /// <summary>Index Buffer Object</summary>
-        public IBO IBO { get; private set; }
+        public IBO IBO => _ibo;
         /// <summary>VAO</summary>
-        public VAO VAO { get; private set; }
+        public VAO VAO => _vao;
         public bool IsLoaded { get; private set; }
 
         /// <summary>描画処理を行うかどうか</summary>
@@ -118,8 +122,8 @@ namespace Elffy.Core
                         modelParent;
 
             if(IsLoaded && IsVisible) {
-                VAO.Bind();
-                IBO.Bind();
+                VAO.Bind(_vao);
+                IBO.Bind(_ibo);
                 //Texture.Apply();
                 ShaderProgram!.Apply(this, Layer!.Lights, model, view, projection);
                 Rendering?.Invoke(this, in model, in view, in projection);
@@ -146,16 +150,16 @@ namespace Elffy.Core
         {
             Dispatcher.ThrowIfNotMainThread();
             if(IsLoaded) {
-                VBO.BindBufferData(vertices, BufferUsageHint.StaticDraw);
-                IBO.BindBufferData(indices, BufferUsageHint.StaticDraw);
+                VBO.BindBufferData(ref _vbo , vertices, BufferUsageHint.StaticDraw);
+                IBO.BindBufferData(ref _ibo, indices, BufferUsageHint.StaticDraw);
             }
             else {
-                VBO = VBO.Create();
-                VBO.BindBufferData(vertices, BufferUsageHint.StaticDraw);
-                IBO = IBO.Create();
-                IBO.BindBufferData(indices, BufferUsageHint.StaticDraw);
-                VAO = VAO.Create();
-                VAO.Bind();
+                _vbo = VBO.Create();
+                VBO.BindBufferData(ref _vbo, vertices, BufferUsageHint.StaticDraw);
+                _ibo = IBO.Create();
+                IBO.BindBufferData(ref _ibo, indices, BufferUsageHint.StaticDraw);
+                _vao = VAO.Create();
+                VAO.Bind(_vao);
                 IsLoaded = true;
                 SetShaderProgram();
             }
@@ -166,9 +170,9 @@ namespace Elffy.Core
             ShaderProgram?.Dispose();
             ShaderProgram = null;
             if(IsLoaded) {
-                VBO.Delete();
-                IBO.Delete();
-                VAO.Delete();
+                VBO.Delete(ref _vbo);
+                IBO.Delete(ref _ibo);
+                VAO.Delete(ref _vao);
             }
         }
 

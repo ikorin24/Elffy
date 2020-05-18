@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 using OpenTK.Graphics.OpenGL;
+using Elffy.OpenGL;
 using Elffy.Components;
 
 namespace Elffy.Core
@@ -26,8 +27,8 @@ namespace Elffy.Core
 
         private void OnRendering(Renderable sender, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
-            //VAO.Bind();
-            //IBO.Bind();
+            //VAO.Bind(VAO);
+            //IBO.Bind(IBO);
             var parts = _parts;
             if(parts != null) {
                 var pos = 0;

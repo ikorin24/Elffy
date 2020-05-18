@@ -1,11 +1,13 @@
 ﻿#nullable enable
 using System;
 using System.Runtime.CompilerServices;
+using System.Diagnostics;
 using OpenTK.Graphics.OpenGL;
 using Elffy.Core;
 
 namespace Elffy.OpenGL
 {
+    [DebuggerDisplay("VBO={Value}, Length={Length}")]
     public readonly struct VBO : IEquatable<VBO>
     {
         // バッファの削除は internal にするために、IDispose.Dispose にしない。interface の実装は public になってしまう。
@@ -14,13 +16,11 @@ namespace Elffy.OpenGL
 
 #pragma warning disable 0649    // Disable 'Field is never assigned to, and is always default'
         private readonly int _vbo;
-        private readonly int _length;
 #pragma warning restore 0649
+        internal readonly int Length;
 
         internal readonly int Value => _vbo;
         internal readonly bool IsEmpty => _vbo == Consts.NULL;
-
-        public static VBO Empty => new VBO();
 
         internal static VBO Create()
         {
@@ -29,18 +29,17 @@ namespace Elffy.OpenGL
             return vbo;
         }
 
-        internal readonly void Delete()
+        internal static unsafe void Delete(ref VBO vbo)
         {
-            if(!IsEmpty) {
-                GL.DeleteBuffer(_vbo);
-                Unsafe.AsRef(_vbo) = Consts.NULL;
-                Unsafe.AsRef(_length) = default;
+            if(!vbo.IsEmpty) {
+                GL.DeleteBuffer(vbo.Value);
+                Unsafe.AsRef(vbo) = default;
             }
         }
 
-        public readonly void Bind()
+        public static void Bind(in VBO vbo)
         {
-            GL.BindBuffer(BufferTarget.ArrayBuffer, _vbo);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, vbo._vbo);
         }
 
         public readonly void Unbind()
@@ -48,15 +47,14 @@ namespace Elffy.OpenGL
             GL.BindBuffer(BufferTarget.ArrayBuffer, Consts.NULL);
         }
 
-        public readonly unsafe void BindBufferData(ReadOnlySpan<Vertex> vertices, BufferUsageHint usage)
+        internal static unsafe void BindBufferData(ref VBO vbo, ReadOnlySpan<Vertex> vertices, BufferUsageHint usage)
         {
-            Bind();
-            Unsafe.AsRef(_length) = vertices.Length;
+            Bind(vbo);
             fixed(Vertex* ptr = vertices) {
                 GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(Vertex), (IntPtr)ptr, usage);
             }
+            Unsafe.AsRef(vbo.Length) = vertices.Length;
         }
-
 
 
 

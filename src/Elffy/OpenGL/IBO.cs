@@ -1,11 +1,13 @@
 ﻿#nullable enable
 using System;
 using System.Runtime.CompilerServices;
+using System.Diagnostics;
 using OpenTK.Graphics.OpenGL;
 using Elffy.Core;
 
 namespace Elffy.OpenGL
 {
+    [DebuggerDisplay("IBO={Value}, Length={Length}")]
     public readonly struct IBO : IEquatable<IBO>
     {
         // バッファの削除は internal にするために、IDispose.Dispose にしない。interface の実装は public になってしまう。
@@ -14,15 +16,11 @@ namespace Elffy.OpenGL
 
 #pragma warning disable 0649    // Disable 'Field is never assigned to, and is always default'
         private readonly int _ibo;
-        private readonly int _length;
 #pragma warning restore 0649
+        internal readonly int Length;
 
         internal readonly int Value => _ibo;
         internal readonly bool IsEmpty => _ibo == Consts.NULL;
-
-        public readonly int Length => _length;
-
-        public static IBO Empty => new IBO();
 
         internal static IBO Create()
         {
@@ -31,34 +29,32 @@ namespace Elffy.OpenGL
             return ibo;
         }
 
-        internal readonly void Delete()
+        internal static unsafe void Delete(ref IBO ibo)
         {
-            if(!IsEmpty) {
-                GL.DeleteBuffer(_ibo);
-                Unsafe.AsRef(_ibo) = Consts.NULL;
-                Unsafe.AsRef(_length) = default;
+            if(!ibo.IsEmpty) {
+                GL.DeleteBuffer(ibo.Value);
+                Unsafe.AsRef(ibo) = default;
             }
         }
 
-        public readonly void Bind()
+        internal static void Bind(in IBO ibo)
         {
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _ibo);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, ibo._ibo);
         }
 
-        public readonly void Unbind()
+        internal static void Unbind()
         {
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, Consts.NULL);
         }
 
-        public readonly unsafe void BindBufferData(ReadOnlySpan<int> indices, BufferUsageHint usage)
+        internal static unsafe void BindBufferData(ref IBO ibo, ReadOnlySpan<int> indices, BufferUsageHint usage)
         {
-            Bind();
-            Unsafe.AsRef(_length) = indices.Length;
+            Bind(ibo);
             fixed(int* ptr = indices) {
                 GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(int), (IntPtr)ptr, usage);
             }
+            Unsafe.AsRef(ibo.Length) = indices.Length;
         }
-
 
 
 

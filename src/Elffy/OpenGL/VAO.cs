@@ -1,11 +1,13 @@
 ﻿#nullable enable
 using System;
 using System.Runtime.CompilerServices;
+using System.Diagnostics;
 using OpenTK.Graphics.OpenGL;
 using Elffy.Core;
 
 namespace Elffy.OpenGL
 {
+    [DebuggerDisplay("VAO={Value}")]
     public readonly struct VAO : IEquatable<VAO>
     {
         // バッファの削除は internal にするために、IDispose.Dispose にしない。interface の実装は public になってしまう。
@@ -28,25 +30,23 @@ namespace Elffy.OpenGL
             return vao;
         }
 
-        internal readonly void Delete()
+        internal static void Delete(ref VAO vao)
         {
-            if(!IsEmpty) {
-                GL.DeleteVertexArray(_vao);
-                Unsafe.AsRef(_vao) = Consts.NULL;
+            if(!vao.IsEmpty) {
+                GL.DeleteVertexArray(vao._vao);
+                Unsafe.AsRef(vao) = default;
             }
         }
 
-        public readonly void Bind()
+        public static void Bind(in VAO vao)
         {
-            GL.BindVertexArray(_vao);
+            GL.BindVertexArray(vao._vao);
         }
 
         public readonly void Unbind()
         {
             GL.BindVertexArray(Consts.NULL);
         }
-
-
 
 
 

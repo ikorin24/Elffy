@@ -40,9 +40,9 @@ namespace Elffy.Shading
             _shaderSource!.SendUniforms(_program, target, lights, model, view, projection);
         }
 
-        internal void AssociateVBO(VBO vbo)
+        internal void AssociateVBO(in VBO vbo)
         {
-            vbo.Bind();
+            VBO.Bind(vbo);
             _shaderSource!.DefineLocation(_program);
             _vboAssociated = true;
         }
