@@ -12,7 +12,7 @@ namespace Elffy.Effective
         /// <returns>インターンプールの文字列参照</returns>
         public static string AsInterned(this string source)
         {
-            return source ?? string.Intern(source);
+            return (source is null) ? source! : string.Intern(source);
         }
 
         /// <summary>指定の文字列が null または空文字列かどうかを取得します。(<see cref="string.IsNullOrEmpty(string)"/> への拡張メソッド)</summary>
