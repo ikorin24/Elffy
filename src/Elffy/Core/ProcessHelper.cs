@@ -12,11 +12,9 @@ namespace Elffy.Core
         /// <summary>名前付き Mutex の名前の最大長</summary>
         private const int MUTEX_NAME_MAX_LEN = 259;
 
-        private static void DoNothing() { }
-
         /// <summary>Mutex を用いてアプリケーションの多重起動を防止します</summary>
         /// <param name="startAction">起動する処理</param>
-        public static void SingleLaunch(Action startAction) => SingleLaunch(startAction, DoNothing);
+        public static void SingleLaunch(Action startAction) => SingleLaunch(startAction, () => { });
 
         /// <summary>Mutex を用いてアプリケーションの多重起動を防止します</summary>
         /// <param name="startAction">起動する処理</param>
@@ -34,7 +32,7 @@ namespace Elffy.Core
         /// <summary>Mutex を用いてアプリケーションの多重起動を防止します</summary>
         /// <param name="uniqueName">Mutex の識別名 (他のアプリケーションと重複せず、このアプリケーションを表す固有名)</param>
         /// <param name="startAction">起動する処理</param>
-        public static void SingleLaunch(string uniqueName, Action startAction) => SingleLaunch(uniqueName, startAction, DoNothing);
+        public static void SingleLaunch(string uniqueName, Action startAction) => SingleLaunch(uniqueName, startAction, () => { });
 
         /// <summary>Mutex を用いてアプリケーションの多重起動を防止します</summary>
         /// <param name="uniqueName">Mutex の識別名 (他のアプリケーションと重複せず、このアプリケーションを表す固有名)</param>
