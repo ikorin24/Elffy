@@ -4,6 +4,7 @@ using Elffy.Effective.Internal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Diagnostics;
 
 namespace Elffy.Core
 {
@@ -62,17 +63,26 @@ namespace Elffy.Core
                     if(item.IsStarted) {
                         _list.Remove(item);
                         switch(item) {
-                            case Renderable renderable:
-                                _renderables.Remove(renderable);
+                            case Renderable renderable: {
+                                var renderableRemoved = _renderables.Remove(renderable);
+                                Debug.Assert(renderableRemoved);
                                 break;
-                            case Light light:
-                                _lights.Remove(light);
+                            }
+                            case Light light: {
+                                var lightRemoved = _lights.Remove(light);
+                                Debug.Assert(lightRemoved);
                                 break;
+                            }
                         }
                     }
                     else {
-                        _addedBuf.Remove(item);
+                        var removed = _addedBuf.Remove(item);
+                        Debug.Assert(removed);
+
+                        // Start する前に Terminate された場合は Add の Callback 処理が呼ばれないので呼んでおく
+                        item.AddToObjectStoreCallback();
                     }
+                    item.RemovedFromObjectStoreCallback();
                 }
                 _removedBuf.Clear();
             }
@@ -87,6 +97,7 @@ namespace Elffy.Core
                             _lights.Add(light);
                             break;
                     }
+                    item.AddToObjectStoreCallback();
                 }
                 _addedBuf.Clear();
             }

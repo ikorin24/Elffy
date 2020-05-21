@@ -90,8 +90,6 @@ namespace Elffy
             if(IsActivated) { return; }
             Layer = layer;
             layer.AddFrameObject(this);
-            IsActivated = true;
-            Activated?.Invoke(this);
         }
 
         internal void Activate<TLayer>(TLayer layer) where TLayer : class, ILayer
@@ -103,8 +101,6 @@ namespace Elffy
             if(IsActivated) { return; }
             Layer = layer;
             layer.AddFrameObject(this);
-            IsActivated = true;
-            Activated?.Invoke(this);
         }
 
         /// <summary>このオブジェクトをエンジン管理下から外して破棄します</summary>
@@ -112,6 +108,16 @@ namespace Elffy
         {
             if(IsTerminated) { return; }
             Layer?.RemoveFrameObject(this);     // IsActivated == false の時は Layer は null なので呼ばれない
+        }
+
+        internal void AddToObjectStoreCallback()
+        {
+            IsActivated = true;
+            Activated?.Invoke(this);
+        }
+
+        internal void RemovedFromObjectStoreCallback()
+        {
             Layer = null;
             IsTerminated = true;
             _dispatcher = null;
