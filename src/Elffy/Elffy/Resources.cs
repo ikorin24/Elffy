@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Elffy.Exceptions;
+using Elffy.Effective.Internal;
 using Elffy.Serialization;
 using Elffy.Shape;
 using Elffy.Effective;
@@ -130,7 +131,7 @@ namespace Elffy
                     resource.Length = (fs.Read(buf, 0, FILE_SIZE_LEN) == FILE_SIZE_LEN) ? BytesToLongLittleEndian(buf) : throw new FormatException(); // ファイル長取得
                     resource.Position = fs.Position;
                     fs.Position += resource.Length;             // データ部を読み飛ばす
-                    _resources.Add(resource.Name, resource);
+                    _resources.Add(resource.Name.AsInterned(), resource);
                 }
             }
         }
@@ -199,7 +200,7 @@ namespace Elffy
     public sealed class ResourceStream : Stream, IDisposable
     {
         private bool _disposed = false;
-        private FileStream _innerStream = null!;
+        private AlloclessFileStream _innerStream = null!;
         private readonly long _head;
         private readonly long _length;
 
@@ -237,7 +238,7 @@ namespace Elffy
         {
             _head = head;
             _length = length;
-            var stream = File.OpenRead(Resources.RESOURCE_FILE_NAME);
+            var stream = AlloclessFileStream.OpenRead(Resources.RESOURCE_FILE_NAME);
             stream.Position = _head;
             _innerStream = stream;
         }
