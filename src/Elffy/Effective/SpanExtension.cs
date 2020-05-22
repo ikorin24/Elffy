@@ -2,6 +2,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Collections.Generic;
 using UnmanageUtility;
 
 namespace Elffy.Effective
@@ -43,6 +44,9 @@ namespace Elffy.Effective
         {
             return MemoryMarshal.Cast<TFrom, TTo>(source);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ReadOnlySpan<T> AsReadOnly<T>(this Span<T> source) => source;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe UnmanagedArray<TTo> SelectToUnmanagedArray<TFrom, TTo>(this Span<TFrom> source, Func<TFrom, TTo> selector) where TTo : unmanaged
@@ -264,6 +268,17 @@ namespace Elffy.Effective
                 accum = func(accum, item);
             }
             return resultSelector(accum);
+        }
+
+        public static Span<T> Replace<T>(this Span<T> source, T oldValue, T newValue)
+        {
+            var eq = EqualityComparer<T>.Default;
+            for(int i = 0; i < source.Length; i++) {
+                if(eq.Equals(source[i], oldValue)) {
+                    source[i] = newValue;
+                }
+            }
+            return source;
         }
 
         public static ReadOnlySpan<char> Replace(this ReadOnlySpan<char> source, char oldValue, char newValue, Span<char> destBuffer)
