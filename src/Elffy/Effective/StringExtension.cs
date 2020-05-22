@@ -37,9 +37,14 @@ namespace Elffy.Effective
         public static ReadOnlySpan<char> FilePathExtension(this string source)
         {
             if(source is null) { throw new ArgumentNullException(nameof(source)); }
+            return FilePathExtension(source.AsSpan());
+        }
+
+        public static ReadOnlySpan<char> FilePathExtension(this ReadOnlySpan<char> source)
+        {
             for(int i = source.Length - 1; i >= 0; i--) {
                 if(source[i] == '.') {
-                    return source.AsSpan(i);
+                    return source.Slice(i);
                 }
             }
             return ReadOnlySpan<char>.Empty;
