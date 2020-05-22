@@ -9,9 +9,8 @@ using Elffy.Effective;
 using Elffy.Imaging;
 using Elffy.Components;
 using UnmanageUtility;
-using Cysharp.Text;
-using PMXParser = MMDTools.PMXParser;
-using PMXObject = MMDTools.PMXObject;
+using PMXParser = MMDTools.Unmanaged.PMXParser;
+using PMXObject = MMDTools.Unmanaged.PMXObject;
 
 namespace Elffy.Shape
 {
@@ -46,17 +45,16 @@ namespace Elffy.Shape
             var (vertices, parts) = await Task.Factory.StartNew(() =>
             {
                 var pmx = _pmxObject!;
-                ReverseTrianglePolygon(pmx.SurfaceList.Span);       // オリジナルのデータを書き換えているので注意、このメソッドは1回しか通らない前提
-                var vertices = pmx.VertexList.Span.SelectToUnmanagedArray(ToVertex);
-                var parts = pmx.MaterialList.Span.SelectToArray(m => new RenderableParts(m.VertexCount, m.Texture));
+                ReverseTrianglePolygon(pmx.SurfaceList.AsSpan());       // オリジナルのデータを書き換えているので注意、このメソッドは1回しか通らない前提
+                var vertices = pmx.VertexList.AsSpan().SelectToUnmanagedArray(ToVertex);
+                var parts = pmx.MaterialList.AsSpan().SelectToArray(m => new RenderableParts(m.VertexCount, m.Texture));
                 return (vertices, parts);
             }).ConfigureAwait(true);
             // ↑ ConfigureAwait true
 
             // Here is main thread
             if(!LifeState.HasTerminatingBit() && !LifeState.HasDeadBit()) {
-                Debug.Assert(vertices != null);
-                LoadGraphicBuffer(vertices!.AsSpan(), _pmxObject!.SurfaceList.Span.MarshalCast<MMDTools.Surface, int>());
+                LoadGraphicBuffer(vertices.AsSpan(), _pmxObject!.SurfaceList.AsSpan().MarshalCast<MMDTools.Unmanaged.Surface, int>());
                 SetParts(parts);
                 var texture = new MultiTexture();
                 texture.Load(_textureBitmaps);
@@ -76,8 +74,9 @@ namespace Elffy.Shape
                     }
                     _textureBitmaps = null;
                 }
+                _pmxObject!.Dispose();
+                _pmxObject = null;
             }, vertices);
-            _pmxObject = null;
         }
 
         public static Task<PmxModel> LoadResourceAsync(string name)
@@ -87,46 +86,37 @@ namespace Elffy.Shape
                 var name = (string)n;
                 PMXObject pmx;
                 using(var stream = Resources.GetStream(name)) {
-                    pmx = PMXParser.Parse(stream);     // PMXParser.Parse はスレッドセーフ
+                    pmx = PMXParser.Parse(stream);
                 }
-                var textureNames = pmx.TextureList.Span;
+                var textureNames = pmx.TextureList.AsSpan();
                 var dir = Resources.GetDirectoryName(name);
                 var bitmaps = new Bitmap[textureNames.Length];
                 for(int i = 0; i < textureNames.Length; i++) {
-                    var texturePath = PathConcat(dir, textureNames[i].AsSpan());
-                    using(var tStream = Resources.GetStream(texturePath)) {
-                        bitmaps[i] = BitmapHelper.StreamToBitmap(tStream, textureNames[i].FilePathExtension());
+
+                    using(var pooledArray = new PooledArray<char>(dir.Length + 1 + textureNames[i].GetCharCount())) {
+                        var texturePath = pooledArray.AsSpan();
+                        dir.CopyTo(texturePath);
+                        texturePath[dir.Length] = '/';
+                        textureNames[i].ToString(texturePath.Slice(dir.Length + 1));
+                        texturePath.Replace('\\', '/');
+                        var textureExt = texturePath.AsReadOnly().FilePathExtension();
+
+                        using(var tStream = Resources.GetStream(texturePath.ToString())) {
+                            bitmaps[i] = BitmapHelper.StreamToBitmap(tStream, textureExt);
+                        }
                     }
                 }
                 return new PmxModel(pmx, bitmaps);
             }, name);
         }
 
-        private static string PathConcat(ReadOnlySpan<char> dir, ReadOnlySpan<char> name)
-        {
-            const char Splitter = '/';
-
-            // name = "hoge\\piyo.foo" ----> n = "hoge/piyo.foo"
-            var n = name.Replace('\\', Splitter, stackalloc char[name.Length]);
-
-            // $"{dir}/{n}"
-            var length = dir.Length + n.Length + 1;
-            var sb = ZString.CreateStringBuilder();
-            var buf = sb.GetSpan(length);
-            dir.CopyTo(buf);
-            buf[dir.Length] = Splitter;
-            n.CopyTo(buf.Slice(dir.Length + 1));
-            sb.Advance(length);
-            return sb.ToString();
-        }
-
         /// <summary>三角ポリゴンの表裏を反転させます</summary>
         /// <param name="surfaceList">頂点インデックス</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static unsafe void ReverseTrianglePolygon(ReadOnlySpan<MMDTools.Surface> surfaceList)
+        private static unsafe void ReverseTrianglePolygon(ReadOnlySpan<MMDTools.Unmanaged.Surface> surfaceList)
         {
             // (a, b, c) を (a, c, b) に書き換える
-            fixed(MMDTools.Surface* s = surfaceList) {
+            fixed(MMDTools.Unmanaged.Surface* s = surfaceList) {
                 int* p = (int*)s;
                 for(int i = 0; i < surfaceList.Length; i++) {
                     var i1 = i * 3 + 1;
@@ -138,17 +128,17 @@ namespace Elffy.Shape
 
         //private static Material ToMaterial(MMDTools.Material m) => new Material(ToColor4(m.Ambient), ToColor4(m.Diffuse), ToColor4(m.Specular), m.Shininess);
 
-        private static Bone ToBone(MMDTools.Bone bone) => new Bone(bone);
+        private static Bone ToBone(MMDTools.Unmanaged.Bone bone) => new Bone(bone);
 
-        private static VertexBoneInfo ToVertexBoneInfo(MMDTools.Vertex v) => new VertexBoneInfo(v);
+        private static VertexBoneInfo ToVertexBoneInfo(MMDTools.Unmanaged.Vertex v) => new VertexBoneInfo(v);
 
-        private static Vertex ToVertex(MMDTools.Vertex v) => new Vertex(ToVector3(v.Position), ToVector3(v.Normal), ToVector2(v.UV));
+        private static Vertex ToVertex(MMDTools.Unmanaged.Vertex v) => new Vertex(ToVector3(v.Position), ToVector3(v.Normal), ToVector2(v.UV));
 
-        private static Color4 ToColor4(MMDTools.Color color) => Unsafe.As<MMDTools.Color, Color4>(ref color);
+        private static Color4 ToColor4(MMDTools.Unmanaged.Color color) => Unsafe.As<MMDTools.Unmanaged.Color, Color4>(ref color);
 
-        private static Vector3 ToVector3(MMDTools.Vector3 vector) => new Vector3(vector.X, vector.Y, -vector.Z);
+        private static Vector3 ToVector3(MMDTools.Unmanaged.Vector3 vector) => new Vector3(vector.X, vector.Y, -vector.Z);
 
-        private static Vector2 ToVector2(MMDTools.Vector2 vector) => new Vector2(vector.X, vector.Y);
+        private static Vector2 ToVector2(MMDTools.Unmanaged.Vector2 vector) => new Vector2(vector.X, vector.Y);
 
         private readonly struct VertexBoneInfo : IEquatable<VertexBoneInfo>
         {
@@ -161,7 +151,7 @@ namespace Elffy.Shape
             public readonly float Weight3;
             public readonly float Weight4;
             public readonly WeightTransformType Type;
-            public VertexBoneInfo(MMDTools.Vertex v)
+            public VertexBoneInfo(MMDTools.Unmanaged.Vertex v)
             {
                 Bone1 = v.BoneIndex1;
                 Bone2 = v.BoneIndex2;
@@ -174,13 +164,13 @@ namespace Elffy.Shape
                 Type = ToWeightType(v.WeightTransformType);
             }
 
-            private static WeightTransformType ToWeightType(MMDTools.WeightTransformType t)
+            private static WeightTransformType ToWeightType(MMDTools.Unmanaged.WeightTransformType t)
             {
                 return t switch
                 {
-                    MMDTools.WeightTransformType.BDEF1 => WeightTransformType.BDEF1,
-                    MMDTools.WeightTransformType.BDEF2 => WeightTransformType.BDEF2,
-                    MMDTools.WeightTransformType.BDEF4 => WeightTransformType.BDEF4,
+                    MMDTools.Unmanaged.WeightTransformType.BDEF1 => WeightTransformType.BDEF1,
+                    MMDTools.Unmanaged.WeightTransformType.BDEF2 => WeightTransformType.BDEF2,
+                    MMDTools.Unmanaged.WeightTransformType.BDEF4 => WeightTransformType.BDEF4,
                     _ => throw new NotSupportedException($"Not supported weight type. Type : {t}"),
                 };
             }
@@ -203,7 +193,7 @@ namespace Elffy.Shape
             public readonly Vector3 Position;
             public readonly int Parent;
 
-            public Bone(MMDTools.Bone bone)
+            public Bone(MMDTools.Unmanaged.Bone bone)
             {
                 Position = ToVector3(bone.Position);
                 Parent = bone.ParentBone;

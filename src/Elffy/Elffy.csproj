@@ -34,8 +34,8 @@
     <Reference Include="OpenTK">
       <HintPath>dll\OpenTK.dll</HintPath>
     </Reference>
-    <Reference Include="PMXParser">
-      <HintPath>dll\PMXParser.dll</HintPath>
+    <Reference Include="PMXParser.UM">
+      <HintPath>dll\PMXParser.UM.dll</HintPath>
     </Reference>
   </ItemGroup>
 

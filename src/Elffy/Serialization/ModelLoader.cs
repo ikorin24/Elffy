@@ -12,6 +12,7 @@ namespace Elffy.Serialization
         /// <param name="stream">ストリーム</param>
         /// <param name="type">3Dモデルの種類</param>
         /// <returns>読み込んだ3Dモデル</returns>
+        [Obsolete("一応残しておきますが使えません", true)]
         public static Model3D Load(Stream stream, ModelType type)
         {
             ArgumentChecker.ThrowIfNullArg(stream, nameof(stream));
