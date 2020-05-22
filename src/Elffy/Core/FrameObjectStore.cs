@@ -60,8 +60,9 @@ namespace Elffy.Core
         {
             if(_removedBuf.Count > 0) {
                 foreach(var item in _removedBuf.AsSpan()) {
-                    if(item.IsStarted) {
-                        _list.Remove(item);
+                    if(item.LifeState.HasStartedBit()) {
+                        var removed = _list.Remove(item);
+                        Debug.Assert(removed);
                         switch(item) {
                             case Renderable renderable: {
                                 var renderableRemoved = _renderables.Remove(renderable);
@@ -107,9 +108,8 @@ namespace Elffy.Core
         {
             foreach(var frameObject in _list.AsSpan()) {
                 if(frameObject.IsFrozen) { continue; }
-                if(frameObject.IsStarted == false) {
+                if(frameObject.LifeState.HasStartedBit() == false) {
                     frameObject.Start();
-                    frameObject.IsStarted = true;
                 }
                 frameObject.EarlyUpdate();
             }

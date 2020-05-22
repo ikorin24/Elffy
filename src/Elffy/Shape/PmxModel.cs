@@ -53,7 +53,7 @@ namespace Elffy.Shape
             // ↑ ConfigureAwait true
 
             // Here is main thread
-            if(!IsTerminated) {
+            if(!LifeState.HasTerminatingBit() && !LifeState.HasDeadBit()) {
                 Debug.Assert(vertices != null);
                 LoadGraphicBuffer(vertices!.AsSpan(), _pmxObject!.SurfaceList.Span.MarshalCast<MMDTools.Surface, int>());
                 SetParts(parts);
