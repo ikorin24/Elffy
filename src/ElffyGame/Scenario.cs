@@ -24,7 +24,7 @@ namespace ElffyGame
     {
         public static void Start(IHostScreen screen)
         {
-            screen.Camera.LookAt(new Vector3(0, 10, 0), new Vector3(40, 40, -40));
+            screen.Camera.LookAt(new Vector3(0, 10, 0), new Vector3(0, 10, 50));
             new CameraMouse(screen.Camera, screen.Mouse, new Vector3(0, 0, 0)).Activate(screen.Layers.WorldLayer);
 
             var sw2 = new Stopwatch();
@@ -60,40 +60,40 @@ namespace ElffyGame
             }
             return;
 
-            var worldLayer = screen.Layers.WorldLayer;
-            //screen.Light.GlobalAmbient = Color4.Red;
+            //var worldLayer = screen.Layers.WorldLayer;
+            ////screen.Light.GlobalAmbient = Color4.Red;
 
-            //var light = new DirectLight();
-            //light.Activate();
-            var model = Resources.LoadModel("Alicia/Alicia_solid.pmx");
+            ////var light = new DirectLight();
+            ////light.Activate();
+            //var model = Resources.LoadModel("Alicia/Alicia_solid.pmx");
 
-            var sw = new Stopwatch();
-            sw.Start();
-            //var shader = ShaderSource.Phong.Compile();
-            model.Shader = ShaderSource.Normal;
-            model.Activate(worldLayer);
-            var c = new Cube();
-            c.Shader = ShaderSource.Normal;
-            c.Activate(worldLayer);
+            //var sw = new Stopwatch();
+            //sw.Start();
+            ////var shader = ShaderSource.Phong.Compile();
+            //model.Shader = ShaderSource.Normal;
+            //model.Activate(worldLayer);
+            //var c = new Cube();
+            //c.Shader = ShaderSource.Normal;
+            //c.Activate(worldLayer);
 
-            var cc = new Cube() { Position = new Vector3(0, 10, 0), Shader = ShaderSource.Normal };
-            cc.Activate(worldLayer);
-            screen.Camera.LookAt(new Vector3(0, 10, 0), new Vector3(40, 40, -40));
-            var cm = new CameraMouse(screen.Camera, screen.Mouse, new Vector3(0, 0, 0));
-            cm.Activate(worldLayer);
+            //var cc = new Cube() { Position = new Vector3(0, 10, 0), Shader = ShaderSource.Normal };
+            //cc.Activate(worldLayer);
+            //screen.Camera.LookAt(new Vector3(0, 10, 0), new Vector3(40, 40, -40));
+            //var cm = new CameraMouse(screen.Camera, screen.Mouse, new Vector3(0, 0, 0));
+            //cm.Activate(worldLayer);
 
-            var cubeArray = Enumerable.Range(0, 9).Select(i => new Cube() { Position = new Vector3(3, 0, 0), Shader = ShaderSource.Normal }).ToArray();
-            foreach(var cube in cubeArray) {
-                cube.Rotate(Vector3.UnitY, 30f.ToRadian());
-                cube.Rotate(Vector3.UnitZ, 10f.ToRadian());
-            }
-            for(int i = 1; i < cubeArray.Length; i++) {
-                cubeArray[i - 1].Children.Add(cubeArray[i]);
-                cubeArray[i].Activate(worldLayer);
-            }
-            cubeArray[0].Activate(worldLayer);
-            sw.Stop();
-            Debug.WriteLine(sw.ElapsedMilliseconds + "ms");
+            //var cubeArray = Enumerable.Range(0, 9).Select(i => new Cube() { Position = new Vector3(3, 0, 0), Shader = ShaderSource.Normal }).ToArray();
+            //foreach(var cube in cubeArray) {
+            //    cube.Rotate(Vector3.UnitY, 30f.ToRadian());
+            //    cube.Rotate(Vector3.UnitZ, 10f.ToRadian());
+            //}
+            //for(int i = 1; i < cubeArray.Length; i++) {
+            //    cubeArray[i - 1].Children.Add(cubeArray[i]);
+            //    cubeArray[i].Activate(worldLayer);
+            //}
+            //cubeArray[0].Activate(worldLayer);
+            //sw.Stop();
+            //Debug.WriteLine(sw.ElapsedMilliseconds + "ms");
 
             //var light = new DirectLight();
             //light.Activate();
