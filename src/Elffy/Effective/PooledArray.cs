@@ -42,6 +42,30 @@ namespace Elffy.Effective
             return (_array is null == false) ? _array.AsSpan(0, Length) : throw DisposedException();
         }
 
+        /// <summary><see cref="Span{T}"/> を取得します</summary>
+        /// <param name="start">start index</param>
+        /// <returns><see cref="Span{T}"/></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly Span<T> AsSpan(int start)
+        {
+            if(_array is null) { throw DisposedException(); }
+            if((uint)start >= (uint)Length) { throw new ArgumentOutOfRangeException(nameof(start)); }
+            return _array.AsSpan(start, Length);
+        }
+
+        /// <summary><see cref="Span{T}"/> を取得します</summary>
+        /// <param name="start">start index</param>
+        /// <param name="length">length of span</param>
+        /// <returns><see cref="Span{T}"/></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly Span<T> AsSpan(int start, int length)
+        {
+            if(_array is null) { throw DisposedException(); }
+            if((uint)start >= (uint)Length) { throw new ArgumentOutOfRangeException(nameof(start)); }
+            if((uint)length > (uint)(Length - start)) { throw new ArgumentOutOfRangeException(nameof(length)); }
+            return _array.AsSpan(start, Length);
+        }
+
         /// <summary><see cref="Memory{T}"/> を取得します</summary>
         /// <returns><see cref="Memory{T}"/></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
