@@ -16,8 +16,6 @@ namespace Elffy.Core
         public MultiPartsRenderable()
         {
             ComponentDetached += (sender, e) => { if(e == _textures) { _textures = null; } };
-            IsEnableRendering = false;
-            Rendering += OnRendering;
         }
 
         protected void SetParts(RenderableParts[] parts)
@@ -25,10 +23,8 @@ namespace Elffy.Core
             _parts = parts ?? throw new ArgumentNullException(nameof(parts));
         }
 
-        private void OnRendering(Renderable sender, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        protected override void OnRendering()
         {
-            //VAO.Bind(VAO);
-            //IBO.Bind(IBO);
             var parts = _parts;
             if(parts != null) {
                 var pos = 0;

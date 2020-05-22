@@ -31,8 +31,6 @@ namespace Elffy.Core
         /// <summary>描画処理を行うかどうか</summary>
         public bool IsVisible { get; set; } = true;
 
-        protected bool IsEnableRendering { get; set; } = true;
-
         ///// <summary>マテリアルを取得または設定します</summary>
         //public Material Material
         //{
@@ -124,11 +122,9 @@ namespace Elffy.Core
                 VAO.Bind(_vao);
                 IBO.Bind(_ibo);
                 //Texture.Apply();
-                ShaderProgram!.Apply(this, Layer!.Lights, model, view, projection);
+                ShaderProgram!.Apply(this, InternalLayer!.Lights, in model, in view, in projection);
                 Rendering?.Invoke(this, in model, in view, in projection);
-                if(IsEnableRendering) {
-                    GL.DrawElements(BeginMode.Triangles, IBO.Length, DrawElementsType.UnsignedInt, 0);
-                }
+                OnRendering();
                 Rendered?.Invoke(this, in model, in view, in projection);
             }
 
@@ -139,6 +135,11 @@ namespace Elffy.Core
                     }
                 }
             }
+        }
+
+        protected virtual void OnRendering()
+        {
+            GL.DrawElements(BeginMode.Triangles, IBO.Length, DrawElementsType.UnsignedInt, 0);
         }
 
         /// <summary>指定の頂点配列とインデックス配列で VBO, IBO を作成し、VAO を作成します</summary>

@@ -32,7 +32,7 @@ namespace Elffy.UI
         {
             base.OnAlive();
             // Layer is always UILayer
-            var yAxisDir = ((UILayer)Layer!).YAxisDirection;
+            var yAxisDir = ((UILayer)InternalLayer!).YAxisDirection;
             Span<Vertex> vertices = stackalloc Vertex[4];
             Span<int> indices = stackalloc int[6];
             SetPolygon(Control.Width, Control.Height, Control.OffsetX, Control.OffsetY, yAxisDir, vertices, indices);
