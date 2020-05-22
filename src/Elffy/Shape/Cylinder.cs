@@ -20,12 +20,12 @@ namespace Elffy.Shape
 
         public Cylinder()
         {
-            Activated += OnActivated;
             throw new NotImplementedException();
         }
 
-        private void OnActivated(FrameObject sender)
+        protected override void OnAlive()
         {
+            base.OnAlive();
             LoadGraphicBuffer(_vertexArray.Span, _indexArray.Span);
         }
     }

@@ -26,20 +26,21 @@ namespace Elffy.Shape
             Debug.Assert(textureBitmaps != null);
             _pmxObject = pmxObject;
             _textureBitmaps = textureBitmaps;
-            Activated += OnActivated;
-            Terminated += OnTerminated;
         }
 
-        private void OnTerminated(FrameObject sender)
+        protected override void OnDead()
         {
+            base.OnDead();
             if(TryGetComponent<IComponentInternal<MultiTexture>>(out var textures)) {
                 RemoveComponent<IComponentInternal<MultiTexture>>();
                 textures.Self.Dispose();
             }
         }
 
-        private async void OnActivated(FrameObject frameObject)
+        protected override async void OnActivated()
         {
+            base.OnActivated();
+
             // Here is main thread
 
             var (vertices, parts) = await Task.Factory.StartNew(() =>

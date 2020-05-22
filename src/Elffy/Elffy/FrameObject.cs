@@ -20,6 +20,23 @@ namespace Elffy
         private object? _tag;
         private FrameObjectLifeState _lifeState = FrameObjectLifeState.New;
 
+        /// <summary><see cref="Activate(Elffy.Layer)"/> が呼ばれたときのイベント</summary>
+        public event ActionEventHandler<FrameObject>? Activated;
+        /// <summary><see cref="Terminate"/> が呼ばれたときのイベント</summary>
+        public event ActionEventHandler<FrameObject>? Terminated;
+        /// <summary><see cref="IsAlive"/> が true になった時のイベント</summary>
+        public event ActionEventHandler<FrameObject>? Alive;
+        /// <summary><see cref="IsAlive"/> が false になった時のベント</summary>
+        public event ActionEventHandler<FrameObject>? Dead;
+        /// <summary>開始時イベント</summary>
+        public event ActionEventHandler<FrameObject>? Started;
+        /// <summary>事前更新時イベント</summary>
+        public event ActionEventHandler<FrameObject>? EarlyUpdated;
+        /// <summary>更新時イベント</summary>
+        public event ActionEventHandler<FrameObject>? Updated;
+        /// <summary>事後更新時イベント</summary>
+        public event ActionEventHandler<FrameObject>? LateUpdated;
+
         internal FrameObjectLifeState LifeState => _lifeState;
 
         public bool IsClean => _lifeState.IsNew();
@@ -30,6 +47,8 @@ namespace Elffy
         public bool IsFrozen
         {
             get => _lifeState.HasFrozenBit();
+
+            // 変更するビット以外は触らないように
             set => _lifeState = value ? (_lifeState | FrameObjectLifeState.Bit_Frozen)
                                       : (_lifeState & ~FrameObjectLifeState.Bit_Frozen);
         }
@@ -51,22 +70,11 @@ namespace Elffy
         /// <exception cref="InvalidOperationException"></exception>
         public Dispatcher Dispatcher => _dispatcher ??= HostScreen.Dispatcher;
 
-        /// <summary>このオブジェクトがアクティブになった時のイベント</summary>
-        public event ActionEventHandler<FrameObject>? Activated;
-        /// <summary>このオブジェクトが終了した時のイベント</summary>
-        public event ActionEventHandler<FrameObject>? Terminated;
-        /// <summary>開始時イベント</summary>
-        public event ActionEventHandler<FrameObject>? Started;
-        /// <summary>事前更新時イベント</summary>
-        public event ActionEventHandler<FrameObject>? EarlyUpdated;
-        /// <summary>更新時イベント</summary>
-        public event ActionEventHandler<FrameObject>? Updated;
-        /// <summary>事後更新時イベント</summary>
-        public event ActionEventHandler<FrameObject>? LateUpdated;
-
         /// <summary>このオブジェクトが更新される最初のフレームに1度のみ実行される処理</summary>
         internal void Start()
         {
+            // 変更するビット以外は触らないように
+            // Started ビットを立てる
             _lifeState |= FrameObjectLifeState.Bit_Started;
             Started?.Invoke(this);
         }
@@ -88,15 +96,18 @@ namespace Elffy
         }
 
         /// <summary>このオブジェクトを指定のレイヤーでアクティブにします</summary>
-        public virtual void Activate(Layer layer)
+        public void Activate(Layer layer)
         {
             ArgumentChecker.ThrowIfNullArg(layer, nameof(layer));
             ArgumentChecker.ThrowArgumentIf(layer.Owner == null, $"{nameof(layer)} is not associated with {nameof(IHostScreen)}.");
             if(_lifeState != FrameObjectLifeState.New) { return; }
 
+            // 変更するビット以外は触らないように
+            // Activating ビットを立てる
             _lifeState |= FrameObjectLifeState.Bit_Activating;
             _layer = layer;
             layer.AddFrameObject(this);
+            OnActivated();
         }
 
         internal void Activate<TLayer>(TLayer layer) where TLayer : class, ILayer
@@ -106,39 +117,69 @@ namespace Elffy
             Debug.Assert(layer.Owner != null);
             if(_lifeState != FrameObjectLifeState.New) { return; }
 
+            // 変更するビット以外は触らないように
+            // Activating ビットを立てる
             _lifeState |= FrameObjectLifeState.Bit_Activating;
             _layer = layer;
             layer.AddFrameObject(this);
+            OnActivated();
         }
 
         /// <summary>このオブジェクトをエンジン管理下から外して破棄します</summary>
         public void Terminate()
         {
             if(_lifeState.IsNew() || _lifeState.HasTerminatingBit() || _lifeState.HasDeadBit()) { return; }
+
+            // 変更するビット以外は触らないように
+            // Terminating ビットを立てる
             _lifeState |= FrameObjectLifeState.Bit_Terminating;
-            _layer?.RemoveFrameObject(this);
+            Debug.Assert(_layer is null == false);
+
+            _layer!.RemoveFrameObject(this);
+            OnTerminated();
+        }
+
+        protected virtual void OnActivated()
+        {
+            Activated?.Invoke(this);
+        }
+
+        protected virtual void OnTerminated()
+        {
+            Terminated?.Invoke(this);
+        }
+
+        protected virtual void OnAlive()
+        {
+            Alive?.Invoke(this);
+        }
+
+        protected virtual void OnDead()
+        {
+            Dead?.Invoke(this);
+            (this as IDisposable)?.Dispose();       // TODO: 継承先にIDisposeがないの確認したら消す。継承先に責任を持って破棄させる
         }
 
         internal void AddToObjectStoreCallback()
         {
+            // 変更するビット以外は触らないように
             // activating ビットをおろす、alive ビットをたてる
-            _lifeState &= ~FrameObjectLifeState.Bit_Activating;
-            _lifeState |= FrameObjectLifeState.Bit_Alive;
-
-            Activated?.Invoke(this);
+            _lifeState = _lifeState & ~FrameObjectLifeState.Bit_Activating
+                                    | FrameObjectLifeState.Bit_Alive;
+            OnAlive();
         }
 
         internal void RemovedFromObjectStoreCallback()
         {
+            // 変更するビット以外は触らないように
             // alive ビットをおろす、terminating ビットをおろす、dead ビットをたてる
-            _lifeState &= ~(FrameObjectLifeState.Bit_Alive | FrameObjectLifeState.Bit_Terminating);
-            _lifeState |= FrameObjectLifeState.Bit_Dead;
-
+            _lifeState = _lifeState & ~FrameObjectLifeState.Bit_Alive
+                                    & ~FrameObjectLifeState.Bit_Terminating
+                                    | FrameObjectLifeState.Bit_Dead;
             _layer = null;
             _dispatcher = null;
             _hostScreen = null;
-            (this as IDisposable)?.Dispose();
-            Terminated?.Invoke(this);
+            OnDead();
         }
     }
 }

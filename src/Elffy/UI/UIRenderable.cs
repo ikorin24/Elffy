@@ -1,4 +1,6 @@
 ﻿#nullable enable
+using System;
+using System.Diagnostics;
 using Elffy.Core;
 using Elffy.Exceptions;
 using System.ComponentModel;
@@ -9,11 +11,6 @@ namespace Elffy.UI
     /// <summary><see cref="UI.Control"/> を描画するためのオブジェクト。対象の <see cref="UI.Control"/> のインスタンスと一対一の関係を持つ</summary>
     internal sealed class UIRenderable : Renderable //, IUIRenderable
     {
-        /// <summary>頂点配列</summary>
-        private UnmanagedArray<Vertex>? _vertexArray;
-        /// <summary>頂点インデックス配列</summary>
-        private UnmanagedArray<int>? _indexArray;
-
         /// <summary>このインスタンスの描画対象である論理 UI コントロール</summary>
         public Control Control { get; private set; }
 
@@ -24,8 +21,6 @@ namespace Elffy.UI
             ArgumentChecker.ThrowIfNullArg(control, nameof(control));
             IsFrozen = true;
             Control = control;
-            Activated += OnActivated;
-            Terminated += OnTerminated;
         }
 
         //void IUIRenderable.Render() => Render(,);
@@ -33,20 +28,15 @@ namespace Elffy.UI
         //void IUIRenderable.Activate() => Activate(Control.Root!.UILayer);
         //void IUIRenderable.Destroy() => Terminate();
 
-        private void OnActivated(FrameObject _)
+        protected override void OnAlive()
         {
+            base.OnAlive();
             // Layer is always UILayer
             var yAxisDir = ((UILayer)Layer!).YAxisDirection;
-            _vertexArray = new UnmanagedArray<Vertex>(4);
-            _indexArray = new UnmanagedArray<int>(6);
-            SetPolygon(Control.Width, Control.Height, Control.OffsetX, Control.OffsetY, yAxisDir);
-            LoadGraphicBuffer(_vertexArray.AsSpan(), _indexArray.AsSpan());
-        }
-
-        private void OnTerminated(FrameObject _)
-        {
-            _vertexArray?.Dispose();
-            _indexArray?.Dispose();
+            Span<Vertex> vertices = stackalloc Vertex[4];
+            Span<int> indices = stackalloc int[6];
+            SetPolygon(Control.Width, Control.Height, Control.OffsetX, Control.OffsetY, yAxisDir, vertices, indices);
+            LoadGraphicBuffer(vertices, indices);
         }
 
         #region SetPolygon
@@ -56,8 +46,13 @@ namespace Elffy.UI
         /// <param name="offsetX">X方向のオフセット</param>
         /// <param name="offsetY">Y方向のオフセット</param>
         /// <param name="yAxisDirection">Y軸方向</param>
-        private void SetPolygon(int width, int height, int offsetX, int offsetY, YAxisDirection yAxisDirection)
+        /// <param name="vertices">頂点</param>
+        /// <param name="indices">頂点インデックス</param>
+        private void SetPolygon(int width, int height, int offsetX, int offsetY, YAxisDirection yAxisDirection, Span<Vertex> vertices, Span<int> indices)
         {
+            Debug.Assert(vertices.Length == 4);
+            Debug.Assert(indices.Length == 6);
+
             var p0 = new Vector3(offsetX, offsetY, 0);
             var p1 = p0 + new Vector3(width, 0, 0);
             var p2 = p0 + new Vector3(width, height, 0);
@@ -85,16 +80,16 @@ namespace Elffy.UI
             }
             var normal = Vector3.UnitZ;
 
-            _vertexArray![0] = new Vertex(p0, normal, t0);
-            _vertexArray![1] = new Vertex(p1, normal, t1);
-            _vertexArray![2] = new Vertex(p2, normal, t2);
-            _vertexArray![3] = new Vertex(p3, normal, t3);
-            _indexArray![0] = i0;
-            _indexArray![1] = i1;
-            _indexArray![2] = i2;
-            _indexArray![3] = i3;
-            _indexArray![4] = i4;
-            _indexArray![5] = i5;
+            vertices[0] = new Vertex(p0, normal, t0);
+            vertices[1] = new Vertex(p1, normal, t1);
+            vertices[2] = new Vertex(p2, normal, t2);
+            vertices[3] = new Vertex(p3, normal, t3);
+            indices[0] = i0;
+            indices[1] = i1;
+            indices[2] = i2;
+            indices[3] = i3;
+            indices[4] = i4;
+            indices[5] = i5;
         }
         #endregion
     }

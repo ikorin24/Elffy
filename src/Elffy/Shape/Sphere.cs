@@ -22,12 +22,12 @@ namespace Elffy.Shape
 
         public Sphere()
         {
-            Activated += OnActivated;
             throw new NotImplementedException();
         }
 
-        private void OnActivated(FrameObject frameObject)
+        protected override void OnAlive()
         {
+            base.OnAlive();
             LoadGraphicBuffer(_vertexArray.Span, _indexArray.Span);
         }
     }

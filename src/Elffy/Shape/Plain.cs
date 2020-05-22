@@ -35,11 +35,11 @@ namespace Elffy.Shape
         public Plain(bool isTexCoordYInversed)
         {
             _isTexCoordYInversed = isTexCoordYInversed;
-            Activated += OnActivated;
         }
 
-        private void OnActivated(FrameObject frameObject)
+        protected override void OnAlive()
         {
+            base.OnAlive();
             var vertexArray = _isTexCoordYInversed ? _inverseTexCoordYVertexArray : _vertexArray;
             LoadGraphicBuffer(vertexArray.Span, _indexArray.Span);
         }

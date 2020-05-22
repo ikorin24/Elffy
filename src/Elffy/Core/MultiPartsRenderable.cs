@@ -16,7 +16,7 @@ namespace Elffy.Core
         public MultiPartsRenderable()
         {
             ComponentDetached += (sender, e) => { if(e == _textures) { _textures = null; } };
-            Activated += OnActivated;
+            IsEnableRendering = false;
             Rendering += OnRendering;
         }
 
@@ -40,12 +40,6 @@ namespace Elffy.Core
                 }
             }
         }
-
-        private void OnActivated(FrameObject sender)
-        {
-            IsEnableRendering = false;
-        }
-
 
         public readonly struct RenderableParts
         {

@@ -55,11 +55,11 @@ namespace Elffy.Shape
 
         public Cube()
         {
-            Activated += OnActivated;
         }
 
-        private void OnActivated(FrameObject frameObject)
+        protected override void OnAlive()
         {
+            base.OnAlive();
             LoadGraphicBuffer(_vertexArray.Span, _indexArray.Span);
         }
     }

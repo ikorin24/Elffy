@@ -101,7 +101,6 @@ namespace Elffy.Core
 
         public Renderable()
         {
-            Terminated += OnTerminated;
         }
 
         /// <summary>描画を行います</summary>
@@ -165,8 +164,9 @@ namespace Elffy.Core
             }
         }
 
-        private void OnTerminated(FrameObject _)
+        protected override void OnDead()
         {
+            base.OnDead();
             ShaderProgram?.Dispose();
             ShaderProgram = null;
             if(IsLoaded) {

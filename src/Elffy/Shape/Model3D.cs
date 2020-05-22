@@ -16,8 +16,6 @@ namespace Elffy.Shape
         {
             _vertexArray = vertexArray.ToUnmanagedArray();
             _indexArray = indexArray.ToUnmanagedArray();
-            Activated += OnActivated;
-            Terminated += OnTerminated;
         }
 
         public ReadOnlySpan<Vertex> GetVertexArray() => _vertexArray.AsSpan();
@@ -29,13 +27,15 @@ namespace Elffy.Shape
             LoadGraphicBuffer(vertexArray, indexArray);
         }
 
-        private void OnActivated(FrameObject frameObject)
+        protected override void OnAlive()
         {
+            base.OnAlive();
             LoadGraphicBuffer(_vertexArray.AsSpan(), _indexArray.AsSpan());
         }
 
-        private void OnTerminated(FrameObject frameObject)
+        protected override void OnDead()
         {
+            base.OnDead();
             _vertexArray.Dispose();
             _indexArray.Dispose();
         }
