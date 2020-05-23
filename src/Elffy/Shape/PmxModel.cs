@@ -8,16 +8,20 @@ using Elffy.Core;
 using Elffy.Effective;
 using Elffy.Imaging;
 using Elffy.Components;
+using OpenTK.Graphics.OpenGL;
 using UnmanageUtility;
 using PMXParser = MMDTools.Unmanaged.PMXParser;
 using PMXObject = MMDTools.Unmanaged.PMXObject;
 
 namespace Elffy.Shape
 {
-    public class PmxModel : MultiPartsRenderable
+    public class PmxModel : Renderable
     {
         private PMXObject? _pmxObject;
         private Bitmap[]? _textureBitmaps;
+
+        private RenderableParts[]? _parts;
+        private MultiTexture? _textures;
 
         private unsafe PmxModel(PMXObject pmxObject, Bitmap[] textureBitmaps)
         {
@@ -30,10 +34,8 @@ namespace Elffy.Shape
         protected override void OnDead()
         {
             base.OnDead();
-            if(TryGetComponent<IComponentInternal<MultiTexture>>(out var textures)) {
-                RemoveComponent<IComponentInternal<MultiTexture>>();
-                textures.Self.Dispose();
-            }
+            _textures?.Dispose();
+            _textures = null;
         }
 
         protected override async void OnActivated()
@@ -42,23 +44,22 @@ namespace Elffy.Shape
 
             // Here is main thread
 
-            var (vertices, parts) = await Task.Factory.StartNew(() =>
+            var vertices = await Task.Factory.StartNew(() =>
             {
                 var pmx = _pmxObject!;
                 ReverseTrianglePolygon(pmx.SurfaceList.AsSpan());       // オリジナルのデータを書き換えているので注意、このメソッドは1回しか通らない前提
                 var vertices = pmx.VertexList.AsSpan().SelectToUnmanagedArray(ToVertex);
-                var parts = pmx.MaterialList.AsSpan().SelectToArray(m => new RenderableParts(m.VertexCount, m.Texture));
-                return (vertices, parts);
+                _parts = pmx.MaterialList.AsSpan().SelectToArray(m => new RenderableParts(m.VertexCount, m.Texture));
+                return vertices;
             }).ConfigureAwait(true);
             // ↑ ConfigureAwait true
 
             // Here is main thread
             if(!LifeState.HasTerminatingBit() && !LifeState.HasDeadBit()) {
                 LoadGraphicBuffer(vertices.AsSpan(), _pmxObject!.SurfaceList.AsSpan().MarshalCast<MMDTools.Unmanaged.Surface, int>());
-                SetParts(parts);
-                var texture = new MultiTexture();
-                texture.Load(_textureBitmaps);
-                AddOrReplaceComponent<IComponentInternal<MultiTexture>>(texture, out _);
+                var textures = new MultiTexture();
+                textures.Load(_textureBitmaps);
+                _textures = textures;
             }
 
             // not await
@@ -77,6 +78,20 @@ namespace Elffy.Shape
                 _pmxObject!.Dispose();
                 _pmxObject = null;
             }, vertices);
+        }
+
+        protected override void OnRendering()
+        {
+            var parts = _parts;
+            if(parts != null) {
+                var pos = 0;
+                var textures = _textures;
+                foreach(var p in parts) {
+                    textures?.Apply(p.TextureIndex);
+                    GL.DrawElements(BeginMode.Triangles, p.VertexCount, DrawElementsType.UnsignedInt, pos * sizeof(int));
+                    pos += p.VertexCount;
+                }
+            }
         }
 
         public static Task<PmxModel> LoadResourceAsync(string name)
@@ -197,6 +212,19 @@ namespace Elffy.Shape
             {
                 Position = ToVector3(bone.Position);
                 Parent = bone.ParentBone;
+            }
+        }
+
+
+        private readonly struct RenderableParts
+        {
+            public readonly int VertexCount;
+            public readonly int TextureIndex;
+
+            public RenderableParts(int vertexCount, int textureIndex)
+            {
+                VertexCount = vertexCount;
+                TextureIndex = textureIndex;
             }
         }
     }
