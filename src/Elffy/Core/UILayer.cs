@@ -16,7 +16,7 @@ namespace Elffy.Core
 
         /// <summary>このレイヤーを持つ親</summary>
         internal LayerCollection Owner { get; }
-        LayerCollection? ILayer.Owner => Owner;
+        LayerCollection? ILayer.OwnerCollection => Owner;
 
         /// <summary><see cref="UILayer"/> has no lights</summary>
         ReadOnlySpan<Light> ILayer.Lights => ReadOnlySpan<Light>.Empty;

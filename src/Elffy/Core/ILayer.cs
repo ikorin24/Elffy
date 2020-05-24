@@ -6,7 +6,7 @@ namespace Elffy.Core
 {
     internal interface ILayer
     {
-        LayerCollection? Owner { get; }
+        LayerCollection? OwnerCollection { get; }
 
         ReadOnlySpan<Light> Lights { get; }
 

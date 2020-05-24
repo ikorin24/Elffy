@@ -74,7 +74,7 @@ namespace Elffy
 
         /// <summary>Get HostScreen of this <see cref="FrameObject"/>.</summary>
         /// <exception cref="InvalidOperationException"><see cref="IsAlive"/> が false です。</exception>
-        public IHostScreen HostScreen => (_hostScreen ??= _layer?.Owner?.Owner?.Owner) ?? throw new InvalidOperationException();
+        public IHostScreen HostScreen => (_hostScreen ??= _layer?.OwnerCollection?.OwnerRenderingArea?.OwnerScreen) ?? throw new InvalidOperationException();
 
         /// <summary>Get Dispatcher of this <see cref="FrameObject"/>.</summary>
         /// <exception cref="InvalidOperationException"></exception>
@@ -124,7 +124,7 @@ namespace Elffy
         {
             ArgumentChecker.ThrowIfNullArg(layer, nameof(layer));
             Debug.Assert(layer is Layer == false, "Layer は具象型のオーバーロードを通っていないとおかしい。");
-            Debug.Assert(layer.Owner != null);
+            Debug.Assert(layer.OwnerCollection != null);
             if(_lifeState != FrameObjectLifeState.New) { return; }
 
             // 変更するビット以外は触らないように

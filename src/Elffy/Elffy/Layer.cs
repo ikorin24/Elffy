@@ -20,7 +20,7 @@ namespace Elffy
         /// 削除時は null を必ず入れる。<para/>
         /// </summary>
         internal LayerCollection? Owner { get; set; }
-        LayerCollection? ILayer.Owner => Owner;
+        LayerCollection? ILayer.OwnerCollection => Owner;
 
         public string Name { get; }
 

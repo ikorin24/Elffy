@@ -20,7 +20,7 @@ namespace Elffy
         private const string WORLD_LAYER_NAME = "World";
         private readonly List<Layer> _list = new List<Layer>();
 
-        internal RenderingArea Owner { get; }
+        internal RenderingArea OwnerRenderingArea { get; }
 
         /// <summary>UI レイヤーを取得します (このレイヤーはリストには含まれません。インスタンスを public にも公開しないでください)</summary>
         internal UILayer UILayer { get; }
@@ -50,7 +50,7 @@ namespace Elffy
         
         internal LayerCollection(YAxisDirection uiYAxisDirection, RenderingArea owner)
         {
-            Owner = owner;
+            OwnerRenderingArea = owner;
             UILayer = new UILayer(uiYAxisDirection, this);
             SystemLayer = new SystemLayer(this);
             WorldLayer = new Layer(WORLD_LAYER_NAME, this);
