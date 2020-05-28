@@ -5,8 +5,10 @@ using Elffy.Threading;
 using Elffy.Exceptions;
 using Elffy.Shading;
 using Elffy.OpenGL;
+using Elffy.Components;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Drawing;
 
 namespace Elffy.Core
 {
@@ -19,6 +21,7 @@ namespace Elffy.Core
         private VBO _vbo;
         private IBO _ibo;
         private VAO _vao;
+        private TextureObject _to;
 
         /// <summary>Vertex Buffer Object</summary>
         public VBO VBO => _vbo;
@@ -26,44 +29,13 @@ namespace Elffy.Core
         public IBO IBO => _ibo;
         /// <summary>VAO</summary>
         public VAO VAO => _vao;
+        /// <summary>Texture Object</summary>
+        public TextureObject TextureObject => _to;
+
         public bool IsLoaded { get; private set; }
 
         /// <summary>描画処理を行うかどうか</summary>
         public bool IsVisible { get; set; } = true;
-
-        ///// <summary>マテリアルを取得または設定します</summary>
-        //public Material Material
-        //{
-        //    get => _material;
-        //    set
-        //    {
-        //        if(_material == value) { return; }
-        //        var old = _material;
-        //        _material = value;
-        //        MaterialChanged?.Invoke(this, new ValueChangedEventArgs<Material>(old, value));
-        //    }
-        //}
-        //private Material _material = Material.Default;
-
-        ///// <summary>テクスチャ</summary>
-        ///// <exception cref="ArgumentNullException"></exception>
-        //public TextureBase Texture
-        //{
-        //    get => _texture;
-        //    set
-        //    {
-        //        ArgumentChecker.ThrowIfNullArg(value, nameof(value));
-        //        if(_texture == value) { return; }
-        //        var old = _texture;
-        //        _texture = value;
-        //        TextureChanged?.Invoke(this, new ValueChangedEventArgs<TextureBase>(old, value));
-        //    }
-        //}
-        //private TextureBase _texture = TextureBase.Empty;
-
-        //private Components.Material? _m;
-
-        //private Components.Texture? _t;
 
         public ShaderSource Shader
         {
@@ -85,11 +57,7 @@ namespace Elffy.Core
         /// <summary>Not null if <see cref="IsLoaded"/> == true</summary>
         protected ShaderProgram? ShaderProgram { get; private set; }
 
-        ///// <summary>Material changed event</summary>
-        //public event ActionEventHandler<Renderable, ValueChangedEventArgs<Material>>? MaterialChanged;
-        ///// <summary>Texture changed event</summary>
-        //public event ActionEventHandler<Renderable, ValueChangedEventArgs<TextureBase>>? TextureChanged;
-        ///// <summary>Shader changed event</summary>
+        /// <summary>Shader changed event</summary>
         public event ActionEventHandler<Renderable, ValueChangedEventArgs<ShaderSource>>? ShaderChanged;
 
         /// <summary>Before-rendering event</summary>
@@ -121,7 +89,7 @@ namespace Elffy.Core
             if(IsLoaded && IsVisible) {
                 VAO.Bind(_vao);
                 IBO.Bind(_ibo);
-                //Texture.Apply();
+                TextureObject.Bind(_to);
                 ShaderProgram!.Apply(this, InternalLayer!.Lights, in model, in view, in projection);
                 Rendering?.Invoke(this, in model, in view, in projection);
                 OnRendering();
@@ -165,6 +133,15 @@ namespace Elffy.Core
             }
         }
 
+        protected void LoadTexture(Bitmap bitmap)
+        {
+            Dispatcher.ThrowIfNotMainThread();
+            if(_to.IsEmpty) {
+                _to = TextureObject.Create();
+            }
+            TextureObject.Load(_to, bitmap);
+        }
+
         protected override void OnDead()
         {
             base.OnDead();
@@ -174,6 +151,9 @@ namespace Elffy.Core
                 VBO.Delete(ref _vbo);
                 IBO.Delete(ref _ibo);
                 VAO.Delete(ref _vao);
+            }
+            if(!_to.IsEmpty) {
+                TextureObject.Delete(ref _to);
             }
         }
 
