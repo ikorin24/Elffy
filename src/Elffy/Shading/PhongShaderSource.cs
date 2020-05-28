@@ -36,7 +36,8 @@ namespace Elffy.Shading
             uniform.Send("md", (Color3)material.Diffuse);
             uniform.Send("ms", (Color3)material.Specular);
             uniform.Send("shininess", material.Shininess);
-            uniform.Send("tex_sampler", 0);
+            const int DefaultTextureUnit = 0;           // ← default texture is 0. GL.ActiveTexture(TextureUnit.Texture0)
+            uniform.Send("tex_sampler", DefaultTextureUnit);
         }
 
         private const string VertSource =
