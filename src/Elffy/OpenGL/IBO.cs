@@ -29,7 +29,7 @@ namespace Elffy.OpenGL
             return ibo;
         }
 
-        internal static unsafe void Delete(ref IBO ibo)
+        internal static void Delete(ref IBO ibo)
         {
             if(!ibo.IsEmpty) {
                 GL.DeleteBuffer(ibo.Value);
