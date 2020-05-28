@@ -27,6 +27,14 @@ namespace ElffyGame
             screen.Camera.LookAt(new Vector3(0, 10, 0), new Vector3(0, 10, 50));
             new CameraMouse(screen.Camera, screen.Mouse, new Vector3(0, 0, 0)).Activate(screen.Layers.WorldLayer);
 
+            var plain = new Plain()
+            {
+                Scale = new Vector3(100),
+                Shader = ShaderSource.Normal,
+            };
+            plain.Rotate(Vector3.UnitX, -MathTool.PiOver2);
+            plain.Activate(screen.Layers.WorldLayer);
+
             var sw2 = new Stopwatch();
             sw2.Start();
             PmxModel.LoadResourceAsync("Alicia/Alicia_solid.pmx")
