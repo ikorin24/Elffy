@@ -18,7 +18,7 @@ namespace Elffy.Effective
             var lenders = new MemoryLender[]
             {
                 // Sorted by segmentSize (small -> large)
-                new MemoryLender(segmentSize: 128, count: 1024),    // ~= 128 kB
+                new MemoryLender(segmentSize: 256, count: 512),    // ~= 128 kB
                 new MemoryLender(segmentSize: 1024, count: 128),    // ~= 128 kB
                 new MemoryLender(segmentSize: 8192, count: 32),     // ~= 256 kB
             };
@@ -38,6 +38,7 @@ namespace Elffy.Effective
                 if(byteLength <= lenders[i].SegmentSize) {
                     rentMemory = lenders[i].Rent(out id);
                     lenderNum = i;
+                    break;
                 }
             }
 
