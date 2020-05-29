@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using Cysharp.Text;
 using System;
 using System.Runtime.CompilerServices;
 
@@ -48,6 +49,11 @@ namespace Elffy.Effective
             _length = length;
         }
 
+        public override string ToString()
+        {
+            return ZString.Concat(typeof(BitArray).FullName, '[', _length ,']');
+        }
+
         public override bool Equals(object? obj) => obj is BitArray array && Equals(array);
 
         public bool Equals(BitArray other) => ReferenceEquals(_table, other._table) && _length == other._length;
@@ -56,23 +62,25 @@ namespace Elffy.Effective
 
         public Enumerator GetEnumerator() => new Enumerator(this);
 
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private IntPtr Not(IntPtr value)
         {
             // JIT で分岐は消える
-            return IntPtr.Size == 8 ? (IntPtr)(~(ulong)value) : (IntPtr)(~(uint)value);
+            return IntPtr.Size == 8 ? (IntPtr)(~(long)value) : (IntPtr)(~(int)value);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private IntPtr And(IntPtr value1, IntPtr value2)
         {
             // JIT で分岐は消える
-            return IntPtr.Size == 8 ? (IntPtr)((ulong)value1 & (ulong)value2) : (IntPtr)((uint)value1 & (uint)value2);
+            return IntPtr.Size == 8 ? (IntPtr)((long)value1 & (long)value2) : (IntPtr)((int)value1 & (int)value2);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private IntPtr Or(IntPtr value1, IntPtr value2)
         {
             // JIT で分岐は消える
-            return IntPtr.Size == 8 ? (IntPtr)((ulong)value1 | (ulong)value2) : (IntPtr)((uint)value1 | (uint)value2);
+            return IntPtr.Size == 8 ? (IntPtr)((long)value1 | (long)value2) : (IntPtr)((int)value1 | (int)value2);
         }
 
         public struct Enumerator
