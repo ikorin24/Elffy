@@ -3,6 +3,8 @@ using System;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Collections;
+using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 
 namespace Elffy.Effective
 {
@@ -26,6 +28,7 @@ namespace Elffy.Effective
         }
 
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe PooledMemory<T> GetMemory<T>(int length) where T : unmanaged
         {
             var byteLength = sizeof(T) * length;
@@ -34,22 +37,28 @@ namespace Elffy.Effective
             var rentMemory = Memory<byte>.Empty;
             var lenderNum = -1;
             var id = -1;
-            for(int i = 0; i < lenders.Length; i++) {
-                if(byteLength <= lenders[i].SegmentSize) {
-                    rentMemory = lenders[i].Rent(out id);
-                    lenderNum = i;
-                    break;
-                }
+            if(byteLength <= lenders[0].SegmentSize) {
+                rentMemory = lenders[0].Rent(out id);
+                lenderNum = 0;
+            }
+            else if(byteLength <= lenders[1].SegmentSize) {
+                rentMemory = lenders[1].Rent(out id);
+                lenderNum = 1;
+            }
+            else if(byteLength <= lenders[2].SegmentSize) {
+                rentMemory = lenders[2].Rent(out id);
+                lenderNum = 2;
             }
 
             var byteMemory = (id >= 0) ? rentMemory.Slice(0, byteLength) : new byte[byteLength].AsMemory();
 
             return new PooledMemory<T>(byteMemory, id, lenderNum);
-
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static unsafe void Return(int lender, int id)
         {
+            if(lender < 0) { return; }
             var lenders = Lenders;
             lenders[lender].Return(id);
         }
@@ -84,6 +93,7 @@ namespace Elffy.Effective
                 }
             }
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public Memory<byte> Rent(out int id)
             {
                 lock(_syncRoot) {
@@ -99,6 +109,7 @@ namespace Elffy.Effective
                 return _array.AsMemory(id * SegmentSize, SegmentSize);
             }
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Return(int id)
             {
                 if(id < 0) { return; }
