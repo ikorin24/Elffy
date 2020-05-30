@@ -42,10 +42,10 @@ namespace Elffy.Effective
                 }
             }
 
-            var byteMemory = (id > 0) ? rentMemory.Slice(0, byteLength) : new byte[byteLength].AsMemory();
+            var byteMemory = (id >= 0) ? rentMemory.Slice(0, byteLength) : new byte[byteLength].AsMemory();
 
             return new PooledMemory<T>(byteMemory, id, lenderNum);
-            
+
         }
 
         internal static unsafe void Return(int lender, int id)
