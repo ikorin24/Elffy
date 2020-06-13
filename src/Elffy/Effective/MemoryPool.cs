@@ -1,150 +1,232 @@
 ﻿#nullable enable
 using System;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Collections;
-using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
+using System.Diagnostics;
 
 namespace Elffy.Effective
 {
     public static class MemoryPool
     {
-        private static Lazy<MemoryLender[]> _lenders 
-            = new Lazy<MemoryLender[]>(CreateLenders, LazyThreadSafetyMode.ExecutionAndPublication);
-
-        private static MemoryLender[] Lenders => _lenders.Value;
-
-        private static MemoryLender[] CreateLenders()
+        private static Lazy<ByteMemoryLender[]> _lenders = new Lazy<ByteMemoryLender[]>(() => new[]
         {
-            var lenders = new MemoryLender[]
-            {
-                // Sorted by segmentSize (small -> large)
-                new MemoryLender(segmentSize: 256, count: 512),    // ~= 128 kB
-                new MemoryLender(segmentSize: 1024, count: 128),    // ~= 128 kB
-                new MemoryLender(segmentSize: 8192, count: 32),     // ~= 256 kB
-            };
-            return lenders;
-        }
+            new ByteMemoryLender(segmentSize: 256, segmentCount: 512),     // ~= 128 kB
+            new ByteMemoryLender(segmentSize: 1024, segmentCount: 128),    // ~= 128 kB
+            new ByteMemoryLender(segmentSize: 8192, segmentCount: 32),     // ~= 256 kB
+        }, LazyThreadSafetyMode.ExecutionAndPublication);
 
+        private static Lazy<ObjectMemoryLender[]> _objLenders = new Lazy<ObjectMemoryLender[]>(() => new[]
+        {
+            new ObjectMemoryLender(segmentSize: 256, segmentCount: 256),     // ~= 512 kB (on 64bit)
+            new ObjectMemoryLender(segmentSize: 1024, segmentCount: 128),    // ~= 1024 kB (on 64bit)
+        }, LazyThreadSafetyMode.ExecutionAndPublication);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe PooledMemory<T> GetMemory<T>(int length) where T : unmanaged
+        internal static unsafe bool TryRentByteMemory<T>(int length, out Memory<byte> memory, out int id, out int lenderNum) where T : unmanaged
         {
+            Debug.Assert(typeof(T).IsValueType);
             var byteLength = sizeof(T) * length;
-            var lenders = Lenders;
-
-            var rentMemory = Memory<byte>.Empty;
-            var lenderNum = -1;
-            var id = -1;
-            if(byteLength <= lenders[0].SegmentSize) {
-                rentMemory = lenders[0].Rent(out id);
-                lenderNum = 0;
+            var lenders = _lenders.Value;
+            for(int i = 0; i < lenders.Length; i++) {
+                if(byteLength <= lenders[i].SegmentSize && lenders[i].TryRent(out var segment, out id)) {
+                    memory = segment.Slice(0, byteLength);
+                    lenderNum = i;
+                    return true;
+                }
             }
-            else if(byteLength <= lenders[1].SegmentSize) {
-                rentMemory = lenders[1].Rent(out id);
-                lenderNum = 1;
-            }
-            else if(byteLength <= lenders[2].SegmentSize) {
-                rentMemory = lenders[2].Rent(out id);
-                lenderNum = 2;
-            }
-
-            var byteMemory = (id >= 0) ? rentMemory.Slice(0, byteLength) : new byte[byteLength].AsMemory();
-
-            return new PooledMemory<T>(byteMemory, id, lenderNum);
+            memory = Memory<byte>.Empty;
+            lenderNum = -1;
+            id = -1;
+            return false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static unsafe void Return(int lender, int id)
+        internal static bool TryRentObjectMemory<T>(int length, out Memory<object> memory, out int id, out int lenderNum)
+        {
+            Debug.Assert(typeof(T).IsValueType == false);
+            var lenders = _objLenders.Value;
+            for(int i = 0; i < lenders.Length; i++) {
+                if(length <= lenders[i].SegmentSize && lenders[i].TryRent(out var segment, out id)) {
+                    memory = segment.Slice(0, length);
+                    lenderNum = i;
+                    return true;
+                }
+            }
+            memory = Memory<object>.Empty;
+            lenderNum = -1;
+            id = -1;
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static unsafe void ReturnByteMemory(int lender, int id)
         {
             if(lender < 0) { return; }
-            var lenders = Lenders;
+            var lenders = _lenders.Value;
+            lenders[lender].Return(id);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static unsafe void ReturnObjectMemory(int lender, int id)
+        {
+            if(lender < 0) { return; }
+            var lenders = _objLenders.Value;
             lenders[lender].Return(id);
         }
 
 
+        //[StructLayout(LayoutKind.Sequential, Pack = 0)]
+        //private struct FieldSizeHelper<T>
+        //{
+        //    private T _field;
+        //    private byte _offset;
+
+        //    /// <summary><see cref="T"/>型の変数のサイズを取得します</summary>
+        //    /// <returns>バイト数</returns>
+        //    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //    public static int GetSize()
+        //    {
+        //        var a = default(FieldSizeHelper<T>);
+        //        return Unsafe.ByteOffset(ref Unsafe.As<T, byte>(ref a._field), ref a._offset).ToInt32();
+        //    }
+        //}
 
 
-        internal sealed class MemoryLender
+        internal abstract class MemoryLender<T>
         {
-            private readonly byte[] _array;
-            private readonly BitArray _segmentState;
-            private readonly int[] _available;
-            private int _next;
+            // [NOTE]
+            // ex) SegmentSize = 3, MaxCount = 4
+            //
+            // ---------------------------------------------------------------------
+            //    _array     | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 |
+            //     segID     |     0     |     1     |     2     |      3      |
+            // _segmentState |   true    |   false   |   false   |    false    |
+            // 
+            // _availableIDStack  | -1 | 2 | 1 | 3 |
+            //                          ↑
+            //      Push (Return) ← _availableHead → Pop (Rent)
+            // ---------------------------------------------------------------------
+            //
+            //                  ↓   Rent   → segID = 2
+            // 
+            // ---------------------------------------------------------------------
+            //    _array     | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 |
+            //     segID     |     0     |     1     |     2     |      3      |
+            // _segmentState |   true    |   false   |   true    |    false    |
+            // 
+            // _availableIDStack  | -1 | -1 | 1 | 3 |
+            //                               ↑
+            //                            _availableHead
+            // ---------------------------------------------------------------------
 
-            public int SegmentSize { get; }
-            public int MaxCount => _available.Length;
+            private readonly T[] _array;
+            private readonly BitArray _segmentState;        // true は貸し出し中、false は貸出可能
+            private readonly int[] _availableIDStack;
+            private int _availableHead;
 
             private object _syncRoot => this;
 
-            public MemoryLender(int segmentSize, int count)
+            public int SegmentSize { get; }
+            public int MaxCount => _availableIDStack.Length;
+
+            public int AvailableCount => _availableIDStack.Length - _availableHead;
+
+            protected MemoryLender(int segmentSize, int segmentCount)
             {
                 if(segmentSize <= 0) { throw new ArgumentOutOfRangeException(nameof(segmentSize)); }
-                if(count <= 0) { throw new ArgumentOutOfRangeException(nameof(count)); }
+                if(segmentCount <= 0) { throw new ArgumentOutOfRangeException(nameof(segmentCount)); }
                 SegmentSize = segmentSize;
-                _array = new byte[segmentSize * count];
-                _segmentState = new BitArray(count);
+                _array = new T[segmentSize * segmentCount];
+                _segmentState = new BitArray(segmentCount);
 
-                _next = 0;
-                _available = new int[count];
-                for(int i = 0; i < _available.Length; i++) {
-                    _available[i] = i;
+                _availableHead = 0;
+                _availableIDStack = new int[segmentCount];
+                for(int i = 0; i < _availableIDStack.Length; i++) {
+                    _availableIDStack[i] = i;
                 }
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public Memory<byte> Rent(out int id)
+            public bool TryRent(out Memory<T> memory, out int segID)
             {
                 lock(_syncRoot) {
-                    if(_next >= _available.Length) {
-                        id = -1;
-                        return Memory<byte>.Empty;
+                    if(_availableHead >= _availableIDStack.Length) {
+                        segID = -1;
+                        memory = Memory<T>.Empty;
+                        return false;
                     }
-                    id = _available[_next];
-                    _available[_next] = -1;
-                    _next++;
-                    _segmentState[id] = true;
+                    segID = _availableIDStack[_availableHead];
+                    _availableIDStack[_availableHead] = -1;
+                    _availableHead++;
+                    _segmentState[segID] = true;
                 }
-                return _array.AsMemory(id * SegmentSize, SegmentSize);
+                memory = _array.AsMemory(segID * SegmentSize, SegmentSize);
+                return true;
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Return(int id)
+            public void Return(int segID)
             {
-                if(id < 0) { return; }
+                if(segID < 0) { return; }
                 lock(_syncRoot) {
-                    if(_segmentState[id] == false) { return; }
-                    _next--;
-                    _available[_next] = id;
-                    _segmentState[id] = false;
+                    if(_segmentState[segID] == false) { return; }
+                    _availableHead--;
+                    _availableIDStack[_availableHead] = segID;
+                    _segmentState[segID] = false;
                 }
+            }
+        }
+
+        internal class ByteMemoryLender : MemoryLender<byte>
+        {
+            public ByteMemoryLender(int segmentSize, int segmentCount) : base(segmentSize, segmentCount)
+            {
+            }
+        }
+
+        internal class ObjectMemoryLender : MemoryLender<object>
+        {
+            public ObjectMemoryLender(int segmentSize, int segmentCount) : base(segmentSize, segmentCount)
+            {
             }
         }
     }
 
-    public readonly struct PooledMemory<T> : IDisposable where T : unmanaged
-    {
-        // IMemoryOwner<T> を継承するメリットが特になく、
-        // Memory<T> を公開する方法もないので
-        // IMemoryOwner<T> は継承しない。
 
-        private readonly Memory<byte> _byteMemory;
-        private readonly int _id;
-        private readonly int _lender;
+    ///// <summary>
+    ///// <see cref="PooledMemory{T}"/> のメモリ返却忘れのための魔除けのお守り
+    ///// </summary>
+    //internal sealed class MemoryPoolAmulet
+    //{
+    //    public int Lender { get; private set; }
+    //    public int ID { get; private set; }
+    //    public bool IsEnabled { get; private set; }
 
-        public readonly Span<T> Span => MemoryMarshal.Cast<byte, T>(_byteMemory.Span);
+    //    public MemoryPoolAmulet()
+    //    {
+    //        ID = -1;
+    //        Lender = -1;
+    //    }
 
-        internal PooledMemory(Memory<byte> byteMemory, int id, int lender)
-        {
-            _byteMemory = byteMemory;
-            _id = id;
-            _lender = lender;
-        }
+    //    ~MemoryPoolAmulet()
+    //    {
+    //        if(IsEnabled) {
+    //            MemoryPool.Return(Lender, ID);
+    //        }
+    //    }
 
-        public readonly void Dispose()
-        {
-            MemoryPool.Return(_lender, _id);
-        }
-    }
+    //    public void Enable(int id, int lender)
+    //    {
+    //        ID = id;
+    //        Lender = lender;
+    //        IsEnabled = true;
+    //    }
+
+    //    public void Disable()
+    //    {
+
+    //        IsEnabled = false;
+    //    }
+    //}
 }
