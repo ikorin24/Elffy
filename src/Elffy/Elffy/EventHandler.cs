@@ -47,10 +47,7 @@ namespace Elffy
 
         public override int GetHashCode()
         {
-            var hashCode = -279159539;
-            hashCode = hashCode * -1521134295 + EqualityComparer<T>.Default.GetHashCode(OldValue);
-            hashCode = hashCode * -1521134295 + EqualityComparer<T>.Default.GetHashCode(NewValue);
-            return hashCode;
+            return HashCode.Combine(OldValue, NewValue);
         }
 
         public static bool operator ==(ValueChangedEventArgs<T> left, ValueChangedEventArgs<T> right)
