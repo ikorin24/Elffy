@@ -171,7 +171,7 @@ namespace Elffy.Effective
         {
             if(_array is null == false) {
                 ArrayPool<T>.Shared.Return(_array);
-                Unsafe.AsRef(_array) = null;
+                Unsafe.AsRef(_array) = null!;
                 Unsafe.AsRef(Length) = 0;
             }
         }
