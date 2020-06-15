@@ -10,11 +10,7 @@ namespace ElffyGame
 {
     static class Program
     {
-        /// <summary>
-        /// アプリケーションのメイン エントリ ポイントです。
-        /// </summary>
         [STAThread]
-        //static void Main() => ProcessHelper.SingleLaunch(GameStart);
         static void Main() => ProcessHelper.SingleLaunch(() =>
         {
             try {
