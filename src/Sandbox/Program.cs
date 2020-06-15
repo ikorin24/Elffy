@@ -14,9 +14,8 @@ namespace ElffyGame
         /// アプリケーションのメイン エントリ ポイントです。
         /// </summary>
         [STAThread]
-        static void Main() => ProcessHelper.SingleLaunch(GameStart);
-
-        static void GameStart()
+        //static void Main() => ProcessHelper.SingleLaunch(GameStart);
+        static void Main() => ProcessHelper.SingleLaunch(() =>
         {
             try {
                 Engine.Run();
@@ -27,6 +26,6 @@ namespace ElffyGame
                 MessageBox.Show(ex.ToString(), "Error", MessageBoxType.Ok, MessageBoxIcon.Error);
                 return;
             }
-        }
+        });
     }
 }
