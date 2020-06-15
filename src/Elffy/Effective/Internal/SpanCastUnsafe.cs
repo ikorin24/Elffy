@@ -68,14 +68,13 @@ namespace Elffy.Effective.Internal
         }
 
 #if SLOW_SPAN
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static unsafe Span<TTo> CastRefTypeForSlowSpan<TFrom, TTo>(Span<TFrom> span)
         {
             var helper1 = new PointerHelper<TFrom>(span);
             var helper2 = new PointerHelper<TTo>();
-
-            var p1 = (&helper1.Head) + 1;
-            var p2 = (&helper2.Head) + 1;
-
+            var p1 = (&helper1.Head) + 1;       // p1 = &helper1.Span;
+            var p2 = (&helper2.Head) + 1;       // p2 = &helper2.Span;
             *p2 = *p1;                          // ret._pinnale = span._pinnable
             *(p2 + 1) = *(p1 + 1);              // ret._byteOffset = span._byteOffset;
             *(int*)(p2 + 2) = *(int*)(p1 + 2);  // ret._length = span._length;
@@ -85,13 +84,19 @@ namespace Elffy.Effective.Internal
 #endif
 
 #if FAST_SPAN
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static unsafe Span<TTo> CastRefTypeForFastSpan<TFrom, TTo>(Span<TFrom> span)
         {
-            // not impl yet ...
+            var helper1 = new PointerHelper<TFrom>(span);
+            var helper2 = new PointerHelper<TTo>();
+            var p1 = (&helper1.Head) + 1;       // p1 = &helper1.Span;
+            var p2 = (&helper2.Head) + 1;       // p2 = &helper2.Span;
+            *p2 = *p1;                          // ret._pointer = span._pointer;
+            *(int*)(p2 + 1) = *(int*)(p1 + 1);  // ret._length = span._length;
+            return helper2.Span;
         }
 #endif
 
-#if SLOW_SPAN
         [StructLayout(LayoutKind.Sequential)]
         private unsafe readonly ref struct PointerHelper<T>
         {
@@ -99,12 +104,12 @@ namespace Elffy.Effective.Internal
                                                 // (ジェネリックを含むと StructLayout で Explicit にできない)
             public readonly Span<T> Span;
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public PointerHelper(Span<T> span)
             {
                 Head = default;
                 Span = span;
             }
         }
-#endif
     }
 }

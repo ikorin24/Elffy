@@ -6,8 +6,12 @@ using Elffy.Effective.Internal;
 
 namespace Elffy.Effective
 {
+    [DebuggerDisplay("{DebugDisplay}")]
     public readonly struct RefTypeRentMemory<T> : IDisposable where T : class
     {
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private readonly string DebugDisplay => $"{nameof(RefTypeRentMemory<T>)}<{typeof(T).Name}>[{Span.Length}]";
+
         // IMemoryOwner<T> を継承するメリットが特になく、
         // Memory<T> を公開する方法もないので
         // IMemoryOwner<T> は継承しない。
@@ -22,9 +26,19 @@ namespace Elffy.Effective
             get => SpanCastUnsafe.CastRefType<object, T>(_objectMemory.Span);
         }
 
+        public readonly bool IsEmpty
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _objectMemory.IsEmpty;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe RefTypeRentMemory(int length)
         {
+            if(length == 0) {
+                this = default;
+                return;
+            }
             if(!MemoryPool.TryRentObjectMemory<T>(length, out _objectMemory, out _id, out _lender)) {
                 Debug.Assert(_lender < 0);
                 _objectMemory = new object[length];
@@ -34,7 +48,7 @@ namespace Elffy.Effective
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly void Dispose()
         {
-            if(_lender >= 0) {
+            if(!_objectMemory.IsEmpty) {
                 _objectMemory.Span.Clear();     // All elements MUST be cleared, or elements are not collected by GC.
                 MemoryPool.ReturnObjectMemory(_lender, _id);
             }
