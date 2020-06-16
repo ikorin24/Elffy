@@ -86,6 +86,7 @@ namespace Elffy
             _window.TargetRenderFrequency = DisplayDevice.Default.RefreshRate;
             _frameDelta = TimeSpan.FromSeconds(1.0 / _window.TargetRenderFrequency);
             _window.Load += OnLoad;
+            _window.Closed += OnClosed;
             _window.Resize += OnResize;
             _window.RenderFrame += OnRenderFrame;
 
@@ -110,6 +111,11 @@ namespace Elffy
             _window.MouseUp += MouseButtonStateChanged;
             _window.MouseEnter += (sender, e) => Mouse.ChangeOnScreen(true);
             _window.MouseLeave += (sender, e) => Mouse.ChangeOnScreen(false);
+        }
+
+        private void OnClosed(object sender, EventArgs e)
+        {
+            ((IHostScreen)this).Close();
         }
 
         void IHostScreen.Close()
