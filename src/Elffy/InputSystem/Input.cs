@@ -1,10 +1,10 @@
 ﻿#nullable enable
 using Elffy.Effective;
 using Elffy.Exceptions;
-using OpenTK.Input;
+using OpenToolkit.Input;
 using System;
 using System.Collections.Generic;
-using OpenTKKey = OpenTK.Input.Key;
+//using OpenToolkitKey = OpenTK.Input.Key;
 
 namespace Elffy.InputSystem
 {
@@ -14,8 +14,8 @@ namespace Elffy.InputSystem
         private const float DEFAULT_AXIS_MIN_VALUE = 0.1f;
         /// <summary>ゲームパッドの状態</summary>
         private static readonly PadState _pad = new PadState();
-        /// <summary>キーボードの状態</summary>
-        private static KeyboardState _keyboard;
+        ///// <summary>キーボードの状態</summary>
+        //private static KeyboardState _keyboard;
         /// <summary>入力状態名と関連情報</summary>
         private static readonly Dictionary<string, StateNameObject> _stateNames = new Dictionary<string, StateNameObject>();
         /// <summary>入力軸状態名と関連情報</summary>
@@ -146,63 +146,68 @@ namespace Elffy.InputSystem
         #region internal Method
         #region Update
         /// <summary>入力の状態を更新します</summary>
+        [Obsolete()]
         internal static void Update()
         {
-            _pad.Parse(GamePad.GetState(0));
-            _keyboard = Keyboard.GetState();
+            // TODO: OpenTK 4.0 への移行時にAPIが色々変わったので取り合えず何もしない。
+            // もともと このメソッドは static な実装をやめるつもりだったので
+            return;
 
-            // Stateを更新
-            foreach(var sn in _stateNames) {
-                _previousState[sn.Key] = _currentState[sn.Key];
-                _currentState[sn.Key] = _pad.Button[sn.Value.GamepadButton] | _keyboard[(OpenTKKey)sn.Value.Key];
-            }
-            // Axisを更新
-            foreach(var an in _axisNames) {
-                float padValue = 0f;
-                switch(an.Value.Axis) {
-                    case StickAxis.LeftStickX:
-                        padValue = _pad.LeftStick.X;
-                        break;
-                    case StickAxis.LeftStickY:
-                        padValue = _pad.LeftStick.Y;
-                        break;
-                    case StickAxis.RightStickX:
-                        padValue = _pad.RightStick.X;
-                        break;
-                    case StickAxis.RightStickY:
-                        padValue = _pad.RightStick.Y;
-                        break;
-                    default:
-                        break;
-                }
-                if(Math.Abs(padValue) < an.Value.MinValue) {
-                    padValue = 0f;
-                }
-                float keyboardValue = (_keyboard[(OpenTKKey)an.Value.PositiveKey] ? 1 : 0) - (_keyboard[(OpenTKKey)an.Value.NegativeKey] ? 1 : 0);
-                _previousAxis[an.Key] = _currentAxis[an.Key];
-                _currentAxis[an.Key] = Math.Abs(padValue) < Math.Abs(keyboardValue) ? keyboardValue : padValue;
-            }
-            // Triggerを更新
-            foreach(var tn in _triggerNames) {
-                float value = 0f;
-                var name = tn.Key;
-                switch(tn.Value.Trigger) {
-                    case Trigger.RightTrigger:
-                        value = _pad.RightTrigger;
-                        break;
-                    case Trigger.LeftTrigger:
-                        value = _pad.LeftTrigger;
-                        break;
-                    default:
-                        break;
-                }
-                if(Math.Abs(value) < tn.Value.MinValue) {
-                    value = 0f;
-                }
-                float keyboardValue = _keyboard[(OpenTKKey)tn.Value.Key] ? 1 : 0;
-                _previousTrigger[tn.Key] = _currentTrigger[tn.Key];
-                _currentTrigger[tn.Key] = value < keyboardValue ? keyboardValue : value;
-            }
+            //_pad.Parse(GamePad.GetState(0));
+            //_keyboard = Keyboard.GetState();
+
+            //// Stateを更新
+            //foreach(var sn in _stateNames) {
+            //    _previousState[sn.Key] = _currentState[sn.Key];
+            //    _currentState[sn.Key] = _pad.Button[sn.Value.GamepadButton] | _keyboard[(OpenTKKey)sn.Value.Key];
+            //}
+            //// Axisを更新
+            //foreach(var an in _axisNames) {
+            //    float padValue = 0f;
+            //    switch(an.Value.Axis) {
+            //        case StickAxis.LeftStickX:
+            //            padValue = _pad.LeftStick.X;
+            //            break;
+            //        case StickAxis.LeftStickY:
+            //            padValue = _pad.LeftStick.Y;
+            //            break;
+            //        case StickAxis.RightStickX:
+            //            padValue = _pad.RightStick.X;
+            //            break;
+            //        case StickAxis.RightStickY:
+            //            padValue = _pad.RightStick.Y;
+            //            break;
+            //        default:
+            //            break;
+            //    }
+            //    if(Math.Abs(padValue) < an.Value.MinValue) {
+            //        padValue = 0f;
+            //    }
+            //    float keyboardValue = (_keyboard[(OpenTKKey)an.Value.PositiveKey] ? 1 : 0) - (_keyboard[(OpenTKKey)an.Value.NegativeKey] ? 1 : 0);
+            //    _previousAxis[an.Key] = _currentAxis[an.Key];
+            //    _currentAxis[an.Key] = Math.Abs(padValue) < Math.Abs(keyboardValue) ? keyboardValue : padValue;
+            //}
+            //// Triggerを更新
+            //foreach(var tn in _triggerNames) {
+            //    float value = 0f;
+            //    var name = tn.Key;
+            //    switch(tn.Value.Trigger) {
+            //        case Trigger.RightTrigger:
+            //            value = _pad.RightTrigger;
+            //            break;
+            //        case Trigger.LeftTrigger:
+            //            value = _pad.LeftTrigger;
+            //            break;
+            //        default:
+            //            break;
+            //    }
+            //    if(Math.Abs(value) < tn.Value.MinValue) {
+            //        value = 0f;
+            //    }
+            //    float keyboardValue = _keyboard[(OpenTKKey)tn.Value.Key] ? 1 : 0;
+            //    _previousTrigger[tn.Key] = _currentTrigger[tn.Key];
+            //    _currentTrigger[tn.Key] = value < keyboardValue ? keyboardValue : value;
+            //}
         }
         #endregion
 

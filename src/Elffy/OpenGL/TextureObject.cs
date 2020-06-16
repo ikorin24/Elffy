@@ -2,13 +2,13 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
-using OpenTK.Graphics.OpenGL;
+using OpenToolkit.Graphics.OpenGL;
 using Elffy.Core;
 using Elffy.Imaging;
 using System.Drawing;
 using System.Drawing.Imaging;
 using PixelFormat = System.Drawing.Imaging.PixelFormat;
-using TKPixelFormat = OpenTK.Graphics.OpenGL.PixelFormat;
+using TKPixelFormat = OpenToolkit.Graphics.OpenGL.PixelFormat;
 
 namespace Elffy.OpenGL
 {

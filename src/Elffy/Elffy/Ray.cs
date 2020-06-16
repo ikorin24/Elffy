@@ -1,6 +1,6 @@
 ﻿#nullable enable
 using Elffy.Exceptions;
-using OpenTK;
+using OpenToolkit;
 using System.Runtime.CompilerServices;
 
 namespace Elffy

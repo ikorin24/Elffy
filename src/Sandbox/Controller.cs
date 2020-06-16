@@ -1,5 +1,5 @@
 ﻿using Elffy.InputSystem;
-using OpenTK;
+using Elffy;
 using System;
 using System.Collections.Generic;
 using System.Linq;

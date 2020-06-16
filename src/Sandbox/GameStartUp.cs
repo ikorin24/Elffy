@@ -8,10 +8,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Drawing;
-using OpenTK;
+//using OpenTK;
 using Elffy.Framing;
 using Elffy.Shape;
-using OpenTK.Graphics;
+//using OpenTK.Graphics;
 using Elffy.Serialization;
 
 namespace ElffyGame

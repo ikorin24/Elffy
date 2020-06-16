@@ -1,5 +1,5 @@
 ﻿#nullable enable
-using OpenTK;
+using OpenToolkit;
 using System;
 using System.Drawing;
 using System.Collections.Generic;
@@ -7,7 +7,7 @@ using System.Diagnostics;
 using Elffy.Exceptions;
 using Elffy.InputSystem;
 using Elffy.Core;
-using OpenTK.Graphics;
+using OpenToolkit.Graphics;
 
 namespace Elffy.UI
 {

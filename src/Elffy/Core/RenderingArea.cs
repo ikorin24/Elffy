@@ -3,7 +3,7 @@ using Elffy.Exceptions;
 using Elffy.InputSystem;
 using Elffy.Threading;
 using Elffy.UI;
-using OpenTK.Graphics.OpenGL;
+using OpenToolkit.Graphics.OpenGL;
 using System;
 using System.Drawing;
 

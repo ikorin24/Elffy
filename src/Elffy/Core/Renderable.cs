@@ -1,6 +1,6 @@
 ﻿#nullable enable
 using System;
-using OpenTK.Graphics.OpenGL;
+using OpenToolkit.Graphics.OpenGL;
 using Elffy.Threading;
 using Elffy.Exceptions;
 using Elffy.Shading;

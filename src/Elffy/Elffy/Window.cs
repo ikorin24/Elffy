@@ -1,16 +1,23 @@
 ﻿#nullable enable
-using OpenTK;
-using OpenTK.Graphics;
+using OpenToolkit;
+using OpenToolkit.Graphics;
 using System;
 using Elffy.UI;
 using Elffy.Core;
 using Elffy.Threading;
 using Elffy.InputSystem;
 using System.Drawing;
-using TKMouseButton = OpenTK.Input.MouseButton;
-using TKMouseButtonEventArgs = OpenTK.Input.MouseButtonEventArgs;
+//using TKMouseButton = OpenTK.Input.MouseButton;
+using TKMouseButton = OpenToolkit.Windowing.Common.Input.MouseButton;
+//using TKMouseButtonEventArgs = OpenTK.Input.MouseButtonEventArgs;
+using TKMouseButtonEventArgs = OpenToolkit.Windowing.Common.MouseButtonEventArgs;
+
 using Elffy.Core.Timer;
 using Elffy.Effective.Internal;
+using OpenToolkit.Windowing.Desktop;
+using OpenToolkit.Windowing.Common;
+using System.Runtime.CompilerServices;
+using OpenToolkit.Mathematics;
 
 namespace Elffy
 {
@@ -41,9 +48,17 @@ namespace Elffy
 
         public VSyncMode VSync { get => _window.VSync; set => _window.VSync = value; }
 
-        public Size ClientSize { get => _window.ClientSize; set => _window.ClientSize = value; }
+        //public Size ClientSize { get => _window.ClientSize; set => _window.ClientSize = value; }
+        public Vector2i ClientSize
+        {
+            get => _window.ClientSize;
+            set
+            {
+                throw new NotImplementedException();    // TODO: opentk 4.0 への移行中
+            }
+        }
 
-        public Icon Icon { get => _window.Icon; set => _window.Icon = value; }
+        //public Icon Icon { get => _window.Icon; set => _window.Icon = value; }
 
         public string Title { get => _window.Title; set => _window.Title = value; }
 
@@ -78,42 +93,88 @@ namespace Elffy
         public Window(int width, int height, string title, WindowStyle windowStyle, YAxisDirection yAxisDirection)
         {
             _renderingArea = new RenderingArea(yAxisDirection, this);
-            _window = new GameWindow(width, height, GraphicsMode.Default, title, (GameWindowFlags)windowStyle);
-            if(windowStyle != WindowStyle.Fullscreen) {
-                _window.ClientSize = new Size(width, height);
-            }
+            //_window = new GameWindow(width, height, GraphicsMode.Default, title, (GameWindowFlags)windowStyle);
+
+            var gwSetting = new GameWindowSettings()
+            {
+                IsMultiThreaded = false,
+                RenderFrequency = 60.0,
+                UpdateFrequency = 60.0,
+            };
+            var nwSetting = new NativeWindowSettings()
+            {
+                Title = title,
+                Size = new Vector2i(width, height),     // TODO: クライアントサイズなのかどうか要確認
+                IsFullscreen = windowStyle == WindowStyle.Fullscreen,
+                IsEventDriven = false,
+                WindowBorder = (windowStyle == WindowStyle.FixedWindow) ? WindowBorder.Fixed : WindowBorder.Resizable,
+                StartVisible = true,
+                StartFocused = false,
+                Profile = ContextProfile.Core,
+                Location = null,
+            };
+            _window = new GameWindow(gwSetting, nwSetting);
             _window.VSync = VSyncMode.On;
-            _window.TargetRenderFrequency = DisplayDevice.Default.RefreshRate;
-            _frameDelta = TimeSpan.FromSeconds(1.0 / _window.TargetRenderFrequency);
+            _frameDelta = TimeSpan.FromSeconds(1.0 / gwSetting.RenderFrequency);
             _window.Load += OnLoad;
             _window.Closed += OnClosed;
             _window.Resize += OnResize;
             _window.RenderFrame += OnRenderFrame;
 
-            MouseButton? GetMouseButton(TKMouseButton button) => button switch
+            //if(windowStyle != WindowStyle.Fullscreen) {
+            //    _window.ClientSize = new Size(width, height);
+            //}
+            //_window.TargetRenderFrequency = DisplayDevice.Default.RefreshRate;
+            //_frameDelta = TimeSpan.FromSeconds(1.0 / _window.TargetRenderFrequency);
+            //_window.Load += OnLoad;
+            //_window.Closed += OnClosed;
+            //_window.Resize += OnResize;
+            //_window.RenderFrame += OnRenderFrame;
+
+            //OpenToolkit.Windowing.Common.Input.MouseButton
+
+            //MouseButton? GetMouseButton(TKMouseButton button) => button switch
+            //{
+            //    TKMouseButton.Left => MouseButton.Left,
+            //    TKMouseButton.Right => MouseButton.Right,
+            //    TKMouseButton.Middle => MouseButton.Middle,
+            //    _ => (MouseButton?)null
+            //};
+
+            void MouseButtonStateChanged(TKMouseButtonEventArgs e)
             {
-                TKMouseButton.Left => MouseButton.Left,
-                TKMouseButton.Right => MouseButton.Right,
-                TKMouseButton.Middle => MouseButton.Middle,
-                _ => (MouseButton?)null
+                switch(e.Button) {
+                    case TKMouseButton.Left:
+                        Mouse.ChangePressedState(MouseButton.Left, e.IsPressed);
+                        break;
+                    case TKMouseButton.Middle:
+                        Mouse.ChangePressedState(MouseButton.Middle, e.IsPressed);
+                        break;
+                    case TKMouseButton.Right:
+                        Mouse.ChangePressedState(MouseButton.Right, e.IsPressed);
+                        break;
+                    default:
+                        break;
+                }
             };
 
-            void MouseButtonStateChanged(object sender, TKMouseButtonEventArgs e)
-            {
-                var button = GetMouseButton(e.Button);
-                if(button == null) { return; }
-                Mouse.ChangePressedState(button.Value, e.IsPressed);
-            };
-
-            _window.MouseMove += (sender, e) => Mouse.ChangePosition(new Point(e.X, e.Y));
-            _window.MouseWheel += (sender, e) => Mouse.ChangeWheel(e.Mouse.WheelPrecise);
+            _window.MouseMove += e => Mouse.ChangePosition(new Point((int)e.X, (int)e.Y));
+            _window.MouseWheel += e => Mouse.ChangeWheel(e.OffsetY);
             _window.MouseDown += MouseButtonStateChanged;
             _window.MouseUp += MouseButtonStateChanged;
-            _window.MouseEnter += (sender, e) => Mouse.ChangeOnScreen(true);
-            _window.MouseLeave += (sender, e) => Mouse.ChangeOnScreen(false);
+            _window.MouseEnter += () => Mouse.ChangeOnScreen(true);
+            _window.MouseLeave += () => Mouse.ChangeOnScreen(false);
+
+
+            //_window.MouseMove += (sender, e) => Mouse.ChangePosition(new Point(e.X, e.Y));
+            //_window.MouseWheel += (sender, e) => Mouse.ChangeWheel(e.Mouse.WheelPrecise);
+            //_window.MouseDown += MouseButtonStateChanged;
+            //_window.MouseUp += MouseButtonStateChanged;
+            //_window.MouseEnter += (sender, e) => Mouse.ChangeOnScreen(true);
+            //_window.MouseLeave += (sender, e) => Mouse.ChangeOnScreen(false);
         }
 
-        private void OnClosed(object sender, EventArgs e)
+        private void OnClosed()
         {
             ((IHostScreen)this).Close();
         }
@@ -130,7 +191,7 @@ namespace Elffy
         void IHostScreen.Show(int width, int height, string title, Icon? icon, WindowStyle windowStyle)
         {
             Title = title;
-            if(icon != null) { Icon = icon; }
+            //if(icon != null) { Icon = icon; }     // TODO: OpenTK 4.0 への移行中
             switch(windowStyle) {
                 case WindowStyle.Default: {
                     _window.WindowBorder = WindowBorder.Resizable;
@@ -153,7 +214,7 @@ namespace Elffy
             _window.Run();
         }
 
-        private void OnLoad(object sender, EventArgs e)
+        private void OnLoad()
         {
             Dispatcher.ThrowIfNotMainThread();
             CustomSynchronizationContext.CreateIfNeeded(_syncContextReciever);
@@ -166,13 +227,14 @@ namespace Elffy
             }
         }
 
-        private void OnResize(object sender, EventArgs e)
+        private void OnResize(ResizeEventArgs e)
         {
             Dispatcher.ThrowIfNotMainThread();
-            _renderingArea.Size = _window.ClientSize;
+            //_renderingArea.Size = _window.ClientSize;
+            _renderingArea.Size = new Size(_window.ClientSize.X, _window.ClientSize.Y);
         }
 
-        private void OnRenderFrame(object sender, FrameEventArgs e)
+        private void OnRenderFrame(FrameEventArgs e)
         {
             Input.Update();     // TODO: static をやめる
             Mouse.InitFrame();

@@ -3,7 +3,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using Elffy.Core;
-using OpenTK.Graphics.OpenGL;
+using OpenToolkit.Graphics.OpenGL;
 
 namespace Elffy.Shading
 {

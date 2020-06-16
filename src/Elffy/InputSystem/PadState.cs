@@ -1,8 +1,10 @@
 ﻿#nullable enable
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using OpenTK;
-using OpenTK.Input;
+using OpenToolkit;
+using OpenToolkit.Input;
+using OpenToolkit.Windowing.GraphicsLibraryFramework;
 
 namespace Elffy.InputSystem
 {
@@ -27,36 +29,38 @@ namespace Elffy.InputSystem
         #region Parse
         /// <summaryGapPadStateからの読み取り</summary>
         /// <param name="state">GamePadState</param>
-        public void Parse(GamePadState state)
+        public unsafe void Parse(GamepadState state)
         {
-            IsAnyButtonPressed = state.Buttons.IsAnyButtonPressed;
+            throw new NotImplementedException("OpenTK 4.0 への移行中");
 
-            // 各ボタン
-            _button[0] = state.Buttons.A == ButtonState.Pressed;
-            _button[1] = state.Buttons.B == ButtonState.Pressed;
-            _button[2] = state.Buttons.X == ButtonState.Pressed;
-            _button[3] = state.Buttons.Y == ButtonState.Pressed;
-            _button[4] = state.Buttons.Start == ButtonState.Pressed;
-            _button[5] = state.Buttons.Back == ButtonState.Pressed;
-            _button[6] = state.Buttons.BigButton == ButtonState.Pressed;
-            _button[7] = state.Buttons.LeftStick == ButtonState.Pressed;
-            _button[8] = state.Buttons.LeftShoulder == ButtonState.Pressed;
-            _button[9] = state.Buttons.RightStick == ButtonState.Pressed;
-            _button[10] = state.Buttons.RightShoulder == ButtonState.Pressed;
+            //IsAnyButtonPressed = state.Buttons.IsAnyButtonPressed;
 
-            // 十字キー
-            _button[11] = state.DPad.IsUp;
-            _button[12] = state.DPad.IsDown;
-            _button[13] = state.DPad.IsRight;
-            _button[14] = state.DPad.IsLeft;
+            //// 各ボタン
+            //_button[0] = state.Buttons.A == ButtonState.Pressed;
+            //_button[1] = state.Buttons.B == ButtonState.Pressed;
+            //_button[2] = state.Buttons.X == ButtonState.Pressed;
+            //_button[3] = state.Buttons.Y == ButtonState.Pressed;
+            //_button[4] = state.Buttons.Start == ButtonState.Pressed;
+            //_button[5] = state.Buttons.Back == ButtonState.Pressed;
+            //_button[6] = state.Buttons.BigButton == ButtonState.Pressed;
+            //_button[7] = state.Buttons.LeftStick == ButtonState.Pressed;
+            //_button[8] = state.Buttons.LeftShoulder == ButtonState.Pressed;
+            //_button[9] = state.Buttons.RightStick == ButtonState.Pressed;
+            //_button[10] = state.Buttons.RightShoulder == ButtonState.Pressed;
 
-            // スティック
-            LeftStick = state.ThumbSticks.Left;
-            RightStick = state.ThumbSticks.Right;
+            //// 十字キー
+            //_button[11] = state.DPad.IsUp;
+            //_button[12] = state.DPad.IsDown;
+            //_button[13] = state.DPad.IsRight;
+            //_button[14] = state.DPad.IsLeft;
 
-            // トリガー
-            LeftTrigger = state.Triggers.Left;
-            RightTrigger = state.Triggers.Right;
+            //// スティック
+            //LeftStick = state.ThumbSticks.Left;
+            //RightStick = state.ThumbSticks.Right;
+
+            //// トリガー
+            //LeftTrigger = state.Triggers.Left;
+            //RightTrigger = state.Triggers.Right;
         }
         #endregion
     }

@@ -3,7 +3,7 @@ using System;
 using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using TKColor4 = OpenTK.Graphics.Color4;
+using TKColor4 = OpenToolkit.Mathematics.Color4;
 
 namespace Elffy
 {

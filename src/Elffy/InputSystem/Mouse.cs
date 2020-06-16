@@ -2,7 +2,7 @@
 using System;
 using System.Drawing;
 using Elffy.Effective;
-using OpenTK;
+using OpenToolkit;
 
 namespace Elffy.InputSystem
 {

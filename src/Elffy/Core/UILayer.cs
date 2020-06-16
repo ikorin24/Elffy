@@ -1,7 +1,7 @@
 ﻿#nullable enable
 using Elffy.InputSystem;
 using Elffy.UI;
-using OpenTK.Graphics.OpenGL;
+using OpenToolkit.Graphics.OpenGL;
 using System;
 using System.Linq;
 

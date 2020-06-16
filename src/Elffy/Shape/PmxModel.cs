@@ -8,7 +8,7 @@ using Elffy.Core;
 using Elffy.Effective;
 using Elffy.Imaging;
 using Elffy.Components;
-using OpenTK.Graphics.OpenGL;
+using OpenToolkit.Graphics.OpenGL;
 using UnmanageUtility;
 using PMXParser = MMDTools.Unmanaged.PMXParser;
 using PMXObject = MMDTools.Unmanaged.PMXObject;

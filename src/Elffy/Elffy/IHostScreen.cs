@@ -1,11 +1,13 @@
 ﻿#nullable enable
 using Elffy.InputSystem;
 using Elffy.UI;
-using OpenTK;
+using OpenToolkit;
 using System.Drawing;
 using Elffy.Threading;
 using Elffy.Core.Timer;
 using System;
+using OpenToolkit.Windowing.Common;
+using OpenToolkit.Mathematics;
 
 namespace Elffy
 {
@@ -21,7 +23,9 @@ namespace Elffy
         /// <summary>UIのルートオブジェクト</summary>
         Page UIRoot { get; }
         /// <summary>描画領域のサイズ [pixel]</summary>
-        Size ClientSize { get; set; }
+        //Size ClientSize { get; set; }
+        Vector2i ClientSize { get; set; }
+
         /// <summary><see cref="FrameObject"/> を保持するためのレイヤーのリスト</summary>
         LayerCollection Layers { get; }
 
