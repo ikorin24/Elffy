@@ -92,18 +92,18 @@ namespace Elffy.Core
             if(mouse.OnScreen) {
                 // Hit control is the last control where mouse over test is true
                 var hitControl = default(Control);
-                foreach(var control in uiRoot.Children) {
+                foreach(var control in uiRoot.Children.AsReadOnlySpan()) {
                     if(control.MouseOverTest(pos)) {
                         hitControl = control;
                     }
                 }
-                foreach(var control in uiRoot.Children) {
-                    control.NotifyHitTestResult(control == hitControl, pos);
+                foreach(var control in uiRoot.Children.AsReadOnlySpan()) {
+                    control.NotifyHitTestResult(control == hitControl, pos);    // TODO: ヒット時イベント中に control を remove されるとまずい (Spanで回してるので)
                 }
             }
             else {
-                foreach(var control in uiRoot.Children) {
-                    control.NotifyHitTestResult(false, pos);
+                foreach(var control in uiRoot.Children.AsReadOnlySpan()) {
+                    control.NotifyHitTestResult(false, pos);                    // TODO: ヒット時イベント中に control を remove されるとまずい (Spanで回してるので)
                 }
             }
         }

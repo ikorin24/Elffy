@@ -1,5 +1,7 @@
 ﻿#nullable enable
+using Elffy.Effective.Internal;
 using Elffy.Exceptions;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -80,10 +82,6 @@ namespace Elffy.UI
         /// <param name="arrayIndex">コピー先の配列のコピーを開始するインデックス</param>
         public void CopyTo(Control[] array, int arrayIndex) => _list.CopyTo(array, arrayIndex);
 
-        /// <summary>列挙子を取得します</summary>
-        /// <returns>列挙子</returns>
-        public IEnumerator<Control> GetEnumerator() => _list.GetEnumerator();
-
         /// <summary>指定要素のインデックスを取得します</summary>
         /// <param name="item">インデックスを取得する要素</param>
         /// <returns>要素のインデックス</returns>
@@ -124,6 +122,16 @@ namespace Elffy.UI
             _list[index].Renderable.Terminate();
             _list.RemoveAt(index);
         }
+
+        internal ReadOnlySpan<Control> AsReadOnlySpan() => _list.AsReadOnlySpan();
+
+        /// <summary>列挙子を取得します</summary>
+        /// <returns>列挙子</returns>
+        public List<Control>.Enumerator GetEnumerator() => _list.GetEnumerator();
+
+        /// <summary>列挙子を取得します</summary>
+        /// <returns>列挙子</returns>
+        IEnumerator<Control> IEnumerable<Control>.GetEnumerator() => _list.GetEnumerator();
 
         /// <summary>列挙子を取得します</summary>
         /// <returns>列挙子</returns>
