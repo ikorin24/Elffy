@@ -23,32 +23,35 @@ namespace Elffy.Effective
         }, LazyThreadSafetyMode.ExecutionAndPublication);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static unsafe bool TryRentByteMemory<T>(int length, out Memory<byte> memory, out int id, out int lenderNum) where T : unmanaged
+        internal static unsafe bool TryRentByteMemory<T>(int length, out byte[]? array, out int start, out int rentByteLength, out int id, out int lenderNum) where T : unmanaged
         {
             Debug.Assert(typeof(T).IsValueType);
             var byteLength = sizeof(T) * length;
             var lenders = _lenders.Value;
             for(int i = 0; i < lenders.Length; i++) {
-                if(byteLength <= lenders[i].SegmentSize && lenders[i].TryRent(out var segment, out id)) {
-                    memory = segment.Slice(0, byteLength);
+                if(byteLength <= lenders[i].SegmentSize && lenders[i].TryRent(out array, out start, out var byteMemoryLength, out id)) {
+                    Debug.Assert(byteLength <= byteMemoryLength);
                     lenderNum = i;
+                    rentByteLength = byteLength;
                     return true;
                 }
             }
-            memory = Memory<byte>.Empty;
+            array = null;
+            start = 0;
+            rentByteLength = 0;
             lenderNum = -1;
             id = -1;
             return false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static bool TryRentObjectMemory<T>(int length, out Memory<object> memory, out int id, out int lenderNum)
+        internal static bool TryRentObjectMemory(int length, out Memory<object> memory, out int id, out int lenderNum)
         {
-            Debug.Assert(typeof(T).IsValueType == false);
             var lenders = _objLenders.Value;
             for(int i = 0; i < lenders.Length; i++) {
-                if(length <= lenders[i].SegmentSize && lenders[i].TryRent(out var segment, out id)) {
-                    memory = segment.Slice(0, length);
+                if(length <= lenders[i].SegmentSize && lenders[i].TryRent(out var array, out var start, out var rentMemoryLength, out id)) {
+                    Debug.Assert(length <= rentMemoryLength);
+                    memory = array.AsMemory(start, length);
                     lenderNum = i;
                     return true;
                 }
@@ -148,12 +151,14 @@ namespace Elffy.Effective
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool TryRent(out Memory<T> memory, out int segID)
+            public bool TryRent(out T[]? array, out int start, out int length, out int segID)
             {
                 lock(_syncRoot) {
                     if(_availableHead >= _availableIDStack.Length) {
                         segID = -1;
-                        memory = Memory<T>.Empty;
+                        array = null;
+                        start = 0;
+                        length = 0;
                         return false;
                     }
                     segID = _availableIDStack[_availableHead];
@@ -161,7 +166,9 @@ namespace Elffy.Effective
                     _availableHead++;
                     _segmentState[segID] = true;
                 }
-                memory = _array.AsMemory(segID * SegmentSize, SegmentSize);
+                array = _array;
+                start = segID * SegmentSize;
+                length = SegmentSize;
                 return true;
             }
 

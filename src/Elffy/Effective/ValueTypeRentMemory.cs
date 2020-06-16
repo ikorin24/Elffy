@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 namespace Elffy.Effective
 {
     [DebuggerDisplay("{DebugDisplay}")]
-    public readonly struct ValueTypeRentMemory<T> : IDisposable where T : unmanaged
+    public readonly struct ValueTypeRentMemory<T> : IEquatable<ValueTypeRentMemory<T>>, IDisposable where T : unmanaged
     {
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private readonly string DebugDisplay => $"{nameof(ValueTypeRentMemory<T>)}<{typeof(T).Name}>[{Span.Length}]";
@@ -16,20 +16,23 @@ namespace Elffy.Effective
         // Memory<T> を公開する方法もないので
         // IMemoryOwner<T> は継承しない。
 
+        private readonly byte[]? _array;
+        private readonly IntPtr _start;
+        private readonly int _byteLength;
         private readonly int _id;
         private readonly int _lender;
-        private readonly Memory<byte> _byteMemory;
 
-        public readonly Span<T> Span
+        public unsafe readonly Span<T> Span
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => MemoryMarshal.Cast<byte, T>(_byteMemory.Span);
+            get => _array is null ? new Span<T>((void*)_start, _byteLength / sizeof(T))
+                                  : MemoryMarshal.Cast<byte, T>(_array.AsSpan(_start.ToInt32(), _byteLength));
         }
 
         public readonly bool IsEmpty
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _byteMemory.IsEmpty;
+            get => _byteLength == 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -39,18 +42,45 @@ namespace Elffy.Effective
                 this = default;
                 return;
             }
-            if(!MemoryPool.TryRentByteMemory<T>(length, out _byteMemory, out _id, out _lender)) {
-                Debug.Assert(_lender < 0);
-                _byteMemory = new byte[sizeof(T) * length];
+            if(MemoryPool.TryRentByteMemory<T>(length, out _array, out int start, out _byteLength, out _id, out _lender)) {
+                Debug.Assert(_array is null == false);
+                _start = new IntPtr(start);
+            }
+            else {
+                Debug.Assert(_lender < 0 && _id < 0);
+                Debug.Assert(_array is null && start == 0 && _byteLength == 0);
+                _byteLength = sizeof(T) * length;
+                _start = Marshal.AllocHGlobal(_byteLength);
             }
         }
 
+        /// <summary>
+        /// ※ 絶対に二重解放してはいけない。構造体は二重解放を検知して防止することができない。
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly void Dispose()
         {
-            if(!_byteMemory.IsEmpty) {
+            if(_array is null) {
+                // new ValueTypeRentMemory().Dispose() した場合 _array is null だが
+                // _start も 0 なので問題ない。Marshal.FreeHGlobal は 0 の時は何もしないことが保証されている。
+                Marshal.FreeHGlobal(_start);
+            }
+            else if(!IsEmpty) {
                 MemoryPool.ReturnByteMemory(_lender, _id);
             }
+        }
+
+        public override bool Equals(object? obj) => obj is ValueTypeRentMemory<T> memory && Equals(memory);
+
+        public override int GetHashCode() => HashCode.Combine(_array, _start, _byteLength, _id, _lender);
+
+        public bool Equals(ValueTypeRentMemory<T> other)
+        {
+            return ReferenceEquals(_array, other._array) &&
+                   _start.Equals(other._start) &&
+                   _byteLength == other._byteLength &&
+                   _id == other._id &&
+                   _lender == other._lender;
         }
     }
 }

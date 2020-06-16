@@ -16,9 +16,9 @@ namespace Elffy.Effective
         // Memory<T> を公開する方法もないので
         // IMemoryOwner<T> は継承しない。
 
+        private readonly Memory<object> _objectMemory;
         private readonly int _id;
         private readonly int _lender;
-        private readonly Memory<object> _objectMemory;
 
         public readonly Span<T> Span
         {
@@ -39,9 +39,9 @@ namespace Elffy.Effective
                 this = default;
                 return;
             }
-            if(!MemoryPool.TryRentObjectMemory<T>(length, out _objectMemory, out _id, out _lender)) {
-                Debug.Assert(_lender < 0);
-                _objectMemory = new object[length];
+            if(!MemoryPool.TryRentObjectMemory(length, out _objectMemory, out _id, out _lender)) {
+                Debug.Assert(_lender < 0 && _id < 0);
+                _objectMemory = new object[length];     // TODO: できれば new は避けたい。あと構造体の等価比較の実装
             }
         }
 
