@@ -58,7 +58,6 @@ namespace Elffy.Effective.Internal
             Debug.Assert(typeof(TFrom).IsClass);
             Debug.Assert(typeof(TTo).IsClass);
 
-            // Only for slow span implementation (.NET Core 2.0 or before)
 #if SLOW_SPAN
             return CastRefTypeForSlowSpan<TFrom, TTo>(span);
 #endif
@@ -100,7 +99,7 @@ namespace Elffy.Effective.Internal
         [StructLayout(LayoutKind.Sequential)]
         private unsafe readonly ref struct PointerHelper<T>
         {
-            public readonly nint Head;          // アライメントにパディングが入っては困るので uint 型にしておく 
+            public readonly nint Head;          // アライメントにパディングが入っては困るので nint 型にしておく 
                                                 // (ジェネリックを含むと StructLayout で Explicit にできない)
             public readonly Span<T> Span;
 
