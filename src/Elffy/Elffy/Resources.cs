@@ -206,7 +206,7 @@ namespace Elffy
 
         public override bool CanRead => true;
 
-        public override bool CanSeek => false;
+        public override bool CanSeek => true;
 
         public override bool CanWrite => false;
 
@@ -272,7 +272,25 @@ namespace Elffy
             base.Dispose(disposing);
         }
 
-        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+        public override long Seek(long offset, SeekOrigin origin)
+        {
+            long newPos = 0;
+            switch(origin) {
+                case SeekOrigin.Begin:
+                    newPos = offset;
+                    break;
+                case SeekOrigin.Current:
+                    newPos = (_innerStream.Position - _head) + offset;
+                    break;
+                case SeekOrigin.End:
+                    newPos = _length - offset;
+                    break;
+                default:
+                    break;
+            }
+            Position = newPos;
+            return newPos;
+        }
         public override void Flush() => throw new NotSupportedException();
         public override void SetLength(long value) => throw new NotSupportedException();
         public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
