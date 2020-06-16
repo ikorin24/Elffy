@@ -1,10 +1,9 @@
-﻿using OpenToolkit.Windowing.Common;
+﻿#nullable enable
+using OpenToolkit.Windowing.Common;
 using OpenToolkit.Windowing.Desktop;
 using OpenToolkit.Windowing.GraphicsLibraryFramework;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,31 +11,11 @@ namespace Elffy.Core
 {
     internal sealed class CustomGameWindow : NativeWindow
     {
-        /// <inheritdoc/>
-        public event Action? Load;
-
-        /// <inheritdoc/>
-        public event Action? Unload;
-
-        /// <inheritdoc/>
-        public event Action<FrameEventArgs>? UpdateFrame;
-
-        /// <inheritdoc/>
-        public event Action? RenderThreadStarted;
-
-        /// <inheritdoc/>
-        public event Action<FrameEventArgs>? RenderFrame;
-
-        /// <summary>
-        /// Frequency cap for Update/RenderFrame events.
-        /// </summary>
         private const double MaxFrequency = 500.0;
 
         private readonly Stopwatch _watchRender = new Stopwatch();
         private readonly Stopwatch _watchUpdate = new Stopwatch();
 
-        // private IGraphicsContext glContext;
-        
         /// <summary>
         /// Gets a value indicating whether or not UpdatePeriod has consistently failed to reach TargetUpdatePeriod.
         /// This can be used to do things such as decreasing visual quality if the user's computer isn't powerful enough
@@ -48,15 +27,13 @@ namespace Elffy.Core
 
         private double _renderFrequency;
         private double _updateFrequency;
+        private VSyncMode _vSync;
 
-        /// <inheritdoc/>
         public bool IsMultiThreaded { get; }
 
-        /// <inheritdoc />
         public double RenderFrequency
         {
             get => _renderFrequency;
-
             set
             {
                 if(value <= 1.0) {
@@ -71,7 +48,6 @@ namespace Elffy.Core
             }
         }
 
-        /// <inheritdoc />
         public double UpdateFrequency
         {
             get => _updateFrequency;
@@ -90,9 +66,6 @@ namespace Elffy.Core
             }
         }
 
-        private VSyncMode _vSync;
-
-        /// <inheritdoc />
         public VSyncMode VSync
         {
             get => _vSync;
@@ -116,11 +89,19 @@ namespace Elffy.Core
             }
         }
 
+        public event Action? Load;
+
+        public event Action? Unload;
+
+        public event Action<FrameEventArgs>? UpdateFrame;
+
+        public event Action<FrameEventArgs>? RenderFrame;
+
         public CustomGameWindow(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
             : base(nativeWindowSettings)
         {
             IsMultiThreaded = gameWindowSettings.IsMultiThreaded;
-
+            //IsMultiThreaded = true;
             RenderFrequency = gameWindowSettings.RenderFrequency;
             UpdateFrequency = gameWindowSettings.UpdateFrequency;
         }
@@ -130,30 +111,29 @@ namespace Elffy.Core
             IsVisible = true;
             Load?.Invoke();
             OnResize(new ResizeEventArgs(Size));
-
             if(IsMultiThreaded) {
-                Task.Factory.StartNew(StartRenderThread);       // TODO: Close 時に終了する
+                Task.Factory.StartNew(StartUpdateThread);       // TODO: Close 時に終了する
             }
-
+            else {
+                _watchUpdate.Start();
+            }
             _watchRender.Start();
-            _watchUpdate.Start();
             while(true) {
                 if(!Exists || IsExiting) { return; }
 
-                DispatchUpdateFrame();
                 if(!IsMultiThreaded) {
-                    DispatchRenderFrame();
+                    DispatchUpdateFrame();
                 }
+                DispatchRenderFrame();
                 Thread.Sleep(1);    // TODO: アイドル時のCPU使用率を下げるのが目的だが時間を無駄にするのは困るので、直近の何フレームかの速度を見ていい感じにする
             }
         }
 
-        private void StartRenderThread()
+        private void StartUpdateThread()
         {
-            RenderThreadStarted?.Invoke();
-            _watchRender.Start();
+            _watchUpdate.Start();
             while(Exists && !IsExiting) {
-                DispatchRenderFrame();
+                DispatchUpdateFrame();
             }
         }
 
@@ -209,11 +189,9 @@ namespace Elffy.Core
         }
 
         /// <inheritdoc />
-        public void SwapBuffers()
+        public unsafe void SwapBuffers()
         {
-            unsafe {
-                GLFW.SwapBuffers(WindowPtr);
-            }
+            GLFW.SwapBuffers(WindowPtr);
         }
 
         /// <inheritdoc />
