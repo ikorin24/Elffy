@@ -36,10 +36,11 @@ namespace Elffy
             try {
                 IHostScreen screen;
                 switch(Platform.PlatformType) {
-                    case PlatformType.Windows: {
-                        screen = new FormScreen(uiYAxisDirection);
-                        break;
-                    }
+                    //case PlatformType.Windows: {
+                    //    screen = new FormScreen(uiYAxisDirection);
+                    //    break;
+                    //}
+                    case PlatformType.Windows:
                     case PlatformType.MacOSX:
                     case PlatformType.Unix: {
                         screen = new Window(width, height, title, windowStyle, uiYAxisDirection);
