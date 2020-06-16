@@ -19,7 +19,6 @@ namespace Elffy
             if(IsRunning) { throw new InvalidOperationException("Engine is already runnning."); }
             IsRunning = true;
             Dispatcher.SetMainThreadID();
-            Resources.Initialize();
         }
 
         public static void ShowScreen(ActionEventHandler<IHostScreen> initialized)

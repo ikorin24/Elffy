@@ -34,9 +34,9 @@ namespace Elffy
 
         internal static bool IsInitialized { get; private set; }
 
-        #region Initialize
-        internal static void Initialize()
+        public static void Initialize()
         {
+            if(IsInitialized) { return; }
             try {
                 CreateDictionary();
             }
@@ -47,7 +47,6 @@ namespace Elffy
             }
             IsInitialized = true;
         }
-        #endregion
 
         internal static string[] GetResourceNames()
         {

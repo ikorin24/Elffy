@@ -14,6 +14,7 @@ namespace ElffyGame
         static void Main() => ProcessHelper.SingleLaunch(() =>
         {
             try {
+                Resources.Initialize();
                 Engine.Run();
                 Engine.ShowScreen(1600, 900, "Game", Resources.LoadIcon("icon.ico"), WindowStyle.Default, YAxisDirection.TopToBottom, screen => Scenario.Start(screen));
             }
