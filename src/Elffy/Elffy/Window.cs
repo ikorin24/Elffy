@@ -1,23 +1,16 @@
 ﻿#nullable enable
-using OpenToolkit;
-using OpenToolkit.Graphics;
 using System;
 using Elffy.UI;
 using Elffy.Core;
 using Elffy.Threading;
 using Elffy.InputSystem;
 using System.Drawing;
-//using TKMouseButton = OpenTK.Input.MouseButton;
-using TKMouseButton = OpenToolkit.Windowing.Common.Input.MouseButton;
-//using TKMouseButtonEventArgs = OpenTK.Input.MouseButtonEventArgs;
-using TKMouseButtonEventArgs = OpenToolkit.Windowing.Common.MouseButtonEventArgs;
-
 using Elffy.Core.Timer;
-using Elffy.Effective.Internal;
 using OpenToolkit.Windowing.Desktop;
 using OpenToolkit.Windowing.Common;
-using System.Runtime.CompilerServices;
 using OpenToolkit.Mathematics;
+using TKMouseButton = OpenToolkit.Windowing.Common.Input.MouseButton;
+using TKMouseButtonEventArgs = OpenToolkit.Windowing.Common.MouseButtonEventArgs;
 
 namespace Elffy
 {
@@ -26,7 +19,8 @@ namespace Elffy
     {
         private bool _isClosed;
         private const string DEFAULT_WINDOW_TITLE = "Window";
-        private readonly GameWindow _window;
+        //private readonly GameWindow _window;
+        private readonly CustomGameWindow _window;
         /// <summary>描画領域に関する処理を行うオブジェクト</summary>
         private readonly RenderingArea _renderingArea;
         private readonly SyncContextReceiver _syncContextReciever = new SyncContextReceiver();
@@ -113,7 +107,7 @@ namespace Elffy
                 Profile = ContextProfile.Core,
                 Location = null,
             };
-            _window = new GameWindow(gwSetting, nwSetting);
+            _window = new CustomGameWindow(gwSetting, nwSetting);
             _window.VSync = VSyncMode.On;
             _frameDelta = TimeSpan.FromSeconds(1.0 / gwSetting.RenderFrequency);
             _window.Load += OnLoad;
