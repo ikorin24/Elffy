@@ -16,6 +16,20 @@ namespace Elffy.Effective
         // Memory<T> を公開する方法もないので
         // IMemoryOwner<T> は継承しない。
 
+        // [メモリを借りてきたとき]
+        // _array : 借りた配列
+        // _start : 使用可能なメモリの開始位置が _array[(int)_start]
+        // _byteLength : 使用可能なメモリのバイト長
+        // _id    : 借りたメモリの識別用番号 (>= 0)
+        // _lender : メモリの貸し出し者  (>= 0)
+        //
+        // [unmanaged メモリを確保した時]
+        // _array : null
+        // _start : unmanaged メモリのポインタ
+        // _byteLength : 使用可能なメモリのバイト長
+        // _id    : -1
+        // _lender : -1
+
         private readonly byte[]? _array;
         private readonly IntPtr _start;
         private readonly int _byteLength;
