@@ -24,11 +24,15 @@ namespace Elffy.Effective.Internal
                                        new[] { typeof(FileStream), typeof(byte[]), },
                                        typeof(AlloclessFileStream).Module,
                                        true);
+
+            var bufferField = typeof(FileStream).GetField("_buffer", BindingFlags.Instance | BindingFlags.NonPublic);
+            Debug.Assert(bufferField is null == false);
+
             const int ILStreamSize = 8;
             var il = dm.GetILGenerator(ILStreamSize);
             il.Emit(OpCodes.Ldarg_0);   // FileStrem
             il.Emit(OpCodes.Ldarg_1);   // byte[]
-            il.Emit(OpCodes.Stfld, typeof(FileStream).GetField("_buffer", BindingFlags.Instance | BindingFlags.NonPublic));
+            il.Emit(OpCodes.Stfld, bufferField!);
             il.Emit(OpCodes.Ret);
 
             // ↑ -----------------------------------------------------------------
@@ -45,6 +49,11 @@ namespace Elffy.Effective.Internal
         private AlloclessFileStream(string path, FileMode mode, FileAccess access, FileShare share)
             : base(path, mode, access, share, BufferSize, useAsync: false)          // `useAsync` must be false
         {
+            // Stream は長期間保持される可能性があるため、ArrayPool に返すまでの間に
+            // 同じ配列長の Rent が発生する可能性があるが、
+            // ArrayPool<T>.Shared はスレッドごとに独立なので発生頻度は低い上、
+            // 二重構造で保持されるのでそうそう問題はないはず。やらないよりは全然マシ。
+
             _pooled = ArrayPool<byte>.Shared.Rent(BufferSize);
             Debug.Assert(_pooled.Length == BufferSize);
             _setBufferDelegate.Invoke(this, _pooled);
