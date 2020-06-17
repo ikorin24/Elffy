@@ -9,14 +9,14 @@ namespace Elffy.Effective
 {
     public static class MemoryPool
     {
-        private static Lazy<ByteMemoryLender[]> _lenders = new Lazy<ByteMemoryLender[]>(() => new[]
+        private static readonly Lazy<ByteMemoryLender[]> _lenders = new Lazy<ByteMemoryLender[]>(() => new[]
         {
             new ByteMemoryLender(segmentSize: 256, segmentCount: 512),     // ~= 128 kB
             new ByteMemoryLender(segmentSize: 1024, segmentCount: 128),    // ~= 128 kB
             new ByteMemoryLender(segmentSize: 8192, segmentCount: 32),     // ~= 256 kB
         }, LazyThreadSafetyMode.ExecutionAndPublication);
 
-        private static Lazy<ObjectMemoryLender[]> _objLenders = new Lazy<ObjectMemoryLender[]>(() => new[]
+        private static readonly Lazy<ObjectMemoryLender[]> _objLenders = new Lazy<ObjectMemoryLender[]>(() => new[]
         {
             new ObjectMemoryLender(segmentSize: 256, segmentCount: 256),     // ~= 512 kB (on 64bit)
             new ObjectMemoryLender(segmentSize: 1024, segmentCount: 128),    // ~= 1024 kB (on 64bit)
@@ -128,7 +128,7 @@ namespace Elffy.Effective
             private readonly int[] _availableIDStack;
             private int _availableHead;
 
-            private object _syncRoot => this;
+            private object SyncRoot => this;
 
             public int SegmentSize { get; }
             public int MaxCount => _availableIDStack.Length;
@@ -153,7 +153,7 @@ namespace Elffy.Effective
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool TryRent(out T[]? array, out int start, out int length, out int segID)
             {
-                lock(_syncRoot) {
+                lock(SyncRoot) {
                     if(_availableHead >= _availableIDStack.Length) {
                         segID = -1;
                         array = null;
@@ -176,7 +176,7 @@ namespace Elffy.Effective
             public void Return(int segID)
             {
                 if(segID < 0) { return; }
-                lock(_syncRoot) {
+                lock(SyncRoot) {
                     if(_segmentState[segID] == false) { return; }
                     _availableHead--;
                     _availableIDStack[_availableHead] = segID;
