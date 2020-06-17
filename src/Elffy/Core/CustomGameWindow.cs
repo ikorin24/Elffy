@@ -28,6 +28,8 @@ namespace Elffy.Core
         private double _renderFrequency;
         private double _updateFrequency;
         private VSyncMode _vSync;
+        private Task? _updateTask;
+        private CancellationTokenSource? _tokenSource;
 
         public bool IsMultiThreaded { get; }
 
@@ -51,7 +53,6 @@ namespace Elffy.Core
         public double UpdateFrequency
         {
             get => _updateFrequency;
-
             set
             {
                 if(value < 1.0) {
@@ -112,7 +113,8 @@ namespace Elffy.Core
             Load?.Invoke();
             OnResize(new ResizeEventArgs(Size));
             if(IsMultiThreaded) {
-                Task.Factory.StartNew(StartUpdateThread);       // TODO: Close 時に終了する
+                _tokenSource = new CancellationTokenSource();
+                _updateTask = Task.Factory.StartNew(StartUpdateThread, _tokenSource.Token);
             }
             else {
                 _watchUpdate.Start();
@@ -131,8 +133,11 @@ namespace Elffy.Core
 
         private void StartUpdateThread()
         {
+            Debug.Assert(_tokenSource is null == false);
+            var token = _tokenSource.Token;
             _watchUpdate.Start();
             while(Exists && !IsExiting) {
+                if(token.IsCancellationRequested) { return; }
                 DispatchUpdateFrame();
             }
         }
@@ -198,6 +203,17 @@ namespace Elffy.Core
         public override void Close()
         {
             Unload?.Invoke();
+            if(_updateTask is null == false) {
+                Debug.Assert(_tokenSource is null == false);
+                try {
+                    _tokenSource.Cancel();
+                    _updateTask.Wait();
+                }
+                finally {
+                    _tokenSource = null;
+                    _updateTask = null;
+                }
+            }
             base.Close();
         }
     }
