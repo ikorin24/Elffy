@@ -30,6 +30,8 @@ namespace Elffy.Core.Timer
 
         internal DebugGameTimer() { }
 
+        ~DebugGameTimer() => Stop();
+
         public void Start()
         {
             if(IsRunning) { return; }
@@ -37,12 +39,12 @@ namespace Elffy.Core.Timer
             _watch.Start();
             _tokenSource = new CancellationTokenSource();
             var token = _tokenSource.Token;
-            _task = Task.Factory.StartNew(() => {
+            _task = Task.Factory.StartNew(async () => {
                 while(true) {
                     if(token.IsCancellationRequested) { return; }
                     Refresh();
                     _time = _watch.Elapsed;
-                    Thread.Sleep(1);            // TODO: スレッドブロックしないように
+                    await Task.Delay(1);
                 }
             }, token);
         }
