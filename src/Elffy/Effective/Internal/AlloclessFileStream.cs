@@ -67,6 +67,14 @@ namespace Elffy.Effective.Internal
             return new AlloclessFileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
         }
 
+        public static AlloclessFileStream OpenWrite(string path)
+        {
+            if(File.Exists(path)) {
+                File.Delete(path);
+            }
+            return new AlloclessFileStream(path, FileMode.Open, FileAccess.Write, FileShare.Write);
+        }
+
         protected override void Dispose(bool disposing)
         {
             if(disposing) {
