@@ -36,35 +36,13 @@ namespace Elffy.Core
         public double RenderFrequency
         {
             get => _renderFrequency;
-            set
-            {
-                if(value <= 1.0) {
-                    _renderFrequency = 0.0;
-                }
-                else if(value <= MaxFrequency) {
-                    _renderFrequency = value;
-                }
-                else {
-                    _renderFrequency = MaxFrequency;
-                }
-            }
+            set => _renderFrequency = (value <= 1.0) ? 0.0 : (value <= MaxFrequency) ? value : MaxFrequency;
         }
 
         public double UpdateFrequency
         {
             get => _updateFrequency;
-            set
-            {
-                if(value < 1.0) {
-                    _updateFrequency = 0.0;
-                }
-                else if(value <= MaxFrequency) {
-                    _updateFrequency = value;
-                }
-                else {
-                    _updateFrequency = MaxFrequency;
-                }
-            }
+            set => _renderFrequency = (value <= 1.0) ? 0.0 : (value <= MaxFrequency) ? value : MaxFrequency;
         }
 
         public VSyncMode VSync
@@ -72,20 +50,14 @@ namespace Elffy.Core
             get => _vSync;
             set
             {
-                switch(value) {
-                    case VSyncMode.On:
-                        GLFW.SwapInterval(1);
-                        break;
-
-                    case VSyncMode.Off:
-                        GLFW.SwapInterval(0);
-                        break;
-
-                    case VSyncMode.Adaptive:
-                        GLFW.SwapInterval(_isRunningSlowly ? 0 : 1);
-                        break;
-                }
-
+                var interval = value switch
+                {
+                    VSyncMode.On => 1,
+                    VSyncMode.Off => 0,
+                    VSyncMode.Adaptive => _isRunningSlowly ? 0 : 1,
+                    _ => throw new ArgumentException(),
+                };
+                GLFW.SwapInterval(interval);
                 _vSync = value;
             }
         }
@@ -161,10 +133,7 @@ namespace Elffy.Core
                 _updateEpsilon += elapsed - updatePeriod;
 
                 if(UpdateFrequency <= double.Epsilon) {
-                    // An UpdateFrequency of zero means we will raise
-                    // UpdateFrame events as fast as possible (one event
-                    // per ProcessEvents() call)
-                    break;
+                    break;  // UpdateFrequency が 0 なら最速で処理を回さなければならない
                 }
 
                 _isRunningSlowly = _updateEpsilon >= updatePeriod;
