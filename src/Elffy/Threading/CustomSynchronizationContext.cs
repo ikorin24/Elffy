@@ -53,7 +53,7 @@ namespace Elffy.Threading
             _syncContextReceiver = receiver;
         }
 
-        public override void Post(SendOrPostCallback d, object state)
+        public override void Post(SendOrPostCallback d, object? state)
         {
             _syncContextReceiver.Add(() => d(state));
         }
