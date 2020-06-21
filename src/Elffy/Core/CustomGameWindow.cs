@@ -165,7 +165,9 @@ namespace Elffy.Core
         /// <inheritdoc />
         public unsafe void SwapBuffers()
         {
-            GLFW.SwapBuffers(WindowPtr);
+            if(Exists && !IsExiting) {
+                GLFW.SwapBuffers(WindowPtr);
+            }
         }
 
         /// <inheritdoc />
