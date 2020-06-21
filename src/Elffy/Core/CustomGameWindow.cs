@@ -42,7 +42,7 @@ namespace Elffy.Core
         public double UpdateFrequency
         {
             get => _updateFrequency;
-            set => _renderFrequency = (value <= 1.0) ? 0.0 : (value <= MaxFrequency) ? value : MaxFrequency;
+            set => _updateFrequency = (value <= 1.0) ? 0.0 : (value <= MaxFrequency) ? value : MaxFrequency;
         }
 
         public VSyncMode VSync
