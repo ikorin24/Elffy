@@ -42,9 +42,9 @@ namespace Elffy.OpenGL
             _binded[textureUnit - TextureUnit.Texture0] = to;
         }
 
-        internal static void Unbind()
+        internal static void Unbind(TextureUnit textureUnit = TextureUnit.Texture0)
         {
-            Bind(Empty);
+            Bind(Empty, textureUnit);
         }
 
         internal static void Delete(ref TextureObject to)
