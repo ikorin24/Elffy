@@ -8,6 +8,7 @@ using Elffy.Core;
 using Elffy.Effective;
 using Elffy.Imaging;
 using Elffy.Components;
+using Elffy.OpenGL;
 using OpenToolkit.Graphics.OpenGL;
 using UnmanageUtility;
 using PMXParser = MMDTools.Unmanaged.PMXParser;
@@ -80,14 +81,17 @@ namespace Elffy.Shape
             }, vertices);
         }
 
-        protected override void OnRendering()
+        protected override void OnRendering(in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
+            VAO.Bind(VAO);
+            IBO.Bind(IBO);
             var parts = _parts;
             if(parts != null) {
                 var pos = 0;
                 var textures = _textures;
                 foreach(var p in parts) {
                     textures?.Apply(p.TextureIndex);
+                    ShaderProgram!.Apply(this, InternalLayer!.Lights, in model, in view, in projection);
                     GL.DrawElements(BeginMode.Triangles, p.VertexCount, DrawElementsType.UnsignedInt, pos * sizeof(int));
                     pos += p.VertexCount;
                 }

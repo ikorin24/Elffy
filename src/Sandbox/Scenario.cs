@@ -30,7 +30,7 @@ namespace ElffyGame
             var plain = new Plain()
             {
                 Scale = new Vector3(100),
-                Shader = ShaderSource.Normal,
+                //Shader = ShaderSource.Normal,
             };
             plain.Rotate(Vector3.UnitX, -MathTool.PiOver2);
             plain.Activate(screen.Layers.WorldLayer);
@@ -41,7 +41,7 @@ namespace ElffyGame
                 .ContinueWith(t => screen.Dispatcher.Invoke(() =>
                 {
                     var m = t.Result;
-                    m.Shader = ShaderSource.Phong;
+                    //m.Shader = ShaderSource.Phong;
                     m.Activate(screen.Layers.WorldLayer);
                 }));
             sw2.Stop();

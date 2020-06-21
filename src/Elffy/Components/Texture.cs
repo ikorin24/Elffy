@@ -5,6 +5,7 @@ using System.Drawing.Imaging;
 using Elffy.Core;
 using Elffy.Exceptions;
 using Elffy.Imaging;
+using Elffy.OpenGL;
 using OpenToolkit.Graphics.OpenGL;
 using PixelFormat = System.Drawing.Imaging.PixelFormat;
 using TKPixelFormat = OpenToolkit.Graphics.OpenGL.PixelFormat;
@@ -13,7 +14,7 @@ namespace Elffy.Components
 {
     public sealed class Texture : IComponent, IDisposable
     {
-        private int _textureBuffer;
+        private TextureObject _to;
         public TextureExpansionMode ExpansionMode { get; }
         public TextureShrinkMode ShrinkMode { get; }
         public TextureMipmapMode MipmapMode { get; }
@@ -29,7 +30,7 @@ namespace Elffy.Components
 
         public void Apply()
         {
-            GL.BindTexture(TextureTarget.Texture2D, _textureBuffer);
+            TextureObject.Bind(_to);
         }
 
         public void Load(Bitmap bitmap)
@@ -42,10 +43,10 @@ namespace Elffy.Components
 
         private void Load(int pixelWidth, int pixelHeight, IntPtr ptr)
         {
-            if(_textureBuffer != Consts.NULL) { throw new InvalidOperationException("Texture is already loaded."); }
+            if(!_to.IsEmpty) { throw new InvalidOperationException("Texture is already loaded."); }
 
-            _textureBuffer = GL.GenTexture();
-            GL.BindTexture(TextureTarget.Texture2D, _textureBuffer);
+            _to = TextureObject.Create();
+            TextureObject.Bind(_to);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, GetMinParameter(ShrinkMode, MipmapMode));
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, GetMagParameter(ExpansionMode));
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, pixelWidth, pixelHeight, 0, TKPixelFormat.Bgra, PixelType.UnsignedByte, ptr);
@@ -60,17 +61,16 @@ namespace Elffy.Components
 
         public void Dispose()
         {
-            if(_textureBuffer == Consts.NULL) { return; }
+            if(_to.IsEmpty) { return; }
             Dispose(true);
             GC.SuppressFinalize(this);
         }
 
         private void Dispose(bool disposing)
         {
-            if(_textureBuffer == Consts.NULL) { return; }
+            if(_to.IsEmpty) { return; }
             if(disposing) {
-                GL.DeleteTexture(_textureBuffer);
-                _textureBuffer = Consts.NULL;
+                TextureObject.Delete(ref _to);
             }
             else {
                 // opengl のバッファは作成したスレッドでしか解放できないため

@@ -23,6 +23,8 @@ namespace Elffy.Core
         private IBO _ibo;
         private VAO _vao;
         private TextureObject _to;
+        private ShaderSource _shader = ShaderSource.Phong;
+        private ShaderProgram? _shaderProgram;
 
         /// <summary>Vertex Buffer Object</summary>
         public VBO VBO => _vbo;
@@ -44,22 +46,13 @@ namespace Elffy.Core
             set
             {
                 if(value is null) { throw new ArgumentNullException(nameof(value)); }
-                if(_shader == value) { return; }
-                var old = _shader;
+                //Dispatcher.ThrowIfNotMainThread();
                 _shader = value;
-                if(!VAO.IsEmpty) {
-                    BeginSetShaderProgram(value);       // TODO: 完了前に複数回セットされた時に順番が保証されない
-                }
-                ShaderChanged?.Invoke(this, new ValueChangedEventArgs<ShaderSource>(old, value));
             }
         }
-        private ShaderSource _shader = ShaderSource.Normal;
 
         /// <summary>Not null if <see cref="IsLoaded"/> == true</summary>
-        protected ShaderProgram? ShaderProgram { get; private set; }
-
-        /// <summary>Shader changed event</summary>
-        public event ActionEventHandler<Renderable, ValueChangedEventArgs<ShaderSource>>? ShaderChanged;
+        protected ShaderProgram? ShaderProgram => _shaderProgram;
 
         /// <summary>Before-rendering event</summary>
         public event RenderingEventHandler? Rendering;
@@ -87,13 +80,9 @@ namespace Elffy.Core
                                     0, 0, 0, 1) *
                         modelParent;
 
-            if(IsLoaded && IsVisible && ShaderProgram != null) {
-                VAO.Bind(_vao);
-                IBO.Bind(_ibo);
-                TextureObject.Bind(_to);
-                ShaderProgram!.Apply(this, InternalLayer!.Lights, in model, in view, in projection);
+            if(IsLoaded && IsVisible && !(_shaderProgram is null)) {
                 Rendering?.Invoke(this, in model, in view, in projection);
-                OnRendering();
+                OnRendering(in model, in view, in projection);
                 Rendered?.Invoke(this, in model, in view, in projection);
             }
 
@@ -106,8 +95,12 @@ namespace Elffy.Core
             }
         }
 
-        protected virtual void OnRendering()
+        protected virtual void OnRendering(in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
+            VAO.Bind(_vao);
+            IBO.Bind(_ibo);
+            TextureObject.Bind(_to);
+            _shaderProgram!.Apply(this, InternalLayer!.Lights, in model, in view, in projection);
             GL.DrawElements(BeginMode.Triangles, IBO.Length, DrawElementsType.UnsignedInt, 0);
         }
 
@@ -146,8 +139,8 @@ namespace Elffy.Core
         protected override void OnDead()    // TODO: 全体の終了時に呼ばれていない
         {
             base.OnDead();
-            ShaderProgram?.Dispose();
-            ShaderProgram = null;
+            _shaderProgram?.Dispose();
+            _shaderProgram = null;
             if(IsLoaded) {
                 VBO.Delete(ref _vbo);
                 IBO.Delete(ref _ibo);
@@ -164,10 +157,20 @@ namespace Elffy.Core
                 .ContinueWith(task => Dispatcher.Invoke(() =>
                 {
                     Debug.Assert(VAO.IsEmpty == false);     // TODO: ロード前に Terminate されている可能性もあるので変えないといけない
-                    var program = task.Result;
-                    program.AssociateVAO(VAO);
-                    ShaderProgram?.Dispose();
-                    ShaderProgram = program;
+                    try {
+                        var program = task.Result;
+                        program.AssociateVAO(VAO);
+                        _shaderProgram?.Dispose();
+                        _shaderProgram = program;
+                    }
+                    catch(AggregateException ex) {
+                        if(ex.InnerExceptions.Count == 1) {
+                            throw ex.InnerExceptions[0];
+                        }
+                        else {
+                            throw ex;
+                        }
+                    }
                 }));
         }
     }

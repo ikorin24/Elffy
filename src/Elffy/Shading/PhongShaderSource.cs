@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using Elffy.Core;
+using Elffy.OpenGL;
 using System;
 
 namespace Elffy.Shading
@@ -40,6 +41,7 @@ namespace Elffy.Shading
             uniform.Send("shininess", material.Shininess);
             const int DefaultTextureUnit = 0;           // ← default texture is 0. GL.ActiveTexture(TextureUnit.Texture0)
             uniform.Send("tex_sampler", DefaultTextureUnit);
+            uniform.Send("hasTexture", TextureObject.GetBinded().IsEmpty ? 0f : 1f);
         }
 
         private const string VertSource =
@@ -88,10 +90,12 @@ in vec3 color;
 in vec2 UV;
 out vec4 fragColor;
 uniform sampler2D tex_sampler;
+uniform float hasTexture;
 
 void main()
 {
-    fragColor = vec4(color, 1.0) * texture(tex_sampler, UV);
+    vec4 t = hasTexture * texture(tex_sampler, UV) + vec4(1.0 - hasTexture);
+    fragColor = vec4(color, 1.0) * t;
 }
 ";
 

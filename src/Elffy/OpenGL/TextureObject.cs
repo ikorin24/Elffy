@@ -15,11 +15,15 @@ namespace Elffy.OpenGL
     [DebuggerDisplay("Texture={_texture}")]
     public readonly struct TextureObject : IEquatable<TextureObject>
     {
+        private readonly static TextureObject[] _binded = new TextureObject[32];
+
         private readonly int _texture;
 
         internal readonly int Value => _texture;
 
-        internal readonly bool IsEmpty => _texture == Consts.NULL;
+        public readonly bool IsEmpty => _texture == Consts.NULL;
+
+        public static TextureObject Empty => new TextureObject();
 
         private TextureObject(int texture)
         {
@@ -31,20 +35,16 @@ namespace Elffy.OpenGL
             return new TextureObject(GL.GenTexture());
         }
 
-        internal static void Bind(in TextureObject to)
-        {
-            Bind(to, TextureUnit.Texture0);
-        }
-
-        internal static void Bind(in TextureObject to, TextureUnit textureUnit)
+        internal static void Bind(in TextureObject to, TextureUnit textureUnit = TextureUnit.Texture0)
         {
             GL.ActiveTexture(textureUnit);
             GL.BindTexture(TextureTarget.Texture2D, to._texture);
+            _binded[textureUnit - TextureUnit.Texture0] = to;
         }
 
         internal static void Unbind()
         {
-            GL.BindTexture(TextureTarget.Texture2D, Consts.NULL);
+            Bind(Empty);
         }
 
         internal static void Delete(ref TextureObject to)
@@ -62,6 +62,11 @@ namespace Elffy.OpenGL
             using var pixels = bitmap.GetPixels(ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba,
                           pixels.Width, pixels.Height, 0, TKPixelFormat.Bgra, PixelType.UnsignedByte, pixels.Ptr);
+        }
+
+        public static TextureObject GetBinded(TextureUnit textureUnit = TextureUnit.Texture0)
+        {
+            return _binded[textureUnit - TextureUnit.Texture0];
         }
 
         public override string ToString() => _texture.ToString();
