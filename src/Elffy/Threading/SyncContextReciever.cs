@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Concurrent;
 
-namespace Elffy.Core
+namespace Elffy.Threading
 {
     internal class SyncContextReceiver
     {
