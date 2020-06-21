@@ -9,9 +9,11 @@ namespace Elffy.Shading
         private static NormalShaderSource? _instance;
         internal static NormalShaderSource Instance => _instance ??= new NormalShaderSource();
 
-        private NormalShaderSource() { }
+        protected override string VertexShaderSource => VertSource;
 
-        public override ShaderProgram Compile() => CompileShaderSources(VertSource, FragSource);
+        protected override string FragmentShaderSource => FragSource;
+
+        private NormalShaderSource() { }
 
         protected override void DefineLocation(VertexDefinition definition)
         {

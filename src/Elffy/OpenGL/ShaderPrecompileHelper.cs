@@ -1,17 +1,13 @@
 ﻿#nullable enable
 using OpenToolkit.Graphics.OpenGL;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using Elffy.Effective;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Elffy.Core;
 using System.IO;
 using System.Threading.Tasks;
-using System.Collections;
 using Elffy.Shading;
-using System.Reflection;
 using Elffy.AssemblyServices;
 using Elffy.Effective.Internal;
 using System.Runtime.InteropServices;
@@ -21,12 +17,11 @@ namespace Elffy.OpenGL
     internal static class ShaderPrecompileHelper
     {
         private const int GL_RROGRAM_BINARY_LENGTH = 0x8741;
-        //private static int[]? _formats;
 
         private static readonly string _cacheDirectory = Path.Combine(AssemblyState.EntryAssemblyDirectory, "cache", "glsl");
         //private static readonly Hashtable _table = new Hashtable();
 
-        public static Task CreateCacheAsync(Type type, int program)
+        public static Task CreateCacheFromProgramAsync(Type type, int program)
         {
             if(type.IsSubclassOf(typeof(ShaderSource)) == false) {
                 throw new ArgumentException();
@@ -53,53 +48,72 @@ namespace Elffy.OpenGL
             }, type);
         }
 
-
-        public static async Task<int> LoadCacheAsync(Type type)
+        /// <summary>
+        /// 指定の <see cref="ShaderSource"/> のキャッシュを取得します。(このメソッドは内部でスレッド復帰しています)
+        /// </summary>
+        /// キャッシュを取得する <param name="type"><see cref="ShaderSource"/> の派生型</param>
+        /// <returns>(program, success) のペア</returns>
+        public static async Task<(int, bool)> TryLoadProgramCacheAsync(Type type)
         {
             if(type.IsSubclassOf(typeof(ShaderSource)) == false) {
                 throw new ArgumentException();
             }
 
-            var (format, binary) = await Task.Factory.StartNew(state =>
+            var (format, binary, success) = await Task.Factory.StartNew(state =>
             {
                 Debug.Assert(state is Type);
                 var type = Unsafe.As<Type>(state);
 
                 var cachePath = Path.Combine(_cacheDirectory, type.FullName!);
-
+                if(!File.Exists(cachePath)) {
+                    return (default, default, false);
+                }
                 using(var stream = AlloclessFileStream.OpenRead(cachePath)) {
+                    ValueTypeRentMemory<byte> binary = default;
                     Span<byte> buf = stackalloc byte[sizeof(int) * 2];
                     if(stream.Read(buf) != buf.Length) {
-                        throw new Exception();
+                        goto ERROR;
                     }
                     var format = (BinaryFormat)BitConverter.ToInt32(buf);
                     var binLen = BitConverter.ToInt32(buf.Slice(sizeof(int)));
-                    var binary = new ValueTypeRentMemory<byte>(binLen);
-
+                    binary = new ValueTypeRentMemory<byte>(binLen);
                     var binarySpan = binary.Span;
                     if(stream.Read(binarySpan) != binarySpan.Length) {
-                        throw new Exception();
+                        goto ERROR;
                     }
+                    return (format, binary, true);
 
-                    return (format, binary);
+
+                ERROR:
+                    binary.Dispose();
+                    binary = default;
+                    return (default, default, false);
                 }
             }, type).ConfigureAwait(true);
 
-
-            return CreateProgram(format, binary);
+            if(success) {
+                Debug.Assert(!binary.IsEmpty);
+                using(binary) {
+                    var program = CreateProgram(format, binary.Span);
+                    return (program == Consts.NULL) ? (default, false) : (program, true);
+                }
+            }
+            else {
+                Debug.Assert(binary.IsEmpty);
+                return (default, false);
+            }
         }
 
-        private static int CreateProgram(BinaryFormat format, ValueTypeRentMemory<byte> binary)
+        private static int CreateProgram(BinaryFormat format, ReadOnlySpan<byte> binary)
         {
             var program = GL.CreateProgram();
-            var binarySpan = binary.Span;
             GL.ProgramBinary(program, format,
-                             ref MemoryMarshal.GetReference(binarySpan),
-                             binarySpan.Length);
+                             ref MemoryMarshal.GetReference(binary),
+                             binary.Length);
             GL.GetProgram(program, GetProgramParameterName.LinkStatus, out int linkStatus);
             if(linkStatus == Consts.ShaderProgramLinkFailed) {
-                var log = GL.GetProgramInfoLog(program);
-                throw new InvalidOperationException($"Linking shader is failed.{Environment.NewLine}{log}");
+                GL.DeleteProgram(program);
+                program = Consts.NULL;
             }
             return program;
         }
@@ -121,37 +135,5 @@ namespace Elffy.OpenGL
                 throw new InvalidOperationException("Some exception thrown. (See inner exception)", ex);
             }
         }
-
-        //public static unsafe bool TryCreateFromBinary(Span<byte> binary, Span<int> formats, out int shaderProgram)
-        //{
-        //    if(!GetFormats().AsSpan().SequenceEqual(formats)) {
-        //        shaderProgram = 0;
-        //        return false;
-        //    }
-        //    shaderProgram = GL.CreateProgram();
-        //    GL.ProgramBinary(shaderProgram,
-        //                     Unsafe.As<int, BinaryFormat>(ref formats.GetPinnableReference()),
-        //                     ref binary.GetPinnableReference(),
-        //                     binary.Length);
-        //    int linkStatus = 0;
-        //    GL.GetProgram(shaderProgram, GetProgramParameterName.LinkStatus, &linkStatus);
-        //    if(linkStatus == Consts.ShaderProgramLinkFailed) {
-        //        //var log = GL.GetProgramInfoLog(shaderProgram);
-        //        //throw new InvalidOperationException($"Linking shader is failed.{Environment.NewLine}{log}");
-        //        shaderProgram = 0;
-        //        return false;
-        //    }
-
-        //    return true;
-        //}
-
-        //public static ReadOnlyMemory<int> GetFormats()
-        //{
-        //    if(_formats is null == false) { return _formats; }
-        //    GL.GetInteger(GetPName.NumProgramBinaryFormats, out int formatsLen);
-        //    var format = new int[formatsLen];
-        //    GL.GetInteger(GetPName.ProgramBinaryFormats, format);
-        //    return (_formats = format);
-        //}
     }
 }

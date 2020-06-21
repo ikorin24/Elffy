@@ -9,9 +9,11 @@ namespace Elffy.Shading
         private static PhongShaderSource? _instance;
         internal static PhongShaderSource Instance => _instance ??= new PhongShaderSource();
 
-        private PhongShaderSource() { }
+        protected override string VertexShaderSource => VertSource;
 
-        public override ShaderProgram Compile() => CompileShaderSources(VertSource, FragSource);
+        protected override string FragmentShaderSource => FragSource;
+
+        private PhongShaderSource() { }
 
         protected override void DefineLocation(VertexDefinition definition)
         {

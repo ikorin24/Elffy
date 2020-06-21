@@ -9,6 +9,7 @@ using Elffy.Components;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Drawing;
+using System.Threading.Tasks;
 
 namespace Elffy.Core
 {
@@ -44,11 +45,11 @@ namespace Elffy.Core
             {
                 if(value is null) { throw new ArgumentNullException(nameof(value)); }
                 if(_shader == value) { return; }
-                if(!VBO.IsEmpty) {
-                    SetShaderProgram();
-                }
                 var old = _shader;
                 _shader = value;
+                if(!VAO.IsEmpty) {
+                    BeginSetShaderProgram(value);       // TODO: 完了前に複数回セットされた時に順番が保証されない
+                }
                 ShaderChanged?.Invoke(this, new ValueChangedEventArgs<ShaderSource>(old, value));
             }
         }
@@ -86,7 +87,7 @@ namespace Elffy.Core
                                     0, 0, 0, 1) *
                         modelParent;
 
-            if(IsLoaded && IsVisible) {
+            if(IsLoaded && IsVisible && ShaderProgram != null) {
                 VAO.Bind(_vao);
                 IBO.Bind(_ibo);
                 TextureObject.Bind(_to);
@@ -129,7 +130,7 @@ namespace Elffy.Core
                 _vao = VAO.Create();
                 VAO.Bind(_vao);
                 IsLoaded = true;
-                SetShaderProgram();
+                BeginSetShaderProgram(_shader);
             }
         }
 
@@ -142,7 +143,7 @@ namespace Elffy.Core
             TextureObject.Load(_to, bitmap);
         }
 
-        protected override void OnDead()
+        protected override void OnDead()    // TODO: 全体の終了時に呼ばれていない
         {
             base.OnDead();
             ShaderProgram?.Dispose();
@@ -157,13 +158,17 @@ namespace Elffy.Core
             }
         }
 
-        private void SetShaderProgram()
+        private void BeginSetShaderProgram(ShaderSource source)
         {
-            Debug.Assert(VBO.IsEmpty == false);
-            var program = _shader.Compile();
-            program.AssociateVBO(VBO);
-            ShaderProgram?.Dispose();
-            ShaderProgram = program;
+            source.CompileOrGetCacheAsync()
+                .ContinueWith(task => Dispatcher.Invoke(() =>
+                {
+                    Debug.Assert(VAO.IsEmpty == false);     // TODO: ロード前に Terminate されている可能性もあるので変えないといけない
+                    var program = task.Result;
+                    program.AssociateVAO(VAO);
+                    ShaderProgram?.Dispose();
+                    ShaderProgram = program;
+                }));
         }
     }
 

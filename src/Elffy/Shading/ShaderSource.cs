@@ -2,7 +2,10 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using Elffy.Core;
+using Elffy.OpenGL;
 using OpenToolkit.Graphics.OpenGL;
 
 namespace Elffy.Shading
@@ -14,6 +17,10 @@ namespace Elffy.Shading
         public static NormalShaderSource Normal => NormalShaderSource.Instance;
 
         public static VertexColorShaderSource VertexColor => VertexColorShaderSource.Instance;
+
+        protected abstract string VertexShaderSource { get; }
+
+        protected abstract string FragmentShaderSource { get; }
 
         /// <summary>派生クラスでオーバーライドされた場合、このシェーダーに渡される頂点属性変数を定義します</summary>
         /// <param name="definition">頂点属性定義用オブジェクト</param>
@@ -34,15 +41,35 @@ namespace Elffy.Shading
             => SendUniforms(new Uniform(program), target, lights, model, view, projection);
 
         /// <summary>頂点シェーダー・フラグメントシェーダ―の読み込み、リンク、プログラムの作成を行います</summary>
-        public abstract ShaderProgram Compile();
+        internal ShaderProgram Compile()
+        {
+            return new ShaderProgram(this, CompilePrivate());
+        }
 
-        protected ShaderProgram CompileShaderSources(string vertexShaderSource, string fragmentShaderSource)
+        public Task CreateCacheAsync()
+        {
+            var program = CompilePrivate();
+            return ShaderPrecompileHelper.CreateCacheFromProgramAsync(GetType(), program);
+        }
+
+        public async Task<ShaderProgram> CompileOrGetCacheAsync()
+        {
+            var (program, success) = await ShaderPrecompileHelper.TryLoadProgramCacheAsync(GetType()).ConfigureAwait(true);
+            if(success) {
+                return new ShaderProgram(this, program);
+            }
+            else {
+                return Compile();
+            }
+        }
+
+        private int CompilePrivate()
         {
             var vertShader = Consts.NULL;
             var fragShader = Consts.NULL;
             try {
-                vertShader = CompileSource(vertexShaderSource, ShaderType.VertexShader);
-                fragShader = CompileSource(fragmentShaderSource, ShaderType.FragmentShader);
+                vertShader = CompileSource(VertexShaderSource, ShaderType.VertexShader);
+                fragShader = CompileSource(FragmentShaderSource, ShaderType.FragmentShader);
 
                 var program = GL.CreateProgram();
                 GL.AttachShader(program, vertShader);
@@ -53,7 +80,7 @@ namespace Elffy.Shading
                     var log = GL.GetProgramInfoLog(program);
                     throw new InvalidOperationException($"Linking shader is failed.{Environment.NewLine}{log}");
                 }
-                return new ShaderProgram(this, program);
+                return program;
             }
             finally {
                 if(vertShader != Consts.NULL) {
@@ -64,6 +91,7 @@ namespace Elffy.Shading
                 }
             }
         }
+
 
         /// <summary>Compile specified type of shader source</summary>
         /// <param name="source">shader source code</param>

@@ -9,9 +9,11 @@ namespace Elffy.Shading
         private static VertexColorShaderSource? _instance;
         internal static VertexColorShaderSource Instance => _instance ??= new VertexColorShaderSource();
 
-        private VertexColorShaderSource() { }
+        protected override string VertexShaderSource => VertexShader;
 
-        public override ShaderProgram Compile() => CompileShaderSources(VertexShader, FragmentShader);
+        protected override string FragmentShaderSource => FragmentShader;
+
+        private VertexColorShaderSource() { }
 
         protected override void DefineLocation(VertexDefinition definition)
         {
