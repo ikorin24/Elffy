@@ -21,8 +21,8 @@ namespace Elffy.Core
         /// <param name="multiLaunch">多重起動時に実行される処理</param>
         public static void SingleLaunch(Action startAction, Action multiLaunch)
         {
-            var assemblyName = Assembly.GetEntryAssembly().GetName();
-            var uniqueName = $"{assemblyName.Name}-{assemblyName.Version.ToString()}";      // 最低1文字 (Empty では Mutex が機能しないため)
+            var assemblyName = Assembly.GetEntryAssembly()!.GetName();
+            var uniqueName = $"{assemblyName.Name}-{assemblyName.Version}";      // 最低1文字 (Empty では Mutex が機能しないため)
             if(uniqueName.Length > MUTEX_NAME_MAX_LEN) {
                 uniqueName = uniqueName.Substring(0, MUTEX_NAME_MAX_LEN);                   // 名前付きMutexの名前は文字数制限があるため
             }

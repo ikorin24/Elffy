@@ -26,7 +26,7 @@ namespace Elffy.Serialization
             ws.IndentChars = "  ";
             var ns = new XmlSerializerNamespaces();
             ns.Add("", "");
-            var dir = Path.GetDirectoryName(path);
+            var dir = Path.GetDirectoryName(path)!;
             var tmpfile = Path.Combine(dir, "___tmp___file___");
             if(dir != "") {
                 Directory.CreateDirectory(dir);

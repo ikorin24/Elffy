@@ -5,6 +5,7 @@ using Elffy.Components;
 using System;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Core
 {
@@ -25,7 +26,7 @@ namespace Elffy.Core
             return component;
         }
 
-        public bool TryGetComponent<T>(out T component) where T : class, IComponent
+        public bool TryGetComponent<T>([MaybeNullWhen(false)] out T component) where T : class, IComponent
         {
             return ComponentStore<T>.TryGet(this, out component);
         }
@@ -35,8 +36,8 @@ namespace Elffy.Core
         /// <param name="component">component object</param>
         public void AddComponent<T>(T component) where T : class, IComponent
         {
-            ArgumentChecker.ThrowIfNullArg(component, nameof(component));
-            ArgumentChecker.ThrowArgumentIf(ComponentStore<T>.HasComponentOf(this), $"Component type '{typeof(T).FullName.AsInterned()}' already exists.".AsInterned());
+            if(component is null) { throw new ArgumentNullException(nameof(component)); }
+            if(ComponentStore<T>.HasComponentOf(this)) { throw new ArgumentException($"Component type '{typeof(T).FullName}' already exists."); }
             ComponentStore<T>.Add(this, component);
             component.OnAttached(this);
             ComponentAttached?.Invoke(this, component);
@@ -75,8 +76,8 @@ namespace Elffy.Core
         {
             var removed = ComponentStore<T>.Remove(this, out var component);
             if(removed) {
-                ComponentDetached?.Invoke(this, component);
-                component.OnDetached(this);
+                ComponentDetached?.Invoke(this, component!);
+                component!.OnDetached(this);
             }
             return removed;
         }
@@ -131,7 +132,7 @@ namespace Elffy.Core
             /// <summary>Get component of specified owner.</summary>
             /// <param name="owner">the owner of the component</param>
             /// <returns>the component</returns>
-            public static bool TryGet(ComponentOwner owner, out T value)
+            public static bool TryGet(ComponentOwner owner, [MaybeNullWhen(false)] out T value)
             {
                 return _components.TryGetValue(owner, out value);
             }
@@ -140,10 +141,15 @@ namespace Elffy.Core
             /// <param name="owner">the owner of the component</param>
             /// <param name="value">removed component</param>
             /// <returns>Return true if removed. Return false when the owner has no component.</returns>
-            public static bool Remove(ComponentOwner owner, out T value)
+            public static bool Remove(ComponentOwner owner, [MaybeNullWhen(false)] out T value)
             {
-                _components.TryGetValue(owner, out value);
-                return _components.Remove(owner);
+                if(_components.TryGetValue(owner, out value)) {
+                    return _components.Remove(owner);
+                }
+                else {
+                    value = default;
+                    return false;
+                }
             }
         }
     }

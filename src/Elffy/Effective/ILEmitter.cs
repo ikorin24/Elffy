@@ -119,15 +119,15 @@ namespace Elffy.Effective
             // Type name is "0", "1", "2", ...
             var typeName = (_typeNum++).ToString();
 
-            var typeBuilder = _moduleBuilder.DefineType(typeName, TypeAttributes.Public | TypeAttributes.Sealed, typeof(object));
+            var typeBuilder = _moduleBuilder.DefineType(typeName, TypeAttributes.Public | TypeAttributes.Sealed, typeof(object))!;
             var methodBuilder = typeBuilder.DefineMethod(MethodName, MethodAttributes.Public, retType, argType);
 
             // Method body is emitted here.
             emitter(methodBuilder.GetILGenerator());
 
-            var method = typeBuilder.CreateTypeInfo()
+            var method = typeBuilder.CreateTypeInfo()!
                                     .AsType()
-                                    .GetMethod(MethodName, BindingFlags.Public | BindingFlags.Instance);
+                                    .GetMethod(MethodName, BindingFlags.Public | BindingFlags.Instance)!;
 
             return (TDelegate)method.CreateDelegate(typeof(TDelegate), null);
         }

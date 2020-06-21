@@ -67,7 +67,7 @@ namespace Elffy.Shape
             _ = Task.Factory.StartNew(v =>
             {
                 // メモリ開放後始末 (非同期で問題ないので別スレッド)
-                var vertices = (UnmanagedArray<Vertex>)v;
+                var vertices = Unsafe.As<UnmanagedArray<Vertex>>(v)!;
                 vertices.Dispose();
                 var textureBitmaps = _textureBitmaps;
                 if(textureBitmaps != null) {
@@ -102,7 +102,7 @@ namespace Elffy.Shape
         {
             return Task.Factory.StartNew(n =>
             {
-                var name = (string)n;
+                var name = Unsafe.As<string>(n)!;
                 PMXObject pmx;
                 using(var stream = Resources.GetStream(name)) {
                     pmx = PMXParser.Parse(stream);

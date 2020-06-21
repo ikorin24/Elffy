@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using UnmanageUtility;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Effective
 {
@@ -191,8 +192,10 @@ namespace Elffy.Effective
             throw new InvalidOperationException("No element matched.");
         }
 
+        [return: MaybeNull]
         public static T FirstOrDefault<T>(this Span<T> source) => FirstOrDefault((ReadOnlySpan<T>)source);
 
+        [return: MaybeNull]
         public static T FirstOrDefault<T>(this ReadOnlySpan<T> source) => source.Length > 0 ? source[0] : default;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

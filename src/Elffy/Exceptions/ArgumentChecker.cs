@@ -79,7 +79,9 @@ namespace Elffy.Exceptions
         /// <param name="message">メッセージ</param>
         /// <returns>取得した要素</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#pragma warning disable CS8714 // この型を、ジェネリック型またはメソッド内で型パラメーターとして使用することはできません。型引数の Null 許容性が 'notnull' 制約と一致しません。
         public static TValue GetValueWithKeyChecking<TKey, TValue>(this Dictionary<TKey, TValue> dic, TKey key, string message)
+#pragma warning restore CS8714 // この型を、ジェネリック型またはメソッド内で型パラメーターとして使用することはできません。型引数の Null 許容性が 'notnull' 制約と一致しません。
         {
             // ** NOTE **
             // For method inlining, the type of dic is Dictionary, NOT IDictionary.

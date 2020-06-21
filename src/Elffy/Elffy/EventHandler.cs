@@ -34,7 +34,7 @@ namespace Elffy
             NewValue = newValue;
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is ValueChangedEventArgs<T> args && Equals(args);
         }

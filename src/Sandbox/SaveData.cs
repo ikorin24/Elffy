@@ -9,7 +9,7 @@ namespace ElffyGame
     [XmlRoot("SaveData")]
     public class SaveData : ConfigBase<SaveData>
     {
-        private static readonly string PATH = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "SaveData.xml");
+        private static readonly string PATH = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!, "SaveData.xml");
 
         public SaveData()
         {

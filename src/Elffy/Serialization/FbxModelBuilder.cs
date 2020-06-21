@@ -36,7 +36,7 @@ namespace Elffy.Serialization
 
             var parser = new FbxParser();
             var fbx = parser.Parse(stream);
-            var objectNode = fbx.Children.Find(x => x.Name == OBJECTS);
+            var objectNode = fbx.Children.Find(x => x.Name == OBJECTS)!;
 
             #region ポリゴン情報取得
             var geometries = objectNode.Children.FindAll(x => x.Name == GEOMETRY).Select(geometry => {
@@ -57,10 +57,10 @@ namespace Elffy.Serialization
                             indexes = ((FbxIntArrayProperty)node.Properties[0]).Value;
                             break;
                         case NORMAL_INFO:
-                            normals = ((FbxDoubleArrayProperty)node.Children.Find(x => x.Name == NORMAL).Properties[0]).Value;
+                            normals = ((FbxDoubleArrayProperty)node.Children.Find(x => x.Name == NORMAL)!.Properties[0]).Value;
                             break;
                         case MATERIAL_INFO:
-                            materialIndex = ((FbxIntArrayProperty)node.Children.Find(x => x.Name == MATERIAL_INDEX).Properties[0]).Value;
+                            materialIndex = ((FbxIntArrayProperty)node!.Children.Find(x => x.Name == MATERIAL_INDEX)!.Properties[0]).Value;
                             break;
                         default:
                             break;
