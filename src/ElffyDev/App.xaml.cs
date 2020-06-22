@@ -9,7 +9,7 @@ using System.Windows;
 namespace ElffyDev
 {
     /// <summary>
-    /// App.xaml の相互作用ロジック
+    /// Interaction logic for App.xaml
     /// </summary>
     public partial class App : Application
     {
