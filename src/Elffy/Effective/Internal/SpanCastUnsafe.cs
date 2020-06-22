@@ -6,6 +6,7 @@
 #define FAST_SPAN   // .net core after 2.1
 #endif
 
+using Elffy.AssemblyServices;
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -25,6 +26,7 @@ namespace Elffy.Effective.Internal
         /// <param name="span">型変換を行う <see cref="Span{T}"/></param>
         /// <returns>変換後の <see cref="Span{T}"/></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [CriticalDotnetDependency]
         public static unsafe Span<TTo> CastRefType<TFrom, TTo>(Span<TFrom> span)
         {
             // [NOTE]

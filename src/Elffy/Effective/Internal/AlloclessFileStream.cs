@@ -5,9 +5,11 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Reflection.Emit;
 using System.Reflection;
+using Elffy.AssemblyServices;
 
 namespace Elffy.Effective.Internal
 {
+    [CriticalDotnetDependency]
     internal sealed class AlloclessFileStream : FileStream, IDisposable
     {
         const int BufferSize = 4096;    // 2^n でなければならない (ArrayPool<byte>.Shared からちょうどのサイズを取る必要があるため)
