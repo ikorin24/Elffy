@@ -50,8 +50,32 @@ namespace Elffy.Shading
 in vec3 vPos;
 in vec3 vNormal;
 in vec2 vUV;
+out vec3 Pos;
+out vec3 Normal;
 out vec2 UV;
-out vec3 color;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
+void main()
+{
+    mat4 modelView = view * model;
+    gl_Position = projection * modelView * vec4(vPos, 1.0);
+    UV = vUV;
+    Pos = vPos;
+    Normal = vNormal;
+}
+";
+
+        private const string FragSource =
+@"#version 440
+
+in vec2 UV;
+in vec3 Pos;
+in vec3 Normal;
+out vec4 fragColor;
+
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
@@ -64,36 +88,21 @@ uniform vec3 md;
 uniform vec3 ms;
 uniform float shininess;
 
-void main()
-{
-    mat4 modelView = view * model;
-    gl_Position = projection * modelView * vec4(vPos, 1.0);
-
-    vec3 posView = (modelView * vec4(vPos, 1.0)).xyz;                   // vertex pos in eye space
-    vec3 normalView = transpose(inverse(mat3(modelView))) * vNormal;    // normal in eye space
-    vec4 lPosView = view * lPos;                                        // light pos in eye space
-    vec3 L = (lPosView.w == 0.0) ? normalize(lPosView.xyz) : normalize(lPosView.xyz / lPosView.w - posView);
-    vec3 N = normalize(normalView);
-    vec3 R = reflect(-L, N);
-    vec3 V = normalize(-posView);
-
-    color = (la * ma) + (ld * md * dot(N, L)) + (ls * ms * max(pow(max(0.0, dot(R, V)), shininess), 0.0));
-    UV = vUV;
-}	
-
-";
-
-        private const string FragSource =
-@"#version 440
-
-in vec3 color;
-in vec2 UV;
-out vec4 fragColor;
 uniform sampler2D tex_sampler;
 uniform float hasTexture;
 
 void main()
 {
+    mat4 modelView = view * model;
+    vec3 posView = (modelView * vec4(Pos, 1.0)).xyz;                    // vertex pos in eye space
+    vec3 normalView = transpose(inverse(mat3(modelView))) * Normal;    // normal in eye space
+    vec4 lPosView = view * lPos;                                        // light pos in eye space
+    vec3 L = (lPosView.w == 0.0) ? normalize(lPosView.xyz) : normalize(lPosView.xyz / lPosView.w - posView);
+    vec3 N = normalize(normalView);
+    vec3 R = reflect(-L, N);
+    vec3 V = normalize(-posView);
+    vec3 color = (la * ma) + (ld * md * dot(N, L)) + (ls * ms * max(pow(max(0.0, dot(R, V)), shininess), 0.0));
+
     vec4 t = hasTexture * texture(tex_sampler, UV) + vec4(1.0 - hasTexture);
     fragColor = vec4(color, 1.0) * t;
 }
