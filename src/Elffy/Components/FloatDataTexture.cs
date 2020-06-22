@@ -10,8 +10,6 @@ namespace Elffy.Core
 {
     public sealed class FloatDataTexture : IComponent, IDisposable
     {
-        public const TextureUnit TargetTextureUnit = FloatDataTextureImpl.TargetTextureUnit;
-
         private FloatDataTextureImpl _impl;
 
         public void Apply() => _impl.Apply();
@@ -36,16 +34,6 @@ namespace Elffy.Core
                 throw new MemoryLeakException(typeof(FloatDataTexture));     // GC スレッドからでは解放できないので
             }
         }
-
-        public void OnAttached(ComponentOwner owner)
-        {
-            // nop
-        }
-
-        public void OnDetached(ComponentOwner owner)
-        {
-            // nop
-        }
     }
 
     internal struct FloatDataTextureImpl : IDisposable
@@ -57,18 +45,18 @@ namespace Elffy.Core
 
         public void Apply()
         {
-            TextureObject.Bind(TextureObject, FloatDataTexture.TargetTextureUnit);
+            TextureObject.Bind(TextureObject, TargetTextureUnit);
         }
 
         public unsafe void Load(ReadOnlySpan<Color4> texels)
         {
             if(texels.IsEmpty) { return; }
             TextureObject = TextureObject.Create();
-            TextureObject.Bind(TextureObject, FloatDataTexture.TargetTextureUnit);
+            TextureObject.Bind(TextureObject, TargetTextureUnit);
             fixed(void* ptr = texels) {
                 GL.TexImage1D(TextureTarget.Texture1D, 0, PixelInternalFormat.Rgba, texels.Length, 0, TKPixelFormat.Rgba, PixelType.Float, (IntPtr)ptr);
             }
-            TextureObject.Unbind(FloatDataTexture.TargetTextureUnit);
+            TextureObject.Unbind(TargetTextureUnit);
         }
 
         public void Dispose()

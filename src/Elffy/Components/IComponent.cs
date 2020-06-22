@@ -10,8 +10,8 @@ namespace Elffy.Components
 {
     public interface IComponent
     {
-        void OnAttached(ComponentOwner owner);
+        void OnAttached(ComponentOwner owner) { }
 
-        void OnDetached(ComponentOwner owner);
+        void OnDetached(ComponentOwner owner) { }
     }
 }
