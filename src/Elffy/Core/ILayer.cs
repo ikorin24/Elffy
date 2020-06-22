@@ -8,8 +8,6 @@ namespace Elffy.Core
     {
         LayerCollection? OwnerCollection { get; }
 
-        ReadOnlySpan<Light> Lights { get; }
-
         /// <summary>現在生きている全オブジェクトの数を取得します</summary>
         int ObjectCount { get; }
 

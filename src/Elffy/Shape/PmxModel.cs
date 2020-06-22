@@ -91,7 +91,7 @@ namespace Elffy.Shape
                 var textures = _textures;
                 foreach(var p in parts) {
                     textures?.Apply(p.TextureIndex);
-                    ShaderProgram!.Apply(this, InternalLayer!.Lights, in model, in view, in projection);
+                    ShaderProgram!.Apply(this, Layer.Lights, in model, in view, in projection);
                     GL.DrawElements(BeginMode.Triangles, p.VertexCount, DrawElementsType.UnsignedInt, pos * sizeof(int));
                     pos += p.VertexCount;
                 }

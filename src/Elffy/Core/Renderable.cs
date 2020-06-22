@@ -100,7 +100,7 @@ namespace Elffy.Core
             VAO.Bind(_vao);
             IBO.Bind(_ibo);
             TextureObject.Bind(_to);
-            _shaderProgram!.Apply(this, InternalLayer!.Lights, in model, in view, in projection);
+            _shaderProgram!.Apply(this, Layer.Lights, in model, in view, in projection);
             GL.DrawElements(BeginMode.Triangles, IBO.Length, DrawElementsType.UnsignedInt, 0);
         }
 

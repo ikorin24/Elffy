@@ -12,9 +12,6 @@ namespace Elffy.Core
         internal LayerCollection Owner { get; }
         LayerCollection? ILayer.OwnerCollection => Owner;
 
-        /// <summary><see cref="SystemLayer"/> has no lights</summary>
-        ReadOnlySpan<Light> ILayer.Lights => ReadOnlySpan<Light>.Empty;
-
         /// <summary>現在生きている全オブジェクトの数を取得します</summary>
         public int ObjectCount => _store.ObjectCount;
 
