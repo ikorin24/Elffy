@@ -6,6 +6,14 @@ using System.Runtime.InteropServices;
 
 namespace Elffy.Effective
 {
+    // TODO: 確実にメモリリークをしない方法を考える
+    // 可能な限りガベージの発生を避けたいので struct 実装にしたが、class と違いファイナライザが使えないため
+    // Dispose を呼び忘れるといろいろと困る。
+    // 特にアンマネージドメモリを確保した場合はメモリリークするので、何かしらの対策を考える。
+    // マネージドメモリの場合でも2回 Dispose されると色々と困る。
+    // 内部実装だけ class にしてインスタンスをプールして使いまわすか、struct をやめるかのどちらかが妥当。
+    // ベンチマークをとるべき
+
     [DebuggerDisplay("{DebugDisplay}")]
     public readonly struct ValueTypeRentMemory<T> : IEquatable<ValueTypeRentMemory<T>>, IDisposable where T : unmanaged
     {
