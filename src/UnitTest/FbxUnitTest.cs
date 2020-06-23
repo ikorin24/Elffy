@@ -1,14 +1,13 @@
 ﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.IO;
 using Elffy.Serialization;
+using Xunit;
 
 namespace Test
 {
-    [TestClass]
     public class FbxUnitTest
     {
-        [TestMethod]
+        [Fact]
         public void FbxModelBuildTest()
         {
             var files = Directory.GetFiles(TestValues.FileDirectory, "*.fbx");

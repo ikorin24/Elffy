@@ -9,6 +9,6 @@ namespace Test
 {
     public static class TestValues
     {
-        public static readonly string FileDirectory = Path.Combine("..", "..", "testfile");
+        public static readonly string FileDirectory = Path.Combine("..", "..", "..", "testfile");
     }
 }

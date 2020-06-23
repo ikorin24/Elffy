@@ -36,7 +36,8 @@ namespace ElffyResourceCompiler
             var output = Path.Combine(param.Args[0], OutputFile);
             var sw = new Stopwatch();
             sw.Start();
-            var setting = new CompileSetting() {
+            var setting = new CompileSetting()
+            {
                 ResourceDir = resourceDir,
                 OutputPath = output,
             };

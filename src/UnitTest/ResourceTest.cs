@@ -5,17 +5,16 @@ using System.Security.Cryptography;
 using System.Linq;
 using System.Collections.Generic;
 using ElffyResourceCompiler;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Elffy;
+using Xunit;
 
 namespace Test
 {
-    [TestClass]
     public class ResourceTest
     {
         #region CompileTest
         /// <summary>リソースのコンパイルが出来ているかをテストします</summary>
-        [TestMethod]
+        [Fact]
         public void CompileTest()
         {
             // リソースのコンパイル -> デコンパイル -> デコンパイルした全ファイルと元ファイルのハッシュが一致すればOK
@@ -68,7 +67,7 @@ namespace Test
 
         #region CommandLineArgParserTest
         /// <summary>コマンドライン引数のParserが正常に機能していることをテストします</summary>
-        [TestMethod]
+        [Fact]
         public void CommandLineArgParserTest()
         {
             // 正常入力テスト
@@ -93,8 +92,8 @@ namespace Test
             foreach(var (param, answer) in testCase.Zip(answers, (test, ans) => (test, ans))) {
                 var args = param.Split(new []{ ' ' }, StringSplitOptions.RemoveEmptyEntries);
                 var parsed = parser.Parse(args);
-                TestHelper.Assert(parsed.Args.SequenceEqual(answer.Args));
-                TestHelper.Assert(parsed.OptionalArgs.SequenceEqual(answer.OptionalArgs));
+                Assert.True(parsed.Args.SequenceEqual(answer.Args));
+                Assert.True(parsed.OptionalArgs.SequenceEqual(answer.OptionalArgs));
             }
 
             // エラー入力テスト
@@ -103,11 +102,11 @@ namespace Test
                 "-o -o",
             };
             var errors = new Action<Action>[] {
-                action => TestHelper.AssertException<ArgumentNullException>(action),
-                action => TestHelper.AssertException<ArgumentException>(action),
+                action => Assert.Throws<ArgumentNullException>(action),
+                action => Assert.Throws<ArgumentException>(action),
             };
             foreach(var (param, assertError) in errorCase.Zip(errors, (test, err) => (test, err))) {
-                var args = param?.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                var args = param?.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)!;
                 assertError(() => parser.Parse(args));
             }
         }
@@ -115,7 +114,7 @@ namespace Test
 
         #region ResourceLoadTest
         /// <summary>リソースのロードができているかをテストします。</summary>
-        [TestMethod]
+        [Fact]
         public void ResourceLoadTest()
         {
             // コンパイル -> コンパイルされたリソースをロード -> もとのファイルとハッシュが一致すればOK
@@ -161,7 +160,6 @@ namespace Test
             // コンパイル実行
             var resource = new DirectoryInfo(Path.Combine(TestValues.FileDirectory, "ElffyResources"));
             var output = Path.Combine(".");
-            //var arg = $"-r {resource.FullName} -s {scene.FullName} {output}";
             var args = new[] { "-r", resource.FullName, output };
             Program.Main(args);
             return (resource, output);
