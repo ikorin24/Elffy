@@ -42,7 +42,7 @@ namespace Elffy.OpenGL
             GL.BindBuffer(BufferTarget.ArrayBuffer, vbo._vbo);
         }
 
-        public readonly void Unbind()
+        public static void Unbind()
         {
             GL.BindBuffer(BufferTarget.ArrayBuffer, Consts.NULL);
         }

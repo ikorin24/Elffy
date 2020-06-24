@@ -69,16 +69,17 @@ namespace Elffy.Core
         /// <param name="modelParent">親の model 行列</param>
         internal unsafe void Render(in Matrix4 projection, in Matrix4 view, in Matrix4 modelParent)
         {
-            var model = new Matrix4(Scale.X, 0, 0, 0,
+            var withoutScale = modelParent *
+                               new Matrix4(1, 0, 0, Position.X,
+                                           0, 1, 0, Position.Y,
+                                           0, 0, 1, Position.Z,
+                                           0, 0, 0, 1) *
+                               Rotation.ToMatrix4();
+            var model = withoutScale * 
+                        new Matrix4(Scale.X, 0, 0, 0,
                                     0, Scale.Y, 0, 0,
                                     0, 0, Scale.Z, 0,
-                                    0, 0, 0, 1) *
-                        Rotation.ToMatrix4() *
-                        new Matrix4(1, 0, 0, Position.X,
-                                    0, 1, 0, Position.Y,
-                                    0, 0, 1, Position.Z,
-                                    0, 0, 0, 1) *
-                        modelParent;
+                                    0, 0, 0, 1);
 
             if(IsLoaded && IsVisible && !(_shaderProgram is null)) {
                 Rendering?.Invoke(this, in model, in view, in projection);
@@ -89,7 +90,7 @@ namespace Elffy.Core
             if(HasChild) {
                 foreach(var child in Children.AsReadOnlySpan()) {
                     if(child is Renderable renderable) {
-                        renderable.Render(projection, view, model);
+                        renderable.Render(projection, view, withoutScale);
                     }
                 }
             }
@@ -99,9 +100,17 @@ namespace Elffy.Core
         {
             VAO.Bind(_vao);
             IBO.Bind(_ibo);
-            TextureObject.Bind(_to);
+            if(!_to.IsEmpty) {
+                TextureObject.Bind(_to);
+            }
+            else {
+                TextureObject.Bind(Engine.WhiteEmptyTexture);
+            }
             _shaderProgram!.Apply(this, Layer.Lights, in model, in view, in projection);
             GL.DrawElements(BeginMode.Triangles, IBO.Length, DrawElementsType.UnsignedInt, 0);
+            VAO.Unbind();
+            IBO.Unbind();
+            TextureObject.Unbind();
         }
 
         /// <summary>指定の頂点配列とインデックス配列で VBO, IBO を作成し、VAO を作成します</summary>

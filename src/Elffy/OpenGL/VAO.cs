@@ -43,7 +43,7 @@ namespace Elffy.OpenGL
             GL.BindVertexArray(vao._vao);
         }
 
-        public readonly void Unbind()
+        public static void Unbind()
         {
             GL.BindVertexArray(Consts.NULL);
         }
