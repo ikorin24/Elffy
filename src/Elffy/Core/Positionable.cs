@@ -14,7 +14,7 @@ namespace Elffy.Core
     {
         #region Proeprty
         /// <summary>オブジェクトの回転を表すクオータニオン</summary>
-        public Quaternion Rotation { get; private set; } = Quaternion.Identity;
+        public Quaternion Rotation { get; set; } = Quaternion.Identity;
 
         /// <summary>この <see cref="Positionable"/> のツリー構造の親を取得します</summary>
         public Positionable? Parent
