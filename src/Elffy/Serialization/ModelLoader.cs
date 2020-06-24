@@ -16,12 +16,13 @@ namespace Elffy.Serialization
         public static Model3D Load(Stream stream, ModelType type)
         {
             ArgumentChecker.ThrowIfNullArg(stream, nameof(stream));
-            return type switch
-            {
-                ModelType.Fbx => FbxModelBuilder.LoadModel(stream),
-                ModelType.Pmx => PmxModelBuilder.LoadModel(stream),
-                _ => throw new NotSupportedException($"Model type '{type}' is not supported."),
-            };
+            throw new NotImplementedException();
+            //return type switch
+            //{
+            //    ModelType.Fbx => FbxModelBuilder.LoadModel(stream),
+            //    ModelType.Pmx => PmxModelBuilder.LoadModel(stream),
+            //    _ => throw new NotSupportedException($"Model type '{type}' is not supported."),
+            //};
         }
     }
 
