@@ -7,11 +7,23 @@ using Elffy.Platforms;
 using Elffy.Exceptions;
 using Elffy.Platforms.Windows;
 using Elffy.Effective.Internal;
+using Elffy.Core;
+using System.Runtime.CompilerServices;
+using Elffy.OpenGL;
 
 namespace Elffy
 {
     public static class Engine
     {
+        private static DefaultGLResource? _glResource;
+
+        public static TextureObject WhiteEmptyTexture
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _glResource?.WhiteEmptyTexture
+                ?? throw new InvalidOperationException("Engine is already runnning.");
+        }
+
         public static bool IsRunning { get; private set; }
 
         public static void Run()
@@ -19,6 +31,16 @@ namespace Elffy
             if(IsRunning) { throw new InvalidOperationException("Engine is already runnning."); }
             IsRunning = true;
             Dispatcher.SetMainThreadID();
+        }
+
+        public static void End()
+        {
+            if(!IsRunning) { return; }
+            IsRunning = false;
+            if(_glResource is null == false) {
+                _glResource.Dispose();
+                _glResource = null;
+            }
         }
 
         public static void ShowScreen(ActionEventHandler<IHostScreen> initialized)
@@ -50,6 +72,9 @@ namespace Elffy
                     default:
                         throw Platform.PlatformNotSupported();
                 }
+                var glResource = new DefaultGLResource();
+                glResource.Create();
+                _glResource = glResource;
                 screen.Initialized += initialized;
                 screen.Show(width, height, title, icon, windowStyle);
             }

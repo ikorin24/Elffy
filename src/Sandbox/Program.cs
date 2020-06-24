@@ -23,6 +23,9 @@ namespace ElffyGame
                 MessageBox.Show(ex.ToString(), "Error", MessageBoxType.Ok, MessageBoxIcon.Error);
                 return;
             }
+            finally {
+                Engine.End();
+            }
         });
     }
 }
