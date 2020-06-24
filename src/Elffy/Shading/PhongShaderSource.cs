@@ -41,9 +41,6 @@ namespace Elffy.Shading
             uniform.Send("shininess", material.Shininess);
             const int DefaultTextureUnit = 0;           // ← default texture is 0. GL.ActiveTexture(TextureUnit.Texture0)
             uniform.Send("tex_sampler", DefaultTextureUnit);
-            if(TextureObject.GetBinded().IsEmpty) {
-                TextureObject.Bind(Engine.WhiteEmptyTexture);
-            }
         }
 
         private const string VertSource =
