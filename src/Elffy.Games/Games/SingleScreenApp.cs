@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using Elffy.Core;
 using Elffy.InputSystem;
+using Elffy.Threading;
 using Elffy.UI;
 using System;
 using System.Collections.Generic;
@@ -15,6 +16,7 @@ namespace Elffy.Games
         private static Layer _worldLayer = null!;
         private static Camera _mainCamera = null!;
         private static Mouse _mouse = null!;
+        private static Dispatcher _dispather = null!;
 
         public static IHostScreen Screen => _screen;
         public static Layer WorldLayer => _worldLayer;
@@ -22,6 +24,8 @@ namespace Elffy.Games
         public static Camera MainCamera => _mainCamera;
 
         public static Mouse Mouse => _mouse;
+
+        public static Dispatcher Dispatcher => _dispather;
 
         public static void Start(Action initialize)
         {
@@ -47,6 +51,7 @@ namespace Elffy.Games
             _worldLayer = screen.Layers.WorldLayer;
             _mainCamera = screen.Camera;
             _mouse = screen.Mouse;
+            _dispather = screen.Dispatcher;
             _initialize();
         }
     }
