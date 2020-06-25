@@ -15,7 +15,7 @@ namespace ElffyGame
         [STAThread]
         static void Main()
         {
-            SingleScreenApp.Start(DDD.A);
+            SingleScreenApp.Start(() => { });
         }
     }
 }
