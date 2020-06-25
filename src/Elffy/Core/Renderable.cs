@@ -162,13 +162,12 @@ namespace Elffy.Core
 
         private void BeginSetShaderProgram(ShaderSource source)
         {
-            source.CompileOrGetCacheAsync()
-                .ContinueWith(task => Dispatcher.Invoke(() =>
-                {
-                    Debug.Assert(VAO.IsEmpty == false);     // TODO: ロード前に Terminate されている可能性もあるので変えないといけない
+            source.CompileOrGetCacheAsync().ContinueWith(task => Dispatcher.Invoke(() =>
+            {
+                var program = task.Result;
+                if(!_vao.IsEmpty) {
                     try {
-                        var program = task.Result;
-                        program.AssociateVAO(VAO);
+                        program.Initialize(_vao, _vbo);
                         _shaderProgram?.Dispose();
                         _shaderProgram = program;
                     }
@@ -180,7 +179,11 @@ namespace Elffy.Core
                             throw ex;
                         }
                     }
-                }));
+                }
+                else {
+                    program.Dispose();
+                }
+            }));
         }
     }
 

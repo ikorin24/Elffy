@@ -12,7 +12,7 @@ namespace Elffy.Shading
     {
         private int _program = Consts.NULL;
         private ShaderSource? _shaderSource;
-        private bool _vaoAssociated;
+        private bool _initialized;
 
         internal bool IsReleased => _program == Consts.NULL;
 
@@ -33,7 +33,7 @@ namespace Elffy.Shading
         internal void Apply(Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             if(IsReleased) { throw new InvalidOperationException("this shader program is empty or deleted."); }
-            if(!_vaoAssociated) { throw new InvalidOperationException("The shader is not associated with VAO."); }
+            if(!_initialized) { throw new InvalidOperationException("The shader is not associated with VAO."); }
             if(_currentProgram != _program) {
                 _currentProgram = _program;
                 GL.UseProgram(_program);
@@ -41,11 +41,14 @@ namespace Elffy.Shading
             _shaderSource!.SendUniforms(_program, target, lights, model, view, projection);
         }
 
-        internal void AssociateVAO(in VAO vao)
+        internal void Initialize(in VAO vao, in VBO vbo)
         {
             VAO.Bind(vao);
+            VBO.Bind(vbo);
             _shaderSource!.DefineLocation(_program);
-            _vaoAssociated = true;
+            _initialized = true;
+            VAO.Unbind();
+            VBO.Unbind();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
