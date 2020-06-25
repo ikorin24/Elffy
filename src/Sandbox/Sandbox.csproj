@@ -16,6 +16,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Elffy.Games\Elffy.Games.csproj" />
     <ProjectReference Include="..\Elffy\Elffy.csproj" />
   </ItemGroup>
 
