@@ -16,8 +16,10 @@ namespace Elffy.Serialization
         /// <summary>Fbxファイルから3Dモデルを作ります</summary>
         /// <param name="stream">fbxのストリーム</param>
         /// <returns>3Dモデル</returns>
-        public static Model3D LoadModel(Stream stream)
+        public static (Vertex[], int[]) LoadModel(Stream stream)
         {
+            // TODO: ガベージの考慮が全くされてないのでもっと減らせる
+
             #region 定数
             const string OBJECTS = "Objects";
 
@@ -128,8 +130,9 @@ namespace Elffy.Serialization
                 modelIndexes.AddRange(indexes);
             }
             // パフォーマンスとかもう少し考える必要がある (Span<T>)
-            var model = new Model3D(modelVertices.ToArray().AsSpan(), modelIndexes.ToArray().AsSpan());
-            return model;
+            //var model = new Model3D(modelVertices.ToArray().AsSpan(), modelIndexes.ToArray().AsSpan());
+            //return model;
+            return (modelVertices.ToArray(), modelIndexes.ToArray());
         }
         #endregion
 

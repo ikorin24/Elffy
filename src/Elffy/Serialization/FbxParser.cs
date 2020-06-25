@@ -9,7 +9,7 @@ using Elffy.Exceptions;
 
 namespace Elffy.Serialization
 {
-    internal class FbxParser
+    internal class FbxParser         // TODO: ガベージの考慮が全くされてないのでもっと減らせる
     {
         #region private member
         /// <summary>Magic Word of Binary FBX</summary>
