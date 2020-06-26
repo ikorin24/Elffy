@@ -68,11 +68,11 @@ uniform mat4 projection;
 
 void main()
 {
-    mat4 modelView = view * model;
-    gl_Position = projection * modelView * vec4(vPos, 1.0);
     UV = vUV;
     Pos = vPos;
     Normal = vNormal;
+    mat4 modelView = view * model;
+    gl_Position = projection * modelView * vec4(vPos, 1.0);
 }
 ";
 
