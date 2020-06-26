@@ -11,8 +11,13 @@ namespace Elffy.Core
     public sealed class FloatDataTexture : IComponent, IDisposable
     {
         private FloatDataTextureImpl _impl;
+        public TextureUnitNumber TextureUnit { get; }
 
-        public void Apply() => _impl.Apply();
+        public FloatDataTexture(TextureUnitNumber unit)
+        {
+            TextureUnit = unit;
+        }
+        public void Apply() => _impl.Apply(TextureUnit);
 
         ~FloatDataTexture() => Dispose(false);
 
@@ -43,20 +48,21 @@ namespace Elffy.Core
         public bool Disposed;
         public TextureObject TextureObject;
 
-        public void Apply()
+        public void Apply(TextureUnitNumber unit)
         {
-            TextureObject.Bind(TextureObject, TargetTextureUnit);
+            TextureObject.Bind(TextureObject, unit);
         }
 
         public unsafe void Load(ReadOnlySpan<Color4> texels)
         {
             if(texels.IsEmpty) { return; }
             TextureObject = TextureObject.Create();
-            TextureObject.Bind(TextureObject, TargetTextureUnit);
+            var unit = TextureUnitNumber.Unit0;
+            TextureObject.Bind(TextureObject, unit);
             fixed(void* ptr = texels) {
                 GL.TexImage1D(TextureTarget.Texture1D, 0, PixelInternalFormat.Rgba, texels.Length, 0, TKPixelFormat.Rgba, PixelType.Float, (IntPtr)ptr);
             }
-            TextureObject.Unbind(TargetTextureUnit);
+            TextureObject.Unbind(unit);
         }
 
         public void Dispose()

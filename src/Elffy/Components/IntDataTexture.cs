@@ -13,7 +13,14 @@ namespace Elffy.Components
     {
         private IntDataTextureImpl _impl;
 
-        public void Apply() => _impl.Apply();
+        public TextureUnitNumber TextureUnit { get; }
+
+        public IntDataTexture(TextureUnitNumber textureUnit)
+        {
+            TextureUnit = textureUnit;
+        }
+
+        public void Apply() => _impl.Apply(TextureUnit);
 
         public void Dispose()
         {
@@ -39,14 +46,12 @@ namespace Elffy.Components
 
     internal struct IntDataTextureImpl : IDisposable
     {
-        public const TextureUnit TargetTextureUnit = TextureUnit.Texture1;
-
         public bool Disposed;
         public TextureObject TextureObject;
 
-        public void Apply()
+        public void Apply(TextureUnitNumber unit)
         {
-            TextureObject.Bind(TextureObject, TargetTextureUnit);
+            TextureObject.Bind(TextureObject, unit);
         }
 
         public unsafe void Load(ReadOnlySpan<int> data)
@@ -59,7 +64,9 @@ namespace Elffy.Components
         {
             if(texels.IsEmpty) { return; }
             TextureObject = TextureObject.Create();
-            TextureObject.Bind(TextureObject, TargetTextureUnit);
+
+            var unit = TextureUnitNumber.Unit0;
+            TextureObject.Bind(TextureObject, unit);
             fixed(void* ptr = texels) {
 
                 // 実際のデータは int 型だが float として GPU 側に転送。
@@ -70,7 +77,7 @@ namespace Elffy.Components
 
                 GL.TexImage1D(TextureTarget.Texture1D, 0, PixelInternalFormat.Rgba, texels.Length, 0, TKPixelFormat.Rgba, PixelType.Float, (IntPtr)ptr);
             }
-            TextureObject.Unbind(TargetTextureUnit);
+            TextureObject.Unbind(unit);
         }
 
         public void Dispose()

@@ -7,6 +7,7 @@ using Elffy.OpenGL;
 using OpenToolkit.Graphics.OpenGL;
 using System.Runtime.CompilerServices;
 using Elffy.Shading;
+using Elffy.Components;
 
 namespace Elffy.UI
 {
@@ -41,17 +42,18 @@ namespace Elffy.UI
         {
             VAO.Bind(VAO);
             IBO.Bind(IBO);
-            if(!TextureObject.IsEmpty) {
-                TextureObject.Bind(TextureObject);
+
+            if(TryGetComponent<Texture>(out var t)) {
+                t.Apply();
             }
             else {
-                TextureObject.Bind(Engine.WhiteEmptyTexture);
+                TextureObject.Bind(Engine.WhiteEmptyTexture, TextureUnitNumber.Unit0);
             }
+
             ShaderProgram!.Apply(this, Span<Light>.Empty, in model, in view, in projection);
             GL.DrawElements(BeginMode.Triangles, IBO.Length, DrawElementsType.UnsignedInt, 0);
             VAO.Unbind();
             IBO.Unbind();
-            TextureObject.Unbind();
         }
 
         /// <summary>頂点配列とインデックス配列をセットします</summary>

@@ -3,6 +3,8 @@ using Elffy.Core;
 using Elffy.Components;
 using System;
 using System.Runtime.CompilerServices;
+using OpenToolkit.Graphics.OpenGL;
+using Elffy.OpenGL;
 
 namespace Elffy.Shading
 {
@@ -48,8 +50,8 @@ namespace Elffy.Shading
             uniform.Send("la", new Vector3(0.8f));
             uniform.Send("ld", new Vector3(0.8f));
             uniform.Send("ls", new Vector3(1f));
-            const int DefaultTextureUnit = 0;           // ← default texture is 0. GL.ActiveTexture(TextureUnit.Texture0)
-            uniform.Send("tex_sampler", DefaultTextureUnit);
+
+            uniform.Send("tex_sampler", TextureUnitNumber.Unit0);
         }
 
         private const string VertSource =

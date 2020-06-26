@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.Runtime.CompilerServices;
+using Elffy.OpenGL;
 using OpenToolkit.Graphics.OpenGL;
 
 namespace Elffy.Shading
@@ -17,6 +18,9 @@ namespace Elffy.Shading
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Send(string name, int value) => Send(GL.GetUniformLocation(_program, name), value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Send(string name, TextureUnitNumber value) => Send(GL.GetUniformLocation(_program, name), value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Send(string name, in Vector2 value) => Send(GL.GetUniformLocation(_program, name), value);
@@ -42,6 +46,9 @@ namespace Elffy.Shading
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Send(int location, int value) => GL.ProgramUniform1(_program, location, value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Send(int location, TextureUnitNumber value) => GL.ProgramUniform1(_program, location, (int)value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Send(int location, in Vector2 value)

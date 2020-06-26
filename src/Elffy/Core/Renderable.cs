@@ -22,7 +22,6 @@ namespace Elffy.Core
         private VBO _vbo;
         private IBO _ibo;
         private VAO _vao;
-        private TextureObject _to;
         private ShaderSource _shader = ShaderSource.Phong;
         private ShaderProgram? _shaderProgram;
 
@@ -32,8 +31,6 @@ namespace Elffy.Core
         public IBO IBO => _ibo;
         /// <summary>VAO</summary>
         public VAO VAO => _vao;
-        /// <summary>Texture Object</summary>
-        public TextureObject TextureObject => _to;
 
         public bool IsLoaded { get; private set; }
 
@@ -100,17 +97,18 @@ namespace Elffy.Core
         {
             VAO.Bind(_vao);
             IBO.Bind(_ibo);
-            if(!_to.IsEmpty) {
-                TextureObject.Bind(_to);
+
+            if(TryGetComponent<Texture>(out var t)) {
+                t.Apply();
             }
             else {
-                TextureObject.Bind(Engine.WhiteEmptyTexture);
+                TextureObject.Bind(Engine.WhiteEmptyTexture, TextureUnitNumber.Unit0);
             }
+
             _shaderProgram!.Apply(this, Layer.Lights, in model, in view, in projection);
             GL.DrawElements(BeginMode.Triangles, IBO.Length, DrawElementsType.UnsignedInt, 0);
             VAO.Unbind();
             IBO.Unbind();
-            TextureObject.Unbind();
         }
 
         /// <summary>指定の頂点配列とインデックス配列で VBO, IBO を作成し、VAO を作成します</summary>
@@ -136,14 +134,6 @@ namespace Elffy.Core
             }
         }
 
-        protected void LoadTexture(Bitmap bitmap)
-        {
-            Dispatcher.ThrowIfNotMainThread();
-            if(_to.IsEmpty) {
-                _to = TextureObject.Create();
-            }
-            TextureObject.Load(_to, bitmap);
-        }
 
         protected override void OnDead()    // TODO: 全体の終了時に呼ばれていない
         {
@@ -154,9 +144,6 @@ namespace Elffy.Core
                 VBO.Delete(ref _vbo);
                 IBO.Delete(ref _ibo);
                 VAO.Delete(ref _vao);
-            }
-            if(!_to.IsEmpty) {
-                TextureObject.Delete(ref _to);
             }
         }
 
