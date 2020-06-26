@@ -35,11 +35,11 @@ namespace Elffy
         {
             var nAxis = axis.Normalized();
             var halfAngle = angle / 2;
-            var sin = MathTool.Sin(halfAngle);
+            var sin = MathF.Sin(halfAngle);
             X = nAxis.X * sin;
             Y = nAxis.Y * sin;
             Z = nAxis.Z * sin;
-            W = MathTool.Cos(halfAngle);
+            W = MathF.Cos(halfAngle);
         }
 
         public Vector3 Xyz => new Vector3(X, Y, Z);
@@ -47,7 +47,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Normalize()
         {
-            var length = (float)Math.Sqrt((X * X) + (Y * Y) + (Z * Z) + (W * W));
+            var length = MathF.Sqrt((X * X) + (Y * Y) + (Z * Z) + (W * W));
             X /= length;
             Y /= length;
             Z /= length;

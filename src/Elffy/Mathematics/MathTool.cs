@@ -30,24 +30,6 @@ namespace Elffy.Mathematics
         /// <summary>Log_2 E</summary>
         public const float Log2E = 1.442695F;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float Sin(int value) => (float)Math.Sin(value);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float Sin(float value) => (float)Math.Sin(value);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float Cos(int value) => (float)Math.Cos(value);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float Cos(float value) => (float)Math.Cos(value);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float Tan(int value) => (float)Math.Tan(value);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float Tan(float value) => (float)Math.Tan(value);
-
         /// <summary>Convert degree to radian</summary>
         /// <param name="degree">degree value</param>
         /// <returns>radian value</returns>

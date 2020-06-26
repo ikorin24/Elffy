@@ -85,8 +85,8 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Matrix2 GetRotateMatrix(float theta)
         {
-            var cos = MathTool.Cos(theta);
-            var sin = MathTool.Sin(theta);
+            var cos = MathF.Cos(theta);
+            var sin = MathF.Sin(theta);
             return new Matrix2(cos, -sin,
                                sin, cos);
         }

@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using Elffy.Mathematics;
 using Elffy.Exceptions;
+using System;
 
 namespace Elffy
 {
@@ -113,7 +114,7 @@ namespace Elffy
         public void ChangeFovy(float fovy, Vector3 target)
         {
             ArgumentChecker.ThrowArgumentIf(fovy <= 0 || fovy > MathTool.Pi, $"{nameof(fovy)} must be 0 ~ π. (not include 0)");
-            var pos = (1 - MathTool.Tan(_fovy / 2f) / MathTool.Tan(fovy / 2f)) * (target - Position);
+            var pos = (1 - MathF.Tan(_fovy / 2f) / MathF.Tan(fovy / 2f)) * (target - Position);
             _position += pos;
             _fovy = fovy;
             SetProjectionMatrix(_fovy, _far, _aspect);

@@ -75,8 +75,8 @@ namespace Elffy
 
             public Angle(float theta)
             {
-                Sin = MathTool.Sin(theta);
-                Cos = MathTool.Cos(theta);
+                Sin = MathF.Sin(theta);
+                Cos = MathF.Cos(theta);
             }
 
             public Angle(float sin, float cos)

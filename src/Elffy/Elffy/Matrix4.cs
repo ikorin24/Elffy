@@ -275,7 +275,7 @@ namespace Elffy
             if(depthNear <= 0) { throw new ArgumentOutOfRangeException(nameof(depthNear)); }
             if(depthFar <= 0) { throw new ArgumentOutOfRangeException(nameof(depthFar)); }
 
-            var maxY = depthNear * MathTool.Tan(0.5f * fovy);
+            var maxY = depthNear * MathF.Tan(0.5f * fovy);
             var minY = -maxY;
             var minX = minY * aspect;
             var maxX = maxY * aspect;
