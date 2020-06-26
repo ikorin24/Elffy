@@ -113,6 +113,8 @@ namespace Elffy
         public Vector4(in Vector2 v, float z, float w) => (X, Y, Z, W) = (v.X, v.Y, z, w);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector4(float value) => (X, Y, Z, W) = (value, value, value, value);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Deconstruct(out float x, out float y, out float z, out float w) => (x, y, z, w) = (X, Y, Z, W);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly (float X, float Y, float Z, float W) ToTuple() => (X, Y, Z, W);

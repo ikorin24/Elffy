@@ -40,6 +40,9 @@ namespace Elffy
         public Vector2(float value) => (X, Y) = (value, value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Deconstruct(out float x, out float y) => (x, y) = (X, Y);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly (float X, float Y) ToTuple() => (X, Y);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly float SumElement() => X + Y;

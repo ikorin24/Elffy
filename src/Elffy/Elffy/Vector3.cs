@@ -82,6 +82,9 @@ namespace Elffy
         public Vector3(float value) => (X, Y, Z) = (value, value, value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Deconstruct(out float x, out float y, out float z) => (x, y, z) = (X, Y, Z);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly (float X, float Y, float Z) ToTuple() => (X, Y, Z);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly float Dot(in Vector3 vec) => Mult(this, vec).SumElement();

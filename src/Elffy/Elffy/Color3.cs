@@ -20,6 +20,8 @@ namespace Elffy
         public Color3(float r, float g, float b) => (R, G, B) = (r, g, b);
         public Color3(float value) => (R, G, B) = (value, value, value);
 
+        public void Deconstruct(out float r, out float g, out float b) => (r, g, b) = (R, G, B);
+
         public readonly override bool Equals(object? obj) => obj is Color3 color && Equals(color);
 
         public readonly bool Equals(Color3 other) => (R == other.R) && (G == other.G) && (B == other.B);
