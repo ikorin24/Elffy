@@ -17,6 +17,7 @@ namespace Elffy.Games
         private static Camera _mainCamera = null!;
         private static Mouse _mouse = null!;
         private static Dispatcher _dispather = null!;
+        private static ControlCollection _uiRootCollection = null!;
 
         public static IHostScreen Screen => _screen;
         public static Layer WorldLayer => _worldLayer;
@@ -26,6 +27,8 @@ namespace Elffy.Games
         public static Mouse Mouse => _mouse;
 
         public static Dispatcher Dispatcher => _dispather;
+
+        public static ControlCollection UI => _uiRootCollection;
 
         public static void Start(Action initialize)
         {
@@ -52,6 +55,7 @@ namespace Elffy.Games
             _mainCamera = screen.Camera;
             _mouse = screen.Mouse;
             _dispather = screen.Dispatcher;
+            _uiRootCollection = screen.UIRoot.Children;
             _initialize();
         }
     }
