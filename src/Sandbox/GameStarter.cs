@@ -1,13 +1,11 @@
 ﻿#nullable enable
 using Elffy;
+using Elffy.Components;
 using Elffy.Games;
 using Elffy.Mathematics;
 using Elffy.Shading;
 using Elffy.Shape;
 using Elffy.Threading;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Sandbox
 {
@@ -19,16 +17,26 @@ namespace Sandbox
 
             new CameraMouse(SingleScreenApp.MainCamera, SingleScreenApp.Mouse, Vector3.Zero).Activate();
 
-            new Plain()
+            var plain = new Plain()
             {
                 Scale = new Vector3(100),
                 Rotation = new Quaternion(Vector3.UnitX, -90f.ToRadian()),
-            }.Activate();
+            };
+            plain.AddComponent(new Material(new Color4(0.8f), new Color4(0.15f), new Color4(0.2f), 400f));
+            plain.Activate();
 
             PmxModel.LoadResourceAsync("Alicia/Alicia_solid.pmx").ContinueWithDispatch(model =>
             {
-                model.Shader = ShaderSource.Normal;
                 model.Scale = new Vector3(0.8f);
+                model.AddComponent(new Material(new Color4(0.8f), new Color4(0.25f), new Color4(0.1f), 5f));
+                model.Activate();
+            });
+
+            PmxModel.LoadResourceAsync("Alicia/Alicia_solid.pmx").ContinueWithDispatch(model =>
+            {
+                model.Position = new Vector3(-10, 0, -10);
+                model.Scale = new Vector3(0.8f);
+                model.Shader = ShaderSource.Normal;
                 model.Activate();
             });
 
@@ -36,7 +44,7 @@ namespace Sandbox
             {
                 model.Scale = new Vector3(0.03f);
                 model.Position = new Vector3(10, 0, 0);
-                model.Shader = ShaderSource.Normal;
+                model.AddComponent(new Material(new Color4(0f, 0.7f, 0.25f), new Color4(0f, 0.6f, 0.1f), Color4.White, 4));
                 model.Activate();
             });
 
@@ -44,6 +52,11 @@ namespace Sandbox
             {
                 Position = new Vector3(-5, 1, 0),
                 Shader = ShaderSource.Normal,
+            }.Activate();
+
+            new Cube()
+            {
+                Position = new Vector3(-5, 1, -5),
             }.Activate();
         }
     }

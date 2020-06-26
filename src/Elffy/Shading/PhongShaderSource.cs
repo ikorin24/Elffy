@@ -1,7 +1,8 @@
 ﻿#nullable enable
 using Elffy.Core;
-using Elffy.OpenGL;
+using Elffy.Components;
 using System;
+using System.Runtime.CompilerServices;
 
 namespace Elffy.Shading
 {
@@ -27,7 +28,19 @@ namespace Elffy.Shading
         {
             // TODO: lights を使う (どうやって可変長かつ抽象型をうまく扱えばいいの?)
 
-            var material = new Elffy.Components.MaterialValue(new Color4(0.8f), new Color4(0.35f), new Color4(0.5f), 10f);
+            if(target.TryGetComponent<Material>(out var m)) {
+                uniform.Send("ma", Unsafe.As<Color4, Color3>(ref Unsafe.AsRef(m.Ambient)));
+                uniform.Send("md", Unsafe.As<Color4, Color3>(ref Unsafe.AsRef(m.Diffuse)));
+                uniform.Send("ms", Unsafe.As<Color4, Color3>(ref Unsafe.AsRef(m.Specular)));
+                uniform.Send("shininess", m.Shininess);
+            }
+            else {
+                uniform.Send("ma", new Color3(0.8f));
+                uniform.Send("md", new Color3(0.35f));
+                uniform.Send("ms", new Color3(0.5f));
+                uniform.Send("shininess", 10f);
+            }
+
             uniform.Send("model", model);
             uniform.Send("view", view);
             uniform.Send("projection", projection);
@@ -35,10 +48,6 @@ namespace Elffy.Shading
             uniform.Send("la", new Vector3(0.8f));
             uniform.Send("ld", new Vector3(0.8f));
             uniform.Send("ls", new Vector3(1f));
-            uniform.Send("ma", (Color3)material.Ambient);
-            uniform.Send("md", (Color3)material.Diffuse);
-            uniform.Send("ms", (Color3)material.Specular);
-            uniform.Send("shininess", material.Shininess);
             const int DefaultTextureUnit = 0;           // ← default texture is 0. GL.ActiveTexture(TextureUnit.Texture0)
             uniform.Send("tex_sampler", DefaultTextureUnit);
         }
