@@ -2,14 +2,16 @@
 using System;
 using System.Diagnostics;
 using Elffy.Core;
-using Elffy.Exceptions;
 using System.ComponentModel;
-using UnmanageUtility;
+using Elffy.OpenGL;
+using OpenToolkit.Graphics.OpenGL;
+using System.Runtime.CompilerServices;
+using Elffy.Shading;
 
 namespace Elffy.UI
 {
     /// <summary><see cref="UI.Control"/> を描画するためのオブジェクト。対象の <see cref="UI.Control"/> のインスタンスと一対一の関係を持つ</summary>
-    internal sealed class UIRenderable : Renderable //, IUIRenderable
+    internal sealed class UIRenderable : Renderable
     {
         /// <summary>このインスタンスの描画対象である論理 UI コントロール</summary>
         public Control Control { get; private set; }
@@ -18,28 +20,40 @@ namespace Elffy.UI
         /// <param name="control">描画対象の論理 UI コントロール</param>
         public UIRenderable(Control control)
         {
-            ArgumentChecker.ThrowIfNullArg(control, nameof(control));
+            Control = control ?? throw new ArgumentNullException(nameof(control));
             IsFrozen = true;
-            Control = control;
+            Shader = UIShaderSource.Instance;
         }
-
-        //void IUIRenderable.Render() => Render(,);
-        //bool IUIRenderable.IsVisible => IsVisible;
-        //void IUIRenderable.Activate() => Activate(Control.Root!.UILayer);
-        //void IUIRenderable.Destroy() => Terminate();
 
         protected override void OnAlive()
         {
             base.OnAlive();
-            // Layer is always UILayer
-            var yAxisDir = ((UILayer)InternalLayer!).YAxisDirection;
+            Debug.Assert(InternalLayer is UILayer);
+            var yAxisDir = Unsafe.As<UILayer>(InternalLayer).YAxisDirection;
+
             Span<Vertex> vertices = stackalloc Vertex[4];
             Span<int> indices = stackalloc int[6];
             SetPolygon(Control.Width, Control.Height, Control.OffsetX, Control.OffsetY, yAxisDir, vertices, indices);
             LoadGraphicBuffer(vertices, indices);
         }
 
-        #region SetPolygon
+        protected override void OnRendering(in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        {
+            VAO.Bind(VAO);
+            IBO.Bind(IBO);
+            if(!TextureObject.IsEmpty) {
+                TextureObject.Bind(TextureObject);
+            }
+            else {
+                TextureObject.Bind(Engine.WhiteEmptyTexture);
+            }
+            ShaderProgram!.Apply(this, Span<Light>.Empty, in model, in view, in projection);
+            GL.DrawElements(BeginMode.Triangles, IBO.Length, DrawElementsType.UnsignedInt, 0);
+            VAO.Unbind();
+            IBO.Unbind();
+            TextureObject.Unbind();
+        }
+
         /// <summary>頂点配列とインデックス配列をセットします</summary>
         /// <param name="width">幅</param>
         /// <param name="height">高さ</param>
@@ -91,6 +105,5 @@ namespace Elffy.UI
             indices[4] = i4;
             indices[5] = i5;
         }
-        #endregion
     }
 }
