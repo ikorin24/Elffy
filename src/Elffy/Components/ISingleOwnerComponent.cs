@@ -5,6 +5,6 @@ namespace Elffy.Components
 {
     public interface ISingleOwnerComponent : IComponent
     {
-        ComponentOwner Owner { get; }
+        ComponentOwner? Owner { get; }
     }
 }

@@ -12,7 +12,7 @@ using TKPixelFormat = OpenToolkit.Graphics.OpenGL.PixelFormat;
 
 namespace Elffy.Components
 {
-    public sealed class Texture : IComponent, IDisposable
+    public sealed class Texture : ISingleOwnerComponent, IDisposable
     {
         private TextureObject _to;
         public TextureExpansionMode ExpansionMode { get; }
@@ -21,12 +21,17 @@ namespace Elffy.Components
 
         public TextureUnitNumber TextureUnit { get; }
 
+        public ComponentOwner? Owner { get; private set; }
+
+        public bool IsAutoDisposeEnabled { get; }
+
         public Texture(TextureExpansionMode expansionMode, TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode)
         {
             ExpansionMode = expansionMode;
             ShrinkMode = shrinkMode;
             MipmapMode = mipmapMode;
             TextureUnit = TextureUnitNumber.Unit0;
+            IsAutoDisposeEnabled = true;
         }
 
         ~Texture() => Dispose(false);
@@ -60,9 +65,26 @@ namespace Elffy.Components
             TextureObject.Unbind(unit);
         }
 
-        public void OnAttached(ComponentOwner owner) { }    // nop
+        public void OnAttached(ComponentOwner owner)
+        {
+            if(Owner is null == false) {
+                throw new InvalidOperationException($"{nameof(Texture)} is already attached. Can not have multi {nameof(ComponentOwner)}s.");
+            }
+            Owner = owner;
+            if(IsAutoDisposeEnabled) {
+                owner.Dead += _ => Dispose();
+            }
+        }
 
-        public void OnDetached(ComponentOwner owner) { }    // nop
+        public void OnDetached(ComponentOwner owner)
+        {
+            if(Owner == owner) {
+                Owner = null;
+                if(IsAutoDisposeEnabled) {
+                    Dispose();
+                }
+            }
+        }
 
         public void Dispose()
         {
