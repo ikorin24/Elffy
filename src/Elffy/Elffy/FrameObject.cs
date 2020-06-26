@@ -175,6 +175,11 @@ namespace Elffy
             // activating ビットをおろす、alive ビットをたてる
             _lifeState = _lifeState & ~FrameObjectLifeState.Bit_Activating
                                     | FrameObjectLifeState.Bit_Alive;
+
+            // TODO: このタイミングでユーザー処理を挟めてしまうと、メインスレッド前提だとしても、状態遷移的に正しい状態を担保するのが複雑になりすぎると思う。
+            //       イベントと virsual メソッドを公開しない方がいいのでは？ Dead 時も同様。
+            //       Activate と Terminate の2つはそもそもユーザー処理側から呼ばれるので、フック処理を公開しても問題はない。
+            //       状態遷移の要検討
             OnAlive();
         }
 
