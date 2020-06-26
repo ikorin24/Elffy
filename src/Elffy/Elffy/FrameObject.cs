@@ -167,7 +167,6 @@ namespace Elffy
         protected virtual void OnDead()
         {
             Dead?.Invoke(this);
-            (this as IDisposable)?.Dispose();       // TODO: 継承先にIDisposeがないの確認したら消す。継承先に責任を持って破棄させる
         }
 
         internal void AddToObjectStoreCallback()
