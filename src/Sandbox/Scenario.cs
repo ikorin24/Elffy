@@ -18,55 +18,55 @@ using System.Runtime.InteropServices;
 using System.Reflection;
 using Elffy.Shading;
 
-namespace ElffyGame
+namespace Sandbox
 {
     public abstract class Scenario
     {
         public static void Start(IHostScreen screen)
         {
-            screen.Camera.LookAt(new Vector3(0, 10, 0), new Vector3(0, 10, 50));
-            new CameraMouse(screen.Camera, screen.Mouse, new Vector3(0, 0, 0)).Activate(screen.Layers.WorldLayer);
+            //screen.Camera.LookAt(new Vector3(0, 10, 0), new Vector3(0, 10, 50));
+            //new CameraMouse(screen.Camera, screen.Mouse, new Vector3(0, 0, 0)).Activate(screen.Layers.WorldLayer);
 
-            var plain = new Plain()
-            {
-                Scale = new Vector3(100),
-                //Shader = ShaderSource.Normal,
-            };
-            plain.Rotate(Vector3.UnitX, -MathTool.PiOver2);
-            plain.Activate(screen.Layers.WorldLayer);
+            //var plain = new Plain()
+            //{
+            //    Scale = new Vector3(100),
+            //    //Shader = ShaderSource.Normal,
+            //};
+            //plain.Rotate(Vector3.UnitX, -MathTool.PiOver2);
+            //plain.Activate(screen.Layers.WorldLayer);
 
-            var sw2 = new Stopwatch();
-            sw2.Start();
-            PmxModel.LoadResourceAsync("Alicia/Alicia_solid.pmx")
-                .ContinueWith(t => screen.Dispatcher.Invoke(() =>
-                {
-                    var m = t.Result;
-                    //m.Shader = ShaderSource.Phong;
-                    m.Activate(screen.Layers.WorldLayer);
-                }));
-            sw2.Stop();
-            Debug.WriteLine($"{sw2.ElapsedMilliseconds} ms");
+            //var sw2 = new Stopwatch();
+            //sw2.Start();
+            //PmxModel.LoadResourceAsync("Alicia/Alicia_solid.pmx")
+            //    .ContinueWith(t => screen.Dispatcher.Invoke(() =>
+            //    {
+            //        var m = t.Result;
+            //        //m.Shader = ShaderSource.Phong;
+            //        m.Activate(screen.Layers.WorldLayer);
+            //    }));
+            //sw2.Stop();
+            //Debug.WriteLine($"{sw2.ElapsedMilliseconds} ms");
 
-            using(var frames = FrameStream.GetStream(screen)) {
-                frames.Do(e =>
-                {
-                    Debug.WriteLine("Do");
-                })
-                .Do(TimeSpan.FromSeconds(3), e =>
-                {
-                    Debug.WriteLine($"Begin : {e.Time.TotalSeconds}");
-                })
-                .Do(e =>
-                {
-                    Debug.WriteLine("Wait 3 sec");
-                })
-                .Wait(TimeSpan.FromSeconds(3))
-                .Do(e =>
-                {
-                    Debug.WriteLine("End");
-                });
-            }
-            return;
+            //using(var frames = FrameStream.GetStream(screen)) {
+            //    frames.Do(e =>
+            //    {
+            //        Debug.WriteLine("Do");
+            //    })
+            //    .Do(TimeSpan.FromSeconds(3), e =>
+            //    {
+            //        Debug.WriteLine($"Begin : {e.Time.TotalSeconds}");
+            //    })
+            //    .Do(e =>
+            //    {
+            //        Debug.WriteLine("Wait 3 sec");
+            //    })
+            //    .Wait(TimeSpan.FromSeconds(3))
+            //    .Do(e =>
+            //    {
+            //        Debug.WriteLine("End");
+            //    });
+            //}
+            //return;
 
             //var worldLayer = screen.Layers.WorldLayer;
             ////screen.Light.GlobalAmbient = Color4.Red;

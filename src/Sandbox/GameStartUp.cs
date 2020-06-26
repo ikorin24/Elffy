@@ -14,7 +14,7 @@ using Elffy.Shape;
 //using OpenTK.Graphics;
 using Elffy.Serialization;
 
-namespace ElffyGame
+namespace Sandbox
 {
     public class GameStartUp
     {

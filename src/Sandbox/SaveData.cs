@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using System.Xml.Serialization;
 using Elffy;
-using System.Reflection;
+using Elffy.AssemblyServices;
 
-namespace ElffyGame
+namespace Sandbox
 {
     [XmlRoot("SaveData")]
     public class SaveData : ConfigBase<SaveData>
     {
-        private static readonly string PATH = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!, "SaveData.xml");
+        private static readonly string PATH = System.IO.Path.Combine(AssemblyState.EntryAssemblyDirectory, "SaveData.xml");
 
         public SaveData()
         {

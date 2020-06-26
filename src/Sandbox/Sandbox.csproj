@@ -3,7 +3,6 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
      <TargetFramework>netcoreapp3.1</TargetFramework> 
-    <!--<TargetFramework>net48</TargetFramework>-->
     <PlatformTarget>AnyCPU</PlatformTarget>
     <LangVersion>8.0</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -19,12 +18,6 @@
     <ProjectReference Include="..\Elffy.Games\Elffy.Games.csproj" />
     <ProjectReference Include="..\Elffy\Elffy.csproj" />
   </ItemGroup>
-
-  <!--<ItemGroup>
-    <Reference Include="OpenTK">
-      <HintPath>..\Elffy\dll\OpenTK.dll</HintPath>
-    </Reference>
-  </ItemGroup>-->
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
     <Exec Command="&quot;$(ProjectDir)externalExe\erc.exe&quot; &quot;-r&quot; &quot;$(ProjectDir)ElffyResources&quot; &quot;-s&quot; &quot;$(ProjectDir)Scene&quot; &quot;$(ProjectDir)$(OutDir)\&quot;" />

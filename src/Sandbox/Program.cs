@@ -8,14 +8,14 @@ using Elffy.Platforms.Windows;
 using Elffy.UI;
 using Sandbox;
 
-namespace ElffyGame
+namespace Sandbox
 {
     static class Program
     {
         [STAThread]
         static void Main()
         {
-            SingleScreenApp.Start(() => { });
+            SingleScreenApp.Start(GameStarter.Start);
         }
     }
 }
