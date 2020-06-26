@@ -11,8 +11,8 @@ namespace Elffy.UI
     public class ControlCollection : IReadOnlyList<Control>, IReadOnlyCollection<Control>, ICollection<Control>, IEnumerable<Control>, IEnumerable
     {
         /// <summary>この <see cref="ControlCollection"/> インスタンスを持つ <see cref="Control"/> オブジェクト</summary>
-        private Control _owner;
-        private List<Control> _list;
+        private readonly Control _owner;
+        private readonly List<Control> _list;
 
         /// <summary>インデックスを指定してリストの要素にアクセスします</summary>
         /// <param name="index">インデックス</param>
@@ -23,14 +23,13 @@ namespace Elffy.UI
         public int Count => _list.Count;
 
         /// <summary><see cref="ICollection{T}.IsReadOnly"/> 実装。常に false を返します。</summary>
-        public bool IsReadOnly => false;
+        bool ICollection<Control>.IsReadOnly => false;
 
         /// <summary>コンストラクタ</summary>
         /// <param name="owner">この <see cref="ControlCollection"/> を持つ <see cref="Control"/> オブジェクト</param>
         internal ControlCollection(Control owner)
         {
-            ArgumentChecker.ThrowIfNullArg(owner, nameof(owner));
-            _owner = owner;
+            _owner = owner ?? throw new ArgumentNullException(nameof(owner));
             _list = new List<Control>();
         }
 
@@ -41,7 +40,7 @@ namespace Elffy.UI
         /// <param name="item">追加する要素</param>
         public void Add(Control item)
         {
-            ArgumentChecker.ThrowIfNullArg(item, nameof(item));
+            if(item is null) { throw new ArgumentNullException(nameof(item)); }
             item.Parent = _owner;
             item.Renderable.Activate(item.Root!.UILayer);
             _list.Add(item);
@@ -51,24 +50,34 @@ namespace Elffy.UI
         /// <param name="items">追加する要素</param>
         public void AddRange(IEnumerable<Control> items)
         {
-            ArgumentChecker.ThrowIfNullArg(items, nameof(items));
-            var evaluated = (items is ICollection) ? items : items.ToArray();
-            ArgumentChecker.ThrowArgumentIf(evaluated.Contains(null!), $"{nameof(items)} contains null. Can not add null");
-            foreach(var item in evaluated) {
+            if(items is null) { throw new ArgumentNullException(nameof(items)); }
+            foreach(var item in items) {
+                if(item is null) { throw new ArgumentException($"{nameof(items)} contains null. Can not add null"); }
                 item.Parent = _owner;
+                _list.Add(item);
                 item.Renderable.Activate(item.Root!.UILayer);
             }
-            _list.AddRange(evaluated);
+        }
+
+        /// <summary>要素を複数追加します</summary>
+        /// <param name="items">追加する要素</param>
+        public void AddRange(ReadOnlySpan<Control> items)
+        {
+            foreach(var item in items) {
+                item.Parent = _owner;
+                _list.Add(item);
+                item.Renderable.Activate(item.Root!.UILayer);
+            }
+            _list.AddRange(items);
         }
 
         /// <summary>要素をクリアします</summary>
         public void Clear()
         {
-            _list.ForEach(x =>
-            {
-                x.Parent = null;
-                x.Renderable.Terminate();
-            });
+            foreach(var item in _list.AsReadOnlySpan()) {
+                item.Parent = null;
+                item.Renderable.Terminate();
+            }
             _list.Clear();
         }
 
@@ -92,8 +101,8 @@ namespace Elffy.UI
         /// <param name="item">追加する要素</param>
         public void Insert(int index, Control item)
         {
-            ArgumentChecker.ThrowIfNullArg(item, nameof(item));
-            ArgumentChecker.ThrowOutOfRangeIf(index < 0 || index > _list.Count, nameof(index), index, $"{nameof(index)} is out of range");
+            if(item is null) { throw new ArgumentNullException(nameof(item)); }
+            if(index < 0 || index > _list.Count) { throw new ArgumentOutOfRangeException(nameof(index), index, $"{nameof(index)} is out of range."); }
             item.Parent = _owner;
             _list.Insert(index, item);
             item.Renderable.Activate(item.Root!.UILayer);
@@ -104,7 +113,7 @@ namespace Elffy.UI
         /// <returns>削除に成功したか (指定した要素が存在しない場合 false)</returns>
         public bool Remove(Control item)
         {
-            ArgumentChecker.ThrowIfNullArg(item, nameof(item));
+            if(item is null) { throw new ArgumentNullException(nameof(item)); }
             var result = _list.Remove(item);
             if(result) {
                 item.Parent = null;
@@ -117,10 +126,11 @@ namespace Elffy.UI
         /// <param name="index">インデックス</param>
         public void RemoveAt(int index)
         {
-            ArgumentChecker.ThrowOutOfRangeIf(index < 0 || index >= _list.Count, nameof(index), index, $"{nameof(index)} is out of range");
-            _list[index].Parent = null;
-            _list[index].Renderable.Terminate();
+            if((uint)index >= (uint)_list.Count) { throw new ArgumentOutOfRangeException(nameof(index), index, $"{nameof(index)} is out of range."); }
+            var removed = _list[index];
             _list.RemoveAt(index);
+            removed.Parent = null;
+            removed.Renderable.Terminate();
         }
 
         internal ReadOnlySpan<Control> AsReadOnlySpan() => _list.AsReadOnlySpan();
