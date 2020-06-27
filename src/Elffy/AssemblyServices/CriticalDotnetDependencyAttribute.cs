@@ -14,6 +14,11 @@ namespace Elffy.AssemblyServices
     // ・この属性が付与されているクラスやメソッドが含まれる場合、.Net Standard をターゲットにせず、
     //   特定の対象のランタイム (.NET Core 3.1 など) 向けにコンパイルしてください
 
+
+    /// <summary>
+    /// Target classes or methods depend on specific version of .NET; internal implementation, private field, and so on.<para/>
+    /// (You must pass unit tests in the runtime of target version. DO NOT build for .NET Standard Library.)<para/>
+    /// </summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Method | AttributeTargets.Constructor,
                     AllowMultiple = false, Inherited = false)]
     internal class CriticalDotnetDependencyAttribute : Attribute
