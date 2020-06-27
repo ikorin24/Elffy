@@ -1,15 +1,15 @@
 ﻿#nullable enable
+using Elffy.AssemblyServices;
+using Elffy.Effective;
+using Elffy.Effective.Internal;
+using Elffy.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Text;
-using Elffy.Exceptions;
-using Elffy.Effective.Internal;
-using Elffy.Effective;
 using System.Runtime.CompilerServices;
-using Elffy.AssemblyServices;
+using System.Text;
 
 namespace Elffy
 {
@@ -65,7 +65,7 @@ namespace Elffy
             }
             return ReadOnlySpan<char>.Empty;
         }
-         
+
         /// <summary>リソースを読み込むストリームを取得します</summary>
         /// <param name="name">リソース名</param>
         /// <returns>リソースのストリーム</returns>
@@ -113,7 +113,7 @@ namespace Elffy
             }
 
             const byte END_MARK = 0x3A;
-            using(var fs = File.OpenRead(ResourceFilePath))
+            using(var fs = AlloclessFileStream.OpenRead(ResourceFilePath))
             using(var pooledArray = new PooledArray<byte>(2048)) {
                 var buf = pooledArray.InnerArray;
                 // フォーマットバージョンの確認
