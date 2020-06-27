@@ -13,7 +13,7 @@ namespace Elffy.Effective.Internal
     internal sealed class AlloclessFileStream : FileStream, IDisposable
     {
         const int BufferSize = 4096;    // 2^n でなければならない (ArrayPool<byte>.Shared からちょうどのサイズを取る必要があるため)
-        private static readonly Action<FileStream, byte[]> _setBufferDelegate;
+        private static readonly Action<FileStream, byte[]?> _setBufferDelegate;
 
         private byte[]? _pooled;
 
@@ -45,7 +45,7 @@ namespace Elffy.Effective.Internal
             // --------------------------------------------------------------------
             Debug.Assert(il.ILOffset <= ILStreamSize);
 
-            _setBufferDelegate = (Action<FileStream, byte[]>)dm.CreateDelegate(typeof(Action<FileStream, byte[]>));
+            _setBufferDelegate = (Action<FileStream, byte[]?>)dm.CreateDelegate(typeof(Action<FileStream, byte[]?>));
         }
 
         private AlloclessFileStream(string path, FileMode mode, FileAccess access, FileShare share)
@@ -55,6 +55,10 @@ namespace Elffy.Effective.Internal
             // 同じ配列長の Rent が発生する可能性があるが、
             // ArrayPool<T>.Shared はスレッドごとに独立なので発生頻度は低い上、
             // 二重構造で保持されるのでそうそう問題はないはず。やらないよりは全然マシ。
+
+            // このクラスを使う側は Dispose を呼ぶまでの間に、BufferSize と同じ配列長になる配列を
+            // 同じスレッド上で ArrayPool<byte> から借りないようにする必要がある。
+            // 借りてもバグにはならないが、配列の使いまわしがうまく機能せずメリットが薄くなる。
 
             _pooled = ArrayPool<byte>.Shared.Rent(BufferSize);
             Debug.Assert(_pooled.Length == BufferSize);
@@ -84,6 +88,13 @@ namespace Elffy.Effective.Internal
                 if(pooled is null == false) {
                     ArrayPool<byte>.Shared.Return(pooled);
                     _pooled = null;
+
+
+                    // .net core 3.1 のソースを見る限り、FileStream の バッファは
+                    // Dispose 時に特に何か処理をされることもなくそのまま放置されるが、
+                    // 再現困難なバグを引き起こしても困るのでバッファは消しておく。
+                    // 消しても null 参照が起こったりはしない。
+                    _setBufferDelegate.Invoke(this, null);
                 }
             }
             base.Dispose(disposing);
