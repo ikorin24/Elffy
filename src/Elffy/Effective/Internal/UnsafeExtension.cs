@@ -9,26 +9,26 @@ namespace Elffy.Effective.Internal
     internal static class UnsafeExtension
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [CriticalDotnetDependency]
+        [CriticalDotnetDependency("netcoreapp3.1")]
         internal static Memory<T> AsMemory<T>(this List<T> list) => Unsafe.As<ListDummy<T>>(list)._items.AsMemory(0, list.Count);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [CriticalDotnetDependency]
+        [CriticalDotnetDependency("netcoreapp3.1")]
         internal static Span<T> AsSpan<T>(this List<T> list) => Unsafe.As<ListDummy<T>>(list)._items.AsSpan(0, list.Count);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [CriticalDotnetDependency]
+        [CriticalDotnetDependency("netcoreapp3.1")]
         internal static ReadOnlyMemory<T> AsReadOnlyMemory<T>(this List<T> list) => list.AsMemory();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [CriticalDotnetDependency]
+        [CriticalDotnetDependency("netcoreapp3.1")]
         internal static ReadOnlySpan<T> AsReadOnlySpan<T>(this List<T> list) => list.AsSpan();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [CriticalDotnetDependency]
+        [CriticalDotnetDependency("netcoreapp3.1")]
         internal static void AddRange<T>(this List<T> list, ReadOnlySpan<T> span) => list.InsertRange(list.Count, span);
 
-        [CriticalDotnetDependency]
+        [CriticalDotnetDependency("netcoreapp3.1")]
         internal static void InsertRange<T>(this List<T> list, int index, ReadOnlySpan<T> span)
         {
             if(list == null) { throw new ArgumentNullException(nameof(list)); }

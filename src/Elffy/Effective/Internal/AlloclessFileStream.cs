@@ -9,7 +9,20 @@ using Elffy.AssemblyServices;
 
 namespace Elffy.Effective.Internal
 {
-    [CriticalDotnetDependency]
+    // .NET Core 3.1 のソースをもとに作成
+    // 
+    // FileStream は Read, Write でバッファが必要になった時にバッファが null なら
+    // _buffer = new byte[N]
+    // で確保し、Dispose 後は放置されて使い捨てられます。
+    // それを、このクラスでは ArrayPool<byte>.Shared から確保したバイトにすり替えて Dispose 時に返します。
+    // バッファのフィールドは private なため、あらかじめ IL で組み立ててキャッシュしたデリゲード経由で
+    // 配列を注入します。
+    // 配列長はコンストラクタで指定した長さちょうどである必要があるため、
+    // ArrayPool<byte>.Shared の仕様として 2^n でなくてはならない。
+
+
+    /// <summary>内部バッファを使い捨てない <see cref="FileStream"/> クラス</summary>
+    [CriticalDotnetDependency("netcoreapp3.1")]
     internal sealed class AlloclessFileStream : FileStream, IDisposable
     {
         const int BufferSize = 4096;    // 2^n でなければならない (ArrayPool<byte>.Shared からちょうどのサイズを取る必要があるため)

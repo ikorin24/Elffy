@@ -26,7 +26,7 @@ namespace Elffy.Effective.Internal
         /// <param name="span">型変換を行う <see cref="Span{T}"/></param>
         /// <returns>変換後の <see cref="Span{T}"/></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [CriticalDotnetDependency]
+        [CriticalDotnetDependency("netcoreapp3.1")]
         public static unsafe Span<TTo> CastRefType<TFrom, TTo>(Span<TFrom> span)
         {
             // [NOTE]
