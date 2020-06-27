@@ -7,10 +7,9 @@ using System.Linq;
 using System.Text;
 using Elffy.Exceptions;
 using Elffy.Effective.Internal;
-using Elffy.Serialization;
-using Elffy.Shape;
 using Elffy.Effective;
 using System.Runtime.CompilerServices;
+using Elffy.AssemblyServices;
 
 namespace Elffy
 {
@@ -31,6 +30,8 @@ namespace Elffy
 
         private const string RESOURCE_ROOT = "Resource";
         #endregion
+
+        internal static readonly string ResourceFilePath = Path.Combine(AssemblyState.EntryAssemblyDirectory, RESOURCE_FILE_NAME);
 
         internal static bool IsInitialized { get; private set; }
 
@@ -106,13 +107,13 @@ namespace Elffy
         #region CreateDictionary
         private static void CreateDictionary()
         {
-            if(!File.Exists(RESOURCE_FILE_NAME)) {
+            if(!File.Exists(ResourceFilePath)) {
                 _resources = new Dictionary<string, ResourceObject>(0);
                 return;
             }
 
             const byte END_MARK = 0x3A;
-            using(var fs = File.OpenRead(RESOURCE_FILE_NAME))
+            using(var fs = File.OpenRead(ResourceFilePath))
             using(var pooledArray = new PooledArray<byte>(2048)) {
                 var buf = pooledArray.InnerArray;
                 // フォーマットバージョンの確認
@@ -237,7 +238,7 @@ namespace Elffy
         {
             _head = head;
             _length = length;
-            var stream = AlloclessFileStream.OpenRead(Resources.RESOURCE_FILE_NAME);
+            var stream = AlloclessFileStream.OpenRead(Resources.ResourceFilePath);
             stream.Position = _head;
             _innerStream = stream;
         }
