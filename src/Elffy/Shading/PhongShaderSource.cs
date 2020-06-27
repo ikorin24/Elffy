@@ -46,10 +46,20 @@ namespace Elffy.Shading
             uniform.Send("model", model);
             uniform.Send("view", view);
             uniform.Send("projection", projection);
-            uniform.Send("lPos", new Vector4(1, 1, 0, 0));
-            uniform.Send("la", new Vector3(0.8f));
-            uniform.Send("ld", new Vector3(0.8f));
-            uniform.Send("ls", new Vector3(1f));
+
+            if(lights.Length > 0) {
+                var light = lights[0];
+                uniform.Send("lPos", light.Position4);
+                uniform.Send("la", light.Ambient);
+                uniform.Send("ld", light.Diffuse);
+                uniform.Send("ls", light.Specular);
+            }
+            else {
+                uniform.Send("lPos", new Vector4(0, 1, 0, 0));
+                uniform.Send("la", new Vector3());
+                uniform.Send("ld", new Vector3());
+                uniform.Send("ls", new Vector3());
+            }
 
             uniform.Send("tex_sampler", TextureUnitNumber.Unit0);
         }

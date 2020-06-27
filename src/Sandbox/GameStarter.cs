@@ -15,9 +15,22 @@ namespace Sandbox
     {
         public static void Start()
         {
+            var light = new DirectLight()
+            {
+                Direction = new Vector3(0, 1, 0),
+            };
+            light.Updated += sender =>
+            {
+                var light = (DirectLight)sender;
+                var frameNum = SingleScreenApp.Screen.FrameNum;
+                light.Direction = new Vector3(0, 1, 0).Rotate(new Quaternion(Vector3.UnitX, (frameNum / 60f * 60).ToRadian()));
+            };
+            light.Activate();
+
             SingleScreenApp.MainCamera.LookAt(new Vector3(0, 3, 0), new Vector3(0, 4.5f, 20));
 
-            new CameraMouse(SingleScreenApp.MainCamera, SingleScreenApp.Mouse, Vector3.Zero).Activate();
+            var cameraMouse = new CameraMouse(SingleScreenApp.MainCamera, SingleScreenApp.Mouse, Vector3.Zero);
+            cameraMouse.Activate();
 
             var plain = new Plain()
             {
@@ -31,7 +44,7 @@ namespace Sandbox
             PmxModel.LoadResourceAsync("Alicia/Alicia_solid.pmx").ContinueWithDispatch(model =>
             {
                 model.Scale = new Vector3(0.3f);
-                model.AddComponent(new Material(new Color4(0.8f), new Color4(0.25f), new Color4(0.1f), 5f));
+                model.AddComponent(new Material(new Color4(0.88f), new Color4(0.18f), new Color4(0.1f), 5f));
                 model.Activate();
             });
 
@@ -61,8 +74,13 @@ namespace Sandbox
             {
                 Position = new Vector3(-3, 0.5f, -3),
             };
-            var cubeTexture = Resources.GetStream("cube.png").ToTexture(BitmapType.Png);
-            cube.AddComponent(cubeTexture);
+            cube.AddComponent(Resources.GetStream("cube.png").ToTexture(BitmapType.Png));
+            cube.Updated += sender =>
+            {
+                var cube = (Cube)sender;
+                var p = SingleScreenApp.Screen.FrameNum / 60f * 30f;
+                cube.Rotation = new Quaternion(Vector3.UnitY, p.ToRadian());
+            };
             cube.Activate();
 
             SingleScreenApp.UI.Add(new Button(90, 30));
