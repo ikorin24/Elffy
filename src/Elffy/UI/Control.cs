@@ -185,6 +185,22 @@ namespace Elffy.UI
             Renderable = new UIRenderable(this);
         }
 
+        protected virtual void OnRecieveHitTestResult(bool isHit, Mouse mouse)
+        {
+            var isMouseOverPrev = IsMouseOver;
+            IsMouseOver = isHit;
+            if(isHit) {
+                if(isMouseOverPrev == false) {
+                    MouseEnter?.Invoke(this, new MouseEventArgs(mouse.Position));
+                }
+            }
+            else {
+                if(isMouseOverPrev) {
+                    MouseLeave?.Invoke(this, new MouseEventArgs(mouse.Position));
+                }
+            }
+        }
+
         /// <summary>このオブジェクトの <see cref="Children"/> 以下に存在する全ての子孫を取得します。列挙順は深さ優先探索 (DFS; depth-first search) です。</summary>
         /// <returns>全ての子孫オブジェクト</returns>
         public IEnumerable<Control> GetOffspring()
@@ -198,30 +214,21 @@ namespace Elffy.UI
         }
 
         /// <summary>マウスオーバーしているかを取得します</summary>
-        /// <param name="mousePos">マウス座標</param>
+        /// <param name="mouse">マウス</param>
         /// <returns>マウスオーバーしているか</returns>
-        internal bool MouseOverTest(Point mousePos)
+        internal bool MouseOverTest(Mouse mouse)
         {
-            return IsVisible && IsHitTestVisible && new Rectangle(AbsolutePosition.X, AbsolutePosition.Y, Width, Height).Contains(mousePos);
+            return IsVisible &&
+                   IsHitTestVisible &&
+                   new Rectangle(AbsolutePosition.X, AbsolutePosition.Y, Width, Height).Contains(mouse.Position);
         }
 
         /// <summary>ヒットテストの結果を通知します</summary>
         /// <param name="isHit">ヒットテスト結果</param>
-        /// <param name="mousePos">マウス座標</param>
-        internal void NotifyHitTestResult(bool isHit, Point mousePos)
+        /// <param name="mouse">マウス</param>
+        internal void NotifyHitTestResult(bool isHit, Mouse mouse)
         {
-            var isMouseOverPrev = IsMouseOver;
-            IsMouseOver = isHit;
-            if(isHit) {
-                if(isMouseOverPrev == false) {
-                    MouseEnter?.Invoke(this, new MouseEventArgs(mousePos));
-                }
-            }
-            else {
-                if(isMouseOverPrev) {
-                    MouseLeave?.Invoke(this, new MouseEventArgs(mousePos));
-                }
-            }
+            OnRecieveHitTestResult(isHit, mouse);
         }
     }
 

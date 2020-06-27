@@ -82,25 +82,21 @@ namespace Elffy.Core
         {
             if(IsHitTestEnabled == false) { return; }
             var uiRoot = UIRoot;
-            var pos = mouse.Position;
-            if(YAxisDirection == YAxisDirection.BottomToTop) {
-                pos.Y = UIRoot.Height - pos.Y;
-            }
             if(mouse.OnScreen) {
                 // Hit control is the last control where mouse over test is true
                 var hitControl = default(Control);
                 foreach(var control in uiRoot.Children.AsReadOnlySpan()) {
-                    if(control.MouseOverTest(pos)) {
+                    if(control.MouseOverTest(mouse)) {
                         hitControl = control;
                     }
                 }
                 foreach(var control in uiRoot.Children.AsReadOnlySpan()) {
-                    control.NotifyHitTestResult(control == hitControl, pos);    // TODO: ヒット時イベント中に control を remove されるとまずい (Spanで回してるので)
+                    control.NotifyHitTestResult(control == hitControl, mouse);    // TODO: ヒット時イベント中に control を remove されるとまずい (Spanで回してるので)
                 }
             }
             else {
                 foreach(var control in uiRoot.Children.AsReadOnlySpan()) {
-                    control.NotifyHitTestResult(false, pos);                    // TODO: ヒット時イベント中に control を remove されるとまずい (Spanで回してるので)
+                    control.NotifyHitTestResult(false, mouse);                    // TODO: ヒット時イベント中に control を remove されるとまずい (Spanで回してるので)
                 }
             }
         }

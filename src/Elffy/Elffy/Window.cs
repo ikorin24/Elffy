@@ -219,6 +219,7 @@ namespace Elffy
             foreach(var layer in _renderingArea.Layers.AsReadOnlySpan()) {
                 layer.ApplyChanging();
             }
+            _renderingArea.Layers.UILayer.ApplyChanging();
         }
 
         private void OnResize(ResizeEventArgs e)
@@ -233,8 +234,8 @@ namespace Elffy
             Input.Update();     // TODO: static をやめる
             Mouse.InitFrame();
             Rendering?.Invoke(this);
-            _renderingArea.RenderFrame();
             _syncContextReciever.DoAll();
+            _renderingArea.RenderFrame();
             _renderingArea.Layers.UILayer.HitTest(Mouse);
             Rendered?.Invoke(this);
             Time += _frameDelta;

@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using Elffy.Exceptions;
+using System;
 
 namespace Elffy.UI
 {
@@ -21,8 +22,8 @@ namespace Elffy.UI
         /// <param name="height">ボタンの高さ</param>
         public Button(int width, int height)
         {
-            ArgumentChecker.ThrowOutOfRangeIf(width <= 0, nameof(width), width, "value is 0 or negative.");
-            ArgumentChecker.ThrowOutOfRangeIf(height <= 0, nameof(height), height, "value is 0 or negative");
+            if(width <= 0) { throw new ArgumentOutOfRangeException(nameof(width), width, "value is 0 or negative."); }
+            if(height <= 0) { throw new ArgumentOutOfRangeException(nameof(height), height, "value is 0 or negative."); }
             Width = width;
             Height = height;
         }

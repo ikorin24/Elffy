@@ -8,6 +8,8 @@ using Elffy.Shading;
 using Elffy.Shape;
 using Elffy.Threading;
 using Elffy.UI;
+using System.Diagnostics;
+using System.Drawing;
 
 namespace Sandbox
 {
@@ -15,23 +17,28 @@ namespace Sandbox
     {
         public static void Start()
         {
-            var light = new DirectLight()
-            {
-                Direction = new Vector3(0, 1, 0),
-            };
+            // 光源
+            var light = new DirectLight();
             light.Updated += sender =>
             {
                 var light = (DirectLight)sender;
                 var frameNum = SingleScreenApp.Screen.FrameNum;
-                light.Direction = new Vector3(0, 1, 0).Rotate(new Quaternion(Vector3.UnitX, (frameNum / 60f * 60).ToRadian()));
+                var rotation = new Quaternion(Vector3.UnitX, (frameNum / 60f * 60).ToRadian());
+                light.Direction = new Vector3(0, -1, 0).Rotate(rotation);
             };
             light.Activate();
 
+
+            // カメラ位置初期化
             SingleScreenApp.MainCamera.LookAt(new Vector3(0, 3, 0), new Vector3(0, 4.5f, 20));
 
+
+            // マウスでカメラ移動するためのオブジェクト
             var cameraMouse = new CameraMouse(SingleScreenApp.MainCamera, SingleScreenApp.Mouse, Vector3.Zero);
             cameraMouse.Activate();
 
+
+            // 床
             var plain = new Plain()
             {
                 Scale = new Vector3(20),
@@ -41,6 +48,8 @@ namespace Sandbox
             plain.AddComponent(Resources.GetStream("cube.png").ToTexture(BitmapType.Png));
             plain.Activate();
 
+
+            // キャラ1
             PmxModel.LoadResourceAsync("Alicia/Alicia_solid.pmx").ContinueWithDispatch(model =>
             {
                 model.Scale = new Vector3(0.3f);
@@ -48,6 +57,8 @@ namespace Sandbox
                 model.Activate();
             });
 
+
+            // キャラ2
             PmxModel.LoadResourceAsync("Alicia/Alicia_solid.pmx").ContinueWithDispatch(model =>
             {
                 model.Position = new Vector3(-5, 0, -5);
@@ -56,6 +67,8 @@ namespace Sandbox
                 model.Activate();
             });
 
+
+            // カエル
             Model3D.LoadResourceAsync("green_frog.fbx").ContinueWithDispatch(model =>
             {
                 model.Scale = new Vector3(0.01f);
@@ -64,12 +77,16 @@ namespace Sandbox
                 model.Activate();
             });
 
+
+            // 箱1
             new Cube()
             {
                 Position = new Vector3(-3, 0.5f, 0),
                 Shader = ShaderSource.Normal,
             }.Activate();
 
+
+            // 箱2
             var cube = new Cube()
             {
                 Position = new Vector3(-3, 0.5f, -3),
@@ -83,7 +100,19 @@ namespace Sandbox
             };
             cube.Activate();
 
-            SingleScreenApp.UI.Add(new Button(90, 30));
+            InitializeUI();
+        }
+
+        private static void InitializeUI()
+        {
+            var button = new Button(90, 30);
+            button.KeyDown += sender =>
+            {
+                Debug.WriteLine("Down");
+            };
+            button.KeyPress += sender => Debug.WriteLine("Press");
+            button.KeyUp += sender => Debug.WriteLine("Up");
+            SingleScreenApp.UI.Add(button);
         }
     }
 }
