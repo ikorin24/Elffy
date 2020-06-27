@@ -23,15 +23,16 @@ namespace Elffy.Components
 
         public ComponentOwner? Owner { get; private set; }
 
+        /// <summary><see cref="ComponentOwner"/> からデタッチされるか、アタッチ先の <see cref="FrameObject"/> が無効になった時に自動的に破棄されるかどうか</summary>
         public bool IsAutoDisposeEnabled { get; }
 
-        public Texture(TextureExpansionMode expansionMode, TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode)
+        public Texture(TextureExpansionMode expansionMode, TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode, bool autoDispose = true)
         {
             ExpansionMode = expansionMode;
             ShrinkMode = shrinkMode;
             MipmapMode = mipmapMode;
             TextureUnit = TextureUnitNumber.Unit0;
-            IsAutoDisposeEnabled = true;
+            IsAutoDisposeEnabled = autoDispose;
         }
 
         ~Texture() => Dispose(false);
