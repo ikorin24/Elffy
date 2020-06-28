@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using Elffy;
 using Elffy.Components;
+using Elffy.Framing;
 using Elffy.Games;
 using Elffy.Imaging;
 using Elffy.Mathematics;
@@ -8,6 +9,9 @@ using Elffy.Shading;
 using Elffy.Shape;
 using Elffy.Threading;
 using Elffy.UI;
+using NAudio.Wave.SampleProviders;
+using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 
@@ -31,6 +35,13 @@ namespace Sandbox
 
             // カメラ位置初期化
             SingleScreenApp.MainCamera.LookAt(new Vector3(0, 3, 0), new Vector3(0, 4.5f, 20));
+
+            FrameStream.GetStream(SingleScreenApp.Screen)
+                .Endless(frame =>
+                {
+                    var fovy = 45f + 10f * MathF.Sin((float)frame.Time.TotalSeconds / 2f * MathF.PI * 2);
+                    SingleScreenApp.MainCamera.ChangeFovy(fovy.ToRadian(), new Vector3(0, 3, 0));
+                }).Dispose();
 
 
             // マウスでカメラ移動するためのオブジェクト
@@ -105,14 +116,14 @@ namespace Sandbox
 
         private static void InitializeUI()
         {
-            var button = new Button(90, 30);
-            button.KeyDown += sender =>
-            {
-                Debug.WriteLine("Down");
-            };
-            button.KeyPress += sender => Debug.WriteLine("Press");
-            button.KeyUp += sender => Debug.WriteLine("Up");
-            SingleScreenApp.UI.Add(button);
+            //var button = new Button(90, 30);
+            //button.KeyDown += sender =>
+            //{
+            //    Debug.WriteLine("Down");
+            //};
+            //button.KeyPress += sender => Debug.WriteLine("Press");
+            //button.KeyUp += sender => Debug.WriteLine("Up");
+            //SingleScreenApp.UI.Add(button);
         }
     }
 }

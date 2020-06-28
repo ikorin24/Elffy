@@ -48,10 +48,10 @@ namespace Elffy
             }
         }
         
-        internal LayerCollection(YAxisDirection uiYAxisDirection, RenderingArea owner)
+        internal LayerCollection(RenderingArea owner)
         {
             OwnerRenderingArea = owner;
-            UILayer = new UILayer(uiYAxisDirection, this);
+            UILayer = new UILayer(this);
             SystemLayer = new SystemLayer(this);
             WorldLayer = new Layer(WORLD_LAYER_NAME, this);
             AddDefaltLayers();

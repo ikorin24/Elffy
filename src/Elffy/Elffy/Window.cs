@@ -72,21 +72,18 @@ namespace Elffy
         /// <summary>ウィンドウを作成します</summary>
         public Window() : this(WindowStyle.Default) { }
 
-        public Window(YAxisDirection uiYAxisDirection) : this(800, 450, DEFAULT_WINDOW_TITLE, WindowStyle.Default, uiYAxisDirection) { }
-
         /// <summary>スタイルを指定してウィンドウを作成します</summary>
         /// <param name="windowStyle">ウィンドウのスタイル</param>
-        public Window(WindowStyle windowStyle) : this(800, 450, DEFAULT_WINDOW_TITLE, windowStyle, YAxisDirection.TopToBottom) { }
+        public Window(WindowStyle windowStyle) : this(800, 450, DEFAULT_WINDOW_TITLE, windowStyle) { }
 
         /// <summary>サイズとタイトルとスタイルを指定して、ウィンドウを作成します</summary>
         /// <param name="width">ウィンドウの幅</param>
         /// <param name="height">ウィンドウの高さ</param>
         /// <param name="title">ウィンドウのタイトル</param>
         /// <param name="windowStyle">ウィンドウのスタイル</param>
-        /// <param name="yAxisDirection">Y軸の方向</param>
-        public Window(int width, int height, string title, WindowStyle windowStyle, YAxisDirection yAxisDirection)
+        public Window(int width, int height, string title, WindowStyle windowStyle)
         {
-            _renderingArea = new RenderingArea(yAxisDirection, this);
+            _renderingArea = new RenderingArea(this);
             //_window = new GameWindow(width, height, GraphicsMode.Default, title, (GameWindowFlags)windowStyle);
 
             var gwSetting = new GameWindowSettings()

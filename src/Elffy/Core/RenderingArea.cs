@@ -74,10 +74,10 @@ namespace Elffy.Core
         }
         private Color4 _clearColor;
 
-        internal RenderingArea(YAxisDirection uiYAxisDirection, IHostScreen screen)
+        internal RenderingArea(IHostScreen screen)
         {
             OwnerScreen = screen;
-            Layers = new LayerCollection(uiYAxisDirection, this);
+            Layers = new LayerCollection(this);
         }
 
         /// <summary>OpenTL の描画に関する初期設定を行います</summary>

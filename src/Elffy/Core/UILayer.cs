@@ -21,13 +21,10 @@ namespace Elffy.Core
         /// <summary>UI tree の Root</summary>
         internal Page UIRoot { get; }
 
-        internal YAxisDirection YAxisDirection { get; }
-
-        internal UILayer(YAxisDirection yAxisDirection, LayerCollection owner)
+        internal UILayer(LayerCollection owner)
         {
             Owner = owner;
             UIRoot = new Page(this);
-            YAxisDirection = yAxisDirection;
         }
 
         internal bool IsHitTestEnabled { get; set; } = true;
@@ -61,15 +58,19 @@ namespace Elffy.Core
         /// <param name="projection"></param>
         internal unsafe void Render(in Matrix4 projection)
         {
-            var view = YAxisDirection switch
-            {
-                YAxisDirection.TopToBottom => new Matrix4(1, 0,  0, 0,
-                                                          0, -1, 0, UIRoot.Height,
-                                                          0, 0,  1, 0,
-                                                          0, 0,  0, 1),
-                YAxisDirection.BottomToTop => Matrix4.Identity,
-                _ => throw new NotSupportedException(),
-            };
+            //var view = YAxisDirection switch
+            //{
+            //    YAxisDirection.TopToBottom => new Matrix4(1, 0,  0, 0,
+            //                                              0, -1, 0, UIRoot.Height,
+            //                                              0, 0,  1, 0,
+            //                                              0, 0,  0, 1),
+            //    YAxisDirection.BottomToTop => Matrix4.Identity,
+            //    _ => throw new NotSupportedException(),
+            //};
+            var view = new Matrix4(1, 0, 0, 0,
+                                   0, -1, 0, UIRoot.Height,
+                                   0, 0, 1, 0,
+                                   0, 0, 0, 1);
             foreach(var renderable in _store.Renderables) {
                 if(!renderable.IsRoot || !renderable.IsVisible) { continue; }
                 renderable.Render(projection, view, Matrix4.Identity);

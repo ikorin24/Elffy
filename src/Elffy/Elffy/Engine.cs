@@ -47,10 +47,10 @@ namespace Elffy
             => ShowScreen(800, 450, "", initialized);
 
         public static void ShowScreen(int width, int height, string title, ActionEventHandler<IHostScreen> initialized)
-            => ShowScreen(width, height, title, null, WindowStyle.Default, YAxisDirection.TopToBottom, initialized);
+            => ShowScreen(width, height, title, null, WindowStyle.Default, initialized);
 
         public static void ShowScreen(int width, int height, string title, Icon? icon, WindowStyle windowStyle,
-                                      YAxisDirection uiYAxisDirection, ActionEventHandler<IHostScreen> initialized)
+                                      ActionEventHandler<IHostScreen> initialized)
         {
             ArgumentChecker.ThrowIfNullArg(initialized, nameof(initialized));
             if(!IsRunning) { throw new InvalidOperationException($"{nameof(Engine)} is not running."); }
@@ -64,7 +64,7 @@ namespace Elffy
                     case PlatformType.Windows:
                     case PlatformType.MacOSX:
                     case PlatformType.Unix: {
-                        screen = new Window(width, height, title, windowStyle, uiYAxisDirection);
+                        screen = new Window(width, height, title, windowStyle);
                         break;
                     }
                     case PlatformType.Android:

@@ -30,11 +30,10 @@ namespace Elffy.UI
         {
             base.OnAlive();
             Debug.Assert(InternalLayer is UILayer);
-            var yAxisDir = Unsafe.As<UILayer>(InternalLayer).YAxisDirection;
 
             Span<Vertex> vertices = stackalloc Vertex[4];
             Span<int> indices = stackalloc int[6];
-            SetPolygon(Control.Width, Control.Height, Control.OffsetX, Control.OffsetY, yAxisDir, vertices, indices);
+            SetPolygon(Control.Width, Control.Height, Control.OffsetX, Control.OffsetY, vertices, indices);
             LoadGraphicBuffer(vertices, indices);
         }
 
@@ -61,10 +60,9 @@ namespace Elffy.UI
         /// <param name="height">高さ</param>
         /// <param name="offsetX">X方向のオフセット</param>
         /// <param name="offsetY">Y方向のオフセット</param>
-        /// <param name="yAxisDirection">Y軸方向</param>
         /// <param name="vertices">頂点</param>
         /// <param name="indices">頂点インデックス</param>
-        private void SetPolygon(int width, int height, int offsetX, int offsetY, YAxisDirection yAxisDirection, Span<Vertex> vertices, Span<int> indices)
+        private void SetPolygon(int width, int height, int offsetX, int offsetY, Span<Vertex> vertices, Span<int> indices)
         {
             Debug.Assert(vertices.Length == 4);
             Debug.Assert(indices.Length == 6);
@@ -76,24 +74,31 @@ namespace Elffy.UI
 
             Vector2 t0, t1, t2, t3;
             int i0, i1, i2, i3, i4, i5;
-            switch(yAxisDirection) {
-                case YAxisDirection.TopToBottom:
-                    t3 = new Vector2(0, 0); t0 = new Vector2(0, 1);
-                    t2 = new Vector2(1, 0); t1 = new Vector2(1, 1);
 
-                    i0 = 0; i1 = 2; i2 = 1;
-                    i3 = 2; i4 = 0; i5 = 3;
-                    break;
-                case YAxisDirection.BottomToTop:
-                    t3 = new Vector2(0, 1); t2 = new Vector2(1, 1);
-                    t0 = new Vector2(0, 0); t1 = new Vector2(1, 0);
+            t3 = new Vector2(0, 0); t0 = new Vector2(0, 1);
+            t2 = new Vector2(1, 0); t1 = new Vector2(1, 1);
 
-                    i0 = 0; i1 = 1; i2 = 2;
-                    i3 = 2; i4 = 3; i5 = 0;
-                    break;
-                default:
-                    throw new InvalidEnumArgumentException(nameof(yAxisDirection), (int)yAxisDirection, typeof(YAxisDirection));
-            }
+            i0 = 0; i1 = 2; i2 = 1;
+            i3 = 2; i4 = 0; i5 = 3;
+
+            //switch(yAxisDirection) {
+            //    case YAxisDirection.TopToBottom:
+            //        t3 = new Vector2(0, 0); t0 = new Vector2(0, 1);
+            //        t2 = new Vector2(1, 0); t1 = new Vector2(1, 1);
+
+            //        i0 = 0; i1 = 2; i2 = 1;
+            //        i3 = 2; i4 = 0; i5 = 3;
+            //        break;
+            //    case YAxisDirection.BottomToTop:
+            //        t3 = new Vector2(0, 1); t2 = new Vector2(1, 1);
+            //        t0 = new Vector2(0, 0); t1 = new Vector2(1, 0);
+
+            //        i0 = 0; i1 = 1; i2 = 2;
+            //        i3 = 2; i4 = 3; i5 = 0;
+            //        break;
+            //    default:
+            //        throw new InvalidEnumArgumentException(nameof(yAxisDirection), (int)yAxisDirection, typeof(YAxisDirection));
+            //}
             var normal = Vector3.UnitZ;
 
             vertices[0] = new Vertex(p0, normal, t0);

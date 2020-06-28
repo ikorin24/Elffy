@@ -41,7 +41,7 @@ namespace Elffy.Games
             try {
                 Resources.Initialize();
                 Engine.Run();
-                Engine.ShowScreen(1600, 900, "Game", Resources.LoadIcon("icon.ico"), WindowStyle.Default, YAxisDirection.TopToBottom, InitScreen);
+                Engine.ShowScreen(1600, 900, "Game", Resources.LoadIcon("icon.ico"), WindowStyle.Default, InitScreen);
             }
             finally {
                 Engine.End();
