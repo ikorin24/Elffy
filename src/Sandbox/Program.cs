@@ -1,12 +1,6 @@
 ﻿#nullable enable
 using System;
-using System.Diagnostics;
-using Elffy;
-using Elffy.Core;
 using Elffy.Games;
-using Elffy.Platforms.Windows;
-using Elffy.UI;
-using Sandbox;
 
 namespace Sandbox
 {
@@ -15,7 +9,7 @@ namespace Sandbox
         [STAThread]
         static void Main()
         {
-            SingleScreenApp.Start(GameStarter.Start);
+            SingleScreenApp.Start(1200, 675, "Sandbox", GameStarter.Start);
         }
     }
 }

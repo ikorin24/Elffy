@@ -5,6 +5,7 @@ using Elffy.Threading;
 using Elffy.UI;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Text;
 
 namespace Elffy.Games
@@ -30,22 +31,21 @@ namespace Elffy.Games
 
         public static ControlCollection UI => _uiRootCollection;
 
-        public static void Start(Action initialize)
+        public static void Start(int width, int height, string title, Action initialize)
         {
             _initialize = initialize ?? throw new ArgumentNullException(nameof(initialize));
-            ProcessHelper.SingleLaunch(StartPrivate);
-        }
 
-        private static void StartPrivate()
-        {
-            try {
-                Resources.Initialize();
-                Engine.Run();
-                Engine.ShowScreen(1600, 900, "Game", Resources.LoadIcon("icon.ico"), WindowStyle.Default, InitScreen);
-            }
-            finally {
-                Engine.End();
-            }
+            ProcessHelper.SingleLaunch(() =>
+            {
+                try {
+                    Resources.Initialize();
+                    Engine.Run();
+                    Engine.ShowScreen(width, height, title, Resources.LoadIcon("icon.ico"), WindowStyle.Default, InitScreen);
+                }
+                finally {
+                    Engine.End();
+                }
+            });
         }
 
         private static void InitScreen(IHostScreen screen)
