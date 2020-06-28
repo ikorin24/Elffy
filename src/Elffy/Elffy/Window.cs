@@ -56,8 +56,6 @@ namespace Elffy
 
         public string Title { get => _window.Title; set => _window.Title = value; }
 
-        public Dispatcher Dispatcher => _renderingArea.Dispatcher;
-
         public TimeSpan Time { get; private set; }
 
         public long FrameNum { get; private set; }

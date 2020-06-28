@@ -21,7 +21,6 @@ namespace Elffy.Core
 
         /// <summary>レイヤーのリスト</summary>
         internal LayerCollection Layers { get; }
-        internal Dispatcher Dispatcher { get; } = new Dispatcher();
         internal Camera Camera { get; } = new Camera();
         internal Mouse Mouse { get; } = new Mouse();
 

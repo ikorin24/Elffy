@@ -30,7 +30,7 @@ namespace Elffy.Threading
                 var action = Unsafe.As<Action>(state);
 
                 if(t.Exception is null) {
-                    SingleScreenApp.Dispatcher.Invoke(action);
+                    Dispatcher.Invoke(action);
                 }
                 else {
                     throw t.Exception;
@@ -57,7 +57,7 @@ namespace Elffy.Threading
                 var action = Unsafe.As<Action<T>>(state);
 
                 if(t.Exception is null) {
-                    SingleScreenApp.Dispatcher.Invoke(() => action(t.Result));  // TODO: ラムダ式のキャプチャ避けるオーバーロードを Invoke に用意する
+                    Dispatcher.Invoke(() => action(t.Result));  // TODO: ラムダ式のキャプチャ避けるオーバーロードを Invoke に用意する
                 }
                 else {
                     throw t.Exception;

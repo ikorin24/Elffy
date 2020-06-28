@@ -16,7 +16,6 @@ namespace Elffy
     public abstract class FrameObject
     {
         private IHostScreen? _hostScreen;
-        private Dispatcher? _dispatcher;
         private ILayer? _layer;
         private object? _tag;
         private FrameObjectLifeState _lifeState = FrameObjectLifeState.New;
@@ -75,10 +74,6 @@ namespace Elffy
         /// <summary>Get HostScreen of this <see cref="FrameObject"/>.</summary>
         /// <exception cref="InvalidOperationException"><see cref="IsAlive"/> が false です。</exception>
         public IHostScreen HostScreen => (_hostScreen ??= _layer?.OwnerCollection?.OwnerRenderingArea?.OwnerScreen) ?? throw new InvalidOperationException();
-
-        /// <summary>Get Dispatcher of this <see cref="FrameObject"/>.</summary>
-        /// <exception cref="InvalidOperationException"></exception>
-        public Dispatcher Dispatcher => _dispatcher ??= HostScreen.Dispatcher;
 
         /// <summary>このオブジェクトが更新される最初のフレームに1度のみ実行される処理</summary>
         internal void Start()
@@ -191,7 +186,6 @@ namespace Elffy
                                     & ~FrameObjectLifeState.Bit_Terminating
                                     | FrameObjectLifeState.Bit_Dead;
             _layer = null;
-            _dispatcher = null;
             _hostScreen = null;
             OnDead();
         }

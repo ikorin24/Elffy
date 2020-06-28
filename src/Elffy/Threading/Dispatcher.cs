@@ -8,24 +8,12 @@ using System.Threading;
 
 namespace Elffy.Threading
 {
-    public sealed class Dispatcher
+    public static class Dispatcher
     {
         /// <summary>メインスレッドに Invoke された処理を保持しておくためのスレッドセーフなキュー</summary>
-        private readonly ConcurrentQueue<Action> _invokedActions = new ConcurrentQueue<Action>();
+        private static readonly ConcurrentQueue<Action> _invokedActions = new ConcurrentQueue<Action>();
         private static bool _hasMainThreadID;
         private static int _mainThreadID;
-
-        public static Dispatcher Current { get; private set; } = null!;
-
-        internal Dispatcher()
-        {
-        }
-
-        internal static void SwitchCurrent(Dispatcher dispatcher)
-        {
-            ArgumentChecker.ThrowIfNullArg(dispatcher, nameof(dispatcher));
-            Current = dispatcher;
-        }
 
         /// <summary>
         /// 指定した処理をメインスレッドで行わせます。<para/>
@@ -34,7 +22,7 @@ namespace Elffy.Threading
         /// </summary>
         /// <param name="action">実行する処理</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Invoke(Action action)
+        public static void Invoke(Action action)
         {
             ArgumentChecker.ThrowIfNullArg(action, nameof(action));
             if(IsMainThread()) {
@@ -48,7 +36,7 @@ namespace Elffy.Threading
         /// <summary>現在のスレッドがメインスレッドかどうかを返します。</summary>
         /// <returns>メインスレッドかどうか</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsMainThread()
+        public static bool IsMainThread()
         {
             if(!_hasMainThreadID) { throw new InvalidOperationException("Main Thread ID is not set."); }
             return Thread.CurrentThread.ManagedThreadId == _mainThreadID;
@@ -57,7 +45,7 @@ namespace Elffy.Threading
         /// <summary>現在のスレッドがメインスレッドでない場合、例外を投げます</summary>
         /// <exception cref="InvalidOperationException">現在のスレッドがメインスレッドでないことを示す例外</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ThrowIfNotMainThread()
+        public static void ThrowIfNotMainThread()
         {
             if(IsMainThread() == false) { throw new InvalidOperationException("Current thread must be Main Thread."); }
         }
@@ -75,7 +63,7 @@ namespace Elffy.Threading
 
         /// <summary>Invokedキューの内容を処理します</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void DoInvokedAction()
+        internal static void DoInvokedAction()
         {
             // 現時点で既にキュー内にある処理までを実行する。それ以降は次回に処理実行する。
             // このメソッドは必ずメインスレッドから呼ばれ、ここ以外ではキュー内アイテムが減ることはないためスレッドセーフ
