@@ -9,7 +9,7 @@ namespace Sandbox
         [STAThread]
         static void Main()
         {
-            SingleScreenApp.Start(1200, 675, "Sandbox", GameStarter.Start);
+            Game.Start(1200, 675, "Sandbox", GameStarter.Start);
         }
     }
 }

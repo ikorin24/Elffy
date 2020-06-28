@@ -9,7 +9,7 @@ namespace Elffy.Games
     {
         public static void Activate(this FrameObject source)
         {
-            source.Activate(SingleScreenApp.WorldLayer);
+            source.Activate(Game.WorldLayer);
         }
     }
 }

@@ -1,16 +1,12 @@
 ﻿#nullable enable
 using Elffy.Core;
 using Elffy.InputSystem;
-using Elffy.Threading;
 using Elffy.UI;
 using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Text;
 
 namespace Elffy.Games
 {
-    public static class SingleScreenApp
+    public static class Game
     {
         private static Action _initialize = null!;
         private static IHostScreen _screen = null!;
@@ -37,7 +33,7 @@ namespace Elffy.Games
                 try {
                     Resources.Initialize();
                     Engine.Run();
-                    Engine.ShowScreen(width, height, title, Resources.LoadIcon("icon.ico"), WindowStyle.Default, InitScreen);
+                    Engine.ShowScreen(width, height, title, Resources.LoadIcon("icon.ico"), WindowStyle.Default, InitScreen);   // TODO: リソース以外からのアイコン指定方法
                 }
                 finally {
                     Engine.End();

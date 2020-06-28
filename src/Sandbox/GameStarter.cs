@@ -26,7 +26,7 @@ namespace Sandbox
             light.Updated += sender =>
             {
                 var light = (DirectLight)sender;
-                var frameNum = SingleScreenApp.Screen.FrameNum;
+                var frameNum = Game.Screen.FrameNum;
                 var rotation = new Quaternion(Vector3.UnitX, (frameNum / 60f * 60).ToRadian());
                 light.Direction = new Vector3(0, -1, 0).Rotate(rotation);
             };
@@ -34,18 +34,18 @@ namespace Sandbox
 
 
             // カメラ位置初期化
-            SingleScreenApp.MainCamera.LookAt(new Vector3(0, 3, 0), new Vector3(0, 4.5f, 20));
+            Game.MainCamera.LookAt(new Vector3(0, 3, 0), new Vector3(0, 4.5f, 20));
 
-            FrameStream.GetStream(SingleScreenApp.Screen)
+            FrameStream.GetStream(Game.Screen)
                 .Endless(frame =>
                 {
                     var fovy = 45f + 10f * MathF.Sin((float)frame.Time.TotalSeconds / 2f * MathF.PI * 2);
-                    SingleScreenApp.MainCamera.ChangeFovy(fovy.ToRadian(), new Vector3(0, 3, 0));
+                    Game.MainCamera.ChangeFovy(fovy.ToRadian(), new Vector3(0, 3, 0));
                 }).Dispose();
 
 
             // マウスでカメラ移動するためのオブジェクト
-            var cameraMouse = new CameraMouse(SingleScreenApp.MainCamera, SingleScreenApp.Mouse, Vector3.Zero);
+            var cameraMouse = new CameraMouse(Game.MainCamera, Game.Mouse, Vector3.Zero);
             cameraMouse.Activate();
 
 
@@ -106,7 +106,7 @@ namespace Sandbox
             cube.Updated += sender =>
             {
                 var cube = (Cube)sender;
-                var p = SingleScreenApp.Screen.FrameNum / 60f * 30f;
+                var p = Game.Screen.FrameNum / 60f * 30f;
                 cube.Rotation = new Quaternion(Vector3.UnitY, p.ToRadian());
             };
             cube.Activate();
