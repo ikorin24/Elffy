@@ -3,26 +3,24 @@ using System;
 using System.Runtime.CompilerServices;
 using Elffy.Exceptions;
 using Elffy.Core;
-using OpenToolkit.Graphics.OpenGL;
 using Elffy.OpenGL;
+using System.Diagnostics;
 
 namespace Elffy.Shading
 {
     public sealed class ShaderProgram : IDisposable
     {
-        private int _program = Consts.NULL;
-        private ShaderSource? _shaderSource;
+        private ProgramObject _program;
+
+        private ShaderSource _shaderSource;
         private bool _initialized;
 
-        internal bool IsReleased => _program == Consts.NULL;
+        internal bool IsReleased => _program.IsEmpty;
 
-        [ThreadStatic]
-        private static int _currentProgram = Consts.NULL;
-
-        internal ShaderProgram(ShaderSource shaderSource, int program)
+        internal ShaderProgram(ShaderSource shaderSource, ProgramObject program)
         {
-            ArgumentChecker.ThrowIfNullArg(shaderSource, nameof(shaderSource));
-            ArgumentChecker.ThrowArgumentIf(program == Consts.NULL, "invalid shader program object");
+            if(shaderSource is null) { throw new ArgumentNullException(nameof(shaderSource)); }
+            Debug.Assert(program.IsEmpty == false);
             _program = program;
             _shaderSource = shaderSource;
         }
@@ -33,11 +31,8 @@ namespace Elffy.Shading
         internal void Apply(Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             if(IsReleased) { throw new InvalidOperationException("this shader program is empty or deleted."); }
-            if(!_initialized) { throw new InvalidOperationException("The shader is not associated with VAO."); }
-            if(_currentProgram != _program) {
-                _currentProgram = _program;
-                GL.UseProgram(_program);
-            }
+            if(!_initialized) { throw new InvalidOperationException("The shader is not initialized."); }
+            ProgramObject.Bind(_program);
             _shaderSource!.SendUniforms(_program, target, lights, model, view, projection);
         }
 
@@ -63,10 +58,7 @@ namespace Elffy.Shading
         private void Dispose(bool disposing)
         {
             if(disposing) {
-                if(IsReleased) { return; }
-                GL.DeleteProgram(_program);
-                _program = Consts.NULL;
-                _shaderSource = null;
+                ProgramObject.Delete(ref _program);
             }
             else {
                 // Can not release resources because finalizer is called from another thread.

@@ -11,6 +11,7 @@ using Elffy.Shading;
 using Elffy.AssemblyServices;
 using Elffy.Effective.Internal;
 using System.Runtime.InteropServices;
+using System.Collections.Generic;
 
 namespace Elffy.OpenGL
 {
@@ -20,12 +21,29 @@ namespace Elffy.OpenGL
 
         private static readonly string _cacheDirectory = Path.Combine(AssemblyState.EntryAssemblyDirectory, "cache", "glsl");
         //private static readonly Hashtable _table = new Hashtable();
+        private static readonly Dictionary<Type, int> _refCount = new Dictionary<Type, int>();
+        private static readonly Dictionary<Type, ShaderProgram> _onMemoryPrograms = new Dictionary<Type, ShaderProgram>();
 
-        public static Task CreateCacheFromProgramAsync(Type type, int program)
+        //public static ShaderProgram GetProgramOnMemoryOrCreate(Type type)
+        //{
+        //    if(type.IsSubclassOf(typeof(ShaderSource)) == false) {
+        //        throw new ArgumentException();
+        //    }
+
+        //    if(_refCount.TryGetValue(type, out var count)) {
+
+        //    }
+        //    else {
+
+        //    }
+        //}
+
+        public static Task CreateCacheFromProgramAsync(Type type, ProgramObject program)
         {
             if(type.IsSubclassOf(typeof(ShaderSource)) == false) {
                 throw new ArgumentException();
             }
+            if(program.IsEmpty) { throw new ArgumentException($"{nameof(program)} is empty"); }
 
             var (f, binary) = GetBinary(program);
             return Task.Factory.StartNew(state =>
@@ -53,11 +71,13 @@ namespace Elffy.OpenGL
         /// </summary>
         /// キャッシュを取得する <param name="type"><see cref="ShaderSource"/> の派生型</param>
         /// <returns>(program, success) のペア</returns>
-        public static async Task<(int, bool)> TryLoadProgramCacheAsync(Type type)
+        public static async Task<(ProgramObject, bool)> TryLoadProgramCacheAsync(Type type)
         {
             if(type.IsSubclassOf(typeof(ShaderSource)) == false) {
                 throw new ArgumentException();
             }
+
+            // TODO: 例外発生時のメモリ開放が甘い気がする。たぶんリークする。要修正
 
             var (format, binary, success) = await Task.Factory.StartNew(state =>
             {
@@ -95,7 +115,7 @@ namespace Elffy.OpenGL
                 Debug.Assert(!binary.IsEmpty);
                 using(binary) {
                     var program = CreateProgram(format, binary.Span);
-                    return (program == Consts.NULL) ? (default, false) : (program, true);
+                    return (program, !program.IsEmpty);
                 }
             }
             else {
@@ -104,28 +124,29 @@ namespace Elffy.OpenGL
             }
         }
 
-        private static int CreateProgram(BinaryFormat format, ReadOnlySpan<byte> binary)
+        private static ProgramObject CreateProgram(BinaryFormat format, ReadOnlySpan<byte> binary)
         {
-            var program = GL.CreateProgram();
-            GL.ProgramBinary(program, format,
+            var program = ProgramObject.Create();
+
+            GL.ProgramBinary(program.Value, format,
                              ref MemoryMarshal.GetReference(binary),
                              binary.Length);
-            GL.GetProgram(program, GetProgramParameterName.LinkStatus, out int linkStatus);
+            GL.GetProgram(program.Value, GetProgramParameterName.LinkStatus, out int linkStatus);
             if(linkStatus == Consts.ShaderProgramLinkFailed) {
-                GL.DeleteProgram(program);
-                program = Consts.NULL;
+                ProgramObject.Delete(ref program);
+                Debug.Assert(program.IsEmpty);
             }
             return program;
         }
 
 
-        private static unsafe (BinaryFormat, ValueTypeRentMemory<byte>) GetBinary(int program)
+        private static unsafe (BinaryFormat, ValueTypeRentMemory<byte>) GetBinary(ProgramObject program)
         {
             ValueTypeRentMemory<byte> binary = default;
             try {
-                GL.GetProgram(program, (GetProgramParameterName)GL_RROGRAM_BINARY_LENGTH, out int binLen);
+                GL.GetProgram(program.Value, (GetProgramParameterName)GL_RROGRAM_BINARY_LENGTH, out int binLen);
                 binary = new ValueTypeRentMemory<byte>(binLen);
-                GL.GetProgramBinary(program, binLen, out int len, out var f, ref MemoryMarshal.GetReference(binary.Span));
+                GL.GetProgramBinary(program.Value, binLen, out int len, out var f, ref MemoryMarshal.GetReference(binary.Span));
                 Debug.Assert(binLen == len);
 
                 return (f, binary);
@@ -135,5 +156,10 @@ namespace Elffy.OpenGL
                 throw new InvalidOperationException("Some exception thrown. (See inner exception)", ex);
             }
         }
+    }
+
+    internal static class ShaderProgramOnMemoryManager
+    {
+        public static readonly Dictionary<Type, int> RefCountTable = new Dictionary<Type, int>();
     }
 }

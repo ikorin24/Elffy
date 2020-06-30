@@ -26,7 +26,7 @@ namespace Elffy.Shading
         /// <param name="definition">頂点属性定義用オブジェクト</param>
         protected abstract void DefineLocation(VertexDefinition definition);
 
-        internal void DefineLocation(int program) => DefineLocation(new VertexDefinition(program));
+        internal void DefineLocation(ProgramObject program) => DefineLocation(new VertexDefinition(program));
 
         /// <summary>派生クラスでオーバーライドされた場合、このシェーダーに uniform 変数を送ります。</summary>
         /// <param name="uniform">uniform 変数の送信用オブジェクト</param>
@@ -37,11 +37,11 @@ namespace Elffy.Shading
         /// <param name="projection">projection 行列</param>
         protected abstract void SendUniforms(Uniform uniform, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection);
 
-        internal void SendUniforms(int program, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        internal void SendUniforms(ProgramObject program, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
             => SendUniforms(new Uniform(program), target, lights, model, view, projection);
 
         /// <summary>頂点シェーダー・フラグメントシェーダ―の読み込み、リンク、プログラムの作成を行います</summary>
-        internal ShaderProgram Compile()
+        public ShaderProgram Compile()
         {
             return new ShaderProgram(this, CompilePrivate());
         }
@@ -54,7 +54,8 @@ namespace Elffy.Shading
 
         public async Task<ShaderProgram> CompileOrGetCacheAsync()
         {
-            var (program, success) = await ShaderPrecompileHelper.TryLoadProgramCacheAsync(GetType()).ConfigureAwait(true);
+            var (program, success) = await ShaderPrecompileHelper.TryLoadProgramCacheAsync(GetType())
+                .ConfigureAwait(true);
             if(success) {
                 return new ShaderProgram(this, program);
             }
@@ -63,7 +64,7 @@ namespace Elffy.Shading
             }
         }
 
-        private int CompilePrivate()
+        private ProgramObject CompilePrivate()
         {
             var vertShader = Consts.NULL;
             var fragShader = Consts.NULL;
@@ -71,13 +72,14 @@ namespace Elffy.Shading
                 vertShader = CompileSource(VertexShaderSource, ShaderType.VertexShader);
                 fragShader = CompileSource(FragmentShaderSource, ShaderType.FragmentShader);
 
-                var program = GL.CreateProgram();
-                GL.AttachShader(program, vertShader);
-                GL.AttachShader(program, fragShader);
-                GL.LinkProgram(program);
-                GL.GetProgram(program, GetProgramParameterName.LinkStatus, out int linkStatus);
+                var program = ProgramObject.Create();
+                GL.AttachShader(program.Value, vertShader);
+                GL.AttachShader(program.Value, fragShader);
+                GL.LinkProgram(program.Value);
+                GL.GetProgram(program.Value, GetProgramParameterName.LinkStatus, out int linkStatus);
+
                 if(linkStatus == Consts.ShaderProgramLinkFailed) {
-                    var log = GL.GetProgramInfoLog(program);
+                    var log = GL.GetProgramInfoLog(program.Value);
                     throw new InvalidOperationException($"Linking shader is failed.{Environment.NewLine}{log}");
                 }
                 return program;

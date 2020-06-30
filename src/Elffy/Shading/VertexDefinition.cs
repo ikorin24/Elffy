@@ -4,14 +4,15 @@ using OpenToolkit.Graphics.OpenGL;
 using Elffy.Core;
 using System.Runtime.CompilerServices;
 using Elffy.Exceptions;
+using Elffy.OpenGL;
 
 namespace Elffy.Shading
 {
     public readonly ref struct VertexDefinition
     {
-        private readonly int _program;
+        private readonly ProgramObject _program;
 
-        internal VertexDefinition(int program)
+        internal VertexDefinition(ProgramObject program)
         {
             _program = program;
         }
@@ -47,7 +48,7 @@ namespace Elffy.Shading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe void Position(string name)
         {
-            var index = GL.GetAttribLocation(_program, name);
+            var index = GL.GetAttribLocation(_program.Value, name);
             if(index < 0) { throw new ArgumentException($"Name not found : {name}"); }
             Position(index);
         }
@@ -55,7 +56,7 @@ namespace Elffy.Shading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe void Normal(string name)
         {
-            var index = GL.GetAttribLocation(_program, name);
+            var index = GL.GetAttribLocation(_program.Value, name);
             if(index < 0) { throw new ArgumentException($"Name not found : {name}"); }
             Normal(index);
         }
@@ -63,7 +64,7 @@ namespace Elffy.Shading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe void Color(string name)
         {
-            var index = GL.GetAttribLocation(_program, name);
+            var index = GL.GetAttribLocation(_program.Value, name);
             if(index < 0) { throw new ArgumentException($"Name not found : {name}"); }
             Color(index);
         }
@@ -71,7 +72,7 @@ namespace Elffy.Shading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe void TexCoord(string name)
         {
-            var index = GL.GetAttribLocation(_program, name);
+            var index = GL.GetAttribLocation(_program.Value, name);
             if(index < 0) { throw new ArgumentException($"Name not found : {name}"); }
             TexCoord(index);
         }
