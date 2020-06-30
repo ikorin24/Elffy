@@ -12,32 +12,18 @@ using Elffy.AssemblyServices;
 using Elffy.Effective.Internal;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
+using Elffy.Threading;
+using System.Runtime.InteropServices.WindowsRuntime;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.OpenGL
 {
+    [Obsolete("未実装", true)]     // ファイルにプリコンパイルしたバイナリのロードはとりあえず未実装に
     internal static class ShaderPrecompileHelper
     {
         private const int GL_RROGRAM_BINARY_LENGTH = 0x8741;
 
         private static readonly string _cacheDirectory = Path.Combine(AssemblyState.EntryAssemblyDirectory, "cache", "glsl");
-        //private static readonly Hashtable _table = new Hashtable();
-        private static readonly Dictionary<Type, int> _refCount = new Dictionary<Type, int>();
-        private static readonly Dictionary<Type, ShaderProgram> _onMemoryPrograms = new Dictionary<Type, ShaderProgram>();
-
-        //public static ShaderProgram GetProgramOnMemoryOrCreate(Type type)
-        //{
-        //    if(type.IsSubclassOf(typeof(ShaderSource)) == false) {
-        //        throw new ArgumentException();
-        //    }
-
-        //    if(_refCount.TryGetValue(type, out var count)) {
-
-        //    }
-        //    else {
-
-        //    }
-        //}
-
         public static Task CreateCacheFromProgramAsync(Type type, ProgramObject program)
         {
             if(type.IsSubclassOf(typeof(ShaderSource)) == false) {

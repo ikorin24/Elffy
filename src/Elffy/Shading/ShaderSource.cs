@@ -41,28 +41,28 @@ namespace Elffy.Shading
             => SendUniforms(new Uniform(program), target, lights, model, view, projection);
 
         /// <summary>頂点シェーダー・フラグメントシェーダ―の読み込み、リンク、プログラムの作成を行います</summary>
-        public ShaderProgram Compile()
+        internal ShaderProgram Compile()
         {
-            return new ShaderProgram(this, CompilePrivate());
+            return new ShaderProgram(this, CompilePrivate);
         }
 
-        public Task CreateCacheAsync()
-        {
-            var program = CompilePrivate();
-            return ShaderPrecompileHelper.CreateCacheFromProgramAsync(GetType(), program);
-        }
+        //public Task CreateCacheAsync()
+        //{
+        //    var program = CompilePrivate();
+        //    return ShaderPrecompileHelper.CreateCacheFromProgramAsync(GetType(), program);
+        //}
 
-        public async Task<ShaderProgram> CompileOrGetCacheAsync()
-        {
-            var (program, success) = await ShaderPrecompileHelper.TryLoadProgramCacheAsync(GetType())
-                .ConfigureAwait(true);
-            if(success) {
-                return new ShaderProgram(this, program);
-            }
-            else {
-                return Compile();
-            }
-        }
+        //public async Task<ShaderProgram> CompileOrGetCacheAsync()
+        //{
+        //    var (program, success) = await ShaderPrecompileHelper.TryLoadProgramCacheAsync(GetType())
+        //        .ConfigureAwait(true);
+        //    if(success) {
+        //        return new ShaderProgram(this, program);
+        //    }
+        //    else {
+        //        return Compile();
+        //    }
+        //}
 
         private ProgramObject CompilePrivate()
         {

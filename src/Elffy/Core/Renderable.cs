@@ -130,7 +130,9 @@ namespace Elffy.Core
                 _vao = VAO.Create();
                 VAO.Bind(_vao);
                 IsLoaded = true;
-                BeginSetShaderProgram(_shader);
+                _shaderProgram?.Dispose();
+                _shaderProgram = _shader.Compile();
+                _shaderProgram.Initialize(_vao, _vbo);
             }
         }
 
@@ -145,32 +147,6 @@ namespace Elffy.Core
                 IBO.Delete(ref _ibo);
                 VAO.Delete(ref _vao);
             }
-        }
-
-        private void BeginSetShaderProgram(ShaderSource source)
-        {
-            source.CompileOrGetCacheAsync().ContinueWith(task => Dispatcher.Invoke(() =>
-            {
-                var program = task.Result;
-                if(!_vao.IsEmpty) {
-                    try {
-                        program.Initialize(_vao, _vbo);
-                        _shaderProgram?.Dispose();
-                        _shaderProgram = program;
-                    }
-                    catch(AggregateException ex) {
-                        if(ex.InnerExceptions.Count == 1) {
-                            throw ex.InnerExceptions[0];
-                        }
-                        else {
-                            throw ex;
-                        }
-                    }
-                }
-                else {
-                    program.Dispose();
-                }
-            }));
         }
     }
 
