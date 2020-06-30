@@ -3,7 +3,6 @@ using Elffy.Core;
 using Elffy.Components;
 using System;
 using System.Runtime.CompilerServices;
-using OpenToolkit.Graphics.OpenGL;
 using Elffy.OpenGL;
 
 namespace Elffy.Shading
@@ -28,8 +27,6 @@ namespace Elffy.Shading
 
         protected override void SendUniforms(Uniform uniform, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
-            // TODO: lights を使う (どうやって可変長かつ抽象型をうまく扱えばいいの?)
-
             if(target.TryGetComponent<Material>(out var m)) {
                 uniform.Send("ma", Unsafe.As<Color4, Color3>(ref Unsafe.AsRef(m.Ambient)));
                 uniform.Send("md", Unsafe.As<Color4, Color3>(ref Unsafe.AsRef(m.Diffuse)));
