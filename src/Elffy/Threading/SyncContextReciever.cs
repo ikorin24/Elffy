@@ -1,20 +1,21 @@
 ﻿#nullable enable
-using System;
 using System.Collections.Concurrent;
+using System.Threading;
 
 namespace Elffy.Threading
 {
     internal class SyncContextReceiver
     {
-        private static readonly ConcurrentQueue<Action> _invokedActions = new ConcurrentQueue<Action>();
+        private static readonly ConcurrentQueue<(SendOrPostCallback callback, object? state)> _queue
+            = new ConcurrentQueue<(SendOrPostCallback callback, object? state)>();
 
-        public void Add(Action action) => _invokedActions.Enqueue(action);
+        public void Add(SendOrPostCallback callback, object? state) => _queue.Enqueue((callback, state));
 
         public void DoAll()
         {
-            var count = _invokedActions.Count;
-            while(count > 0 && _invokedActions.TryDequeue(out var action)) {
-                action();
+            var count = _queue.Count;
+            while(count > 0 && _queue.TryDequeue(out var item)) {
+                item.callback(item.state);
                 count--;
             }
         }

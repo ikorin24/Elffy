@@ -11,7 +11,8 @@ namespace Elffy.Threading
     public static class Dispatcher
     {
         /// <summary>メインスレッドに Invoke された処理を保持しておくためのスレッドセーフなキュー</summary>
-        private static readonly ConcurrentQueue<Action> _invokedActions = new ConcurrentQueue<Action>();
+        private static readonly ConcurrentQueue<(Action<object?>? action, object? state)> _invokedActions
+            = new ConcurrentQueue<(Action<object?>? action, object? state)>();
         private static bool _hasMainThreadID;
         private static int _mainThreadID;
 
@@ -24,12 +25,24 @@ namespace Elffy.Threading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Invoke(Action action)
         {
-            ArgumentChecker.ThrowIfNullArg(action, nameof(action));
+            if(action is null) { throw new ArgumentNullException(nameof(action)); }
             if(IsMainThread()) {
                 action();
             }
             else {
-                _invokedActions.Enqueue(action);
+                _invokedActions.Enqueue((null, action));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Invoke(Action<object?> action, object? state)
+        {
+            if(action is null) { throw new ArgumentNullException(nameof(action)); }
+            if(IsMainThread()) {
+                action(state);
+            }
+            else {
+                _invokedActions.Enqueue((action, state));
             }
         }
 
@@ -68,8 +81,17 @@ namespace Elffy.Threading
             // 現時点で既にキュー内にある処理までを実行する。それ以降は次回に処理実行する。
             // このメソッドは必ずメインスレッドから呼ばれ、ここ以外ではキュー内アイテムが減ることはないためスレッドセーフ
             var count = _invokedActions.Count;
-            while(count > 0 && _invokedActions.TryDequeue(out var action)) {
-                action();
+            while(count > 0 && _invokedActions.TryDequeue(out var item)) {
+                if(item.action is null) {
+
+                    // action が null の時は、引数なしの Action が state としてキューに入っている
+
+                    Debug.Assert(item.state is Action);
+                    Unsafe.As<Action>(item.state).Invoke();
+                }
+                else {
+                    item.action(item.state);
+                }
                 count--;
             }
         }

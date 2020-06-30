@@ -55,7 +55,7 @@ namespace Elffy.Threading
 
         public override void Post(SendOrPostCallback d, object? state)
         {
-            _syncContextReceiver.Add(() => d(state));
+            _syncContextReceiver.Add(d, state);
         }
 
         /// <summary>現在のインスタンスのコピーを生成します</summary>
