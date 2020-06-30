@@ -16,10 +16,14 @@ namespace Elffy.Threading
         private static bool _hasMainThreadID;
         private static int _mainThreadID;
 
+
+        // キューの監視はメインスレッド内の同一フレームで複数回行われる可能性がある (windowが複数あるような場合)
+        // そのため、メインスレッド内のどのタイミングで実行されるかは保証できない
+
         /// <summary>
-        /// 指定した処理をメインスレッドで行わせます。<para/>
+        /// 指定した処理をメインスレッドで行わせます。メインスレッド内のどのタイミングで実行されるかは保証されません。<para/>
         /// 呼び出しスレッドがメインスレッドの場合、処理はキューに送られず、その場で同期的に実行されます。<para/>
-        /// それ以外のスレッドからの呼び出しの場合、処理はキューに追加され、現在のフレームの描画処理前に実行されます。<para/>
+        /// それ以外のスレッドからの呼び出しの場合、処理はキューに追加されます。<para/>
         /// </summary>
         /// <param name="action">実行する処理</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -34,6 +38,13 @@ namespace Elffy.Threading
             }
         }
 
+        /// <summary>
+        /// 指定した処理をメインスレッドで行わせます。メインスレッド内のどのタイミングで実行されるかは保証されません。<para/>
+        /// 呼び出しスレッドがメインスレッドの場合、処理はキューに送られず、その場で同期的に実行されます。<para/>
+        /// それ以外のスレッドからの呼び出しの場合、処理はキューに追加されます。<para/>
+        /// </summary>
+        /// <param name="action">実行する処理</param>
+        /// <param name="state">実行する処理に渡される引数</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Invoke(Action<object?> action, object? state)
         {
