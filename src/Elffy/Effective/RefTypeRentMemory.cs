@@ -6,6 +6,8 @@ using Elffy.Effective.Internal;
 
 namespace Elffy.Effective
 {
+    // ValueTypeRentMemory<T> のコメントも見てください
+
     /// <summary>Shared memories from memory pool, that provides <see cref="Span{T}"/> like <see cref="Memory{T}"/>.</summary>
     /// <typeparam name="T">element type</typeparam>
     [DebuggerDisplay("{DebugDisplay}")]
