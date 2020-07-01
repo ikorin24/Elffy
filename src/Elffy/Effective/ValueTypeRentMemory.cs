@@ -125,5 +125,8 @@ namespace Elffy.Effective
                    _id == other._id &&
                    _lender == other._lender;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override string ToString() => DebugDisplay;
     }
 }

@@ -72,5 +72,8 @@ namespace Elffy.Effective
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode() => HashCode.Combine(_objectMemory, _id, _lender);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override string ToString() => DebugDisplay;
     }
 }
