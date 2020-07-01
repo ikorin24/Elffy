@@ -7,7 +7,7 @@ namespace Elffy.Shading
     public class NormalShaderSource : ShaderSource
     {
         private static NormalShaderSource? _instance;
-        internal static NormalShaderSource Instance => _instance ??= new NormalShaderSource();
+        public static NormalShaderSource Instance => _instance ??= new NormalShaderSource();
 
         protected override string VertexShaderSource => VertSource;
 

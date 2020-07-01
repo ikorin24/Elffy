@@ -7,7 +7,7 @@ namespace Elffy.Shading
     public class VertexColorShaderSource : ShaderSource
     {
         private static VertexColorShaderSource? _instance;
-        internal static VertexColorShaderSource Instance => _instance ??= new VertexColorShaderSource();
+        public static VertexColorShaderSource Instance => _instance ??= new VertexColorShaderSource();
 
         protected override string VertexShaderSource => VertexShader;
 

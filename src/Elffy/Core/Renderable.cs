@@ -22,7 +22,7 @@ namespace Elffy.Core
         private VBO _vbo;
         private IBO _ibo;
         private VAO _vao;
-        private ShaderSource _shader = ShaderSource.Phong;
+        private ShaderSource _shader = PhongShaderSource.Instance;
         private ShaderProgram? _shaderProgram;
 
         /// <summary>Vertex Buffer Object</summary>

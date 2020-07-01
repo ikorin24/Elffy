@@ -2,8 +2,6 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 using Elffy.Core;
 using Elffy.OpenGL;
 using OpenToolkit.Graphics.OpenGL;
@@ -12,12 +10,6 @@ namespace Elffy.Shading
 {
     public abstract class ShaderSource
     {
-        public static PhongShaderSource Phong => PhongShaderSource.Instance;
-
-        public static NormalShaderSource Normal => NormalShaderSource.Instance;
-
-        public static VertexColorShaderSource VertexColor => VertexColorShaderSource.Instance;
-
         protected abstract string VertexShaderSource { get; }
 
         protected abstract string FragmentShaderSource { get; }
@@ -37,8 +29,11 @@ namespace Elffy.Shading
         /// <param name="projection">projection 行列</param>
         protected abstract void SendUniforms(Uniform uniform, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection);
 
-        internal void SendUniforms(ProgramObject program, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
-            => SendUniforms(new Uniform(program), target, lights, model, view, projection);
+        internal void SendUniforms(ProgramObject program, Renderable target, ReadOnlySpan<Light> lights,
+                                   in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        {
+            SendUniforms(new Uniform(program), target, lights, model, view, projection);
+        }
 
         /// <summary>頂点シェーダー・フラグメントシェーダ―の読み込み、リンク、プログラムの作成を行います</summary>
         internal ShaderProgram Compile()

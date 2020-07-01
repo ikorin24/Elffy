@@ -9,11 +9,11 @@ using Elffy.Shading;
 using Elffy.Shape;
 using Elffy.Threading;
 using Elffy.UI;
-using NAudio.Wave.SampleProviders;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
+using System.Runtime.CompilerServices;
 
 namespace Sandbox
 {
@@ -74,7 +74,7 @@ namespace Sandbox
             {
                 model.Position = new Vector3(-5, 0, -5);
                 model.Scale = new Vector3(0.3f);
-                model.Shader = ShaderSource.Normal;
+                model.Shader = NormalShaderSource.Instance;
                 model.Activate();
             });
 
@@ -93,7 +93,7 @@ namespace Sandbox
             new Cube()
             {
                 Position = new Vector3(-3, 0.5f, 0),
-                Shader = ShaderSource.Normal,
+                Shader = NormalShaderSource.Instance,
             }.Activate();
 
 
@@ -105,11 +105,18 @@ namespace Sandbox
             cube.AddComponent(Resources.GetStream("cube.png").ToTexture(BitmapType.Png));
             cube.Updated += sender =>
             {
-                var cube = (Cube)sender;
+                Debug.Assert(sender is Cube);
+                var cube = Unsafe.As<Cube>(sender);
                 var p = Game.Screen.FrameNum / 60f * 30f;
                 cube.Rotation = new Quaternion(Vector3.UnitY, p.ToRadian());
             };
             cube.Activate();
+
+            new Sky()
+            {
+                Scale = new Vector3(500),
+                Shader = SkyShaderSource.Instance,
+            }.Activate();
 
             InitializeUI();
         }

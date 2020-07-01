@@ -10,7 +10,7 @@ namespace Elffy.Shading
     public sealed class PhongShaderSource : ShaderSource
     {
         private static PhongShaderSource? _instance;
-        internal static PhongShaderSource Instance => _instance ??= new PhongShaderSource();
+        public static PhongShaderSource Instance => _instance ??= new PhongShaderSource();
 
         protected override string VertexShaderSource => VertSource;
 
