@@ -89,7 +89,12 @@ namespace Elffy.Effective
             }
             else if(!IsEmpty) {
                 MemoryPool.ReturnByteMemory(_lender, _id);
+                Unsafe.AsRef(_array) = null!;
             }
+            Unsafe.AsRef(_lender) = 0;
+            Unsafe.AsRef(_id) = 0;
+            Unsafe.AsRef(_start) = IntPtr.Zero;
+            Unsafe.AsRef(_byteLength) = 0;
         }
 
         public override bool Equals(object? obj) => obj is ValueTypeRentMemory<T> memory && Equals(memory);

@@ -51,6 +51,7 @@ namespace Elffy.Effective
             if(!_objectMemory.IsEmpty) {
                 _objectMemory.Span.Clear();     // All elements MUST be cleared, or elements are not collected by GC.
                 MemoryPool.ReturnObjectMemory(_lender, _id);
+                Unsafe.AsRef(_objectMemory) = Memory<object>.Empty;
             }
         }
     }
