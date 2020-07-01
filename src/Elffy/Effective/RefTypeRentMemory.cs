@@ -7,7 +7,7 @@ using Elffy.Effective.Internal;
 namespace Elffy.Effective
 {
     [DebuggerDisplay("{DebugDisplay}")]
-    public readonly struct RefTypeRentMemory<T> : IDisposable where T : class
+    public readonly struct RefTypeRentMemory<T> : IEquatable<RefTypeRentMemory<T>>, IDisposable where T : class
     {
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private readonly string DebugDisplay => $"{nameof(RefTypeRentMemory<T>)}<{typeof(T).Name}>[{Span.Length}]";
@@ -41,7 +41,7 @@ namespace Elffy.Effective
             }
             if(!MemoryPool.TryRentObjectMemory(length, out _objectMemory, out _id, out _lender)) {
                 Debug.Assert(_lender < 0 && _id < 0);
-                _objectMemory = new object[length];     // TODO: できれば new は避けたい。あと構造体の等価比較の実装
+                _objectMemory = new object[length];     // TODO: できれば new は避けたい。
             }
         }
 
@@ -54,5 +54,19 @@ namespace Elffy.Effective
                 Unsafe.AsRef(_objectMemory) = Memory<object>.Empty;
             }
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override bool Equals(object? obj) => obj is RefTypeRentMemory<T> memory && Equals(memory);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Equals(RefTypeRentMemory<T> other)
+        {
+            return _objectMemory.Equals(other._objectMemory) &&
+                   _id == other._id &&
+                   _lender == other._lender;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override int GetHashCode() => HashCode.Combine(_objectMemory, _id, _lender);
     }
 }
