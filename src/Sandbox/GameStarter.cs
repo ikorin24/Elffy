@@ -10,9 +10,7 @@ using Elffy.Shapes;
 using Elffy.Threading;
 using Elffy.UI;
 using System;
-using System.ComponentModel;
 using System.Diagnostics;
-using System.Drawing;
 using System.Runtime.CompilerServices;
 
 namespace Sandbox
@@ -25,7 +23,8 @@ namespace Sandbox
             var light = new DirectLight();
             light.Updated += sender =>
             {
-                var light = (DirectLight)sender;
+                Debug.Assert(sender is DirectLight);
+                var light = Unsafe.As<DirectLight>(sender);
                 var frameNum = Game.Screen.FrameNum;
                 var rotation = new Quaternion(Vector3.UnitX, (frameNum / 60f * 60).ToRadian());
                 light.Direction = new Vector3(0, -1, 0).Rotate(rotation);
