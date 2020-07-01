@@ -14,6 +14,8 @@ namespace Elffy.Effective
     // 内部実装だけ class にしてインスタンスをプールして使いまわすか、struct をやめるかのどちらかが妥当。
     // ベンチマークをとるべき
 
+    /// <summary>Shared memories from memory pool, that provides <see cref="Span{T}"/> like <see cref="Memory{T}"/>.</summary>
+    /// <typeparam name="T">element type</typeparam>
     [DebuggerDisplay("{DebugDisplay}")]
     public readonly struct ValueTypeRentMemory<T> : IEquatable<ValueTypeRentMemory<T>>, IDisposable where T : unmanaged
     {
@@ -44,12 +46,17 @@ namespace Elffy.Effective
         private readonly int _id;
         private readonly int _lender;
 
+        public static ValueTypeRentMemory<T> Empty => default;
+
         public unsafe readonly Span<T> Span
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _array is null ? new Span<T>((void*)_start, _byteLength / sizeof(T))
                                   : MemoryMarshal.Cast<byte, T>(_array.AsSpan(_start.ToInt32(), _byteLength));
         }
+
+        // default(ValueTypeRentMemory<T>) は _id と _lender が0ですが、プールから借りたメモリではない。
+        // _byteLength が0かどうかで、Empty を判断します。
 
         public readonly bool IsEmpty
         {
@@ -82,6 +89,12 @@ namespace Elffy.Effective
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly void Dispose()
         {
+            // 安全のために各フィールドは0で初期化するが、構造体は値型なので
+            // Dispose 前にインスタンス自体がコピーされている場合、
+            // Dispose を呼んでいないインスタンスのフィールドは0初期化されない。
+            // そのため複数回 Dispose 呼ぶことが出来てしまう。
+            // ファイルの上のコメント参照。
+
             if(_array is null) {
                 // new ValueTypeRentMemory().Dispose() した場合 _array is null だが
                 // _start も 0 なので問題ない。Marshal.FreeHGlobal は 0 の時は何もしないことが保証されている。
@@ -97,10 +110,13 @@ namespace Elffy.Effective
             Unsafe.AsRef(_byteLength) = 0;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override bool Equals(object? obj) => obj is ValueTypeRentMemory<T> memory && Equals(memory);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode() => HashCode.Combine(_array, _start, _byteLength, _id, _lender);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Equals(ValueTypeRentMemory<T> other)
         {
             return ReferenceEquals(_array, other._array) &&

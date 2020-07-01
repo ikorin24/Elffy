@@ -6,6 +6,8 @@ using Elffy.Effective.Internal;
 
 namespace Elffy.Effective
 {
+    /// <summary>Shared memories from memory pool, that provides <see cref="Span{T}"/> like <see cref="Memory{T}"/>.</summary>
+    /// <typeparam name="T">element type</typeparam>
     [DebuggerDisplay("{DebugDisplay}")]
     public readonly struct RefTypeRentMemory<T> : IEquatable<RefTypeRentMemory<T>>, IDisposable where T : class
     {
@@ -20,7 +22,9 @@ namespace Elffy.Effective
         private readonly int _id;
         private readonly int _lender;
 
-        public readonly Span<T> Span
+        public static RefTypeRentMemory<T> Empty => default;
+
+        public readonly Span<T> Spans
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => SpanCastUnsafe.CastRefType<object, T>(_objectMemory.Span);
