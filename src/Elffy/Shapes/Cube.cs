@@ -4,7 +4,7 @@ using OpenToolkit;
 using Elffy.Core;
 using System;
 
-namespace Elffy.Shape
+namespace Elffy.Shapes
 {
     public class Cube : Renderable
     {

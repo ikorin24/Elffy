@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using System.Drawing;
 //using OpenTK;
 using Elffy.Framing;
-using Elffy.Shape;
+using Elffy.Shapes;
 //using OpenTK.Graphics;
 using Elffy.Serialization;
 

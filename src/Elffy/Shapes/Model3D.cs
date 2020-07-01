@@ -9,7 +9,7 @@ using Elffy.Effective;
 using Elffy.Serialization;
 using UnmanageUtility;
 
-namespace Elffy.Shape
+namespace Elffy.Shapes
 {
     public class Model3D : Renderable
     {

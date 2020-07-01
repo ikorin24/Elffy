@@ -2,7 +2,7 @@
 using Elffy.Core;
 using Elffy.Effective;
 using Elffy.Exceptions;
-using Elffy.Shape;
+using Elffy.Shapes;
 using System;
 using System.Diagnostics;
 using UnmanageUtility;

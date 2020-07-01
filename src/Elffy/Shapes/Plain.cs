@@ -2,7 +2,7 @@
 using Elffy.Core;
 using System;
 
-namespace Elffy.Shape
+namespace Elffy.Shapes
 {
     /// <summary>正方形の平面の3Dオブジェクトクラス</summary>
     public class Plain : Renderable

@@ -1,24 +1,26 @@
-﻿using Elffy.Core;
+﻿#nullable enable
+using Elffy.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Elffy.Shape
+namespace Elffy.Shapes
 {
-    public class Cylinder : Renderable
+    public class Sphere : Renderable
     {
         private static readonly ReadOnlyMemory<Vertex> _vertexArray;
         private static readonly ReadOnlyMemory<int> _indexArray;
 
-        static Cylinder()
+        static Sphere()
         {
+            // TODO:
             _vertexArray = new ReadOnlyMemory<Vertex>();
             _indexArray = new ReadOnlyMemory<int>();
         }
 
-        public Cylinder()
+        public Sphere()
         {
             throw new NotImplementedException();
         }

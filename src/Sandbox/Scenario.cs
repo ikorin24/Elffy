@@ -2,7 +2,7 @@
 using System;
 using System.Linq;
 using Elffy;
-using Elffy.Shape;
+using Elffy.Shapes;
 using Elffy.Threading;
 using Elffy.UI;
 using Elffy.Framing;

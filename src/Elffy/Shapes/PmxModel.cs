@@ -14,7 +14,7 @@ using UnmanageUtility;
 using PMXParser = MMDTools.Unmanaged.PMXParser;
 using PMXObject = MMDTools.Unmanaged.PMXObject;
 
-namespace Elffy.Shape
+namespace Elffy.Shapes
 {
     public class PmxModel : Renderable
     {

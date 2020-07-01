@@ -1,6 +1,6 @@
 ﻿#nullable enable
 using Elffy.Exceptions;
-using Elffy.Shape;
+using Elffy.Shapes;
 using System;
 using System.IO;
 

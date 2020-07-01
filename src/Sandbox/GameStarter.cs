@@ -6,7 +6,7 @@ using Elffy.Games;
 using Elffy.Imaging;
 using Elffy.Mathematics;
 using Elffy.Shading;
-using Elffy.Shape;
+using Elffy.Shapes;
 using Elffy.Threading;
 using Elffy.UI;
 using System;
