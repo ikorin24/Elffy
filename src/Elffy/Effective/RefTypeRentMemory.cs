@@ -24,7 +24,7 @@ namespace Elffy.Effective
 
         public static RefTypeRentMemory<T> Empty => default;
 
-        public readonly Span<T> Spans
+        public readonly Span<T> Span
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => SpanCastUnsafe.CastRefType<object, T>(_objectMemory.Span);
