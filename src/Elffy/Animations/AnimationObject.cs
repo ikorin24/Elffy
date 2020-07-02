@@ -1,62 +1,62 @@
 ﻿#nullable enable
+using Elffy.Core;
 using System;
 using System.Collections.Generic;
 
-namespace Elffy.Framing
+namespace Elffy.Animations
 {
     /// <summary>
-    /// <see cref="FrameStream"/> の動作を処理する実体となるオブジェクト<para/>
-    /// 一つの <see cref="FrameStream"/> と1つの <see cref="FrameStreamObject"/> が対応している
+    /// <see cref="Animation"/> の動作を処理する実体となるオブジェクト<para/>
+    /// 一つの <see cref="Animation"/> と1つの <see cref="AnimationObject"/> が対応している
     /// </summary>
-    internal sealed class FrameStreamObject : FrameObject
+    internal sealed class AnimationObject : FrameObject
     {
-        private readonly Queue<FrameBehavior> _queue = new Queue<FrameBehavior>();
+        private readonly Queue<AnimationBehavior> _queue = new Queue<AnimationBehavior>();
 
-        private FrameBehavior _current;
+        /// <summary>現在実行中の処理</summary>
+        private AnimationBehavior _current;
+        /// <summary>現在実行中の処理があるかどうか</summary>
         private bool _hasCurrent;
-
         /// <summary>キャンセルされたかどうか</summary>
         private bool _isCanceled;
-        private IHostScreen _screen;
 
-        public FrameStreamObject(IHostScreen screen)
+        public AnimationObject()
         {
-            _screen = screen ?? throw new ArgumentNullException(nameof(screen));
             Updated += OnUpdated;
         }
 
-        public void Activate()
+        public void Activate(SystemLayer systemLayer)
         {
-            Activate(_screen.Layers.SystemLayer);
+            base.Activate(systemLayer);     // FrameObject.Activate(ILayer)
         }
 
         /// <summary>キューに処理を追加します</summary>
         /// <param name="time">処理の寿命</param>
         /// <param name="action">処理</param>
-        public void AddLifeSpanBehavior(TimeSpan time, FrameBehaviorDelegate action)
+        public void AddLifeSpanBehavior(TimeSpan time, AnimationBehaviorDelegate action)
         {
-            _queue.Enqueue(new FrameBehavior(action, FrameBehaviorInfo.LifeSpanMode(time)));
+            _queue.Enqueue(new AnimationBehavior(action, AnimationBehaviorInfo.LifeSpanMode(time)));
         }
 
         /// <summary>継続条件を指定してキューに処理を追加</summary>
         /// <param name="condition">継続条件</param>
         /// <param name="action">処理</param>
-        public void AddConditionalBehavior(Func<bool> condition, FrameBehaviorDelegate action)
+        public void AddConditionalBehavior(Func<bool> condition, AnimationBehaviorDelegate action)
         {
-            _queue.Enqueue(new FrameBehavior(action, FrameBehaviorInfo.ConditionalMode(condition)));
+            _queue.Enqueue(new AnimationBehavior(action, AnimationBehaviorInfo.ConditionalMode(condition)));
         }
 
         /// <summary>寿命1フレームの処理をキューに追加</summary>
         /// <param name="action">処理</param>
-        public void AddFrameSpanBehavior(int frameSpan, FrameBehaviorDelegate action)
+        public void AddFrameSpanBehavior(int frameSpan, AnimationBehaviorDelegate action)
         {
-            _queue.Enqueue(new FrameBehavior(action, FrameBehaviorInfo.FrameSpanMode(frameSpan)));
+            _queue.Enqueue(new AnimationBehavior(action, AnimationBehaviorInfo.FrameSpanMode(frameSpan)));
         }
 
         /// <summary>終了処理をキューに追加</summary>
         public void AddEndBehavior()
         {
-            _queue.Enqueue(new FrameBehavior(_ => Cancel(), FrameBehaviorInfo.FrameSpanMode(1)));
+            _queue.Enqueue(new AnimationBehavior(_ => Cancel(), AnimationBehaviorInfo.FrameSpanMode(1)));
         }
 
         /// <summary>即時キャンセルを発行します</summary>
@@ -72,14 +72,17 @@ namespace Elffy.Framing
                 Terminate();
                 return;
             }
+
+            // キューから取り出した処理が既に終了条件を満たしている場合がある。
+            // 更新に成功するかキューがなくなるまで次の処理をキューから取り出し続ける。
             while(true) {
                 if(_hasCurrent == false) {
                     if(_queue.Count <= 0) { break; }
                     _current = _queue.Dequeue();
                     _hasCurrent = true;
                 }
-                var updated = FrameBehavior.UpdateFrame(ref _current, _screen.Time);
-                if(updated) {
+                var successUpdate = AnimationBehavior.UpdateFrame(ref _current, HostScreen.Time);
+                if(successUpdate) {
                     break;
                 }
                 else {
@@ -87,15 +90,5 @@ namespace Elffy.Framing
                 }
             }
         }
-    }
-
-    public enum FrameBehaviorEndMode
-    {
-        /// <summary>寿命時間で終了します</summary>
-        LifeSpen,
-        /// <summary>終了条件で終了します</summary>
-        Conditional,
-        /// <summary>指定のフレーム回数で終了します</summary>
-        FrameSpan,
     }
 }

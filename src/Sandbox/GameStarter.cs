@@ -1,7 +1,7 @@
 ﻿#nullable enable
 using Elffy;
 using Elffy.Components;
-using Elffy.Framing;
+using Elffy.Animations;
 using Elffy.Games;
 using Elffy.Imaging;
 using Elffy.Mathematics;
@@ -35,12 +35,11 @@ namespace Sandbox
             // カメラ位置初期化
             Game.MainCamera.LookAt(new Vector3(0, 3, 0), new Vector3(0, 4.5f, 20));
 
-            FrameStream.GetStream(Game.Screen)
-                .Endless(frame =>
-                {
-                    var fovy = 45f + 10f * MathF.Sin((float)frame.Time.TotalSeconds / 2f * MathF.PI * 2);
-                    Game.MainCamera.ChangeFovy(fovy.ToRadian(), new Vector3(0, 3, 0));
-                }).Dispose();
+            Animation.Define().Endless(frame =>
+            {
+                var fovy = 45f + 10f * MathF.Sin((float)frame.Time.TotalSeconds / 2f * MathF.PI * 2);
+                Game.MainCamera.ChangeFovy(fovy.ToRadian(), new Vector3(0, 3, 0));
+            }).Play();
 
 
             // マウスでカメラ移動するためのオブジェクト
