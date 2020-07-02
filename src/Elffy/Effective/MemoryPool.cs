@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace Elffy.Effective
 {
-    public static class MemoryPool
+    internal static class MemoryPool
     {
         private static readonly Lazy<ByteMemoryLender[]> _lenders = new Lazy<ByteMemoryLender[]>(() => new[]
         {
@@ -23,7 +23,7 @@ namespace Elffy.Effective
         }, LazyThreadSafetyMode.ExecutionAndPublication);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static unsafe bool TryRentByteMemory<T>(int length, out byte[]? array, out int start, out int rentByteLength, out int id, out int lenderNum) where T : unmanaged
+        public static unsafe bool TryRentByteMemory<T>(int length, out byte[]? array, out int start, out int rentByteLength, out int id, out int lenderNum) where T : unmanaged
         {
             Debug.Assert(typeof(T).IsValueType);
             var byteLength = sizeof(T) * length;
@@ -45,7 +45,7 @@ namespace Elffy.Effective
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static bool TryRentObjectMemory(int length, out Memory<object> memory, out int id, out int lenderNum)
+        public static bool TryRentObjectMemory(int length, out Memory<object> memory, out int id, out int lenderNum)
         {
             var lenders = _objLenders.Value;
             for(int i = 0; i < lenders.Length; i++) {
@@ -63,7 +63,7 @@ namespace Elffy.Effective
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static unsafe void ReturnByteMemory(int lender, int id)
+        public static unsafe void ReturnByteMemory(int lender, int id)
         {
             if(lender < 0) { return; }
             var lenders = _lenders.Value;
@@ -71,7 +71,7 @@ namespace Elffy.Effective
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static unsafe void ReturnObjectMemory(int lender, int id)
+        public static unsafe void ReturnObjectMemory(int lender, int id)
         {
             if(lender < 0) { return; }
             var lenders = _objLenders.Value;
@@ -79,24 +79,7 @@ namespace Elffy.Effective
         }
 
 
-        //[StructLayout(LayoutKind.Sequential, Pack = 0)]
-        //private struct FieldSizeHelper<T>
-        //{
-        //    private T _field;
-        //    private byte _offset;
-
-        //    /// <summary><see cref="T"/>型の変数のサイズを取得します</summary>
-        //    /// <returns>バイト数</returns>
-        //    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        //    public static int GetSize()
-        //    {
-        //        var a = default(FieldSizeHelper<T>);
-        //        return Unsafe.ByteOffset(ref Unsafe.As<T, byte>(ref a._field), ref a._offset).ToInt32();
-        //    }
-        //}
-
-
-        internal abstract class MemoryLender<T>
+        abstract class MemoryLender<T>
         {
             // [NOTE]
             // ex) SegmentSize = 3, MaxCount = 4
@@ -185,55 +168,18 @@ namespace Elffy.Effective
             }
         }
 
-        internal class ByteMemoryLender : MemoryLender<byte>
+        class ByteMemoryLender : MemoryLender<byte>
         {
             public ByteMemoryLender(int segmentSize, int segmentCount) : base(segmentSize, segmentCount)
             {
             }
         }
 
-        internal class ObjectMemoryLender : MemoryLender<object>
+        class ObjectMemoryLender : MemoryLender<object>
         {
             public ObjectMemoryLender(int segmentSize, int segmentCount) : base(segmentSize, segmentCount)
             {
             }
         }
     }
-
-
-    ///// <summary>
-    ///// <see cref="PooledMemory{T}"/> のメモリ返却忘れのための魔除けのお守り
-    ///// </summary>
-    //internal sealed class MemoryPoolAmulet
-    //{
-    //    public int Lender { get; private set; }
-    //    public int ID { get; private set; }
-    //    public bool IsEnabled { get; private set; }
-
-    //    public MemoryPoolAmulet()
-    //    {
-    //        ID = -1;
-    //        Lender = -1;
-    //    }
-
-    //    ~MemoryPoolAmulet()
-    //    {
-    //        if(IsEnabled) {
-    //            MemoryPool.Return(Lender, ID);
-    //        }
-    //    }
-
-    //    public void Enable(int id, int lender)
-    //    {
-    //        ID = id;
-    //        Lender = lender;
-    //        IsEnabled = true;
-    //    }
-
-    //    public void Disable()
-    //    {
-
-    //        IsEnabled = false;
-    //    }
-    //}
 }
