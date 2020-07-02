@@ -2,7 +2,7 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Elffy.Effective.Internal;
+using Elffy.Effective.Unsafes;
 
 namespace Elffy.Effective
 {

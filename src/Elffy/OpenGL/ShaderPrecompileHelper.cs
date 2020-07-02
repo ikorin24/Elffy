@@ -9,7 +9,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Elffy.Shading;
 using Elffy.AssemblyServices;
-using Elffy.Effective.Internal;
+using Elffy.Effective.Unsafes;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using Elffy.Threading;

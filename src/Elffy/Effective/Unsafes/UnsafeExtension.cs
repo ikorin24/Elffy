@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Elffy.AssemblyServices;
 
-namespace Elffy.Effective.Internal
+namespace Elffy.Effective.Unsafes
 {
     internal static class UnsafeExtension
     {

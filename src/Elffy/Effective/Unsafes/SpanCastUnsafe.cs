@@ -13,7 +13,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using nint = System.IntPtr;
 
-namespace Elffy.Effective.Internal
+namespace Elffy.Effective.Unsafes
 {
     internal static class SpanCastUnsafe
     {

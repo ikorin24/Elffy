@@ -1,5 +1,5 @@
 ﻿#nullable enable
-using Elffy.Effective.Internal;
+using Elffy.Effective.Unsafes;
 using System;
 using System.Diagnostics;
 using System.IO;

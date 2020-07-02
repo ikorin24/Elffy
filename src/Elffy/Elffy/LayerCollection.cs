@@ -8,7 +8,7 @@ using Elffy.Core;
 using Elffy.Exceptions;
 using Elffy.UI;
 using Elffy.Effective;
-using Elffy.Effective.Internal;
+using Elffy.Effective.Unsafes;
 
 namespace Elffy
 {

@@ -6,7 +6,7 @@ using Elffy.Threading;
 using Elffy.Platforms;
 using Elffy.Exceptions;
 using Elffy.Platforms.Windows;
-using Elffy.Effective.Internal;
+using Elffy.Effective.Unsafes;
 using Elffy.Core;
 using System.Runtime.CompilerServices;
 using Elffy.OpenGL;

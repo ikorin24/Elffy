@@ -1,7 +1,7 @@
 ﻿#nullable enable
 using Elffy.AssemblyServices;
 using Elffy.Effective;
-using Elffy.Effective.Internal;
+using Elffy.Effective.Unsafes;
 using Elffy.Exceptions;
 using System;
 using System.Collections.Generic;

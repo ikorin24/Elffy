@@ -7,7 +7,7 @@ using System.Reflection.Emit;
 using System.Reflection;
 using Elffy.AssemblyServices;
 
-namespace Elffy.Effective.Internal
+namespace Elffy.Effective.Unsafes
 {
     // .NET Core 3.1 のソースをもとに作成
     // 
