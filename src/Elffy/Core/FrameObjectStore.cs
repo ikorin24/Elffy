@@ -55,38 +55,33 @@ namespace Elffy.Core
             _removedBuf.Add(frameObject);
         }
 
-        /// <summary>オブジェクトの追加と削除の変更を適用します</summary>
-        public void ApplyChanging()
+        public void ApplyRemove()
         {
             if(_removedBuf.Count > 0) {
                 foreach(var item in _removedBuf.AsSpan()) {
-                    if(item.LifeState.HasStartedBit()) {
-                        var removed = _list.Remove(item);
-                        Debug.Assert(removed);
-                        switch(item) {
-                            case Renderable renderable: {
-                                var renderableRemoved = _renderables.Remove(renderable);
-                                Debug.Assert(renderableRemoved);
-                                break;
-                            }
-                            case Light light: {
-                                var lightRemoved = _lights.Remove(light);
-                                Debug.Assert(lightRemoved);
-                                break;
-                            }
+                    Debug.Assert(item.LifeState == FrameObjectLifeSpanState.Alive);
+                    var removed = _list.Remove(item);
+                    Debug.Assert(removed);
+                    switch(item) {
+                        case Renderable renderable: {
+                            var renderableRemoved = _renderables.Remove(renderable);
+                            Debug.Assert(renderableRemoved);
+                            break;
                         }
-                    }
-                    else {
-                        var removed = _addedBuf.Remove(item);
-                        Debug.Assert(removed);
-
-                        // Start する前に Terminate された場合は Add の Callback 処理が呼ばれないので呼んでおく
-                        item.AddToObjectStoreCallback();
+                        case Light light: {
+                            var lightRemoved = _lights.Remove(light);
+                            Debug.Assert(lightRemoved);
+                            break;
+                        }
                     }
                     item.RemovedFromObjectStoreCallback();
                 }
                 _removedBuf.Clear();
             }
+        }
+
+        public void ApplyAdd()
+        {
             if(_addedBuf.Count > 0) {
                 _list.AddRange(_addedBuf);
                 foreach(var item in _addedBuf.AsSpan()) {
@@ -108,9 +103,6 @@ namespace Elffy.Core
         {
             foreach(var frameObject in _list.AsSpan()) {
                 if(frameObject.IsFrozen) { continue; }
-                if(frameObject.LifeState.HasStartedBit() == false) {
-                    frameObject.Start();
-                }
                 frameObject.EarlyUpdate();
             }
         }
@@ -139,12 +131,13 @@ namespace Elffy.Core
             foreach(var item in _list.AsSpan()) {
                 item.Terminate();         // 生きているオブジェクトをすべて破棄
             }
-            ApplyChanging();            // 変更を全て適用
+            ApplyRemove();          // 削除を適用
 
             // 全リストをクリア
             _list.Clear();
             _removedBuf.Clear();
             _renderables.Clear();
+            _lights.Clear();
         }
     }
 }

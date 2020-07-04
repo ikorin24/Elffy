@@ -103,6 +103,13 @@ namespace Elffy.Core
             var systemLayer = Layers.SystemLayer;
             var uiLayer = Layers.UILayer;
 
+            // 前フレームで追加されたオブジェクトの追加を適用
+            systemLayer.ApplyAdd();
+            foreach(var layer in Layers.AsReadOnlySpan()) {
+                layer.ApplyAdd();
+            }
+            uiLayer.ApplyAdd();
+
             // 事前レイヤー更新
             systemLayer.EarlyUpdate();
             foreach(var layer in Layers.AsReadOnlySpan()) {
@@ -133,12 +140,12 @@ namespace Elffy.Core
             }
             uiLayer.Render(_uiProjection);
 
-            // レイヤー変更適用
-            systemLayer.ApplyChanging();
+            // このフレームで削除されたオブジェクトの削除を適用
+            systemLayer.ApplyRemove();
             foreach(var layer in Layers.AsReadOnlySpan()) {
-                layer.ApplyChanging();
+                layer.ApplyRemove();
             }
-            uiLayer.ApplyChanging();
+            uiLayer.ApplyRemove();
         }
 
         private void OnSizeChanged(int x, int y, int width, int height)

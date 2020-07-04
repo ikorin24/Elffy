@@ -19,7 +19,6 @@ namespace Elffy.UI
 
         public Executable()
         {
-            Renderable.IsFrozen = false;
         }
 
         internal void Execute(ExecutableExecutionType type)

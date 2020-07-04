@@ -128,14 +128,14 @@ namespace Sandbox
 
         private static void InitializeUI()
         {
-            //var button = new Button(90, 30);
-            //button.KeyDown += sender =>
-            //{
-            //    Debug.WriteLine("Down");
-            //};
-            //button.KeyPress += sender => Debug.WriteLine("Press");
-            //button.KeyUp += sender => Debug.WriteLine("Up");
-            //SingleScreenApp.UI.Add(button);
+            var button = new Button(90, 30);
+            button.KeyDown += sender =>
+            {
+                Debug.WriteLine("Down");
+            };
+            button.KeyPress += sender => Debug.WriteLine("Press");
+            button.KeyUp += sender => Debug.WriteLine("Up");
+            Game.UI.Add(button);
         }
     }
 }

@@ -210,11 +210,13 @@ namespace Elffy
             _renderingArea.InitializeGL();
             _watch.Start();
             Initialized?.Invoke(this);
-            _renderingArea.Layers.SystemLayer.ApplyChanging();
-            foreach(var layer in _renderingArea.Layers.AsReadOnlySpan()) {
-                layer.ApplyChanging();
+
+            var layers = _renderingArea.Layers;
+            layers.SystemLayer.ApplyAdd();
+            foreach(var layer in layers.AsReadOnlySpan()) {
+                layer.ApplyAdd();
             }
-            _renderingArea.Layers.UILayer.ApplyChanging();
+            layers.UILayer.ApplyAdd();
         }
 
         private void OnResize(ResizeEventArgs e)
@@ -246,8 +248,6 @@ namespace Elffy
                 layer.ClearFrameObject();
             }
             _renderingArea.Layers.Clear();
-
-            // TODO: 全オブジェクト破棄後に Dispatcher.DoInvokedAction() をする。しかしここに書くべきではない？
         }
     }
 }

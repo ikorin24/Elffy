@@ -56,7 +56,8 @@ namespace Elffy.Shapes
             // ↑ ConfigureAwait true
 
             // Here is main thread
-            if(!LifeState.HasTerminatingBit() && !LifeState.HasDeadBit()) {
+            if(LifeState != FrameObjectLifeSpanState.Terminated &&
+               LifeState != FrameObjectLifeSpanState.Dead) {
                 LoadGraphicBuffer(vertices.AsSpan(), _pmxObject!.SurfaceList.AsSpan().MarshalCast<MMDTools.Unmanaged.Surface, int>());
                 var textures = new MultiTexture();
                 textures.Load(_textureBitmaps);

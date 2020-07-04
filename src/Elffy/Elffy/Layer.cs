@@ -57,8 +57,9 @@ namespace Elffy
 
         void ILayer.RemoveFrameObject(FrameObject frameObject) => RemoveFrameObject(frameObject);
 
-        /// <summary>オブジェクトの追加と削除の変更を適用します</summary>
-        internal void ApplyChanging() => _store.ApplyChanging();
+        internal void ApplyRemove() => _store.ApplyRemove();
+
+        internal void ApplyAdd() => _store.ApplyAdd();
 
         internal void EarlyUpdate() => _store.EarlyUpdate();
 

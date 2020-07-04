@@ -3,7 +3,6 @@ using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Elffy.Core;
-using Elffy.Exceptions;
 using Elffy.Threading;
 using Elffy.AssemblyServices;
 
@@ -18,18 +17,17 @@ namespace Elffy
         private IHostScreen? _hostScreen;
         private ILayer? _layer;
         private object? _tag;
-        private FrameObjectLifeState _lifeState = FrameObjectLifeState.New;
+        private FrameObjectLifeSpanState _state = FrameObjectLifeSpanState.New;
+        private bool _isFrozen;
 
         /// <summary><see cref="Activate(Elffy.Layer)"/> が呼ばれたときのイベント</summary>
         public event ActionEventHandler<FrameObject>? Activated;
         /// <summary><see cref="Terminate"/> が呼ばれたときのイベント</summary>
         public event ActionEventHandler<FrameObject>? Terminated;
-        /// <summary><see cref="IsAlive"/> が true になった時のイベント</summary>
+        /// <summary><see cref="IsAlive"/> が true になった最初のフレームに発火するイベント</summary>
         public event ActionEventHandler<FrameObject>? Alive;
-        /// <summary><see cref="IsAlive"/> が false になった時のベント</summary>
+        /// <summary><see cref="IsAlive"/> が false になった最初のフレームに発火するベント</summary>
         public event ActionEventHandler<FrameObject>? Dead;
-        /// <summary>開始時イベント</summary>
-        public event ActionEventHandler<FrameObject>? Started;
         /// <summary>事前更新時イベント</summary>
         public event ActionEventHandler<FrameObject>? EarlyUpdated;
         /// <summary>更新時イベント</summary>
@@ -37,21 +35,20 @@ namespace Elffy
         /// <summary>事後更新時イベント</summary>
         public event ActionEventHandler<FrameObject>? LateUpdated;
 
-        internal FrameObjectLifeState LifeState => _lifeState;
+        internal FrameObjectLifeSpanState LifeState => _state;
 
-        public bool IsClean => _lifeState.IsNew();
+        public bool IsNew => _state == FrameObjectLifeSpanState.New;
 
-        public bool IsAlive => _lifeState.HasAliveBit();
+        public bool IsActivated => _state == FrameObjectLifeSpanState.Activated;
+
+        public bool IsAlive => _state == FrameObjectLifeSpanState.Alive;
+
+        public bool IsTerminated => _state == FrameObjectLifeSpanState.Terminated;
+
+        public bool IsDead => _state == FrameObjectLifeSpanState.Dead;
 
         /// <summary>フレームのUpdate処理をスキップするかどうかを返します</summary>
-        public bool IsFrozen
-        {
-            get => _lifeState.HasFrozenBit();
-
-            // 変更するビット以外は触らないように
-            set => _lifeState = value ? (_lifeState | FrameObjectLifeState.Bit_Frozen)
-                                      : (_lifeState & ~FrameObjectLifeState.Bit_Frozen);
-        }
+        public bool IsFrozen { get => _isFrozen; set => _isFrozen = value; }
 
         /// <summary>このオブジェクトに付けられたタグ</summary>
         public ref object? Tag => ref _tag;
@@ -75,15 +72,6 @@ namespace Elffy
         /// <exception cref="InvalidOperationException"><see cref="IsAlive"/> が false です。</exception>
         public IHostScreen HostScreen => (_hostScreen ??= _layer?.OwnerCollection?.OwnerRenderingArea?.OwnerScreen) ?? throw new InvalidOperationException();
 
-        /// <summary>このオブジェクトが更新される最初のフレームに1度のみ実行される処理</summary>
-        internal void Start()
-        {
-            // 変更するビット以外は触らないように
-            // Started ビットを立てる
-            _lifeState |= FrameObjectLifeState.Bit_Started;
-            Started?.Invoke(this);
-        }
-
         internal void EarlyUpdate()
         {
             EarlyUpdated?.Invoke(this);
@@ -103,13 +91,11 @@ namespace Elffy
         /// <summary>このオブジェクトを指定のレイヤーでアクティブにします</summary>
         public void Activate(Layer layer)
         {
-            ArgumentChecker.ThrowIfNullArg(layer, nameof(layer));
-            ArgumentChecker.ThrowArgumentIf(layer.Owner == null, $"{nameof(layer)} is not associated with {nameof(IHostScreen)}.");
-            if(_lifeState != FrameObjectLifeState.New) { return; }
+            if(layer is null) { throw new ArgumentNullException(nameof(layer)); }
+            if(layer.Owner is null) { throw new ArgumentException($"{nameof(layer)} is not associated with {nameof(IHostScreen)}"); }
+            if(_state != FrameObjectLifeSpanState.New) { return; }
 
-            // 変更するビット以外は触らないように
-            // Activating ビットを立てる
-            _lifeState |= FrameObjectLifeState.Bit_Activating;
+            _state = FrameObjectLifeSpanState.Activated;
             _layer = layer;
             layer.AddFrameObject(this);
             OnActivated();
@@ -117,14 +103,12 @@ namespace Elffy
 
         internal void Activate<TLayer>(TLayer layer) where TLayer : class, ILayer
         {
-            ArgumentChecker.ThrowIfNullArg(layer, nameof(layer));
+            if(layer is null) { throw new ArgumentNullException(nameof(layer)); }
             Debug.Assert(layer is Layer == false, "Layer は具象型のオーバーロードを通っていないとおかしい。");
-            Debug.Assert(layer.OwnerCollection != null);
-            if(_lifeState != FrameObjectLifeState.New) { return; }
+            Debug.Assert(layer.OwnerCollection is null == false);
+            if(_state != FrameObjectLifeSpanState.New) { return; }
 
-            // 変更するビット以外は触らないように
-            // Activating ビットを立てる
-            _lifeState |= FrameObjectLifeState.Bit_Activating;
+            _state = FrameObjectLifeSpanState.Activated;
             _layer = layer;
             layer.AddFrameObject(this);
             OnActivated();
@@ -133,11 +117,7 @@ namespace Elffy
         /// <summary>このオブジェクトをエンジン管理下から外して破棄します</summary>
         public void Terminate()
         {
-            if(_lifeState.IsNew() || _lifeState.HasTerminatingBit() || _lifeState.HasDeadBit()) { return; }
-
-            // 変更するビット以外は触らないように
-            // Terminating ビットを立てる
-            _lifeState |= FrameObjectLifeState.Bit_Terminating;
+            if(_state != FrameObjectLifeSpanState.Alive) { return; }
             Debug.Assert(_layer is null == false);
 
             _layer!.RemoveFrameObject(this);
@@ -166,25 +146,15 @@ namespace Elffy
 
         internal void AddToObjectStoreCallback()
         {
-            // 変更するビット以外は触らないように
-            // activating ビットをおろす、alive ビットをたてる
-            _lifeState = _lifeState & ~FrameObjectLifeState.Bit_Activating
-                                    | FrameObjectLifeState.Bit_Alive;
-
-            // TODO: このタイミングでユーザー処理を挟めてしまうと、メインスレッド前提だとしても、状態遷移的に正しい状態を担保するのが複雑になりすぎると思う。
-            //       イベントと virsual メソッドを公開しない方がいいのでは？ Dead 時も同様。
-            //       Activate と Terminate の2つはそもそもユーザー処理側から呼ばれるので、フック処理を公開しても問題はない。
-            //       状態遷移の要検討
+            Debug.Assert(_state == FrameObjectLifeSpanState.Activated);
+            _state = FrameObjectLifeSpanState.Alive;
             OnAlive();
         }
 
         internal void RemovedFromObjectStoreCallback()
         {
-            // 変更するビット以外は触らないように
-            // alive ビットをおろす、terminating ビットをおろす、dead ビットをたてる
-            _lifeState = _lifeState & ~FrameObjectLifeState.Bit_Alive
-                                    & ~FrameObjectLifeState.Bit_Terminating
-                                    | FrameObjectLifeState.Bit_Dead;
+            Debug.Assert(_state == FrameObjectLifeSpanState.Terminated);
+            _state = FrameObjectLifeSpanState.Dead;
             _layer = null;
             _hostScreen = null;
             OnDead();
