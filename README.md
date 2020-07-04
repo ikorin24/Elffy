@@ -27,3 +27,7 @@ OpenGL ベースの C# 製の ゲームエンジン
 上記の`Sandbox.csproj`をビルドして実行してください。
 
 プロジェクト内の`Sandbox/externalExe/erc.exe`は`src/Elffy/ElffyResourceCompiler.csproj`をビルドしたもので、`Sandbox.csproj`のビルド時にゲームのリソースを zip に固めるためのものです。
+
+## Other licensed products
+
+See [CREDITS.md]
