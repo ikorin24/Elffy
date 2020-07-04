@@ -21,11 +21,6 @@ namespace Elffy.Animations
     public readonly struct Animation
     {
         private readonly AnimationObject _obj;
-        private AnimationObject AnimationObj
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _obj ?? throw new InvalidOperationException("Already playing or canceled.");
-        }
 
         private Animation(AnimationObject obj)
         {
@@ -47,7 +42,8 @@ namespace Elffy.Animations
         {
             if(time < TimeSpan.Zero) { throw new ArgumentException($"{nameof(time)} is negative."); }
             if(action is null) { throw new ArgumentNullException(nameof(action)); }
-            var obj = AnimationObj;
+            var obj = GetNotRunningObject();
+            if(obj.IsAlive) { }
             obj.AddLifeSpanBehavior(time, action);
             return this;
         }
@@ -58,7 +54,7 @@ namespace Elffy.Animations
         public Animation Do(AnimationBehaviorDelegate action)
         {
             if(action is null) { throw new ArgumentNullException(nameof(action)); }
-            var obj = AnimationObj;
+            var obj = GetNotRunningObject();
             obj.AddFrameSpanBehavior(1, action);
             return this;
         }
@@ -69,7 +65,7 @@ namespace Elffy.Animations
         public Animation Wait(TimeSpan time)
         {
             if(time < TimeSpan.Zero) { throw new ArgumentOutOfRangeException($"{nameof(time)} is negative."); }
-            var obj = AnimationObj;
+            var obj = GetNotRunningObject();
             obj.AddLifeSpanBehavior(time, _ => { });
             return this;
         }
@@ -82,7 +78,7 @@ namespace Elffy.Animations
         {
             if(condition is null) { throw new ArgumentNullException(nameof(condition)); }
             if(action is null) { throw new ArgumentNullException(nameof(action)); }
-            var obj = AnimationObj;
+            var obj = GetNotRunningObject();
             obj.AddConditionalBehavior(condition, action);
             return this;
         }
@@ -93,7 +89,7 @@ namespace Elffy.Animations
         public Animation Endless(AnimationBehaviorDelegate action)
         {
             if(action is null) { throw new ArgumentNullException(nameof(action)); }
-            var obj = AnimationObj;
+            var obj = GetNotRunningObject();
             obj.AddConditionalBehavior(() => true, action);
             return this;
         }
@@ -101,19 +97,26 @@ namespace Elffy.Animations
         /// <summary>処理を全てキャンセルし停止させます。このメソッドが呼ばれた時点で残りの処理に関わらず終了します</summary>
         public void Cancel()
         {
-            var obj = AnimationObj;
+            var obj = _obj ?? throw new InvalidOperationException("Invalid operation");
             obj.Cancel();
             Unsafe.AsRef(_obj) = null!;
         }
 
         /// <summary>処理を開始します</summary>
         /// <param name="screen">処理を行う <see cref="IHostScreen"/></param>
-        public void Play(IHostScreen screen)
+        public Animation Play(IHostScreen screen)
         {
-            var obj = AnimationObj;
+            var obj = GetNotRunningObject();
             obj.Activate(screen.Layers.SystemLayer);
             obj.AddEndBehavior();
-            Unsafe.AsRef(_obj) = null!;
+            return this;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private AnimationObject GetNotRunningObject()
+        {
+            if(_obj is null || _obj.IsAlive) { throw new InvalidOperationException("Already playing or invalid operation."); }
+            return _obj;
         }
     }
 }

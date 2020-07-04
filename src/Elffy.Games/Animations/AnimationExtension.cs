@@ -5,9 +5,9 @@ namespace Elffy.Animations
 {
     public static class AnimationExtension
     {
-        public static void Play(this Animation animation)
+        public static Animation Play(this Animation animation)
         {
-            animation.Play(Game.Screen);
+            return animation.Play(Game.Screen);
         }
     }
 }
