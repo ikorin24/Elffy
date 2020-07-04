@@ -21,3 +21,9 @@ OpenGL ベースの C# 製の ゲームエンジン
 `src/Elffy/`以下にその他関連プロジェクト、関連ファイル
 
 ビルド及び実行は Windows10, Visual Studio 2019 からしか確認していません。
+
+## サンプル
+
+上記の`Sandbox.csproj`をビルドして実行してください。
+
+プロジェクト内の`Sandbox/externalExe/erc.exe`は`src/Elffy/ElffyResourceCompiler.csproj`をビルドしたもので、`Sandbox.csproj`のビルド時にゲームのリソースを zip に固めるためのものです。
