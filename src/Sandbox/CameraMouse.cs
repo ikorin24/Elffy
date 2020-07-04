@@ -1,9 +1,10 @@
 ﻿#nullable enable
 using System;
+using Elffy;
 using Elffy.InputSystem;
 using Elffy.Mathematics;
 
-namespace Elffy
+namespace Sandbox
 {
     public class CameraMouse : FrameObject
     {
