@@ -89,9 +89,6 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly AffineMatrix3 ToAffineMatrix3() => new AffineMatrix3(ToMatrix3());
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly Matrix4 ToMatrix4() => new Matrix4(ToMatrix3());
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
