@@ -30,4 +30,4 @@ OpenGL ベースの C# 製の ゲームエンジン
 
 ## Other licensed products
 
-See [CREDITS.md]
+See [CREDITS](https://github.com/ikorin24/Elffy/blob/master/CREDITS.md)
