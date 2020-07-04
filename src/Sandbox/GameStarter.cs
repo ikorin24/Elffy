@@ -35,12 +35,6 @@ namespace Sandbox
             // カメラ位置初期化
             Game.MainCamera.LookAt(new Vector3(0, 3, 0), new Vector3(0, 4.5f, 20));
 
-            //Animation.Define().Endless(frame =>
-            //{
-            //    var fovy = 45f + 10f * MathF.Sin((float)frame.Time.TotalSeconds / 2f * MathF.PI * 2);
-            //    Game.MainCamera.ChangeFovy(fovy.ToRadian(), new Vector3(0, 3, 0));
-            //}).Play();
-
 
             // マウスでカメラ移動するためのオブジェクト
             var cameraMouse = new CameraMouse(Game.MainCamera, Game.Mouse, Vector3.Zero);
@@ -76,6 +70,7 @@ namespace Sandbox
                 model.Activate();
             });
 
+            // サイコロ
             Model3D.LoadResourceAsync("Dice.fbx").ContinueWithDispatch(model =>
             {
                 model.Position = new Vector3(4, 4, -2);
