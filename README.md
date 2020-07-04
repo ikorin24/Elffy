@@ -1,6 +1,6 @@
 # Elffy
 
-## ***Now Developing !!! Comming Soon...***
+## ***Now Developing !!! Coming Soon...***
 
 ## 概要
 
