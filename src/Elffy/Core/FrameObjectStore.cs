@@ -59,7 +59,7 @@ namespace Elffy.Core
         {
             if(_removedBuf.Count > 0) {
                 foreach(var item in _removedBuf.AsSpan()) {
-                    Debug.Assert(item.LifeState == FrameObjectLifeSpanState.Alive);
+                    Debug.Assert(item.LifeState == FrameObjectLifeSpanState.Terminated);
                     var removed = _list.Remove(item);
                     Debug.Assert(removed);
                     switch(item) {
@@ -85,6 +85,7 @@ namespace Elffy.Core
             if(_addedBuf.Count > 0) {
                 _list.AddRange(_addedBuf);
                 foreach(var item in _addedBuf.AsSpan()) {
+                    Debug.Assert(item.LifeState == FrameObjectLifeSpanState.Activated);
                     switch(item) {
                         case Renderable renderable:
                             _renderables.Add(renderable);

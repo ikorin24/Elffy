@@ -106,7 +106,7 @@ namespace Elffy
             _window.VSync = VSyncMode.On;
             _frameDelta = TimeSpan.FromSeconds(1.0 / gwSetting.RenderFrequency);
             _window.Load += OnLoad;
-            _window.Closed += OnClosed;
+            _window.Unload += ReleaseResource;
             _window.Resize += OnResize;
             _window.RenderFrame += OnRenderFrame;
 
@@ -163,12 +163,10 @@ namespace Elffy
             //_window.MouseLeave += (sender, e) => Mouse.ChangeOnScreen(false);
         }
 
-        private void OnClosed()
-        {
-            ((IHostScreen)this).Close();
-        }
+        void IHostScreen.Close() => Close();
 
-        void IHostScreen.Close()
+
+        public void Close()
         {
             Dispatcher.ThrowIfNotMainThread();
             if(_isClosed) { return; }

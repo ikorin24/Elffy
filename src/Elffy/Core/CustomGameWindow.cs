@@ -28,10 +28,6 @@ namespace Elffy.Core
         private double _renderFrequency;
         private double _updateFrequency;
         private VSyncMode _vSync;
-        private Task? _updateTask;
-        private CancellationTokenSource? _tokenSource;
-
-        public bool IsMultiThreaded { get; }
 
         public double RenderFrequency
         {
@@ -73,8 +69,6 @@ namespace Elffy.Core
         public CustomGameWindow(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
             : base(nativeWindowSettings)
         {
-            IsMultiThreaded = gameWindowSettings.IsMultiThreaded;
-            //IsMultiThreaded = true;
             RenderFrequency = gameWindowSettings.RenderFrequency;
             UpdateFrequency = gameWindowSettings.UpdateFrequency;
         }
@@ -84,34 +78,16 @@ namespace Elffy.Core
             IsVisible = true;
             Load?.Invoke();
             OnResize(new ResizeEventArgs(Size));
-            if(IsMultiThreaded) {
-                _tokenSource = new CancellationTokenSource();
-                _updateTask = Task.Factory.StartNew(StartUpdateThread, _tokenSource.Token);
-            }
-            else {
-                _watchUpdate.Start();
-            }
+            _watchUpdate.Start();
             _watchRender.Start();
             while(true) {
-                if(!Exists || IsExiting) { return; }
+                if(!Exists || IsExiting) { break; ; }
 
-                if(!IsMultiThreaded) {
-                    DispatchUpdateFrame();
-                }
+                DispatchUpdateFrame();
                 DispatchRenderFrame();
                 Thread.Sleep(1);    // TODO: アイドル時のCPU使用率を下げるのが目的だが時間を無駄にするのは困るので、直近の何フレームかの速度を見ていい感じにする
             }
-        }
-
-        private void StartUpdateThread()
-        {
-            Debug.Assert(_tokenSource is null == false);
-            var token = _tokenSource.Token;
-            _watchUpdate.Start();
-            while(Exists && !IsExiting) {
-                if(token.IsCancellationRequested) { return; }
-                DispatchUpdateFrame();
-            }
+            Unload?.Invoke();
         }
 
         private void DispatchUpdateFrame()
@@ -168,24 +144,6 @@ namespace Elffy.Core
             if(Exists && !IsExiting) {
                 GLFW.SwapBuffers(WindowPtr);
             }
-        }
-
-        /// <inheritdoc />
-        public override void Close()
-        {
-            Unload?.Invoke();
-            if(_updateTask is null == false) {
-                Debug.Assert(_tokenSource is null == false);
-                try {
-                    _tokenSource.Cancel();
-                    _updateTask.Wait();
-                }
-                finally {
-                    _tokenSource = null;
-                    _updateTask = null;
-                }
-            }
-            base.Close();
         }
     }
 }

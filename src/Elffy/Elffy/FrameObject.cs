@@ -120,6 +120,7 @@ namespace Elffy
             if(_state != FrameObjectLifeSpanState.Alive) { return; }
             Debug.Assert(_layer is null == false);
 
+            _state = FrameObjectLifeSpanState.Terminated;
             _layer!.RemoveFrameObject(this);
             OnTerminated();
         }
