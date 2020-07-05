@@ -56,7 +56,7 @@ out vec4 fragColor;
 
 float RangeFilter(float range_min, float range_max, float value)
 {
-    return step(range_min, value) * (1.0 - step(range_max, value)) * value;
+    return step(range_min, value) * (1.0 - step(range_max, value));
 }
 
 
@@ -67,17 +67,15 @@ vec3 Linear(float x0, float x1, vec3 y0, vec3 y1, float x)
 
 void main()
 {
-    const int num = 2;
+    const int num = 5;
     vec3[num] colors = vec3[](
-        //vec3(0.1882, 0.2863, 0.5608),
-        //vec3(0.3804, 0.6392, 0.8549),
-        //vec3(0.6667, 0.949, 1.0),
-        //vec3(0.3569, 0.8157, 1.0),
-        //vec3(1.0, 1.0, 1.0),
+        vec3(0.3686, 0.349, 0.3294),
+        vec3(0.3686, 0.349, 0.3294),
+        vec3(0.6314, 0.9882, 1.0),
         vec3(0.4902, 0.8902, 1.0),
         vec3(0.0902, 0.4863, 1.0)
     );
-    float[num] offsets = float[]( 0.0, /* 0.49, 0.5, 0.51, */ 1.0 );
+    float[num] offsets = float[]( 0.0, 0.498, 0.5, 0.54, 1.0 );
     vec3 color = vec3(0.0);
     for(int i = 0;i < num-1; i++) {
         color += RangeFilter(offsets[i], offsets[i+1], UV.y) * Linear(offsets[i], offsets[i+1], colors[i], colors[i+1], UV.y);
