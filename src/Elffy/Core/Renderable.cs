@@ -137,7 +137,7 @@ namespace Elffy.Core
         }
 
 
-        protected override void OnDead()    // TODO: 全体の終了時に呼ばれていない
+        protected override void OnDead()
         {
             base.OnDead();
             _shaderProgram?.Dispose();
