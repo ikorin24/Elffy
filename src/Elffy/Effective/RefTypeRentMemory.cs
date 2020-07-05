@@ -47,7 +47,7 @@ namespace Elffy.Effective
             }
             if(!MemoryPool.TryRentObjectMemory(length, out _objectMemory, out _id, out _lender)) {
                 Debug.Assert(_lender < 0 && _id < 0);
-                _objectMemory = new object[length];     // TODO: できれば new は避けたい。
+                _objectMemory = new object[length];
             }
         }
 
