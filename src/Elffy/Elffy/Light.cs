@@ -23,9 +23,9 @@ namespace Elffy
         /// <summary>Get position as <see cref="Vector4"/>, whose element of w is 0.</summary>
         public override Vector4 Position4 => new Vector4(-Direction, 0f);
 
-        public DirectLight() : this(new Vector3(0, -1, 0), new Color3(0.8f), new Color3(0.8f), new Color3(1)) { }
+        public DirectLight() : this(new Vector3(0, -1, 0)) { }
 
-        public DirectLight(Vector3 direction) : this(direction, new Color3(1), new Color3(1), new Color3(0.8f)) { }
+        public DirectLight(Vector3 direction) : this(direction, new Color3(0.85f), new Color3(0.9f), new Color3(1)) { }
         
         public DirectLight(Vector3 direction, Color3 ambient, Color3 diffuse, Color3 specular)
         {
