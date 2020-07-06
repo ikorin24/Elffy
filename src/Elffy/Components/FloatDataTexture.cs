@@ -39,6 +39,16 @@ namespace Elffy.Core
                 throw new MemoryLeakException(typeof(FloatDataTexture));     // GC スレッドからでは解放できないので
             }
         }
+
+        public void OnAttached(ComponentOwner owner)
+        {
+            // nop
+        }
+
+        public void OnDetached(ComponentOwner owner)
+        {
+            // nop
+        }
     }
 
     internal struct FloatDataTextureImpl : IDisposable

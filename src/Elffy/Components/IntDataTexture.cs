@@ -6,6 +6,7 @@ using Elffy.Exceptions;
 using TKPixelFormat = OpenToolkit.Graphics.OpenGL.PixelFormat;
 using System.Runtime.InteropServices;
 using Elffy.Effective;
+using Elffy.Core;
 
 namespace Elffy.Components
 {
@@ -41,6 +42,16 @@ namespace Elffy.Components
             else {
                 throw new MemoryLeakException(typeof(IntDataTexture));     // GC スレッドからでは解放できないので
             }
+        }
+
+        public void OnAttached(ComponentOwner owner)
+        {
+            // nop
+        }
+
+        public void OnDetached(ComponentOwner owner)
+        {
+            // nop
         }
     }
 
