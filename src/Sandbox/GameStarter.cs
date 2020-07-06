@@ -47,7 +47,7 @@ namespace Sandbox
                 Scale = new Vector3(20),
                 Rotation = new Quaternion(Vector3.UnitX, -90f.ToRadian()),
             };
-            plain.AddComponent(new Material(new Color4(0.8f), new Color4(0.15f), new Color4(0.2f), 400f));
+            plain.AddComponent(new Material(new Color4(0.85f), new Color4(0.15f), new Color4(0.2f), 400f));
             plain.AddComponent(Resources.GetStream("cube.png").ToTexture(BitmapType.Png));
             plain.Activate();
 
