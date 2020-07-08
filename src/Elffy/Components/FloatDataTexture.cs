@@ -5,6 +5,7 @@ using OpenToolkit.Graphics.OpenGL;
 using Elffy.Exceptions;
 using TKPixelFormat = OpenToolkit.Graphics.OpenGL.PixelFormat;
 using Elffy.Components;
+using Elffy.Effective;
 
 namespace Elffy.Core
 {
@@ -20,6 +21,8 @@ namespace Elffy.Core
         public void Apply() => _impl.Apply(TextureUnit);
 
         ~FloatDataTexture() => Dispose(false);
+
+        public unsafe void Load(ReadOnlySpan<Vector4> texels) => _impl.Load(texels.MarshalCast<Vector4, Color4>());
 
         public unsafe void Load(ReadOnlySpan<Color4> texels) => _impl.Load(texels);
 

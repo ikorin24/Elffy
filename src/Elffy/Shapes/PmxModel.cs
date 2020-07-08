@@ -13,6 +13,8 @@ using OpenToolkit.Graphics.OpenGL;
 using UnmanageUtility;
 using PMXParser = MMDTools.Unmanaged.PMXParser;
 using PMXObject = MMDTools.Unmanaged.PMXObject;
+using Elffy.Serialization;
+using System.Runtime.InteropServices;
 
 namespace Elffy.Shapes
 {
@@ -43,43 +45,52 @@ namespace Elffy.Shapes
         {
             base.OnActivated();
 
-            // Here is main thread
-
-            var vertices = await Task.Factory.StartNew(() =>
+            UnmanagedArray<Vertex> BuildModelParts()
             {
                 var pmx = _pmxObject!;
-                ReverseTrianglePolygon(pmx.SurfaceList.AsSpan());       // オリジナルのデータを書き換えているので注意、このメソッドは1回しか通らない前提
-                var vertices = pmx.VertexList.AsSpan().SelectToUnmanagedArray(ToVertex);
+                var surfaces = pmx.SurfaceList.AsSpan();
+
+                // [CAUTION] it is dengerous !! Be careful !!!
+                var surfacesWritable = MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(surfaces), surfaces.Length);
+
+                PmxModelLoadHelper.ReverseTrianglePolygon(surfacesWritable);    // オリジナルのデータを書き換えているので注意、このメソッドは1回しか通らない前提
+
+                var vertices = pmx.VertexList.AsSpan().SelectToUnmanagedArray(v => v.ToVertex());
                 _parts = pmx.MaterialList.AsSpan().SelectToArray(m => new RenderableParts(m.VertexCount, m.Texture));
                 return vertices;
-            }).ConfigureAwait(true);
-            // ↑ ConfigureAwait true
+            }
+
+            UnmanagedArray<Vector4> BuildBonePositions()
+            {
+                var bones = _pmxObject!.BoneList.AsSpan();
+                return bones.SelectToUnmanagedArray(b => new Vector4(b.Position.X, b.Position.Y, b.Position.Z, 0));
+            }
+
+
+            // Here is main thread
+
+            var vertices = await Task.Factory.StartNew(BuildModelParts);
+            var bonePositions = await Task.Factory.StartNew(BuildBonePositions);
 
             // Here is main thread
             if(LifeState != FrameObjectLifeSpanState.Terminated &&
                LifeState != FrameObjectLifeSpanState.Dead) {
-                LoadGraphicBuffer(vertices.AsSpan(), _pmxObject!.SurfaceList.AsSpan().MarshalCast<MMDTools.Unmanaged.Surface, int>());
+                // skeleton component
+                var skeleton = new Skeleton(TextureUnitNumber.Unit1);
+                skeleton.Load(bonePositions.AsSpan());
+                AddComponent(skeleton);
+
+                // multi texture
                 var textures = new MultiTexture();
                 textures.Load(_textureBitmaps);
                 _textures = textures;
+
+                // load vertex
+                LoadGraphicBuffer(vertices.AsSpan(), _pmxObject!.SurfaceList.AsSpan().MarshalCast<MMDTools.Unmanaged.Surface, int>());
             }
 
             // not await
-            _ = Task.Factory.StartNew(v =>
-            {
-                // メモリ開放後始末 (非同期で問題ないので別スレッド)
-                var vertices = Unsafe.As<UnmanagedArray<Vertex>>(v)!;
-                vertices.Dispose();
-                var textureBitmaps = _textureBitmaps;
-                if(textureBitmaps != null) {
-                    foreach(var t in textureBitmaps) {
-                        t.Dispose();
-                    }
-                    _textureBitmaps = null;
-                }
-                _pmxObject!.Dispose();
-                _pmxObject = null;
-            }, vertices);
+            _ = ReleaseTemporaryBufferAsync(vertices, bonePositions);
         }
 
         protected override void OnRendering(in Matrix4 model, in Matrix4 view, in Matrix4 projection)
@@ -130,96 +141,35 @@ namespace Elffy.Shapes
             }, name);
         }
 
-        /// <summary>三角ポリゴンの表裏を反転させます</summary>
-        /// <param name="surfaceList">頂点インデックス</param>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static unsafe void ReverseTrianglePolygon(ReadOnlySpan<MMDTools.Unmanaged.Surface> surfaceList)
+        /// <summary>ロードのための一時バッファを非同期で解放します</summary>
+        /// <param name="vertices"></param>
+        /// <param name="bonePositions"></param>
+        /// <returns></returns>
+        private Task ReleaseTemporaryBufferAsync(UnmanagedArray<Vertex> vertices, UnmanagedArray<Vector4> bonePositions)
         {
-            // (a, b, c) を (a, c, b) に書き換える
-            fixed(MMDTools.Unmanaged.Surface* s = surfaceList) {
-                int* p = (int*)s;
-                for(int i = 0; i < surfaceList.Length; i++) {
-                    var i1 = i * 3 + 1;
-                    var i2 = i * 3 + 2;
-                    (p[i1], p[i2]) = (p[i2], p[i1]);
+            // メモリ開放後始末 (非同期で問題ないので別スレッド)
+            return Task.Factory.StartNew(v =>
+            {
+                Debug.Assert(v is UnmanagedArray<Vertex>);
+                var vertices = Unsafe.As<UnmanagedArray<Vertex>>(v)!;
+                vertices.Dispose();
+
+                var textureBitmaps = _textureBitmaps;
+                if(textureBitmaps != null) {
+                    foreach(var t in textureBitmaps) {
+                        t.Dispose();
+                    }
+                    _textureBitmaps = null;
                 }
-            }
-        }
-
-        //private static Material ToMaterial(MMDTools.Material m) => new Material(ToColor4(m.Ambient), ToColor4(m.Diffuse), ToColor4(m.Specular), m.Shininess);
-
-        private static Bone ToBone(MMDTools.Unmanaged.Bone bone) => new Bone(bone);
-
-        private static VertexBoneInfo ToVertexBoneInfo(MMDTools.Unmanaged.Vertex v) => new VertexBoneInfo(v);
-
-        private static Vertex ToVertex(MMDTools.Unmanaged.Vertex v) => new Vertex(ToVector3(v.Position), ToVector3(v.Normal), ToVector2(v.UV));
-
-        private static Color4 ToColor4(MMDTools.Unmanaged.Color color) => Unsafe.As<MMDTools.Unmanaged.Color, Color4>(ref color);
-
-        private static Vector3 ToVector3(MMDTools.Unmanaged.Vector3 vector) => new Vector3(vector.X, vector.Y, -vector.Z);
-
-        private static Vector2 ToVector2(MMDTools.Unmanaged.Vector2 vector) => new Vector2(vector.X, vector.Y);
-
-        private readonly struct VertexBoneInfo : IEquatable<VertexBoneInfo>
-        {
-            public readonly int Bone1;
-            public readonly int Bone2;
-            public readonly int Bone3;
-            public readonly int Bone4;
-            public readonly float Weight1;
-            public readonly float Weight2;
-            public readonly float Weight3;
-            public readonly float Weight4;
-            public readonly WeightTransformType Type;
-            public VertexBoneInfo(MMDTools.Unmanaged.Vertex v)
+                _pmxObject?.Dispose();
+                _pmxObject = null;
+            }, vertices).ContinueWith((task, state) =>
             {
-                Bone1 = v.BoneIndex1;
-                Bone2 = v.BoneIndex2;
-                Bone3 = v.BoneIndex3;
-                Bone4 = v.BoneIndex4;
-                Weight1 = v.Weight1;
-                Weight2 = v.Weight2;
-                Weight3 = v.Weight3;
-                Weight4 = v.Weight4;
-                Type = ToWeightType(v.WeightTransformType);
-            }
-
-            private static WeightTransformType ToWeightType(MMDTools.Unmanaged.WeightTransformType t)
-            {
-                return t switch
-                {
-                    MMDTools.Unmanaged.WeightTransformType.BDEF1 => WeightTransformType.BDEF1,
-                    MMDTools.Unmanaged.WeightTransformType.BDEF2 => WeightTransformType.BDEF2,
-                    MMDTools.Unmanaged.WeightTransformType.BDEF4 => WeightTransformType.BDEF4,
-                    _ => throw new NotSupportedException($"Not supported weight type. Type : {t}"),
-                };
-            }
-
-            public override bool Equals(object? obj) => obj is VertexBoneInfo info && Equals(info);
-
-            public bool Equals(VertexBoneInfo other) => (Bone1 == other.Bone1) && (Bone2 == other.Bone2) && (Bone3 == other.Bone3) && (Bone4 == other.Bone4) &&
-                                                        (Weight1 == other.Weight1) && (Weight2 == other.Weight2) && (Weight3 == other.Weight3) && (Weight4 == other.Weight4) &&
-                                                        (Type == other.Type);
-
-            public override int GetHashCode() => HashCodeEx.Combine(Bone1, Bone2, Bone3, Bone4, Weight1, Weight2, Weight3, Weight4, Type);
-
-            public static bool operator ==(VertexBoneInfo left, VertexBoneInfo right) => left.Equals(right);
-
-            public static bool operator !=(VertexBoneInfo left, VertexBoneInfo right) => !(left == right);
+                Debug.Assert(state is UnmanagedArray<Vector4>);
+                var bonePosition = Unsafe.As<UnmanagedArray<Vector4>>(state);
+                bonePosition.Dispose();
+            }, bonePositions);
         }
-
-        private readonly struct Bone
-        {
-            public readonly Vector3 Position;
-            public readonly int Parent;
-
-            public Bone(MMDTools.Unmanaged.Bone bone)
-            {
-                Position = ToVector3(bone.Position);
-                Parent = bone.ParentBone;
-            }
-        }
-
 
         private readonly struct RenderableParts
         {
