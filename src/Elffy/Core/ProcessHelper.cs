@@ -40,9 +40,10 @@ namespace Elffy.Core
         /// <param name="multiLaunch">多重起動時に実行される処理</param>
         public static void SingleLaunch(string uniqueName, Action startAction, Action multiLaunch)
         {
-            ArgumentChecker.ThrowArgumentIf(string.IsNullOrEmpty(uniqueName), $"{nameof(uniqueName)} is null or empty.");
-            ArgumentChecker.ThrowIfNullArg(startAction, nameof(startAction));
-            ArgumentChecker.ThrowIfNullArg(multiLaunch, nameof(multiLaunch));
+            if(string.IsNullOrEmpty(uniqueName)) { throw new ArgumentException($"{nameof(uniqueName)} is null or empty."); }
+            if(startAction is null) { throw new ArgumentNullException(nameof(startAction)); }
+            if(multiLaunch is null) { throw new ArgumentNullException(nameof(multiLaunch)); }
+
             if(uniqueName.Length > MUTEX_NAME_MAX_LEN) {
                 throw new ArgumentException($"{nameof(uniqueName)} is too long. Length must be between 0 and {MUTEX_NAME_MAX_LEN}.");
             }

@@ -19,7 +19,7 @@ namespace Elffy.UI
         /// <param name="uiLayer">この <see cref="Page"/> と子孫を描画する UI レイヤー</param>
         internal Page(UILayer uiLayer)
         {
-            ArgumentChecker.ThrowIfNullArg(uiLayer, nameof(uiLayer));
+            if(uiLayer is null) { throw new ArgumentNullException(nameof(uiLayer)); }
             UILayer = uiLayer;
             Root = this;
         }

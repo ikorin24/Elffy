@@ -15,7 +15,7 @@ namespace Elffy.Serialization
         [Obsolete("一応残しておきますが使えません", true)]
         public static Model3D Load(Stream stream, ModelType type)
         {
-            ArgumentChecker.ThrowIfNullArg(stream, nameof(stream));
+            if(stream is null) { throw new ArgumentNullException(nameof(stream)); }
             throw new NotImplementedException();
             //return type switch
             //{

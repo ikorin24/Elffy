@@ -30,14 +30,12 @@ namespace Elffy
         /// <param name="name">レイヤー名</param>
         public Layer(string name)
         {
-            ArgumentChecker.ThrowIfNullArg(name, nameof(name));
-            Name = name;
+            Name = name ?? throw new ArgumentNullException(nameof(name));
         }
 
         internal Layer(string name, LayerCollection owner)
         {
-            ArgumentChecker.ThrowIfNullArg(name, nameof(name));
-            Name = name;
+            Name = name ?? throw new ArgumentNullException(nameof(name));
             Owner = owner;
         }
 

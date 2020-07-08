@@ -56,7 +56,7 @@ namespace Elffy
             get { return _fovy; }
             set
             {
-                ArgumentChecker.ThrowArgumentIf(value <= 0 || value > MathTool.Pi, "Value must be 0 ~ π. (not include 0)");
+                if(value <= 0 || value > MathTool.Pi) { throw new ArgumentOutOfRangeException("Value must be 0 ~ π. (not include 0)"); }
                 _fovy = value;
                 SetProjectionMatrix(_fovy, _far, _aspect);
             }
@@ -69,7 +69,7 @@ namespace Elffy
             get { return _far; }
             set
             {
-                ArgumentChecker.ThrowArgumentIf(value <= NEAR, "Value must be bigger than 0. (or value is too small.)");
+                if(value <= NEAR) { throw new ArgumentException("Value must be bigger than 0. (or value is too small.)"); }
                 _far = value;
                 SetProjectionMatrix(_fovy, _far, _aspect);
             }
@@ -113,7 +113,7 @@ namespace Elffy
         /// <param name="target">target position where screen region is same as current.</param>
         public void ChangeFovy(float fovy, Vector3 target)
         {
-            ArgumentChecker.ThrowArgumentIf(fovy <= 0 || fovy > MathTool.Pi, $"{nameof(fovy)} must be 0 ~ π. (not include 0)");
+            if(fovy <= 0 || fovy > MathTool.Pi) { throw new ArgumentOutOfRangeException($"{nameof(fovy)} must be 0 ~ π. (not include 0)"); }
             var pos = (1 - MathF.Tan(_fovy / 2f) / MathF.Tan(fovy / 2f)) * (target - Position);
             _position += pos;
             _fovy = fovy;
@@ -126,8 +126,9 @@ namespace Elffy
         /// <param name="height">高さ</param>
         internal void ChangeScreenSize(int width, int height)
         {
-            ArgumentChecker.ThrowOutOfRangeIf(width < 0, nameof(width), width, "value is negative.");
-            ArgumentChecker.ThrowOutOfRangeIf(height < 0, nameof(height), height, "value is negative");
+            if(width < 0) { throw new ArgumentOutOfRangeException(nameof(width), width, "value si negative."); }
+            if(height < 0) { throw new ArgumentOutOfRangeException(nameof(height), height, "value is negative."); }
+
             _aspect = (float)width / height;
             SetProjectionMatrix(_fovy, _far, _aspect);
         }

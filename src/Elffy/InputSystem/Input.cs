@@ -41,7 +41,7 @@ namespace Elffy.InputSystem
         /// <returns>入力状態</returns>
         public static bool GetState(string name)
         {
-            var result = _currentState.GetValueWithKeyChecking(name, "Specified input state is not registered.");
+            var result = _currentState[name];
             return result;
         }
         #endregion
@@ -52,8 +52,8 @@ namespace Elffy.InputSystem
         /// <returns>入力状態</returns>
         public static bool GetStateDown(string name)
         {
-            var current = _currentState.GetValueWithKeyChecking(name, "Specified input state is not registered.");
-            var prev = _previousState.GetValueWithKeyChecking(name, "Specified input state is not registered.");
+            var current = _currentState[name];
+            var prev = _previousState[name];
             return current && !prev;        // 立ち上がりを検出
         }
         #endregion
@@ -64,8 +64,8 @@ namespace Elffy.InputSystem
         /// <returns>結果</returns>
         public static bool GetStateUp(string name)
         {
-            var current = _currentState.GetValueWithKeyChecking(name, "Specified input state is not registered.");
-            var prev = _previousState.GetValueWithKeyChecking(name, "Specified input state is not registered.");
+            var current = _currentState[name];
+            var prev = _previousState[name];
             return !current && prev;        // 立ち下がりを検出
         }
         #endregion
@@ -76,14 +76,14 @@ namespace Elffy.InputSystem
         /// <returns>入力値</returns>
         public static float GetAxis(string name)
         {
-            var value = _currentAxis.GetValueWithKeyChecking(name, "Specified input state is not registered.");
+            var value = _currentAxis[name];
             return value;
         }
         #endregion
 
         public static float GetTrigger(string name)
         {
-            var value = _currentTrigger.GetValueWithKeyChecking(name, "Specified input state is not registered.");
+            var value = _currentTrigger[name];
             return value;
         }
 
@@ -94,9 +94,12 @@ namespace Elffy.InputSystem
         /// <param name="gamepadButton">関連させるゲームパッドのボタン番号</param>
         public static void AddState(string name, Key key, int gamepadButton)
         {
-            ArgumentChecker.ThrowIfNullArg(name, nameof(name));
-            ArgumentChecker.ThrowOutOfRangeIf(gamepadButton < 0 || gamepadButton >= PadState.BUTTON_COUNT, nameof(gamepadButton), gamepadButton, $"{nameof(gamepadButton)} is out of range.");
-            ArgumentChecker.ThrowArgumentIf(_stateNames.ContainsKey(name), $"Input state '{name}' already exists".AsInterned());
+            if(name is null) { throw new ArgumentNullException(nameof(name)); }
+            if(gamepadButton < 0 || gamepadButton >= PadState.BUTTON_COUNT) {
+                throw new ArgumentOutOfRangeException(nameof(gamepadButton), gamepadButton, $"{nameof(gamepadButton)} is out of range.");
+            }
+            if(_stateNames.ContainsKey(name)) { throw new ArgumentException($"Input state '{name}' already exists"); }
+
             _stateNames.Add(name, new StateNameObject(name, key, gamepadButton));
             _currentState.Add(name, false);
             _previousState.Add(name, false);
@@ -120,9 +123,10 @@ namespace Elffy.InputSystem
         /// <param name="minValue">軸が反応する最小値</param>
         public static void AddAxis(string name, Key positiveKey, Key negativeKey, StickAxis stickAxis, float minValue)
         {
-            ArgumentChecker.ThrowIfNullArg(name, nameof(name));
-            ArgumentChecker.ThrowOutOfRangeIf(minValue < 0 || minValue > 1, nameof(minValue), minValue, $"{nameof(minValue)} must be between 0 and 1");
-            ArgumentChecker.ThrowArgumentIf(_axisNames.ContainsKey(name), $"Input state '{name}' already exists".AsInterned());
+            if(name is null) { throw new ArgumentNullException(nameof(name)); }
+            if(minValue < 0 || minValue > 1) { throw new ArgumentOutOfRangeException(nameof(minValue), minValue, $"{nameof(minValue)} must be between 0 and 1"); }
+            if(_axisNames.ContainsKey(name)) { throw new ArgumentException($"Input state '{name}' already exists"); }
+
             _axisNames.Add(name, new AxisNameObject(name, positiveKey, negativeKey, stickAxis, minValue));
             _currentAxis.Add(name, 0);
             _previousAxis.Add(name, 0);
@@ -134,9 +138,10 @@ namespace Elffy.InputSystem
 
         public static void AddTrigger(string name, Key key, Trigger trigger, float minValue)
         {
-            ArgumentChecker.ThrowIfNullArg(name, nameof(name));
-            ArgumentChecker.ThrowOutOfRangeIf(minValue < 0 || minValue > 1, nameof(minValue), minValue, $"{nameof(minValue)} must be between 0 and 1");
-            ArgumentChecker.ThrowArgumentIf(_triggerNames.ContainsKey(name), $"Input state '{name}' already exists".AsInterned());
+            if(name is null) { throw new ArgumentNullException(nameof(name)); }
+            if(minValue < 0 || minValue > 1) { throw new ArgumentOutOfRangeException(nameof(minValue), minValue, $"{nameof(minValue)} must be between 0 and 1"); }
+            if(_triggerNames.ContainsKey(name)) { throw new ArgumentException($"Input state '{name}' already exists"); }
+
             _triggerNames.Add(name, new TriggerNameObject(name, key, trigger, minValue));
             _currentTrigger.Add(name, 0);
             _previousTrigger.Add(name, 0);

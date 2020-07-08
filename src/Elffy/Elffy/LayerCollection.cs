@@ -43,7 +43,7 @@ namespace Elffy
         {
             get
             {
-                ArgumentChecker.ThrowOutOfRangeIf((uint)index >= (uint)_list.Count, nameof(index), index, "value is out of range");
+                if((uint)index >= (uint)_list.Count) { throw new ArgumentOutOfRangeException(nameof(index), index, "value is out of range"); }
                 return _list[index];
             }
         }
@@ -63,7 +63,7 @@ namespace Elffy
         /// <param name="layer">追加する要素</param>
         public void Add(Layer layer)
         {
-            ArgumentChecker.ThrowIfNullArg(layer, nameof(layer));
+            if(layer is null) { throw new ArgumentNullException(nameof(layer)); }
             if(layer.Owner != null) { throw new InvalidOperationException($"指定のレイヤーは既に別の {nameof(LayerCollection)} に含まれています。"); }
             layer.Owner = this;
             _list.Add(layer);
@@ -93,7 +93,7 @@ namespace Elffy
         /// <returns>削除に成功したか (指定した要素が存在しない場合 false)</returns>
         public bool Remove(Layer layer)
         {
-            ArgumentChecker.ThrowIfNullArg(layer, nameof(layer));
+            if(layer is null) { throw new ArgumentNullException(nameof(layer)); }
             var removed = _list.Remove(layer);
             if(removed) {
                 layer.Owner = null;

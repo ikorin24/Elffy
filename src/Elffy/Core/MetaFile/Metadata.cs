@@ -2,6 +2,7 @@
 using Elffy.Effective;
 using Elffy.Exceptions;
 using Elffy.Serialization;
+using System;
 using System.IO;
 
 namespace Elffy.Core.MetaFile
@@ -21,7 +22,7 @@ namespace Elffy.Core.MetaFile
         /// <returns>読み取ったメタデータ</returns>
         public static T LoadFromStream<T>(Stream stream) where T : Metadata, new()
         {
-            ArgumentChecker.ThrowIfNullArg(stream, nameof(stream));
+            if(stream is null) { throw new ArgumentNullException(nameof(stream)); }
             var data = _serializer.Deserialize<MetadataDeserialized>(stream);
             var metaFile = new T();
             metaFile.InitializeFromDeserialized(data);
@@ -32,7 +33,7 @@ namespace Elffy.Core.MetaFile
         /// <param name="data">デシリアライズされたデータ</param>
         protected virtual void InitializeFromDeserialized(MetadataDeserialized data)
         {
-            DataChecker.ThrowFormatIf(!IsSupportedVersion(data), $"Not supported format version : '{data.FormatVersion}'".AsInterned());
+            if(!IsSupportedVersion(data)) { throw new FormatException($"Not supported format version : '{data.FormatVersion}'"); }
             DataType = data.DataType;
         }
 

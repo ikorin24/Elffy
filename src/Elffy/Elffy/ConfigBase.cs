@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using System;
 using System.IO;
 using Elffy.Exceptions;
 using Elffy.Serialization;
@@ -18,8 +19,7 @@ namespace Elffy
             get { return _path; }
             set
             {
-                ArgumentChecker.ThrowIfNullArg(value, nameof(value));
-                _path = value;
+                _path = value ?? throw new ArgumentNullException(nameof(value));
             }
         }
 

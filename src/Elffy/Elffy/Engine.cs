@@ -52,7 +52,7 @@ namespace Elffy
         public static void ShowScreen(int width, int height, string title, Icon? icon, WindowStyle windowStyle,
                                       ActionEventHandler<IHostScreen> initialized)
         {
-            ArgumentChecker.ThrowIfNullArg(initialized, nameof(initialized));
+            if(initialized is null) { throw new ArgumentNullException(nameof(initialized)); }
             if(!IsRunning) { throw new InvalidOperationException($"{nameof(Engine)} is not running."); }
             try {
                 IHostScreen screen;

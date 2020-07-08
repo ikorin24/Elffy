@@ -29,7 +29,7 @@ namespace Elffy.Core
         /// <param name="owner">この <see cref="PositionableCollection"/> を持つ <see cref="Positionable"/> オブジェクト</param>
         internal PositionableCollection(Positionable owner)
         {
-            ArgumentChecker.ThrowIfNullArg(owner, nameof(owner));
+            if(owner is null) { throw new ArgumentNullException(nameof(owner)); }
             _owner = owner;
             _list = new List<Positionable>();
         }
@@ -41,7 +41,7 @@ namespace Elffy.Core
         /// <param name="item">追加する要素</param>
         public void Add(Positionable item)
         {
-            ArgumentChecker.ThrowIfNullArg(item, nameof(item));
+            if(item is null) { throw new ArgumentNullException(nameof(item)); }
             item.Parent = _owner;
             _list.Add(item);
         }
@@ -73,8 +73,9 @@ namespace Elffy.Core
         /// <param name="item">追加する要素</param>
         public void Insert(int index, Positionable item)
         {
-            ArgumentChecker.ThrowIfNullArg(item, nameof(item));
-            ArgumentChecker.ThrowOutOfRangeIf(index < 0 || index > _list.Count, nameof(index), index, "value is out of range.");
+            if(item is null) { throw new ArgumentNullException(nameof(item)); }
+            if(index < 0 || index > _list.Count) { throw new ArgumentOutOfRangeException(nameof(index), index, "value is out of range."); }
+
             item.Parent = _owner;
             _list.Insert(index, item);
         }
@@ -84,7 +85,7 @@ namespace Elffy.Core
         /// <returns>削除に成功したか (指定した要素が存在しない場合 false)</returns>
         public bool Remove(Positionable item)
         {
-            ArgumentChecker.ThrowIfNullArg(item, nameof(item));
+            if(item is null) { throw new ArgumentNullException(nameof(item)); }
             var result = _list.Remove(item);
             if(result) {
                 item.Parent = null;
@@ -96,7 +97,8 @@ namespace Elffy.Core
         /// <param name="index">インデックス</param>
         public void RemoveAt(int index)
         {
-            ArgumentChecker.ThrowOutOfRangeIf(index < 0 || index >= _list.Count, nameof(index), index, $"{nameof(index)} is out of range");
+            if(index < 0 || index >= _list.Count) { throw new ArgumentOutOfRangeException(nameof(index), index, $"{nameof(index)} is out of range"); }
+
             _list[index].Parent = null;
             _list.RemoveAt(index);
         }

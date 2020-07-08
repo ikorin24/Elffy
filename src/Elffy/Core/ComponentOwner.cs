@@ -49,7 +49,7 @@ namespace Elffy.Core
         /// <returns>Return true if replaced, otherwize false.</returns>
         public bool AddOrReplaceComponent<T>(T component, out T? old) where T : class, IComponent
         {
-            ArgumentChecker.ThrowIfNullArg(component, nameof(component));
+            if(component is null) { throw new ArgumentNullException(nameof(component)); }
             var replaced = ComponentStore<T>.AddOrReplace(this, component, out old);
             if(replaced) {
                 Debug.Assert(old != null);

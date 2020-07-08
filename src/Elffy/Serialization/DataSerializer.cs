@@ -19,7 +19,7 @@ namespace Elffy.Serialization
         /// <param name="data">シリアライズ対象のオブジェクト</param>
         public void Serialize<T>(string path, T data)
         {
-            ArgumentChecker.ThrowIfNullArg(path, nameof(path));
+            if(path is null) { throw new ArgumentNullException(nameof(path)); }
             var ws = new XmlWriterSettings();
             ws.Encoding = _encoding;
             ws.Indent = true;

@@ -70,7 +70,7 @@ namespace Elffy
         /// <exception cref="ArgumentNullException"></exception>
         public void Load(string filename)
         {
-            ArgumentChecker.ThrowIfNullArg(filename, nameof(filename));
+            if(filename is null) { throw new ArgumentNullException(nameof(filename)); }
             var ext = Path.GetExtension(filename);
             Load(File.OpenRead(filename), GetSoundTypeFromExtension(ext));
         }
@@ -82,7 +82,7 @@ namespace Elffy
         /// <exception cref="ArgumentNullException"></exception>
         public void Load(Stream stream, SoundType type)
         {
-            ArgumentChecker.ThrowIfNullArg(stream, nameof(stream));
+            if(stream is null) { throw new ArgumentNullException(nameof(stream)); }
             lock(_sync) {
                 _reader = OpenReader(stream, type);
                 DisposeAllResource();

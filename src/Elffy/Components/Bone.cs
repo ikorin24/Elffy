@@ -28,7 +28,7 @@ namespace Elffy.Components
                     break;
                 }
             }
-            ArgumentChecker.ThrowArgumentIf(_rootIndex < 0, "Can not find root element of bone tree");
+            if(_rootIndex < 0) { throw new ArgumentException("Can not find root element of bone tree"); }
             _treeElements = treeElements.ToUnmanagedArray();
             _weightArray = vertexInfoArray.ToUnmanagedArray() ?? throw new ArgumentNullException(nameof(vertexInfoArray));
             _vertexArray = default!;
@@ -38,7 +38,8 @@ namespace Elffy.Components
         public void OnAttached(ComponentOwner owner)
         {
             Debug.Assert(owner != null);
-            ArgumentChecker.CheckType<Model3D, ComponentOwner>(owner!, $"The component owner must be {nameof(Model3D)}");
+            if(owner is Model3D == false) { throw new ArgumentException($"The component owner must be {nameof(Model3D)}"); }
+
             if(_owner != null) { throw new InvalidOperationException("This component has already attatched to another."); }
             var model = (Model3D)owner!;
             _owner = model;
@@ -55,7 +56,7 @@ namespace Elffy.Components
         public void OnDetached(ComponentOwner owner)
         {
             if(_owner == null) { throw new InvalidOperationException("The component is not attatched."); }
-            ArgumentChecker.ThrowArgumentIf(_owner != owner, "owner is invalid");
+            if(_owner != owner) { throw new ArgumentException("owner is invalid"); }
 
             owner.Updated -= OnOwnerUpdated;
 

@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using Elffy.Exceptions;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -16,9 +17,9 @@ namespace Elffy.UI
 
         public Split(ICollection<float> propotion)
         {
-            ArgumentChecker.ThrowIfNullArg(propotion, nameof(propotion));
+            if(propotion is null) { throw new ArgumentNullException(nameof(propotion)); }
             var tmp = propotion.ToArray();
-            ArgumentChecker.ThrowArgumentIf(tmp.Any(value => value < 0), "negative propotion is not allowed");
+            if(tmp.Any(value => value < 0)) { throw new ArgumentException("negative propotion is not allowed"); }
             Propotion = new ReadOnlyCollection<float>(tmp);
         }
 
@@ -27,7 +28,7 @@ namespace Elffy.UI
             // "4,5,3"
             // " 3, 3  ,  32  "
             var propotion = source.Split(new[] { ',' }).Select(x => x.Trim()).Cast<float>().ToArray();
-            ArgumentChecker.ThrowArgumentIf(propotion.Any(value => value < 0), "negative propotion is not allowed");
+            if(propotion.Any(value => value < 0)) { throw new ArgumentException("negative propotion is not allowed"); }
             var split = new Split();
             split.Propotion = new ReadOnlyCollection<float>(propotion);
             return new Split();
