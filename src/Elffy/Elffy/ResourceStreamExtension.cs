@@ -9,7 +9,7 @@ namespace Elffy
     public static class ResourceStreamExtension
     {
         public static Texture ToTexture(this Stream stream, BitmapType bitmapType)
-            => ToTexture(stream, bitmapType, TextureExpansionMode.Bilinear, TextureShrinkMode.NearestNeighbor, TextureMipmapMode.None);
+            => ToTexture(stream, bitmapType, TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear, TextureMipmapMode.None);
 
         public static Texture ToTexture(this Stream stream, BitmapType bitmapType, TextureExpansionMode expansionMode, TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode)
         {
