@@ -43,7 +43,7 @@ namespace Elffy.Core
             set
             {
                 if(value is null) { throw new ArgumentNullException(nameof(value)); }
-                //Dispatcher.ThrowIfNotMainThread();
+                if(IsLoaded) { throw new InvalidOperationException("already loaded"); }
                 _shader = value;
             }
         }
@@ -118,22 +118,18 @@ namespace Elffy.Core
         protected unsafe void LoadGraphicBuffer(ReadOnlySpan<Vertex> vertices, ReadOnlySpan<int> indices)
         {
             Dispatcher.ThrowIfNotMainThread();
-            if(IsLoaded) {
-                VBO.BindBufferData(ref _vbo , vertices, BufferUsageHint.StaticDraw);
-                IBO.BindBufferData(ref _ibo, indices, BufferUsageHint.StaticDraw);
-            }
-            else {
-                _vbo = VBO.Create();
-                VBO.BindBufferData(ref _vbo, vertices, BufferUsageHint.StaticDraw);
-                _ibo = IBO.Create();
-                IBO.BindBufferData(ref _ibo, indices, BufferUsageHint.StaticDraw);
-                _vao = VAO.Create();
-                VAO.Bind(_vao);
-                IsLoaded = true;
-                _shaderProgram?.Dispose();
-                _shaderProgram = _shader.Compile();
-                _shaderProgram.Initialize(_vao, _vbo);
-            }
+            if(IsLoaded) { throw new InvalidOperationException("already loaded"); }
+
+            _vbo = VBO.Create();
+            VBO.BindBufferData(ref _vbo, vertices, BufferUsageHint.StaticDraw);
+            _ibo = IBO.Create();
+            IBO.BindBufferData(ref _ibo, indices, BufferUsageHint.StaticDraw);
+            _vao = VAO.Create();
+            VAO.Bind(_vao);
+            IsLoaded = true;
+            _shaderProgram?.Dispose();
+            _shaderProgram = _shader.Compile();
+            _shaderProgram.Initialize(_vao, _vbo);
         }
 
 
