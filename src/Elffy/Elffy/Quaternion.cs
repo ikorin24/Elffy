@@ -31,15 +31,15 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Quaternion(in Vector3 axis, float angle)
+        public Quaternion(in Vector3 axis, float radian)
         {
             var nAxis = axis.Normalized();
-            var halfAngle = angle / 2;
-            var sin = MathF.Sin(halfAngle);
+            var halfRadian = radian / 2;
+            var sin = MathF.Sin(halfRadian);
             X = nAxis.X * sin;
             Y = nAxis.Y * sin;
             Z = nAxis.Z * sin;
-            W = MathF.Cos(halfAngle);
+            W = MathF.Cos(halfRadian);
         }
 
         public Vector3 Xyz => new Vector3(X, Y, Z);
@@ -116,6 +116,12 @@ namespace Elffy
                                    q.Z * p.X + q.W * p.Y - q.X * p.Z + q.Y * p.W,
                                   -q.Y * p.X + q.X * p.Y + q.W * p.Z + q.Z * p.W,
                                   -q.X * p.X - q.Y * p.Y - q.Z * p.Z + q.W * p.W);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 operator *(in Quaternion rot, in Vector3 vec)
+        {
+            return (rot * new Quaternion(vec.X, vec.Y, vec.Z, 0) * rot.Inversed()).Xyz;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
