@@ -21,6 +21,8 @@ namespace Elffy.Components
 
         public TextureUnitNumber TextureUnit => _bonePositions.TextureUnit;
 
+        public bool AutoDisposeOnDetached => true;
+
         internal Skeleton(TextureUnitNumber textureUnit)
         {
             _bonePositions = new FloatDataTexture(textureUnit);

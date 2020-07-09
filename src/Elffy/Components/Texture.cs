@@ -1,7 +1,10 @@
 ﻿#nullable enable
 using System;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Runtime.CompilerServices;
 using Elffy.Core;
 using Elffy.Exceptions;
 using Elffy.Imaging;
@@ -23,8 +26,7 @@ namespace Elffy.Components
 
         public ComponentOwner? Owner { get; private set; }
 
-        /// <summary><see cref="ComponentOwner"/> からデタッチされるか、アタッチ先の <see cref="FrameObject"/> が無効になった時に自動的に破棄されるかどうか</summary>
-        public bool IsAutoDisposeEnabled { get; }
+        public bool AutoDisposeOnDetached { get; }
 
         public Texture(TextureExpansionMode expansionMode, TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode, bool autoDispose = true)
         {
@@ -32,7 +34,7 @@ namespace Elffy.Components
             ShrinkMode = shrinkMode;
             MipmapMode = mipmapMode;
             TextureUnit = TextureUnitNumber.Unit0;
-            IsAutoDisposeEnabled = autoDispose;
+            AutoDisposeOnDetached = autoDispose;
         }
 
         ~Texture() => Dispose(false);
@@ -72,8 +74,12 @@ namespace Elffy.Components
                 throw new InvalidOperationException($"{nameof(Texture)} is already attached. Can not have multi {nameof(ComponentOwner)}s.");
             }
             Owner = owner;
-            if(IsAutoDisposeEnabled) {
-                owner.Dead += _ => Dispose();
+            if(AutoDisposeOnDetached) {
+                owner.Dead += sender =>
+                {
+                    Debug.Assert(sender is ComponentOwner);
+                    Unsafe.As<ComponentOwner>(sender).RemoveComponent<Texture>();
+                };
             }
         }
 
@@ -81,7 +87,7 @@ namespace Elffy.Components
         {
             if(Owner == owner) {
                 Owner = null;
-                if(IsAutoDisposeEnabled) {
+                if(AutoDisposeOnDetached) {
                     Dispose();
                 }
             }

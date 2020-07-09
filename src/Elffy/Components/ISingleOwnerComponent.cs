@@ -6,5 +6,7 @@ namespace Elffy.Components
     public interface ISingleOwnerComponent : IComponent
     {
         ComponentOwner? Owner { get; }
+
+        bool AutoDisposeOnDetached { get; }
     }
 }
