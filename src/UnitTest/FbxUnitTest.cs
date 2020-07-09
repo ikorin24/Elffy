@@ -3,7 +3,7 @@ using System.IO;
 using Elffy.Serialization;
 using Xunit;
 
-namespace Test
+namespace UnitTest
 {
     public class FbxUnitTest
     {
