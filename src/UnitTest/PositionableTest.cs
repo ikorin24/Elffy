@@ -4,7 +4,7 @@ using Elffy.Core;
 using Elffy;
 using Xunit;
 
-namespace Test
+namespace UnitTest
 {
     public class PositionableTest
     {

@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using Xunit;
 
-namespace Test
+namespace UnitTest
 {
     public class UnsafeExtensionTest
     {

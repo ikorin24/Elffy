@@ -47,26 +47,25 @@ namespace Sandbox
         private void MoveCamera(float thetaRad, float phiRad)
         {
             var target = Target;
-            var p0 = _camera.Position - target;
-            var theta = new Angle(thetaRad);                // 水平方向の回転角
-            var phi = new Angle(phiRad);                    // 垂直方向の回転角
-            var alpha = new Angle(p0.X / p0.Xz.Length, p0.Z / p0.Xz.Length);    // XZ平面への正射影ベクトルとZ軸との角 (経度)
 
-            var matrix = new Matrix3(theta.Cos, 0, theta.Sin,   // 水平方向回転
-                                     0, 1, 0,
-                                     -theta.Sin, 0, theta.Cos)  //  ↑
-                       * new Matrix3(alpha.Cos, 0, alpha.Sin,   // 元の経度へ
-                                     0, 1, 0,
-                                     -alpha.Sin, 0, alpha.Cos)  //  ↑
-                       * new Matrix3(1, 0, 0,                   // 垂直方向回転
-                                     0, phi.Cos, phi.Sin,
-                                     0, -phi.Sin, phi.Cos)      //  ↑
-                       * new Matrix3(alpha.Cos, 0, -alpha.Sin,  // 経度0 (Z軸正方向)へ水平方向回転
-                                     0, 1, 0,
-                                     alpha.Sin, 0, alpha.Cos);
+            // target を原点とする座標系
+            var v = _camera.Position - target;
+            var alpha = -MathF.Atan2(v.Z, v.X);         // x軸正方向を0度とした時の現在の経度
+            var beta = MathF.Atan2(v.Y, v.Xz.Length);   // 現在の緯度
 
-            _camera.Direction = matrix * _camera.Direction;
-            _camera.Position = target + matrix * p0;
+            var maxBeta = 80.ToRadian();
+            var minBeta = -maxBeta;
+
+            // 緯度方向の回転角
+            phiRad = MathF.Max(MathF.Min(phiRad, maxBeta - beta), minBeta - beta);
+
+            // 経度を0に戻す → 緯度方向回転 → 元の経度+緯度回転
+            var q1 = new Quaternion(Vector3.UnitY, -alpha);
+            var q2 = new Quaternion(Vector3.UnitZ, phiRad);
+            var q3 = new Quaternion(Vector3.UnitY, alpha + thetaRad);
+
+            _camera.Position = q3 * q2 * q1 * v + target;
+            _camera.LookAt(target);
         }
 
         private readonly struct Angle

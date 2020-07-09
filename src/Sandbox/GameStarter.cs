@@ -27,17 +27,18 @@ namespace Sandbox
                 var light = Unsafe.As<DirectLight>(sender);
                 var frameNum = Game.Screen.FrameNum;
                 var rotation = new Quaternion(Vector3.UnitX, (frameNum / 60f * 60).ToRadian());
-                light.Direction = new Vector3(0, -1, 0).Rotate(rotation);
+                light.Direction = rotation * new Vector3(0, -1, 0);
             };
             light.Activate();
 
 
             // カメラ位置初期化
-            Game.MainCamera.LookAt(new Vector3(0, 3, 0), new Vector3(0, 4.5f, 20));
+            var cameraTarget = new Vector3(0, 3, 0);
+            Game.MainCamera.LookAt(cameraTarget, new Vector3(0, 4.5f, 20));
 
 
             // マウスでカメラ移動するためのオブジェクト
-            var cameraMouse = new CameraMouse(Game.MainCamera, Game.Mouse, Vector3.Zero);
+            var cameraMouse = new CameraMouse(Game.MainCamera, Game.Mouse, cameraTarget);
             cameraMouse.Activate();
 
 

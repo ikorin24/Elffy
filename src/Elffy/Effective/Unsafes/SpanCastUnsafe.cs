@@ -6,12 +6,10 @@
 #define FAST_SPAN   // .net core after 2.1
 #endif
 
-using Elffy.AssemblyServices;
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using nint = System.IntPtr;
 
 namespace Elffy.Effective.Unsafes
 {
@@ -26,7 +24,9 @@ namespace Elffy.Effective.Unsafes
         /// <param name="span">型変換を行う <see cref="Span{T}"/></param>
         /// <returns>変換後の <see cref="Span{T}"/></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [CriticalDotnetDependency("netcoreapp3.1")]
+#if SLOW_SPAN
+        [CriticalDotnetDependency("net48")]
+#endif
         public static unsafe Span<TTo> CastRefType<TFrom, TTo>(Span<TFrom> span)
         {
             // [NOTE]
@@ -65,7 +65,7 @@ namespace Elffy.Effective.Unsafes
             return CastRefTypeForSlowSpan<TFrom, TTo>(span);
 #endif
 #if FAST_SPAN
-            return CastRefTypeForFastSpan<TFrom, TTo>(span);
+            return MemoryMarshal.CreateSpan(ref Unsafe.As<TFrom, TTo>(ref MemoryMarshal.GetReference(span)), span.Length);
 #endif
         }
 
@@ -83,26 +83,11 @@ namespace Elffy.Effective.Unsafes
 
             return helper2.Span;
         }
-#endif
-
-#if FAST_SPAN
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static unsafe Span<TTo> CastRefTypeForFastSpan<TFrom, TTo>(Span<TFrom> span)
-        {
-            var helper1 = new PointerHelper<TFrom>(span);
-            var helper2 = new PointerHelper<TTo>();
-            var p1 = (&helper1.Head) + 1;       // p1 = &helper1.Span;
-            var p2 = (&helper2.Head) + 1;       // p2 = &helper2.Span;
-            *p2 = *p1;                          // ret._pointer = span._pointer;
-            *(int*)(p2 + 1) = *(int*)(p1 + 1);  // ret._length = span._length;
-            return helper2.Span;
-        }
-#endif
 
         [StructLayout(LayoutKind.Sequential)]
         private unsafe readonly ref struct PointerHelper<T>
         {
-            public readonly nint Head;          // アライメントにパディングが入っては困るので nint 型にしておく 
+            public readonly IntPtr Head;        // アライメントにパディングが入っては困るので native int 型にしておく 
                                                 // (ジェネリックを含むと StructLayout で Explicit にできない)
             public readonly Span<T> Span;
 
@@ -113,5 +98,6 @@ namespace Elffy.Effective.Unsafes
                 Span = span;
             }
         }
+#endif
     }
 }

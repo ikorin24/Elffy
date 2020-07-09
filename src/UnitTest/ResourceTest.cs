@@ -8,7 +8,7 @@ using ElffyResourceCompiler;
 using Elffy;
 using Xunit;
 
-namespace Test
+namespace UnitTest
 {
     public class ResourceTest
     {
