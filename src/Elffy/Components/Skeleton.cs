@@ -46,11 +46,13 @@ namespace Elffy.Components
             if(Owner is null == false) { throw new InvalidOperationException($"{nameof(Skeleton)} is already attatched."); }
             if(_disposed) { throw new ObjectDisposedException(nameof(Skeleton)); }
             Owner = owner;
-            Owner.Dead += sender =>
-            {
-                Debug.Assert(sender is ComponentOwner);
-                Unsafe.As<ComponentOwner>(sender).RemoveComponent<Skeleton>();
-            };
+            if(AutoDisposeOnDetached) {
+                Owner.Dead += sender =>
+                {
+                    Debug.Assert(sender is ComponentOwner);
+                    Unsafe.As<ComponentOwner>(sender).RemoveComponent<Skeleton>();
+                };
+            }
         }
 
         public void OnDetached(ComponentOwner owner)
@@ -58,7 +60,9 @@ namespace Elffy.Components
             if(Owner == owner) {
                 Owner = null;
             }
-            Dispose();
+            if(AutoDisposeOnDetached) {
+                Dispose();
+            }
         }
 
         public void Dispose()
