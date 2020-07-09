@@ -20,9 +20,9 @@ namespace Elffy.Shading
 
         protected override void DefineLocation(VertexDefinition definition)
         {
-            definition.Position("vPos");
-            definition.Normal("vNormal");
-            definition.TexCoord("vUV");
+            definition.Map<Vertex>(nameof(Vertex.Position), "vPos");
+            definition.Map<Vertex>(nameof(Vertex.Normal), "vNormal");
+            definition.Map<Vertex>(nameof(Vertex.TexCoord), "vUV");
         }
 
         protected override void SendUniforms(Uniform uniform, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)

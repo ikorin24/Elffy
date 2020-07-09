@@ -12,10 +12,22 @@ namespace Elffy.Core
         public Color4 Color;
         public Vector2 TexCoord;
 
-        internal static readonly int PositionOffset = 0;
-        internal static readonly int NormalOffset = sizeof(Vector3);
-        internal static readonly int ColorOffset = sizeof(Vector3) + sizeof(Vector3);
-        internal static readonly int TexCoordOffset = sizeof(Vector3) + sizeof(Vector3) + sizeof(Color4);
+        private static readonly int PositionOffset = 0;
+        private static readonly int NormalOffset = sizeof(Vector3);
+        private static readonly int ColorOffset = sizeof(Vector3) + sizeof(Vector3);
+        private static readonly int TexCoordOffset = sizeof(Vector3) + sizeof(Vector3) + sizeof(Color4);
+
+        static Vertex()
+        {
+            VertexMarshalHelper<Vertex>.Register(fieldName => fieldName switch
+            {
+                nameof(Position) => (PositionOffset, VertexFieldElementType.Float, 3),
+                nameof(Normal) =>   (NormalOffset,   VertexFieldElementType.Float, 3),
+                nameof(Color) =>    (ColorOffset,    VertexFieldElementType.Float, 4),
+                nameof(TexCoord) => (TexCoordOffset, VertexFieldElementType.Float, 2),
+                _ => throw new ArgumentException(),
+            });
+        }
 
         public Vertex(Vector3 position, Vector3 normal, Vector2 texcoord)
         {

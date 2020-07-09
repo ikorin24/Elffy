@@ -18,63 +18,23 @@ namespace Elffy.Shading
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void Position(int index)
+        public unsafe void Map<TVertex>(string vertexFieldName, int index) where TVertex : unmanaged
         {
+            var (offset, type, elementCount) = VertexMarshalHelper<TVertex>.Layout.Invoke(vertexFieldName);
+
             GL.EnableVertexAttribArray(index);
-            GL.VertexAttribPointer(index, 3, VertexAttribPointerType.Float, false, sizeof(Vertex), Vertex.PositionOffset);
+            GL.VertexAttribPointer(index, 4, (VertexAttribPointerType)type, false, sizeof(TVertex), offset);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void Normal(int index)
+        public unsafe void Map<TVertex>(string vertexFieldName, string name) where TVertex : unmanaged
         {
+            var (offset, type, elementCount) = VertexMarshalHelper<TVertex>.Layout.Invoke(vertexFieldName);
+
+            var index = GL.GetAttribLocation(_program.Value, name);
+
             GL.EnableVertexAttribArray(index);
-            GL.VertexAttribPointer(index, 3, VertexAttribPointerType.Float, false, sizeof(Vertex), Vertex.NormalOffset);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void Color(int index)
-        {
-            GL.EnableVertexAttribArray(index);
-            GL.VertexAttribPointer(index, 4, VertexAttribPointerType.Float, false, sizeof(Vertex), Vertex.ColorOffset);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void TexCoord(int index)
-        {
-            GL.EnableVertexAttribArray(index);
-            GL.VertexAttribPointer(index, 2, VertexAttribPointerType.Float, false, sizeof(Vertex), Vertex.TexCoordOffset);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void Position(string name)
-        {
-            var index = GL.GetAttribLocation(_program.Value, name);
-            if(index < 0) { throw new ArgumentException($"Name not found : {name}"); }
-            Position(index);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void Normal(string name)
-        {
-            var index = GL.GetAttribLocation(_program.Value, name);
-            if(index < 0) { throw new ArgumentException($"Name not found : {name}"); }
-            Normal(index);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void Color(string name)
-        {
-            var index = GL.GetAttribLocation(_program.Value, name);
-            if(index < 0) { throw new ArgumentException($"Name not found : {name}"); }
-            Color(index);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void TexCoord(string name)
-        {
-            var index = GL.GetAttribLocation(_program.Value, name);
-            if(index < 0) { throw new ArgumentException($"Name not found : {name}"); }
-            TexCoord(index);
+            GL.VertexAttribPointer(index, 4, (VertexAttribPointerType)type, false, sizeof(TVertex), offset);
         }
 
 
