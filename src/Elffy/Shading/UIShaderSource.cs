@@ -1,11 +1,15 @@
 ﻿#nullable enable
 using System;
 using System.Diagnostics;
+using Elffy.Components;
 using Elffy.Core;
+using Elffy.Diagnostics;
+using Elffy.OpenGL;
 using Elffy.UI;
 
 namespace Elffy.Shading
 {
+    [ShaderTargetVertexType(typeof(Vertex))]
     internal sealed class UIShaderSource : ShaderSource
     {
         protected override string VertexShaderSource => VertSource;
@@ -28,9 +32,8 @@ namespace Elffy.Shading
         {
             Debug.Assert(target is UIRenderable);
             var mvp = projection * view * model;
-            const int DefaultTextureUnit = 0;           // ← default texture is 0. GL.ActiveTexture(TextureUnit.Texture0)
             uniform.Send("mvp", mvp);
-            uniform.Send("tex_sampler", DefaultTextureUnit);
+            uniform.Send("tex_sampler", TextureUnitNumber.Unit0);
         }
 
         private const string VertSource =

@@ -58,18 +58,10 @@ namespace Sandbox
             {
                 model.Scale = new Vector3(0.3f);
                 model.AddComponent(new Material(new Color4(0.88f), new Color4(0.18f), new Color4(0.1f), 5f));
+                model.Shader = RigShaderSource.Instance;
                 model.Activate();
             });
 
-
-            // キャラ2
-            PmxModel.LoadResourceAsync("Alicia/Alicia_solid.pmx").ContinueWithDispatch(model =>
-            {
-                model.Position = new Vector3(-5, 0, -5);
-                model.Scale = new Vector3(0.3f);
-                model.Shader = NormalShaderSource.Instance;
-                model.Activate();
-            });
 
             // サイコロ
             Model3D.LoadResourceAsync("Dice.fbx").ContinueWithDispatch(model =>
@@ -129,14 +121,14 @@ namespace Sandbox
 
         private static void InitializeUI()
         {
-            var button = new Button(90, 30);
-            button.KeyDown += sender =>
-            {
-                Debug.WriteLine("Down");
-            };
-            button.KeyPress += sender => Debug.WriteLine("Press");
-            button.KeyUp += sender => Debug.WriteLine("Up");
-            Game.UI.Add(button);
+            //var button = new Button(90, 30);
+            //button.KeyDown += sender =>
+            //{
+            //    Debug.WriteLine("Down");
+            //};
+            //button.KeyPress += sender => Debug.WriteLine("Press");
+            //button.KeyUp += sender => Debug.WriteLine("Up");
+            //Game.UI.Add(button);
         }
     }
 }

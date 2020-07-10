@@ -15,6 +15,7 @@ using PMXParser = MMDTools.Unmanaged.PMXParser;
 using PMXObject = MMDTools.Unmanaged.PMXObject;
 using Elffy.Serialization;
 using System.Runtime.InteropServices;
+using System.Linq;
 
 namespace Elffy.Shapes
 {
@@ -45,7 +46,7 @@ namespace Elffy.Shapes
         {
             base.OnActivated();
 
-            UnmanagedArray<Vertex> BuildModelParts()
+            UnmanagedArray<RigVertex> BuildModelParts()
             {
                 var pmx = _pmxObject!;
                 var surfaces = pmx.SurfaceList.AsSpan();
@@ -55,7 +56,7 @@ namespace Elffy.Shapes
 
                 PmxModelLoadHelper.ReverseTrianglePolygon(surfacesWritable);    // オリジナルのデータを書き換えているので注意、このメソッドは1回しか通らない前提
 
-                var vertices = pmx.VertexList.AsSpan().SelectToUnmanagedArray(v => v.ToVertex());
+                var vertices = pmx.VertexList.AsSpan().SelectToUnmanagedArray(v => v.ToRigVertex());
                 _parts = pmx.MaterialList.AsSpan().SelectToArray(m => new RenderableParts(m.VertexCount, m.Texture));
                 return vertices;
             }
@@ -145,13 +146,13 @@ namespace Elffy.Shapes
         /// <param name="vertices"></param>
         /// <param name="bonePositions"></param>
         /// <returns></returns>
-        private Task ReleaseTemporaryBufferAsync(UnmanagedArray<Vertex> vertices, UnmanagedArray<Vector4> bonePositions)
+        private Task ReleaseTemporaryBufferAsync(UnmanagedArray<RigVertex> vertices, UnmanagedArray<Vector4> bonePositions)
         {
             // メモリ開放後始末 (非同期で問題ないので別スレッド)
             return Task.Factory.StartNew(v =>
             {
-                Debug.Assert(v is UnmanagedArray<Vertex>);
-                var vertices = Unsafe.As<UnmanagedArray<Vertex>>(v)!;
+                Debug.Assert(v is UnmanagedArray<RigVertex>);
+                var vertices = Unsafe.As<UnmanagedArray<RigVertex>>(v)!;
                 vertices.Dispose();
 
                 var textureBitmaps = _textureBitmaps;

@@ -19,6 +19,8 @@ namespace Elffy.OpenGL
 #pragma warning restore 0649
         internal readonly int Length;
 
+        internal readonly int ElementSize;
+
         internal readonly int Value => _vbo;
         internal readonly bool IsEmpty => _vbo == Consts.NULL;
 
@@ -33,6 +35,7 @@ namespace Elffy.OpenGL
         {
             if(!vbo.IsEmpty) {
                 GL.DeleteBuffer(vbo.Value);
+                Unsafe.AsRef(vbo.ElementSize) = default;
                 Unsafe.AsRef(vbo) = default;
             }
         }
@@ -47,13 +50,14 @@ namespace Elffy.OpenGL
             GL.BindBuffer(BufferTarget.ArrayBuffer, Consts.NULL);
         }
 
-        internal static unsafe void BindBufferData(ref VBO vbo, ReadOnlySpan<Vertex> vertices, BufferUsageHint usage)
+        internal static unsafe void BindBufferData<TVertex>(ref VBO vbo, ReadOnlySpan<TVertex> vertices, BufferUsageHint usage) where TVertex : unmanaged
         {
             Bind(vbo);
-            fixed(Vertex* ptr = vertices) {
-                GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(Vertex), (IntPtr)ptr, usage);
-            }
+            Unsafe.AsRef(vbo.ElementSize) = sizeof(TVertex);
             Unsafe.AsRef(vbo.Length) = vertices.Length;
+            fixed(TVertex* ptr = vertices) {
+                GL.BufferData(BufferTarget.ArrayBuffer, vbo.Length * vbo.ElementSize, (IntPtr)ptr, usage);
+            }
         }
 
 

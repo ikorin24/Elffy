@@ -10,6 +10,9 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Drawing;
 using System.Threading.Tasks;
+using Elffy.Effective;
+using Elffy.Diagnostics;
+using Cysharp.Text;
 
 namespace Elffy.Core
 {
@@ -111,14 +114,21 @@ namespace Elffy.Core
             IBO.Unbind();
         }
 
+        protected unsafe void LoadGraphicBuffer<TVertex>(Span<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged
+            => LoadGraphicBuffer(vertices.AsReadOnly(), indices);
+
         /// <summary>指定の頂点配列とインデックス配列で VBO, IBO を作成し、VAO を作成します</summary>
         /// <param name="vertices">頂点配列</param>
         /// <param name="indices">インデックス配列</param>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected unsafe void LoadGraphicBuffer(ReadOnlySpan<Vertex> vertices, ReadOnlySpan<int> indices)
+        protected unsafe void LoadGraphicBuffer<TVertex>(ReadOnlySpan<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged
         {
             Dispatcher.ThrowIfNotMainThread();
             if(IsLoaded) { throw new InvalidOperationException("already loaded"); }
+
+            // checking target vertex type of shader is valid.
+            if(DiagnosticsSetting.IsEnableDiagnostics) {
+                ShaderTargetVertexTypeAttribute.CheckVertexType(_shader.GetType(), typeof(TVertex));
+            }
 
             _vbo = VBO.Create();
             VBO.BindBufferData(ref _vbo, vertices, BufferUsageHint.StaticDraw);

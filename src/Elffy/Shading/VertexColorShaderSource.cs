@@ -1,9 +1,11 @@
 ﻿#nullable enable
 using Elffy.Core;
+using Elffy.Diagnostics;
 using System;
 
 namespace Elffy.Shading
 {
+    [ShaderTargetVertexType(typeof(Vertex))]
     public class VertexColorShaderSource : ShaderSource
     {
         private static VertexColorShaderSource? _instance;

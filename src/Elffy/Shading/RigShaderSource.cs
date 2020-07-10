@@ -1,30 +1,33 @@
 ﻿#nullable enable
-using Elffy.Core;
 using Elffy.Components;
-using System;
-using System.Runtime.CompilerServices;
-using Elffy.OpenGL;
+using Elffy.Core;
 using Elffy.Diagnostics;
+using Elffy.OpenGL;
+using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace Elffy.Shading
 {
-    [ShaderTargetVertexType(typeof(Vertex))]
-    public sealed class PhongShaderSource : ShaderSource
+    [ShaderTargetVertexType(typeof(RigVertex))]
+    public sealed class RigShaderSource : ShaderSource
     {
-        private static PhongShaderSource? _instance;
-        public static PhongShaderSource Instance => _instance ??= new PhongShaderSource();
+        private static RigShaderSource? _instance;
+
+        public static RigShaderSource Instance => _instance ??= new RigShaderSource();
 
         protected override string VertexShaderSource => VertSource;
 
         protected override string FragmentShaderSource => FragSource;
 
-        private PhongShaderSource() { }
+        private RigShaderSource() { }
 
         protected override void DefineLocation(VertexDefinition definition)
         {
-            definition.Map<Vertex>(nameof(Vertex.Position), "vPos");
-            definition.Map<Vertex>(nameof(Vertex.Normal), "vNormal");
-            definition.Map<Vertex>(nameof(Vertex.TexCoord), "vUV");
+            definition.Map<RigVertex>(nameof(RigVertex.Position), "vPos");
+            definition.Map<RigVertex>(nameof(RigVertex.Normal), "vNormal");
+            definition.Map<RigVertex>(nameof(RigVertex.TexCoord), "vUV");
         }
 
         protected override void SendUniforms(Uniform uniform, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
@@ -60,6 +63,14 @@ namespace Elffy.Shading
                 uniform.Send("ls", new Vector3());
             }
 
+            if(target.TryGetComponent<Skeleton>(out var skeleton)) {
+                skeleton.Apply();
+            }
+            else {
+                TextureObject.Bind(Engine.WhiteEmptyTexture, TextureUnitNumber.Unit1);
+            }
+            uniform.Send("skeleton", TextureUnitNumber.Unit1);
+
             uniform.Send("tex_sampler", TextureUnitNumber.Unit0);
         }
 
@@ -76,6 +87,7 @@ out vec2 UV;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+uniform sampler1D skeleton;
 
 void main()
 {
@@ -124,6 +136,5 @@ void main()
     fragColor = vec4(color, 1.0) * texture(tex_sampler, UV);
 }
 ";
-
     }
 }

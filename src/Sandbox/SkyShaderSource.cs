@@ -1,11 +1,13 @@
 ﻿#nullable enable
 using Elffy;
 using Elffy.Core;
+using Elffy.Diagnostics;
 using Elffy.Shading;
 using System;
 
 namespace Sandbox
 {
+    [ShaderTargetVertexType(typeof(Vertex))]
     public class SkyShaderSource : ShaderSource
     {
         public static readonly SkyShaderSource Instance = new SkyShaderSource();

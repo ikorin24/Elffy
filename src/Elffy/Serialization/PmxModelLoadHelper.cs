@@ -22,13 +22,21 @@ namespace Elffy.Serialization
 
         //private static Material ToMaterial(MMDTools.Material m) => new Material(ToColor4(m.Ambient), ToColor4(m.Diffuse), ToColor4(m.Specular), m.Shininess);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vertex ToVertex(this MMDTools.Unmanaged.Vertex v) => new Vertex(ToVector3(v.Position), ToVector3(v.Normal), ToVector2(v.UV));
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static RigVertex ToRigVertex(this MMDTools.Unmanaged.Vertex v)
+            => new RigVertex(ToVector3(v.Position), ToVector3(v.Normal), ToVector2(v.UV), v.BoneIndex1, v.BoneIndex2, v.BoneIndex3, v.BoneIndex4);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Color4 ToColor4(this MMDTools.Unmanaged.Color color) => Unsafe.As<MMDTools.Unmanaged.Color, Color4>(ref color);
 
         // Reverse Z because coordinate is inversed
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 ToVector3(this MMDTools.Unmanaged.Vector3 vector) => new Vector3(vector.X, vector.Y, -vector.Z);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 ToVector2(this MMDTools.Unmanaged.Vector2 vector) => new Vector2(vector.X, vector.Y);
     }
 }

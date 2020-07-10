@@ -1,10 +1,12 @@
 ﻿#nullable enable
+using Elffy.Diagnostics;
 using System;
 using System.Diagnostics;
 
 namespace Elffy.Core
 {
     [DebuggerDisplay("{Position}")]
+    [VertexLike]
     public unsafe struct Vertex : IEquatable<Vertex>
     {
         public Vector3 Position;

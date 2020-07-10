@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.Runtime.CompilerServices;
+using Elffy.Diagnostics;
 using OpenToolkit.Graphics.OpenGL;
 
 namespace Elffy.Core
@@ -9,7 +10,7 @@ namespace Elffy.Core
     {
         private static VertexLayoutDelegate? _layouter;
 
-        public static VertexLayoutDelegate Layout
+        internal static VertexLayoutDelegate Layout
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _layouter ?? throw new InvalidOperationException("Layouter is not registered");
@@ -17,6 +18,12 @@ namespace Elffy.Core
 
         public static void Register(VertexLayoutDelegate layout)
         {
+            if(DiagnosticsSetting.IsEnableDiagnostics) {
+                if(Attribute.GetCustomAttribute(typeof(T), typeof(VertexLikeAttribute)) is null) {
+                    throw new ArgumentException($"Invalid type of vertex, which has no {nameof(VertexLikeAttribute)}");
+                }
+            }
+
             if(_layouter is null == false) { throw new InvalidOperationException("already registerd"); }
             _layouter = layout ?? throw new ArgumentNullException(nameof(layout));
         }
