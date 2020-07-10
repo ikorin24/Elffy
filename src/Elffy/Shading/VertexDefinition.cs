@@ -19,8 +19,10 @@ namespace Elffy.Shading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe void Map<TVertex>(string vertexFieldName, int index) where TVertex : unmanaged
         {
-            var (offset, type, elementCount) = VertexMarshalHelper<TVertex>.Layout.Invoke(vertexFieldName);
+            // Call static constructor of TVertex to Register layout. (It is called only once)
+            RuntimeHelpers.RunClassConstructor(typeof(TVertex).TypeHandle);
 
+            var (offset, type, elementCount) = VertexMarshalHelper<TVertex>.Layout.Invoke(vertexFieldName);
             GL.EnableVertexAttribArray(index);
             GL.VertexAttribPointer(index, 4, (VertexAttribPointerType)type, false, sizeof(TVertex), offset);
         }
@@ -28,10 +30,11 @@ namespace Elffy.Shading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe void Map<TVertex>(string vertexFieldName, string name) where TVertex : unmanaged
         {
+            // Call static constructor of TVertex to Register layout. (It is called only once)
+            RuntimeHelpers.RunClassConstructor(typeof(TVertex).TypeHandle);
+            
             var (offset, type, elementCount) = VertexMarshalHelper<TVertex>.Layout.Invoke(vertexFieldName);
-
             var index = GL.GetAttribLocation(_program.Value, name);
-
             GL.EnableVertexAttribArray(index);
             GL.VertexAttribPointer(index, 4, (VertexAttribPointerType)type, false, sizeof(TVertex), offset);
         }
