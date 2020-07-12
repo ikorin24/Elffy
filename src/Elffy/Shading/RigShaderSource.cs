@@ -28,6 +28,8 @@ namespace Elffy.Shading
             definition.Map<RigVertex>(nameof(RigVertex.Position), "vPos");
             definition.Map<RigVertex>(nameof(RigVertex.Normal), "vNormal");
             definition.Map<RigVertex>(nameof(RigVertex.TexCoord), "vUV");
+            definition.Map<RigVertex>(nameof(RigVertex.Bone), "bone");
+            definition.Map<RigVertex>(nameof(RigVertex.Weight), "weight");
         }
 
         protected override void SendUniforms(Uniform uniform, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
@@ -80,6 +82,8 @@ namespace Elffy.Shading
 in vec3 vPos;
 in vec3 vNormal;
 in vec2 vUV;
+in ivec4 bone;
+in vec4 weight;
 out vec3 Pos;
 out vec3 Normal;
 out vec2 UV;
@@ -91,11 +95,17 @@ uniform sampler1D skeleton;
 
 void main()
 {
+    vec3 v0 = texelFetch(skeleton, int(bone.x), 0).xyz;
+    vec3 v1 = texelFetch(skeleton, int(bone.y), 0).xyz;
+    vec3 v2 = texelFetch(skeleton, int(bone.z), 0).xyz;
+    vec3 v3 = texelFetch(skeleton, int(bone.w), 0).xyz;
+    vec3 v = weight.x * v0 + weight.y * v1 + weight.z * v2 + weight.w * v3;
+    vec3 pos = vPos;
     UV = vUV;
-    Pos = vPos;
+    Pos = pos;
     Normal = vNormal;
     mat4 modelView = view * model;
-    gl_Position = projection * modelView * vec4(vPos, 1.0);
+    gl_Position = projection * modelView * vec4(pos, 1.0);
 }
 ";
 

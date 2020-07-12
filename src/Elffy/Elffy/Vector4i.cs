@@ -1,0 +1,80 @@
+﻿#nullable enable
+using Cysharp.Text;
+using System;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using TKVector4i = OpenToolkit.Mathematics.Vector4i;
+
+namespace Elffy
+{
+    [StructLayout(LayoutKind.Explicit)]
+    public struct Vector4i : IEquatable<Vector4i>
+    {
+        [FieldOffset(0)]
+        public int X;
+        [FieldOffset(4)]
+        public int Y;
+        [FieldOffset(8)]
+        public int Z;
+        [FieldOffset(12)]
+        public int W;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Vector4i(int x, int y, int z, int w)
+        {
+            (X, Y, Z, W) = (x, y, z, w);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly void Destructor(out int x, out int y, out int z, out int w)
+        {
+            (x, y, z, w) = (X, Y, Z, W);
+        }
+
+        public readonly override bool Equals(object? obj) => obj is Vector4i i && Equals(i);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly bool Equals(Vector4i other) => X == other.X &&
+                                                       Y == other.Y &&
+                                                       Z == other.Z &&
+                                                       W == other.W;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly override int GetHashCode() => HashCode.Combine(X, Y, Z, W);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly override string ToString() => ZString.Concat('(', X, Y, Z, W, ')');
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector4i operator -(in Vector4i vec) => new Vector4i(-vec.X, -vec.Y, -vec.Z, -vec.W);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator ==(Vector4i left, Vector4i right) => left.Equals(right);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator !=(Vector4i left, Vector4i right) => !(left == right);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector4i operator +(in Vector4i vec1, in Vector4i vec2) => new Vector4i(vec1.X + vec2.X, vec1.Y + vec2.Y, vec1.Z + vec2.Z, vec1.W + vec2.W);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector4i operator +(in Vector4i vec1, int right) => new Vector4i(vec1.X + right, vec1.Y + right, vec1.Z + right, vec1.W + right);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector4i operator -(in Vector4i vec1, in Vector4i vec2) => new Vector4i(vec1.X - vec2.X, vec1.Y - vec2.Y, vec1.Z - vec2.Z, vec1.W - vec2.W);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector4i operator -(in Vector4i vec1, int right) => new Vector4i(vec1.X - right, vec1.Y - right, vec1.Z - right, vec1.W - right);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector4i operator *(in Vector4i vec1, int right) => new Vector4i(vec1.X * right, vec1.Y * right, vec1.Z * right, vec1.W * right);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector4i operator *(int right, in Vector4i vec1) => new Vector4i(vec1.X * right, vec1.Y * right, vec1.Z * right, vec1.W * right);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector4i operator /(in Vector4i vec1, int right) => new Vector4i(vec1.X / right, vec1.Y / right, vec1.Z / right, vec1.W / right);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector4i operator /(int right, in Vector4i vec1) => new Vector4i(vec1.X / right, vec1.Y / right, vec1.Z / right, vec1.W / right);
+
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Vector4i(TKVector4i vec) => Unsafe.As<TKVector4i, Vector4i>(ref vec);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator TKVector4i(Vector4i vec) => Unsafe.As<Vector4i, TKVector4i>(ref vec);
+    }
+}
