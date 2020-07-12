@@ -24,7 +24,7 @@ namespace Elffy.Shading
 
             var (offset, type, elementCount) = VertexMarshalHelper<TVertex>.Layout.Invoke(vertexFieldName);
             GL.EnableVertexAttribArray(index);
-            GL.VertexAttribPointer(index, 4, (VertexAttribPointerType)type, false, sizeof(TVertex), offset);
+            GL.VertexAttribPointer(index, elementCount, (VertexAttribPointerType)type, false, sizeof(TVertex), offset);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -36,7 +36,7 @@ namespace Elffy.Shading
             var (offset, type, elementCount) = VertexMarshalHelper<TVertex>.Layout.Invoke(vertexFieldName);
             var index = GL.GetAttribLocation(_program.Value, name);
             GL.EnableVertexAttribArray(index);
-            GL.VertexAttribPointer(index, 4, (VertexAttribPointerType)type, false, sizeof(TVertex), offset);
+            GL.VertexAttribPointer(index, elementCount, (VertexAttribPointerType)type, false, sizeof(TVertex), offset);
         }
 
 
