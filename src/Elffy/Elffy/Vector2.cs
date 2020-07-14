@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using Cysharp.Text;
 using System;
 using System.Drawing;
 using System.Runtime.CompilerServices;
@@ -31,7 +32,7 @@ namespace Elffy
         public readonly float Length
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => (float)Math.Sqrt(LengthSquared);
+            get => MathF.Sqrt(LengthSquared);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -40,10 +41,8 @@ namespace Elffy
         public Vector2(float value) => (X, Y) = (value, value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Deconstruct(out float x, out float y) => (x, y) = (X, Y);
+        public readonly void Deconstruct(out float x, out float y) => (x, y) = (X, Y);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly (float X, float Y) ToTuple() => (X, Y);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly float SumElement() => X + Y;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -63,7 +62,8 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly override int GetHashCode() => HashCode.Combine(X, Y);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly override string ToString() => $"({X}, {Y})";
+        public readonly override string ToString() => ZString.Concat('(', X, ' ', Y, ')');
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 operator -(in Vector2 vec) => new Vector2(-vec.X, -vec.Y);

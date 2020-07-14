@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using Cysharp.Text;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -43,7 +44,7 @@ namespace Elffy
         public readonly float Length
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => (float)Math.Sqrt(LengthSquared);
+            get => MathF.Sqrt(LengthSquared);
         }
 
         public readonly bool IsZero
@@ -82,10 +83,8 @@ namespace Elffy
         public Vector3(float value) => (X, Y, Z) = (value, value, value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Deconstruct(out float x, out float y, out float z) => (x, y, z) = (X, Y, Z);
+        public readonly void Deconstruct(out float x, out float y, out float z) => (x, y, z) = (X, Y, Z);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly (float X, float Y, float Z) ToTuple() => (X, Y, Z);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly float Dot(in Vector3 vec) => Mult(this, vec).SumElement();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -118,7 +117,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly override int GetHashCode() => HashCode.Combine(X, Y, Z);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly override string ToString() => $"({X}, {Y}, {Z})";
+        public readonly override string ToString() => ZString.Concat('(', X, ' ',Y, ' ', Z, ')');
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 operator -(in Vector3 vec) => new Vector3(-vec.X, -vec.Y, -vec.Z);
