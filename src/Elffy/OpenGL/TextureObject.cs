@@ -4,11 +4,6 @@ using System.Runtime.CompilerServices;
 using System.Diagnostics;
 using OpenToolkit.Graphics.OpenGL;
 using Elffy.Core;
-using Elffy.Imaging;
-using System.Drawing;
-using System.Drawing.Imaging;
-using PixelFormat = System.Drawing.Imaging.PixelFormat;
-using TKPixelFormat = OpenToolkit.Graphics.OpenGL.PixelFormat;
 
 namespace Elffy.OpenGL
 {
@@ -69,18 +64,6 @@ namespace Elffy.OpenGL
                 GL.DeleteTexture(to._texture);
                 Unsafe.AsRef(to._texture) = default;
             }
-        }
-
-        internal static void Load2D(in TextureObject to, Bitmap bitmap)
-        {
-            if(bitmap is null) { throw new ArgumentNullException(nameof(bitmap)); }
-            var unit = TextureUnitNumber.Unit0;
-
-            Bind2D(to, unit);
-            using var pixels = bitmap.GetPixels(ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba,
-                          pixels.Width, pixels.Height, 0, TKPixelFormat.Bgra, PixelType.UnsignedByte, pixels.Ptr);
-            Unbind2D(unit);
         }
 
         public static TextureObject GetBinded(TextureUnitNumber textureUnit = TextureUnitNumber.Unit0)
