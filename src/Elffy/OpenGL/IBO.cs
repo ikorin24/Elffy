@@ -62,9 +62,9 @@ namespace Elffy.OpenGL
 
         public readonly override bool Equals(object? obj) => obj is IBO ibo && Equals(ibo);
 
-        public readonly bool Equals(IBO other) => _ibo == other._ibo;
+        public readonly bool Equals(IBO other) => _ibo == other._ibo && Length == other.Length;
 
-        public readonly override int GetHashCode() => HashCode.Combine(_ibo);
+        public readonly override int GetHashCode() => HashCode.Combine(_ibo, Length);
 
         public static bool operator ==(IBO left, IBO right) => left.Equals(right);
 

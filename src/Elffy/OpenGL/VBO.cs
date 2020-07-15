@@ -66,9 +66,9 @@ namespace Elffy.OpenGL
 
         public override bool Equals(object? obj) => obj is VBO vbo && Equals(vbo);
 
-        public bool Equals(VBO other) => _vbo == other._vbo;
+        public bool Equals(VBO other) => _vbo == other._vbo && Length == other.Length;
 
-        public override int GetHashCode() => HashCode.Combine(_vbo);
+        public override int GetHashCode() => HashCode.Combine(_vbo, Length);
 
         public static bool operator ==(VBO left, VBO right) => left.Equals(right);
 
