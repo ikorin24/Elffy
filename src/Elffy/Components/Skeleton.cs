@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using Elffy.Core;
+using Elffy.Effective;
 using Elffy.Exceptions;
 using Elffy.OpenGL;
 using System;
@@ -9,33 +10,25 @@ namespace Elffy.Components
     public sealed class Skeleton : ISingleOwnerComponent, IDisposable
     {
         private SingleOwnerComponentCore<Skeleton> _core = new SingleOwnerComponentCore<Skeleton>(true);
+        private FloatDataTextureImpl _impl = new FloatDataTextureImpl();
+        private TextureUnitNumber _textureUnit;
         private bool _disposed;
 
-        private FloatDataTexture _bonePositions;
-
+        public TextureUnitNumber TextureUnit => _textureUnit;
         public ComponentOwner? Owner => _core.Owner;
-
-        public TextureUnitNumber TextureUnit => _bonePositions.TextureUnit;
 
         public bool AutoDisposeOnDetached => _core.AutoDisposeOnDetached;
 
         internal Skeleton(TextureUnitNumber textureUnit)
         {
-            _bonePositions = new FloatDataTexture(textureUnit);
+            _textureUnit = textureUnit;
         }
 
         ~Skeleton() => Dispose(false);
 
-        internal void Load(ReadOnlySpan<Vector4> bonePositions)
-        {
-            _bonePositions.Load(bonePositions);
-        }
+        internal void Load(ReadOnlySpan<Vector4> bonePositions) => _impl.Load(bonePositions.MarshalCast<Vector4, Color4>());
 
-        public void Apply()
-        {
-            _bonePositions.Apply();
-        }
-
+        public void Apply() => _impl.Apply(TextureUnit);
 
         public void OnAttached(ComponentOwner owner) => _core.OnAttached(owner);
 
@@ -51,7 +44,7 @@ namespace Elffy.Components
         {
             if(_disposed) { return; }
             if(disposing) {
-                _bonePositions.Dispose();
+                _impl.Dispose();
             }
             else {
                 throw new MemoryLeakException(typeof(Skeleton));

@@ -6,6 +6,7 @@ using Elffy.Exceptions;
 using TKPixelFormat = OpenToolkit.Graphics.OpenGL.PixelFormat;
 using Elffy.Effective;
 using Elffy.Core;
+using System.Runtime.CompilerServices;
 
 namespace Elffy.Components
 {
@@ -52,11 +53,11 @@ namespace Elffy.Components
         public void OnDetached(ComponentOwner owner) => _core.OnDetachedForDisposable(owner, this);
     }
 
-    internal struct FloatDataTextureImpl : IDisposable
+    internal readonly struct FloatDataTextureImpl : IDisposable
     {
         public const TextureUnit TargetTextureUnit = TextureUnit.Texture1;
 
-        public TextureObject TextureObject;
+        public readonly TextureObject TextureObject;
 
         public void Apply(TextureUnitNumber unit)
         {
@@ -67,7 +68,7 @@ namespace Elffy.Components
         {
             if(texels.IsEmpty) { return; }
             var unit = TextureUnitNumber.Unit1;
-            TextureObject = TextureObject.Create();
+            Unsafe.AsRef(TextureObject) = TextureObject.Create();
             TextureObject.Bind1D(TextureObject, unit);
             GL.TexParameter(TextureTarget.Texture1D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
             GL.TexParameter(TextureTarget.Texture1D, TextureParameterName.TextureMagFilter, (int)TextureMinFilter.Nearest);
@@ -83,7 +84,7 @@ namespace Elffy.Components
 
         public void Dispose()
         {
-            TextureObject.Delete(ref TextureObject);
+            TextureObject.Delete(ref Unsafe.AsRef(TextureObject));
         }
     }
 }
