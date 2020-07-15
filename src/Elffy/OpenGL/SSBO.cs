@@ -1,0 +1,77 @@
+﻿#nullable enable
+using Elffy.Core;
+using OpenToolkit.Graphics.OpenGL;
+using System;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+
+namespace Elffy.OpenGL
+{
+    /// <summary>Shader Storage Buffer Object</summary>
+    [DebuggerDisplay("SSBO={Value}, Length={Length}")]
+    public readonly struct SSBO : IEquatable<SSBO>
+    {
+#pragma warning disable 0649    // Disable 'Field is never assigned to, and is always default'
+        private readonly int _ssbo;
+        private readonly int _length;
+#pragma warning restore 0649
+
+        internal int Value => _ssbo;
+        internal int Length => _length;
+
+        internal bool IsEmpty => _ssbo == Consts.NULL;
+
+        internal static SSBO Create()
+        {
+            var ssbo = new SSBO();
+            Unsafe.AsRef(ssbo._ssbo) = GL.GenBuffer();
+            return ssbo;
+        }
+
+        internal static void Delete(ref SSBO ssbo)
+        {
+            if(!ssbo.IsEmpty) {
+                GL.DeleteBuffer(ssbo._ssbo);
+                Unsafe.AsRef(ssbo._ssbo) = Consts.NULL;
+                Unsafe.AsRef(ssbo._length) = 0;
+            }
+        }
+
+        internal static void Bind(in SSBO ssbo)
+        {
+            GL.BindBuffer(BufferTarget.ShaderStorageBuffer, ssbo._ssbo);
+        }
+
+        internal static void BindBase(in SSBO ssbo, int index)
+        {
+            Bind(ssbo);
+            GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, index, ssbo._ssbo);
+        }
+
+        internal static unsafe void BindBufferData<T>(ref SSBO ssbo, ReadOnlySpan<T> data, BufferUsageHint usage) where T : unmanaged
+        {
+            Bind(ssbo);
+            fixed(T* ptr = data) {
+                GL.BufferData(BufferTarget.ShaderStorageBuffer, sizeof(T) * data.Length, (IntPtr)ptr, usage);
+            }
+            Unsafe.AsRef(ssbo._length) = data.Length;
+        }
+
+        internal static void Unbind()
+        {
+            GL.BindBuffer(BufferTarget.ShaderStorageBuffer, Consts.NULL);
+        }
+
+        public readonly override string ToString() => _ssbo.ToString();
+
+        public override bool Equals(object? obj) => obj is SSBO ssbo && Equals(ssbo);
+
+        public bool Equals(SSBO other) => _ssbo == other._ssbo && _length == other._length;
+
+        public override int GetHashCode() => HashCode.Combine(_ssbo, _length);
+
+        public static bool operator ==(SSBO left, SSBO right) => left.Equals(right);
+
+        public static bool operator !=(SSBO left, SSBO right) => !(left == right);
+    }
+}
