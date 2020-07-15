@@ -17,6 +17,7 @@ namespace Elffy.Components
 {
     public sealed class Texture : ISingleOwnerComponent, IDisposable
     {
+        private SingleOwnerComponentCore<Texture> _core = new SingleOwnerComponentCore<Texture>(true);
         private TextureObject _to;
         public TextureExpansionMode ExpansionMode { get; }
         public TextureShrinkMode ShrinkMode { get; }
@@ -24,9 +25,9 @@ namespace Elffy.Components
 
         public TextureUnitNumber TextureUnit { get; }
 
-        public ComponentOwner? Owner { get; private set; }
+        public ComponentOwner? Owner => _core.Owner;
 
-        public bool AutoDisposeOnDetached { get; }
+        public bool AutoDisposeOnDetached => _core.AutoDisposeOnDetached;
 
         public Texture(TextureExpansionMode expansionMode, TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode, bool autoDispose = true)
         {
@@ -34,7 +35,6 @@ namespace Elffy.Components
             ShrinkMode = shrinkMode;
             MipmapMode = mipmapMode;
             TextureUnit = TextureUnitNumber.Unit0;
-            AutoDisposeOnDetached = autoDispose;
         }
 
         ~Texture() => Dispose(false);
@@ -68,30 +68,9 @@ namespace Elffy.Components
             TextureObject.Unbind2D(unit);
         }
 
-        public void OnAttached(ComponentOwner owner)
-        {
-            if(Owner is null == false) {
-                throw new InvalidOperationException($"{nameof(Texture)} is already attached. Can not have multi {nameof(ComponentOwner)}s.");
-            }
-            Owner = owner;
-            if(AutoDisposeOnDetached) {
-                owner.Dead += sender =>
-                {
-                    Debug.Assert(sender is ComponentOwner);
-                    Unsafe.As<ComponentOwner>(sender).RemoveComponent<Texture>();
-                };
-            }
-        }
+        public void OnAttached(ComponentOwner owner) => _core.OnAttached(owner);
 
-        public void OnDetached(ComponentOwner owner)
-        {
-            if(Owner == owner) {
-                Owner = null;
-                if(AutoDisposeOnDetached) {
-                    Dispose();
-                }
-            }
-        }
+        public void OnDetached(ComponentOwner owner) => _core.OnDetachedForDisposable(owner, this);
 
         public void Dispose()
         {
