@@ -35,7 +35,7 @@ namespace Elffy.OpenGL
             return new TextureObject(GL.GenTexture());
         }
 
-        internal static void Bind(in TextureObject to, TextureUnitNumber textureUnit)
+        internal static void Bind2D(in TextureObject to, TextureUnitNumber textureUnit)
         {
             var glTextureUnit = (TextureUnit)((int)TextureUnit.Texture0 + textureUnit);
 
@@ -44,9 +44,23 @@ namespace Elffy.OpenGL
             _binded[(int)textureUnit] = to;
         }
 
-        internal static void Unbind(TextureUnitNumber textureUnit)
+        internal static void Bind1D(in TextureObject to, TextureUnitNumber textureUnit)
         {
-            Bind(Empty, textureUnit);
+            var glTextureUnit = (TextureUnit)((int)TextureUnit.Texture0 + textureUnit);
+
+            GL.ActiveTexture(glTextureUnit);
+            GL.BindTexture(TextureTarget.Texture1D, to._texture);
+            _binded[(int)textureUnit] = to;
+        }
+
+        internal static void Unbind2D(TextureUnitNumber textureUnit)
+        {
+            Bind2D(Empty, textureUnit);
+        }
+
+        internal static void Unbind1D(TextureUnitNumber textureUnit)
+        {
+            Bind1D(Empty, textureUnit);
         }
 
         internal static void Delete(ref TextureObject to)
@@ -57,16 +71,16 @@ namespace Elffy.OpenGL
             }
         }
 
-        internal static void Load(in TextureObject to, Bitmap bitmap)
+        internal static void Load2D(in TextureObject to, Bitmap bitmap)
         {
             if(bitmap is null) { throw new ArgumentNullException(nameof(bitmap)); }
             var unit = TextureUnitNumber.Unit0;
 
-            Bind(to, unit);
+            Bind2D(to, unit);
             using var pixels = bitmap.GetPixels(ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba,
                           pixels.Width, pixels.Height, 0, TKPixelFormat.Bgra, PixelType.UnsignedByte, pixels.Ptr);
-            Unbind(unit);
+            Unbind2D(unit);
         }
 
         public static TextureObject GetBinded(TextureUnitNumber textureUnit = TextureUnitNumber.Unit0)

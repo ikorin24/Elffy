@@ -25,10 +25,10 @@ namespace Elffy.Core
             var whiteEmpty = TextureObject.Create();
             var pixel = Color4.White;
             var unit = TextureUnitNumber.Unit0;
-            TextureObject.Bind(whiteEmpty, unit);
+            TextureObject.Bind2D(whiteEmpty, unit);
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, 1, 1, 0, TKPixelFormat.Rgba, PixelType.Float, new IntPtr(&pixel));
             _whiteEmptyTexture = whiteEmpty;
-            TextureObject.Unbind(unit);
+            TextureObject.Unbind2D(unit);
         }
 
         public void Dispose()

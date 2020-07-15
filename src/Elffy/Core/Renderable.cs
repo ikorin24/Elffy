@@ -105,7 +105,7 @@ namespace Elffy.Core
                 t.Apply();
             }
             else {
-                TextureObject.Bind(Engine.WhiteEmptyTexture, TextureUnitNumber.Unit0);
+                TextureObject.Bind2D(Engine.WhiteEmptyTexture, TextureUnitNumber.Unit0);
             }
 
             _shaderProgram!.Apply(this, Layer.Lights, in model, in view, in projection);

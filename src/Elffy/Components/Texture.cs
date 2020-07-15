@@ -41,7 +41,7 @@ namespace Elffy.Components
 
         public void Apply()
         {
-            TextureObject.Bind(_to, TextureUnit);
+            TextureObject.Bind2D(_to, TextureUnit);
         }
 
         public void Load(Bitmap bitmap)
@@ -58,14 +58,14 @@ namespace Elffy.Components
 
             _to = TextureObject.Create();
             var unit = TextureUnitNumber.Unit0;
-            TextureObject.Bind(_to, unit);
+            TextureObject.Bind2D(_to, unit);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, GetMinParameter(ShrinkMode, MipmapMode));
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, GetMagParameter(ExpansionMode));
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, pixelWidth, pixelHeight, 0, TKPixelFormat.Bgra, PixelType.UnsignedByte, ptr);
             if(MipmapMode != TextureMipmapMode.None) {
                 GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
             }
-            TextureObject.Unbind(unit);
+            TextureObject.Unbind2D(unit);
         }
 
         public void OnAttached(ComponentOwner owner)

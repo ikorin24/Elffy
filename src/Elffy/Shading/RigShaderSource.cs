@@ -69,7 +69,7 @@ namespace Elffy.Shading
                 skeleton.Apply();
             }
             else {
-                TextureObject.Bind(Engine.WhiteEmptyTexture, TextureUnitNumber.Unit1);
+                TextureObject.Bind1D(Engine.WhiteEmptyTexture, TextureUnitNumber.Unit1);
             }
             uniform.Send("skeleton", TextureUnitNumber.Unit1);
 
