@@ -29,11 +29,11 @@ namespace Elffy.Core
         private ShaderProgram? _shaderProgram;
 
         /// <summary>Vertex Buffer Object</summary>
-        public VBO VBO => _vbo;
+        public ref readonly VBO VBO => ref _vbo;
         /// <summary>Index Buffer Object</summary>
-        public IBO IBO => _ibo;
+        public ref readonly IBO IBO => ref _ibo;
         /// <summary>VAO</summary>
-        public VAO VAO => _vao;
+        public ref readonly VAO VAO => ref _vao;
 
         public bool IsLoaded { get; private set; }
 
@@ -139,7 +139,7 @@ namespace Elffy.Core
             IsLoaded = true;
             _shaderProgram?.Dispose();
             _shaderProgram = _shader.Compile();
-            _shaderProgram.Initialize(_vao, _vbo);
+            _shaderProgram.Initialize(this);
         }
 
 

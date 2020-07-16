@@ -53,11 +53,11 @@ namespace Elffy.Shading
             _shaderSource!.SendUniforms(_program, target, lights, model, view, projection);
         }
 
-        internal void Initialize(in VAO vao, in VBO vbo)
+        internal void Initialize(Renderable target)
         {
-            VAO.Bind(vao);
-            VBO.Bind(vbo);
-            _shaderSource!.DefineLocation(_program);
+            VAO.Bind(target.VAO);
+            VBO.Bind(target.VBO);
+            _shaderSource!.DefineLocation(_program, target);
             _initialized = true;
             VAO.Unbind();
             VBO.Unbind();

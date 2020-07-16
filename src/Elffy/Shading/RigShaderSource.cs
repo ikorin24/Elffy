@@ -23,7 +23,7 @@ namespace Elffy.Shading
 
         private RigShaderSource() { }
 
-        protected override void DefineLocation(VertexDefinition definition)
+        protected override void DefineLocation(VertexDefinition definition, Renderable target)
         {
             definition.Map<RigVertex>(nameof(RigVertex.Position), "vPos");
             definition.Map<RigVertex>(nameof(RigVertex.Normal), "vNormal");

@@ -22,7 +22,7 @@ namespace Elffy.Shading
         {
         }
 
-        protected override void DefineLocation(VertexDefinition definition)
+        protected override void DefineLocation(VertexDefinition definition, Renderable target)
         {
             definition.Map<Vertex>(nameof(Vertex.Position), "vPos");
             definition.Map<Vertex>(nameof(Vertex.TexCoord), "vUV");

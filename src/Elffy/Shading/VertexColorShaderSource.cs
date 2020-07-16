@@ -17,7 +17,7 @@ namespace Elffy.Shading
 
         private VertexColorShaderSource() { }
 
-        protected override void DefineLocation(VertexDefinition definition)
+        protected override void DefineLocation(VertexDefinition definition, Renderable target)
         {
             definition.Map<Vertex>(nameof(Vertex.Position), "pos");
             definition.Map<Vertex>(nameof(Vertex.Color), "vertexColor");
