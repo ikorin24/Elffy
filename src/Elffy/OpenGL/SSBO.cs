@@ -48,13 +48,27 @@ namespace Elffy.OpenGL
             GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, index, ssbo._ssbo);
         }
 
-        internal static unsafe void BindBufferData<T>(ref SSBO ssbo, ReadOnlySpan<T> data, BufferUsageHint usage) where T : unmanaged
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static unsafe void LoadNewData<T>(ref SSBO ssbo, ReadOnlySpan<T> data, BufferUsage usage) where T : unmanaged
         {
+            if(data.IsEmpty) { return; }
             Bind(ssbo);
             fixed(T* ptr = data) {
-                GL.BufferData(BufferTarget.ShaderStorageBuffer, sizeof(T) * data.Length, (IntPtr)ptr, usage);
+                GL.BufferData(BufferTarget.ShaderStorageBuffer, sizeof(T) * data.Length, (IntPtr)ptr, usage.ToBufferUsageHint());
             }
             Unsafe.AsRef(ssbo._length) = data.Length;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static unsafe void UpdateSubData<T>(ref SSBO ssbo, int offset, ReadOnlySpan<T> data) where T : unmanaged
+        {
+            var size = sizeof(T) * data.Length;
+            if(ssbo.IsEmpty) { throw new ArgumentException(); }
+            if(offset + size > ssbo._length) { throw new ArgumentOutOfRangeException(); }
+            Bind(ssbo);
+            fixed(T* ptr = data) {
+                GL.BufferSubData(BufferTarget.ShaderStorageBuffer, (IntPtr)offset, size, (IntPtr)ptr);
+            }
         }
 
         internal static void Unbind()
