@@ -23,15 +23,14 @@ namespace Elffy.Shapes
     public class PmxModel : Renderable
     {
         private PMXObject? _pmxObject;
-        private Bitmap[]? _textureBitmaps;
+        private RefTypeRentMemory<Bitmap> _textureBitmaps;
 
-        private RenderableParts[]? _parts;
+        private UnmanagedArray<RenderableParts>? _parts;
         private MultiTexture? _textures;
 
-        private unsafe PmxModel(PMXObject pmxObject, Bitmap[] textureBitmaps)
+        private unsafe PmxModel(PMXObject pmxObject, in RefTypeRentMemory<Bitmap> textureBitmaps)
         {
             Debug.Assert(pmxObject != null);
-            Debug.Assert(textureBitmaps != null);
             _pmxObject = pmxObject;
             _textureBitmaps = textureBitmaps;
         }
@@ -41,13 +40,15 @@ namespace Elffy.Shapes
             base.OnDead();
             _textures?.Dispose();
             _textures = null;
+            _parts?.Dispose();
+            _parts = null;
         }
 
         protected override async void OnActivated()
         {
             base.OnActivated();
 
-            (UnmanagedArray<RigVertex>, RenderableParts[]) BuildModelParts()
+            (UnmanagedArray<RigVertex>, UnmanagedArray<RenderableParts>) BuildModelParts()
             {
                 var pmx = _pmxObject!;
 
@@ -55,7 +56,7 @@ namespace Elffy.Shapes
                 PmxModelLoadHelper.ReverseTrianglePolygon(pmx.SurfaceList.AsSpan().AsWritable());
 
                 var vertices = pmx.VertexList.AsSpan().SelectToUnmanagedArray(v => v.ToRigVertex());
-                var parts = pmx.MaterialList.AsSpan().SelectToArray(m => new RenderableParts(m.VertexCount, m.Texture));
+                var parts = pmx.MaterialList.AsSpan().SelectToUnmanagedArray(m => new RenderableParts(m.VertexCount, m.Texture));
                 return (vertices, parts);
             }
 
@@ -82,7 +83,7 @@ namespace Elffy.Shapes
 
                 // multi texture
                 var textures = new MultiTexture();
-                textures.Load(_textureBitmaps);
+                textures.Load(_textureBitmaps.Span);
                 _textures = textures;
 
                 // load vertex
@@ -101,7 +102,7 @@ namespace Elffy.Shapes
             if(parts != null) {
                 var pos = 0;
                 var textures = _textures;
-                foreach(var p in parts) {
+                foreach(var p in parts.AsSpan()) {
                     textures?.Apply(p.TextureIndex);
                     ShaderProgram!.Apply(this, Layer.Lights, in model, in view, in projection);
                     GL.DrawElements(BeginMode.Triangles, p.VertexCount, DrawElementsType.UnsignedInt, pos * sizeof(int));
@@ -121,8 +122,9 @@ namespace Elffy.Shapes
                 }
                 var textureNames = pmx.TextureList.AsSpan();
                 var dir = Resources.GetDirectoryName(name);
-                var bitmaps = new Bitmap[textureNames.Length];
-                for(int i = 0; i < textureNames.Length; i++) {
+                var bitmaps = new RefTypeRentMemory<Bitmap>(textureNames.Length);
+                var bitmapSpan = bitmaps.Span;
+                for(int i = 0; i < bitmapSpan.Length; i++) {
 
                     using(var pooledArray = new PooledArray<char>(dir.Length + 1 + textureNames[i].GetCharCount())) {
                         var texturePath = pooledArray.AsSpan();
@@ -133,7 +135,7 @@ namespace Elffy.Shapes
                         var textureExt = texturePath.AsReadOnly().FilePathExtension();
 
                         using(var tStream = Resources.GetStream(texturePath.ToString())) {
-                            bitmaps[i] = BitmapHelper.StreamToBitmap(tStream, textureExt);
+                            bitmapSpan[i] = BitmapHelper.StreamToBitmap(tStream, textureExt);
                         }
                     }
                 }
@@ -154,13 +156,12 @@ namespace Elffy.Shapes
                 var vertices = Unsafe.As<UnmanagedArray<RigVertex>>(v)!;
                 vertices.Dispose();
 
-                var textureBitmaps = _textureBitmaps;
-                if(textureBitmaps != null) {
-                    foreach(var t in textureBitmaps) {
-                        t.Dispose();
-                    }
-                    _textureBitmaps = null;
+                foreach(var t in _textureBitmaps.Span) {
+                    t.Dispose();
                 }
+                _textureBitmaps.Dispose();
+                _textureBitmaps = default;
+
                 _pmxObject?.Dispose();
                 _pmxObject = null;
             }, vertices).ContinueWith((task, state) =>
