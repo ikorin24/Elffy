@@ -16,6 +16,7 @@ using PMXObject = MMDTools.Unmanaged.PMXObject;
 using Elffy.Serialization;
 using System.Runtime.InteropServices;
 using System.Linq;
+using Elffy.Effective.Unsafes;
 
 namespace Elffy.Shapes
 {
@@ -46,19 +47,16 @@ namespace Elffy.Shapes
         {
             base.OnActivated();
 
-            UnmanagedArray<RigVertex> BuildModelParts()
+            (UnmanagedArray<RigVertex>, RenderableParts[]) BuildModelParts()
             {
                 var pmx = _pmxObject!;
-                var surfaces = pmx.SurfaceList.AsSpan();
 
-                // [CAUTION] it is dengerous !! Be careful !!!
-                var surfacesWritable = MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(surfaces), surfaces.Length);
-
-                PmxModelLoadHelper.ReverseTrianglePolygon(surfacesWritable);    // オリジナルのデータを書き換えているので注意、このメソッドは1回しか通らない前提
+                // オリジナルのデータを書き換えているので注意、このメソッドは1回しか通らない前提
+                PmxModelLoadHelper.ReverseTrianglePolygon(pmx.SurfaceList.AsSpan().AsWritable());
 
                 var vertices = pmx.VertexList.AsSpan().SelectToUnmanagedArray(v => v.ToRigVertex());
-                _parts = pmx.MaterialList.AsSpan().SelectToArray(m => new RenderableParts(m.VertexCount, m.Texture));
-                return vertices;
+                var parts = pmx.MaterialList.AsSpan().SelectToArray(m => new RenderableParts(m.VertexCount, m.Texture));
+                return (vertices, parts);
             }
 
             UnmanagedArray<Vector4> BuildBonePositions()
@@ -70,8 +68,9 @@ namespace Elffy.Shapes
 
             // Here is main thread
 
-            var vertices = await Task.Factory.StartNew(BuildModelParts);
+            var (vertices, parts) = await Task.Factory.StartNew(BuildModelParts);
             var bonePositions = await Task.Factory.StartNew(BuildBonePositions);
+            _parts = parts;
 
             // Here is main thread
             if(LifeState != FrameObjectLifeSpanState.Terminated &&

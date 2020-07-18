@@ -2,12 +2,24 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Elffy.AssemblyServices;
 
 namespace Elffy.Effective.Unsafes
 {
     internal static class UnsafeExtension
     {
+        /// <summary>
+        /// Change <see cref="ReadOnlySpan{T}"/> into <see cref="Span{T}"/>, which is very DENGEROUS !!! Be carefull !!!
+        /// </summary>
+        /// <typeparam name="T">type of Span</typeparam>
+        /// <param name="source">source object as <see cref="ReadOnlySpan{T}"/></param>
+        /// <returns><see cref="Span{T}"/> created from <paramref name="source"/></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static Span<T> AsWritable<T>(this ReadOnlySpan<T> source)
+            => MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(source), source.Length);
+
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [CriticalDotnetDependency("netcoreapp3.1")]
         internal static Memory<T> AsMemory<T>(this List<T> list) => Unsafe.As<ListDummy<T>>(list)._items.AsMemory(0, list.Count);
