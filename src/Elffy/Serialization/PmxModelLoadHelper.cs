@@ -26,7 +26,7 @@ namespace Elffy.Serialization
         public static Vertex ToVertex(this MMDTools.Unmanaged.Vertex v) => new Vertex(ToVector3(v.Position), ToVector3(v.Normal), ToVector2(v.UV));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static RigVertex ToRigVertex(this MMDTools.Unmanaged.Vertex v)
+        public static RigVertex ToRigVertex(in this MMDTools.Unmanaged.Vertex v)
             => new RigVertex(ToVector3(v.Position), ToVector3(v.Normal), ToVector2(v.UV),
                              new Vector4i(v.BoneIndex1, v.BoneIndex2, v.BoneIndex3, v.BoneIndex4),
                              new Vector4(v.Weight1, v.Weight2, v.Weight3, v.Weight4));
