@@ -198,7 +198,13 @@ namespace Elffy
                 default:
                     break;
             }
-            _window.Run();
+            try {
+                _window.Run();
+            }
+            catch(Exception) {
+                Close();
+                throw;
+            }
         }
 
         private void OnLoad()
