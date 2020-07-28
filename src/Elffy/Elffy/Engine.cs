@@ -10,6 +10,7 @@ using Elffy.Effective.Unsafes;
 using Elffy.Core;
 using System.Runtime.CompilerServices;
 using Elffy.OpenGL;
+using Elffy.AssemblyServices;
 
 namespace Elffy
 {
@@ -40,6 +41,10 @@ namespace Elffy
             if(_glResource is null == false) {
                 _glResource.Dispose();
                 _glResource = null;
+            }
+            if(AssemblyState.IsDebug) {
+                // TODO: 暫定的実装
+                GC.Collect();           // OpenGL 関連のメモリリーク検知用
             }
         }
 
