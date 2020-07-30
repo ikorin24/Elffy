@@ -43,7 +43,7 @@ namespace Elffy.UI
             IBO.Bind(IBO);
 
             if(TryGetComponent<Texture>(out var t)) {
-                t.Apply();
+                t.Apply(TextureUnitNumber.Unit0);
             }
             else {
                 TextureObject.Bind2D(Engine.WhiteEmptyTexture, TextureUnitNumber.Unit0);

@@ -2,6 +2,7 @@
 using System;
 using System.Drawing;
 using Elffy.Core;
+using Elffy.OpenGL;
 
 namespace Elffy.Components
 {
@@ -17,10 +18,10 @@ namespace Elffy.Components
 
         ~MultiTexture() => Dispose(false);
 
-        public void Apply(int index)
+        public void Apply(int index, TextureUnitNumber textureUnit)
         {
             if(_textures != null) {
-                _textures[index].Apply();
+                _textures[index].Apply(textureUnit);
             }
         }
 

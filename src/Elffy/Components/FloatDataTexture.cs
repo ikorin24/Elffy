@@ -13,18 +13,17 @@ namespace Elffy.Components
     public sealed class FloatDataTexture : ISingleOwnerComponent, IDisposable
     {
         private SingleOwnerComponentCore<FloatDataTexture> _core = new SingleOwnerComponentCore<FloatDataTexture>(true);
-        private FloatDataTextureImpl _impl;
-        public TextureUnitNumber TextureUnit { get; }
+        private FloatDataTextureImpl _impl = new FloatDataTextureImpl();
 
         public ComponentOwner? Owner => _core.Owner;
 
         public bool AutoDisposeOnDetached => _core.AutoDisposeOnDetached;
 
-        public FloatDataTexture(TextureUnitNumber unit)
+        public FloatDataTexture()
         {
-            TextureUnit = unit;
         }
-        public void Apply() => _impl.Apply(TextureUnit);
+
+        public void Apply(TextureUnitNumber textureUnit) => _impl.Apply(textureUnit);
 
         ~FloatDataTexture() => Dispose(false);
 
@@ -55,8 +54,6 @@ namespace Elffy.Components
 
     internal readonly struct FloatDataTextureImpl : IDisposable
     {
-        public const TextureUnit TargetTextureUnit = TextureUnit.Texture1;
-
         public readonly TextureObject TextureObject;
 
         public void Apply(TextureUnitNumber unit)

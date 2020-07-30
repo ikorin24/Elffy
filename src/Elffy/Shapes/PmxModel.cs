@@ -77,7 +77,9 @@ namespace Elffy.Shapes
             if(LifeState != FrameObjectLifeSpanState.Terminated &&
                LifeState != FrameObjectLifeSpanState.Dead) {
                 // skeleton component
-                var skeleton = new Skeleton(TextureUnitNumber.Unit1);
+                //var skeleton = new Skeleton(TextureUnitNumber.Unit1);
+                //skeleton.Load(bonePositions.AsSpan());
+                var skeleton = new Skeleton();
                 skeleton.Load(bonePositions.AsSpan());
                 AddComponent(skeleton);
 
@@ -103,7 +105,7 @@ namespace Elffy.Shapes
                 var pos = 0;
                 var textures = _textures;
                 foreach(var p in parts.AsSpan()) {
-                    textures?.Apply(p.TextureIndex);
+                    textures?.Apply(p.TextureIndex, TextureUnitNumber.Unit0);
                     ShaderProgram!.Apply(this, Layer.Lights, in model, in view, in projection);
                     GL.DrawElements(BeginMode.Triangles, p.VertexCount, DrawElementsType.UnsignedInt, pos * sizeof(int));
                     pos += p.VertexCount;

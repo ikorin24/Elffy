@@ -23,8 +23,6 @@ namespace Elffy.Components
         public TextureShrinkMode ShrinkMode { get; }
         public TextureMipmapMode MipmapMode { get; }
 
-        public TextureUnitNumber TextureUnit { get; }
-
         public ComponentOwner? Owner => _core.Owner;
 
         public bool AutoDisposeOnDetached => _core.AutoDisposeOnDetached;
@@ -34,14 +32,13 @@ namespace Elffy.Components
             ExpansionMode = expansionMode;
             ShrinkMode = shrinkMode;
             MipmapMode = mipmapMode;
-            TextureUnit = TextureUnitNumber.Unit0;
         }
 
         ~Texture() => Dispose(false);
 
-        public void Apply()
+        public void Apply(TextureUnitNumber textureUnit)
         {
-            TextureObject.Bind2D(_to, TextureUnit);
+            TextureObject.Bind2D(_to, textureUnit);
         }
 
         public void Load(Bitmap bitmap)

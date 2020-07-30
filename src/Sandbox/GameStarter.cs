@@ -34,7 +34,7 @@ namespace Sandbox
 
             // カメラ位置初期化
             var cameraTarget = new Vector3(0, 3, 0);
-            Game.MainCamera.LookAt(cameraTarget, new Vector3(0, 4.5f, 20));
+            Game.MainCamera.LookAt(cameraTarget, new Vector3(0, 4.5f, 20) * 1);
 
 
             // マウスでカメラ移動するためのオブジェクト
@@ -56,7 +56,7 @@ namespace Sandbox
             // キャラ1
             PmxModel.LoadResourceAsync("Alicia/Alicia_solid.pmx").ContinueWithDispatch(model =>
             {
-                model.Scale = new Vector3(0.3f);
+                //model.Scale = new Vector3(0.3f);
                 model.AddComponent(new Material(new Color4(0.88f), new Color4(0.18f), new Color4(0.1f), 5f));
                 model.Shader = RigShaderSource.Instance;
                 model.Activate();
@@ -64,27 +64,27 @@ namespace Sandbox
 
 
             // サイコロ
-            Model3D.LoadResourceAsync("Dice.fbx").ContinueWithDispatch(model =>
-            {
-                model.Position = new Vector3(4, 4, -2);
-                model.Activate();
-                Animation.Define().Endless(f =>
-                {
-                    var theta = MathF.PI * 2 * (float)f.Time.TotalSeconds;
-                    var scale = 0.5f + 0.1f * MathF.Sin(theta);
-                    model.Scale = new Vector3(scale);
-                }).Play();
-            });
+            //Model3D.LoadResourceAsync("Dice.fbx").ContinueWithDispatch(model =>
+            //{
+            //    model.Position = new Vector3(4, 4, -2);
+            //    model.Activate();
+            //    Animation.Define().Endless(f =>
+            //    {
+            //        var theta = MathF.PI * 2 * (float)f.Time.TotalSeconds;
+            //        var scale = 0.5f + 0.1f * MathF.Sin(theta);
+            //        model.Scale = new Vector3(scale);
+            //    }).Play();
+            //});
 
 
             // カエル
-            Model3D.LoadResourceAsync("green_frog.fbx").ContinueWithDispatch(model =>
-            {
-                model.Scale = new Vector3(0.01f);
-                model.Position = new Vector3(5, 0, 0);
-                model.AddComponent(new Material(new Color4(0f, 0.7f, 0.25f), new Color4(0f, 0.6f, 0.1f), Color4.White, 4));
-                model.Activate();
-            });
+            //Model3D.LoadResourceAsync("green_frog.fbx").ContinueWithDispatch(model =>
+            //{
+            //    model.Scale = new Vector3(0.01f);
+            //    model.Position = new Vector3(5, 0, 0);
+            //    model.AddComponent(new Material(new Color4(0f, 0.7f, 0.25f), new Color4(0f, 0.6f, 0.1f), Color4.White, 4));
+            //    model.Activate();
+            //});
 
 
             // 箱1
@@ -115,6 +115,24 @@ namespace Sandbox
                 Scale = new Vector3(500),
                 Shader = SkyShaderSource.Instance,
             }.Activate();
+
+
+
+            var test = new TestPlain()
+            {
+                Position = new Vector3(0, 0, 0),
+                Shader = TestShaderSource.Instance,
+            };
+            var storage = new ShaderStorage();
+            storage.Create(stackalloc Vector4[]
+            {
+                new Vector4(0, 1, 0, 0), 
+                new Vector4(0, 2, 0, 0),
+                new Vector4(0, 3, 0, 0),
+                new Vector4(0, 4, 0, 0)
+            }, Elffy.OpenGL.BufferUsage.StaticDraw);
+            test.AddComponent(storage);
+            test.Activate();
 
             InitializeUI();
         }

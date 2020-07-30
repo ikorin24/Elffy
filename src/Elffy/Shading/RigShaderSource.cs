@@ -3,6 +3,7 @@ using Elffy.Components;
 using Elffy.Core;
 using Elffy.Diagnostics;
 using Elffy.OpenGL;
+using OpenToolkit.Graphics.OpenGL;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -30,6 +31,10 @@ namespace Elffy.Shading
             definition.Map<RigVertex>(nameof(RigVertex.TexCoord), "vUV");
             definition.Map<RigVertex>(nameof(RigVertex.Bone), "bone");
             definition.Map<RigVertex>(nameof(RigVertex.Weight), "weight");
+
+            //target.GetComponent<Skeleton>().BindIndex(index: 0);
+
+            //target.GetComponent<ShaderStorage>().BindIndex(index: 0);
         }
 
         protected override void SendUniforms(Uniform uniform, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
@@ -65,13 +70,15 @@ namespace Elffy.Shading
                 uniform.Send("ls", new Vector3());
             }
 
-            if(target.TryGetComponent<Skeleton>(out var skeleton)) {
-                skeleton.Apply();
-            }
-            else {
-                TextureObject.Bind1D(Engine.WhiteEmptyTexture, TextureUnitNumber.Unit1);
-            }
-            uniform.Send("skeleton", TextureUnitNumber.Unit1);
+            //target.GetComponent<Skeleton>().BindIndex(index: 0);
+
+            //if(target.TryGetComponent<Skeleton>(out var skeleton)) {
+            //    skeleton.Apply();
+            //}
+            //else {
+            //    TextureObject.Bind1D(Engine.WhiteEmptyTexture, TextureUnitNumber.Unit1);
+            //}
+            //uniform.Send("skeleton", TextureUnitNumber.Unit1);
 
             uniform.Send("tex_sampler", TextureUnitNumber.Unit0);
         }
@@ -91,20 +98,34 @@ out vec2 UV;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
-uniform sampler1D skeleton;
+
+//layout(std430,binding=0) readonly buffer SSBO
+//{
+//    vec4 _ssbo[];
+//};
+
+//mat4 GetBonePosMat(ivec4 b)
+//{
+//    return mat4(_ssbo[b[0]], _ssbo[b[1]], _ssbo[b[2]], _ssbo[b[3]]);
+//}
 
 void main()
 {
-    vec3 v0 = texelFetch(skeleton, int(bone.x), 0).xyz;
-    vec3 v1 = texelFetch(skeleton, int(bone.y), 0).xyz;
-    vec3 v2 = texelFetch(skeleton, int(bone.z), 0).xyz;
-    vec3 v3 = texelFetch(skeleton, int(bone.w), 0).xyz;
-    vec3 v = weight.x * v0 + weight.y * v1 + weight.z * v2 + weight.w * v3;
-    vec3 pos = vPos;
+    //vec3 v0 = texelFetch(skeleton, int(bone.x), 0).xyz;
+    //vec3 v1 = texelFetch(skeleton, int(bone.y), 0).xyz;
+    //vec3 v2 = texelFetch(skeleton, int(bone.z), 0).xyz;
+    //vec3 v3 = texelFetch(skeleton, int(bone.w), 0).xyz;
+    //vec3 v = weight.x * v0 + weight.y * v1 + weight.z * v2 + weight.w * v3;
+    
+    //vec4 moveOffset = GetBonePosMat(bone) * weight;
+    //vec4 moveOffset = _ssbo[0];
+
+    vec3 pos = vPos;// + moveOffset.xyz;
     UV = vUV;
     Pos = pos;
     Normal = vNormal;
     mat4 modelView = view * model;
+    //gl_Position = projection * modelView * vec4(pos, 1.0);
     gl_Position = projection * modelView * vec4(pos, 1.0);
 }
 ";
