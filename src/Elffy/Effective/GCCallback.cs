@@ -18,10 +18,13 @@ namespace Elffy.Effective
         /// <param name="generation">target generation of GC</param>
         public static void Register(Func<bool> callback, int generation)
         {
+            if(callback is null) { throw new ArgumentNullException(nameof(callback)); }
+            if((uint)generation > (uint)GC.MaxGeneration) { new ArgumentOutOfRangeException(nameof(generation)); }
+
             Debug.Assert(callback is null == false);
 
             // This is zombie object. No one can access it but it survives.
-            new CallbackHolder(callback, Math.Min(generation, GC.MaxGeneration));
+            new CallbackHolder(callback, generation);
         }
 
         /// <summary>Register callback of GC in specified generation. Callback is alive while it returns true, or argument of it is alive.</summary>
@@ -34,11 +37,12 @@ namespace Elffy.Effective
         /// <param name="generation">target generation of GC</param>
         public static void Register(Func<object, bool> callback, object callbackArg, int generation)
         {
-            Debug.Assert(callback is null == false);
-            Debug.Assert(callbackArg is null == false);
+            if(callback is null) { throw new ArgumentNullException(nameof(callback)); }
+            if(callbackArg is null) { throw new ArgumentNullException(nameof(callbackArg)); }
+            if((uint)generation > (uint)GC.MaxGeneration) { new ArgumentOutOfRangeException(nameof(generation)); }
 
             // This is zombie object. No one can access it but it survives.
-            new CallbackWithArgHolder(callback, callbackArg, Math.Min(generation, GC.MaxGeneration));
+            new CallbackWithArgHolder(callback, callbackArg, generation);
         }
 
         private class CallbackHolder
