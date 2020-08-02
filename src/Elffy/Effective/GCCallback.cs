@@ -47,6 +47,7 @@ namespace Elffy.Effective
 
         private class CallbackHolder
         {
+            private int _generation;
             private readonly Func<bool> _callback;
             private readonly int _targetGen;
             private int _targetGenCount;
@@ -58,10 +59,17 @@ namespace Elffy.Effective
                 _targetGenCount = GC.CollectionCount(targetGen);
             }
 
+            private CallbackHolder(Func<bool> callback, int targetGen, int targetGenCount)
+            {
+                // Create clone as generation 0.
+                _callback = callback;
+                _targetGen = targetGen;
+                _targetGenCount = targetGenCount;
+            }
+
             ~CallbackHolder()
             {
-                // Keep this object alive by `GC.ReRegisterForFinalize(this)`
-                // until the callback returns false.
+                // Keep this object alive until the callback returns false.
 
                 var targetGenCount = GC.CollectionCount(_targetGen);
                 if(targetGenCount != _targetGenCount) {
@@ -73,12 +81,27 @@ namespace Elffy.Effective
                         if(AssemblyState.IsDebug) { throw; }
                     }
                 }
-                GC.ReRegisterForFinalize(this);
+
+                // Revive !!
+                if(_targetGen < GC.MaxGeneration) {
+                    if(_generation == _targetGen) {
+                        // `this` object becomes dead. Create clone as generation 0.
+                        new CallbackHolder(_callback, _targetGen, _targetGenCount);
+                    }
+                    else {
+                        _generation++;
+                        GC.ReRegisterForFinalize(this);
+                    }
+                }
+                else {
+                    GC.ReRegisterForFinalize(this);
+                }
             }
         }
 
         private class CallbackWithArgHolder
         {
+            private int _generation;
             private readonly Func<object, bool> _callback;
             private readonly GCHandle _callbackArg;
             private readonly int _targetGen;
@@ -92,10 +115,18 @@ namespace Elffy.Effective
                 _targetGenCount = GC.CollectionCount(targetGen);
             }
 
+            public CallbackWithArgHolder(Func<object, bool> callback, GCHandle callbackArg, int targetGen, int targetGenCount)
+            {
+                // Create clone as generation 0
+                _callback = callback;
+                _callbackArg = callbackArg;
+                _targetGen = targetGen;
+                _targetGenCount = targetGenCount;
+            }
+
             ~CallbackWithArgHolder()
             {
-                // Keep this object alive by `GC.ReRegisterForFinalize(this)`
-                // until the callback returns false or arg is alive.
+                // Keep this object alive until the callback returns false or arg is alive.
 
                 var targetGenCount = GC.CollectionCount(_targetGen);
                 if(targetGenCount != _targetGenCount) {
@@ -112,7 +143,21 @@ namespace Elffy.Effective
                         if(AssemblyState.IsDebug) { throw; }
                     }
                 }
-                GC.ReRegisterForFinalize(this);
+
+                // Revive !!
+                if(_targetGen < GC.MaxGeneration) {
+                    if(_generation == _targetGen) {
+                        // `this` object becomes dead. Create clone as generation 0.
+                        new CallbackWithArgHolder(_callback, _callbackArg, _targetGen, _targetGenCount);
+                    }
+                    else {
+                        _generation++;
+                        GC.ReRegisterForFinalize(this);
+                    }
+                }
+                else {
+                    GC.ReRegisterForFinalize(this);
+                }
             }
         }
     }

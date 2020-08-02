@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using System;
 using System.Diagnostics;
 using Elffy.Effective;
 
@@ -7,44 +8,41 @@ namespace Elffy.Diagnostics
     internal static class GCTracker
     {
         private static bool _isRunning;
+        private static readonly int[] _gcCount = new int[GC.MaxGeneration + 1];
 
         public static void Init()
         {
             if(_isRunning) { return; }
             _isRunning = true;
 
-            GCCallback.Register(OnGC0, 0);
-            GCCallback.Register(OnGC1, 1);
-            GCCallback.Register(OnGC2, 2);
+            for(int i = 0; i < _gcCount.Length; i++) {
+                _gcCount[i] = GC.CollectionCount(i);
+            }
+
+            GCCallback.Register(OnGCCollected, 0);
         }
 
-        private static bool OnGC0()
+        private static bool OnGCCollected()
         {
             if(!_isRunning) { return false; }
 
-            Debug.WriteLine("----- GC gen 0 -----");
-            return true;
-        }
+            var gen = 0;
+            for(int i = 0; i < _gcCount.Length; i++) {
+                var count = GC.CollectionCount(i);
+                if(count != _gcCount[i]) {
+                    gen = i;
+                    _gcCount[i] = count;
+                }
+            }
 
-        private static bool OnGC1()
-        {
-            if(!_isRunning) { return false; }
-
-            Debug.WriteLine("----- GC gen 1 -----");
-            return true;
-        }
-
-        private static bool OnGC2()
-        {
-            if(!_isRunning) { return false; }
-
-            Debug.WriteLine("----- GC gen 2 -----");
+            Debug.WriteLine($"----- GC gen {gen} -----");
             return true;
         }
 
         public static void End()
         {
             _isRunning = false;
+            _gcCount.AsSpan().Clear();
         }
     }
 }
