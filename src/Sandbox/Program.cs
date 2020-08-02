@@ -10,8 +10,15 @@ namespace Sandbox
         [STAThread]
         static void Main()
         {
-            DiagnosticsSetting.IsEnableDiagnostics = AssemblyInfo.IsDebug;
-            Game.Start(1200, 675, "Sandbox", GameStarter.Start);
+            try {
+                if(AssemblyInfo.IsDebug) {
+                    DiagnosticsSetting.Run();
+                }
+                Game.Start(1200, 675, "Sandbox", GameStarter.Start);
+            }
+            finally {
+                DiagnosticsSetting.Stop();
+            }
         }
     }
 }
