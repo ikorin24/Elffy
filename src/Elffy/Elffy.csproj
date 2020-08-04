@@ -24,12 +24,14 @@
     <PackageReference Include="OpenTK" Version="4.0.0-pre9.1" />
     <PackageReference Include="PMXParser" Version="1.1.0-rc" />
     <PackageReference Include="System.Memory" Version="4.5.4" />
-    <PackageReference Include="UnmanagedArray" Version="2.0.0" />
+    <PackageReference Include="UnmanagedArray" Version="2.1.0-rc" />
     <PackageReference Include="ZString" Version="1.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Elffy.Imaging\Elffy.Imaging.csproj" />
+    <ProjectReference Include="..\Elffy.Memory\Elffy.Memory.csproj" />
+    <ProjectReference Include="..\Elffy.Utility\Elffy.Utility.csproj" />
   </ItemGroup>
 
 </Project>

@@ -21,7 +21,7 @@ namespace Elffy.AssemblyServices
     /// </summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Method | AttributeTargets.Constructor,
                     AllowMultiple = false, Inherited = false)]
-    internal class CriticalDotnetDependencyAttribute : Attribute
+    public class CriticalDotnetDependencyAttribute : Attribute
     {
         public string Description { get; }
 

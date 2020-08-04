@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <LangVersion>8.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>Elffy</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="UnmanagedArray" Version="2.1.0-rc" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Elffy.Utility\Elffy.Utility.csproj" />
+  </ItemGroup>
+
+</Project>

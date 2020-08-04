@@ -2,7 +2,6 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using Elffy.AssemblyServices;
 
 namespace Elffy.Effective
 {
@@ -78,7 +77,9 @@ namespace Elffy.Effective
                         if(!_callback()) { return; }
                     }
                     catch {
-                        if(AssemblyState.IsDebug) { throw; }
+#if DEBUG
+                        throw;  // throw if DEBUG
+#endif
                     }
                 }
 
@@ -140,7 +141,10 @@ namespace Elffy.Effective
                         if(!_callback(arg)) { return; }
                     }
                     catch {
-                        if(AssemblyState.IsDebug) { throw; }
+#if DEBUG
+                        throw;  // throw if DEBUG
+#endif
+
                     }
                 }
 
