@@ -117,6 +117,7 @@ namespace Elffy.Shapes
         {
             return Task.Factory.StartNew(n =>
             {
+                Debug.Assert(n is string);
                 var name = Unsafe.As<string>(n)!;
                 PMXObject pmx;
                 using(var stream = Resources.GetStream(name)) {
