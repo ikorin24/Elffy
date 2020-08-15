@@ -119,18 +119,18 @@ namespace Sandbox
 
 
 
-            var test = new TestPlain()
-            {
-                Position = new Vector3(0, 1, 0),
-                Shader = TestShaderSource.Instance,
-            };
-            var data = new FloatDataTexture();
-            var array = new Vector4[4];
-            array[0] = new Vector4(2f, 2f, 2f, 1f);
-            array[1] = new Vector4(0f, -5f, -5f, 0f);
-            data.Load(array);
-            test.AddComponent(data);
-            test.Activate();
+            //var test = new TestPlain()
+            //{
+            //    Position = new Vector3(0, 1, 0),
+            //    Shader = TestShaderSource.Instance,
+            //};
+            //var data = new FloatDataTexture();
+            //var array = new Vector4[4];
+            //array[0] = new Vector4(2f, 2f, 2f, 1f);
+            //array[1] = new Vector4(0f, -5f, -5f, 0f);
+            //data.Load(array);
+            //test.AddComponent(data);
+            //test.Activate();
 
             InitializeUI();
         }

@@ -31,10 +31,6 @@ namespace Elffy.Shading
             definition.Map<RigVertex>(nameof(RigVertex.TexCoord), "vUV");
             definition.Map<RigVertex>(nameof(RigVertex.Bone), "bone");
             definition.Map<RigVertex>(nameof(RigVertex.Weight), "weight");
-
-            //target.GetComponent<Skeleton>().BindIndex(index: 0);
-
-            //target.GetComponent<ShaderStorage>().BindIndex(index: 0);
         }
 
         protected override void SendUniforms(Uniform uniform, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
@@ -70,15 +66,10 @@ namespace Elffy.Shading
                 uniform.Send("ls", new Vector3());
             }
 
-            //target.GetComponent<Skeleton>().BindIndex(index: 0);
-
-            //if(target.TryGetComponent<Skeleton>(out var skeleton)) {
-            //    skeleton.Apply();
-            //}
-            //else {
-            //    TextureObject.Bind1D(Engine.WhiteEmptyTexture, TextureUnitNumber.Unit1);
-            //}
-            //uniform.Send("skeleton", TextureUnitNumber.Unit1);
+            var skeleton = target.GetComponent<Skeleton>();
+            uniform.Send("_boneCountInverse", 1f / skeleton.BoneCount);
+            skeleton.Apply(TextureUnitNumber.Unit3);
+            uniform.Send("_boneMove", TextureUnitNumber.Unit3);
 
             uniform.Send("tex_sampler", TextureUnitNumber.Unit0);
         }
@@ -98,34 +89,28 @@ out vec2 UV;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+uniform highp sampler1D _boneMove;
+uniform highp float _boneCountInverse;
 
-//layout(std430,binding=0) readonly buffer SSBO
-//{
-//    vec4 _ssbo[];
-//};
+vec4 GetBoneMove(int index)
+{
+    highp float u = (float(index) + 0.5) * _boneCountInverse;
+    return texture(_boneMove, u);
+}
 
-//mat4 GetBonePosMat(ivec4 b)
-//{
-//    return mat4(_ssbo[b[0]], _ssbo[b[1]], _ssbo[b[2]], _ssbo[b[3]]);
-//}
+mat4 GetBoneMoveMat(ivec4 b)
+{
+    return mat4(GetBoneMove(b[0]), GetBoneMove(b[1]), GetBoneMove(b[2]), GetBoneMove(b[3]));
+}
 
 void main()
 {
-    //vec3 v0 = texelFetch(skeleton, int(bone.x), 0).xyz;
-    //vec3 v1 = texelFetch(skeleton, int(bone.y), 0).xyz;
-    //vec3 v2 = texelFetch(skeleton, int(bone.z), 0).xyz;
-    //vec3 v3 = texelFetch(skeleton, int(bone.w), 0).xyz;
-    //vec3 v = weight.x * v0 + weight.y * v1 + weight.z * v2 + weight.w * v3;
-    
-    //vec4 moveOffset = GetBonePosMat(bone) * weight;
-    //vec4 moveOffset = _ssbo[0];
-
-    vec3 pos = vPos;// + moveOffset.xyz;
+    vec3 move = (GetBoneMoveMat(bone) * weight).xyz;
+    vec3 pos = vPos + move;
     UV = vUV;
     Pos = pos;
     Normal = vNormal;
     mat4 modelView = view * model;
-    //gl_Position = projection * modelView * vec4(pos, 1.0);
     gl_Position = projection * modelView * vec4(pos, 1.0);
 }
 ";

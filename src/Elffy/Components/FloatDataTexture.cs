@@ -64,6 +64,9 @@ namespace Elffy.Components
 
         public unsafe void Load(ReadOnlySpan<Color4> texels)
         {
+            if(!TextureObject.IsEmpty) {
+                throw new InvalidOperationException("Already loaded");
+            }
             if(texels.IsEmpty) { return; }
             
             Unsafe.AsRef(TextureObject) = TextureObject.Create();

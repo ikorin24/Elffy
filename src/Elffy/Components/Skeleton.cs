@@ -21,6 +21,8 @@ namespace Elffy.Components
 
         public bool AutoDisposeOnDetached => _core.AutoDisposeOnDetached;
 
+        public int BoneCount => _boneMoveData.Length;
+
         internal Skeleton()
         {
         }
@@ -62,9 +64,13 @@ namespace Elffy.Components
             Debug.Assert(_move is null == false);
 
             var move = _move.AsSpan();
-
+            //for(int i = 0; i < move.Length; i++) {
+            //    move[i] += new Vector4(new Vector3(0.02f), 0);
+            //}
             // ここでボーン動かす
-
+            //_boneMoveData.Dispose();
+            //_boneMoveData = new FloatDataTextureImpl();
+            //_boneMoveData.Load(move.MarshalCast<Vector4, Color4>());
             _boneMoveData.Update(move.MarshalCast<Vector4, Color4>(), 0);
         }
 
