@@ -30,38 +30,21 @@ namespace Sandbox
         protected override void SendUniforms(Uniform uniform, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             uniform.Send("_mvp", projection * view * model);
-            target.GetComponent<ShaderStorage>().BindIndex(index: 0);
+            var data = target.GetComponent<FloatDataTexture>();
+            data.Apply(Elffy.OpenGL.TextureUnitNumber.Unit1);
+            uniform.Send("_data", Elffy.OpenGL.TextureUnitNumber.Unit1);
         }
 
         private const string VertexShader =
 @"#version 440
 in vec3 _pos;
 in ivec4 _bone;
+
 uniform mat4 _mvp;
-
-//struct V3
-//{
-//    float x;
-//    float y;
-//    float z;
-//};
-
-//layout(std430,binding=0) readonly buffer SSBO
-//{
-//    V3 _ssbo[];
-//};
-
-layout(std430,binding=0) readonly buffer SSBO
-{
-    vec4 _ssbo[];
-};
 
 void main()
 {
-    //gl_Position = _mvp * vec4(_pos, 1.0);
-    int i = 0;
-    //gl_Position = _mvp * vec4(_pos + _ssbo[0].xyz, 1.0);
-    gl_Position = _mvp * vec4(_pos + float(_bone.y), 1.0);
+    gl_Position = _mvp * vec4(_pos, 1.0);
 }
 ";
 
@@ -69,9 +52,16 @@ void main()
 @"#version 440
 out vec4 fragColor;
 
+uniform sampler1D _data;
+
+vec4 get_data(int index)
+{
+    return texelFetch(_data, index, 0);
+}
+
 void main()
 {
-    fragColor = vec4(1.0);
+    fragColor = vec4(0.25, 0.0, 0.0, 1.0) * get_data(0) + (vec4(0.0, 5.5, 5.5, 0.0) + get_data(1));
 }
 ";
     }

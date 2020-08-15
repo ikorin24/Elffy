@@ -12,6 +12,7 @@ using Elffy.UI;
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using Elffy.Effective;
 
 namespace Sandbox
 {
@@ -120,18 +121,15 @@ namespace Sandbox
 
             var test = new TestPlain()
             {
-                Position = new Vector3(0, 0, 0),
+                Position = new Vector3(0, 1, 0),
                 Shader = TestShaderSource.Instance,
             };
-            var storage = new ShaderStorage();
-            storage.Create(stackalloc Vector4[]
-            {
-                new Vector4(0, 1, 0, 0), 
-                new Vector4(0, 2, 0, 0),
-                new Vector4(0, 3, 0, 0),
-                new Vector4(0, 4, 0, 0)
-            }, Elffy.OpenGL.BufferUsage.StaticDraw);
-            test.AddComponent(storage);
+            var data = new FloatDataTexture();
+            var array = new Vector4[4];
+            array[0] = new Vector4(2f, 2f, 2f, 1f);
+            array[1] = new Vector4(0f, -5f, -5f, 0f);
+            data.Load(array);
+            test.AddComponent(data);
             test.Activate();
 
             InitializeUI();

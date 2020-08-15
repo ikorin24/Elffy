@@ -27,9 +27,9 @@ namespace Elffy.Components
 
         ~FloatDataTexture() => Dispose(false);
 
-        public unsafe void Load(ReadOnlySpan<Vector4> texels) => _impl.Load(texels.MarshalCast<Vector4, Color4>());
+        public void Load(ReadOnlySpan<Vector4> texels) => _impl.Load(texels.MarshalCast<Vector4, Color4>());
 
-        public unsafe void Load(ReadOnlySpan<Color4> texels) => _impl.Load(texels);
+        public void Load(ReadOnlySpan<Color4> texels) => _impl.Load(texels);
 
         public void Dispose()
         {
@@ -69,12 +69,10 @@ namespace Elffy.Components
             TextureObject.Bind1D(TextureObject, unit);
             GL.TexParameter(TextureTarget.Texture1D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
             GL.TexParameter(TextureTarget.Texture1D, TextureParameterName.TextureMagFilter, (int)TextureMinFilter.Nearest);
+            
             fixed(void* ptr = texels) {
-
-                // おそらくデータは 0 ~ 1 に丸められます。
-                // OpenGL の内部挙動 (仕様？) を把握しきれてないが、実験してみたらおそらく丸められている。
-
-                GL.TexImage1D(TextureTarget.Texture1D, 0, PixelInternalFormat.Rgba, texels.Length, 0, TKPixelFormat.Rgba, PixelType.Float, (IntPtr)ptr);
+                GL.TexImage1D(TextureTarget.Texture1D, 0, PixelInternalFormat.Rgba32f,
+                              texels.Length, 0, TKPixelFormat.Rgba, PixelType.Float, (IntPtr)ptr);
             }
             TextureObject.Unbind1D(unit);
         }
