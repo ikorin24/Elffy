@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using Elffy.Core;
+using Elffy.Diagnostics;
 using Elffy.InputSystem;
 using Elffy.UI;
 using System;
@@ -25,18 +26,25 @@ namespace Elffy.Games
         public static ControlCollection UI => _uiRootCollection;
 
         public static void Start(int width, int height, string title, Action initialize)
+            => Start(width, height, title, false, initialize);
+
+        public static void Start(int width, int height, string title, bool isDebug, Action initialize)
         {
             _initialize = initialize ?? throw new ArgumentNullException(nameof(initialize));
 
             ProcessHelper.SingleLaunch(() =>
             {
                 try {
+                    if(isDebug) {
+                        DiagnosticsSetting.Run();
+                    }
                     Resources.Initialize();
                     Engine.Run();
                     Engine.ShowScreen(width, height, title, Resources.LoadIcon("icon.ico"), WindowStyle.Default, InitScreen);   // TODO: リソース以外からのアイコン指定方法
                 }
                 finally {
                     Engine.End();
+                    DiagnosticsSetting.Stop();
                 }
             });
         }
