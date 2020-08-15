@@ -55,6 +55,7 @@ namespace Elffy.Components
     internal readonly struct FloatDataTextureImpl : IDisposable
     {
         public readonly TextureObject TextureObject;
+        public readonly int Length;
 
         public void Apply(TextureUnitNumber unit)
         {
@@ -64,12 +65,14 @@ namespace Elffy.Components
         public unsafe void Load(ReadOnlySpan<Color4> texels)
         {
             if(texels.IsEmpty) { return; }
-            var unit = TextureUnitNumber.Unit1;
+            
             Unsafe.AsRef(TextureObject) = TextureObject.Create();
+            Unsafe.AsRef(Length) = texels.Length;
+
+            const TextureUnitNumber unit = TextureUnitNumber.Unit1;
             TextureObject.Bind1D(TextureObject, unit);
             GL.TexParameter(TextureTarget.Texture1D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
             GL.TexParameter(TextureTarget.Texture1D, TextureParameterName.TextureMagFilter, (int)TextureMinFilter.Nearest);
-            
             fixed(void* ptr = texels) {
                 GL.TexImage1D(TextureTarget.Texture1D, 0, PixelInternalFormat.Rgba32f,
                               texels.Length, 0, TKPixelFormat.Rgba, PixelType.Float, (IntPtr)ptr);
@@ -77,9 +80,28 @@ namespace Elffy.Components
             TextureObject.Unbind1D(unit);
         }
 
+        public unsafe void Update(ReadOnlySpan<Color4> texels, int xOffset)
+        {
+            if(TextureObject.IsEmpty) { throw new InvalidOperationException("Cannnot update texels because not loaded yet."); }
+            if((uint)xOffset >= (uint)Length || texels.Length > Length - xOffset) {
+                throw new ArgumentOutOfRangeException($"Length: {Length}, {nameof(texels)}.Length: {texels.Length}, {nameof(xOffset)}: {xOffset}");
+            }
+
+            if(texels.IsEmpty) { return; }
+
+            const TextureUnitNumber unit = TextureUnitNumber.Unit1;
+            TextureObject.Bind1D(TextureObject, unit);
+            fixed(void* ptr = texels) {
+                GL.TexSubImage1D(TextureTarget.Texture1D, 0, xOffset,
+                                 texels.Length, TKPixelFormat.Rgba, PixelType.Float, (IntPtr)ptr);
+            }
+            TextureObject.Unbind1D(unit);
+        }
+
         public void Dispose()
         {
             TextureObject.Delete(ref Unsafe.AsRef(TextureObject));
+            Unsafe.AsRef(Length) = 0;
         }
     }
 }

@@ -17,6 +17,7 @@ using Elffy.Serialization;
 using System.Runtime.InteropServices;
 using System.Linq;
 using Elffy.Effective.Unsafes;
+using Elffy.Threading;
 
 namespace Elffy.Shapes
 {
@@ -60,27 +61,27 @@ namespace Elffy.Shapes
                 return (vertices, parts);
             }
 
-            UnmanagedArray<Vector4> BuildBonePositions()
-            {
-                var bones = _pmxObject!.BoneList.AsSpan();
-                return bones.SelectToUnmanagedArray(b => new Vector4(b.Position.X, b.Position.Y, b.Position.Z, 0));
-            }
-
-
             // Here is main thread
+            Debug.Assert(Dispatcher.IsMainThread());
 
-            var (vertices, parts) = await Task.Factory.StartNew(BuildModelParts);
-            var bonePositions = await Task.Factory.StartNew(BuildBonePositions);
+            var (vertices, parts) = await Task.Factory.StartNew(BuildModelParts)
+                .ConfigureAwait(true);
             _parts = parts;
 
+            var skeleton = new Skeleton();
+            var bonePositions = await Task.Factory.StartNew(() => 
+                    _pmxObject!.BoneList
+                               .AsSpan()
+                               .SelectToUnmanagedArray(b => new Vector4(b.Position.X, b.Position.Y, b.Position.Z, 0f)))
+                .ConfigureAwait(true);
+
             // Here is main thread
-            if(LifeState != FrameObjectLifeSpanState.Terminated &&
-               LifeState != FrameObjectLifeSpanState.Dead) {
-                // skeleton component
-                //var skeleton = new Skeleton(TextureUnitNumber.Unit1);
-                //skeleton.Load(bonePositions.AsSpan());
-                var skeleton = new Skeleton();
-                skeleton.Load(bonePositions.AsSpan());
+            Debug.Assert(Dispatcher.IsMainThread());
+            skeleton.Load(bonePositions);
+
+            var needLoading = LifeState != FrameObjectLifeSpanState.Terminated &&
+                           LifeState != FrameObjectLifeSpanState.Dead;
+            if(needLoading) {
                 AddComponent(skeleton);
 
                 // multi texture
@@ -91,9 +92,12 @@ namespace Elffy.Shapes
                 // load vertex
                 LoadGraphicBuffer(vertices.AsSpan(), _pmxObject!.SurfaceList.AsSpan().MarshalCast<MMDTools.Unmanaged.Surface, int>());
             }
+            else {
+                skeleton.Dispose();
+            }
 
             // not await
-            _ = ReleaseTemporaryBufferAsync(vertices, bonePositions);
+            _ = ReleaseTemporaryBufferAsync(vertices);
         }
 
         protected override void OnRendering(in Matrix4 model, in Matrix4 view, in Matrix4 projection)
@@ -148,9 +152,8 @@ namespace Elffy.Shapes
 
         /// <summary>ロードのための一時バッファを非同期で解放します</summary>
         /// <param name="vertices"></param>
-        /// <param name="bonePositions"></param>
         /// <returns></returns>
-        private Task ReleaseTemporaryBufferAsync(UnmanagedArray<RigVertex> vertices, UnmanagedArray<Vector4> bonePositions)
+        private Task ReleaseTemporaryBufferAsync(UnmanagedArray<RigVertex> vertices)
         {
             // メモリ開放後始末 (非同期で問題ないので別スレッド)
             return Task.Factory.StartNew(v =>
@@ -167,12 +170,7 @@ namespace Elffy.Shapes
 
                 _pmxObject?.Dispose();
                 _pmxObject = null;
-            }, vertices).ContinueWith((task, state) =>
-            {
-                Debug.Assert(state is UnmanagedArray<Vector4>);
-                var bonePosition = Unsafe.As<UnmanagedArray<Vector4>>(state);
-                bonePosition.Dispose();
-            }, bonePositions);
+            }, vertices);
         }
 
         private readonly struct RenderableParts
