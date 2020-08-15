@@ -10,6 +10,7 @@ using UnmanageUtility;
 namespace Elffy.Components
 {
     /// <summary>Bone component</summary>
+    [Obsolete("たぶんいらない", true)]
     public sealed class Bone : IComponent, IDisposable
     {
         private Model3D? _owner;

@@ -4,6 +4,7 @@ using System.Diagnostics;
 
 namespace Elffy.Core
 {
+    [Obsolete("たぶんいらない", true)]
     [DebuggerDisplay("{Type}, [{RefBone0}] {Weight0.ToString(\"F9\")}, [{RefBone1}], {Weight1.ToString(\"F9\")}, [{RefBone2}],{Weight2.ToString(\"F9\")}, [{RefBone0}],{Weight3.ToString(\"F9\")}")]
     public readonly struct BoneWeight : IEquatable<BoneWeight>
     {
