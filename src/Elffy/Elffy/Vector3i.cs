@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using Cysharp.Text;
 using System;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using TKVector3i = OpenToolkit.Mathematics.Vector3i;
@@ -28,6 +29,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector3i(int x, int y, int z) => (X, Y, Z) = (x, y, z);
 
+        [EditorBrowsable(EditorBrowsableState.Never)]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly void Deconstruct(out int x, out int y, out int z) => (x, y, z) = (X, Y, Z);
 

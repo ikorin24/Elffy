@@ -2,6 +2,7 @@
 using Cysharp.Text;
 using Elffy.Effective;
 using System;
+using System.ComponentModel;
 using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -23,6 +24,8 @@ namespace Elffy
         public Color3(float r, float g, float b) => (R, G, B) = (r, g, b);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Color3(float value) => (R, G, B) = (value, value, value);
+
+        [EditorBrowsable(EditorBrowsableState.Never)]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly void Deconstruct(out float r, out float g, out float b) => (r, g, b) = (R, G, B);
 

@@ -1,6 +1,8 @@
 ﻿#nullable enable
 using Cysharp.Text;
 using System;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -9,12 +11,12 @@ using TKVector2 = OpenToolkit.Mathematics.Vector2;
 namespace Elffy
 {
     [StructLayout(LayoutKind.Explicit)]
-    public readonly struct Vector2 : IEquatable<Vector2>
+    public struct Vector2 : IEquatable<Vector2>
     {
         [FieldOffset(0)]
-        public readonly float X;
+        public float X;
         [FieldOffset(4)]
-        public readonly float Y;
+        public float Y;
 
         public static readonly Vector2 UnitX = new Vector2(1, 0);
         public static readonly Vector2 UnitY = new Vector2(0, 1);
@@ -40,6 +42,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector2(float value) => (X, Y) = (value, value);
 
+        [EditorBrowsable(EditorBrowsableState.Never)]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly void Deconstruct(out float x, out float y) => (x, y) = (X, Y);
 

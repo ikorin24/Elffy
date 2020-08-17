@@ -2,6 +2,7 @@
 using Cysharp.Text;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -14,13 +15,14 @@ namespace Elffy
     public struct Vector2i : IEquatable<Vector2i>
     {
         [FieldOffset(0)]
-        public readonly int X;
+        public int X;
         [FieldOffset(4)]
-        public readonly int Y;
+        public int Y;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector2i(int x, int y) => (X, Y) = (x, y);
 
+        [EditorBrowsable(EditorBrowsableState.Never)]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly void Deconstruct(out int x, out int y) => (x, y) = (X, Y);
 
