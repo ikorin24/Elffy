@@ -65,7 +65,7 @@ namespace Elffy.Components
 
             var move = _move.AsSpan();
             //for(int i = 0; i < move.Length; i++) {
-            //    move[i] += new Vector4(new Vector3(0.02f), 0);
+            //    move[i] += new Vector4(0.02f, 0, 0, 0);
             //}
             // ここでボーン動かす
             //_boneMoveData.Dispose();

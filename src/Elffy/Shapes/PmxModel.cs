@@ -15,8 +15,7 @@ using Elffy.Threading;
 using OpenToolkit.Graphics.OpenGL;
 using Cysharp.Threading.Tasks;
 using UnmanageUtility;
-using PMXParser = MMDTools.Unmanaged.PMXParser;
-using PMXObject = MMDTools.Unmanaged.PMXObject;
+using MMDTools.Unmanaged;
 
 namespace Elffy.Shapes
 {
@@ -56,15 +55,20 @@ namespace Elffy.Shapes
             await UniTask.Run(() => PmxModelLoadHelper.ReverseTrianglePolygon(_pmxObject!.SurfaceList.AsSpan().AsWritable()),
                               configureAwait: false);
             var (vertices, parts, bonePositions) = await UniTask.WhenAll(
+                
+                // build vertices
                 UniTask.Run(() => _pmxObject!.VertexList
                                 .AsSpan()
                                 .SelectToUnmanagedArray(v => v.ToRigVertex())),
+                
+                // build each parts
                 UniTask.Run(() => _pmxObject!.MaterialList
                                 .AsSpan()
                                 .SelectToUnmanagedArray(m => new RenderableParts(m.VertexCount, m.Texture))),
+                // build bones
                 UniTask.Run(() => _pmxObject!.BoneList
                                 .AsSpan()
-                                .SelectToUnmanagedArray(b => new Vector4(b.Position.X, b.Position.Y, b.Position.Z, 0f)))
+                                .SelectToUnmanagedArray(b => new Vector4(b.Position.ToVector3(), 0f)))
                 );
             await UniTask.SwitchToSynchronizationContext(syncContext);
 
@@ -84,7 +88,7 @@ namespace Elffy.Shapes
                 _textures = textures;
 
                 // load vertex
-                LoadGraphicBuffer(vertices.AsSpan(), _pmxObject!.SurfaceList.AsSpan().MarshalCast<MMDTools.Unmanaged.Surface, int>());
+                LoadGraphicBuffer(vertices.AsSpan(), _pmxObject!.SurfaceList.AsSpan().MarshalCast<Surface, int>());
             }
             else {
                 skeleton.Dispose();
@@ -126,17 +130,17 @@ namespace Elffy.Shapes
 
                 for(int i = 0; i < bitmapSpan.Length; i++) {
 
-                    using(var pooledArray = new PooledArray<char>(dir.Length + 1 + textureNames[i].GetCharCount())) {
-                        var texturePath = pooledArray.AsSpan();
-                        dir.CopyTo(texturePath);
-                        texturePath[dir.Length] = '/';
-                        textureNames[i].ToString(texturePath.Slice(dir.Length + 1));
-                        texturePath.Replace('\\', '/');
-                        var textureExt = texturePath.AsReadOnly().FilePathExtension();
+                    using var pooledArray = new PooledArray<char>(dir.Length + 1 + textureNames[i].GetCharCount());
 
-                        using var tStream = Resources.GetStream(texturePath.ToString());
-                        bitmapSpan[i] = BitmapHelper.StreamToBitmap(tStream, textureExt);
-                    }
+                    var texturePath = pooledArray.AsSpan();
+                    dir.CopyTo(texturePath);
+                    texturePath[dir.Length] = '/';
+                    textureNames[i].ToString(texturePath.Slice(dir.Length + 1));
+                    texturePath.Replace('\\', '/');
+                    var textureExt = texturePath.AsReadOnly().FilePathExtension();
+
+                    using var tStream = Resources.GetStream(texturePath.ToString());
+                    bitmapSpan[i] = BitmapHelper.StreamToBitmap(tStream, textureExt);
                 }
                 return new PmxModel(pmx, bitmaps);
             }, name);
