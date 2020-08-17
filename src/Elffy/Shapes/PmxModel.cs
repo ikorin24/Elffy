@@ -1,23 +1,22 @@
 ﻿#nullable enable
-using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Drawing;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using Elffy.Core;
 using Elffy.Effective;
 using Elffy.Imaging;
 using Elffy.Components;
 using Elffy.OpenGL;
+using Elffy.Serialization;
+using Elffy.Effective.Unsafes;
+using Elffy.Threading;
 using OpenToolkit.Graphics.OpenGL;
+using Cysharp.Threading.Tasks;
 using UnmanageUtility;
 using PMXParser = MMDTools.Unmanaged.PMXParser;
 using PMXObject = MMDTools.Unmanaged.PMXObject;
-using Elffy.Serialization;
-using System.Runtime.InteropServices;
-using System.Linq;
-using Elffy.Effective.Unsafes;
-using Elffy.Threading;
 
 namespace Elffy.Shapes
 {
@@ -49,36 +48,31 @@ namespace Elffy.Shapes
         {
             base.OnActivated();
 
-            (UnmanagedArray<RigVertex>, UnmanagedArray<RenderableParts>) BuildModelParts()
-            {
-                var pmx = _pmxObject!;
-
-                // オリジナルのデータを書き換えているので注意、このメソッドは1回しか通らない前提
-                PmxModelLoadHelper.ReverseTrianglePolygon(pmx.SurfaceList.AsSpan().AsWritable());
-
-                var vertices = pmx.VertexList.AsSpan().SelectToUnmanagedArray(v => v.ToRigVertex());
-                var parts = pmx.MaterialList.AsSpan().SelectToUnmanagedArray(m => new RenderableParts(m.VertexCount, m.Texture));
-                return (vertices, parts);
-            }
-
-            // Here is main thread
             Debug.Assert(Dispatcher.IsMainThread());
+            var syncContext = SynchronizationContext.Current;
+            Debug.Assert(syncContext?.GetType() == typeof(CustomSynchronizationContext));
 
-            var (vertices, parts) = await Task.Factory.StartNew(BuildModelParts)
-                .ConfigureAwait(true);
+            // オリジナルのデータを書き換えているので注意、このメソッドは1回しか通らない前提
+            await UniTask.Run(() => PmxModelLoadHelper.ReverseTrianglePolygon(_pmxObject!.SurfaceList.AsSpan().AsWritable()),
+                              configureAwait: false);
+            var (vertices, parts, bonePositions) = await UniTask.WhenAll(
+                UniTask.Run(() => _pmxObject!.VertexList
+                                .AsSpan()
+                                .SelectToUnmanagedArray(v => v.ToRigVertex())),
+                UniTask.Run(() => _pmxObject!.MaterialList
+                                .AsSpan()
+                                .SelectToUnmanagedArray(m => new RenderableParts(m.VertexCount, m.Texture))),
+                UniTask.Run(() => _pmxObject!.BoneList
+                                .AsSpan()
+                                .SelectToUnmanagedArray(b => new Vector4(b.Position.X, b.Position.Y, b.Position.Z, 0f)))
+                );
+            await UniTask.SwitchToSynchronizationContext(syncContext);
+
+
+            Debug.Assert(Dispatcher.IsMainThread());
             _parts = parts;
-
             var skeleton = new Skeleton();
-            var bonePositions = await Task.Factory.StartNew(() => 
-                    _pmxObject!.BoneList
-                               .AsSpan()
-                               .SelectToUnmanagedArray(b => new Vector4(b.Position.X, b.Position.Y, b.Position.Z, 0f)))
-                .ConfigureAwait(true);
-
-            // Here is main thread
-            Debug.Assert(Dispatcher.IsMainThread());
             skeleton.Load(bonePositions);
-
             var needLoading = LifeState != FrameObjectLifeSpanState.Terminated &&
                            LifeState != FrameObjectLifeSpanState.Dead;
             if(needLoading) {
@@ -95,9 +89,7 @@ namespace Elffy.Shapes
             else {
                 skeleton.Dispose();
             }
-
-            // not await
-            _ = ReleaseTemporaryBufferAsync(vertices);
+            ReleaseTemporaryBuffer(vertices);
         }
 
         protected override void OnRendering(in Matrix4 model, in Matrix4 view, in Matrix4 projection)
@@ -117,9 +109,9 @@ namespace Elffy.Shapes
             }
         }
 
-        public static Task<PmxModel> LoadResourceAsync(string name)
+        public static UniTask<PmxModel> LoadResourceAsync(string name)
         {
-            return Task.Factory.StartNew(n =>
+            return UniTask.Run(n =>
             {
                 Debug.Assert(n is string);
                 var name = Unsafe.As<string>(n)!;
@@ -131,6 +123,7 @@ namespace Elffy.Shapes
                 var dir = Resources.GetDirectoryName(name);
                 var bitmaps = new RefTypeRentMemory<Bitmap>(textureNames.Length);
                 var bitmapSpan = bitmaps.Span;
+
                 for(int i = 0; i < bitmapSpan.Length; i++) {
 
                     using(var pooledArray = new PooledArray<char>(dir.Length + 1 + textureNames[i].GetCharCount())) {
@@ -141,9 +134,8 @@ namespace Elffy.Shapes
                         texturePath.Replace('\\', '/');
                         var textureExt = texturePath.AsReadOnly().FilePathExtension();
 
-                        using(var tStream = Resources.GetStream(texturePath.ToString())) {
-                            bitmapSpan[i] = BitmapHelper.StreamToBitmap(tStream, textureExt);
-                        }
+                        using var tStream = Resources.GetStream(texturePath.ToString());
+                        bitmapSpan[i] = BitmapHelper.StreamToBitmap(tStream, textureExt);
                     }
                 }
                 return new PmxModel(pmx, bitmaps);
@@ -153,24 +145,30 @@ namespace Elffy.Shapes
         /// <summary>ロードのための一時バッファを非同期で解放します</summary>
         /// <param name="vertices"></param>
         /// <returns></returns>
-        private Task ReleaseTemporaryBufferAsync(UnmanagedArray<RigVertex> vertices)
+        private void ReleaseTemporaryBuffer(UnmanagedArray<RigVertex> vertices)
         {
             // メモリ開放後始末 (非同期で問題ないので別スレッド)
-            return Task.Factory.StartNew(v =>
-            {
-                Debug.Assert(v is UnmanagedArray<RigVertex>);
-                var vertices = Unsafe.As<UnmanagedArray<RigVertex>>(v)!;
-                vertices.Dispose();
-
-                foreach(var t in _textureBitmaps.Span) {
-                    t.Dispose();
-                }
-                _textureBitmaps.Dispose();
-                _textureBitmaps = default;
-
-                _pmxObject?.Dispose();
-                _pmxObject = null;
-            }, vertices);
+            UniTask.WhenAll(
+                UniTask.Run(v =>
+                {
+                    Debug.Assert(v is UnmanagedArray<RigVertex>);
+                    var vertices = Unsafe.As<UnmanagedArray<RigVertex>>(v)!;
+                    vertices.Dispose();
+                }, vertices, false),
+                UniTask.Run(() =>
+                {
+                    foreach(var t in _textureBitmaps.Span) {
+                        t.Dispose();
+                    }
+                    _textureBitmaps.Dispose();
+                    _textureBitmaps = default;
+                }),
+                UniTask.Run(() =>
+                {
+                    _pmxObject?.Dispose();
+                    _pmxObject = null;
+                })
+            ).Forget();
         }
 
         private readonly struct RenderableParts

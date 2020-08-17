@@ -13,6 +13,7 @@ using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Elffy.Effective;
+using Cysharp.Threading.Tasks;
 
 namespace Sandbox
 {
@@ -55,7 +56,7 @@ namespace Sandbox
 
 
             // キャラ1
-            PmxModel.LoadResourceAsync("Alicia/Alicia_solid.pmx").ContinueWithDispatch(model =>
+            PmxModel.LoadResourceAsync("Alicia/Alicia_solid.pmx").AsTask().ContinueWithDispatch(model =>
             {
                 //model.Scale = new Vector3(0.3f);
                 model.AddComponent(new Material(new Color4(0.88f), new Color4(0.18f), new Color4(0.1f), 5f));
