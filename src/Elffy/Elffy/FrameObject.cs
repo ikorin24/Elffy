@@ -3,7 +3,6 @@ using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Elffy.Core;
-using Elffy.Threading;
 using Elffy.AssemblyServices;
 
 namespace Elffy
@@ -63,9 +62,13 @@ namespace Elffy
         // Layer クラス以外の internal なレイヤーに乗るオブジェクトはこのプロパティを呼んではいけない。代わりに ILayer の方を使う。
         /// <summary>このオブジェクトのレイヤーを取得します</summary>
         /// <exception cref="InvalidOperationException"><see cref="IsAlive"/> が false です。</exception>
-        public Layer Layer => AssemblyState.IsDebug ? (Layer?)_layer ?? throw new InvalidOperationException()
-                                                    : Unsafe.As<Layer?>(_layer) ?? throw new InvalidOperationException();
-        // ↑Unsafe は怖いのでデバッグ時は通常キャストする。JITで分岐は消える。
+        public Layer Layer
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => AssemblyState.IsDebug ? (Layer?)_layer ?? throw new InvalidOperationException()
+                                         : Unsafe.As<Layer?>(_layer) ?? throw new InvalidOperationException();
+            // ↑Unsafe は怖いのでデバッグ時は通常キャストする。JITで分岐は消える。
+        }
 
 
         /// <summary>Get HostScreen of this <see cref="FrameObject"/>.</summary>
