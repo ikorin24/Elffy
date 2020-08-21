@@ -10,12 +10,16 @@ namespace Elffy.Effective
 {
     public static class SpanExtension
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref T Head<T>(this Span<T> source) => ref MemoryMarshal.GetReference(source);
         
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref readonly T Head<T>(this ReadOnlySpan<T> source) => ref MemoryMarshal.GetReference(source);
         
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref T HeadOrNull<T>(this Span<T> source) => ref source.GetPinnableReference();
         
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref readonly T HeadOrNull<T>(this ReadOnlySpan<T> source) => ref source.GetPinnableReference();
         
         /// <summary>
