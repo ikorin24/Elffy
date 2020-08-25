@@ -69,17 +69,8 @@ namespace Elffy.Core
         /// <param name="modelParent">親の model 行列</param>
         internal unsafe void Render(in Matrix4 projection, in Matrix4 view, in Matrix4 modelParent)
         {
-            var withoutScale = modelParent *
-                               new Matrix4(1, 0, 0, Position.X,
-                                           0, 1, 0, Position.Y,
-                                           0, 0, 1, Position.Z,
-                                           0, 0, 0, 1) *
-                               Rotation.ToMatrix4();
-            var model = withoutScale * 
-                        new Matrix4(Scale.X, 0, 0, 0,
-                                    0, Scale.Y, 0, 0,
-                                    0, 0, Scale.Z, 0,
-                                    0, 0, 0, 1);
+            var withoutScale = modelParent * Position.ToTranslationMatrix4() * Rotation.ToMatrix4();
+            var model = withoutScale * Scale.ToScaleMatrix4();
 
             if(IsLoaded && IsVisible && !(_shaderProgram is null)) {
                 Rendering?.Invoke(this, in model, in view, in projection);
@@ -100,14 +91,6 @@ namespace Elffy.Core
         {
             VAO.Bind(_vao);
             IBO.Bind(_ibo);
-
-            if(TryGetComponent<Texture>(out var t)) {
-                t.Apply(TextureUnitNumber.Unit0);
-            }
-            else {
-                TextureObject.Bind2D(Engine.WhiteEmptyTexture, TextureUnitNumber.Unit0);
-            }
-
             _shaderProgram!.Apply(this, Layer.Lights, in model, in view, in projection);
             GL.DrawElements(BeginMode.Triangles, IBO.Length, DrawElementsType.UnsignedInt, 0);
             VAO.Unbind();

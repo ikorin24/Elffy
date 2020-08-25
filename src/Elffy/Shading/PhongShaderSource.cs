@@ -5,6 +5,7 @@ using System;
 using System.Runtime.CompilerServices;
 using Elffy.OpenGL;
 using Elffy.Diagnostics;
+using Elffy.Effective;
 
 namespace Elffy.Shading
 {
@@ -30,9 +31,9 @@ namespace Elffy.Shading
         protected override void SendUniforms(Uniform uniform, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             if(target.TryGetComponent<Material>(out var m)) {
-                uniform.Send("ma", Unsafe.As<Color4, Color3>(ref Unsafe.AsRef(m.Ambient)));
-                uniform.Send("md", Unsafe.As<Color4, Color3>(ref Unsafe.AsRef(m.Diffuse)));
-                uniform.Send("ms", Unsafe.As<Color4, Color3>(ref Unsafe.AsRef(m.Specular)));
+                uniform.Send("ma", UnsafeEx.As<Color4, Color3>(m.Ambient));
+                uniform.Send("md", UnsafeEx.As<Color4, Color3>(m.Diffuse));
+                uniform.Send("ms", UnsafeEx.As<Color4, Color3>(m.Specular));
                 uniform.Send("shininess", m.Shininess);
             }
             else {
@@ -60,7 +61,14 @@ namespace Elffy.Shading
                 uniform.Send("ls", new Vector3());
             }
 
-            uniform.Send("tex_sampler", TextureUnitNumber.Unit0);
+            const TextureUnitNumber texUnit = TextureUnitNumber.Unit0;
+            if(target.TryGetComponent<Texture>(out var t)) {
+                t.Apply(texUnit);
+            }
+            else {
+                TextureObject.Bind2D(Engine.WhiteEmptyTexture, texUnit);
+            }
+            uniform.Send("tex_sampler", texUnit);
         }
 
         private const string VertSource =

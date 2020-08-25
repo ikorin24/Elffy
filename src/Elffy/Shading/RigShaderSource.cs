@@ -2,6 +2,7 @@
 using Elffy.Components;
 using Elffy.Core;
 using Elffy.Diagnostics;
+using Elffy.Effective;
 using Elffy.OpenGL;
 using OpenToolkit.Graphics.OpenGL4;
 using System;
@@ -36,9 +37,9 @@ namespace Elffy.Shading
         protected override void SendUniforms(Uniform uniform, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             if(target.TryGetComponent<Material>(out var m)) {
-                uniform.Send("ma", Unsafe.As<Color4, Color3>(ref Unsafe.AsRef(m.Ambient)));
-                uniform.Send("md", Unsafe.As<Color4, Color3>(ref Unsafe.AsRef(m.Diffuse)));
-                uniform.Send("ms", Unsafe.As<Color4, Color3>(ref Unsafe.AsRef(m.Specular)));
+                uniform.Send("ma", UnsafeEx.As<Color4, Color3>(m.Ambient));
+                uniform.Send("md", UnsafeEx.As<Color4, Color3>(m.Diffuse));
+                uniform.Send("ms", UnsafeEx.As<Color4, Color3>(m.Specular));
                 uniform.Send("shininess", m.Shininess);
             }
             else {
@@ -68,10 +69,12 @@ namespace Elffy.Shading
 
             var skeleton = target.GetComponent<Skeleton>();
             uniform.Send("_boneCountInverse", 1f / skeleton.BoneCount);
-            skeleton.Apply(TextureUnitNumber.Unit3);
-            uniform.Send("_boneMove", TextureUnitNumber.Unit3);
+            skeleton.Apply(TextureUnitNumber.Unit1);
+            uniform.Send("_boneMove", TextureUnitNumber.Unit1);
 
-            uniform.Send("tex_sampler", TextureUnitNumber.Unit0);
+            const TextureUnitNumber texUnit = TextureUnitNumber.Unit0;
+            target.GetComponent<MultiTexture>().Apply(texUnit);
+            uniform.Send("tex_sampler", texUnit);
         }
 
         private const string VertSource =

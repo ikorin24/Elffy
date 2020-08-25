@@ -33,7 +33,15 @@ namespace Elffy.Shading
             Debug.Assert(target is UIRenderable);
             var mvp = projection * view * model;
             uniform.Send("mvp", mvp);
-            uniform.Send("tex_sampler", TextureUnitNumber.Unit0);
+
+            const TextureUnitNumber texUnit = TextureUnitNumber.Unit0;
+            if(target.TryGetComponent<Texture>(out var t)) {
+                t.Apply(texUnit);
+            }
+            else {
+                TextureObject.Bind2D(Engine.WhiteEmptyTexture, texUnit);
+            }
+            uniform.Send("tex_sampler", texUnit);
         }
 
         private const string VertSource =

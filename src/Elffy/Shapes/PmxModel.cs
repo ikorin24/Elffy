@@ -37,7 +37,6 @@ namespace Elffy.Shapes
         protected override void OnDead()
         {
             base.OnDead();
-            _textures?.Dispose();
             _textures = null;
             _parts?.Dispose();
             _parts = null;
@@ -75,23 +74,24 @@ namespace Elffy.Shapes
 
             Debug.Assert(Dispatcher.IsMainThread());
             _parts = parts;
-            var skeleton = new Skeleton();
-            skeleton.Load(bonePositions);
             var needLoading = LifeState != FrameObjectLifeSpanState.Terminated &&
-                           LifeState != FrameObjectLifeSpanState.Dead;
+                              LifeState != FrameObjectLifeSpanState.Dead;
             if(needLoading) {
+                var skeleton = new Skeleton();
+                skeleton.Load(bonePositions);
                 AddComponent(skeleton);
 
                 // multi texture
                 var textures = new MultiTexture();
                 textures.Load(_textureBitmaps.Span);
+                AddComponent(textures);
                 _textures = textures;
 
                 // load vertex
                 LoadGraphicBuffer(vertices.AsSpan(), _pmxObject!.SurfaceList.AsSpan().MarshalCast<Surface, int>());
             }
             else {
-                skeleton.Dispose();
+                bonePositions.Dispose();
             }
             ReleaseTemporaryBuffer(vertices);
         }
@@ -104,13 +104,16 @@ namespace Elffy.Shapes
             if(parts != null) {
                 var pos = 0;
                 var textures = _textures;
-                foreach(var p in parts.AsSpan()) {
-                    textures?.Apply(p.TextureIndex, TextureUnitNumber.Unit0);
+                Debug.Assert(textures is null == false);
+                for(int i = 0; i < parts.Length; i++) {
+                    textures.Current = parts[i].TextureIndex;
                     ShaderProgram!.Apply(this, Layer.Lights, in model, in view, in projection);
-                    GL.DrawElements(BeginMode.Triangles, p.VertexCount, DrawElementsType.UnsignedInt, pos * sizeof(int));
-                    pos += p.VertexCount;
+                    GL.DrawElements(BeginMode.Triangles, parts[i].VertexCount, DrawElementsType.UnsignedInt, pos * sizeof(int));
+                    pos += parts[i].VertexCount;
                 }
             }
+            VAO.Unbind();
+            IBO.Unbind();
         }
 
         public static UniTask<PmxModel> LoadResourceAsync(string name)

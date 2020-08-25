@@ -41,14 +41,6 @@ namespace Elffy.UI
         {
             VAO.Bind(VAO);
             IBO.Bind(IBO);
-
-            if(TryGetComponent<Texture>(out var t)) {
-                t.Apply(TextureUnitNumber.Unit0);
-            }
-            else {
-                TextureObject.Bind2D(Engine.WhiteEmptyTexture, TextureUnitNumber.Unit0);
-            }
-
             ShaderProgram!.Apply(this, Span<Light>.Empty, in model, in view, in projection);
             GL.DrawElements(BeginMode.Triangles, IBO.Length, DrawElementsType.UnsignedInt, 0);
             VAO.Unbind();
