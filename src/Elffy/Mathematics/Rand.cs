@@ -7,8 +7,8 @@ namespace Elffy.Mathematics
     /// <summary>Random value generator class</summary>
     public static class Rand
     {
-        private static Xorshift32 _xorshift32 = Xorshift32.GetDefault();
-        private static Xorshift64 _xorshift64 = Xorshift64.GetDefault();
+        private static Xorshift32 _xorshift32 = Xorshift32.GetDefault();    // do not change into readonly
+        private static Xorshift64 _xorshift64 = Xorshift64.GetDefault();    // do not change into readonly
 
         /// <summary>Get random color (R, G, B are random, Alpha is 1).</summary>
         /// <returns>random color</returns>
