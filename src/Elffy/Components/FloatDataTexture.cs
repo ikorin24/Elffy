@@ -1,9 +1,9 @@
 ﻿#nullable enable
 using Elffy.OpenGL;
 using System;
-using OpenToolkit.Graphics.OpenGL;
+using OpenToolkit.Graphics.OpenGL4;
 using Elffy.Exceptions;
-using TKPixelFormat = OpenToolkit.Graphics.OpenGL.PixelFormat;
+using TKPixelFormat = OpenToolkit.Graphics.OpenGL4.PixelFormat;
 using Elffy.Effective;
 using Elffy.Core;
 using System.Runtime.CompilerServices;

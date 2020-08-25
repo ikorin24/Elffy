@@ -1,6 +1,6 @@
 ﻿#nullable enable
 using Elffy.Core;
-using OpenToolkit.Graphics.OpenGL;
+using OpenToolkit.Graphics.OpenGL4;
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;

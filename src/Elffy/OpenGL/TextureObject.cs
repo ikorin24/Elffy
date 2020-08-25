@@ -2,7 +2,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
-using OpenToolkit.Graphics.OpenGL;
+using OpenToolkit.Graphics.OpenGL4;
 using Elffy.Core;
 
 namespace Elffy.OpenGL

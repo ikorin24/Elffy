@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using Elffy.Core;
 using Elffy.OpenGL;
-using OpenToolkit.Graphics.OpenGL;
+using OpenToolkit.Graphics.OpenGL4;
 
 namespace Elffy.Shading
 {

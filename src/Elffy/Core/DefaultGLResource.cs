@@ -2,8 +2,8 @@
 using Elffy.Exceptions;
 using Elffy.OpenGL;
 using System;
-using OpenToolkit.Graphics.OpenGL;
-using TKPixelFormat = OpenToolkit.Graphics.OpenGL.PixelFormat;
+using OpenToolkit.Graphics.OpenGL4;
+using TKPixelFormat = OpenToolkit.Graphics.OpenGL4.PixelFormat;
 
 namespace Elffy.Core
 {

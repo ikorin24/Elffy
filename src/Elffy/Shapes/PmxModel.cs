@@ -12,7 +12,7 @@ using Elffy.OpenGL;
 using Elffy.Serialization;
 using Elffy.Effective.Unsafes;
 using Elffy.Threading;
-using OpenToolkit.Graphics.OpenGL;
+using OpenToolkit.Graphics.OpenGL4;
 using Cysharp.Threading.Tasks;
 using UnmanageUtility;
 using MMDTools.Unmanaged;

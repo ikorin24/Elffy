@@ -4,7 +4,7 @@ using System.Diagnostics;
 using Elffy.Core;
 using System.ComponentModel;
 using Elffy.OpenGL;
-using OpenToolkit.Graphics.OpenGL;
+using OpenToolkit.Graphics.OpenGL4;
 using System.Runtime.CompilerServices;
 using Elffy.Shading;
 using Elffy.Components;

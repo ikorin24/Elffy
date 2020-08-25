@@ -3,7 +3,7 @@ using Elffy.Components;
 using Elffy.Core;
 using Elffy.Diagnostics;
 using Elffy.OpenGL;
-using OpenToolkit.Graphics.OpenGL;
+using OpenToolkit.Graphics.OpenGL4;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;

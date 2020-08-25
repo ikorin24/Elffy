@@ -1,5 +1,5 @@
 ﻿#nullable enable
-using OpenToolkit.Graphics.OpenGL;
+using OpenToolkit.Graphics.OpenGL4;
 using System;
 using Elffy.Effective;
 using System.Diagnostics;
