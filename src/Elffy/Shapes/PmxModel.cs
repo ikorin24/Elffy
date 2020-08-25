@@ -143,7 +143,7 @@ namespace Elffy.Shapes
                     bitmapSpan[i] = BitmapHelper.StreamToBitmap(tStream, textureExt);
                 }
                 return new PmxModel(pmx, bitmaps);
-            }, name);
+            }, name, configureAwait: false);
         }
 
         /// <summary>ロードのための一時バッファを非同期で解放します</summary>
