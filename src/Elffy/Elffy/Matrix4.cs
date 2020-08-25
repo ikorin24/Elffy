@@ -131,10 +131,10 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal Matrix4(Matrix3 matrix) : this(matrix.M00, matrix.M01, matrix.M02, 0,
-                                                matrix.M10, matrix.M11, matrix.M12, 0,
-                                                matrix.M20, matrix.M21, matrix.M22, 0,
-                                                0, 0, 0, 1) { }
+        internal Matrix4(in Matrix3 matrix) : this(matrix.M00, matrix.M01, matrix.M02, 0,
+                                                   matrix.M10, matrix.M11, matrix.M12, 0,
+                                                   matrix.M20, matrix.M21, matrix.M22, 0,
+                                                   0, 0, 0, 1) { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Transpose() => (M10, M20, M30, M01, M21, M31, M02, M12, M32, M03, M13, M23) = (M01, M02, M03, M10, M12, M13, M20, M21, M23, M30, M31, M32);
@@ -230,9 +230,9 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator ==(Matrix4 left, Matrix4 right) => left.Equals(right);
+        public static bool operator ==(in Matrix4 left, in Matrix4 right) => left.Equals(right);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator !=(Matrix4 left, Matrix4 right) => !(left == right);
+        public static bool operator !=(in Matrix4 left, in Matrix4 right) => !(left == right);
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void OrthographicProjection(float left, float right, float bottom, float top, float depthNear, float depthFar, out Matrix4 result)
@@ -284,7 +284,7 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void LookAt(Vector3 eye, Vector3 target, Vector3 up, out Matrix4 result)
+        public static void LookAt(in Vector3 eye, in Vector3 target, in Vector3 up, out Matrix4 result)
         {
             var z = (eye - target).Normalized();
             var x = up.Cross(z).Normalized();

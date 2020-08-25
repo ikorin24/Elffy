@@ -42,7 +42,7 @@ namespace Elffy.Core
         /// <param name="frameObject">追加するオブジェクト</param>
         public void AddFrameObject(FrameObject frameObject)
         {
-            if(frameObject is null) { throw new ArgumentNullException(nameof(frameObject)); }
+            Debug.Assert(frameObject is null == false);
             _addedBuf.Add(frameObject);
         }
 
@@ -51,7 +51,7 @@ namespace Elffy.Core
         /// <returns>削除できたかどうか</returns>
         public void RemoveFrameObject(FrameObject frameObject)
         {
-            if(frameObject is null) { throw new ArgumentNullException(nameof(frameObject)); }
+            Debug.Assert(frameObject is null == false);
             _removedBuf.Add(frameObject);
         }
 

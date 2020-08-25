@@ -116,7 +116,7 @@ namespace Elffy.Effective
                 _targetGenCount = GC.CollectionCount(targetGen);
             }
 
-            public CallbackWithArgHolder(Func<object, bool> callback, GCHandle callbackArg, int targetGen, int targetGenCount)
+            private CallbackWithArgHolder(Func<object, bool> callback, GCHandle callbackArg, int targetGen, int targetGenCount)
             {
                 // Create clone as generation 0
                 _callback = callback;

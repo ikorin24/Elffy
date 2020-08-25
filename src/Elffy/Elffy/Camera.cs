@@ -91,12 +91,12 @@ namespace Elffy
 
         /// <summary>Look at the specified target position.</summary>
         /// <param name="target">position of target</param>
-        public void LookAt(Vector3 target) => LookAt(target, Position);
+        public void LookAt(in Vector3 target) => LookAt(target, Position);
 
         /// <summary>Look at the specified target position from specified camera position.</summary>
         /// <param name="target">position of target</param>
         /// <param name="cameraPos">position of camera</param>
-        public void LookAt(Vector3 target, Vector3 cameraPos)
+        public void LookAt(in Vector3 target, in Vector3 cameraPos)
         {
             var vec = target - cameraPos;
             if(vec == Vector3.Zero) { return; }
@@ -111,7 +111,7 @@ namespace Elffy
         /// </summary>
         /// <param name="fovy">Y field of view radian. 0 ~ π</param>
         /// <param name="target">target position where screen region is same as current.</param>
-        public void ChangeFovy(float fovy, Vector3 target)
+        public void ChangeFovy(float fovy, in Vector3 target)
         {
             if(fovy <= 0 || fovy > MathTool.Pi) { throw new ArgumentOutOfRangeException($"{nameof(fovy)} must be 0 ~ π. (not include 0)"); }
             var pos = (1 - MathF.Tan(_fovy / 2f) / MathF.Tan(fovy / 2f)) * (target - Position);
@@ -133,7 +133,7 @@ namespace Elffy
             SetProjectionMatrix(_fovy, _far, _aspect);
         }
 
-        private void SetViewMatrix(Vector3 pos, Vector3 dir, Vector3 up)
+        private void SetViewMatrix(in Vector3 pos, in Vector3 dir, in Vector3 up)
         {
             Matrix4.LookAt(pos, pos + dir, up, out var view);
             View = view;

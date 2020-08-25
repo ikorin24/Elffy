@@ -3,7 +3,6 @@ using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Elffy.Core;
-using Elffy.Threading;
 using Elffy.AssemblyServices;
 
 namespace Elffy
