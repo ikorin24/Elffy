@@ -24,7 +24,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elffy.Games", "Elffy.Games\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elffy.Memory", "Elffy.Memory\Elffy.Memory.csproj", "{96B1EDE5-ACE3-4B24-BFB9-DCFA77F0A9C7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Elffy.Utility", "Elffy.Utility\Elffy.Utility.csproj", "{51BEEF68-F6F4-4A42-8572-34973FB4A090}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elffy.Utility", "Elffy.Utility\Elffy.Utility.csproj", "{51BEEF68-F6F4-4A42-8572-34973FB4A090}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
