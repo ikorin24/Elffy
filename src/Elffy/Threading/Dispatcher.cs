@@ -31,13 +31,15 @@ namespace Elffy.Threading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Invoke(Action action)
         {
-            if(action is null) { throw new ArgumentNullException(nameof(action)); }
+            if(action is null) { ThrowNullArg(); }
             if(IsMainThread()) {
-                action();
+                action!.Invoke();
             }
             else {
                 _invokedActions.Enqueue((null, action));
             }
+
+            static void ThrowNullArg() => throw new ArgumentNullException(nameof(action));
         }
 
         /// <summary>
@@ -50,13 +52,15 @@ namespace Elffy.Threading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Invoke(Action<object?> action, object? state)
         {
-            if(action is null) { throw new ArgumentNullException(nameof(action)); }
+            if(action is null) { ThrowNullArg(); }
             if(IsMainThread()) {
-                action(state);
+                action!.Invoke(state);
             }
             else {
                 _invokedActions.Enqueue((action, state));
             }
+
+            static void ThrowNullArg() => throw new ArgumentNullException(nameof(action));
         }
 
         /// <summary>現在のスレッドがメインスレッドかどうかを返します。</summary>
@@ -73,7 +77,9 @@ namespace Elffy.Threading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ThrowIfNotMainThread()
         {
-            if(IsMainThread() == false) { throw new InvalidOperationException("Current thread is not main thread."); }
+            if(IsMainThread() == false) { ThrowNotMain(); }
+
+            static void ThrowNotMain() => throw new InvalidOperationException("Current thread is not main thread.");
         }
 
         /// <summary>
