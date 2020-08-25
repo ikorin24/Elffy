@@ -112,6 +112,20 @@ namespace Elffy
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly Vector3 Normalized() => ((TKVector3)this).Normalized();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly Matrix4 ToTranslationMatrix4() => new Matrix4(1, 0, 0, X,
+                                                                      0, 1, 0, Y,
+                                                                      0, 0, 1, Z,
+                                                                      0, 0, 0, 1);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly Matrix4 ToScaleMatrix4() => new Matrix4(X, 0, 0, 0,
+                                                                0, Y, 0, 0,
+                                                                0, 0, Z, 0,
+                                                                0, 0, 0, 1);
+
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly override bool Equals(object? obj) => obj is Vector3 vector && Equals(vector);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
