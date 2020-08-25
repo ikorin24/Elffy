@@ -51,7 +51,7 @@ namespace Elffy
         public bool IsFrozen { get => _isFrozen; set => _isFrozen = value; }
 
         /// <summary>このオブジェクトに付けられたタグ</summary>
-        public ref object? Tag => ref _tag;
+        public object? Tag { get => _tag; set => _tag = value; }
 
         /// <summary>
         /// このオブジェクトが所属するレイヤー。
@@ -63,29 +63,41 @@ namespace Elffy
         // Layer クラス以外の internal なレイヤーに乗るオブジェクトはこのプロパティを呼んではいけない。代わりに ILayer の方を使う。
         /// <summary>このオブジェクトのレイヤーを取得します</summary>
         /// <exception cref="InvalidOperationException"><see cref="IsAlive"/> が false です。</exception>
-        public Layer Layer => AssemblyState.IsDebug ? (Layer?)_layer ?? throw new InvalidOperationException()
-                                                    : Unsafe.As<Layer?>(_layer) ?? throw new InvalidOperationException();
-        // ↑Unsafe は怖いのでデバッグ時は通常キャストする。JITで分岐は消える。
+        public Layer Layer
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => AssemblyState.IsDebug ? (Layer?)_layer ?? throw new InvalidOperationException()
+                                         : Unsafe.As<Layer?>(_layer) ?? throw new InvalidOperationException();
+
+            // ↑Unsafe は怖いのでデバッグ時は通常キャストする。JITで分岐は消える。
+        }
 
 
         /// <summary>Get HostScreen of this <see cref="FrameObject"/>.</summary>
         /// <exception cref="InvalidOperationException"><see cref="IsAlive"/> が false です。</exception>
-        public IHostScreen HostScreen => (_hostScreen ??= _layer?.OwnerCollection?.OwnerRenderingArea?.OwnerScreen) ?? throw new InvalidOperationException();
+        public IHostScreen HostScreen
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => (_hostScreen ??= _layer?.OwnerCollection?.OwnerRenderingArea?.OwnerScreen) ?? throw new InvalidOperationException();
+        }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void EarlyUpdate()
         {
-            EarlyUpdated?.Invoke(this);
+            OnEarlyUpdate();
         }
 
         /// <summary>フレームの更新ごとに実行される更新処理</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void Update()
         {
-            Updated?.Invoke(this);
+            OnUpdate();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void LateUpdate()
         {
-            LateUpdated?.Invoke(this);
+            OnLateUpdte();
         }
 
         /// <summary>このオブジェクトを指定のレイヤーでアクティブにします</summary>
@@ -125,25 +137,19 @@ namespace Elffy
             OnTerminated();
         }
 
-        protected virtual void OnActivated()
-        {
-            Activated?.Invoke(this);
-        }
+        protected virtual void OnEarlyUpdate() => EarlyUpdated?.Invoke(this);
 
-        protected virtual void OnTerminated()
-        {
-            Terminated?.Invoke(this);
-        }
+        protected virtual void OnUpdate() => Updated?.Invoke(this);
 
-        protected virtual void OnAlive()
-        {
-            Alive?.Invoke(this);
-        }
+        protected virtual void OnLateUpdte() => LateUpdated?.Invoke(this);
 
-        protected virtual void OnDead()
-        {
-            Dead?.Invoke(this);
-        }
+        protected virtual void OnActivated() => Activated?.Invoke(this);
+
+        protected virtual void OnTerminated() => Terminated?.Invoke(this);
+
+        protected virtual void OnAlive() => Alive?.Invoke(this);
+
+        protected virtual void OnDead() => Dead?.Invoke(this);
 
         internal void AddToObjectStoreCallback()
         {
