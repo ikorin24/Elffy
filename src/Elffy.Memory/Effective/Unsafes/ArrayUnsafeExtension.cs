@@ -57,7 +57,7 @@ namespace Elffy.Effective.Unsafes
         private class ArrayDummy
         {
 #pragma warning disable 0169    // disable not used warning
-            private IntPtr _length;  // int Length (length is int32 but padding exists after it in x86.)
+            private IntPtr _length;  // int Length (length is int32 but padding exists after it in 32bit runtime.)
 #pragma warning restore 0169    // disable not used warning
             internal byte Data;
         }
