@@ -1,10 +1,13 @@
 ﻿#nullable enable
-using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
+using System;
+using Elffy.AssemblyServices;
+#if NETCOREAPP3_1
+using System.Runtime.InteropServices;
+#endif
 
 namespace Elffy.Effective.Unsafes
 {
-#if NET5_0
     public static class ArrayUnsafeExtension
     {
         /// <summary>Get array element at specified index without range checking.</summary>
@@ -17,10 +20,47 @@ namespace Elffy.Effective.Unsafes
         /// <param name="index">index of array</param>
         /// <returns>element in the array</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NETCOREAPP3_1
+        [CriticalDotnetDependency("netcoreapp3.1")]
+#endif
+#if !(NET5_0 || NETCOREAPP3_1)
+        [Obsolete("This method can be used only netcoreapp3.1 or after net5.0 ", true)]
+#endif
         public static ref T At<T>(this T[] source, int index)
         {
-            return ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(source), index);
-        }
-    }
+#if NET5_0 || NETCOREAPP3_1
+            return ref Unsafe.Add(ref GetArrayDataReference(source), index);
+#else
+            throw new NotSupportedException();
 #endif
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NETCOREAPP3_1
+        [CriticalDotnetDependency("netcoreapp3.1")]
+#endif
+#if !(NET5_0 || NETCOREAPP3_1)
+        [Obsolete("This method can be used only netcoreapp3.1 or after net5.0 ", true)]
+#endif
+        public static ref T GetArrayDataReference<T>(T[] array)
+        {
+#if NET5_0
+            return MemoryMarshal.GetArrayDataReference(source);
+#elif NETCOREAPP3_1
+            return ref Unsafe.As<byte, T>(ref Unsafe.As<ArrayDummy>(array).Data);
+#else
+            throw new NotSupportedException();
+#endif
+        }
+
+#if NETCOREAPP3_1
+        private class ArrayDummy
+        {
+#pragma warning disable 0169    // disable not used warning
+            private IntPtr _length;  // int Length (length is int32 but padding exists after it in x86.)
+#pragma warning restore 0169    // disable not used warning
+            internal byte Data;
+        }
+#endif
+    }
 }
