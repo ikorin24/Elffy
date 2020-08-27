@@ -19,18 +19,9 @@ namespace Elffy.Effective.Unsafes
         internal static Span<T> AsWritable<T>(this ReadOnlySpan<T> source)
             => MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(source), source.Length);
 
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [CriticalDotnetDependency("netcoreapp3.1")]
-        internal static Memory<T> AsMemory<T>(this List<T> list) => Unsafe.As<ListDummy<T>>(list)._items.AsMemory(0, list.Count);
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [CriticalDotnetDependency("netcoreapp3.1")]
         internal static Span<T> AsSpan<T>(this List<T> list) => Unsafe.As<ListDummy<T>>(list)._items.AsSpan(0, list.Count);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [CriticalDotnetDependency("netcoreapp3.1")]
-        internal static ReadOnlyMemory<T> AsReadOnlyMemory<T>(this List<T> list) => list.AsMemory();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [CriticalDotnetDependency("netcoreapp3.1")]
