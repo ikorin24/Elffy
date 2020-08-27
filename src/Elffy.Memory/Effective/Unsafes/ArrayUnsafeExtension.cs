@@ -45,7 +45,7 @@ namespace Elffy.Effective.Unsafes
         public static ref T GetArrayDataReference<T>(T[] array)
         {
 #if NET5_0
-            return MemoryMarshal.GetArrayDataReference(source);
+            return ref MemoryMarshal.GetArrayDataReference(array);
 #elif NETCOREAPP3_1
             return ref Unsafe.As<byte, T>(ref Unsafe.As<ArrayDummy>(array).Data);
 #else
