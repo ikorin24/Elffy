@@ -23,40 +23,35 @@ namespace Elffy.Effective
         }, LazyThreadSafetyMode.ExecutionAndPublication);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe bool TryRentByteMemory<T>(int length, out byte[]? array, out int start, out int rentByteLength, out int id, out int lenderNum) where T : unmanaged
+        public static unsafe bool TryRentByteMemory<T>(int length, out byte[]? array, out int start, out int id, out int lenderNum) where T : unmanaged
         {
-            Debug.Assert(typeof(T).IsValueType);
             var byteLength = sizeof(T) * length;
             var lenders = _lenders.Value;
             for(int i = 0; i < lenders.Length; i++) {
-                if(byteLength <= lenders[i].SegmentSize && lenders[i].TryRent(out array, out start, out var byteMemoryLength, out id)) {
-                    Debug.Assert(byteLength <= byteMemoryLength);
+                if(byteLength <= lenders[i].SegmentSize && lenders[i].TryRent(out array, out start, out id)) {
                     lenderNum = i;
-                    rentByteLength = byteLength;
                     return true;
                 }
             }
             array = null;
             start = 0;
-            rentByteLength = 0;
             lenderNum = -1;
             id = -1;
             return false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryRentObjectMemory(int length, out Memory<object> memory, out int id, out int lenderNum)
+        public static bool TryRentObjectMemory(int length, out object[]? array, out int start, out int id, out int lenderNum)
         {
             var lenders = _objLenders.Value;
             for(int i = 0; i < lenders.Length; i++) {
-                if(length <= lenders[i].SegmentSize && lenders[i].TryRent(out var array, out var start, out var rentMemoryLength, out id)) {
-                    Debug.Assert(length <= rentMemoryLength);
-                    memory = array.AsMemory(start, length);
+                if(length <= lenders[i].SegmentSize && lenders[i].TryRent(out array, out start, out id)) {
                     lenderNum = i;
                     return true;
                 }
             }
-            memory = Memory<object>.Empty;
+            array = null;
+            start = 0;
             lenderNum = -1;
             id = -1;
             return false;
@@ -89,7 +84,7 @@ namespace Elffy.Effective
             //     segID     |     0     |     1     |     2     |      3      |
             // _segmentState |   true    |   false   |   false   |    false    |
             // 
-            // _availableIDStack  | -1 | 2 | 1 | 3 |
+            // _availableIDStack  | X | 2 | 1 | 3 |         (X is whatever)
             //                          ↑
             //      Push (Return) ← _availableHead → Pop (Rent)
             // ---------------------------------------------------------------------
@@ -101,17 +96,20 @@ namespace Elffy.Effective
             //     segID     |     0     |     1     |     2     |      3      |
             // _segmentState |   true    |   false   |   true    |    false    |
             // 
-            // _availableIDStack  | -1 | -1 | 1 | 3 |
-            //                               ↑
+            // _availableIDStack  | X | X | 1 | 3 |         (X is whatever)
+            //                              ↑
             //                            _availableHead
             // ---------------------------------------------------------------------
+
+            private const int SYNC_ENTER = 1;
+            private const int SYNC_EXIT = 0;
 
             private readonly T[] _array;
             private readonly BitArray _segmentState;        // true は貸し出し中、false は貸出可能
             private readonly int[] _availableIDStack;
             private int _availableHead;
 
-            private object SyncRoot => this;
+            private int _syncFlag = 0;
 
             public int SegmentSize { get; }
             public int MaxCount => _availableIDStack.Length;
@@ -134,37 +132,53 @@ namespace Elffy.Effective
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool TryRent(out T[]? array, out int start, out int length, out int segID)
+            public bool TryRent(out T[]? array, out int start, out int segID)
             {
-                lock(SyncRoot) {
-                    if(_availableHead >= _availableIDStack.Length) {
-                        segID = -1;
-                        array = null;
-                        start = 0;
-                        length = 0;
-                        return false;
-                    }
+                var spinner = new SpinWait();
+                while(Interlocked.CompareExchange(ref _syncFlag, SYNC_ENTER, SYNC_EXIT) == SYNC_ENTER) {
+                    spinner.SpinOnce();
+                }
+                // --- begin sync
+
+                if(_availableHead >= _availableIDStack.Length) {
+                    _syncFlag = SYNC_EXIT;
+                    // --- end sync
+
+                    segID = -1;
+                    array = null;
+                    start = 0;
+                    return false;
+                }
+                else {
                     segID = _availableIDStack[_availableHead];
-                    _availableIDStack[_availableHead] = -1;
                     _availableHead++;
                     _segmentState[segID] = true;
+
+                    _syncFlag = SYNC_EXIT;
+                    // --- end sync
+
+                    array = _array;
+                    start = segID * SegmentSize;
+                    return true;
                 }
-                array = _array;
-                start = segID * SegmentSize;
-                length = SegmentSize;
-                return true;
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Return(int segID)
             {
-                if(segID < 0) { return; }
-                lock(SyncRoot) {
-                    if(_segmentState[segID] == false) { return; }
+                if((uint)segID >= (uint)MaxCount) { return; }
+                var spinner = new SpinWait();
+                while(Interlocked.CompareExchange(ref _syncFlag, SYNC_ENTER, SYNC_EXIT) == SYNC_ENTER) {
+                    spinner.SpinOnce();
+                }
+                // --- begin sync
+                if(_segmentState[segID] == true) {
                     _availableHead--;
                     _availableIDStack[_availableHead] = segID;
                     _segmentState[segID] = false;
                 }
+                _syncFlag = SYNC_EXIT;
+                // --- end sync
             }
         }
 
