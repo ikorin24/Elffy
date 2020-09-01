@@ -50,9 +50,10 @@ namespace Elffy.Shapes
             var syncContext = SynchronizationContext.Current;
             Debug.Assert(syncContext?.GetType() == typeof(CustomSynchronizationContext));
 
+            await UniTask.SwitchToThreadPool();
+
             // オリジナルのデータを書き換えているので注意、このメソッドは1回しか通らない前提
-            await UniTask.Run(() => PmxModelLoadHelper.ReverseTrianglePolygon(_pmxObject!.SurfaceList.AsSpan().AsWritable()),
-                              configureAwait: false);
+            PmxModelLoadHelper.ReverseTrianglePolygon(_pmxObject!.SurfaceList.AsSpan().AsWritable());
             var (vertices, parts, bonePositions) = await UniTask.WhenAll(
                 
                 // build vertices
@@ -93,67 +94,7 @@ namespace Elffy.Shapes
             else {
                 bonePositions.Dispose();
             }
-            ReleaseTemporaryBuffer(vertices);
-        }
 
-        protected override void OnRendering(in Matrix4 model, in Matrix4 view, in Matrix4 projection)
-        {
-            VAO.Bind(VAO);
-            IBO.Bind(IBO);
-            var parts = _parts;
-            if(parts != null) {
-                var pos = 0;
-                var textures = _textures;
-                Debug.Assert(textures is null == false);
-                for(int i = 0; i < parts.Length; i++) {
-                    textures.Current = parts[i].TextureIndex;
-                    ShaderProgram!.Apply(this, Layer.Lights, in model, in view, in projection);
-                    GL.DrawElements(BeginMode.Triangles, parts[i].VertexCount, DrawElementsType.UnsignedInt, pos * sizeof(int));
-                    pos += parts[i].VertexCount;
-                }
-            }
-            VAO.Unbind();
-            IBO.Unbind();
-        }
-
-        public static UniTask<PmxModel> LoadResourceAsync(string name)
-        {
-            return UniTask.Run(n =>
-            {
-                Debug.Assert(n is string);
-                var name = Unsafe.As<string>(n)!;
-                PMXObject pmx;
-                using(var stream = Resources.GetStream(name)) {
-                    pmx = PMXParser.Parse(stream);
-                }
-                var textureNames = pmx.TextureList.AsSpan();
-                var dir = Resources.GetDirectoryName(name);
-                var bitmaps = new RefTypeRentMemory<Bitmap>(textureNames.Length);
-                var bitmapSpan = bitmaps.Span;
-
-                for(int i = 0; i < bitmapSpan.Length; i++) {
-
-                    using var pooledArray = new PooledArray<char>(dir.Length + 1 + textureNames[i].GetCharCount());
-
-                    var texturePath = pooledArray.AsSpan();
-                    dir.CopyTo(texturePath);
-                    texturePath[dir.Length] = '/';
-                    textureNames[i].ToString(texturePath.Slice(dir.Length + 1));
-                    texturePath.Replace('\\', '/');
-                    var textureExt = texturePath.AsReadOnly().FilePathExtension();
-
-                    using var tStream = Resources.GetStream(texturePath.ToString());
-                    bitmapSpan[i] = BitmapHelper.StreamToBitmap(tStream, textureExt);
-                }
-                return new PmxModel(pmx, bitmaps);
-            }, name, configureAwait: false);
-        }
-
-        /// <summary>ロードのための一時バッファを非同期で解放します</summary>
-        /// <param name="vertices"></param>
-        /// <returns></returns>
-        private void ReleaseTemporaryBuffer(UnmanagedArray<RigVertex> vertices)
-        {
             // メモリ開放後始末 (非同期で問題ないので別スレッド)
             UniTask.WhenAll(
                 UniTask.Run(v =>
@@ -176,6 +117,63 @@ namespace Elffy.Shapes
                     _pmxObject = null;
                 })
             ).Forget();
+        }
+
+        protected override void OnRendering(in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        {
+            VAO.Bind(VAO);
+            IBO.Bind(IBO);
+            var parts = _parts;
+            if(parts != null) {
+                var pos = 0;
+                var textures = _textures;
+                Debug.Assert(textures is null == false);
+                for(int i = 0; i < parts.Length; i++) {
+                    textures.Current = parts[i].TextureIndex;
+                    ShaderProgram!.Apply(this, Layer.Lights, in model, in view, in projection);
+                    GL.DrawElements(BeginMode.Triangles, parts[i].VertexCount, DrawElementsType.UnsignedInt, pos * sizeof(int));
+                    pos += parts[i].VertexCount;
+                }
+            }
+            VAO.Unbind();
+            IBO.Unbind();
+        }
+
+        public static PmxModel LoadResource(string name)
+        {
+            PMXObject pmx;
+            using(var stream = Resources.GetStream(name)) {
+                pmx = PMXParser.Parse(stream);
+            }
+            var textureNames = pmx.TextureList.AsSpan();
+            var dir = Resources.GetDirectoryName(name);
+            var bitmaps = new RefTypeRentMemory<Bitmap>(textureNames.Length);
+            var bitmapSpan = bitmaps.Span;
+
+            for(int i = 0; i < bitmapSpan.Length; i++) {
+
+                using var pooledArray = new PooledArray<char>(dir.Length + 1 + textureNames[i].GetCharCount());
+
+                var texturePath = pooledArray.AsSpan();
+                dir.CopyTo(texturePath);
+                texturePath[dir.Length] = '/';
+                textureNames[i].ToString(texturePath.Slice(dir.Length + 1));
+                texturePath.Replace('\\', '/');
+                var textureExt = texturePath.AsReadOnly().FilePathExtension();
+
+                using var tStream = Resources.GetStream(texturePath.ToString());
+                bitmapSpan[i] = BitmapHelper.StreamToBitmap(tStream, textureExt);
+            }
+            return new PmxModel(pmx, bitmaps);
+        }
+
+        public static UniTask<PmxModel> LoadResourceAsync(string name)
+        {
+            return UniTask.Run(n =>
+            {
+                Debug.Assert(n is string);
+                return LoadResource(Unsafe.As<string>(n));
+            }, name, configureAwait: false);
         }
 
         private readonly struct RenderableParts
