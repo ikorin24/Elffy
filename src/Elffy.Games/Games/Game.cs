@@ -32,8 +32,9 @@ namespace Elffy.Games
         {
             _initialize = initialize ?? throw new ArgumentNullException(nameof(initialize));
 
-            ProcessHelper.SingleLaunch(() =>
-            {
+            ProcessHelper.SingleLaunch(Launch);
+
+            void Launch() {
                 try {
                     if(isDebug) {
                         DiagnosticsSetting.Run();
@@ -46,7 +47,7 @@ namespace Elffy.Games
                     Engine.End();
                     DiagnosticsSetting.Stop();
                 }
-            });
+            }
         }
 
         private static void InitScreen(IHostScreen screen)
