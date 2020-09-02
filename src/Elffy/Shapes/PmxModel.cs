@@ -131,7 +131,7 @@ namespace Elffy.Shapes
                 for(int i = 0; i < parts.Length; i++) {
                     textures.Current = parts[i].TextureIndex;
                     ShaderProgram!.Apply(this, Layer.Lights, in model, in view, in projection);
-                    GL.DrawElements(BeginMode.Triangles, parts[i].VertexCount, DrawElementsType.UnsignedInt, pos * sizeof(int));
+                    DrawElements(parts[i].VertexCount, pos * sizeof(int));
                     pos += parts[i].VertexCount;
                 }
             }

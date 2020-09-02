@@ -24,6 +24,24 @@ namespace Elffy.OpenGL
         internal readonly int Value => _vbo;
         internal readonly bool IsEmpty => _vbo == Consts.NULL;
 
+        /// <summary>Map vbo to memory as read-write.</summary>
+        /// <typeparam name="T">elements type</typeparam>
+        /// <returns>returns <see cref="MappedBuffer{T}"/>, which generates <see cref="Span{T}"/>.</returns>
+        public readonly MappedBuffer<T> Map<T>() where T : unmanaged
+        {
+            return new MappedBuffer<T>(this);
+        }
+
+        /// <summary>Map vbo to memory as read-only</summary>
+        /// <typeparam name="T">elements type</typeparam>
+        /// <returns>returns <see cref="ReadOnlyMappedBuffer{T}"/>, which generates <see cref="ReadOnlySpan{T}"/>.</returns>
+        public readonly ReadOnlyMappedBuffer<T> ReadOnlyMap<T>() where T : unmanaged
+        {
+            return new ReadOnlyMappedBuffer<T>(this);
+        }
+
+        /// <summary>Create new vertex buffer object</summary>
+        /// <returns>new <see cref="VBO"/></returns>
         internal static VBO Create()
         {
             var vbo = new VBO();
@@ -31,6 +49,8 @@ namespace Elffy.OpenGL
             return vbo;
         }
 
+        /// <summary>Delete vertex buffer object</summary>
+        /// <param name="vbo"><see cref="VBO"/> to delete</param>
         internal static unsafe void Delete(ref VBO vbo)
         {
             if(!vbo.IsEmpty) {
@@ -40,22 +60,30 @@ namespace Elffy.OpenGL
             }
         }
 
+        /// <summary>Bind vertex buffer object</summary>
+        /// <param name="vbo"><see cref="VBO"/> to bind</param>
         public static void Bind(in VBO vbo)
         {
             GL.BindBuffer(BufferTarget.ArrayBuffer, vbo._vbo);
         }
 
+        /// <summary>Unbind vertex buffer object</summary>
         public static void Unbind()
         {
             GL.BindBuffer(BufferTarget.ArrayBuffer, Consts.NULL);
         }
 
-        internal static unsafe void BindBufferData<TVertex>(ref VBO vbo, ReadOnlySpan<TVertex> vertices, BufferUsageHint usage) where TVertex : unmanaged
+        /// <summary>Bind <see cref="VBO"/> and send data</summary>
+        /// <typeparam name="T">data type</typeparam>
+        /// <param name="vbo"><see cref="VBO"/> to send data to</param>
+        /// <param name="vertices">sended data to vbo</param>
+        /// <param name="usage">buffer usage hint</param>
+        internal static unsafe void BindBufferData<T>(ref VBO vbo, ReadOnlySpan<T> vertices, BufferUsageHint usage) where T : unmanaged
         {
             Bind(vbo);
-            Unsafe.AsRef(vbo.ElementSize) = sizeof(TVertex);
+            Unsafe.AsRef(vbo.ElementSize) = sizeof(T);
             Unsafe.AsRef(vbo.Length) = vertices.Length;
-            fixed(TVertex* ptr = vertices) {
+            fixed(T* ptr = vertices) {
                 GL.BufferData(BufferTarget.ArrayBuffer, vbo.Length * vbo.ElementSize, (IntPtr)ptr, usage);
             }
         }
@@ -66,12 +94,12 @@ namespace Elffy.OpenGL
 
         public override bool Equals(object? obj) => obj is VBO vbo && Equals(vbo);
 
-        public bool Equals(VBO other) => _vbo == other._vbo && Length == other.Length;
+        public bool Equals(VBO other) => (_vbo == other._vbo) && (Length == other.Length) && (ElementSize == other.ElementSize);
 
-        public override int GetHashCode() => HashCode.Combine(_vbo, Length);
+        public override int GetHashCode() => HashCode.Combine(_vbo, Length, ElementSize);
 
-        public static bool operator ==(VBO left, VBO right) => left.Equals(right);
+        public static bool operator ==(in VBO left, in VBO right) => left.Equals(right);
 
-        public static bool operator !=(VBO left, VBO right) => !(left == right);
+        public static bool operator !=(in VBO left, in VBO right) => !(left == right);
     }
 }

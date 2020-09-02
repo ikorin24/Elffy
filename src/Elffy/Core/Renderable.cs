@@ -2,17 +2,10 @@
 using System;
 using OpenToolkit.Graphics.OpenGL4;
 using Elffy.Threading;
-using Elffy.Exceptions;
 using Elffy.Shading;
 using Elffy.OpenGL;
-using Elffy.Components;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.Drawing;
-using System.Threading.Tasks;
 using Elffy.Effective;
 using Elffy.Diagnostics;
-using Cysharp.Text;
 
 namespace Elffy.Core
 {
@@ -27,6 +20,7 @@ namespace Elffy.Core
         private VAO _vao;
         private ShaderSource _shader = PhongShaderSource.Instance;
         private ShaderProgram? _shaderProgram;
+        private int _instancingCount;
 
         /// <summary>Vertex Buffer Object</summary>
         public ref readonly VBO VBO => ref _vbo;
@@ -45,9 +39,25 @@ namespace Elffy.Core
             get => _shader;
             set
             {
-                if(value is null) { throw new ArgumentNullException(nameof(value)); }
-                if(IsLoaded) { throw new InvalidOperationException("already loaded"); }
-                _shader = value;
+                if(value is null) { ThrowNullArg(); }
+                if(IsLoaded) { ThrowAlreadyLoaded(); }
+                _shader = value!;
+
+                static void ThrowNullArg() => throw new ArgumentNullException(nameof(value));
+                static void ThrowAlreadyLoaded() => throw new InvalidOperationException("already loaded");
+            }
+        }
+
+        /// <summary>Get or set instancing count. No instancing if 0.</summary>
+        public int InstancingCount
+        {
+            get => _instancingCount;
+            set
+            {
+                if(value < 0) { ThrowOutOfRange(); }
+                _instancingCount = value;
+
+                static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(value));
             }
         }
 
@@ -92,10 +102,21 @@ namespace Elffy.Core
             VAO.Bind(_vao);
             IBO.Bind(_ibo);
             _shaderProgram!.Apply(this, Layer.Lights, in model, in view, in projection);
-            GL.DrawElements(BeginMode.Triangles, IBO.Length, DrawElementsType.UnsignedInt, 0);
+            DrawElements(IBO.Length, 0);
             VAO.Unbind();
             IBO.Unbind();
         }
+
+        protected void DrawElements(int count, int byteOffset)
+        {
+            if(_instancingCount == 0) {
+                GL.DrawElements(BeginMode.Triangles, count, DrawElementsType.UnsignedInt, byteOffset);
+            }
+            else {
+                GL.DrawElementsInstanced(PrimitiveType.Triangles, count, DrawElementsType.UnsignedInt, (IntPtr)byteOffset, _instancingCount);
+            }
+        }
+
 
         protected unsafe void LoadGraphicBuffer<TVertex>(Span<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged
             => LoadGraphicBuffer(vertices.AsReadOnly(), indices);

@@ -42,7 +42,7 @@ namespace Elffy.UI
             VAO.Bind(VAO);
             IBO.Bind(IBO);
             ShaderProgram!.Apply(this, Span<Light>.Empty, in model, in view, in projection);
-            GL.DrawElements(BeginMode.Triangles, IBO.Length, DrawElementsType.UnsignedInt, 0);
+            DrawElements(IBO.Length, 0);
             VAO.Unbind();
             IBO.Unbind();
         }
