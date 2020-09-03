@@ -1,10 +1,9 @@
 ﻿#nullable enable
-using Elffy.Exceptions;
 using Elffy.InputSystem;
 using Elffy.Threading;
-using Elffy.UI;
 using OpenToolkit.Graphics.OpenGL4;
 using System;
+using System.Diagnostics;
 using System.Drawing;
 
 namespace Elffy.Core
@@ -14,6 +13,8 @@ namespace Elffy.Core
     {
         const float UI_FAR = 1.01f;
         const float UI_NEAR = -0.01f;
+
+        private PostProcessor _postProcessor = new PostProcessor();
         /// <summary>UI の投影行列</summary>
         private Matrix4 _uiProjection;
 
@@ -160,6 +161,9 @@ namespace Elffy.Core
             var uiRoot = Layers.UILayer.UIRoot;
             uiRoot.Width = width;
             uiRoot.Height = height;
+
+            _postProcessor.UpdateSize(width, height);
+            Debug.WriteLine($"Size changed ({width}, {height})");
         }
     }
 }
