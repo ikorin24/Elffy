@@ -11,6 +11,8 @@ namespace Elffy.OpenGL
     {
         private readonly int _fbo;
 
+        public readonly bool IsEmpty => _fbo == Consts.NULL;
+
         private FBO(int fbo)
         {
             _fbo = fbo;
@@ -21,7 +23,7 @@ namespace Elffy.OpenGL
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, fbo._fbo);
         }
 
-        public static void Unbind(in FBO fbo)
+        public static void Unbind()
         {
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, Consts.NULL);
         }

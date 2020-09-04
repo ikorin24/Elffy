@@ -172,6 +172,7 @@ namespace Elffy
             if(_isClosed) { return; }
             _isClosed = true;
             _window.Close();
+            _renderingArea.Dispose();
             ReleaseResource();
         }
 

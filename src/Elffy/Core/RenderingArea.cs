@@ -9,11 +9,12 @@ using System.Drawing;
 namespace Elffy.Core
 {
     /// <summary>OpenGL が描画を行う領域を扱うクラスです</summary>
-    internal class RenderingArea
+    internal class RenderingArea : IDisposable
     {
         const float UI_FAR = 1.01f;
         const float UI_NEAR = -0.01f;
 
+        private bool _isEnabledPostProcess;
         private PostProcessor _postProcessor = new PostProcessor();
         /// <summary>UI の投影行列</summary>
         private Matrix4 _uiProjection;
@@ -30,9 +31,11 @@ namespace Elffy.Core
             get => _width;
             set
             {
-                if(value < 0) { throw new ArgumentOutOfRangeException(nameof(value), value, $"{nameof(value)} is out of range."); }
+                if(value < 0) { ThrowOutOfRange(); }
                 _width = value;
                 OnSizeChanged(0, 0, _width, _height);
+
+                void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(value), value, $"{nameof(value)} is out of range.");
             }
         }
         private int _width;
@@ -42,9 +45,11 @@ namespace Elffy.Core
             get => _height;
             set
             {
-                if(value < 0) { throw new ArgumentOutOfRangeException(nameof(value), value, $"{nameof(value)} is out of range."); }
+                if(value < 0) { ThrowOutOfRange(); }
                 _height = value;
                 OnSizeChanged(0, 0, _width, _height);
+
+                void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(value), value, $"{nameof(value)} is out of range.");
             }
         }
         private int _height;
@@ -54,12 +59,15 @@ namespace Elffy.Core
             get => new Size(_width, _height);
             set
             {
-                if(value.Width < 0) { throw new ArgumentOutOfRangeException(nameof(value.Width), value.Width, $"value is out of range."); }
-                if(value.Height < 0) { throw new ArgumentOutOfRangeException(nameof(value.Height), value.Height, $"value is out of range."); }
+                if(value.Width < 0) { ThrowWidthOutOfRange(); }
+                if(value.Height < 0) { ThrowHeightOutOfRange(); }
 
                 _width = value.Width;
                 _height = value.Height;
                 OnSizeChanged(0, 0, _width, _height);
+
+                void ThrowWidthOutOfRange() => throw new ArgumentOutOfRangeException(nameof(value.Width), value.Width, $"width is out of range.");
+                void ThrowHeightOutOfRange() => throw new ArgumentOutOfRangeException(nameof(value.Height), value.Height, $"height is out of range.");
             }
         }
 
@@ -97,6 +105,8 @@ namespace Elffy.Core
             GL.Enable(EnableCap.CullFace);
             GL.CullFace(CullFaceMode.Back);
             GL.FrontFace(FrontFaceDirection.Ccw);
+
+            //_isEnabledPostProcess = true;
         }
 
         /// <summary>フレームを更新して描画します</summary>
@@ -136,11 +146,19 @@ namespace Elffy.Core
             Dispatcher.DoInvokedAction();
 
             // レイヤー描画処理
+            var isEnabledPostProcess = _isEnabledPostProcess;
+            if(isEnabledPostProcess) {
+                _postProcessor.EnableOffScreenRendering();
+            }
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             foreach(var layer in Layers.AsReadOnlySpan()) {
                 layer.Render(Camera.Projection, Camera.View);
             }
             uiLayer.Render(_uiProjection);
+            if(isEnabledPostProcess) {
+                _postProcessor.RenderPostProcess(_uiProjection);
+                _postProcessor.DisableOffScreenRendering();
+            }
 
             // このフレームで削除されたオブジェクトの削除を適用
             systemLayer.ApplyRemove();
@@ -148,6 +166,11 @@ namespace Elffy.Core
                 layer.ApplyRemove();
             }
             uiLayer.ApplyRemove();
+        }
+
+        public void Dispose()
+        {
+            _postProcessor.Dispose();
         }
 
         private void OnSizeChanged(int x, int y, int width, int height)
@@ -162,7 +185,9 @@ namespace Elffy.Core
             uiRoot.Width = width;
             uiRoot.Height = height;
 
-            _postProcessor.UpdateSize(width, height);
+            if(_isEnabledPostProcess) {
+                _postProcessor.CreateNewBuffer(width, height);
+            }
             Debug.WriteLine($"Size changed ({width}, {height})");
         }
     }
