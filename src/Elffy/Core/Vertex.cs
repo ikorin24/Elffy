@@ -31,7 +31,7 @@ namespace Elffy.Core
             });
         }
 
-        public Vertex(Vector3 position, Vector3 normal, Vector2 texcoord)
+        public Vertex(in Vector3 position, in Vector3 normal, in Vector2 texcoord)
         {
             Position = position;
             Normal = normal;
@@ -39,7 +39,7 @@ namespace Elffy.Core
             TexCoord = texcoord;
         }
 
-        public Vertex(Vector3 position, Vector3 normal, Color4 color, Vector2 texcoord)
+        public Vertex(in Vector3 position, in Vector3 normal, in Color4 color, in Vector2 texcoord)
         {
             Position = position;
             Normal = normal;
@@ -56,8 +56,8 @@ namespace Elffy.Core
 
         public override int GetHashCode() => HashCode.Combine(Position, Normal, Color, TexCoord);
 
-        public static bool operator ==(Vertex left, Vertex right) => left.Equals(right);
+        public static bool operator ==(in Vertex left, in Vertex right) => left.Equals(right);
 
-        public static bool operator !=(Vertex left, Vertex right) => !(left == right);
+        public static bool operator !=(in Vertex left, in Vertex right) => !(left == right);
     }
 }
