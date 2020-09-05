@@ -47,14 +47,14 @@ namespace Elffy.Core
             TexCoord = texcoord;
         }
 
-        public override bool Equals(object? obj) => obj is Vertex vertex && Equals(vertex);
+        public readonly override bool Equals(object? obj) => obj is Vertex vertex && Equals(vertex);
 
-        public bool Equals(Vertex other) => Position.Equals(other.Position) &&
-                                            Normal.Equals(other.Normal) &&
-                                            Color.Equals(other.Color) &&
-                                            TexCoord.Equals(other.TexCoord);
+        public readonly bool Equals(Vertex other) => Position.Equals(other.Position) &&
+                                                     Normal.Equals(other.Normal) &&
+                                                     Color.Equals(other.Color) &&
+                                                     TexCoord.Equals(other.TexCoord);
 
-        public override int GetHashCode() => HashCode.Combine(Position, Normal, Color, TexCoord);
+        public readonly override int GetHashCode() => HashCode.Combine(Position, Normal, Color, TexCoord);
 
         public static bool operator ==(in Vertex left, in Vertex right) => left.Equals(right);
 
