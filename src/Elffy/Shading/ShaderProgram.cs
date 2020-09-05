@@ -6,7 +6,6 @@ using Elffy.Core;
 using Elffy.OpenGL;
 using System.Diagnostics;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Shading
 {
@@ -44,13 +43,15 @@ namespace Elffy.Shading
 
         ~ShaderProgram() => Dispose(false);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void Apply(Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
-            if(IsReleased) { throw new InvalidOperationException("this shader program is empty or deleted."); }
-            if(!_initialized) { throw new InvalidOperationException("The shader is not initialized."); }
+            if(IsReleased) { ThrowEmptyShader(); }
+            if(!_initialized) { ThrowNotInitialized(); }
             ProgramObject.Bind(_program);
             _shaderSource!.SendUniforms(_program, target, lights, model, view, projection);
+
+            static void ThrowEmptyShader() => throw new InvalidOperationException("this shader program is empty or deleted.");
+            static void ThrowNotInitialized() => throw new InvalidOperationException("The shader is not initialized.");
         }
 
         internal void Initialize(Renderable target)

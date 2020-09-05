@@ -2,6 +2,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.CompilerServices;
 using Elffy.Core;
 using Elffy.OpenGL;
 using OpenToolkit.Graphics.OpenGL4;
@@ -31,6 +32,7 @@ namespace Elffy.Shading
         /// <param name="projection">projection 行列</param>
         protected abstract void SendUniforms(Uniform uniform, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void SendUniforms(ProgramObject program, Renderable target, ReadOnlySpan<Light> lights,
                                    in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
