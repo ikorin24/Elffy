@@ -14,7 +14,8 @@ namespace Elffy.Core
         private FBO _fbo;
         private TextureObject _to;
         private RBO _rbo;
-
+        private Vector2i _screenSize;
+        private Matrix4 _projection;
 
         private VAO _vao;
         private VBO _vbo;
@@ -26,27 +27,28 @@ namespace Elffy.Core
         private const string VertShaderSource =
 @"#version 440
 
-layout(location = 0) in vec3 _pos;
-layout(location = 1) in vec2 _uv;
-out vec2 uv_;
-uniform mat4 _mvp;
+in vec3 _pos;
+in vec2 _uv;
+out vec2 _uv2;
 
 void main()
 {
-    uv_ = _uv;
-    gl_Position = _mvp * vec4(_pos, 1.0);
+    _uv2 = _uv;
+    gl_Position = vec4(_pos, 1.0);
 }
 ";
         private const string FragShaderSource =
 @"#version 440
 
-in vec2 uv_;
+in vec2 _uv2;
 out vec4 _color;
 uniform sampler2D _sampler;
 
 void main()
 {
-    _color = texture(_sampler, uv_);
+    vec4 c = texture(_sampler, _uv2);
+    //_color = vec4(1.0, c.g, c.b, 1.0);
+    _color = vec4(1.0 - c.x, 1.0 - c.y, 1.0 - c.z, 1.0);
 }
 ";
 
@@ -68,20 +70,23 @@ void main()
             FBO.Unbind();
         }
 
-        internal void RenderPostProcess(in Matrix4 projection)
+        internal void Render()
         {
-            // This method is called from a context which binded to fbo.
+            const TextureUnitNumber textureUnit = TextureUnitNumber.Unit0;
 
             VAO.Bind(_vao);
             IBO.Bind(_ibo);
-            const TextureUnitNumber textureUnit = TextureUnitNumber.Unit0;
             TextureObject.Bind2D(_to, textureUnit);
+            ProgramObject.Bind(_program);
             var uniform = new Uniform(_program);
-            //uniform.Send(2, projection);                // location 2: matrix
-            uniform.Send("_mvp", projection);                // location 2: matrix
-            //uniform.Send(4, TextureUnitNumber.Unit0);   // location 4: texture sampler
-            uniform.Send("_sampler", textureUnit);   // location 4: texture sampler
+            uniform.Send("_sampler", textureUnit);
+            var depthTestEnabled = GL.IsEnabled(EnableCap.DepthTest);
+            GL.Disable(EnableCap.DepthTest);
+            GL.Clear(ClearBufferMask.ColorBufferBit);
             GL.DrawElements(BeginMode.Triangles, _ibo.Length, DrawElementsType.UnsignedInt, 0);
+            if(depthTestEnabled) {
+                GL.Enable(EnableCap.DepthTest);
+            }
             VAO.Unbind();
             IBO.Unbind();
             TextureObject.Unbind2D(textureUnit);
@@ -94,6 +99,7 @@ void main()
                     FBO.Delete(ref _fbo);
                     TextureObject.Delete(ref _to);
                     RBO.Delete(ref _rbo);
+                    _screenSize = default;
                 }
                 return;
             }
@@ -113,8 +119,9 @@ void main()
             _fbo = fbo;
             _to = to;
             _rbo = rbo;
+            _screenSize = new Vector2i(width, height);
+            Matrix4.OrthographicProjection(0, 1, 0, 1, -1, 1, out _projection);
 
-            
             static void CreateBuffer(int width, int height, out FBO fbo, out TextureObject to, out RBO rbo)
             {
                 Debug.Assert(width > 0);
@@ -154,16 +161,13 @@ void main()
             // | / |
             // 1 - 2
 
-            const int S = 1;
-            ReadOnlySpan<float> vertices = stackalloc float[]
+            ReadOnlySpan<VertexSlim> vertices = stackalloc VertexSlim[4]
             {
-                // [pos]        [uv]
-                -S,  S, 0,      0, 1,   // 0
-                -S, -S, 0,      0, 0,   // 1
-                S,  -S, 0,      1, 0,   // 2
-                S,  S,  0,      1, 1,   // 3
+                new VertexSlim(new Vector3(-1, 1, 0),  new Vector2(0, 1)),
+                new VertexSlim(new Vector3(-1, -1, 0), new Vector2(0, 0)),
+                new VertexSlim(new Vector3(1, -1, 0),  new Vector2(1, 0)),
+                new VertexSlim(new Vector3(1, 1, 0),   new Vector2(1, 1)),
             };
-
             ReadOnlySpan<int> indices = stackalloc int[6]
             {
                 0, 1, 3, 1, 2, 3,
@@ -178,7 +182,7 @@ void main()
             try {
                 _program = CompileShader(VertShaderSource, FragShaderSource);
             }
-            catch(Exception) {
+            catch {
                 VBO.Unbind();
                 IBO.Unbind();
                 VAO.Unbind();
@@ -188,13 +192,9 @@ void main()
                 throw;
             }
 
-            // vertex mapping
-            // pos
-            GL.EnableVertexAttribArray(0);
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, sizeof(float) * 5, 0);
-            // uv
-            GL.EnableVertexAttribArray(1);
-            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, sizeof(float) * 5, sizeof(float) * 3);
+            var def = new VertexDefinition(_program);
+            def.Map<VertexSlim>(nameof(VertexSlim.Position), "_pos");
+            def.Map<VertexSlim>(nameof(VertexSlim.UV), "_uv");
 
             VAO.Unbind();
             VBO.Unbind();
@@ -207,7 +207,6 @@ void main()
                 GL.ShaderSource(vertShader, vertSource);
                 GL.CompileShader(vertShader);
                 GL.GetShader(vertShader, ShaderParameter.CompileStatus, out int vertCompileStatus);
-                //Debug.Assert(vertCompileStatus != Consts.ShaderCompileFailed);
                 if(vertCompileStatus == Consts.ShaderCompileFailed) {
                     var log = GL.GetShaderInfoLog(vertShader);
                     throw new InvalidDataException($"Compiling shader is Failed.{Environment.NewLine}{log}{Environment.NewLine}{vertSource}");
@@ -218,7 +217,6 @@ void main()
                 GL.ShaderSource(fragShader, fragSource);
                 GL.CompileShader(fragShader);
                 GL.GetShader(fragShader, ShaderParameter.CompileStatus, out int fragCompileStatus);
-                //Debug.Assert(fragCompileStatus != Consts.ShaderCompileFailed);
                 if(fragCompileStatus == Consts.ShaderCompileFailed) {
                     var log = GL.GetShaderInfoLog(fragShader);
                     throw new InvalidDataException($"Compiling shader is Failed.{Environment.NewLine}{log}{Environment.NewLine}{fragSource}");
@@ -229,7 +227,6 @@ void main()
                 GL.AttachShader(program.Value, fragShader);
                 GL.LinkProgram(program.Value);
                 GL.GetProgram(program.Value, GetProgramParameterName.LinkStatus, out int linkStatus);
-                //Debug.Assert(linkStatus != Consts.ShaderProgramLinkFailed);
                 if(linkStatus == Consts.ShaderProgramLinkFailed) {
                     var log = GL.GetProgramInfoLog(program.Value);
                     throw new InvalidOperationException($"Linking shader is failed.{Environment.NewLine}{log}");

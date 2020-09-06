@@ -14,8 +14,7 @@ namespace Elffy.Core
         const float UI_FAR = 1.01f;
         const float UI_NEAR = -0.01f;
 
-        private bool _isEnabledPostProcess;
-        private PostProcessor _postProcessor = new PostProcessor();
+        private readonly PostProcessor _postProcessor = new PostProcessor();
         /// <summary>UI の投影行列</summary>
         private Matrix4 _uiProjection;
 
@@ -25,6 +24,8 @@ namespace Elffy.Core
         internal LayerCollection Layers { get; }
         internal Camera Camera { get; } = new Camera();
         internal Mouse Mouse { get; } = new Mouse();
+
+        internal bool IsEnabledPostProcess { get; set; }
 
         internal int Width
         {
@@ -94,8 +95,6 @@ namespace Elffy.Core
         {
             ClearColor = Color4.Gray;
             GL.Enable(EnableCap.DepthTest);
-            GL.Enable(EnableCap.Texture1D);
-            GL.Enable(EnableCap.Texture2D);
 
             // αブレンディング設定
             GL.Enable(EnableCap.Blend);
@@ -122,21 +121,21 @@ namespace Elffy.Core
             }
             uiLayer.ApplyAdd();
 
-            // 事前レイヤー更新
+            // Early update
             systemLayer.EarlyUpdate();
             foreach(var layer in Layers.AsReadOnlySpan()) {
                 layer.EarlyUpdate();
             }
             uiLayer.EarlyUpdate();
 
-            // レイヤー更新
+            // Update
             systemLayer.Update();
             foreach(var layer in Layers.AsReadOnlySpan()) {
                 layer.Update();
             }
             uiLayer.Update();
 
-            // 事後レイヤー更新
+            // Late update
             systemLayer.LateUpdate();
             foreach(var layer in Layers.AsReadOnlySpan()) {
                 layer.LateUpdate();
@@ -145,8 +144,8 @@ namespace Elffy.Core
 
             Dispatcher.DoInvokedAction();
 
-            // レイヤー描画処理
-            var isEnabledPostProcess = _isEnabledPostProcess;
+            // Render
+            var isEnabledPostProcess = IsEnabledPostProcess;
             if(isEnabledPostProcess) {
                 _postProcessor.EnableOffScreenRendering();
             }
@@ -156,8 +155,8 @@ namespace Elffy.Core
             }
             uiLayer.Render(_uiProjection);
             if(isEnabledPostProcess) {
-                _postProcessor.RenderPostProcess(_uiProjection);
                 _postProcessor.DisableOffScreenRendering();
+                _postProcessor.Render();
             }
 
             // このフレームで削除されたオブジェクトの削除を適用
@@ -185,7 +184,7 @@ namespace Elffy.Core
             uiRoot.Width = width;
             uiRoot.Height = height;
 
-            if(_isEnabledPostProcess) {
+            if(IsEnabledPostProcess) {
                 _postProcessor.CreateNewBuffer(width, height);
             }
             Debug.WriteLine($"Size changed ({width}, {height})");

@@ -34,14 +34,14 @@ namespace Elffy.UI
             var p1 = p0 + new Vector3(control.Width, 0, 0);
             var p2 = p0 + new Vector3(control.Width, control.Height, 0);
             var p3 = p0 + new Vector3(0, control.Height, 0);
-            Span<VertexSlim> vertices = stackalloc VertexSlim[4]
+            ReadOnlySpan<VertexSlim> vertices = stackalloc VertexSlim[4]
             {
                 new VertexSlim(p0, new Vector2(0, 1)),
                 new VertexSlim(p1, new Vector2(1, 1)),
                 new VertexSlim(p2, new Vector2(1, 0)),
                 new VertexSlim(p3, new Vector2(0, 0)),
             };
-            Span<int> indices = stackalloc int[6] { 0, 2, 1, 2, 0, 3 };
+            ReadOnlySpan<int> indices = stackalloc int[6] { 0, 2, 1, 2, 0, 3 };
             LoadGraphicBuffer(vertices, indices);
         }
 
