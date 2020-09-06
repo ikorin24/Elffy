@@ -7,7 +7,7 @@ using Elffy.Core;
 
 namespace Elffy.OpenGL
 {
-    [DebuggerDisplay("VBO={Value}, Length={Length}")]
+    [DebuggerDisplay("VBO={Value}, Length={Length}, ElementSize={ElementSize}")]
     public readonly struct VBO : IEquatable<VBO>
     {
         // バッファの削除は internal にするために、IDispose.Dispose にしない。interface の実装は public になってしまう。
