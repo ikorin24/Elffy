@@ -18,71 +18,59 @@ namespace Elffy.Core
         /// <summary>UI の投影行列</summary>
         private Matrix4 _uiProjection;
 
-        internal IHostScreen OwnerScreen { get; }
+        public IHostScreen OwnerScreen { get; }
 
         /// <summary>レイヤーのリスト</summary>
-        internal LayerCollection Layers { get; }
-        internal Camera Camera { get; } = new Camera();
-        internal Mouse Mouse { get; } = new Mouse();
+        public LayerCollection Layers { get; }
+        public Camera Camera { get; } = new Camera();
+        public Mouse Mouse { get; } = new Mouse();
 
-        internal bool IsEnabledPostProcess { get; set; }
+        public bool IsEnabledPostProcess { get; set; }
 
-        internal int Width
+        public int Width
         {
             get => _width;
             set
             {
                 if(value < 0) { ThrowOutOfRange(); }
                 _width = value;
-                OnSizeChanged(0, 0, _width, _height);
+                OnSizeChanged(_width, _height);
 
                 void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(value), value, $"{nameof(value)} is out of range.");
             }
         }
         private int _width;
 
-        internal int Height
+        public int Height
         {
             get => _height;
             set
             {
                 if(value < 0) { ThrowOutOfRange(); }
                 _height = value;
-                OnSizeChanged(0, 0, _width, _height);
+                OnSizeChanged(_width, _height);
 
                 void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(value), value, $"{nameof(value)} is out of range.");
             }
         }
         private int _height;
 
-        internal Size Size
+        public Vector2i Size
         {
-            get => new Size(_width, _height);
+            get => new Vector2i(_width, _height);
             set
             {
-                if(value.Width < 0) { ThrowWidthOutOfRange(); }
-                if(value.Height < 0) { ThrowHeightOutOfRange(); }
+                if(value.X < 0) { ThrowWidthOutOfRange(); }
+                if(value.Y < 0) { ThrowHeightOutOfRange(); }
 
-                _width = value.Width;
-                _height = value.Height;
-                OnSizeChanged(0, 0, _width, _height);
+                _width = value.X;
+                _height = value.Y;
+                OnSizeChanged(_width, _height);
 
-                void ThrowWidthOutOfRange() => throw new ArgumentOutOfRangeException(nameof(value.Width), value.Width, $"width is out of range.");
-                void ThrowHeightOutOfRange() => throw new ArgumentOutOfRangeException(nameof(value.Height), value.Height, $"height is out of range.");
+                void ThrowWidthOutOfRange() => throw new ArgumentOutOfRangeException("Width", value.X, $"width is out of range.");
+                void ThrowHeightOutOfRange() => throw new ArgumentOutOfRangeException("Height", value.Y, $"height is out of range.");
             }
         }
-
-        /// <summary>get or set color of clearing rendering area on beginning of each frames.</summary>
-        internal Color4 ClearColor
-        {
-            get => _clearColor;
-            set
-            {
-                _clearColor = value;
-                GL.ClearColor(_clearColor);
-            }
-        }
-        private Color4 _clearColor;
 
         internal RenderingArea(IHostScreen screen)
         {
@@ -91,27 +79,26 @@ namespace Elffy.Core
         }
 
         /// <summary>OpenTL の描画に関する初期設定を行います</summary>
-        internal void InitializeGL()
+        public void InitializeGL()
         {
-            ClearColor = Color4.Gray;
+            GL.ClearColor(Color4.Gray);
             GL.Enable(EnableCap.DepthTest);
 
-            // αブレンディング設定
+            // Enable alpha blending.
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
-            // 裏面削除 反時計回りが表でカリング
+            // Enable back face culling. front face is counter clockwise
             GL.Enable(EnableCap.CullFace);
             GL.CullFace(CullFaceMode.Back);
             GL.FrontFace(FrontFaceDirection.Ccw);
 
-            //_isEnabledPostProcess = true;
             // Enable Multi Sampling Anti-alias (MSAA)
             GL.Enable(EnableCap.Multisample);
         }
 
         /// <summary>フレームを更新して描画します</summary>
-        internal void RenderFrame()
+        public void RenderFrame()
         {
             var systemLayer = Layers.SystemLayer;
             var uiLayer = Layers.UILayer;
@@ -174,14 +161,14 @@ namespace Elffy.Core
             _postProcessor.Dispose();
         }
 
-        private void OnSizeChanged(int x, int y, int width, int height)
+        private void OnSizeChanged(int width, int height)
         {
             // Change view and projection matrix (World).
             Camera.ChangeScreenSize(width, height);
 
             // Change projection matrix (UI)
-            GL.Viewport(x, y, width, height);
-            Matrix4.OrthographicProjection(x, x + width, y, y + height, UI_NEAR, UI_FAR, out _uiProjection);
+            GL.Viewport(0, 0, width, height);
+            Matrix4.OrthographicProjection(0, width, 0, height, UI_NEAR, UI_FAR, out _uiProjection);
             var uiRoot = Layers.UILayer.UIRoot;
             uiRoot.Width = width;
             uiRoot.Height = height;

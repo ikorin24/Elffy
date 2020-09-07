@@ -8,9 +8,9 @@ using System.Drawing;
 using Elffy.Core.Timer;
 using OpenToolkit.Windowing.Desktop;
 using OpenToolkit.Windowing.Common;
-using OpenToolkit.Mathematics;
 using TKMouseButton = OpenToolkit.Windowing.Common.Input.MouseButton;
 using TKMouseButtonEventArgs = OpenToolkit.Windowing.Common.MouseButtonEventArgs;
+using GLFW = OpenToolkit.Windowing.GraphicsLibraryFramework.GLFW;
 
 namespace Elffy
 {
@@ -18,8 +18,7 @@ namespace Elffy
     public class Window : IHostScreen
     {
         private bool _isClosed;
-        private const string DEFAULT_WINDOW_TITLE = "Window";
-        //private readonly GameWindow _window;
+        private const string DefaultTitle = "Window";
         private readonly CustomGameWindow _window;
         /// <summary>描画領域に関する処理を行うオブジェクト</summary>
         private readonly RenderingArea _renderingArea;
@@ -42,7 +41,6 @@ namespace Elffy
 
         public VSyncMode VSync { get => _window.VSync; set => _window.VSync = value; }
 
-        //public Size ClientSize { get => _window.ClientSize; set => _window.ClientSize = value; }
         public Vector2i ClientSize
         {
             get => _window.ClientSize;
@@ -72,7 +70,7 @@ namespace Elffy
 
         /// <summary>スタイルを指定してウィンドウを作成します</summary>
         /// <param name="windowStyle">ウィンドウのスタイル</param>
-        public Window(WindowStyle windowStyle) : this(800, 450, DEFAULT_WINDOW_TITLE, windowStyle) { }
+        public Window(WindowStyle windowStyle) : this(800, 450, DefaultTitle, windowStyle) { }
 
         /// <summary>サイズとタイトルとスタイルを指定して、ウィンドウを作成します</summary>
         /// <param name="width">ウィンドウの幅</param>
@@ -82,7 +80,6 @@ namespace Elffy
         public Window(int width, int height, string title, WindowStyle windowStyle)
         {
             _renderingArea = new RenderingArea(this);
-            //_window = new GameWindow(width, height, GraphicsMode.Default, title, (GameWindowFlags)windowStyle);
 
             var gwSetting = new GameWindowSettings()
             {
@@ -93,7 +90,7 @@ namespace Elffy
             var nwSetting = new NativeWindowSettings()
             {
                 Title = title,
-                Size = new Vector2i(width, height),     // TODO: クライアントサイズなのかどうか要確認
+                Size = new Vector2i(width, height),
                 IsFullscreen = windowStyle == WindowStyle.Fullscreen,
                 IsEventDriven = false,
                 WindowBorder = (windowStyle == WindowStyle.FixedWindow) ? WindowBorder.Fixed : WindowBorder.Resizable,
@@ -116,26 +113,6 @@ namespace Elffy
             _window.Unload += ReleaseResource;
             _window.Resize += OnResize;
             _window.RenderFrame += OnRenderFrame;
-
-            //if(windowStyle != WindowStyle.Fullscreen) {
-            //    _window.ClientSize = new Size(width, height);
-            //}
-            //_window.TargetRenderFrequency = DisplayDevice.Default.RefreshRate;
-            //_frameDelta = TimeSpan.FromSeconds(1.0 / _window.TargetRenderFrequency);
-            //_window.Load += OnLoad;
-            //_window.Closed += OnClosed;
-            //_window.Resize += OnResize;
-            //_window.RenderFrame += OnRenderFrame;
-
-            //OpenToolkit.Windowing.Common.Input.MouseButton
-
-            //MouseButton? GetMouseButton(TKMouseButton button) => button switch
-            //{
-            //    TKMouseButton.Left => MouseButton.Left,
-            //    TKMouseButton.Right => MouseButton.Right,
-            //    TKMouseButton.Middle => MouseButton.Middle,
-            //    _ => (MouseButton?)null
-            //};
 
             void MouseButtonStateChanged(TKMouseButtonEventArgs e)
             {
@@ -160,14 +137,6 @@ namespace Elffy
             _window.MouseUp += MouseButtonStateChanged;
             _window.MouseEnter += () => Mouse.ChangeOnScreen(true);
             _window.MouseLeave += () => Mouse.ChangeOnScreen(false);
-
-
-            //_window.MouseMove += (sender, e) => Mouse.ChangePosition(new Point(e.X, e.Y));
-            //_window.MouseWheel += (sender, e) => Mouse.ChangeWheel(e.Mouse.WheelPrecise);
-            //_window.MouseDown += MouseButtonStateChanged;
-            //_window.MouseUp += MouseButtonStateChanged;
-            //_window.MouseEnter += (sender, e) => Mouse.ChangeOnScreen(true);
-            //_window.MouseLeave += (sender, e) => Mouse.ChangeOnScreen(false);
         }
 
         void IHostScreen.Close() => Close();
@@ -234,8 +203,7 @@ namespace Elffy
         private void OnResize(ResizeEventArgs e)
         {
             Dispatcher.ThrowIfNotMainThread();
-            //_renderingArea.Size = _window.ClientSize;
-            _renderingArea.Size = new Size(_window.ClientSize.X, _window.ClientSize.Y);
+            _renderingArea.Size = _window.ClientSize;
         }
 
         private void OnRenderFrame(FrameEventArgs e)
@@ -255,11 +223,12 @@ namespace Elffy
         private void ReleaseResource()
         {
             // 全てのレイヤーに含まれるオブジェクトを破棄し、レイヤーを削除
-            _renderingArea.Layers.SystemLayer.ClearFrameObject();
-            foreach(var layer in _renderingArea.Layers.AsReadOnlySpan()) {
+            var layers = _renderingArea.Layers;
+            layers.SystemLayer.ClearFrameObject();
+            foreach(var layer in layers.AsReadOnlySpan()) {
                 layer.ClearFrameObject();
             }
-            _renderingArea.Layers.Clear();
+            layers.Clear();
         }
     }
 }
