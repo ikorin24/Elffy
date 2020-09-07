@@ -102,6 +102,13 @@ namespace Elffy
                 Profile = ContextProfile.Core,
                 Location = null,
             };
+
+            // Multi Sampling を有効にする (MSAA; Multi Sampling Anti Alias)
+            // TODO: 暫定的実装
+            //       CustomGameWindow 内に書きたいが GLFW ウィンドウ作成前に実行しておく必要がある。
+            //       CustomGameWindow が NativeWindow を継承しないように実装変更した時にそちらに移すべき
+            GLFW.WindowHint(OpenToolkit.Windowing.GraphicsLibraryFramework.WindowHintInt.Samples, 4);
+
             _window = new CustomGameWindow(gwSetting, nwSetting);
             _window.VSync = VSyncMode.On;
             _frameDelta = TimeSpan.FromSeconds(1.0 / gwSetting.RenderFrequency);

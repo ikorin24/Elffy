@@ -106,6 +106,8 @@ namespace Elffy.Core
             GL.FrontFace(FrontFaceDirection.Ccw);
 
             //_isEnabledPostProcess = true;
+            // Enable Multi Sampling Anti-alias (MSAA)
+            GL.Enable(EnableCap.Multisample);
         }
 
         /// <summary>フレームを更新して描画します</summary>
