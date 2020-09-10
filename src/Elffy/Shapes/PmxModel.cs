@@ -1,9 +1,7 @@
 ﻿#nullable enable
 using System.Diagnostics;
-using System.Threading.Tasks;
 using System.Drawing;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using Elffy.Core;
 using Elffy.Effective;
 using Elffy.Imaging;
@@ -12,7 +10,6 @@ using Elffy.OpenGL;
 using Elffy.Serialization;
 using Elffy.Effective.Unsafes;
 using Elffy.Threading;
-using OpenToolkit.Graphics.OpenGL4;
 using Cysharp.Threading.Tasks;
 using UnmanageUtility;
 using MMDTools.Unmanaged;
@@ -27,7 +24,7 @@ namespace Elffy.Shapes
         private UnmanagedArray<RenderableParts>? _parts;
         private MultiTexture? _textures;
 
-        private unsafe PmxModel(PMXObject pmxObject, in RefTypeRentMemory<Bitmap> textureBitmaps)
+        private PmxModel(PMXObject pmxObject, in RefTypeRentMemory<Bitmap> textureBitmaps)
         {
             Debug.Assert(pmxObject != null);
             _pmxObject = pmxObject;
@@ -47,8 +44,6 @@ namespace Elffy.Shapes
             base.OnActivated();
 
             Debug.Assert(Dispatcher.IsMainThread());
-            var syncContext = SynchronizationContext.Current;
-            Debug.Assert(syncContext?.GetType() == typeof(CustomSynchronizationContext));
 
             await UniTask.SwitchToThreadPool();
 
@@ -70,8 +65,7 @@ namespace Elffy.Shapes
                                 .AsSpan()
                                 .SelectToUnmanagedArray(b => new Vector4(b.Position.ToVector3(), 0f)))
                 );
-            await UniTask.SwitchToSynchronizationContext(syncContext);
-
+            await AsyncHelper.SwitchToMain();
 
             Debug.Assert(Dispatcher.IsMainThread());
             _parts = parts;

@@ -34,18 +34,35 @@ namespace Elffy.Games
 
             ProcessHelper.SingleLaunch(Launch);
 
-            void Launch() {
+            //void Launch() {
+            //    try {
+            //        if(isDebug) {
+            //            DiagnosticsSetting.Run();
+            //        }
+            //        Resources.Initialize();
+            //        Engine.Run();
+            //        Engine.ShowScreen(width, height, title, Resources.LoadIcon("icon.ico"), WindowStyle.Default, InitScreen);   // TODO: リソース以外からのアイコン指定方法
+            //    }
+            //    finally {
+            //        Engine.End();
+            //        DiagnosticsSetting.Stop();
+            //    }
+            //}
+
+            void Launch()
+            {
                 try {
                     if(isDebug) {
                         DiagnosticsSetting.Run();
                     }
-                    Resources.Initialize();
-                    Engine.Run();
-                    Engine.ShowScreen(width, height, title, Resources.LoadIcon("icon.ico"), WindowStyle.Default, InitScreen);   // TODO: リソース以外からのアイコン指定方法
+                    var window = new Window();
+                    window.Initialized += InitScreen;
+                    Engine.Start(window);
                 }
                 finally {
-                    Engine.End();
-                    DiagnosticsSetting.Stop();
+                    if(isDebug) {
+                        DiagnosticsSetting.Stop();
+                    }
                 }
             }
         }

@@ -14,6 +14,7 @@ namespace Elffy.Core
         const float UI_FAR = 1.01f;
         const float UI_NEAR = -0.01f;
 
+        private bool _disposed;
         private readonly PostProcessor _postProcessor = new PostProcessor();
         /// <summary>UI の投影行列</summary>
         private Matrix4 _uiProjection;
@@ -158,6 +159,18 @@ namespace Elffy.Core
 
         public void Dispose()
         {
+            if(_disposed) { return; }
+            _disposed = true;
+
+            // Clear objects in all layers
+            var layers = Layers;
+            layers.SystemLayer.ClearFrameObject();
+            foreach(var layer in layers.AsReadOnlySpan()) {
+                layer.ClearFrameObject();
+            }
+            layers.Clear();
+
+            // Dispose resources of post process
             _postProcessor.Dispose();
         }
 
