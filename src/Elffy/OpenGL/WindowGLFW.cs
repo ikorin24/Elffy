@@ -449,18 +449,4 @@ namespace Elffy.OpenGL
             Images = images;
         }
     }
-
-
-    public ref struct WindowGLFWSetting
-    {
-        public int Width { get; set; }
-        public int Height { get; set; }
-        public string Title { get; set; }
-
-        public Span<Image> Icon { get; set; }
-
-        public bool AntiAliased { get; set; }
-
-        public WindowStyle Style { get; set; }
-    }
 }
