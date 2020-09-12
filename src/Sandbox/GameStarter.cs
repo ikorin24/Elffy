@@ -56,9 +56,9 @@ namespace Sandbox
 
 
             // キャラ1
-            PmxModel.LoadResourceAsync("Alicia/Alicia_solid.pmx").AsTask().ContinueWithDispatch(model =>
+            PmxModel.LoadResourceAsync("Alicia/Alicia_solid.pmx").ContinueWith(async model =>
             {
-                //model.Scale = new Vector3(0.3f);
+                await AsyncHelper.SwitchToMain();
                 model.AddComponent(new Material(new Color4(0.88f), new Color4(0.18f), new Color4(0.1f), 5f));
                 model.Shader = RigShaderSource.Instance;
                 model.Activate();
@@ -117,21 +117,6 @@ namespace Sandbox
                 Scale = new Vector3(500),
                 Shader = SkyShaderSource.Instance,
             }.Activate();
-
-
-
-            //var test = new TestPlain()
-            //{
-            //    Position = new Vector3(0, 1, 0),
-            //    Shader = TestShaderSource.Instance,
-            //};
-            //var data = new FloatDataTexture();
-            //var array = new Vector4[4];
-            //array[0] = new Vector4(2f, 2f, 2f, 1f);
-            //array[1] = new Vector4(0f, -5f, -5f, 0f);
-            //data.Load(array);
-            //test.AddComponent(data);
-            //test.Activate();
 
             InitializeUI();
         }
