@@ -14,6 +14,7 @@ using Image = OpenToolkit.Windowing.GraphicsLibraryFramework.Image;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Elffy.Core.OpenToolkit;
+using System.Runtime.CompilerServices;
 
 namespace Elffy.OpenGL
 {
@@ -72,7 +73,7 @@ namespace Elffy.OpenGL
         public event Action<WindowGLFW, MouseMoveEventArgs>? MouseMove;
         public event Action<WindowGLFW, MouseWheelEventArgs>? MouseWheel;
 
-        public event Action<WindowGLFW, FileDropEventArgs>? FileDrop;
+        public event FileDropEventHandler? FileDrop;
 
         private bool IsDisposed => _window == null;
 
@@ -164,7 +165,6 @@ namespace Elffy.OpenGL
                     throw new ArgumentException(nameof(style));
             }
             GLFW.WindowHint(WindowHintOpenGlProfile.OpenGlProfile, OpenGlProfile.Core);
-            //GLFW.WindowHint(WindowHintOpenGlProfile.OpenGlProfile, OpenGlProfile.Compat);
             GLFW.WindowHint(WindowHintClientApi.ClientApi, ClientApi.OpenGlApi);
             GLFW.WindowHint(WindowHintInt.ContextVersionMajor, 4);
             GLFW.WindowHint(WindowHintInt.ContextVersionMinor, 1);
@@ -361,67 +361,83 @@ namespace Elffy.OpenGL
 
             GLFW.SetWindowIconifyCallback(_window, (_, minimized) =>
             {
-                Debug.WriteLine("Not Impl");    // TODO:
+                Debug.WriteLine("Iconify Not Impl");    // TODO:
                 //Minimized?.Invoke(this, new MinimizedEventArgs(minimized));
             });
 
             GLFW.SetWindowFocusCallback(_window, (_, focused) =>
             {
-                Debug.WriteLine("Not Impl");    // TODO:
+                Debug.WriteLine("Focus Not Impl");    // TODO:
             });
 
             GLFW.SetCharCallback(_window, (_, codepoint) =>
             {
-                Debug.WriteLine("Not Impl");    // TODO:
+                Debug.WriteLine("Set char Not Impl");    // TODO:
             });
 
             GLFW.SetKeyCallback(_window, (_, key, scanCode, action, mods) =>
             {
-                Debug.WriteLine("Not Impl");    // TODO:
+                Debug.WriteLine("Key call Not Impl");    // TODO:
             });
 
             GLFW.SetCursorEnterCallback(_window, (_, entered) =>
             {
-                Debug.WriteLine("Not Impl");    // TODO:
+                Debug.WriteLine("Curosr Enter Not Impl");    // TODO:
             });
 
             GLFW.SetMouseButtonCallback(_window, (_, button, action, mods) =>
             {
-                Debug.WriteLine("Not Impl");    // TODO:
+                Debug.WriteLine("Mouse Button Not Impl");    // TODO:
             });
 
             GLFW.SetCursorPosCallback(_window, (_, x, y) =>
             {
-                Debug.WriteLine("Not Impl");    // TODO:
+                Debug.WriteLine("Cursor Pos Not Impl");    // TODO:
             });
 
             GLFW.SetScrollCallback(_window, (_, x, y) =>
             {
-                Debug.WriteLine("Not Impl");    // TODO:
+                Debug.WriteLine("Scroll Not Impl");    // TODO:
             });
 
             GLFW.SetDropCallback(_window, (_, count, paths) =>
             {
-                var files = new string[count];
-                for(int i = 0; i < files.Length; i++) {
-                    files[i] = Marshal.PtrToStringUTF8((IntPtr)paths[i]) ?? "";
+                Utf8StringRef* files;
+                var isHeap = false;
+                if(count > 16) {
+                    isHeap = true;
+                    files = (Utf8StringRef*)Marshal.AllocHGlobal(count * sizeof(Utf8StringRef));
                 }
-                FileDrop?.Invoke(this, new FileDropEventArgs(files));
+                else {
+                    var p = stackalloc Utf8StringRef[count];
+                    files = p;
+                }
+                try {
+                    for(int i = 0; i < count; i++) {
+                        files[i] = new Utf8StringRef(paths[i]);
+                    }
+                    FileDrop?.Invoke(this, new Utf8StringRefArray(files, count));
+                }
+                finally {
+                    if(isHeap) {
+                        Marshal.FreeHGlobal((IntPtr)files);
+                    }
+                }
             });
 
             GLFW.SetJoystickCallback((joystick, eventCode) =>
             {
-                Debug.WriteLine("Not Impl");    // TODO:
+                Debug.WriteLine("Joystick Not Impl");    // TODO:
             });
 
             GLFW.SetMonitorCallback((monitor, state) =>
             {
-                Debug.WriteLine("Not Impl");    // TODO:
+                Debug.WriteLine("Monitor Not Impl");    // TODO:
             });
 
             GLFW.SetWindowRefreshCallback(_window, _ =>
             {
-                Debug.WriteLine("Not Impl");    // TODO:
+                Debug.WriteLine("Refresh Not Impl");    // TODO:
             });
         }
 
@@ -437,6 +453,8 @@ namespace Elffy.OpenGL
         [DoesNotReturn]
         private void ThrowDisposed() => throw new ObjectDisposedException(nameof(WindowGLFW), "This window is already disposed.");
     }
+
+    internal delegate void FileDropEventHandler(WindowGLFW window, Utf8StringRefArray files);
 
     internal readonly ref struct WindowIconRaw
     {
