@@ -7,43 +7,46 @@ using Elffy.Core;
 
 namespace Elffy.OpenGL
 {
-    [DebuggerDisplay("IBO={Value}, Length={Length}")]
+    [DebuggerDisplay("IBO={_ibo}, Length={_length}")]
     public readonly struct IBO : IEquatable<IBO>
     {
-        // バッファの削除は internal にするために、IDispose.Dispose にしない。interface の実装は public になってしまう。
-        // int へのキャストを実装してはいけない。(public になるため)
-
-
-#pragma warning disable 0649    // Disable 'Field is never assigned to, and is always default'
         private readonly int _ibo;
-#pragma warning restore 0649
-        internal readonly int Length;
+        private readonly int _length;
 
-        internal readonly int Value => _ibo;
-        internal readonly bool IsEmpty => _ibo == Consts.NULL;
+        internal int Value => _ibo;
+
+        internal int Length => _length;
+
+        private IBO(int ibo)
+        {
+            _ibo = ibo;
+            _length = 0;
+        }
 
         internal static IBO Create()
         {
-            var ibo = new IBO();
-            Unsafe.AsRef(ibo._ibo) = GL.GenBuffer();
-            return ibo;
+            GLAssert.EnsureContext();
+            return new IBO(GL.GenBuffer());
         }
 
         internal static void Delete(ref IBO ibo)
         {
-            if(!ibo.IsEmpty) {
-                GL.DeleteBuffer(ibo.Value);
-                Unsafe.AsRef(ibo) = default;
+            if(ibo._ibo != Consts.NULL) {
+                GLAssert.EnsureContext();
+                GL.DeleteBuffer(ibo._ibo);
+                ibo = default;
             }
         }
 
         internal static void Bind(in IBO ibo)
         {
+            GLAssert.EnsureContext();
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, ibo._ibo);
         }
 
         internal static void Unbind()
         {
+            GLAssert.EnsureContext();
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, Consts.NULL);
         }
 
@@ -51,23 +54,19 @@ namespace Elffy.OpenGL
         {
             Bind(ibo);
             fixed(int* ptr = indices) {
+                GLAssert.EnsureContext();
                 GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(int), (IntPtr)ptr, usage);
             }
-            Unsafe.AsRef(ibo.Length) = indices.Length;
+            Unsafe.AsRef(ibo._length) = indices.Length;
         }
-
 
 
         public readonly override string ToString() => _ibo.ToString();
 
         public readonly override bool Equals(object? obj) => obj is IBO ibo && Equals(ibo);
 
-        public readonly bool Equals(IBO other) => _ibo == other._ibo && Length == other.Length;
+        public readonly bool Equals(IBO other) => (_ibo == other._ibo) && (_length == other._length);
 
-        public readonly override int GetHashCode() => HashCode.Combine(_ibo, Length);
-
-        public static bool operator ==(IBO left, IBO right) => left.Equals(right);
-
-        public static bool operator !=(IBO left, IBO right) => !(left == right);
+        public readonly override int GetHashCode() => HashCode.Combine(_ibo, _length);
     }
 }

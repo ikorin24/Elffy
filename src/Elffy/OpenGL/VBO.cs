@@ -7,56 +7,41 @@ using Elffy.Core;
 
 namespace Elffy.OpenGL
 {
-    [DebuggerDisplay("VBO={Value}, Length={Length}, ElementSize={ElementSize}")]
+    [DebuggerDisplay("VBO={_vbo}, Length={_length}, ElementSize={_elementSize}")]
     public readonly struct VBO : IEquatable<VBO>
     {
-        // バッファの削除は internal にするために、IDispose.Dispose にしない。interface の実装は public になってしまう。
-        // int へのキャストを実装してはいけない。(public になるため)
-
-
-#pragma warning disable 0649    // Disable 'Field is never assigned to, and is always default'
         private readonly int _vbo;
-#pragma warning restore 0649
-        internal readonly int Length;
+        private readonly int _length;
+        private readonly int _elementSize;
 
-        internal readonly int ElementSize;
+        internal int Value => _vbo;
+        internal int Length => _length;
+        internal int ElementSize => _elementSize;
+        public bool IsEmpty => _vbo == Consts.NULL;
 
-        internal readonly int Value => _vbo;
-        internal readonly bool IsEmpty => _vbo == Consts.NULL;
-
-        /// <summary>Map vbo to memory as read-write.</summary>
-        /// <typeparam name="T">elements type</typeparam>
-        /// <returns>returns <see cref="MappedBuffer{T}"/>, which generates <see cref="Span{T}"/>.</returns>
-        public readonly MappedBuffer<T> Map<T>() where T : unmanaged
+        private VBO(int vbo)
         {
-            return new MappedBuffer<T>(this);
-        }
-
-        /// <summary>Map vbo to memory as read-only</summary>
-        /// <typeparam name="T">elements type</typeparam>
-        /// <returns>returns <see cref="ReadOnlyMappedBuffer{T}"/>, which generates <see cref="ReadOnlySpan{T}"/>.</returns>
-        public readonly ReadOnlyMappedBuffer<T> ReadOnlyMap<T>() where T : unmanaged
-        {
-            return new ReadOnlyMappedBuffer<T>(this);
+            _vbo = vbo;
+            _length = 0;
+            _elementSize = 0;
         }
 
         /// <summary>Create new vertex buffer object</summary>
         /// <returns>new <see cref="VBO"/></returns>
         internal static VBO Create()
         {
-            var vbo = new VBO();
-            Unsafe.AsRef(vbo._vbo) = GL.GenBuffer();
-            return vbo;
+            GLAssert.EnsureContext();
+            return new VBO(GL.GenBuffer());
         }
 
         /// <summary>Delete vertex buffer object</summary>
         /// <param name="vbo"><see cref="VBO"/> to delete</param>
         internal static unsafe void Delete(ref VBO vbo)
         {
-            if(!vbo.IsEmpty) {
-                GL.DeleteBuffer(vbo.Value);
-                Unsafe.AsRef(vbo.ElementSize) = default;
-                Unsafe.AsRef(vbo) = default;
+            if(vbo._vbo != Consts.NULL) {
+                GLAssert.EnsureContext();
+                GL.DeleteBuffer(vbo._vbo);
+                vbo = default;
             }
         }
 
@@ -64,12 +49,14 @@ namespace Elffy.OpenGL
         /// <param name="vbo"><see cref="VBO"/> to bind</param>
         public static void Bind(in VBO vbo)
         {
+            GLAssert.EnsureContext();
             GL.BindBuffer(BufferTarget.ArrayBuffer, vbo._vbo);
         }
 
         /// <summary>Unbind vertex buffer object</summary>
         public static void Unbind()
         {
+            GLAssert.EnsureContext();
             GL.BindBuffer(BufferTarget.ArrayBuffer, Consts.NULL);
         }
 
@@ -81,10 +68,11 @@ namespace Elffy.OpenGL
         internal static unsafe void BindBufferData<T>(ref VBO vbo, ReadOnlySpan<T> vertices, BufferUsageHint usage) where T : unmanaged
         {
             Bind(vbo);
-            Unsafe.AsRef(vbo.ElementSize) = sizeof(T);
-            Unsafe.AsRef(vbo.Length) = vertices.Length;
+            Unsafe.AsRef(vbo._elementSize) = sizeof(T);
+            Unsafe.AsRef(vbo._length) = vertices.Length;
             fixed(T* ptr = vertices) {
-                GL.BufferData(BufferTarget.ArrayBuffer, vbo.Length * vbo.ElementSize, (IntPtr)ptr, usage);
+                GLAssert.EnsureContext();
+                GL.BufferData(BufferTarget.ArrayBuffer, vbo._length * vbo._elementSize, (IntPtr)ptr, usage);
             }
         }
 
@@ -94,12 +82,8 @@ namespace Elffy.OpenGL
 
         public override bool Equals(object? obj) => obj is VBO vbo && Equals(vbo);
 
-        public bool Equals(VBO other) => (_vbo == other._vbo) && (Length == other.Length) && (ElementSize == other.ElementSize);
+        public bool Equals(VBO other) => (_vbo == other._vbo) && (_length == other._length) && (_elementSize == other._elementSize);
 
-        public override int GetHashCode() => HashCode.Combine(_vbo, Length, ElementSize);
-
-        public static bool operator ==(in VBO left, in VBO right) => left.Equals(right);
-
-        public static bool operator !=(in VBO left, in VBO right) => !(left == right);
+        public override int GetHashCode() => HashCode.Combine(_vbo, _length, _elementSize);
     }
 }

@@ -3,45 +3,48 @@ using Elffy.Core;
 using OpenToolkit.Graphics.OpenGL4;
 using System;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 
 namespace Elffy.OpenGL
 {
-    [DebuggerDisplay("Program={Value}")]
+    [DebuggerDisplay("Program={_program}")]
     public readonly struct ProgramObject : IEquatable<ProgramObject>
     {
-#pragma warning disable 0649    // Field is not assigned.
         private readonly int _program;
-#pragma warning restore 0649
 
-        internal readonly int Value => _program;
-
-        internal readonly bool IsEmpty => _program == Consts.NULL;
+        internal int Value => _program;
+        internal bool IsEmpty => _program == Consts.NULL;
 
         internal static ProgramObject Empty => default;
 
+        private ProgramObject(int program)
+        {
+            _program = program;
+        }
+
         internal static ProgramObject Create()
         {
-            var po = new ProgramObject();
-            Unsafe.AsRef(po._program) = GL.CreateProgram();
-            return po;
+            GLAssert.EnsureContext();
+            return new ProgramObject(GL.CreateProgram());
         }
 
         internal static void Delete(ref ProgramObject po)
         {
-            if(!po.IsEmpty) {
+            if(po._program != Consts.NULL) {
+                GLAssert.EnsureContext();
                 GL.DeleteProgram(po._program);
-                Unsafe.AsRef(po._program) = Consts.NULL;
+                po = default;
             }
         }
 
         internal static void Bind(in ProgramObject po)
         {
+            GLAssert.EnsureContext();
             GL.UseProgram(po._program);
         }
 
         internal static void Unbind()
         {
+            GLAssert.EnsureContext();
             GL.UseProgram(Consts.NULL);
         }
 
