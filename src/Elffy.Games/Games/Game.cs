@@ -2,6 +2,8 @@
 using Elffy.Core;
 using Elffy.Diagnostics;
 using Elffy.InputSystem;
+using Elffy.Platforms;
+using Elffy.Threading;
 using Elffy.UI;
 using System;
 
@@ -9,57 +11,45 @@ namespace Elffy.Games
 {
     public static class Game
     {
+        private static SyncContextReceiver? _syncContextReciever;
         private static Action _initialize = null!;
-        private static IHostScreen _screen = null!;
-        private static Layer _worldLayer = null!;
-        private static Camera _mainCamera = null!;
-        private static Mouse _mouse = null!;
-        private static ControlCollection _uiRootCollection = null!;
 
-        public static IHostScreen Screen => _screen;
-        public static Layer WorldLayer => _worldLayer;
+        public static IHostScreen Screen { get; private set; } = null!;
+        public static Layer WorldLayer { get; private set; } = null!;
+        public static Camera MainCamera { get; private set; } = null!;
+        public static Mouse Mouse { get; private set; } = null!;
+        public static ControlCollection UI { get; private set; } = null!;
 
-        public static Camera MainCamera => _mainCamera;
-
-        public static Mouse Mouse => _mouse;
-
-        public static ControlCollection UI => _uiRootCollection;
-
-        public static void Start(int width, int height, string title, Action initialize)
-            => Start(width, height, title, false, initialize);
+        public static void Start(int width, int height, string title, Action initialize) => Start(width, height, title, false, initialize);
 
         public static void Start(int width, int height, string title, bool isDebug, Action initialize)
         {
             _initialize = initialize ?? throw new ArgumentNullException(nameof(initialize));
-
             ProcessHelper.SingleLaunch(Launch);
-
-            //void Launch() {
-            //    try {
-            //        if(isDebug) {
-            //            DiagnosticsSetting.Run();
-            //        }
-            //        Resources.Initialize();
-            //        Engine.Run();
-            //        Engine.ShowScreen(width, height, title, Resources.LoadIcon("icon.ico"), WindowStyle.Default, InitScreen);   // TODO: リソース以外からのアイコン指定方法
-            //    }
-            //    finally {
-            //        Engine.End();
-            //        DiagnosticsSetting.Stop();
-            //    }
-            //}
 
             void Launch()
             {
+                var screen = CreateScreen(width, height, title);
+                screen.Initialized += InitScreen;
+
+                if(isDebug) {
+                    DiagnosticsSetting.Run();
+                }
+                Engine.Run();
                 try {
-                    if(isDebug) {
-                        DiagnosticsSetting.Run();
+                    _syncContextReciever = new SyncContextReceiver();
+                    CustomSynchronizationContext.Create(_syncContextReciever);
+                    screen.Show();
+
+                    while(Engine.HandleOnce()) {
+                        _syncContextReciever.DoAll();
                     }
-                    var window = new Window();
-                    window.Initialized += InitScreen;
-                    Engine.Start(window);
                 }
                 finally {
+                    CustomSynchronizationContext.Delete();
+                    _syncContextReciever = null;
+                    Engine.Stop();
+
                     if(isDebug) {
                         DiagnosticsSetting.Stop();
                     }
@@ -69,12 +59,26 @@ namespace Elffy.Games
 
         private static void InitScreen(IHostScreen screen)
         {
-            _screen = screen;
-            _worldLayer = screen.Layers.WorldLayer;
-            _mainCamera = screen.Camera;
-            _mouse = screen.Mouse;
-            _uiRootCollection = screen.UIRoot.Children;
+            Screen = screen;
+            WorldLayer = screen.Layers.WorldLayer;
+            MainCamera = screen.Camera;
+            Mouse = screen.Mouse;
+            UI = screen.UIRoot.Children;
             _initialize();
+        }
+
+        private static IHostScreen CreateScreen(int width, int height, string title)
+        {
+            switch(Platform.PlatformType) {
+                case PlatformType.Windows:
+                case PlatformType.MacOSX:
+                case PlatformType.Unix:
+                    return new Window(width, height, title, WindowStyle.Default);
+                case PlatformType.Android:
+                case PlatformType.Other:
+                default:
+                    throw new PlatformNotSupportedException();
+            }
         }
     }
 }

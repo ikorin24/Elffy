@@ -1,13 +1,9 @@
 ﻿#nullable enable
 using Elffy.InputSystem;
 using Elffy.UI;
-using OpenToolkit;
-using System.Drawing;
-using Elffy.Threading;
+using Elffy.Core;
 using Elffy.Core.Timer;
 using System;
-using OpenToolkit.Windowing.Common;
-using OpenToolkit.Mathematics;
 
 namespace Elffy
 {
@@ -29,6 +25,8 @@ namespace Elffy
         TimeSpan Time { get; }
 
         long FrameNum { get; }
+
+        IDefaultResource DefaultResource { get; }
 
         internal IGameTimer Watch { get; }
 

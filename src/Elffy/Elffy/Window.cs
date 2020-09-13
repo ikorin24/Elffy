@@ -24,6 +24,7 @@ namespace Elffy
         private readonly RenderingArea _renderingArea;
         private readonly IGameTimer _watch = GameTimerGenerator.Create();
         private TimeSpan _frameDelta;
+        private readonly DefaultGLResource _defaultGLResource;
 
         /// <summary>ウィンドウの UI の Root</summary>
         public Page UIRoot => _renderingArea.Layers.UILayer.UIRoot;
@@ -45,6 +46,8 @@ namespace Elffy
         public TimeSpan Time { get; private set; }
 
         public long FrameNum { get; private set; }
+
+        public IDefaultResource DefaultResource => _defaultGLResource;
 
         /// <summary>初期化時イベント</summary>
         public event ActionEventHandler<IHostScreen>? Initialized;
@@ -83,6 +86,7 @@ namespace Elffy
             _windowImpl.MouseEnter += _ => Mouse.ChangeOnScreen(true);
             _windowImpl.MouseLeave += _ => Mouse.ChangeOnScreen(false);
 
+            _defaultGLResource = new DefaultGLResource();
             Engine.AddScreen(this, show: false);
 
 
@@ -113,57 +117,15 @@ namespace Elffy
             _isClosed = true;
             _windowImpl.Dispose();
             _renderingArea.Dispose();
+            _defaultGLResource.Dispose();
             Engine.RemoveScreen(this);
         }
-
-
-        //public void Close()
-        //{
-        //    Dispatcher.ThrowIfNotMainThread();
-        //    if(_isClosed) { return; }
-        //    _isClosed = true;
-        //    //_window.Close();
-        //    _wind.Dispose();
-        //    _renderingArea.Dispose();
-        //    ReleaseResource();
-        //}
-
-        //void IHostScreen.Show(int width, int height, string title, Icon? icon, WindowStyle windowStyle)
-        //{
-        //    Title = title;
-        //    //if(icon != null) { Icon = icon; }     // TODO: OpenTK 4.0 への移行中
-        //    switch(windowStyle) {
-        //        case WindowStyle.Default: {
-        //            _window.WindowBorder = WindowBorder.Resizable;
-        //            _window.WindowState = WindowState.Normal;
-        //            break;
-        //        }
-        //        case WindowStyle.Fullscreen: {
-        //            _window.WindowBorder = WindowBorder.Fixed;
-        //            _window.WindowState = WindowState.Fullscreen;
-        //            break;
-        //        }
-        //        case WindowStyle.FixedWindow: {
-        //            _window.WindowBorder = WindowBorder.Fixed;
-        //            _window.WindowState = WindowState.Normal;
-        //            break;
-        //        }
-        //        default:
-        //            break;
-        //    }
-        //    try {
-        //        _window.Run();
-        //    }
-        //    catch(Exception) {
-        //        Close();
-        //        throw;
-        //    }
-        //}
 
         private void OnLoad(WindowGLFW _)
         {
             Dispatcher.ThrowIfNotMainThread();
             _renderingArea.InitializeGL();
+            _defaultGLResource.Init();
             _watch.Start();
             Initialized?.Invoke(this);
 

@@ -7,7 +7,7 @@ using TKPixelFormat = OpenToolkit.Graphics.OpenGL4.PixelFormat;
 
 namespace Elffy.Core
 {
-    internal sealed class DefaultGLResource : IDisposable
+    internal sealed class DefaultGLResource : IDefaultResource, IDisposable
     {
         private bool _disposed;
         private TextureObject _whiteEmptyTexture;
@@ -20,7 +20,7 @@ namespace Elffy.Core
 
         ~DefaultGLResource() => Dispose(false);
 
-        public unsafe void Create()
+        public unsafe void Init()
         {
             var whiteEmpty = TextureObject.Create();
             var pixel = Color4.White;
@@ -48,5 +48,10 @@ namespace Elffy.Core
             }
             _disposed = true;
         }
+    }
+
+    public interface IDefaultResource
+    {
+        TextureObject WhiteEmptyTexture { get; }
     }
 }

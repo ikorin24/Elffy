@@ -39,7 +39,7 @@ namespace Elffy.Shading
                 t.Apply(texUnit);
             }
             else {
-                TextureObject.Bind2D(Engine.WhiteEmptyTexture, texUnit);
+                TextureObject.Bind2D(target.HostScreen.DefaultResource.WhiteEmptyTexture, texUnit);
             }
             uniform.Send("tex_sampler", texUnit);
         }
