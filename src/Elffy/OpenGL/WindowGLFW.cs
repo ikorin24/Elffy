@@ -19,9 +19,11 @@ using System.Runtime.CompilerServices;
 namespace Elffy.OpenGL
 {
     /// <summary>Raw window class of GLFW</summary>
-    internal unsafe sealed class WindowGLFW : IDisposable
+    internal unsafe sealed partial class WindowGLFW : IDisposable
     {
         const double MaxUpdateFrequency = 500;
+
+        private bool _isCloseRequested;
 
         private Wnd* _window;
         private Vector2i _clientSize;
@@ -36,46 +38,7 @@ namespace Elffy.OpenGL
 
         private bool _isLoaded;
 
-
-        public event Action<WindowGLFW>? Load;
-
-        //public event Action<WindowGLFW>? Unload;
-
-        public event Action<WindowGLFW, FrameEventArgs>? UpdateFrame;
-
-        //public event Action<WindowGLFW, FrameEventArgs>? RenderFrame;
-
-        public event Action<WindowGLFW, WindowPositionEventArgs>? Move;
-        public event Action<WindowGLFW, ResizeEventArgs>? Resize;
-
-        public event Action<WindowGLFW>? Refresh;
-
-        public event Action<WindowGLFW, CancelEventArgs>? Closing;
-        public event Action<WindowGLFW>? Closed;
-
-        public event Action<WindowGLFW, MinimizedEventArgs>? Minimized;
-
-        public event Action<WindowGLFW, JoystickEventArgs>? JoystickConnected;
-
-        public event Action<WindowGLFW, FocusedChangedEventArgs>? FocusedChanged;
-
-        public event Action<WindowGLFW, TextInputEventArgs>? TextInput;
-
-        public event Action<WindowGLFW, KeyboardKeyEventArgs>? KeyDown;
-        public event Action<WindowGLFW, KeyboardKeyEventArgs>? KeyUp;
-
-        public event Action<WindowGLFW, MonitorEventArgs>? MonitorConnected;
-
-        public event Action<WindowGLFW>? MouseLeave;
-        public event Action<WindowGLFW>? MouseEnter;
-        public event Action<WindowGLFW, MouseButtonEventArgs>? MouseDown;
-        public event Action<WindowGLFW, MouseButtonEventArgs>? MouseUp;
-        public event Action<WindowGLFW, MouseMoveEventArgs>? MouseMove;
-        public event Action<WindowGLFW, MouseWheelEventArgs>? MouseWheel;
-
-        public event FileDropEventHandler? FileDrop;
-
-        private bool IsDisposed => _window == null;
+        public bool IsDisposed => _window == null;
 
         /// <summary>Frequency of updating (Hz). If null, update is called as faster as possible.</summary>
         public double? UpdateFrequency
@@ -187,20 +150,22 @@ namespace Elffy.OpenGL
             }
 
             try {
+                GLFW.MakeContextCurrent(_window);
+                InitializeGlBindings();
+                RegisterWindowCallbacks();
+                GLFW.FocusWindow(_window);
                 _title = title;
-                GLFW.SetWindowIcon(_window, icon.Images);
+                if(icon.Images.Length != 0) {
+                    GLFW.SetWindowIcon(_window, icon.Images);
+                }
 
                 GLFW.GetWindowSize(_window, out _clientSize.X, out _clientSize.Y);
                 GLFW.GetWindowFrameSize(_window, out var left, out var top, out var right, out var bottom);
                 _size = new Vector2i(_clientSize.X + left + right, _clientSize.Y + top + bottom);
                 GLFW.GetWindowPos(_window, out _location.X, out _location.Y);
 
-                GLFW.MakeContextCurrent(_window);
                 GLFW.SwapInterval(1);               // Enable Vsync
-                InitializeGlBindings();
-                //GLFW.MakeContextCurrent(null);
 
-                RegisterWindowCallbacks();
             }
             catch {
                 GLFW.DestroyWindow(_window);
@@ -208,11 +173,21 @@ namespace Elffy.OpenGL
                 GLFW.DefaultWindowHints();
                 throw;
             }
+            //finally {
+            //    GLFW.MakeContextCurrent(null);
+            //}
         }
 
         public void HandleOnce()
         {
-            if(IsDisposed) { return; }
+            if(_isCloseRequested || IsDisposed) {
+                if(IsDisposed == false) {
+                    GLFW.MakeContextCurrent(_window);
+                    Dispose();
+                    GLFW.MakeContextCurrent(null);
+                }
+                return;
+            }
 
             if(!_watchUpdate.IsRunning) {
                 _watchUpdate.Start();
@@ -254,7 +229,6 @@ namespace Elffy.OpenGL
 
             void Update(double elapsed)
             {
-                // Window get disposed if closing event is handled on polling.
                 GLFW.PollEvents();
                 if(IsDisposed) { return; }
 
@@ -327,118 +301,6 @@ namespace Elffy.OpenGL
                     throw;
                 }
             }
-        }
-
-        private void RegisterWindowCallbacks()
-        {
-            GLFW.SetWindowPosCallback(_window, (_, x, y) =>
-            {
-                _location = new Vector2i(x, y);
-                Move?.Invoke(this, new WindowPositionEventArgs(x, y));
-            });
-
-            GLFW.SetWindowSizeCallback(_window, (_, width, height) =>
-            {
-                GLFW.GetWindowFrameSize(_window, out var left, out var top, out var right, out var bottom);
-                _clientSize = new Vector2i(width, height);
-                _size = new Vector2i(_clientSize.X + left + right, _clientSize.Y + top + bottom);
-                Resize?.Invoke(this, new ResizeEventArgs(width, height));
-            });
-
-            GLFW.SetWindowCloseCallback(_window, _ =>
-            {
-                var e = new CancelEventArgs();
-                Closing?.Invoke(this, e);
-                if(e.Cancel) {
-                    GLFW.SetWindowShouldClose(_window, false);
-                    return;
-                }
-                else {
-                    Dispose();
-                    return;
-                }
-            });
-
-            GLFW.SetWindowIconifyCallback(_window, (_, minimized) =>
-            {
-                Debug.WriteLine("Iconify Not Impl");    // TODO:
-                //Minimized?.Invoke(this, new MinimizedEventArgs(minimized));
-            });
-
-            GLFW.SetWindowFocusCallback(_window, (_, focused) =>
-            {
-                Debug.WriteLine("Focus Not Impl");    // TODO:
-            });
-
-            GLFW.SetCharCallback(_window, (_, codepoint) =>
-            {
-                Debug.WriteLine("Set char Not Impl");    // TODO:
-            });
-
-            GLFW.SetKeyCallback(_window, (_, key, scanCode, action, mods) =>
-            {
-                Debug.WriteLine("Key call Not Impl");    // TODO:
-            });
-
-            GLFW.SetCursorEnterCallback(_window, (_, entered) =>
-            {
-                Debug.WriteLine("Curosr Enter Not Impl");    // TODO:
-            });
-
-            GLFW.SetMouseButtonCallback(_window, (_, button, action, mods) =>
-            {
-                Debug.WriteLine("Mouse Button Not Impl");    // TODO:
-            });
-
-            GLFW.SetCursorPosCallback(_window, (_, x, y) =>
-            {
-                Debug.WriteLine("Cursor Pos Not Impl");    // TODO:
-            });
-
-            GLFW.SetScrollCallback(_window, (_, x, y) =>
-            {
-                Debug.WriteLine("Scroll Not Impl");    // TODO:
-            });
-
-            GLFW.SetDropCallback(_window, (_, count, paths) =>
-            {
-                Utf8StringRef* files;
-                var isHeap = false;
-                if(count > 16) {
-                    isHeap = true;
-                    files = (Utf8StringRef*)Marshal.AllocHGlobal(count * sizeof(Utf8StringRef));
-                }
-                else {
-                    var p = stackalloc Utf8StringRef[count];
-                    files = p;
-                }
-                try {
-                    for(int i = 0; i < count; i++) {
-                        files[i] = new Utf8StringRef(paths[i]);
-                    }
-                    FileDrop?.Invoke(this, new Utf8StringRefArray(files, count));
-                }
-                finally {
-                    if(isHeap) {
-                        Marshal.FreeHGlobal((IntPtr)files);
-                    }
-                }
-            });
-
-            GLFW.SetJoystickCallback((joystick, eventCode) =>
-            {
-                Debug.WriteLine("Joystick Not Impl");    // TODO:
-            });
-
-            GLFW.SetMonitorCallback((monitor, state) =>
-            {
-                Debug.WriteLine("Monitor Not Impl");    // TODO:
-            });
-
-            GLFW.SetWindowRefreshCallback(_window, _ =>
-            {
-                Debug.WriteLine("Refresh Not Impl");    // TODO:
-            });
         }
 
         public void Dispose()
