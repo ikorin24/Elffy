@@ -1,20 +1,15 @@
 ﻿#nullable enable
-using OpenToolkit.Windowing.Common;
-using OpenToolkit.Windowing.Common.Input;
-using OpenToolkit.Windowing.GraphicsLibraryFramework;
 using System;
 using System.Reflection;
-using System.Runtime.InteropServices;
-using System.ComponentModel;
-using Elffy.AssemblyServices;
-
-using Monitor = OpenToolkit.Windowing.GraphicsLibraryFramework.Monitor;
-using Wnd = OpenToolkit.Windowing.GraphicsLibraryFramework.Window;
-using Image = OpenToolkit.Windowing.GraphicsLibraryFramework.Image;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using Elffy.AssemblyServices;
+using Elffy.OpenGL.Windowing;
 using Elffy.Core.OpenToolkit;
-using System.Runtime.CompilerServices;
+using OpenToolkit.Windowing.Common;
+using OpenToolkit.Windowing.GraphicsLibraryFramework;
+using Monitor = OpenToolkit.Windowing.GraphicsLibraryFramework.Monitor;
+using Wnd = OpenToolkit.Windowing.GraphicsLibraryFramework.Window;
 
 namespace Elffy.OpenGL
 {
@@ -314,19 +309,5 @@ namespace Elffy.OpenGL
 
         [DoesNotReturn]
         private void ThrowDisposed() => throw new ObjectDisposedException(nameof(WindowGLFW), "This window is already disposed.");
-    }
-
-    internal delegate void FileDropEventHandler(WindowGLFW window, Utf8StringRefArray files);
-
-    internal readonly ref struct WindowIconRaw
-    {
-        public readonly ReadOnlySpan<Image> Images;
-
-        public static WindowIconRaw Empty => default;
-
-        public WindowIconRaw(Span<Image> images)
-        {
-            Images = images;
-        }
     }
 }

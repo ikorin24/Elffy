@@ -10,6 +10,7 @@ using OpenToolkit.Windowing.Common;
 using TKMouseButton = OpenToolkit.Windowing.Common.Input.MouseButton;
 using TKMouseButtonEventArgs = OpenToolkit.Windowing.Common.MouseButtonEventArgs;
 using Elffy.OpenGL;
+using Elffy.OpenGL.Windowing;
 
 namespace Elffy
 {

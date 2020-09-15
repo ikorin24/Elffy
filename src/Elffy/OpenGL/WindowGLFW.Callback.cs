@@ -1,10 +1,11 @@
 ﻿#nullable enable
 using System;
 using System.Diagnostics;
-using System.ComponentModel;
 using System.Runtime.InteropServices;
 using OpenToolkit.Windowing.GraphicsLibraryFramework;
 using OpenToolkit.Windowing.Common;
+using Elffy.OpenGL.Windowing;
+using InputAction = OpenToolkit.Windowing.GraphicsLibraryFramework.InputAction;
 
 namespace Elffy.OpenGL
 {
@@ -42,7 +43,7 @@ namespace Elffy.OpenGL
 
         public event Action<WindowGLFW>? Refresh;
 
-        public event Action<WindowGLFW, CancelEventArgs>? Closing;
+        public event ClosingEventHandler? Closing;
         public event Action<WindowGLFW>? Closed;
 
         public event Action<WindowGLFW, MinimizedEventArgs>? Minimized;
@@ -94,15 +95,14 @@ namespace Elffy.OpenGL
 
             _closeCallback = _ =>
             {
-                var e = new CancelEventArgs();
+                var cancel = false;
+                var e = new CancelEventArgs(&cancel);
                 Closing?.Invoke(this, e);
                 if(e.Cancel) {
                     GLFW.SetWindowShouldClose(_window, false);
-                    return;
                 }
                 else {
                     _isCloseRequested = true;
-                    return;
                 }
             };
             GLFW.SetWindowCloseCallback(_window, _closeCallback);
@@ -110,26 +110,32 @@ namespace Elffy.OpenGL
 
             _iconifyCallback = (_, minimized) =>
             {
-                Debug.WriteLine("Iconify Not Impl");    // TODO:
-                //Minimized?.Invoke(this, new MinimizedEventArgs(minimized));
+                Minimized?.Invoke(this, new MinimizedEventArgs(minimized));
             };
             GLFW.SetWindowIconifyCallback(_window, _iconifyCallback);
 
             _focusCallback = (_, focused) =>
             {
-                Debug.WriteLine("Focus Not Impl");    // TODO:
+                FocusedChanged?.Invoke(this, new FocusedChangedEventArgs(focused));
             };
             GLFW.SetWindowFocusCallback(_window, _focusCallback);
 
             _charCallback = (_, codepoint) =>
             {
-                Debug.WriteLine("Set char Not Impl");    // TODO:
+                TextInput?.Invoke(this, new TextInputEventArgs((int)codepoint));
             };
             GLFW.SetCharCallback(_window, _charCallback);
 
-            _keyCallback = (_, key, scanCode, action, mods) =>
+            _keyCallback = (_, glfwKey, scanCode, action, glfwMods) =>
             {
-                Debug.WriteLine("Key call Not Impl");    // TODO:
+                var e = new KeyboardKeyEventArgs(GLFWKeyMapper.Map(glfwKey), scanCode, GLFWKeyMapper.Map(glfwMods), action == InputAction.Repeat);
+
+                if(action == InputAction.Release) {
+                    KeyUp?.Invoke(this, e);
+                }
+                else {
+                    KeyDown?.Invoke(this, e);
+                }
             };
             GLFW.SetKeyCallback(_window, _keyCallback);
 
@@ -190,15 +196,19 @@ namespace Elffy.OpenGL
 
             _monitorCallback = (monitor, state) =>
             {
-                Debug.WriteLine("Monitor Not Impl");    // TODO:
+                Debug.WriteLine("MonitorCalback is Not Implemented");
             };
             GLFW.SetMonitorCallback(_monitorCallback);
 
             _refreshCallback = _ =>
             {
-                Debug.WriteLine("Refresh Not Impl");    // TODO:
+                Refresh?.Invoke(this);
             };
             GLFW.SetWindowRefreshCallback(_window, _refreshCallback);
         }
     }
+
+    internal delegate void FileDropEventHandler(WindowGLFW window, Utf8StringRefArray files);
+
+    internal delegate void ClosingEventHandler(WindowGLFW window, CancelEventArgs e);
 }
