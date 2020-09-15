@@ -4,7 +4,7 @@ using System;
 namespace Elffy.OpenGL.Windowing
 {
     /// <summary>Event argument struct for events which can get canceled.</summary>
-    public readonly ref struct CancelEventArgs
+    internal readonly ref struct CancelEventArgs
     {
         private readonly IntPtr _cancel;
 

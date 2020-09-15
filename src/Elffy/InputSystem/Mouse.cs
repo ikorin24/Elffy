@@ -18,11 +18,11 @@ namespace Elffy.InputSystem
         public bool OnScreen { get; private set; }
 
         /// <summary>Top-Left を基点としY軸下方向でのマウスの <see cref="IHostScreen"/> 内での座標を取得します</summary>
-        public Point Position { get; private set; }
+        public Vector2 Position { get; private set; }
 
         internal Mouse() { }
 
-        internal void ChangePosition(Point position) => Position = position;
+        internal void ChangePosition(in Vector2 position) => Position = position;
 
         internal void ChangePressedState(MouseButton button, bool isPressed)
         {

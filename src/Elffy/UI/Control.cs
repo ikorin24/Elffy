@@ -8,6 +8,8 @@ using Elffy.Exceptions;
 using Elffy.InputSystem;
 using Elffy.Core;
 using OpenToolkit.Graphics;
+using System.Runtime.CompilerServices;
+using Elffy.Effective;
 
 namespace Elffy.UI
 {
@@ -220,7 +222,8 @@ namespace Elffy.UI
         {
             return IsVisible &&
                    IsHitTestVisible &&
-                   new Rectangle(AbsolutePosition.X, AbsolutePosition.Y, Width, Height).Contains(mouse.Position);
+                   new Rectangle(AbsolutePosition.X, AbsolutePosition.Y, Width, Height)
+                        .Contains((int)mouse.Position.X, (int)mouse.Position.Y);
         }
 
         /// <summary>ヒットテストの結果を通知します</summary>
@@ -260,14 +263,14 @@ namespace Elffy.UI
 
     #region class MouseEventArgs
     /// <summary>Mouse event argument class</summary>
-    public struct MouseEventArgs
+    public readonly struct MouseEventArgs
     {
         /// <summary>mouse position</summary>
-        public Point MousePosition { get; }
+        public Vector2 MousePosition { get; }
 
         /// <summary>constructor</summary>
         /// <param name="mousePosition">mouse position</param>
-        public MouseEventArgs(Point mousePosition)
+        public MouseEventArgs(in Vector2 mousePosition)
         {
             MousePosition = mousePosition;
         }

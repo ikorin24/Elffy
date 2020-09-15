@@ -80,7 +80,7 @@ namespace Elffy
             _windowImpl.Load += OnLoad;
             _windowImpl.Closed += _ => Dispose();
             _windowImpl.Resize += OnResize;
-            _windowImpl.MouseMove += (_, e) => Mouse.ChangePosition(new Point((int)e.X, (int)e.Y));
+            _windowImpl.MouseMove += (_, e) => Mouse.ChangePosition(e.Position);
             _windowImpl.MouseWheel += (_, e) => Mouse.ChangeWheel(e.OffsetY);
             _windowImpl.MouseDown += MouseButtonStateChanged;
             _windowImpl.MouseUp += MouseButtonStateChanged;

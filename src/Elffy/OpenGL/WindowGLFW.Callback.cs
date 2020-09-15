@@ -2,10 +2,15 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using OpenToolkit.Windowing.GraphicsLibraryFramework;
 using OpenToolkit.Windowing.Common;
+using OpenToolkit.Windowing.Common.Input;
 using Elffy.OpenGL.Windowing;
-using InputAction = OpenToolkit.Windowing.GraphicsLibraryFramework.InputAction;
+using GlfwInputAction = OpenToolkit.Windowing.GraphicsLibraryFramework.InputAction;
+using GlfwConnectedState = OpenToolkit.Windowing.GraphicsLibraryFramework.ConnectedState;
+using GLFWCallbacks = OpenToolkit.Windowing.GraphicsLibraryFramework.GLFWCallbacks;
+using GLFW = OpenToolkit.Windowing.GraphicsLibraryFramework.GLFW;
+
+using MouseMoveEventArgs = Elffy.OpenGL.Windowing.MouseMoveEventArgs;
 
 namespace Elffy.OpenGL
 {
@@ -48,16 +53,16 @@ namespace Elffy.OpenGL
 
         public event Action<WindowGLFW, MinimizedEventArgs>? Minimized;
 
-        public event Action<WindowGLFW, JoystickEventArgs>? JoystickConnected;
+        public event Action<WindowGLFW, JoystickConnectionEventArgs>? JoystickConnectionChanged;
 
         public event Action<WindowGLFW, FocusedChangedEventArgs>? FocusedChanged;
 
-        public event Action<WindowGLFW, TextInputEventArgs>? TextInput;
+        public event Action<WindowGLFW, CharInputEventArgs>? CharInput;
 
         public event Action<WindowGLFW, KeyboardKeyEventArgs>? KeyDown;
         public event Action<WindowGLFW, KeyboardKeyEventArgs>? KeyUp;
 
-        public event Action<WindowGLFW, MonitorEventArgs>? MonitorConnected;
+        public event Action<WindowGLFW, MonitorConnectionEventArgs>? MonitorConnectionChanged;
 
         public event Action<WindowGLFW>? MouseLeave;
         public event Action<WindowGLFW>? MouseEnter;
@@ -120,17 +125,17 @@ namespace Elffy.OpenGL
             };
             GLFW.SetWindowFocusCallback(_window, _focusCallback);
 
-            _charCallback = (_, codepoint) =>
+            _charCallback = (_, unicode) =>
             {
-                TextInput?.Invoke(this, new TextInputEventArgs((int)codepoint));
+                CharInput?.Invoke(this, new CharInputEventArgs(unicode));
             };
             GLFW.SetCharCallback(_window, _charCallback);
 
             _keyCallback = (_, glfwKey, scanCode, action, glfwMods) =>
             {
-                var e = new KeyboardKeyEventArgs(GLFWKeyMapper.Map(glfwKey), scanCode, GLFWKeyMapper.Map(glfwMods), action == InputAction.Repeat);
+                var e = new KeyboardKeyEventArgs(GLFWKeyMapper.Map(glfwKey), scanCode, GLFWKeyMapper.Map(glfwMods), action == GlfwInputAction.Repeat);
 
-                if(action == InputAction.Release) {
+                if(action == GlfwInputAction.Release) {
                     KeyUp?.Invoke(this, e);
                 }
                 else {
@@ -141,25 +146,43 @@ namespace Elffy.OpenGL
 
             _cursorEnterCallback = (_, entered) =>
             {
-                Debug.WriteLine("Curosr Enter Not Impl");    // TODO:
+                if(entered) {
+                    MouseEnter?.Invoke(this);
+                }
+                else {
+                    MouseLeave?.Invoke(this);
+                }
             };
             GLFW.SetCursorEnterCallback(_window, _cursorEnterCallback);
 
             _mouseButtonCallback = (_, button, action, mods) =>
             {
-                Debug.WriteLine("Mouse Button Not Impl");    // TODO:
+                var act = GLFWKeyMapper.Map(action);
+                var e = new MouseButtonEventArgs(
+                    (MouseButton)button,
+                    GLFWKeyMapper.Map(action),
+                    GLFWKeyMapper.Map(mods));
+
+                if(action == GlfwInputAction.Release) {
+                    MouseUp?.Invoke(this, e);
+                }
+                else {
+                    MouseDown?.Invoke(this, e);
+                }
             };
             GLFW.SetMouseButtonCallback(_window, _mouseButtonCallback);
 
-            _cursorPosCallback = (_, x, y) =>
+            _cursorPosCallback = (_, posX, posY) =>
             {
-                Debug.WriteLine("Cursor Pos Not Impl");    // TODO:
+                var e = new MouseMoveEventArgs(new Vector2((int)posX, (int)posY));
+                MouseMove?.Invoke(this, e);
             };
             GLFW.SetCursorPosCallback(_window, _cursorPosCallback);
 
-            _scrollCallback = (_, x, y) =>
+            _scrollCallback = (_, offsetX, offsetY) =>
             {
-                Debug.WriteLine("Scroll Not Impl");    // TODO:
+                var e = new MouseWheelEventArgs((float)offsetX, (float)offsetY);
+                MouseWheel?.Invoke(this, e);
             };
             GLFW.SetScrollCallback(_window, _scrollCallback);
 
@@ -188,15 +211,17 @@ namespace Elffy.OpenGL
             };
             GLFW.SetDropCallback(_window, _dropCallback);
 
-            _joystickCallback = (joystick, eventCode) =>
+            _joystickCallback = (joystick, state) =>
             {
-                Debug.WriteLine("Joystick Not Impl");    // TODO:
+                var e = new JoystickConnectionEventArgs(joystick, state == GlfwConnectedState.Connected);
+                JoystickConnectionChanged?.Invoke(this, e);
             };
             GLFW.SetJoystickCallback(_joystickCallback);
 
             _monitorCallback = (monitor, state) =>
             {
-                Debug.WriteLine("MonitorCalback is Not Implemented");
+                var e = new MonitorConnectionEventArgs(monitor, state == GlfwConnectedState.Connected);
+                MonitorConnectionChanged?.Invoke(this, e);
             };
             GLFW.SetMonitorCallback(_monitorCallback);
 
