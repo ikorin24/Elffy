@@ -1,8 +1,4 @@
 ﻿#nullable enable
-using System;
-using System.Drawing;
-using Elffy.Effective;
-using OpenToolkit;
 
 namespace Elffy.InputSystem
 {
@@ -37,7 +33,7 @@ namespace Elffy.InputSystem
                     _middleButton.SetValue(isPressed);
                     return;
                 default:
-                    throw UnknownButtonException(button);
+                    return;
             }
         }
 
@@ -75,13 +71,13 @@ namespace Elffy.InputSystem
         /// <returns>button down state</returns>
         public bool IsDown(MouseButton button)
         {
-            return (button switch
+            return button switch
             {
-                MouseButton.Left => _leftButton,
-                MouseButton.Right => _rightButton,
-                MouseButton.Middle => _middleButton,
-                _ => throw UnknownButtonException(button),
-            }).IsKeyDown();
+                MouseButton.Left => _leftButton.IsKeyDown(),
+                MouseButton.Right => _rightButton.IsKeyDown(),
+                MouseButton.Middle => _middleButton.IsKeyDown(),
+                _ => false,
+            };
         }
 
         /// <summary>Get whether specified mouse button is pressed.</summary>
@@ -89,13 +85,13 @@ namespace Elffy.InputSystem
         /// <returns>button pressed state</returns>
         public bool IsPressed(MouseButton button)
         {
-            return (button switch
+            return button switch
             {
-                MouseButton.Left => _leftButton,
-                MouseButton.Right => _rightButton,
-                MouseButton.Middle => _middleButton,
-                _ => throw UnknownButtonException(button),
-            }).IsKeyPressed();
+                MouseButton.Left => _leftButton.IsKeyPressed(),
+                MouseButton.Right => _rightButton.IsKeyPressed(),
+                MouseButton.Middle => _middleButton.IsKeyPressed(),
+                _ => false,
+            };
         }
 
         /// <summary>Get whether specified mouse button Tis up. (Return true if the button got released on this frame.)</summary>
@@ -103,21 +99,18 @@ namespace Elffy.InputSystem
         /// <returns>button up state</returns>
         public bool IsUp(MouseButton button)
         {
-            return (button switch
+            return button switch
             {
-                MouseButton.Left => _leftButton,
-                MouseButton.Right => _rightButton,
-                MouseButton.Middle => _middleButton,
-                _ => throw UnknownButtonException(button),
-            }).IsKeyUp();
+                MouseButton.Left => _leftButton.IsKeyUp(),
+                MouseButton.Right => _rightButton.IsKeyUp(),
+                MouseButton.Middle => _middleButton.IsKeyUp(),
+                _ => false,
+            };
         }
 
         /// <summary>Get wheel value difference from previouse frame.</summary>
         /// <returns>wheel value</returns>
-        public float Wheel() => _wheel.GetDiff();
-
-        private NotSupportedException UnknownButtonException(MouseButton button) 
-            => throw new NotSupportedException($"Unknown button type '{button}'".AsInterned());
+        public float Wheel() => _wheel.Wheel();
 
         private struct KeyBuffer
         {
@@ -150,25 +143,20 @@ namespace Elffy.InputSystem
         private struct WheelBuffer
         {
             private float _current;
-            private float _prev;
             private bool _changed;
 
             public void SetValue(float value)
             {
-                _prev = _current;
                 _current = value;
                 _changed = true;
             }
 
-            public float GetDiff()
-            {
-                return _current - _prev;
-            }
+            public float Wheel() => _current;
 
             public void InitFrame()
             {
                 if(_changed == false) {
-                    _prev = _current;
+                    _current = 0f;
                 }
                 _changed = false;
             }
