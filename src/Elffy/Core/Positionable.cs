@@ -19,7 +19,7 @@ namespace Elffy.Core
 
         #region Proeprty
         /// <summary>オブジェクトの回転を表すクオータニオン</summary>
-        public Quaternion Rotation { get => _ratation; set => _ratation = value; }
+        public ref Quaternion Rotation => ref _ratation;
 
         /// <summary>この <see cref="Positionable"/> のツリー構造の親を取得します</summary>
         public Positionable? Parent
@@ -49,16 +49,7 @@ namespace Elffy.Core
         /// オブジェクトのローカル座標<para/>
         /// <see cref="IsRoot"/> が true の場合は <see cref="WorldPosition"/> と同じ値。false の場合は親の <see cref="Position"/> を基準とした相対座標。
         /// </summary>
-        public Vector3 Position { get => _position; set => _position = value; }
-
-        /// <summary>オブジェクトのX座標</summary>
-        public float PositionX { get => _position.X; set => _position.X = value; }
-
-        /// <summary>オブジェクトのY座標</summary>
-        public float PositionY { get => _position.Y; set => _position.Y = value; }
-
-        /// <summary>オブジェクトのZ座標</summary>
-        public float PositionZ { get => _position.Z; set => _position.Z = value; }
+        public ref Vector3 Position => ref _position;
 
         /// <summary>オブジェクトのワールド座標。get/set ともに Root までの親の数 N に対し O(N)</summary>
         public Vector3 WorldPosition
@@ -145,16 +136,7 @@ namespace Elffy.Core
         }
 
         /// <summary>オブジェクトの拡大率</summary>
-        public Vector3 Scale { get => _scale; set => _scale = value; }
-
-        /// <summary>x軸方向の拡大率</summary>
-        public float ScaleX { get => _scale.X; set => _scale.X = value; }
-
-        /// <summary>y軸方向の拡大率</summary>
-        public float ScaleY { get => _scale.Y; set => _scale.Y = value; }
-
-        /// <summary>z軸方向の拡大率</summary>
-        public float ScaleZ { get => _scale.Z; set => _scale.Z = value; }
+        public ref Vector3 Scale => ref _scale;
         #endregion
 
         public Positionable()
@@ -203,7 +185,7 @@ namespace Elffy.Core
         /// <param name="quaternion">回転させるクオータニオン</param>
         public void Rotate(in Quaternion quaternion)
         {
-            Rotation = quaternion * Rotation;
+            _ratation = quaternion * _ratation;
         }
 
         /// <summary>このオブジェクトの <see cref="Children"/> 以下に存在する全ての子孫を取得します。列挙順は深さ優先探索 (DFS; depth-first search) です。</summary>

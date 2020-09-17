@@ -3,6 +3,7 @@ using Cysharp.Text;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Elffy.Effective;
 using TKVector4i = OpenToolkit.Mathematics.Vector4i;
 
 namespace Elffy
@@ -74,9 +75,12 @@ namespace Elffy
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Vector4i(TKVector4i vec) => Unsafe.As<TKVector4i, Vector4i>(ref vec);
+        public static implicit operator Vector4i(in TKVector4i vec) => UnsafeEx.As<TKVector4i, Vector4i>(in vec);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator TKVector4i(Vector4i vec) => Unsafe.As<Vector4i, TKVector4i>(ref vec);
+        public static implicit operator TKVector4i(in Vector4i vec) => UnsafeEx.As<Vector4i, TKVector4i>(in vec);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator Vector4i(in Vector4 vec) => new Vector4i((int)vec.X, (int)vec.Y, (int)vec.Z, (int)vec.W);
     }
 }

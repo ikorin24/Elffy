@@ -102,27 +102,32 @@ namespace Elffy
         /// <summary>このオブジェクトを指定のレイヤーでアクティブにします</summary>
         public void Activate(Layer layer)
         {
-            if(layer is null) { throw new ArgumentNullException(nameof(layer)); }
-            if(layer.Owner is null) { throw new ArgumentException($"{nameof(layer)} is not associated with {nameof(IHostScreen)}"); }
+            if(layer is null) { ThrowNullArg(); }
+            if(layer!.Owner is null) { ThrowInvalidLayer(); }
             if(_state != FrameObjectLifeSpanState.New) { return; }
 
             _state = FrameObjectLifeSpanState.Activated;
             _layer = layer;
             layer.AddFrameObject(this);
             OnActivated();
+
+            static void ThrowNullArg() => throw new ArgumentNullException(nameof(layer));
+            static void ThrowInvalidLayer() => throw new ArgumentException($"{nameof(layer)} is not associated with {nameof(IHostScreen)}");
         }
 
         internal void Activate<TLayer>(TLayer layer) where TLayer : class, ILayer
         {
-            if(layer is null) { throw new ArgumentNullException(nameof(layer)); }
+            if(layer is null) { ThrowNullArg(); }
             Debug.Assert(layer is Layer == false, "Layer は具象型のオーバーロードを通っていないとおかしい。");
-            Debug.Assert(layer.OwnerCollection is null == false);
+            Debug.Assert(layer!.OwnerCollection is null == false);
             if(_state != FrameObjectLifeSpanState.New) { return; }
 
             _state = FrameObjectLifeSpanState.Activated;
             _layer = layer;
             layer.AddFrameObject(this);
             OnActivated();
+
+            static void ThrowNullArg() => throw new ArgumentNullException(nameof(layer));
         }
 
         /// <summary>このオブジェクトをエンジン管理下から外して破棄します</summary>

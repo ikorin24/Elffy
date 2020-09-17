@@ -1,12 +1,11 @@
 ﻿#nullable enable
 using Cysharp.Text;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text;
+using Elffy.Effective;
 using TKVector2i = OpenToolkit.Mathematics.Vector2i;
 
 namespace Elffy
@@ -44,12 +43,35 @@ namespace Elffy
         public static bool operator !=(in Vector2i left, in Vector2i right) => !(left == right);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator TKVector2i(Vector2i vec) => Unsafe.As<Vector2i, TKVector2i>(ref vec);
+        public static Vector2i operator -(in Vector2i vec) => new Vector2i(-vec.X, -vec.Y);
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Vector2i(TKVector2i vec) => Unsafe.As<TKVector2i, Vector2i>(ref vec);
+        public static Vector2i operator +(in Vector2i vec1, in Vector2i vec2) => new Vector2i(vec1.X + vec2.X, vec1.Y + vec2.Y);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Vector2i(in Point point) => new Vector2i(point.X, point.Y);
+        public static Vector2i operator +(in Vector2i vec1, int right) => new Vector2i(vec1.X + right, vec1.Y + right);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator Point(in Vector2i vec) => new Point(vec.X, vec.Y);
+        public static Vector2i operator -(in Vector2i vec1, in Vector2i vec2) => new Vector2i(vec1.X - vec2.X, vec1.Y - vec2.Y);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2i operator -(in Vector2i vec1, int right) => new Vector2i(vec1.X - right, vec1.Y - right);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2i operator *(in Vector2i vec1, int right) => new Vector2i(vec1.X * right, vec1.Y * right);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2i operator *(int right, in Vector2i vec1) => new Vector2i(vec1.X * right, vec1.Y * right);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2i operator /(in Vector2i vec1, int right) => new Vector2i(vec1.X / right, vec1.Y / right);
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator TKVector2i(in Vector2i vec) => UnsafeEx.As<Vector2i, TKVector2i>(in vec);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Vector2i(in TKVector2i vec) => UnsafeEx.As<TKVector2i, Vector2i>(in vec);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Vector2i(in Point point) => UnsafeEx.As<Point, Vector2i>(in point);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator Vector2i(in Vector2 vec) => new Vector2i((int)vec.X, (int)vec.Y);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator Point(in Vector2i vec) => UnsafeEx.As<Vector2i, Point>(in vec);
     }
 }

@@ -4,6 +4,7 @@ using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Elffy.Effective;
 using TKVector3i = OpenToolkit.Mathematics.Vector3i;
 
 namespace Elffy
@@ -68,8 +69,11 @@ namespace Elffy
         public static Vector3i operator /(int right, in Vector3i vec1) => new Vector3i(vec1.X / right, vec1.Y / right, vec1.Z / right);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator TKVector3i(in Vector3i vec) => Unsafe.As<Vector3i, TKVector3i>(ref Unsafe.AsRef(vec));
+        public static implicit operator TKVector3i(in Vector3i vec) => UnsafeEx.As<Vector3i, TKVector3i>(in vec);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Vector3i(in TKVector3i vec) => Unsafe.As<TKVector3i, Vector3i>(ref Unsafe.AsRef(vec));
+        public static implicit operator Vector3i(in TKVector3i vec) => UnsafeEx.As<TKVector3i, Vector3i>(in vec);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator Vector3i(in Vector3 vec) => new Vector3i((int)vec.X, (int)vec.Y, (int)vec.Z);
     }
 }
