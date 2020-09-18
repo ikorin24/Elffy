@@ -35,6 +35,8 @@ namespace Elffy.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 Vector4() => new Vector4(_xorshift32.Single(), _xorshift32.Single(), _xorshift32.Single(), _xorshift32.Single()).Normalized();
 
+        /// <summary>Get 1 or -1 randomly</summary>
+        /// <returns>1 or -1</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Sign() => (_xorshift32.Int32() & 2) - 1;
 
