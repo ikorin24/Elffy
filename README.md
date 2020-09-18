@@ -12,13 +12,13 @@ OpenGL ベースの C# 製の ゲームエンジン
 
 ## ディレクトリ構造
 
-`src/Elffy/Elffy.sln` : 全体のソリューション
+`src/Elffy.sln` : 全体のソリューション
 
-`src/Elffy/Elffy/Elffy.csproj` : ゲームエンジン本体のプロジェクト (dll)
+`src/Elffy/Elffy.csproj` : ゲームエンジン本体のプロジェクト (dll)
 
-`src/Elffy/Sandbox/Sandbox.csproj` : ゲームエンジンを実際に使った動作確認サンプル (WinExe)
+`src/Sandbox/Sandbox.csproj` : ゲームエンジンを実際に使った動作確認サンプル (WinExe)
 
-`src/Elffy/`以下にその他関連プロジェクト、関連ファイル
+`src/`以下にその他関連プロジェクト、関連ファイル
 
 ビルド及び実行は Windows10, Visual Studio 2019 からしか確認していません。
 
@@ -26,7 +26,7 @@ OpenGL ベースの C# 製の ゲームエンジン
 
 上記の`Sandbox.csproj`をビルドして実行してください。
 
-プロジェクト内の`Sandbox/externalExe/erc.exe`は`src/Elffy/ElffyResourceCompiler.csproj`をビルドしたもので、`Sandbox.csproj`のビルド時にゲームのリソースを zip に固めるためのものです。
+プロジェクト内の`Sandbox/externalExe/erc.exe`は`src/ElffyResourceCompiler/ElffyResourceCompiler.csproj`をビルドしたもので、`Sandbox.csproj`のビルド時にゲームのリソースを単一ファイルに固めるためのものです。
 
 ## Other licensed products
 
