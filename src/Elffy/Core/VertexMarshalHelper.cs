@@ -39,12 +39,17 @@ namespace Elffy.Core
 
     public enum VertexFieldElementType
     {
-        Byte = VertexAttribPointerType.UnsignedByte,
-        Int16 = VertexAttribPointerType.Short,
-        Int32 = VertexAttribPointerType.Int,
-        Uint32 = VertexAttribPointerType.UnsignedInt,
-        HalfFloat = VertexAttribPointerType.HalfFloat,
+        // floating point types
+
         Float = VertexAttribPointerType.Float,
-        Double = VertexAttribPointerType.Double,
+        HalfFloat = VertexAttribPointerType.HalfFloat,
+
+        // integer types
+
+        Uint32 = VertexAttribIntegerType.UnsignedInt,
+        Int32 = VertexAttribIntegerType.Int,
+        Byte = VertexAttribIntegerType.UnsignedByte,
+        Int16 = VertexAttribIntegerType.Short,
+        Uint16 = VertexAttribIntegerType.UnsignedShort,
     }
 }

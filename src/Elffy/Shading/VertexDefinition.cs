@@ -48,7 +48,28 @@ namespace Elffy.Shading
 
             var (offset, type, elementCount) = VertexMarshalHelper<TVertex>.GetLayout(vertexFieldName);
             GL.EnableVertexAttribArray(index);
-            GL.VertexAttribPointer(index, elementCount, (VertexAttribPointerType)type, false, sizeof(TVertex), offset);
+
+
+            switch(type) {
+                case VertexFieldElementType.Float:
+                case VertexFieldElementType.HalfFloat: {
+                    GL.VertexAttribPointer(index, elementCount, (VertexAttribPointerType)type, false, sizeof(TVertex), offset);
+                    break;
+                }
+                case VertexFieldElementType.Uint32:
+                case VertexFieldElementType.Int32:
+                case VertexFieldElementType.Byte:
+                case VertexFieldElementType.Int16:
+                case VertexFieldElementType.Uint16: {
+                    GL.VertexAttribIPointer(index, elementCount, (VertexAttribIntegerType)type, sizeof(TVertex), (IntPtr)offset);
+                    break;
+                }
+                default:
+                    ThrowNotSupported();
+                    break;
+
+                    static void ThrowNotSupported() => throw new NotSupportedException();
+            }
         }
 
 
