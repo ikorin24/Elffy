@@ -31,6 +31,10 @@ namespace Elffy.Components
 
         public void Load(ReadOnlySpan<Color4> texels) => _impl.Load(texels);
 
+        public void Update(ReadOnlySpan<Vector4> texels, int xOffset) => _impl.Update(texels.MarshalCast<Vector4, Color4>(), xOffset);
+        
+        public void Update(ReadOnlySpan<Color4> texels, int xOffset) => _impl.Update(texels, xOffset);
+
         public void Dispose()
         {
             Dispose(true);
