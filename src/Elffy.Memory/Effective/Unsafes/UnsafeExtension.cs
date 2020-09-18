@@ -9,6 +9,50 @@ namespace Elffy.Effective.Unsafes
 {
     internal static class UnsafeExtension
     {
+        /// <summary>Get reference to specified indexed element of <see cref="Span{T}"/></summary>
+        /// <remarks>[CAUTION] This method DOES NOT check boundary !! Be careful !!</remarks>
+        /// <typeparam name="T">type of element of <see cref="Span{T}"/></typeparam>
+        /// <param name="source">source object</param>
+        /// <param name="i">index</param>
+        /// <returns>reference to element</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref T At<T>(this Span<T> source, int i)
+        {
+            return ref Unsafe.Add(ref MemoryMarshal.GetReference(source), i);
+        }
+
+        /// <summary>Get reference to specified indexed element of <see cref="ReadOnlySpan{T}"/></summary>
+        /// <remarks>[CAUTION] This method DOES NOT check boundary !! Be careful !!</remarks>
+        /// <typeparam name="T">type of element of <see cref="ReadOnlySpan{T}"/></typeparam>
+        /// <param name="source">source object</param>
+        /// <param name="i">index</param>
+        /// <returns>reference to element</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref readonly T At<T>(this ReadOnlySpan<T> source, int i)
+        {
+            return ref Unsafe.Add(ref MemoryMarshal.GetReference(source), i);
+        }
+
+        /// <summary>Get reference to 0th element of <see cref="Span{T}"/></summary>
+        /// <typeparam name="T">type of element of <see cref="Span{T}"/></typeparam>
+        /// <param name="source">source object</param>
+        /// <returns>reference to 0th element</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref T Reference<T>(this Span<T> source)
+        {
+            return ref MemoryMarshal.GetReference(source);
+        }
+
+        /// <summary>Get reference to 0th element of <see cref="ReadOnlySpan{T}"/></summary>
+        /// <typeparam name="T">type of element of <see cref="ReadOnlySpan{T}"/></typeparam>
+        /// <param name="source">source object</param>
+        /// <returns>reference to 0th element</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref readonly T Reference<T>(this ReadOnlySpan<T> source)
+        {
+            return ref MemoryMarshal.GetReference(source);
+        }
+
         /// <summary>
         /// Change <see cref="ReadOnlySpan{T}"/> into <see cref="Span{T}"/>, which is very DENGEROUS !!! Be carefull !!!
         /// </summary>
