@@ -1,10 +1,7 @@
 ﻿#nullable enable
 using System;
-using System.ComponentModel;
-using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.Runtime.CompilerServices;
 using Elffy.Core;
 using Elffy.Exceptions;
 using Elffy.Imaging;
@@ -65,9 +62,9 @@ namespace Elffy.Components
             TextureObject.Unbind2D(unit);
         }
 
-        public void OnAttached(ComponentOwner owner) => _core.OnAttached(owner);
+        void IComponent.OnAttached(ComponentOwner owner) => _core.OnAttached(owner);
 
-        public void OnDetached(ComponentOwner owner) => _core.OnDetachedForDisposable(owner, this);
+        void IComponent.OnDetached(ComponentOwner owner) => _core.OnDetachedForDisposable(owner, this);
 
         public void Dispose()
         {

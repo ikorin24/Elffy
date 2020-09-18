@@ -9,7 +9,7 @@ using Elffy.OpenGL;
 
 namespace Elffy.Components
 {
-    public sealed class MultiTexture : ISingleOwnerComponent, IComponent, IDisposable
+    public sealed class MultiTexture : ISingleOwnerComponent, IDisposable
     {
         private SingleOwnerComponentCore<MultiTexture> _core = new SingleOwnerComponentCore<MultiTexture>(true);
         private bool _disposed;

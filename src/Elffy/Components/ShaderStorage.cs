@@ -45,9 +45,9 @@ namespace Elffy.Components
             }
         }
 
-        public void OnAttached(ComponentOwner owner) => _core.OnAttached(owner);
+        void IComponent.OnAttached(ComponentOwner owner) => _core.OnAttached(owner);
 
-        public void OnDetached(ComponentOwner owner) => _core.OnDetachedForDisposable(owner, this);
+        void IComponent.OnDetached(ComponentOwner owner) => _core.OnDetachedForDisposable(owner, this);
     }
 
     internal readonly struct ShaderStorageImpl : IDisposable

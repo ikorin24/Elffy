@@ -47,13 +47,13 @@ namespace Elffy.Components
 
         public void Apply(TextureUnitNumber textureUnit) => _boneMoveData.Apply(textureUnit);
 
-        public void OnAttached(ComponentOwner owner)
+        void IComponent.OnAttached(ComponentOwner owner)
         {
             _core.OnAttached(owner);
             owner.EarlyUpdated += OwnerEarlyUpdated;
         }
 
-        public void OnDetached(ComponentOwner owner)
+        void IComponent.OnDetached(ComponentOwner owner)
         {
             owner.EarlyUpdated -= OwnerEarlyUpdated;
             _core.OnDetachedForDisposable(owner, this);

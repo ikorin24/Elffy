@@ -22,24 +22,23 @@ namespace Elffy.Components
 
         public ref MaterialValue Value => ref _material;
 
-        public Material(Color4 color)
+        public Material(in Color4 color)
         {
             _material = new MaterialValue(color);
         }
 
-        public Material(Color4 ambient, Color4 diffuse, Color4 specular, float shininess)
+        public Material(in Color4 ambient, in Color4 diffuse, in Color4 specular, float shininess)
         {
             _material = new MaterialValue(ambient, diffuse, specular, shininess);
         }
 
-        public Material(MaterialValue materialValue)
+        public Material(in MaterialValue materialValue)
         {
             _material = materialValue;
         }
 
-        public void OnAttached(ComponentOwner owner) { }
-
-        public void OnDetached(ComponentOwner owner) { }
+        void IComponent.OnAttached(ComponentOwner owner) { }
+        void IComponent.OnDetached(ComponentOwner owner) { }
     }
 
     [DebuggerDisplay("Ambient=({Ambient.R}, {Ambient.G}, {Ambient.B}, {Ambient.A}), Diffuse=({Diffuse.R}, {Diffuse.G}, {Diffuse.B}, {Diffuse.A}), Specular=({Specular.R}, {Specular.G}, {Specular.B}, {Specular.A}), Shininess={Shininess}")]
@@ -64,7 +63,7 @@ namespace Elffy.Components
 
         /// <summary>constructor of specified color material</summary>
         /// <param name="color">color of material</param>
-        public MaterialValue(Color4 color)
+        public MaterialValue(in Color4 color)
         {
             const float AMBIENT_RATIO = 0.4f;
             const float DIFFUSE_RATIO = 1f - AMBIENT_RATIO;
@@ -79,7 +78,7 @@ namespace Elffy.Components
         /// <param name="diffuse"></param>
         /// <param name="specular"></param>
         /// <param name="shininess"></param>
-        public MaterialValue(Color4 ambient, Color4 diffuse, Color4 specular, float shininess)
+        public MaterialValue(in Color4 ambient, in Color4 diffuse, in Color4 specular, float shininess)
         {
             Ambient = ambient;
             Diffuse = diffuse;
@@ -96,9 +95,9 @@ namespace Elffy.Components
 
         public readonly override int GetHashCode() => HashCode.Combine(Ambient, Diffuse, Specular, Shininess);
 
-        public static bool operator ==(MaterialValue left, MaterialValue right) => left.Equals(right);
+        public static bool operator ==(in MaterialValue left, in MaterialValue right) => left.Equals(right);
 
-        public static bool operator !=(MaterialValue left, MaterialValue right) => !(left == right);
+        public static bool operator !=(in MaterialValue left, in MaterialValue right) => !(left == right);
 
 
 

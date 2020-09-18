@@ -1,12 +1,12 @@
 ﻿#nullable enable
-using Elffy.OpenGL;
-using System;
-using OpenToolkit.Graphics.OpenGL4;
-using Elffy.Exceptions;
-using TKPixelFormat = OpenToolkit.Graphics.OpenGL4.PixelFormat;
-using Elffy.Effective;
 using Elffy.Core;
+using Elffy.OpenGL;
+using Elffy.Exceptions;
+using Elffy.Effective;
+using System;
 using System.Runtime.CompilerServices;
+using OpenToolkit.Graphics.OpenGL4;
+using TKPixelFormat = OpenToolkit.Graphics.OpenGL4.PixelFormat;
 
 namespace Elffy.Components
 {
@@ -51,9 +51,9 @@ namespace Elffy.Components
             }
         }
 
-        public void OnAttached(ComponentOwner owner) => _core.OnAttached(owner);
+        void IComponent.OnAttached(ComponentOwner owner) => _core.OnAttached(owner);
 
-        public void OnDetached(ComponentOwner owner) => _core.OnDetachedForDisposable(owner, this);
+        void IComponent.OnDetached(ComponentOwner owner) => _core.OnDetachedForDisposable(owner, this);
     }
 
     internal readonly struct FloatDataTextureImpl : IDisposable
