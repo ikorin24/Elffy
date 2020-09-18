@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 namespace Elffy.Core
 {
+    [Obsolete("削除予定 (replaced to WindowGLFW class)", true)]
     internal sealed class CustomGameWindow : NativeWindow
     {
         private const double MaxFrequency = 500.0;
