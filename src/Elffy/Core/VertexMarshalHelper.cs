@@ -10,10 +10,16 @@ namespace Elffy.Core
     {
         private static VertexLayoutDelegate? _layouter;
 
-        internal static VertexLayoutDelegate Layout
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static (int offset, VertexFieldElementType type, int elementCount) GetLayout(string fieldName)
         {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _layouter ?? throw new InvalidOperationException("Layouter is not registered");
+            var layouter = _layouter;
+            if(layouter is null) {
+                ThrowLayoutNotRegistered();
+            }
+            return layouter!.Invoke(fieldName);
+
+            static void ThrowLayoutNotRegistered() => throw new InvalidOperationException("Layouter is not registered");
         }
 
         public static void Register(VertexLayoutDelegate layout)
