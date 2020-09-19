@@ -11,7 +11,7 @@ namespace Elffy.Components
 {
     public sealed class FloatDataTexture : ISingleOwnerComponent, IDisposable
     {
-        private SingleOwnerComponentCore<FloatDataTexture> _core = new SingleOwnerComponentCore<FloatDataTexture>(true);
+        private SingleOwnerComponentCore<FloatDataTexture> _core = new SingleOwnerComponentCore<FloatDataTexture>(true);    // Mutable object, Don't change into reaadonly
         private FloatDataTextureImpl _impl = new FloatDataTextureImpl();    // Mutable object, Don't change into reaadonly
 
         public ComponentOwner? Owner => _core.Owner;

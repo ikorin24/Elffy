@@ -13,9 +13,9 @@ namespace Elffy.Components
     /// <see cref="ISingleOwnerComponent"/> を継承したクラスの実装を簡略化するためのヘルパー構造体
     /// </summary>
     /// <typeparam name="TComponent">コンポーネントの型</typeparam>
-    public readonly struct SingleOwnerComponentCore<TComponent> where TComponent : class, ISingleOwnerComponent
+    public struct SingleOwnerComponentCore<TComponent> where TComponent : class, ISingleOwnerComponent
     {
-        private readonly ComponentOwner? _owner;
+        private ComponentOwner? _owner;
         private readonly bool _autoDisposeOnDetached;
 
         /// <summary>対象のコンポーネントの所有者を取得します</summary>
@@ -41,12 +41,17 @@ namespace Elffy.Components
         public void OnAttached(ComponentOwner owner)
         {
             if(_owner is null == false) {
-                throw new InvalidOperationException($"This component is already attached. Can not have multi {nameof(ComponentOwner)}s.");
+                ThrowAlreadyLoaded();
+                static void ThrowAlreadyLoaded() => throw new InvalidOperationException($"This component is already attached. Can not have multi {nameof(ComponentOwner)}s.");
+            }
+            if(owner is null) {
+                ThrowNullArg();
+                static void ThrowNullArg() => throw new ArgumentNullException(nameof(owner));
             }
 
-            Unsafe.AsRef(_owner) = owner ?? throw new ArgumentNullException(nameof(owner));
+            _owner = owner;
             if(_autoDisposeOnDetached) {
-                owner.Dead += sender =>
+                owner!.Dead += sender =>
                 {
                     Debug.Assert(sender is ComponentOwner);
                     Unsafe.As<ComponentOwner>(sender).RemoveComponent<TComponent>();
@@ -63,7 +68,7 @@ namespace Elffy.Components
         public void OnDetached(ComponentOwner owner)
         {
             if(Owner == owner) {
-                Unsafe.AsRef(_owner) = null;
+                _owner = null;
             }
         }
 
@@ -78,7 +83,7 @@ namespace Elffy.Components
         public void OnDetachedForDisposable<T>(ComponentOwner owner, T self) where T : IDisposable
         {
             if(Owner == owner) {
-                Unsafe.AsRef(_owner) = null;
+                _owner = null;
                 if(AutoDisposeOnDetached) {
                     self.Dispose();
                 }
