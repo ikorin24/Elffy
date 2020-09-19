@@ -12,7 +12,7 @@ namespace Elffy.Components
     public sealed class Skeleton : ISingleOwnerComponent, IDisposable
     {
         private SingleOwnerComponentCore<Skeleton> _core = new SingleOwnerComponentCore<Skeleton>(true);
-        private FloatDataTextureImpl _boneMoveData = new FloatDataTextureImpl();
+        private FloatDataTextureImpl _boneMoveData = new FloatDataTextureImpl();    // Mutable object, Don't change into reaadonly
         private UnmanagedArray<Vector4>? _positions;
         private UnmanagedArray<Vector4>? _move;
         private bool _disposed;

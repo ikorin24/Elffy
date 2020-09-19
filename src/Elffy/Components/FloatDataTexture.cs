@@ -4,7 +4,6 @@ using Elffy.OpenGL;
 using Elffy.Exceptions;
 using Elffy.Effective;
 using System;
-using System.Runtime.CompilerServices;
 using OpenToolkit.Graphics.OpenGL4;
 using TKPixelFormat = OpenToolkit.Graphics.OpenGL4.PixelFormat;
 
@@ -13,7 +12,7 @@ namespace Elffy.Components
     public sealed class FloatDataTexture : ISingleOwnerComponent, IDisposable
     {
         private SingleOwnerComponentCore<FloatDataTexture> _core = new SingleOwnerComponentCore<FloatDataTexture>(true);
-        private FloatDataTextureImpl _impl = new FloatDataTextureImpl();
+        private FloatDataTextureImpl _impl = new FloatDataTextureImpl();    // Mutable object, Don't change into reaadonly
 
         public ComponentOwner? Owner => _core.Owner;
 
@@ -56,12 +55,12 @@ namespace Elffy.Components
         void IComponent.OnDetached(ComponentOwner owner) => _core.OnDetachedForDisposable(owner, this);
     }
 
-    internal readonly struct FloatDataTextureImpl : IDisposable
+    internal struct FloatDataTextureImpl : IDisposable
     {
-        public readonly TextureObject TextureObject;
-        public readonly int Length;
+        public TextureObject TextureObject;
+        public int Length;
 
-        public void Apply(TextureUnitNumber unit)
+        public readonly void Apply(TextureUnitNumber unit)
         {
             TextureObject.Bind1D(TextureObject, unit);
         }
@@ -69,14 +68,16 @@ namespace Elffy.Components
         public unsafe void Load(ReadOnlySpan<Color4> texels)
         {
             if(!TextureObject.IsEmpty) {
-                throw new InvalidOperationException("Already loaded");
+                ThrowAlreadyLoaded();
+                static void ThrowAlreadyLoaded() => throw new InvalidOperationException("Already loaded");
             }
-            if(texels.IsEmpty) { return; }
-            
-            Unsafe.AsRef(TextureObject) = TextureObject.Create();
-            Unsafe.AsRef(Length) = texels.Length;
 
-            const TextureUnitNumber unit = TextureUnitNumber.Unit1;
+            if(texels.IsEmpty) { return; }
+
+            TextureObject = TextureObject.Create();
+            Length = texels.Length;
+
+            const TextureUnitNumber unit = TextureUnitNumber.Unit0;
             TextureObject.Bind1D(TextureObject, unit);
             GL.TexParameter(TextureTarget.Texture1D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
             GL.TexParameter(TextureTarget.Texture1D, TextureParameterName.TextureMagFilter, (int)TextureMinFilter.Nearest);
@@ -89,14 +90,18 @@ namespace Elffy.Components
 
         public unsafe void Update(ReadOnlySpan<Color4> texels, int xOffset)
         {
-            if(TextureObject.IsEmpty) { throw new InvalidOperationException("Cannnot update texels because not loaded yet."); }
+            if(TextureObject.IsEmpty) {
+                ThrowNotYetLoaded();
+                static void ThrowNotYetLoaded() => throw new InvalidOperationException("Cannnot update texels because not loaded yet.");
+            }
             if((uint)xOffset >= (uint)Length || texels.Length > Length - xOffset) {
-                throw new ArgumentOutOfRangeException($"Length: {Length}, {nameof(texels)}.Length: {texels.Length}, {nameof(xOffset)}: {xOffset}");
+                ThrowOutOfRange($"Length: {Length}, {nameof(texels)}.Length: {texels.Length}, {nameof(xOffset)}: {xOffset}");
+                static void ThrowOutOfRange(string msg) => throw new ArgumentOutOfRangeException(msg);
             }
 
             if(texels.IsEmpty) { return; }
 
-            const TextureUnitNumber unit = TextureUnitNumber.Unit1;
+            const TextureUnitNumber unit = TextureUnitNumber.Unit0;
             TextureObject.Bind1D(TextureObject, unit);
             fixed(void* ptr = texels) {
                 GL.TexSubImage1D(TextureTarget.Texture1D, 0, xOffset,
@@ -107,8 +112,8 @@ namespace Elffy.Components
 
         public void Dispose()
         {
-            TextureObject.Delete(ref Unsafe.AsRef(TextureObject));
-            Unsafe.AsRef(Length) = 0;
+            TextureObject.Delete(ref TextureObject);
+            Length = 0;
         }
     }
 }
