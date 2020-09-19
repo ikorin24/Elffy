@@ -64,7 +64,7 @@ namespace Elffy.OpenGL
             Unsafe.AsRef(ssbo._length) = data.Length;
         }
 
-        internal static unsafe void UpdateSubData<T>(ref SSBO ssbo, int offset, ReadOnlySpan<T> data) where T : unmanaged
+        internal static unsafe void UpdateSubData<T>(in SSBO ssbo, int offset, ReadOnlySpan<T> data) where T : unmanaged
         {
             if(ssbo.IsEmpty) { ThrowEmpty(); }
             var size = sizeof(T) * data.Length;

@@ -11,7 +11,7 @@ namespace Elffy.Components
     public sealed class ShaderStorage : ISingleOwnerComponent, IDisposable
     {
         private SingleOwnerComponentCore<ShaderStorage> _core = new SingleOwnerComponentCore<ShaderStorage>(true);  // Mutable object, Don't change into reaadonly
-        private ShaderStorageImpl _impl = new ShaderStorageImpl();
+        private ShaderStorageImpl _impl = new ShaderStorageImpl();  // Mutable object, Don't change into reaadonly
 
         public ComponentOwner? Owner => _core.Owner;
 
@@ -19,9 +19,9 @@ namespace Elffy.Components
 
         ~ShaderStorage() => Dispose(false);
 
-        public void Create<T>(Span<T> data, BufferUsage usage) where T : unmanaged => _impl.Create(data.AsReadOnly(), usage);
+        public void Create<T>(Span<T> data, BufferUsage usage) where T : unmanaged => _impl.Load(data.AsReadOnly(), usage);
 
-        public void Create<T>(ReadOnlySpan<T> data, BufferUsage usage) where T : unmanaged => _impl.Create(data, usage);
+        public void Create<T>(ReadOnlySpan<T> data, BufferUsage usage) where T : unmanaged => _impl.Load(data, usage);
 
         public void Update<T>(int offset, Span<T> data) where T : unmanaged => _impl.Update(offset, data.AsReadOnly());
 
@@ -50,29 +50,34 @@ namespace Elffy.Components
         void IComponent.OnDetached(ComponentOwner owner) => _core.OnDetachedForDisposable(owner, this);
     }
 
-    internal readonly struct ShaderStorageImpl : IDisposable
+    internal struct ShaderStorageImpl : IDisposable
     {
-        private readonly SSBO _ssbo;
+        private SSBO _ssbo;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Create<T>(ReadOnlySpan<T> data, BufferUsage usage) where T : unmanaged
+        public void Load<T>(ReadOnlySpan<T> data, BufferUsage usage) where T : unmanaged
         {
-            ref var ssbo = ref Unsafe.AsRef(_ssbo);
-            ssbo = SSBO.Create();
-            SSBO.LoadNewData(ref ssbo, data, usage);
+            _ssbo = SSBO.Create();
+            SSBO.LoadNewData(ref _ssbo, data, usage);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Update<T>(int offset, ReadOnlySpan<T> data) where T : unmanaged
+        public readonly void Update<T>(int offset, ReadOnlySpan<T> data) where T : unmanaged
         {
-            if(_ssbo.IsEmpty) { throw new InvalidOperationException($"SSBO is not created yet. Call {nameof(Create)} before"); }
-            SSBO.UpdateSubData(ref Unsafe.AsRef(_ssbo), offset, data);
+            if(_ssbo.IsEmpty) {
+                ThrowNotYetLoaded();
+                static void ThrowNotYetLoaded() => throw new InvalidOperationException($"SSBO is not loaded yet. Call {nameof(Load)} before");
+            }
+            SSBO.UpdateSubData(in _ssbo, offset, data);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void BindIndex(int index)
+        public readonly void BindIndex(int index)
         {
-            if(_ssbo.IsEmpty) { throw new InvalidOperationException($"SSBO is not created yet. Call {nameof(Create)} before"); }
+            if(_ssbo.IsEmpty) {
+                ThrowNotYetLoaded();
+                static void ThrowNotYetLoaded() => throw new InvalidOperationException($"SSBO is not loaded yet. Call {nameof(Load)} before");
+            }
             SSBO.BindBase(_ssbo, index);
         }
 
