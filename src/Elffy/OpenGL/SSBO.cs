@@ -19,18 +19,21 @@ namespace Elffy.OpenGL
 
         public bool IsEmpty => _ssbo == Consts.NULL;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private SSBO(int ssbo)
         {
             _ssbo = ssbo;
             _length = 0;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static SSBO Create()
         {
             GLAssert.EnsureContext();
             return new SSBO(GL.GenBuffer());
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void Delete(ref SSBO ssbo)
         {
             if(!ssbo.IsEmpty) {
@@ -40,12 +43,14 @@ namespace Elffy.OpenGL
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void Bind(in SSBO ssbo)
         {
             GLAssert.EnsureContext();
             GL.BindBuffer(BufferTarget.ShaderStorageBuffer, ssbo._ssbo);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void BindBase(in SSBO ssbo, int index)
         {
             Bind(ssbo);
@@ -79,6 +84,7 @@ namespace Elffy.OpenGL
             static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void Unbind()
         {
             GLAssert.EnsureContext();
