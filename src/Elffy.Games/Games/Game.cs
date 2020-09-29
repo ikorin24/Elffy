@@ -4,6 +4,7 @@ using Elffy.Diagnostics;
 using Elffy.InputSystem;
 using Elffy.Platforms;
 using Elffy.Threading;
+using Elffy.Threading.Tasks;
 using Elffy.UI;
 using System;
 
@@ -18,6 +19,7 @@ namespace Elffy.Games
         public static Layer WorldLayer { get; private set; } = null!;
         public static Camera MainCamera { get; private set; } = null!;
         public static Mouse Mouse { get; private set; } = null!;
+        public static AsyncBackEndPoint AsyncBack { get; private set; } = null!;
         public static ControlCollection UI { get; private set; } = null!;
 
         public static void Start(int width, int height, string title, Action initialize) => Start(width, height, title, false, initialize);
@@ -64,6 +66,7 @@ namespace Elffy.Games
             MainCamera = screen.Camera;
             Mouse = screen.Mouse;
             UI = screen.UIRoot.Children;
+            AsyncBack = screen.AsyncBack;
             _initialize();
         }
 

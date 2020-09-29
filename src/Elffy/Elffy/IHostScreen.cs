@@ -4,6 +4,7 @@ using Elffy.UI;
 using Elffy.Core;
 using Elffy.Core.Timer;
 using System;
+using Elffy.Threading.Tasks;
 
 namespace Elffy
 {
@@ -16,6 +17,8 @@ namespace Elffy
         Camera Camera { get; }
         /// <summary>UIのルートオブジェクト</summary>
         Page UIRoot { get; }
+
+        public AsyncBackEndPoint AsyncBack { get; }
         /// <summary>描画領域のサイズ [pixel]</summary>
         Vector2i ClientSize { get; set; }
 

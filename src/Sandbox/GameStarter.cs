@@ -14,6 +14,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Elffy.Effective;
 using Cysharp.Threading.Tasks;
+using Elffy.Threading.Tasks;
 
 namespace Sandbox
 {
@@ -58,7 +59,7 @@ namespace Sandbox
             // キャラ1
             PmxModel.LoadResourceAsync("Alicia/Alicia_solid.pmx").ContinueWith(async model =>
             {
-                await AsyncHelper.SwitchToMain();
+                await GameAsync.ToUpdate();
                 model.AddComponent(new Material(new Color4(0.88f), new Color4(0.18f), new Color4(0.1f), 5f));
                 model.Shader = RigShaderSource.Instance;
                 model.Activate();
@@ -77,6 +78,22 @@ namespace Sandbox
             //        model.Scale = new Vector3(scale);
             //    }).Play();
             //});
+
+            Model3D.LoadResourceAsync("Dice.fbx").ContinueWith(async model =>
+            {
+                await GameAsync.ToUpdate();
+                model.Position = new Vector3(4, 4, -2);
+                model.Activate();
+
+                var startTime = Game.Screen.Time.TotalSeconds;
+
+                while(!model.IsDead && !model.IsFrozen) {
+                    var theta = MathF.PI * 2 * (float)(startTime - Game.Screen.Time.TotalSeconds);
+                    var scale = 0.5f + 0.1f * MathF.Sin(theta);
+                    model.Scale = new Vector3(scale);
+                    await GameAsync.ToUpdate();
+                }
+            });
 
 
             // カエル

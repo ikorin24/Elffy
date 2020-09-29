@@ -11,6 +11,7 @@ using TKMouseButton = OpenToolkit.Windowing.Common.Input.MouseButton;
 using TKMouseButtonEventArgs = OpenToolkit.Windowing.Common.MouseButtonEventArgs;
 using Elffy.OpenGL;
 using Elffy.OpenGL.Windowing;
+using Elffy.Threading.Tasks;
 
 namespace Elffy
 {
@@ -32,6 +33,8 @@ namespace Elffy
 
         /// <summary>マウスを取得します</summary>
         public Mouse Mouse => _renderingArea.Mouse;
+
+        public AsyncBackEndPoint AsyncBack => _renderingArea.AsyncBack;
 
         /// <summary>このウィンドウのレイヤー</summary>
         LayerCollection IHostScreen.Layers => _renderingArea.Layers;

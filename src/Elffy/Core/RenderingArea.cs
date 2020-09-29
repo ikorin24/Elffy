@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using Elffy.InputSystem;
 using Elffy.Threading;
+using Elffy.Threading.Tasks;
 using OpenToolkit.Graphics.OpenGL4;
 using System;
 using System.Diagnostics;
@@ -25,6 +26,8 @@ namespace Elffy.Core
         public LayerCollection Layers { get; }
         public Camera Camera { get; } = new Camera();
         public Mouse Mouse { get; } = new Mouse();
+
+        public AsyncBackEndPoint AsyncBack { get; }
 
         public bool IsEnabledPostProcess { get; set; }
 
@@ -77,6 +80,7 @@ namespace Elffy.Core
         {
             OwnerScreen = screen;
             Layers = new LayerCollection(this);
+            AsyncBack = new AsyncBackEndPoint();
         }
 
         /// <summary>OpenTL の描画に関する初期設定を行います</summary>
@@ -113,6 +117,7 @@ namespace Elffy.Core
 
             // Early update
             systemLayer.EarlyUpdate();
+            AsyncBack.DoQueuedEvents(FrameLoopTiming.EarlyUpdate);
             foreach(var layer in Layers.AsReadOnlySpan()) {
                 layer.EarlyUpdate();
             }
@@ -120,6 +125,7 @@ namespace Elffy.Core
 
             // Update
             systemLayer.Update();
+            AsyncBack.DoQueuedEvents(FrameLoopTiming.Update);
             foreach(var layer in Layers.AsReadOnlySpan()) {
                 layer.Update();
             }
@@ -127,6 +133,7 @@ namespace Elffy.Core
 
             // Late update
             systemLayer.LateUpdate();
+            AsyncBack.DoQueuedEvents(FrameLoopTiming.LateUpdate);
             foreach(var layer in Layers.AsReadOnlySpan()) {
                 layer.LateUpdate();
             }
