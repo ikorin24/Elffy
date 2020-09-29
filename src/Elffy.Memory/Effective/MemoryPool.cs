@@ -141,7 +141,7 @@ namespace Elffy.Effective
                 // --- begin sync
 
                 if(_availableHead >= _availableIDStack.Length) {
-                    _syncFlag = SYNC_EXIT;
+                    Volatile.Write(ref _syncFlag, SYNC_EXIT);
                     // --- end sync
 
                     segID = -1;
@@ -154,7 +154,7 @@ namespace Elffy.Effective
                     _availableHead++;
                     _segmentState[segID] = true;
 
-                    _syncFlag = SYNC_EXIT;
+                    Volatile.Write(ref _syncFlag, SYNC_EXIT);
                     // --- end sync
 
                     array = _array;
@@ -177,7 +177,7 @@ namespace Elffy.Effective
                     _availableIDStack[_availableHead] = segID;
                     _segmentState[segID] = false;
                 }
-                _syncFlag = SYNC_EXIT;
+                Volatile.Write(ref _syncFlag, SYNC_EXIT);
                 // --- end sync
             }
         }
