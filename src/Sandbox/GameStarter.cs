@@ -60,25 +60,14 @@ namespace Sandbox
             PmxModel.LoadResourceAsync("Alicia/Alicia_solid.pmx").ContinueWith(async model =>
             {
                 await GameAsync.ToUpdate();
+                model.Scale = new Vector3(0.3f);
                 model.AddComponent(new Material(new Color4(0.88f), new Color4(0.18f), new Color4(0.1f), 5f));
                 model.Shader = RigShaderSource.Instance;
                 model.Activate();
-            });
+            }).Forget();
 
 
             // サイコロ
-            //Model3D.LoadResourceAsync("Dice.fbx").ContinueWithDispatch(model =>
-            //{
-            //    model.Position = new Vector3(4, 4, -2);
-            //    model.Activate();
-            //    Animation.Define().Endless(f =>
-            //    {
-            //        var theta = MathF.PI * 2 * (float)f.Time.TotalSeconds;
-            //        var scale = 0.5f + 0.1f * MathF.Sin(theta);
-            //        model.Scale = new Vector3(scale);
-            //    }).Play();
-            //});
-
             Model3D.LoadResourceAsync("Dice.fbx").ContinueWith(async model =>
             {
                 await GameAsync.ToUpdate();
@@ -93,17 +82,18 @@ namespace Sandbox
                     model.Scale = new Vector3(scale);
                     await GameAsync.ToUpdate();
                 }
-            });
+            }).Forget();
 
 
             // カエル
-            //Model3D.LoadResourceAsync("green_frog.fbx").ContinueWithDispatch(model =>
-            //{
-            //    model.Scale = new Vector3(0.01f);
-            //    model.Position = new Vector3(5, 0, 0);
-            //    model.AddComponent(new Material(new Color4(0f, 0.7f, 0.25f), new Color4(0f, 0.6f, 0.1f), Color4.White, 4));
-            //    model.Activate();
-            //});
+            Model3D.LoadResourceAsync("green_frog.fbx").ContinueWith(async model =>
+            {
+                await GameAsync.ToUpdate();
+                model.Scale = new Vector3(0.01f);
+                model.Position = new Vector3(5, 0, 0);
+                model.AddComponent(new Material(new Color4(0f, 0.7f, 0.25f), new Color4(0f, 0.6f, 0.1f), Color4.White, 4));
+                model.Activate();
+            }).Forget();
 
 
             // 箱1
@@ -140,14 +130,12 @@ namespace Sandbox
 
         private static void InitializeUI()
         {
-            //var button = new Button(90, 30);
-            //button.KeyDown += sender =>
-            //{
-            //    Debug.WriteLine("Down");
-            //};
-            //button.KeyPress += sender => Debug.WriteLine("Press");
-            //button.KeyUp += sender => Debug.WriteLine("Up");
-            //Game.UI.Add(button);
+            var button = new Button(90, 30);
+            button.Position = new Vector2i(10, 10);
+            button.KeyDown += sender => Debug.WriteLine("Down");
+            button.KeyPress += sender => Debug.WriteLine("Press");
+            button.KeyUp += sender => Debug.WriteLine("Up");
+            Game.UI.Add(button);
         }
     }
 }
