@@ -8,6 +8,7 @@
     <LangVersion>8.0</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Nullable>enable</Nullable>
+    <Configurations>Debug;Release;Develop</Configurations>
   </PropertyGroup>
 
   <ItemGroup>

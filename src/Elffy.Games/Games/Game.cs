@@ -22,9 +22,7 @@ namespace Elffy.Games
         public static AsyncBackEndPoint AsyncBack { get; private set; } = null!;
         public static ControlCollection UI { get; private set; } = null!;
 
-        public static void Start(int width, int height, string title, Action initialize) => Start(width, height, title, false, initialize);
-
-        public static void Start(int width, int height, string title, bool isDebug, Action initialize)
+        public static void Start(int width, int height, string title, Action initialize)
         {
             _initialize = initialize ?? throw new ArgumentNullException(nameof(initialize));
             ProcessHelper.SingleLaunch(Launch);
@@ -34,9 +32,7 @@ namespace Elffy.Games
                 var screen = CreateScreen(width, height, title);
                 screen.Initialized += InitScreen;
 
-                if(isDebug) {
-                    DiagnosticsSetting.Run();
-                }
+                DevelopingDiagnostics.Run();
                 Engine.Run();
                 try {
                     _syncContextReciever = new SyncContextReceiver();
@@ -51,10 +47,7 @@ namespace Elffy.Games
                     CustomSynchronizationContext.Delete();
                     _syncContextReciever = null;
                     Engine.Stop();
-
-                    if(isDebug) {
-                        DiagnosticsSetting.Stop();
-                    }
+                    DevelopingDiagnostics.Stop();
                 }
             }
         }

@@ -8,14 +8,23 @@ namespace Elffy.AssemblyServices
     /// <summary>アセンブリの状態を提供するクラス</summary>
     public static class AssemblyState
     {
-        /// <summary>現在のアセンブリが条件付きコンパイル #define DEBUG でコンパイルされたかどうかを取得します</summary>
-        /// <returns>条件付きコンパイルで DEBUG が定義済みであるかどうか</returns>
+        /// <summary>Get whether this assembly is compiled with symbol of '#define DEBUG'.</summary>
         public const bool IsDebug =
 #if DEBUG
             true;
 #else
             false;
 #endif
+
+        /// <summary>Get whether this assembly is compiled with symbol of '#define DEVELOP'.</summary>
+        public const bool IsDevelop =
+#if DEVELOP
+            true;
+#else
+            false;
+#endif
+        internal const string Symbol_DEBUG = "DEBUG";
+        internal const string Symbol_Develop = "DEVELOP";
 
         /// <summary>アプリケーションドメインのエントリーアセンブリ (exe) のパスを取得します。</summary>
         /// <remarks>アンマネージコードからのエントリーの場合 null を返します</remarks>

@@ -6,6 +6,7 @@ using Elffy.Shading;
 using Elffy.OpenGL;
 using Elffy.Effective;
 using Elffy.Diagnostics;
+using Elffy.AssemblyServices;
 
 namespace Elffy.Core
 {
@@ -130,7 +131,7 @@ namespace Elffy.Core
             if(IsLoaded) { throw new InvalidOperationException("already loaded"); }
 
             // checking target vertex type of shader is valid.
-            if(DiagnosticsSetting.IsEnableDiagnostics) {
+            if(AssemblyState.IsDevelop && DevelopingDiagnostics.IsEnabled) {
                 ShaderTargetVertexTypeAttribute.CheckVertexType(_shader.GetType(), typeof(TVertex));
             }
 

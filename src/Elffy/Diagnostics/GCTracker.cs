@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.Diagnostics;
+using Elffy.AssemblyServices;
 using Elffy.Effective;
 
 namespace Elffy.Diagnostics
@@ -10,6 +11,7 @@ namespace Elffy.Diagnostics
         private static bool _isRunning;
         private static readonly int[] _gcCount = new int[GC.MaxGeneration + 1];
 
+        [Conditional(AssemblyState.Symbol_Develop)]
         public static void Init()
         {
             if(_isRunning) { return; }
@@ -34,11 +36,11 @@ namespace Elffy.Diagnostics
                     _gcCount[i] = count;
                 }
             }
-
-            Debug.WriteLine($"----- GC gen {gen} -----");
+            DevEnv.WriteLine($"----- GC gen {gen} -----");
             return true;
         }
 
+        [Conditional(AssemblyState.Symbol_Develop)]
         public static void End()
         {
             _isRunning = false;

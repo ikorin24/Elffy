@@ -9,12 +9,13 @@ using Elffy.Shading;
 using Elffy.Shapes;
 using Elffy.Threading;
 using Elffy.UI;
+using Elffy.Diagnostics;
+using Elffy.Effective;
+using Elffy.Threading.Tasks;
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Elffy.Effective;
 using Cysharp.Threading.Tasks;
-using Elffy.Threading.Tasks;
 
 namespace Sandbox
 {
@@ -132,9 +133,9 @@ namespace Sandbox
         {
             var button = new Button(90, 30);
             button.Position = new Vector2i(10, 10);
-            button.KeyDown += sender => Debug.WriteLine("Down");
-            button.KeyPress += sender => Debug.WriteLine("Press");
-            button.KeyUp += sender => Debug.WriteLine("Up");
+            button.KeyDown += sender => DevEnv.WriteLine("Down");
+            button.KeyPress += sender => DevEnv.WriteLine("Press");
+            button.KeyUp += sender => DevEnv.WriteLine("Up");
             Game.UI.Add(button);
         }
     }

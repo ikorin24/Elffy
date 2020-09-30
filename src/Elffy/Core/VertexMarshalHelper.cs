@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.Runtime.CompilerServices;
+using Elffy.AssemblyServices;
 using Elffy.Diagnostics;
 using OpenToolkit.Graphics.OpenGL4;
 
@@ -24,7 +25,7 @@ namespace Elffy.Core
 
         public static void Register(VertexLayoutDelegate layout)
         {
-            if(DiagnosticsSetting.IsEnableDiagnostics) {
+            if(AssemblyState.IsDevelop && DevelopingDiagnostics.IsEnabled) {
                 if(Attribute.GetCustomAttribute(typeof(T), typeof(VertexLikeAttribute)) is null) {
                     throw new ArgumentException($"Invalid type of vertex, which has no {nameof(VertexLikeAttribute)}");
                 }
