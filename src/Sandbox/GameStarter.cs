@@ -29,7 +29,7 @@ namespace Sandbox
             {
                 Debug.Assert(sender is DirectLight);
                 var light = Unsafe.As<DirectLight>(sender);
-                var frameNum = Game.Screen.FrameNum;
+                var frameNum = Game.FrameNum;
                 var rotation = new Quaternion(Vector3.UnitX, (frameNum / 60f * 60).ToRadian());
                 light.Direction = rotation * new Vector3(0, -1, 0);
             };
@@ -75,10 +75,10 @@ namespace Sandbox
                 model.Position = new Vector3(4, 4, -2);
                 model.Activate();
 
-                var startTime = Game.Screen.Time.TotalSeconds;
+                var startTime = Game.Time.TotalSeconds;
 
                 while(!model.IsDead && !model.IsFrozen) {
-                    var theta = MathF.PI * 2 * (float)(startTime - Game.Screen.Time.TotalSeconds);
+                    var theta = MathF.PI * 2 * (float)(startTime - Game.Time.TotalSeconds);
                     var scale = 0.5f + 0.1f * MathF.Sin(theta);
                     model.Scale = new Vector3(scale);
                     await GameAsync.ToUpdate();
@@ -115,7 +115,7 @@ namespace Sandbox
             {
                 Debug.Assert(sender is Cube);
                 var cube = Unsafe.As<Cube>(sender);
-                var p = Game.Screen.FrameNum / 60f * 30f;
+                var p = Game.FrameNum / 60f * 30f;
                 cube.Rotation = new Quaternion(Vector3.UnitY, p.ToRadian());
             };
             cube.Activate();

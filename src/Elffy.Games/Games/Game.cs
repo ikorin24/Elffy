@@ -22,6 +22,12 @@ namespace Elffy.Games
         public static AsyncBackEndPoint AsyncBack { get; private set; } = null!;
         public static ControlCollection UI { get; private set; } = null!;
 
+        /// <summary>Get time of current frame. (This is NOT real time.)</summary>
+        public static ref readonly TimeSpan Time => ref Screen.Time;
+        
+        /// <summary>Get number of current frame.</summary>
+        public static ref readonly long FrameNum => ref Screen.FrameNum;
+
         public static void Start(int width, int height, string title, Action initialize)
         {
             _initialize = initialize ?? throw new ArgumentNullException(nameof(initialize));
@@ -53,11 +59,14 @@ namespace Elffy.Games
         private static void InitScreen(IHostScreen screen)
         {
             Screen = screen;
+
+            // Cache each fields to avoid accessing via interface.
             WorldLayer = screen.Layers.WorldLayer;
             MainCamera = screen.Camera;
             Mouse = screen.Mouse;
             UI = screen.UIRoot.Children;
             AsyncBack = screen.AsyncBack;
+            
             _initialize();
         }
 

@@ -26,6 +26,8 @@ namespace Elffy
         private readonly RenderingArea _renderingArea;
         private readonly IGameTimer _watch = GameTimerGenerator.Create();
         private TimeSpan _frameDelta;
+        private TimeSpan _time;
+        private long _frameNum;
         private readonly DefaultGLResource _defaultGLResource;
 
         /// <summary>ウィンドウの UI の Root</summary>
@@ -47,9 +49,11 @@ namespace Elffy
 
         public string Title { get => _windowImpl.Title; set => _windowImpl.Title = value; }
 
-        public TimeSpan Time { get; private set; }
+        /// <inheritdoc/>
+        public ref readonly TimeSpan Time => ref _time;
 
-        public long FrameNum { get; private set; }
+        /// <inheritdoc/>
+        public ref readonly long FrameNum => ref _frameNum;
 
         public IDefaultResource DefaultResource => _defaultGLResource;
 
@@ -154,8 +158,8 @@ namespace Elffy
             _renderingArea.RenderFrame();
             _renderingArea.Layers.UILayer.HitTest(Mouse);
             Rendered?.Invoke(this);
-            Time += _frameDelta;
-            FrameNum++;
+            _time += _frameDelta;
+            _frameNum++;
             _windowImpl.SwapBuffers();
         }
 

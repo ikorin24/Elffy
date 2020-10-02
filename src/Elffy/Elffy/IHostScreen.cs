@@ -25,9 +25,11 @@ namespace Elffy
         /// <summary><see cref="FrameObject"/> を保持するためのレイヤーのリスト</summary>
         LayerCollection Layers { get; }
 
-        TimeSpan Time { get; }
+        /// <summary>Get time of current frame. (This is NOT real time.)</summary>
+        ref readonly TimeSpan Time { get; }
 
-        long FrameNum { get; }
+        /// <summary>Get number of current frame.</summary>
+        ref readonly long FrameNum { get; }
 
         IDefaultResource DefaultResource { get; }
 
