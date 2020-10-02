@@ -1,9 +1,11 @@
 ﻿#nullable enable
 using Elffy.Core;
+using Elffy.Diagnostics;
 using System;
 
 namespace Elffy.Shading
 {
+    [ShaderTargetVertexType(typeof(Vertex))]
     public class VertexColorShaderSource : ShaderSource
     {
         private static VertexColorShaderSource? _instance;
@@ -15,10 +17,10 @@ namespace Elffy.Shading
 
         private VertexColorShaderSource() { }
 
-        protected override void DefineLocation(VertexDefinition definition)
+        protected override void DefineLocation(VertexDefinition definition, Renderable target)
         {
-            definition.Position("pos");
-            definition.Color("vertexColor");
+            definition.Map<Vertex>(nameof(Vertex.Position), "pos");
+            definition.Map<Vertex>(nameof(Vertex.Color), "vertexColor");
         }
 
         protected override void SendUniforms(Uniform uniform, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)

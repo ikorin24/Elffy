@@ -2,9 +2,10 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.CompilerServices;
 using Elffy.Core;
 using Elffy.OpenGL;
-using OpenToolkit.Graphics.OpenGL;
+using OpenTK.Graphics.OpenGL4;
 
 namespace Elffy.Shading
 {
@@ -16,9 +17,11 @@ namespace Elffy.Shading
 
         /// <summary>派生クラスでオーバーライドされた場合、このシェーダーに渡される頂点属性変数を定義します</summary>
         /// <param name="definition">頂点属性定義用オブジェクト</param>
-        protected abstract void DefineLocation(VertexDefinition definition);
+        /// <param name="target">描画対象の <see cref="Renderable"/></param>
+        protected abstract void DefineLocation(VertexDefinition definition, Renderable target);
 
-        internal void DefineLocation(ProgramObject program) => DefineLocation(new VertexDefinition(program));
+        internal void DefineLocation(ProgramObject program, Renderable target)
+            => DefineLocation(new VertexDefinition(program), target);
 
         /// <summary>派生クラスでオーバーライドされた場合、このシェーダーに uniform 変数を送ります。</summary>
         /// <param name="uniform">uniform 変数の送信用オブジェクト</param>
@@ -29,6 +32,7 @@ namespace Elffy.Shading
         /// <param name="projection">projection 行列</param>
         protected abstract void SendUniforms(Uniform uniform, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void SendUniforms(ProgramObject program, Renderable target, ReadOnlySpan<Light> lights,
                                    in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {

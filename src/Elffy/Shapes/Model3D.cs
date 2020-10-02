@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using Elffy.Core;
 using Elffy.Effective;
 using Elffy.Serialization;
@@ -44,9 +45,9 @@ namespace Elffy.Shapes
             _indexArray.Dispose();
         }
 
-        public static Task<Model3D> LoadResourceAsync(string name)
+        public static UniTask<Model3D> LoadResourceAsync(string name)
         {
-            return Task.Factory.StartNew(n =>
+            return UniTask.Run(n =>
             {
                 Debug.Assert(n is string);
                 var name = Unsafe.As<string>(n)!;

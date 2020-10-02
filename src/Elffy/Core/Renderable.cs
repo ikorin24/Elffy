@@ -1,15 +1,12 @@
 ﻿#nullable enable
 using System;
-using OpenToolkit.Graphics.OpenGL;
+using OpenTK.Graphics.OpenGL4;
 using Elffy.Threading;
-using Elffy.Exceptions;
 using Elffy.Shading;
 using Elffy.OpenGL;
-using Elffy.Components;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.Drawing;
-using System.Threading.Tasks;
+using Elffy.Effective;
+using Elffy.Diagnostics;
+using Elffy.AssemblyServices;
 
 namespace Elffy.Core
 {
@@ -24,13 +21,14 @@ namespace Elffy.Core
         private VAO _vao;
         private ShaderSource _shader = PhongShaderSource.Instance;
         private ShaderProgram? _shaderProgram;
+        private int _instancingCount;
 
         /// <summary>Vertex Buffer Object</summary>
-        public VBO VBO => _vbo;
+        public ref readonly VBO VBO => ref _vbo;
         /// <summary>Index Buffer Object</summary>
-        public IBO IBO => _ibo;
+        public ref readonly IBO IBO => ref _ibo;
         /// <summary>VAO</summary>
-        public VAO VAO => _vao;
+        public ref readonly VAO VAO => ref _vao;
 
         public bool IsLoaded { get; private set; }
 
@@ -42,9 +40,25 @@ namespace Elffy.Core
             get => _shader;
             set
             {
-                if(value is null) { throw new ArgumentNullException(nameof(value)); }
-                if(IsLoaded) { throw new InvalidOperationException("already loaded"); }
-                _shader = value;
+                if(value is null) { ThrowNullArg(); }
+                if(IsLoaded) { ThrowAlreadyLoaded(); }
+                _shader = value!;
+
+                static void ThrowNullArg() => throw new ArgumentNullException(nameof(value));
+                static void ThrowAlreadyLoaded() => throw new InvalidOperationException("already loaded");
+            }
+        }
+
+        /// <summary>Get or set instancing count. No instancing if 0.</summary>
+        public int InstancingCount
+        {
+            get => _instancingCount;
+            set
+            {
+                if(value < 0) { ThrowOutOfRange(); }
+                _instancingCount = value;
+
+                static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(value));
             }
         }
 
@@ -66,17 +80,8 @@ namespace Elffy.Core
         /// <param name="modelParent">親の model 行列</param>
         internal unsafe void Render(in Matrix4 projection, in Matrix4 view, in Matrix4 modelParent)
         {
-            var withoutScale = modelParent *
-                               new Matrix4(1, 0, 0, Position.X,
-                                           0, 1, 0, Position.Y,
-                                           0, 0, 1, Position.Z,
-                                           0, 0, 0, 1) *
-                               Rotation.ToMatrix4();
-            var model = withoutScale * 
-                        new Matrix4(Scale.X, 0, 0, 0,
-                                    0, Scale.Y, 0, 0,
-                                    0, 0, Scale.Z, 0,
-                                    0, 0, 0, 1);
+            var withoutScale = modelParent * Position.ToTranslationMatrix4() * Rotation.ToMatrix4();
+            var model = withoutScale * Scale.ToScaleMatrix4();
 
             if(IsLoaded && IsVisible && !(_shaderProgram is null)) {
                 Rendering?.Invoke(this, in model, in view, in projection);
@@ -97,28 +102,38 @@ namespace Elffy.Core
         {
             VAO.Bind(_vao);
             IBO.Bind(_ibo);
-
-            if(TryGetComponent<Texture>(out var t)) {
-                t.Apply();
-            }
-            else {
-                TextureObject.Bind(Engine.WhiteEmptyTexture, TextureUnitNumber.Unit0);
-            }
-
             _shaderProgram!.Apply(this, Layer.Lights, in model, in view, in projection);
-            GL.DrawElements(BeginMode.Triangles, IBO.Length, DrawElementsType.UnsignedInt, 0);
+            DrawElements(IBO.Length, 0);
             VAO.Unbind();
             IBO.Unbind();
         }
 
+        protected void DrawElements(int count, int byteOffset)
+        {
+            if(_instancingCount == 0) {
+                GL.DrawElements(BeginMode.Triangles, count, DrawElementsType.UnsignedInt, byteOffset);
+            }
+            else {
+                GL.DrawElementsInstanced(PrimitiveType.Triangles, count, DrawElementsType.UnsignedInt, (IntPtr)byteOffset, _instancingCount);
+            }
+        }
+
+
+        protected unsafe void LoadGraphicBuffer<TVertex>(Span<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged
+            => LoadGraphicBuffer(vertices.AsReadOnly(), indices);
+
         /// <summary>指定の頂点配列とインデックス配列で VBO, IBO を作成し、VAO を作成します</summary>
         /// <param name="vertices">頂点配列</param>
         /// <param name="indices">インデックス配列</param>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected unsafe void LoadGraphicBuffer(ReadOnlySpan<Vertex> vertices, ReadOnlySpan<int> indices)
+        protected unsafe void LoadGraphicBuffer<TVertex>(ReadOnlySpan<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged
         {
             Dispatcher.ThrowIfNotMainThread();
             if(IsLoaded) { throw new InvalidOperationException("already loaded"); }
+
+            // checking target vertex type of shader is valid.
+            if(DevEnv.IsEnabled) {
+                ShaderTargetVertexTypeAttribute.CheckVertexType(_shader.GetType(), typeof(TVertex));
+            }
 
             _vbo = VBO.Create();
             VBO.BindBufferData(ref _vbo, vertices, BufferUsageHint.StaticDraw);
@@ -129,7 +144,7 @@ namespace Elffy.Core
             IsLoaded = true;
             _shaderProgram?.Dispose();
             _shaderProgram = _shader.Compile();
-            _shaderProgram.Initialize(_vao, _vbo);
+            _shaderProgram.Initialize(this);
         }
 
 

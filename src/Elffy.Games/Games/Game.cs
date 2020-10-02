@@ -1,6 +1,10 @@
 ﻿#nullable enable
 using Elffy.Core;
+using Elffy.Diagnostics;
 using Elffy.InputSystem;
+using Elffy.Platforms;
+using Elffy.Threading;
+using Elffy.Threading.Tasks;
 using Elffy.UI;
 using System;
 
@@ -8,47 +12,76 @@ namespace Elffy.Games
 {
     public static class Game
     {
+        private static SyncContextReceiver? _syncContextReciever;
         private static Action _initialize = null!;
-        private static IHostScreen _screen = null!;
-        private static Layer _worldLayer = null!;
-        private static Camera _mainCamera = null!;
-        private static Mouse _mouse = null!;
-        private static ControlCollection _uiRootCollection = null!;
 
-        public static IHostScreen Screen => _screen;
-        public static Layer WorldLayer => _worldLayer;
+        public static IHostScreen Screen { get; private set; } = null!;
+        public static Layer WorldLayer { get; private set; } = null!;
+        public static Camera MainCamera { get; private set; } = null!;
+        public static Mouse Mouse { get; private set; } = null!;
+        public static AsyncBackEndPoint AsyncBack { get; private set; } = null!;
+        public static ControlCollection UI { get; private set; } = null!;
 
-        public static Camera MainCamera => _mainCamera;
-
-        public static Mouse Mouse => _mouse;
-
-        public static ControlCollection UI => _uiRootCollection;
+        /// <summary>Get time of current frame. (This is NOT real time.)</summary>
+        public static ref readonly TimeSpan Time => ref Screen.Time;
+        
+        /// <summary>Get number of current frame.</summary>
+        public static ref readonly long FrameNum => ref Screen.FrameNum;
 
         public static void Start(int width, int height, string title, Action initialize)
         {
             _initialize = initialize ?? throw new ArgumentNullException(nameof(initialize));
+            ProcessHelper.SingleLaunch(Launch);
 
-            ProcessHelper.SingleLaunch(() =>
+            void Launch()
             {
+                var screen = CreateScreen(width, height, title);
+                screen.Initialized += InitScreen;
+
+                Engine.Run();
                 try {
-                    Resources.Initialize();
-                    Engine.Run();
-                    Engine.ShowScreen(width, height, title, Resources.LoadIcon("icon.ico"), WindowStyle.Default, InitScreen);   // TODO: リソース以外からのアイコン指定方法
+                    _syncContextReciever = new SyncContextReceiver();
+                    CustomSynchronizationContext.Create(_syncContextReciever);
+                    screen.Show();
+
+                    while(Engine.HandleOnce()) {
+                        _syncContextReciever.DoAll();
+                    }
                 }
                 finally {
-                    Engine.End();
+                    CustomSynchronizationContext.Delete();
+                    _syncContextReciever = null;
+                    Engine.Stop();
                 }
-            });
+            }
         }
 
         private static void InitScreen(IHostScreen screen)
         {
-            _screen = screen;
-            _worldLayer = screen.Layers.WorldLayer;
-            _mainCamera = screen.Camera;
-            _mouse = screen.Mouse;
-            _uiRootCollection = screen.UIRoot.Children;
+            Screen = screen;
+
+            // Cache each fields to avoid accessing via interface.
+            WorldLayer = screen.Layers.WorldLayer;
+            MainCamera = screen.Camera;
+            Mouse = screen.Mouse;
+            UI = screen.UIRoot.Children;
+            AsyncBack = screen.AsyncBack;
+            
             _initialize();
+        }
+
+        private static IHostScreen CreateScreen(int width, int height, string title)
+        {
+            switch(Platform.PlatformType) {
+                case PlatformType.Windows:
+                case PlatformType.MacOSX:
+                case PlatformType.Unix:
+                    return new Window(width, height, title, WindowStyle.Default);
+                case PlatformType.Android:
+                case PlatformType.Other:
+                default:
+                    throw new PlatformNotSupportedException();
+            }
         }
     }
 }

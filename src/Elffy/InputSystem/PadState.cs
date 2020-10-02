@@ -2,9 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using OpenToolkit;
-using OpenToolkit.Input;
-using OpenToolkit.Windowing.GraphicsLibraryFramework;
+using OpenTK;
+using OpenTK.Input;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace Elffy.InputSystem
 {

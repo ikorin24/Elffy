@@ -1,13 +1,9 @@
 ﻿#nullable enable
-using OpenToolkit;
 using System;
 using System.Drawing;
 using System.Collections.Generic;
 using System.Diagnostics;
-using Elffy.Exceptions;
 using Elffy.InputSystem;
-using Elffy.Core;
-using OpenToolkit.Graphics;
 
 namespace Elffy.UI
 {
@@ -46,7 +42,9 @@ namespace Elffy.UI
                     _parent = null;
                     Root = null;
                 }
-                else { throw new InvalidOperationException($"The instance is already a child of another object. Can not has multi parents."); }
+                else { ThrowInvalidOperation(); }
+
+                static void ThrowInvalidOperation() => throw new InvalidOperationException($"The instance is already a child of another object. Can not has multi parents.");
             }
         }
         private Control? _parent;
@@ -54,33 +52,52 @@ namespace Elffy.UI
         /// <summary>この <see cref="Control"/> を持つ UI tree の Root</summary>
         public Page? Root { get; protected private set; }
 
-        public Point Position
+        public Vector2i Position
         {
-            get => new Point((int)Renderable.PositionX, (int)Renderable.PositionY);
+            get => (Vector2i)Renderable.Position.Xy;
             set
             {
-                var vecX = value.X - PositionX;
-                var vecY = value.Y - PositionY;
-                Renderable.Position += new Vector3(vecX, vecY, 0);
-                _absolutePosition.X += vecX;
-                _absolutePosition.Y += vecY;
-                foreach(var child in GetOffspring()) {
-                    child._absolutePosition.X += vecX;
-                    child._absolutePosition.Y += vecY;
+                var vec = value - Position;
+                Renderable.Position += new Vector3(vec.X, vec.Y, 0);
+                _absolutePosition += vec;
+
+                // Optimization for inlining in case of `this` has no children
+                // by making loop a function.
+                if(Children.Count > 0) {
+                    ApplyRecursively(Children, in vec);
+                }
+
+                static void ApplyRecursively(ControlCollection children, in Vector2i vec)
+                {
+                    foreach(var child in children.AsReadOnlySpan()) {
+                        child._absolutePosition += vec;
+                        ApplyRecursively(child.Children, vec);
+                    }
                 }
             }
         }
 
         public int PositionX
         {
-            get => (int)Renderable.PositionX;
+            get => (int)Renderable.Position.X;
             set
             {
                 var diff = value - PositionX;
-                Renderable.PositionX += diff;
+                Renderable.Position.X += diff;
                 _absolutePosition.X += diff;
-                foreach(var child in GetOffspring()) {
-                    child._absolutePosition.X += diff;
+
+                // Optimization for inlining in case of `this` has no children
+                // by making loop a function.
+                if(Children.Count > 0) {
+                    ApplyRecursively(Children, diff);
+                }
+
+                static void ApplyRecursively(ControlCollection children, int diff)
+                {
+                    foreach(var child in children.AsReadOnlySpan()) {
+                        child._absolutePosition.X += diff;
+                        ApplyRecursively(child.Children, diff);
+                    }
                 }
             }
         }
@@ -88,43 +105,38 @@ namespace Elffy.UI
         /// <summary>オブジェクトのY座標</summary>
         public int PositionY
         {
-            get => (int)Renderable.PositionY;
+            get => (int)Renderable.Position.Y;
             set
             {
                 var diff = value - PositionY;
-                Renderable.PositionY += diff;
+                Renderable.Position.Y += diff;
                 _absolutePosition.Y += diff;
-                foreach(var child in GetOffspring()) {
-                    child._absolutePosition.Y += diff;
+
+                // Optimization for inlining in case of `this` has no children
+                // by making loop a function.
+                if(Children.Count > 0) {
+                    ApplyRecursively(Children, diff);
+                }
+
+                static void ApplyRecursively(ControlCollection children, int diff)
+                {
+                    foreach(var child in children.AsReadOnlySpan()) {
+                        child._absolutePosition.Y += diff;
+                        ApplyRecursively(child.Children, diff);
+                    }
                 }
             }
         }
 
-        public Point AbsolutePosition => _absolutePosition;
-        private Point _absolutePosition;
+        public ref readonly Vector2i AbsolutePosition => ref _absolutePosition;
+        private Vector2i _absolutePosition;
 
         /// <summary>get or set Width of <see cref="Control"/></summary>
-        public int Width
-        {
-            get => _width;
-            set
-            {
-                if(value < 0) { throw new ArgumentOutOfRangeException(nameof(value), value, $"{value} is negative value."); }
-                _width = value;
-            }
-        }
+        public int Width { get => _width; set => _width = Math.Max(0, value); }
         private int _width;
 
         /// <summary>get or set Height of <see cref="Control"/></summary>
-        public int Height
-        {
-            get => _height;
-            set
-            {
-                if(value < 0) { throw new ArgumentOutOfRangeException(nameof(value), value, $"{value} is negative value."); }
-                _height = value;
-            }
-        }
+        public int Height { get => _height; set => _height = Math.Max(0, value); }
         private int _height;
 
         /// <summary>get or set offset position X of layout</summary>
@@ -220,7 +232,8 @@ namespace Elffy.UI
         {
             return IsVisible &&
                    IsHitTestVisible &&
-                   new Rectangle(AbsolutePosition.X, AbsolutePosition.Y, Width, Height).Contains(mouse.Position);
+                   new Rectangle(_absolutePosition.X, _absolutePosition.Y, _width, _height)
+                        .Contains((int)mouse.Position.X, (int)mouse.Position.Y);
         }
 
         /// <summary>ヒットテストの結果を通知します</summary>
@@ -260,14 +273,14 @@ namespace Elffy.UI
 
     #region class MouseEventArgs
     /// <summary>Mouse event argument class</summary>
-    public struct MouseEventArgs
+    public readonly struct MouseEventArgs
     {
         /// <summary>mouse position</summary>
-        public Point MousePosition { get; }
+        public Vector2 MousePosition { get; }
 
         /// <summary>constructor</summary>
         /// <param name="mousePosition">mouse position</param>
-        public MouseEventArgs(Point mousePosition)
+        public MouseEventArgs(in Vector2 mousePosition)
         {
             MousePosition = mousePosition;
         }

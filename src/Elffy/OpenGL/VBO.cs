@@ -2,58 +2,78 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
-using OpenToolkit.Graphics.OpenGL;
+using OpenTK.Graphics.OpenGL4;
 using Elffy.Core;
 
 namespace Elffy.OpenGL
 {
-    [DebuggerDisplay("VBO={Value}, Length={Length}")]
+    [DebuggerDisplay("VBO={_vbo}, Length={_length}, ElementSize={_elementSize}")]
     public readonly struct VBO : IEquatable<VBO>
     {
-        // バッファの削除は internal にするために、IDispose.Dispose にしない。interface の実装は public になってしまう。
-        // int へのキャストを実装してはいけない。(public になるため)
-
-
-#pragma warning disable 0649    // Disable 'Field is never assigned to, and is always default'
         private readonly int _vbo;
-#pragma warning restore 0649
-        internal readonly int Length;
+        private readonly int _length;
+        private readonly int _elementSize;
 
-        internal readonly int Value => _vbo;
-        internal readonly bool IsEmpty => _vbo == Consts.NULL;
+        internal int Value => _vbo;
+        internal int Length => _length;
+        internal int ElementSize => _elementSize;
+        public bool IsEmpty => _vbo == Consts.NULL;
 
-        internal static VBO Create()
+        private VBO(int vbo)
         {
-            var vbo = new VBO();
-            Unsafe.AsRef(vbo._vbo) = GL.GenBuffer();
-            return vbo;
+            _vbo = vbo;
+            _length = 0;
+            _elementSize = 0;
         }
 
+        /// <summary>Create new vertex buffer object</summary>
+        /// <returns>new <see cref="VBO"/></returns>
+        internal static VBO Create()
+        {
+            GLAssert.EnsureContext();
+            return new VBO(GL.GenBuffer());
+        }
+
+        /// <summary>Delete vertex buffer object</summary>
+        /// <param name="vbo"><see cref="VBO"/> to delete</param>
         internal static unsafe void Delete(ref VBO vbo)
         {
-            if(!vbo.IsEmpty) {
-                GL.DeleteBuffer(vbo.Value);
-                Unsafe.AsRef(vbo) = default;
+            if(vbo._vbo != Consts.NULL) {
+                GLAssert.EnsureContext();
+                GL.DeleteBuffer(vbo._vbo);
+                vbo = default;
             }
         }
 
+        /// <summary>Bind vertex buffer object</summary>
+        /// <param name="vbo"><see cref="VBO"/> to bind</param>
         public static void Bind(in VBO vbo)
         {
+            GLAssert.EnsureContext();
             GL.BindBuffer(BufferTarget.ArrayBuffer, vbo._vbo);
         }
 
+        /// <summary>Unbind vertex buffer object</summary>
         public static void Unbind()
         {
+            GLAssert.EnsureContext();
             GL.BindBuffer(BufferTarget.ArrayBuffer, Consts.NULL);
         }
 
-        internal static unsafe void BindBufferData(ref VBO vbo, ReadOnlySpan<Vertex> vertices, BufferUsageHint usage)
+        /// <summary>Bind <see cref="VBO"/> and send data</summary>
+        /// <typeparam name="T">data type</typeparam>
+        /// <param name="vbo"><see cref="VBO"/> to send data to</param>
+        /// <param name="vertices">sended data to vbo</param>
+        /// <param name="usage">buffer usage hint</param>
+        internal static unsafe void BindBufferData<T>(ref VBO vbo, ReadOnlySpan<T> vertices, BufferUsageHint usage) where T : unmanaged
         {
             Bind(vbo);
-            fixed(Vertex* ptr = vertices) {
-                GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(Vertex), (IntPtr)ptr, usage);
+            Unsafe.AsRef(vbo._elementSize) = sizeof(T);
+            Unsafe.AsRef(vbo._length) = vertices.Length;
+            fixed(T* ptr = vertices) {
+                GLAssert.EnsureContext();
+                GL.BufferData(BufferTarget.ArrayBuffer, vbo._length * vbo._elementSize, (IntPtr)ptr, usage);
             }
-            Unsafe.AsRef(vbo.Length) = vertices.Length;
         }
 
 
@@ -62,12 +82,8 @@ namespace Elffy.OpenGL
 
         public override bool Equals(object? obj) => obj is VBO vbo && Equals(vbo);
 
-        public bool Equals(VBO other) => _vbo == other._vbo;
+        public bool Equals(VBO other) => (_vbo == other._vbo) && (_length == other._length) && (_elementSize == other._elementSize);
 
-        public override int GetHashCode() => HashCode.Combine(_vbo);
-
-        public static bool operator ==(VBO left, VBO right) => left.Equals(right);
-
-        public static bool operator !=(VBO left, VBO right) => !(left == right);
+        public override int GetHashCode() => HashCode.Combine(_vbo, _length, _elementSize);
     }
 }

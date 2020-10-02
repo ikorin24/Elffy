@@ -1,9 +1,8 @@
 ﻿#nullable enable
 using System;
-using OpenToolkit.Graphics.OpenGL;
+using OpenTK.Graphics.OpenGL4;
 using Elffy.Core;
 using System.Runtime.CompilerServices;
-using Elffy.Exceptions;
 using Elffy.OpenGL;
 
 namespace Elffy.Shading
@@ -18,63 +17,59 @@ namespace Elffy.Shading
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void Position(int index)
+        public unsafe void Map<TVertex>(string vertexFieldName, int index) where TVertex : unmanaged
         {
-            GL.EnableVertexAttribArray(index);
-            GL.VertexAttribPointer(index, 3, VertexAttribPointerType.Float, false, sizeof(Vertex), Vertex.PositionOffset);
+            if(index < 0) {
+                ThrowInvalidIndex();
+            }
+            MapPrivate<TVertex>(vertexFieldName, index);
+
+            static void ThrowInvalidIndex() => throw new ArgumentException($"{nameof(index)} is negative value.");
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void Normal(int index)
-        {
-            GL.EnableVertexAttribArray(index);
-            GL.VertexAttribPointer(index, 3, VertexAttribPointerType.Float, false, sizeof(Vertex), Vertex.NormalOffset);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void Color(int index)
-        {
-            GL.EnableVertexAttribArray(index);
-            GL.VertexAttribPointer(index, 4, VertexAttribPointerType.Float, false, sizeof(Vertex), Vertex.ColorOffset);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void TexCoord(int index)
-        {
-            GL.EnableVertexAttribArray(index);
-            GL.VertexAttribPointer(index, 2, VertexAttribPointerType.Float, false, sizeof(Vertex), Vertex.TexCoordOffset);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void Position(string name)
+        public unsafe void Map<TVertex>(string vertexFieldName, string name) where TVertex : unmanaged
         {
             var index = GL.GetAttribLocation(_program.Value, name);
-            if(index < 0) { throw new ArgumentException($"Name not found : {name}"); }
-            Position(index);
+            if(index < 0) {
+                ThrowVertexShaderFieldNotFound(name);
+            }
+            MapPrivate<TVertex>(vertexFieldName, index);
+
+            static void ThrowVertexShaderFieldNotFound(string name)
+                => throw new ArgumentException($"Shader field of name '{name}' is not found.");
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void Normal(string name)
+        private unsafe void MapPrivate<TVertex>(string vertexFieldName, int index) where TVertex : unmanaged
         {
-            var index = GL.GetAttribLocation(_program.Value, name);
-            if(index < 0) { throw new ArgumentException($"Name not found : {name}"); }
-            Normal(index);
-        }
+            // Call static constructor of TVertex to Register layout. (It is called only once)
+            RuntimeHelpers.RunClassConstructor(typeof(TVertex).TypeHandle);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void Color(string name)
-        {
-            var index = GL.GetAttribLocation(_program.Value, name);
-            if(index < 0) { throw new ArgumentException($"Name not found : {name}"); }
-            Color(index);
-        }
+            var (offset, type, elementCount) = VertexMarshalHelper<TVertex>.GetLayout(vertexFieldName);
+            GL.EnableVertexAttribArray(index);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void TexCoord(string name)
-        {
-            var index = GL.GetAttribLocation(_program.Value, name);
-            if(index < 0) { throw new ArgumentException($"Name not found : {name}"); }
-            TexCoord(index);
+
+            switch(type) {
+                case VertexFieldElementType.Float:
+                case VertexFieldElementType.HalfFloat: {
+                    GL.VertexAttribPointer(index, elementCount, (VertexAttribPointerType)type, false, sizeof(TVertex), offset);
+                    break;
+                }
+                case VertexFieldElementType.Uint32:
+                case VertexFieldElementType.Int32:
+                case VertexFieldElementType.Byte:
+                case VertexFieldElementType.Int16:
+                case VertexFieldElementType.Uint16: {
+                    GL.VertexAttribIPointer(index, elementCount, (VertexAttribIntegerType)type, sizeof(TVertex), (IntPtr)offset);
+                    break;
+                }
+                default:
+                    ThrowNotSupported();
+                    break;
+
+                    static void ThrowNotSupported() => throw new NotSupportedException();
+            }
         }
 
 

@@ -1,7 +1,7 @@
 ﻿#nullable enable
 using System.Runtime.CompilerServices;
 using Elffy.OpenGL;
-using OpenToolkit.Graphics.OpenGL;
+using OpenTK.Graphics.OpenGL4;
 
 namespace Elffy.Shading
 {

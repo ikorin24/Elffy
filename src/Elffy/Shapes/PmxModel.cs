@@ -1,7 +1,5 @@
 ﻿#nullable enable
-using System;
 using System.Diagnostics;
-using System.Threading.Tasks;
 using System.Drawing;
 using System.Runtime.CompilerServices;
 using Elffy.Core;
@@ -9,25 +7,26 @@ using Elffy.Effective;
 using Elffy.Imaging;
 using Elffy.Components;
 using Elffy.OpenGL;
-using OpenToolkit.Graphics.OpenGL;
+using Elffy.Serialization;
+using Elffy.Effective.Unsafes;
+using Elffy.Threading;
+using Cysharp.Threading.Tasks;
 using UnmanageUtility;
-using PMXParser = MMDTools.Unmanaged.PMXParser;
-using PMXObject = MMDTools.Unmanaged.PMXObject;
+using MMDTools.Unmanaged;
 
 namespace Elffy.Shapes
 {
     public class PmxModel : Renderable
     {
         private PMXObject? _pmxObject;
-        private Bitmap[]? _textureBitmaps;
+        private RefTypeRentMemory<Bitmap> _textureBitmaps;
 
-        private RenderableParts[]? _parts;
+        private UnmanagedArray<RenderableParts>? _parts;
         private MultiTexture? _textures;
 
-        private unsafe PmxModel(PMXObject pmxObject, Bitmap[] textureBitmaps)
+        private PmxModel(PMXObject pmxObject, in RefTypeRentMemory<Bitmap> textureBitmaps)
         {
             Debug.Assert(pmxObject != null);
-            Debug.Assert(textureBitmaps != null);
             _pmxObject = pmxObject;
             _textureBitmaps = textureBitmaps;
         }
@@ -35,51 +34,83 @@ namespace Elffy.Shapes
         protected override void OnDead()
         {
             base.OnDead();
-            _textures?.Dispose();
             _textures = null;
+            _parts?.Dispose();
+            _parts = null;
         }
 
         protected override async void OnActivated()
         {
             base.OnActivated();
 
-            // Here is main thread
+            Debug.Assert(Dispatcher.IsMainThread());
 
-            var vertices = await Task.Factory.StartNew(() =>
-            {
-                var pmx = _pmxObject!;
-                ReverseTrianglePolygon(pmx.SurfaceList.AsSpan());       // オリジナルのデータを書き換えているので注意、このメソッドは1回しか通らない前提
-                var vertices = pmx.VertexList.AsSpan().SelectToUnmanagedArray(ToVertex);
-                _parts = pmx.MaterialList.AsSpan().SelectToArray(m => new RenderableParts(m.VertexCount, m.Texture));
-                return vertices;
-            }).ConfigureAwait(true);
-            // ↑ ConfigureAwait true
+            await UniTask.SwitchToThreadPool();
 
-            // Here is main thread
-            if(LifeState != FrameObjectLifeSpanState.Terminated &&
-               LifeState != FrameObjectLifeSpanState.Dead) {
-                LoadGraphicBuffer(vertices.AsSpan(), _pmxObject!.SurfaceList.AsSpan().MarshalCast<MMDTools.Unmanaged.Surface, int>());
+            // オリジナルのデータを書き換えているので注意、このメソッドは1回しか通らない前提
+            PmxModelLoadHelper.ReverseTrianglePolygon(_pmxObject!.SurfaceList.AsSpan().AsWritable());
+            var (vertices, parts, bonePositions) = await UniTask.WhenAll(
+                
+                // build vertices
+                UniTask.Run(() => _pmxObject!.VertexList
+                                .AsSpan()
+                                .SelectToUnmanagedArray(v => v.ToRigVertex())),
+                
+                // build each parts
+                UniTask.Run(() => _pmxObject!.MaterialList
+                                .AsSpan()
+                                .SelectToUnmanagedArray(m => new RenderableParts(m.VertexCount, m.Texture))),
+                // build bones
+                UniTask.Run(() => _pmxObject!.BoneList
+                                .AsSpan()
+                                .SelectToUnmanagedArray(b => new Vector4(b.Position.ToVector3(), 0f)))
+                );
+            await AsyncHelper.SwitchToMain();
+
+            Debug.Assert(Dispatcher.IsMainThread());
+            _parts = parts;
+            var needLoading = LifeState != FrameObjectLifeSpanState.Terminated &&
+                              LifeState != FrameObjectLifeSpanState.Dead;
+            if(needLoading) {
+                var skeleton = new Skeleton();
+                skeleton.Load(bonePositions);
+                AddComponent(skeleton);
+
+                // multi texture
                 var textures = new MultiTexture();
-                textures.Load(_textureBitmaps);
+                textures.Load(_textureBitmaps.Span);
+                AddComponent(textures);
                 _textures = textures;
+
+                // load vertex
+                LoadGraphicBuffer(vertices.AsSpan(), _pmxObject!.SurfaceList.AsSpan().MarshalCast<Surface, int>());
+            }
+            else {
+                bonePositions.Dispose();
             }
 
-            // not await
-            _ = Task.Factory.StartNew(v =>
-            {
-                // メモリ開放後始末 (非同期で問題ないので別スレッド)
-                var vertices = Unsafe.As<UnmanagedArray<Vertex>>(v)!;
-                vertices.Dispose();
-                var textureBitmaps = _textureBitmaps;
-                if(textureBitmaps != null) {
-                    foreach(var t in textureBitmaps) {
+            // メモリ開放後始末 (非同期で問題ないので別スレッド)
+            UniTask.WhenAll(
+                UniTask.Run(v =>
+                {
+                    Debug.Assert(v is UnmanagedArray<RigVertex>);
+                    var vertices = Unsafe.As<UnmanagedArray<RigVertex>>(v)!;
+                    vertices.Dispose();
+                }, vertices, false),
+                UniTask.Run(() =>
+                {
+                    foreach(var t in _textureBitmaps.Span) {
                         t.Dispose();
                     }
-                    _textureBitmaps = null;
-                }
-                _pmxObject!.Dispose();
-                _pmxObject = null;
-            }, vertices);
+                    _textureBitmaps.Dispose();
+                    _textureBitmaps = default;
+                }),
+                UniTask.Run(() =>
+                {
+                    _pmxObject?.Dispose();
+                    _pmxObject = null;
+                })
+            ).Forget();
         }
 
         protected override void OnRendering(in Matrix4 model, in Matrix4 view, in Matrix4 projection)
@@ -90,136 +121,54 @@ namespace Elffy.Shapes
             if(parts != null) {
                 var pos = 0;
                 var textures = _textures;
-                foreach(var p in parts) {
-                    textures?.Apply(p.TextureIndex);
+                Debug.Assert(textures is null == false);
+                for(int i = 0; i < parts.Length; i++) {
+                    textures.Current = parts[i].TextureIndex;
                     ShaderProgram!.Apply(this, Layer.Lights, in model, in view, in projection);
-                    GL.DrawElements(BeginMode.Triangles, p.VertexCount, DrawElementsType.UnsignedInt, pos * sizeof(int));
-                    pos += p.VertexCount;
+                    DrawElements(parts[i].VertexCount, pos * sizeof(int));
+                    pos += parts[i].VertexCount;
                 }
             }
+            VAO.Unbind();
+            IBO.Unbind();
         }
 
-        public static Task<PmxModel> LoadResourceAsync(string name)
+        public static PmxModel LoadResource(string name)
         {
-            return Task.Factory.StartNew(n =>
-            {
-                var name = Unsafe.As<string>(n)!;
-                PMXObject pmx;
-                using(var stream = Resources.GetStream(name)) {
-                    pmx = PMXParser.Parse(stream);
-                }
-                var textureNames = pmx.TextureList.AsSpan();
-                var dir = Resources.GetDirectoryName(name);
-                var bitmaps = new Bitmap[textureNames.Length];
-                for(int i = 0; i < textureNames.Length; i++) {
+            PMXObject pmx;
+            using(var stream = Resources.GetStream(name)) {
+                pmx = PMXParser.Parse(stream);
+            }
+            var textureNames = pmx.TextureList.AsSpan();
+            var dir = Resources.GetDirectoryName(name);
+            var bitmaps = new RefTypeRentMemory<Bitmap>(textureNames.Length);
+            var bitmapSpan = bitmaps.Span;
 
-                    using(var pooledArray = new PooledArray<char>(dir.Length + 1 + textureNames[i].GetCharCount())) {
-                        var texturePath = pooledArray.AsSpan();
-                        dir.CopyTo(texturePath);
-                        texturePath[dir.Length] = '/';
-                        textureNames[i].ToString(texturePath.Slice(dir.Length + 1));
-                        texturePath.Replace('\\', '/');
-                        var textureExt = texturePath.AsReadOnly().FilePathExtension();
+            for(int i = 0; i < bitmapSpan.Length; i++) {
 
-                        using(var tStream = Resources.GetStream(texturePath.ToString())) {
-                            bitmaps[i] = BitmapHelper.StreamToBitmap(tStream, textureExt);
-                        }
-                    }
-                }
-                return new PmxModel(pmx, bitmaps);
-            }, name);
+                using var pooledArray = new PooledArray<char>(dir.Length + 1 + textureNames[i].GetCharCount());
+
+                var texturePath = pooledArray.AsSpan();
+                dir.CopyTo(texturePath);
+                texturePath[dir.Length] = '/';
+                textureNames[i].ToString(texturePath.Slice(dir.Length + 1));
+                texturePath.Replace('\\', '/');
+                var textureExt = texturePath.AsReadOnly().FilePathExtension();
+
+                using var tStream = Resources.GetStream(texturePath.ToString());
+                bitmapSpan[i] = BitmapHelper.StreamToBitmap(tStream, textureExt);
+            }
+            return new PmxModel(pmx, bitmaps);
         }
 
-        /// <summary>三角ポリゴンの表裏を反転させます</summary>
-        /// <param name="surfaceList">頂点インデックス</param>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static unsafe void ReverseTrianglePolygon(ReadOnlySpan<MMDTools.Unmanaged.Surface> surfaceList)
+        public static UniTask<PmxModel> LoadResourceAsync(string name)
         {
-            // (a, b, c) を (a, c, b) に書き換える
-            fixed(MMDTools.Unmanaged.Surface* s = surfaceList) {
-                int* p = (int*)s;
-                for(int i = 0; i < surfaceList.Length; i++) {
-                    var i1 = i * 3 + 1;
-                    var i2 = i * 3 + 2;
-                    (p[i1], p[i2]) = (p[i2], p[i1]);
-                }
-            }
-        }
-
-        //private static Material ToMaterial(MMDTools.Material m) => new Material(ToColor4(m.Ambient), ToColor4(m.Diffuse), ToColor4(m.Specular), m.Shininess);
-
-        private static Bone ToBone(MMDTools.Unmanaged.Bone bone) => new Bone(bone);
-
-        private static VertexBoneInfo ToVertexBoneInfo(MMDTools.Unmanaged.Vertex v) => new VertexBoneInfo(v);
-
-        private static Vertex ToVertex(MMDTools.Unmanaged.Vertex v) => new Vertex(ToVector3(v.Position), ToVector3(v.Normal), ToVector2(v.UV));
-
-        private static Color4 ToColor4(MMDTools.Unmanaged.Color color) => Unsafe.As<MMDTools.Unmanaged.Color, Color4>(ref color);
-
-        private static Vector3 ToVector3(MMDTools.Unmanaged.Vector3 vector) => new Vector3(vector.X, vector.Y, -vector.Z);
-
-        private static Vector2 ToVector2(MMDTools.Unmanaged.Vector2 vector) => new Vector2(vector.X, vector.Y);
-
-        private readonly struct VertexBoneInfo : IEquatable<VertexBoneInfo>
-        {
-            public readonly int Bone1;
-            public readonly int Bone2;
-            public readonly int Bone3;
-            public readonly int Bone4;
-            public readonly float Weight1;
-            public readonly float Weight2;
-            public readonly float Weight3;
-            public readonly float Weight4;
-            public readonly WeightTransformType Type;
-            public VertexBoneInfo(MMDTools.Unmanaged.Vertex v)
+            return UniTask.Run(n =>
             {
-                Bone1 = v.BoneIndex1;
-                Bone2 = v.BoneIndex2;
-                Bone3 = v.BoneIndex3;
-                Bone4 = v.BoneIndex4;
-                Weight1 = v.Weight1;
-                Weight2 = v.Weight2;
-                Weight3 = v.Weight3;
-                Weight4 = v.Weight4;
-                Type = ToWeightType(v.WeightTransformType);
-            }
-
-            private static WeightTransformType ToWeightType(MMDTools.Unmanaged.WeightTransformType t)
-            {
-                return t switch
-                {
-                    MMDTools.Unmanaged.WeightTransformType.BDEF1 => WeightTransformType.BDEF1,
-                    MMDTools.Unmanaged.WeightTransformType.BDEF2 => WeightTransformType.BDEF2,
-                    MMDTools.Unmanaged.WeightTransformType.BDEF4 => WeightTransformType.BDEF4,
-                    _ => throw new NotSupportedException($"Not supported weight type. Type : {t}"),
-                };
-            }
-
-            public override bool Equals(object? obj) => obj is VertexBoneInfo info && Equals(info);
-
-            public bool Equals(VertexBoneInfo other) => (Bone1 == other.Bone1) && (Bone2 == other.Bone2) && (Bone3 == other.Bone3) && (Bone4 == other.Bone4) &&
-                                                        (Weight1 == other.Weight1) && (Weight2 == other.Weight2) && (Weight3 == other.Weight3) && (Weight4 == other.Weight4) &&
-                                                        (Type == other.Type);
-
-            public override int GetHashCode() => HashCodeEx.Combine(Bone1, Bone2, Bone3, Bone4, Weight1, Weight2, Weight3, Weight4, Type);
-
-            public static bool operator ==(VertexBoneInfo left, VertexBoneInfo right) => left.Equals(right);
-
-            public static bool operator !=(VertexBoneInfo left, VertexBoneInfo right) => !(left == right);
+                Debug.Assert(n is string);
+                return LoadResource(Unsafe.As<string>(n));
+            }, name, configureAwait: false);
         }
-
-        private readonly struct Bone
-        {
-            public readonly Vector3 Position;
-            public readonly int Parent;
-
-            public Bone(MMDTools.Unmanaged.Bone bone)
-            {
-                Position = ToVector3(bone.Position);
-                Parent = bone.ParentBone;
-            }
-        }
-
 
         private readonly struct RenderableParts
         {

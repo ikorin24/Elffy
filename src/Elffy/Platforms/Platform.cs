@@ -4,7 +4,7 @@ using System;
 namespace Elffy.Platforms
 {
     /// <summary>プラットフォームに関する機能を提供します</summary>
-    internal static class Platform
+    public static class Platform
     {
         /// <summary>現在のプラットフォームの種類を取得します</summary>
         public static PlatformType PlatformType { get; }

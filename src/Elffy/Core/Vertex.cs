@@ -1,10 +1,12 @@
 ﻿#nullable enable
+using Elffy.Diagnostics;
 using System;
 using System.Diagnostics;
 
 namespace Elffy.Core
 {
     [DebuggerDisplay("{Position}")]
+    [VertexLike]
     public unsafe struct Vertex : IEquatable<Vertex>
     {
         public Vector3 Position;
@@ -12,12 +14,24 @@ namespace Elffy.Core
         public Color4 Color;
         public Vector2 TexCoord;
 
-        internal static readonly int PositionOffset = 0;
-        internal static readonly int NormalOffset = sizeof(Vector3);
-        internal static readonly int ColorOffset = sizeof(Vector3) + sizeof(Vector3);
-        internal static readonly int TexCoordOffset = sizeof(Vector3) + sizeof(Vector3) + sizeof(Color4);
+        private static readonly int PositionOffset = 0;
+        private static readonly int NormalOffset = sizeof(Vector3);
+        private static readonly int ColorOffset = sizeof(Vector3) + sizeof(Vector3);
+        private static readonly int TexCoordOffset = sizeof(Vector3) + sizeof(Vector3) + sizeof(Color4);
 
-        public Vertex(Vector3 position, Vector3 normal, Vector2 texcoord)
+        static Vertex()
+        {
+            VertexMarshalHelper<Vertex>.Register(fieldName => fieldName switch
+            {
+                nameof(Position) => (PositionOffset, VertexFieldElementType.Float, 3),
+                nameof(Normal) =>   (NormalOffset,   VertexFieldElementType.Float, 3),
+                nameof(Color) =>    (ColorOffset,    VertexFieldElementType.Float, 4),
+                nameof(TexCoord) => (TexCoordOffset, VertexFieldElementType.Float, 2),
+                _ => throw new ArgumentException(),
+            });
+        }
+
+        public Vertex(in Vector3 position, in Vector3 normal, in Vector2 texcoord)
         {
             Position = position;
             Normal = normal;
@@ -25,7 +39,7 @@ namespace Elffy.Core
             TexCoord = texcoord;
         }
 
-        public Vertex(Vector3 position, Vector3 normal, Color4 color, Vector2 texcoord)
+        public Vertex(in Vector3 position, in Vector3 normal, in Color4 color, in Vector2 texcoord)
         {
             Position = position;
             Normal = normal;
@@ -33,17 +47,17 @@ namespace Elffy.Core
             TexCoord = texcoord;
         }
 
-        public override bool Equals(object? obj) => obj is Vertex vertex && Equals(vertex);
+        public readonly override bool Equals(object? obj) => obj is Vertex vertex && Equals(vertex);
 
-        public bool Equals(Vertex other) => Position.Equals(other.Position) &&
-                                            Normal.Equals(other.Normal) &&
-                                            Color.Equals(other.Color) &&
-                                            TexCoord.Equals(other.TexCoord);
+        public readonly bool Equals(Vertex other) => Position.Equals(other.Position) &&
+                                                     Normal.Equals(other.Normal) &&
+                                                     Color.Equals(other.Color) &&
+                                                     TexCoord.Equals(other.TexCoord);
 
-        public override int GetHashCode() => HashCode.Combine(Position, Normal, Color, TexCoord);
+        public readonly override int GetHashCode() => HashCode.Combine(Position, Normal, Color, TexCoord);
 
-        public static bool operator ==(Vertex left, Vertex right) => left.Equals(right);
+        public static bool operator ==(in Vertex left, in Vertex right) => left.Equals(right);
 
-        public static bool operator !=(Vertex left, Vertex right) => !(left == right);
+        public static bool operator !=(in Vertex left, in Vertex right) => !(left == right);
     }
 }

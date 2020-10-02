@@ -1,105 +1,109 @@
 ﻿#nullable enable
-using Elffy.Exceptions;
 using Elffy.InputSystem;
 using Elffy.Threading;
-using Elffy.UI;
-using OpenToolkit.Graphics.OpenGL;
+using Elffy.Threading.Tasks;
+using OpenTK.Graphics.OpenGL4;
 using System;
+using System.Diagnostics;
 using System.Drawing;
 
 namespace Elffy.Core
 {
     /// <summary>OpenGL が描画を行う領域を扱うクラスです</summary>
-    internal class RenderingArea
+    internal class RenderingArea : IDisposable
     {
         const float UI_FAR = 1.01f;
         const float UI_NEAR = -0.01f;
+
+        private bool _disposed;
+        private readonly PostProcessor _postProcessor = new PostProcessor();
         /// <summary>UI の投影行列</summary>
         private Matrix4 _uiProjection;
 
-        internal IHostScreen OwnerScreen { get; }
+        public IHostScreen OwnerScreen { get; }
 
         /// <summary>レイヤーのリスト</summary>
-        internal LayerCollection Layers { get; }
-        internal Camera Camera { get; } = new Camera();
-        internal Mouse Mouse { get; } = new Mouse();
+        public LayerCollection Layers { get; }
+        public Camera Camera { get; } = new Camera();
+        public Mouse Mouse { get; } = new Mouse();
 
-        internal int Width
+        public AsyncBackEndPoint AsyncBack { get; }
+
+        public bool IsEnabledPostProcess { get; set; }
+
+        public int Width
         {
             get => _width;
             set
             {
-                if(value < 0) { throw new ArgumentOutOfRangeException(nameof(value), value, $"{nameof(value)} is out of range."); }
+                if(value < 0) { ThrowOutOfRange(); }
                 _width = value;
-                OnSizeChanged(0, 0, _width, _height);
+                OnSizeChanged(_width, _height);
+
+                void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(value), value, $"{nameof(value)} is out of range.");
             }
         }
         private int _width;
 
-        internal int Height
+        public int Height
         {
             get => _height;
             set
             {
-                if(value < 0) { throw new ArgumentOutOfRangeException(nameof(value), value, $"{nameof(value)} is out of range."); }
+                if(value < 0) { ThrowOutOfRange(); }
                 _height = value;
-                OnSizeChanged(0, 0, _width, _height);
+                OnSizeChanged(_width, _height);
+
+                void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(value), value, $"{nameof(value)} is out of range.");
             }
         }
         private int _height;
 
-        internal Size Size
+        public Vector2i Size
         {
-            get => new Size(_width, _height);
+            get => new Vector2i(_width, _height);
             set
             {
-                if(value.Width < 0) { throw new ArgumentOutOfRangeException(nameof(value.Width), value.Width, $"value is out of range."); }
-                if(value.Height < 0) { throw new ArgumentOutOfRangeException(nameof(value.Height), value.Height, $"value is out of range."); }
+                if(value.X < 0) { ThrowWidthOutOfRange(); }
+                if(value.Y < 0) { ThrowHeightOutOfRange(); }
 
-                _width = value.Width;
-                _height = value.Height;
-                OnSizeChanged(0, 0, _width, _height);
+                _width = value.X;
+                _height = value.Y;
+                OnSizeChanged(_width, _height);
+
+                void ThrowWidthOutOfRange() => throw new ArgumentOutOfRangeException("Width", value.X, $"width is out of range.");
+                void ThrowHeightOutOfRange() => throw new ArgumentOutOfRangeException("Height", value.Y, $"height is out of range.");
             }
         }
-
-        /// <summary>get or set color of clearing rendering area on beginning of each frames.</summary>
-        internal Color4 ClearColor
-        {
-            get => _clearColor;
-            set
-            {
-                _clearColor = value;
-                GL.ClearColor(_clearColor);
-            }
-        }
-        private Color4 _clearColor;
 
         internal RenderingArea(IHostScreen screen)
         {
             OwnerScreen = screen;
             Layers = new LayerCollection(this);
+            AsyncBack = new AsyncBackEndPoint();
         }
 
         /// <summary>OpenTL の描画に関する初期設定を行います</summary>
-        internal void InitializeGL()
+        public void InitializeGL()
         {
-            ClearColor = Color4.Gray;
+            GL.ClearColor(Color4.Gray);
             GL.Enable(EnableCap.DepthTest);
-            GL.Enable(EnableCap.Texture2D);
-            GL.Enable(EnableCap.Normalize);
 
-            // αブレンディング設定
+            // Enable alpha blending.
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
-            // 裏面削除 反時計回りが表でカリング
+            // Enable back face culling. front face is counter clockwise
             GL.Enable(EnableCap.CullFace);
             GL.CullFace(CullFaceMode.Back);
             GL.FrontFace(FrontFaceDirection.Ccw);
+
+            // Enable Multi Sampling Anti-alias (MSAA)
+            GL.Enable(EnableCap.Multisample);
         }
 
         /// <summary>フレームを更新して描画します</summary>
-        internal void RenderFrame()
+        public void RenderFrame()
         {
             var systemLayer = Layers.SystemLayer;
             var uiLayer = Layers.UILayer;
@@ -111,22 +115,25 @@ namespace Elffy.Core
             }
             uiLayer.ApplyAdd();
 
-            // 事前レイヤー更新
+            // Early update
             systemLayer.EarlyUpdate();
+            AsyncBack.DoQueuedEvents(FrameLoopTiming.EarlyUpdate);
             foreach(var layer in Layers.AsReadOnlySpan()) {
                 layer.EarlyUpdate();
             }
             uiLayer.EarlyUpdate();
 
-            // レイヤー更新
+            // Update
             systemLayer.Update();
+            AsyncBack.DoQueuedEvents(FrameLoopTiming.Update);
             foreach(var layer in Layers.AsReadOnlySpan()) {
                 layer.Update();
             }
             uiLayer.Update();
 
-            // 事後レイヤー更新
+            // Late update
             systemLayer.LateUpdate();
+            AsyncBack.DoQueuedEvents(FrameLoopTiming.LateUpdate);
             foreach(var layer in Layers.AsReadOnlySpan()) {
                 layer.LateUpdate();
             }
@@ -134,12 +141,20 @@ namespace Elffy.Core
 
             Dispatcher.DoInvokedAction();
 
-            // レイヤー描画処理
+            // Render
+            var isEnabledPostProcess = IsEnabledPostProcess;
+            if(isEnabledPostProcess) {
+                _postProcessor.EnableOffScreenRendering();
+            }
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             foreach(var layer in Layers.AsReadOnlySpan()) {
                 layer.Render(Camera.Projection, Camera.View);
             }
             uiLayer.Render(_uiProjection);
+            if(isEnabledPostProcess) {
+                _postProcessor.DisableOffScreenRendering();
+                _postProcessor.Render();
+            }
 
             // このフレームで削除されたオブジェクトの削除を適用
             systemLayer.ApplyRemove();
@@ -149,17 +164,39 @@ namespace Elffy.Core
             uiLayer.ApplyRemove();
         }
 
-        private void OnSizeChanged(int x, int y, int width, int height)
+        public void Dispose()
+        {
+            if(_disposed) { return; }
+            _disposed = true;
+
+            // Clear objects in all layers
+            var layers = Layers;
+            layers.SystemLayer.ClearFrameObject();
+            foreach(var layer in layers.AsReadOnlySpan()) {
+                layer.ClearFrameObject();
+            }
+            layers.Clear();
+
+            // Dispose resources of post process
+            _postProcessor.Dispose();
+        }
+
+        private void OnSizeChanged(int width, int height)
         {
             // Change view and projection matrix (World).
             Camera.ChangeScreenSize(width, height);
 
             // Change projection matrix (UI)
-            GL.Viewport(x, y, width, height);
-            Matrix4.OrthographicProjection(x, x + width, y, y + height, UI_NEAR, UI_FAR, out _uiProjection);
+            GL.Viewport(0, 0, width, height);
+            Matrix4.OrthographicProjection(0, width, 0, height, UI_NEAR, UI_FAR, out _uiProjection);
             var uiRoot = Layers.UILayer.UIRoot;
             uiRoot.Width = width;
             uiRoot.Height = height;
+
+            if(IsEnabledPostProcess) {
+                _postProcessor.CreateNewBuffer(width, height);
+            }
+            Debug.WriteLine($"Size changed ({width}, {height})");
         }
     }
 }

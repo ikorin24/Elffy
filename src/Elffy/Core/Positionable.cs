@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace Elffy.Core
@@ -12,9 +11,15 @@ namespace Elffy.Core
     /// </summary>
     public abstract class Positionable : ComponentOwner
     {
+        private Quaternion _ratation = Quaternion.Identity;
+        private Vector3 _scale = Vector3.One;
+        private Vector3 _position;
+        private readonly PositionableCollection _children;
+        private Positionable? _parent;
+
         #region Proeprty
         /// <summary>オブジェクトの回転を表すクオータニオン</summary>
-        public Quaternion Rotation { get; set; } = Quaternion.Identity;
+        public ref Quaternion Rotation => ref _ratation;
 
         /// <summary>この <see cref="Positionable"/> のツリー構造の親を取得します</summary>
         public Positionable? Parent
@@ -22,22 +27,20 @@ namespace Elffy.Core
             get => _parent;
             internal set
             {
-                if(_parent == null) {
+                if(_parent is null || value is null) {
                     _parent = value;
                 }
-                else if(_parent != null && value == null) {
-                    _parent = value;
-                }
-                else { throw new InvalidOperationException($"The instance is already a child of another object. Can not has multi parents."); }
+                else { ThrowAlreadyHasParent(); }
+
+                static void ThrowAlreadyHasParent() => throw new InvalidOperationException($"The instance is already a child of another object. Can not has multi parents.");
             }
         }
-        private Positionable? _parent;
 
         /// <summary>この <see cref="Positionable"/> のツリー構造の子要素を取得します</summary>
-        public PositionableCollection Children { get; }
+        public PositionableCollection Children => _children;
 
         /// <summary>この <see cref="Positionable"/> がツリー構造の Root かどうかを取得します</summary>
-        public bool IsRoot => Parent == null;
+        public bool IsRoot => _parent is null;
 
         /// <summary>この <see cref="Positionable"/> が子要素の <see cref="Positionable"/> を持っているかどうかを取得します</summary>
         public bool HasChild => Children.Count > 0;
@@ -46,33 +49,7 @@ namespace Elffy.Core
         /// オブジェクトのローカル座標<para/>
         /// <see cref="IsRoot"/> が true の場合は <see cref="WorldPosition"/> と同じ値。false の場合は親の <see cref="Position"/> を基準とした相対座標。
         /// </summary>
-        public Vector3 Position
-        {
-            get => _position;
-            set => _position = value;
-        }
-        private Vector3 _position;
-
-        /// <summary>オブジェクトのX座標</summary>
-        public float PositionX
-        {
-            get => _position.X;
-            set => _position.X = value;
-        }
-
-        /// <summary>オブジェクトのY座標</summary>
-        public float PositionY
-        {
-            get => _position.Y;
-            set => _position.Y = value;
-        }
-
-        /// <summary>オブジェクトのZ座標</summary>
-        public float PositionZ
-        {
-            get => _position.Z;
-            set => _position.Z = value;
-        }
+        public ref Vector3 Position => ref _position;
 
         /// <summary>オブジェクトのワールド座標。get/set ともに Root までの親の数 N に対し O(N)</summary>
         public Vector3 WorldPosition
@@ -80,13 +57,17 @@ namespace Elffy.Core
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                var worldPos = _position;
-                var current = this;
-                while(!current.IsRoot) {
-                    current = current.Parent!;
-                    worldPos += current._position;
+                return IsRoot ? _position : Calc(this);
+
+                static Vector3 Calc(Positionable source)
+                {
+                    var wPos = source._position;
+                    while(!source.IsRoot) {
+                        source = source._parent!;
+                        wPos += source._position;
+                    }
+                    return wPos;
                 }
-                return worldPos;
             }
             set => _position += value - WorldPosition;
         }
@@ -97,13 +78,17 @@ namespace Elffy.Core
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                var worldPosX = _position.X;
-                var current = this;
-                while(!current.IsRoot) {
-                    current = current.Parent!;
-                    worldPosX += current._position.X;
+                return IsRoot ? _position.X : Calc(this);
+
+                static float Calc(Positionable source)
+                {
+                    var wPosX = source._position.X;
+                    while(!source.IsRoot) {
+                        source = source._parent!;
+                        wPosX += source._position.X;
+                    }
+                    return wPosX;
                 }
-                return worldPosX;
             }
             set => _position.X += value - WorldPositionX;
         }
@@ -114,13 +99,17 @@ namespace Elffy.Core
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                var worldPosY = _position.Y;
-                var current = this;
-                while(!current.IsRoot) {
-                    current = current.Parent!;
-                    worldPosY += current._position.Y;
+                return IsRoot ? _position.Y : Calc(this);
+
+                static float Calc(Positionable source)
+                {
+                    var wPosY = source._position.Y;
+                    while(!source.IsRoot) {
+                        source = source._parent!;
+                        wPosY += source._position.Y;
+                    }
+                    return wPosY;
                 }
-                return worldPosY;
             }
             set => _position.Y += value - WorldPositionY;
         }
@@ -131,58 +120,28 @@ namespace Elffy.Core
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                var worldPosZ = _position.Z;
-                var current = this;
-                while(!current.IsRoot) {
-                    current = current.Parent!;
-                    worldPosZ += current._position.Z;
+                return IsRoot ? _position.Z : Calc(this);
+
+                static float Calc(Positionable source)
+                {
+                    var wPosZ = source._position.Z;
+                    while(!source.IsRoot) {
+                        source = source._parent!;
+                        wPosZ += source._position.Z;
+                    }
+                    return wPosZ;
                 }
-                return worldPosZ;
             }
             set => _position.Z += value - WorldPositionZ;
         }
 
-        #region Scale
         /// <summary>オブジェクトの拡大率</summary>
-        public Vector3 Scale
-        {
-            get => _scale;
-            set { _scale = value; }
-        }
-        private Vector3 _scale = Vector3.One;
-        #endregion
-
-        #region ScaleX
-        /// <summary>x軸方向の拡大率</summary>
-        public float ScaleX
-        {
-            get => _scale.X;
-            set { _scale.X = value; }
-        }
-        #endregion
-
-        #region ScaleY
-        /// <summary>y軸方向の拡大率</summary>
-        public float ScaleY
-        {
-            get => _scale.Y;
-            set { _scale.Y = value; }
-        }
-        #endregion
-
-        #region ScaleZ
-        /// <summary>z軸方向の拡大率</summary>
-        public float ScaleZ
-        {
-            get => _scale.Z;
-            set { _scale.Z = value; }
-        }
-        #endregion
+        public ref Vector3 Scale => ref _scale;
         #endregion
 
         public Positionable()
         {
-            Children = new PositionableCollection(this);
+            _children = new PositionableCollection(this);
         }
 
         /// <summary>オブジェクトを移動させます</summary>
@@ -196,7 +155,7 @@ namespace Elffy.Core
 
         /// <summary>オブジェクトを移動させます</summary>
         /// <param name="vector">移動ベクトル</param>
-        public void Translate(Vector3 vector)
+        public void Translate(in Vector3 vector)
         {
             Position += vector;
         }
@@ -220,13 +179,13 @@ namespace Elffy.Core
         /// <summary>オブジェクトを回転させます</summary>
         /// <param name="axis">回転軸</param>
         /// <param name="angle">回転角(ラジアン)</param>
-        public void Rotate(Vector3 axis, float angle) => Rotate(new Quaternion(axis, angle));
+        public void Rotate(in Vector3 axis, float angle) => Rotate(new Quaternion(axis, angle));
 
         /// <summary>オブジェクトを回転させます</summary>
         /// <param name="quaternion">回転させるクオータニオン</param>
-        public void Rotate(Quaternion quaternion)
+        public void Rotate(in Quaternion quaternion)
         {
-            Rotation = quaternion * Rotation;
+            _ratation = quaternion * _ratation;
         }
 
         /// <summary>このオブジェクトの <see cref="Children"/> 以下に存在する全ての子孫を取得します。列挙順は深さ優先探索 (DFS; depth-first search) です。</summary>
@@ -256,8 +215,16 @@ namespace Elffy.Core
         /// <returns>Root オブジェクト</returns>
         public Positionable GetRoot()
         {
-            if(IsRoot) { return this; }
-            return GetAncestor().Last();
+            return IsRoot ? this : SerachRoot(this);
+
+            static Positionable SerachRoot(Positionable source)
+            {
+                var obj = source;
+                while(!obj.IsRoot) {
+                    obj = obj._parent!;
+                }
+                return obj;
+            }
         }
     }
 }

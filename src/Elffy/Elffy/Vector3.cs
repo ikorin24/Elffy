@@ -1,8 +1,10 @@
 ﻿#nullable enable
+using Cysharp.Text;
 using System;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using TKVector3 = OpenToolkit.Mathematics.Vector3;
+using TKVector3 = OpenTK.Mathematics.Vector3;
 
 namespace Elffy
 {
@@ -43,7 +45,7 @@ namespace Elffy
         public readonly float Length
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => (float)Math.Sqrt(LengthSquared);
+            get => MathF.Sqrt(LengthSquared);
         }
 
         public readonly bool IsZero
@@ -81,11 +83,10 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector3(float value) => (X, Y, Z) = (value, value, value);
 
+        [EditorBrowsable(EditorBrowsableState.Never)]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Deconstruct(out float x, out float y, out float z) => (x, y, z) = (X, Y, Z);
+        public readonly void Deconstruct(out float x, out float y, out float z) => (x, y, z) = (X, Y, Z);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly (float X, float Y, float Z) ToTuple() => (X, Y, Z);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly float Dot(in Vector3 vec) => Mult(this, vec).SumElement();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -111,6 +112,20 @@ namespace Elffy
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly Vector3 Normalized() => ((TKVector3)this).Normalized();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly Matrix4 ToTranslationMatrix4() => new Matrix4(1, 0, 0, X,
+                                                                      0, 1, 0, Y,
+                                                                      0, 0, 1, Z,
+                                                                      0, 0, 0, 1);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly Matrix4 ToScaleMatrix4() => new Matrix4(X, 0, 0, 0,
+                                                                0, Y, 0, 0,
+                                                                0, 0, Z, 0,
+                                                                0, 0, 0, 1);
+
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly override bool Equals(object? obj) => obj is Vector3 vector && Equals(vector);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -118,7 +133,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly override int GetHashCode() => HashCode.Combine(X, Y, Z);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly override string ToString() => $"({X}, {Y}, {Z})";
+        public readonly override string ToString() => ZString.Concat('(', X, ' ',Y, ' ', Z, ')');
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 operator -(in Vector3 vec) => new Vector3(-vec.X, -vec.Y, -vec.Z);

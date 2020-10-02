@@ -6,40 +6,36 @@ using Elffy.Core;
 using Elffy.Exceptions;
 using Elffy.Imaging;
 using Elffy.OpenGL;
-using OpenToolkit.Graphics.OpenGL;
+using OpenTK.Graphics.OpenGL4;
 using PixelFormat = System.Drawing.Imaging.PixelFormat;
-using TKPixelFormat = OpenToolkit.Graphics.OpenGL.PixelFormat;
+using TKPixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
 namespace Elffy.Components
 {
     public sealed class Texture : ISingleOwnerComponent, IDisposable
     {
+        private SingleOwnerComponentCore<Texture> _core = new SingleOwnerComponentCore<Texture>(true);  // Mutable object, Don't change into reaadonly
         private TextureObject _to;
         public TextureExpansionMode ExpansionMode { get; }
         public TextureShrinkMode ShrinkMode { get; }
         public TextureMipmapMode MipmapMode { get; }
 
-        public TextureUnitNumber TextureUnit { get; }
+        public ComponentOwner? Owner => _core.Owner;
 
-        public ComponentOwner? Owner { get; private set; }
-
-        /// <summary><see cref="ComponentOwner"/> からデタッチされるか、アタッチ先の <see cref="FrameObject"/> が無効になった時に自動的に破棄されるかどうか</summary>
-        public bool IsAutoDisposeEnabled { get; }
+        public bool AutoDisposeOnDetached => _core.AutoDisposeOnDetached;
 
         public Texture(TextureExpansionMode expansionMode, TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode, bool autoDispose = true)
         {
             ExpansionMode = expansionMode;
             ShrinkMode = shrinkMode;
             MipmapMode = mipmapMode;
-            TextureUnit = TextureUnitNumber.Unit0;
-            IsAutoDisposeEnabled = autoDispose;
         }
 
         ~Texture() => Dispose(false);
 
-        public void Apply()
+        public void Apply(TextureUnitNumber textureUnit)
         {
-            TextureObject.Bind(_to, TextureUnit);
+            TextureObject.Bind2D(_to, textureUnit);
         }
 
         public void Load(Bitmap bitmap)
@@ -56,36 +52,19 @@ namespace Elffy.Components
 
             _to = TextureObject.Create();
             var unit = TextureUnitNumber.Unit0;
-            TextureObject.Bind(_to, unit);
+            TextureObject.Bind2D(_to, unit);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, GetMinParameter(ShrinkMode, MipmapMode));
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, GetMagParameter(ExpansionMode));
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, pixelWidth, pixelHeight, 0, TKPixelFormat.Bgra, PixelType.UnsignedByte, ptr);
             if(MipmapMode != TextureMipmapMode.None) {
                 GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
             }
-            TextureObject.Unbind(unit);
+            TextureObject.Unbind2D(unit);
         }
 
-        public void OnAttached(ComponentOwner owner)
-        {
-            if(Owner is null == false) {
-                throw new InvalidOperationException($"{nameof(Texture)} is already attached. Can not have multi {nameof(ComponentOwner)}s.");
-            }
-            Owner = owner;
-            if(IsAutoDisposeEnabled) {
-                owner.Dead += _ => Dispose();
-            }
-        }
+        void IComponent.OnAttached(ComponentOwner owner) => _core.OnAttached(owner);
 
-        public void OnDetached(ComponentOwner owner)
-        {
-            if(Owner == owner) {
-                Owner = null;
-                if(IsAutoDisposeEnabled) {
-                    Dispose();
-                }
-            }
-        }
+        void IComponent.OnDetached(ComponentOwner owner) => _core.OnDetachedForDisposable(owner, this);
 
         public void Dispose()
         {

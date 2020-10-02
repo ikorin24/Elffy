@@ -7,8 +7,8 @@ namespace Elffy.Mathematics
     /// <summary>Random value generator class</summary>
     public static class Rand
     {
-        private static Xorshift32 _xorshift32 = Xorshift32.GetDefault();
-        private static Xorshift64 _xorshift64 = Xorshift64.GetDefault();
+        private static Xorshift32 _xorshift32 = Xorshift32.GetDefault();    // do not change into readonly
+        private static Xorshift64 _xorshift64 = Xorshift64.GetDefault();    // do not change into readonly
 
         /// <summary>Get random color (R, G, B are random, Alpha is 1).</summary>
         /// <returns>random color</returns>
@@ -35,6 +35,8 @@ namespace Elffy.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 Vector4() => new Vector4(_xorshift32.Single(), _xorshift32.Single(), _xorshift32.Single(), _xorshift32.Single()).Normalized();
 
+        /// <summary>Get 1 or -1 randomly</summary>
+        /// <returns>1 or -1</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Sign() => (_xorshift32.Int32() & 2) - 1;
 

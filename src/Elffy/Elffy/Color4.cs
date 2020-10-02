@@ -1,9 +1,12 @@
 ﻿#nullable enable
+using Cysharp.Text;
+using Elffy.Effective;
 using System;
+using System.ComponentModel;
 using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using TKColor4 = OpenToolkit.Mathematics.Color4;
+using TKColor4 = OpenTK.Mathematics.Color4;
 
 namespace Elffy
 {
@@ -19,11 +22,19 @@ namespace Elffy
         [FieldOffset(12)]
         public float A;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Color4(float r, float g, float b) => (R, G, B, A) = (r, g, b, 1f);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Color4(float value) => (R, G, B, A) = (value, value, value, 1f);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Color4(float r, float g, float b, float a) => (R, G, B, A) = (r, g, b, a);
-        public Color4(Color3 color) => (R, G, B, A) = (color.R, color.G, color.B, 1f);
-        public Color4(Color3 color, float a) => (R, G, B, A) = (color.R, color.G, color.B, a);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Color4(in Color3 color) => (R, G, B, A) = (color.R, color.G, color.B, 1f);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Color4(in Color3 color, float a) => (R, G, B, A) = (color.R, color.G, color.B, a);
+
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly void Deconstruct(out float r, out float g, out float b, out float a) => (r, g, b, a) = (R, G, B, A);
 
         public readonly override bool Equals(object? obj) => obj is Color4 color && Equals(color);
@@ -31,16 +42,20 @@ namespace Elffy
         public readonly bool Equals(Color4 other) => R == other.R && G == other.G && B == other.B && A == other.A;
 
         public readonly override int GetHashCode() => HashCode.Combine(R, G, B, A);
-        public readonly override string ToString() => $"(R, G, B, A) = ({R}, {G}, {B}, {A}) = ({ToByte(R)}, {ToByte(G)}, {ToByte(B)}, {ToByte(A)})";
+        public readonly override string ToString() => ZString.Concat("(R: ", ToByte(R),
+                                                                     ", G: ", ToByte(G),
+                                                                     ", B: ", ToByte(B),
+                                                                     ", A: ", ToByte(A), ")");
+
         public static bool operator ==(in Color4 left, in Color4 right) => left.Equals(right);
 
         public static bool operator !=(in Color4 left, in Color4 right) => !(left == right);
 
-        public static implicit operator TKColor4(Color4 color) => Unsafe.As<Color4, TKColor4>(ref color);
-        public static implicit operator Color4(TKColor4 color) => Unsafe.As<TKColor4, Color4>(ref color);
+        public static implicit operator TKColor4(in Color4 color) => UnsafeEx.As<Color4, TKColor4>(in color);
+        public static implicit operator Color4(in TKColor4 color) => UnsafeEx.As<TKColor4, Color4>(in color);
         public static explicit operator Color(in Color4 color) => (Color)(TKColor4)color;
         public static implicit operator Color4(in Color color) => (TKColor4)color;
-        public static explicit operator Vector3(Color4 color) => Unsafe.As<Color4, Vector3>(ref color);
+        public static explicit operator Vector3(in Color4 color) => UnsafeEx.As<Color4, Vector3>(in color);
 
         private static byte ToByte(float value)
         {

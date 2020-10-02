@@ -1,31 +1,41 @@
 ﻿#nullable enable
+using Elffy.Core;
 using Elffy.OpenGL;
-using System;
-using OpenToolkit.Graphics.OpenGL;
 using Elffy.Exceptions;
-using TKPixelFormat = OpenToolkit.Graphics.OpenGL.PixelFormat;
-using Elffy.Components;
+using Elffy.Effective;
+using System;
+using OpenTK.Graphics.OpenGL4;
+using TKPixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
-namespace Elffy.Core
+namespace Elffy.Components
 {
-    public sealed class FloatDataTexture : IComponent, IDisposable
+    public sealed class FloatDataTexture : ISingleOwnerComponent, IDisposable
     {
-        private FloatDataTextureImpl _impl;
-        public TextureUnitNumber TextureUnit { get; }
+        private SingleOwnerComponentCore<FloatDataTexture> _core = new SingleOwnerComponentCore<FloatDataTexture>(true);    // Mutable object, Don't change into reaadonly
+        private FloatDataTextureImpl _impl = new FloatDataTextureImpl();    // Mutable object, Don't change into reaadonly
 
-        public FloatDataTexture(TextureUnitNumber unit)
+        public ComponentOwner? Owner => _core.Owner;
+
+        public bool AutoDisposeOnDetached => _core.AutoDisposeOnDetached;
+
+        public FloatDataTexture()
         {
-            TextureUnit = unit;
         }
-        public void Apply() => _impl.Apply(TextureUnit);
+
+        public void Apply(TextureUnitNumber textureUnit) => _impl.Apply(textureUnit);
 
         ~FloatDataTexture() => Dispose(false);
 
-        public unsafe void Load(ReadOnlySpan<Color4> texels) => _impl.Load(texels);
+        public void Load(ReadOnlySpan<Vector4> texels) => _impl.Load(texels.MarshalCast<Vector4, Color4>());
+
+        public void Load(ReadOnlySpan<Color4> texels) => _impl.Load(texels);
+
+        public void Update(ReadOnlySpan<Vector4> texels, int xOffset) => _impl.Update(texels.MarshalCast<Vector4, Color4>(), xOffset);
+        
+        public void Update(ReadOnlySpan<Color4> texels, int xOffset) => _impl.Update(texels, xOffset);
 
         public void Dispose()
         {
-            if(_impl.Disposed) { return; }
             Dispose(true);
             GC.SuppressFinalize(this);
         }
@@ -40,46 +50,70 @@ namespace Elffy.Core
             }
         }
 
-        public void OnAttached(ComponentOwner owner)
-        {
-            // nop
-        }
+        void IComponent.OnAttached(ComponentOwner owner) => _core.OnAttached(owner);
 
-        public void OnDetached(ComponentOwner owner)
-        {
-            // nop
-        }
+        void IComponent.OnDetached(ComponentOwner owner) => _core.OnDetachedForDisposable(owner, this);
     }
 
     internal struct FloatDataTextureImpl : IDisposable
     {
-        public const TextureUnit TargetTextureUnit = TextureUnit.Texture1;
-
-        public bool Disposed;
         public TextureObject TextureObject;
+        public int Length;
 
-        public void Apply(TextureUnitNumber unit)
+        public readonly void Apply(TextureUnitNumber unit)
         {
-            TextureObject.Bind(TextureObject, unit);
+            TextureObject.Bind1D(TextureObject, unit);
         }
 
         public unsafe void Load(ReadOnlySpan<Color4> texels)
         {
-            if(texels.IsEmpty) { return; }
-            TextureObject = TextureObject.Create();
-            var unit = TextureUnitNumber.Unit0;
-            TextureObject.Bind(TextureObject, unit);
-            fixed(void* ptr = texels) {
-                GL.TexImage1D(TextureTarget.Texture1D, 0, PixelInternalFormat.Rgba, texels.Length, 0, TKPixelFormat.Rgba, PixelType.Float, (IntPtr)ptr);
+            if(!TextureObject.IsEmpty) {
+                ThrowAlreadyLoaded();
+                static void ThrowAlreadyLoaded() => throw new InvalidOperationException("Already loaded");
             }
-            TextureObject.Unbind(unit);
+
+            if(texels.IsEmpty) { return; }
+
+            TextureObject = TextureObject.Create();
+            Length = texels.Length;
+
+            const TextureUnitNumber unit = TextureUnitNumber.Unit0;
+            TextureObject.Bind1D(TextureObject, unit);
+            GL.TexParameter(TextureTarget.Texture1D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture1D, TextureParameterName.TextureMagFilter, (int)TextureMinFilter.Nearest);
+            fixed(void* ptr = texels) {
+                GL.TexImage1D(TextureTarget.Texture1D, 0, PixelInternalFormat.Rgba32f,
+                              texels.Length, 0, TKPixelFormat.Rgba, PixelType.Float, (IntPtr)ptr);
+            }
+            TextureObject.Unbind1D(unit);
+        }
+
+        public unsafe void Update(ReadOnlySpan<Color4> texels, int xOffset)
+        {
+            if(TextureObject.IsEmpty) {
+                ThrowNotYetLoaded();
+                static void ThrowNotYetLoaded() => throw new InvalidOperationException("Cannnot update texels because not loaded yet.");
+            }
+            if((uint)xOffset >= (uint)Length || texels.Length > Length - xOffset) {
+                ThrowOutOfRange($"Length: {Length}, {nameof(texels)}.Length: {texels.Length}, {nameof(xOffset)}: {xOffset}");
+                static void ThrowOutOfRange(string msg) => throw new ArgumentOutOfRangeException(msg);
+            }
+
+            if(texels.IsEmpty) { return; }
+
+            const TextureUnitNumber unit = TextureUnitNumber.Unit0;
+            TextureObject.Bind1D(TextureObject, unit);
+            fixed(void* ptr = texels) {
+                GL.TexSubImage1D(TextureTarget.Texture1D, 0, xOffset,
+                                 texels.Length, TKPixelFormat.Rgba, PixelType.Float, (IntPtr)ptr);
+            }
+            TextureObject.Unbind1D(unit);
         }
 
         public void Dispose()
         {
-            if(Disposed) { return; }
-            Disposed = true;
             TextureObject.Delete(ref TextureObject);
+            Length = 0;
         }
     }
 }

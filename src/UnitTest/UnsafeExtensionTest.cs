@@ -10,17 +10,6 @@ namespace UnitTest
     public class UnsafeExtensionTest
     {
         [Fact]
-        public void ListAsReadOnlyMemoryTest()
-        {
-            var list = Enumerable.Range(0, 10).ToList();
-            var i = 0;
-            foreach(var item in list.AsReadOnlyMemory().Span) {
-                Assert.True(i == item);
-                i++;
-            }
-        }
-
-        [Fact]
         public void ListAddRageTest()
         {
             {

@@ -1,39 +1,70 @@
 ﻿#nullable enable
 using System;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using Elffy.Core;
+using Elffy.Effective;
+using Elffy.Exceptions;
+using Elffy.OpenGL;
 
 namespace Elffy.Components
 {
-    public sealed class MultiTexture : IComponent, IDisposable, IComponentInternal<MultiTexture>
+    public sealed class MultiTexture : ISingleOwnerComponent, IDisposable
     {
-        private bool _isLoaded;
+        private SingleOwnerComponentCore<MultiTexture> _core = new SingleOwnerComponentCore<MultiTexture>(true);    // Mutable object, Don't change into reaadonly
         private bool _disposed;
-        private Texture[]? _textures;
+        private RefTypeRentMemory<Texture> _textures;
+        private int _count;
+        private int _current;
 
-        public int Count => _textures?.Length ?? 0;
+        public int Count => _count;
+        public int Current
+        {
+            get => _current;
+            set
+            {
+                if((uint)value >= (uint)_count) { ThrowOutOfRange(); }
+                _current = value;
 
-        MultiTexture IComponentInternal<MultiTexture>.Self => this;
+                static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(value));
+            }
+        }
+
+
+        public ComponentOwner? Owner => _core.Owner;
+
+        public bool AutoDisposeOnDetached => _core.AutoDisposeOnDetached;
 
         ~MultiTexture() => Dispose(false);
 
-        public void Apply(int index)
+        public void Apply(TextureUnitNumber textureUnit)
         {
-            if(_textures != null) {
-                _textures[index].Apply();
-            }
+            if(_textures.IsEmpty) { return; }
+            _textures.Span[_current].Apply(textureUnit);
         }
 
         public void Load(ReadOnlySpan<Bitmap> bitmaps)
         {
-            if(_isLoaded) { throw new InvalidOperationException("Already loaded"); }
-            var textures = new Texture[bitmaps.Length];
-            for(int i = 0; i < textures.Length; i++) {
-                textures[i] = new Texture(TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear, TextureMipmapMode.None);
-                textures[i].Load(bitmaps[i]);
+            if(!_textures.IsEmpty) {
+                ClearTextures();
+            }
+
+            if(bitmaps.Length == 0) { return; }
+
+            var textures = new RefTypeRentMemory<Texture>(bitmaps.Length);
+            try {
+                var span = textures.Span;
+                for(int i = 0; i < span.Length; i++) {
+                    span[i] = new Texture(TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear, TextureMipmapMode.None);
+                    span[i].Load(bitmaps[i]);
+                }
+            }
+            catch(Exception) {
+                textures.Dispose();
+                throw;
             }
             _textures = textures;
-            _isLoaded = true;
+            _count = bitmaps.Length;
         }
 
         public void Dispose()
@@ -46,19 +77,27 @@ namespace Elffy.Components
         private void Dispose(bool disposing)
         {
             if(disposing) {
-                var textures = _textures;
-                if(textures != null) {
-                    foreach(var texture in textures) {
-                        texture.Dispose();
-                    }
-                    _textures = null;
-                }
+                ClearTextures();
+                _current = 0;
                 _disposed = true;
+            }
+            else {
+                throw new MemoryLeakException(typeof(MultiTexture));
             }
         }
 
-        public void OnAttached(ComponentOwner owner) { }
+        private void ClearTextures()
+        {
+            foreach(var texture in _textures.Span) {
+                texture.Dispose();
+            }
+            _textures.Dispose();
+            _textures = default;
+            _count = 0;
+        }
 
-        public void OnDetached(ComponentOwner owner) { }
+        public void OnAttached(ComponentOwner owner) => _core.OnAttached(owner);
+
+        public void OnDetached(ComponentOwner owner) => _core.OnDetachedForDisposable(owner, this);
     }
 }

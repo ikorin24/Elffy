@@ -4,9 +4,12 @@ using Elffy.Components;
 using System;
 using System.Runtime.CompilerServices;
 using Elffy.OpenGL;
+using Elffy.Diagnostics;
+using Elffy.Effective;
 
 namespace Elffy.Shading
 {
+    [ShaderTargetVertexType(typeof(Vertex))]
     public sealed class PhongShaderSource : ShaderSource
     {
         private static PhongShaderSource? _instance;
@@ -18,19 +21,19 @@ namespace Elffy.Shading
 
         private PhongShaderSource() { }
 
-        protected override void DefineLocation(VertexDefinition definition)
+        protected override void DefineLocation(VertexDefinition definition, Renderable target)
         {
-            definition.Position("vPos");
-            definition.Normal("vNormal");
-            definition.TexCoord("vUV");
+            definition.Map<Vertex>(nameof(Vertex.Position), "vPos");
+            definition.Map<Vertex>(nameof(Vertex.Normal), "vNormal");
+            definition.Map<Vertex>(nameof(Vertex.TexCoord), "vUV");
         }
 
         protected override void SendUniforms(Uniform uniform, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             if(target.TryGetComponent<Material>(out var m)) {
-                uniform.Send("ma", Unsafe.As<Color4, Color3>(ref Unsafe.AsRef(m.Ambient)));
-                uniform.Send("md", Unsafe.As<Color4, Color3>(ref Unsafe.AsRef(m.Diffuse)));
-                uniform.Send("ms", Unsafe.As<Color4, Color3>(ref Unsafe.AsRef(m.Specular)));
+                uniform.Send("ma", UnsafeEx.As<Color4, Color3>(m.Ambient));
+                uniform.Send("md", UnsafeEx.As<Color4, Color3>(m.Diffuse));
+                uniform.Send("ms", UnsafeEx.As<Color4, Color3>(m.Specular));
                 uniform.Send("shininess", m.Shininess);
             }
             else {
@@ -58,7 +61,14 @@ namespace Elffy.Shading
                 uniform.Send("ls", new Vector3());
             }
 
-            uniform.Send("tex_sampler", TextureUnitNumber.Unit0);
+            const TextureUnitNumber texUnit = TextureUnitNumber.Unit0;
+            if(target.TryGetComponent<Texture>(out var t)) {
+                t.Apply(texUnit);
+            }
+            else {
+                TextureObject.Bind2D(target.HostScreen.DefaultResource.WhiteEmptyTexture, texUnit);
+            }
+            uniform.Send("tex_sampler", texUnit);
         }
 
         private const string VertSource =

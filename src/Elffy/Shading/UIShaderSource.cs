@@ -1,11 +1,15 @@
 ﻿#nullable enable
 using System;
 using System.Diagnostics;
+using Elffy.Components;
 using Elffy.Core;
+using Elffy.Diagnostics;
+using Elffy.OpenGL;
 using Elffy.UI;
 
 namespace Elffy.Shading
 {
+    [ShaderTargetVertexType(typeof(VertexSlim))]
     internal sealed class UIShaderSource : ShaderSource
     {
         protected override string VertexShaderSource => VertSource;
@@ -18,19 +22,26 @@ namespace Elffy.Shading
         {
         }
 
-        protected override void DefineLocation(VertexDefinition definition)
+        protected override void DefineLocation(VertexDefinition definition, Renderable target)
         {
-            definition.Position("vPos");
-            definition.TexCoord("vUV");
+            definition.Map<VertexSlim>(nameof(VertexSlim.Position), "vPos");
+            definition.Map<VertexSlim>(nameof(VertexSlim.UV), "vUV");
         }
 
         protected override void SendUniforms(Uniform uniform, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             Debug.Assert(target is UIRenderable);
             var mvp = projection * view * model;
-            const int DefaultTextureUnit = 0;           // ← default texture is 0. GL.ActiveTexture(TextureUnit.Texture0)
             uniform.Send("mvp", mvp);
-            uniform.Send("tex_sampler", DefaultTextureUnit);
+
+            const TextureUnitNumber texUnit = TextureUnitNumber.Unit0;
+            if(target.TryGetComponent<Texture>(out var t)) {
+                t.Apply(texUnit);
+            }
+            else {
+                TextureObject.Bind2D(target.HostScreen.DefaultResource.WhiteEmptyTexture, texUnit);
+            }
+            uniform.Send("tex_sampler", texUnit);
         }
 
         private const string VertSource =

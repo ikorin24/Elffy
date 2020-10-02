@@ -16,16 +16,16 @@ namespace Sandbox
 
         public Vector3 Target { get; set; }
 
-        public CameraMouse(Camera camera, Mouse mouse, Vector3 target)
+        public CameraMouse(Camera camera, Mouse mouse, in Vector3 target)
         {
             _camera = camera ?? throw new ArgumentNullException(nameof(camera));
             _mouse = mouse ?? throw new ArgumentNullException(nameof(mouse));
             Target = target;
-            EarlyUpdated += OnEarlyUpdated;
         }
 
-        private void OnEarlyUpdated(FrameObject sender)
+        protected override void OnEarlyUpdate()
         {
+            base.OnEarlyUpdate();
             if(_mouse.IsDown(MouseButton.Left)) {
                 _mousePos = _mouse.Position;
                 _isMousePressed = true;
@@ -66,24 +66,6 @@ namespace Sandbox
 
             _camera.Position = q3 * q2 * q1 * v + target;
             _camera.LookAt(target);
-        }
-
-        private readonly struct Angle
-        {
-            public readonly float Sin;
-            public readonly float Cos;
-
-            public Angle(float theta)
-            {
-                Sin = MathF.Sin(theta);
-                Cos = MathF.Cos(theta);
-            }
-
-            public Angle(float sin, float cos)
-            {
-                Sin = sin;
-                Cos = cos;
-            }
         }
     }
 }

@@ -2,12 +2,12 @@
 using Elffy.Exceptions;
 using Elffy.OpenGL;
 using System;
-using OpenToolkit.Graphics.OpenGL;
-using TKPixelFormat = OpenToolkit.Graphics.OpenGL.PixelFormat;
+using OpenTK.Graphics.OpenGL4;
+using TKPixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
 namespace Elffy.Core
 {
-    internal sealed class DefaultGLResource : IDisposable
+    internal sealed class DefaultGLResource : IDefaultResource, IDisposable
     {
         private bool _disposed;
         private TextureObject _whiteEmptyTexture;
@@ -20,15 +20,15 @@ namespace Elffy.Core
 
         ~DefaultGLResource() => Dispose(false);
 
-        public unsafe void Create()
+        public unsafe void Init()
         {
             var whiteEmpty = TextureObject.Create();
             var pixel = Color4.White;
             var unit = TextureUnitNumber.Unit0;
-            TextureObject.Bind(whiteEmpty, unit);
+            TextureObject.Bind2D(whiteEmpty, unit);
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, 1, 1, 0, TKPixelFormat.Rgba, PixelType.Float, new IntPtr(&pixel));
             _whiteEmptyTexture = whiteEmpty;
-            TextureObject.Unbind(unit);
+            TextureObject.Unbind2D(unit);
         }
 
         public void Dispose()
@@ -48,5 +48,10 @@ namespace Elffy.Core
             }
             _disposed = true;
         }
+    }
+
+    public interface IDefaultResource
+    {
+        TextureObject WhiteEmptyTexture { get; }
     }
 }

@@ -1,6 +1,4 @@
 ﻿#nullable enable
-using Elffy.Effective;
-using Elffy.Exceptions;
 using Elffy.Components;
 using System;
 using System.Runtime.CompilerServices;
@@ -21,9 +19,11 @@ namespace Elffy.Core
         public T GetComponent<T>() where T : class, IComponent
         {
             if(!ComponentStore<T>.TryGet(this, out var component)) {
-                throw new InvalidOperationException($"No component of type '{typeof(T).FullName}'");
+                ThrowDoesNotHaveComponent();
             }
-            return component;
+            return component!;
+
+            static void ThrowDoesNotHaveComponent() => throw new InvalidOperationException($"No component of type '{typeof(T).FullName}'");
         }
 
         public bool TryGetComponent<T>([MaybeNullWhen(false)] out T component) where T : class, IComponent
@@ -36,11 +36,14 @@ namespace Elffy.Core
         /// <param name="component">component object</param>
         public void AddComponent<T>(T component) where T : class, IComponent
         {
-            if(component is null) { throw new ArgumentNullException(nameof(component)); }
-            if(ComponentStore<T>.HasComponentOf(this)) { throw new ArgumentException($"Component type '{typeof(T).FullName}' already exists."); }
-            ComponentStore<T>.Add(this, component);
-            component.OnAttached(this);
-            ComponentAttached?.Invoke(this, component);
+            if(component is null) { ThrowNullArg(); }
+            if(ComponentStore<T>.HasComponentOf(this)) { ThrowAlreadyExists(); }
+            ComponentStore<T>.Add(this, component!);
+            component!.OnAttached(this);
+            ComponentAttached?.Invoke(this, component!);
+
+            static void ThrowNullArg() => throw new ArgumentNullException(nameof(component));
+            static void ThrowAlreadyExists() => throw new ArgumentException($"Component type '{typeof(T).FullName}' already exists.");
         }
 
         /// <summary>Add or replace component whose type is <typeparamref name="T"/>. Return true if replaced, otherwize false.</summary>
@@ -49,16 +52,18 @@ namespace Elffy.Core
         /// <returns>Return true if replaced, otherwize false.</returns>
         public bool AddOrReplaceComponent<T>(T component, out T? old) where T : class, IComponent
         {
-            if(component is null) { throw new ArgumentNullException(nameof(component)); }
-            var replaced = ComponentStore<T>.AddOrReplace(this, component, out old);
+            if(component is null) { ThrowNullArg(); }
+            var replaced = ComponentStore<T>.AddOrReplace(this, component!, out old);
             if(replaced) {
-                Debug.Assert(old != null);
+                Debug.Assert(old is null == false);
                 ComponentDetached?.Invoke(this, old!);
                 old!.OnDetached(this);
             }
-            component.OnAttached(this);
-            ComponentAttached?.Invoke(this, component);
+            component!.OnAttached(this);
+            ComponentAttached?.Invoke(this, component!);
             return replaced;
+
+            static void ThrowNullArg() => throw new ArgumentNullException(nameof(component));
         }
 
         /// <summary>Get whether <see cref="ComponentOwner"/> has a component of specified type</summary>

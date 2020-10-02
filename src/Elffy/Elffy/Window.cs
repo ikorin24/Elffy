@@ -6,11 +6,12 @@ using Elffy.Threading;
 using Elffy.InputSystem;
 using System.Drawing;
 using Elffy.Core.Timer;
-using OpenToolkit.Windowing.Desktop;
-using OpenToolkit.Windowing.Common;
-using OpenToolkit.Mathematics;
-using TKMouseButton = OpenToolkit.Windowing.Common.Input.MouseButton;
-using TKMouseButtonEventArgs = OpenToolkit.Windowing.Common.MouseButtonEventArgs;
+using OpenTK.Windowing.Common;
+using TKMouseButton = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
+using TKMouseButtonEventArgs = OpenTK.Windowing.Common.MouseButtonEventArgs;
+using Elffy.OpenGL;
+using Elffy.OpenGL.Windowing;
+using Elffy.Threading.Tasks;
 
 namespace Elffy
 {
@@ -18,20 +19,24 @@ namespace Elffy
     public class Window : IHostScreen
     {
         private bool _isClosed;
-        private const string DEFAULT_WINDOW_TITLE = "Window";
-        //private readonly GameWindow _window;
-        private readonly CustomGameWindow _window;
+        private const string DefaultTitle = "Window";
+        private readonly WindowGLFW _windowImpl;
+
         /// <summary>描画領域に関する処理を行うオブジェクト</summary>
         private readonly RenderingArea _renderingArea;
-        private readonly SyncContextReceiver _syncContextReciever = new SyncContextReceiver();
         private readonly IGameTimer _watch = GameTimerGenerator.Create();
         private TimeSpan _frameDelta;
+        private TimeSpan _time;
+        private long _frameNum;
+        private readonly DefaultGLResource _defaultGLResource;
 
         /// <summary>ウィンドウの UI の Root</summary>
         public Page UIRoot => _renderingArea.Layers.UILayer.UIRoot;
 
         /// <summary>マウスを取得します</summary>
         public Mouse Mouse => _renderingArea.Mouse;
+
+        public AsyncBackEndPoint AsyncBack => _renderingArea.AsyncBack;
 
         /// <summary>このウィンドウのレイヤー</summary>
         LayerCollection IHostScreen.Layers => _renderingArea.Layers;
@@ -40,25 +45,17 @@ namespace Elffy
         TimeSpan IHostScreen.FrameDelta => _frameDelta;
         IGameTimer IHostScreen.Watch => _watch;
 
-        public VSyncMode VSync { get => _window.VSync; set => _window.VSync = value; }
+        public Vector2i ClientSize { get => _windowImpl.ClientSize; set => _windowImpl.ClientSize = value; }
 
-        //public Size ClientSize { get => _window.ClientSize; set => _window.ClientSize = value; }
-        public Vector2i ClientSize
-        {
-            get => _window.ClientSize;
-            set
-            {
-                throw new NotImplementedException();    // TODO: opentk 4.0 への移行中
-            }
-        }
+        public string Title { get => _windowImpl.Title; set => _windowImpl.Title = value; }
 
-        //public Icon Icon { get => _window.Icon; set => _window.Icon = value; }
+        /// <inheritdoc/>
+        public ref readonly TimeSpan Time => ref _time;
 
-        public string Title { get => _window.Title; set => _window.Title = value; }
+        /// <inheritdoc/>
+        public ref readonly long FrameNum => ref _frameNum;
 
-        public TimeSpan Time { get; private set; }
-
-        public long FrameNum { get; private set; }
+        public IDefaultResource DefaultResource => _defaultGLResource;
 
         /// <summary>初期化時イベント</summary>
         public event ActionEventHandler<IHostScreen>? Initialized;
@@ -72,7 +69,7 @@ namespace Elffy
 
         /// <summary>スタイルを指定してウィンドウを作成します</summary>
         /// <param name="windowStyle">ウィンドウのスタイル</param>
-        public Window(WindowStyle windowStyle) : this(800, 450, DEFAULT_WINDOW_TITLE, windowStyle) { }
+        public Window(WindowStyle windowStyle) : this(800, 450, DefaultTitle, windowStyle) { }
 
         /// <summary>サイズとタイトルとスタイルを指定して、ウィンドウを作成します</summary>
         /// <param name="width">ウィンドウの幅</param>
@@ -82,130 +79,61 @@ namespace Elffy
         public Window(int width, int height, string title, WindowStyle windowStyle)
         {
             _renderingArea = new RenderingArea(this);
-            //_window = new GameWindow(width, height, GraphicsMode.Default, title, (GameWindowFlags)windowStyle);
 
-            var gwSetting = new GameWindowSettings()
+            _windowImpl = new WindowGLFW(width, height, title, windowStyle, false, WindowIconRaw.Empty);  // TODO: アンチエイリアス有効化した時のポストプロセスのバッファサイズが未対応
+
+            _frameDelta = TimeSpan.FromSeconds(1.0 / 60.0); // TODO: とりあえず固定で
+            _windowImpl.UpdateFrame += OnUpdateFrame;
+            _windowImpl.Load += OnLoad;
+            _windowImpl.Closed += _ => Dispose();
+            _windowImpl.Resize += OnResize;
+            _windowImpl.MouseMove += (_, e) => Mouse.ChangePosition(e.Position);
+            _windowImpl.MouseWheel += (_, e) => Mouse.ChangeWheel(e.OffsetY);
+            _windowImpl.MouseDown += MouseButtonStateChanged;
+            _windowImpl.MouseUp += MouseButtonStateChanged;
+            _windowImpl.MouseEnter += _ => Mouse.ChangeOnScreen(true);
+            _windowImpl.MouseLeave += _ => Mouse.ChangeOnScreen(false);
+
+            _defaultGLResource = new DefaultGLResource();
+            Engine.AddScreen(this, show: false);
+
+
+            void MouseButtonStateChanged(WindowGLFW _, TKMouseButtonEventArgs e)
             {
-                IsMultiThreaded = false,
-                RenderFrequency = 60.0,
-                UpdateFrequency = 60.0,
-            };
-            var nwSetting = new NativeWindowSettings()
-            {
-                Title = title,
-                Size = new Vector2i(width, height),     // TODO: クライアントサイズなのかどうか要確認
-                IsFullscreen = windowStyle == WindowStyle.Fullscreen,
-                IsEventDriven = false,
-                WindowBorder = (windowStyle == WindowStyle.FixedWindow) ? WindowBorder.Fixed : WindowBorder.Resizable,
-                StartVisible = true,
-                StartFocused = false,
-                Profile = ContextProfile.Core,
-                Location = null,
-            };
-            _window = new CustomGameWindow(gwSetting, nwSetting);
-            _window.VSync = VSyncMode.On;
-            _frameDelta = TimeSpan.FromSeconds(1.0 / gwSetting.RenderFrequency);
-            _window.Load += OnLoad;
-            _window.Unload += ReleaseResource;
-            _window.Resize += OnResize;
-            _window.RenderFrame += OnRenderFrame;
-
-            //if(windowStyle != WindowStyle.Fullscreen) {
-            //    _window.ClientSize = new Size(width, height);
-            //}
-            //_window.TargetRenderFrequency = DisplayDevice.Default.RefreshRate;
-            //_frameDelta = TimeSpan.FromSeconds(1.0 / _window.TargetRenderFrequency);
-            //_window.Load += OnLoad;
-            //_window.Closed += OnClosed;
-            //_window.Resize += OnResize;
-            //_window.RenderFrame += OnRenderFrame;
-
-            //OpenToolkit.Windowing.Common.Input.MouseButton
-
-            //MouseButton? GetMouseButton(TKMouseButton button) => button switch
-            //{
-            //    TKMouseButton.Left => MouseButton.Left,
-            //    TKMouseButton.Right => MouseButton.Right,
-            //    TKMouseButton.Middle => MouseButton.Middle,
-            //    _ => (MouseButton?)null
-            //};
-
-            void MouseButtonStateChanged(TKMouseButtonEventArgs e)
-            {
+                MouseButton button;
                 switch(e.Button) {
                     case TKMouseButton.Left:
-                        Mouse.ChangePressedState(MouseButton.Left, e.IsPressed);
+                        button = MouseButton.Left;
                         break;
                     case TKMouseButton.Middle:
-                        Mouse.ChangePressedState(MouseButton.Middle, e.IsPressed);
+                        button = MouseButton.Middle;
                         break;
                     case TKMouseButton.Right:
-                        Mouse.ChangePressedState(MouseButton.Right, e.IsPressed);
+                        button = MouseButton.Right;
                         break;
                     default:
-                        break;
+                        return;
                 }
+                Mouse.ChangePressedState(button, e.IsPressed);
             };
-
-            _window.MouseMove += e => Mouse.ChangePosition(new Point((int)e.X, (int)e.Y));
-            _window.MouseWheel += e => Mouse.ChangeWheel(e.OffsetY);
-            _window.MouseDown += MouseButtonStateChanged;
-            _window.MouseUp += MouseButtonStateChanged;
-            _window.MouseEnter += () => Mouse.ChangeOnScreen(true);
-            _window.MouseLeave += () => Mouse.ChangeOnScreen(false);
-
-
-            //_window.MouseMove += (sender, e) => Mouse.ChangePosition(new Point(e.X, e.Y));
-            //_window.MouseWheel += (sender, e) => Mouse.ChangeWheel(e.Mouse.WheelPrecise);
-            //_window.MouseDown += MouseButtonStateChanged;
-            //_window.MouseUp += MouseButtonStateChanged;
-            //_window.MouseEnter += (sender, e) => Mouse.ChangeOnScreen(true);
-            //_window.MouseLeave += (sender, e) => Mouse.ChangeOnScreen(false);
         }
 
-        void IHostScreen.Close() => Close();
-
-
-        public void Close()
+        public void Dispose()
         {
             Dispatcher.ThrowIfNotMainThread();
             if(_isClosed) { return; }
             _isClosed = true;
-            _window.Close();
-            ReleaseResource();
+            _windowImpl.Dispose();
+            _renderingArea.Dispose();
+            _defaultGLResource.Dispose();
+            Engine.RemoveScreen(this);
         }
 
-        void IHostScreen.Show(int width, int height, string title, Icon? icon, WindowStyle windowStyle)
-        {
-            Title = title;
-            //if(icon != null) { Icon = icon; }     // TODO: OpenTK 4.0 への移行中
-            switch(windowStyle) {
-                case WindowStyle.Default: {
-                    _window.WindowBorder = WindowBorder.Resizable;
-                    _window.WindowState = WindowState.Normal;
-                    break;
-                }
-                case WindowStyle.Fullscreen: {
-                    _window.WindowBorder = WindowBorder.Fixed;
-                    _window.WindowState = WindowState.Fullscreen;
-                    break;
-                }
-                case WindowStyle.FixedWindow: {
-                    _window.WindowBorder = WindowBorder.Fixed;
-                    _window.WindowState = WindowState.Normal;
-                    break;
-                }
-                default:
-                    break;
-            }
-            _window.Run();
-        }
-
-        private void OnLoad()
+        private void OnLoad(WindowGLFW _)
         {
             Dispatcher.ThrowIfNotMainThread();
-            CustomSynchronizationContext.CreateIfNeeded(_syncContextReciever);
             _renderingArea.InitializeGL();
+            _defaultGLResource.Init();
             _watch.Start();
             Initialized?.Invoke(this);
 
@@ -217,35 +145,32 @@ namespace Elffy
             layers.UILayer.ApplyAdd();
         }
 
-        private void OnResize(ResizeEventArgs e)
+        private void OnResize(WindowGLFW _, ResizeEventArgs e)
         {
-            Dispatcher.ThrowIfNotMainThread();
-            //_renderingArea.Size = _window.ClientSize;
-            _renderingArea.Size = new Size(_window.ClientSize.X, _window.ClientSize.Y);
+            _renderingArea.Size = e.Size;
         }
 
-        private void OnRenderFrame(FrameEventArgs e)
+        private void OnUpdateFrame(WindowGLFW _, FrameEventArgs e)
         {
             Input.Update();     // TODO: static をやめる
             Mouse.InitFrame();
             Rendering?.Invoke(this);
-            _syncContextReciever.DoAll();
             _renderingArea.RenderFrame();
             _renderingArea.Layers.UILayer.HitTest(Mouse);
             Rendered?.Invoke(this);
-            Time += _frameDelta;
-            FrameNum++;
-            _window.SwapBuffers();
+            _time += _frameDelta;
+            _frameNum++;
+            _windowImpl.SwapBuffers();
         }
 
-        private void ReleaseResource()
+        public void Show()
         {
-            // 全てのレイヤーに含まれるオブジェクトを破棄し、レイヤーを削除
-            _renderingArea.Layers.SystemLayer.ClearFrameObject();
-            foreach(var layer in _renderingArea.Layers.AsReadOnlySpan()) {
-                layer.ClearFrameObject();
-            }
-            _renderingArea.Layers.Clear();
+            _windowImpl.Show();
+        }
+
+        void IHostScreen.HandleOnce()
+        {
+            _windowImpl.HandleOnce();
         }
     }
 }

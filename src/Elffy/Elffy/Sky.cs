@@ -3,7 +3,7 @@ using Elffy.Core;
 using Elffy.Effective;
 using Elffy.Exceptions;
 using Elffy.Mathematics;
-using OpenToolkit;
+using OpenTK;
 using System;
 
 namespace Elffy

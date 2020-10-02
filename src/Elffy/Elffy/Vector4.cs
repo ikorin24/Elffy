@@ -1,8 +1,10 @@
 ﻿#nullable enable
+using Cysharp.Text;
 using System;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using TKVector4 = OpenToolkit.Mathematics.Vector4;
+using TKVector4 = OpenTK.Mathematics.Vector4;
 
 namespace Elffy
 {
@@ -93,16 +95,16 @@ namespace Elffy
             get => (X * X) + (Y * Y) + (Z * Z) + (W * W);
         }
 
-        public readonly float GetLength
+        public readonly float Length
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => (float)Math.Sqrt(LengthSquared);
+            get => MathF.Sqrt(LengthSquared);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector4(float x, float y, float z, float w) => (X, Y, Z, W) = (x, y, z, w);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Vector4(Vector4 v) => this = v;
+        public Vector4(in Vector4 v) => this = v;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector4(in Vector3 v) => (X, Y, Z, W) = (v.X, v.Y, v.Z, 0);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -113,11 +115,11 @@ namespace Elffy
         public Vector4(in Vector2 v, float z, float w) => (X, Y, Z, W) = (v.X, v.Y, z, w);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector4(float value) => (X, Y, Z, W) = (value, value, value, value);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Deconstruct(out float x, out float y, out float z, out float w) => (x, y, z, w) = (X, Y, Z, W);
 
+        [EditorBrowsable(EditorBrowsableState.Never)]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly (float X, float Y, float Z, float W) ToTuple() => (X, Y, Z, W);
+        public readonly void Deconstruct(out float x, out float y, out float z, out float w) => (x, y, z, w) = (X, Y, Z, W);
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly float SumElement() => X + Y + Z + W;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -137,7 +139,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly override int GetHashCode() => HashCode.Combine(X, Y, Z, W);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly override string ToString() => $"({X}, {Y}, {Z}, {W})";
+        public readonly override string ToString() => ZString.Concat('(', X, ' ', Y, ' ', Z, ' ', W, ')');
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 operator -(in Vector4 vec) => new Vector4(-vec.X, -vec.Y, -vec.Z, -vec.W);

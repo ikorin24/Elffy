@@ -73,6 +73,11 @@ namespace Elffy.Effective.Unsafes
             // 同じスレッド上で ArrayPool<byte> から借りないようにする必要がある。
             // 借りてもバグにはならないが、配列の使いまわしがうまく機能せずメリットが薄くなる。
 
+            // また、ArrayPool<T>.Shared の性質上、このコンストラクタを呼んだスレッドと
+            // 同じスレッドで Dispose を呼ばないとメモリのロスが発生します。
+            // 別スレッドで Dispose したとしてもバグにはならないが、配列の使いまわしがうまく機能せず
+            // 最大の効果を得られません。
+
             _pooled = ArrayPool<byte>.Shared.Rent(BufferSize);
             Debug.Assert(_pooled.Length == BufferSize);
             _setBufferDelegate.Invoke(this, _pooled);

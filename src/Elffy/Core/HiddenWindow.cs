@@ -1,7 +1,7 @@
 ﻿#nullable enable
 using System;
-using OpenToolkit.Windowing.GraphicsLibraryFramework;
-using GLFWWindow = OpenToolkit.Windowing.GraphicsLibraryFramework.Window;
+using OpenTK.Windowing.GraphicsLibraryFramework;
+using GLFWWindow = OpenTK.Windowing.GraphicsLibraryFramework.Window;
 
 namespace Elffy.Core
 {
