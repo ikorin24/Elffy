@@ -32,7 +32,6 @@ namespace Elffy.Games
                 var screen = CreateScreen(width, height, title);
                 screen.Initialized += InitScreen;
 
-                DevelopingDiagnostics.Run();
                 Engine.Run();
                 try {
                     _syncContextReciever = new SyncContextReceiver();
@@ -47,7 +46,6 @@ namespace Elffy.Games
                     CustomSynchronizationContext.Delete();
                     _syncContextReciever = null;
                     Engine.Stop();
-                    DevelopingDiagnostics.Stop();
                 }
             }
         }

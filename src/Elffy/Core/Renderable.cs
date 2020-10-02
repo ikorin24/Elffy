@@ -131,7 +131,7 @@ namespace Elffy.Core
             if(IsLoaded) { throw new InvalidOperationException("already loaded"); }
 
             // checking target vertex type of shader is valid.
-            if(AssemblyState.IsDevelop && DevelopingDiagnostics.IsEnabled) {
+            if(DevEnv.IsEnabled) {
                 ShaderTargetVertexTypeAttribute.CheckVertexType(_shader.GetType(), typeof(TVertex));
             }
 

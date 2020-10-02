@@ -25,7 +25,7 @@ namespace Elffy.Core
 
         public static void Register(VertexLayoutDelegate layout)
         {
-            if(AssemblyState.IsDevelop && DevelopingDiagnostics.IsEnabled) {
+            if(DevEnv.IsEnabled) {
                 if(Attribute.GetCustomAttribute(typeof(T), typeof(VertexLikeAttribute)) is null) {
                     throw new ArgumentException($"Invalid type of vertex, which has no {nameof(VertexLikeAttribute)}");
                 }

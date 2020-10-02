@@ -16,16 +16,6 @@ namespace Elffy.AssemblyServices
             false;
 #endif
 
-        /// <summary>Get whether this assembly is compiled with symbol of '#define DEVELOP'.</summary>
-        public const bool IsDevelop =
-#if DEVELOP
-            true;
-#else
-            false;
-#endif
-        internal const string Symbol_DEBUG = "DEBUG";
-        internal const string Symbol_Develop = "DEVELOP";
-
         /// <summary>アプリケーションドメインのエントリーアセンブリ (exe) のパスを取得します。</summary>
         /// <remarks>アンマネージコードからのエントリーの場合 null を返します</remarks>
         public static string EntryAssemblyPath => _entryAssemblyPath ??= Assembly.GetEntryAssembly()?.Location!;

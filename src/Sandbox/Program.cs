@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 using Elffy.Games;
+using Elffy.Diagnostics;
 
 namespace Sandbox
 {
@@ -9,7 +10,13 @@ namespace Sandbox
         [STAThread]
         static void Main()
         {
-            Game.Start(1200, 675, "Sandbox", GameStarter.Start);
+            try {
+                DevEnv.Run();
+                Game.Start(1200, 675, "Sandbox", GameStarter.Start);
+            }
+            finally {
+                DevEnv.Stop();
+            }
         }
     }
 }
