@@ -1,6 +1,6 @@
 ﻿#nullable enable
 using System.Diagnostics;
-using OpenToolkit.Windowing.GraphicsLibraryFramework;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace Elffy.OpenGL
 {

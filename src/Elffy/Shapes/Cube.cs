@@ -1,6 +1,6 @@
 ﻿#nullable enable
 using System.Linq;
-using OpenToolkit;
+using OpenTK;
 using Elffy.Core;
 using System;
 

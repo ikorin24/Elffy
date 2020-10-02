@@ -5,11 +5,11 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Elffy.AssemblyServices;
 using Elffy.OpenGL.Windowing;
-using Elffy.Core.OpenToolkit;
-using OpenToolkit.Windowing.Common;
-using OpenToolkit.Windowing.GraphicsLibraryFramework;
-using Monitor = OpenToolkit.Windowing.GraphicsLibraryFramework.Monitor;
-using Wnd = OpenToolkit.Windowing.GraphicsLibraryFramework.Window;
+using Elffy.Core.OpenTK;
+using OpenTK.Windowing.Common;
+using OpenTK.Windowing.GraphicsLibraryFramework;
+using Monitor = OpenTK.Windowing.GraphicsLibraryFramework.Monitor;
+using Wnd = OpenTK.Windowing.GraphicsLibraryFramework.Window;
 
 namespace Elffy.OpenGL
 {
@@ -275,7 +275,7 @@ namespace Elffy.OpenGL
 
             var provider = new GLFWBindingsContext();
             try {
-                var assembly = Assembly.Load("OpenToolkit.Graphics");
+                var assembly = Assembly.Load("OpenTK.Graphics");
 
                 LoadBindings("ES11");
                 LoadBindings("ES20");
@@ -286,7 +286,7 @@ namespace Elffy.OpenGL
                 void LoadBindings(string typeNamespace)
                 {
                     assembly
-                        !.GetType("OpenToolkit.Graphics." + typeNamespace + ".GL")
+                        !.GetType("OpenTK.Graphics." + typeNamespace + ".GL")
                         !.GetMethod("LoadBindings")
                         !.Invoke(null, new object[1] { provider! });
                 }

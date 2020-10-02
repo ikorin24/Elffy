@@ -3,14 +3,14 @@ using System;
 using System.Reflection;
 using System.Reflection.Emit;
 
-namespace Elffy.Core.OpenToolkit
+namespace Elffy.Core.OpenTK
 {
     internal static class OpenTKHelper
     {
         private static Action? _GLFWProvider_EnsureInitialized;
 
         /// <summary>
-        /// Call 'OpenToolkit.Windowing.Desktop.GLFWProvider.EnsureInitialized()', which is internal method.
+        /// Call 'OpenTK.Windowing.Desktop.GLFWProvider.EnsureInitialized()', which is internal method.
         /// </summary>
         public static void GLFWProvider_EnsureInitialized()
         {
@@ -29,8 +29,8 @@ namespace Elffy.Core.OpenToolkit
                                        typeof(OpenTKHelper).Module,
                                        true);
                 var m = Assembly
-                    .Load("OpenToolkit.Windowing.Desktop")
-                    ?.GetType("OpenToolkit.Windowing.Desktop.GLFWProvider")
+                    .Load("OpenTK.Windowing.Desktop")
+                    ?.GetType("OpenTK.Windowing.Desktop.GLFWProvider")
                     ?.GetMethod("EnsureInitialized");
                 var il = dm.GetILGenerator();
                 il.Emit(OpCodes.Call, m);

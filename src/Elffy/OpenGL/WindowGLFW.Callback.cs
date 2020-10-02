@@ -2,13 +2,13 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using OpenToolkit.Windowing.Common;
-using OpenToolkit.Windowing.Common.Input;
+using OpenTK.Windowing.Common;
+using OpenTK.Windowing.Common.Input;
 using Elffy.OpenGL.Windowing;
-using GlfwInputAction = OpenToolkit.Windowing.GraphicsLibraryFramework.InputAction;
-using GlfwConnectedState = OpenToolkit.Windowing.GraphicsLibraryFramework.ConnectedState;
-using GLFWCallbacks = OpenToolkit.Windowing.GraphicsLibraryFramework.GLFWCallbacks;
-using GLFW = OpenToolkit.Windowing.GraphicsLibraryFramework.GLFW;
+using GlfwInputAction = OpenTK.Windowing.GraphicsLibraryFramework.InputAction;
+using GlfwConnectedState = OpenTK.Windowing.GraphicsLibraryFramework.ConnectedState;
+using GLFWCallbacks = OpenTK.Windowing.GraphicsLibraryFramework.GLFWCallbacks;
+using GLFW = OpenTK.Windowing.GraphicsLibraryFramework.GLFW;
 
 using MouseMoveEventArgs = Elffy.OpenGL.Windowing.MouseMoveEventArgs;
 
@@ -133,7 +133,7 @@ namespace Elffy.OpenGL
 
             _keyCallback = (_, glfwKey, scanCode, action, glfwMods) =>
             {
-                var e = new KeyboardKeyEventArgs(GLFWKeyMapper.Map(glfwKey), scanCode, GLFWKeyMapper.Map(glfwMods), action == GlfwInputAction.Repeat);
+                var e = new KeyboardKeyEventArgs(glfwKey, scanCode, glfwMods, action == GlfwInputAction.Repeat);
 
                 if(action == GlfwInputAction.Release) {
                     KeyUp?.Invoke(this, e);
@@ -157,11 +157,7 @@ namespace Elffy.OpenGL
 
             _mouseButtonCallback = (_, button, action, mods) =>
             {
-                var act = GLFWKeyMapper.Map(action);
-                var e = new MouseButtonEventArgs(
-                    (MouseButton)button,
-                    GLFWKeyMapper.Map(action),
-                    GLFWKeyMapper.Map(mods));
+                var e = new MouseButtonEventArgs(button, action, mods);
 
                 if(action == GlfwInputAction.Release) {
                     MouseUp?.Invoke(this, e);

@@ -1,10 +1,10 @@
 ﻿#nullable enable
 using Elffy.Effective;
 using Elffy.Exceptions;
-using OpenToolkit.Input;
+using OpenTK.Input;
 using System;
 using System.Collections.Generic;
-//using OpenToolkitKey = OpenTK.Input.Key;
+//using OpenTKKey = OpenTK.Input.Key;
 
 namespace Elffy.InputSystem
 {

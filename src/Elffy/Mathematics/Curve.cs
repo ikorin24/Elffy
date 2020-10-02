@@ -1,5 +1,5 @@
 ﻿#nullable enable
-using OpenToolkit.Mathematics;
+using OpenTK.Mathematics;
 using System;
 using System.Runtime.CompilerServices;
 

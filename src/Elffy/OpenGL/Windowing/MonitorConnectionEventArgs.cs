@@ -1,6 +1,6 @@
 ﻿#nullable enable
 using System;
-using Monitor = OpenToolkit.Windowing.GraphicsLibraryFramework.Monitor;
+using Monitor = OpenTK.Windowing.GraphicsLibraryFramework.Monitor;
 
 namespace Elffy.OpenGL.Windowing
 {

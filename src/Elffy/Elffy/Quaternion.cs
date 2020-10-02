@@ -3,7 +3,7 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Elffy.Mathematics;
-using TKQuaternion = OpenToolkit.Mathematics.Quaternion;
+using TKQuaternion = OpenTK.Mathematics.Quaternion;
 
 namespace Elffy
 {

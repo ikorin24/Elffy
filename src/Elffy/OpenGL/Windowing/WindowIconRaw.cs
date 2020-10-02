@@ -1,6 +1,6 @@
 ﻿#nullable enable
 using System;
-using OpenToolkit.Windowing.GraphicsLibraryFramework;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace Elffy.OpenGL.Windowing
 {

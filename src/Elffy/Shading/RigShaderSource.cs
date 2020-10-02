@@ -4,7 +4,7 @@ using Elffy.Core;
 using Elffy.Diagnostics;
 using Elffy.Effective;
 using Elffy.OpenGL;
-using OpenToolkit.Graphics.OpenGL4;
+using OpenTK.Graphics.OpenGL4;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;

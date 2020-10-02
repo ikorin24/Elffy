@@ -2,7 +2,7 @@
 using Elffy.InputSystem;
 using Elffy.Threading;
 using Elffy.Threading.Tasks;
-using OpenToolkit.Graphics.OpenGL4;
+using OpenTK.Graphics.OpenGL4;
 using System;
 using System.Diagnostics;
 using System.Drawing;

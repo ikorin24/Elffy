@@ -5,7 +5,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Elffy.Effective;
-using TKVector3i = OpenToolkit.Mathematics.Vector3i;
+using TKVector3i = OpenTK.Mathematics.Vector3i;
 
 namespace Elffy
 {

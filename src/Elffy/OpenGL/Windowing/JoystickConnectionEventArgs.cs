@@ -1,5 +1,5 @@
 ﻿#nullable enable
-using OpenToolkit.Windowing.GraphicsLibraryFramework;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 using System;
 using System.Collections.Generic;
 using System.Text;
