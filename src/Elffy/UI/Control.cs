@@ -203,11 +203,7 @@ namespace Elffy.UI
             Texture = new Texture(TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear, TextureMipmapMode.None);
 
             // Attached component is disposed automatically when Renderable dies.
-            Renderable.Alive += sender =>
-            {
-                Debug.Assert(sender is ComponentOwner);
-                Unsafe.As<ComponentOwner>(sender).AddComponent(Texture);
-            };
+            Renderable.Alive += sender => SafeCast.As<ComponentOwner>(sender).AddComponent(Texture);
         }
 
         protected virtual void OnRecieveHitTestResult(bool isHit, Mouse mouse)
