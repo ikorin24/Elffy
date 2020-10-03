@@ -22,6 +22,8 @@ namespace Elffy.UI
     /// </remarks>
     public abstract class Control
     {
+        internal bool IsNew => Renderable.IsNew;
+
         /// <summary>この <see cref="Control"/> を描画するオブジェクト</summary>
         internal UIRenderable Renderable { get; private set; }
 
@@ -153,6 +155,8 @@ namespace Elffy.UI
         /// <summary>get whether this <see cref="Control"/> is focused</summary>
         public bool IsFocused
         {
+            // TODO: 実装
+
             get => _isFocused;
             internal set
             {

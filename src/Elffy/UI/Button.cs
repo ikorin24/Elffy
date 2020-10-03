@@ -22,8 +22,14 @@ namespace Elffy.UI
         /// <param name="height">ボタンの高さ</param>
         public Button(int width, int height)
         {
-            if(width <= 0) { throw new ArgumentOutOfRangeException(nameof(width), width, "value is 0 or negative."); }
-            if(height <= 0) { throw new ArgumentOutOfRangeException(nameof(height), height, "value is 0 or negative."); }
+            if(width <= 0) {
+                Throw(width);
+                static void Throw(int w) => throw new ArgumentOutOfRangeException(nameof(width), w, "value is 0 or negative.");
+            }
+            if(height <= 0) {
+                Throw(height);
+                static void Throw(int h) => throw new ArgumentOutOfRangeException(nameof(height), h, "value is 0 or negative.");
+            }
             Width = width;
             Height = height;
         }
