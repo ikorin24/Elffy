@@ -6,6 +6,8 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Configurations>Debug;Release</Configurations>
+    <Authors>ikorin24</Authors>
+    <Version>0.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>

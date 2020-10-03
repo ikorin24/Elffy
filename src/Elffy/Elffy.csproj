@@ -8,6 +8,10 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ApplicationIcon>img\Elffy.ico</ApplicationIcon>
     <Configurations>Debug;Release</Configurations>
+    <Version>0.0.0</Version>
+    <Authors>ikorin24</Authors>
+    <Description />
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
