@@ -25,7 +25,11 @@ namespace Elffy.UI
     /// </remarks>
     public abstract class Control
     {
-        internal bool IsNew => Renderable.IsNew;
+        public bool IsNew => Renderable.IsNew;
+        public bool IsActivated => Renderable.IsActivated;
+        public bool IsAlive => Renderable.IsAlive;
+        public bool IsTerminated => Renderable.IsTerminated;
+        public bool IsDead => Renderable.IsDead;
 
         /// <summary>この <see cref="Control"/> を描画するオブジェクト</summary>
         internal UIRenderable Renderable { get; private set; }
