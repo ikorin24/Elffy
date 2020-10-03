@@ -19,12 +19,12 @@ namespace Elffy.Core
         LayerCollection? ILayer.OwnerCollection => Owner;
 
         /// <summary>UI tree の Root</summary>
-        internal Page UIRoot { get; }
+        internal RootPanel UIRoot { get; }
 
         internal UILayer(LayerCollection owner)
         {
             Owner = owner;
-            UIRoot = new Page(this);
+            UIRoot = new RootPanel(this);
         }
 
         internal bool IsHitTestEnabled { get; set; } = true;

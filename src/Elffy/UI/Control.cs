@@ -59,7 +59,7 @@ namespace Elffy.UI
         private Control? _parent;
 
         /// <summary>この <see cref="Control"/> を持つ UI tree の Root</summary>
-        public Page? Root { get; protected private set; }
+        public RootPanel? Root { get; protected private set; }
 
         public Vector2i Position
         {

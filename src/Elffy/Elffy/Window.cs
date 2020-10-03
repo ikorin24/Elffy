@@ -29,7 +29,7 @@ namespace Elffy
         private readonly DefaultGLResource _defaultGLResource;
 
         /// <summary>ウィンドウの UI の Root</summary>
-        public Page UIRoot => _renderingArea.Layers.UILayer.UIRoot;
+        public RootPanel UIRoot => _renderingArea.Layers.UILayer.UIRoot;
 
         /// <summary>マウスを取得します</summary>
         public Mouse Mouse => _renderingArea.Mouse;

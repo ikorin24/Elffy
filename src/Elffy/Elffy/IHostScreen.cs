@@ -15,7 +15,7 @@ namespace Elffy
         /// <summary>カメラを取得します</summary>
         Camera Camera { get; }
         /// <summary>UIのルートオブジェクト</summary>
-        Page UIRoot { get; }
+        RootPanel UIRoot { get; }
 
         public AsyncBackEndPoint AsyncBack { get; }
         /// <summary>描画領域のサイズ [pixel]</summary>
