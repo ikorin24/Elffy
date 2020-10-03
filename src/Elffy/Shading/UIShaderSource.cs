@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Elffy.Components;
 using Elffy.Core;
 using Elffy.Diagnostics;
@@ -31,17 +32,15 @@ namespace Elffy.Shading
         protected override void SendUniforms(Uniform uniform, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             Debug.Assert(target is UIRenderable);
+            var uiRenderable = Unsafe.As<UIRenderable>(target);
             var mvp = projection * view * model;
             uniform.Send("mvp", mvp);
 
             const TextureUnitNumber texUnit = TextureUnitNumber.Unit0;
-            if(target.TryGetComponent<Texture>(out var t)) {
-                t.Apply(texUnit);
-            }
-            else {
-                TextureObject.Bind2D(target.HostScreen.DefaultResource.WhiteEmptyTexture, texUnit);
-            }
+            var texture = uiRenderable.Control.Texture;
+            texture.Apply(texUnit);
             uniform.Send("tex_sampler", texUnit);
+            uniform.Send("hasTexture", !texture.IsEmpty);
         }
 
         private const string VertSource =
@@ -66,10 +65,11 @@ void main()
 in vec2 UV;
 out vec4 fragColor;
 uniform sampler2D tex_sampler;
+uniform bool hasTexture;
 
 void main()
 {
-    fragColor = texture(tex_sampler, UV);
+    fragColor = hasTexture ? texture(tex_sampler, UV) : vec4(1.0, 1.0, 1.0, 1.0);
 }
 ";
     }

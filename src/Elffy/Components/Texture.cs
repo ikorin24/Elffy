@@ -22,6 +22,8 @@ namespace Elffy.Components
 
         public ComponentOwner? Owner => _core.Owner;
 
+        public bool IsEmpty => _to.IsEmpty;
+
         public bool AutoDisposeOnDetached => _core.AutoDisposeOnDetached;
 
         public Texture(TextureExpansionMode expansionMode, TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode, bool autoDispose = true)

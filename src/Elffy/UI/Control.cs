@@ -4,6 +4,9 @@ using System.Drawing;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Elffy.InputSystem;
+using Elffy.Components;
+using Elffy.Core;
+using System.Runtime.CompilerServices;
 
 namespace Elffy.UI
 {
@@ -181,9 +184,7 @@ namespace Elffy.UI
         /// <summary>get or set <see cref="Control"/> is visible on rendering.</summary>
         public bool IsVisible { get => Renderable.IsVisible; set => Renderable.IsVisible = value; }
 
-        ///// <summary>Get or set texture</summary>
-        ///// <exception cref="ArgumentNullException"></exception>
-        //public TextureBase Texture { get => Renderable.Texture; set => Renderable.Texture = value; }
+        internal Texture Texture { get; }
 
         /// <summary>Focus enter event</summary>
         public event ActionEventHandler<Control>? FocusEnter;
@@ -199,6 +200,14 @@ namespace Elffy.UI
         {
             Children = new ControlCollection(this);
             Renderable = new UIRenderable(this);
+            Texture = new Texture(TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear, TextureMipmapMode.None);
+
+            // Attached component is disposed automatically when Renderable dies.
+            Renderable.Alive += sender =>
+            {
+                Debug.Assert(sender is ComponentOwner);
+                Unsafe.As<ComponentOwner>(sender).AddComponent(Texture);
+            };
         }
 
         protected virtual void OnRecieveHitTestResult(bool isHit, Mouse mouse)
