@@ -2,7 +2,6 @@
 using Elffy.InputSystem;
 using Elffy.UI;
 using Elffy.Core;
-using Elffy.Core.Timer;
 using System;
 using Elffy.Threading.Tasks;
 
@@ -32,8 +31,6 @@ namespace Elffy
         ref readonly long FrameNum { get; }
 
         IDefaultResource DefaultResource { get; }
-
-        internal IGameTimer Watch { get; }
 
         internal TimeSpan FrameDelta { get; }
 

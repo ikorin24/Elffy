@@ -5,7 +5,6 @@ using Elffy.Core;
 using Elffy.Threading;
 using Elffy.InputSystem;
 using System.Drawing;
-using Elffy.Core.Timer;
 using OpenTK.Windowing.Common;
 using TKMouseButton = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
 using TKMouseButtonEventArgs = OpenTK.Windowing.Common.MouseButtonEventArgs;
@@ -24,7 +23,6 @@ namespace Elffy
 
         /// <summary>描画領域に関する処理を行うオブジェクト</summary>
         private readonly RenderingArea _renderingArea;
-        private readonly IGameTimer _watch = GameTimerGenerator.Create();
         private TimeSpan _frameDelta;
         private TimeSpan _time;
         private long _frameNum;
@@ -43,7 +41,6 @@ namespace Elffy
         /// <summary>カメラを取得します</summary>
         Camera IHostScreen.Camera => _renderingArea.Camera;
         TimeSpan IHostScreen.FrameDelta => _frameDelta;
-        IGameTimer IHostScreen.Watch => _watch;
 
         public Vector2i ClientSize { get => _windowImpl.ClientSize; set => _windowImpl.ClientSize = value; }
 
@@ -134,7 +131,6 @@ namespace Elffy
             Dispatcher.ThrowIfNotMainThread();
             _renderingArea.InitializeGL();
             _defaultGLResource.Init();
-            _watch.Start();
             Initialized?.Invoke(this);
 
             var layers = _renderingArea.Layers;
