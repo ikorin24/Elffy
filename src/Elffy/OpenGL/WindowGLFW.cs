@@ -234,7 +234,7 @@ namespace Elffy.OpenGL
 
         public void SwapBuffers()
         {
-            if(IsDisposed) { ThrowDisposed(); }
+            if(IsDisposed) { return; }
             GLFW.SwapBuffers(_window);
         }
 
