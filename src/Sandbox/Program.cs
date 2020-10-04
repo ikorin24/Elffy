@@ -1,6 +1,6 @@
 ﻿#nullable enable
 using System;
-using Elffy.Games;
+using Elffy;
 using Elffy.Diagnostics;
 
 namespace Sandbox

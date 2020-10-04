@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using System;
 using Cysharp.Threading.Tasks;
-using Elffy.Games;
 
 namespace Elffy.Threading.Tasks
 {

@@ -8,7 +8,7 @@ using Elffy.Threading.Tasks;
 using Elffy.UI;
 using System;
 
-namespace Elffy.Games
+namespace Elffy
 {
     public static class Game
     {

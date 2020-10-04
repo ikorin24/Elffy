@@ -1,6 +1,6 @@
 ﻿#nullable enable
 
-namespace Elffy.Games
+namespace Elffy
 {
     public static class FrameObjectExtension
     {
