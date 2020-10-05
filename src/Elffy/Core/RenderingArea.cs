@@ -139,8 +139,6 @@ namespace Elffy.Core
             }
             uiLayer.LateUpdate();
 
-            Dispatcher.DoInvokedAction();
-
             // Render
             var isEnabledPostProcess = IsEnabledPostProcess;
             if(isEnabledPostProcess) {

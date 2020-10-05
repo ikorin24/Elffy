@@ -61,7 +61,7 @@ namespace Elffy
 
         // Layer クラス以外の internal なレイヤーに乗るオブジェクトはこのプロパティを呼んではいけない。代わりに ILayer の方を使う。
         /// <summary>このオブジェクトのレイヤーを取得します</summary>
-        /// <exception cref="InvalidOperationException"><see cref="IsAlive"/> が false です。</exception>
+        /// <exception cref="InvalidOperationException"> <see cref="FrameObject"/> is not activated yet or already dead.</exception>
         public Layer Layer
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -73,7 +73,7 @@ namespace Elffy
 
 
         /// <summary>Get HostScreen of this <see cref="FrameObject"/>.</summary>
-        /// <exception cref="InvalidOperationException"><see cref="IsAlive"/> が false です。</exception>
+        /// <exception cref="InvalidOperationException"> <see cref="FrameObject"/> is not activated yet or already dead.</exception>
         public IHostScreen HostScreen
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]

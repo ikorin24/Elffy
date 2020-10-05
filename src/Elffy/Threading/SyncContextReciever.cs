@@ -1,16 +1,18 @@
 ﻿#nullable enable
 using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Elffy.Threading
 {
-    internal class SyncContextReceiver
+    internal sealed class SyncContextReceiver
     {
         private readonly ConcurrentQueue<(SendOrPostCallback callback, object? state)> _queue
             = new ConcurrentQueue<(SendOrPostCallback callback, object? state)>();
 
         public void Add(SendOrPostCallback callback, object? state) => _queue.Enqueue((callback, state));
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void DoAll()
         {
             var count = _queue.Count;

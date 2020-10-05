@@ -127,7 +127,7 @@ namespace Elffy.Core
         /// <param name="indices">インデックス配列</param>
         protected unsafe void LoadGraphicBuffer<TVertex>(ReadOnlySpan<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged
         {
-            Dispatcher.ThrowIfNotMainThread();
+            HostScreen.ThrowIfNotMainThread();
             if(IsLoaded) { throw new InvalidOperationException("already loaded"); }
 
             // checking target vertex type of shader is valid.

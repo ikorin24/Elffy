@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using System.Diagnostics;
 using System.Drawing;
-using System.Runtime.CompilerServices;
 using Elffy.Core;
 using Elffy.Effective;
 using Elffy.Imaging;
@@ -9,7 +8,6 @@ using Elffy.Components;
 using Elffy.OpenGL;
 using Elffy.Serialization;
 using Elffy.Effective.Unsafes;
-using Elffy.Threading;
 using Cysharp.Threading.Tasks;
 using UnmanageUtility;
 using MMDTools.Unmanaged;
@@ -43,7 +41,7 @@ namespace Elffy.Shapes
         {
             base.OnActivated();
 
-            Debug.Assert(Dispatcher.IsMainThread());
+            Debug.Assert(HostScreen.IsThreadMain());
 
             await UniTask.SwitchToThreadPool();
 
@@ -65,9 +63,10 @@ namespace Elffy.Shapes
                                 .AsSpan()
                                 .SelectToUnmanagedArray(b => new Vector4(b.Position.ToVector3(), 0f)))
                 );
-            await AsyncHelper.SwitchToMain();
+            await HostScreen.AsyncBack.ToFrameLoopEvent(Threading.Tasks.FrameLoopTiming.Update);
 
-            Debug.Assert(Dispatcher.IsMainThread());
+            Debug.Assert(HostScreen.IsThreadMain());
+
             _parts = parts;
             var needLoading = LifeState != FrameObjectLifeSpanState.Terminated &&
                               LifeState != FrameObjectLifeSpanState.Dead;

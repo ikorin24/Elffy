@@ -2,9 +2,7 @@
 using System;
 using Elffy.UI;
 using Elffy.Core;
-using Elffy.Threading;
 using Elffy.InputSystem;
-using System.Drawing;
 using OpenTK.Windowing.Common;
 using TKMouseButton = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
 using TKMouseButtonEventArgs = OpenTK.Windowing.Common.MouseButtonEventArgs;
@@ -17,9 +15,13 @@ namespace Elffy
     /// <summary>クロスプラットフォーム ウィンドウクラス</summary>
     public class Window : IHostScreen
     {
-        private bool _isClosed;
         private const string DefaultTitle = "Window";
+
+        private bool _isClosed;
         private readonly WindowGLFW _windowImpl;
+
+        [ThreadStatic]
+        private static bool _isThreadMain;
 
         /// <summary>描画領域に関する処理を行うオブジェクト</summary>
         private readonly RenderingArea _renderingArea;
@@ -58,10 +60,6 @@ namespace Elffy
 
         /// <summary>初期化時イベント</summary>
         public event ActionEventHandler<IHostScreen>? Initialized;
-        /// <summary>描画前イベント</summary>
-        public event ActionEventHandler<IHostScreen>? Rendering;
-        /// <summary>描画後イベント</summary>
-        public event ActionEventHandler<IHostScreen>? Rendered;
 
         /// <summary>ウィンドウを作成します</summary>
         public Window() : this(WindowStyle.Default) { }
@@ -77,6 +75,7 @@ namespace Elffy
         /// <param name="windowStyle">ウィンドウのスタイル</param>
         public Window(int width, int height, string title, WindowStyle windowStyle)
         {
+            _isThreadMain = true;
             _renderingArea = new RenderingArea(this);
 
             _windowImpl = new WindowGLFW(width, height, title, windowStyle, false, WindowIconRaw.Empty);  // TODO: アンチエイリアス有効化した時のポストプロセスのバッファサイズが未対応
@@ -119,7 +118,7 @@ namespace Elffy
 
         public void Dispose()
         {
-            Dispatcher.ThrowIfNotMainThread();
+            ThrowIfNotMainThread();
             if(_isClosed) { return; }
             _isClosed = true;
             _windowImpl.Dispose();
@@ -128,9 +127,24 @@ namespace Elffy
             Engine.RemoveScreen(this);
         }
 
+        /// <inheritdoc/>
+        public bool IsThreadMain()
+        {
+            return _isThreadMain;
+        }
+
+        /// <inheritdoc/>
+        public void ThrowIfNotMainThread()
+        {
+            if(!_isThreadMain) {
+                ThrowThreadNotMain();
+                static void ThrowThreadNotMain() => throw new InvalidOperationException("Current thread is not main thread.");
+            }
+        }
+
         private void OnLoad(WindowGLFW _)
         {
-            Dispatcher.ThrowIfNotMainThread();
+            ThrowIfNotMainThread();
             _renderingArea.InitializeGL();
             _defaultGLResource.Init();
             Initialized?.Invoke(this);
@@ -151,10 +165,8 @@ namespace Elffy
         private void OnUpdateFrame(WindowGLFW _, FrameEventArgs e)
         {
             Mouse.InitFrame();
-            Rendering?.Invoke(this);
             _renderingArea.RenderFrame();
             _renderingArea.Layers.UILayer.HitTest(Mouse);
-            Rendered?.Invoke(this);
             _time += _frameDelta;
             _frameNum++;
             _windowImpl.SwapBuffers();

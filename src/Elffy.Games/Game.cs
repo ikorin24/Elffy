@@ -40,16 +40,17 @@ namespace Elffy
 
                 Engine.Run();
                 try {
-                    _syncContextReciever = new SyncContextReceiver();
-                    CustomSynchronizationContext.Create(_syncContextReciever);
+                    if(CustomSynchronizationContext.CreateIfNeeded(out var syncContext, out _syncContextReciever)) {
+
+                    }
                     screen.Show();
 
                     while(Engine.HandleOnce()) {
-                        _syncContextReciever.DoAll();
+                        _syncContextReciever?.DoAll();
                     }
                 }
                 finally {
-                    CustomSynchronizationContext.Delete();
+                    CustomSynchronizationContext.Restore();
                     _syncContextReciever = null;
                     Engine.Stop();
                 }

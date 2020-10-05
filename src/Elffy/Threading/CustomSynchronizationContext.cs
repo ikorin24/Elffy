@@ -13,7 +13,7 @@ namespace Elffy.Threading
         [ThreadStatic]
         private static SynchronizationContext? _previousSyncContext;
 
-        /// <summary>この <see cref="CustomSynchronizationContext"/> インスタンスが紐づいている <see cref="Thread"/></summary>
+        /// <summary>Get <see cref="Thread"/> related with this <see cref="CustomSynchronizationContext"/>.</summary>
         private Thread? DestinationThread 
             => _destinationThread.TryGetTarget(out var thread) ? thread : null;
         private readonly WeakReference<Thread> _destinationThread;
@@ -40,29 +40,34 @@ namespace Elffy.Threading
             _syncContextReceiver.Add(d, state);
         }
 
-        /// <summary>現在のインスタンスのコピーを生成します</summary>
-        /// <returns>コピーインスタンス</returns>
+        /// <summary>Create a copy of <see cref="SynchronizationContext"/></summary>
+        /// <returns>copied instance of <see cref="SynchronizationContext"/></returns>
         public override SynchronizationContext CreateCopy()
         {
             return new CustomSynchronizationContext(DestinationThread, _syncContextReceiver);
         }
 
-        internal static void Create(SyncContextReceiver reciever)
+        internal static bool CreateIfNeeded(out CustomSynchronizationContext? syncContext, out SyncContextReceiver? reciever)
         {
             var context = AsyncOperationManager.SynchronizationContext;
             if(context is null || context.GetType() == typeof(SynchronizationContext)) {
                 _previousSyncContext = context;
-                var newContext = new CustomSynchronizationContext(reciever);
-                AsyncOperationManager.SynchronizationContext = newContext;
-                AsyncHelper.SetEngineSyncContext(newContext);
+                reciever = new SyncContextReceiver();
+                syncContext = new CustomSynchronizationContext(reciever);
+                AsyncOperationManager.SynchronizationContext = syncContext;
+                return true;
+            }
+            else {
+                syncContext = null;
+                reciever = null;
+                return false;
             }
         }
 
-        internal static void Delete()
+        internal static void Restore()
         {
             if(AsyncOperationManager.SynchronizationContext is CustomSynchronizationContext) {
-                AsyncOperationManager.SynchronizationContext = _previousSyncContext ?? new SynchronizationContext();
-                AsyncHelper.ClearEngineSyncContext();
+                AsyncOperationManager.SynchronizationContext = _previousSyncContext;
                 _previousSyncContext = null;
             }
         }

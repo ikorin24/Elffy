@@ -41,7 +41,6 @@ namespace Elffy
         {
             if(IsRunning) { throw new InvalidOperationException("Engine is already runnning."); }
             IsRunning = true;
-            Dispatcher.SetMainThreadID();
             Resources.Initialize();
         }
 

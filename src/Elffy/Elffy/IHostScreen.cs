@@ -38,12 +38,15 @@ namespace Elffy
 
         /// <summary>初期化時イベント</summary>
         event ActionEventHandler<IHostScreen> Initialized;
-        /// <summary>描画前イベント</summary>
-        event ActionEventHandler<IHostScreen> Rendering;
-        /// <summary>描画後イベント</summary>
-        event ActionEventHandler<IHostScreen> Rendered;
 
         void Show();
+
+        /// <summary>Return current thread is main or not of this <see cref="IHostScreen"/></summary>
+        /// <returns>true if main thread, otherwise false</returns>
+        bool IsThreadMain();
+
+        /// <summary>Throw exception if current thread is not main of this <see cref="IHostScreen"/></summary>
+        void ThrowIfNotMainThread();
 
         internal void HandleOnce();
     }
