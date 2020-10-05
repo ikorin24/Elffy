@@ -21,6 +21,8 @@ namespace Elffy
         /// <summary>描画領域のサイズ [pixel]</summary>
         Vector2i ClientSize { get; set; }
 
+        Vector2i Location { get; set; }
+
         /// <summary><see cref="FrameObject"/> を保持するためのレイヤーのリスト</summary>
         LayerCollection Layers { get; }
 

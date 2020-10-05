@@ -44,6 +44,8 @@ namespace Elffy
 
         public Vector2i ClientSize { get => _windowImpl.ClientSize; set => _windowImpl.ClientSize = value; }
 
+        public Vector2i Location { get => _windowImpl.Location; set => _windowImpl.Location = value; }
+
         public string Title { get => _windowImpl.Title; set => _windowImpl.Title = value; }
 
         /// <inheritdoc/>
