@@ -87,11 +87,7 @@ namespace Elffy.Threading.Tasks
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public WorkItem(Action action)
             {
-                _action = state =>
-                {
-                    Debug.Assert(state is Action);
-                    Unsafe.As<Action>(state).Invoke();
-                };
+                _action = state => SafeCast.As<Action>(state!).Invoke();
                 _state = action;
             }
 

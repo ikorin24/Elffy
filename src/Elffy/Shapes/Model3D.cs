@@ -49,8 +49,7 @@ namespace Elffy.Shapes
         {
             return UniTask.Run(n =>
             {
-                Debug.Assert(n is string);
-                var name = Unsafe.As<string>(n)!;
+                var name = SafeCast.As<string>(n);
                 using(var stream = Resources.GetStream(name)) {
                     var (vertices, indices) = FbxModelBuilder.LoadModel(stream);
                     return new Model3D(vertices, indices);

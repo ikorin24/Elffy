@@ -34,8 +34,7 @@ namespace Elffy.OpenGL
             var (f, binary) = GetBinary(program);
             return Task.Factory.StartNew(state =>
             {
-                Debug.Assert(state is Type);
-                var type = Unsafe.As<Type>(state);
+                var type = SafeCast.As<Type>(state!);
 
                 Directory.CreateDirectory(_cacheDirectory);
                 var cachePath = Path.Combine(_cacheDirectory, type.FullName!);
@@ -67,8 +66,7 @@ namespace Elffy.OpenGL
 
             var (format, binary, success) = await Task.Factory.StartNew(state =>
             {
-                Debug.Assert(state is Type);
-                var type = Unsafe.As<Type>(state);
+                var type = SafeCast.As<Type>(state!);
 
                 var cachePath = Path.Combine(_cacheDirectory, type.FullName!);
                 if(!File.Exists(cachePath)) {

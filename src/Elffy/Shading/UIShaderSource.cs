@@ -31,8 +31,7 @@ namespace Elffy.Shading
 
         protected override void SendUniforms(Uniform uniform, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
-            Debug.Assert(target is UIRenderable);
-            var uiRenderable = Unsafe.As<UIRenderable>(target);
+            var uiRenderable = SafeCast.As<UIRenderable>(target);
             var mvp = projection * view * model;
             uniform.Send("mvp", mvp);
 

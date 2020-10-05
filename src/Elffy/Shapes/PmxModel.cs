@@ -93,8 +93,7 @@ namespace Elffy.Shapes
             UniTask.WhenAll(
                 UniTask.Run(v =>
                 {
-                    Debug.Assert(v is UnmanagedArray<RigVertex>);
-                    var vertices = Unsafe.As<UnmanagedArray<RigVertex>>(v)!;
+                    var vertices = SafeCast.As<UnmanagedArray<RigVertex>>(v)!;
                     vertices.Dispose();
                 }, vertices, false),
                 UniTask.Run(() =>
@@ -163,11 +162,9 @@ namespace Elffy.Shapes
 
         public static UniTask<PmxModel> LoadResourceAsync(string name)
         {
-            return UniTask.Run(n =>
-            {
-                Debug.Assert(n is string);
-                return LoadResource(Unsafe.As<string>(n));
-            }, name, configureAwait: false);
+            return UniTask.Run(n => LoadResource(SafeCast.As<string>(n)),
+                               name,
+                               configureAwait: false);
         }
 
         private readonly struct RenderableParts

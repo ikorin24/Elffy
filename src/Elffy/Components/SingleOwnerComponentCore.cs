@@ -51,11 +51,7 @@ namespace Elffy.Components
 
             _owner = owner;
             if(_autoDisposeOnDetached) {
-                owner!.Dead += sender =>
-                {
-                    Debug.Assert(sender is ComponentOwner);
-                    Unsafe.As<ComponentOwner>(sender).RemoveComponent<TComponent>();
-                };
+                owner!.Dead += sender => SafeCast.As<ComponentOwner>(sender).RemoveComponent<TComponent>();
             }
         }
 

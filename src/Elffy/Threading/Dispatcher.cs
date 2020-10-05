@@ -114,8 +114,7 @@ namespace Elffy.Threading
                     if(item.action is null) {
 
                         // action が null の時は、引数なしの Action が state としてキューに入っている
-                        Debug.Assert(item.state is Action);
-                        Unsafe.As<Action>(item.state).Invoke();
+                        SafeCast.As<Action>(item.state!).Invoke();
                     }
                     else {
                         item.action(item.state);
