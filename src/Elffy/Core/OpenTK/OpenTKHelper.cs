@@ -28,12 +28,16 @@ namespace Elffy.Core.OpenTK
                                        null, null,
                                        typeof(OpenTKHelper).Module,
                                        true);
-                var m = Assembly
-                    .Load("OpenTK.Windowing.Desktop")
-                    ?.GetType("OpenTK.Windowing.Desktop.GLFWProvider")
-                    ?.GetMethod("EnsureInitialized");
+
+                const string AsmName = "OpenTK.Windowing.Desktop";
+                const string TypeName = "OpenTK.Windowing.Desktop.GLFWProvider";
+                const string MethodName = "EnsureInitialized";
+
+                var method = Assembly.Load(AsmName)?.GetType(TypeName)?.GetMethod(MethodName)
+                    ?? throw new Exception($"Cannot find method: {TypeName}.{MethodName} in assembly of {AsmName}.");
+
                 var il = dm.GetILGenerator();
-                il.Emit(OpCodes.Call, m);
+                il.Emit(OpCodes.Call, method);
                 il.Emit(OpCodes.Ret);
 
                 return (Action)dm.CreateDelegate(typeof(Action));
