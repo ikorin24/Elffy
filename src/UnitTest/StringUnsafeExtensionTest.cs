@@ -25,7 +25,7 @@ namespace UnitTest
             Check(empty);
         }
 
-        private static unsafe void Check(string str)
+        private static void Check(string str)
         {
             ref var firstChar = ref str.GetFirstCharReference();
 
