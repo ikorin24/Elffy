@@ -150,10 +150,6 @@ namespace UnitTest
             // コンパイル実行
             var resource = new DirectoryInfo(Path.Combine(TestValues.FileDirectory, "ElffyResources"));
             var output = Path.Combine(".", "Resources.dat");
-            //var args = new[] { "-r", resource.FullName, output };
-            //var args = $"'{resource.FullName}' -o '{output}'"
-            //    .Replace(" ", @"\ ")
-            //    .Split(' ');
             var args = new[] { resource.FullName, "-o", output };
             var ret = Program.Main(args);
             if(ret != 0) {
