@@ -79,10 +79,9 @@ namespace UnitTest
                 new CommandLineArgument(new []{ "24", "piyo", }, 
                                         new Dictionary<string, string>(){ { "-a", "ikorin" }, { "-b", "hoge"}, { "--hoge", ""}, { "--time", "3:34"} }),
             };
-            var parser = new CommandLineArgParser();
             foreach(var (param, answer) in testCase.Zip(answers, (test, ans) => (test, ans))) {
                 var args = param.Split(new []{ ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                var parsed = parser.Parse(args);
+                var parsed = CommandLineArgParser.Parse(args);
                 Assert.True(parsed.Args.SequenceEqual(answer.Args));
                 Assert.True(parsed.OptionalArgs.SequenceEqual(answer.OptionalArgs));
             }
@@ -98,7 +97,7 @@ namespace UnitTest
             };
             foreach(var (param, assertError) in errorCase.Zip(errors, (test, err) => (test, err))) {
                 var args = param?.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)!;
-                assertError(() => parser.Parse(args));
+                assertError(() => CommandLineArgParser.Parse(args));
             }
         }
         #endregion

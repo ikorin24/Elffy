@@ -15,8 +15,7 @@ namespace ElffyResourceCompiler
         {
             // Arguments
             // "-r <resource-dir> <output-dir>"
-            var parser = new CommandLineArgParser();
-            var param = parser.Parse(args);
+            var param = CommandLineArgParser.Parse(args);
             if(param.OptionalArgs.ContainsKey("-h")) {
                 ShowHelp();
                 return 0;
