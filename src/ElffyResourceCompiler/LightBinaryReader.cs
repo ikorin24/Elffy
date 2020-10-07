@@ -24,7 +24,7 @@ namespace ElffyResourceCompiler
             _stream = stream;
         }
 
-        public string ReadString(int byteLength)
+        public string ReadUTF8(int byteLength)
         {
             var buf = ArrayPool<byte>.Shared.Rent(byteLength);
             try {
@@ -80,6 +80,14 @@ namespace ElffyResourceCompiler
                 throw new EndOfStreamException();
             }
             return BinaryPrimitives.ReadInt64LittleEndian(buf);
+        }
+
+        public void Read(Span<byte> buffer)
+        {
+            var len = _stream.Read(buffer);
+            if(len != buffer.Length) {
+                throw new EndOfStreamException();
+            }
         }
 
         public void CopyBytesTo(Stream dest, long length)

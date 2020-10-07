@@ -36,12 +36,7 @@ namespace ElffyResourceCompiler
             var output = Path.Combine(param.Args[0], OutputFile);
             var sw = new Stopwatch();
             sw.Start();
-            var setting = new CompileSetting()
-            {
-                ResourceDir = resourceDir,
-                OutputPath = output,
-            };
-            Compiler.Compile(setting);
+            Compiler.Compile(resourceDir, output);
             sw.Stop();
             Console.WriteLine($"Resouce compiled : {sw.ElapsedMilliseconds}ms");
             return 0;
@@ -49,7 +44,7 @@ namespace ElffyResourceCompiler
 
         private static void ShowHelp()
         {
-            var exe = Path.GetFileName(Assembly.GetEntryAssembly().Location);
+            var exe = Path.GetFileName(Assembly.GetEntryAssembly()!.Location);
             Console.WriteLine($"usage : {exe} [-h] [-r <resource-dir>] output-dir");
         }
     }
