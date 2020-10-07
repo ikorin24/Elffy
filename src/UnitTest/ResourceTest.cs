@@ -25,7 +25,7 @@ namespace UnitTest
             // デコンパイル実行
             var decompiled = new DirectoryInfo("decompiled");
             var hashfunc = new SHA256CryptoServiceProvider();
-            Compiler.Decompile(Path.Combine(output, Program.OutputFile), decompiled.FullName);
+            Compiler.Decompile(output, decompiled.FullName);
 
             IEnumerable<FileInfo> GetAllChildren(DirectoryInfo di) => di.GetFiles().Concat(di.GetDirectories().SelectMany(GetAllChildren));
             Uri GetDirUri(DirectoryInfo di) => new Uri($"{di.FullName}");
@@ -149,9 +149,16 @@ namespace UnitTest
         {
             // コンパイル実行
             var resource = new DirectoryInfo(Path.Combine(TestValues.FileDirectory, "ElffyResources"));
-            var output = Path.Combine(".");
-            var args = new[] { "-r", resource.FullName, output };
-            Program.Main(args);
+            var output = Path.Combine(".", "Resources.dat");
+            //var args = new[] { "-r", resource.FullName, output };
+            //var args = $"'{resource.FullName}' -o '{output}'"
+            //    .Replace(" ", @"\ ")
+            //    .Split(' ');
+            var args = new[] { resource.FullName, "-o", output };
+            var ret = Program.Main(args);
+            if(ret != 0) {
+                throw new Exception("Failure");
+            }
             return (resource, output);
         }
     }
