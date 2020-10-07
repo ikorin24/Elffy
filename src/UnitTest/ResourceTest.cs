@@ -126,13 +126,13 @@ namespace UnitTest
             
             // リソースと元ファイルのペアを作り、そのハッシュ値の一致を確認
             Resources.Initialize();
-            var pair = Resources.GetResourceNames().Select(x => (Resource: x, Original: sourceNames.Find(y => x == y), Type: "Resource"))
+            var pair = Resources.GetResourceNames().Select(x => (Resource: x, Original: sourceNames.Find(y => x == y)))
                                 .ToArray();
-            foreach(var (name, original, type) in pair) {
+            foreach(var (name, original) in pair) {
                 byte[] hash1;
                 byte[] hash2;
-                var stream1 = (type == "Resource") ? Resources.GetStream(name) : throw new Exception();
-                var stream2 = (type == "Resource") ? File.OpenRead(Path.Combine(resource.FullName, original)) : throw new Exception();
+                var stream1 = Resources.GetStream(name);
+                var stream2 = File.OpenRead(Path.Combine(resource.FullName, original));
                 using(stream1) {
                     hash1 = hashfunc.ComputeHash(stream1);
                 }
