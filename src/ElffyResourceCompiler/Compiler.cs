@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,88 +11,44 @@ namespace ElffyResourceCompiler
 {
     public static class Compiler
     {
-        #region private Member
         private const string FORMAT_VERSION = "1.0";
-        /// <summary>一時ファイル名</summary>
-        private const string TMP_FILE = "____tmp____";
-        /// <summary>一時ディレクトリ名</summary>
-        private const string TMP_DIR = "____tmp_dir____";
-        /// <summary>初期化ベクトルのバイト数</summary>
-        private const int IV_SIZE = 16;
         /// <summary>正常解凍を確認するためのマジックワード</summary>
         private const string MAGIC_WORD = "ELFFY_RESOURCE";
-        /// <summary>大きなファイルの閾値(Byte)</summary>
-        private const long LARGE_FILE_SIZE = 50 * 1024 * 1024;
-        /// <summary>バッファ長</summary>
-        private const int BUF_LEN = 1024 * 1024;
-        /// <summary>文字のエンコード</summary>
-        private static readonly Encoding _encoding = Encoding.UTF8;
-        /// <summary>ファイル読み込み用のバッファ</summary>
-        private static byte[] _buf;
         /// <summary>ファイルのハッシュ値計算用</summary>
         private static readonly HashAlgorithm _hashFunc = new SHA256CryptoServiceProvider();
         /// <summary>ハッシュのバイト長</summary>
         private const int HASH_LEN = 32;
-        /// <summary>ファイル数の書き込み部のバイトサイズ</summary>
-        private const int FILE_COUNT_BYTE_COUNT = 4;
-        /// <summary>ファイルサイズの書き込み部のバイトサイズ</summary>
-        private const int FILE_SIZE_BYTE_COUNT = 8;
 
-        private const string RESOURCE_ROOT = "Resource/";
-        private const string SCENE_ROOT = "Scene/";
 
-        //private const string HIDDEN_ROOT = "?";
-        //private const string HIDDEN_ROOT_DECOMPILED = "!";
-        #endregion
-
-        #region Compile
-        /// <summary>リソースのビルドを行います。</summary>
-        /// <param name="targetDir">リソースディレクトリのパス</param>
-        /// <param name="outputPath">出力ファイル名</param>
         public static void Compile(CompileSetting setting)
         {
             if(setting == null) { throw new ArgumentNullException(nameof(setting)); }
             var outputPath = setting.OutputPath ?? throw new ArgumentException();
             var resourceDir = setting.ResourceDir;
-            try {
-                _buf = new byte[BUF_LEN];
-                if(File.Exists(outputPath)) { File.Delete(outputPath); }
-                Directory.CreateDirectory(Directory.GetParent(outputPath).FullName);
-                using(var fs = File.OpenWrite(outputPath)) {
-                    WriteToStream(fs, FORMAT_VERSION);                  // フォーマットバージョンを出力へ書きこむ
-                    WriteToStream(fs, MAGIC_WORD);                      // マジックワードを書き込む
-                    var fileCountPosition = fs.Position;                // ファイル数を書き込むための場所
-                    int fileCount = 0;
-                    fs.Position += FILE_COUNT_BYTE_COUNT;
+            if(File.Exists(outputPath)) { File.Delete(outputPath); }
+            Directory.CreateDirectory(Directory.GetParent(outputPath).FullName);
 
-                    // Resourceの書き込み
-                    if(resourceDir != null) {
-                        var dir = new DirectoryInfo(resourceDir);
-                        if(Directory.Exists(dir.FullName)) {
-                            WriteDirectory(dir, RESOURCE_ROOT, fs, ref fileCount);
-                        }
-                    }
-
-                    // ファイル数書き込み
-                    fs.Position = fileCountPosition;                                            // ファイル数を書き込む場所へ移動
-                    fs.Write(IntToBytesLittleEndian(fileCount), 0, FILE_COUNT_BYTE_COUNT);      // ファイル数書き込み
+            using(var fs = File.OpenWrite(outputPath)) {
+                var writer = new LightBinaryWriter(fs);
+                writer.WriteAsUTF8(FORMAT_VERSION);
+                writer.WriteAsUTF8(MAGIC_WORD);
+                var fileCountPosition = fs.Position;                // ファイル数を書き込むための場所
+                int fileCount = 0;
+                fs.Position += 4;   // sizeof(int)
+                var dir = new DirectoryInfo(resourceDir);
+                if(Directory.Exists(dir.FullName)) {
+                    WriteDirectory(dir, "", writer, ref fileCount);
                 }
-                if(File.Exists(TMP_FILE)) {
-                    File.Delete(TMP_FILE);
-                }
-            }
-            finally {
-                _buf = null;
+                fs.Position = fileCountPosition;
+                writer.WriteLittleEndian(fileCount);
             }
         }
-        #endregion
 
         public static void DiffCompile(string directory, string outputPath)
         {
             throw new NotImplementedException();
         }
 
-        #region Decompile
         /// <summary>リソースを解凍します</summary>
         /// <param name="inputPath">解凍するリソースのパス</param>
         /// <param name="outputDir">出力ディレクトリ</param>
@@ -101,8 +58,10 @@ namespace ElffyResourceCompiler
             if(outputDir == null) { throw new ArgumentNullException(nameof(outputDir)); }
             if(inputPath == null) { throw new ArgumentNullException(nameof(inputPath)); }
             if(!File.Exists(inputPath)) { throw new FileNotFoundException($"file : {inputPath}"); }
+
+            const string TMP_DIR = "____tmp_dir____";
+
             try {
-                _buf = new byte[BUF_LEN];
                 if(Directory.Exists(outputDir)) {
                     if(Directory.Exists(TMP_DIR)) { Directory.Delete(TMP_DIR, true); }
                     Directory.Move(outputDir, TMP_DIR);       // 出力先ディレクトリが既に存在するなら一時退避
@@ -110,128 +69,71 @@ namespace ElffyResourceCompiler
                 Directory.CreateDirectory(outputDir);
                 
                 using(var fs = File.OpenRead(inputPath)) {
-                    // フォーマットバージョンの確認
-                    var formatVersion = ReadFromStream(fs, 3);
-                    if(formatVersion != FORMAT_VERSION) { return false; }
-                    // マジックワードの確認
-                    var magicWord = ReadFromStream(fs, MAGIC_WORD.Length);
-                    if(magicWord != MAGIC_WORD) { return false; }
-                    // ファイル数の確認
-                    if(fs.Read(_buf, 0, FILE_COUNT_BYTE_COUNT) != FILE_COUNT_BYTE_COUNT) { return false; }
-                    var filecount = BytesToIntLittleEndian(_buf);
-                    // ディレクトリへの展開
-                    ReadDirectory(fs, new DirectoryInfo(outputDir));
+                    var reader = new LightBinaryReader(fs);
+                    if(reader.ReadString(3) != FORMAT_VERSION) { return false; }
+                    if(reader.ReadString(MAGIC_WORD.Length) != MAGIC_WORD) { return false; }
+                    var filecount = reader.ReadInt32();
+
+                    ReadDirectory(reader, new DirectoryInfo(outputDir));
                 }
             }
-            catch(Exception ex) {
+            catch(Exception) {
                 if(Directory.Exists(TMP_DIR)) {
                     Directory.Move(TMP_DIR, outputDir);       // 退避させた元のディレクトリを復元
                 }
-                throw ex;
+                throw;
             }
-            finally {
-                _buf = null;
-            }
+            
             if(Directory.Exists(TMP_DIR)) {
                 Directory.Delete(TMP_DIR, true);          // 退避させた一時ディレクトリがあるなら消す
             }
             return true;
         }
-        #endregion
 
-        #region private Method
-        #region WriteDirectory
-        /// <summary>ディレクトリを指定して、その内容を出力します</summary>
-        /// <param name="dir">ディレクトリ情報</param>
-        /// <param name="dirName">ディレクトリ名(ファイル名の前につける相対パス)</param>
-        /// <param name="stream">出力するStream</param>
-        private static void WriteDirectory(DirectoryInfo dir, string dirName, Stream stream, ref int fileCount)
+        private static void WriteDirectory(DirectoryInfo dir, string dirName, in LightBinaryWriter writer, ref int fileCount)
         {
             foreach(var file in dir.GetFiles()) {
                 fileCount++;
-                WriteToStream(stream, $"{dirName}{file.Name}:");       // ファイル名を出力
+                writer.WriteAsUTF8($"{dirName}{file.Name}:");
 
-                // ファイルハッシュの書き込み
                 using(var fs = file.OpenRead()) {
                     var hash = _hashFunc.ComputeHash(fs);
-                    stream.Write(hash, 0, hash.Length);
-                }
+                    writer.Write(hash);
+                    writer.WriteLittleEndian(file.Length);
 
-                stream.Write(LongToBytesLittleEndian(file.Length), 0, FILE_SIZE_BYTE_COUNT);    // ファイルサイズ書き込み
-
-                // データの書き込み
-                using(var fs = file.OpenRead()) {
-                    while(true) {
-                        var readlen = fs.Read(_buf, 0, _buf.Length);
-                        if(readlen == 0) { break; }
-                        stream.Write(_buf, 0, readlen);
-                    }
+                    fs.Position = 0;
+                    var reader = new LightBinaryReader(fs);
+                    reader.CopyBytesTo(writer.InnerStream, reader.Length);
                 }
             }
             foreach(var subDir in dir.GetDirectories()) {
-                WriteDirectory(subDir, $"{dirName}{subDir.Name}/", stream, ref fileCount);
+                WriteDirectory(subDir, $"{dirName}{subDir.Name}/", writer, ref fileCount);
             }
         }
-        #endregion
 
-        #region ReadDirectory
-        private static bool ReadDirectory(Stream stream, DirectoryInfo rootDir)
+        private static bool ReadDirectory(LightBinaryReader reader, DirectoryInfo rootDir)
         {
             while(true) {
-                if(stream.Position == stream.Length) { break; }
+                if(reader.Position == reader.Length) { break; }
                 // ファイル名取得
-                int bufPos = 0;
-                while(true) {
-                    var tmp = stream.ReadByte();
-                    if(tmp == -1) { return false; }     // ファイル末尾ならフォーマットエラー
-                    var b = (byte)tmp;
-                    if(b == 0x3A) { break; }        // 区切り文字 0x3A == ':' までがファイル名
-                    _buf[bufPos++] = b;
-                }
-                var formattedFilePath = _encoding.GetString(_buf, 0, bufPos);
+                var formattedFilePath = reader.ReadTerminatedString(0x3a);  // 0x3a == ':'
 
                 // ハッシュ値を読む(使わないので読み飛ばす)
-                if(stream.Read(_buf, 0, HASH_LEN) != HASH_LEN) { return false; }
+                reader.Position += HASH_LEN;
 
                 // ファイル長取得
-                if(stream.Read(_buf, 0, FILE_SIZE_BYTE_COUNT) != FILE_SIZE_BYTE_COUNT) { return false; }
-                var filelen = BytesToLongLittleEndian(_buf);
+                var filelen = reader.ReadInt64();
 
-                var allLen = filelen;
                 var filename = CreateDirectory(formattedFilePath, rootDir, out var dir);
                 using(var fs = File.Create(Path.Combine(dir.FullName, filename))) {
-                    while(true) {
-                        if(allLen <= 0) { break; }
-                        var readRequestLen = (int)(_buf.Length < allLen ? _buf.Length : allLen);
-                        var readlen = stream.Read(_buf, 0, readRequestLen);
-                        if(readlen != readRequestLen) { return false; }
-                        allLen -= readlen;
-                        fs.Write(_buf, 0, readlen);
-                    }
+                    reader.CopyBytesTo(fs, filelen);
                 }
             }
 
             return true;
         }
-        #endregion
 
-        #region WriteToStream
-        private static void WriteToStream(Stream stream, string str)
-        {
-            var bytes = _encoding.GetBytes(str);
-            stream.Write(bytes, 0, bytes.Length);
-        }
-        #endregion
 
-        #region ReadFromString
-        private static string ReadFromStream(Stream stream, int byteCount)
-        {
-            stream.Read(_buf, 0, byteCount);
-            return _encoding.GetString(_buf, 0, byteCount);
-        }
-        #endregion
-
-        #region CreateDirectory
         private static string CreateDirectory(string formattedFilePath, DirectoryInfo root, out DirectoryInfo directory)
         {
             var path = formattedFilePath.Split('/');
@@ -244,12 +146,5 @@ namespace ElffyResourceCompiler
             }
             return path[path.Length - 1];       // return filename
         }
-        #endregion
-
-        private static byte[] LongToBytesLittleEndian(long x) => Enumerable.Range(0, sizeof(long)).Select(i => (byte)((x >> (i * 8)) % 256)).ToArray();
-        private static byte[] IntToBytesLittleEndian(int x) => Enumerable.Range(0, sizeof(int)).Select(i => (byte)((x >> (i * 8)) % 256)).ToArray();
-        private static long BytesToLongLittleEndian(byte[] x) => Enumerable.Range(0, sizeof(long)).Select(i => ((long)x[i]) << (i * 8)).Sum();
-        private static int BytesToIntLittleEndian(byte[] x) => Enumerable.Range(0, sizeof(int)).Select(i => x[i] << (i * 8)).Sum();
-        #endregion private Method
     }
 }

@@ -32,34 +32,25 @@ namespace UnitTest
             Uri GetFileUri(FileInfo fi) => new Uri($"{fi.FullName}");
             bool UriEqual(Uri x, Uri y) => x.ToString().Split('/').Skip(1).SequenceEqual(y.ToString().Split('/').Skip(1));
 
-            var decompiledResource = decompiled.GetDirectories().First(d => d.Name == "Resource");
-
-            var checkTargets = new []
-            {
-                (Original: resource, DecompiledTarget: decompiledResource),
-            };
-
-            foreach(var (original, decompiledTarget) in checkTargets) {
-                // デコンパイルしたファイルと元ファイルを組にして、そのハッシュの一致を確かめる
-                var s = GetAllChildren(original)
-                        .Select(x => (Uri: GetDirUri(original).MakeRelativeUri(GetFileUri(x)), File: x))
+            // デコンパイルしたファイルと元ファイルを組にして、そのハッシュの一致を確かめる
+            var s = GetAllChildren(resource)
+                    .Select(x => (Uri: GetDirUri(resource).MakeRelativeUri(GetFileUri(x)), File: x))
+                    .ToList();
+            var pair = GetAllChildren(decompiled)
+                        .Select(x => (Uri: GetDirUri(decompiled).MakeRelativeUri(GetFileUri(x)), File: x))
+                        .Select(x => (Result: x.File, Source: s.Find(y => UriEqual(x.Uri, y.Uri)).File))
                         .ToList();
-                var pair = GetAllChildren(decompiledTarget)
-                            .Select(x => (Uri: GetDirUri(decompiledTarget).MakeRelativeUri(GetFileUri(x)), File: x))
-                            .Select(x => (Result: x.File, Source: s.Find(y => UriEqual(x.Uri, y.Uri)).File))
-                            .ToList();
-                foreach(var item in pair) {
-                    byte[] hash1;
-                    byte[] hash2;
-                    using(var stream = item.Source.OpenRead()) {
-                        hash1 = hashfunc.ComputeHash(stream);
-                    }
-                    using(var stream = item.Result.OpenRead()) {
-                        hash2 = hashfunc.ComputeHash(stream);
-                    }
-                    if(hash1.SequenceEqual(hash2) == false) {
-                        throw new Exception(GetFileUri(item.Result).ToString());
-                    }
+            foreach(var item in pair) {
+                byte[] hash1;
+                byte[] hash2;
+                using(var stream = item.Source.OpenRead()) {
+                    hash1 = hashfunc.ComputeHash(stream);
+                }
+                using(var stream = item.Result.OpenRead()) {
+                    hash2 = hashfunc.ComputeHash(stream);
+                }
+                if(hash1.SequenceEqual(hash2) == false) {
+                    throw new Exception(GetFileUri(item.Result).ToString());
                 }
             }
         }
