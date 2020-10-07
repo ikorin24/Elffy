@@ -14,13 +14,20 @@ namespace UnitTest
     {
         #region CompileTest
         /// <summary>リソースのコンパイルが出来ているかをテストします</summary>
-        [Fact]
-        public void CompileTest()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void CompileTest(bool forceCompile)
         {
             // リソースのコンパイル -> デコンパイル -> デコンパイルした全ファイルと元ファイルのハッシュが一致すればOK
 
             // コンパイル実行
-            var (resource, output) = Compile();
+            var (resource, output) = Compile(true);
+            if(forceCompile == false) {
+                // Re-compile source.
+                // That will be skipped because already compiled.
+                (resource, output) = Compile(false);
+            }
 
             // デコンパイル実行
             var decompiled = new DirectoryInfo("decompiled");
@@ -55,6 +62,7 @@ namespace UnitTest
             }
         }
         #endregion
+
 
         #region CommandLineArgParserTest
         /// <summary>コマンドライン引数のParserが正常に機能していることをテストします</summary>
@@ -110,7 +118,7 @@ namespace UnitTest
             // コンパイル -> コンパイルされたリソースをロード -> もとのファイルとハッシュが一致すればOK
 
             // コンパイル実行
-            var (resource, output) = Compile();
+            var (resource, output) = Compile(true);
 
             IEnumerable<FileInfo> GetAllChildren(DirectoryInfo di) => di.GetFiles().Concat(di.GetDirectories().SelectMany(GetAllChildren));
             Uri GetDirUri(DirectoryInfo di) => new Uri($"{di.FullName}");
@@ -145,16 +153,12 @@ namespace UnitTest
         }
         #endregion
 
-        private (DirectoryInfo resource, string output) Compile()
+        private (DirectoryInfo resource, string output) Compile(bool forceCompile)
         {
             // コンパイル実行
             var resource = new DirectoryInfo(Path.Combine(TestValues.FileDirectory, "ElffyResources"));
             var output = Path.Combine(".", "Resources.dat");
-            var args = new[] { resource.FullName, "-o", output };
-            var ret = Program.Main(args);
-            if(ret != 0) {
-                throw new Exception("Failure");
-            }
+            Compiler.Compile(resource.FullName, output, forceCompile);
             return (resource, output);
         }
     }

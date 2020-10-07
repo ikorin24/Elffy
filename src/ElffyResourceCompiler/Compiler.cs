@@ -20,19 +20,7 @@ namespace ElffyResourceCompiler
         /// <summary>ハッシュのバイト長</summary>
         private const int HASH_LEN = 32;
 
-
-        public static void Compile(string resourceDir, string outputPath)
-        {
-            if(resourceDir is null) { throw new ArgumentNullException(resourceDir); }
-            if(outputPath is null) { throw new ArgumentNullException(outputPath); }
-
-            if(File.Exists(outputPath)) { File.Delete(outputPath); }
-            Directory.CreateDirectory(Directory.GetParent(outputPath).FullName);
-
-            CompilePrivate(resourceDir, outputPath);
-        }
-
-        public static void Compile_(string resourceDir, string outputPath, bool forceCompile = false)
+        public static void Compile(string resourceDir, string outputPath, bool forceCompile = false)
         {
             if(resourceDir is null) { throw new ArgumentNullException(nameof(resourceDir)); }
             if(outputPath is null) { throw new ArgumentNullException(nameof(outputPath)); }
