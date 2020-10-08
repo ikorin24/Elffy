@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Buffers.Binary;
 
 namespace Elffy
 {
@@ -24,8 +25,6 @@ namespace Elffy
         private const int FILE_SIZE_LEN = 8;
         private static readonly Encoding _encoding = Encoding.UTF8;
         private static Dictionary<string, ResourceObject>? _resources;
-
-        private const string RESOURCE_ROOT = "Resource";
 
         internal static readonly string ResourceFilePath = Path.Combine(AssemblyState.EntryAssemblyDirectory, RESOURCE_FILE_NAME);
 
@@ -71,9 +70,9 @@ namespace Elffy
             }
 
             // TODO: ReadOnlySpan<char> をキーにした専用 dictionary の実装
-            var fullname = $"{RESOURCE_ROOT}/{name}";
+            //var fullname = $"{RESOURCE_ROOT}/{name}";
 
-            if(_resources!.TryGetValue(fullname, out var resource) == false) {
+            if(_resources!.TryGetValue(name!, out var resource) == false) {
                 throw new ResourceNotFoundException(name!);
             }
             return new ResourceStream(resource.Position, resource.Length);
@@ -92,7 +91,7 @@ namespace Elffy
             // this method is only for debug
 
             CheckInitialized();
-            return _resources!.Keys.Where(k => k.StartsWith(RESOURCE_ROOT)).Select(k => k.Substring(RESOURCE_ROOT.Length + 1)).ToArray();
+            return _resources!.Keys.ToArray();
         }
 
         private static void CreateDictionary()
@@ -102,7 +101,6 @@ namespace Elffy
                 return;
             }
 
-            const byte END_MARK = 0x3A;
             using(var fs = AlloclessFileStream.OpenRead(ResourceFilePath))
             using(var pooledArray = new PooledArray<byte>(2048)) {
                 var buf = pooledArray.InnerArray;
@@ -111,14 +109,15 @@ namespace Elffy
                 // マジックワードの確認
                 if(ReadString(fs, MAGIC_WORD.Length, buf) != MAGIC_WORD) { throw new FormatException(); }
                 fs.Read(buf, 0, 4);
-                var fileCount = BytesToIntLittleEndian(buf);       // ファイル数取得
+                var fileCount = BinaryPrimitives.ReadInt32LittleEndian(buf);
+                fs.Position += HASH_LEN;    // hashSum
                 _resources = new Dictionary<string, ResourceObject>(fileCount);
                 while(true) {
                     if(fs.Position == fs.Length) { break; }     // ファイル末尾で終了
                     var resource = new ResourceObject();
-                    resource.Name = ReadString(fs, END_MARK, buf);                                       // ファイル名取得
+                    resource.Name = ReadStringWithLength(fs, buf);
                     if(fs.Read(buf, 0, HASH_LEN) != HASH_LEN) { throw new FormatException(); }     // ハッシュ値を読み飛ばす(使わない)
-                    resource.Length = (fs.Read(buf, 0, FILE_SIZE_LEN) == FILE_SIZE_LEN) ? BytesToLongLittleEndian(buf) : throw new FormatException(); // ファイル長取得
+                    resource.Length = (fs.Read(buf, 0, FILE_SIZE_LEN) == FILE_SIZE_LEN) ? BinaryPrimitives.ReadInt64LittleEndian(buf) : throw new FormatException(); // ファイル長取得
                     resource.Position = fs.Position;
                     fs.Position += resource.Length;             // データ部を読み飛ばす
                     _resources.Add(resource.Name, resource);
@@ -130,6 +129,18 @@ namespace Elffy
         {
             stream.Read(buf, 0, byteCount);
             return _encoding.GetString(buf, 0, byteCount);
+        }
+
+        private static string ReadStringWithLength(Stream stream, byte[] buf)
+        {
+            if(stream.Read(buf, 0, sizeof(int)) != sizeof(int)) {
+                throw new EndOfStreamException();
+            }
+            var len = BinaryPrimitives.ReadInt32LittleEndian(buf);
+            if(stream.Read(buf, 0, len) != len) {
+                throw new EndOfStreamException();
+            }
+            return _encoding.GetString(buf, 0, len);
         }
 
         private static string ReadString(Stream stream, byte endMark, byte[] buf)
@@ -144,30 +155,6 @@ namespace Elffy
             }
             return _encoding.GetString(buf, 0, bufPos);
         }
-
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static int BytesToIntLittleEndian(byte[] x)
-        {
-            // TODO: BCL から little endian 用のメソッド呼べ、あったはず
-            int n = 0;
-            for(int i = 0; i < sizeof(int); i++) {
-                n += ((int)x[i]) << (i * 8);
-            }
-            return n;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static long BytesToLongLittleEndian(byte[] b)
-        {
-            // TODO: BCL から little endian 用のメソッド呼べ、あったはず
-            long n = 0;
-            for(int i = 0; i < sizeof(long); i++) {
-                n += ((long)b[i]) << (i * 8);
-            }
-            return n;
-        }
-
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void CheckInitialized()
