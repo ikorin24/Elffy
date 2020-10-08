@@ -6,6 +6,7 @@ using System.IO;
 using System.Text;
 using System.Buffers.Binary;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace ElffyResourceCompiler
 {
@@ -28,12 +29,22 @@ namespace ElffyResourceCompiler
 
         public void WriteAsUTF8(string value)
         {
-            // [NOTE]
-            // Too long string causes stack over flow.
-
             var buf = ArrayPool<byte>.Shared.Rent(_utf8.GetMaxByteCount(value.Length));
             try {
-                var len = _utf8.GetBytes(value, buf);
+                var len = _utf8.GetBytes(value, 0, value.Length, buf, 0);
+                _stream.Write(buf, 0, len);
+            }
+            finally {
+                ArrayPool<byte>.Shared.Return(buf);
+            }
+        }
+
+        public void WriteAsUTF8WithLength(string value)
+        {
+            var buf = ArrayPool<byte>.Shared.Rent(_utf8.GetMaxByteCount(value.Length));
+            try {
+                var len = _utf8.GetBytes(value, 0, value.Length, buf, 0);
+                WriteLittleEndian(len);
                 _stream.Write(buf, 0, len);
             }
             finally {
@@ -44,29 +55,17 @@ namespace ElffyResourceCompiler
         public void WriteLittleEndian(int value)
         {
             const int size = 4;
-            var buf = ArrayPool<byte>.Shared.Rent(size);
-            try {
-                var span = buf.AsSpan(0, size);
-                BinaryPrimitives.WriteInt32LittleEndian(span, value);
-                _stream.Write(span);
-            }
-            finally {
-                ArrayPool<byte>.Shared.Return(buf);
-            }
+            Span<byte> b = stackalloc byte[size];
+            BinaryPrimitives.WriteInt32LittleEndian(b, value);
+            _stream.Write(b);
         }
 
         public void WriteLittleEndian(long value)
         {
             const int size = 8;
-            var buf = ArrayPool<byte>.Shared.Rent(size);
-            try {
-                var span = buf.AsSpan(0, size);
-                BinaryPrimitives.WriteInt64LittleEndian(span, value);
-                _stream.Write(span);
-            }
-            finally {
-                ArrayPool<byte>.Shared.Return(buf);
-            }
+            Span<byte> b = stackalloc byte[size];
+            BinaryPrimitives.WriteInt64LittleEndian(b, value);
+            _stream.Write(b);
         }
 
         public void Write(byte[] value)

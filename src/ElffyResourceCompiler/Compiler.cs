@@ -135,7 +135,7 @@ namespace ElffyResourceCompiler
         {
             foreach(var file in dir.GetFiles()) {
                 fileCount++;
-                writer.WriteAsUTF8($"{dirName}{file.Name}:");
+                writer.WriteAsUTF8WithLength($"{dirName}{file.Name}");
 
                 using(var fs = file.OpenRead()) {
                     var hash = _hashFunc.ComputeHash(fs);
@@ -158,7 +158,7 @@ namespace ElffyResourceCompiler
             while(true) {
                 if(reader.Position == reader.Length) { break; }
                 // ファイル名取得
-                var formattedFilePath = reader.ReadTerminatedString(0x3a);  // 0x3a == ':'
+                var formattedFilePath = reader.ReadUTF8WithLength();
 
                 // ハッシュ値を読む(使わないので読み飛ばす)
                 reader.Position += HASH_LEN;

@@ -24,6 +24,12 @@ namespace ElffyResourceCompiler
             _stream = stream;
         }
 
+        public string ReadUTF8WithLength()
+        {
+            var len = ReadInt32();
+            return ReadUTF8(len);
+        }
+
         public string ReadUTF8(int byteLength)
         {
             var buf = ArrayPool<byte>.Shared.Rent(byteLength);
@@ -33,27 +39,6 @@ namespace ElffyResourceCompiler
                     throw new EndOfStreamException();
                 }
                 return _utf8.GetString(buf, 0, readlen);
-            }
-            finally {
-                ArrayPool<byte>.Shared.Return(buf);
-            }
-        }
-
-        public string ReadTerminatedString(byte termination = 0x00)
-        {
-            var buf = ArrayPool<byte>.Shared.Rent(4 * 1024);
-            try {
-                int bufPos = 0;
-                while(true) {
-                    var tmp = _stream.ReadByte();
-                    if(tmp == -1) {
-
-                    }
-                    var b = (byte)tmp;
-                    if(b == termination) { break; }
-                    buf[bufPos++] = b;
-                }
-                return _utf8.GetString(buf, 0, bufPos);
             }
             finally {
                 ArrayPool<byte>.Shared.Return(buf);
