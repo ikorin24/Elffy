@@ -265,4 +265,4 @@ __pycache__/
 
 # Custom (only for this project)
 src/ElffyResourceCompiler/Resources
-src/Sandbox/ElffyResources/Hidden/
+src/Sandbox/Resources/Hidden/
