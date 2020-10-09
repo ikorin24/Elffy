@@ -39,10 +39,9 @@ namespace Elffy
                 screen.Initialized += InitScreen;
 
                 Engine.Run();
+                Resources.Initialize();
                 try {
-                    if(CustomSynchronizationContext.CreateIfNeeded(out var syncContext, out _syncContextReciever)) {
-
-                    }
+                    CustomSynchronizationContext.CreateIfNeeded(out var syncContext, out _syncContextReciever);
                     screen.Show();
 
                     while(Engine.HandleOnce()) {

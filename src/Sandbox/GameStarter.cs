@@ -5,10 +5,8 @@ using Elffy.Imaging;
 using Elffy.Mathematics;
 using Elffy.Shading;
 using Elffy.Shapes;
-using Elffy.Threading;
 using Elffy.UI;
 using Elffy.Diagnostics;
-using Elffy.Effective;
 using Elffy.Threading.Tasks;
 using System;
 using System.Diagnostics;
@@ -51,12 +49,12 @@ namespace Sandbox
                 Rotation = new Quaternion(Vector3.UnitX, -90f.ToRadian()),
             };
             plain.AddComponent(new Material(new Color4(0.85f), new Color4(0.15f), new Color4(0.2f), 400f));
-            plain.AddComponent(Resources.GetStream("cube.png").ToTexture(BitmapType.Png));
+            plain.AddComponent(Resources.Loader.LoadTexture("cube.png", BitmapType.Png));
             plain.Activate();
 
 
             // キャラ1
-            PmxModel.LoadResourceAsync("Alicia/Alicia_solid.pmx").ContinueWith(async model =>
+            Resources.Loader.LoadPmxModelAsync("Alicia/Alicia_solid.pmx").ContinueWith(async model =>
             {
                 await GameAsync.ToUpdate();
                 model.Scale = new Vector3(0.3f);
@@ -67,7 +65,7 @@ namespace Sandbox
 
 
             // サイコロ
-            Model3D.LoadResourceAsync("Dice.fbx").ContinueWith(async model =>
+            Resources.Loader.LoadFbxModelAsync("Dice.fbx").ContinueWith(async model =>
             {
                 await GameAsync.ToUpdate();
                 model.Position = new Vector3(4, 4, -2);
@@ -85,7 +83,7 @@ namespace Sandbox
 
 
             // カエル
-            Model3D.LoadResourceAsync("green_frog.fbx").ContinueWith(async model =>
+            Resources.Loader.LoadFbxModelAsync("green_frog.fbx").ContinueWith(async model =>
             {
                 await GameAsync.ToUpdate();
                 model.Scale = new Vector3(0.01f);
@@ -108,7 +106,7 @@ namespace Sandbox
             {
                 Position = new Vector3(-3, 0.5f, -3),
             };
-            cube.AddComponent(Resources.GetStream("cube.png").ToTexture(BitmapType.Png));
+            cube.AddComponent(Resources.Loader.LoadTexture("cube.png", BitmapType.Png));
             cube.Updated += sender =>
             {
                 Debug.Assert(sender is Cube);

@@ -1,13 +1,6 @@
 ﻿#nullable enable
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
-using Cysharp.Threading.Tasks;
 using Elffy.Core;
-using Elffy.Effective;
-using Elffy.Serialization;
 using UnmanageUtility;
 
 namespace Elffy.Shapes
@@ -43,18 +36,6 @@ namespace Elffy.Shapes
             base.OnDead();
             _vertexArray.Dispose();
             _indexArray.Dispose();
-        }
-
-        public static UniTask<Model3D> LoadResourceAsync(string name)
-        {
-            return UniTask.Run(n =>
-            {
-                var name = SafeCast.As<string>(n);
-                using(var stream = Resources.GetStream(name)) {
-                    var (vertices, indices) = FbxModelBuilder.LoadModel(stream);
-                    return new Model3D(vertices, indices);
-                }
-            }, name);
         }
     }
 }

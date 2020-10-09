@@ -22,7 +22,7 @@ namespace Elffy.Shapes
         private UnmanagedArray<RenderableParts>? _parts;
         private MultiTexture? _textures;
 
-        private PmxModel(PMXObject pmxObject, in RefTypeRentMemory<Bitmap> textureBitmaps)
+        internal PmxModel(PMXObject pmxObject, in RefTypeRentMemory<Bitmap> textureBitmaps)
         {
             Debug.Assert(pmxObject != null);
             _pmxObject = pmxObject;
@@ -129,41 +129,6 @@ namespace Elffy.Shapes
             }
             VAO.Unbind();
             IBO.Unbind();
-        }
-
-        public static PmxModel LoadResource(string name)
-        {
-            PMXObject pmx;
-            using(var stream = Resources.GetStream(name)) {
-                pmx = PMXParser.Parse(stream);
-            }
-            var textureNames = pmx.TextureList.AsSpan();
-            var dir = Resources.GetDirectoryName(name);
-            var bitmaps = new RefTypeRentMemory<Bitmap>(textureNames.Length);
-            var bitmapSpan = bitmaps.Span;
-
-            for(int i = 0; i < bitmapSpan.Length; i++) {
-
-                using var pooledArray = new PooledArray<char>(dir.Length + 1 + textureNames[i].GetCharCount());
-
-                var texturePath = pooledArray.AsSpan();
-                dir.CopyTo(texturePath);
-                texturePath[dir.Length] = '/';
-                textureNames[i].ToString(texturePath.Slice(dir.Length + 1));
-                texturePath.Replace('\\', '/');
-                var textureExt = texturePath.AsReadOnly().FilePathExtension();
-
-                using var tStream = Resources.GetStream(texturePath.ToString());
-                bitmapSpan[i] = BitmapHelper.StreamToBitmap(tStream, textureExt);
-            }
-            return new PmxModel(pmx, bitmaps);
-        }
-
-        public static UniTask<PmxModel> LoadResourceAsync(string name)
-        {
-            return UniTask.Run(n => LoadResource(SafeCast.As<string>(n)),
-                               name,
-                               configureAwait: false);
         }
 
         private readonly struct RenderableParts

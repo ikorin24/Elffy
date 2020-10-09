@@ -10,6 +10,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Buffers.Binary;
+using System.Diagnostics;
 
 namespace Elffy
 {
@@ -21,6 +22,17 @@ namespace Elffy
         private static readonly Encoding _utf8 = Encoding.UTF8;
         private static Dictionary<string, ResourceObject>? _resources;
         private static bool _isInitialized;
+        private static ResourceLoader? _loader;
+
+        public static ResourceLoader Loader
+        {
+            get
+            {
+                CheckInitialized();
+                Debug.Assert(_loader is null == false);
+                return _loader!;
+            }
+        }
 
         internal static readonly string ResourceFilePath = Path.Combine(AssemblyState.EntryAssemblyDirectory, RESOURCE_FILE_NAME);
 
@@ -30,6 +42,7 @@ namespace Elffy
             if(_isInitialized) { return; }
             try {
                 CreateDictionary();
+                _loader = new ResourceLoader();
             }
             catch(Exception ex) {
                 _resources?.Clear();
