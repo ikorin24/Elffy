@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,10 +16,6 @@ namespace ElffyResourceCompiler
         private const string FORMAT_VERSION = "1.0";
         /// <summary>正常解凍を確認するためのマジックワード</summary>
         private const string MAGIC_WORD = "ELFFY_RESOURCE";
-        /// <summary>ファイルのハッシュ値計算用</summary>
-        private static readonly HashAlgorithm _hashFunc = new SHA256CryptoServiceProvider();
-        /// <summary>ハッシュのバイト長</summary>
-        private const int HASH_LEN = 32;
 
         public static void Compile(string resourceDir, string outputPath, bool forceCompile = false)
         {
@@ -36,21 +33,18 @@ namespace ElffyResourceCompiler
                     goto RECOMPILE;
                 }
                 var fileCount = reader.ReadInt32();
-                Span<byte> buf = stackalloc byte[HASH_LEN];
-                reader.Read(buf);
-                var hashSum = new BigInteger(buf);
+                var hashSum = reader.ReadInt64();
 
                 var dir = new DirectoryInfo(resourceDir);
                 if(Directory.Exists(dir.FullName)) {
 
                     static IEnumerable<FileInfo> GetAllSubfiles(DirectoryInfo d) => d.GetFiles().Concat(d.GetDirectories().SelectMany(GetAllSubfiles));
 
-                    var readFileCount = 0;
-                    var readHashSum = new BigInteger();
+                    int readFileCount = 0;
+                    long readHashSum = 0L;
                     foreach(var file in GetAllSubfiles(dir)) {
                         readFileCount++;
-                        using var a = file.OpenRead();
-                        readHashSum += new BigInteger(_hashFunc.ComputeHash(a));
+                        readHashSum += file.LastWriteTimeUtc.Ticks + file.Length;
                     }
 
                     if(readFileCount == fileCount && readHashSum == hashSum) {
@@ -63,8 +57,22 @@ namespace ElffyResourceCompiler
             }
 
         RECOMPILE:
-
-            CompilePrivate(resourceDir, outputPath);
+            const string TMP_FILE = "____tmp____";
+            if(File.Exists(outputPath)) {
+                File.Move(outputPath, TMP_FILE, true);
+            }
+            try {
+                CompilePrivate(resourceDir, outputPath);
+                if(File.Exists(TMP_FILE)) {
+                    File.Delete(TMP_FILE);
+                }
+            }
+            catch(Exception) {
+                if(File.Exists(TMP_FILE)) {
+                    File.Move(TMP_FILE, outputPath, true);
+                }
+                throw;
+            }
             return;
         }
 
@@ -88,14 +96,16 @@ namespace ElffyResourceCompiler
                     if(reader.ReadUTF8(3) != FORMAT_VERSION) { return false; }
                     if(reader.ReadUTF8(MAGIC_WORD.Length) != MAGIC_WORD) { return false; }
                     var filecount = reader.ReadInt32();
-                    Span<byte> hashSum = stackalloc byte[HASH_LEN];
-                    reader.Read(hashSum);
+                    var hashSum = reader.ReadInt64();
 
                     ReadDirectory(reader, new DirectoryInfo(outputDir));
                 }
             }
             catch(Exception) {
                 if(Directory.Exists(TMP_DIR)) {
+                    if(Directory.Exists(outputDir)) {
+                        Directory.Delete(outputDir, true);
+                    }
                     Directory.Move(TMP_DIR, outputDir);       // 退避させた元のディレクトリを復元
                 }
                 throw;
@@ -116,9 +126,9 @@ namespace ElffyResourceCompiler
                 writer.WriteAsUTF8(MAGIC_WORD);
                 var fileCountPosition = fs.Position;                // ファイル数を書き込むための場所
                 int fileCount = 0;
-                fs.Position += 4;   // sizeof(int)
-                var hashSum = new BigInteger();
-                fs.Position += HASH_LEN;
+                fs.Position += Unsafe.SizeOf<int>();
+                long hashSum = 0L;
+                fs.Position += Unsafe.SizeOf<long>();
 
                 var dir = new DirectoryInfo(resourceDir);
                 if(Directory.Exists(dir.FullName)) {
@@ -126,24 +136,24 @@ namespace ElffyResourceCompiler
                 }
                 fs.Position = fileCountPosition;
                 writer.WriteLittleEndian(fileCount);
-                writer.Write(hashSum.ToByteArray(), 0, HASH_LEN);
+                writer.WriteLittleEndian(hashSum);
             }
         }
 
 
-        private static void WriteDirectory(DirectoryInfo dir, string dirName, in LightBinaryWriter writer, ref int fileCount, ref BigInteger hashSum)
+        private static void WriteDirectory(DirectoryInfo dir, string dirName, in LightBinaryWriter writer, ref int fileCount, ref long hashSum)
         {
             foreach(var file in dir.GetFiles()) {
                 fileCount++;
+                var time = file.LastWriteTimeUtc.Ticks;
+                var fileSize = file.Length;
+                hashSum += time + fileSize;
+
                 writer.WriteAsUTF8WithLength($"{dirName}{file.Name}");
+                writer.WriteLittleEndian(time);
+                writer.WriteLittleEndian(fileSize);
 
                 using(var fs = file.OpenRead()) {
-                    var hash = _hashFunc.ComputeHash(fs);
-                    hashSum += new BigInteger(hash);
-                    writer.Write(hash);
-                    writer.WriteLittleEndian(file.Length);
-
-                    fs.Position = 0;
                     var reader = new LightBinaryReader(fs);
                     reader.CopyBytesTo(writer.InnerStream, reader.Length);
                 }
@@ -157,18 +167,13 @@ namespace ElffyResourceCompiler
         {
             while(true) {
                 if(reader.Position == reader.Length) { break; }
-                // ファイル名取得
                 var formattedFilePath = reader.ReadUTF8WithLength();
-
-                // ハッシュ値を読む(使わないので読み飛ばす)
-                reader.Position += HASH_LEN;
-
-                // ファイル長取得
-                var filelen = reader.ReadInt64();
+                var time = reader.ReadInt64();
+                var fileSize = reader.ReadInt64();
 
                 var filename = CreateDirectory(formattedFilePath, rootDir, out var dir);
                 using(var fs = File.Create(Path.Combine(dir.FullName, filename))) {
-                    reader.CopyBytesTo(fs, filelen);
+                    reader.CopyBytesTo(fs, fileSize);
                 }
             }
 
