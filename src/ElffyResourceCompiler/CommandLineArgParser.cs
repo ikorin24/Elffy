@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 
 namespace ElffyResourceCompiler
 {
-    public class CommandLineArgParser
+    internal static class CommandLineArgParser
     {
-        public CommandLineArgument Parse(string[] args)
+        public static CommandLineArgument Parse(string[] args)
         {
             if(args == null) { throw new ArgumentNullException(nameof(args)); }
             var normalArgs = new List<string>();
@@ -18,7 +18,9 @@ namespace ElffyResourceCompiler
             for(int i = 0; i < args.Length; i++) {
                 var current = args[i];
                 if(current.StartsWith("-")) {
-                    if(optionalArgs.ContainsKey(current)) { throw ArgDuplicationException(current); }
+                    if(optionalArgs.ContainsKey(current)) {
+                        throw new ArgumentException($"Optional argument '{current}' is duplicated.");
+                    }
                     if(args.Length > i + 1) {
                         if(args[i + 1].StartsWith("-")) {
                             optionalArgs.Add(current, "");
@@ -38,11 +40,9 @@ namespace ElffyResourceCompiler
             }
             return new CommandLineArgument(normalArgs.ToArray(), optionalArgs);
         }
-
-        private Exception ArgDuplicationException(string key) => new ArgumentException($"Optional argument '{key}' is duplicated.");
     }
 
-    public class CommandLineArgument
+    internal class CommandLineArgument
     {
         public ArgumentCollection Args { get; }
         public OptionalArgumentCollection OptionalArgs { get; }
@@ -56,7 +56,7 @@ namespace ElffyResourceCompiler
         }
     }
 
-    public class ArgumentCollection : IReadOnlyList<string>
+    internal class ArgumentCollection : IReadOnlyList<string>
     {
         private string[] _args;
         public string this[int index] => _args[index];
@@ -73,7 +73,7 @@ namespace ElffyResourceCompiler
         IEnumerator IEnumerable.GetEnumerator() => _args.GetEnumerator();
     }
 
-    public class OptionalArgumentCollection : IReadOnlyDictionary<string, string>
+    internal class OptionalArgumentCollection : IReadOnlyDictionary<string, string>
     {
         private IDictionary<string, string> _optioanlArgs;
 
@@ -94,7 +94,7 @@ namespace ElffyResourceCompiler
 
         public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => _optioanlArgs.GetEnumerator();
 
-        public bool TryGetValue(string key, out string value) => _optioanlArgs.TryGetValue(key, out value);
+        public bool TryGetValue(string key, out string value) => _optioanlArgs.TryGetValue(key, out value!);
 
         IEnumerator IEnumerable.GetEnumerator() => _optioanlArgs.GetEnumerator();
     }

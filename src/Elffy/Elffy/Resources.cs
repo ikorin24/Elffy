@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Buffers.Binary;
 
 namespace Elffy
 {
@@ -16,24 +17,17 @@ namespace Elffy
     {
         internal const string RESOURCE_FILE_NAME = "Resources.dat";
         private const string FORMAT_VERSION = "1.0";
-        /// <summary>正常解凍を確認するためのマジックワード</summary>
         private const string MAGIC_WORD = "ELFFY_RESOURCE";
-        /// <summary>ハッシュのバイト長</summary>
-        private const int HASH_LEN = 32;
-        /// <summary>ファイルサイズのバイト長</summary>
-        private const int FILE_SIZE_LEN = 8;
-        private static readonly Encoding _encoding = Encoding.UTF8;
+        private static readonly Encoding _utf8 = Encoding.UTF8;
         private static Dictionary<string, ResourceObject>? _resources;
-
-        private const string RESOURCE_ROOT = "Resource";
+        private static bool _isInitialized;
 
         internal static readonly string ResourceFilePath = Path.Combine(AssemblyState.EntryAssemblyDirectory, RESOURCE_FILE_NAME);
 
-        internal static bool IsInitialized { get; private set; }
 
         public static void Initialize()
         {
-            if(IsInitialized) { return; }
+            if(_isInitialized) { return; }
             try {
                 CreateDictionary();
             }
@@ -42,7 +36,7 @@ namespace Elffy
                 _resources = null;
                 throw new FormatException("Failed in creating resource dic.", ex);
             }
-            IsInitialized = true;
+            _isInitialized = true;
         }
 
         public static ReadOnlySpan<char> GetDirectoryName(string name)
@@ -70,10 +64,7 @@ namespace Elffy
                 static void ThrowNullArg() => throw new ArgumentNullException(nameof(name));
             }
 
-            // TODO: ReadOnlySpan<char> をキーにした専用 dictionary の実装
-            var fullname = $"{RESOURCE_ROOT}/{name}";
-
-            if(_resources!.TryGetValue(fullname, out var resource) == false) {
+            if(_resources!.TryGetValue(name!, out var resource) == false) {
                 throw new ResourceNotFoundException(name!);
             }
             return new ResourceStream(resource.Position, resource.Length);
@@ -92,7 +83,7 @@ namespace Elffy
             // this method is only for debug
 
             CheckInitialized();
-            return _resources!.Keys.Where(k => k.StartsWith(RESOURCE_ROOT)).Select(k => k.Substring(RESOURCE_ROOT.Length + 1)).ToArray();
+            return _resources!.Keys.ToArray();
         }
 
         private static void CreateDictionary()
@@ -102,25 +93,28 @@ namespace Elffy
                 return;
             }
 
-            const byte END_MARK = 0x3A;
             using(var fs = AlloclessFileStream.OpenRead(ResourceFilePath))
             using(var pooledArray = new PooledArray<byte>(2048)) {
                 var buf = pooledArray.InnerArray;
-                // フォーマットバージョンの確認
-                if(ReadString(fs, 3, buf) != FORMAT_VERSION) { throw new FormatException(); }
-                // マジックワードの確認
-                if(ReadString(fs, MAGIC_WORD.Length, buf) != MAGIC_WORD) { throw new FormatException(); }
+                if(ReadString(fs, 3, buf) != FORMAT_VERSION) {
+                    throw new FormatException();
+                }
+                if(ReadString(fs, MAGIC_WORD.Length, buf) != MAGIC_WORD) {
+                    throw new FormatException();
+                }
                 fs.Read(buf, 0, 4);
-                var fileCount = BytesToIntLittleEndian(buf);       // ファイル数取得
+                var fileCount = BinaryPrimitives.ReadInt32LittleEndian(buf);
+                fs.Position += sizeof(long);    // hashSum
                 _resources = new Dictionary<string, ResourceObject>(fileCount);
                 while(true) {
-                    if(fs.Position == fs.Length) { break; }     // ファイル末尾で終了
+                    if(fs.Position == fs.Length) { break; }
                     var resource = new ResourceObject();
-                    resource.Name = ReadString(fs, END_MARK, buf);                                       // ファイル名取得
-                    if(fs.Read(buf, 0, HASH_LEN) != HASH_LEN) { throw new FormatException(); }     // ハッシュ値を読み飛ばす(使わない)
-                    resource.Length = (fs.Read(buf, 0, FILE_SIZE_LEN) == FILE_SIZE_LEN) ? BytesToLongLittleEndian(buf) : throw new FormatException(); // ファイル長取得
+                    resource.Name = ReadStringWithLength(fs, buf);
+                    fs.Position += sizeof(long);    // time stamp
+                    resource.Length = (fs.Read(buf, 0, sizeof(long)) == sizeof(long)) ? BinaryPrimitives.ReadInt64LittleEndian(buf)
+                                                                                      : throw new FormatException();
                     resource.Position = fs.Position;
-                    fs.Position += resource.Length;             // データ部を読み飛ばす
+                    fs.Position += resource.Length;         // data
                     _resources.Add(resource.Name, resource);
                 }
             }
@@ -129,57 +123,30 @@ namespace Elffy
         private static string ReadString(Stream stream, int byteCount, byte[] buf)
         {
             stream.Read(buf, 0, byteCount);
-            return _encoding.GetString(buf, 0, byteCount);
+            return _utf8.GetString(buf, 0, byteCount);
         }
 
-        private static string ReadString(Stream stream, byte endMark, byte[] buf)
+        private static string ReadStringWithLength(Stream stream, byte[] buf)
         {
-            var bufPos = 0;
-            while(true) {
-                var tmp = stream.ReadByte();
-                if(tmp == -1) { throw new FormatException(); }     // ファイル末尾ならフォーマットエラー
-                var b = (byte)tmp;
-                if(b == endMark) { break; }        // 区切り文字なら終了
-                buf[bufPos++] = b;
+            if(stream.Read(buf, 0, sizeof(int)) != sizeof(int)) {
+                throw new EndOfStreamException();
             }
-            return _encoding.GetString(buf, 0, bufPos);
-        }
-
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static int BytesToIntLittleEndian(byte[] x)
-        {
-            // TODO: BCL から little endian 用のメソッド呼べ、あったはず
-            int n = 0;
-            for(int i = 0; i < sizeof(int); i++) {
-                n += ((int)x[i]) << (i * 8);
+            var len = BinaryPrimitives.ReadInt32LittleEndian(buf);
+            if(stream.Read(buf, 0, len) != len) {
+                throw new EndOfStreamException();
             }
-            return n;
+            return _utf8.GetString(buf, 0, len);
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static long BytesToLongLittleEndian(byte[] b)
-        {
-            // TODO: BCL から little endian 用のメソッド呼べ、あったはず
-            long n = 0;
-            for(int i = 0; i < sizeof(long); i++) {
-                n += ((long)b[i]) << (i * 8);
-            }
-            return n;
-        }
-
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void CheckInitialized()
         {
-            if(!IsInitialized) {
+            if(!_isInitialized) {
                 ThrowNotInitialized();
                 static void ThrowNotInitialized() => throw new InvalidOperationException("Resources not Initialized");
             }
         }
 
-        // ReadOnlySpan<char> をキーにした専用 dictionary を作った時に
-        // 構造体にして ref でやり取りすべき
         private class ResourceObject
         {
             public string Name { get; set; } = string.Empty;

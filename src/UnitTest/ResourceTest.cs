@@ -14,56 +14,55 @@ namespace UnitTest
     {
         #region CompileTest
         /// <summary>リソースのコンパイルが出来ているかをテストします</summary>
-        [Fact]
-        public void CompileTest()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void CompileTest(bool forceCompile)
         {
             // リソースのコンパイル -> デコンパイル -> デコンパイルした全ファイルと元ファイルのハッシュが一致すればOK
 
             // コンパイル実行
-            var (resource, output) = Compile();
+            var (resource, output) = Compile(true);
+            if(forceCompile == false) {
+                // Re-compile source.
+                // That will be skipped because already compiled.
+                (resource, output) = Compile(false);
+            }
 
             // デコンパイル実行
             var decompiled = new DirectoryInfo("decompiled");
             var hashfunc = new SHA256CryptoServiceProvider();
-            Compiler.Decompile(Path.Combine(output, Program.OutputFile), decompiled.FullName);
+            Compiler.Decompile(output, decompiled.FullName);
 
             IEnumerable<FileInfo> GetAllChildren(DirectoryInfo di) => di.GetFiles().Concat(di.GetDirectories().SelectMany(GetAllChildren));
             Uri GetDirUri(DirectoryInfo di) => new Uri($"{di.FullName}");
             Uri GetFileUri(FileInfo fi) => new Uri($"{fi.FullName}");
             bool UriEqual(Uri x, Uri y) => x.ToString().Split('/').Skip(1).SequenceEqual(y.ToString().Split('/').Skip(1));
 
-            var decompiledResource = decompiled.GetDirectories().First(d => d.Name == "Resource");
-
-            var checkTargets = new []
-            {
-                (Original: resource, DecompiledTarget: decompiledResource),
-            };
-
-            foreach(var (original, decompiledTarget) in checkTargets) {
-                // デコンパイルしたファイルと元ファイルを組にして、そのハッシュの一致を確かめる
-                var s = GetAllChildren(original)
-                        .Select(x => (Uri: GetDirUri(original).MakeRelativeUri(GetFileUri(x)), File: x))
+            // デコンパイルしたファイルと元ファイルを組にして、そのハッシュの一致を確かめる
+            var s = GetAllChildren(resource)
+                    .Select(x => (Uri: GetDirUri(resource).MakeRelativeUri(GetFileUri(x)), File: x))
+                    .ToList();
+            var pair = GetAllChildren(decompiled)
+                        .Select(x => (Uri: GetDirUri(decompiled).MakeRelativeUri(GetFileUri(x)), File: x))
+                        .Select(x => (Result: x.File, Source: s.Find(y => UriEqual(x.Uri, y.Uri)).File))
                         .ToList();
-                var pair = GetAllChildren(decompiledTarget)
-                            .Select(x => (Uri: GetDirUri(decompiledTarget).MakeRelativeUri(GetFileUri(x)), File: x))
-                            .Select(x => (Result: x.File, Source: s.Find(y => UriEqual(x.Uri, y.Uri)).File))
-                            .ToList();
-                foreach(var item in pair) {
-                    byte[] hash1;
-                    byte[] hash2;
-                    using(var stream = item.Source.OpenRead()) {
-                        hash1 = hashfunc.ComputeHash(stream);
-                    }
-                    using(var stream = item.Result.OpenRead()) {
-                        hash2 = hashfunc.ComputeHash(stream);
-                    }
-                    if(hash1.SequenceEqual(hash2) == false) {
-                        throw new Exception(GetFileUri(item.Result).ToString());
-                    }
+            foreach(var item in pair) {
+                byte[] hash1;
+                byte[] hash2;
+                using(var stream = item.Source.OpenRead()) {
+                    hash1 = hashfunc.ComputeHash(stream);
+                }
+                using(var stream = item.Result.OpenRead()) {
+                    hash2 = hashfunc.ComputeHash(stream);
+                }
+                if(hash1.SequenceEqual(hash2) == false) {
+                    throw new Exception(GetFileUri(item.Result).ToString());
                 }
             }
         }
         #endregion
+
 
         #region CommandLineArgParserTest
         /// <summary>コマンドライン引数のParserが正常に機能していることをテストします</summary>
@@ -88,10 +87,9 @@ namespace UnitTest
                 new CommandLineArgument(new []{ "24", "piyo", }, 
                                         new Dictionary<string, string>(){ { "-a", "ikorin" }, { "-b", "hoge"}, { "--hoge", ""}, { "--time", "3:34"} }),
             };
-            var parser = new CommandLineArgParser();
             foreach(var (param, answer) in testCase.Zip(answers, (test, ans) => (test, ans))) {
                 var args = param.Split(new []{ ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                var parsed = parser.Parse(args);
+                var parsed = CommandLineArgParser.Parse(args);
                 Assert.True(parsed.Args.SequenceEqual(answer.Args));
                 Assert.True(parsed.OptionalArgs.SequenceEqual(answer.OptionalArgs));
             }
@@ -107,7 +105,7 @@ namespace UnitTest
             };
             foreach(var (param, assertError) in errorCase.Zip(errors, (test, err) => (test, err))) {
                 var args = param?.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)!;
-                assertError(() => parser.Parse(args));
+                assertError(() => CommandLineArgParser.Parse(args));
             }
         }
         #endregion
@@ -120,7 +118,7 @@ namespace UnitTest
             // コンパイル -> コンパイルされたリソースをロード -> もとのファイルとハッシュが一致すればOK
 
             // コンパイル実行
-            var (resource, output) = Compile();
+            var (resource, output) = Compile(true);
 
             IEnumerable<FileInfo> GetAllChildren(DirectoryInfo di) => di.GetFiles().Concat(di.GetDirectories().SelectMany(GetAllChildren));
             Uri GetDirUri(DirectoryInfo di) => new Uri($"{di.FullName}");
@@ -135,13 +133,13 @@ namespace UnitTest
             
             // リソースと元ファイルのペアを作り、そのハッシュ値の一致を確認
             Resources.Initialize();
-            var pair = Resources.GetResourceNames().Select(x => (Resource: x, Original: sourceNames.Find(y => x == y), Type: "Resource"))
+            var pair = Resources.GetResourceNames().Select(x => (Resource: x, Original: sourceNames.Find(y => x == y)))
                                 .ToArray();
-            foreach(var (name, original, type) in pair) {
+            foreach(var (name, original) in pair) {
                 byte[] hash1;
                 byte[] hash2;
-                var stream1 = (type == "Resource") ? Resources.GetStream(name) : throw new Exception();
-                var stream2 = (type == "Resource") ? File.OpenRead(Path.Combine(resource.FullName, original)) : throw new Exception();
+                var stream1 = Resources.GetStream(name);
+                var stream2 = File.OpenRead(Path.Combine(resource.FullName, original));
                 using(stream1) {
                     hash1 = hashfunc.ComputeHash(stream1);
                 }
@@ -155,13 +153,12 @@ namespace UnitTest
         }
         #endregion
 
-        private (DirectoryInfo resource, string output) Compile()
+        private (DirectoryInfo resource, string output) Compile(bool forceCompile)
         {
             // コンパイル実行
             var resource = new DirectoryInfo(Path.Combine(TestValues.FileDirectory, "ElffyResources"));
-            var output = Path.Combine(".");
-            var args = new[] { "-r", resource.FullName, output };
-            Program.Main(args);
+            var output = Path.Combine(".", "Resources.dat");
+            Compiler.Compile(resource.FullName, output, forceCompile);
             return (resource, output);
         }
     }

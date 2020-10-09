@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="&quot;$(ProjectDir)externalExe\erc.exe&quot; &quot;-r&quot; &quot;$(ProjectDir)ElffyResources&quot; &quot;-s&quot; &quot;$(ProjectDir)Scene&quot; &quot;$(ProjectDir)$(OutDir)\&quot;" />
+    <Exec Command="dotnet externalExe/erc.dll Resources -o $(OutDir)Resources.dat" />
   </Target>
 
 </Project>
