@@ -20,6 +20,8 @@ namespace Elffy.Components
         public TextureShrinkMode ShrinkMode { get; }
         public TextureMipmapMode MipmapMode { get; }
 
+        public TextureObject TextureObject => _to;
+
         public ComponentOwner? Owner => _core.Owner;
 
         public bool IsEmpty => _to.IsEmpty;
@@ -34,11 +36,6 @@ namespace Elffy.Components
         }
 
         ~Texture() => Dispose(false);
-
-        public void Apply(TextureUnitNumber textureUnit)
-        {
-            TextureObject.Bind2D(_to, textureUnit);
-        }
 
         public void Load(Bitmap bitmap)
         {

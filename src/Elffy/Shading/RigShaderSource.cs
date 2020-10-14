@@ -72,9 +72,7 @@ namespace Elffy.Shading
             skeleton.Apply(TextureUnitNumber.Unit1);
             uniform.Send("_boneMove", TextureUnitNumber.Unit1);
 
-            const TextureUnitNumber texUnit = TextureUnitNumber.Unit0;
-            target.GetComponent<MultiTexture>().Apply(texUnit);
-            uniform.Send("tex_sampler", texUnit);
+            uniform.SendTexture2D("tex_sampler", target.GetComponent<MultiTexture>().CurrentTextureObject, TextureUnitNumber.Unit0);
         }
 
         private const string VertSource =

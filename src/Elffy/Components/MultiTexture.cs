@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using System;
 using System.Drawing;
-using System.Runtime.InteropServices;
 using Elffy.Core;
 using Elffy.Effective;
 using Elffy.Exceptions;
@@ -16,6 +15,9 @@ namespace Elffy.Components
         private RefTypeRentMemory<Texture> _textures;
         private int _count;
         private int _current;
+
+        public TextureObject CurrentTextureObject 
+            => _textures.IsEmpty ? TextureObject.Empty : _textures.Span[_current].TextureObject;
 
         public int Count => _count;
         public int Current
@@ -36,12 +38,6 @@ namespace Elffy.Components
         public bool AutoDisposeOnDetached => _core.AutoDisposeOnDetached;
 
         ~MultiTexture() => Dispose(false);
-
-        public void Apply(TextureUnitNumber textureUnit)
-        {
-            if(_textures.IsEmpty) { return; }
-            _textures.Span[_current].Apply(textureUnit);
-        }
 
         public void Load(ReadOnlySpan<Bitmap> bitmaps)
         {

@@ -42,7 +42,7 @@ namespace Elffy.Shading
         /// <summary>頂点シェーダー・フラグメントシェーダ―の読み込み、リンク、プログラムの作成を行います</summary>
         internal ShaderProgram Compile()
         {
-            return new ShaderProgram(this, CompilePrivate);
+            return new ShaderProgram(this, () => CompileToProgramObject(VertexShaderSource, FragmentShaderSource));
         }
 
         //public Task CreateCacheAsync()
@@ -63,15 +63,16 @@ namespace Elffy.Shading
         //    }
         //}
 
-        private ProgramObject CompilePrivate()
+        internal static ProgramObject CompileToProgramObject(string vertSource, string fragSource)
         {
             var vertShader = Consts.NULL;
             var fragShader = Consts.NULL;
+            var program = ProgramObject.Empty;
             try {
-                vertShader = CompileSource(VertexShaderSource, ShaderType.VertexShader);
-                fragShader = CompileSource(FragmentShaderSource, ShaderType.FragmentShader);
+                vertShader = CompileSource(vertSource, ShaderType.VertexShader);
+                fragShader = CompileSource(fragSource, ShaderType.FragmentShader);
 
-                var program = ProgramObject.Create();
+                program = ProgramObject.Create();
                 GL.AttachShader(program.Value, vertShader);
                 GL.AttachShader(program.Value, fragShader);
                 GL.LinkProgram(program.Value);
@@ -82,6 +83,10 @@ namespace Elffy.Shading
                     throw new InvalidOperationException($"Linking shader is failed.{Environment.NewLine}{log}");
                 }
                 return program;
+            }
+            catch {
+                ProgramObject.Delete(ref program);
+                throw;
             }
             finally {
                 if(vertShader != Consts.NULL) {

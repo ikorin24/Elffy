@@ -10,7 +10,7 @@ using System.Drawing;
 namespace Elffy.Core
 {
     /// <summary>OpenGL が描画を行う領域を扱うクラスです</summary>
-    internal class RenderingArea : IDisposable
+    internal sealed class RenderingArea : IDisposable
     {
         const float UI_FAR = 1.01f;
         const float UI_NEAR = -0.01f;

@@ -61,14 +61,10 @@ namespace Elffy.Shading
                 uniform.Send("ls", new Vector3());
             }
 
-            const TextureUnitNumber texUnit = TextureUnitNumber.Unit0;
-            if(target.TryGetComponent<Texture>(out var t)) {
-                t.Apply(texUnit);
-            }
-            else {
-                TextureObject.Bind2D(target.HostScreen.DefaultResource.WhiteEmptyTexture, texUnit);
-            }
-            uniform.Send("tex_sampler", texUnit);
+            var texObj = target.TryGetComponent<Texture>(out var texture)
+                ? texture.TextureObject
+                : target.HostScreen.DefaultResource.WhiteEmptyTexture;
+            uniform.SendTexture2D("tex_sampler", texObj, TextureUnitNumber.Unit0);
         }
 
         private const string VertSource =

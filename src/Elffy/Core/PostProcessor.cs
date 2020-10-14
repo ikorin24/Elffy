@@ -16,7 +16,6 @@ namespace Elffy.Core
         private TextureObject _to;
         private RBO _rbo;
         private Vector2i _screenSize;
-        private Matrix4 _projection;
 
         private VAO _vao;
         private VBO _vbo;
@@ -58,23 +57,22 @@ void main()
 
         internal OffScreenRenderingScope OffScreenRendering(bool enabled, int width, int height)
         {
-            if(!_initialized) {
-                Init();
+            if(enabled) {
+                if(!_initialized) {
+                    Init();
+                }
+                CreateBuffer(width, height);
             }
-            CreateBuffer(width, height);
             return new OffScreenRenderingScope(enabled, this);
         }
 
         private void Render()
         {
-            const TextureUnitNumber textureUnit = TextureUnitNumber.Unit0;
-
             VAO.Bind(_vao);
             IBO.Bind(_ibo);
-            TextureObject.Bind2D(_to, textureUnit);
             ProgramObject.Bind(_program);
             var uniform = new Uniform(_program);
-            uniform.Send("_sampler", textureUnit);
+            uniform.SendTexture2D("_sampler", _to, TextureUnitNumber.Unit0);
             var depthTestEnabled = GL.IsEnabled(EnableCap.DepthTest);
             GL.Disable(EnableCap.DepthTest);
             GL.Clear(ClearBufferMask.ColorBufferBit);
@@ -84,7 +82,6 @@ void main()
             }
             VAO.Unbind();
             IBO.Unbind();
-            TextureObject.Unbind2D(textureUnit);
         }
 
         private void CreateBuffer(int width, int height)
@@ -123,7 +120,6 @@ void main()
             _to = to;
             _rbo = rbo;
             _screenSize = new Vector2i(width, height);
-            Matrix4.OrthographicProjection(0, 1, 0, 1, -1, 1, out _projection);
 
             static void CreateNewBuffer(int width, int height, out FBO fbo, out TextureObject to, out RBO rbo)
             {
@@ -183,7 +179,7 @@ void main()
             VAO.Bind(_vao);
 
             try {
-                _program = CompileShader(VertShaderSource, FragShaderSource);
+                _program = ShaderSource.CompileToProgramObject(VertShaderSource, FragShaderSource);
             }
             catch {
                 VBO.Unbind();
@@ -202,42 +198,6 @@ void main()
             VAO.Unbind();
             VBO.Unbind();
             _initialized = true;
-
-
-            static ProgramObject CompileShader(string vertSource, string fragSource)
-            {
-                int vertShader;
-                vertShader = GL.CreateShader(ShaderType.VertexShader);
-                GL.ShaderSource(vertShader, vertSource);
-                GL.CompileShader(vertShader);
-                GL.GetShader(vertShader, ShaderParameter.CompileStatus, out int vertCompileStatus);
-                if(vertCompileStatus == Consts.ShaderCompileFailed) {
-                    var log = GL.GetShaderInfoLog(vertShader);
-                    throw new InvalidDataException($"Compiling shader is Failed.{Environment.NewLine}{log}{Environment.NewLine}{vertSource}");
-                }
-
-                int fragShader;
-                fragShader = GL.CreateShader(ShaderType.FragmentShader);
-                GL.ShaderSource(fragShader, fragSource);
-                GL.CompileShader(fragShader);
-                GL.GetShader(fragShader, ShaderParameter.CompileStatus, out int fragCompileStatus);
-                if(fragCompileStatus == Consts.ShaderCompileFailed) {
-                    var log = GL.GetShaderInfoLog(fragShader);
-                    throw new InvalidDataException($"Compiling shader is Failed.{Environment.NewLine}{log}{Environment.NewLine}{fragSource}");
-                }
-
-                var program = ProgramObject.Create();
-                GL.AttachShader(program.Value, vertShader);
-                GL.AttachShader(program.Value, fragShader);
-                GL.LinkProgram(program.Value);
-                GL.GetProgram(program.Value, GetProgramParameterName.LinkStatus, out int linkStatus);
-                if(linkStatus == Consts.ShaderProgramLinkFailed) {
-                    var log = GL.GetProgramInfoLog(program.Value);
-                    throw new InvalidOperationException($"Linking shader is failed.{Environment.NewLine}{log}");
-                }
-
-                return program;
-            }
         }
 
         public void Dispose()
