@@ -1,11 +1,13 @@
 ﻿#nullable enable
 using System;
+using System.Diagnostics;
 using Elffy.Core;
 using OpenTK.Graphics.OpenGL4;
 
 namespace Elffy.OpenGL
 {
     /// <summary>Render Buffer Object of OpenGL</summary>
+    [DebuggerDisplay("RBO={_rbo}")]
     public readonly struct RBO : IEquatable<RBO>
     {
         private readonly int _rbo;

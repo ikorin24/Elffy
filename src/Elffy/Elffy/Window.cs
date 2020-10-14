@@ -42,6 +42,13 @@ namespace Elffy
         LayerCollection IHostScreen.Layers => _renderingArea.Layers;
         /// <summary>カメラを取得します</summary>
         Camera IHostScreen.Camera => _renderingArea.Camera;
+
+        public bool IsEnabledPostProcess
+        {
+            get => _renderingArea.IsEnabledPostProcess;
+            set => _renderingArea.IsEnabledPostProcess = value;
+        }
+
         TimeSpan IHostScreen.FrameDelta => _frameDelta;
 
         public Vector2i ClientSize { get => _windowImpl.ClientSize; set => _windowImpl.ClientSize = value; }

@@ -6,10 +6,11 @@ using Elffy.AssemblyServices;
 using Elffy.OpenGL;
 using Elffy.Shading;
 using System.IO;
+using System.Runtime.CompilerServices;
 
 namespace Elffy.Core
 {
-    public class PostProcessor : IDisposable
+    public sealed class PostProcessor : IDisposable
     {
         private FBO _fbo;
         private TextureObject _to;
@@ -46,9 +47,8 @@ uniform sampler2D _sampler;
 
 void main()
 {
-    vec4 c = texture(_sampler, _uv2);
-    //_color = vec4(1.0, c.g, c.b, 1.0);
-    _color = vec4(1.0 - c.x, 1.0 - c.y, 1.0 - c.z, 1.0);
+    //_color = texture(_sampler, _uv2);
+    _color = vec4(vec3(1.0, 1.0, 1.0) - texture(_sampler, _uv2).rgb, 1.0);
 }
 ";
 
@@ -56,21 +56,16 @@ void main()
         {
         }
 
-        internal void EnableOffScreenRendering()
+        internal OffScreenRenderingScope OffScreenRendering(bool enabled, int width, int height)
         {
             if(!_initialized) {
                 Init();
-                _initialized = true;
             }
-            FBO.Bind(_fbo);
+            CreateBuffer(width, height);
+            return new OffScreenRenderingScope(enabled, this);
         }
 
-        internal void DisableOffScreenRendering()
-        {
-            FBO.Unbind();
-        }
-
-        internal void Render()
+        private void Render()
         {
             const TextureUnitNumber textureUnit = TextureUnitNumber.Unit0;
 
@@ -92,10 +87,17 @@ void main()
             TextureObject.Unbind2D(textureUnit);
         }
 
-        internal void CreateNewBuffer(int width, int height)
+        private void CreateBuffer(int width, int height)
         {
+            if(_screenSize.X == width && _screenSize.Y == height) {
+                return;
+            }
+
             if(width <= 0 || height <= 0) {
                 if(!_fbo.IsEmpty) {
+                    Debug.WriteLine(_to.IsEmpty == false);
+                    Debug.WriteLine(_rbo.IsEmpty == false);
+
                     FBO.Delete(ref _fbo);
                     TextureObject.Delete(ref _to);
                     RBO.Delete(ref _rbo);
@@ -109,9 +111,10 @@ void main()
             TextureObject to;
             RBO rbo;
             try {
-                CreateBuffer(width, height, out fbo, out to, out rbo);
+                CreateNewBuffer(width, height, out fbo, out to, out rbo);
             }
             finally {
+                // delete old buffers
                 FBO.Delete(ref _fbo);
                 TextureObject.Delete(ref _to);
                 RBO.Delete(ref _rbo);
@@ -122,7 +125,7 @@ void main()
             _screenSize = new Vector2i(width, height);
             Matrix4.OrthographicProjection(0, 1, 0, 1, -1, 1, out _projection);
 
-            static void CreateBuffer(int width, int height, out FBO fbo, out TextureObject to, out RBO rbo)
+            static void CreateNewBuffer(int width, int height, out FBO fbo, out TextureObject to, out RBO rbo)
             {
                 Debug.Assert(width > 0);
                 Debug.Assert(height > 0);
@@ -198,6 +201,7 @@ void main()
 
             VAO.Unbind();
             VBO.Unbind();
+            _initialized = true;
 
 
             static ProgramObject CompileShader(string vertSource, string fragSource)
@@ -245,6 +249,31 @@ void main()
             VBO.Delete(ref _vbo);
             IBO.Delete(ref _ibo);
             ProgramObject.Delete(ref _program);
+        }
+
+        internal readonly ref struct OffScreenRenderingScope
+        {
+            private readonly bool _enabled;
+            private readonly PostProcessor _p;
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            internal OffScreenRenderingScope(bool enabled, PostProcessor p)
+            {
+                _enabled = enabled;
+                _p = p;
+                if(enabled) {
+                    FBO.Bind(p._fbo);
+                }
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void Dispose()
+            {
+                if(_enabled) {
+                    FBO.Unbind();
+                    _p.Render();
+                }
+            }
         }
     }
 }

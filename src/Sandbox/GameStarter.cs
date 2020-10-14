@@ -129,7 +129,13 @@ namespace Sandbox
         {
             var button = new Button(90, 30);
             button.Position = new Vector2i(10, 10);
-            button.KeyDown += sender => DevEnv.WriteLine("Down");
+            button.KeyDown += sender =>
+            {
+                var enabled = !Game.Screen.IsEnabledPostProcess;
+                Game.Screen.IsEnabledPostProcess = enabled;
+                DevEnv.WriteLine(enabled);
+                DevEnv.WriteLine("Down");
+            };
             button.KeyPress += sender => DevEnv.WriteLine("Press");
             button.KeyUp += sender => DevEnv.WriteLine("Up");
             Game.UI.Add(button);

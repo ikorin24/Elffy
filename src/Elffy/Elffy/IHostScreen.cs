@@ -32,6 +32,8 @@ namespace Elffy
         /// <summary>Get number of current frame.</summary>
         ref readonly long FrameNum { get; }
 
+        bool IsEnabledPostProcess { get; set; }
+
         IDefaultResource DefaultResource { get; }
 
         internal TimeSpan FrameDelta { get; }

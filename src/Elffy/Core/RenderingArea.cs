@@ -140,18 +140,12 @@ namespace Elffy.Core
             uiLayer.LateUpdate();
 
             // Render
-            var isEnabledPostProcess = IsEnabledPostProcess;
-            if(isEnabledPostProcess) {
-                _postProcessor.EnableOffScreenRendering();
-            }
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            foreach(var layer in Layers.AsReadOnlySpan()) {
-                layer.Render(Camera.Projection, Camera.View);
-            }
-            uiLayer.Render(_uiProjection);
-            if(isEnabledPostProcess) {
-                _postProcessor.DisableOffScreenRendering();
-                _postProcessor.Render();
+            using(_postProcessor.OffScreenRendering(IsEnabledPostProcess, _width, _height)) {
+                GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+                foreach(var layer in Layers.AsReadOnlySpan()) {
+                    layer.Render(Camera.Projection, Camera.View);
+                }
+                uiLayer.Render(_uiProjection);
             }
 
             // このフレームで削除されたオブジェクトの削除を適用
@@ -191,9 +185,6 @@ namespace Elffy.Core
             uiRoot.Width = width;
             uiRoot.Height = height;
 
-            if(IsEnabledPostProcess) {
-                _postProcessor.CreateNewBuffer(width, height);
-            }
             Debug.WriteLine($"Size changed ({width}, {height})");
         }
     }
