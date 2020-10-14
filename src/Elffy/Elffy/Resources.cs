@@ -16,13 +16,13 @@ namespace Elffy
 {
     public static class Resources
     {
-        internal const string RESOURCE_FILE_NAME = "Resources.dat";
         private const string FORMAT_VERSION = "1.0";
         private const string MAGIC_WORD = "ELFFY_RESOURCE";
         private static readonly Encoding _utf8 = Encoding.UTF8;
         private static Dictionary<string, ResourceObject>? _resources;
         private static bool _isInitialized;
         private static ResourceLoader? _loader;
+        private static string? _resourceFilePath;
 
         public static ResourceLoader Loader
         {
@@ -34,14 +34,22 @@ namespace Elffy
             }
         }
 
-        internal static readonly string ResourceFilePath = Path.Combine(AssemblyState.EntryAssemblyDirectory, RESOURCE_FILE_NAME);
-
-
-        public static void Initialize()
+        public static void Initialize(string resourceFilePath)
         {
-            if(_isInitialized) { return; }
+            if(resourceFilePath is null) {
+                throw new ArgumentNullException(nameof(resourceFilePath));
+            }
+            if(!File.Exists(resourceFilePath)) {
+                throw new FileNotFoundException("Resource file not found", resourceFilePath);
+            }
+            if(_isInitialized) {
+                throw new InvalidOperationException("Already initialized");
+            }
+
+
+            _resourceFilePath = resourceFilePath;
             try {
-                CreateDictionary();
+                CreateDictionary(resourceFilePath);
                 _loader = new ResourceLoader();
             }
             catch(Exception ex) {
@@ -80,7 +88,8 @@ namespace Elffy
             if(_resources!.TryGetValue(name!, out var resource) == false) {
                 throw new ResourceNotFoundException(name!);
             }
-            return new ResourceStream(resource.Position, resource.Length);
+            Debug.Assert(_resourceFilePath is null == false);
+            return new ResourceStream(_resourceFilePath, resource.Position, resource.Length);
         }
 
         //internal static bool HasResource(string name)
@@ -99,14 +108,14 @@ namespace Elffy
             return _resources!.Keys.ToArray();
         }
 
-        private static void CreateDictionary()
+        private static void CreateDictionary(string filePath)
         {
-            if(!File.Exists(ResourceFilePath)) {
+            if(!File.Exists(filePath)) {
                 _resources = new Dictionary<string, ResourceObject>(0);
                 return;
             }
 
-            using(var fs = AlloclessFileStream.OpenRead(ResourceFilePath))
+            using(var fs = AlloclessFileStream.OpenRead(filePath))
             using(var pooledArray = new PooledArray<byte>(2048)) {
                 var buf = pooledArray.InnerArray;
                 if(ReadString(fs, 3, buf) != FORMAT_VERSION) {

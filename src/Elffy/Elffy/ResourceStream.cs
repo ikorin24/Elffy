@@ -52,14 +52,14 @@ namespace Elffy
             }
         }
 
-        internal ResourceStream(long head, long length)
+        internal ResourceStream(string resourceFilePath, long head, long length)
         {
             Debug.Assert(head >= 0);
             Debug.Assert(length >= 0);
 
             _head = head;
             _length = length;
-            var stream = AlloclessFileStream.OpenRead(Resources.ResourceFilePath);
+            var stream = AlloclessFileStream.OpenRead(resourceFilePath);
             stream.Position = _head;
             _innerStream = stream;
         }

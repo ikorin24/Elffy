@@ -1,12 +1,13 @@
 ﻿#nullable enable
+using Elffy.AssemblyServices;
 using Elffy.Core;
-using Elffy.Diagnostics;
 using Elffy.InputSystem;
 using Elffy.Platforms;
 using Elffy.Threading;
 using Elffy.Threading.Tasks;
 using Elffy.UI;
 using System;
+using System.IO;
 
 namespace Elffy
 {
@@ -30,6 +31,11 @@ namespace Elffy
 
         public static void Start(int width, int height, string title, Action initialize)
         {
+            Start(width, height, title, Path.GetFullPath("Resources.dat"), initialize);
+        }
+
+        public static void Start(int width, int height, string title, string resourceFilePath, Action initialize)
+        {
             _initialize = initialize ?? throw new ArgumentNullException(nameof(initialize));
             ProcessHelper.SingleLaunch(Launch);
 
@@ -39,7 +45,7 @@ namespace Elffy
                 screen.Initialized += InitScreen;
 
                 Engine.Run();
-                Resources.Initialize();
+                Resources.Initialize(resourceFilePath);
                 try {
                     CustomSynchronizationContext.CreateIfNeeded(out var syncContext, out _syncContextReciever);
                     screen.Show();
