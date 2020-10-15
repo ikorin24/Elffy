@@ -3,6 +3,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
+using Cysharp.Text;
 using Elffy.Core;
 using Elffy.OpenGL;
 using OpenTK.Graphics.OpenGL4;
@@ -112,10 +113,24 @@ namespace Elffy.Shading
             GL.CompileShader(shaderID);
             GL.GetShader(shaderID, ShaderParameter.CompileStatus, out int compileStatus);
             if(compileStatus == Consts.ShaderCompileFailed) {
-                var log = GL.GetShaderInfoLog(shaderID);
-                throw new InvalidDataException($"Compiling shader is Failed.{Environment.NewLine}{log}{Environment.NewLine}{source}");
+                throw ShaderCompileFailure(shaderID, source);
             }
             return shaderID;
+
+            static InvalidDataException ShaderCompileFailure(int shaderID, string source)
+            {
+                var log = GL.GetShaderInfoLog(shaderID);
+                using var sb = ZString.CreateStringBuilder();
+                sb.AppendLine("Compiling shader is Failed.");
+                sb.AppendLine(log);
+                var lines = source.Split('\n');
+                for(int l = 0; l < lines.Length; l++) {
+                    sb.Append(string.Format("{0, 3}\t", l));
+                    sb.Append(lines[l]);
+                    sb.Append('\n');
+                }
+                return new InvalidDataException(sb.ToString());
+            }
         }
     }
 }
