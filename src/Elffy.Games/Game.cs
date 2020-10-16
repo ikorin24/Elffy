@@ -47,7 +47,7 @@ namespace Elffy
                 Engine.Run();
                 Resources.Initialize(resourceFilePath);
                 try {
-                    CustomSynchronizationContext.CreateIfNeeded(out var syncContext, out _syncContextReciever);
+                    CustomSynchronizationContext.CreateIfNeeded(out _, out _syncContextReciever);
                     screen.Show();
 
                     while(Engine.HandleOnce()) {
