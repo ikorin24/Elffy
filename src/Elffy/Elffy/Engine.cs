@@ -23,6 +23,11 @@ namespace Elffy
             }
         }
 
+        public static ReadOnlySpan<IHostScreen> GetScreens()
+        {
+            return _screens.AsSpan();
+        }
+
         internal static void AddScreen(IHostScreen screen, bool show = true)
         {
             _screens.Add(screen);

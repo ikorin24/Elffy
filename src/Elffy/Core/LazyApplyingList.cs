@@ -56,6 +56,6 @@ namespace Elffy.Core
             }
         }
 
-        public Span<T> AsSpan() => _list.AsSpan();
+        public ReadOnlySpan<T> AsSpan() => _list.AsSpan();
     }
 }
