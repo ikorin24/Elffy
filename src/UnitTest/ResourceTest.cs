@@ -132,7 +132,7 @@ namespace UnitTest
                                                       .ToList();
             
             // リソースと元ファイルのペアを作り、そのハッシュ値の一致を確認
-            Resources.Initialize();
+            Resources.Initialize(Path.GetFullPath("Resources.dat"));
             var pair = Resources.GetResourceNames().Select(x => (Resource: x, Original: sourceNames.Find(y => x == y)))
                                 .ToArray();
             foreach(var (name, original) in pair) {
