@@ -5,7 +5,6 @@ using OpenTK.Graphics.OpenGL4;
 using Elffy.AssemblyServices;
 using Elffy.OpenGL;
 using Elffy.Shading;
-using System.IO;
 using System.Runtime.CompilerServices;
 
 namespace Elffy.Core
@@ -39,15 +38,16 @@ void main()
 ";
         private const string FragShaderSource =
 @"#version 440
+" + GlslLibrary.FXAA + @"
 
 in vec2 _uv2;
 out vec4 _color;
 uniform sampler2D _sampler;
+uniform vec2 _invScreenSize;
 
 void main()
 {
-    //_color = texture(_sampler, _uv2);
-    _color = vec4(vec3(1.0, 1.0, 1.0) - texture(_sampler, _uv2).rgb, 1.0);
+    _color = FXAA(_sampler, _uv2, _invScreenSize);
 }
 ";
 
@@ -63,16 +63,17 @@ void main()
                 }
                 CreateBuffer(width, height);
             }
-            return new OffScreenRenderingScope(enabled, this);
+            return new OffScreenRenderingScope(enabled, this, width, height);
         }
 
-        private void Render()
+        private void Render(int width, int height)
         {
             VAO.Bind(_vao);
             IBO.Bind(_ibo);
             ProgramObject.Bind(_program);
             var uniform = new Uniform(_program);
             uniform.SendTexture2D("_sampler", _to, TextureUnitNumber.Unit0);
+            uniform.Send("_invScreenSize", new Vector2(1f / width, 1f / height));
             var depthTestEnabled = GL.IsEnabled(EnableCap.DepthTest);
             GL.Disable(EnableCap.DepthTest);
             GL.Clear(ClearBufferMask.ColorBufferBit);
@@ -215,12 +216,16 @@ void main()
         {
             private readonly bool _enabled;
             private readonly PostProcessor _p;
+            private readonly int _width;
+            private readonly int _height;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            internal OffScreenRenderingScope(bool enabled, PostProcessor p)
+            internal OffScreenRenderingScope(bool enabled, PostProcessor p, int width, int height)
             {
                 _enabled = enabled;
                 _p = p;
+                _width = width;
+                _height = height;
                 if(enabled) {
                     FBO.Bind(p._fbo);
                 }
@@ -231,7 +236,7 @@ void main()
             {
                 if(_enabled) {
                     FBO.Unbind();
-                    _p.Render();
+                    _p.Render(_width, _height);
                 }
             }
         }
