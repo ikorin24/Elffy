@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using Elffy.InputSystem;
+using Elffy.Shading;
 using Elffy.Threading.Tasks;
 using OpenTK.Graphics.OpenGL4;
 using System;
@@ -16,9 +17,7 @@ namespace Elffy.Core
         private bool _disposed;
         /// <summary>UI の投影行列</summary>
         private Matrix4 _uiProjection;
-        private bool _postProcessChanged;
-        private PostProcessCompiled? _ppCompiled;
-        private PostProcess? _postProcess;
+        private PostProcessImpl _postProcessImpl;   // mutable object, don't make it readonly.
 
         public IHostScreen OwnerScreen { get; }
 
@@ -31,12 +30,8 @@ namespace Elffy.Core
 
         public PostProcess? PostProcess
         {
-            get => _postProcess;
-            set
-            {
-                _postProcess = value;
-                _postProcessChanged = true;
-            }
+            get => _postProcessImpl.PostProcess;
+            set => _postProcessImpl.PostProcess = value;
         }
 
         public int Width
@@ -148,14 +143,10 @@ namespace Elffy.Core
             uiLayer.LateUpdate();
 
             // Comile postProcess if needed
-            if(_postProcessChanged) {
-                _ppCompiled?.Dispose();
-                _ppCompiled = _postProcess?.Compile();
-                _postProcessChanged = false;
-            }
+            _postProcessImpl.ApplyChange();
 
             // Render
-            using(var scope = PostProcessCompiled.Scope.RootScope(_ppCompiled, new Vector2i(_width, _height))) {
+            using(var scope = _postProcessImpl.GetScopeAsRoot(new Vector2i(_width, _height))) {
                 foreach(var layer in Layers.AsReadOnlySpan()) {
                     layer.Render(Camera.Projection, Camera.View, scope);
                 }
@@ -184,8 +175,7 @@ namespace Elffy.Core
             layers.Clear();
 
             // Dispose resources of post process
-            _ppCompiled?.Dispose();
-            _ppCompiled = null;
+            _postProcessImpl.Dispose();
         }
 
         private void OnSizeChanged(int width, int height)

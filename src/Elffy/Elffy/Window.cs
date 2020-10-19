@@ -59,7 +59,7 @@ namespace Elffy
 
         public IDefaultResource DefaultResource => _defaultGLResource;
 
-        public PostProcess? PostProcess { get => _renderingArea.PostProcess; set => _renderingArea.PostProcess = value; }
+        public Shading.PostProcess? PostProcess { get => _renderingArea.PostProcess; set => _renderingArea.PostProcess = value; }
 
         /// <summary>初期化時イベント</summary>
         public event ActionEventHandler<IHostScreen>? Initialized;

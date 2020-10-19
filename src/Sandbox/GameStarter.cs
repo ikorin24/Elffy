@@ -133,7 +133,7 @@ namespace Sandbox
             button.KeyDown += sender =>
             {
                 if(Game.Screen.PostProcess is null) {
-                    Game.Screen.PostProcess = new FxaaPostProcessor();
+                    Game.Screen.PostProcess = new FxaaPostProcess();
                 }
                 else {
                     Game.Screen.PostProcess = null;

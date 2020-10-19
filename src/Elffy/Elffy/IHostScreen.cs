@@ -32,7 +32,7 @@ namespace Elffy
         /// <summary>Get number of current frame.</summary>
         ref readonly long FrameNum { get; }
 
-        PostProcess? PostProcess { get; set; }
+        Shading.PostProcess? PostProcess { get; set; }
 
         IDefaultResource DefaultResource { get; }
 

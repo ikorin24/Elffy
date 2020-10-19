@@ -3,6 +3,7 @@ using System;
 using System.Diagnostics;
 using Elffy.Core;
 using Elffy.OpenGL;
+using Elffy.Shading;
 
 namespace Elffy
 {
@@ -11,10 +12,8 @@ namespace Elffy
     public class Layer : ILayer, IDisposable
     {
         private readonly FrameObjectStore _store = new FrameObjectStore();
-        private bool _postProcessChanged;
-        private PostProcessCompiled? _ppCompiled;
-        private PostProcess? _postProcess;
         private LayerCollection? _owner;
+        private PostProcessImpl _postProcessImpl;   // mutable object, don't make it readonly.
 
         /// <summary>
         /// このレイヤーを持つ親 (<see cref="LayerCollection"/>)<para/>
@@ -40,12 +39,8 @@ namespace Elffy
 
         public PostProcess? PostProcess
         {
-            get => _postProcess;
-            set
-            {
-                _postProcess = value;
-                _postProcessChanged = true;
-            }
+            get => _postProcessImpl.PostProcess;
+            set => _postProcessImpl.PostProcess = value;
         }
 
         /// <summary>レイヤー名を指定して <see cref="Layer"/> を作成します</summary>
@@ -93,17 +88,12 @@ namespace Elffy
         /// <summary>Render all <see cref="FrameObject"/>s in this layer</summary>
         /// <param name="projection">projection matrix</param>
         /// <param name="view">view matrix</param>
-        /// <param name="current">current scope of <see cref="FBO"/></param>
-        internal void Render(in Matrix4 projection, in Matrix4 view,
-                             in PostProcessCompiled.Scope current)
+        /// <param name="currentScope">current scope of <see cref="FBO"/></param>
+        internal void Render(in Matrix4 projection, in Matrix4 view, in FrameBufferScope currentScope)
         {
-            if(_postProcessChanged) {
-                _ppCompiled?.Dispose();
-                _ppCompiled = PostProcess?.Compile();
-                _postProcessChanged = false;
-            }
+            _postProcessImpl.ApplyChange();
 
-            using(var scope = current.NewScope(_ppCompiled)) {
+            using(var scope = _postProcessImpl.GetScope(currentScope)) {
                 foreach(var renderable in _store.Renderables) {
                     if(!renderable.IsRoot || !renderable.IsVisible) { continue; }
                     renderable.Render(projection, view, Matrix4.Identity);
@@ -127,9 +117,7 @@ namespace Elffy
         {
             if(disposing) {
                 // Release managed resources
-                _postProcessChanged = false;
-                _ppCompiled?.Dispose();
-                _ppCompiled = null;
+                _postProcessImpl.Dispose();
             }
         }
     }
