@@ -43,12 +43,6 @@ namespace Elffy
         /// <summary>カメラを取得します</summary>
         Camera IHostScreen.Camera => _renderingArea.Camera;
 
-        public bool IsEnabledPostProcess
-        {
-            get => _renderingArea.IsEnabledPostProcess;
-            set => _renderingArea.IsEnabledPostProcess = value;
-        }
-
         TimeSpan IHostScreen.FrameDelta => _frameDelta;
 
         public Vector2i ClientSize { get => _windowImpl.ClientSize; set => _windowImpl.ClientSize = value; }
@@ -64,6 +58,8 @@ namespace Elffy
         public ref readonly long FrameNum => ref _frameNum;
 
         public IDefaultResource DefaultResource => _defaultGLResource;
+
+        public PostProcess? PostProcess { get => _renderingArea.PostProcess; set => _renderingArea.PostProcess = value; }
 
         /// <summary>初期化時イベント</summary>
         public event ActionEventHandler<IHostScreen>? Initialized;

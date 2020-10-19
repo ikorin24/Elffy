@@ -3,19 +3,16 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using Elffy.Core;
-using Elffy.Exceptions;
-using Elffy.UI;
-using Elffy.Effective;
 using Elffy.Effective.Unsafes;
+using System.Runtime.CompilerServices;
 
 namespace Elffy
 {
     /// <summary><see cref="Layer"/>のリストを表すクラスです。</summary>
     [DebuggerTypeProxy(typeof(LayerCollectionDebuggerTypeProxy))]
     [DebuggerDisplay("LayerCollection (Count = {Count})")]
-    public class LayerCollection : IReadOnlyList<Layer>, IReadOnlyCollection<Layer>, ICollection<Layer>
+    public sealed class LayerCollection : IReadOnlyList<Layer>, IReadOnlyCollection<Layer>, ICollection<Layer>
     {
         private const string WORLD_LAYER_NAME = "World";
         private readonly List<Layer> _list = new List<Layer>();
@@ -39,21 +36,14 @@ namespace Elffy
         /// <summary>インデックスを指定して、レイヤーを取得、設定します</summary>
         /// <param name="index">インデックス</param>
         /// <returns>レイヤー</returns>
-        public Layer this[int index]
-        {
-            get
-            {
-                if((uint)index >= (uint)_list.Count) { throw new ArgumentOutOfRangeException(nameof(index), index, "value is out of range"); }
-                return _list[index];
-            }
-        }
-        
+        public Layer this[int index] => _list[index];   // no index bounds checking (List<T> checks it.)
+
         internal LayerCollection(RenderingArea owner)
         {
             OwnerRenderingArea = owner;
             UILayer = new UILayer(this);
             SystemLayer = new SystemLayer(this);
-            WorldLayer = new Layer(WORLD_LAYER_NAME, this);
+            WorldLayer = new Layer(WORLD_LAYER_NAME);
             AddDefaltLayers();
         }
 
@@ -61,10 +51,17 @@ namespace Elffy
         /// レイヤーを追加します<para/>
         /// </summary>
         /// <param name="layer">追加する要素</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(Layer layer)
         {
-            if(layer is null) { throw new ArgumentNullException(nameof(layer)); }
-            if(layer.Owner != null) { throw new InvalidOperationException($"指定のレイヤーは既に別の {nameof(LayerCollection)} に含まれています。"); }
+            if(layer is null) {
+                ThrowNullArg();
+                static void ThrowNullArg() => throw new ArgumentNullException(nameof(layer));
+            }
+            if(layer!.Owner is null == false) {
+                ThrowAlreadyOwned();
+                static void ThrowAlreadyOwned() => throw new InvalidOperationException($"Layer is already owned by {nameof(LayerCollection)}.");
+            }
             layer.Owner = this;
             _list.Add(layer);
         }
@@ -93,10 +90,13 @@ namespace Elffy
         /// <returns>削除に成功したか (指定した要素が存在しない場合 false)</returns>
         public bool Remove(Layer layer)
         {
-            if(layer is null) { throw new ArgumentNullException(nameof(layer)); }
-            var removed = _list.Remove(layer);
+            if(layer is null) {
+                ThrowNullArg();
+                static void ThrowNullArg() => throw new ArgumentNullException(nameof(layer));
+            }
+            var removed = _list.Remove(layer!);
             if(removed) {
-                layer.Owner = null;
+                layer!.Owner = null;
             }
             return removed;
         }
@@ -112,7 +112,7 @@ namespace Elffy
 
         private void AddDefaltLayers()
         {
-            _list.Add(WorldLayer);
+            Add(WorldLayer);
         }
     }
 

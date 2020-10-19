@@ -1,11 +1,9 @@
 ﻿#nullable enable
 using Elffy.InputSystem;
-using Elffy.Threading;
 using Elffy.Threading.Tasks;
 using OpenTK.Graphics.OpenGL4;
 using System;
 using System.Diagnostics;
-using System.Drawing;
 
 namespace Elffy.Core
 {
@@ -16,9 +14,11 @@ namespace Elffy.Core
         const float UI_NEAR = -0.01f;
 
         private bool _disposed;
-        private readonly PostProcessor _postProcessor = new PostProcessor();
         /// <summary>UI の投影行列</summary>
         private Matrix4 _uiProjection;
+        private bool _postProcessChanged;
+        private PostProcessCompiled? _ppCompiled;
+        private PostProcess? _postProcess;
 
         public IHostScreen OwnerScreen { get; }
 
@@ -29,7 +29,15 @@ namespace Elffy.Core
 
         public AsyncBackEndPoint AsyncBack { get; }
 
-        public bool IsEnabledPostProcess { get; set; }
+        public PostProcess? PostProcess
+        {
+            get => _postProcess;
+            set
+            {
+                _postProcess = value;
+                _postProcessChanged = true;
+            }
+        }
 
         public int Width
         {
@@ -139,11 +147,17 @@ namespace Elffy.Core
             }
             uiLayer.LateUpdate();
 
+            // Comile postProcess if needed
+            if(_postProcessChanged) {
+                _ppCompiled?.Dispose();
+                _ppCompiled = _postProcess?.Compile();
+                _postProcessChanged = false;
+            }
+
             // Render
-            using(_postProcessor.OffScreenRendering(IsEnabledPostProcess, _width, _height)) {
-                GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            using(var scope = PostProcessCompiled.Scope.RootScope(_ppCompiled, new Vector2i(_width, _height))) {
                 foreach(var layer in Layers.AsReadOnlySpan()) {
-                    layer.Render(Camera.Projection, Camera.View);
+                    layer.Render(Camera.Projection, Camera.View, scope);
                 }
                 uiLayer.Render(_uiProjection);
             }
@@ -170,7 +184,8 @@ namespace Elffy.Core
             layers.Clear();
 
             // Dispose resources of post process
-            _postProcessor.Dispose();
+            _ppCompiled?.Dispose();
+            _ppCompiled = null;
         }
 
         private void OnSizeChanged(int width, int height)

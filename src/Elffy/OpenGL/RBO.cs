@@ -15,6 +15,8 @@ namespace Elffy.OpenGL
         internal int Value => _rbo;
         public bool IsEmpty => _rbo == Consts.NULL;
 
+        public static RBO Empty => new RBO();
+
         private RBO(int rbo)
         {
             _rbo = rbo;

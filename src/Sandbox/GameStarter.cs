@@ -12,6 +12,7 @@ using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Cysharp.Threading.Tasks;
+using Elffy.Core;
 
 namespace Sandbox
 {
@@ -131,9 +132,12 @@ namespace Sandbox
             button.Position = new Vector2i(10, 10);
             button.KeyDown += sender =>
             {
-                var enabled = !Game.Screen.IsEnabledPostProcess;
-                Game.Screen.IsEnabledPostProcess = enabled;
-                DevEnv.WriteLine(enabled);
+                if(Game.Screen.PostProcess is null) {
+                    Game.Screen.PostProcess = new FxaaPostProcessor();
+                }
+                else {
+                    Game.Screen.PostProcess = null;
+                }
                 DevEnv.WriteLine("Down");
             };
             button.KeyPress += sender => DevEnv.WriteLine("Press");

@@ -90,6 +90,7 @@ namespace Elffy.Shading
             GL.ProgramUniform1(_program.Value, location, (int)unit);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal Uniform(ProgramObject program)
         {
             _program = program;

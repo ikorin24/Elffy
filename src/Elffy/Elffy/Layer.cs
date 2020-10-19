@@ -1,42 +1,62 @@
 ﻿#nullable enable
-using Elffy.Core;
-using System.Linq;
-using OpenTK.Graphics.OpenGL4;
-using System.Diagnostics;
-using Elffy.Exceptions;
 using System;
+using System.Diagnostics;
+using Elffy.Core;
+using Elffy.OpenGL;
 
 namespace Elffy
 {
     /// <summary><see cref="FrameObject"/> のレイヤークラス</summary>
     [DebuggerDisplay("Layer: {Name} (ObjectCount = {ObjectCount})", Type = nameof(Layer), TargetTypeName = nameof(Layer))]
-    public class Layer : ILayer
+    public class Layer : ILayer, IDisposable
     {
         private readonly FrameObjectStore _store = new FrameObjectStore();
+        private bool _postProcessChanged;
+        private PostProcessCompiled? _ppCompiled;
+        private PostProcess? _postProcess;
+        private LayerCollection? _owner;
 
         /// <summary>
         /// このレイヤーを持つ親 (<see cref="LayerCollection"/>)<para/>
         /// ※ このレイヤーを <see cref="LayerCollection"/> に追加する時、必ず <see cref="LayerCollection"/> をこのプロパティに入れるように実装されなければならない。
         /// 削除時は null を必ず入れる。<para/>
         /// </summary>
-        internal LayerCollection? Owner { get; set; }
+        internal LayerCollection? Owner
+        {
+            get => _owner;
+            set
+            {
+                if(value is null) {
+                    Dispose();      // dispose when removed from owner.
+                }
+                _owner = value;
+            }
+        }
         LayerCollection? ILayer.OwnerCollection => Owner;
 
         public string Name { get; }
 
         public ReadOnlySpan<Light> Lights => _store.Lights;
 
+        public PostProcess? PostProcess
+        {
+            get => _postProcess;
+            set
+            {
+                _postProcess = value;
+                _postProcessChanged = true;
+            }
+        }
+
         /// <summary>レイヤー名を指定して <see cref="Layer"/> を作成します</summary>
         /// <param name="name">レイヤー名</param>
         public Layer(string name)
         {
-            Name = name ?? throw new ArgumentNullException(nameof(name));
-        }
-
-        internal Layer(string name, LayerCollection owner)
-        {
-            Name = name ?? throw new ArgumentNullException(nameof(name));
-            Owner = owner;
+            if(name is null) {
+                ThrowNullArg();
+                static void ThrowNullArg() => throw new ArgumentNullException(nameof(name));
+            }
+            Name = name!;
         }
 
         /// <summary>現在生きている全オブジェクトの数を取得します</summary>
@@ -70,14 +90,46 @@ namespace Elffy
         internal void ClearFrameObject() => _store.ClearFrameObject();
         void ILayer.ClearFrameObject() => ClearFrameObject();
 
-        /// <summary>画面への投影行列とカメラ行列を指定して、描画を実行します</summary>
-        /// <param name="projection">投影行列</param>
-        /// <param name="view">カメラ行列</param>
-        internal unsafe void Render(in Matrix4 projection, in Matrix4 view)
+        /// <summary>Render all <see cref="FrameObject"/>s in this layer</summary>
+        /// <param name="projection">projection matrix</param>
+        /// <param name="view">view matrix</param>
+        /// <param name="current">current scope of <see cref="FBO"/></param>
+        internal void Render(in Matrix4 projection, in Matrix4 view,
+                             in PostProcessCompiled.Scope current)
         {
-            foreach(var renderable in _store.Renderables) {
-                if(!renderable.IsRoot || !renderable.IsVisible) { continue; }
-                renderable.Render(projection, view, Matrix4.Identity);
+            if(_postProcessChanged) {
+                _ppCompiled?.Dispose();
+                _ppCompiled = PostProcess?.Compile();
+                _postProcessChanged = false;
+            }
+
+            using(var scope = current.NewScope(_ppCompiled)) {
+                foreach(var renderable in _store.Renderables) {
+                    if(!renderable.IsRoot || !renderable.IsVisible) { continue; }
+                    renderable.Render(projection, view, Matrix4.Identity);
+                }
+            }
+        }
+
+        public void Dispose()
+        {
+            // [NOTE]
+            // Dispose() is called when removed from an owner layer collection.
+            // Dispose resources, but this instance does not die
+            // because default layer in layer collection (e.g. world layer) must be survived
+            // when called LayerCollection.Clear().
+            // Don't check already disposed.
+
+            Dispose(true);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if(disposing) {
+                // Release managed resources
+                _postProcessChanged = false;
+                _ppCompiled?.Dispose();
+                _ppCompiled = null;
             }
         }
     }

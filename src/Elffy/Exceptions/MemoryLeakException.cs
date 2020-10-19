@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using System;
-using Cysharp.Text;
 
 namespace Elffy.Exceptions
 {
@@ -14,7 +13,7 @@ namespace Elffy.Exceptions
         {
         }
 
-        public MemoryLeakException(Type targetType) : base(ZString.Concat(DefaultMessage, Environment.NewLine, "Target Type : ", targetType?.FullName))
+        public MemoryLeakException(Type targetType) : base($"Target Type: {targetType.FullName}, {DefaultMessage}")
         {
             TargetType = targetType;
         }
