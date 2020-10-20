@@ -8,19 +8,18 @@ namespace Elffy.Core
     {
         LayerCollection? OwnerCollection { get; }
 
-        /// <summary>現在生きている全オブジェクトの数を取得します</summary>
+        /// <summary>Get count of living objects</summary>
         int ObjectCount { get; }
 
-        /// <summary>指定した<see cref="FrameObject"/>を追加します</summary>
-        /// <param name="frameObject">追加するオブジェクト</param>
+        /// <summary>Add <see cref="FrameObject"/></summary>
+        /// <param name="frameObject"><see cref="FrameObject"/> to add to the list</param>
         void AddFrameObject(FrameObject frameObject);
 
-        /// <summary>指定した<see cref="FrameObject"/>を削除します</summary>
-        /// <param name="frameObject">削除するオブジェクト</param>
-        /// <returns>削除できたかどうか</returns>
+        /// <summary>Remove <see cref="FrameObject"/></summary>
+        /// <param name="frameObject"><see cref="FrameObject"/> to remove from the list</param>
         void RemoveFrameObject(FrameObject frameObject);
 
-        /// <summary>保持している <see cref="FrameObject"/> を全て破棄し、リストをクリアします</summary>
+        /// <summary>Clear all <see cref="FrameObject"/>s in the lists</summary>
         void ClearFrameObject();
     }
 }

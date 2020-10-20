@@ -1,9 +1,6 @@
 ﻿#nullable enable
 using Elffy.InputSystem;
 using Elffy.UI;
-using OpenTK.Graphics.OpenGL4;
-using System;
-using System.Linq;
 
 namespace Elffy.Core
 {
@@ -11,8 +8,8 @@ namespace Elffy.Core
     {
         private readonly FrameObjectStore _store = FrameObjectStore.New();
 
-        /// <summary>現在フォーカスがある <see cref="Control"/></summary>
-        private Control? _focusedControl;
+        ///// <summary>現在フォーカスがある <see cref="Control"/></summary>
+        //private Control? _focusedControl;
 
         /// <summary>このレイヤーを持つ親</summary>
         internal LayerCollection Owner { get; }
@@ -59,15 +56,6 @@ namespace Elffy.Core
         /// <param name="projection"></param>
         internal unsafe void Render(in Matrix4 projection)
         {
-            //var view = YAxisDirection switch
-            //{
-            //    YAxisDirection.TopToBottom => new Matrix4(1, 0,  0, 0,
-            //                                              0, -1, 0, UIRoot.Height,
-            //                                              0, 0,  1, 0,
-            //                                              0, 0,  0, 1),
-            //    YAxisDirection.BottomToTop => Matrix4.Identity,
-            //    _ => throw new NotSupportedException(),
-            //};
             var view = new Matrix4(1, 0, 0, 0,
                                    0, -1, 0, UIRoot.Height,
                                    0, 0, 1, 0,

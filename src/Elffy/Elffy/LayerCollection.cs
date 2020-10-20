@@ -9,44 +9,41 @@ using System.Runtime.CompilerServices;
 
 namespace Elffy
 {
-    /// <summary><see cref="Layer"/>のリストを表すクラスです。</summary>
+    /// <summary>List class of <see cref="Layer"/></summary>
     [DebuggerTypeProxy(typeof(LayerCollectionDebuggerTypeProxy))]
     [DebuggerDisplay("LayerCollection (Count = {Count})")]
-    public sealed class LayerCollection : IReadOnlyList<Layer>, IReadOnlyCollection<Layer>, ICollection<Layer>
+    public sealed class LayerCollection : IReadOnlyList<Layer>, IReadOnlyCollection<Layer>
     {
-        private const string WORLD_LAYER_NAME = "World";
+        private const string WorldLayerName = "World";
         private readonly List<Layer> _list = new List<Layer>();
 
         internal RenderingArea OwnerRenderingArea { get; }
 
-        /// <summary>UI レイヤーを取得します (このレイヤーはリストには含まれません。インスタンスを public にも公開しないでください)</summary>
+        /// <summary>Get UI layer instance.</summary>
+        /// <remarks>DO NOT make it public. This is not in the list, don't share the instance as public.</remarks>
         internal UILayer UILayer { get; }
 
-        /// <summary>ワールドレイヤーを取得します</summary>
+        /// <summary>Get world layer instance. (This instance is in the list.)</summary>
         public Layer WorldLayer { get; }
 
-        /// <summary>レイヤーの数を取得します</summary>
+        /// <summary>Get layer count</summary>
         public int Count => _list.Count;
 
-        bool ICollection<Layer>.IsReadOnly => false;
-
-        /// <summary>インデックスを指定して、レイヤーを取得、設定します</summary>
-        /// <param name="index">インデックス</param>
-        /// <returns>レイヤー</returns>
+        /// <summary>Get <see cref="Layer"/> of specified index</summary>
+        /// <param name="index">index to get a layer</param>
+        /// <returns><see cref="Layer"/> instance</returns>
         public Layer this[int index] => _list[index];   // no index bounds checking (List<T> checks it.)
 
         internal LayerCollection(RenderingArea owner)
         {
             OwnerRenderingArea = owner;
             UILayer = new UILayer(this);
-            WorldLayer = new Layer(WORLD_LAYER_NAME);
+            WorldLayer = new Layer(WorldLayerName);
             AddDefaltLayers();
         }
 
-        /// <summary>
-        /// レイヤーを追加します<para/>
-        /// </summary>
-        /// <param name="layer">追加する要素</param>
+        /// <summary>Add <see cref="Layer"/></summary>
+        /// <param name="layer">layer instance</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(Layer layer)
         {
@@ -62,7 +59,7 @@ namespace Elffy
             _list.Add(layer);
         }
 
-        /// <summary>レイヤーをクリアします (デフォルトのレイヤーはクリアされません)</summary>
+        /// <summary>Clear all layers. (Default layer is not cleared.)</summary>
         public void Clear()
         {
             foreach(var layer in _list.AsSpan()) {
@@ -72,18 +69,9 @@ namespace Elffy
             AddDefaltLayers();
         }
 
-        /// <summary>リスト中にレイヤーが含まれているかを取得します</summary>
-        /// <param name="layer">確認するレイヤー</param>
-        /// <returns>リスト中に指定レイヤーが含まれているか</returns>
-        public bool Contains(Layer layer) => _list.Contains(layer);
-
-        /// <summary>リストのレイヤーを配列にコピーします</summary>
-        /// <param name="array">コピー先の配列</param>
-        /// <param name="arrayIndex">コピー先の配列のコピーを開始するインデックス</param>
-        public void CopyTo(Layer[] array, int arrayIndex) => _list.CopyTo(array, arrayIndex);
-        /// <summary>レイヤーをリストから削除します</summary>
-        /// <param name="layer">削除するレイヤー</param>
-        /// <returns>削除に成功したか (指定した要素が存在しない場合 false)</returns>
+        /// <summary>Remove <see cref="Layer"/></summary>
+        /// <param name="layer">layer</param>
+        /// <returns>true if success, false when not contains</returns>
         public bool Remove(Layer layer)
         {
             if(layer is null) {
@@ -110,26 +98,27 @@ namespace Elffy
         {
             Add(WorldLayer);
         }
-    }
 
-    #region class LayerCollectionDebuggerTypeProxy
-    internal class LayerCollectionDebuggerTypeProxy
-    {
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private LayerCollection _entity;
 
-        [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-        public Layer[] Layers
+        #region class LayerCollectionDebuggerTypeProxy
+        internal class LayerCollectionDebuggerTypeProxy
         {
-            get
-            {
-                var layers = new Layer[_entity.Count];
-                _entity.CopyTo(layers, 0);
-                return layers;
-            }
-        }
+            [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+            private LayerCollection _entity;
 
-        public LayerCollectionDebuggerTypeProxy(LayerCollection entity) => _entity = entity;
+            [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+            public Layer[] Layers
+            {
+                get
+                {
+                    var layers = new Layer[_entity.Count];
+                    _entity._list.CopyTo(layers, 0);
+                    return layers;
+                }
+            }
+
+            public LayerCollectionDebuggerTypeProxy(LayerCollection entity) => _entity = entity;
+        }
+        #endregion class LayerCollectionDebuggerTypeProxy<T>
     }
-    #endregion class LayerCollectionDebuggerTypeProxy<T>
 }
