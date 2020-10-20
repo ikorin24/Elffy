@@ -11,7 +11,7 @@ namespace Elffy
     [DebuggerDisplay("Layer: {Name} (ObjectCount = {ObjectCount})", Type = nameof(Layer), TargetTypeName = nameof(Layer))]
     public class Layer : ILayer, IDisposable
     {
-        private readonly FrameObjectStore _store = new FrameObjectStore();
+        private readonly FrameObjectStore _store = FrameObjectStore.New();
         private LayerCollection? _owner;
         private PostProcessImpl _postProcessImpl;   // mutable object, don't make it readonly.
 

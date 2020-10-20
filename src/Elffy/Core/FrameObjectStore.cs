@@ -1,45 +1,46 @@
 ﻿#nullable enable
-using Elffy.Exceptions;
 using Elffy.Effective.Unsafes;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Elffy.Core
 {
-    /// <summary><see cref="FrameObject"/> を保持しておくためのクラスです。</summary>
-    internal class FrameObjectStore
+    internal readonly struct FrameObjectStore
     {
-        /// <summary>現在生きている全オブジェクトのリスト</summary>
-        private readonly List<FrameObject> _list = new List<FrameObject>();
-        /// <summary>このフレームで追加されたオブジェクトのリスト (次のフレームの最初に <see cref="_list"/> に追加されます)</summary>
-        private readonly List<FrameObject> _addedBuf = new List<FrameObject>();
-        /// <summary>このフレームで削除されたオブジェクトのリスト (次のフレームの最初に <see cref="_list"/> から削除されます)</summary>
-        private readonly List<FrameObject> _removedBuf = new List<FrameObject>();
-        /// <summary><see cref="_list"/> に含まれるオブジェクトのうち、<see cref="Renderable"/> を継承しているもののリスト</summary>
-        private readonly List<Renderable> _renderables = new List<Renderable>();
+        private readonly List<FrameObject> _list;
+        private readonly List<FrameObject> _addedBuf;
+        private readonly List<FrameObject> _removedBuf;
+        private readonly List<Renderable> _renderables;
+        private readonly List<Light> _lights;
 
-        private readonly List<Light> _lights = new List<Light>();
-
-        /// <summary>現在生きている全オブジェクトを取得します</summary>
-        public ReadOnlySpan<FrameObject> List => _list.AsReadOnlySpan();
-        /// <summary>現在生きている全オブジェクトの数を取得します</summary>
         public int ObjectCount => _list.Count;
-
-        /// <summary>現在のフレームで追加されたオブジェクトを取得します</summary>
+        public ReadOnlySpan<FrameObject> List => _list.AsReadOnlySpan();
         public ReadOnlySpan<FrameObject> Added => _addedBuf.AsReadOnlySpan();
-
-        /// <summary>現在のフレームで削除されたオブジェクトを取得します</summary>
         public ReadOnlySpan<FrameObject> Removed => _removedBuf.AsReadOnlySpan();
-
-        /// <summary><see cref="List"/> に含まれるオブジェクトのうち、<see cref="Renderable"/> を継承しているものを取得します</summary>
         public ReadOnlySpan<Renderable> Renderables => _renderables.AsReadOnlySpan();
-
         public ReadOnlySpan<Light> Lights => _lights.AsReadOnlySpan();
+
+        private FrameObjectStore(int dummyArg)
+        {
+            _list = new List<FrameObject>();
+            _addedBuf = new List<FrameObject>();
+            _removedBuf = new List<FrameObject>();
+            _renderables = new List<Renderable>();
+            _lights = new List<Light>();
+        }
+
+        /// <summary>Create new <see cref="FrameObjectStore"/></summary>
+        /// <returns>instance</returns>
+        public static FrameObjectStore New()
+        {
+            return new FrameObjectStore(0);
+        }
 
         /// <summary>指定した<see cref="FrameObject"/>を追加します</summary>
         /// <param name="frameObject">追加するオブジェクト</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddFrameObject(FrameObject frameObject)
         {
             Debug.Assert(frameObject is null == false);
@@ -49,57 +50,30 @@ namespace Elffy.Core
         /// <summary>指定した<see cref="FrameObject"/>を削除します</summary>
         /// <param name="frameObject">削除するオブジェクト</param>
         /// <returns>削除できたかどうか</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RemoveFrameObject(FrameObject frameObject)
         {
             Debug.Assert(frameObject is null == false);
             _removedBuf.Add(frameObject);
         }
 
-        public void ApplyRemove()
-        {
-            if(_removedBuf.Count > 0) {
-                foreach(var item in _removedBuf.AsSpan()) {
-                    Debug.Assert(item.LifeState == FrameObjectLifeSpanState.Terminated);
-                    var removed = _list.Remove(item);
-                    Debug.Assert(removed);
-                    switch(item) {
-                        case Renderable renderable: {
-                            var renderableRemoved = _renderables.Remove(renderable);
-                            Debug.Assert(renderableRemoved);
-                            break;
-                        }
-                        case Light light: {
-                            var lightRemoved = _lights.Remove(light);
-                            Debug.Assert(lightRemoved);
-                            break;
-                        }
-                    }
-                    item.RemovedFromObjectStoreCallback();
-                }
-                _removedBuf.Clear();
-            }
-        }
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ApplyAdd()
         {
             if(_addedBuf.Count > 0) {
-                _list.AddRange(_addedBuf);
-                foreach(var item in _addedBuf.AsSpan()) {
-                    Debug.Assert(item.LifeState == FrameObjectLifeSpanState.Activated);
-                    switch(item) {
-                        case Renderable renderable:
-                            _renderables.Add(renderable);
-                            break;
-                        case Light light:
-                            _lights.Add(light);
-                            break;
-                    }
-                    item.AddToObjectStoreCallback();
-                }
-                _addedBuf.Clear();
+                ApplyAddPrivate();
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ApplyRemove()
+        {
+            if(_removedBuf.Count > 0) {
+                ApplyRemovePrivate();
+            }
+        }
+
+        /// <summary>Early update frame</summary>
         public void EarlyUpdate()
         {
             foreach(var frameObject in _list.AsSpan()) {
@@ -108,7 +82,7 @@ namespace Elffy.Core
             }
         }
 
-        /// <summary>フレームの更新を行います</summary>
+        /// <summary>Update frame</summary>
         public void Update()
         {
             foreach(var frameObject in _list.AsSpan()) {
@@ -117,6 +91,7 @@ namespace Elffy.Core
             }
         }
 
+        /// <summary>Late update frame</summary>
         public void LateUpdate()
         {
             foreach(var frameObject in _list.AsSpan()) {
@@ -125,20 +100,68 @@ namespace Elffy.Core
             }
         }
 
-        /// <summary>保持している <see cref="FrameObject"/> を全て破棄し、リストをクリアします</summary>
+        /// <summary>Clear all <see cref="FrameObject"/> in lists</summary>
         public void ClearFrameObject()
         {
-            _addedBuf.Clear();          // 追加オブジェクトのリストを先にクリア
-            foreach(var item in _list.AsSpan()) {
-                item.Terminate();         // 生きているオブジェクトをすべて破棄
-            }
-            ApplyRemove();          // 削除を適用
+            // Abort added objects at the first.
+            _addedBuf.Clear();
 
-            // 全リストをクリア
+            // Terminate all living object. (Terminated objects go to removed buffer.)
+            foreach(var item in _list.AsSpan()) {
+                item.Terminate();
+            }
+
+            // Apply removing
+            ApplyRemove();
+
+            // Clear all other lists
             _list.Clear();
             _removedBuf.Clear();
             _renderables.Clear();
             _lights.Clear();
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]  // uncommon path, no inlining
+        private void ApplyRemovePrivate()
+        {
+            foreach(var item in _removedBuf.AsSpan()) {
+                Debug.Assert(item.LifeState == FrameObjectLifeSpanState.Terminated);
+                var sucessRemoving = _list.Remove(item);
+                Debug.Assert(sucessRemoving);
+                switch(item) {
+                    case Renderable renderable: {
+                        var renderableRemoved = _renderables.Remove(renderable);
+                        Debug.Assert(renderableRemoved);
+                        break;
+                    }
+                    case Light light: {
+                        var lightRemoved = _lights.Remove(light);
+                        Debug.Assert(lightRemoved);
+                        break;
+                    }
+                }
+                item.RemovedFromObjectStoreCallback();
+            }
+            _removedBuf.Clear();
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]  // uncommon path, no inlining
+        private void ApplyAddPrivate()
+        {
+            _list.AddRange(_addedBuf);
+            foreach(var item in _addedBuf.AsSpan()) {
+                Debug.Assert(item.LifeState == FrameObjectLifeSpanState.Activated);
+                switch(item) {
+                    case Renderable renderable:
+                        _renderables.Add(renderable);
+                        break;
+                    case Light light:
+                        _lights.Add(light);
+                        break;
+                }
+                item.AddToObjectStoreCallback();
+            }
+            _addedBuf.Clear();
         }
     }
 }

@@ -9,7 +9,7 @@ namespace Elffy.Core
 {
     internal sealed class UILayer : ILayer
     {
-        private readonly FrameObjectStore _store = new FrameObjectStore();
+        private readonly FrameObjectStore _store = FrameObjectStore.New();
 
         /// <summary>現在フォーカスがある <see cref="Control"/></summary>
         private Control? _focusedControl;

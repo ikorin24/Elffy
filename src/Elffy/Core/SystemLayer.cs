@@ -6,7 +6,7 @@ namespace Elffy.Core
 {
     internal sealed class SystemLayer : ILayer
     {
-        private readonly FrameObjectStore _store = new FrameObjectStore();
+        private readonly FrameObjectStore _store = FrameObjectStore.New();
 
         /// <summary>このレイヤーを持つ親</summary>
         internal LayerCollection Owner { get; }
