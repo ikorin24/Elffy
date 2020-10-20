@@ -8,7 +8,7 @@ namespace Elffy
 {
     public static class Engine
     {
-        private static LazyApplyingList<IHostScreen> _screens = new LazyApplyingList<IHostScreen>();
+        private static LazyApplyingList<IHostScreen> _screens = LazyApplyingList<IHostScreen>.New();
 
         public static bool IsRunning { get; private set; }
 
