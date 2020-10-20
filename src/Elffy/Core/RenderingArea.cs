@@ -108,18 +108,15 @@ namespace Elffy.Core
         /// <summary>フレームを更新して描画します</summary>
         public void RenderFrame()
         {
-            var systemLayer = Layers.SystemLayer;
             var uiLayer = Layers.UILayer;
 
             // 前フレームで追加されたオブジェクトの追加を適用
-            systemLayer.ApplyAdd();
             foreach(var layer in Layers.AsReadOnlySpan()) {
                 layer.ApplyAdd();
             }
             uiLayer.ApplyAdd();
 
             // Early update
-            systemLayer.EarlyUpdate();
             AsyncBack.DoQueuedEvents(FrameLoopTiming.EarlyUpdate);
             foreach(var layer in Layers.AsReadOnlySpan()) {
                 layer.EarlyUpdate();
@@ -127,7 +124,6 @@ namespace Elffy.Core
             uiLayer.EarlyUpdate();
 
             // Update
-            systemLayer.Update();
             AsyncBack.DoQueuedEvents(FrameLoopTiming.Update);
             foreach(var layer in Layers.AsReadOnlySpan()) {
                 layer.Update();
@@ -135,7 +131,6 @@ namespace Elffy.Core
             uiLayer.Update();
 
             // Late update
-            systemLayer.LateUpdate();
             AsyncBack.DoQueuedEvents(FrameLoopTiming.LateUpdate);
             foreach(var layer in Layers.AsReadOnlySpan()) {
                 layer.LateUpdate();
@@ -154,7 +149,6 @@ namespace Elffy.Core
             }
 
             // このフレームで削除されたオブジェクトの削除を適用
-            systemLayer.ApplyRemove();
             foreach(var layer in Layers.AsReadOnlySpan()) {
                 layer.ApplyRemove();
             }
@@ -168,7 +162,6 @@ namespace Elffy.Core
 
             // Clear objects in all layers
             var layers = Layers;
-            layers.SystemLayer.ClearFrameObject();
             foreach(var layer in layers.AsReadOnlySpan()) {
                 layer.ClearFrameObject();
             }

@@ -153,7 +153,6 @@ namespace Elffy
             Initialized?.Invoke(this);
 
             var layers = _renderingArea.Layers;
-            layers.SystemLayer.ApplyAdd();
             foreach(var layer in layers.AsReadOnlySpan()) {
                 layer.ApplyAdd();
             }

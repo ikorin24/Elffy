@@ -25,9 +25,6 @@ namespace Elffy
         /// <summary>ワールドレイヤーを取得します</summary>
         public Layer WorldLayer { get; }
 
-        /// <summary>システムレイヤー (このレイヤーはリストには含まれません。インスタンスを public にも公開しないでください)</summary>
-        internal SystemLayer SystemLayer { get; }
-
         /// <summary>レイヤーの数を取得します</summary>
         public int Count => _list.Count;
 
@@ -42,7 +39,6 @@ namespace Elffy
         {
             OwnerRenderingArea = owner;
             UILayer = new UILayer(this);
-            SystemLayer = new SystemLayer(this);
             WorldLayer = new Layer(WORLD_LAYER_NAME);
             AddDefaltLayers();
         }
