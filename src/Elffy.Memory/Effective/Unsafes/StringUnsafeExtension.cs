@@ -1,6 +1,8 @@
 ﻿#nullable enable
 using Elffy.AssemblyServices;
+using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Elffy.Effective.Unsafes
 {
@@ -16,6 +18,50 @@ namespace Elffy.Effective.Unsafes
             return ref Unsafe.As<StringDummy>(source)._firstChar;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [CriticalDotnetDependency("netcoreapp3.1")]
+        public static ReadOnlySpan<char> AsSpanUnsafe(this string source, int start)
+        {
+            return MemoryMarshal.CreateReadOnlySpan(ref Unsafe.Add(ref Unsafe.As<StringDummy>(source)._firstChar, start), source.Length - start);
+        }
+
+        /// <summary>Get span of <see cref="string"/>.</summary>
+        /// <remarks>[CAUTION] This method DOES NOT check boundary !! Be careful !!</remarks>
+        /// <param name="source">source <see cref="string"/></param>
+        /// <param name="start">start index to slice</param>
+        /// <param name="length">length to slice</param>
+        /// <returns>sliced span</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [CriticalDotnetDependency("netcoreapp3.1")]
+        public static ReadOnlySpan<char> AsSpanUnsafe(this string source, int start, int length)
+        {
+            return MemoryMarshal.CreateReadOnlySpan(ref Unsafe.Add(ref Unsafe.As<StringDummy>(source)._firstChar, start), length);
+        }
+
+        /// <summary>Get slice of <see cref="ReadOnlySpan{char}"/>.</summary>
+        /// <remarks>[CAUTION] This method DOES NOT check boundary !! Be careful !!</remarks>
+        /// <param name="source">source <see cref="ReadOnlySpan{char}"/></param>
+        /// <param name="start">start index to slice</param>
+        /// <returns>sliced span</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ReadOnlySpan<char> SliceUnsafe(this ReadOnlySpan<char> source, int start)
+        {
+            return MemoryMarshal.CreateReadOnlySpan(ref Unsafe.AsRef(source.At(start)), source.Length - start);
+        }
+
+        /// <summary>Get slice of <see cref="ReadOnlySpan{char}"/>.</summary>
+        /// <remarks>[CAUTION] This method DOES NOT check boundary !! Be careful !!</remarks>
+        /// <param name="source">source <see cref="ReadOnlySpan{char}"/></param>
+        /// <param name="start">start index to slice</param>
+        /// <param name="length">length to slice</param>
+        /// <returns>sliced span</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ReadOnlySpan<char> SliceUnsafe(this ReadOnlySpan<char> source, int start, int length)
+        {
+            return MemoryMarshal.CreateReadOnlySpan(ref Unsafe.AsRef(source.At(start)), length);
+        }
+
+#if NETCOREAPP3_1
         private sealed class StringDummy
         {
 #pragma warning disable CS0649  // warning of field not set
@@ -23,10 +69,8 @@ namespace Elffy.Effective.Unsafes
             internal char _firstChar;
 #pragma warning restore CS0649
 
-            private StringDummy()
-            {
-
-            }
+            private StringDummy() { }
         }
     }
+#endif
 }
