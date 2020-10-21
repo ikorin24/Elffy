@@ -153,6 +153,62 @@ namespace UnitTest
         }
         #endregion
 
+        [Fact]
+        public void ResourcePathTest()
+        {
+            Test(path: "hoge/piyo/foo.bar.boo",
+                 dir: "hoge/piyo",
+                 filename: "foo.bar.boo",
+                 filenameNoEx: "foo.bar",
+                 extension: ".boo");
+
+            Test(path: "foo.bar",
+                 dir: "",
+                 filename: "foo.bar",
+                 filenameNoEx: "foo",
+                 extension: ".bar");
+
+            Test(path: "foo",
+                 dir: "",
+                 filename: "foo",
+                 filenameNoEx: "foo",
+                 extension: "");
+
+            Test(path: "foo/",
+                 dir: "foo",
+                 filename: "",
+                 filenameNoEx: "",
+                 extension: "");
+
+            Test(path: ".foo",
+                 dir: "",
+                 filename: ".foo",
+                 filenameNoEx: "",
+                 extension: ".foo");
+
+            Test(path: "",
+                 dir: "",
+                 filename: "",
+                 filenameNoEx: "",
+                 extension: "");
+
+
+            static void Test(string path, string dir, string filename, string filenameNoEx, string extension)
+            {
+                Assert.True(ResourcePath.GetDirectoryName(path).SequenceEqual(dir));
+                Assert.True(ResourcePath.GetDirectoryName(path.AsSpan()).SequenceEqual(dir));
+
+                Assert.True(ResourcePath.GetFileName(path).SequenceEqual(filename));
+                Assert.True(ResourcePath.GetFileName(path.AsSpan()).SequenceEqual(filename));
+
+                Assert.True(ResourcePath.GetFileNameWithoutExtension(path).SequenceEqual(filenameNoEx));
+                Assert.True(ResourcePath.GetFileNameWithoutExtension(path.AsSpan()).SequenceEqual(filenameNoEx));
+
+                Assert.True(ResourcePath.GetExtension(path).SequenceEqual(extension));
+                Assert.True(ResourcePath.GetExtension(path.AsSpan()).SequenceEqual(extension));
+            }
+        }
+
         private (DirectoryInfo resource, string output) Compile(bool forceCompile)
         {
             // コンパイル実行

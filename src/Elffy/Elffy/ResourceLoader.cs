@@ -63,7 +63,7 @@ namespace Elffy
                     pmx = PMXParser.Parse(stream);
                 }
                 var textureNames = pmx.TextureList.AsSpan();
-                var dir = Resources.GetDirectoryName(name);
+                var dir = ResourcePath.GetDirectoryName(name);
                 var bitmaps = new RefTypeRentMemory<Bitmap>(textureNames.Length);
                 var bitmapSpan = bitmaps.Span;
 
@@ -90,7 +90,8 @@ namespace Elffy
                     texturePath[dir.Length] = '/';
                     name.ToString(texturePath.Slice(dir.Length + 1));
                     texturePath.Replace('\\', '/');
-                    ext = texturePath.AsReadOnly().FilePathExtension();
+                    ext = ResourcePath.GetExtension(texturePath);
+                    
                     return pooledArray;
                 }
                 catch {

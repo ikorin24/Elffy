@@ -60,20 +60,6 @@ namespace Elffy
             _isInitialized = true;
         }
 
-        public static ReadOnlySpan<char> GetDirectoryName(string name)
-        {
-            if(name is null) {
-                ThrowNullArg();
-                static void ThrowNullArg() => throw new ArgumentNullException(nameof(name));
-            }
-            for(int i = name!.Length - 1; i >= 0; i--) {
-                if(name[i] == '/') {
-                    return name.AsSpan(0, i);
-                }
-            }
-            return ReadOnlySpan<char>.Empty;
-        }
-
         /// <summary>リソースを読み込むストリームを取得します</summary>
         /// <param name="name">リソース名</param>
         /// <returns>リソースのストリーム</returns>

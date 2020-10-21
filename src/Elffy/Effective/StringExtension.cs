@@ -22,26 +22,5 @@ namespace Elffy.Effective
         {
             return string.IsNullOrWhiteSpace(source);
         }
-
-        /// <summary>ファイルパスの拡張子を部分文字列で取得します。(ドットを含みます (ex) ".png" )</summary>
-        /// <param name="source">文字列</param>
-        /// <returns>拡張子</returns>
-        public static ReadOnlySpan<char> FilePathExtension(this string source)
-        {
-            if(source is null) {
-                return ReadOnlySpan<char>.Empty;
-            }
-            return FilePathExtension(source.AsSpan());
-        }
-
-        public static ReadOnlySpan<char> FilePathExtension(this ReadOnlySpan<char> source)
-        {
-            for(int i = source.Length - 1; i >= 0; i--) {
-                if(source[i] == '.') {
-                    return source.Slice(i);
-                }
-            }
-            return ReadOnlySpan<char>.Empty;
-        }
     }
 }
