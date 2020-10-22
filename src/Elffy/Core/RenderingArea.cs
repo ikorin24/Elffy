@@ -25,6 +25,7 @@ namespace Elffy.Core
         public LayerCollection Layers { get; }
         public Camera Camera { get; } = new Camera();
         public Mouse Mouse { get; } = new Mouse();
+        public Keyboard Keyboard { get; } = new Keyboard();
 
         public AsyncBackEndPoint AsyncBack { get; }
 

@@ -12,6 +12,8 @@ namespace Elffy
     {
         /// <summary>マウスを取得します</summary>
         Mouse Mouse { get; }
+        /// <summary>Get keyborad</summary>
+        Keyboard Keyboard { get; }
         /// <summary>カメラを取得します</summary>
         Camera Camera { get; }
         /// <summary>UIのルートオブジェクト</summary>

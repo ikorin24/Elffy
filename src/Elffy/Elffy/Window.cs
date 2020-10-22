@@ -35,6 +35,9 @@ namespace Elffy
 
         /// <summary>マウスを取得します</summary>
         public Mouse Mouse => _renderingArea.Mouse;
+        
+        /// <inheritdoc/>
+        public Keyboard Keyboard => _renderingArea.Keyboard;
 
         public AsyncBackEndPoint AsyncBack => _renderingArea.AsyncBack;
 
@@ -94,6 +97,9 @@ namespace Elffy
             _windowImpl.MouseUp += MouseButtonStateChanged;
             _windowImpl.MouseEnter += _ => Mouse.ChangeOnScreen(true);
             _windowImpl.MouseLeave += _ => Mouse.ChangeOnScreen(false);
+            _windowImpl.KeyDown += (_, e) => Keyboard.ChangeToDown(e);
+            _windowImpl.KeyUp += (_, e) => Keyboard.ChangeToUp(e);
+
 
             _defaultGLResource = new DefaultGLResource();
             Engine.AddScreen(this, show: false);
@@ -167,6 +173,7 @@ namespace Elffy
         private void OnUpdateFrame(WindowGLFW _, FrameEventArgs e)
         {
             Mouse.InitFrame();
+            Keyboard.InitFrame();
             _renderingArea.RenderFrame();
             _renderingArea.Layers.UILayer.HitTest(Mouse);
             _time += _frameDelta;

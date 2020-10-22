@@ -13,6 +13,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Cysharp.Threading.Tasks;
 using Elffy.Core;
+using Elffy.InputSystem;
 
 namespace Sandbox
 {
@@ -82,7 +83,6 @@ namespace Sandbox
                 }
             }).Forget();
 
-
             // カエル
             Resources.Loader.LoadFbxModelAsync("green_frog.fbx").ContinueWith(async model =>
             {
@@ -124,6 +124,7 @@ namespace Sandbox
             }.Activate();
 
             InitializeUI();
+            Anim();
         }
 
         private static void InitializeUI()
@@ -134,6 +135,27 @@ namespace Sandbox
             button.KeyPress += sender => DevEnv.WriteLine("Press");
             button.KeyUp += sender => DevEnv.WriteLine("Up");
             Game.UI.Add(button);
+        }
+
+        private static async void Anim()
+        {
+            await GameAsync.ToUpdate();
+            while(true) {
+                if(Game.Keyboard.IsPress(Keys.S, KeyModifiers.Control)) {
+                    Debug.WriteLine("CTRL+S");
+                }
+
+                if(Game.Keyboard.IsDown(Keys.A)) {
+                    Debug.WriteLine($"{Game.FrameNum}: A down");
+                }
+                if(Game.Keyboard.IsPress(Keys.A)) {
+                    Debug.WriteLine($"{Game.FrameNum}: A press");
+                }
+                if(Game.Keyboard.IsUp(Keys.A)) {
+                    Debug.WriteLine($"{Game.FrameNum}: A up");
+                }
+                await GameAsync.ToUpdate();
+            }
         }
     }
 }

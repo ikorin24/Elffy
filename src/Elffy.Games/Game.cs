@@ -20,6 +20,7 @@ namespace Elffy
         public static Layer WorldLayer { get; private set; } = null!;
         public static Camera MainCamera { get; private set; } = null!;
         public static Mouse Mouse { get; private set; } = null!;
+        public static Keyboard Keyboard { get; private set; } = null!;
         public static AsyncBackEndPoint AsyncBack { get; private set; } = null!;
         public static ControlCollection UI { get; private set; } = null!;
 
@@ -70,6 +71,7 @@ namespace Elffy
             WorldLayer = screen.Layers.WorldLayer;
             MainCamera = screen.Camera;
             Mouse = screen.Mouse;
+            Keyboard = screen.Keyboard;
             UI = screen.UIRoot.Children;
             AsyncBack = screen.AsyncBack;
             
