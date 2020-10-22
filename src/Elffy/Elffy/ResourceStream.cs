@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using Elffy.Core;
 using Elffy.Effective.Unsafes;
 using System;
 using System.Diagnostics;
@@ -52,13 +53,13 @@ namespace Elffy
             }
         }
 
-        internal ResourceStream(string resourceFilePath, long head, long length)
+        internal ResourceStream(string resourceFilePath, in ResourceObject obj)
         {
-            Debug.Assert(head >= 0);
-            Debug.Assert(length >= 0);
+            Debug.Assert(obj.Position >= 0);
+            Debug.Assert(obj.Length >= 0);
 
-            _head = head;
-            _length = length;
+            _head = obj.Position;
+            _length = obj.Length;
             var stream = AlloclessFileStream.OpenRead(resourceFilePath);
             stream.Position = _head;
             _innerStream = stream;
