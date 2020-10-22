@@ -52,16 +52,16 @@ namespace Elffy.Shapes
                 // build vertices
                 UniTask.Run(() => _pmxObject!.VertexList
                                 .AsSpan()
-                                .SelectToUnmanagedArray(v => v.ToRigVertex())),
+                                .SelectToUnmanagedArray(v => v.ToRigVertex()), configureAwait: false),
                 
                 // build each parts
                 UniTask.Run(() => _pmxObject!.MaterialList
                                 .AsSpan()
-                                .SelectToUnmanagedArray(m => new RenderableParts(m.VertexCount, m.Texture))),
+                                .SelectToUnmanagedArray(m => new RenderableParts(m.VertexCount, m.Texture)), configureAwait: false),
                 // build bones
                 UniTask.Run(() => _pmxObject!.BoneList
                                 .AsSpan()
-                                .SelectToUnmanagedArray(b => new Vector4(b.Position.ToVector3(), 0f)))
+                                .SelectToUnmanagedArray(b => new Vector4(b.Position.ToVector3(), 0f)), configureAwait: false)
                 );
             await HostScreen.AsyncBack.ToFrameLoopEvent(Threading.Tasks.FrameLoopTiming.Update);
 
