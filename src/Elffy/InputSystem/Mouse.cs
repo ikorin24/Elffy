@@ -3,7 +3,7 @@
 namespace Elffy.InputSystem
 {
     /// <summary>マウスの状態を表すクラスです</summary>
-    public class Mouse
+    public sealed class Mouse
     {
         private KeyBuffer _leftButton;
         private KeyBuffer _rightButton;
