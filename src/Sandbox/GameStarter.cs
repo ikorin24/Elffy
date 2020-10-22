@@ -141,8 +141,14 @@ namespace Sandbox
         {
             await GameAsync.ToUpdate();
             while(true) {
+                if(Game.Keyboard.IsDown(Keys.S, KeyModifiers.Control)) {
+                    Debug.WriteLine($"{Game.FrameNum}: Ctrl+S down");
+                }
                 if(Game.Keyboard.IsPress(Keys.S, KeyModifiers.Control)) {
-                    Debug.WriteLine("CTRL+S");
+                    Debug.WriteLine($"{Game.FrameNum}: Ctrl+S press");
+                }
+                if(Game.Keyboard.IsUp(Keys.S, KeyModifiers.Control)) {
+                    Debug.WriteLine($"{Game.FrameNum}: Ctrl+S up");
                 }
 
                 if(Game.Keyboard.IsDown(Keys.A)) {

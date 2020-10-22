@@ -16,6 +16,7 @@ namespace Elffy.InputSystem
         private BitArrayUnsafe _c;      // current frame
         private BitArrayUnsafe _n;      // next frame
         private BitArrayUnsafe _nSub;   // next frame (but not copied from current frame buffer on move to next frame.)
+        private KeyModifiers _pm;
         private KeyModifiers _cm;
         private KeyModifiers _nm;
 
@@ -36,6 +37,16 @@ namespace Elffy.InputSystem
             if((uint)key >= KeyLen) { return false; }
             int index = (int)key;
             return _c[index] && !_p[index];
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsDown(Keys key, KeyModifiers mod)
+        {
+            if((uint)key >= KeyLen) { return false; }
+            int index = (int)key;
+
+            // No Boxing happen by optimization in 'HasFlag'.
+            return !(_p[index] && _pm.HasFlag(mod)) && (_c[index] && _cm.HasFlag(mod));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -62,6 +73,16 @@ namespace Elffy.InputSystem
             if((uint)key >= KeyLen) { return false; }
             int index = (int)key;
             return !_c[index] && _p[index];
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsUp(Keys key, KeyModifiers mod)
+        {
+            if((uint)key >= KeyLen) { return false; }
+            int index = (int)key;
+
+            // No Boxing happen by optimization in 'HasFlag'.
+            return (_p[index] && _pm.HasFlag(mod)) && !(_c[index] && _cm.HasFlag(mod));
         }
 
         internal void ChangeToDown(in KeyboardKeyEventArgs e)
@@ -96,6 +117,7 @@ namespace Elffy.InputSystem
             _c.CopyTo(_n);      // Next frame buffer takes over the states in current buffer.
             _nSub.Clear();      // Sub buffer is cleared. (not take over them.)
 
+            _pm = _cm;
             _cm = _nm;
 
             // Retry event in the queue.
