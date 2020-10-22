@@ -12,6 +12,10 @@ namespace Elffy
 
         public static bool IsRunning { get; private set; }
 
+        public static int ScreenCount => _screens.Count;
+
+        public static ReadOnlySpan<IHostScreen> Screens => _screens.AsSpan();
+
         public static void Start()
         {
             Run();
@@ -21,11 +25,6 @@ namespace Elffy
             finally {
                 Stop();
             }
-        }
-
-        public static ReadOnlySpan<IHostScreen> GetScreens()
-        {
-            return _screens.AsSpan();
         }
 
         internal static void AddScreen(IHostScreen screen, bool show = true)
