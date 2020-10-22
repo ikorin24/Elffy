@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using Elffy.AssemblyServices;
 using Elffy.Effective;
 using Elffy.Effective.Unsafes;
 using Elffy.Exceptions;
@@ -24,6 +23,10 @@ namespace Elffy
         private static ResourceLoader? _loader;
         private static string? _resourceFilePath;
 
+        /// <summary>Get whether <see cref="Resources"/> class is initialized.</summary>
+        public static bool IsInitialized => _isInitialized;
+
+        /// <summary>Get resource loader instance</summary>
         public static ResourceLoader Loader
         {
             get
@@ -34,6 +37,8 @@ namespace Elffy
             }
         }
 
+        /// <summary>Initialize resource</summary>
+        /// <param name="resourceFilePath">file path of resource</param>
         public static void Initialize(string resourceFilePath)
         {
             if(resourceFilePath is null) {
@@ -60,9 +65,18 @@ namespace Elffy
             _isInitialized = true;
         }
 
-        /// <summary>リソースを読み込むストリームを取得します</summary>
-        /// <param name="name">リソース名</param>
-        /// <returns>リソースのストリーム</returns>
+        /// <summary>Release resource dictionary</summary>
+        public static void Close()
+        {
+            _resourceFilePath = null;
+            _loader = null;
+            _resources = null;
+            _isInitialized = false;
+        }
+
+        /// <summary>Get <see cref="Stream"/> to load a resource</summary>
+        /// <param name="name">name of the resource</param>
+        /// <returns><see cref="Stream"/> to load</returns>
         public static ResourceStream GetStream(string name)
         {
             CheckInitialized();

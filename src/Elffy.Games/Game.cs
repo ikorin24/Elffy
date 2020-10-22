@@ -56,6 +56,7 @@ namespace Elffy
                     }
                 }
                 finally {
+                    Resources.Close();
                     CustomSynchronizationContext.Restore();
                     _syncContextReciever = null;
                     Engine.Stop();
