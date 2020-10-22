@@ -66,9 +66,9 @@ namespace Elffy.Core
         public readonly override int GetHashCode() => HashCode.Combine(Position, Normal, TexCoord, Bone, Weight);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator ==(RigVertex left, RigVertex right) => left.Equals(right);
+        public static bool operator ==(in RigVertex left, in RigVertex right) => left.Equals(right);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator !=(RigVertex left, RigVertex right) => !(left == right);
+        public static bool operator !=(in RigVertex left, in RigVertex right) => !(left == right);
     }
 }
