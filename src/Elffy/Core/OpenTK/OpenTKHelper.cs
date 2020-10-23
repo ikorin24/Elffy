@@ -22,7 +22,7 @@ namespace Elffy.Core.OpenTK
 
             static Action Build()
             {
-                var dm = new DynamicMethod("SetBufferDynamic",
+                var dm = new DynamicMethod("CallEnsureInitialized",
                                        MethodAttributes.Public | MethodAttributes.Static,
                                        CallingConventions.Standard,
                                        null, null,
