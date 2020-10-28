@@ -77,7 +77,12 @@ namespace Elffy
         public IHostScreen HostScreen
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => (_hostScreen ??= _layer?.OwnerCollection?.OwnerRenderingArea?.OwnerScreen) ?? throw new InvalidOperationException();
+            get
+            {
+                return _hostScreen ?? TryGetSceen(_layer);
+
+                static IHostScreen TryGetSceen(ILayer? layer) => GetHostScreen(layer) ?? throw new InvalidOperationException();
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -103,12 +108,20 @@ namespace Elffy
         public void Activate(Layer layer)
         {
             if(layer is null) { ThrowNullArg(); }
-            if(layer!.Owner is null) { ThrowInvalidLayer(); }
             if(_state != FrameObjectLifeSpanState.New) { return; }
+
+            var screen = GetHostScreen(layer);
+            if(screen is null) {
+                ThrowInvalidLayer();
+            }
+            else {
+                screen.ThrowIfNotMainThread();
+                _hostScreen = screen;
+            }
 
             _state = FrameObjectLifeSpanState.Activated;
             _layer = layer;
-            layer.AddFrameObject(this);
+            layer!.AddFrameObject(this);
             OnActivated();
 
             static void ThrowNullArg() => throw new ArgumentNullException(nameof(layer));
@@ -121,6 +134,8 @@ namespace Elffy
             Debug.Assert(layer is Layer == false, "Layer は具象型のオーバーロードを通っていないとおかしい。");
             Debug.Assert(layer!.OwnerCollection is null == false);
             if(_state != FrameObjectLifeSpanState.New) { return; }
+
+            Debug.Assert(GetHostScreen(layer)!.IsThreadMain());
 
             _state = FrameObjectLifeSpanState.Activated;
             _layer = layer;
@@ -169,6 +184,12 @@ namespace Elffy
             _layer = null;
             _hostScreen = null;
             OnDead();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static IHostScreen? GetHostScreen<TLayer>(TLayer? layer) where TLayer : class, ILayer
+        {
+            return layer?.OwnerCollection?.OwnerRenderingArea.OwnerScreen;
         }
     }
 }
