@@ -4,6 +4,31 @@ namespace Elffy.Shading
 {
     public static class GlslLibrary
     {
+        /// <summary>Get random value from value</summary>
+        public const string Rand =
+@"#ifndef SOURCE_RAND
+#define SOURCE_RAND 1
+highp float Rand(vec2 pos)
+{
+    highp float a = 12.9898;
+    highp float b = 78.233;
+    highp float c = 43758.5453;
+    highp float dt= dot(pos.xy ,vec2(a,b));
+    highp float sn= mod(dt,3.14);
+    return fract(sin(sn) * c);
+}
+
+highp float Rand(float x){return Rand(vec2(x, 0.0));}
+#endif
+";
+        /// <summary>Get xorshift next value from seed</summary>
+        public const string Xorshift =
+@"#ifndef SOURCE_XORSHIFT
+#define SOURCE_XORSHIFT 1
+uint Xorshift(uint seed){seed ^= (seed << 13);seed ^= (seed >> 17);seed ^= (seed << 5);return seed;}
+#endif
+";
+
         /// <summary>Make color grayscale</summary>
         public const string MakeGray =
 @"#ifndef SOURCE_MAKEGRAY
