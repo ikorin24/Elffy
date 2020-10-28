@@ -19,6 +19,7 @@ namespace Elffy.Threading.Tasks
             _queues = new ConcurrentDictionary<FrameLoopTiming, ConcurrentQueue<WorkItem>>();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public FrameLoopAwaitable ToFrameLoopEvent(FrameLoopTiming timing, CancellationToken cancellationToken = default)
         {
             return new FrameLoopAwaitable(this, timing, cancellationToken);

@@ -11,6 +11,7 @@ namespace Elffy.Threading.Tasks
         private readonly FrameLoopTiming _eventType;
         private readonly CancellationToken _cancellationToken;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public FrameLoopAwaitable(AsyncBackEndPoint asyncBack, FrameLoopTiming eventType, CancellationToken cancellationToken)
         {
             _asyncBack = asyncBack!;
@@ -18,6 +19,7 @@ namespace Elffy.Threading.Tasks
             _cancellationToken = cancellationToken;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Awaiter GetAwaiter()
         {
             return new Awaiter(_asyncBack, _eventType, _cancellationToken);
@@ -31,6 +33,7 @@ namespace Elffy.Threading.Tasks
 
             public bool IsCompleted => false;
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public Awaiter(AsyncBackEndPoint asyncBack, FrameLoopTiming eventType, CancellationToken cancellationToken)
             {
                 _asyncBack = asyncBack;
@@ -38,16 +41,19 @@ namespace Elffy.Threading.Tasks
                 _cancellationToken = cancellationToken;
             }
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void GetResult()
             {
                 _cancellationToken.ThrowIfCancellationRequested();
             }
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void OnCompleted(Action continuation)
             {
                 _asyncBack?.Post(_eventType, continuation);
             }
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void UnsafeOnCompleted(Action continuation)
             {
                 _asyncBack?.Post(_eventType, continuation);
