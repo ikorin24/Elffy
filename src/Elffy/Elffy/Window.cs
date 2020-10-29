@@ -84,7 +84,7 @@ namespace Elffy
             _isThreadMain = true;
             _renderingArea = new RenderingArea(this);
 
-            _windowImpl = new WindowGLFW(width, height, title, windowStyle, false, WindowIconRaw.Empty);  // TODO: アンチエイリアス有効化した時のポストプロセスのバッファサイズが未対応
+            _windowImpl = new WindowGLFW(width, height, title, windowStyle, WindowIconRaw.Empty);
 
             _frameDelta = TimeSpan.FromSeconds(1.0 / 60.0); // TODO: とりあえず固定で
             _windowImpl.UpdateFrame += OnUpdateFrame;

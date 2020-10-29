@@ -102,8 +102,7 @@ namespace Elffy.Core
             GL.CullFace(CullFaceMode.Back);
             GL.FrontFace(FrontFaceDirection.Ccw);
 
-            // Enable Multi Sampling Anti-alias (MSAA)
-            GL.Enable(EnableCap.Multisample);
+            GL.Disable(EnableCap.Multisample);  // I don't care about MSAA
         }
 
         /// <summary>フレームを更新して描画します</summary>

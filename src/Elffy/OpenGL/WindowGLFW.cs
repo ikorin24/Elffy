@@ -84,11 +84,11 @@ namespace Elffy.OpenGL
             }
         }
 
-        public WindowGLFW() : this(800, 600, "Window", WindowStyle.Default, false, WindowIconRaw.Empty)
+        public WindowGLFW() : this(800, 600, "Window", WindowStyle.Default, WindowIconRaw.Empty)
         {
         }
 
-        public WindowGLFW(int width, int height, string title, WindowStyle style, bool antiAliased, WindowIconRaw icon)
+        public WindowGLFW(int width, int height, string title, WindowStyle style, WindowIconRaw icon)
         {
             title ??= "";
 
@@ -128,9 +128,9 @@ namespace Elffy.OpenGL
             GLFW.WindowHint(WindowHintInt.ContextVersionMinor, 1);
             GLFW.WindowHint(WindowHintBool.Focused, true);
             GLFW.WindowHint(WindowHintBool.Visible, false);
-            if(antiAliased) {
-                GLFW.WindowHint(WindowHintInt.Samples, 4);
-            }
+
+            //GLFW.WindowHint(WindowHintInt.Samples, 4);        // I don't care about MSAA
+
             if(isFullscreen) {
                 var videoMode = GLFW.GetVideoMode(monitor);
                 GLFW.WindowHint(WindowHintInt.RedBits, videoMode->RedBits);
