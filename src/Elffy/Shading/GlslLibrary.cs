@@ -6,7 +6,8 @@ namespace Elffy.Shading
     {
         /// <summary>Get random value from value</summary>
         public const string Rand =
-@"#ifndef SOURCE_RAND
+@"
+#ifndef SOURCE_RAND
 #define SOURCE_RAND 1
 highp float Rand(vec2 pos)
 {
@@ -21,9 +22,26 @@ highp float Rand(vec2 pos)
 highp float Rand(float x){return Rand(vec2(x, 0.0));}
 #endif
 ";
+
+        public const string NegativeColor =
+@"
+#ifndef SOURCE_NEGATIVECOLOR
+#define SOURCE_NEGATIVECOLOR 1
+vec4 NegativeColor(vec4 c)
+{
+    return vec4(1-c.r, 1-c.g, 1-c.b, c.a);
+}
+vec3 NegativeColor(vec3 c)
+{
+    return vec3(1-c.r, 1-c.g, 1-c.b);
+}
+#endif
+";
+
         /// <summary>Get xorshift next value from seed</summary>
         public const string Xorshift =
-@"#ifndef SOURCE_XORSHIFT
+@"
+#ifndef SOURCE_XORSHIFT
 #define SOURCE_XORSHIFT 1
 uint Xorshift(uint seed){seed ^= (seed << 13);seed ^= (seed >> 17);seed ^= (seed << 5);return seed;}
 #endif
@@ -31,7 +49,8 @@ uint Xorshift(uint seed){seed ^= (seed << 13);seed ^= (seed >> 17);seed ^= (seed
 
         /// <summary>Make color grayscale</summary>
         public const string MakeGray =
-@"#ifndef SOURCE_MAKEGRAY
+@"
+#ifndef SOURCE_MAKEGRAY
 #define SOURCE_MAKEGRAY 1
 vec3 MakeGray(vec3 c)
 {
@@ -48,7 +67,8 @@ vec4 MakeGray(vec4 c)
 #endif
 ";
         public const string MakeGrayValue =
-@"#ifndef SOURCE_MAKEGRAYVALUE
+@"
+#ifndef SOURCE_MAKEGRAYVALUE
 #define SOURCE_MAKEGRAYVALUE 1
 float MakeGrayValue(vec3 c)
 {
@@ -68,7 +88,8 @@ float MakeGrayValue(vec4 c)
         public const string FXAA =
 MakeGray + 
 MakeGrayValue +
-@"#ifndef SOURCE_FXAA
+@"
+#ifndef SOURCE_FXAA
 #define SOURCE_FXAA 1
 vec4 FXAA(sampler2D sampler, vec2 uv, vec2 inversedScreenSize)
 {

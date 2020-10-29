@@ -1,21 +1,32 @@
 ﻿#nullable enable
 using System;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using OpenTK.Graphics.OpenGL4;
-using Elffy.AssemblyServices;
 using Elffy.OpenGL;
 using Elffy.Core;
-using Elffy.Exceptions;
 
 namespace Elffy.Shading
 {
     public abstract class PostProcess
     {
-        protected abstract string VertShaderSource { get; }
+        protected virtual string VertShaderSource =>
+@"#version 440
+in vec3 _pos;
+in vec2 _v_uv;
+out vec2 _uv;
+void main()
+{
+    _uv = _v_uv;
+    gl_Position = vec4(_pos, 1.0);
+}
+";
         protected abstract string FragShaderSource { get; }
 
-        protected abstract void DefineLocation(out string pos, out string uv);
+        protected virtual void DefineLocation(out string pos, out string uv)
+        {
+            pos = "_pos";
+            uv = "_v_uv";
+        }
 
         protected abstract void SendUniforms(Uniform uniform, in Vector2i screenSize, in TextureObject prerenderedTexture);
 
