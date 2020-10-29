@@ -143,9 +143,13 @@ namespace Elffy.Core
             // Render
             using(var scope = _postProcessImpl.GetScopeAsRoot(new Vector2i(_width, _height))) {
                 foreach(var layer in Layers.AsReadOnlySpan()) {
-                    layer.Render(Camera.Projection, Camera.View, scope);
+                    if(layer.IsVisible) {
+                        layer.Render(Camera.Projection, Camera.View, scope);
+                    }
                 }
-                uiLayer.Render(_uiProjection);
+                if(uiLayer.IsVisible) {
+                    uiLayer.Render(_uiProjection);
+                }
             }
 
             // このフレームで削除されたオブジェクトの削除を適用

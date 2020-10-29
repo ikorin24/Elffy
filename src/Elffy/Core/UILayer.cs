@@ -15,6 +15,9 @@ namespace Elffy.Core
         internal LayerCollection Owner { get; }
         LayerCollection? ILayer.OwnerCollection => Owner;
 
+        /// <inheritdoc/>
+        public bool IsVisible { get; set; } = true;
+
         /// <summary>UI tree の Root</summary>
         internal RootPanel UIRoot { get; }
 

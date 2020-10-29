@@ -8,6 +8,9 @@ namespace Elffy.Core
     {
         LayerCollection? OwnerCollection { get; }
 
+        /// <summary>Get or set visiblity of the layer</summary>
+        bool IsVisible { get; set; }
+
         /// <summary>Get count of living objects</summary>
         int ObjectCount { get; }
 

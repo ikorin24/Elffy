@@ -43,6 +43,9 @@ namespace Elffy
             set => _postProcessImpl.PostProcess = value;
         }
 
+        /// <inheritdoc/>
+        public bool IsVisible { get; set; } = true;
+
         /// <summary>レイヤー名を指定して <see cref="Layer"/> を作成します</summary>
         /// <param name="name">レイヤー名</param>
         public Layer(string name)
