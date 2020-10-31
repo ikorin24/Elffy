@@ -130,15 +130,15 @@ namespace UnitTest
             var sourceNames = GetAllChildren(resource).Select(x => GetDirUri(resource).MakeRelativeUri(GetFileUri(x)))
                                                       .Select(x => string.Join("/", x.ToString().Split('/').Skip(1)))
                                                       .ToList();
-            
+
             // リソースと元ファイルのペアを作り、そのハッシュ値の一致を確認
-            Resources.Initialize(Path.GetFullPath("Resources.dat"));
-            var pair = Resources.GetResourceNames().Select(x => (Resource: x, Original: sourceNames.Find(y => x == y)))
+            var resources = new LocalResourceLoader("Resources.dat");
+            var pair = resources.GetResourceNames().Select(x => (Resource: x, Original: sourceNames.Find(y => x == y)))
                                 .ToArray();
             foreach(var (name, original) in pair) {
                 byte[] hash1;
                 byte[] hash2;
-                var stream1 = Resources.GetStream(name);
+                var stream1 = resources.GetStream(name);
                 var stream2 = File.OpenRead(Path.Combine(resource.FullName, original));
                 using(stream1) {
                     hash1 = hashfunc.ComputeHash(stream1);

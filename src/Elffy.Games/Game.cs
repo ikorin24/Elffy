@@ -42,12 +42,11 @@ namespace Elffy
 
             void Launch()
             {
-                var screen = CreateScreen(width, height, title);
-                screen.Initialized += InitScreen;
-
-                Engine.Run();
-                Resources.Initialize(resourceFilePath);
                 try {
+                    var screen = CreateScreen(width, height, title);
+                    screen.Initialized += InitScreen;
+                    Engine.Run();
+                    Resources.Initialize(path => new LocalResourceLoader(path), resourceFilePath);
                     CustomSynchronizationContext.CreateIfNeeded(out _, out _syncContextReciever);
                     screen.Show();
 

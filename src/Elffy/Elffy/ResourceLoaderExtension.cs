@@ -8,23 +8,20 @@ using Elffy.Shapes;
 using MMDTools.Unmanaged;
 using System;
 using System.Drawing;
+using System.IO;
 
 namespace Elffy
 {
-    public sealed class ResourceLoader
+    public static class ResourceLoaderExtension
     {
-        internal ResourceLoader()
-        {
-        }
-
         /// <summary>Create <see cref="Texture"/> from resource</summary>
         /// <remarks>Created <see cref="Texture"/> expands and shrinks linearly, and has no mipmap.</remarks>
         /// <param name="name">resource name</param>
         /// <param name="bitmapType">image file type</param>
         /// <returns><see cref="Texture"/> created from <see cref="Stream"/></returns>
-        public Texture LoadTexture(string name, BitmapType bitmapType)
+        public static Texture LoadTexture(this IResourceLoader source, string name, BitmapType bitmapType)
         {
-            return LoadTexture(name, bitmapType,
+            return LoadTexture(source, name, bitmapType,
                              TextureExpansionMode.Bilinear,
                              TextureShrinkMode.Bilinear,
                              TextureMipmapMode.None);
@@ -37,10 +34,10 @@ namespace Elffy
         /// <param name="shrinkMode">textrue shrink mode</param>
         /// <param name="mipmapMode">texture mipmap mode</param>
         /// <returns><see cref="Texture"/> create from <see cref="Stream"/></returns>
-        public Texture LoadTexture(string name, BitmapType bitmapType, TextureExpansionMode expansionMode,
+        public static Texture LoadTexture(this IResourceLoader source, string name, BitmapType bitmapType, TextureExpansionMode expansionMode,
                                         TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode)
         {
-            using(var stream = Resources.GetStream(name))
+            using(var stream = source.GetStream(name))
             using(var bitmap = BitmapHelper.StreamToBitmap(stream, bitmapType)) {
                 var texture = new Texture(expansionMode, shrinkMode, mipmapMode);
                 texture.Load(bitmap);
@@ -48,18 +45,18 @@ namespace Elffy
             }
         }
 
-        public UniTask<PmxModel> LoadPmxModelAsync(string name)
+        public static UniTask<PmxModel> LoadPmxModelAsync(this IResourceLoader source, string name)
         {
-            return UniTask.Run(n => LoadPmxModel(SafeCast.As<string>(n)),
-                               name,
-                               configureAwait: false);
+            return UniTask.Run(Load, false);
+
+            PmxModel Load() => LoadPmxModel(source, name);
         }
 
-        public PmxModel LoadPmxModel(string name)
+        public static PmxModel LoadPmxModel(this IResourceLoader source, string name)
         {
             PMXObject? pmx = default;
             try {
-                using(var stream = Resources.GetStream(name)) {
+                using(var stream = source.GetStream(name)) {
                     pmx = PMXParser.Parse(stream);
                 }
                 var textureNames = pmx.TextureList.AsSpan();
@@ -69,7 +66,7 @@ namespace Elffy
 
                 for(int i = 0; i < bitmapSpan.Length; i++) {
                     using(GetTexturePath(dir, textureNames[i], out var texturePath, out var ext))
-                    using(var stream = Resources.GetStream(texturePath.ToString())) {
+                    using(var stream = source.GetStream(texturePath.ToString())) {
                         bitmapSpan[i] = BitmapHelper.StreamToBitmap(stream, ext);
                     }
                 }
@@ -91,7 +88,7 @@ namespace Elffy
                     name.ToString(texturePath.Slice(dir.Length + 1));
                     texturePath.Replace('\\', '/');
                     ext = ResourcePath.GetExtension(texturePath);
-                    
+
                     return pooledArray;
                 }
                 catch {
@@ -103,14 +100,16 @@ namespace Elffy
 
         }
 
-        public UniTask<Model3D> LoadFbxModelAsync(string name)
+        public static UniTask<Model3D> LoadFbxModelAsync(this IResourceLoader source, string name)
         {
-            return UniTask.Run(n => LoadFbxModel(SafeCast.As<string>(n)), name, false);
+            return UniTask.Run(Load, false);
+
+            Model3D Load() => LoadFbxModel(source, name);
         }
 
-        public Model3D LoadFbxModel(string name)
+        public static Model3D LoadFbxModel(this IResourceLoader source, string name)
         {
-            using(var stream = Resources.GetStream(name)) {
+            using(var stream = source.GetStream(name)) {
                 var (vertices, indices) = FbxModelBuilder.LoadModel(stream);
                 return new Model3D(vertices, indices);
             }
