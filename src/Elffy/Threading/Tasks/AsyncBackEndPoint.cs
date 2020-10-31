@@ -25,6 +25,12 @@ namespace Elffy.Threading.Tasks
             return new FrameLoopAwaitable(this, timing, cancellationToken);
         }
 
+        /// <summary>Abort all suspended tasks by clearing the queue.</summary>
+        internal void AbortAll()
+        {
+            _queues.Clear();
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void Post(FrameLoopTiming timing, Action continuation)
         {

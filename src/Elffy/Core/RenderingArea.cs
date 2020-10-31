@@ -173,6 +173,8 @@ namespace Elffy.Core
 
             // Dispose resources of post process
             _postProcessImpl.Dispose();
+
+            AsyncBack.AbortAll();
         }
 
         private void OnSizeChanged(int width, int height)
