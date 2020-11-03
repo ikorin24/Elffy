@@ -28,6 +28,23 @@ namespace Elffy.UI
             base.OnAlive();
             Debug.Assert(InternalLayer is UILayer);
 
+            //  Position                UI
+            //                          
+            //       p3(3) -- p2(2)     (0,1) --- (1,1)
+            //       |     /   |          |         |
+            //       |    /    |          |         |
+            //       |   /     |          |         |
+            //       p0(0) -- p1(1)     (0,0) --- (1,0)
+            //  Y
+            //  |  Z (direction to back of screen)
+            //  | /
+            //  o ---> X
+            //
+            // Indices
+            // [0, 2, 1], [2, 0, 3]
+            //
+            // Y axis is inversed on rendered.
+
             // Build polygons and load them
             var control = Control;
             var p0 = new Vector3(control.OffsetX, control.OffsetY, 0);
@@ -36,10 +53,10 @@ namespace Elffy.UI
             var p3 = p0 + new Vector3(0, control.Height, 0);
             ReadOnlySpan<VertexSlim> vertices = stackalloc VertexSlim[4]
             {
-                new VertexSlim(p0, new Vector2(0, 1)),
-                new VertexSlim(p1, new Vector2(1, 1)),
-                new VertexSlim(p2, new Vector2(1, 0)),
-                new VertexSlim(p3, new Vector2(0, 0)),
+                new VertexSlim(p0, new Vector2(0, 0)),
+                new VertexSlim(p1, new Vector2(1, 0)),
+                new VertexSlim(p2, new Vector2(1, 1)),
+                new VertexSlim(p3, new Vector2(0, 1)),
             };
             ReadOnlySpan<int> indices = stackalloc int[6] { 0, 2, 1, 2, 0, 3 };
             LoadGraphicBuffer(vertices, indices);
