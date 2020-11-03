@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using Elffy.InputSystem;
+using Elffy.OpenGL;
 using Elffy.Shading;
 using Elffy.Threading.Tasks;
 using OpenTK.Graphics.OpenGL4;
@@ -11,13 +12,14 @@ namespace Elffy.Core
     /// <summary>OpenGL が描画を行う領域を扱うクラスです</summary>
     internal sealed class RenderingArea : IDisposable
     {
-        const float UI_FAR = 1.01f;
-        const float UI_NEAR = -0.01f;
+        const float UI_FAR = 1f;
+        const float UI_NEAR = -1f;
 
         private bool _disposed;
         /// <summary>UI の投影行列</summary>
         private Matrix4 _uiProjection;
         private PostProcessImpl _postProcessImpl;   // mutable object, don't make it readonly.
+        private Vector2i _size;
 
         public IHostScreen OwnerScreen { get; }
 
@@ -37,43 +39,40 @@ namespace Elffy.Core
 
         public int Width
         {
-            get => _width;
+            get => _size.X;
             set
             {
                 if(value < 0) { ThrowOutOfRange(); }
-                _width = value;
-                OnSizeChanged(_width, _height);
+                _size.X = value;
+                OnSizeChanged(_size);
 
                 void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(value), value, $"{nameof(value)} is out of range.");
             }
         }
-        private int _width;
 
         public int Height
         {
-            get => _height;
+            get => _size.Y;
             set
             {
                 if(value < 0) { ThrowOutOfRange(); }
-                _height = value;
-                OnSizeChanged(_width, _height);
+                _size.Y = value;
+                OnSizeChanged(_size);
 
                 void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(value), value, $"{nameof(value)} is out of range.");
             }
         }
-        private int _height;
 
         public Vector2i Size
         {
-            get => new Vector2i(_width, _height);
+            get => _size;
             set
             {
                 if(value.X < 0) { ThrowWidthOutOfRange(); }
                 if(value.Y < 0) { ThrowHeightOutOfRange(); }
 
-                _width = value.X;
-                _height = value.Y;
-                OnSizeChanged(_width, _height);
+                _size = value;
+                OnSizeChanged(_size);
 
                 void ThrowWidthOutOfRange() => throw new ArgumentOutOfRangeException("Width", value.X, $"width is out of range.");
                 void ThrowHeightOutOfRange() => throw new ArgumentOutOfRangeException("Height", value.Y, $"height is out of range.");
@@ -109,51 +108,69 @@ namespace Elffy.Core
         public void RenderFrame()
         {
             var uiLayer = Layers.UILayer;
+            var layers = Layers.AsReadOnlySpan();
 
-            // 前フレームで追加されたオブジェクトの追加を適用
-            foreach(var layer in Layers.AsReadOnlySpan()) {
+            // Apply FrameObject added at previous frame.
+            foreach(var layer in layers) {
                 layer.ApplyAdd();
             }
             uiLayer.ApplyAdd();
 
             // Early update
             AsyncBack.DoQueuedEvents(FrameLoopTiming.EarlyUpdate);
-            foreach(var layer in Layers.AsReadOnlySpan()) {
+            foreach(var layer in layers) {
                 layer.EarlyUpdate();
             }
             uiLayer.EarlyUpdate();
 
             // Update
             AsyncBack.DoQueuedEvents(FrameLoopTiming.Update);
-            foreach(var layer in Layers.AsReadOnlySpan()) {
+            foreach(var layer in layers) {
                 layer.Update();
             }
             uiLayer.Update();
 
             // Late update
             AsyncBack.DoQueuedEvents(FrameLoopTiming.LateUpdate);
-            foreach(var layer in Layers.AsReadOnlySpan()) {
+            foreach(var layer in layers) {
                 layer.LateUpdate();
             }
             uiLayer.LateUpdate();
 
-            // Comile postProcess if needed
-            _postProcessImpl.ApplyChange();
-
             // Render
-            using(var scope = _postProcessImpl.GetScopeAsRoot(new Vector2i(_width, _height))) {
-                foreach(var layer in Layers.AsReadOnlySpan()) {
+            var ppCompiled = _postProcessImpl.GetCompiled();        // Get comiled postProcess
+            var screenFbo = FBO.Empty;
+            if(ppCompiled is null) {
+                FBO.Bind(screenFbo, FBO.Target.FrameBuffer);
+                GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+                foreach(var layer in layers) {
                     if(layer.IsVisible) {
-                        layer.Render(Camera.Projection, Camera.View, scope);
+                        layer.Render(Camera.Projection, Camera.View);
                     }
                 }
                 if(uiLayer.IsVisible) {
                     uiLayer.Render(_uiProjection);
                 }
             }
+            else {
+                ref readonly var fbo = ref ppCompiled.GetFBO(_size);
+                FBO.Bind(fbo, FBO.Target.FrameBuffer);         // Draw to fbo of post process
+                GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+                foreach(var layer in layers) {
+                    if(layer.IsVisible) {
+                        layer.Render(Camera.Projection, Camera.View);
+                    }
+                }
+                FBO.Bind(screenFbo, FBO.Target.FrameBuffer);   // Draw to screen
+                GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+                ppCompiled.Render();
+                if(uiLayer.IsVisible) {
+                    uiLayer.Render(_uiProjection);
+                }
+            }
 
-            // このフレームで削除されたオブジェクトの削除を適用
-            foreach(var layer in Layers.AsReadOnlySpan()) {
+            // Apply FrameObject removed at previous frame.
+            foreach(var layer in layers) {
                 layer.ApplyRemove();
             }
             uiLayer.ApplyRemove();
@@ -177,19 +194,19 @@ namespace Elffy.Core
             AsyncBack.AbortAll();
         }
 
-        private void OnSizeChanged(int width, int height)
+        private void OnSizeChanged(in Vector2i newSize)
         {
             // Change view and projection matrix (World).
-            Camera.ChangeScreenSize(width, height);
+            Camera.ChangeScreenSize(newSize.X, newSize.Y);
 
             // Change projection matrix (UI)
-            GL.Viewport(0, 0, width, height);
-            Matrix4.OrthographicProjection(0, width, 0, height, UI_NEAR, UI_FAR, out _uiProjection);
+            GL.Viewport(0, 0, newSize.X, newSize.Y);
+            Matrix4.OrthographicProjection(0, newSize.X, 0, newSize.Y, UI_NEAR, UI_FAR, out _uiProjection);
             var uiRoot = Layers.UILayer.UIRoot;
-            uiRoot.Width = width;
-            uiRoot.Height = height;
+            uiRoot.Width = newSize.X;
+            uiRoot.Height = newSize.Y;
 
-            Debug.WriteLine($"Size changed ({width}, {height})");
+            Debug.WriteLine($"Size changed ({newSize.X}, {newSize.Y})");
         }
     }
 }

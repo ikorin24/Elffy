@@ -2,18 +2,15 @@
 using System;
 using System.Diagnostics;
 using Elffy.Core;
-using Elffy.OpenGL;
-using Elffy.Shading;
 
 namespace Elffy
 {
     /// <summary><see cref="FrameObject"/> のレイヤークラス</summary>
     [DebuggerDisplay("Layer: {Name} (ObjectCount = {ObjectCount})", Type = nameof(Layer), TargetTypeName = nameof(Layer))]
-    public class Layer : ILayer, IDisposable
+    public class Layer : ILayer
     {
         private readonly FrameObjectStore _store = FrameObjectStore.New();
         private LayerCollection? _owner;
-        private PostProcessImpl _postProcessImpl;   // mutable object, don't make it readonly.
 
         /// <summary>
         /// このレイヤーを持つ親 (<see cref="LayerCollection"/>)<para/>
@@ -23,25 +20,13 @@ namespace Elffy
         internal LayerCollection? Owner
         {
             get => _owner;
-            set
-            {
-                if(value is null) {
-                    Dispose();      // dispose when removed from owner.
-                }
-                _owner = value;
-            }
+            set => _owner = value;
         }
         LayerCollection? ILayer.OwnerCollection => Owner;
 
         public string Name { get; }
 
         public ReadOnlySpan<Light> Lights => _store.Lights;
-
-        public PostProcess? PostProcess
-        {
-            get => _postProcessImpl.PostProcess;
-            set => _postProcessImpl.PostProcess = value;
-        }
 
         /// <inheritdoc/>
         public bool IsVisible { get; set; } = true;
@@ -91,36 +76,13 @@ namespace Elffy
         /// <summary>Render all <see cref="FrameObject"/>s in this layer</summary>
         /// <param name="projection">projection matrix</param>
         /// <param name="view">view matrix</param>
-        /// <param name="currentScope">current scope of <see cref="FBO"/></param>
-        internal void Render(in Matrix4 projection, in Matrix4 view, in FrameBufferScope currentScope)
+        internal void Render(in Matrix4 projection, in Matrix4 view)
         {
-            _postProcessImpl.ApplyChange();
-
-            using(var scope = _postProcessImpl.GetScope(currentScope)) {
-                foreach(var renderable in _store.Renderables) {
-                    if(!renderable.IsRoot || !renderable.IsVisible) { continue; }
-                    renderable.Render(projection, view, Matrix4.Identity);
-                }
-            }
-        }
-
-        public void Dispose()
-        {
-            // [NOTE]
-            // Dispose() is called when removed from an owner layer collection.
-            // Dispose resources, but this instance does not die
-            // because default layer in layer collection (e.g. world layer) must be survived
-            // when called LayerCollection.Clear().
-            // Don't check already disposed.
-
-            Dispose(true);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if(disposing) {
-                // Release managed resources
-                _postProcessImpl.Dispose();
+            foreach(var renderable in _store.Renderables) {
+                // Render only root objects.
+                // Childen are rendered from thier parent 'Render' method.
+                if(!renderable.IsRoot || !renderable.IsVisible) { continue; }
+                renderable.Render(projection, view, Matrix4.Identity);
             }
         }
     }

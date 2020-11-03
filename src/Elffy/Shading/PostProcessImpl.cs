@@ -22,23 +22,12 @@ namespace Elffy.Shading
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ApplyChange()
+        public PostProcessCompiled? GetCompiled()
         {
             if(_postProcessChanged) {
                 ApplyChangePrivate();
             }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public FrameBufferScope GetScopeAsRoot(in Vector2i screenSize)
-        {
-            return FrameBufferScope.RootScope(_ppCompiled, screenSize);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public FrameBufferScope GetScope(in FrameBufferScope parentScope)
-        {
-            return parentScope.NewScope(_ppCompiled);
+            return _ppCompiled;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

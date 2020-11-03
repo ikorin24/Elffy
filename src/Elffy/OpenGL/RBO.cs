@@ -40,10 +40,10 @@ namespace Elffy.OpenGL
             return new RBO(GL.GenRenderbuffer());
         }
 
-        internal static void SetStorage(int width, int height)
+        internal static void SetStorage(int width, int height, StorageType type)
         {
             GLAssert.EnsureContext();
-            GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, RenderbufferStorage.Depth24Stencil8, width, height);
+            GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, (RenderbufferStorage)type, width, height);
         }
 
         internal static void Delete(ref RBO rbo)
@@ -58,5 +58,23 @@ namespace Elffy.OpenGL
         public bool Equals(RBO other) => _rbo == other._rbo;
 
         public override int GetHashCode() => _rbo.GetHashCode();
+
+        public enum StorageType
+        {
+            /// <summary>each color chanels of RGBA are 32bits</summary>
+            Rgba32f = RenderbufferStorage.Rgba32f,
+
+            /// <summary>16bits depth</summary>
+            Depth16 = RenderbufferStorage.DepthComponent16,
+            Depth24 = RenderbufferStorage.DepthComponent24,
+            Depth32 = RenderbufferStorage.DepthComponent32,
+
+            Stencil1 = RenderbufferStorage.StencilIndex1,
+            Stencil4 = RenderbufferStorage.StencilIndex4,
+            Stencil8 = RenderbufferStorage.StencilIndex8,
+            Stencil16 = RenderbufferStorage.StencilIndex16,
+
+            Stencil24Stencil8 = RenderbufferStorage.Depth24Stencil8,
+        }
     }
 }

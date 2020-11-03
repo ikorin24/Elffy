@@ -33,7 +33,14 @@ void main()
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void SendUniforms(PostProcessCompiled compiled)
         {
-            SendUniforms(new Uniform(compiled.Program), compiled.ScreenSize, compiled.TextureObject);
+            SendUniforms(new Uniform(compiled.Program), compiled.ScreenSize, compiled.ColorBuffer);
+        }
+
+        protected virtual FrameBuffer CreateFrameBuffer()
+        {
+            return new FrameBuffer(FrameBuffer.BufferType.Texture,
+                                   FrameBuffer.BufferType.RenderBuffer,
+                                   FrameBuffer.BufferType.RenderBuffer);
         }
 
         internal PostProcessCompiled Compile()
@@ -42,12 +49,13 @@ void main()
             // | / |
             // 1 - 2
 
+            const float z = 0.9f;
             ReadOnlySpan<VertexSlim> vertices = stackalloc VertexSlim[4]
             {
-                new VertexSlim(new Vector3(-1, 1, 0),  new Vector2(0, 1)),
-                new VertexSlim(new Vector3(-1, -1, 0), new Vector2(0, 0)),
-                new VertexSlim(new Vector3(1, -1, 0),  new Vector2(1, 0)),
-                new VertexSlim(new Vector3(1, 1, 0),   new Vector2(1, 1)),
+                new VertexSlim(new Vector3(-1, 1, z),  new Vector2(0, 1)),
+                new VertexSlim(new Vector3(-1, -1, z), new Vector2(0, 0)),
+                new VertexSlim(new Vector3(1, -1, z),  new Vector2(1, 0)),
+                new VertexSlim(new Vector3(1, 1, z),   new Vector2(1, 1)),
             };
             ReadOnlySpan<int> indices = stackalloc int[6]
             {
@@ -72,7 +80,7 @@ void main()
                 def.Map<VertexSlim>(nameof(VertexSlim.UV), uv);
                 VAO.Unbind();
                 VBO.Unbind();
-                return new PostProcessCompiled(this, program, vbo, ibo, vao);
+                return new PostProcessCompiled(this, program, vbo, ibo, vao, CreateFrameBuffer());
             }
             catch {
                 VBO.Unbind();
