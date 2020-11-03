@@ -45,6 +45,21 @@ namespace Elffy
             }
         }
 
+        public static UniTask<Texture> LoadTextureAsync(this IResourceLoader source, string name, BitmapType bitmapType)
+        {
+            return UniTask.Run(Load, false);
+
+            Texture Load() => LoadTexture(source, name, bitmapType);
+        }
+
+        public static UniTask<Texture> LoadTextureAsync(this IResourceLoader source, string name, BitmapType bitmapType, TextureExpansionMode expansionMode,
+                                        TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode)
+        {
+            return UniTask.Run(Load, false);
+
+            Texture Load() => LoadTexture(source, name, bitmapType, expansionMode, shrinkMode, mipmapMode);
+        }
+
         public static UniTask<PmxModel> LoadPmxModelAsync(this IResourceLoader source, string name)
         {
             return UniTask.Run(Load, false);
