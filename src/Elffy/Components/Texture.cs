@@ -18,7 +18,7 @@ namespace Elffy.Components
 {
     public sealed partial class Texture : ISingleOwnerComponent, IDisposable
     {
-        private SingleOwnerComponentCore<Texture> _core = new SingleOwnerComponentCore<Texture>(true);  // Mutable object, Don't change into reaadonly
+        private SingleOwnerComponentCore<Texture> _core;    // Mutable object, Don't change into reaadonly
         private TextureObject _to;
         private Vector2i _size;
         public TextureExpansionMode ExpansionMode { get; }
@@ -38,6 +38,7 @@ namespace Elffy.Components
             ExpansionMode = expansionMode;
             ShrinkMode = shrinkMode;
             MipmapMode = mipmapMode;
+            _core = new SingleOwnerComponentCore<Texture>(autoDispose);
         }
 
         ~Texture() => Dispose(false);
