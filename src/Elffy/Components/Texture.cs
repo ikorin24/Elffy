@@ -69,12 +69,22 @@ namespace Elffy.Components
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Painter GetPainter()
         {
+            if(_to.IsEmpty) {
+                ThrowEmptyTexture();
+                static void ThrowEmptyTexture() => throw new InvalidOperationException("Texture is not loaded yet.");
+            }
+
             return new Painter(this, new RectI(0, 0, _size.X, _size.Y));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Painter GetPainter(in RectI rect)
         {
+            if(_to.IsEmpty) {
+                ThrowEmptyTexture();
+                static void ThrowEmptyTexture() => throw new InvalidOperationException("Texture is not loaded yet.");
+            }
+
             if((uint)rect.X >= (uint)_size.X) { ThrowOutOfRange(); }
             if((uint)rect.Y >= (uint)_size.Y) { ThrowOutOfRange(); }
             if((uint)rect.Width >= (uint)(_size.X - rect.X)) { ThrowOutOfRange(); }
