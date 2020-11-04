@@ -2,20 +2,25 @@
 using System;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Elffy.Core;
+using Elffy.Effective;
 using Elffy.Exceptions;
 using Elffy.Imaging;
 using Elffy.OpenGL;
 using OpenTK.Graphics.OpenGL4;
+using SkiaSharp;
 using PixelFormat = System.Drawing.Imaging.PixelFormat;
 using TKPixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
 namespace Elffy.Components
 {
-    public sealed class Texture : ISingleOwnerComponent, IDisposable
+    public sealed partial class Texture : ISingleOwnerComponent, IDisposable
     {
         private SingleOwnerComponentCore<Texture> _core = new SingleOwnerComponentCore<Texture>(true);  // Mutable object, Don't change into reaadonly
         private TextureObject _to;
+        private Vector2i _size;
         public TextureExpansionMode ExpansionMode { get; }
         public TextureShrinkMode ShrinkMode { get; }
         public TextureMipmapMode MipmapMode { get; }
@@ -39,25 +44,70 @@ namespace Elffy.Components
 
         public void Load(Bitmap bitmap)
         {
+            if(!_to.IsEmpty) { throw new InvalidOperationException("Texture is already loaded."); }
             if(bitmap is null) { throw new ArgumentNullException(nameof(bitmap)); }
+
             using(var pixels = bitmap.GetPixels(ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb)) {
-                Load(pixels.Width, pixels.Height, pixels.Ptr);
+                LoadPrivate(new Vector2i(pixels.Width, pixels.Height), pixels.Ptr, TKPixelFormat.Bgra);
             }
         }
 
-        private void Load(int pixelWidth, int pixelHeight, IntPtr ptr)
+        public unsafe void Load(in Vector2i size, in ColorByte fill)
         {
             if(!_to.IsEmpty) { throw new InvalidOperationException("Texture is already loaded."); }
 
+            using(var buf = new PooledArray<byte>(size.X * size.Y * sizeof(ColorByte))) {
+                var pixels = buf.AsSpan().MarshalCast<byte, ColorByte>();
+                pixels.Fill(fill);
+                fixed(void* ptr = pixels) {
+                    LoadPrivate(size, (IntPtr)ptr, TKPixelFormat.Rgba);
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Painter GetPainter()
+        {
+            return new Painter(this, new RectI(0, 0, _size.X, _size.Y));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Painter GetPainter(in RectI rect)
+        {
+            if((uint)rect.X >= (uint)_size.X) { ThrowOutOfRange(); }
+            if((uint)rect.Y >= (uint)_size.Y) { ThrowOutOfRange(); }
+            if((uint)rect.Width >= (uint)(_size.X - rect.X)) { ThrowOutOfRange(); }
+            if((uint)rect.Height >= (uint)(_size.Y - rect.Y)) { ThrowOutOfRange(); }
+
+            return new Painter(this, rect);
+
+            static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException();
+        }
+
+
+        private void LoadPrivate(in Vector2i size, IntPtr ptr, TKPixelFormat format)
+        {
             _to = TextureObject.Create();
-            var unit = TextureUnitNumber.Unit0;
+            const TextureUnitNumber unit = TextureUnitNumber.Unit0;
             TextureObject.Bind2D(_to, unit);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, GetMinParameter(ShrinkMode, MipmapMode));
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, GetMagParameter(ExpansionMode));
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, pixelWidth, pixelHeight, 0, TKPixelFormat.Bgra, PixelType.UnsignedByte, ptr);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, size.X, size.Y, 0, format, PixelType.UnsignedByte, ptr);
             if(MipmapMode != TextureMipmapMode.None) {
                 GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
             }
+            TextureObject.Unbind2D(unit);
+            _size = size;
+        }
+
+        private unsafe void UpdateSubTexture(byte* pixels, in RectI rect)
+        {
+            // This method is called from Painter
+
+            Debug.Assert(_to.IsEmpty == false);
+            const TextureUnitNumber unit = TextureUnitNumber.Unit0;
+            TextureObject.Bind2D(_to, unit);
+            GL.TexSubImage2D(TextureTarget.Texture2D, 0, rect.X, rect.Y, rect.Width, rect.Height, TKPixelFormat.Rgba, PixelType.UnsignedByte, (IntPtr)pixels);
             TextureObject.Unbind2D(unit);
         }
 
@@ -79,14 +129,13 @@ namespace Elffy.Components
                 TextureObject.Delete(ref _to);
             }
             else {
-                // opengl のバッファは作成したスレッドでしか解放できないため
-                // ファイナライザ経由では解放不可
+                // Cannot release objects of OpenGL from the finalizer thread.
                 throw new MemoryLeakException(typeof(Texture));
             }
         }
 
 
-        private int GetMagParameter(TextureExpansionMode expansionMode)
+        private static int GetMagParameter(TextureExpansionMode expansionMode)
         {
             switch(expansionMode) {
                 case TextureExpansionMode.Bilinear:
@@ -97,7 +146,8 @@ namespace Elffy.Components
                     throw new ArgumentException();
             }
         }
-        private int GetMinParameter(TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode)
+
+        private static int GetMinParameter(TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode)
         {
             switch(shrinkMode) {
                 case TextureShrinkMode.Bilinear:
@@ -122,6 +172,66 @@ namespace Elffy.Components
                     break;
             }
             throw new ArgumentException();
+        }
+
+        public unsafe partial struct Painter : IDisposable
+        {
+            // This color type is same as texture inner pixel format of opengl
+            const SKColorType ColorType = SKColorType.Rgba8888;
+
+            private readonly RectI _rect;
+            private readonly Texture _t;
+            private SKPaint? _paint;
+            private SKBitmap? _bitmap;
+            private SKCanvas? _canvas;
+            private SKTextBlobBuilder? _textBuilder;
+            private bool _isDirty;
+            private byte* _pixels;      // pointer to a head pixel
+
+            private SKPaint Paint => _paint ??= new SKPaint();
+            private SKBitmap Bitmap
+            {
+                get
+                {
+                    if(_bitmap is null) {
+                        _bitmap = new SKBitmap(new SKImageInfo(_rect.Width, _rect.Height, ColorType, SKAlphaType.Unpremul));
+                        _bitmap.Erase(SKColors.Black);
+                    }
+                    return _bitmap;
+                }
+            }
+            private SKCanvas Canvas => _canvas ??= new SKCanvas(Bitmap);
+            private SKTextBlobBuilder TextBuilder => _textBuilder ??= new SKTextBlobBuilder();
+
+            internal Painter(Texture texture, in RectI rect)
+            {
+                _rect = rect;
+                _t = texture;
+                _isDirty = false;
+                _pixels = default;
+                _paint = null;
+                _bitmap = null;
+                _canvas = null;
+                _textBuilder = null;
+            }
+
+            public void Flush()
+            {
+                if(_isDirty) {
+                    Debug.Assert(_pixels != null);
+                    _t.UpdateSubTexture(_pixels, _rect);
+                    _isDirty = false;
+                }
+            }
+
+            public void Dispose()
+            {
+                Flush();
+                _paint?.Dispose();
+                _bitmap?.Dispose();
+                _canvas?.Dispose();
+                _textBuilder?.Dispose();
+            }
         }
     }
 }
