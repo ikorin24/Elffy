@@ -33,6 +33,8 @@ namespace Elffy.Components
 
         public bool AutoDisposeOnDetached => _core.AutoDisposeOnDetached;
 
+        public ref readonly Vector2i Size => ref _size;
+
         public Texture(TextureExpansionMode expansionMode, TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode, bool autoDispose = true)
         {
             ExpansionMode = expansionMode;
@@ -138,6 +140,7 @@ namespace Elffy.Components
             if(_to.IsEmpty) { return; }
             if(disposing) {
                 TextureObject.Delete(ref _to);
+                _size = default;
             }
             else {
                 // Cannot release objects of OpenGL from the finalizer thread.
@@ -206,7 +209,6 @@ namespace Elffy.Components
                 {
                     if(_bitmap is null) {
                         _bitmap = new SKBitmap(new SKImageInfo(_rect.Width, _rect.Height, ColorType, SKAlphaType.Unpremul));
-                        _bitmap.Erase(SKColors.Black);
                     }
                     return _bitmap;
                 }

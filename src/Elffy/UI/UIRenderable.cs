@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Elffy.Core;
 using Elffy.OpenGL;
 using Elffy.Shading;
@@ -28,13 +29,14 @@ namespace Elffy.UI
             base.OnAlive();
             Debug.Assert(InternalLayer is UILayer);
 
-            //  Position                UI
+            //     Position                    UI
             //                          
-            //       p3(3) -- p2(2)     (0,1) --- (1,1)
-            //       |     /   |          |         |
-            //       |    /    |          |         |
-            //       |   /     |          |         |
-            //       p0(0) -- p1(1)     (0,0) --- (1,0)
+            //     p3(0,1,0) -- p2(1,1,0)     (0,1) --- (1,1)
+            //     |         /     |           |      /   |
+            //     |        /      |           |     /    |
+            //     |       /       |           |    /     |
+            //     |      /        |           |   /      |
+            //     p0(0,0,0) -- p1(1,0,0)     (0,0) --- (1,0)
             //  Y
             //  |  Z (direction to back of screen)
             //  | /
@@ -46,17 +48,12 @@ namespace Elffy.UI
             // Y axis is inversed on rendered.
 
             // Build polygons and load them
-            var control = Control;
-            var p0 = new Vector3(control.OffsetX, control.OffsetY, 0);
-            var p1 = p0 + new Vector3(control.Width, 0, 0);
-            var p2 = p0 + new Vector3(control.Width, control.Height, 0);
-            var p3 = p0 + new Vector3(0, control.Height, 0);
             ReadOnlySpan<VertexSlim> vertices = stackalloc VertexSlim[4]
             {
-                new VertexSlim(p0, new Vector2(0, 0)),
-                new VertexSlim(p1, new Vector2(1, 0)),
-                new VertexSlim(p2, new Vector2(1, 1)),
-                new VertexSlim(p3, new Vector2(0, 1)),
+                new VertexSlim(new Vector3(0, 0, 0), new Vector2(0, 0)),
+                new VertexSlim(new Vector3(1, 0, 0), new Vector2(1, 0)),
+                new VertexSlim(new Vector3(1, 1, 0), new Vector2(1, 1)),
+                new VertexSlim(new Vector3(0, 1, 0), new Vector2(0, 1)),
             };
             ReadOnlySpan<int> indices = stackalloc int[6] { 0, 2, 1, 2, 0, 3 };
             LoadGraphicBuffer(vertices, indices);
@@ -64,12 +61,30 @@ namespace Elffy.UI
 
         protected override void OnRendering(in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
+            var control = Control;
+            var offset = new Vector2(control.OffsetX, control.OffsetY);
+            var hasOffset = offset != Vector2.Zero;
+
+            // Add offset translation to the model matrix.
+            // Overwrite it instead of creating a new matrix. (It's faster)
+            if(hasOffset) {
+                Unsafe.AsRef(model).M03 += offset.X;
+                Unsafe.AsRef(model).M13 += offset.Y;
+            }
+
             VAO.Bind(VAO);
             IBO.Bind(IBO);
             ShaderProgram!.Apply(this, Span<Light>.Empty, in model, in view, in projection);
             DrawElements(IBO.Length, 0);
             VAO.Unbind();
             IBO.Unbind();
+
+            // Restore the model matrix for safety.
+            // (Though this is no needed I think.)
+            if(hasOffset) {
+                Unsafe.AsRef(model).M03 -= offset.X;
+                Unsafe.AsRef(model).M13 -= offset.Y;
+            }
         }
     }
 }

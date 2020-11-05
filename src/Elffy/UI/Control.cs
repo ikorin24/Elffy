@@ -141,12 +141,34 @@ namespace Elffy.UI
         private Vector2i _absolutePosition;
 
         /// <summary>get or set Width of <see cref="Control"/></summary>
-        public int Width { get => _width; set => _width = Math.Max(0, value); }
-        private int _width;
+        public int Width
+        {
+            get => (int)Renderable.Scale.X;
+            set
+            {
+                if(value < 0) {
+                    ThrowOutOfRange();
+                    static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException();
+                }
+                Renderable.Scale.X = value;
+            }
+        }
+
 
         /// <summary>get or set Height of <see cref="Control"/></summary>
-        public int Height { get => _height; set => _height = Math.Max(0, value); }
-        private int _height;
+        //public int Height { get => _height; set => _height = Math.Max(0, value); }
+        public int Height
+        {
+            get => (int)Renderable.Scale.Y;
+            set
+            {
+                if(value < 0) {
+                    ThrowOutOfRange();
+                    static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException();
+                }
+                Renderable.Scale.Y = value;
+            }
+        }
 
         /// <summary>get or set offset position X of layout</summary>
         public int OffsetX { get; set; }
@@ -199,15 +221,17 @@ namespace Elffy.UI
         /// <summary>Mouse leave event</summary>
         public event ActionEventHandler<Control, MouseEventArgs>? MouseLeave;
 
+        public event ActionEventHandler<Control>? Alive;
+        public event ActionEventHandler<Control>? Dead;
+
         /// <summary>constructor of <see cref="Control"/></summary>
         public Control()
         {
             Children = new ControlCollection(this);
             Renderable = new UIRenderable(this);
             Texture = new Texture(TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear, TextureMipmapMode.None);
-
-            // Attached component is disposed automatically when Renderable dies.
-            Renderable.Alive += sender => SafeCast.As<ComponentOwner>(sender).AddComponent(Texture);
+            Renderable.Alive += OnRenderableAlive;
+            Renderable.Dead += OnRenderableDead;
         }
 
         protected virtual void OnRecieveHitTestResult(bool isHit, Mouse mouse)
@@ -245,7 +269,7 @@ namespace Elffy.UI
         {
             return IsVisible &&
                    IsHitTestVisible &&
-                   new Rectangle(_absolutePosition.X, _absolutePosition.Y, _width, _height)
+                   new Rectangle(_absolutePosition.X, _absolutePosition.Y, Width, Height)
                         .Contains((int)mouse.Position.X, (int)mouse.Position.Y);
         }
 
@@ -255,6 +279,18 @@ namespace Elffy.UI
         internal void NotifyHitTestResult(bool isHit, Mouse mouse)
         {
             OnRecieveHitTestResult(isHit, mouse);
+        }
+
+        private void OnRenderableAlive(FrameObject sender)
+        {
+            // Attached component is disposed automatically when Renderable dies.
+            SafeCast.As<ComponentOwner>(sender).AddComponent(Texture);
+            Alive?.Invoke(this);
+        }
+
+        private void OnRenderableDead(FrameObject sender)
+        {
+            Dead?.Invoke(this);
         }
     }
 

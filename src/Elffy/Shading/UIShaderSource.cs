@@ -1,8 +1,5 @@
 ﻿#nullable enable
 using System;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using Elffy.Components;
 using Elffy.Core;
 using Elffy.Diagnostics;
 using Elffy.OpenGL;
@@ -38,6 +35,10 @@ namespace Elffy.Shading
             var texture = uiRenderable.Control.Texture;
             uniform.SendTexture2D("tex_sampler", texture.TextureObject, TextureUnitNumber.Unit0);
             uniform.Send("hasTexture", !texture.IsEmpty);
+
+            var control = uiRenderable.Control;
+            var uvScale = new Vector2(control.Width, control.Height) / texture.Size;
+            uniform.Send("uvScale", uvScale);
         }
 
         private const string VertSource =
@@ -47,11 +48,12 @@ in vec3 vPos;
 in vec2 vUV;
 out vec2 UV;
 
+uniform vec2 uvScale;
 uniform mat4 mvp;
 
 void main()
 {
-    UV = vUV;
+    UV = vUV * uvScale;
     gl_Position = mvp * vec4(vPos, 1.0);
 }
 ";
