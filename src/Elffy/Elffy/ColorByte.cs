@@ -35,5 +35,11 @@ namespace Elffy
         public static bool operator ==(in ColorByte left, in ColorByte right) => left.Equals(right);
 
         public static bool operator !=(in ColorByte left, in ColorByte right) => !(left == right);
+
+
+
+        public static ColorByte White => new ColorByte(255, 255, 255, 255);
+        public static ColorByte Black => new ColorByte(0, 0, 0, 255);
+        public static ColorByte Transparent => new ColorByte(0, 0, 0, 0);
     }
 }
