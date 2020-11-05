@@ -59,6 +59,10 @@ namespace Elffy
         public static Vector2i operator *(int right, in Vector2i vec1) => new Vector2i(vec1.X * right, vec1.Y * right);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2i operator /(in Vector2i vec1, int right) => new Vector2i(vec1.X / right, vec1.Y / right);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2 operator /(in Vector2i vec1, in Vector2 vec2) => new Vector2(vec1.X / vec2.X, vec1.Y / vec2.Y);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2i operator /(in Vector2i vec1, in Vector2i vec2) => new Vector2i(vec1.X / vec2.X, vec1.Y / vec2.Y);
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -70,6 +74,8 @@ namespace Elffy
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator Vector2i(in Vector2 vec) => new Vector2i((int)vec.X, (int)vec.Y);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator Vector2(in Vector2i vec) => new Vector2(vec.X, vec.Y);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator Point(in Vector2i vec) => UnsafeEx.As<Vector2i, Point>(in vec);

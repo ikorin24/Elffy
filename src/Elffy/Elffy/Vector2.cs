@@ -88,6 +88,11 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 operator /(in Vector2 vec1, float right) => new Vector2(vec1.X / right, vec1.Y / right);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2 operator /(in Vector2 vec1, in Vector2 vec2) => new Vector2(vec1.X / vec2.X, vec1.Y / vec2.Y);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2 operator /(in Vector2 vec1, in Vector2i vec2) => new Vector2(vec1.X / vec2.X, vec1.Y / vec2.Y);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 operator /(float right, in Vector2 vec1) => new Vector2(vec1.X / right, vec1.Y / right);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator TKVector2(Vector2 vec) => Unsafe.As<Vector2, TKVector2>(ref vec);
