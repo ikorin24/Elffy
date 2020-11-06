@@ -1,9 +1,11 @@
 ﻿#nullable enable
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Elffy.Core;
 using OpenTK.Graphics.OpenGL4;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace Elffy.OpenGL
 {
@@ -11,6 +13,9 @@ namespace Elffy.OpenGL
     [DebuggerDisplay("FBO={_fbo}")]
     public readonly struct FBO : IEquatable<FBO>
     {
+        private static readonly Dictionary<IntPtr, FBO> _readBinded = new Dictionary<IntPtr, FBO>();
+        private static readonly Dictionary<IntPtr, FBO> _drawBinded = new Dictionary<IntPtr, FBO>();
+
         private readonly int _fbo;
 
         internal int Value => _fbo;
@@ -19,6 +24,23 @@ namespace Elffy.OpenGL
 
         public static FBO Empty => default;
 
+        public unsafe static FBO CurrentReadBinded
+        {
+            get
+            {
+                var c = (IntPtr)GLFW.GetCurrentContext();
+                return _readBinded.TryGetValue(c, out var fbo) ? fbo : Empty;
+            }
+        }
+        public unsafe static FBO CurrentDrawBinded
+        {
+            get
+            {
+                var c = (IntPtr)GLFW.GetCurrentContext();
+                return _drawBinded.TryGetValue(c, out var fbo) ? fbo : Empty;
+            }
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private FBO(int fbo)
         {
@@ -26,16 +48,34 @@ namespace Elffy.OpenGL
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Bind(in FBO fbo, Target target)
+        public static unsafe void Bind(in FBO fbo, Target target)
         {
             GLAssert.EnsureContext();
+
+            var context = (IntPtr)GLFW.GetCurrentContext();
+            if(target != Target.Read) {
+                _drawBinded[context] = fbo;
+            }
+            if(target != Target.Draw) {
+                _readBinded[context] = fbo;
+            }
+
             GL.BindFramebuffer((FramebufferTarget)target, fbo._fbo);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Unbind(Target target)
+        public static unsafe void Unbind(Target target)
         {
             GLAssert.EnsureContext();
+
+            var context = (IntPtr)GLFW.GetCurrentContext();
+            if(target != Target.Read) {
+                _drawBinded[context] = Empty;
+            }
+            if(target != Target.Draw) {
+                _readBinded[context] = Empty;
+            }
+
             GL.BindFramebuffer((FramebufferTarget)target, Consts.NULL);
         }
 

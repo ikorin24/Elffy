@@ -250,6 +250,20 @@ namespace Elffy.UI
             }
         }
 
+        public Texture.Painter GetPainter()
+        {
+            var texture = Texture;
+            if(texture.IsEmpty) {
+                texture.LoadUndefinedEmpty(new Vector2i(Width, Height));
+                var p = Texture.GetPainter();
+                p.Fill(ColorByte.White);
+                return p;
+            }
+            else {
+                return Texture.GetPainter();
+            }
+        }
+
         /// <summary>このオブジェクトの <see cref="Children"/> 以下に存在する全ての子孫を取得します。列挙順は深さ優先探索 (DFS; depth-first search) です。</summary>
         /// <returns>全ての子孫オブジェクト</returns>
         public IEnumerable<Control> GetOffspring()

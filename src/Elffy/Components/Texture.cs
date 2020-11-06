@@ -18,6 +18,18 @@ namespace Elffy.Components
 {
     public sealed partial class Texture : ISingleOwnerComponent, IDisposable
     {
+        // I use GL_RGBA as internal pixel format (format in GPU).
+        //
+        // | LSB  <---               --->  MAB |
+        // |   R    |   G    |   B    |   A    |
+        // | 1 byte | 1 byte | 1 byte | 1 byte |
+        // |             4 bytes               |
+        //
+        // The driver of opengl convert it if we send pixels as other formats.
+        // Avoid that if possible.
+        private PixelInternalFormat InternalFormat = PixelInternalFormat.Rgba;
+
+
         private SingleOwnerComponentCore<Texture> _core;    // Mutable object, Don't change into reaadonly
         private TextureObject _to;
         private Vector2i _size;
@@ -68,19 +80,70 @@ namespace Elffy.Components
             }
         }
 
+        internal unsafe void LoadUndefinedEmpty(in Vector2i size)
+        {
+            if(!_to.IsEmpty) {
+                ThrowAlreadyLoaded();
+                static void ThrowAlreadyLoaded() => throw new InvalidOperationException("Texture is already loaded.");
+            }
+            LoadPrivate(size, IntPtr.Zero, TKPixelFormat.Rgba);
+        }
+
+        public unsafe int GetPixels(in RectI rect, Span<ColorByte> buffer)
+        {
+            if(_to.IsEmpty) {
+                return 0;
+            }
+            if((uint)rect.X >= (uint)_size.X ||
+               (uint)rect.Y >= (uint)_size.Y ||
+               (uint)rect.Width > (uint)(_size.X - rect.X) ||
+               (uint)rect.Height > (uint)(_size.Y - rect.Y)) {
+                throw new ArgumentOutOfRangeException();
+            }
+            var len = rect.X * rect.Y * sizeof(ColorByte);
+            if(buffer.Length < len) {
+                throw new ArgumentException($"{nameof(buffer)} is too short.");
+            }
+
+            // Get current binded fbo
+            var currentRead = FBO.CurrentReadBinded;
+            var currentDraw = FBO.CurrentDrawBinded;
+
+            var fbo = FBO.Create();
+            try {
+                FBO.Bind(fbo, FBO.Target.FrameBuffer);
+                FBO.SetTexture2DBuffer(_to, FBO.Attachment.ColorAttachment0);
+                if(!FBO.CheckStatus(out var status)) {
+                    throw new Exception(status.ToString());
+                }
+                fixed(void* ptr = buffer) {
+                    GL.ReadPixels(rect.X, rect.Y, rect.Width, rect.Height, TKPixelFormat.Rgba, PixelType.UnsignedByte, (IntPtr)ptr);
+                }
+            }
+            finally {
+                FBO.Unbind(FBO.Target.FrameBuffer);
+                FBO.Delete(ref fbo);
+
+                // Restore binded
+                FBO.Bind(currentRead, FBO.Target.Read);
+                FBO.Bind(currentDraw, FBO.Target.Draw);
+            }
+            return len;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Painter GetPainter()
+        public Painter GetPainter(bool copyFromOriginal = true)
         {
             if(_to.IsEmpty) {
                 ThrowEmptyTexture();
                 static void ThrowEmptyTexture() => throw new InvalidOperationException("Texture is not loaded yet.");
             }
 
-            return new Painter(this, new RectI(0, 0, _size.X, _size.Y));
+            return new Painter(this, new RectI(0, 0, _size.X, _size.Y), copyFromOriginal);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Painter GetPainter(in RectI rect)
+        public Painter GetPainter(in RectI rect, bool copyFromOriginal = true)
         {
             if(_to.IsEmpty) {
                 ThrowEmptyTexture();
@@ -89,10 +152,10 @@ namespace Elffy.Components
 
             if((uint)rect.X >= (uint)_size.X) { ThrowOutOfRange(); }
             if((uint)rect.Y >= (uint)_size.Y) { ThrowOutOfRange(); }
-            if((uint)rect.Width >= (uint)(_size.X - rect.X)) { ThrowOutOfRange(); }
-            if((uint)rect.Height >= (uint)(_size.Y - rect.Y)) { ThrowOutOfRange(); }
+            if((uint)rect.Width > (uint)(_size.X - rect.X)) { ThrowOutOfRange(); }
+            if((uint)rect.Height > (uint)(_size.Y - rect.Y)) { ThrowOutOfRange(); }
 
-            return new Painter(this, rect);
+            return new Painter(this, rect, copyFromOriginal);
 
             static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException();
         }
@@ -105,7 +168,7 @@ namespace Elffy.Components
             TextureObject.Bind2D(_to, unit);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, GetMinParameter(ShrinkMode, MipmapMode));
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, GetMagParameter(ExpansionMode));
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, size.X, size.Y, 0, format, PixelType.UnsignedByte, ptr);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat, size.X, size.Y, 0, format, PixelType.UnsignedByte, ptr);
             if(MipmapMode != TextureMipmapMode.None) {
                 GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
             }
@@ -123,6 +186,8 @@ namespace Elffy.Components
             GL.TexSubImage2D(TextureTarget.Texture2D, 0, rect.X, rect.Y, rect.Width, rect.Height, TKPixelFormat.Rgba, PixelType.UnsignedByte, (IntPtr)pixels);
             TextureObject.Unbind2D(unit);
         }
+
+        //private 
 
         void IComponent.OnAttached(ComponentOwner owner) => _core.OnAttached(owner);
 
@@ -216,7 +281,7 @@ namespace Elffy.Components
             private SKCanvas Canvas => _canvas ??= new SKCanvas(Bitmap);
             private SKTextBlobBuilder TextBuilder => _textBuilder ??= new SKTextBlobBuilder();
 
-            internal Painter(Texture texture, in RectI rect)
+            internal Painter(Texture texture, in RectI rect, bool copyFromOriginal)
             {
                 _rect = rect;
                 _t = texture;
@@ -226,6 +291,9 @@ namespace Elffy.Components
                 _bitmap = null;
                 _canvas = null;
                 _textBuilder = null;
+                if(copyFromOriginal) {
+                    CopyFromOriginal(rect);
+                }
             }
 
             public void Flush()
@@ -244,6 +312,14 @@ namespace Elffy.Components
                 _bitmap?.Dispose();
                 _canvas?.Dispose();
                 _textBuilder?.Dispose();
+            }
+
+            private void CopyFromOriginal(in RectI rect)
+            {
+                var texture = _t;
+                var pixCount = texture.Size.X * texture.Size.Y;
+                var buf = new Span<ColorByte>(Bitmap.GetPixels().ToPointer(), pixCount);
+                texture.GetPixels(rect, buf);
             }
         }
     }
