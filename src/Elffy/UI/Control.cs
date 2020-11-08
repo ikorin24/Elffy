@@ -6,7 +6,6 @@ using System.Diagnostics;
 using Elffy.InputSystem;
 using Elffy.Components;
 using Elffy.Core;
-using System.Runtime.CompilerServices;
 
 namespace Elffy.UI
 {
@@ -156,7 +155,6 @@ namespace Elffy.UI
 
 
         /// <summary>get or set Height of <see cref="Control"/></summary>
-        //public int Height { get => _height; set => _height = Math.Max(0, value); }
         public int Height
         {
             get => (int)Renderable.Scale.Y;
