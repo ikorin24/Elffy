@@ -12,14 +12,14 @@ namespace Elffy.Effective.Unsafes
         /// <param name="source">source <see cref="string"/></param>
         /// <returns>reference to first char</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [CriticalDotnetDependency("netcoreapp3.1")]
+        [CriticalDotnetDependency("netcoreapp3.1 || net5.0")]
         public static ref char GetFirstCharReference(this string source)
         {
             return ref Unsafe.As<StringDummy>(source)._firstChar;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [CriticalDotnetDependency("netcoreapp3.1")]
+        [CriticalDotnetDependency("netcoreapp3.1 || net5.0")]
         public static ReadOnlySpan<char> AsSpanUnsafe(this string source, int start)
         {
             return MemoryMarshal.CreateReadOnlySpan(ref Unsafe.Add(ref Unsafe.As<StringDummy>(source)._firstChar, start), source.Length - start);
@@ -32,7 +32,7 @@ namespace Elffy.Effective.Unsafes
         /// <param name="length">length to slice</param>
         /// <returns>sliced span</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [CriticalDotnetDependency("netcoreapp3.1")]
+        [CriticalDotnetDependency("netcoreapp3.1 || net5.0")]
         public static ReadOnlySpan<char> AsSpanUnsafe(this string source, int start, int length)
         {
             return MemoryMarshal.CreateReadOnlySpan(ref Unsafe.Add(ref Unsafe.As<StringDummy>(source)._firstChar, start), length);
@@ -61,7 +61,6 @@ namespace Elffy.Effective.Unsafes
             return MemoryMarshal.CreateReadOnlySpan(ref Unsafe.AsRef(source.At(start)), length);
         }
 
-#if NETCOREAPP3_1
         private sealed class StringDummy
         {
 #pragma warning disable CS0649  // warning of field not set
@@ -72,5 +71,4 @@ namespace Elffy.Effective.Unsafes
             private StringDummy() { }
         }
     }
-#endif
 }

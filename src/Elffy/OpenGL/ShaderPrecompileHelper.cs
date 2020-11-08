@@ -12,9 +12,6 @@ using Elffy.AssemblyServices;
 using Elffy.Effective.Unsafes;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
-using Elffy.Threading;
-using System.Runtime.InteropServices.WindowsRuntime;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.OpenGL
 {

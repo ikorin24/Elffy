@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 using System;
 using Elffy.AssemblyServices;
-#if NETCOREAPP3_1
+#if !NETCOREAPP3_1
 using System.Runtime.InteropServices;
 #endif
 

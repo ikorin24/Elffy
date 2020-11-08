@@ -64,20 +64,30 @@ namespace Elffy.Effective.Unsafes
             => MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(source), source.Length);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NETCOREAPP3_1
         [CriticalDotnetDependency("netcoreapp3.1")]
-        internal static Span<T> AsSpan<T>(this List<T> list) => Unsafe.As<ListDummy<T>>(list)._items.AsSpan(0, list.Count);
+#endif
+        internal static Span<T> AsSpan<T>(this List<T> list)
+        {
+#if NETCOREAPP3_1
+            return (list is null) ? default : Unsafe.As<ListDummy<T>>(list)._items.AsSpan(0, list.Count);
+#elif NET5_0
+            return CollectionsMarshal.AsSpan(list);
+#endif
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [CriticalDotnetDependency("netcoreapp3.1")]
         internal static ReadOnlySpan<T> AsReadOnlySpan<T>(this List<T> list) => list.AsSpan();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [CriticalDotnetDependency("netcoreapp3.1")]
+        [CriticalDotnetDependency("netcoreapp3.1 || net5.0")]
         internal static void AddRange<T>(this List<T> list, ReadOnlySpan<T> span) => list.InsertRange(list.Count, span);
 
-        [CriticalDotnetDependency("netcoreapp3.1")]
+        [CriticalDotnetDependency("netcoreapp3.1 || net5.0")]
         internal static void InsertRange<T>(this List<T> list, int index, ReadOnlySpan<T> span)
         {
+            // TODO: self insertion
             if(list == null) { throw new ArgumentNullException(nameof(list)); }
             static void EnsureCapacity(List<T> original, ListDummy<T> dummy, int min)
             {
@@ -117,9 +127,7 @@ namespace Elffy.Effective.Unsafes
             internal T[] _items = default!;
             internal int _size;
             internal int _version;
-#if NETFRAMEWORK
-            internal object _syncRoot = default!;
-#endif
+            //internal object _syncRoot = default!;     // for NETFRAMEWORK
 
             private ListDummy() { }
         }

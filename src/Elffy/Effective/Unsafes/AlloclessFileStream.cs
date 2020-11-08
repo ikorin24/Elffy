@@ -22,7 +22,7 @@ namespace Elffy.Effective.Unsafes
 
 
     /// <summary>内部バッファを使い捨てない <see cref="FileStream"/> クラス</summary>
-    [CriticalDotnetDependency("netcoreapp3.1")]
+    [CriticalDotnetDependency("netcoreapp3.1 || net5.0")]
     internal sealed class AlloclessFileStream : FileStream, IDisposable
     {
         const int BufferSize = 4096;    // 2^n でなければならない (ArrayPool<byte>.Shared からちょうどのサイズを取る必要があるため)
