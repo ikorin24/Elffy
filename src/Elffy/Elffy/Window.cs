@@ -9,6 +9,7 @@ using TKMouseButtonEventArgs = OpenTK.Windowing.Common.MouseButtonEventArgs;
 using Elffy.OpenGL;
 using Elffy.OpenGL.Windowing;
 using Elffy.Threading.Tasks;
+using Elffy.Imaging;
 
 namespace Elffy
 {
@@ -72,19 +73,18 @@ namespace Elffy
 
         /// <summary>スタイルを指定してウィンドウを作成します</summary>
         /// <param name="windowStyle">ウィンドウのスタイル</param>
-        public Window(WindowStyle windowStyle) : this(800, 450, DefaultTitle, windowStyle) { }
+        public Window(WindowStyle windowStyle) : this(800, 450, DefaultTitle, windowStyle, ReadOnlySpan<RawImage>.Empty) { }
 
         /// <summary>サイズとタイトルとスタイルを指定して、ウィンドウを作成します</summary>
         /// <param name="width">ウィンドウの幅</param>
         /// <param name="height">ウィンドウの高さ</param>
         /// <param name="title">ウィンドウのタイトル</param>
         /// <param name="windowStyle">ウィンドウのスタイル</param>
-        public Window(int width, int height, string title, WindowStyle windowStyle)
+        public Window(int width, int height, string title, WindowStyle windowStyle, ReadOnlySpan<RawImage> icon)
         {
             _isThreadMain = true;
             _renderingArea = new RenderingArea(this);
-
-            _windowImpl = new WindowGLFW(width, height, title, windowStyle, WindowIconRaw.Empty);
+            _windowImpl = new WindowGLFW(width, height, title, windowStyle, icon);
 
             _frameDelta = TimeSpan.FromSeconds(1.0 / 60.0); // TODO: とりあえず固定で
             _windowImpl.UpdateFrame += OnUpdateFrame;

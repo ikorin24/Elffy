@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.IO;
 using Elffy;
 using Elffy.Diagnostics;
 
@@ -12,7 +13,7 @@ namespace Sandbox
         {
             try {
                 DevEnv.Run();
-                Game.Start(1200, 675, "Sandbox", GameStarter.Start);
+                Game.Start(1200, 675, "Sandbox", "icon.ico", GameStarter.Start);
             }
             finally {
                 DevEnv.Stop();

@@ -6,6 +6,8 @@ using System.Diagnostics.CodeAnalysis;
 using Elffy.AssemblyServices;
 using Elffy.OpenGL.Windowing;
 using Elffy.Core.OpenTK;
+using Elffy.Imaging;
+using Elffy.Effective;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using Monitor = OpenTK.Windowing.GraphicsLibraryFramework.Monitor;
@@ -84,11 +86,11 @@ namespace Elffy.OpenGL
             }
         }
 
-        public WindowGLFW() : this(800, 600, "Window", WindowStyle.Default, WindowIconRaw.Empty)
+        public WindowGLFW() : this(800, 600, "Window", WindowStyle.Default, ReadOnlySpan<RawImage>.Empty)
         {
         }
 
-        public WindowGLFW(int width, int height, string title, WindowStyle style, WindowIconRaw icon)
+        public WindowGLFW(int width, int height, string title, WindowStyle style, ReadOnlySpan<RawImage> icon)
         {
             title ??= "";
 
@@ -150,8 +152,8 @@ namespace Elffy.OpenGL
                 RegisterWindowCallbacks();
                 GLFW.FocusWindow(_window);
                 _title = title;
-                if(icon.Images.Length != 0) {
-                    GLFW.SetWindowIcon(_window, icon.Images);
+                if(icon.Length != 0) {
+                    GLFW.SetWindowIcon(_window, icon.MarshalCast<RawImage, Image>());
                 }
 
                 GLFW.GetWindowSize(_window, out _clientSize.X, out _clientSize.Y);
