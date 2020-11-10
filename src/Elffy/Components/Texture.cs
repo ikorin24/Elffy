@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Elffy.Core;
 using Elffy.Effective;
 using Elffy.Exceptions;
@@ -20,7 +21,7 @@ namespace Elffy.Components
     {
         // I use GL_RGBA as internal pixel format (format in GPU).
         //
-        // | LSB  <---               --->  MAB |
+        // |   0    |   1    |   2    |   3    |
         // |   R    |   G    |   B    |   A    |
         // | 1 byte | 1 byte | 1 byte | 1 byte |
         // |             4 bytes               |
@@ -281,6 +282,10 @@ namespace Elffy.Components
             private SKCanvas Canvas => _canvas ??= new SKCanvas(Bitmap);
             private SKTextBlobBuilder TextBuilder => _textBuilder ??= new SKTextBlobBuilder();
 
+            /// <summary>Get pointer to pixels.</summary>
+            /// <remarks>If change pixels via pointer, you must call <see cref="SetDirty"/> method after that.</remarks>
+            public ColorByte* Ptr => (ColorByte*)Bitmap.GetPixels();
+
             internal Painter(Texture texture, in RectI rect, bool copyFromOriginal)
             {
                 _rect = rect;
@@ -296,6 +301,13 @@ namespace Elffy.Components
                 }
             }
 
+            /// <summary>Get pixels as <see cref="Span{T}"/> of <see cref="ColorByte"/>.</summary>
+            /// <remarks>If change pixels via span, you must call <see cref="SetDirty"/> method after that.</remarks>
+            /// <returns><see cref="Span{T}"/> of <see cref="ColorByte"/></returns>
+            public Span<ColorByte> AsSpan() => MemoryMarshal.CreateSpan(ref *Ptr, _rect.Width * _rect.Height);
+
+            /// <summary>Flush changes of pixels to <see cref="Texture"/> if dirty flag is set.</summary>
+            /// <remarks>This method is automatically called from <see cref="Dispose"/></remarks>
             public void Flush()
             {
                 if(_isDirty) {
