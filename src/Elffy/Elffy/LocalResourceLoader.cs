@@ -22,15 +22,19 @@ namespace Elffy
 
         public Stream GetStream(string name)
         {
-            if(name is null) {
-                ThrowNullArg();
-                static void ThrowNullArg() => throw new ArgumentNullException(nameof(name));
+            if(_resources!.TryGetValue(name, out var resource) == false) {
+                ThrowNotFound(name);
+                static void ThrowNotFound(string name) => throw new ResourceNotFoundException(name);
             }
+            return new ResourceStream(_resourcesFilePath, resource);
+        }
 
+        public long GetSize(string name)
+        {
             if(_resources!.TryGetValue(name!, out var resource) == false) {
                 throw new ResourceNotFoundException(name!);
             }
-            return new ResourceStream(_resourcesFilePath, resource);
+            return resource.Length;
         }
 
         // This method is only for debug.

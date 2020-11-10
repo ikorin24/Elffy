@@ -6,9 +6,11 @@ using Elffy.Imaging;
 using Elffy.Serialization;
 using Elffy.Shapes;
 using MMDTools.Unmanaged;
+using SkiaSharp;
 using System;
 using System.Drawing;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace Elffy
 {
@@ -127,6 +129,26 @@ namespace Elffy
             using(var stream = source.GetStream(name)) {
                 var (vertices, indices) = FbxModelBuilder.LoadModel(stream);
                 return new Model3D(vertices, indices);
+            }
+        }
+
+        public static unsafe SKTypeface LoadTypeface(this IResourceLoader source, string name, int fontFaceIndex = 0)
+        {
+            var size = source.GetSize(name);
+
+            if(size <= int.MaxValue) {
+                using(var stream = source.GetStream(name))
+                using(var data = SKData.Create((ulong)size)) {
+                    // Copy stream to SKData directly.
+                    stream.Read(new Span<byte>((void*)data.Data, (int)size));
+                    return SKTypeface.FromData(data, fontFaceIndex);
+                }
+            }
+            else {
+                using(var stream = source.GetStream(name))
+                using(var data = SKData.Create(stream)) {
+                    return SKTypeface.FromData(data, fontFaceIndex);
+                }
             }
         }
     }
