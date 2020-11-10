@@ -37,32 +37,31 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly void Deconstruct(out float r, out float g, out float b, out float a) => (r, g, b, a) = (R, G, B, A);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly ColorByte ToColorByte()
+        {
+            return new ColorByte((byte)(R * byte.MaxValue), (byte)(G * byte.MaxValue), (byte)(B * byte.MaxValue), (byte)(A * byte.MaxValue));
+        }
+
         public readonly override bool Equals(object? obj) => obj is Color4 color && Equals(color);
 
         public readonly bool Equals(Color4 other) => R == other.R && G == other.G && B == other.B && A == other.A;
 
         public readonly override int GetHashCode() => HashCode.Combine(R, G, B, A);
-        public readonly override string ToString() => ZString.Concat("(R: ", ToByte(R),
-                                                                     ", G: ", ToByte(G),
-                                                                     ", B: ", ToByte(B),
-                                                                     ", A: ", ToByte(A), ")");
+        public readonly override string ToString() => ToColorByte().ToString();
 
         public static bool operator ==(in Color4 left, in Color4 right) => left.Equals(right);
 
         public static bool operator !=(in Color4 left, in Color4 right) => !(left == right);
 
+        public static explicit operator Color4(in ColorByte color) => color.ToColor4();
+        public static explicit operator ColorByte(in Color4 color) => color.ToColorByte();
         public static implicit operator TKColor4(in Color4 color) => UnsafeEx.As<Color4, TKColor4>(in color);
         public static implicit operator Color4(in TKColor4 color) => UnsafeEx.As<TKColor4, Color4>(in color);
         public static explicit operator Color(in Color4 color) => (Color)(TKColor4)color;
         public static implicit operator Color4(in Color color) => (TKColor4)color;
         public static explicit operator Vector3(in Color4 color) => UnsafeEx.As<Color4, Vector3>(in color);
 
-        private static byte ToByte(float value)
-        {
-            var tmp = value * byte.MaxValue;
-            return (tmp < 0f) ? (byte)0 :
-                   (tmp > (float)byte.MaxValue) ? byte.MaxValue : (byte)tmp;
-        }
 
         #region Predefined Colors
         public static Color4 MediumAquamarine => TKColor4.MediumAquamarine;
