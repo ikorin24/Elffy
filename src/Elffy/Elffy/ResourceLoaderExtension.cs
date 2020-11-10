@@ -151,5 +151,12 @@ namespace Elffy
                 }
             }
         }
+
+        public static UniTask<SKTypeface> LoadTypefaceAsync(this IResourceLoader source, string name, int fontFaceIndex = 0)
+        {
+            return UniTask.Run(Load, false);
+
+            SKTypeface Load() => LoadTypeface(source, name, fontFaceIndex);
+        }
     }
 }
