@@ -59,22 +59,6 @@ namespace Elffy.Effective
             get => _length;
         }
 
-        public readonly unsafe ref T this[int index]
-        {
-            get
-            {
-                if((uint)index >= (uint)_length) { Throw(); }
-                if(_array is null) {
-                    return ref Unsafe.AsRef<T>(_start.ToPointer());
-                }
-                else {
-                    return ref Unsafe.As<byte, T>(ref _array.At(index));
-                }
-
-                static void Throw() => throw new ArgumentOutOfRangeException(nameof(index));
-            }
-        }
-
         public readonly bool IsEmpty
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -98,6 +82,17 @@ namespace Elffy.Effective
                 _start = Marshal.AllocHGlobal(sizeof(T) * length);
             }
             _length = length;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe ref T GetReference()
+        {
+            if(_array is null) {
+                return ref *(T*)_start;
+            }
+            else {
+                return ref Unsafe.As<byte, T>(ref _array.At(_start.ToInt32()));
+            }
         }
 
         /// <summary>複数回このメソッドを呼んだ場合の動作は未定義です</summary>

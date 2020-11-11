@@ -65,6 +65,17 @@ namespace Elffy.Effective
             _length = length;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe ref T GetReference()
+        {
+            if(_array is null) {
+                return ref Unsafe.AsRef<T>(null);
+            }
+            else {
+                return ref Unsafe.As<object, T>(ref _array.At(_start));
+            }
+        }
+
         /// <summary>複数回このメソッドを呼んだ場合の動作は未定義です</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly void Dispose()
