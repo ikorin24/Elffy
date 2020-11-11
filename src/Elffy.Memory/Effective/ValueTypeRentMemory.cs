@@ -49,8 +49,7 @@ namespace Elffy.Effective
         public unsafe readonly Span<T> Span
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _array is null ? MemoryMarshal.CreateSpan(ref Unsafe.AsRef<T>(_start.ToPointer()), _length)
-                                  : MemoryMarshal.CreateSpan(ref Unsafe.As<byte, T>(ref _array.At(_start.ToInt32())), _length);
+            get => MemoryMarshal.CreateSpan(ref Reference(), _length);
         }
 
         public readonly int Length
@@ -85,10 +84,10 @@ namespace Elffy.Effective
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe ref T GetReference()
+        public unsafe ref T Reference()
         {
             if(_array is null) {
-                return ref *(T*)_start;
+                return ref Unsafe.AsRef<T>(_start.ToPointer());
             }
             else {
                 return ref Unsafe.As<byte, T>(ref _array.At(_start.ToInt32()));

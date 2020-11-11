@@ -13,7 +13,7 @@ namespace Elffy.Effective.Unsafes
         /// <returns>reference to first char</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [CriticalDotnetDependency("netcoreapp3.1 || net5.0")]
-        public static ref char GetFirstCharReference(this string source)
+        public static ref char Reference(this string source)
         {
             return ref Unsafe.As<StringDummy>(source)._firstChar;
         }

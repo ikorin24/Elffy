@@ -27,7 +27,7 @@ namespace UnitTest
 
         private static void Check(string str)
         {
-            ref var firstChar = ref str.GetFirstCharReference();
+            ref var firstChar = ref str.Reference();
 
             if(str.Length > 0) {
                 ref var a = ref Unsafe.AsRef(in str.AsSpan()[0]);
