@@ -118,12 +118,25 @@ namespace Elffy
                                                                       0, 1, 0, Y,
                                                                       0, 0, 1, Z,
                                                                       0, 0, 0, 1);
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly void ToTranslationMatrix4(out Matrix4 dest) => dest = new Matrix4(1, 0, 0, X,
+                                                                                          0, 1, 0, Y,
+                                                                                          0, 0, 1, Z,
+                                                                                          0, 0, 0, 1);
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly Matrix4 ToScaleMatrix4() => new Matrix4(X, 0, 0, 0,
                                                                 0, Y, 0, 0,
                                                                 0, 0, Z, 0,
                                                                 0, 0, 0, 1);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly Matrix4 ToScaleMatrix4(out Matrix4 dest) => dest = new Matrix4(X, 0, 0, 0,
+                                                                                       0, Y, 0, 0,
+                                                                                       0, 0, Z, 0,
+                                                                                       0, 0, 0, 1);
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -11,6 +11,7 @@ using Elffy.Effective.Unsafes;
 using Cysharp.Threading.Tasks;
 using UnmanageUtility;
 using MMDTools.Unmanaged;
+using System.Runtime.CompilerServices;
 
 namespace Elffy.Shapes
 {
@@ -48,20 +49,25 @@ namespace Elffy.Shapes
             // オリジナルのデータを書き換えているので注意、このメソッドは1回しか通らない前提
             PmxModelLoadHelper.ReverseTrianglePolygon(_pmxObject!.SurfaceList.AsSpan().AsWritable());
             var (vertices, parts, bonePositions) = await UniTask.WhenAll(
-                
+
                 // build vertices
                 UniTask.Run(() => _pmxObject!.VertexList
                                 .AsSpan()
                                 .SelectToUnmanagedArray(v => v.ToRigVertex()), configureAwait: false),
-                
+
                 // build each parts
                 UniTask.Run(() => _pmxObject!.MaterialList
                                 .AsSpan()
                                 .SelectToUnmanagedArray(m => new RenderableParts(m.VertexCount, m.Texture)), configureAwait: false),
                 // build bones
+                //UniTask.Run(() => _pmxObject!.BoneList
+                //                .AsSpan()
+                //                .SelectToUnmanagedArray(b => new Vector4(b.Position.ToVector3(), 0f)), configureAwait: false)
                 UniTask.Run(() => _pmxObject!.BoneList
                                 .AsSpan()
-                                .SelectToUnmanagedArray(b => new Vector4(b.Position.ToVector3(), 0f)), configureAwait: false)
+                                .SelectToUnmanagedArray(b => new Components.Bone(UnsafeEx.As<MMDTools.Unmanaged.Vector3, Vector3>(in b.Position),
+                                                                                 b.ParentBone != 65535 ? b.ParentBone : null,
+                                                                                 b.ConnectedBone != 65535 ? b.ConnectedBone : null)))
                 );
             await HostScreen.AsyncBack.ToFrameLoopEvent(Threading.Tasks.FrameLoopTiming.Update);
 
@@ -72,7 +78,7 @@ namespace Elffy.Shapes
                               LifeState != FrameObjectLifeSpanState.Dead;
             if(needLoading) {
                 var skeleton = new Skeleton();
-                skeleton.Load(bonePositions);
+                skeleton.Load(bonePositions.AsSpan());
                 AddComponent(skeleton);
 
                 // multi texture
