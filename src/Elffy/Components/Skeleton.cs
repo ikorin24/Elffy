@@ -16,12 +16,16 @@ namespace Elffy.Components
     public sealed class Skeleton : ISingleOwnerComponent, IDisposable
     {
         private SingleOwnerComponentCore<Skeleton> _core = new SingleOwnerComponentCore<Skeleton>(true);    // Mutable object, Don't change into reaadonly
-        private FloatDataTextureImpl _boneTranslationData = new FloatDataTextureImpl();     // Mutable object, Don't change into reaadonly
-        private FloatDataTextureImpl _bonePositionData = new FloatDataTextureImpl();        // Mutable object, Don't change into reaadonly
-        private UnmanagedArray<Matrix4>? _translations;
-        private UnmanagedArray<Matrix4>? _matrices;
-        private UnmanagedArray<BoneInternal>? _tree;
+        private FloatDataTextureImpl _boneTranslationData = new FloatDataTextureImpl();                     // Mutable object, Don't change into reaadonly
+
+        private UnmanagedArray<Matrix4>? _posMatrices;      // Position matrix of each model in model local coordinate (It's read-only after loaded once.)
+        private UnmanagedArray<Matrix4>? _posInvMatrices;   // Inverse of _posMatrices (It's read-only after loaded once.)
+        private UnmanagedArray<Matrix4>? _translations;     // Translation matrix of each bone, which coordinate is bone local. (not model local)
+        private UnmanagedArray<Matrix4>? _matrices;         // Buffer to send matrix to data texture
+        private UnmanagedArray<BoneInternal>? _tree;        // Bone tree to walk around all bones
         private bool _disposed;
+
+        private bool IsBoneLoaded => !_boneTranslationData.TextureObject.IsEmpty;
 
         /// <inheritdoc/>
         public ComponentOwner? Owner => _core.Owner;
@@ -39,9 +43,6 @@ namespace Elffy.Components
         /// <summary>Get <see cref="TextureObject"/> of bone translation matrices. (This is Texture1D)</summary>
         public ref readonly TextureObject TranslationData => ref _boneTranslationData.TextureObject;
 
-        /// <summary>Get <see cref="TextureObject"/> of bone position matrices. (This is Texture1D)</summary>
-        public ref readonly TextureObject PositionData => ref _bonePositionData.TextureObject;
-
         public Skeleton()
         {
         }
@@ -52,18 +53,13 @@ namespace Elffy.Components
         /// <param name="bones">bone data</param>
         public unsafe void Load(ReadOnlySpan<Bone> bones)
         {
-            _tree?.Dispose();
-            _matrices?.Dispose();
-            _translations?.Dispose();
+            if(IsBoneLoaded) { throw new InvalidOperationException("Already loaded"); }
 
-            CreateBoneTree(bones, out var posMatrix, out _tree);
-            using(posMatrix) {
-                // Load matrices of positions
-                _bonePositionData.Load(posMatrix.AsSpan().MarshalCast<Matrix4, Color4>());
-            }
+            CreateBoneTree(bones, out _posMatrices, out _posInvMatrices, out _tree);
 
             // Round up pixel count of bone matrix buffer on data texture to 2^n.
-            var bufLen = MathTool.RoundUpToPowerOfTwo(bones.Length * sizeof(Matrix4) / sizeof(Vector4));
+            var pixelCount = MathTool.RoundUpToPowerOfTwo(bones.Length * sizeof(Matrix4) / sizeof(Vector4));
+            var bufLen = pixelCount * sizeof(Vector4) / sizeof(Matrix4);
 
             // Load matrices as identity
             _matrices = new UnmanagedArray<Matrix4>(bufLen, fill: Matrix4.Identity);
@@ -92,20 +88,31 @@ namespace Elffy.Components
         /// <summary>Send matrices to opengl. This method is called from <see cref="SkeletonHandler"/></summary>
         internal unsafe void UpdateTranslations()
         {
-            if(_tree is null) { return; }
+            if(!IsBoneLoaded) { return; }
+            Debug.Assert(_tree is not null);
             Debug.Assert(_matrices is not null);
             Debug.Assert(_translations is not null);
+            Debug.Assert(_posMatrices is not null);
+            Debug.Assert(_posInvMatrices is not null);
+            Debug.Assert(_tree.Length <= _matrices.Length &&        // _matrices.Length is rounded up to power of two.
+                         _tree.Length == _translations.Length &&
+                         _tree.Length == _posMatrices.Length &&
+                         _tree.Length == _posInvMatrices.Length);
 
             var matrices = (Matrix4*)_matrices.Ptr;
             var tree = (BoneInternal*)_tree.Ptr;
             var translations = (Matrix4*)_translations.Ptr;
+            var pos = (Matrix4*)_posMatrices.Ptr;
+            var posInv = (Matrix4*)_posInvMatrices.Ptr;
 
+            // Calc matrices in model local coordinate.
+            // You can walk around all bones in the tree by following to "b->Next".
+            // The order is DFS (Depth First Search).
+            // Therefore, matrices[b->Parent->ID] has been calculated when you will calculate matrices[b->ID].
             for(BoneInternal* b = tree; b != null; b = b->Next) {
-                if(b->Parent == null) {
-                    matrices[b->ID] = translations[b->ID];
-                }
-                else {
-                    matrices[b->ID] = matrices[b->Parent->ID] * translations[b->ID];
+                matrices[b->ID] = pos[b->ID] * translations[b->ID] * posInv[b->ID];
+                if(b->Parent != null) {
+                    matrices[b->ID] = matrices[b->Parent->ID] * matrices[b->ID];
                 }
             }
 
@@ -125,11 +132,17 @@ namespace Elffy.Components
 
             if(disposing) {
                 _boneTranslationData.Dispose();
-                _bonePositionData.Dispose();
 
+                _posMatrices?.Dispose();
+                _posInvMatrices?.Dispose();
                 _matrices?.Dispose();
+                _translations?.Dispose();
                 _tree?.Dispose();
+
+                _posMatrices = null;
+                _posInvMatrices = null;
                 _matrices = null;
+                _translations = null;
                 _tree = null;
             }
             else {
@@ -139,16 +152,22 @@ namespace Elffy.Components
         }
 
         private unsafe static void CreateBoneTree(ReadOnlySpan<Bone> bones,
-                                                  out UnsafeRawArray<Matrix4> posMatrices,
+                                                  out UnmanagedArray<Matrix4> posMatrices,
+                                                  out UnmanagedArray<Matrix4> posInvMatrices,
                                                   out UnmanagedArray<BoneInternal> boneTree)
         {
-            boneTree = null!;
-            posMatrices = default;
-            try {
+            // This method is O(NM). (in the worst case)
+            // N is bones.Length, M is depth of bone tree
 
-                // Round up pixel count of bone position matrix on data texture to 2^n.
-                var pixCountPoT = MathTool.RoundUpToPowerOfTwo(bones.Length * (sizeof(Matrix4) / sizeof(Color4)));
-                posMatrices = new UnsafeRawArray<Matrix4>(pixCountPoT);
+            boneTree = null!;
+            posMatrices = null!;
+            posInvMatrices = null!;
+            try {
+                posMatrices = new UnmanagedArray<Matrix4>(bones.Length);
+                posInvMatrices = new UnmanagedArray<Matrix4>(bones.Length);
+
+                var pos = (Matrix4*)posMatrices.Ptr;
+                var posInv = (Matrix4*)posInvMatrices.Ptr;
 
                 boneTree = new UnmanagedArray<BoneInternal>(bones.Length);
                 var tree = (BoneInternal*)boneTree.Ptr;
@@ -160,14 +179,16 @@ namespace Elffy.Components
                     if(bones[i].ParentBone != null) {
                         tree[i].Parent = &tree[(int)bones[i].ParentBone!];
                     }
-                    bones[i].Position.ToTranslationMatrix4(out posMatrices[i]);
+                    bones[i].Position.ToTranslationMatrix4(out pos[i]);
+                    pos[i].Inverted(out posInv[i]);                         // Calc inverse of pos matrix in advance.
                 }
 
-                // [NOTE]
-                // If debug this and use debugger viewer,
+                // [NOTE] ---------------------------------------------------------
+                // If debug here and use debugger viewer,
                 // enable initializing 'UnsafeRawArray' and 'UnsafeRawList' zero-cleared by constructor arg.
-                // Otherwise, you see undefined values, or it may cause exceptions in debugger.
+                // Otherwise, you may see undefined values, or it may cause exceptions in debugger.
                 // (but it is no matter)
+                // ----------------------------------------------------------------
 
                 // 'childrenBuf[i]' means IDs of children of tree[i].
                 // It is like 'List<int>[]'
@@ -184,6 +205,7 @@ namespace Elffy.Components
                     }
 
                     // Initialize tree of 'Next'
+                    // Create tree to walk around all bones in the way of DFS (depth first search).
                     for(int i = 0; i < boneTree.Length; i++) {
                         if(childrenBuf[i].Count > 0) {              // If tree[i] has any children
                             var firstChildID = childrenBuf[i][0];
@@ -191,21 +213,21 @@ namespace Elffy.Components
                         }
                         else {                                      // When tree[i] has no children
                             ref var target = ref tree[i];           // For the first time, target is tree[i].
-                        SEARCH:
-                            if(target.Parent == null) {             // If target is root
-                                tree[i].Next = null;                // tree[i].Next is null
-                                continue;
-                            }
-
-                            ref var siblings = ref childrenBuf[target.Parent->ID];  // Get siblings of target.
-
-                            var num = siblings.IndexOf(target.ID);          // Get number of target in the siblings.
-                            if(num < siblings.Count - 1) {                  // That means tree[i] is not the last child in its siblings.
-                                tree[i].Next = &tree[siblings[num + 1]];    // tree[i].Next is next sibling of itself.
-                            }
-                            else {                                          // When tree[i] is the last child in its siblings.
-                                target = ref *(target.Parent);              // If target is not root, change target to its parent
-                                goto SEARCH;                                // and search recursively.
+                            while(true) {
+                                if(target.Parent == null) {         // If target is root
+                                    tree[i].Next = null;            // tree[i].Next is null
+                                    break;
+                                }
+                                ref var siblings = ref childrenBuf[target.Parent->ID];  // Get siblings of target.
+                                var num = siblings.IndexOf(target.ID);                  // Get number of target in the siblings.
+                                if(num < siblings.Count - 1) {                          // That means tree[i] is not the last child in its siblings.
+                                    tree[i].Next = &tree[siblings[num + 1]];            // tree[i].Next is next sibling of itself.
+                                    break;
+                                }
+                                // When tree[i] is the last child in its siblings.
+                                // If target is not root, change target to its parent
+                                // and search recursively.
+                                target = ref *(target.Parent);
                             }
                         }
                     }
@@ -217,10 +239,10 @@ namespace Elffy.Components
                     childrenBuf.Dispose();
                     throw;
                 }
-
             }
             catch {
-                posMatrices.Dispose();
+                posMatrices?.Dispose();
+                posInvMatrices?.Dispose();
                 boneTree?.Dispose();
                 throw;
             }

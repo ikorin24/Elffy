@@ -64,9 +64,8 @@ namespace Elffy.Shading
             }
 
             var skeleton = target.GetComponent<Skeleton>();
-            uniform.SendTexture1D("_boneMove", skeleton.TranslationData, TextureUnitNumber.Unit0);
-            uniform.SendTexture1D("_bonePos", skeleton.PositionData, TextureUnitNumber.Unit1);
-            uniform.SendTexture2D("tex_sampler", target.GetComponent<MultiTexture>().CurrentTextureObject, TextureUnitNumber.Unit2);
+            uniform.SendTexture1D("_boneTrans", skeleton.TranslationData, TextureUnitNumber.Unit0);
+            uniform.SendTexture2D("tex_sampler", target.GetComponent<MultiTexture>().CurrentTextureObject, TextureUnitNumber.Unit1);
         }
 
         private const string VertSource =
@@ -84,31 +83,22 @@ out vec2 UV;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
-uniform sampler1D _boneMove;
-uniform sampler1D _bonePos;
-
-mat4 GetPosMat(int boneIndex)
-{
-    return mat4(texelFetch(_bonePos, boneIndex * 4,     0),
-                texelFetch(_bonePos, boneIndex * 4 + 1, 0),
-                texelFetch(_bonePos, boneIndex * 4 + 2, 0),
-                texelFetch(_bonePos, boneIndex * 4 + 3, 0));
-}
+uniform sampler1D _boneTrans;
 
 mat4 GetMat(int boneIndex)
 {
-    return mat4(texelFetch(_boneMove, boneIndex * 4,     0),
-                texelFetch(_boneMove, boneIndex * 4 + 1, 0),
-                texelFetch(_boneMove, boneIndex * 4 + 2, 0),
-                texelFetch(_boneMove, boneIndex * 4 + 3, 0));
+    return mat4(texelFetch(_boneTrans, boneIndex * 4,     0),
+                texelFetch(_boneTrans, boneIndex * 4 + 1, 0),
+                texelFetch(_boneTrans, boneIndex * 4 + 2, 0),
+                texelFetch(_boneTrans, boneIndex * 4 + 3, 0));
 }
 
 void main()
 {
-    vec4 skinned = weight.x * (GetPosMat(bone.x) * GetMat(bone.x) * inverse(GetPosMat(bone.x)) * vec4(vPos, 1.0)) +
-                   weight.y * (GetPosMat(bone.y) * GetMat(bone.y) * inverse(GetPosMat(bone.y)) * vec4(vPos, 1.0)) +
-                   weight.z * (GetPosMat(bone.z) * GetMat(bone.z) * inverse(GetPosMat(bone.z)) * vec4(vPos, 1.0)) +
-                   weight.w * (GetPosMat(bone.w) * GetMat(bone.w) * inverse(GetPosMat(bone.w)) * vec4(vPos, 1.0));
+    vec4 skinned = weight.x * (GetMat(bone.x) * vec4(vPos, 1.0)) +
+                   weight.y * (GetMat(bone.y) * vec4(vPos, 1.0)) +
+                   weight.z * (GetMat(bone.z) * vec4(vPos, 1.0)) +
+                   weight.w * (GetMat(bone.w) * vec4(vPos, 1.0));
     vec4 tmp = projection * view * model * skinned;
     Pos = tmp.xyz;
     gl_Position = tmp;
