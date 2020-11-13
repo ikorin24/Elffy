@@ -56,6 +56,7 @@ namespace Elffy.Mathematics
         public static float ToDegree(this float radian) => radian / PiOver180;
 
         /// <summary>Round up value to power of two</summary>
+        /// <remarks>[NOTE] 0 or negative value return 1.</remarks>
         /// <param name="value">value to round up</param>
         /// <returns>value of power of two</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -68,6 +69,7 @@ namespace Elffy.Mathematics
         }
 
         /// <summary>Round up value to power of two</summary>
+        /// <remarks>[NOTE] 0 returns 1.</remarks>
         /// <param name="value">value to round up</param>
         /// <returns>value of power of two</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -80,6 +82,7 @@ namespace Elffy.Mathematics
         }
 
         /// <summary>Round up value to power of two</summary>
+        /// <remarks>[NOTE] 0 or negative value return 1.</remarks>
         /// <param name="value">value to round up</param>
         /// <returns>value of power of two</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -92,6 +95,7 @@ namespace Elffy.Mathematics
         }
 
         /// <summary>Round up value to power of two</summary>
+        /// <remarks>[NOTE] 0 returns 1.</remarks>
         /// <param name="value">value to round up</param>
         /// <returns>value of power of two</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
