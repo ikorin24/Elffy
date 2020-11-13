@@ -22,8 +22,6 @@ namespace Elffy.Components
         {
         }
 
-        public void Apply(TextureUnitNumber textureUnit) => _impl.Apply(textureUnit);
-
         ~FloatDataTexture() => Dispose(false);
 
         public void Load(ReadOnlySpan<Vector4> texels) => _impl.Load(texels.MarshalCast<Vector4, Color4>());

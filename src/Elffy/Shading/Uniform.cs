@@ -43,6 +43,10 @@ namespace Elffy.Shading
         public void Send(string name, in Matrix4 value) => Send(GL.GetUniformLocation(_program.Value, name), value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SendTexture1D(string name, in TextureObject value, TextureUnitNumber unit)
+            => SendTexture1D(GL.GetUniformLocation(_program.Value, name), value, unit);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SendTexture2D(string name, in TextureObject value, TextureUnitNumber unit)
             => SendTexture2D(GL.GetUniformLocation(_program.Value, name), value, unit);
 
@@ -82,6 +86,13 @@ namespace Elffy.Shading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Send(int location, in Matrix4 value)
             => GL.ProgramUniformMatrix4(_program.Value, location, 1, false, ref Unsafe.As<Matrix4, float>(ref Unsafe.AsRef(value)));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SendTexture1D(int location, in TextureObject value, TextureUnitNumber unit)
+        {
+            TextureObject.Bind1D(value, unit);
+            GL.ProgramUniform1(_program.Value, location, (int)unit);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SendTexture2D(int location, in TextureObject value, TextureUnitNumber unit)

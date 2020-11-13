@@ -1,10 +1,14 @@
 ﻿#nullable enable
+using Cysharp.Text;
 using Elffy.Core;
 using Elffy.Effective;
 using Elffy.Exceptions;
+using Elffy.Mathematics;
 using Elffy.OpenGL;
 using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using UnmanageUtility;
 
 namespace Elffy.Components
@@ -12,17 +16,31 @@ namespace Elffy.Components
     public sealed class Skeleton : ISingleOwnerComponent, IDisposable
     {
         private SingleOwnerComponentCore<Skeleton> _core = new SingleOwnerComponentCore<Skeleton>(true);    // Mutable object, Don't change into reaadonly
-        private FloatDataTextureImpl _boneMoveData = new FloatDataTextureImpl();    // Mutable object, Don't change into reaadonly
-        private UnmanagedArray<Vector3>? _positions;
+        private FloatDataTextureImpl _boneTranslationData = new FloatDataTextureImpl();     // Mutable object, Don't change into reaadonly
+        private FloatDataTextureImpl _bonePositionData = new FloatDataTextureImpl();        // Mutable object, Don't change into reaadonly
+        private UnmanagedArray<Matrix4>? _translations;
         private UnmanagedArray<Matrix4>? _matrices;
         private UnmanagedArray<BoneInternal>? _tree;
         private bool _disposed;
 
+        /// <inheritdoc/>
         public ComponentOwner? Owner => _core.Owner;
 
+        /// <inheritdoc/>
         public bool AutoDisposeOnDetached => _core.AutoDisposeOnDetached;
 
-        public int BoneCount => _positions?.Length ?? 0;
+        /// <summary>Get bone count</summary>
+        public int BoneCount => _tree?.Length ?? 0;
+
+        /// <summary>Get translation matrices of each bone as readonly.</summary>
+        /// <remarks>If you want to edit matrices, use <see cref="StartTranslation"/> method.</remarks>
+        public ReadOnlySpan<Matrix4> Translations => (_translations is not null) ? _translations.AsSpan() : default;
+
+        /// <summary>Get <see cref="TextureObject"/> of bone translation matrices. (This is Texture1D)</summary>
+        public ref readonly TextureObject TranslationData => ref _boneTranslationData.TextureObject;
+
+        /// <summary>Get <see cref="TextureObject"/> of bone position matrices. (This is Texture1D)</summary>
+        public ref readonly TextureObject PositionData => ref _bonePositionData.TextureObject;
 
         public Skeleton()
         {
@@ -30,47 +48,71 @@ namespace Elffy.Components
 
         ~Skeleton() => Dispose(false);
 
-        public void Load(ReadOnlySpan<Bone> bones)
+        /// <summary>Load bone data</summary>
+        /// <param name="bones">bone data</param>
+        public unsafe void Load(ReadOnlySpan<Bone> bones)
         {
-            CreateBones(bones, out _positions, out _tree);
-            _matrices = new UnmanagedArray<Matrix4>(bones.Length, fill: Matrix4.Identity);
-            _boneMoveData.Load(_matrices.AsSpan().MarshalCast<Matrix4, Color4>());
+            _tree?.Dispose();
+            _matrices?.Dispose();
+            _translations?.Dispose();
+
+            CreateBoneTree(bones, out var posMatrix, out _tree);
+            using(posMatrix) {
+                // Load matrices of positions
+                _bonePositionData.Load(posMatrix.AsSpan().MarshalCast<Matrix4, Color4>());
+            }
+
+            // Round up pixel count of bone matrix buffer on data texture to 2^n.
+            var bufLen = MathTool.RoundUpToPowerOfTwo(bones.Length * sizeof(Matrix4) / sizeof(Vector4));
+
+            // Load matrices as identity
+            _matrices = new UnmanagedArray<Matrix4>(bufLen, fill: Matrix4.Identity);
+            _boneTranslationData.Load(_matrices.AsSpan().MarshalCast<Matrix4, Color4>());
+
+            // Initialize translations as identity
+            _translations = new UnmanagedArray<Matrix4>(bones.Length, fill: Matrix4.Identity);
         }
 
-        public void Apply(TextureUnitNumber textureUnit) => _boneMoveData.Apply(textureUnit);
+        /// <inheritdoc/>
+        void IComponent.OnAttached(ComponentOwner owner) => _core.OnAttached(owner);
 
-        void IComponent.OnAttached(ComponentOwner owner)
+        /// <inheritdoc/>
+        void IComponent.OnDetached(ComponentOwner owner) => _core.OnDetachedForDisposable(owner, this);
+
+
+        /// <summary>Get handler to edit translation matrices. (Call <see cref="SkeletonHandler.Dispose"/> to end editing.)</summary>
+        /// <returns>handler to edit translation matrices.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe SkeletonHandler StartTranslation()
         {
-            _core.OnAttached(owner);
-            owner.LateUpdated += OwnerLateUpdated;
+            return (_translations is not null) ? new SkeletonHandler(this, _translations.Ptr, _translations.Length)
+                                               : new SkeletonHandler(this, IntPtr.Zero, 0);
         }
 
-        void IComponent.OnDetached(ComponentOwner owner)
-        {
-            owner.LateUpdated -= OwnerLateUpdated;
-            _core.OnDetachedForDisposable(owner, this);
-        }
-
-        private unsafe void OwnerLateUpdated(FrameObject sender)
+        /// <summary>Send matrices to opengl. This method is called from <see cref="SkeletonHandler"/></summary>
+        internal unsafe void UpdateTranslations()
         {
             if(_tree is null) { return; }
-            Debug.Assert(_positions is not null);
             Debug.Assert(_matrices is not null);
+            Debug.Assert(_translations is not null);
 
-            //var pos = (Vector3*)_positions.Ptr;
             var matrices = (Matrix4*)_matrices.Ptr;
             var tree = (BoneInternal*)_tree.Ptr;
+            var translations = (Matrix4*)_translations.Ptr;
 
             for(BoneInternal* b = tree; b != null; b = b->Next) {
-                //pos[b->ID].ToTranslationMatrix4(out matrices[b->ID]);
-                if(b->Parent != null) {
-                    matrices[b->ID] = matrices[b->Parent->ID] * matrices[b->ID];
+                if(b->Parent == null) {
+                    matrices[b->ID] = translations[b->ID];
+                }
+                else {
+                    matrices[b->ID] = matrices[b->Parent->ID] * translations[b->ID];
                 }
             }
 
-            //_boneMoveData.Update(_matrices.AsSpan().MarshalCast<Matrix4, Color4>(), 0);
+            _boneTranslationData.Update(_matrices.AsSpan().MarshalCast<Matrix4, Color4>(), 0);
         }
 
+        /// <summary>Dispose resources</summary>
         public void Dispose()
         {
             GC.SuppressFinalize(this);
@@ -82,12 +124,11 @@ namespace Elffy.Components
             if(_disposed) { return; }
 
             if(disposing) {
-                _boneMoveData.Dispose();
+                _boneTranslationData.Dispose();
+                _bonePositionData.Dispose();
 
-                _positions?.Dispose();
                 _matrices?.Dispose();
                 _tree?.Dispose();
-                _positions = null;
                 _matrices = null;
                 _tree = null;
             }
@@ -97,62 +138,70 @@ namespace Elffy.Components
             _disposed = true;
         }
 
-        private unsafe static void CreateBones(ReadOnlySpan<Bone> bones,
-                                               out UnmanagedArray<Vector3> positions,
-                                               out UnmanagedArray<BoneInternal> tree)
+        private unsafe static void CreateBoneTree(ReadOnlySpan<Bone> bones,
+                                                  out UnsafeRawArray<Matrix4> posMatrices,
+                                                  out UnmanagedArray<BoneInternal> boneTree)
         {
-            positions = null!;
-            tree = null!;
+            boneTree = null!;
+            posMatrices = default;
             try {
-                positions = new UnmanagedArray<Vector3>(bones.Length);
-                tree = new UnmanagedArray<BoneInternal>(bones.Length);
 
-                var treePtr = (BoneInternal*)tree.Ptr;
-                var posPtr = (Vector3*)positions.Ptr;
+                // Round up pixel count of bone position matrix on data texture to 2^n.
+                var pixCountPoT = MathTool.RoundUpToPowerOfTwo(bones.Length * (sizeof(Matrix4) / sizeof(Color4)));
+                posMatrices = new UnsafeRawArray<Matrix4>(pixCountPoT);
+
+                boneTree = new UnmanagedArray<BoneInternal>(bones.Length);
+                var tree = (BoneInternal*)boneTree.Ptr;
 
                 // Initialize tree of 'ID' and 'Parent'.
                 // ('Next' is not set yet.)
                 for(int i = 0; i < bones.Length; i++) {
-                    treePtr[i].ID = i;                      // tree[i].ID is index in the tree.
+                    tree[i].ID = i;                      // tree[i].ID is index in the tree.
                     if(bones[i].ParentBone != null) {
-                        treePtr[i].Parent = &treePtr[(int)bones[i].ParentBone!];
+                        tree[i].Parent = &tree[(int)bones[i].ParentBone!];
                     }
-                    posPtr[i] = bones[i].Position;
+                    bones[i].Position.ToTranslationMatrix4(out posMatrices[i]);
                 }
 
+                // [NOTE]
+                // If debug this and use debugger viewer,
+                // enable initializing 'UnsafeRawArray' and 'UnsafeRawList' zero-cleared by constructor arg.
+                // Otherwise, you see undefined values, or it may cause exceptions in debugger.
+                // (but it is no matter)
 
                 // 'childrenBuf[i]' means IDs of children of tree[i].
-                var childrenBuf = new UnsafeRawArray<UnsafeRawList<int>>(tree.Length, true);
+                // It is like 'List<int>[]'
+                var childrenBuf = new UnsafeRawArray<UnsafeRawList<int>>(boneTree.Length);
 
                 try {
                     // Set children
                     for(int i = 0; i < childrenBuf.Length; i++) {
                         childrenBuf[i] = new UnsafeRawList<int>(4);
-                        if(treePtr[i].Parent != null) {
-                            var parentID = treePtr[i].Parent->ID;
+                        if(tree[i].Parent != null) {
+                            var parentID = tree[i].Parent->ID;
                             childrenBuf[parentID].Add(i);
                         }
                     }
 
                     // Initialize tree of 'Next'
-                    for(int i = 0; i < tree.Length; i++) {
-                        if(childrenBuf[i].Count > 0) {                  // If tree[i] has any children
+                    for(int i = 0; i < boneTree.Length; i++) {
+                        if(childrenBuf[i].Count > 0) {              // If tree[i] has any children
                             var firstChildID = childrenBuf[i][0];
-                            treePtr[i].Next = &treePtr[firstChildID];   // tree[i].Next is first child of itself.
+                            tree[i].Next = &tree[firstChildID];     // tree[i].Next is first child of itself.
                         }
-                        else {                                          // When tree[i] has no children
-                            ref var target = ref treePtr[i];            // For the first time, target is tree[i].
+                        else {                                      // When tree[i] has no children
+                            ref var target = ref tree[i];           // For the first time, target is tree[i].
                         SEARCH:
-                            if(target.Parent == null) {                 // If target is root
-                                treePtr[i].Next = null;                 // tree[i].Next is null
+                            if(target.Parent == null) {             // If target is root
+                                tree[i].Next = null;                // tree[i].Next is null
                                 continue;
                             }
 
                             ref var siblings = ref childrenBuf[target.Parent->ID];  // Get siblings of target.
 
-                            var num = siblings.IndexOf(target.ID);              // Get number of target in the siblings.
-                            if(num < siblings.Count - 1) {                      // That means tree[i] is not the last child in its siblings.
-                                treePtr[i].Next = &treePtr[siblings[num + 1]];  // tree[i].Next is next sibling of itself.
+                            var num = siblings.IndexOf(target.ID);          // Get number of target in the siblings.
+                            if(num < siblings.Count - 1) {                  // That means tree[i] is not the last child in its siblings.
+                                tree[i].Next = &tree[siblings[num + 1]];    // tree[i].Next is next sibling of itself.
                             }
                             else {                                          // When tree[i] is the last child in its siblings.
                                 target = ref *(target.Parent);              // If target is not root, change target to its parent
@@ -168,27 +217,76 @@ namespace Elffy.Components
                     childrenBuf.Dispose();
                     throw;
                 }
-                
+
             }
             catch {
-                positions?.Dispose();
-                tree?.Dispose();
+                posMatrices.Dispose();
+                boneTree?.Dispose();
                 throw;
             }
-
-            int a = 0;
-            for(BoneInternal* b = (BoneInternal*)tree.Ptr; b != null; b = b->Next) {
-                a++;
-            }
-            Debug.WriteLine(a);
         }
     }
 
+    /// <summary>Translation matrices handler of <see cref="Skeleton"/></summary>
+    public readonly unsafe struct SkeletonHandler : IDisposable
+    {
+        private readonly Skeleton _skeleton;
+        private readonly IntPtr _ptr;
+        private readonly int _length;
+
+        /// <summary>Get or set translation matrix of specified bone</summary>
+        /// <param name="index">index to get translation matrix</param>
+        /// <returns>translation matrix of specified index</returns>
+        public ref Matrix4 this[int index]
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                if((uint)index >= (uint)_length) {
+                    throw new ArgumentOutOfRangeException(nameof(index));
+                }
+                return ref Unsafe.Add(ref Unsafe.AsRef<Matrix4>((void*)_ptr), index);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal SkeletonHandler(Skeleton skeleton, IntPtr translationsPtr, int length)
+        {
+            Debug.Assert(length >= 0);
+            _skeleton = skeleton;
+            _ptr = translationsPtr;
+            _length = length;
+        }
+
+        /// <summary>Get translation matrices as <see cref="Span{T}"/></summary>
+        /// <returns>translation matrices</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Span<Matrix4> AsSpan()
+        {
+            return MemoryMarshal.CreateSpan(ref Unsafe.AsRef<Matrix4>((void*)_ptr), _length);
+        }
+
+        /// <summary>Flush to update translation matrices.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Dispose()
+        {
+            _skeleton?.UpdateTranslations();
+        }
+    }
+
+    [DebuggerDisplay("{DebugView()}")]
     internal unsafe struct BoneInternal
     {
         public int ID;
         public BoneInternal* Parent;
         public BoneInternal* Next;
+
+        private string DebugView()  // only for debug
+        {
+            return ZString.Concat("ID: ", ID,
+                                  ", Parent: ", Parent is null ? (int?)null : Parent->ID,
+                                  ", Next: ", Next is null ? (int?)null : Next->ID);
+        }
     }
 
     [DebuggerDisplay("Position: {Position}, Parent: {ParentBone}, Connected: {ConnectedBone}")]
@@ -204,6 +302,7 @@ namespace Elffy.Components
         /// <remarks>This field has no special meaning. Only for debug viewing. If the bone has more than one child, choose one of them.</remarks>
         public readonly int? ConnectedBone;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Bone(in Vector3 pos, int? parentBone, int? connectedBone)
         {
             Position = pos;

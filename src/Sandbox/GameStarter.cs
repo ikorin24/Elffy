@@ -8,12 +8,12 @@ using Elffy.Shapes;
 using Elffy.UI;
 using Elffy.Diagnostics;
 using Elffy.Threading.Tasks;
+using Elffy.InputSystem;
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Cysharp.Threading.Tasks;
-using Elffy.Core;
-using Elffy.InputSystem;
+using SkiaSharp;
 
 namespace Sandbox
 {
@@ -47,11 +47,12 @@ namespace Sandbox
             // 床
             var plain = new Plain()
             {
-                Scale = new Vector3(20),
+                Scale = new Vector3(10),
                 Rotation = new Quaternion(Vector3.UnitX, -90f.ToRadian()),
             };
-            plain.AddComponent(new Material(new Color4(0.85f), new Color4(0.15f), new Color4(0.2f), 400f));
-            plain.AddComponent(Resources.Loader.LoadTexture("cube.png", BitmapType.Png));
+            //plain.AddComponent(new Material(new Color4(0.85f), new Color4(0.15f), new Color4(0.2f), 400f));
+            plain.AddComponent(new Material(new Color4(1f), new Color4(0.25f), new Color4(0.2f), 400f));
+            plain.AddComponent(Resources.Loader.LoadTexture("floor.png", BitmapType.Png));
             plain.Activate();
 
 
@@ -63,7 +64,25 @@ namespace Sandbox
                 model.AddComponent(new Material(new Color4(0.88f), new Color4(0.18f), new Color4(0.1f), 5f));
                 model.Shader = RigShaderSource.Instance;
                 model.Activate();
+
+                const int neck = 34;
+                const int leftArm = 7;
+                const int leftLeg = 134;
+                while(model.IsLoaded == false) {
+                    await GameAsync.ToUpdate();
+                }
+                var skeleton = model.GetComponent<Skeleton>();
+                while(model.IsAlive) {
+                    using(var op = skeleton.StartTranslation()) {
+                        var theta = (float)Game.Time.TotalSeconds * 45.ToRadian();
+                        //op[neck] = new Quaternion(Vector3.UnitX, theta).ToMatrix4();
+                        op[leftLeg] = new Quaternion(Vector3.UnitX, theta).ToMatrix4();
+                    }
+                    await GameAsync.ToUpdate();
+                }
+
             }).Forget();
+
 
 
             // サイコロ
@@ -129,7 +148,17 @@ namespace Sandbox
 
         private static void InitializeUI()
         {
-            var button = new Button(90, 30);
+            using var typeface = Resources.Loader.LoadTypeface("mplus-1p-black.otf");
+            using var font = new SKFont(typeface, size: 35);
+            //using var font = new SKFont();
+            font.Size = 12;
+
+            var button = new Button(194, 52);
+            using(var p = button.GetPainter()) {
+                //p.DrawText("The quick brown fox", font, new Vector2(22, 20), ColorByte.Black);
+                //p.DrawText("jumps over the lazy dog", font, new Vector2(22, 40), ColorByte.Black);
+                p.DrawText("大きなノッポの古時計", font, new Vector2(22, 40), ColorByte.Chocolate);
+            }
             button.Position = new Vector2i(10, 10);
             button.KeyDown += sender => DevEnv.WriteLine("Down");
             button.KeyPress += sender => DevEnv.WriteLine("Press");

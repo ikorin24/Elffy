@@ -4,11 +4,7 @@ using Elffy.Core;
 using Elffy.Diagnostics;
 using Elffy.Effective;
 using Elffy.OpenGL;
-using OpenTK.Graphics.OpenGL4;
 using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Text;
 
 namespace Elffy.Shading
 {
@@ -68,11 +64,9 @@ namespace Elffy.Shading
             }
 
             var skeleton = target.GetComponent<Skeleton>();
-            uniform.Send("_boneCountInverse", 1f / skeleton.BoneCount);
-            skeleton.Apply(TextureUnitNumber.Unit1);
-            uniform.Send("_boneMove", TextureUnitNumber.Unit1);
-
-            uniform.SendTexture2D("tex_sampler", target.GetComponent<MultiTexture>().CurrentTextureObject, TextureUnitNumber.Unit0);
+            uniform.SendTexture1D("_boneMove", skeleton.TranslationData, TextureUnitNumber.Unit0);
+            uniform.SendTexture1D("_bonePos", skeleton.PositionData, TextureUnitNumber.Unit1);
+            uniform.SendTexture2D("tex_sampler", target.GetComponent<MultiTexture>().CurrentTextureObject, TextureUnitNumber.Unit2);
         }
 
         private const string VertSource =
@@ -90,29 +84,36 @@ out vec2 UV;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
-uniform highp sampler1D _boneMove;
-uniform highp float _boneCountInverse;
+uniform sampler1D _boneMove;
+uniform sampler1D _bonePos;
 
-vec4 GetBoneMove(int index)
+mat4 GetPosMat(int boneIndex)
 {
-    highp float u = (float(index) + 0.5) * _boneCountInverse;
-    return texture(_boneMove, u);
+    return mat4(texelFetch(_bonePos, boneIndex * 4,     0),
+                texelFetch(_bonePos, boneIndex * 4 + 1, 0),
+                texelFetch(_bonePos, boneIndex * 4 + 2, 0),
+                texelFetch(_bonePos, boneIndex * 4 + 3, 0));
 }
 
-mat4 GetBoneMoveMat(ivec4 b)
+mat4 GetMat(int boneIndex)
 {
-    return mat4(GetBoneMove(b[0]), GetBoneMove(b[1]), GetBoneMove(b[2]), GetBoneMove(b[3]));
+    return mat4(texelFetch(_boneMove, boneIndex * 4,     0),
+                texelFetch(_boneMove, boneIndex * 4 + 1, 0),
+                texelFetch(_boneMove, boneIndex * 4 + 2, 0),
+                texelFetch(_boneMove, boneIndex * 4 + 3, 0));
 }
 
 void main()
 {
-    vec3 move = (GetBoneMoveMat(bone) * weight).xyz;
-    vec3 pos = vPos + move;
+    vec4 skinned = weight.x * (GetPosMat(bone.x) * GetMat(bone.x) * inverse(GetPosMat(bone.x)) * vec4(vPos, 1.0)) +
+                   weight.y * (GetPosMat(bone.y) * GetMat(bone.y) * inverse(GetPosMat(bone.y)) * vec4(vPos, 1.0)) +
+                   weight.z * (GetPosMat(bone.z) * GetMat(bone.z) * inverse(GetPosMat(bone.z)) * vec4(vPos, 1.0)) +
+                   weight.w * (GetPosMat(bone.w) * GetMat(bone.w) * inverse(GetPosMat(bone.w)) * vec4(vPos, 1.0));
+    vec4 tmp = projection * view * model * skinned;
+    Pos = tmp.xyz;
+    gl_Position = tmp;
+    Normal = vNormal;       // TODO: skinning of normal
     UV = vUV;
-    Pos = pos;
-    Normal = vNormal;
-    mat4 modelView = view * model;
-    gl_Position = projection * modelView * vec4(pos, 1.0);
 }
 ";
 
