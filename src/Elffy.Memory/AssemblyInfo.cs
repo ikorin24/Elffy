@@ -1,3 +1,3 @@
 ﻿using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Elffy")]
-[assembly: InternalsVisibleTo("UnitTest")]
+[assembly: InternalsVisibleTo("UnitTest.Elffy.Memory")]

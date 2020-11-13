@@ -1,7 +1,5 @@
 ﻿#nullable enable
 using System;
-using Elffy.Core;
-using Elffy.Components;
 using Xunit;
 using Elffy.Effective.Unsafes;
 using System.Runtime.CompilerServices;
