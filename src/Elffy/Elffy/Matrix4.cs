@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using Elffy.Mathematics;
+using Elffy.Effective;
 
 namespace Elffy
 {
@@ -16,7 +17,7 @@ namespace Elffy
     {
         // =================================================
         // [Field Order]
-        // Field order is column-major order. (but this does not have const field in memory.)
+        // Field order is column-major order.
         // 
         // matrix = [M00, M10, M20, M30, M01, M11, M21, M31, M02, M12, M22, M32, M03, M13, M23, M33]
         // | M00 M01 M02 M03 |
@@ -145,6 +146,11 @@ namespace Elffy
                                                             M02, M12, M22, M32,
                                                             M03, M13, M23, M33);
 
+        public readonly bool Inverted(out Matrix4 result)
+        {
+            return MatrixHelper.Invert(in this, out result);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override bool Equals(object? obj) => obj is Matrix4 matrix && Equals(matrix);
 
@@ -205,15 +211,6 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe Matrix4 operator *(in Matrix4 m1, in Matrix4 m2)
         {
-            //var m1Row0 = m1.Row0();
-            //var m1Row1 = m1.Row1();
-            //var m1Row2 = m1.Row2();
-            //var m1Row3 = m1.Row3();
-            //ref var m2Col0 = ref m2.Col0();
-            //ref var m2Col1 = ref m2.Col1();
-            //ref var m2Col2 = ref m2.Col2();
-            //ref var m2Col3 = ref m2.Col3();
-
             var m1Row0 = Row0(m1);
             var m1Row1 = Row1(m1);
             var m1Row2 = Row2(m1);
