@@ -1,173 +1,37 @@
 ﻿#nullable enable
-using Elffy;
-using Elffy.Components;
-using Elffy.Imaging;
-using Elffy.Mathematics;
-using Elffy.Shading;
-using Elffy.Shapes;
-using Elffy.UI;
-using Elffy.Diagnostics;
-using Elffy.Threading.Tasks;
-using Elffy.InputSystem;
-using System;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using Cysharp.Threading.Tasks;
-using SkiaSharp;
 
 namespace Sandbox
 {
     public static class GameStarter
     {
-        public static void Start()
+        public static async void Start()
         {
-            // 光源
-            var light = new DirectLight();
-            light.Updated += sender =>
-            {
-                Debug.Assert(sender is DirectLight);
-                var light = Unsafe.As<DirectLight>(sender);
-                var frameNum = Game.FrameNum;
-                var rotation = new Quaternion(Vector3.UnitX, (frameNum / 60f * 60).ToRadian());
-                light.Direction = rotation * new Vector3(0, -1, 0);
-            };
-            light.Activate();
+            Definition.Initialize();
 
+            // Load objects
+            await UniTask.WhenAll(
+                Definition.GenLight(),
+                Definition.GenCameraMouse(),
+                Definition.GenPlain(),
+                Definition.GenAlicia(),
+                UniTask.WhenAll(
+                    Definition.GenDice(),
+                    Definition.GenDiceBehavior())
+                .ContinueWith(x =>
+                {
+                    var (dice, behavior) = x;
+                    behavior.Invoke(dice).Forget();
+                }),
+                Definition.GenBox(),
+                Definition.GenBox2(),
+                Definition.GenSky(),
+                Definition.GenUI());
 
-            // カメラ位置初期化
-            var cameraTarget = new Vector3(0, 3, 0);
-            Game.MainCamera.LookAt(cameraTarget, new Vector3(0, 4.5f, 20) * 1);
+            Debug.WriteLine("Load completed !!");
 
-
-            // マウスでカメラ移動するためのオブジェクト
-            var cameraMouse = new CameraMouse(Game.MainCamera, Game.Mouse, cameraTarget);
-            cameraMouse.Activate();
-
-
-            // 床
-            var plain = new Plain()
-            {
-                Scale = new Vector3(10),
-                Rotation = new Quaternion(Vector3.UnitX, -90f.ToRadian()),
-            };
-            plain.AddComponent(new Material(new Color4(1f), new Color4(0.25f), new Color4(0.2f), 400f));
-            plain.AddComponent(Resources.Loader.LoadTexture("floor.png", BitmapType.Png));
-            plain.Activate();
-
-
-            // キャラ1
-            Resources.Loader.LoadPmxModelAsync("Alicia/Alicia_solid.pmx").ContinueWith(async model =>
-            {
-                await GameAsync.ToUpdate();
-                model.Scale = new Vector3(0.3f);
-                model.AddComponent(new Material(new Color4(0.88f), new Color4(0.18f), new Color4(0.1f), 5f));
-                model.Shader = RigShaderSource.Instance;
-                model.Activate();
-            }).Forget();
-
-
-
-            // サイコロ
-            Resources.Loader.LoadFbxModelAsync("Dice.fbx").ContinueWith(async model =>
-            {
-                await GameAsync.ToUpdate();
-                model.Position = new Vector3(4, 4, -2);
-                model.Activate();
-
-                var startTime = Game.Time.TotalSeconds;
-
-                while(!model.IsDead && !model.IsFrozen) {
-                    var theta = MathF.PI * 2 * (float)(startTime - Game.Time.TotalSeconds);
-                    var scale = 0.5f + 0.1f * MathF.Sin(theta);
-                    model.Scale = new Vector3(scale);
-                    await GameAsync.ToUpdate();
-                }
-            }).Forget();
-
-            // カエル
-            Resources.Loader.LoadFbxModelAsync("green_frog.fbx").ContinueWith(async model =>
-            {
-                await GameAsync.ToUpdate();
-                model.Scale = new Vector3(0.01f);
-                model.Position = new Vector3(5, 0, 0);
-                model.AddComponent(new Material(new Color4(0f, 0.7f, 0.25f), new Color4(0f, 0.6f, 0.1f), Color4.White, 4));
-                model.Activate();
-            }).Forget();
-
-
-            // 箱1
-            new Cube()
-            {
-                Position = new Vector3(-3, 0.5f, 0),
-                Shader = NormalShaderSource.Instance,
-            }.Activate();
-
-
-            // 箱2
-            var cube = new Cube()
-            {
-                Position = new Vector3(-3, 0.5f, -3),
-            };
-            cube.AddComponent(Resources.Loader.LoadTexture("cube.png", BitmapType.Png));
-            cube.Updated += sender =>
-            {
-                Debug.Assert(sender is Cube);
-                var cube = Unsafe.As<Cube>(sender);
-                var p = Game.FrameNum / 60f * 30f;
-                cube.Rotation = new Quaternion(Vector3.UnitY, p.ToRadian());
-            };
-            cube.Activate();
-
-            new Sky()
-            {
-                Scale = new Vector3(500),
-                Shader = SkyShaderSource.Instance,
-            }.Activate();
-
-            InitializeUI();
-            KeyBoardInputDump();
-        }
-
-        private static void InitializeUI()
-        {
-            using var typeface = Resources.Loader.LoadTypeface("mplus-1p-regular.otf");
-            using var font = new SKFont(typeface, size: 12);
-
-            var button = new Button(90, 26);
-            using(var p = button.GetPainter()) {
-                p.DrawText("Button", font, new Vector2(24, 17), ColorByte.Black);
-            }
-            button.Position = new Vector2i(10, 10);
-            button.KeyDown += sender => DevEnv.WriteLine("Down");
-            button.KeyPress += sender => DevEnv.WriteLine("Press");
-            button.KeyUp += sender => DevEnv.WriteLine("Up");
-            Game.UI.Add(button);
-        }
-
-        private static async void KeyBoardInputDump()
-        {
-            while(true) {
-                await GameAsync.ToUpdate();
-                if(Game.Keyboard.IsDown(Keys.S, KeyModifiers.Control)) {
-                    Debug.WriteLine($"{Game.FrameNum}: Ctrl+S down");
-                }
-                if(Game.Keyboard.IsPress(Keys.S, KeyModifiers.Control)) {
-                    Debug.WriteLine($"{Game.FrameNum}: Ctrl+S press");
-                }
-                if(Game.Keyboard.IsUp(Keys.S, KeyModifiers.Control)) {
-                    Debug.WriteLine($"{Game.FrameNum}: Ctrl+S up");
-                }
-
-                if(Game.Keyboard.IsDown(Keys.A)) {
-                    Debug.WriteLine($"{Game.FrameNum}: A down");
-                }
-                if(Game.Keyboard.IsPress(Keys.A)) {
-                    Debug.WriteLine($"{Game.FrameNum}: A press");
-                }
-                if(Game.Keyboard.IsUp(Keys.A)) {
-                    Debug.WriteLine($"{Game.FrameNum}: A up");
-                }
-            }
+            Definition.GenKeyBoardInputDump().Forget();
         }
     }
 }
