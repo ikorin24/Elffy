@@ -104,7 +104,7 @@ namespace Elffy
             try {
                 RawImage iconRawImage = default;
 
-                // TODO: This is low performance, which make A lot of garbages. It is better to create custom .ico parser.
+                // TODO: This is low performance, which makes a lot of garbages. It is better to create custom .ico parser.
                 if(iconStream is not null) {
                     // Get icon raw image from stream.
                     iconBitmap = new Bitmap(iconStream);
