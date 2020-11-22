@@ -10,6 +10,7 @@ using SkiaSharp;
 using System;
 using System.Drawing;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Elffy
@@ -128,7 +129,7 @@ namespace Elffy
         {
             using(var stream = source.GetStream(name)) {
                 var (vertices, indices) = FbxModelBuilder.LoadModel(stream);
-                return new Model3D(vertices, indices);
+                return Model3D.Create(vertices, indices);
             }
         }
 
