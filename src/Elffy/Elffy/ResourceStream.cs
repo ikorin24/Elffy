@@ -4,10 +4,11 @@ using Elffy.Effective.Unsafes;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.CompilerServices;
 
 namespace Elffy
 {
-    /// <summary><see cref="Resources"/> 内のデータを読み取るためのストリームを提供します</summary>
+    /// <summary>Stream class used by <see cref="LocalResourceLoader"/></summary>
     public sealed class ResourceStream : Stream
     {
         // このクラスはもとになる Stream の一部だけを切り出した Stream として振る舞う。
@@ -18,6 +19,7 @@ namespace Elffy
         private readonly long _head;
         private readonly long _length;
 
+        /// <summary>The property returns true</summary>
         public override bool CanRead => true;
 
         // [NOTE]
@@ -25,10 +27,13 @@ namespace Elffy
         // Stream から MemoryStream へのコピーが起こり、メモリの無駄。
         // Seek を許可しても特に問題はないため、CanSeek は true にして Seek も実装する。
 
+        /// <summary>The property returns true</summary>
         public override bool CanSeek => true;
 
+        /// <summary>The property returns false</summary>
         public override bool CanWrite => false;
 
+        /// <inheritdoc/>
         public override long Length
         {
             get
@@ -38,6 +43,7 @@ namespace Elffy
             }
         }
 
+        /// <inheritdoc/>
         public override long Position
         {
             get
@@ -67,27 +73,42 @@ namespace Elffy
 
         ~ResourceStream() => Dispose(false);
 
+        /// <inheritdoc/>
         public override int Read(byte[] buffer, int offset, int count)
         {
             if(_disposed) { throw new ObjectDisposedException(nameof(ResourceStream)); }
+            if(buffer is null) { throw new ArgumentNullException(nameof(buffer)); }
+            return ReadCore(buffer.AsSpan(offset, count));
+        }
+
+        /// <inheritdoc/>
+        public override int Read(Span<byte> buffer)
+        {
+            if(_disposed) { throw new ObjectDisposedException(nameof(ResourceStream)); }
+            return ReadCore(buffer);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private int ReadCore(Span<byte> buffer)
+        {
             var current = _innerStream.Position;
             var available = (int)(_head + _length - current);
-            return _innerStream.Read(buffer, offset, Math.Min(count, available));
+            var readLen = Math.Min(buffer.Length, available);
+            return _innerStream.Read(buffer.Slice(0, readLen));
         }
 
         protected override void Dispose(bool disposing)
         {
             if(_disposed) { return; }
             if(disposing) {
-                // マネージリソース解放
                 _innerStream.Dispose();
                 _innerStream = null!;
             }
-            // アンマネージドリソースがある場合ここに解放処理を書く
             _disposed = true;
             base.Dispose(disposing);
         }
 
+        /// <inheritdoc/>
         public override long Seek(long offset, SeekOrigin origin)
         {
             long newPos = 0;
@@ -99,7 +120,7 @@ namespace Elffy
                     newPos = (_innerStream.Position - _head) + offset;
                     break;
                 case SeekOrigin.End:
-                    newPos = _length - offset;
+                    newPos = _length + offset;
                     break;
                 default:
                     break;
@@ -107,8 +128,18 @@ namespace Elffy
             Position = newPos;
             return newPos;
         }
+
+        /// <summary>Not supported !! (This method throws <see cref="NotSupportedException"/>)</summary>
         public override void Flush() => throw new NotSupportedException();
+
+        /// <summary>Not supported !! (This method throws <see cref="NotSupportedException"/>)</summary>
+        /// <param name="value"></param>
         public override void SetLength(long value) => throw new NotSupportedException();
+        
+        /// <summary>Not supported !! (This method throws <see cref="NotSupportedException"/>)</summary>
+        /// <param name="buffer"></param>
+        /// <param name="offset"></param>
+        /// <param name="count"></param>
         public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
     }
 }
