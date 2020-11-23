@@ -1,6 +1,8 @@
 ﻿#nullable enable
 using System.Diagnostics;
 using Cysharp.Threading.Tasks;
+using Elffy;
+using Elffy.Threading.Tasks;
 
 namespace Sandbox
 {
@@ -16,6 +18,7 @@ namespace Sandbox
                 Definition.GenCameraMouse(),
                 Definition.GenPlain(),
                 Definition.GenAlicia(),
+                Definition.GenFrog(),
                 UniTask.WhenAll(
                     Definition.GenDice(),
                     Definition.GenDiceBehavior())

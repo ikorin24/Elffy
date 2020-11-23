@@ -74,9 +74,7 @@ namespace Elffy.Threading.Tasks
         [MethodImpl(MethodImplOptions.NoInlining)]
         private ConcurrentQueue<WorkItem> InitQueue(FrameLoopTiming eventType)
         {
-            var q = new ConcurrentQueue<WorkItem>();
-            _queues.TryAdd(eventType, q);
-            return q;
+            return _queues.GetOrAdd(eventType, new ConcurrentQueue<WorkItem>());
         }
 
         private readonly struct WorkItem

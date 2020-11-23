@@ -54,7 +54,7 @@ namespace Sandbox
                 ObjectFactory.Register(ID_Alicia, DefineAlicia);
                 ObjectFactory.Register(ID_Dice, DefineDice);
                 ObjectFactory.Register(ID_DiceBehavior, DefineDiceBehavior);
-                //ObjectFactory.Register(ID_Frog, DefineFrog);
+                ObjectFactory.Register(ID_Frog, DefineFrog);
                 ObjectFactory.Register(ID_Box, DefineBox);
                 ObjectFactory.Register(ID_Box2, DefineBox2);
                 ObjectFactory.Register(ID_Sky, DefineSky);
@@ -159,18 +159,18 @@ namespace Sandbox
         #endregion
 
         #region Frog
-        //public static UniTask<Model3D> GenFrog() => ObjectFactory.GenerateAsync<Model3D>(ID_Frog);
+        public static UniTask<Model3D> GenFrog() => ObjectFactory.GenerateAsync<Model3D>(ID_Frog);
 
-        //private static async UniTask<Model3D> DefineFrog()
-        //{
-        //    var model = await Resources.Loader.LoadFbxModelAsync("green_frog.fbx");
-        //    await GameAsync.ToUpdate();
-        //    model.Scale = new Vector3(0.01f);
-        //    model.Position = new Vector3(5, 0, 0);
-        //    model.AddComponent(new Material(new Color4(0f, 0.7f, 0.25f), new Color4(0f, 0.6f, 0.1f), Color4.White, 4));
-        //    model.Activate();
-        //    return model;
-        //}
+        private static async UniTask<Model3D> DefineFrog()
+        {
+            var model = await Resources.Loader.LoadFbxModelAsync("green_frog.fbx");
+            await GameAsync.ToUpdate();
+            model.Scale = new Vector3(0.01f);
+            model.Position = new Vector3(5, 0, 0);
+            model.AddComponent(new Material(new Color4(0f, 0.7f, 0.25f), new Color4(0f, 0.6f, 0.1f), Color4.White, 4));
+            model.Activate();
+            return model;
+        }
         #endregion
 
         #region Box
