@@ -24,9 +24,9 @@ namespace Elffy.Shapes
             _loader = loader;
         }
 
-        protected override void OnActivated()
+        protected override void OnAlive()
         {
-            base.OnActivated();
+            base.OnAlive();
             Debug.Assert(_vertices is not null);
             Debug.Assert(_indices is not null);
 
@@ -36,7 +36,6 @@ namespace Elffy.Shapes
             _indices = null;
             _loader = null;
         }
-
 
         /// <summary>Create <see cref="Model3D"/> with specified vertices and indices data.</summary>
         /// <remarks>
@@ -59,11 +58,33 @@ namespace Elffy.Shapes
 
             return new Model3D(vertices, indices, &Loader);
 
-            // Loader method is called on activating.
+            // Loader method is called from OnAlive().
             static void Loader(Model3D model, object vertices, object indices)
             {
                 var vert = SafeCast.As<UnmanagedArray<TVertex>>(vertices);
                 var ind = SafeCast.As<UnmanagedArray<int>>(indices);
+                model.LoadGraphicBuffer(vert.AsSpan(), ind.AsSpan());
+            }
+        }
+
+        public static Model3D Create<TVertex>(UnmanagedList<TVertex> vertices, UnmanagedList<int> indices) where TVertex : unmanaged
+        {
+            if(vertices is null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(vertices));
+            }
+            if(indices is null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(indices));
+            }
+
+            return new Model3D(vertices, indices, &Loader);
+
+            // Loader method is called from OnAlive().
+            static void Loader(Model3D model, object vertices, object indices)
+            {
+                var vert = SafeCast.As<UnmanagedList<TVertex>>(vertices);
+                var ind = SafeCast.As<UnmanagedList<int>>(indices);
                 model.LoadGraphicBuffer(vert.AsSpan(), ind.AsSpan());
             }
         }
@@ -86,7 +107,7 @@ namespace Elffy.Shapes
 
             return new Model3D(vertices, indices, &Loader);
 
-            // Loader method is called on activating.
+            // Loader method is called from OnAlive().
             static void Loader(Model3D model, object vertices, object indices)
             {
                 var vert = SafeCast.As<TVertex[]>(vertices).AsSpan();

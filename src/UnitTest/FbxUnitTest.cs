@@ -12,9 +12,10 @@ namespace UnitTest
         {
             var files = Directory.GetFiles(TestValues.FileDirectory, "*.fbx");
             foreach(var path in files) {
-                using(var stream = File.Open(path, FileMode.Open)) {
-                    var model = FbxModelBuilder.LoadModel(stream);
-                }
+                using var stream = File.OpenRead(path);
+                ModelBuilder.BuildFromFbx(stream, out var vertices, out var indices);
+                Assert.True(vertices.Count > 0);
+                Assert.True(indices.Count > 0);
             }
         }
     }
