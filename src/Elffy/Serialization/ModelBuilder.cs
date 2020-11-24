@@ -3,6 +3,7 @@ using System;
 using System.Linq;
 using System.IO;
 using Elffy.Core;
+using Elffy.Shapes;
 using StringLiteral;
 using UnmanageUtility;
 
@@ -10,14 +11,17 @@ namespace Elffy.Serialization
 {
     public static class ModelBuilder
     {
-        public static void BuildFromFbx(Stream stream, out UnmanagedList<Vertex> vertices, out UnmanagedList<int> indices)
+        /// <summary>Create <see cref="Model3D"/> from <see cref="Stream"/> of fbx format file</summary>
+        /// <param name="stream"><see cref="Stream"/> of fbx format file</param>
+        /// <returns>new <see cref="Model3D"/> instance</returns>
+        public static Model3D BuildFromFbx(Stream stream)
         {
             using var fbx = FbxTools.FbxParser.Parse(stream);
 
             ref readonly var objects = ref fbx.Find(FbxConsts.Objects());
 
-            vertices = null!;
-            indices = null!;
+            UnmanagedList<Vertex> vertices = null!;
+            UnmanagedList<int> indices = null!;
 
             Span<int> buf = stackalloc int[objects.Children.Length];
             foreach(var i in buf.Slice(0, objects.FindIndexAll(FbxConsts.Geometry(), buf))) {
@@ -35,6 +39,8 @@ namespace Elffy.Serialization
             }
             vertices ??= new UnmanagedList<Vertex>(0);
             indices ??= new UnmanagedList<int>(0);
+
+            return Model3D.Create(vertices, indices);
         }
 
         private static void ResolveVertices(ReadOnlySpan<int> indicesRaw,

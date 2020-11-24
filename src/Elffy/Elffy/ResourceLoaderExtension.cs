@@ -128,8 +128,7 @@ namespace Elffy
         public static Model3D LoadFbxModel(this IResourceLoader source, string name)
         {
             using(var stream = source.GetStream(name)) {
-                ModelBuilder.BuildFromFbx(stream, out var vertices, out var indices);
-                return Model3D.Create(vertices, indices);
+                return ModelBuilder.BuildFromFbx(stream);
             }
         }
 
