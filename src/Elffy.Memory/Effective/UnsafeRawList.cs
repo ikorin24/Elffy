@@ -22,7 +22,28 @@ namespace Elffy.Effective
         public readonly int Count => _count;
 
         /// <summary>Get capacity of the inner array</summary>
-        public readonly int Capacity => _array.Length;
+        public int Capacity
+        {
+            readonly get => _array.Length;
+            set
+            {
+                if(value < _count) { throw new ArgumentOutOfRangeException(nameof(value)); }
+                if(value != _count) {
+                    var newArray = new UnsafeRawArray<T>(value, false);
+                    if(_count > 0) {
+                        try {
+                            AsSpan().CopyTo(newArray.AsSpan());
+                        }
+                        catch {
+                            newArray.Dispose();
+                            throw;
+                        }
+                        _array.Dispose();
+                        _array = newArray;
+                    }
+                }
+            }
+        }
 
         /// <summary>Get pointer to the head</summary>
         public readonly IntPtr Ptr => _array.Ptr;
@@ -41,7 +62,7 @@ namespace Elffy.Effective
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public UnsafeRawList(int capacity)
         {
-            _array = new UnsafeRawArray<T>(capacity, zeroFill: true);
+            _array = new UnsafeRawArray<T>(capacity, zeroFill: false);
             _count = 0;
         }
 
@@ -105,6 +126,11 @@ namespace Elffy.Effective
                 var byteLen = (long)(_count * sizeof(T));
                 Buffer.MemoryCopy((void*)Ptr, arrayPtr + arrayIndex, byteLen, byteLen);
             }
+        }
+
+        public readonly Span<T> AsSpan()
+        {
+            return _array.AsSpan(0, _count);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]  // uncommon path

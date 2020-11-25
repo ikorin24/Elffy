@@ -7,5 +7,7 @@ namespace Elffy
     {
         Stream GetStream(string name);
         long GetSize(string name);
+
+        bool HasResource(string name);
     }
 }

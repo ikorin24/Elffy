@@ -2,52 +2,112 @@
 using System;
 using System.Linq;
 using System.IO;
+using Elffy.Exceptions;
 using Elffy.Core;
 using Elffy.Shapes;
+using Elffy.Effective;
 using StringLiteral;
-using UnmanageUtility;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Serialization
 {
     public static class ModelBuilder
     {
-        /// <summary>Create <see cref="Model3D"/> from <see cref="Stream"/> of fbx format file</summary>
-        /// <param name="stream"><see cref="Stream"/> of fbx format file</param>
-        /// <returns>new <see cref="Model3D"/> instance</returns>
-        public static Model3D BuildFromFbx(Stream stream)
+        public static Model3D BuildFromFbx(IResourceLoader resourceLoader, string name)
         {
-            using var fbx = FbxTools.FbxParser.Parse(stream);
+            if(resourceLoader is null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(resourceLoader));
+            }
+            if(resourceLoader.HasResource(name) == false) {
+                ThrowNotFound(name);
+                [DoesNotReturn] static void ThrowNotFound(string name) => throw new ResourceNotFoundException(name);
+            }
 
+            var obj = new NamedResource(resourceLoader, name);
+            return Model3D.Create<NamedResource, Vertex>(obj, BuldCore);
+        }
+
+        private static void BuldCore(NamedResource obj, Model3D model, Model3DLoadDelegate<Vertex> load)
+        {
+            // Parse fbx file
+            using var fbx = FbxTools.FbxParser.Parse(obj.GetStream());
+
+            // Get "Objects" node
             ref readonly var objects = ref fbx.Find(FbxConsts.Objects());
 
-            UnmanagedList<Vertex> vertices = null!;
-            UnmanagedList<int> indices = null!;
+            UnsafeRawList<Vertex> vertices = default;
+            UnsafeRawList<int> indices = default;
+            try {
+                Span<int> indexBuffer = stackalloc int[objects.Children.Length];
+                var geometryCount = objects.FindIndexAll(FbxConsts.Geometry(), indexBuffer);
+                foreach(var i in indexBuffer.Slice(0, geometryCount)) {
 
-            Span<int> buf = stackalloc int[objects.Children.Length];
-            foreach(var i in buf.Slice(0, objects.FindIndexAll(FbxConsts.Geometry(), buf))) {
-                GeometryNode(objects.Children[i],
-                             out var id,
-                             out var name,
-                             out var positions,
-                             out var indicesRaw,
-                             out var normals,
-                             out var materials);
+                    // Get "Objects" -> "Geometry" node
+                    ref readonly var geometry = ref objects.Children[i];
 
-                vertices ??= new UnmanagedList<Vertex>(indicesRaw.Length);
-                indices ??= new UnmanagedList<int>(indicesRaw.Length);
-                ResolveVertices(indicesRaw, positions, normals, vertices, indices);
+                    // Get geometry data
+                    GetGeometryData(geometry,
+                                 out var id,
+                                 out var geometryName,
+                                 out var positions,
+                                 out var indicesRaw,
+                                 out var normals,
+                                 out var materials);
+
+                    vertices.Capacity += indicesRaw.Length;
+                    indices.Capacity += indicesRaw.Length;
+
+                    // Resolve geometry data into vertices and indices.
+                    ResolveVertices(indicesRaw, positions, normals, ref vertices, ref indices);
+                }
+                // load to Model3D
+                load(vertices.AsSpan(), indices.AsSpan());
             }
-            vertices ??= new UnmanagedList<Vertex>(0);
-            indices ??= new UnmanagedList<int>(0);
+            finally {
+                vertices.Dispose();
+                indices.Dispose();
+            }
+        }
 
-            return Model3D.Create(vertices, indices);
+        private static void GetGeometryData(in FbxTools.FbxNode geometry,
+                                            out long id,
+                                            out ReadOnlySpan<byte> name,
+                                            out ReadOnlySpan<double> positions,
+                                            out ReadOnlySpan<int> indicesRaw,
+                                            out ReadOnlySpan<double> normals,
+                                            out ReadOnlySpan<int> materials)
+        {
+            id = geometry.Properties[0].AsInt64();
+            name = geometry.Properties[1].AsString();
+
+            positions = default;
+            indicesRaw = default;
+            normals = default;
+            materials = default;
+
+            foreach(var node in geometry.Children) {
+                var nodeName = node.Name;
+                if(nodeName.SequenceEqual(FbxConsts.Vertices())) {
+                    positions = node.Properties[0].AsDoubleArray();
+                }
+                else if(nodeName.SequenceEqual(FbxConsts.Indices())) {
+                    indicesRaw = node.Properties[0].AsInt32Array();
+                }
+                else if(nodeName.SequenceEqual(FbxConsts.NormalInfo())) {
+                    normals = node.Find(FbxConsts.Normals()).Properties[0].AsDoubleArray();
+                }
+                else if(nodeName.SequenceEqual(FbxConsts.MaterialInfo())) {
+                    materials = node.Find(FbxConsts.Materials()).Properties[0].AsInt32Array();
+                }
+            }
         }
 
         private static void ResolveVertices(ReadOnlySpan<int> indicesRaw,
                                             ReadOnlySpan<double> positions,
                                             ReadOnlySpan<double> normals,
-                                            UnmanagedList<Vertex> verticesMarged,
-                                            UnmanagedList<int> indicesMarged)
+                                            ref UnsafeRawList<Vertex> verticesMarged,
+                                            ref UnsafeRawList<int> indicesMarged)
         {
             // positions の数は幾何的な頂点の数
             // normals の数は属性が同じ頂点の数 (属性: 座標・法線・頂点色など) (== indices の数)
@@ -86,39 +146,6 @@ namespace Elffy.Serialization
                 }
             }
         }
-
-        private static void GeometryNode(in FbxTools.FbxNode geometry,
-                                         out long id,
-                                         out ReadOnlySpan<byte> name,
-                                         out ReadOnlySpan<double> positions,
-                                         out ReadOnlySpan<int> indicesRaw,
-                                         out ReadOnlySpan<double> normals,
-                                         out ReadOnlySpan<int> materials)
-        {
-            id = geometry.Properties[0].AsInt64();
-            name = geometry.Properties[1].AsString();
-
-            positions = default;
-            indicesRaw = default;
-            normals = default;
-            materials = default;
-
-            foreach(var node in geometry.Children) {
-                var nodeName = node.Name;
-                if(nodeName.SequenceEqual(FbxConsts.Vertices())) {
-                    positions = node.Properties[0].AsDoubleArray();
-                }
-                else if(nodeName.SequenceEqual(FbxConsts.Indices())) {
-                    indicesRaw = node.Properties[0].AsInt32Array();
-                }
-                else if(nodeName.SequenceEqual(FbxConsts.NormalInfo())) {
-                    normals = node.Find(FbxConsts.Normals()).Properties[0].AsDoubleArray();
-                }
-                else if(nodeName.SequenceEqual(FbxConsts.MaterialInfo())) {
-                    materials = node.Find(FbxConsts.Materials()).Properties[0].AsInt32Array();
-                }
-            }
-        }
     }
 
     internal static partial class FbxConsts
@@ -146,5 +173,22 @@ namespace Elffy.Serialization
 
         [Utf8("Materials")]
         public static partial ReadOnlySpan<byte> Materials();
+    }
+
+    internal sealed class NamedResource
+    {
+        public IResourceLoader ResourceLoader { get; }
+        public string Name { get; }
+        
+        public NamedResource(IResourceLoader resourceLoader, string name)
+        {
+            ResourceLoader = resourceLoader;
+            Name = name;
+        }
+
+        public Stream GetStream()
+        {
+            return ResourceLoader.GetStream(Name);
+        }
     }
 }

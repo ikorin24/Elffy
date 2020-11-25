@@ -37,6 +37,11 @@ namespace Elffy
             return resource.Length;
         }
 
+        public bool HasResource(string name)
+        {
+            return _resources.ContainsKey(name);
+        }
+
         // This method is only for debug.
         internal string[] GetResourceNames()
         {

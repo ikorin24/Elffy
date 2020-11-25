@@ -127,9 +127,7 @@ namespace Elffy
 
         public static Model3D LoadFbxModel(this IResourceLoader source, string name)
         {
-            using(var stream = source.GetStream(name)) {
-                return ModelBuilder.BuildFromFbx(stream);
-            }
+            return ModelBuilder.BuildFromFbx(source, name);
         }
 
         public static unsafe SKTypeface LoadTypeface(this IResourceLoader source, string name, int fontFaceIndex = 0)
