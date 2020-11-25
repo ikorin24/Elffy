@@ -10,32 +10,35 @@ namespace Elffy.Shapes
     public unsafe class Model3D : Renderable
     {
         private object? _obj;
-        private delegate*<Model3D, object?, Delegate, void> _callbackOnAlive;  // void func(Model3D self, object obj, Delegate loader)
+        private delegate*<Model3D, object?, Delegate, void> _callbackOnActivated;  // void func(Model3D self, object obj, Delegate loader)
         private Delegate? _builder;
 
         private Model3D(object? obj, delegate*<Model3D, object?, Delegate, void> callbackOnAlive, Delegate builder)
         {
             Debug.Assert(builder is not null);
             _obj = obj;
-            _callbackOnAlive = callbackOnAlive;
+            _callbackOnActivated = callbackOnAlive;
             _builder = builder;
         }
 
-        protected override void OnAlive()
+        protected override void OnActivated()
         {
-            base.OnAlive();
+            base.OnActivated();
+            if(IsTerminated) {
+                return;
+            }
             Debug.Assert(_builder is not null);
-            Debug.Assert(_callbackOnAlive is not null);
+            Debug.Assert(_callbackOnActivated is not null);
 
             try {
-                _callbackOnAlive(this, _obj, _builder);
+                _callbackOnActivated(this, _obj, _builder);
             }
             catch {
                 Terminate();
             }
             finally {
                 _obj = null;
-                _callbackOnAlive = null;
+                _callbackOnActivated = null;
                 _builder = null;
             }
         }
@@ -50,11 +53,11 @@ namespace Elffy.Shapes
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Model3D Create<T>(T? obj, Action<T, Model3D, Model3DLoadDelegate> builder) where T : class
         {
-            return new Model3D(obj, &CallbackOnAlive, builder);
+            return new Model3D(obj, &CallbackOnActivated, builder);
 
             // ジェネリクス型<T>をローカル関数に含め、関数ポインタを渡すことで、
-            // builder の呼び出しを OnAlive() まで遅延させつつ、<T>を復元できる。
-            static void CallbackOnAlive(Model3D model, object? obj, Delegate builder)
+            // builder の呼び出しを OnActivated() まで遅延させつつ、<T>を復元できる。
+            static void CallbackOnActivated(Model3D model, object? obj, Delegate builder)
             {
                 // Restore types of builder and obj.
                 var typedBuilder = SafeCast.As<Action<T, Model3D, Model3DLoadDelegate>>(builder);
