@@ -150,10 +150,12 @@ namespace Elffy.Core
 
         protected override void OnDead()
         {
+            var isLoaded = IsLoaded;
+            IsLoaded = false;
             base.OnDead();
             _shaderProgram?.Dispose();
             _shaderProgram = null;
-            if(IsLoaded) {
+            if(isLoaded) {
                 VBO.Delete(ref _vbo);
                 IBO.Delete(ref _ibo);
                 VAO.Delete(ref _vao);
