@@ -11,10 +11,11 @@ namespace Elffy.Shapes
     {
         private object? _obj;
         private delegate*<Model3D, object?, Delegate, void> _callbackOnAlive;  // void func(Model3D self, object obj, Delegate loader)
-        private Delegate _builder;
+        private Delegate? _builder;
 
         private Model3D(object? obj, delegate*<Model3D, object?, Delegate, void> callbackOnAlive, Delegate builder)
         {
+            Debug.Assert(builder is not null);
             _obj = obj;
             _callbackOnAlive = callbackOnAlive;
             _builder = builder;
@@ -31,6 +32,11 @@ namespace Elffy.Shapes
             }
             catch {
                 Terminate();
+            }
+            finally {
+                _obj = null;
+                _callbackOnAlive = null;
+                _builder = null;
             }
         }
 
