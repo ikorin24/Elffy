@@ -43,8 +43,10 @@ namespace Elffy.Serialization
                 CancellationToken = cancellationToken
             };
 
-            return Model3D.Create(obj, async (obj, model, load) =>
+            return Model3D.Create(obj, static async (obj, model, load) =>
             {
+                var resourceLoader = obj.ResourceLoader;
+                var name = obj.Name;
                 var token = obj.CancellationToken;
                 token.ThrowIfCancellationRequested();
                 
@@ -221,20 +223,20 @@ namespace Elffy.Serialization
         public static partial ReadOnlySpan<byte> Materials();
     }
 
-    internal sealed class NamedResource
-    {
-        public IResourceLoader ResourceLoader { get; }
-        public string Name { get; }
+    //internal sealed class NamedResource
+    //{
+    //    public IResourceLoader ResourceLoader { get; }
+    //    public string Name { get; }
         
-        public NamedResource(IResourceLoader resourceLoader, string name)
-        {
-            ResourceLoader = resourceLoader;
-            Name = name;
-        }
+    //    public NamedResource(IResourceLoader resourceLoader, string name)
+    //    {
+    //        ResourceLoader = resourceLoader;
+    //        Name = name;
+    //    }
 
-        public Stream GetStream()
-        {
-            return ResourceLoader.GetStream(Name);
-        }
-    }
+    //    public Stream GetStream()
+    //    {
+    //        return ResourceLoader.GetStream(Name);
+    //    }
+    //}
 }
