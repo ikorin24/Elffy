@@ -25,7 +25,13 @@ namespace Elffy.Shapes
             base.OnAlive();
             Debug.Assert(_builder is not null);
             Debug.Assert(_callbackOnAlive is not null);
-            _callbackOnAlive(this, _obj, _builder);
+
+            try {
+                _callbackOnAlive(this, _obj, _builder);
+            }
+            catch {
+                Terminate();
+            }
         }
 
         // This method is used by Model3DLoadDelegate
@@ -35,6 +41,7 @@ namespace Elffy.Shapes
             LoadGraphicBuffer(vertices, indices);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Model3D Create<T>(T? obj, Action<T, Model3D, Model3DLoadDelegate> builder) where T : class
         {
             return new Model3D(obj, &CallbackOnAlive, builder);

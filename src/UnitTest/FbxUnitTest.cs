@@ -15,9 +15,10 @@ namespace UnitTest
             var loader = new LocalFileResourceLoader(TestValues.FileDirectory);
             var files = Directory.GetFiles(TestValues.FileDirectory, "*.fbx")
                                  .Select(path => Path.GetFileName(path));
+            
             foreach(var file in files) {
-                using var stream = File.OpenRead(Path.Combine(loader.CurrentDirectory, file));
-                _ = ModelBuilder.BuildFromFbx(loader, file);
+                var model = FbxModelBuilder.CreateLazyLoadingFbx(loader, file);
+                Assert.True(model is not null);
             }
         }
     }
@@ -41,6 +42,6 @@ namespace UnitTest
             return File.OpenRead(Path.Combine(CurrentDirectory, name));
         }
 
-        public bool HasResource(string name) => throw new NotSupportedException();
+        public bool HasResource(string name) => true;
     }
 }

@@ -118,16 +118,9 @@ namespace Elffy
 
         }
 
-        public static UniTask<Model3D> LoadFbxModelAsync(this IResourceLoader source, string name)
+        public static Model3D CreateFbxModel(this IResourceLoader source, string name)
         {
-            return UniTask.Run(Load, false);
-
-            Model3D Load() => LoadFbxModel(source, name);
-        }
-
-        public static Model3D LoadFbxModel(this IResourceLoader source, string name)
-        {
-            return ModelBuilder.BuildFromFbx(source, name);
+            return FbxModelBuilder.CreateLazyLoadingFbx(source, name);
         }
 
         public static unsafe SKTypeface LoadTypeface(this IResourceLoader source, string name, int fontFaceIndex = 0)

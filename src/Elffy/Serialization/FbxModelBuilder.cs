@@ -6,18 +6,26 @@ using Elffy.Exceptions;
 using Elffy.Core;
 using Elffy.Shapes;
 using Elffy.Effective;
+using Elffy.Threading.Tasks;
 using StringLiteral;
 using System.Diagnostics.CodeAnalysis;
+using Cysharp.Threading.Tasks;
+using System.Threading;
+using UnmanageUtility;
+using FbxTools;
+using System.Diagnostics;
 
 namespace Elffy.Serialization
 {
-    public static class ModelBuilder
+    public static class FbxModelBuilder
     {
-        /// <summary>Create <see cref="Model3D"/> from fbx file in resources</summary>
-        /// <param name="resourceLoader">Resource loader</param>
-        /// <param name="name">resource name of fbx</param>
+        /// <summary>Create <see cref="Model3D"/> instance from resource with lazy loading.</summary>
+        /// <remarks>Loading will run after <see cref="FrameObject.Activate(Layer)"/> on thread pool.</remarks>
+        /// <param name="resourceLoader">resource loader</param>
+        /// <param name="name">resource name</param>
+        /// <param name="cancellationToken">cancellation token</param>
         /// <returns>new <see cref="Model3D"/> instance</returns>
-        public static Model3D BuildFromFbx(IResourceLoader resourceLoader, string name)
+        public static Model3D CreateLazyLoadingFbx(IResourceLoader resourceLoader, string name, CancellationToken cancellationToken = default)
         {
             if(resourceLoader is null) {
                 ThrowNullArg();
@@ -28,53 +36,87 @@ namespace Elffy.Serialization
                 [DoesNotReturn] static void ThrowNotFound(string name) => throw new ResourceNotFoundException(name);
             }
 
-            var obj = new NamedResource(resourceLoader, name);
-            return Model3D.Create(obj, BuldCore);
+            var obj = new
+            {
+                ResourceLoader = resourceLoader,
+                Name = name,
+                CancellationToken = cancellationToken
+            };
+
+            return Model3D.Create(obj, async (obj, model, load) =>
+            {
+                var token = obj.CancellationToken;
+                token.ThrowIfCancellationRequested();
+                
+                // Run on thread pool
+                await UniTask.SwitchToThreadPool();
+                token.ThrowIfCancellationRequested();
+                
+                // Parse fbx file
+                using(var fbx = FbxParser.Parse(resourceLoader.GetStream(name))) {
+                    // build model
+                    BuildCore(fbx, model, load, token);
+                }
+            });
         }
 
-        private static void BuldCore(NamedResource obj, Model3D model, Model3DLoadDelegate load)
+        private static void BuildCore(FbxObject fbx, Model3D model, Model3DLoadDelegate load, CancellationToken cancellationToken)
         {
-            // Parse fbx file
-            using var fbx = FbxTools.FbxParser.Parse(obj.GetStream());
+            Debug.Assert(model.HostScreen.IsThreadMain() == false);
 
             // Get "Objects" node
             ref readonly var objects = ref fbx.Find(FbxConsts.Objects());
 
-            UnsafeRawList<Vertex> vertices = default;
-            UnsafeRawList<int> indices = default;
-            try {
-                Span<int> indexBuffer = stackalloc int[objects.Children.Length];
-                var geometryCount = objects.FindIndexAll(FbxConsts.Geometry(), indexBuffer);
-                foreach(var i in indexBuffer.Slice(0, geometryCount)) {
+            // Vertices and indices to load to Model3D
+            // (Don't make them UnsafeRawList<T>. FrameLoopAwaitable can be aborted
+            // when HostScreen will get closed. In the case of that, 
+            // UnsafeRawList<T> leaks memory because it has no finalizer.)
+            var vertices = new UnmanagedList<Vertex>();
+            var indices = new UnmanagedList<int>();
 
-                    // Get "Objects" -> "Geometry" node
-                    ref readonly var geometry = ref objects.Children[i];
+            Span<int> indexBuffer = stackalloc int[objects.Children.Length];
+            var geometryCount = objects.FindIndexAll(FbxConsts.Geometry(), indexBuffer);
+            foreach(var i in indexBuffer.Slice(0, geometryCount)) {
 
-                    // Get geometry data
-                    GetGeometryData(geometry,
-                                 out var id,
-                                 out var geometryName,
-                                 out var positions,
-                                 out var indicesRaw,
-                                 out var normals,
-                                 out var materials);
+                // Get "Objects" -> "Geometry" node
+                ref readonly var geometry = ref objects.Children[i];
 
-                    vertices.Capacity += indicesRaw.Length;
-                    indices.Capacity += indicesRaw.Length;
+                // Get geometry data
+                GetGeometryData(geometry,
+                                out var id,
+                                out var geometryName,
+                                out var positions,
+                                out var indicesRaw,
+                                out var normals,
+                                out var materials);
 
-                    // Resolve geometry data into vertices and indices.
-                    ResolveVertices(indicesRaw, positions, normals, ref vertices, ref indices);
-                }
-                // load to Model3D
-                load.Invoke(vertices.AsSpan(), indices.AsSpan());
+                //vertices.Capacity += indicesRaw.Length;
+                //indices.Capacity += indicesRaw.Length;
+
+                // Resolve geometry data into vertices and indices.
+                ResolveVertices(indicesRaw, positions, normals, vertices, indices);
             }
-            finally {
-                vertices.Dispose();
-                indices.Dispose();
+
+            // Switch to main thread and load to Model3D.
+            LoadToModel(model, vertices, indices, load, cancellationToken).Forget();
+
+            static async UniTaskVoid LoadToModel(Model3D model, UnmanagedList<Vertex> vertices, UnmanagedList<int> indices, Model3DLoadDelegate load, CancellationToken cancellationToken)
+            {
+                try {
+                    await model.HostScreen.AsyncBack.ToFrameLoopEvent(FrameLoopTiming.Update, cancellationToken);
+                    load.Invoke(vertices.AsSpan(), indices.AsSpan());
+                }
+                catch {
+                    model.Terminate();
+                }
+                finally {
+                    vertices.Dispose();
+                    indices.Dispose();
+                }
             }
         }
 
-        private static void GetGeometryData(in FbxTools.FbxNode geometry,
+        private static void GetGeometryData(in FbxNode geometry,
                                             out long id,
                                             out ReadOnlySpan<byte> name,
                                             out ReadOnlySpan<double> positions,
@@ -110,8 +152,8 @@ namespace Elffy.Serialization
         private static void ResolveVertices(ReadOnlySpan<int> indicesRaw,
                                             ReadOnlySpan<double> positions,
                                             ReadOnlySpan<double> normals,
-                                            ref UnsafeRawList<Vertex> verticesMarged,
-                                            ref UnsafeRawList<int> indicesMarged)
+                                            UnmanagedList<Vertex> verticesMarged,
+                                            UnmanagedList<int> indicesMarged)
         {
             // positions の数は幾何的な頂点の数
             // normals の数は属性が同じ頂点の数 (属性: 座標・法線・頂点色など) (== indices の数)

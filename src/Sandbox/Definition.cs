@@ -130,13 +130,12 @@ namespace Sandbox
         #region Dice
         public static UniTask<Model3D> GenDice() => ObjectFactory.GenerateAsync<Model3D>(ID_Dice);
 
-        private static async UniTask<Model3D> DefineDice()
+        private static UniTask<Model3D> DefineDice()
         {
-            var model = await Resources.Loader.LoadFbxModelAsync("Dice.fbx");
-            await GameAsync.ToUpdate();
+            var model = Resources.Loader.CreateFbxModel("Dice.fbx");
             model.Position = new Vector3(4, 4, -2);
             model.Activate();
-            return model;
+            return new UniTask<Model3D>(model);
         }
         #endregion
 
@@ -161,15 +160,14 @@ namespace Sandbox
         #region Frog
         public static UniTask<Model3D> GenFrog() => ObjectFactory.GenerateAsync<Model3D>(ID_Frog);
 
-        private static async UniTask<Model3D> DefineFrog()
+        private static UniTask<Model3D> DefineFrog()
         {
-            var model = await Resources.Loader.LoadFbxModelAsync("green_frog.fbx");
-            await GameAsync.ToUpdate();
+            var model = Resources.Loader.CreateFbxModel("green_frog.fbx");
             model.Scale = new Vector3(0.01f);
             model.Position = new Vector3(5, 0, 0);
             model.AddComponent(new Material(new Color4(0f, 0.7f, 0.25f), new Color4(0f, 0.6f, 0.1f), Color4.White, 4));
             model.Activate();
-            return model;
+            return new UniTask<Model3D>(model);
         }
         #endregion
 
