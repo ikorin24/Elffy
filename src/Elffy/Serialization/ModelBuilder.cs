@@ -13,6 +13,10 @@ namespace Elffy.Serialization
 {
     public static class ModelBuilder
     {
+        /// <summary>Create <see cref="Model3D"/> from fbx file in resources</summary>
+        /// <param name="resourceLoader">Resource loader</param>
+        /// <param name="name">resource name of fbx</param>
+        /// <returns>new <see cref="Model3D"/> instance</returns>
         public static Model3D BuildFromFbx(IResourceLoader resourceLoader, string name)
         {
             if(resourceLoader is null) {
@@ -25,10 +29,10 @@ namespace Elffy.Serialization
             }
 
             var obj = new NamedResource(resourceLoader, name);
-            return Model3D.Create<NamedResource, Vertex>(obj, BuldCore);
+            return Model3D.Create(obj, BuldCore);
         }
 
-        private static void BuldCore(NamedResource obj, Model3D model, Model3DLoadDelegate<Vertex> load)
+        private static void BuldCore(NamedResource obj, Model3D model, Model3DLoadDelegate load)
         {
             // Parse fbx file
             using var fbx = FbxTools.FbxParser.Parse(obj.GetStream());
@@ -62,7 +66,7 @@ namespace Elffy.Serialization
                     ResolveVertices(indicesRaw, positions, normals, ref vertices, ref indices);
                 }
                 // load to Model3D
-                load(vertices.AsSpan(), indices.AsSpan());
+                load.Invoke(vertices.AsSpan(), indices.AsSpan());
             }
             finally {
                 vertices.Dispose();
