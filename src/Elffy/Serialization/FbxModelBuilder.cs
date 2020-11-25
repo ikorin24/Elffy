@@ -106,7 +106,9 @@ namespace Elffy.Serialization
             {
                 try {
                     await model.HostScreen.AsyncBack.ToFrameLoopEvent(FrameLoopTiming.Update, cancellationToken);
-                    load.Invoke(vertices.AsSpan(), indices.AsSpan());
+                    if(model.IsActivated || model.IsAlive) {
+                        load.Invoke(vertices.AsSpan(), indices.AsSpan());
+                    }
                 }
                 catch {
                     model.Terminate();
