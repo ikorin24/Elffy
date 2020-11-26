@@ -3,12 +3,14 @@ using Cysharp.Text;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 using Elffy.Effective;
 using TKVector4i = OpenTK.Mathematics.Vector4i;
 
 namespace Elffy
 {
     [StructLayout(LayoutKind.Explicit)]
+    [DebuggerDisplay("{DebuggerDisplay}")]
     public struct Vector4i : IEquatable<Vector4i>
     {
         [FieldOffset(0)]
@@ -19,6 +21,8 @@ namespace Elffy
         public int Z;
         [FieldOffset(12)]
         public int W;
+
+        private readonly string DebuggerDisplay => ToString();
 
         public static readonly Vector4i UnitX = new Vector4i(1, 0, 0, 0);
         public static readonly Vector4i UnitY = new Vector4i(0, 1, 0, 0);
@@ -46,7 +50,7 @@ namespace Elffy
         public readonly override int GetHashCode() => HashCode.Combine(X, Y, Z, W);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly override string ToString() => ZString.Concat('(', X, ' ', Y, ' ', Z, ' ', W, ')');
+        public readonly override string ToString() => ZString.Concat('(', X, ", ", Y, ", ", Z, ", ", W, ')');
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

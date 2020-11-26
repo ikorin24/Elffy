@@ -4,12 +4,14 @@ using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 using Elffy.Effective;
 using TKVector3i = OpenTK.Mathematics.Vector3i;
 
 namespace Elffy
 {
     [StructLayout(LayoutKind.Explicit)]
+    [DebuggerDisplay("{DebuggerDisplay}")]
     public struct Vector3i : IEquatable<Vector3i>
     {
         [FieldOffset(0)]
@@ -18,6 +20,8 @@ namespace Elffy
         public int Y;
         [FieldOffset(8)]
         public int Z;
+
+        private readonly string DebuggerDisplay => ToString();
 
         public static readonly Vector3i UnitX = new Vector3i(1, 0, 0);
         public static readonly Vector3i UnitY = new Vector3i(0, 1, 0);
@@ -43,7 +47,7 @@ namespace Elffy
         public readonly override int GetHashCode() => HashCode.Combine(X, Y, Z);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly override string ToString() => ZString.Concat('(', X, ' ', Y, ' ', Z, ')');
+        public readonly override string ToString() => ZString.Concat('(', X, ", ", Y, ", ", Z, ')');
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3i operator -(in Vector3i vec) => new Vector3i(-vec.X, -vec.Y, -vec.Z);

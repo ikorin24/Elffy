@@ -5,18 +5,22 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 using Elffy.Effective;
 using TKVector2i = OpenTK.Mathematics.Vector2i;
 
 namespace Elffy
 {
     [StructLayout(LayoutKind.Explicit)]
+    [DebuggerDisplay("{DebuggerDisplay}")]
     public struct Vector2i : IEquatable<Vector2i>
     {
         [FieldOffset(0)]
         public int X;
         [FieldOffset(4)]
         public int Y;
+
+        private readonly string DebuggerDisplay => ToString();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector2i(int x, int y) => (X, Y) = (x, y);
@@ -34,7 +38,7 @@ namespace Elffy
         public override int GetHashCode() => HashCode.Combine(X, Y);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly override string ToString() => ZString.Concat('(', X, ' ', Y, ')');
+        public readonly override string ToString() => ZString.Concat('(', X, ", ", Y, ')');
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(in Vector2i left, in Vector2i right) => left.Equals(right);

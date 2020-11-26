@@ -5,17 +5,21 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 using TKVector2 = OpenTK.Mathematics.Vector2;
 
 namespace Elffy
 {
     [StructLayout(LayoutKind.Explicit)]
+    [DebuggerDisplay("{DebuggerDisplay}")]
     public struct Vector2 : IEquatable<Vector2>
     {
         [FieldOffset(0)]
         public float X;
         [FieldOffset(4)]
         public float Y;
+
+        private readonly string DebuggerDisplay => ToString();
 
         public static readonly Vector2 UnitX = new Vector2(1, 0);
         public static readonly Vector2 UnitY = new Vector2(0, 1);
@@ -64,7 +68,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly override int GetHashCode() => HashCode.Combine(X, Y);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly override string ToString() => ZString.Concat('(', X, ' ', Y, ')');
+        public readonly override string ToString() => ZString.Concat('(', X, ", ", Y, ')');
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
