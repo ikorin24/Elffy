@@ -221,17 +221,17 @@ namespace Sandbox
         #endregion
 
         #region Sky
-        public static UniTask<Sky> GenSky() => ObjectFactory.GenerateAsync<Sky>(ID_Sky);
+        public static UniTask<SkySphere> GenSky() => ObjectFactory.GenerateAsync<SkySphere>(ID_Sky);
 
-        private static UniTask<Sky> DefineSky()
+        private static UniTask<SkySphere> DefineSky()
         {
-            var sky = new Sky()
+            var sky = new SkySphere()
             {
                 Scale = new Vector3(500),
                 Shader = SkyShaderSource.Instance,
             };
             sky.Activate();
-            return new UniTask<Sky>(sky);
+            return new UniTask<SkySphere>(sky);
         }
         #endregion
 

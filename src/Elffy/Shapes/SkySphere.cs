@@ -1,16 +1,14 @@
 ﻿#nullable enable
 using Elffy.Core;
 using Elffy.Effective;
-using Elffy.Exceptions;
 using Elffy.Mathematics;
-using OpenTK;
 using System;
 
-namespace Elffy
+namespace Elffy.Shapes
 {
-    public class Sky : Renderable
+    public class SkySphere : Renderable
     {
-        public Sky()
+        public SkySphere()
         {
         }
 
