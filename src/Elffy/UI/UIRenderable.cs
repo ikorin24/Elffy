@@ -24,9 +24,10 @@ namespace Elffy.UI
             Shader = UIShaderSource.Instance;
         }
 
-        protected override void OnAlive()
+        [SkipLocalsInit]
+        protected override void OnActivated()
         {
-            base.OnAlive();
+            base.OnActivated();
             Debug.Assert(InternalLayer is UILayer);
 
             //     Position                    UI

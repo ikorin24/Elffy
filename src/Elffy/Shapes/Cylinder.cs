@@ -23,9 +23,9 @@ namespace Elffy.Shapes
             throw new NotImplementedException();
         }
 
-        protected override void OnAlive()
+        protected override void OnActivated()
         {
-            base.OnAlive();
+            base.OnActivated();
             LoadGraphicBuffer(_vertexArray.Span, _indexArray.Span);
         }
     }

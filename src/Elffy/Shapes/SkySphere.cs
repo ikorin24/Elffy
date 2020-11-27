@@ -46,9 +46,9 @@ namespace Elffy.Shapes
             }
         }
 
-        protected override void OnAlive()
+        protected override void OnActivated()
         {
-            base.OnAlive();
+            base.OnActivated();
 
             ValueTypeRentMemory<Vertex> vertices = default;
             ValueTypeRentMemory<int> indices = default;
