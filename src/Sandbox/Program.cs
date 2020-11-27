@@ -3,6 +3,8 @@ using System;
 using Elffy;
 using Elffy.Diagnostics;
 
+[assembly: GenerateResourceFile("Resources", "Resources.dat")]
+
 namespace Sandbox
 {
     static class Program

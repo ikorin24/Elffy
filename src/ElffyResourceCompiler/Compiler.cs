@@ -3,11 +3,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ElffyResourceCompiler
 {
@@ -59,7 +55,10 @@ namespace ElffyResourceCompiler
         RECOMPILE:
             const string TMP_FILE = "____tmp____";
             if(File.Exists(outputPath)) {
-                File.Move(outputPath, TMP_FILE, true);
+                if(File.Exists(TMP_FILE)) {
+                    File.Delete(TMP_FILE);
+                }
+                File.Move(outputPath, TMP_FILE);
             }
             try {
                 CompilePrivate(resourceDir, outputPath);
@@ -69,7 +68,10 @@ namespace ElffyResourceCompiler
             }
             catch(Exception) {
                 if(File.Exists(TMP_FILE)) {
-                    File.Move(TMP_FILE, outputPath, true);
+                    if(File.Exists(outputPath)) {
+                        File.Delete(outputPath);
+                    }
+                    File.Move(TMP_FILE, outputPath);
                 }
                 throw;
             }

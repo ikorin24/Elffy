@@ -78,4 +78,40 @@ namespace ElffyResourceCompiler
             _stream.Write(value, offset, count);
         }
     }
+
+#if NETSTANDARD2_0
+    internal static class StreamExtenson
+    {
+        public static void Write(this Stream source, ReadOnlySpan<byte> buffer)
+        {
+            byte[]? array = null;
+            try {
+                array = ArrayPool<byte>.Shared.Rent(buffer.Length);
+                buffer.CopyTo(array.AsSpan());
+                source.Write(array, 0, buffer.Length);
+            }
+            finally {
+                if(array is not null) {
+                    ArrayPool<byte>.Shared.Return(array);
+                }
+            }
+        }
+
+        public static int Read(this Stream source, Span<byte> buffer)
+        {
+            byte[]? array = null;
+            try {
+                array = ArrayPool<byte>.Shared.Rent(buffer.Length);
+                var readlen = source.Read(array, 0, buffer.Length);
+                array.AsSpan(0, buffer.Length).CopyTo(buffer);
+                return readlen;
+            }
+            finally {
+                if(array is not null) {
+                    ArrayPool<byte>.Shared.Return(array);
+                }
+            }
+        }
+    }
+#endif
 }

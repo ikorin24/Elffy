@@ -8,7 +8,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Nullable>enable</Nullable>
     <ApplicationIcon>Elffy.ico</ApplicationIcon>
-    <Configurations>Debug;Release;Develop</Configurations>
+    <Configurations>Debug;Release</Configurations>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -18,10 +18,9 @@
   <ItemGroup>
     <ProjectReference Include="..\Elffy.Games\Elffy.Games.csproj" />
     <ProjectReference Include="..\Elffy\Elffy.csproj" />
+    <ProjectReference Include="..\ElffyGenerator\ElffyGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="dotnet externalExe/erc.dll Resources -o $(OutDir)Resources.dat" />
-  </Target>
+  <Import Project="..\ElffyGenerator\CompiledResourceGenerator.props"/>
 
 </Project>
