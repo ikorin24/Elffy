@@ -7,12 +7,12 @@ using Elffy.Platforms;
 using Elffy.Threading;
 using Elffy.Threading.Tasks;
 using Elffy.UI;
-using Elffy.Effective;
 using System;
 using System.IO;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.Runtime.InteropServices;
+using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 
 namespace Elffy
 {
@@ -22,8 +22,11 @@ namespace Elffy
 
         private static SyncContextReceiver? _syncContextReciever;
         private static Action _initialize = null!;
+        private static IHostScreen? _screen;
 
-        public static IHostScreen Screen { get; private set; } = null!;
+        // Cache each field of screen to avoid accessing via interface.
+        // No null checking for performance. (They cannot be null if runnning in the suitable way.)
+        public static IHostScreen Screen => _screen!;
         public static Layer WorldLayer { get; private set; } = null!;
         public static Camera MainCamera { get; private set; } = null!;
         public static Mouse Mouse { get; private set; } = null!;
@@ -66,7 +69,11 @@ namespace Elffy
                             screen = CreateScreen(width, height, title, stream);
                         }
                     }
-                    screen.Initialized += InitScreen;
+                    screen.Initialized += screen =>
+                    {
+                        SetScreen(screen);
+                        _initialize();
+                    };
                     CustomSynchronizationContext.CreateIfNeeded(out _, out _syncContextReciever);
                     screen.Show();
 
@@ -74,6 +81,9 @@ namespace Elffy
                         _syncContextReciever?.DoAll();
                     }
                 }
+                //catch(Exception ex) {
+                //    // TODO: logging of engine
+                //}
                 finally {
                     Resources.Close();
                     CustomSynchronizationContext.Restore();
@@ -83,9 +93,17 @@ namespace Elffy
             }
         }
 
-        private static void InitScreen(IHostScreen screen)
+        public static void SetScreen(IHostScreen screen)
         {
-            Screen = screen;
+            if(screen is null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(screen));
+            }
+
+            if(Interlocked.CompareExchange(ref _screen, screen, null) is not null) {
+                ThrowAlreadySet();
+                [DoesNotReturn] static void ThrowAlreadySet() => throw new InvalidOperationException("Screen is already set.");
+            }
 
             // Cache each fields to avoid accessing via interface.
             WorldLayer = screen.Layers.WorldLayer;
@@ -94,15 +112,13 @@ namespace Elffy
             Keyboard = screen.Keyboard;
             UI = screen.UIRoot.Children;
             AsyncBack = screen.AsyncBack;
-            
-            _initialize();
         }
 
         private static unsafe IHostScreen CreateScreen(int width, int height, string title, Stream? iconStream)
         {
             Bitmap? iconBitmap = null;
             try {
-                RawImage iconRawImage = default;
+                Span<RawImage> icon = stackalloc RawImage[1];
 
                 // TODO: This is low performance, which makes a lot of garbages. It is better to create custom .ico parser.
                 if(iconStream is not null) {
@@ -119,10 +135,12 @@ namespace Elffy
                             pixelSpan[i * 4 + 1] = g;
                             pixelSpan[i * 4 + 2] = b;
                         }
-                        iconRawImage = new RawImage(pixels.Width, pixels.Height, pixels.GetPtr<byte>());
+                        icon[0] = new RawImage(pixels.Width, pixels.Height, pixels.GetPtr<byte>());
                     }
                 }
-                var icon = MemoryMarshal.CreateReadOnlySpan(ref iconRawImage, 1);
+                else {
+                    icon = Span<RawImage>.Empty;
+                }
 
                 switch(Platform.PlatformType) {
                     case PlatformType.Windows:
