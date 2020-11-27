@@ -125,7 +125,7 @@ namespace Elffy.Core
         private void ApplyRemovePrivate()
         {
             foreach(var item in _removedBuf.AsSpan()) {
-                Debug.Assert(item.LifeState == FrameObjectLifeSpanState.Terminated);
+                Debug.Assert(item.LifeState == FrameObjectLifeState.Terminated);
                 var sucessRemoving = _list.Remove(item);
                 Debug.Assert(sucessRemoving);
                 switch(item) {
@@ -150,7 +150,7 @@ namespace Elffy.Core
         {
             _list.AddRange(_addedBuf);
             foreach(var item in _addedBuf.AsSpan()) {
-                Debug.Assert(item.LifeState == FrameObjectLifeSpanState.Activated);
+                Debug.Assert(item.LifeState == FrameObjectLifeState.Activated);
                 switch(item) {
                     case Renderable renderable:
                         _renderables.Add(renderable);

@@ -16,7 +16,7 @@ namespace Elffy
         private IHostScreen? _hostScreen;
         private ILayer? _layer;
         private object? _tag;
-        private FrameObjectLifeSpanState _state = FrameObjectLifeSpanState.New;
+        private FrameObjectLifeState _state = FrameObjectLifeState.New;
         private bool _isFrozen;
 
         /// <summary><see cref="Activate(Elffy.Layer)"/> が呼ばれたときのイベント</summary>
@@ -34,17 +34,17 @@ namespace Elffy
         /// <summary>事後更新時イベント</summary>
         public event ActionEventHandler<FrameObject>? LateUpdated;
 
-        internal FrameObjectLifeSpanState LifeState => _state;
+        internal FrameObjectLifeState LifeState => _state;
 
-        public bool IsNew => _state == FrameObjectLifeSpanState.New;
+        public bool IsNew => _state == FrameObjectLifeState.New;
 
-        public bool IsActivated => _state == FrameObjectLifeSpanState.Activated;
+        public bool IsActivated => _state == FrameObjectLifeState.Activated;
 
-        public bool IsAlive => _state == FrameObjectLifeSpanState.Alive;
+        public bool IsAlive => _state == FrameObjectLifeState.Alive;
 
-        public bool IsTerminated => _state == FrameObjectLifeSpanState.Terminated;
+        public bool IsTerminated => _state == FrameObjectLifeState.Terminated;
 
-        public bool IsDead => _state == FrameObjectLifeSpanState.Dead;
+        public bool IsDead => _state == FrameObjectLifeState.Dead;
 
         /// <summary>フレームのUpdate処理をスキップするかどうかを返します</summary>
         public bool IsFrozen { get => _isFrozen; set => _isFrozen = value; }
@@ -108,7 +108,7 @@ namespace Elffy
         public void Activate(Layer layer)
         {
             if(layer is null) { ThrowNullArg(); }
-            if(_state != FrameObjectLifeSpanState.New) { return; }
+            if(_state != FrameObjectLifeState.New) { return; }
 
             var screen = GetHostScreen(layer);
             if(screen is null) {
@@ -119,7 +119,7 @@ namespace Elffy
                 _hostScreen = screen;
             }
 
-            _state = FrameObjectLifeSpanState.Activated;
+            _state = FrameObjectLifeState.Activated;
             _layer = layer;
             layer!.AddFrameObject(this);
             OnActivated();
@@ -133,11 +133,11 @@ namespace Elffy
             if(layer is null) { ThrowNullArg(); }
             Debug.Assert(layer is Layer == false, "Layer は具象型のオーバーロードを通っていないとおかしい。");
             Debug.Assert(layer!.OwnerCollection is null == false);
-            if(_state != FrameObjectLifeSpanState.New) { return; }
+            if(_state != FrameObjectLifeState.New) { return; }
 
             Debug.Assert(GetHostScreen(layer)!.IsThreadMain());
 
-            _state = FrameObjectLifeSpanState.Activated;
+            _state = FrameObjectLifeState.Activated;
             _layer = layer;
             layer.AddFrameObject(this);
             OnActivated();
@@ -148,10 +148,10 @@ namespace Elffy
         /// <summary>このオブジェクトをエンジン管理下から外して破棄します</summary>
         public void Terminate()
         {
-            if(_state != FrameObjectLifeSpanState.Alive) { return; }
+            if(_state != FrameObjectLifeState.Alive) { return; }
             Debug.Assert(_layer is null == false);
 
-            _state = FrameObjectLifeSpanState.Terminated;
+            _state = FrameObjectLifeState.Terminated;
             _layer!.RemoveFrameObject(this);
             OnTerminated();
         }
@@ -172,15 +172,15 @@ namespace Elffy
 
         internal void AddToObjectStoreCallback()
         {
-            Debug.Assert(_state == FrameObjectLifeSpanState.Activated);
-            _state = FrameObjectLifeSpanState.Alive;
+            Debug.Assert(_state == FrameObjectLifeState.Activated);
+            _state = FrameObjectLifeState.Alive;
             OnAlive();
         }
 
         internal void RemovedFromObjectStoreCallback()
         {
-            Debug.Assert(_state == FrameObjectLifeSpanState.Terminated);
-            _state = FrameObjectLifeSpanState.Dead;
+            Debug.Assert(_state == FrameObjectLifeState.Terminated);
+            _state = FrameObjectLifeState.Dead;
             _layer = null;
             _hostScreen = null;
             OnDead();

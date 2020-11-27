@@ -74,8 +74,8 @@ namespace Elffy.Shapes
             Debug.Assert(HostScreen.IsThreadMain());
 
             _parts = parts;
-            var needLoading = LifeState != FrameObjectLifeSpanState.Terminated &&
-                              LifeState != FrameObjectLifeSpanState.Dead;
+            var needLoading = LifeState != FrameObjectLifeState.Terminated &&
+                              LifeState != FrameObjectLifeState.Dead;
             if(needLoading) {
                 var skeleton = new Skeleton();
                 skeleton.Load(bonePositions.AsSpan());
