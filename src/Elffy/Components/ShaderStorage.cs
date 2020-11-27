@@ -10,8 +10,8 @@ namespace Elffy.Components
 {
     public sealed class ShaderStorage : ISingleOwnerComponent, IDisposable
     {
-        private SingleOwnerComponentCore<ShaderStorage> _core = new SingleOwnerComponentCore<ShaderStorage>(true);  // Mutable object, Don't change into reaadonly
-        private ShaderStorageImpl _impl = new ShaderStorageImpl();  // Mutable object, Don't change into reaadonly
+        private SingleOwnerComponentCore<ShaderStorage> _core = new SingleOwnerComponentCore<ShaderStorage>(true);  // Mutable object, Don't change into readonly
+        private ShaderStorageImpl _impl = new ShaderStorageImpl();  // Mutable object, Don't change into readonly
 
         public ComponentOwner? Owner => _core.Owner;
 

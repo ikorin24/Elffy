@@ -31,7 +31,7 @@ namespace Elffy.Components
         private PixelInternalFormat InternalFormat = PixelInternalFormat.Rgba;
 
 
-        private SingleOwnerComponentCore<Texture> _core;    // Mutable object, Don't change into reaadonly
+        private SingleOwnerComponentCore<Texture> _core;    // Mutable object, Don't change into readonly
         private TextureObject _to;
         private Vector2i _size;
         public TextureExpansionMode ExpansionMode { get; }

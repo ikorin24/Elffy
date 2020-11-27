@@ -10,7 +10,7 @@ namespace Elffy.Components
 {
     public sealed class MultiTexture : ISingleOwnerComponent, IDisposable
     {
-        private SingleOwnerComponentCore<MultiTexture> _core = new SingleOwnerComponentCore<MultiTexture>(true);    // Mutable object, Don't change into reaadonly
+        private SingleOwnerComponentCore<MultiTexture> _core = new SingleOwnerComponentCore<MultiTexture>(true);    // Mutable object, Don't change into readonly
         private bool _disposed;
         private RefTypeRentMemory<Texture> _textures;
         private int _count;

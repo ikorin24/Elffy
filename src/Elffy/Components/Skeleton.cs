@@ -15,8 +15,8 @@ namespace Elffy.Components
 {
     public sealed class Skeleton : ISingleOwnerComponent, IDisposable
     {
-        private SingleOwnerComponentCore<Skeleton> _core = new SingleOwnerComponentCore<Skeleton>(true);    // Mutable object, Don't change into reaadonly
-        private FloatDataTextureImpl _boneTranslationData = new FloatDataTextureImpl();                     // Mutable object, Don't change into reaadonly
+        private SingleOwnerComponentCore<Skeleton> _core = new SingleOwnerComponentCore<Skeleton>(true);    // Mutable object, Don't change into readonly
+        private FloatDataTextureImpl _boneTranslationData = new FloatDataTextureImpl();                     // Mutable object, Don't change into readonly
 
         private UnmanagedArray<Matrix4>? _posMatrices;      // Position matrix of each model in model local coordinate (It's read-only after loaded once.)
         private UnmanagedArray<Matrix4>? _posInvMatrices;   // Inverse of _posMatrices (It's read-only after loaded once.)
