@@ -9,10 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\ElffyResourceCompiler\CommandLineArgParser.cs" Link="CommandLineArgParser.cs" />
-    <Compile Include="..\ElffyResourceCompiler\Compiler.cs" Link="Compiler.cs" />
-    <Compile Include="..\ElffyResourceCompiler\LightBinaryReader.cs" Link="LightBinaryReader.cs" />
-    <Compile Include="..\ElffyResourceCompiler\LightBinaryWriter.cs" Link="LightBinaryWriter.cs" />
+    <Compile Include="..\ElffyResourceCompiler\CommandLineArgParser.cs" Link="ElffyResourceCompiler\CommandLineArgParser.cs" />
+    <Compile Include="..\ElffyResourceCompiler\Compiler.cs" Link="ElffyResourceCompiler\Compiler.cs" />
+    <Compile Include="..\ElffyResourceCompiler\LightBinaryReader.cs" Link="ElffyResourceCompiler\LightBinaryReader.cs" />
+    <Compile Include="..\ElffyResourceCompiler\LightBinaryWriter.cs" Link="ElffyResourceCompiler\LightBinaryWriter.cs" />
   </ItemGroup>
 
   <ItemGroup>
