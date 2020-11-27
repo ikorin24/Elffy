@@ -19,6 +19,7 @@ namespace ElffyGenerator
 
 namespace Elffy
 {
+    [System.Diagnostics.Conditional(""COMPILE_TIME_ONLY"")]
     [AttributeUsage(AttributeTargets.Assembly, Inherited = false, AllowMultiple = false)]
     internal sealed class GenerateResourceFileAttribute : Attribute
     {
