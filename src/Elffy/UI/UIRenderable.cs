@@ -51,10 +51,10 @@ namespace Elffy.UI
             // Build polygons and load them
             ReadOnlySpan<VertexSlim> vertices = stackalloc VertexSlim[4]
             {
-                new VertexSlim(new Vector3(0, 0, 0), new Vector2(0, 0)),
-                new VertexSlim(new Vector3(1, 0, 0), new Vector2(1, 0)),
-                new VertexSlim(new Vector3(1, 1, 0), new Vector2(1, 1)),
-                new VertexSlim(new Vector3(0, 1, 0), new Vector2(0, 1)),
+                new(new(0, 0, 0), new(0, 0)),
+                new(new(1, 0, 0), new(1, 0)),
+                new(new(1, 1, 0), new(1, 1)),
+                new(new(0, 1, 0), new(0, 1)),
             };
             ReadOnlySpan<int> indices = stackalloc int[6] { 0, 2, 1, 2, 0, 3 };
             LoadGraphicBuffer(vertices, indices);
