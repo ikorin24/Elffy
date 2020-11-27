@@ -1,12 +1,10 @@
 ﻿#nullable enable
 using System.Diagnostics;
 using Cysharp.Threading.Tasks;
-using Elffy;
-using Elffy.Threading.Tasks;
 
 namespace Sandbox
 {
-    public static class GameStarter
+    public static class Startup
     {
         public static async void Start()
         {

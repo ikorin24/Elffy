@@ -14,7 +14,7 @@ namespace Sandbox
         {
             try {
                 DevEnv.Run();
-                Game.Start(1200, 675, "Sandbox", "icon.ico", GameStarter.Start);
+                Game.Start(1200, 675, "Sandbox", "icon.ico", Startup.Start);
             }
             finally {
                 DevEnv.Stop();
