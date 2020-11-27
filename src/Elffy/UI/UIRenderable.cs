@@ -72,19 +72,21 @@ namespace Elffy.UI
                 Unsafe.AsRef(model).M03 += offset.X;
                 Unsafe.AsRef(model).M13 += offset.Y;
             }
-
-            VAO.Bind(VAO);
-            IBO.Bind(IBO);
-            ShaderProgram!.Apply(this, Span<Light>.Empty, in model, in view, in projection);
-            DrawElements(IBO.Length, 0);
-            VAO.Unbind();
-            IBO.Unbind();
-
-            // Restore the model matrix for safety.
-            // (Though this is no needed I think.)
-            if(hasOffset) {
-                Unsafe.AsRef(model).M03 -= offset.X;
-                Unsafe.AsRef(model).M13 -= offset.Y;
+            try {
+                VAO.Bind(VAO);
+                IBO.Bind(IBO);
+                ShaderProgram!.Apply(this, Span<Light>.Empty, in model, in view, in projection);
+                DrawElements(IBO.Length, 0);
+                VAO.Unbind();
+                IBO.Unbind();
+            }
+            finally {
+                // Restore the model matrix for safety.
+                // (Though this is no needed I think.)
+                if(hasOffset) {
+                    Unsafe.AsRef(model).M03 -= offset.X;
+                    Unsafe.AsRef(model).M13 -= offset.Y;
+                }
             }
         }
     }
