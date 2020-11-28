@@ -252,7 +252,7 @@ namespace Elffy.UI
         {
             var texture = Texture;
             if(texture.IsEmpty) {
-                texture.LoadUndefinedEmpty(new Vector2i(Width, Height));
+                texture.LoadUndefined(new Vector2i(Width, Height));
                 var p = texture.GetPainter();
                 p.Fill(ColorByte.White);
                 return p;
@@ -266,7 +266,7 @@ namespace Elffy.UI
         {
             var texture = Texture;
             if(texture.IsEmpty) {
-                texture.LoadUndefinedEmpty(new Vector2i(Width, Height));
+                texture.LoadUndefined(new Vector2i(Width, Height));
                 var p = texture.GetPainter(rect, copyFromOriginal);
                 p.Fill(ColorByte.White);
                 return p;
