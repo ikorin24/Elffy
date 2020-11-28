@@ -1,0 +1,101 @@
+﻿#nullable enable
+using System;
+using System.Runtime.CompilerServices;
+using Elffy.Core;
+using Elffy.Shading;
+
+namespace Elffy.Shapes
+{
+    /// <summary>Sky box 3D object</summary>
+    public class SkyBox : Renderable
+    {
+        /// <summary>Create new <see cref="SkyBox"/></summary>
+        public SkyBox()
+        {
+            Shader = TextureShaderSource.Instance;
+        }
+
+        [SkipLocalsInit]
+        protected unsafe override void OnActivated()
+        {
+            base.OnActivated();
+
+            // [indices]
+            //             0 ------- 3
+            //             |         |
+            //             |   up    |
+            //             |         |
+            //             1 ------- 2
+            // 4 ------- 7 8 -------11 12-------15 16-------19
+            // |         | |         | |         | |         |
+            // |  left   | |  front  | |  right  | |  back   |
+            // |         | |         | |         | |         |
+            // 5 ------- 6 9 -------10 13-------14 17-------18
+            //             20-------23
+            //             |         |
+            //             |  down   |
+            //             |         |
+            //             21-------22
+
+            // [uv]
+            //
+            //   1             + ------- +
+            //   |             |         |
+            //   |             |   up    |
+            //   |             |         |
+            //  3/4  + ------- + ------- + ------- + ------- +
+            //   |   |         |         |         |         |
+            //   |   |  left   |  front  |  right  |  back   |
+            //   |   |         |         |         |         |
+            //  1/2  + ------- + ------- + ------- + ------- +
+            //   |             |         |
+            //   |             |  down   |
+            //   |             |         |
+            //  1/4            + ------- +
+            //   |   v
+            //   |   ^
+            //   |   |
+            //   0   o ---> u
+            //
+            //        0 ------ 1/4 ----- 1/2 ----- 3/4 ------ 1
+
+            // [shape]
+            // Inner is front face of the polygon.
+            // Coordinate origin is center of the box.
+            //
+            //     + ------- +
+            //    /   up    /|
+            //   + ------- + |
+            //   |         | ← right
+            //   |  back   | +
+            //   |         |/
+            //   + ------- +
+
+            const float a = 0.5f;
+            const float b0 = 0f;
+            const float b1 = 1f/4f;
+            const float b2 = 2f/4f;
+            const float b3 = 3f/4f;
+            const float b4 = 1f;
+            ReadOnlySpan<VertexSlim> vertices = stackalloc VertexSlim[24]
+            {
+                new(new(-a,  a,  a), new(b1, b4)), new(new(-a,  a, -a), new(b1, b3)), new(new( a,  a, -a), new(b2, b3)), new(new( a,  a,  a), new(b2, b4)),
+                new(new(-a,  a,  a), new(b0, b3)), new(new(-a, -a,  a), new(b0, b2)), new(new(-a, -a, -a), new(b1, b2)), new(new(-a,  a, -a), new(b1, b3)),
+                new(new(-a,  a, -a), new(b1, b3)), new(new(-a, -a, -a), new(b1, b2)), new(new( a, -a, -a), new(b2, b2)), new(new( a,  a, -a), new(b2, b3)),
+                new(new( a,  a, -a), new(b2, b3)), new(new( a, -a, -a), new(b2, b2)), new(new( a, -a,  a), new(b3, b2)), new(new( a,  a,  a), new(b3, b3)),
+                new(new( a,  a,  a), new(b3, b3)), new(new( a, -a,  a), new(b3, b2)), new(new(-a, -a,  a), new(b4, b2)), new(new(-a,  a,  a), new(b4, b3)),
+                new(new(-a, -a, -a), new(b1, b2)), new(new(-a, -a,  a), new(b1, b1)), new(new( a, -a,  a), new(b2, b1)), new(new( a, -a, -a), new(b2, b2)),
+            };
+            ReadOnlySpan<int> indices = stackalloc int[36]
+            {
+                0, 1, 2, 0, 2, 3,         // up
+                4, 5, 6, 4, 6, 7,         // left
+                8, 9, 10, 8, 10, 11,      // front
+                12, 13, 14, 12, 14, 15,   // right
+                16, 17, 18, 16, 18, 19,   // back
+                20, 21, 22, 20, 22, 23,   // down
+            };
+            LoadGraphicBuffer(vertices, indices);
+        }
+    }
+}
