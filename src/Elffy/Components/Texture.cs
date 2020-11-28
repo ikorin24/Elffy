@@ -14,6 +14,7 @@ using OpenTK.Graphics.OpenGL4;
 using SkiaSharp;
 using PixelFormat = System.Drawing.Imaging.PixelFormat;
 using TKPixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Components
 {
@@ -58,20 +59,62 @@ namespace Elffy.Components
 
         ~Texture() => Dispose(false);
 
+        /// <summary>Load pixel data from <see cref="Bitmap"/></summary>
+        /// <remarks>Texture width and height should be power of two for performance.</remarks>
+        /// <param name="bitmap">bitmap to load pixels</param>
         public void Load(Bitmap bitmap)
         {
-            if(!_to.IsEmpty) { throw new InvalidOperationException("Texture is already loaded."); }
-            if(bitmap is null) { throw new ArgumentNullException(nameof(bitmap)); }
+            if(!_to.IsEmpty) {
+                ThrowInvalidOperation();
+                [DoesNotReturn] static void ThrowInvalidOperation() => throw new InvalidOperationException("Texture is already loaded.");
+            }
+            if(bitmap is null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(bitmap));
+            }
 
             using(var pixels = bitmap.GetPixels(ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb)) {
                 LoadPrivate(new Vector2i(pixels.Width, pixels.Height), pixels.Ptr, TKPixelFormat.Bgra);
             }
         }
 
+        /// <summary>Load specified pixel data with specified texture size</summary>
+        /// <remarks>Texture width and height should be power of two for performance.</remarks>
+        /// <param name="size">texture size</param>
+        /// <param name="pixels">pixel data</param>
+        public unsafe void Load(in Vector2i size, ReadOnlySpan<ColorByte> pixels)
+        {
+            if(!_to.IsEmpty) {
+                ThrowInvalidOperation();
+                [DoesNotReturn] static void ThrowInvalidOperation() => throw new InvalidOperationException("Texture is already loaded.");
+            }
+            if(size.X <= 0 || size.Y <= 0) {
+                ThrowInvalidSize();
+                [DoesNotReturn] static void ThrowInvalidSize() => throw new ArgumentOutOfRangeException($"{nameof(size)} is invalid");
+            }
+            if(pixels.Length < size.X * size.Y) {
+                ThrowPixelsTooShort();
+                [DoesNotReturn] static void ThrowPixelsTooShort() => throw new ArgumentException($"{nameof(pixels)} is too short");
+            }
+            fixed(void* ptr = pixels) {
+                LoadPrivate(size, (IntPtr)ptr, TKPixelFormat.Rgba);
+            }
+        }
+
+        /// <summary>Load pixel data filled with specified color</summary>
+        /// <remarks>Texture width and height should be power of two for performance.</remarks>
+        /// <param name="size">texture size</param>
+        /// <param name="fill">color to fill all pixels with</param>
         public unsafe void Load(in Vector2i size, in ColorByte fill)
         {
-            if(!_to.IsEmpty) { throw new InvalidOperationException("Texture is already loaded."); }
-
+            if(!_to.IsEmpty) {
+                ThrowInvalidOperation();
+                [DoesNotReturn] static void ThrowInvalidOperation() => throw new InvalidOperationException("Texture is already loaded.");
+            }
+            if(size.X <= 0 || size.Y <= 0) {
+                ThrowInvalidSize();
+                [DoesNotReturn] static void ThrowInvalidSize() => throw new ArgumentOutOfRangeException($"{nameof(size)} is invalid");
+            }
             using(var buf = new PooledArray<byte>(size.X * size.Y * sizeof(ColorByte))) {
                 var pixels = buf.AsSpan().MarshalCast<byte, ColorByte>();
                 pixels.Fill(fill);
@@ -81,13 +124,52 @@ namespace Elffy.Components
             }
         }
 
-        internal unsafe void LoadUndefinedEmpty(in Vector2i size)
+        /// <summary>Create gpu texture buffer with specified size, but no uploading pixels. Pixels color remain undefined.</summary>
+        /// <remarks>Texture width and height should be power of two for performance.</remarks>
+        /// <param name="size">texture size</param>
+        public unsafe void LoadUndefined(in Vector2i size)
         {
             if(!_to.IsEmpty) {
                 ThrowAlreadyLoaded();
                 static void ThrowAlreadyLoaded() => throw new InvalidOperationException("Texture is already loaded.");
             }
             LoadPrivate(size, IntPtr.Zero, TKPixelFormat.Rgba);
+        }
+
+        public unsafe void Update(in RectI rect, ReadOnlySpan<ColorByte> pixels)
+        {
+            if(_to.IsEmpty) {
+                ThrowNotLoaded();
+                static void ThrowNotLoaded() => throw new InvalidOperationException("Texture is not loaded yet.");
+            }
+            if(rect.X < 0 || rect.Y < 0 || (uint)rect.Width >= (uint)(_size.X - rect.X) || (uint)rect.Height >= (uint)(_size.Y - rect.Y)) {
+                ThrowInvalidRect();
+                [DoesNotReturn] static void ThrowInvalidRect() => throw new ArgumentOutOfRangeException($"{nameof(rect)} is invalid");
+            }
+
+            fixed(void* ptr = pixels) {
+                UpdateSubTexture((byte*)ptr, rect);
+            }
+        }
+
+        public unsafe void Update(in RectI rect, in ColorByte fill)
+        {
+            if(_to.IsEmpty) {
+                ThrowNotLoaded();
+                static void ThrowNotLoaded() => throw new InvalidOperationException("Texture is not loaded yet.");
+            }
+            if(rect.X < 0 || rect.Y < 0 || (uint)rect.Width >= (uint)(_size.X - rect.X) || (uint)rect.Height >= (uint)(_size.Y - rect.Y)) {
+                ThrowInvalidRect();
+                [DoesNotReturn] static void ThrowInvalidRect() => throw new ArgumentOutOfRangeException($"{nameof(rect)} is invalid");
+            }
+
+            using(var buf = new PooledArray<byte>(rect.Width * rect.Height * sizeof(ColorByte))) {
+                var pixels = buf.AsSpan().MarshalCast<byte, ColorByte>();
+                pixels.Fill(fill);
+                fixed(void* ptr = pixels) {
+                    UpdateSubTexture((byte*)ptr, rect);
+                }
+            }
         }
 
         public unsafe int GetPixels(in RectI rect, Span<ColorByte> buffer)
@@ -187,8 +269,6 @@ namespace Elffy.Components
             GL.TexSubImage2D(TextureTarget.Texture2D, 0, rect.X, rect.Y, rect.Width, rect.Height, TKPixelFormat.Rgba, PixelType.UnsignedByte, (IntPtr)pixels);
             TextureObject.Unbind2D(unit);
         }
-
-        //private 
 
         void IComponent.OnAttached(ComponentOwner owner) => _core.OnAttached(owner);
 
