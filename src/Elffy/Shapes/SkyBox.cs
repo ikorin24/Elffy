@@ -38,12 +38,17 @@ namespace Elffy.Shapes
             //             21-------22
 
             // [uv]
+            // OpenGL coordinate of uv is left-bottom based,
+            // but many popular format of images (e.g. png) are left-top based.
+            // So, I use left-top as uv coordinate.
             //
-            //   1             + ------- +
+            //       0 ------ 1/4 ----- 1/2 ----- 3/4 ------ 1
+            //
+            //   0   o --> u   + ------- +
+            //   |   |         |         |
+            //   |   v         |   up    |
             //   |             |         |
-            //   |             |   up    |
-            //   |             |         |
-            //  3/4  + ------- + ------- + ------- + ------- +
+            //  1/4  + ------- + ------- + ------- + ------- +
             //   |   |         |         |         |         |
             //   |   |  left   |  front  |  right  |  back   |
             //   |   |         |         |         |         |
@@ -51,13 +56,12 @@ namespace Elffy.Shapes
             //   |             |         |
             //   |             |  down   |
             //   |             |         |
-            //  1/4            + ------- +
-            //   |   v
-            //   |   ^
-            //   |   |
-            //   0   o ---> u
+            //  3/4            + ------- +
+            //   |
+            //   |
+            //   |
+            //   1
             //
-            //        0 ------ 1/4 ----- 1/2 ----- 3/4 ------ 1
 
             // [shape]
             // Inner is front face of the polygon.
@@ -79,12 +83,12 @@ namespace Elffy.Shapes
             const float b4 = 1f;
             ReadOnlySpan<VertexSlim> vertices = stackalloc VertexSlim[24]
             {
-                new(new(-a,  a,  a), new(b1, b4)), new(new(-a,  a, -a), new(b1, b3)), new(new( a,  a, -a), new(b2, b3)), new(new( a,  a,  a), new(b2, b4)),
-                new(new(-a,  a,  a), new(b0, b3)), new(new(-a, -a,  a), new(b0, b2)), new(new(-a, -a, -a), new(b1, b2)), new(new(-a,  a, -a), new(b1, b3)),
-                new(new(-a,  a, -a), new(b1, b3)), new(new(-a, -a, -a), new(b1, b2)), new(new( a, -a, -a), new(b2, b2)), new(new( a,  a, -a), new(b2, b3)),
-                new(new( a,  a, -a), new(b2, b3)), new(new( a, -a, -a), new(b2, b2)), new(new( a, -a,  a), new(b3, b2)), new(new( a,  a,  a), new(b3, b3)),
-                new(new( a,  a,  a), new(b3, b3)), new(new( a, -a,  a), new(b3, b2)), new(new(-a, -a,  a), new(b4, b2)), new(new(-a,  a,  a), new(b4, b3)),
-                new(new(-a, -a, -a), new(b1, b2)), new(new(-a, -a,  a), new(b1, b1)), new(new( a, -a,  a), new(b2, b1)), new(new( a, -a, -a), new(b2, b2)),
+                new(new(-a,  a,  a), new(b1, b0)), new(new(-a,  a, -a), new(b1, b1)), new(new( a,  a, -a), new(b2, b1)), new(new( a,  a,  a), new(b2, b0)),
+                new(new(-a,  a,  a), new(b0, b1)), new(new(-a, -a,  a), new(b0, b2)), new(new(-a, -a, -a), new(b1, b2)), new(new(-a,  a, -a), new(b1, b1)),
+                new(new(-a,  a, -a), new(b1, b1)), new(new(-a, -a, -a), new(b1, b2)), new(new( a, -a, -a), new(b2, b2)), new(new( a,  a, -a), new(b2, b1)),
+                new(new( a,  a, -a), new(b2, b1)), new(new( a, -a, -a), new(b2, b2)), new(new( a, -a,  a), new(b3, b2)), new(new( a,  a,  a), new(b3, b1)),
+                new(new( a,  a,  a), new(b3, b1)), new(new( a, -a,  a), new(b3, b2)), new(new(-a, -a,  a), new(b4, b2)), new(new(-a,  a,  a), new(b4, b1)),
+                new(new(-a, -a, -a), new(b1, b2)), new(new(-a, -a,  a), new(b1, b3)), new(new( a, -a,  a), new(b2, b3)), new(new( a, -a, -a), new(b2, b2)),
             };
             ReadOnlySpan<int> indices = stackalloc int[36]
             {

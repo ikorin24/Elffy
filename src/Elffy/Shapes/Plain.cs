@@ -1,33 +1,60 @@
 ﻿#nullable enable
 using Elffy.Core;
 using System;
+using System.Runtime.CompilerServices;
 
 namespace Elffy.Shapes
 {
-    /// <summary>正方形の平面の3Dオブジェクトクラス</summary>
+    /// <summary>Square plain 3D object</summary>
     public class Plain : Renderable
     {
-        private const float A = 0.5f;
-
-        private static readonly ReadOnlyMemory<Vertex> _vertexArray = new Vertex[4]
-        {
-            new Vertex(new Vector3(-A, A, 0),  new Vector3(0, 0, 1), new Vector2(0, 0)),
-            new Vertex(new Vector3(-A, -A, 0), new Vector3(0, 0, 1), new Vector2(0, 1)),
-            new Vertex(new Vector3(A, -A, 0),  new Vector3(0, 0, 1), new Vector2(1, 1)),
-            new Vertex(new Vector3(A, A, 0),   new Vector3(0, 0, 1), new Vector2(1, 0)),
-        };
-
-        private static readonly ReadOnlyMemory<int> _indexArray = new int[6] { 0, 1, 2, 2, 3, 0 };
-
-        /// <summary>平面の3Dオブジェクトを生成します</summary>
+        /// <summary>Create new <see cref="Plain"/></summary>
         public Plain()
         {
         }
 
+        [SkipLocalsInit]
         protected override void OnActivated()
         {
             base.OnActivated();
-            LoadGraphicBuffer(_vertexArray.Span, _indexArray.Span);
+
+            // [indices]
+            //
+            //        0 ----- 3
+            //        |  \    |
+            //   y    |    \  |
+            //   ^    1 ----- 2
+            //   |
+            //   + ---> x
+            //  /
+            // z
+
+            // [uv]
+            // OpenGL coordinate of uv is left-bottom based,
+            // but many popular format of images (e.g. png) are left-top based.
+            // So, I use left-top as uv coordinate.
+            //
+            //         0 ----- 1  u
+            //
+            //    0    0 ----- 3
+            //    |    |       |
+            //    |    |       |
+            //    1    1 ----- 2
+            //    v
+
+            const float a = 0.5f;
+            ReadOnlySpan<Vertex> vertice = stackalloc Vertex[4]
+            {
+                new(new(-a,  a, 0), new(0, 0, 1), new(0, 0)),
+                new(new(-a, -a, 0), new(0, 0, 1), new(0, 1)),
+                new(new( a, -a, 0), new(0, 0, 1), new(1, 1)),
+                new(new( a,  a, 0), new(0, 0, 1), new(1, 0)),
+            };
+            ReadOnlySpan<int> indices = stackalloc int[6]
+            {
+                0, 1, 2, 0, 2, 3,
+            };
+            LoadGraphicBuffer(vertice, indices);
         }
     }
 }
