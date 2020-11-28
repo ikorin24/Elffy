@@ -48,20 +48,15 @@ namespace Elffy.Shapes
             //   |   |         |         |
             //   |   v         |   up    |
             //   |             |         |
-            //  1/4  + ------- + ------- + ------- + ------- +
+            //  1/3  + ------- + ------- + ------- + ------- +
             //   |   |         |         |         |         |
             //   |   |  left   |  front  |  right  |  back   |
             //   |   |         |         |         |         |
-            //  1/2  + ------- + ------- + ------- + ------- +
+            //  2/3  + ------- + ------- + ------- + ------- +
             //   |             |         |
             //   |             |  down   |
             //   |             |         |
-            //  3/4            + ------- +
-            //   |
-            //   |
-            //   |
-            //   1
-            //
+            //   1             + ------- +
 
             // [shape]
             // Inner is front face of the polygon.
@@ -81,14 +76,18 @@ namespace Elffy.Shapes
             const float b2 = 2f/4f;
             const float b3 = 3f/4f;
             const float b4 = 1f;
+            const float c0 = 0f;
+            const float c1 = 1f/3f;
+            const float c2 = 2f/3f;
+            const float c3 = 1f;
             ReadOnlySpan<VertexSlim> vertices = stackalloc VertexSlim[24]
             {
-                new(new(-a,  a,  a), new(b1, b0)), new(new(-a,  a, -a), new(b1, b1)), new(new( a,  a, -a), new(b2, b1)), new(new( a,  a,  a), new(b2, b0)),
-                new(new(-a,  a,  a), new(b0, b1)), new(new(-a, -a,  a), new(b0, b2)), new(new(-a, -a, -a), new(b1, b2)), new(new(-a,  a, -a), new(b1, b1)),
-                new(new(-a,  a, -a), new(b1, b1)), new(new(-a, -a, -a), new(b1, b2)), new(new( a, -a, -a), new(b2, b2)), new(new( a,  a, -a), new(b2, b1)),
-                new(new( a,  a, -a), new(b2, b1)), new(new( a, -a, -a), new(b2, b2)), new(new( a, -a,  a), new(b3, b2)), new(new( a,  a,  a), new(b3, b1)),
-                new(new( a,  a,  a), new(b3, b1)), new(new( a, -a,  a), new(b3, b2)), new(new(-a, -a,  a), new(b4, b2)), new(new(-a,  a,  a), new(b4, b1)),
-                new(new(-a, -a, -a), new(b1, b2)), new(new(-a, -a,  a), new(b1, b3)), new(new( a, -a,  a), new(b2, b3)), new(new( a, -a, -a), new(b2, b2)),
+                new(new(-a,  a,  a), new(b1, c0)), new(new(-a,  a, -a), new(b1, c1)), new(new( a,  a, -a), new(b2, c1)), new(new( a,  a,  a), new(b2, c0)),
+                new(new(-a,  a,  a), new(b0, c1)), new(new(-a, -a,  a), new(b0, c2)), new(new(-a, -a, -a), new(b1, c2)), new(new(-a,  a, -a), new(b1, c1)),
+                new(new(-a,  a, -a), new(b1, c1)), new(new(-a, -a, -a), new(b1, c2)), new(new( a, -a, -a), new(b2, c2)), new(new( a,  a, -a), new(b2, c1)),
+                new(new( a,  a, -a), new(b2, c1)), new(new( a, -a, -a), new(b2, c2)), new(new( a, -a,  a), new(b3, c2)), new(new( a,  a,  a), new(b3, c1)),
+                new(new( a,  a,  a), new(b3, c1)), new(new( a, -a,  a), new(b3, c2)), new(new(-a, -a,  a), new(b4, c2)), new(new(-a,  a,  a), new(b4, c1)),
+                new(new(-a, -a, -a), new(b1, c2)), new(new(-a, -a,  a), new(b1, c3)), new(new( a, -a,  a), new(b2, c3)), new(new( a, -a, -a), new(b2, c2)),
             };
             ReadOnlySpan<int> indices = stackalloc int[36]
             {
