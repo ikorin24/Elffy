@@ -53,7 +53,7 @@ namespace ElffyResourceCompiler
             }
 
         RECOMPILE:
-            const string TMP_FILE = "____tmp____";
+            string TMP_FILE = Path.Combine(Path.GetDirectoryName(outputPath), "____tmp____");
             if(File.Exists(outputPath)) {
                 if(File.Exists(TMP_FILE)) {
                     File.Delete(TMP_FILE);
