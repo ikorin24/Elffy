@@ -25,7 +25,7 @@ namespace Sandbox
                     var (dice, behavior) = x;
                     behavior.Invoke(dice).Forget();
                 }),
-                Definition.GenBox(),
+                //Definition.GenBox(),
                 Definition.GenBox2(),
                 Definition.GenSky(),
                 Definition.GenUI());

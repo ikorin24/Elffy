@@ -1,68 +1,102 @@
 ﻿#nullable enable
-using System.Linq;
-using OpenTK;
-using Elffy.Core;
 using System;
+using System.Runtime.CompilerServices;
+using Elffy.Core;
+using Elffy.Shading;
 
 namespace Elffy.Shapes
 {
     public class Cube : Renderable
     {
-        private const float A = 0.5f;
-
-        private const float zero = 0.0f;
-        private const float one = 1 / 3.0f;
-        private const float two = 2 / 3.0f;
-        private const float three = 1.0f;
-
-        private static readonly ReadOnlyMemory<Vertex> _vertexArray = new Vertex[36] {
-            new Vertex(new Vector3(-A, -A, -A), new Vector3(-1, 0, 0), new Vector2(zero,    zero)),
-            new Vertex(new Vector3(-A, -A, A),  new Vector3(-1, 0, 0), new Vector2(zero,    one)),
-            new Vertex(new Vector3(-A, A, A),   new Vector3(-1, 0, 0), new Vector2(one,     one)),
-            new Vertex(new Vector3(A, A, -A),   new Vector3(0, 0, -1), new Vector2(three,   zero)),
-            new Vertex(new Vector3(-A, -A, -A), new Vector3(0, 0, -1), new Vector2(two,     one)),
-            new Vertex(new Vector3(-A, A, -A),  new Vector3(0, 0, -1), new Vector2(three,   one)),
-            new Vertex(new Vector3(A, -A, A),   new Vector3(0, -1, 0), new Vector2(two,     one)),
-            new Vertex(new Vector3(-A, -A, -A), new Vector3(0, -1, 0), new Vector2(one,     two)),
-            new Vertex(new Vector3(A, -A, -A),  new Vector3(0, -1, 0), new Vector2(two,     two)),
-            new Vertex(new Vector3(A, A, -A),   new Vector3(0, 0, -1), new Vector2(three,   zero)),
-            new Vertex(new Vector3(A, -A, -A),  new Vector3(0, 0, -1), new Vector2(two,     zero)),
-            new Vertex(new Vector3(-A, -A, -A), new Vector3(0, 0, -1), new Vector2(two,     one)),
-            new Vertex(new Vector3(-A, -A, -A), new Vector3(-1, 0, 0), new Vector2(zero,    zero)),
-            new Vertex(new Vector3(-A, A, A),   new Vector3(-1, 0, 0), new Vector2(one,     one)),
-            new Vertex(new Vector3(-A, A, -A),  new Vector3(-1, 0, 0), new Vector2(one,     zero)),
-            new Vertex(new Vector3(A, -A, A),   new Vector3(0, -1, 0), new Vector2(two,     one)),
-            new Vertex(new Vector3(-A, -A, A),  new Vector3(0, -1, 0), new Vector2(one,     one)),
-            new Vertex(new Vector3(-A, -A, -A), new Vector3(0, -1, 0), new Vector2(one,     two)),
-            new Vertex(new Vector3(-A, A, A),   new Vector3(0, 0, 1),  new Vector2(three,   two)),
-            new Vertex(new Vector3(-A, -A, A),  new Vector3(0, 0, 1),  new Vector2(three,   one)),
-            new Vertex(new Vector3(A, -A, A),   new Vector3(0, 0, 1),  new Vector2(two,     one)),
-            new Vertex(new Vector3(A, A, A),    new Vector3(1, 0, 0),  new Vector2(two,     zero)),
-            new Vertex(new Vector3(A, -A, -A),  new Vector3(1, 0, 0),  new Vector2(one,     one)),
-            new Vertex(new Vector3(A, A, -A),   new Vector3(1, 0, 0),  new Vector2(two,     one)),
-            new Vertex(new Vector3(A, -A, -A),  new Vector3(1, 0, 0),  new Vector2(one,     one)),
-            new Vertex(new Vector3(A, A, A),    new Vector3(1, 0, 0),  new Vector2(two,     zero)),
-            new Vertex(new Vector3(A, -A, A),   new Vector3(1, 0, 0),  new Vector2(one,     zero)),
-            new Vertex(new Vector3(A, A, A),    new Vector3(0, 1, 0),  new Vector2(zero,    one)),
-            new Vertex(new Vector3(A, A, -A),   new Vector3(0, 1, 0),  new Vector2(zero,    two)),
-            new Vertex(new Vector3(-A, A, -A),  new Vector3(0, 1, 0),  new Vector2(one,     two)),
-            new Vertex(new Vector3(A, A, A),    new Vector3(0, 1, 0),  new Vector2(zero,    one)),
-            new Vertex(new Vector3(-A, A, -A),  new Vector3(0, 1, 0),  new Vector2(one,     two)),
-            new Vertex(new Vector3(-A, A, A),   new Vector3(0, 1, 0),  new Vector2(one,     one)),
-            new Vertex(new Vector3(A, A, A),    new Vector3(0, 0, 1),  new Vector2(two,     two)),
-            new Vertex(new Vector3(-A, A, A),   new Vector3(0, 0, 1),  new Vector2(three,   two)),
-            new Vertex(new Vector3(A, -A, A),   new Vector3(0, 0, 1),  new Vector2(two,     one)),
-        };
-        private static readonly ReadOnlyMemory<int> _indexArray = Enumerable.Range(0, _vertexArray.Length).ToArray();
-
         public Cube()
         {
+            Shader = TextureShaderSource.Instance;
         }
 
+        [SkipLocalsInit]
         protected override void OnActivated()
         {
             base.OnActivated();
-            LoadGraphicBuffer(_vertexArray.Span, _indexArray.Span);
+
+            // [indices]
+            //             0 ------- 3
+            //             |         |
+            //             |   up    |
+            //             |         |
+            //             1 ------- 2
+            // 4 ------- 7 8 -------11 12-------15 16-------19
+            // |         | |         | |         | |         |
+            // |  left   | |  front  | |  right  | |  back   |
+            // |         | |         | |         | |         |
+            // 5 ------- 6 9 -------10 13-------14 17-------18
+            //             20-------23
+            //             |         |
+            //             |  down   |
+            //             |         |
+            //             21-------22
+
+            // [uv]
+            // OpenGL coordinate of uv is left-bottom based,
+            // but many popular format of images (e.g. png) are left-top based.
+            // So, I use left-top as uv coordinate.
+            //
+            //       0 ------ 1/4 ----- 1/2 ----- 3/4 ------ 1
+            //
+            //   0   o --> u   + ------- +
+            //   |   |         |         |
+            //   |   v         |   up    |
+            //   |             |         |
+            //  1/3  + ------- + ------- + ------- + ------- +
+            //   |   |         |         |         |         |
+            //   |   |  left   |  front  |  right  |  back   |
+            //   |   |         |         |         |         |
+            //  2/3  + ------- + ------- + ------- + ------- +
+            //   |             |         |
+            //   |             |  down   |
+            //   |             |         |
+            //   1             + ------- +
+
+            // [shape]
+            // Inner is front face of the polygon.
+            // Coordinate origin is center of the box.
+            //
+            //     + ------- +
+            //    /   up    /|
+            //   + ------- + |
+            //   |         | ← right
+            //   |  front  | +
+            //   |         |/
+            //   + ------- +
+
+            const float a = 0.5f;
+            const float b0 = 0f;
+            const float b1 = 1f/4f;
+            const float b2 = 2f/4f;
+            const float b3 = 3f/4f;
+            const float b4 = 1f;
+            const float c0 = 0f;
+            const float c1 = 1f/3f;
+            const float c2 = 2f/3f;
+            const float c3 = 1f;
+            ReadOnlySpan<VertexSlim> vertices = stackalloc VertexSlim[24]
+            {
+                new(new(-a,  a,  -a), new(b1, c0)), new(new(-a,  a, a), new(b1, c1)), new(new( a,  a, a), new(b2, c1)), new(new( a,  a,  -a), new(b2, c0)),
+                new(new(-a,  a,  -a), new(b0, c1)), new(new(-a, -a,  -a), new(b0, c2)), new(new(-a, -a, a), new(b1, c2)), new(new(-a,  a, a), new(b1, c1)),
+                new(new(-a,  a, a), new(b1, c1)), new(new(-a, -a, a), new(b1, c2)), new(new( a, -a, a), new(b2, c2)), new(new( a,  a, a), new(b2, c1)),
+                new(new( a,  a, a), new(b2, c1)), new(new( a, -a, a), new(b2, c2)), new(new( a, -a,  -a), new(b3, c2)), new(new( a,  a,  -a), new(b3, c1)),
+                new(new( a,  a,  -a), new(b3, c1)), new(new( a, -a,  -a), new(b3, c2)), new(new(-a, -a,  -a), new(b4, c2)), new(new(-a,  a,  -a), new(b4, c1)),
+                new(new(-a, -a, a), new(b1, c2)), new(new(-a, -a,  -a), new(b1, c3)), new(new( a, -a,  -a), new(b2, c3)), new(new( a, -a, a), new(b2, c2)),
+            };
+            ReadOnlySpan<int> indices = stackalloc int[36]
+            {
+                0, 1, 2, 0, 2, 3,         // up
+                4, 5, 6, 4, 6, 7,         // left
+                8, 9, 10, 8, 10, 11,      // front
+                12, 13, 14, 12, 14, 15,   // right
+                16, 17, 18, 16, 18, 19,   // back
+                20, 21, 22, 20, 22, 23,   // down
+            };
+            LoadGraphicBuffer(vertices, indices);
         }
     }
 }

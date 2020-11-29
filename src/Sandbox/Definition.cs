@@ -32,7 +32,7 @@ namespace Sandbox
         private const uint ID_Dice = 4;
         private const uint ID_DiceBehavior = 5;
         private const uint ID_Frog = 6;
-        private const uint ID_Box = 7;
+        //private const uint ID_Box = 7;
         private const uint ID_Box2 = 8;
         private const uint ID_Sky = 9;
         private const uint ID_UI = 10;
@@ -55,7 +55,7 @@ namespace Sandbox
                 ObjectFactory.Register(ID_Dice, DefineDice);
                 ObjectFactory.Register(ID_DiceBehavior, DefineDiceBehavior);
                 ObjectFactory.Register(ID_Frog, DefineFrog);
-                ObjectFactory.Register(ID_Box, DefineBox);
+                //ObjectFactory.Register(ID_Box, DefineBox);
                 ObjectFactory.Register(ID_Box2, DefineBox2);
                 ObjectFactory.Register(ID_Sky, DefineSky);
                 ObjectFactory.Register(ID_UI, DefineUI);
@@ -183,20 +183,20 @@ namespace Sandbox
         }
         #endregion
 
-        #region Box
-        public static UniTask<Cube> GenBox() => ObjectFactory.GenerateAsync<Cube>(ID_Box);
+        //#region Box
+        //public static UniTask<Cube> GenBox() => ObjectFactory.GenerateAsync<Cube>(ID_Box);
 
-        private static UniTask<Cube> DefineBox()
-        {
-            var cube = new Cube()
-            {
-                Position = new Vector3(-3, 0.5f, 0),
-                Shader = NormalShaderSource.Instance,
-            };
-            cube.Activate();
-            return new UniTask<Cube>(cube);
-        }
-        #endregion
+        //private static UniTask<Cube> DefineBox()
+        //{
+        //    var cube = new Cube()
+        //    {
+        //        Position = new Vector3(-3, 0.5f, 0),
+        //        Shader = NormalShaderSource.Instance,
+        //    };
+        //    cube.Activate();
+        //    return new UniTask<Cube>(cube);
+        //}
+        //#endregion
 
         #region Box2
         public static UniTask<Cube> GenBox2() => ObjectFactory.GenerateAsync<Cube>(ID_Box2);
