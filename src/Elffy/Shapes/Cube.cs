@@ -2,7 +2,6 @@
 using System;
 using System.Runtime.CompilerServices;
 using Elffy.Core;
-using Elffy.Shading;
 
 namespace Elffy.Shapes
 {
@@ -10,7 +9,6 @@ namespace Elffy.Shapes
     {
         public Cube()
         {
-            Shader = TextureShaderSource.Instance;
         }
 
         [SkipLocalsInit]
@@ -57,7 +55,6 @@ namespace Elffy.Shapes
             //   1             + ------- +
 
             // [shape]
-            // Inner is front face of the polygon.
             // Coordinate origin is center of the box.
             //
             //     + ------- +
@@ -78,14 +75,14 @@ namespace Elffy.Shapes
             const float c1 = 1f/3f;
             const float c2 = 2f/3f;
             const float c3 = 1f;
-            ReadOnlySpan<VertexSlim> vertices = stackalloc VertexSlim[24]
+            ReadOnlySpan<Vertex> vertices = stackalloc Vertex[24]
             {
-                new(new(-a,  a,  -a), new(b1, c0)), new(new(-a,  a, a), new(b1, c1)), new(new( a,  a, a), new(b2, c1)), new(new( a,  a,  -a), new(b2, c0)),
-                new(new(-a,  a,  -a), new(b0, c1)), new(new(-a, -a,  -a), new(b0, c2)), new(new(-a, -a, a), new(b1, c2)), new(new(-a,  a, a), new(b1, c1)),
-                new(new(-a,  a, a), new(b1, c1)), new(new(-a, -a, a), new(b1, c2)), new(new( a, -a, a), new(b2, c2)), new(new( a,  a, a), new(b2, c1)),
-                new(new( a,  a, a), new(b2, c1)), new(new( a, -a, a), new(b2, c2)), new(new( a, -a,  -a), new(b3, c2)), new(new( a,  a,  -a), new(b3, c1)),
-                new(new( a,  a,  -a), new(b3, c1)), new(new( a, -a,  -a), new(b3, c2)), new(new(-a, -a,  -a), new(b4, c2)), new(new(-a,  a,  -a), new(b4, c1)),
-                new(new(-a, -a, a), new(b1, c2)), new(new(-a, -a,  -a), new(b1, c3)), new(new( a, -a,  -a), new(b2, c3)), new(new( a, -a, a), new(b2, c2)),
+                new(new(-a,  a, -a), new( 0,  1,  0), new(b1, c0)), new(new(-a,  a,  a), new( 0,  1,  0), new(b1, c1)), new(new( a,  a,  a), new( 0,  1,  0), new(b2, c1)), new(new( a,  a, -a), new( 0,  1,  0), new(b2, c0)),
+                new(new(-a,  a, -a), new(-1,  0,  0), new(b0, c1)), new(new(-a, -a, -a), new(-1,  0,  0), new(b0, c2)), new(new(-a, -a,  a), new(-1,  0,  0), new(b1, c2)), new(new(-a,  a,  a), new(-1,  0,  0), new(b1, c1)),
+                new(new(-a,  a,  a), new( 0,  0,  1), new(b1, c1)), new(new(-a, -a,  a), new( 0,  0,  1), new(b1, c2)), new(new( a, -a,  a), new( 0,  0,  1), new(b2, c2)), new(new( a,  a,  a), new( 0,  0,  1), new(b2, c1)),
+                new(new( a,  a,  a), new( 1,  0,  0), new(b2, c1)), new(new( a, -a,  a), new( 1,  0,  0), new(b2, c2)), new(new( a, -a, -a), new( 1,  0,  0), new(b3, c2)), new(new( a,  a, -a), new( 1,  0,  0), new(b3, c1)),
+                new(new( a,  a, -a), new( 0,  0, -1), new(b3, c1)), new(new( a, -a, -a), new( 0,  0, -1), new(b3, c2)), new(new(-a, -a, -a), new( 0,  0, -1), new(b4, c2)), new(new(-a,  a, -a), new( 0,  0, -1), new(b4, c1)),
+                new(new(-a, -a,  a), new( 0, -1,  0), new(b1, c2)), new(new(-a, -a, -a), new( 0, -1,  0), new(b1, c3)), new(new( a, -a, -a), new( 0, -1,  0), new(b2, c3)), new(new( a, -a,  a), new( 0, -1,  0), new(b2, c2)),
             };
             ReadOnlySpan<int> indices = stackalloc int[36]
             {
