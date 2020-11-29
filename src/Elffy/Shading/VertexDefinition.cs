@@ -1,14 +1,32 @@
 ﻿#nullable enable
 using System;
+using System.Runtime.CompilerServices;
 using OpenTK.Graphics.OpenGL4;
 using Elffy.Core;
-using System.Runtime.CompilerServices;
 using Elffy.OpenGL;
 
 namespace Elffy.Shading
 {
     public readonly ref struct VertexDefinition
     {
+        private static readonly int[] _attribTypes;
+
+        static VertexDefinition()
+        {
+            _attribTypes = new int[7];   // TODO: get element count from enum
+
+            // float type
+            _attribTypes[(int)VertexFieldMarshalType.Float] = (int)VertexAttribPointerType.Float;
+            _attribTypes[(int)VertexFieldMarshalType.HalfFloat] = (int)VertexAttribPointerType.HalfFloat;
+
+            // int type
+            _attribTypes[(int)VertexFieldMarshalType.Uint32] = (int)VertexAttribIntegerType.UnsignedInt;
+            _attribTypes[(int)VertexFieldMarshalType.Int32] = (int)VertexAttribIntegerType.Int;
+            _attribTypes[(int)VertexFieldMarshalType.Byte] = (int)VertexAttribIntegerType.UnsignedByte;
+            _attribTypes[(int)VertexFieldMarshalType.Int16] = (int)VertexAttribIntegerType.Short;
+            _attribTypes[(int)VertexFieldMarshalType.Uint16] = (int)VertexAttribIntegerType.UnsignedShort;
+        }
+
         private readonly ProgramObject _program;
 
         internal VertexDefinition(ProgramObject program)
@@ -49,26 +67,12 @@ namespace Elffy.Shading
             var (offset, type, elementCount) = VertexMarshalHelper<TVertex>.GetLayout(vertexFieldName);
             GL.EnableVertexAttribArray(index);
 
-
-            switch(type) {
-                case VertexFieldElementType.Float:
-                case VertexFieldElementType.HalfFloat: {
-                    GL.VertexAttribPointer(index, elementCount, (VertexAttribPointerType)type, false, sizeof(TVertex), offset);
-                    break;
-                }
-                case VertexFieldElementType.Uint32:
-                case VertexFieldElementType.Int32:
-                case VertexFieldElementType.Byte:
-                case VertexFieldElementType.Int16:
-                case VertexFieldElementType.Uint16: {
-                    GL.VertexAttribIPointer(index, elementCount, (VertexAttribIntegerType)type, sizeof(TVertex), (IntPtr)offset);
-                    break;
-                }
-                default:
-                    ThrowNotSupported();
-                    break;
-
-                    static void ThrowNotSupported() => throw new NotSupportedException();
+            if(type <= VertexFieldMarshalType.HalfFloat) {
+                // float or half
+                GL.VertexAttribPointer(index, elementCount, (VertexAttribPointerType)_attribTypes[(int)type], false, sizeof(TVertex), offset);
+            }
+            else {
+                GL.VertexAttribIPointer(index, elementCount, (VertexAttribIntegerType)_attribTypes[(int)type], sizeof(TVertex), (IntPtr)offset);
             }
         }
 

@@ -1,9 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.Runtime.CompilerServices;
-using Elffy.AssemblyServices;
 using Elffy.Diagnostics;
-using OpenTK.Graphics.OpenGL4;
 
 namespace Elffy.Core
 {
@@ -12,7 +10,7 @@ namespace Elffy.Core
         private static VertexLayoutDelegate? _layouter;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static (int offset, VertexFieldElementType type, int elementCount) GetLayout(string fieldName)
+        internal static (int offset, VertexFieldMarshalType type, int elementCount) GetLayout(string fieldName)
         {
             var layouter = _layouter;
             if(layouter is null) {
@@ -23,6 +21,7 @@ namespace Elffy.Core
             static void ThrowLayoutNotRegistered() => throw new InvalidOperationException("Layouter is not registered");
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Register(VertexLayoutDelegate layout)
         {
             if(DevEnv.IsEnabled) {
@@ -36,21 +35,5 @@ namespace Elffy.Core
         }
     }
 
-    public delegate (int offset, VertexFieldElementType type, int elementCount) VertexLayoutDelegate(string fieldName);
-
-    public enum VertexFieldElementType
-    {
-        // floating point types
-
-        Float = VertexAttribPointerType.Float,
-        HalfFloat = VertexAttribPointerType.HalfFloat,
-
-        // integer types
-
-        Uint32 = VertexAttribIntegerType.UnsignedInt,
-        Int32 = VertexAttribIntegerType.Int,
-        Byte = VertexAttribIntegerType.UnsignedByte,
-        Int16 = VertexAttribIntegerType.Short,
-        Uint16 = VertexAttribIntegerType.UnsignedShort,
-    }
+    public delegate (int offset, VertexFieldMarshalType type, int elementCount) VertexLayoutDelegate(string fieldName);
 }

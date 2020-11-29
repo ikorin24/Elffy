@@ -23,8 +23,8 @@ namespace Elffy.Core
             // Register struct layout cache
             VertexMarshalHelper<VertexSlim>.Register(fieldName => fieldName switch
             {
-                nameof(Position) => (0, VertexFieldElementType.Float, 3),
-                nameof(UV) => (12, VertexFieldElementType.Float, 2),
+                nameof(Position) => (0, VertexFieldMarshalType.Float, 3),
+                nameof(UV) => (12, VertexFieldMarshalType.Float, 2),
                 _ => throw new ArgumentException(),
             });
         }

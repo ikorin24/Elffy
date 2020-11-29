@@ -13,6 +13,8 @@
     <Compile Include="..\ElffyResourceCompiler\Compiler.cs" Link="ElffyResourceCompiler\Compiler.cs" />
     <Compile Include="..\ElffyResourceCompiler\LightBinaryReader.cs" Link="ElffyResourceCompiler\LightBinaryReader.cs" />
     <Compile Include="..\ElffyResourceCompiler\LightBinaryWriter.cs" Link="ElffyResourceCompiler\LightBinaryWriter.cs" />
+    <Compile Include="..\Elffy\Core\VertexFieldMarshalType.cs" Link="Elffy\Core\VertexFieldMarshalType.cs" />
+    <Compile Include="..\Elffy\Diagnostics\VertexLikeAttribute.cs" Link="Elffy\Diagnostics\VertexLikeAttribute.cs" />
   </ItemGroup>
 
   <ItemGroup>

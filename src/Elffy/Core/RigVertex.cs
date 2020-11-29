@@ -34,11 +34,11 @@ namespace Elffy.Core
         {
             VertexMarshalHelper<RigVertex>.Register(fieldName => fieldName switch
             {
-                nameof(Position) => (PositionOffset, VertexFieldElementType.Float, 3),
-                nameof(Normal) => (NormalOffset, VertexFieldElementType.Float, 3),
-                nameof(TexCoord) => (TexCoordOffset, VertexFieldElementType.Float, 2),
-                nameof(Bone) => (BoneOffset, VertexFieldElementType.Int32, 4),
-                nameof(Weight) => (WeightOffset, VertexFieldElementType.Float, 4),
+                nameof(Position) => (PositionOffset, VertexFieldMarshalType.Float, 3),
+                nameof(Normal) => (NormalOffset, VertexFieldMarshalType.Float, 3),
+                nameof(TexCoord) => (TexCoordOffset, VertexFieldMarshalType.Float, 2),
+                nameof(Bone) => (BoneOffset, VertexFieldMarshalType.Int32, 4),
+                nameof(Weight) => (WeightOffset, VertexFieldMarshalType.Float, 4),
                 _ => throw new ArgumentException(),
             });
         }
