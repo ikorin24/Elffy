@@ -36,18 +36,12 @@ namespace Elffy.Serialization
                 [DoesNotReturn] static void ThrowNotFound(string name) => throw new ResourceNotFoundException(name);
             }
 
-            var obj = new
-            {
-                ResourceLoader = resourceLoader,
-                Name = name,
-                CancellationToken = cancellationToken
-            };
+
+            var obj = Tuple.Create(resourceLoader, name, cancellationToken);
 
             return Model3D.Create(obj, static async (obj, model, load) =>
             {
-                var resourceLoader = obj.ResourceLoader;
-                var name = obj.Name;
-                var token = obj.CancellationToken;
+                var (resourceLoader, name, token) = obj;
                 token.ThrowIfCancellationRequested();
                 
                 // Run on thread pool
@@ -224,21 +218,4 @@ namespace Elffy.Serialization
         [Utf8("Materials")]
         public static partial ReadOnlySpan<byte> Materials();
     }
-
-    //internal sealed class NamedResource
-    //{
-    //    public IResourceLoader ResourceLoader { get; }
-    //    public string Name { get; }
-        
-    //    public NamedResource(IResourceLoader resourceLoader, string name)
-    //    {
-    //        ResourceLoader = resourceLoader;
-    //        Name = name;
-    //    }
-
-    //    public Stream GetStream()
-    //    {
-    //        return ResourceLoader.GetStream(Name);
-    //    }
-    //}
 }
