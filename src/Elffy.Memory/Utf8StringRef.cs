@@ -7,11 +7,13 @@ using System.Text;
 
 namespace Elffy
 {
-    [DebuggerDisplay("{ToString()}")]
+    [DebuggerDisplay("{DebugView}")]
     public readonly unsafe ref struct Utf8StringRef
     {
         private readonly IntPtr _ptr;   // byte*
         private readonly int _length;
+
+        private readonly string DebugView => ToString();
 
         public int Lenght
         {

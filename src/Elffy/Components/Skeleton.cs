@@ -296,19 +296,16 @@ namespace Elffy.Components
         }
     }
 
-    [DebuggerDisplay("{DebugView()}")]
+    [DebuggerDisplay("{DebugView}")]
     internal unsafe struct BoneInternal
     {
         public int ID;
         public BoneInternal* Parent;
         public BoneInternal* Next;
 
-        private string DebugView()  // only for debug
-        {
-            return ZString.Concat("ID: ", ID,
-                                  ", Parent: ", Parent is null ? (int?)null : Parent->ID,
-                                  ", Next: ", Next is null ? (int?)null : Next->ID);
-        }
+        private string DebugView => ZString.Concat("ID: ", ID,
+                                                   ", Parent: ", Parent is null ? (int?)null : Parent->ID,
+                                                   ", Next: ", Next is null ? (int?)null : Next->ID);
     }
 
     [DebuggerDisplay("Position: {Position}, Parent: {ParentBone}, Connected: {ConnectedBone}")]
