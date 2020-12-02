@@ -33,6 +33,12 @@ namespace Elffy.OpenGL
             return new TextureObject(GL.GenTexture());
         }
 
+        public int GetMaxTextureUnitCount()
+        {
+            GL.GetInteger(GetPName.MaxTextureImageUnits, out var count);
+            return count;
+        }
+
         internal static void Bind2D(in TextureObject to, TextureUnitNumber textureUnit)
         {
             var glTextureUnit = (TextureUnit)((int)TextureUnit.Texture0 + textureUnit);
@@ -78,6 +84,18 @@ namespace Elffy.OpenGL
         internal static unsafe void Image2D(in Vector2i size, Color4* pixels)
         {
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, size.X, size.Y,
+                          0, TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
+        }
+
+        internal static unsafe void Image2D(in Vector2i size, ColorByte* pixels, InternalFormat internalFormat)
+        {
+            GL.TexImage2D(TextureTarget.Texture2D, 0, (PixelInternalFormat)internalFormat, size.X, size.Y,
+                          0, TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
+        }
+
+        internal static unsafe void Image2D(in Vector2i size, Color4* pixels, InternalFormat internalFormat)
+        {
+            GL.TexImage2D(TextureTarget.Texture2D, 0, (PixelInternalFormat)internalFormat, size.X, size.Y,
                           0, TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
         }
 
@@ -205,5 +223,13 @@ namespace Elffy.OpenGL
         public bool Equals(TextureObject other) => _texture == other._texture;
 
         public override int GetHashCode() => _texture.GetHashCode();
+
+
+        public enum InternalFormat
+        {
+            Rgba = PixelInternalFormat.Rgba,
+            Rgba16f = PixelInternalFormat.Rgba16f,
+            Rgba32f = PixelInternalFormat.Rgba32f,
+        }
     }
 }
