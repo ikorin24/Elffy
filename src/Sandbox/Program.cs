@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using System;
 using Elffy;
 using Elffy.Diagnostics;
 using Elffy.Core;
@@ -13,7 +12,6 @@ namespace Sandbox
 {
     static class Program
     {
-        [STAThread]
         static void Main()
         {
             try {
