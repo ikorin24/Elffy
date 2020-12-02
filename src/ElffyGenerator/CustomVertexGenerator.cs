@@ -96,7 +96,8 @@ namespace ElffyGenerator
 
         public void Execute(GeneratorExecutionContext context)
         {
-            context.AddSource("GenerateCustomVertexAttribute", SourceText.From(AttributeSource, Encoding.UTF8));
+            var attributeSource = GeneratorUtil.GetGeneratorSigniture(typeof(CustomVertexGenerator)) + AttributeSource;
+            context.AddSource("GenerateCustomVertexAttribute", SourceText.From(attributeSource, Encoding.UTF8));
             var compilation = context.Compilation;
             var attrs = compilation
                     .SyntaxTrees
@@ -163,6 +164,7 @@ namespace ElffyGenerator
             var typeName = vertexTypeName.Substring(ns.Length + 1);
 
             var sb = new StringBuilder();
+            sb.Append(GeneratorUtil.GetGeneratorSigniture(typeof(CustomVertexGenerator)));
             sb.Append(
 @$"using {nameof(Elffy)}.{nameof(Elffy.Diagnostics)};
 using {nameof(Elffy)}.{nameof(Elffy.Core)};

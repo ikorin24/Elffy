@@ -31,7 +31,8 @@ namespace Elffy
 
         public void Execute(GeneratorExecutionContext context)
         {
-            context.AddSource("GenerateResourceFileAttribute", SourceText.From(AttributeText, Encoding.UTF8));
+            var attributeText = GeneratorUtil.GetGeneratorSigniture(typeof(CompiledResourceGenerator)) + AttributeText;
+            context.AddSource("GenerateResourceFileAttribute", SourceText.From(attributeText, Encoding.UTF8));
 
             var compilation = context.Compilation;
             var attr = compilation
