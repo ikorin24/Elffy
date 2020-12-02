@@ -1,6 +1,9 @@
 ﻿#nullable enable
+using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Elffy.OpenGL;
+using Elffy.Effective.Unsafes;
 using OpenTK.Graphics.OpenGL4;
 
 namespace Elffy.Shading
@@ -41,6 +44,30 @@ namespace Elffy.Shading
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Send(string name, in Matrix4 value) => Send(GL.GetUniformLocation(_program.Value, name), value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Send(string name, ReadOnlySpan<float> value) => Send(GL.GetUniformLocation(_program.Value, name), value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Send(string name, ReadOnlySpan<int> value) => Send(GL.GetUniformLocation(_program.Value, name), value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Send(string name, ReadOnlySpan<Vector2> value) => Send(GL.GetUniformLocation(_program.Value, name), value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Send(string name, ReadOnlySpan<Vector3> value) => Send(GL.GetUniformLocation(_program.Value, name), value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Send(string name, ReadOnlySpan<Vector4> value) => Send(GL.GetUniformLocation(_program.Value, name), value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Send(string name, ReadOnlySpan<Color3> value) => Send(GL.GetUniformLocation(_program.Value, name), value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Send(string name, ReadOnlySpan<Color4> value) => Send(GL.GetUniformLocation(_program.Value, name), value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Send(string name, ReadOnlySpan<Matrix4> value) => Send(GL.GetUniformLocation(_program.Value, name), value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SendTexture1D(string name, in TextureObject value, TextureUnitNumber unit)
@@ -86,6 +113,60 @@ namespace Elffy.Shading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Send(int location, in Matrix4 value)
             => GL.ProgramUniformMatrix4(_program.Value, location, 1, false, ref Unsafe.As<Matrix4, float>(ref Unsafe.AsRef(value)));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Send(int location, ReadOnlySpan<float> value)
+        {
+            GL.ProgramUniform1(_program.Value, location, value.Length, ref Unsafe.AsRef(in value.Reference()));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Send(int location, ReadOnlySpan<int> value)
+        {
+            GL.ProgramUniform1(_program.Value, location, value.Length, ref Unsafe.AsRef(in value.Reference()));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Send(int location, ReadOnlySpan<Vector2> value)
+        {
+            GL.ProgramUniform2(_program.Value, location, value.Length,
+                               ref Unsafe.As<Vector2, float>(ref Unsafe.AsRef(in value.Reference())));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Send(int location, ReadOnlySpan<Vector3> value)
+        {
+            GL.ProgramUniform3(_program.Value, location, value.Length,
+                               ref Unsafe.As<Vector3, float>(ref Unsafe.AsRef(in value.Reference())));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Send(int location, ReadOnlySpan<Vector4> value)
+        {
+            GL.ProgramUniform4(_program.Value, location, value.Length,
+                               ref Unsafe.As<Vector4, float>(ref Unsafe.AsRef(in value.Reference())));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Send(int location, ReadOnlySpan<Color3> value)
+        {
+            GL.ProgramUniform3(_program.Value, location, value.Length,
+                               ref Unsafe.As<Color3, float>(ref Unsafe.AsRef(in value.Reference())));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Send(int location, ReadOnlySpan<Color4> value)
+        {
+            GL.ProgramUniform4(_program.Value, location, value.Length,
+                               ref Unsafe.As<Color4, float>(ref Unsafe.AsRef(in value.Reference())));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Send(int location, ReadOnlySpan<Matrix4> value)
+        {
+            GL.ProgramUniformMatrix4(_program.Value, location, value.Length, false,
+                                     ref Unsafe.As<Matrix4, float>(ref Unsafe.AsRef(in value.Reference())));
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SendTexture1D(int location, in TextureObject value, TextureUnitNumber unit)
