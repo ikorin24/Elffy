@@ -248,7 +248,7 @@ namespace Elffy.UI
             }
         }
 
-        public Texture.Painter GetPainter(bool copyFromOriginal = true)
+        public TexturePainter GetPainter(bool copyFromOriginal = true)
         {
             var texture = Texture;
             if(texture.IsEmpty) {
@@ -262,7 +262,7 @@ namespace Elffy.UI
             }
         }
 
-        public Texture.Painter GetPainter(in RectI rect, bool copyFromOriginal = true)
+        public TexturePainter GetPainter(in RectI rect, bool copyFromOriginal = true)
         {
             var texture = Texture;
             if(texture.IsEmpty) {

@@ -224,18 +224,18 @@ namespace Elffy.Components
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Painter GetPainter(bool copyFromOriginal = true)
+        public TexturePainter GetPainter(bool copyFromOriginal = true)
         {
             if(_to.IsEmpty) {
                 ThrowEmptyTexture();
                 static void ThrowEmptyTexture() => throw new InvalidOperationException("Texture is not loaded yet.");
             }
 
-            return new Painter(this, new RectI(0, 0, _size.X, _size.Y), copyFromOriginal);
+            return new TexturePainter(this, new RectI(0, 0, _size.X, _size.Y), copyFromOriginal);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Painter GetPainter(in RectI rect, bool copyFromOriginal = true)
+        public TexturePainter GetPainter(in RectI rect, bool copyFromOriginal = true)
         {
             if(_to.IsEmpty) {
                 ThrowEmptyTexture();
@@ -247,7 +247,7 @@ namespace Elffy.Components
             if((uint)rect.Width > (uint)(_size.X - rect.X)) { ThrowOutOfRange(); }
             if((uint)rect.Height > (uint)(_size.Y - rect.Y)) { ThrowOutOfRange(); }
 
-            return new Painter(this, rect, copyFromOriginal);
+            return new TexturePainter(this, rect, copyFromOriginal);
 
             static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException();
         }
@@ -268,9 +268,9 @@ namespace Elffy.Components
             _size = size;
         }
 
-        private unsafe void UpdateSubTexture(ColorByte* pixels, in RectI rect)
+        internal unsafe void UpdateSubTexture(ColorByte* pixels, in RectI rect)
         {
-            // This method is called from Painter
+            // This method is called from TexturePainter
 
             Debug.Assert(_to.IsEmpty == false);
             const TextureUnitNumber unit = TextureUnitNumber.Unit0;
@@ -300,88 +300,6 @@ namespace Elffy.Components
             else {
                 // Cannot release objects of OpenGL from the finalizer thread.
                 throw new MemoryLeakException(typeof(Texture));
-            }
-        }
-        
-
-        public unsafe partial struct Painter : IDisposable
-        {
-            // This color type is same as texture inner pixel format of opengl
-            const SKColorType ColorType = SKColorType.Rgba8888;
-
-            private readonly RectI _rect;
-            private readonly Texture _t;
-            private SKPaint? _paint;
-            private SKBitmap? _bitmap;
-            private SKCanvas? _canvas;
-            private SKTextBlobBuilder? _textBuilder;
-            private bool _isDirty;
-            private ColorByte* _pixels;      // pointer to a head pixel
-
-            private SKPaint Paint => _paint ??= new SKPaint();
-            private SKBitmap Bitmap
-            {
-                get
-                {
-                    if(_bitmap is null) {
-                        _bitmap = new SKBitmap(new SKImageInfo(_rect.Width, _rect.Height, ColorType, SKAlphaType.Unpremul));
-                    }
-                    return _bitmap;
-                }
-            }
-            private SKCanvas Canvas => _canvas ??= new SKCanvas(Bitmap);
-            private SKTextBlobBuilder TextBuilder => _textBuilder ??= new SKTextBlobBuilder();
-
-            /// <summary>Get pointer to pixels.</summary>
-            /// <remarks>If change pixels via pointer, you must call <see cref="SetDirty"/> method after that.</remarks>
-            public ColorByte* Ptr => (ColorByte*)Bitmap.GetPixels();
-
-            internal Painter(Texture texture, in RectI rect, bool copyFromOriginal)
-            {
-                _rect = rect;
-                _t = texture;
-                _isDirty = false;
-                _pixels = default;
-                _paint = null;
-                _bitmap = null;
-                _canvas = null;
-                _textBuilder = null;
-                if(copyFromOriginal) {
-                    CopyFromOriginal(rect);
-                }
-            }
-
-            /// <summary>Get pixels as <see cref="Span{T}"/> of <see cref="ColorByte"/>.</summary>
-            /// <remarks>If change pixels via span, you must call <see cref="SetDirty"/> method after that.</remarks>
-            /// <returns><see cref="Span{T}"/> of <see cref="ColorByte"/></returns>
-            public Span<ColorByte> AsSpan() => MemoryMarshal.CreateSpan(ref *Ptr, _rect.Width * _rect.Height);
-
-            /// <summary>Flush changes of pixels to <see cref="Texture"/> if dirty flag is set.</summary>
-            /// <remarks>This method is automatically called from <see cref="Dispose"/></remarks>
-            public void Flush()
-            {
-                if(_isDirty) {
-                    Debug.Assert(_pixels != null);
-                    _t.UpdateSubTexture(_pixels, _rect);
-                    _isDirty = false;
-                }
-            }
-
-            public void Dispose()
-            {
-                Flush();
-                _paint?.Dispose();
-                _bitmap?.Dispose();
-                _canvas?.Dispose();
-                _textBuilder?.Dispose();
-            }
-
-            private void CopyFromOriginal(in RectI rect)
-            {
-                var texture = _t;
-                var pixCount = texture.Size.X * texture.Size.Y;
-                var buf = new Span<ColorByte>(Bitmap.GetPixels().ToPointer(), pixCount);
-                texture.GetPixels(rect, buf);
             }
         }
     }
