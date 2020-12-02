@@ -261,15 +261,15 @@ namespace Elffy.Shading
             StencilDepthRbo = stencilDepthRbo;
         }
 
-        private static void CreateTexture(in Vector2i screenSize, out TextureObject to)
+        private static unsafe void CreateTexture(in Vector2i screenSize, out TextureObject to)
         {
             to = TextureObject.Create();
             TextureObject.Bind2D(to, TextureUnitNumber.Unit0);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, screenSize.X, screenSize.Y, 0, PixelFormat.Rgb, PixelType.UnsignedByte, IntPtr.Zero);
+            //GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            //GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+            TextureObject.Parameter2DMagFilter(TextureExpansionMode.Bilinear);
+            TextureObject.Parameter2DMinFilter(TextureShrinkMode.Bilinear);
+            TextureObject.Image2D(screenSize, (ColorByte*)null);
             TextureObject.Unbind2D(TextureUnitNumber.Unit0);
         }
 

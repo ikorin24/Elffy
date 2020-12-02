@@ -4,8 +4,6 @@ using Elffy.OpenGL;
 using Elffy.Exceptions;
 using Elffy.Effective;
 using System;
-using OpenTK.Graphics.OpenGL4;
-using TKPixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
 namespace Elffy.Components
 {
@@ -77,11 +75,10 @@ namespace Elffy.Components
 
             const TextureUnitNumber unit = TextureUnitNumber.Unit0;
             TextureObject.Bind1D(TextureObject, unit);
-            GL.TexParameter(TextureTarget.Texture1D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
-            GL.TexParameter(TextureTarget.Texture1D, TextureParameterName.TextureMagFilter, (int)TextureMinFilter.Nearest);
-            fixed(void* ptr = texels) {
-                GL.TexImage1D(TextureTarget.Texture1D, 0, PixelInternalFormat.Rgba32f,
-                              texels.Length, 0, TKPixelFormat.Rgba, PixelType.Float, (IntPtr)ptr);
+            TextureObject.Parameter1DMinFilter(TextureShrinkMode.NearestNeighbor);
+            TextureObject.Parameter1DMagFilter(TextureExpansionMode.NearestNeighbor);
+            fixed(Color4* ptr = texels) {
+                TextureObject.Image1DAsRgba32f(texels.Length, ptr);
             }
             TextureObject.Unbind1D(unit);
         }
@@ -101,9 +98,10 @@ namespace Elffy.Components
 
             const TextureUnitNumber unit = TextureUnitNumber.Unit0;
             TextureObject.Bind1D(TextureObject, unit);
-            fixed(void* ptr = texels) {
-                GL.TexSubImage1D(TextureTarget.Texture1D, 0, xOffset,
-                                 texels.Length, TKPixelFormat.Rgba, PixelType.Float, (IntPtr)ptr);
+            fixed(Color4* ptr = texels) {
+                //GL.TexSubImage1D(TextureTarget.Texture1D, 0, xOffset,
+                //                 texels.Length, TKPixelFormat.Rgba, PixelType.Float, (IntPtr)ptr);
+                TextureObject.SubImage1D(xOffset, texels.Length, ptr);
             }
             TextureObject.Unbind1D(unit);
         }

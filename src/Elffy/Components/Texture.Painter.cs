@@ -87,7 +87,7 @@ namespace Elffy.Components
             {
                 _isDirty = true;
                 if(_pixels == null) {
-                    _pixels = (byte*)Bitmap.GetPixels();
+                    _pixels = (ColorByte*)Bitmap.GetPixels();
                 }
             }
 

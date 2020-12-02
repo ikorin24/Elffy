@@ -10,6 +10,7 @@ using Elffy.Effective;
 using Elffy.Exceptions;
 using Elffy.Imaging;
 using Elffy.OpenGL;
+using Elffy.Effective.Unsafes;
 using OpenTK.Graphics.OpenGL4;
 using SkiaSharp;
 using PixelFormat = System.Drawing.Imaging.PixelFormat;
@@ -62,7 +63,7 @@ namespace Elffy.Components
         /// <summary>Load pixel data from <see cref="Bitmap"/></summary>
         /// <remarks>Texture width and height should be power of two for performance.</remarks>
         /// <param name="bitmap">bitmap to load pixels</param>
-        public void Load(Bitmap bitmap)
+        public unsafe void Load(Bitmap bitmap)
         {
             if(!_to.IsEmpty) {
                 ThrowInvalidOperation();
@@ -73,9 +74,17 @@ namespace Elffy.Components
                 [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(bitmap));
             }
 
-            using(var pixels = bitmap.GetPixels(ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb)) {
-                LoadPrivate(new Vector2i(pixels.Width, pixels.Height), pixels.Ptr, TKPixelFormat.Bgra);
+            _to = TextureObject.Create();
+            const TextureUnitNumber unit = TextureUnitNumber.Unit0;
+            TextureObject.Bind2D(_to, unit);
+            TextureObject.Parameter2DMinFilter(ShrinkMode, MipmapMode);
+            TextureObject.Parameter2DMagFilter(ExpansionMode);
+            TextureObject.Image2D(bitmap);
+            if(MipmapMode != TextureMipmapMode.None) {
+                TextureObject.GenerateMipmap2D();
             }
+            TextureObject.Unbind2D(unit);
+            _size = new(bitmap.Width, bitmap.Height);
         }
 
         /// <summary>Load specified pixel data with specified texture size</summary>
@@ -96,8 +105,8 @@ namespace Elffy.Components
                 ThrowPixelsTooShort();
                 [DoesNotReturn] static void ThrowPixelsTooShort() => throw new ArgumentException($"{nameof(pixels)} is too short");
             }
-            fixed(void* ptr = pixels) {
-                LoadPrivate(size, (IntPtr)ptr, TKPixelFormat.Rgba);
+            fixed(ColorByte* ptr = pixels) {
+                LoadCore(size, ptr);
             }
         }
 
@@ -118,8 +127,8 @@ namespace Elffy.Components
             using(var buf = new PooledArray<byte>(size.X * size.Y * sizeof(ColorByte))) {
                 var pixels = buf.AsSpan().MarshalCast<byte, ColorByte>();
                 pixels.Fill(fill);
-                fixed(void* ptr = pixels) {
-                    LoadPrivate(size, (IntPtr)ptr, TKPixelFormat.Rgba);
+                fixed(ColorByte* ptr = pixels) {
+                    LoadCore(size, ptr);
                 }
             }
         }
@@ -133,7 +142,7 @@ namespace Elffy.Components
                 ThrowAlreadyLoaded();
                 static void ThrowAlreadyLoaded() => throw new InvalidOperationException("Texture is already loaded.");
             }
-            LoadPrivate(size, IntPtr.Zero, TKPixelFormat.Rgba);
+            LoadCore(size, null);
         }
 
         public unsafe void Update(in RectI rect, ReadOnlySpan<ColorByte> pixels)
@@ -147,8 +156,8 @@ namespace Elffy.Components
                 [DoesNotReturn] static void ThrowInvalidRect() => throw new ArgumentOutOfRangeException($"{nameof(rect)} is invalid");
             }
 
-            fixed(void* ptr = pixels) {
-                UpdateSubTexture((byte*)ptr, rect);
+            fixed(ColorByte* ptr = pixels) {
+                UpdateSubTexture(ptr, rect);
             }
         }
 
@@ -166,8 +175,8 @@ namespace Elffy.Components
             using(var buf = new PooledArray<byte>(rect.Width * rect.Height * sizeof(ColorByte))) {
                 var pixels = buf.AsSpan().MarshalCast<byte, ColorByte>();
                 pixels.Fill(fill);
-                fixed(void* ptr = pixels) {
-                    UpdateSubTexture((byte*)ptr, rect);
+                fixed(ColorByte* ptr = pixels) {
+                    UpdateSubTexture(ptr, rect);
                 }
             }
         }
@@ -244,29 +253,29 @@ namespace Elffy.Components
         }
 
 
-        private void LoadPrivate(in Vector2i size, IntPtr ptr, TKPixelFormat format)
+        private unsafe void LoadCore(in Vector2i size, ColorByte* pixels)
         {
             _to = TextureObject.Create();
             const TextureUnitNumber unit = TextureUnitNumber.Unit0;
             TextureObject.Bind2D(_to, unit);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, GetMinParameter(ShrinkMode, MipmapMode));
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, GetMagParameter(ExpansionMode));
-            GL.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat, size.X, size.Y, 0, format, PixelType.UnsignedByte, ptr);
+            TextureObject.Parameter2DMinFilter(ShrinkMode, MipmapMode);
+            TextureObject.Parameter2DMagFilter(ExpansionMode);
+            TextureObject.Image2D(size, pixels);
             if(MipmapMode != TextureMipmapMode.None) {
-                GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+                TextureObject.GenerateMipmap2D();
             }
             TextureObject.Unbind2D(unit);
             _size = size;
         }
 
-        private unsafe void UpdateSubTexture(byte* pixels, in RectI rect)
+        private unsafe void UpdateSubTexture(ColorByte* pixels, in RectI rect)
         {
             // This method is called from Painter
 
             Debug.Assert(_to.IsEmpty == false);
             const TextureUnitNumber unit = TextureUnitNumber.Unit0;
             TextureObject.Bind2D(_to, unit);
-            GL.TexSubImage2D(TextureTarget.Texture2D, 0, rect.X, rect.Y, rect.Width, rect.Height, TKPixelFormat.Rgba, PixelType.UnsignedByte, (IntPtr)pixels);
+            TextureObject.SubImage2D(rect, pixels);
             TextureObject.Unbind2D(unit);
         }
 
@@ -293,46 +302,7 @@ namespace Elffy.Components
                 throw new MemoryLeakException(typeof(Texture));
             }
         }
-
-
-        private static int GetMagParameter(TextureExpansionMode expansionMode)
-        {
-            switch(expansionMode) {
-                case TextureExpansionMode.Bilinear:
-                    return (int)TextureMagFilter.Linear;
-                case TextureExpansionMode.NearestNeighbor:
-                    return (int)TextureMagFilter.Nearest;
-                default:
-                    throw new ArgumentException();
-            }
-        }
-
-        private static int GetMinParameter(TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode)
-        {
-            switch(shrinkMode) {
-                case TextureShrinkMode.Bilinear:
-                    switch(mipmapMode) {
-                        case TextureMipmapMode.None:
-                            return (int)TextureMinFilter.Linear;
-                        case TextureMipmapMode.Bilinear:
-                            return (int)TextureMinFilter.LinearMipmapLinear;
-                        case TextureMipmapMode.NearestNeighbor:
-                            return (int)TextureMinFilter.LinearMipmapNearest;
-                    }
-                    break;
-                case TextureShrinkMode.NearestNeighbor:
-                    switch(mipmapMode) {
-                        case TextureMipmapMode.None:
-                            return (int)TextureMinFilter.Nearest;
-                        case TextureMipmapMode.Bilinear:
-                            return (int)TextureMinFilter.NearestMipmapLinear;
-                        case TextureMipmapMode.NearestNeighbor:
-                            return (int)TextureMinFilter.NearestMipmapNearest;
-                    }
-                    break;
-            }
-            throw new ArgumentException();
-        }
+        
 
         public unsafe partial struct Painter : IDisposable
         {
@@ -346,7 +316,7 @@ namespace Elffy.Components
             private SKCanvas? _canvas;
             private SKTextBlobBuilder? _textBuilder;
             private bool _isDirty;
-            private byte* _pixels;      // pointer to a head pixel
+            private ColorByte* _pixels;      // pointer to a head pixel
 
             private SKPaint Paint => _paint ??= new SKPaint();
             private SKBitmap Bitmap

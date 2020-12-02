@@ -2,8 +2,6 @@
 using Elffy.Exceptions;
 using Elffy.OpenGL;
 using System;
-using OpenTK.Graphics.OpenGL4;
-using TKPixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
 namespace Elffy.Core
 {
@@ -23,10 +21,10 @@ namespace Elffy.Core
         public unsafe void Init()
         {
             var whiteEmpty = TextureObject.Create();
-            var pixel = Color4.White;
-            var unit = TextureUnitNumber.Unit0;
+            var pixel = ColorByte.White;
+            const TextureUnitNumber unit = TextureUnitNumber.Unit0;
             TextureObject.Bind2D(whiteEmpty, unit);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, 1, 1, 0, TKPixelFormat.Rgba, PixelType.Float, new IntPtr(&pixel));
+            TextureObject.Image2D(new(1, 1), &pixel);
             _whiteEmptyTexture = whiteEmpty;
             TextureObject.Unbind2D(unit);
         }
