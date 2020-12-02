@@ -9,7 +9,7 @@ namespace Elffy.Shading
 {
     public abstract class PostProcess
     {
-        protected virtual string VertShaderSource =>
+        protected virtual string VertShaderSource =>    // TODO: private にすべき？
 @"#version 440
 in vec3 _pos;
 in vec2 _v_uv;
@@ -22,7 +22,7 @@ void main()
 ";
         protected abstract string FragShaderSource { get; }
 
-        protected virtual void DefineLocation(out string pos, out string uv)
+        protected virtual void DefineLocation(out string pos, out string uv)    // TODO: private にすべき？
         {
             pos = "_pos";
             uv = "_v_uv";
