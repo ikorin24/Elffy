@@ -29,7 +29,7 @@ namespace Elffy.Effective
         public ref T this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => ref Unsafe.Add(ref Reference(), index);
+            get => ref Unsafe.Add(ref GetReference(), index);
         }
 
         /// <summary>Allocate non-zero-initialized array of specified length.</summary>
@@ -99,14 +99,14 @@ namespace Elffy.Effective
         /// <summary>Get reference to the 0th element of the array. (If length of the array is 0, returns reference to null)</summary>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T Reference() => ref Unsafe.AsRef<T>((void*)Ptr);
+        public ref T GetReference() => ref Unsafe.AsRef<T>((void*)Ptr);
 
         /// <summary>Get <see cref="Span{T}"/> of type <see cref="T"/></summary>
         /// <returns><see cref="Span{T}"/> of type <see cref="T"/></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Span<T> AsSpan()
         {
-            return MemoryMarshal.CreateSpan(ref Reference(), Length);
+            return MemoryMarshal.CreateSpan(ref GetReference(), Length);
         }
 
         /// <summary>Get <see cref="Span{T}"/> of type <see cref="T"/></summary>

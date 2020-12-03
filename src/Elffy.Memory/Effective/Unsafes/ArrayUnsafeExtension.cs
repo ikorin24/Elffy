@@ -29,7 +29,7 @@ namespace Elffy.Effective.Unsafes
         public static ref T At<T>(this T[] source, int index)
         {
 #if NET5_0 || NETCOREAPP3_1
-            return ref Unsafe.Add(ref Reference(source), index);
+            return ref Unsafe.Add(ref GetReference(source), index);
 #else
             throw new NotSupportedException();
 #endif
@@ -42,7 +42,7 @@ namespace Elffy.Effective.Unsafes
 #if !(NET5_0 || NETCOREAPP3_1)
         [Obsolete("This method can be used only netcoreapp3.1 or after net5.0 ", true)]
 #endif
-        public static ref T Reference<T>(this T[] array)
+        public static ref T GetReference<T>(this T[] array)
         {
 #if NET5_0
             return ref MemoryMarshal.GetArrayDataReference(array);

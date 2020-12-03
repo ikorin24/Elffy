@@ -117,55 +117,55 @@ namespace Elffy.Shading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Send(int location, ReadOnlySpan<float> value)
         {
-            GL.ProgramUniform1(_program.Value, location, value.Length, ref Unsafe.AsRef(in value.Reference()));
+            GL.ProgramUniform1(_program.Value, location, value.Length, ref Unsafe.AsRef(in value.GetReference()));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Send(int location, ReadOnlySpan<int> value)
         {
-            GL.ProgramUniform1(_program.Value, location, value.Length, ref Unsafe.AsRef(in value.Reference()));
+            GL.ProgramUniform1(_program.Value, location, value.Length, ref Unsafe.AsRef(in value.GetReference()));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Send(int location, ReadOnlySpan<Vector2> value)
         {
             GL.ProgramUniform2(_program.Value, location, value.Length,
-                               ref Unsafe.As<Vector2, float>(ref Unsafe.AsRef(in value.Reference())));
+                               ref Unsafe.As<Vector2, float>(ref Unsafe.AsRef(in value.GetReference())));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Send(int location, ReadOnlySpan<Vector3> value)
         {
             GL.ProgramUniform3(_program.Value, location, value.Length,
-                               ref Unsafe.As<Vector3, float>(ref Unsafe.AsRef(in value.Reference())));
+                               ref Unsafe.As<Vector3, float>(ref Unsafe.AsRef(in value.GetReference())));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Send(int location, ReadOnlySpan<Vector4> value)
         {
             GL.ProgramUniform4(_program.Value, location, value.Length,
-                               ref Unsafe.As<Vector4, float>(ref Unsafe.AsRef(in value.Reference())));
+                               ref Unsafe.As<Vector4, float>(ref Unsafe.AsRef(in value.GetReference())));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Send(int location, ReadOnlySpan<Color3> value)
         {
             GL.ProgramUniform3(_program.Value, location, value.Length,
-                               ref Unsafe.As<Color3, float>(ref Unsafe.AsRef(in value.Reference())));
+                               ref Unsafe.As<Color3, float>(ref Unsafe.AsRef(in value.GetReference())));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Send(int location, ReadOnlySpan<Color4> value)
         {
             GL.ProgramUniform4(_program.Value, location, value.Length,
-                               ref Unsafe.As<Color4, float>(ref Unsafe.AsRef(in value.Reference())));
+                               ref Unsafe.As<Color4, float>(ref Unsafe.AsRef(in value.GetReference())));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Send(int location, ReadOnlySpan<Matrix4> value)
         {
             GL.ProgramUniformMatrix4(_program.Value, location, value.Length, false,
-                                     ref Unsafe.As<Matrix4, float>(ref Unsafe.AsRef(in value.Reference())));
+                                     ref Unsafe.As<Matrix4, float>(ref Unsafe.AsRef(in value.GetReference())));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

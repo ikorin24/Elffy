@@ -38,7 +38,7 @@ namespace Elffy.Effective.Unsafes
         /// <param name="source">source object</param>
         /// <returns>reference to 0th element</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ref T Reference<T>(this Span<T> source)
+        public static ref T GetReference<T>(this Span<T> source)
         {
             return ref MemoryMarshal.GetReference(source);
         }
@@ -48,7 +48,7 @@ namespace Elffy.Effective.Unsafes
         /// <param name="source">source object</param>
         /// <returns>reference to 0th element</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ref readonly T Reference<T>(this ReadOnlySpan<T> source)
+        public static ref readonly T GetReference<T>(this ReadOnlySpan<T> source)
         {
             return ref MemoryMarshal.GetReference(source);
         }
