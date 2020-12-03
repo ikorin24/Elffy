@@ -13,14 +13,12 @@ namespace Elffy.Core
         private readonly List<FrameObject> _addedBuf;
         private readonly List<FrameObject> _removedBuf;
         private readonly List<Renderable> _renderables;
-        private readonly List<Light> _lights;
 
         public int ObjectCount => _list.Count;
         public ReadOnlySpan<FrameObject> List => _list.AsReadOnlySpan();
         public ReadOnlySpan<FrameObject> Added => _addedBuf.AsReadOnlySpan();
         public ReadOnlySpan<FrameObject> Removed => _removedBuf.AsReadOnlySpan();
         public ReadOnlySpan<Renderable> Renderables => _renderables.AsReadOnlySpan();
-        public ReadOnlySpan<Light> Lights => _lights.AsReadOnlySpan();
 
         private FrameObjectStore(int dummyArg)
         {
@@ -28,7 +26,6 @@ namespace Elffy.Core
             _addedBuf = new List<FrameObject>();
             _removedBuf = new List<FrameObject>();
             _renderables = new List<Renderable>();
-            _lights = new List<Light>();
         }
 
         /// <summary>Create new <see cref="FrameObjectStore"/></summary>
@@ -118,7 +115,6 @@ namespace Elffy.Core
             _list.Clear();
             _removedBuf.Clear();
             _renderables.Clear();
-            _lights.Clear();
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]  // uncommon path, no inlining
@@ -132,11 +128,6 @@ namespace Elffy.Core
                     case Renderable renderable: {
                         var renderableRemoved = _renderables.Remove(renderable);
                         Debug.Assert(renderableRemoved);
-                        break;
-                    }
-                    case Light light: {
-                        var lightRemoved = _lights.Remove(light);
-                        Debug.Assert(lightRemoved);
                         break;
                     }
                 }
@@ -154,9 +145,6 @@ namespace Elffy.Core
                 switch(item) {
                     case Renderable renderable:
                         _renderables.Add(renderable);
-                        break;
-                    case Light light:
-                        _lights.Add(light);
                         break;
                 }
                 item.AddToObjectStoreCallback();

@@ -26,8 +26,6 @@ namespace Elffy
 
         public string Name { get; }
 
-        public ReadOnlySpan<Light> Lights => _store.Lights;
-
         /// <inheritdoc/>
         public bool IsVisible { get; set; } = true;
 
