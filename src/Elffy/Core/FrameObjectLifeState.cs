@@ -2,7 +2,7 @@
 
 namespace Elffy.Core
 {
-    internal enum FrameObjectLifeState : byte
+    public enum FrameObjectLifeState : byte
     {
         /// <summary><see cref="FrameObject"/> の初期状態。Activate されていない状態</summary>
         New,

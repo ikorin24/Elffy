@@ -34,7 +34,7 @@ namespace Elffy
         /// <summary>事後更新時イベント</summary>
         public event ActionEventHandler<FrameObject>? LateUpdated;
 
-        internal FrameObjectLifeState LifeState => _state;
+        public FrameObjectLifeState LifeState => _state;
 
         public bool IsNew => _state == FrameObjectLifeState.New;
 

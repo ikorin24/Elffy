@@ -12,7 +12,6 @@ namespace Elffy.Shapes
         /// <summary>Create new <see cref="SkyBox"/></summary>
         public SkyBox()
         {
-            Shader = TextureShaderSource.Instance;
         }
 
         [SkipLocalsInit]

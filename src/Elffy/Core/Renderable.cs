@@ -7,6 +7,7 @@ using Elffy.OpenGL;
 using Elffy.Effective;
 using Elffy.Diagnostics;
 using Elffy.AssemblyServices;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Core
 {
@@ -19,7 +20,7 @@ namespace Elffy.Core
         private VBO _vbo;
         private IBO _ibo;
         private VAO _vao;
-        private ShaderSource _shader = PhongShaderSource.Instance;
+        private ShaderSource? _shader;
         private ShaderProgram? _shaderProgram;
         private int _instancingCount;
 
@@ -35,6 +36,7 @@ namespace Elffy.Core
         /// <summary>描画処理を行うかどうか</summary>
         public bool IsVisible { get; set; } = true;
 
+        [MaybeNull]
         public ShaderSource Shader
         {
             get => _shader;
@@ -42,10 +44,10 @@ namespace Elffy.Core
             {
                 if(value is null) { ThrowNullArg(); }
                 if(IsLoaded) { ThrowAlreadyLoaded(); }
-                _shader = value!;
+                _shader = value;
 
-                static void ThrowNullArg() => throw new ArgumentNullException(nameof(value));
-                static void ThrowAlreadyLoaded() => throw new InvalidOperationException("already loaded");
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(value));
+                [DoesNotReturn] static void ThrowAlreadyLoaded() => throw new InvalidOperationException("already loaded");
             }
         }
 
@@ -58,7 +60,7 @@ namespace Elffy.Core
                 if(value < 0) { ThrowOutOfRange(); }
                 _instancingCount = value;
 
-                static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(value));
+                [DoesNotReturn] static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(value));
             }
         }
 
@@ -129,6 +131,8 @@ namespace Elffy.Core
         {
             HostScreen.ThrowIfNotMainThread();
             if(IsLoaded) { throw new InvalidOperationException("already loaded"); }
+
+            _shader ??= EmptyShaderSource<TVertex>.Instance;
 
             // checking target vertex type of shader is valid.
             if(DevEnv.IsEnabled) {

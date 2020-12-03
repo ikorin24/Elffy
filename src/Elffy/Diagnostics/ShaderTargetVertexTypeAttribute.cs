@@ -2,10 +2,11 @@
 using Cysharp.Text;
 using Elffy.Shading;
 using System;
+using System.Linq;
 
 namespace Elffy.Diagnostics
 {
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
     public sealed class ShaderTargetVertexTypeAttribute : Attribute
     {
         public Type VertexType { get; }
@@ -23,18 +24,30 @@ namespace Elffy.Diagnostics
                 throw new ArgumentException($"{nameof(shaderSourceType)} is not subclass of {typeof(ShaderSource)}");
             }
 
-            if(GetCustomAttribute(shaderSourceType, typeof(ShaderTargetVertexTypeAttribute)) is ShaderTargetVertexTypeAttribute attr) {
-
-                if(attr.VertexType != vertexType) {
-                    throw new ArgumentException($"Vertex type mismatch. Shader requires {attr.VertexType.FullName}. Actual vertex is {vertexType.FullName}");
-                }
-                else {
+            var attrs = GetCustomAttributes(shaderSourceType, typeof(ShaderTargetVertexTypeAttribute))
+                .OfType<ShaderTargetVertexTypeAttribute>()
+                .Where(a => a.VertexType == vertexType);
+            foreach(var attr in attrs) {
+                if(attr is ShaderTargetVertexTypeAttribute shaderAttr && shaderAttr.VertexType == vertexType) {
                     return;
                 }
             }
-            else {
-                throw new ArgumentException($"Shader source does not have {typeof(ShaderTargetVertexTypeAttribute).FullName} attribute.");
-            }
+            var availableTypes = string.Join(", ", attrs.Select(a => a.VertexType.FullName));
+            throw new ArgumentException($"Vertex type mismatch. Specified vertex type: {vertexType.FullName}. Available vertex type(s): {availableTypes}");
+
+
+            //if(GetCustomAttribute(shaderSourceType, typeof(ShaderTargetVertexTypeAttribute)) is ShaderTargetVertexTypeAttribute attr) {
+
+            //    if(attr.VertexType != vertexType) {
+            //        throw new ArgumentException($"Vertex type mismatch. Shader requires {attr.VertexType.FullName}. Actual vertex is {vertexType.FullName}");
+            //    }
+            //    else {
+            //        return;
+            //    }
+            //}
+            //else {
+            //    throw new ArgumentException($"Shader source does not have {typeof(ShaderTargetVertexTypeAttribute).FullName} attribute.");
+            //}
         }
     }
 }

@@ -98,7 +98,8 @@ namespace Elffy.Shapes
             UniTask.WhenAll(
                 UniTask.Run(v =>
                 {
-                    var vertices = SafeCast.As<UnmanagedArray<RigVertex>>(v)!;
+                    Debug.Assert(v is UnmanagedArray<RigVertex>);
+                    var vertices = Unsafe.As<UnmanagedArray<RigVertex>>(v);
                     vertices.Dispose();
                 }, vertices, false),
                 UniTask.Run(() =>
