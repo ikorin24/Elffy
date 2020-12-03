@@ -38,13 +38,13 @@ namespace Elffy.OpenGL
             }
         }
 
-        internal static void Bind(in IBO ibo)
+        public static void Bind(in IBO ibo)
         {
             GLAssert.EnsureContext();
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, ibo._ibo);
         }
 
-        internal static void Unbind()
+        public static void Unbind()
         {
             GLAssert.EnsureContext();
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, Consts.NULL);

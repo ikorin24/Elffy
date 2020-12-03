@@ -43,7 +43,7 @@ namespace Elffy.Shading
 
         ~ShaderProgram() => Dispose(false);
 
-        internal void Apply(Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        public void Apply(Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             if(IsReleased) { ThrowEmptyShader(); }
             if(!_initialized) { ThrowNotInitialized(); }
