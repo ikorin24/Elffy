@@ -29,7 +29,7 @@ namespace Elffy.Core
             definition.Map<Vertex>(nameof(Vertex.TexCoord), "_vUV");
         }
 
-        protected override void SendUniforms(Uniform uniform, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             var material = target.GetComponent<Material>();
             uniform.Send("_diffuse", material.Diffuse);

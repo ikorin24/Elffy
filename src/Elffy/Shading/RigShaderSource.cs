@@ -30,7 +30,7 @@ namespace Elffy.Shading
             definition.Map<RigVertex>(nameof(RigVertex.Weight), "weight");
         }
 
-        protected override void SendUniforms(Uniform uniform, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             if(target.TryGetComponent<Material>(out var m)) {
                 uniform.Send("ma", UnsafeEx.As<Color4, Color3>(m.Ambient));
@@ -49,19 +49,10 @@ namespace Elffy.Shading
             uniform.Send("view", view);
             uniform.Send("projection", projection);
 
-            if(lights.Length > 0) {
-                var light = lights[0];
-                uniform.Send("lPos", light.Position4);
-                uniform.Send("la", light.Ambient);
-                uniform.Send("ld", light.Diffuse);
-                uniform.Send("ls", light.Specular);
-            }
-            else {
-                uniform.Send("lPos", new Vector4(0, 1, 0, 0));
-                uniform.Send("la", new Vector3());
-                uniform.Send("ld", new Vector3());
-                uniform.Send("ls", new Vector3());
-            }
+            uniform.Send("lPos", new Vector4(0, 1, 0, 0));
+            uniform.Send("la", new Vector3(0.8f));
+            uniform.Send("ld", new Vector3(0.8f));
+            uniform.Send("ls", new Vector3(0.2f));
 
             var skeleton = target.GetComponent<Skeleton>();
             uniform.SendTexture1D("_boneTrans", skeleton.TranslationData, TextureUnitNumber.Unit0);

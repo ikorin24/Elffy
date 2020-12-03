@@ -43,12 +43,12 @@ namespace Elffy.Shading
 
         ~ShaderProgram() => Dispose(false);
 
-        internal void Apply(Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        internal void Apply(Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             if(IsReleased) { ThrowEmptyShader(); }
             if(!_initialized) { ThrowNotInitialized(); }
             ProgramObject.Bind(_program);
-            _shaderSource!.SendUniforms(_program, target, lights, model, view, projection);
+            _shaderSource!.SendUniforms(_program, target, model, view, projection);
 
             static void ThrowEmptyShader() => throw new InvalidOperationException("this shader program is empty or deleted.");
             static void ThrowNotInitialized() => throw new InvalidOperationException("The shader is not initialized.");

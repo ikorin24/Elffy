@@ -128,7 +128,7 @@ namespace Elffy.Shapes
                 Debug.Assert(textures is null == false);
                 for(int i = 0; i < parts.Length; i++) {
                     textures.Current = parts[i].TextureIndex;
-                    ShaderProgram!.Apply(this, Layer.Lights, in model, in view, in projection);
+                    ShaderProgram!.Apply(this, in model, in view, in projection);
                     DrawElements(parts[i].VertexCount, pos * sizeof(int));
                     pos += parts[i].VertexCount;
                 }

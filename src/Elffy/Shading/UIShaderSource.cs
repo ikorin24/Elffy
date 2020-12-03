@@ -26,7 +26,7 @@ namespace Elffy.Shading
             definition.Map<VertexSlim>(nameof(VertexSlim.UV), "vUV");
         }
 
-        protected override void SendUniforms(Uniform uniform, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             var uiRenderable = SafeCast.As<UIRenderable>(target);
             var mvp = projection * view * model;

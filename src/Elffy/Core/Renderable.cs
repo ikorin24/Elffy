@@ -102,7 +102,7 @@ namespace Elffy.Core
         {
             VAO.Bind(_vao);
             IBO.Bind(_ibo);
-            _shaderProgram!.Apply(this, Layer.Lights, in model, in view, in projection);
+            _shaderProgram!.Apply(this, in model, in view, in projection);
             DrawElements(IBO.Length, 0);
             VAO.Unbind();
             IBO.Unbind();

@@ -27,17 +27,16 @@ namespace Elffy.Shading
         /// <summary>派生クラスでオーバーライドされた場合、このシェーダーに uniform 変数を送ります。</summary>
         /// <param name="uniform">uniform 変数の送信用オブジェクト</param>
         /// <param name="target">描画対象の <see cref="Renderable"/></param>
-        /// <param name="lights">ライト</param>
         /// <param name="model">model 行列</param>
         /// <param name="view">view 行列</param>
         /// <param name="projection">projection 行列</param>
-        protected abstract void SendUniforms(Uniform uniform, Renderable target, ReadOnlySpan<Light> lights, in Matrix4 model, in Matrix4 view, in Matrix4 projection);
+        protected abstract void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SendUniforms(ProgramObject program, Renderable target, ReadOnlySpan<Light> lights,
+        internal void SendUniforms(ProgramObject program, Renderable target,
                                    in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
-            SendUniforms(new Uniform(program), target, lights, model, view, projection);
+            SendUniforms(new Uniform(program), target, model, view, projection);
         }
 
         /// <summary>頂点シェーダー・フラグメントシェーダ―の読み込み、リンク、プログラムの作成を行います</summary>
