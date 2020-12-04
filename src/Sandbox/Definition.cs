@@ -15,6 +15,7 @@ using System.Runtime.CompilerServices;
 using Cysharp.Threading.Tasks;
 using SkiaSharp;
 using System.Threading;
+using Elffy.Core;
 
 namespace Sandbox
 {
@@ -104,6 +105,7 @@ namespace Sandbox
             {
                 Scale = new Vector3(10),
                 Rotation = new Quaternion(Vector3.UnitX, -90f.ToRadian()),
+                Shader = TextureShaderSource<Vertex>.Instance,
             };
             plain.AddComponent(new Material(new Color4(1f), new Color4(0.25f), new Color4(0.2f), 400f));
             plain.AddComponent(Resources.Loader.LoadTexture("floor.png", BitmapType.Png));
@@ -145,6 +147,7 @@ namespace Sandbox
         private static UniTask<Model3D> DefineDice()
         {
             var model = Resources.Loader.CreateFbxModel("Dice.fbx");
+            model.Shader = PhongShaderSource.Instance;
             model.Position = new Vector3(4, 4, -2);
             model.Activate();
             return new UniTask<Model3D>(model);
@@ -175,6 +178,7 @@ namespace Sandbox
         private static UniTask<Model3D> DefineFrog()
         {
             var model = Resources.Loader.CreateFbxModel("green_frog.fbx");
+            model.Shader = PhongShaderSource.Instance;
             model.Scale = new Vector3(0.01f);
             model.Position = new Vector3(5, 0, 0);
             model.AddComponent(new Material(new Color4(0f, 0.7f, 0.25f), new Color4(0f, 0.6f, 0.1f), Color4.White, 4));
@@ -206,6 +210,7 @@ namespace Sandbox
             var cube = new Cube()
             {
                 Position = new Vector3(-3, 0.5f, -3),
+                Shader = PhongShaderSource.Instance,
             };
             cube.AddComponent(Resources.Loader.LoadTexture("cube.png", BitmapType.Png));
             cube.Updated += sender =>

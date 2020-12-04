@@ -4,17 +4,32 @@ using Elffy.Diagnostics;
 using Elffy.Components;
 using Elffy.OpenGL;
 using System;
+using System.Runtime.CompilerServices;
 
 namespace Elffy.Shading
 {
-    /// <summary>Simple shader which displays texture. (Target vertex type is <see cref="VertexSlim"/>)</summary>
+    /// <summary>Simple shader which displays texture.</summary>
     [ShaderTargetVertexType(typeof(VertexSlim))]
-    public sealed class TextureShaderSource : ShaderSource
+    [ShaderTargetVertexType(typeof(Vertex))]
+    public sealed class TextureShaderSource<TVertex> : ShaderSource
     {
-        private static TextureShaderSource? _instance;
+        private static TextureShaderSource<TVertex>? _instance;
 
         /// <summary>Get singleton instance of <see cref="TextureShaderSource"/></summary>
-        public static TextureShaderSource Instance => _instance ??= new();
+        public static TextureShaderSource<TVertex> Instance
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                if(_instance is not null) {
+                    return _instance;
+                }
+                if(typeof(TVertex) == typeof(VertexSlim) || typeof(TVertex) == typeof(Vertex)) {
+                    return _instance = new();
+                }
+                throw new NotSupportedException("Not supported vertex type.");
+            }
+        }
 
         protected override string VertexShaderSource => VertSource;
 
@@ -22,15 +37,24 @@ namespace Elffy.Shading
 
         protected override void DefineLocation(VertexDefinition definition, Renderable target)
         {
-            definition.Map<VertexSlim>(nameof(VertexSlim.Position), "_pos");
-            definition.Map<VertexSlim>(nameof(VertexSlim.UV), "_uv");
+            if(typeof(TVertex) == typeof(VertexSlim)) {
+                definition.Map<VertexSlim>(nameof(VertexSlim.Position), "_pos");
+                definition.Map<VertexSlim>(nameof(VertexSlim.UV), "_uv");
+            }
+            else if(typeof(TVertex) == typeof(Vertex)) {
+                definition.Map<Vertex>(nameof(Vertex.Position), "_pos");
+                definition.Map<Vertex>(nameof(Vertex.TexCoord), "_uv");
+            }
+            else {
+                throw new NotSupportedException("Not supported vertex type.");
+            }
         }
 
         protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
-            var to = target.TryGetComponent<Texture>(out var texture) ? texture.TextureObject :
-                throw new InvalidOperationException($"{nameof(TextureShaderSource)} needs {nameof(Texture)} component.");
-            uniform.SendTexture2D("_sampler", to, TextureUnitNumber.Unit0);
+            var texture = target.GetComponent<Texture>();
+
+            uniform.SendTexture2D("_sampler", texture.TextureObject, TextureUnitNumber.Unit0);
             uniform.Send("_mvp", projection * view * model);
         }
 
