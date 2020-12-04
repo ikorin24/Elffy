@@ -2,10 +2,7 @@
 using Elffy.Core;
 using Elffy.Diagnostics;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 
 namespace Elffy.Shading
 {
@@ -14,7 +11,27 @@ namespace Elffy.Shading
     public sealed class EmptyShaderSource<TVertex> : ShaderSource where TVertex : unmanaged
     {
         private static EmptyShaderSource<TVertex>? _instance;
-        public static EmptyShaderSource<TVertex> Instance => _instance ??= new EmptyShaderSource<TVertex>();
+        
+        /// <summary>Get instance of <see cref="EmptyShaderSource{TVertex}"/></summary>
+        public static EmptyShaderSource<TVertex> Instance
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                if(_instance is not null) {
+                    return _instance;
+                }
+                if(typeof(TVertex) == typeof(Vertex) ||
+                   typeof(TVertex) == typeof(VertexSlim)) {
+
+                    _instance = new EmptyShaderSource<TVertex>();
+                    return _instance;
+                }
+                else {
+                    throw new NotSupportedException($"{typeof(TVertex).FullName} is not supported.");
+                }
+            }
+        }
 
         protected override string VertexShaderSource => VertSource;
 
@@ -33,7 +50,7 @@ namespace Elffy.Shading
                 definition.Map<VertexSlim>(nameof(VertexSlim.Position), "_pos");
             }
             else {
-                throw new NotSupportedException($"{typeof(Vertex).FullName} and {typeof(VertexSlim).FullName} is only supported type.");
+                throw new NotSupportedException($"{typeof(TVertex).FullName} is not supported.");
             }
         }
 
