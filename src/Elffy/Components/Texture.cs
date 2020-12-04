@@ -19,7 +19,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Components
 {
-    public sealed partial class Texture : ISingleOwnerComponent, IDisposable
+    public sealed class Texture : ISingleOwnerComponent, IDisposable
     {
         // I use GL_RGBA as internal pixel format (format in GPU).
         //
