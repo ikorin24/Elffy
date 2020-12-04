@@ -212,7 +212,7 @@ namespace Sandbox
                 Position = new Vector3(-3, 0.5f, -3),
                 Shader = PhongShaderSource.Instance,
             };
-            cube.AddComponent(Resources.Loader.LoadTexture("cube.png", BitmapType.Png));
+            cube.AddComponent(Resources.Loader.LoadTexture("box.png", BitmapType.Png));
             cube.Updated += sender =>
             {
                 Debug.Assert(sender is Cube);
