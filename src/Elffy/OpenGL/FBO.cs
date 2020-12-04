@@ -79,37 +79,48 @@ namespace Elffy.OpenGL
             GL.BindFramebuffer((FramebufferTarget)target, Consts.NULL);
         }
 
+        /// <summary>Call glFreameBufferTexture2D</summary>
+        /// <param name="to">texture object</param>
+        /// <param name="attachment">attachment type</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void SetTexture2DBuffer(in TextureObject to, Attachment attachment)
+        public static void SetTexture2DBuffer(in TextureObject to, Attachment attachment)
         {
             GLAssert.EnsureContext();
             GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, (FramebufferAttachment)attachment, TextureTarget.Texture2D, to.Value, 0);
         }
 
+        /// <summary>Call glFramebufferRenderbuffer</summary>
+        /// <param name="rbo">render buffer object</param>
+        /// <param name="attachment">attachment type</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void SetRenderBuffer(in RBO rbo, Attachment attachment)
+        public static void SetRenderBuffer(in RBO rbo, Attachment attachment)
         {
             GLAssert.EnsureContext();
             GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, (FramebufferAttachment)attachment, RenderbufferTarget.Renderbuffer, rbo.Value);
         }
 
+        /// <summary>Call glCheckFramebufferStatus</summary>
+        /// <param name="status"></param>
+        /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static bool CheckStatus(out FramebufferErrorCode status)
+        public static bool CheckStatus(out string error)
         {
             GLAssert.EnsureContext();
-            status = GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer);
-            return status == FramebufferErrorCode.FramebufferComplete;
+            var status = GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer);
+            var isError = status != FramebufferErrorCode.FramebufferComplete;
+            error = isError ? status.ToString() : "";
+            return !isError;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static FBO Create()
+        public static FBO Create()
         {
             GLAssert.EnsureContext();
             return new FBO(GL.GenFramebuffer());
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void Delete(ref FBO fbo)
+        public static void Delete(ref FBO fbo)
         {
             GLAssert.EnsureContext();
             GL.DeleteFramebuffer(fbo._fbo);

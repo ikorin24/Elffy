@@ -230,8 +230,8 @@ namespace Elffy.Shading
                             break;
                     }
                 }
-                if(AssemblyState.IsDebug && !FBO.CheckStatus(out var status)) {
-                    throw new Exception(status.ToString());
+                if(AssemblyState.IsDebug && !FBO.CheckStatus(out var error)) {
+                    throw new Exception(error);
                 }
             }
             catch {

@@ -205,8 +205,8 @@ namespace Elffy.Components
             try {
                 FBO.Bind(fbo, FBO.Target.FrameBuffer);
                 FBO.SetTexture2DBuffer(_to, FBO.Attachment.ColorAttachment0);
-                if(!FBO.CheckStatus(out var status)) {
-                    throw new Exception(status.ToString());
+                if(!FBO.CheckStatus(out var error)) {
+                    throw new Exception(error);
                 }
                 fixed(void* ptr = buffer) {
                     GL.ReadPixels(rect.X, rect.Y, rect.Width, rect.Height, TKPixelFormat.Rgba, PixelType.UnsignedByte, (IntPtr)ptr);

@@ -20,6 +20,7 @@ namespace Elffy.OpenGL
 
         public bool IsEmpty => _texture == Consts.NULL;
 
+        /// <summary>Get empty <see cref="TextureObject"/></summary>
         public static TextureObject Empty => new TextureObject();
 
         private TextureObject(int texture)
@@ -27,7 +28,9 @@ namespace Elffy.OpenGL
             _texture = texture;
         }
 
-        internal static TextureObject Create()
+        /// <summary>Create texture object (Call glGenTexture)</summary>
+        /// <returns>texture object</returns>
+        public static TextureObject Create()
         {
             GLAssert.EnsureContext();
             return new TextureObject(GL.GenTexture());
@@ -39,7 +42,10 @@ namespace Elffy.OpenGL
             return count;
         }
 
-        internal static void Bind2D(in TextureObject to, TextureUnitNumber textureUnit)
+        /// <summary>Call glActivateTexture and glBindTexture</summary>
+        /// <param name="to">texture object</param>
+        /// <param name="textureUnit">texture unit</param>
+        public static void Bind2D(in TextureObject to, TextureUnitNumber textureUnit)
         {
             var glTextureUnit = (TextureUnit)((int)TextureUnit.Texture0 + textureUnit);
 
@@ -48,7 +54,10 @@ namespace Elffy.OpenGL
             GL.BindTexture(TextureTarget.Texture2D, to._texture);
         }
 
-        internal static void Bind1D(in TextureObject to, TextureUnitNumber textureUnit)
+        /// <summary>Call glActivateTexture adn glBindTexture</summary>
+        /// <param name="to">texture object</param>
+        /// <param name="textureUnit">texture unit</param>
+        public static void Bind1D(in TextureObject to, TextureUnitNumber textureUnit)
         {
             var glTextureUnit = (TextureUnit)((int)TextureUnit.Texture0 + textureUnit);
 
@@ -57,17 +66,23 @@ namespace Elffy.OpenGL
             GL.BindTexture(TextureTarget.Texture1D, to._texture);
         }
 
-        internal static void Unbind2D(TextureUnitNumber textureUnit)
+        /// <summary>Call glBindTexture(0)</summary>
+        /// <param name="textureUnit"></param>
+        public static void Unbind2D(TextureUnitNumber textureUnit)
         {
             Bind2D(Empty, textureUnit);
         }
 
-        internal static void Unbind1D(TextureUnitNumber textureUnit)
+        /// <summary>Call glBindTexture(0)</summary>
+        /// <param name="textureUnit"></param>
+        public static void Unbind1D(TextureUnitNumber textureUnit)
         {
             Bind1D(Empty, textureUnit);
         }
 
-        internal static unsafe void Image2D(Bitmap bitmap)
+        /// <summary>Call glTexImage2D</summary>
+        /// <param name="bitmap">texture to load</param>
+        public static unsafe void Image2D(Bitmap bitmap)
         {
             using(var pixels = bitmap.GetPixels(ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb)) {
                 GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, pixels.Width, pixels.Height,
@@ -75,100 +90,161 @@ namespace Elffy.OpenGL
             }
         }
 
-        internal static unsafe void Image2D(in Vector2i size, ColorByte* pixels)
+        /// <summary>Call glTexImage2D</summary>
+        /// <param name="size">texture size</param>
+        /// <param name="pixels">texture to load</param>
+        public static unsafe void Image2D(in Vector2i size, ColorByte* pixels)
         {
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, size.X, size.Y,
                           0, TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
         }
 
-        internal static unsafe void Image2D(in Vector2i size, Color4* pixels)
+        /// <summary>Call glTexImage2D</summary>
+        /// <param name="size">texture size</param>
+        /// <param name="pixels">texture to load</param>
+        public static unsafe void Image2D(in Vector2i size, Color4* pixels)
         {
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, size.X, size.Y,
                           0, TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
         }
 
-        internal static unsafe void Image2D(in Vector2i size, ColorByte* pixels, InternalFormat internalFormat)
+        /// <summary>Call glTexImage2D</summary>
+        /// <param name="size">texture size</param>
+        /// <param name="pixels">texture to load</param>
+        /// <param name="internalFormat">internal format</param>
+        public static unsafe void Image2D(in Vector2i size, ColorByte* pixels, InternalFormat internalFormat)
         {
             GL.TexImage2D(TextureTarget.Texture2D, 0, (PixelInternalFormat)internalFormat, size.X, size.Y,
                           0, TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
         }
 
-        internal static unsafe void Image2D(in Vector2i size, Color4* pixels, InternalFormat internalFormat)
+        /// <summary>Call glTexImage2D</summary>
+        /// <param name="size">texture size</param>
+        /// <param name="pixels">texture to load</param>
+        /// <param name="internalFormat">internal format</param>
+        public static unsafe void Image2D(in Vector2i size, Color4* pixels, InternalFormat internalFormat)
         {
             GL.TexImage2D(TextureTarget.Texture2D, 0, (PixelInternalFormat)internalFormat, size.X, size.Y,
                           0, TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
         }
 
-        internal static unsafe void SubImage2D(in RectI rect, ColorByte* pixels)
+        /// <summary>Call glTexSubImage2D</summary>
+        /// <param name="rect">sub texture rect</param>
+        /// <param name="pixels">sub texture to load</param>
+        public static unsafe void SubImage2D(in RectI rect, ColorByte* pixels)
         {
             GL.TexSubImage2D(TextureTarget.Texture2D, 0, rect.X, rect.Y, rect.Width, rect.Height,
                              TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
         }
 
-        internal static unsafe void SubImage2D(in RectI rect, Color4* pixels)
+        /// <summary>Call glTexSubImage2D</summary>
+        /// <param name="rect">sub texture rect</param>
+        /// <param name="pixels">sub texture to load</param>
+        public static unsafe void SubImage2D(in RectI rect, Color4* pixels)
         {
             GL.TexSubImage2D(TextureTarget.Texture2D, 0, rect.X, rect.Y, rect.Width, rect.Height,
                              TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
         }
 
-        internal static void Parameter2DMinFilter(TextureShrinkMode shrinkMode,
-                                                  TextureMipmapMode mipmapMode = TextureMipmapMode.None)
+        /// <summary>Call glTexParameter with texture2D and texture min filter</summary>
+        /// <param name="shrinkMode">shrink mode</param>
+        /// <param name="mipmapMode">mipmap mode</param>
+        public static void Parameter2DMinFilter(TextureShrinkMode shrinkMode,
+                                                TextureMipmapMode mipmapMode = TextureMipmapMode.None)
         {
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, GetMinParameter(shrinkMode, mipmapMode));
         }
 
-        internal static void Parameter2DMagFilter(TextureExpansionMode expansionMode)
+        /// <summary>Call glTexParameter with texture2D and texture mag filter</summary>
+        /// <param name="expansionMode">expantion mode</param>
+        public static void Parameter2DMagFilter(TextureExpansionMode expansionMode)
         {
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, GetMagParameter(expansionMode));
         }
 
-        internal static void GenerateMipmap2D()
+        /// <summary>Call glGenerateMipmap with texture2D</summary>
+        public static void GenerateMipmap2D()
         {
             GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
         }
 
-        internal static unsafe void Image1D(int width, ColorByte* pixels)
+        /// <summary>Call glTexImage1D</summary>
+        /// <param name="width">texture width</param>
+        /// <param name="pixels">texture to load</param>
+        public static unsafe void Image1D(int width, ColorByte* pixels)
         {
             GL.TexImage1D(TextureTarget.Texture1D, 0, PixelInternalFormat.Rgba, width,
                           0, TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
         }
 
-        internal static unsafe void Image1D(int width, Color4* pixels)
+        /// <summary>Call glTexImage1D</summary>
+        /// <param name="width">texture width</param>
+        /// <param name="pixels">texture to load</param>
+        public static unsafe void Image1D(int width, Color4* pixels)
         {
             GL.TexImage1D(TextureTarget.Texture1D, 0, PixelInternalFormat.Rgba, width,
                           0, TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
         }
 
-        internal static unsafe void Image1DAsRgba32f(int width, Color4* pixels)
+        /// <summary>Call glTexImage1D</summary>
+        /// <param name="width">texture width</param>
+        /// <param name="pixels">texture to load</param>
+        /// <param name="internalFormat">internal format</param>
+        public static unsafe void Image1D(int width, ColorByte* pixels, InternalFormat internalFormat)
         {
-            GL.TexImage1D(TextureTarget.Texture1D, 0, PixelInternalFormat.Rgba32f,
-                          width, 0, TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
+            GL.TexImage1D(TextureTarget.Texture1D, 0, (PixelInternalFormat)internalFormat, width,
+                          0, TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
         }
 
-        internal static unsafe void SubImage1D(int xOffset, int width, ColorByte* pixels)
+        /// <summary>Call glTexImage1D</summary>
+        /// <param name="width">texture width</param>
+        /// <param name="pixels">texture to load</param>
+        /// <param name="internalFormat">internal format</param>
+        public static unsafe void Image1D(int width, Color4* pixels, InternalFormat internalFormat)
+        {
+            GL.TexImage1D(TextureTarget.Texture1D, 0, (PixelInternalFormat)internalFormat, width,
+                          0, TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
+        }
+
+        /// <summary>Call glTexSubImage1D</summary>
+        /// <param name="xOffset">offset of sub texture</param>
+        /// <param name="width">width of sub texture</param>
+        /// <param name="pixels">sub texture to load</param>
+        public static unsafe void SubImage1D(int xOffset, int width, ColorByte* pixels)
         {
             GL.TexSubImage1D(TextureTarget.Texture1D, 0, xOffset, width,
                              TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
         }
 
-        internal static unsafe void SubImage1D(int xOffset, int width, Color4* pixels)
+        /// <summary>Call glTexSubImage1D</summary>
+        /// <param name="xOffset">offset of sub texture</param>
+        /// <param name="width">width of sub texture</param>
+        /// <param name="pixels">sub texture to load</param>
+        public static unsafe void SubImage1D(int xOffset, int width, Color4* pixels)
         {
             GL.TexSubImage1D(TextureTarget.Texture1D, 0, xOffset, width,
                              TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
         }
 
-        internal static void Parameter1DMinFilter(TextureShrinkMode shrinkMode,
-                                                  TextureMipmapMode mipmapMode = TextureMipmapMode.None)
+        /// <summary>Call glTexParameter with texture1D and min filter</summary>
+        /// <param name="shrinkMode">shrink mode</param>
+        /// <param name="mipmapMode">mipmap mode</param>
+        public static void Parameter1DMinFilter(TextureShrinkMode shrinkMode,
+                                                TextureMipmapMode mipmapMode = TextureMipmapMode.None)
         {
             GL.TexParameter(TextureTarget.Texture1D, TextureParameterName.TextureMinFilter, GetMinParameter(shrinkMode, mipmapMode));
         }
 
-        internal static void Parameter1DMagFilter(TextureExpansionMode expansionMode)
+        /// <summary>Call glTexparameter with texture1D and mag filter</summary>
+        /// <param name="expansionMode">expansion mode</param>
+        public static void Parameter1DMagFilter(TextureExpansionMode expansionMode)
         {
             GL.TexParameter(TextureTarget.Texture1D, TextureParameterName.TextureMagFilter, GetMagParameter(expansionMode));
         }
 
-        internal static void Delete(ref TextureObject to)
+        /// <summary>Call glDeleteTexture</summary>
+        /// <param name="to">texture object to delete</param>
+        public static void Delete(ref TextureObject to)
         {
             if(to._texture != Consts.NULL) {
                 GLAssert.EnsureContext();

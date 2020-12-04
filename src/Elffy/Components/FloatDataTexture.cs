@@ -78,7 +78,7 @@ namespace Elffy.Components
             TextureObject.Parameter1DMinFilter(TextureShrinkMode.NearestNeighbor);
             TextureObject.Parameter1DMagFilter(TextureExpansionMode.NearestNeighbor);
             fixed(Color4* ptr = texels) {
-                TextureObject.Image1DAsRgba32f(texels.Length, ptr);
+                TextureObject.Image1D(texels.Length, ptr, TextureObject.InternalFormat.Rgba32f);
             }
             TextureObject.Unbind1D(unit);
         }
