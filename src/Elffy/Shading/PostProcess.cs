@@ -9,7 +9,7 @@ namespace Elffy.Shading
 {
     public abstract class PostProcess
     {
-        protected virtual string VertShaderSource =>    // TODO: private にすべき？
+        private const string VertShaderSource =
 @"#version 440
 in vec3 _pos;
 in vec2 _v_uv;
@@ -22,10 +22,10 @@ void main()
 ";
         protected abstract string FragShaderSource { get; }
 
-        protected virtual void DefineLocation(out string pos, out string uv)    // TODO: private にすべき？
+        private void DefineLocation(VertexDefinition definition)
         {
-            pos = "_pos";
-            uv = "_v_uv";
+            definition.Map<VertexSlim>(nameof(VertexSlim.Position), "_pos");
+            definition.Map<VertexSlim>(nameof(VertexSlim.UV), "_v_uv");
         }
 
 
@@ -69,10 +69,7 @@ void main()
                 vao = VAO.Create();
                 VAO.Bind(vao);
                 program = ShaderSource.CompileToProgramObject(VertShaderSource, FragShaderSource);
-                DefineLocation(out var pos, out var uv);
-                var def = new VertexDefinition(program);
-                def.Map<VertexSlim>(nameof(VertexSlim.Position), pos);
-                def.Map<VertexSlim>(nameof(VertexSlim.UV), uv);
+                DefineLocation(new VertexDefinition(program));
                 VAO.Unbind();
                 VBO.Unbind();
                 return new PostProcessProgram(this, program, vbo, ibo, vao);
