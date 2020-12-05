@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.Runtime.CompilerServices;
+using System.Diagnostics;
 using OpenTK.Graphics.OpenGL4;
 using Elffy.Core;
 using Elffy.OpenGL;
@@ -50,9 +51,12 @@ namespace Elffy.Shading
         {
             var index = GL.GetAttribLocation(_program.Value, name);
             if(index < 0) {
-                ThrowVertexShaderFieldNotFound(name);
+                //ThrowVertexShaderFieldNotFound(name);
+                Debug.WriteLine($"[warning] '{name}' vertex field input is not found in shader program({_program.Value}).");
             }
-            MapPrivate<TVertex>(vertexFieldName, index);
+            else {
+                MapPrivate<TVertex>(vertexFieldName, index);
+            }
 
             static void ThrowVertexShaderFieldNotFound(string name)
                 => throw new ArgumentException($"Shader field of name '{name}' is not found.");

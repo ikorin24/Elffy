@@ -28,22 +28,17 @@ void main()
             uv = "_v_uv";
         }
 
-        protected abstract void SendUniforms(Uniform uniform, in Vector2i screenSize, in TextureObject prerenderedTexture);
+
+        protected abstract void SendUniforms(Uniform uniform, in Vector2i screenSize);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SendUniforms(PostProcessCompiled compiled)
+        internal void SendUniforms(ProgramObject program, in Vector2i screenSize)
         {
-            SendUniforms(new Uniform(compiled.Program), compiled.ScreenSize, compiled.ColorBuffer);
+            SendUniforms(new Uniform(program), screenSize);
         }
 
-        protected virtual FrameBuffer CreateFrameBuffer()
-        {
-            return new FrameBuffer(FrameBuffer.BufferType.Texture,
-                                   FrameBuffer.BufferType.RenderBuffer,
-                                   FrameBuffer.BufferType.RenderBuffer);
-        }
-
-        internal PostProcessCompiled Compile()
+        [SkipLocalsInit]
+        public PostProcessProgram Compile()
         {
             // 0 - 3    polygon
             // | / |
@@ -80,7 +75,7 @@ void main()
                 def.Map<VertexSlim>(nameof(VertexSlim.UV), uv);
                 VAO.Unbind();
                 VBO.Unbind();
-                return new PostProcessCompiled(this, program, vbo, ibo, vao, CreateFrameBuffer());
+                return new PostProcessProgram(this, program, vbo, ibo, vao);
             }
             catch {
                 VBO.Unbind();

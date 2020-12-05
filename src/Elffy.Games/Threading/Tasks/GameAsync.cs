@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 
 namespace Elffy.Threading.Tasks
@@ -9,23 +10,33 @@ namespace Elffy.Threading.Tasks
     {
         /// <summary>Wait for the next update timing.</summary>
         /// <returns>awaitable object</returns>
-        public static FrameLoopAwaitable ToUpdate()
+        public static FrameLoopAwaitable ToUpdate(CancellationToken cancellationToken = default)
         {
-            return Game.AsyncBack.ToFrameLoopEvent(FrameLoopTiming.Update);
+            return Game.AsyncBack.ToFrameLoopEvent(FrameLoopTiming.Update, cancellationToken);
         }
 
         /// <summary>Wait for the next early update timing.</summary>
         /// <returns>awaitable object</returns>
-        public static FrameLoopAwaitable ToEarlyUpdate()
+        public static FrameLoopAwaitable ToEarlyUpdate(CancellationToken cancellationToken = default)
         {
-            return Game.AsyncBack.ToFrameLoopEvent(FrameLoopTiming.EarlyUpdate);
+            return Game.AsyncBack.ToFrameLoopEvent(FrameLoopTiming.EarlyUpdate, cancellationToken);
         }
 
         /// <summary>Wait for the next late update timing.</summary>
         /// <returns>awaitable object</returns>
-        public static FrameLoopAwaitable ToLateUpdate()
+        public static FrameLoopAwaitable ToLateUpdate(CancellationToken cancellationToken = default)
         {
-            return Game.AsyncBack.ToFrameLoopEvent(FrameLoopTiming.LateUpdate);
+            return Game.AsyncBack.ToFrameLoopEvent(FrameLoopTiming.LateUpdate, cancellationToken);
+        }
+
+        public static FrameLoopAwaitable ToBeforeRendering(CancellationToken cancellationToken = default)
+        {
+            return Game.AsyncBack.ToFrameLoopEvent(FrameLoopTiming.BeforeRendering, cancellationToken);
+        }
+
+        public static FrameLoopAwaitable ToAfterRendering(CancellationToken cancellationToken = default)
+        {
+            return Game.AsyncBack.ToFrameLoopEvent(FrameLoopTiming.AfterRendering, cancellationToken);
         }
 
         /// <summary>Wait for the specified number of frames.</summary>

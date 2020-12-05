@@ -58,6 +58,7 @@ namespace Elffy.Threading.Tasks
             if(_queues.TryGetValue(eventType, out var queue) && (count = queue.Count) > 0) {
                 Do(queue, count);
 
+                [MethodImpl(MethodImplOptions.NoInlining)]
                 static void Do(ConcurrentQueue<WorkItem> queue, int count)
                 {
                     for(int i = 0; i < count; i++) {

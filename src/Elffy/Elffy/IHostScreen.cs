@@ -4,6 +4,7 @@ using Elffy.UI;
 using Elffy.Core;
 using System;
 using Elffy.Threading.Tasks;
+using System.Threading;
 
 namespace Elffy
 {
@@ -34,7 +35,10 @@ namespace Elffy
         /// <summary>Get number of current frame.</summary>
         ref readonly long FrameNum { get; }
 
-        Shading.PostProcess? PostProcess { get; set; }
+        /// <summary>Get screen running token, which is canceled when screen got closed.</summary>
+        CancellationToken RunningToken { get; }
+
+        //Shading.PostProcess? PostProcess { get; set; }
 
         IDefaultResource DefaultResource { get; }
 

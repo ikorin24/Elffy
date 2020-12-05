@@ -34,19 +34,19 @@ namespace Elffy.OpenGL
             GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, 0);
         }
 
-        internal static RBO Create()
+        public static RBO Create()
         {
             GLAssert.EnsureContext();
             return new RBO(GL.GenRenderbuffer());
         }
 
-        internal static void SetStorage(int width, int height, StorageType type)
+        public static void Storage(in Vector2i size, StorageType type)
         {
             GLAssert.EnsureContext();
-            GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, (RenderbufferStorage)type, width, height);
+            GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, (RenderbufferStorage)type, size.X, size.Y);
         }
 
-        internal static void Delete(ref RBO rbo)
+        public static void Delete(ref RBO rbo)
         {
             GLAssert.EnsureContext();
             GL.DeleteRenderbuffer(rbo._rbo);
@@ -61,20 +61,29 @@ namespace Elffy.OpenGL
 
         public enum StorageType
         {
-            /// <summary>each color chanels of RGBA are 32bits</summary>
+            /// <summary>GL_RGBA32F, Each chanel is 32 bits floating point value.</summary>
             Rgba32f = RenderbufferStorage.Rgba32f,
 
-            /// <summary>16bits depth</summary>
-            Depth16 = RenderbufferStorage.DepthComponent16,
-            Depth24 = RenderbufferStorage.DepthComponent24,
-            Depth32 = RenderbufferStorage.DepthComponent32,
+            /// <summary>GL_DEPTH_COMPONENT, Depth buffer that the driver chooses its precision.</summary>
+            DepthComponent = RenderbufferStorage.DepthComponent,
+            /// <summary>GL_DEPTH_COMPONENT16, Depth buffer of 16 bits precision.</summary>
+            DepthComponent16 = RenderbufferStorage.DepthComponent16,
+            /// <summary>GL_DEPTH_COMPONENT24, Depth buffer of 24 bits precision.</summary>
+            DepthComponent24 = RenderbufferStorage.DepthComponent24,
+            /// <summary>GL_DEPTH_COMPONENT32, Depth buffer of 32 bits precision.</summary>
+            DepthComponent32 = RenderbufferStorage.DepthComponent32,
 
+            /// <summary>GL_STENCIL_INDEX1</summary>
             Stencil1 = RenderbufferStorage.StencilIndex1,
+            /// <summary>GL_STENCIL_INDEX4</summary>
             Stencil4 = RenderbufferStorage.StencilIndex4,
+            /// <summary>GL_STENCIL_INDEX8</summary>
             Stencil8 = RenderbufferStorage.StencilIndex8,
+            /// <summary>GL_STENCIL_INDEX16</summary>
             Stencil16 = RenderbufferStorage.StencilIndex16,
 
-            Stencil24Stencil8 = RenderbufferStorage.Depth24Stencil8,
+            /// <summary>GL_DEPTH24_STENCIL8</summary>
+            Depth24Stencil8 = RenderbufferStorage.Depth24Stencil8,
         }
     }
 }

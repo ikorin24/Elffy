@@ -1,15 +1,15 @@
 ﻿#nullable enable
 using System;
+using System.Threading;
 using Elffy.UI;
 using Elffy.Core;
 using Elffy.InputSystem;
+using Elffy.OpenGL;
+using Elffy.Threading.Tasks;
+using Elffy.Imaging;
 using OpenTK.Windowing.Common;
 using TKMouseButton = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
 using TKMouseButtonEventArgs = OpenTK.Windowing.Common.MouseButtonEventArgs;
-using Elffy.OpenGL;
-using Elffy.OpenGL.Windowing;
-using Elffy.Threading.Tasks;
-using Elffy.Imaging;
 
 namespace Elffy
 {
@@ -29,7 +29,6 @@ namespace Elffy
         private TimeSpan _frameDelta;
         private TimeSpan _time;
         private long _frameNum;
-        private readonly DefaultGLResource _defaultGLResource;
 
         /// <summary>ウィンドウの UI の Root</summary>
         public RootPanel UIRoot => _renderingArea.Layers.UILayer.UIRoot;
@@ -61,12 +60,25 @@ namespace Elffy
         /// <inheritdoc/>
         public ref readonly long FrameNum => ref _frameNum;
 
-        public IDefaultResource DefaultResource => _defaultGLResource;
+        public IDefaultResource DefaultResource => _renderingArea.DefaultGLResource;
 
-        public Shading.PostProcess? PostProcess { get => _renderingArea.PostProcess; set => _renderingArea.PostProcess = value; }
+        /// <inheritdoc/>
+        public CancellationToken RunningToken => _renderingArea.RunningToken;
+
+        //public Shading.PostProcess? PostProcess { get => _renderingArea.PostProcess; set => _renderingArea.PostProcess = value; }
 
         /// <summary>初期化時イベント</summary>
-        public event ActionEventHandler<IHostScreen>? Initialized;
+        public event ActionEventHandler<IHostScreen>? Initialized
+        {
+            add
+            {
+                _renderingArea.Initialized += value;
+            }
+            remove
+            {
+                _renderingArea.Initialized += value;
+            }
+        }
 
         /// <summary>ウィンドウを作成します</summary>
         public Window() : this(WindowStyle.Default) { }
@@ -100,8 +112,6 @@ namespace Elffy
             _windowImpl.KeyDown += (_, e) => Keyboard.ChangeToDown(e);
             _windowImpl.KeyUp += (_, e) => Keyboard.ChangeToUp(e);
 
-
-            _defaultGLResource = new DefaultGLResource();
             Engine.AddScreen(this, show: false);
 
 
@@ -125,14 +135,18 @@ namespace Elffy
             };
         }
 
+        private void RequestClose()
+        {
+            _renderingArea.RequestClose();
+        }
+
         public void Dispose()
         {
             ThrowIfNotMainThread();
             if(_isClosed) { return; }
             _isClosed = true;
-            _windowImpl.Dispose();
             _renderingArea.Dispose();
-            _defaultGLResource.Dispose();
+            _windowImpl.Dispose();
             Engine.RemoveScreen(this);
         }
 
@@ -154,15 +168,7 @@ namespace Elffy
         private void OnLoad(WindowGLFW _)
         {
             ThrowIfNotMainThread();
-            _renderingArea.InitializeGL();
-            _defaultGLResource.Init();
-            Initialized?.Invoke(this);
-
-            var layers = _renderingArea.Layers;
-            foreach(var layer in layers.AsReadOnlySpan()) {
-                layer.ApplyAdd();
-            }
-            layers.UILayer.ApplyAdd();
+            _renderingArea.Initialize();
         }
 
         private void OnResize(WindowGLFW _, ResizeEventArgs e)
@@ -172,10 +178,7 @@ namespace Elffy
 
         private void OnUpdateFrame(WindowGLFW _, FrameEventArgs e)
         {
-            Mouse.InitFrame();
-            Keyboard.InitFrame();
             _renderingArea.RenderFrame();
-            _renderingArea.Layers.UILayer.HitTest(Mouse);
             _time += _frameDelta;
             _frameNum++;
             _windowImpl.SwapBuffers();

@@ -6,6 +6,7 @@ using Elffy.Threading.Tasks;
 using OpenTK.Graphics.OpenGL4;
 using System;
 using System.Diagnostics;
+using System.Threading;
 
 namespace Elffy.Core
 {
@@ -15,11 +16,18 @@ namespace Elffy.Core
         const float UI_FAR = 1f;
         const float UI_NEAR = -1f;
 
+        private bool _isCloseRequested;
         private bool _disposed;
         /// <summary>UI の投影行列</summary>
         private Matrix4 _uiProjection;
-        private PostProcessImpl _postProcessImpl;   // mutable object, don't make it readonly.
         private Vector2i _size;
+        private readonly CancellationTokenSource _runningTokenSource;
+
+        public event ActionEventHandler<IHostScreen>? Initialized;
+
+        public CancellationToken RunningToken => _runningTokenSource.Token;
+
+        public DefaultGLResource DefaultGLResource { get; }
 
         public IHostScreen OwnerScreen { get; }
 
@@ -30,12 +38,6 @@ namespace Elffy.Core
         public Keyboard Keyboard { get; } = new Keyboard();
 
         public AsyncBackEndPoint AsyncBack { get; }
-
-        public PostProcess? PostProcess
-        {
-            get => _postProcessImpl.PostProcess;
-            set => _postProcessImpl.PostProcess = value;
-        }
 
         public int Width
         {
@@ -84,10 +86,11 @@ namespace Elffy.Core
             OwnerScreen = screen;
             Layers = new LayerCollection(this);
             AsyncBack = new AsyncBackEndPoint();
+            DefaultGLResource = new DefaultGLResource();
+            _runningTokenSource = new CancellationTokenSource();
         }
 
-        /// <summary>OpenTL の描画に関する初期設定を行います</summary>
-        public void InitializeGL()
+        public void Initialize()
         {
             GL.ClearColor(Color4.Gray);
             GL.Enable(EnableCap.DepthTest);
@@ -102,6 +105,15 @@ namespace Elffy.Core
             GL.FrontFace(FrontFaceDirection.Ccw);
 
             GL.Disable(EnableCap.Multisample);  // I don't care about MSAA
+
+            DefaultGLResource.Init();
+
+            Initialized?.Invoke(OwnerScreen);
+
+            foreach(var layer in Layers.AsReadOnlySpan()) {
+                layer.ApplyAdd();
+            }
+            Layers.UILayer.ApplyAdd();
         }
 
         /// <summary>フレームを更新して描画します</summary>
@@ -109,6 +121,10 @@ namespace Elffy.Core
         {
             var uiLayer = Layers.UILayer;
             var layers = Layers.AsReadOnlySpan();
+
+            Mouse.InitFrame();
+            Keyboard.InitFrame();
+            uiLayer.HitTest(Mouse);
 
             // Apply FrameObject added at previous frame.
             foreach(var layer in layers) {
@@ -138,42 +154,31 @@ namespace Elffy.Core
             uiLayer.LateUpdate();
 
             // Render
-            var ppCompiled = _postProcessImpl.GetCompiled();        // Get comiled postProcess
-            var screenFbo = FBO.Empty;
-            if(ppCompiled is null) {
-                FBO.Bind(screenFbo, FBO.Target.FrameBuffer);
-                GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-                foreach(var layer in layers) {
-                    if(layer.IsVisible) {
-                        layer.Render(Camera.Projection, Camera.View);
-                    }
-                }
-                if(uiLayer.IsVisible) {
-                    uiLayer.Render(_uiProjection);
+
+            FBO.Bind(FBO.Empty, FBO.Target.FrameBuffer);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            AsyncBack.DoQueuedEvents(FrameLoopTiming.BeforeRendering);
+            foreach(var layer in layers) {
+                if(layer.IsVisible) {
+                    layer.Render(Camera.Projection, Camera.View);
                 }
             }
-            else {
-                ref readonly var fbo = ref ppCompiled.GetFBO(_size);
-                FBO.Bind(fbo, FBO.Target.FrameBuffer);         // Draw to fbo of post process
-                GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-                foreach(var layer in layers) {
-                    if(layer.IsVisible) {
-                        layer.Render(Camera.Projection, Camera.View);
-                    }
-                }
-                FBO.Bind(screenFbo, FBO.Target.FrameBuffer);   // Draw to screen
-                GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-                ppCompiled.Render();
-                if(uiLayer.IsVisible) {
-                    uiLayer.Render(_uiProjection);
-                }
+            if(uiLayer.IsVisible) {
+                uiLayer.Render(_uiProjection);
             }
+
+            AsyncBack.DoQueuedEvents(FrameLoopTiming.AfterRendering);
 
             // Apply FrameObject removed at previous frame.
             foreach(var layer in layers) {
                 layer.ApplyRemove();
             }
             uiLayer.ApplyRemove();
+        }
+
+        public void RequestClose()
+        {
+            _isCloseRequested = true;
         }
 
         public void Dispose()
@@ -188,10 +193,9 @@ namespace Elffy.Core
             }
             layers.Clear();
 
-            // Dispose resources of post process
-            _postProcessImpl.Dispose();
-
             AsyncBack.AbortAll();
+
+            DefaultGLResource.Dispose();
         }
 
         private void OnSizeChanged(in Vector2i newSize)

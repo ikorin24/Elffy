@@ -1,12 +1,10 @@
 ﻿#nullable enable
 using System;
 using OpenTK.Graphics.OpenGL4;
-using Elffy.Threading;
 using Elffy.Shading;
 using Elffy.OpenGL;
 using Elffy.Effective;
 using Elffy.Diagnostics;
-using Elffy.AssemblyServices;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Core

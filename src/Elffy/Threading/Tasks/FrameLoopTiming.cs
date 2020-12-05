@@ -7,5 +7,7 @@ namespace Elffy.Threading.Tasks
         EarlyUpdate,
         Update,
         LateUpdate,
+        BeforeRendering,
+        AfterRendering,
     }
 }

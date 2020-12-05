@@ -227,10 +227,10 @@ namespace Elffy.OpenGL
             void Update(double elapsed)
             {
                 GLFW.PollEvents();
-                if(IsDisposed) { return; }
+                //if(IsDisposed) { return; }
 
                 UpdateFrame?.Invoke(this, new FrameEventArgs(elapsed));
-                if(IsDisposed) { return; }
+                //if(IsDisposed) { return; }
             }
         }
 
@@ -279,10 +279,10 @@ namespace Elffy.OpenGL
             try {
                 var assembly = Assembly.Load("OpenTK.Graphics");
 
-                LoadBindings("ES11");
-                LoadBindings("ES20");
-                LoadBindings("ES30");
-                LoadBindings("OpenGL");
+                //LoadBindings("ES11");
+                //LoadBindings("ES20");
+                //LoadBindings("ES30");
+                //LoadBindings("OpenGL");
                 LoadBindings("OpenGL4");
 
                 void LoadBindings(string typeNamespace)

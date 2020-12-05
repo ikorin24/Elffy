@@ -51,7 +51,7 @@ namespace Elffy.Components
         void IComponent.OnDetached(ComponentOwner owner) => _core.OnDetachedForDisposable(owner, this);
     }
 
-    internal struct FloatDataTextureImpl : IDisposable
+    public struct FloatDataTextureImpl : IDisposable
     {
         public TextureObject TextureObject;
         public int Length;
@@ -80,6 +80,28 @@ namespace Elffy.Components
             fixed(Color4* ptr = texels) {
                 TextureObject.Image1D(texels.Length, ptr, TextureObject.InternalFormat.Rgba32f);
             }
+            TextureObject.Unbind1D(unit);
+        }
+
+        public unsafe void LoadUndefined(int width)
+        {
+            if(!TextureObject.IsEmpty) {
+                ThrowAlreadyLoaded();
+                static void ThrowAlreadyLoaded() => throw new InvalidOperationException("Already loaded");
+            }
+            if(width < 0) {
+                ThrowOutOfRange();
+                static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(width));
+            }
+            if(width == 0) { return; }
+            TextureObject = TextureObject.Create();
+            Length = width;
+
+            const TextureUnitNumber unit = TextureUnitNumber.Unit0;
+            TextureObject.Bind1D(TextureObject, unit);
+            TextureObject.Parameter1DMinFilter(TextureShrinkMode.NearestNeighbor);
+            TextureObject.Parameter1DMagFilter(TextureExpansionMode.NearestNeighbor);
+            TextureObject.Image1D(width, (Color4*)null, TextureObject.InternalFormat.Rgba32f);
             TextureObject.Unbind1D(unit);
         }
 
