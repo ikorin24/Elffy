@@ -3,6 +3,7 @@ using Elffy.AssemblyServices;
 using System;
 using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace Elffy.Diagnostics
 {
@@ -69,14 +70,23 @@ namespace Elffy.Diagnostics
             WritePrivate(msg);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void ForceWriteLine(string? value)
         {
-            _s_provider_Write.Value?.Invoke(value + NewLine);
+            if(IsEnabled) {
+                WriteLine(value);
+
+                [MethodImpl(MethodImplOptions.NoInlining)]
+                static void WriteLine(string? value) => WritePrivate(value + NewLine);
+            }
         }
 
         private static void WritePrivate(string message)
         {
-            // This means 'Debug.Write(string)'
+            // [NOTE]
+            // I have no idea how to use custom 'Debug.WriteLine'...
+
+            // This means 'Debug.Write(string)'. Force invoke in the both case of debug and release.
             _s_provider_Write.Value?.Invoke(message);
         }
 
