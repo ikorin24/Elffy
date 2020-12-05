@@ -20,6 +20,7 @@ void main()
     gl_Position = vec4(_pos, 1.0);
 }
 ";
+        /// <summary>Get fragment shader code of glsl</summary>
         protected abstract string FragShaderSource { get; }
 
         private void DefineLocation(VertexDefinition definition)
@@ -28,7 +29,9 @@ void main()
             definition.Map<VertexSlim>(nameof(VertexSlim.UV), "_v_uv");
         }
 
-
+        /// <summary>Send uniform variables to glsl shader code.</summary>
+        /// <param name="uniform">helper object to send uniform variables</param>
+        /// <param name="screenSize">screen size</param>
         protected abstract void SendUniforms(Uniform uniform, in Vector2i screenSize);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -37,6 +40,8 @@ void main()
             SendUniforms(new Uniform(program), screenSize);
         }
 
+        /// <summary>Compile post process fragment shader.</summary>
+        /// <returns>compiled program of post process</returns>
         [SkipLocalsInit]
         public PostProcessProgram Compile()
         {
@@ -47,10 +52,10 @@ void main()
             const float z = 0.9f;
             ReadOnlySpan<VertexSlim> vertices = stackalloc VertexSlim[4]
             {
-                new VertexSlim(new Vector3(-1, 1, z),  new Vector2(0, 1)),
-                new VertexSlim(new Vector3(-1, -1, z), new Vector2(0, 0)),
-                new VertexSlim(new Vector3(1, -1, z),  new Vector2(1, 0)),
-                new VertexSlim(new Vector3(1, 1, z),   new Vector2(1, 1)),
+                new (new (-1, 1, z),  new (0, 1)),
+                new (new (-1, -1, z), new (0, 0)),
+                new (new (1, -1, z),  new (1, 0)),
+                new (new (1, 1, z),   new (1, 1)),
             };
             ReadOnlySpan<int> indices = stackalloc int[6]
             {

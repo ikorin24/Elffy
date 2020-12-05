@@ -1,15 +1,13 @@
 ﻿#nullable enable
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Elffy.OpenGL;
 using Elffy.Exceptions;
 using OpenTK.Graphics.OpenGL4;
 
 namespace Elffy.Shading
 {
+    /// <summary>Compiled post process program</summary>
+    /// <remarks>Don't forget to call <see cref="Dispose"/></remarks>
     public sealed class PostProcessProgram : IDisposable
     {
         private PostProcess _source;
@@ -40,6 +38,7 @@ namespace Elffy.Shading
             IBO.Unbind();
         }
 
+        /// <summary>Dispose post process program</summary>
         public void Dispose()
         {
             GC.SuppressFinalize(this);
@@ -48,6 +47,7 @@ namespace Elffy.Shading
 
         private void Dispose(bool disposing)
         {
+            if(_program.IsEmpty) { return; }
             if(disposing) {
                 ProgramObject.Delete(ref _program);
                 VBO.Delete(ref _vbo);
