@@ -13,8 +13,11 @@ namespace Elffy.OpenGL
         private readonly int _rbo;
 
         internal int Value => _rbo;
+
+        /// <summary>Get whether the render buffer object is empty or not</summary>
         public bool IsEmpty => _rbo == Consts.NULL;
 
+        /// <summary>Get empty <see cref="RBO"/>. (that means 0)</summary>
         public static RBO Empty => new RBO();
 
         private RBO(int rbo)
@@ -22,30 +25,40 @@ namespace Elffy.OpenGL
             _rbo = rbo;
         }
 
+        /// <summary>Call glBindRenderbuffer</summary>
+        /// <param name="rbo">render buffer object</param>
         public static void Bind(in RBO rbo)
         {
             GLAssert.EnsureContext();
             GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, rbo._rbo);
         }
 
+        /// <summary>Call glBindRenderbuffer with 0.</summary>
         public static void Unbind()
         {
             GLAssert.EnsureContext();
             GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, 0);
         }
 
+        /// <summary>Create new <see cref="RBO"/> (Call glGenRenderbuffer)</summary>
+        /// <returns>new <see cref="RBO"/></returns>
         public static RBO Create()
         {
             GLAssert.EnsureContext();
             return new RBO(GL.GenRenderbuffer());
         }
 
+        /// <summary>Call glRenderbufferStorage</summary>
+        /// <param name="size">size of storage</param>
+        /// <param name="type">type of storage</param>
         public static void Storage(in Vector2i size, StorageType type)
         {
             GLAssert.EnsureContext();
             GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, (RenderbufferStorage)type, size.X, size.Y);
         }
 
+        /// <summary>Call glDeleteRenderbuffer</summary>
+        /// <param name="rbo">render buffer object</param>
         public static void Delete(ref RBO rbo)
         {
             GLAssert.EnsureContext();

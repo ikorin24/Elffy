@@ -7,6 +7,7 @@ using Elffy.Core;
 
 namespace Elffy.OpenGL
 {
+    /// <summary>Index buffer object of OpenGL. (Sometimes it is called element buffer object.)</summary>
     [DebuggerDisplay("IBO={_ibo}, Length={_length}")]
     public readonly struct IBO : IEquatable<IBO>
     {
@@ -23,13 +24,17 @@ namespace Elffy.OpenGL
             _length = 0;
         }
 
-        internal static IBO Create()
+        /// <summary>Create new <see cref="IBO"/> (call glGenBuffer)</summary>
+        /// <returns>new index buffer object</returns>
+        public static IBO Create()
         {
             GLAssert.EnsureContext();
             return new IBO(GL.GenBuffer());
         }
 
-        internal static void Delete(ref IBO ibo)
+        /// <summary>Delete <see cref="IBO"/> (call glDeleteBuffer)</summary>
+        /// <param name="ibo">index buffer object to delete</param>
+        public static void Delete(ref IBO ibo)
         {
             if(ibo._ibo != Consts.NULL) {
                 GLAssert.EnsureContext();
@@ -38,19 +43,26 @@ namespace Elffy.OpenGL
             }
         }
 
+        /// <summary>Call glBindBuffer with GL_ELEMENT_ARRAY_BUFFER</summary>
+        /// <param name="ibo"></param>
         public static void Bind(in IBO ibo)
         {
             GLAssert.EnsureContext();
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, ibo._ibo);
         }
 
+        /// <summary>Call glBindBuffer with GL_ELEMENT_ARRAY_BUFFER and 0</summary>
         public static void Unbind()
         {
             GLAssert.EnsureContext();
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, Consts.NULL);
         }
 
-        internal static unsafe void BindBufferData(ref IBO ibo, ReadOnlySpan<int> indices, BufferUsageHint usage)
+        /// <summary>Bind ibo and set buffer data. (Call glBindBuffer and glBufferData)</summary>
+        /// <param name="ibo">index buffer object to bind and set data</param>
+        /// <param name="indices">indices data to send to ibo</param>
+        /// <param name="usage">buffer usage hint</param>
+        public static unsafe void BindBufferData(ref IBO ibo, ReadOnlySpan<int> indices, BufferUsageHint usage)
         {
             Bind(ibo);
             fixed(int* ptr = indices) {

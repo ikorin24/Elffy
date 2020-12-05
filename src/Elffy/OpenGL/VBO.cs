@@ -7,6 +7,7 @@ using Elffy.Core;
 
 namespace Elffy.OpenGL
 {
+    /// <summary>Vetex buffer object of OpenGL</summary>
     [DebuggerDisplay("VBO={_vbo}, Length={_length}, ElementSize={_elementSize}")]
     public readonly struct VBO : IEquatable<VBO>
     {
@@ -17,6 +18,8 @@ namespace Elffy.OpenGL
         internal int Value => _vbo;
         internal int Length => _length;
         internal int ElementSize => _elementSize;
+
+        /// <summary>Get whether the vertex buffer object is empty or not.</summary>
         public bool IsEmpty => _vbo == Consts.NULL;
 
         private VBO(int vbo)
@@ -28,7 +31,7 @@ namespace Elffy.OpenGL
 
         /// <summary>Create new vertex buffer object</summary>
         /// <returns>new <see cref="VBO"/></returns>
-        internal static VBO Create()
+        public static VBO Create()
         {
             GLAssert.EnsureContext();
             return new VBO(GL.GenBuffer());
@@ -36,7 +39,7 @@ namespace Elffy.OpenGL
 
         /// <summary>Delete vertex buffer object</summary>
         /// <param name="vbo"><see cref="VBO"/> to delete</param>
-        internal static unsafe void Delete(ref VBO vbo)
+        public static unsafe void Delete(ref VBO vbo)
         {
             if(vbo._vbo != Consts.NULL) {
                 GLAssert.EnsureContext();
