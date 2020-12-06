@@ -1,0 +1,6 @@
+﻿<Project>
+  <ItemGroup>
+    <CompilerVisibleProperty Include="ProjectDir" />
+    <CompilerVisibleProperty Include="TargetDir" />
+  </ItemGroup>
+</Project>
