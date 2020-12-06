@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using Elffy.Core;
 using Elffy.Exceptions;
+using Elffy.AssemblyServices;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -16,8 +17,9 @@ namespace Elffy
         public LocalResourceLoader(string resourcesFilePath)
         {
             if(resourcesFilePath is null) { throw new ArgumentNullException(nameof(resourcesFilePath)); }
-            _resourcesFilePath = resourcesFilePath;
-            _resources = ResourceInitializer.CreateDictionary(resourcesFilePath);
+
+            _resourcesFilePath = Path.Combine(AssemblyState.EntryAssemblyDirectory, resourcesFilePath);
+            _resources = ResourceInitializer.CreateDictionary(_resourcesFilePath);
         }
 
         public Stream GetStream(string name)
