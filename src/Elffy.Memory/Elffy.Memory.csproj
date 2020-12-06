@@ -13,6 +13,15 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>TRACE;DEBUG;</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DocumentationFile></DocumentationFile>
+    <DefineConstants>TRACE;</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="UnmanagedArray" Version="2.1.0" />
   </ItemGroup>

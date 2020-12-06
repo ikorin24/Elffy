@@ -11,6 +11,15 @@
     <Configurations>Debug;Release</Configurations>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>TRACE;DEBUG;</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DocumentationFile></DocumentationFile>
+    <DefineConstants>TRACE;</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <Resource Include="Elffy.ico" />
   </ItemGroup>
