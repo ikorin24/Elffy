@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy
 {
@@ -14,9 +15,9 @@ namespace Elffy
             {
                 if(_loader is null) {
                     ThrowNotInitialized();
-                    void ThrowNotInitialized() => throw new InvalidOperationException("Resources is not initialized.");
+                    [DoesNotReturn] void ThrowNotInitialized() => throw new InvalidOperationException("Resources is not initialized.");
                 }
-                return _loader!;
+                return _loader;
             }
         }
 
@@ -24,7 +25,10 @@ namespace Elffy
         /// <param name="loaderFactory">factory function of <see cref="IResourceLoader"/> instance.</param>
         public static void Initialize(Func<IResourceLoader> loaderFactory)
         {
-            if(loaderFactory is null) { throw new ArgumentNullException(nameof(loaderFactory)); }
+            if(loaderFactory is null) {
+                ThrowNullArg();
+                 [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(loaderFactory));
+            }
             _loader = loaderFactory();
         }
 
@@ -34,7 +38,10 @@ namespace Elffy
         /// <param name="arg">factory arg</param>
         public static void Initialize<T>(Func<T, IResourceLoader> loaderFactory, T arg)
         {
-            if(loaderFactory is null) { throw new ArgumentNullException(nameof(loaderFactory)); }
+            if(loaderFactory is null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(loaderFactory));
+            }
             _loader = loaderFactory(arg);
         }
 
