@@ -8,7 +8,7 @@ namespace Elffy
         /// <param name="source">source object to activate</param>
         public static void Activate(this FrameObject source)
         {
-            source.Activate(Game.WorldLayer);
+            source.Activate(Screen.Layers.WorldLayer);
         }
     }
 }

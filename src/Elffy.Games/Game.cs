@@ -1,42 +1,19 @@
 ﻿#nullable enable
-using Elffy.AssemblyServices;
 using Elffy.Core;
 using Elffy.Imaging;
-using Elffy.InputSystem;
 using Elffy.Platforms;
 using Elffy.Threading;
-using Elffy.Threading.Tasks;
-using Elffy.UI;
 using System;
 using System.IO;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Diagnostics.CodeAnalysis;
-using System.Threading;
 
 namespace Elffy
 {
     public static class Game
     {
-        private static SyncContextReceiver? _syncContextReciever;
         private static Action _initialize = null!;
-        private static IHostScreen? _screen;
-
-        // Cache each field of screen to avoid accessing via interface.
-        // No null checking for performance. (They cannot be null if runnning in the suitable way.)
-        public static IHostScreen Screen => _screen!;
-        public static Layer WorldLayer { get; private set; } = null!;
-        public static Camera MainCamera { get; private set; } = null!;
-        public static Mouse Mouse { get; private set; } = null!;
-        public static Keyboard Keyboard { get; private set; } = null!;
-        public static AsyncBackEndPoint AsyncBack { get; private set; } = null!;
-        public static ControlCollection UI { get; private set; } = null!;
-
-        /// <summary>Get time of current frame. (This is NOT real time.)</summary>
-        public static ref readonly TimeSpan Time => ref Screen.Time;
-        
-        /// <summary>Get number of current frame.</summary>
-        public static ref readonly long FrameNum => ref Screen.FrameNum;
 
         /// <summary>Start game without resource</summary>
         /// <param name="width">game screen width</param>
@@ -85,11 +62,11 @@ namespace Elffy
                         SetScreen(screen);
                         _initialize();
                     };
-                    CustomSynchronizationContext.CreateIfNeeded(out _, out _syncContextReciever);
+                    CustomSynchronizationContext.CreateIfNeeded(out _, out var syncContextReciever);
                     screen.Show();
 
                     while(Engine.HandleOnce()) {
-                        _syncContextReciever?.DoAll();
+                        syncContextReciever?.DoAll();
                     }
                 }
                 //catch(Exception ex) {
@@ -98,7 +75,6 @@ namespace Elffy
                 finally {
                     Resources.Close();
                     CustomSynchronizationContext.Restore();
-                    _syncContextReciever = null;
                     Engine.Stop();
                 }
             }
@@ -111,18 +87,9 @@ namespace Elffy
                 [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(screen));
             }
 
-            if(Interlocked.CompareExchange(ref _screen, screen, null) is not null) {
-                ThrowAlreadySet();
-                [DoesNotReturn] static void ThrowAlreadySet() => throw new InvalidOperationException("Screen is already set.");
-            }
-
-            // Cache each fields to avoid accessing via interface.
-            WorldLayer = screen.Layers.WorldLayer;
-            MainCamera = screen.Camera;
-            Mouse = screen.Mouse;
-            Keyboard = screen.Keyboard;
-            UI = screen.UIRoot.Children;
-            AsyncBack = screen.AsyncBack;
+            Timing.Initialize(screen.AsyncBack);
+            Screen.Initialize(screen);
+            GameUI.Initialize(screen.UIRoot);
         }
 
         private static unsafe IHostScreen CreateScreen(int width, int height, string title, Stream? iconStream)

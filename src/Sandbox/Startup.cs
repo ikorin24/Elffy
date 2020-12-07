@@ -55,7 +55,7 @@ namespace Sandbox
         static async UniTaskVoid Hoge()
         {
             var tmp = new Cube() { IsVisible = false, };
-            var gBuffer = new GBuffer(Game.Screen);
+            var gBuffer = new GBuffer(Screen.Instance);
             var program = gBuffer.PostProcess.Compile();
             tmp.Terminated += _ =>
             {
@@ -64,13 +64,13 @@ namespace Sandbox
             };
             tmp.Activate();
             while(true) {
-                await GameAsync.ToBeforeRendering();
+                await Timing.ToBeforeRendering();
                 gBuffer.BindFrameBuffer();
                 ElffyGL.Clear(ElffyGL.ClearBufferMask.ColorBufferBit | ElffyGL.ClearBufferMask.DepthBufferBit);
 
-                await GameAsync.ToAfterRendering();
+                await Timing.ToAfterRendering();
                 FBO.Unbind(FBO.Target.FrameBuffer);
-                program.Render(Game.Screen.ClientSize);
+                program.Render(Screen.Size);
             }
 
 
