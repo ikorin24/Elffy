@@ -18,8 +18,6 @@ namespace Elffy
 {
     public static class Game
     {
-        private const string DefaultResource = "Resources.dat";
-
         private static SyncContextReceiver? _syncContextReciever;
         private static Action _initialize = null!;
         private static IHostScreen? _screen;
@@ -40,18 +38,29 @@ namespace Elffy
         /// <summary>Get number of current frame.</summary>
         public static ref readonly long FrameNum => ref Screen.FrameNum;
 
+        /// <summary>Start game without resource</summary>
+        /// <param name="width">game screen width</param>
+        /// <param name="height">game screen height</param>
+        /// <param name="title">game screen title</param>
+        /// <param name="initialize">entry point of the game</param>
         public static void Start(int width, int height, string title, Action initialize)
         {
-            Start(width, height, title, null, Path.GetFullPath(DefaultResource), initialize);
+            Start(width, height, title, null, null, initialize);
         }
 
-        public static void Start(int width, int height, string title, string? iconName, Action initialize)
+        /// <summary>Start game with specified resource file</summary>
+        /// <param name="width">game screen width</param>
+        /// <param name="height">game screen height</param>
+        /// <param name="title">game screen title</param>
+        /// <param name="iconName">icon name in the resources. (null if no icon)</param>
+        /// <param name="resourceFilePath">resource file path, which is relative path from the directory of entry assembly.</param>
+        /// <param name="initialize"></param>
+        public static void Start(int width, int height, string title, string? iconName, string? resourceFilePath, Action initialize)
         {
-            Start(width, height, title, iconName, Path.GetFullPath(DefaultResource), initialize);
-        }
+            if(resourceFilePath is null && iconName is not null) {
+                throw new ArgumentNullException($"{nameof(iconName)} is assigned but {nameof(resourceFilePath)} is null.");
+            }
 
-        public static void Start(int width, int height, string title, string? iconName, string resourceFilePath, Action initialize)
-        {
             _initialize = initialize ?? throw new ArgumentNullException(nameof(initialize));
             ProcessHelper.SingleLaunch(Launch);
 
@@ -59,7 +68,9 @@ namespace Elffy
             {
                 try {
                     Engine.Run();
-                    Resources.Initialize(path => new LocalResourceLoader(path), resourceFilePath);
+                    if(resourceFilePath is not null) {
+                        Resources.Initialize(path => new LocalResourceLoader(path), resourceFilePath);
+                    }
                     IHostScreen screen;
                     if(iconName is null) {
                         screen = CreateScreen(width, height, title, null);

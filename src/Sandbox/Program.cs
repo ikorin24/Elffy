@@ -8,19 +8,5 @@ using Elffy.Core;
     "Position", typeof(Vector3), 0, VertexFieldMarshalType.Float, 3
 )]
 
-namespace Sandbox
-{
-    static class Program
-    {
-        static void Main()
-        {
-            try {
-                DevEnv.Run();
-                Game.Start(1200, 675, "Sandbox", "icon.ico", Startup.Start);
-            }
-            finally {
-                DevEnv.Stop();
-            }
-        }
-    }
-}
+DevEnv.Run();
+Game.Start(1200, 675, "Sandbox", "icon.ico", "Resources.dat", Sandbox.Startup.Start);
