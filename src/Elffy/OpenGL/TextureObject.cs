@@ -172,6 +172,20 @@ namespace Elffy.OpenGL
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, GetMagParameter(expansionMode));
         }
 
+        /// <summary>Call glTexparameter with texture2D and texture wrap s</summary>
+        /// <param name="wrapMode">texture wrap mode</param>
+        public static void Parameter2DWrapS(WrapMode wrapMode)
+        {
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)wrapMode);
+        }
+
+        /// <summary>Call glTexparameter with texture2D and texture wrap t</summary>
+        /// <param name="wrapMode">texture wrap mode</param>
+        public static void Parameter2DWrapT(WrapMode wrapMode)
+        {
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)wrapMode);
+        }
+
         /// <summary>Call glGenerateMipmap with texture2D</summary>
         public static void GenerateMipmap2D()
         {
@@ -326,6 +340,19 @@ namespace Elffy.OpenGL
             DepthComponent16 = PixelInternalFormat.DepthComponent16,
             /// <summary>GL_DEPTH_COMPONENT24. Use texture as a depth buffer. 24 bits precision.</summary>
             DepthComponent24 = PixelInternalFormat.DepthComponent24,
+        }
+
+        /// <summary>Texture wrap mode</summary>
+        public enum WrapMode
+        {
+            /// <summary>GL_REPEAT</summary>
+            Repeat = TextureWrapMode.Repeat,
+            /// <summary>GL_MIRRORED_REPEAT</summary>
+            MirroredRepeat = TextureWrapMode.MirroredRepeat,
+            /// <summary>GL_CLAMP_TO_BORDER</summary>
+            ClampToBorder = TextureWrapMode.ClampToBorder,
+            /// <summary>GL_CLAMP_TO_EDGE</summary>
+            ClampToEdge = TextureWrapMode.ClampToEdge,
         }
     }
 }
