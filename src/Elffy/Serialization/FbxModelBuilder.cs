@@ -6,7 +6,6 @@ using Elffy.Exceptions;
 using Elffy.Core;
 using Elffy.Shapes;
 using Elffy.Effective;
-using Elffy.Threading.Tasks;
 using StringLiteral;
 using System.Diagnostics.CodeAnalysis;
 using Cysharp.Threading.Tasks;

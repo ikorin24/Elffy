@@ -7,7 +7,6 @@ using Elffy.Shading;
 using Elffy.Shapes;
 using Elffy.UI;
 using Elffy.Diagnostics;
-using Elffy.Threading.Tasks;
 using Elffy.InputSystem;
 using System;
 using System.Diagnostics;

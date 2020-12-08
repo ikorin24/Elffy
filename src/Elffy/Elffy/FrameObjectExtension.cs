@@ -4,7 +4,6 @@ using System.Threading;
 using System.Diagnostics.CodeAnalysis;
 using Cysharp.Threading.Tasks;
 using Elffy.Core;
-using Elffy.Threading.Tasks;
 
 namespace Elffy
 {

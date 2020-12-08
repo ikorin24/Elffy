@@ -1,6 +1,6 @@
 ﻿#nullable enable
 
-namespace Elffy.Threading.Tasks
+namespace Elffy
 {
     public enum FrameLoopTiming
     {

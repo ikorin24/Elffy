@@ -3,7 +3,6 @@ using Elffy.InputSystem;
 using Elffy.UI;
 using Elffy.Core;
 using System;
-using Elffy.Threading.Tasks;
 using System.Threading;
 
 namespace Elffy

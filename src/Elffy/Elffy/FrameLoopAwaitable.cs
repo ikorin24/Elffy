@@ -4,7 +4,7 @@ using System.Threading;
 using System.Runtime.CompilerServices;
 using Cysharp.Threading.Tasks;
 
-namespace Elffy.Threading.Tasks
+namespace Elffy
 {
     public readonly struct FrameLoopAwaitable
     {

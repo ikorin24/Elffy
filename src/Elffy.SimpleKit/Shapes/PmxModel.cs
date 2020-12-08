@@ -69,7 +69,7 @@ namespace Elffy.Shapes
                                                                                  b.ParentBone != 65535 ? b.ParentBone : null,
                                                                                  b.ConnectedBone != 65535 ? b.ConnectedBone : null)))
                 );
-            await HostScreen.AsyncBack.ToFrameLoopEvent(Threading.Tasks.FrameLoopTiming.Update);
+            await HostScreen.AsyncBack.ToFrameLoopEvent(FrameLoopTiming.Update);
 
             Debug.Assert(HostScreen.IsThreadMain());
 

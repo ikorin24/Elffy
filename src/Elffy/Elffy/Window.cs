@@ -5,7 +5,6 @@ using Elffy.UI;
 using Elffy.Core;
 using Elffy.InputSystem;
 using Elffy.OpenGL;
-using Elffy.Threading.Tasks;
 using Elffy.Imaging;
 using OpenTK.Windowing.Common;
 using TKMouseButton = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;

@@ -15,7 +15,6 @@ using MMDTools.Unmanaged;
 using System.Drawing;
 using Elffy.Imaging;
 using Elffy.Effective.Unsafes;
-using Elffy.Threading.Tasks;
 using Elffy.Components;
 using UnmanageUtility;
 

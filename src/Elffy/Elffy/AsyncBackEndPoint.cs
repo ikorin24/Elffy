@@ -8,7 +8,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-namespace Elffy.Threading.Tasks
+namespace Elffy
 {
     public sealed class AsyncBackEndPoint
     {

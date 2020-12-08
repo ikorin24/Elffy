@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using System;
 using Elffy;
-using Elffy.Threading.Tasks;
 using Elffy.OpenGL;
 using Elffy.Shapes;
 using Elffy.Shading;
