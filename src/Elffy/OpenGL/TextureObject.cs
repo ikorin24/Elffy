@@ -36,11 +36,19 @@ namespace Elffy.OpenGL
             return new TextureObject(GL.GenTexture());
         }
 
-        /// <summary>Get max texture unit count of GPU. (Call glGetIntegerv with GL_MAX_TEXTURE_IMAGE_UNITS)</summary>
+        /// <summary>Get available max texture unit count of fragment shader. (Call glGetIntegerv with GL_MAX_TEXTURE_IMAGE_UNITS)</summary>
         /// <returns>max texture unit count</returns>
-        public static int GetMaxTextureUnitCount()
+        public static int GetFragmentShaderMaxTextureUnitCount()
         {
             GL.GetInteger(GetPName.MaxTextureImageUnits, out var count);
+            return count;
+        }
+
+        /// <summary>Get available max texture unit count of vertex shader. (Call glGetIntegerv with GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS)</summary>
+        /// <returns>max texture unit count</returns>
+        public static int GetVertexShaderMaxTextureUnitCount()
+        {
+            GL.GetInteger(GetPName.MaxVertexTextureImageUnits, out var count);
             return count;
         }
 
