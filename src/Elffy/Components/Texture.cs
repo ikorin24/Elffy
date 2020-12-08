@@ -75,15 +75,14 @@ namespace Elffy.Components
             }
 
             _to = TextureObject.Create();
-            const TextureUnitNumber unit = TextureUnitNumber.Unit0;
-            TextureObject.Bind2D(_to, unit);
+            TextureObject.Bind2D(_to);
             TextureObject.Parameter2DMinFilter(ShrinkMode, MipmapMode);
             TextureObject.Parameter2DMagFilter(ExpansionMode);
             TextureObject.Image2D(bitmap);
             if(MipmapMode != TextureMipmapMode.None) {
                 TextureObject.GenerateMipmap2D();
             }
-            TextureObject.Unbind2D(unit);
+            TextureObject.Unbind2D();
             _size = new(bitmap.Width, bitmap.Height);
         }
 
@@ -256,15 +255,14 @@ namespace Elffy.Components
         private unsafe void LoadCore(in Vector2i size, ColorByte* pixels)
         {
             _to = TextureObject.Create();
-            const TextureUnitNumber unit = TextureUnitNumber.Unit0;
-            TextureObject.Bind2D(_to, unit);
+            TextureObject.Bind2D(_to);
             TextureObject.Parameter2DMinFilter(ShrinkMode, MipmapMode);
             TextureObject.Parameter2DMagFilter(ExpansionMode);
             TextureObject.Image2D(size, pixels);
             if(MipmapMode != TextureMipmapMode.None) {
                 TextureObject.GenerateMipmap2D();
             }
-            TextureObject.Unbind2D(unit);
+            TextureObject.Unbind2D();
             _size = size;
         }
 
@@ -273,10 +271,9 @@ namespace Elffy.Components
             // This method is called from TexturePainter
 
             Debug.Assert(_to.IsEmpty == false);
-            const TextureUnitNumber unit = TextureUnitNumber.Unit0;
-            TextureObject.Bind2D(_to, unit);
+            TextureObject.Bind2D(_to);
             TextureObject.SubImage2D(rect, pixels);
-            TextureObject.Unbind2D(unit);
+            TextureObject.Unbind2D();
         }
 
         void IComponent.OnAttached(ComponentOwner owner) => _core.OnAttached(owner);

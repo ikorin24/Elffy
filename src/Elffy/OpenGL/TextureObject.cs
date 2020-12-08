@@ -45,7 +45,7 @@ namespace Elffy.OpenGL
         /// <summary>Call glActivateTexture and glBindTexture</summary>
         /// <param name="to">texture object</param>
         /// <param name="textureUnit">texture unit</param>
-        public static void Bind2D(in TextureObject to, TextureUnitNumber textureUnit)
+        public static void Bind2D(in TextureObject to, TextureUnitNumber textureUnit = TextureUnitNumber.Unit0)
         {
             var glTextureUnit = (TextureUnit)((int)TextureUnit.Texture0 + textureUnit);
 
@@ -57,7 +57,7 @@ namespace Elffy.OpenGL
         /// <summary>Call glActivateTexture adn glBindTexture</summary>
         /// <param name="to">texture object</param>
         /// <param name="textureUnit">texture unit</param>
-        public static void Bind1D(in TextureObject to, TextureUnitNumber textureUnit)
+        public static void Bind1D(in TextureObject to, TextureUnitNumber textureUnit = TextureUnitNumber.Unit0)
         {
             var glTextureUnit = (TextureUnit)((int)TextureUnit.Texture0 + textureUnit);
 
@@ -68,14 +68,14 @@ namespace Elffy.OpenGL
 
         /// <summary>Call glBindTexture(0)</summary>
         /// <param name="textureUnit"></param>
-        public static void Unbind2D(TextureUnitNumber textureUnit)
+        public static void Unbind2D(TextureUnitNumber textureUnit = TextureUnitNumber.Unit0)
         {
             Bind2D(Empty, textureUnit);
         }
 
         /// <summary>Call glBindTexture(0)</summary>
         /// <param name="textureUnit"></param>
-        public static void Unbind1D(TextureUnitNumber textureUnit)
+        public static void Unbind1D(TextureUnitNumber textureUnit = TextureUnitNumber.Unit0)
         {
             Bind1D(Empty, textureUnit);
         }

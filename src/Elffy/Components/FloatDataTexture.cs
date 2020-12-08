@@ -53,13 +53,8 @@ namespace Elffy.Components
 
     public struct FloatDataTextureImpl : IDisposable
     {
-        public TextureObject TextureObject;
+        public TextureObject TextureObject;     // TODO: public field はやめる
         public int Length;
-
-        public readonly void Apply(TextureUnitNumber unit)
-        {
-            TextureObject.Bind1D(TextureObject, unit);
-        }
 
         public unsafe void Load(ReadOnlySpan<Color4> texels)
         {
@@ -73,14 +68,13 @@ namespace Elffy.Components
             TextureObject = TextureObject.Create();
             Length = texels.Length;
 
-            const TextureUnitNumber unit = TextureUnitNumber.Unit0;
-            TextureObject.Bind1D(TextureObject, unit);
+            TextureObject.Bind1D(TextureObject);
             TextureObject.Parameter1DMinFilter(TextureShrinkMode.NearestNeighbor);
             TextureObject.Parameter1DMagFilter(TextureExpansionMode.NearestNeighbor);
             fixed(Color4* ptr = texels) {
                 TextureObject.Image1D(texels.Length, ptr, TextureObject.InternalFormat.Rgba32f);
             }
-            TextureObject.Unbind1D(unit);
+            TextureObject.Unbind1D();
         }
 
         public unsafe void LoadUndefined(int width)
@@ -97,12 +91,11 @@ namespace Elffy.Components
             TextureObject = TextureObject.Create();
             Length = width;
 
-            const TextureUnitNumber unit = TextureUnitNumber.Unit0;
-            TextureObject.Bind1D(TextureObject, unit);
+            TextureObject.Bind1D(TextureObject);
             TextureObject.Parameter1DMinFilter(TextureShrinkMode.NearestNeighbor);
             TextureObject.Parameter1DMagFilter(TextureExpansionMode.NearestNeighbor);
             TextureObject.Image1D(width, (Color4*)null, TextureObject.InternalFormat.Rgba32f);
-            TextureObject.Unbind1D(unit);
+            TextureObject.Unbind1D();
         }
 
         public unsafe void Update(ReadOnlySpan<Color4> texels, int xOffset)
@@ -118,14 +111,11 @@ namespace Elffy.Components
 
             if(texels.IsEmpty) { return; }
 
-            const TextureUnitNumber unit = TextureUnitNumber.Unit0;
-            TextureObject.Bind1D(TextureObject, unit);
+            TextureObject.Bind1D(TextureObject);
             fixed(Color4* ptr = texels) {
-                //GL.TexSubImage1D(TextureTarget.Texture1D, 0, xOffset,
-                //                 texels.Length, TKPixelFormat.Rgba, PixelType.Float, (IntPtr)ptr);
                 TextureObject.SubImage1D(xOffset, texels.Length, ptr);
             }
-            TextureObject.Unbind1D(unit);
+            TextureObject.Unbind1D();
         }
 
         public void Dispose()

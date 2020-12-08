@@ -86,7 +86,7 @@ namespace Elffy
                 var bufs = stackalloc DrawBuffersEnum[bufCount];
 
                 position = TextureObject.Create();
-                TextureObject.Bind2D(position, TextureUnitNumber.Unit0);
+                TextureObject.Bind2D(position);
                 TextureObject.Image2D(screenSize, (Color4*)null, TextureObject.InternalFormat.Rgba16f);
                 TextureObject.Parameter2DMagFilter(TextureExpansionMode.NearestNeighbor);
                 TextureObject.Parameter2DMinFilter(TextureShrinkMode.NearestNeighbor);
@@ -94,7 +94,7 @@ namespace Elffy
                 bufs[0] = DrawBuffersEnum.ColorAttachment0;
 
                 normal = TextureObject.Create();
-                TextureObject.Bind2D(normal, TextureUnitNumber.Unit0);
+                TextureObject.Bind2D(normal);
                 TextureObject.Image2D(screenSize, (Color4*)null, TextureObject.InternalFormat.Rgba16f);
                 TextureObject.Parameter2DMagFilter(TextureExpansionMode.NearestNeighbor);
                 TextureObject.Parameter2DMinFilter(TextureShrinkMode.NearestNeighbor);
@@ -102,7 +102,7 @@ namespace Elffy
                 bufs[1] = DrawBuffersEnum.ColorAttachment1;
 
                 color = TextureObject.Create();
-                TextureObject.Bind2D(color, TextureUnitNumber.Unit0);
+                TextureObject.Bind2D(color);
                 TextureObject.Image2D(screenSize, (ColorByte*)null, TextureObject.InternalFormat.Rgba8);
                 TextureObject.Parameter2DMagFilter(TextureExpansionMode.NearestNeighbor);
                 TextureObject.Parameter2DMinFilter(TextureShrinkMode.NearestNeighbor);
@@ -118,7 +118,7 @@ namespace Elffy
                     throw new Exception(error);
                 }
                 GL.DrawBuffers(bufCount, bufs);
-                TextureObject.Unbind2D(TextureUnitNumber.Unit0);
+                TextureObject.Unbind2D();
             }
             catch {
                 FBO.Delete(ref fbo);

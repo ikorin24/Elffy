@@ -22,11 +22,10 @@ namespace Elffy.Core
         {
             var whiteEmpty = TextureObject.Create();
             var pixel = ColorByte.White;
-            const TextureUnitNumber unit = TextureUnitNumber.Unit0;
-            TextureObject.Bind2D(whiteEmpty, unit);
+            TextureObject.Bind2D(whiteEmpty);
             TextureObject.Image2D(new(1, 1), &pixel);
             _whiteEmptyTexture = whiteEmpty;
-            TextureObject.Unbind2D(unit);
+            TextureObject.Unbind2D();
         }
 
         public void Dispose()

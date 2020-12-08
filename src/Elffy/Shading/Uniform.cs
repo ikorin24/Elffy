@@ -173,6 +173,7 @@ namespace Elffy.Shading
         {
             TextureObject.Bind1D(value, unit);
             GL.ProgramUniform1(_program.Value, location, (int)unit);
+            TextureObject.Unbind1D(unit);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -180,6 +181,7 @@ namespace Elffy.Shading
         {
             TextureObject.Bind2D(value, unit);
             GL.ProgramUniform1(_program.Value, location, (int)unit);
+            TextureObject.Unbind1D(unit);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
