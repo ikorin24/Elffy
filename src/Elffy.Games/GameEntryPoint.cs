@@ -11,7 +11,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy
 {
-    public static class Game
+    public static class GameEntryPoint
     {
         private static Action _initialize = null!;
 

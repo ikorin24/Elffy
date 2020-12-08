@@ -9,4 +9,4 @@ using Elffy.Core;
 )]
 
 DevEnv.Run();
-Game.Start(1200, 675, "Sandbox", "icon.ico", "Resources.dat", Sandbox.Startup.Start);
+GameEntryPoint.Start(1200, 675, "Sandbox", "icon.ico", "Resources.dat", Sandbox.Startup.Start);
