@@ -101,6 +101,7 @@ namespace Elffy.OpenGL
 
 
             GLFW.Init();
+            GLFW.SetErrorCallback((errorCode, description) => throw new GLFWException(description, errorCode));
 
             var monitor = GLFW.GetPrimaryMonitor();
             if(monitor == null) {
