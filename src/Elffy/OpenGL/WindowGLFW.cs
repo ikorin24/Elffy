@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Elffy.AssemblyServices;
 using Elffy.OpenGL.Windowing;
-using Elffy.Core.OpenTK;
 using Elffy.Imaging;
 using Elffy.Effective;
 using OpenTK.Windowing.Common;
@@ -101,9 +100,7 @@ namespace Elffy.OpenGL
             // Vsync is enabled
 
 
-            // Call GLFWProvider.EnsureInitialized()
-            // (That ensures glfwInit())
-            OpenTKHelper.GLFWProvider_EnsureInitialized();
+            GLFW.Init();
 
             var monitor = GLFW.GetPrimaryMonitor();
             if(monitor == null) {
