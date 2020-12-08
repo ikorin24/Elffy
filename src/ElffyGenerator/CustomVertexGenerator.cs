@@ -19,18 +19,16 @@ namespace ElffyGenerator
         private readonly Regex _attrRegex = new Regex(@"^(global::)?(Elffy\.)?GenerateCustomVertex(Attribute)?$");
 
         private const string AttributeSource =
-@"namespace Elffy
-{
-    using System;
-    using System.Diagnostics;
-    using Elffy.Core;
+@"using System;
+using System.Diagnostics;
+using Elffy.Core;
 
+namespace Elffy
+{
     [Conditional(""COMPILE_TIME_ONLY"")]
     [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true, Inherited = false)]
     internal sealed class GenerateCustomVertexAttribute : Attribute
     {
-        public string DebuggerDisplayString { get; set; }
-
         public GenerateCustomVertexAttribute(string typeFullName,
                                              string name0, Type type0, uint byteOffset0, VertexFieldMarshalType marshal0, uint marshalCount0)
         { }
@@ -113,9 +111,8 @@ namespace ElffyGenerator
                 if(attr.ArgumentList is null) { throw new Exception("Can't be null here."); }
                 var fields = ParseArgs(attr,
                                        compilation.GetSemanticModel(attr.SyntaxTree),
-                                       out var vertexTypeName,
-                                       out var debuggerDisplay);
-                var source = CreateSource(vertexTypeName, debuggerDisplay, fields);
+                                       out var vertexTypeName);
+                var source = CreateSource(vertexTypeName, fields);
                 context.AddSource(vertexTypeName, SourceText.From(source, Encoding.UTF8));
             }
         }
@@ -125,11 +122,13 @@ namespace ElffyGenerator
             // nop
         }
 
-        private static VertexFieldInfo[] ParseArgs(AttributeSyntax attr, SemanticModel attrSemantic, out string vertexTypeName, out string? debuggerDisplay)
+        private static VertexFieldInfo[] ParseArgs(AttributeSyntax attr, SemanticModel attrSemantic, out string vertexTypeName)
         {
+            if(attr.ArgumentList is null) {
+                throw new Exception("Can not be null argument list.");
+            }
             var args = attr.ArgumentList.Arguments;
             vertexTypeName = attrSemantic.GetConstantValue(args[0].Expression).ToString();
-            debuggerDisplay = null; // TODO:
             const int N = 5;
 
             var fieldCount = (args.Count - 1) / N;
@@ -158,7 +157,7 @@ namespace ElffyGenerator
             return fields;
         }
 
-        private string CreateSource(string vertexTypeName, string? debuggerDisplay, VertexFieldInfo[] fields)
+        private string CreateSource(string vertexTypeName, VertexFieldInfo[] fields)
         {
             var ns = vertexTypeName.Substring(0, vertexTypeName.LastIndexOf('.'));
             var typeName = vertexTypeName.Substring(ns.Length + 1);
@@ -169,18 +168,12 @@ namespace ElffyGenerator
 @$"using {nameof(Elffy)}.{nameof(Elffy.Diagnostics)};
 using {nameof(Elffy)}.{nameof(Elffy.Core)};
 using System;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 
 namespace {ns}
 {{
 ");
-            if(debuggerDisplay is not null) {
-                sb.Append(
-@$"    [DebuggerDisplay(""{debuggerDisplay}"")]
-");
-            }
             sb.Append(
 @$"    [{nameof(VertexLikeAttribute)}]
     [StructLayout(LayoutKind.Explicit)]
