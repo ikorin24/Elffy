@@ -10,6 +10,7 @@ namespace Elffy.Threading
         private readonly ConcurrentQueue<(SendOrPostCallback callback, object? state)> _queue
             = new ConcurrentQueue<(SendOrPostCallback callback, object? state)>();
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(SendOrPostCallback callback, object? state) => _queue.Enqueue((callback, state));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
