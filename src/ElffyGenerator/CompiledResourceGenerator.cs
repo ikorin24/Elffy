@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.IO;
+using ElffyResourceCompiler;
 
 namespace ElffyGenerator
 {
@@ -45,19 +46,20 @@ namespace Elffy
             if(attr is null) { return; }
 
             if(attr.ArgumentList is null) { throw new Exception("Can't be null here"); }
+            var argList = attr.ArgumentList;
 
             var resourceDir = compilation.GetSemanticModel(attr.SyntaxTree)
-                                         .GetConstantValue(attr.ArgumentList.Arguments[0].Expression)
+                                         .GetConstantValue(argList.Arguments[0].Expression)
                                          .ToString();
 
             var output = compilation.GetSemanticModel(attr.SyntaxTree)
-                                    .GetConstantValue(attr.ArgumentList.Arguments[1].Expression)
+                                    .GetConstantValue(argList.Arguments[1].Expression)
                                     .ToString();
 
             var forceCompile = false;
-            if(attr.ArgumentList.Arguments.Count >= 3) {
+            if(argList.Arguments.Count >= 3) {
                 var value = compilation.GetSemanticModel(attr.SyntaxTree)
-                                       .GetConstantValue(attr.ArgumentList.Arguments[2].Expression).Value;
+                                       .GetConstantValue(argList.Arguments[2].Expression).Value;
                 if(value is not null) {
                     forceCompile = (bool)value;
                 }
@@ -65,12 +67,16 @@ namespace Elffy
 
             var globalOptions = context.AnalyzerConfigOptions.GlobalOptions;
             if(!globalOptions.TryGetValue("build_property.ProjectDir", out var projectDir)) { return; }
-            if(!globalOptions.TryGetValue("build_property.TargetDir", out var targetDir)) { return; }
+            var dir = Path.Combine(projectDir, resourceDir);
 
-            var d = Path.Combine(projectDir, resourceDir);
-            var o = Path.Combine(targetDir, output);
-
-            ElffyResourceCompiler.Compiler.Compile(d, o, forceCompile);
+            if(globalOptions.TryGetValue("build_property.TargetDir", out var targetDir)) {
+                var o = Path.Combine(targetDir, output);
+                Compiler.Compile(dir, o, forceCompile);
+            }
+            if(globalOptions.TryGetValue("build_property.PublishDir", out var publishDir)) {
+                var o = Path.Combine(projectDir, publishDir, output);
+                Compiler.Compile(dir, o, true);
+            }
         }
 
         public void Initialize(GeneratorInitializationContext context)

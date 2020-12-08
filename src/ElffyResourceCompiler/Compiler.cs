@@ -53,6 +53,7 @@ namespace ElffyResourceCompiler
             }
 
         RECOMPILE:
+            Directory.CreateDirectory(new FileInfo(outputPath).DirectoryName);
             string TMP_FILE = Path.Combine(Path.GetDirectoryName(outputPath), "____tmp____");
             if(File.Exists(outputPath)) {
                 if(File.Exists(TMP_FILE)) {
