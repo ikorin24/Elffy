@@ -36,7 +36,9 @@ namespace Elffy.OpenGL
             return new TextureObject(GL.GenTexture());
         }
 
-        public int GetMaxTextureUnitCount()
+        /// <summary>Get max texture unit count of GPU. (Call glGetIntegerv with GL_MAX_TEXTURE_IMAGE_UNITS)</summary>
+        /// <returns>max texture unit count</returns>
+        public static int GetMaxTextureUnitCount()
         {
             GL.GetInteger(GetPName.MaxTextureImageUnits, out var count);
             return count;
