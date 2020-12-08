@@ -128,19 +128,18 @@ namespace Elffy.OpenGL
             GLFW.WindowHint(WindowHintBool.Focused, true);
             GLFW.WindowHint(WindowHintBool.Visible, false);
 
-            //GLFW.WindowHint(WindowHintInt.Samples, 4);        // I don't care about MSAA
-
+            var videoMode = GLFW.GetVideoMode(monitor);
+            GLFW.WindowHint(WindowHintInt.RedBits, videoMode->RedBits);
+            GLFW.WindowHint(WindowHintInt.GreenBits, videoMode->GreenBits);
+            GLFW.WindowHint(WindowHintInt.BlueBits, videoMode->BlueBits);
+            //GLFW.WindowHint(WindowHintInt.RefreshRate, videoMode->RefreshRate);
+            GLFW.WindowHint(WindowHintInt.RefreshRate, 60);                         // TODO: とりあえず60fps固定
             if(isFullscreen) {
-                var videoMode = GLFW.GetVideoMode(monitor);
-                GLFW.WindowHint(WindowHintInt.RedBits, videoMode->RedBits);
-                GLFW.WindowHint(WindowHintInt.GreenBits, videoMode->GreenBits);
-                GLFW.WindowHint(WindowHintInt.BlueBits, videoMode->BlueBits);
-                //GLFW.WindowHint(WindowHintInt.RefreshRate, videoMode->RefreshRate);
-                GLFW.WindowHint(WindowHintInt.RefreshRate, 60);                         // TODO: とりあえず60fps固定
                 _window = GLFW.CreateWindow(width, height, title, monitor, null);
             }
             else {
                 _window = GLFW.CreateWindow(width, height, title, null, null);
+                GLFW.SetWindowPos(_window, (videoMode->Width - width) / 2, (videoMode->Height - height) / 2);
             }
 
             try {
