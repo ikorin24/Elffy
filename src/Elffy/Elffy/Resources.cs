@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy
 {
+    /// <summary>Provides resource loader</summary>
     public static class Resources
     {
         private static IResourceLoader? _loader;
