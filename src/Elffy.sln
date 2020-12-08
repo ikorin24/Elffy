@@ -24,13 +24,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elffy.Games", "Elffy.Games\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elffy.Memory", "Elffy.Memory\Elffy.Memory.csproj", "{96B1EDE5-ACE3-4B24-BFB9-DCFA77F0A9C7}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elffy.Utility", "Elffy.Utility\Elffy.Utility.csproj", "{51BEEF68-F6F4-4A42-8572-34973FB4A090}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTest.Elffy.Memory", "UnitTest.Elffy.Memory\UnitTest.Elffy.Memory.csproj", "{80E7C609-A702-41C8-84BA-55017D574318}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElffyGenerator", "ElffyGenerator\ElffyGenerator.csproj", "{F6B9CED4-7D06-4BBA-A8BC-B69CD992CD30}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Elffy.SimpleKit", "Elffy.SimpleKit\Elffy.SimpleKit.csproj", "{56F40F30-E379-471A-B9A8-F491EB04EDFD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elffy.SimpleKit", "Elffy.SimpleKit\Elffy.SimpleKit.csproj", "{56F40F30-E379-471A-B9A8-F491EB04EDFD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -138,18 +136,6 @@ Global
 		{96B1EDE5-ACE3-4B24-BFB9-DCFA77F0A9C7}.Release|x64.Build.0 = Release|Any CPU
 		{96B1EDE5-ACE3-4B24-BFB9-DCFA77F0A9C7}.Release|x86.ActiveCfg = Release|Any CPU
 		{96B1EDE5-ACE3-4B24-BFB9-DCFA77F0A9C7}.Release|x86.Build.0 = Release|Any CPU
-		{51BEEF68-F6F4-4A42-8572-34973FB4A090}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{51BEEF68-F6F4-4A42-8572-34973FB4A090}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{51BEEF68-F6F4-4A42-8572-34973FB4A090}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{51BEEF68-F6F4-4A42-8572-34973FB4A090}.Debug|x64.Build.0 = Debug|Any CPU
-		{51BEEF68-F6F4-4A42-8572-34973FB4A090}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{51BEEF68-F6F4-4A42-8572-34973FB4A090}.Debug|x86.Build.0 = Debug|Any CPU
-		{51BEEF68-F6F4-4A42-8572-34973FB4A090}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{51BEEF68-F6F4-4A42-8572-34973FB4A090}.Release|Any CPU.Build.0 = Release|Any CPU
-		{51BEEF68-F6F4-4A42-8572-34973FB4A090}.Release|x64.ActiveCfg = Release|Any CPU
-		{51BEEF68-F6F4-4A42-8572-34973FB4A090}.Release|x64.Build.0 = Release|Any CPU
-		{51BEEF68-F6F4-4A42-8572-34973FB4A090}.Release|x86.ActiveCfg = Release|Any CPU
-		{51BEEF68-F6F4-4A42-8572-34973FB4A090}.Release|x86.Build.0 = Release|Any CPU
 		{80E7C609-A702-41C8-84BA-55017D574318}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{80E7C609-A702-41C8-84BA-55017D574318}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{80E7C609-A702-41C8-84BA-55017D574318}.Debug|x64.ActiveCfg = Debug|Any CPU

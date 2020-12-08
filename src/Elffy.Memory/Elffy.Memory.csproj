@@ -23,11 +23,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="UnmanagedArray" Version="2.1.0" />
+    <Compile Include="..\Elffy\AssemblyServices\CriticalDotnetDependencyAttribute.cs" Link="AssemblyServices\CriticalDotnetDependencyAttribute.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Elffy.Utility\Elffy.Utility.csproj" />
+    <PackageReference Include="UnmanagedArray" Version="2.1.0" />
   </ItemGroup>
 
 </Project>

@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.Diagnostics;
 
 namespace Elffy.AssemblyServices
 {
@@ -19,15 +20,13 @@ namespace Elffy.AssemblyServices
     /// Target classes or methods depend on specific version of .NET; internal implementation, private field, and so on.<para/>
     /// (You must pass unit tests in the runtime of target version. DO NOT build for .NET Standard Library.)<para/>
     /// </summary>
+    [Conditional("COMPILE_TIME_ONLY")]  // This attribute is not included in the assembly.
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Method | AttributeTargets.Constructor,
                     AllowMultiple = false, Inherited = false)]
     public class CriticalDotnetDependencyAttribute : Attribute
     {
-        public string Description { get; }
-
         public CriticalDotnetDependencyAttribute(string description = "")
         {
-            Description = description;
         }
     }
 }
