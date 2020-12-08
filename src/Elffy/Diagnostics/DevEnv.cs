@@ -90,7 +90,9 @@ namespace Elffy.Diagnostics
             _s_provider_Write.Value?.Invoke(message);
         }
 
+#pragma warning disable CS0436 // The type conflicts with the imported type
         [CriticalDotnetDependency("netcoreapp3.1 || net5.0")]
+#pragma warning restore CS0436 // The type conflicts with the imported type
         private static Action<string>? GetDebugProvider()
         {
             var s_provider = typeof(Debug).GetField("s_provider", BindingFlags.Static | BindingFlags.NonPublic)?.GetValue(null);

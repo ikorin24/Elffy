@@ -20,9 +20,11 @@ namespace Elffy.Effective.Unsafes
     // 配列長はコンストラクタで指定した長さちょうどである必要があるため、
     // ArrayPool<byte>.Shared の仕様として 2^n でなくてはならない。
 
-
+    //#pragma warning disable 0436
     /// <summary>内部バッファを使い捨てない <see cref="FileStream"/> クラス</summary>
+#pragma warning disable CS0436 // The type conflicts with the imported type
     [CriticalDotnetDependency("netcoreapp3.1 || net5.0")]
+#pragma warning restore CS0436 // The type conflicts with the imported type
     internal sealed class AlloclessFileStream : FileStream, IDisposable
     {
         const int BufferSize = 4096;    // 2^n でなければならない (ArrayPool<byte>.Shared からちょうどのサイズを取る必要があるため)

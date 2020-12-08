@@ -23,7 +23,7 @@ namespace Elffy.AssemblyServices
     [Conditional("COMPILE_TIME_ONLY")]  // This attribute is not included in the assembly.
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Method | AttributeTargets.Constructor,
                     AllowMultiple = false, Inherited = false)]
-    public class CriticalDotnetDependencyAttribute : Attribute
+    internal class CriticalDotnetDependencyAttribute : Attribute
     {
         public CriticalDotnetDependencyAttribute(string description = "")
         {
