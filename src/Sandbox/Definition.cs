@@ -74,7 +74,7 @@ namespace Sandbox
             {
                 Debug.Assert(sender is DirectLight);
                 var light = Unsafe.As<DirectLight>(sender);
-                var frameNum = Screen.FrameNum;
+                var frameNum = Game.FrameNum;
                 var rotation = new Quaternion(Vector3.UnitX, (frameNum / 60f * 60).ToRadian());
                 light.Direction = rotation * new Vector3(0, -1, 0);
             };
@@ -89,8 +89,8 @@ namespace Sandbox
         private static UniTask<CameraMouse> DefineCameraMouse()
         {
             var cameraTarget = new Vector3(0, 3, 0);
-            Screen.Camera.LookAt(cameraTarget, new Vector3(0, 4.5f, 20) * 1);
-            var cameraMouse = new CameraMouse(Screen.Camera, Screen.Mouse, cameraTarget);
+            Game.Camera.LookAt(cameraTarget, new Vector3(0, 4.5f, 20) * 1);
+            var cameraMouse = new CameraMouse(Game.Camera, Game.Mouse, cameraTarget);
             cameraMouse.Activate();
             return new(cameraMouse);
         }
@@ -161,9 +161,9 @@ namespace Sandbox
         {
             return new UniTask<Func<Model3D, UniTaskVoid>>(async (Model3D model) =>
             {
-                var startTime = Screen.Time.TotalSeconds;
+                var startTime = Game.Time.TotalSeconds;
                 while(!model.IsDead && !model.IsFrozen) {
-                    var theta = MathF.PI * 2 * (float)(startTime - Screen.Time.TotalSeconds);
+                    var theta = MathF.PI * 2 * (float)(startTime - Game.Time.TotalSeconds);
                     var scale = 0.5f + 0.1f * MathF.Sin(theta);
                     model.Scale = new Vector3(scale);
                     await Timing.ToUpdate();
@@ -217,7 +217,7 @@ namespace Sandbox
             {
                 Debug.Assert(sender is Cube);
                 var cube = Unsafe.As<Cube>(sender);
-                var p = Screen.FrameNum / 60f * 30f;
+                var p = Game.FrameNum / 60f * 30f;
                 cube.Rotation = new Quaternion(Vector3.UnitY, p.ToRadian());
             };
             cube.Activate();
@@ -268,24 +268,24 @@ namespace Sandbox
         {
             while(true) {
                 await Timing.ToUpdate();
-                if(Screen.Keyboard.IsDown(Keys.S, KeyModifiers.Control)) {
-                    Debug.WriteLine($"{Screen.FrameNum}: Ctrl+S down");
+                if(Game.Keyboard.IsDown(Keys.S, KeyModifiers.Control)) {
+                    Debug.WriteLine($"{Game.FrameNum}: Ctrl+S down");
                 }
-                if(Screen.Keyboard.IsPress(Keys.S, KeyModifiers.Control)) {
-                    Debug.WriteLine($"{Screen.FrameNum}: Ctrl+S press");
+                if(Game.Keyboard.IsPress(Keys.S, KeyModifiers.Control)) {
+                    Debug.WriteLine($"{Game.FrameNum}: Ctrl+S press");
                 }
-                if(Screen.Keyboard.IsUp(Keys.S, KeyModifiers.Control)) {
-                    Debug.WriteLine($"{Screen.FrameNum}: Ctrl+S up");
+                if(Game.Keyboard.IsUp(Keys.S, KeyModifiers.Control)) {
+                    Debug.WriteLine($"{Game.FrameNum}: Ctrl+S up");
                 }
 
-                if(Screen.Keyboard.IsDown(Keys.A)) {
-                    Debug.WriteLine($"{Screen.FrameNum}: A down");
+                if(Game.Keyboard.IsDown(Keys.A)) {
+                    Debug.WriteLine($"{Game.FrameNum}: A down");
                 }
-                if(Screen.Keyboard.IsPress(Keys.A)) {
-                    Debug.WriteLine($"{Screen.FrameNum}: A press");
+                if(Game.Keyboard.IsPress(Keys.A)) {
+                    Debug.WriteLine($"{Game.FrameNum}: A press");
                 }
-                if(Screen.Keyboard.IsUp(Keys.A)) {
-                    Debug.WriteLine($"{Screen.FrameNum}: A up");
+                if(Game.Keyboard.IsUp(Keys.A)) {
+                    Debug.WriteLine($"{Game.FrameNum}: A up");
                 }
             }
         }

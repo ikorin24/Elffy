@@ -55,7 +55,7 @@ namespace Sandbox
         static async UniTaskVoid Hoge()
         {
             var tmp = new Cube() { IsVisible = false, };
-            var gBuffer = new GBuffer(Screen.Instance);
+            var gBuffer = new GBuffer(Game.Screen);
             var program = gBuffer.PostProcess.Compile();
             tmp.Terminated += _ =>
             {
@@ -70,7 +70,7 @@ namespace Sandbox
 
                 await Timing.ToAfterRendering();
                 FBO.Unbind(FBO.Target.FrameBuffer);
-                program.Render(Screen.Size);
+                program.Render(Game.Screen.ClientSize);
             }
 
 

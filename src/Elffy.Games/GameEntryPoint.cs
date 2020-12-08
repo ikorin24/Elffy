@@ -11,21 +11,12 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy
 {
+    /// <summary>Game entry point class</summary>
     public static class GameEntryPoint
     {
         private static Action _initialize = null!;
 
-        /// <summary>Start game without resource</summary>
-        /// <param name="width">game screen width</param>
-        /// <param name="height">game screen height</param>
-        /// <param name="title">game screen title</param>
-        /// <param name="initialize">entry point of the game</param>
-        public static void Start(int width, int height, string title, Action initialize)
-        {
-            Start(width, height, title, null, null, initialize);
-        }
-
-        /// <summary>Start game with specified resource file</summary>
+        /// <summary>Start game</summary>
         /// <param name="width">game screen width</param>
         /// <param name="height">game screen height</param>
         /// <param name="title">game screen title</param>
@@ -80,7 +71,7 @@ namespace Elffy
             }
         }
 
-        public static void SetScreen(IHostScreen screen)
+        private static void SetScreen(IHostScreen screen)
         {
             if(screen is null) {
                 ThrowNullArg();
@@ -88,7 +79,7 @@ namespace Elffy
             }
 
             Timing.Initialize(screen.AsyncBack);
-            Screen.Initialize(screen);
+            Game.Initialize(screen);
             GameUI.Initialize(screen.UIRoot);
         }
 

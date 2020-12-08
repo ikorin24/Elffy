@@ -1,8 +1,8 @@
 ﻿#nullable enable
 using System;
-using Elffy.Threading;
 using Elffy.Core;
 using Elffy.AssemblyServices;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy
 {
@@ -43,7 +43,6 @@ namespace Elffy
         {
             if(IsRunning) {
                 ThrowAlreadyRunning();
-                static void ThrowAlreadyRunning() => throw new InvalidOperationException("Engine is already runnning.");
             }
             IsRunning = true;
         }
@@ -75,6 +74,10 @@ namespace Elffy
             }
         }
 
+        [DoesNotReturn]
         private static void ThrowNotRunning() => throw new InvalidOperationException("Engine is not running");
+
+        [DoesNotReturn]
+        private static void ThrowAlreadyRunning() => throw new InvalidOperationException("Engine is already runnning.");
     }
 }

@@ -105,8 +105,8 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static async UniTask DelayTime(TimeSpan time, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
         {
-            var start = Screen.Time;
-            while(Screen.Time - start < time) {
+            var start = Game.Time;
+            while(Game.Time - start < time) {
                 await ToFrameLoopTiming(timing, cancellationToken);
             }
         }

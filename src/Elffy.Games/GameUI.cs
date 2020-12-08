@@ -3,6 +3,7 @@ using Elffy.UI;
 
 namespace Elffy
 {
+    /// <summary>Provides game UI</summary>
     public static class GameUI
     {
         private static RootPanel? _rootPanel = null;
