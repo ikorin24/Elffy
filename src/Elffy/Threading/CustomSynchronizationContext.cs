@@ -5,7 +5,7 @@ using System.ComponentModel;
 
 namespace Elffy.Threading
 {
-    /// <summary>スレッドの同期コンテキストクラスです</summary>
+    /// <summary>Custom <see cref="SynchronizationContext"/> context class</summary>
     public sealed class CustomSynchronizationContext : SynchronizationContext
     {
         private readonly SyncContextReceiver _syncContextReceiver;
@@ -67,7 +67,7 @@ namespace Elffy.Threading
         internal static void Restore()
         {
             if(AsyncOperationManager.SynchronizationContext is CustomSynchronizationContext) {
-                AsyncOperationManager.SynchronizationContext = _previousSyncContext;
+                AsyncOperationManager.SynchronizationContext = _previousSyncContext!;   // It is valid to set null
                 _previousSyncContext = null;
             }
         }
