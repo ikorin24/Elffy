@@ -1,20 +1,22 @@
 ﻿#nullable enable
-using OpenTK.Graphics.OpenGL4;
 using System;
-using Elffy.Effective;
+using System.IO;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Elffy.Core;
-using System.IO;
 using System.Threading.Tasks;
+using System.Runtime.InteropServices;
+using System.Collections.Generic;
+using Elffy.Effective;
+using Elffy.Core;
 using Elffy.Shading;
 using Elffy.AssemblyServices;
 using Elffy.Effective.Unsafes;
-using System.Runtime.InteropServices;
-using System.Collections.Generic;
+using OpenTK.Graphics.OpenGL4;
 
 namespace Elffy.OpenGL
 {
+#if SHADER_PRECOMPILE   // Not implemented yet
+
     [Obsolete("未実装", true)]     // ファイルにプリコンパイルしたバイナリのロードはとりあえず未実装に
     internal static class ShaderPrecompileHelper
     {
@@ -143,4 +145,6 @@ namespace Elffy.OpenGL
     {
         public static readonly Dictionary<Type, int> RefCountTable = new Dictionary<Type, int>();
     }
+
+#endif 
 }
