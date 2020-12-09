@@ -2,44 +2,67 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using Cysharp.Threading.Tasks;
 using Elffy.Core;
 using Elffy.Effective;
 
 namespace Elffy.Shapes
 {
-    public unsafe class Model3D : Renderable
+    public sealed class Model3D : Renderable
     {
         private object? _obj;
-        private delegate*<Model3D, object?, Delegate, void> _callbackOnActivated;  // void func(Model3D self, object obj, Delegate loader)
+        private unsafe delegate*<Model3D, object?, Delegate, UniTask> _callbackOnActivated;  // UniTask func(Model3D self, object? obj, Delegate builder)
         private Delegate? _builder;
+        private readonly Model3DRenderingDelegate? _onRendering;
 
-        private Model3D(object? obj, delegate*<Model3D, object?, Delegate, void> callbackOnAlive, Delegate builder)
+        private unsafe Model3D(object? obj,
+                               delegate*<Model3D, object?, Delegate, UniTask> callbackOnAlive,
+                               Delegate builder,
+                               Model3DRenderingDelegate? onRendering)
         {
             Debug.Assert(builder is not null);
             _obj = obj;
             _callbackOnActivated = callbackOnAlive;
             _builder = builder;
+            _onRendering = onRendering;
         }
 
-        protected override void OnActivated()
+        protected override async void OnActivated()
         {
             base.OnActivated();
             if(IsTerminated) {
                 return;
             }
             Debug.Assert(_builder is not null);
-            Debug.Assert(_callbackOnActivated is not null);
+            unsafe {
+                Debug.Assert(_callbackOnActivated is not null);
+            }
 
             try {
-                _callbackOnActivated(this, _obj, _builder);
+                await InvokeCallback(this, _obj, _builder);
+
+                unsafe UniTask InvokeCallback(Model3D model, object? obj, Delegate builder) => _callbackOnActivated(model, obj, builder);
             }
             catch {
                 Terminate();
+                // Don't throw. No one can catch it.
             }
             finally {
                 _obj = null;
-                _callbackOnActivated = null;
                 _builder = null;
+                unsafe {
+                    _callbackOnActivated = null;
+                }
+            }
+        }
+
+        protected override void OnRendering(in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        {
+            if(_onRendering is null) {
+                base.OnRendering(model, view, projection);
+            }
+            else {
+                _onRendering.Invoke(this, model, view, projection, new(this));
             }
         }
 
@@ -51,23 +74,35 @@ namespace Elffy.Shapes
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Model3D Create<T>(T? obj, Action<T, Model3D, Model3DLoadDelegate> builder) where T : class
+        internal void DrawElementsInternal(int startIndex, int indexCount)
         {
-            return new Model3D(obj, &CallbackOnActivated, builder);
+            DrawElements(indexCount, startIndex * sizeof(int));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe Model3D Create<T>(T? obj,
+                                               Model3DBuilderDelegate<T> builder,
+                                               Model3DRenderingDelegate? onRendering = null) where T : class
+        {
+            return new Model3D(obj, &CallbackOnActivated, builder, onRendering);
 
             // ジェネリクス型<T>をローカル関数に含め、関数ポインタを渡すことで、
             // builder の呼び出しを OnActivated() まで遅延させつつ、<T>を復元できる。
-            static void CallbackOnActivated(Model3D model, object? obj, Delegate builder)
+            static UniTask CallbackOnActivated(Model3D model, object? obj, Delegate builder)
             {
                 // Restore types of builder and obj.
-                var typedBuilder = SafeCast.As<Action<T, Model3D, Model3DLoadDelegate>>(builder);
+                var typedBuilder = SafeCast.As<Model3DBuilderDelegate<T>>(builder);
                 var typedObj = SafeCast.As<T>(obj);
                 
                 // Call builder
-                typedBuilder(typedObj, model, new Model3DLoadDelegate(model));
+                return typedBuilder(typedObj, model, new Model3DLoadDelegate(model));
             }
         }
     }
+
+    public delegate UniTask Model3DBuilderDelegate<T>(T obj, Model3D model3D, Model3DLoadDelegate load) where T : class;
+
+    public delegate void Model3DRenderingDelegate(Model3D model3D, in Matrix4 model, in Matrix4 view, in Matrix4 projection, Model3DDrawElementsDelegate drawElements);
 
     public readonly struct Model3DLoadDelegate
     {
@@ -96,6 +131,28 @@ namespace Elffy.Shapes
         public void Invoke<TVertex>(Span<TVertex> vertices, Span<int> indices) where TVertex : unmanaged
         {
             _model.LoadGraphicBufferInternal(vertices.AsReadOnly(), indices.AsReadOnly());
+        }
+    }
+
+    public readonly struct Model3DDrawElementsDelegate
+    {
+        private readonly Model3D _model;
+
+        internal Model3DDrawElementsDelegate(Model3D model)
+        {
+            _model = model;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Invoke()
+        {
+            _model.DrawElementsInternal(0, _model.IBO.Length);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Invoke(int startIndex, int indexCount)
+        {
+            _model.DrawElementsInternal(startIndex, indexCount);
         }
     }
 }

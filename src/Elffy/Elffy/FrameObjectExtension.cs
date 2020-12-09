@@ -34,29 +34,53 @@ namespace Elffy
         //
         // =======================================================================================
 
-        /// <summary>Wait until <see cref="Renderable.IsLoaded"/> get true. (If not <see cref="Renderable"/>, no waiting.)</summary>
+        /// <summary>Wait until <see cref="Renderable.IsLoaded"/> get true or <see cref="FrameObject.IsDead"/> get true. </summary>
+        /// <remarks>If not <see cref="Renderable"/>, no waiting.</remarks>
         /// <param name="timing">frame loop timing to get back</param>
         /// <param name="cancellationToken">cancellation token</param>
         /// <returns>awaitable object</returns>
-        public static UniTask WaitUntilLoaded(this FrameObject source, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
+        public static UniTask<bool> WaitLoadedOrDead(this FrameObject source, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
         {
             if(source is null) {
                 ThrowNullArg();
                 [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(source));
             }
 
-            // [NoTE] See class comment of state transition
+            // [NOTE] See class comment of state transition
 
             // Early return if not Renderable or already loaded.
             if(source is Renderable renderable) {
-                return renderable.IsLoaded ? UniTask.CompletedTask : Wait(renderable, timing, cancellationToken);
+                if(renderable.HostScreen.IsThreadMain()) {
+                    if(renderable.IsLoaded && !renderable.IsDead) {
+                        return new(true);
+                    }
+                    else {
+                        return Wait(true, renderable, timing, cancellationToken);
+                    }
+                }
+                else {
+                    return Wait(false, renderable, timing, cancellationToken);
+                }
             }
-            return UniTask.CompletedTask;
+            else {
+                return (source.IsNew || source.IsDead) ? new(false) : new(true);
+            }
 
-            static async UniTask Wait(Renderable renderable, FrameLoopTiming timing, CancellationToken cancellationToken)
+            static async UniTask<bool> Wait(bool isMainThreadNow, Renderable renderable, FrameLoopTiming timing, CancellationToken cancellationToken)
             {
-                while(renderable.IsLoaded == false) {
+                if(!isMainThreadNow) {
                     await renderable.HostScreen.AsyncBack.ToFrameLoopEvent(timing, cancellationToken);
+                }
+                while(true) {
+                    if(renderable.IsDead) {
+                        return false;
+                    }
+                    else if(renderable.IsLoaded) {
+                        return true;
+                    }
+                    else {
+                        await renderable.HostScreen.AsyncBack.ToFrameLoopEvent(timing, cancellationToken);
+                    }
                 }
             }
         }

@@ -63,7 +63,7 @@ namespace Elffy.Core
         }
 
         /// <summary>Not null if <see cref="IsLoaded"/> == true</summary>
-        protected ShaderProgram? ShaderProgram => _shaderProgram;
+        public ShaderProgram? ShaderProgram => _shaderProgram;
 
         /// <summary>Before-rendering event</summary>
         public event RenderingEventHandler? Rendering;

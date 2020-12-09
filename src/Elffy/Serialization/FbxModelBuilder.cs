@@ -50,13 +50,14 @@ namespace Elffy.Serialization
                 // Parse fbx file
                 using(var fbx = FbxParser.Parse(resourceLoader.GetStream(name))) {
                     // build model
-                    BuildCore(fbx, model, load, token);
+                    await BuildCore(fbx, model, load, token);
                 }
             });
         }
 
-        private static void BuildCore(FbxObject fbx, Model3D model, Model3DLoadDelegate load, CancellationToken cancellationToken)
+        private static UniTask BuildCore(FbxObject fbx, Model3D model, Model3DLoadDelegate load, CancellationToken cancellationToken)
         {
+            throw new NotImplementedException();        // TODO: fix
             Debug.Assert(model.HostScreen.IsThreadMain() == false);
 
             // Get "Objects" node

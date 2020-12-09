@@ -9,7 +9,7 @@ using System.Collections.Generic;
 
 namespace Elffy.Shading
 {
-    public sealed class ShaderProgram : IDisposable
+    public sealed class ShaderProgram : IDisposable // TODO: IDisposable をやめる、internal からしか破棄できないようにする
     {
         private static readonly Dictionary<ShaderSource, (ProgramObject po, int count)> _onMemoryCache
             = new Dictionary<ShaderSource, (ProgramObject po, int count)>();

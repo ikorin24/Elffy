@@ -15,23 +15,30 @@ namespace Sandbox
         {
             Definition.Initialize();
 
-            Hoge().Forget();
+            //Hoge().Forget();
 
             await Definition.GenCameraMouse();
-            new Cube()
-            {
-                Shader = DeferedRenderingShaderSource.Instance,
-            }.Activate();
 
-            for(int x = -3; x < 4; x++) {
-                for(int y = -3; y < 4; y++) {
-                    var d = Resources.Loader.CreateFbxModel("Dice.fbx");
-                    d.Shader = DeferedRenderingShaderSource.Instance;
-                    d.Position = new(x, y, 0);
-                    d.Scale = new(0.4f);
-                    d.Activate();
-                }
-            }
+            var alicia = Elffy.Serialization.PmxModelBuilder.CreateLazyLoadingPmx(Resources.Loader, "Alicia/Alicia_solid.pmx");
+            alicia.Activate();
+            var successed = await alicia.WaitLoadedOrDead();
+            System.Diagnostics.Debug.WriteLine($"alicia loaded : {successed}");
+            //Resources.Loader
+
+            //new Cube()
+            //{
+            //    Shader = DeferedRenderingShaderSource.Instance,
+            //}.Activate();
+
+            //for(int x = -3; x < 4; x++) {
+            //    for(int y = -3; y < 4; y++) {
+            //        var d = Resources.Loader.CreateFbxModel("Dice.fbx");
+            //        d.Shader = DeferedRenderingShaderSource.Instance;
+            //        d.Position = new(x, y, 0);
+            //        d.Scale = new(0.4f);
+            //        d.Activate();
+            //    }
+            //}
 
             //await Definition.GenUI();
 

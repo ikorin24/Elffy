@@ -50,6 +50,19 @@ namespace Elffy.Effective
             get => _length == 0;
         }
 
+        public readonly ref T this[int index]
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                if((uint)index >= (uint)_length) {
+                    ThrowOutOfRange();
+                    static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(index));
+                }
+                return ref Unsafe.Add(ref GetReference(), index);
+            }
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe RefTypeRentMemory(int length)
         {
