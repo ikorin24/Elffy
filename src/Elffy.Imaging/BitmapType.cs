@@ -7,5 +7,6 @@ namespace Elffy.Imaging
         Png,
         Jpg,
         Tga,
+        Bmp,
     }
 }

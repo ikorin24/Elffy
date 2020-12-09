@@ -16,6 +16,7 @@ namespace Elffy.Imaging
             switch(type) {
                 case BitmapType.Png:
                 case BitmapType.Jpg:
+                case BitmapType.Bmp:
                     return new Bitmap(stream);
                 case BitmapType.Tga:
                     return TgaParser.Parse(stream);
@@ -37,6 +38,9 @@ namespace Elffy.Imaging
             }
             else if(StringEquals(ext, ".tga")) {
                 return BitmapType.Tga;
+            }
+            else if(StringEquals(ext, ".bmp")) {
+                return BitmapType.Bmp;
             }
             else {
                 throw new NotSupportedException($"Not supported extension. {ext.ToString()}");
