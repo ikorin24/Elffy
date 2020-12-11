@@ -51,6 +51,9 @@ namespace Elffy
 
         public bool IsDead => _state == LifeState.Dead;
 
+        /// <summary>Get whether the <see cref="FrameObject"/> is running in the current frame. (That means <see cref="LifeState"/> is <see cref="LifeState.Alive"/> of <see cref="LifeState.Terminated"/>)</summary>
+        public bool IsRunning => _state == LifeState.Alive || _state == LifeState.Terminated;
+
         /// <summary>Get or set whether the <see cref="FrameObject"/> skips early updating, updating, and late updating. (Skips if true)</summary>
         public bool IsFrozen { get => _isFrozen; set => _isFrozen = value; }
 
