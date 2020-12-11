@@ -8,8 +8,8 @@ using Elffy.Core;
 using Elffy.Shapes;
 using StringLiteral;
 using Cysharp.Threading.Tasks;
-using UnmanageUtility;
 using FbxTools;
+using Elffy.Effective;
 
 namespace Elffy.Serialization
 {
@@ -52,59 +52,59 @@ namespace Elffy.Serialization
 
             // Parse fbx file
             using var fbx = FbxParser.Parse(resourceLoader.GetStream(name));
-            var (vertices, indices) = BuildCore(fbx, token);
-            using(vertices)
-            using(indices) {
+            var vertices = new UnsafeRawList<Vertex>();
+            var indices = new UnsafeRawList<int>();
+            try {
+                BuildCore(fbx, token, ref vertices, ref indices);
 
                 //      ↑ thread pool
                 // --------------------------------------
                 await model.HostScreen.AsyncBack.ToFrameLoopEvent(FrameLoopTiming.Update, token);
                 // --------------------------------------
                 //      ↓ main thread
+
                 if(model.LifeState == LifeState.Activated || model.LifeState == LifeState.Alive) {
                     load.Invoke(vertices.AsSpan(), indices.AsSpan());
                 }
             }
+            finally {
+                // I don't care about thread.
+                vertices.Dispose();
+                indices.Dispose();
+            }
         }
 
-        private static (UnmanagedList<Vertex>, UnmanagedList<int>) BuildCore(FbxObject fbx, CancellationToken cancellationToken)
+        private static void BuildCore(FbxObject fbx, CancellationToken cancellationToken, ref UnsafeRawList<Vertex> vertices, ref UnsafeRawList<int> indices)
         {
+            // --------------------------------------
+            //      ↓ thread pool
+
             // Get "Objects" node
             ref readonly var objects = ref fbx.Find(FbxConsts.Objects());
 
-            var vertices = new UnmanagedList<Vertex>();
-            var indices = new UnmanagedList<int>();
-            try {
-                Span<int> indexBuffer = stackalloc int[objects.Children.Length];
-                var geometryCount = objects.FindIndexAll(FbxConsts.Geometry(), indexBuffer);
-                foreach(var i in indexBuffer.Slice(0, geometryCount)) {
+            Span<int> indexBuffer = stackalloc int[objects.Children.Length];
+            var geometryCount = objects.FindIndexAll(FbxConsts.Geometry(), indexBuffer);
+            foreach(var i in indexBuffer.Slice(0, geometryCount)) {
 
-                    // Get "Objects" -> "Geometry" node
-                    ref readonly var geometry = ref objects.Children[i];
+                // Get "Objects" -> "Geometry" node
+                ref readonly var geometry = ref objects.Children[i];
 
-                    // Get geometry data
-                    GetGeometryData(geometry,
-                                    out var id,
-                                    out var geometryName,
-                                    out var positions,
-                                    out var indicesRaw,
-                                    out var normals,
-                                    out var materials);
+                // Get geometry data
+                GetGeometryData(geometry,
+                                out var id,
+                                out var geometryName,
+                                out var positions,
+                                out var indicesRaw,
+                                out var normals,
+                                out var materials);
 
-                    vertices.Capacity += indicesRaw.Length;
-                    indices.Capacity += indicesRaw.Length;
+                vertices.Capacity += indicesRaw.Length;
+                indices.Capacity += indicesRaw.Length;
 
-                    // Resolve geometry data into vertices and indices.
-                    ResolveVertices(indicesRaw, positions, normals, vertices, indices);
-                    cancellationToken.ThrowIfCancellationRequested();
-                }
+                // Resolve geometry data into vertices and indices.
+                ResolveVertices(indicesRaw, positions, normals, ref vertices, ref indices);
+                cancellationToken.ThrowIfCancellationRequested();
             }
-            catch {
-                vertices.Dispose();
-                indices.Dispose();
-                throw;
-            }
-            return (vertices, indices);
         }
 
         private static void GetGeometryData(in FbxNode geometry,
@@ -143,8 +143,8 @@ namespace Elffy.Serialization
         private static void ResolveVertices(ReadOnlySpan<int> indicesRaw,
                                             ReadOnlySpan<double> positions,
                                             ReadOnlySpan<double> normals,
-                                            UnmanagedList<Vertex> verticesMarged,
-                                            UnmanagedList<int> indicesMarged)
+                                            ref UnsafeRawList<Vertex> verticesMarged,
+                                            ref UnsafeRawList<int> indicesMarged)
         {
             // positions の数は幾何的な頂点の数
             // normals の数は属性が同じ頂点の数 (属性: 座標・法線・頂点色など) (== indices の数)
