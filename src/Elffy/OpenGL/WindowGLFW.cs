@@ -174,6 +174,12 @@ namespace Elffy.OpenGL
 
         public void HandleOnce()
         {
+            if(!_isLoaded) {
+                _isLoaded = true;
+                GLFW.MakeContextCurrent(_window);
+                Load?.Invoke(this);
+            }
+
             if(_isCloseRequested || IsDisposed) {
                 if(IsDisposed == false) {
                     GLFW.MakeContextCurrent(_window);
@@ -247,12 +253,6 @@ namespace Elffy.OpenGL
         {
             if(IsDisposed) { ThrowDisposed(); }
             GLFW.ShowWindow(_window);
-            if(!_isLoaded) {
-                _isLoaded = true;
-                GLFW.MakeContextCurrent(_window);
-                Load?.Invoke(this);
-                //GLFW.MakeContextCurrent(null);
-            }
         }
 
         public void Hide()
