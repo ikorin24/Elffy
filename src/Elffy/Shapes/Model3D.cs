@@ -45,6 +45,9 @@ namespace Elffy.Shapes
                 unsafe UniTask InvokeCallback(Model3D model, object? obj, Delegate builder) => _callbackOnActivated(model, obj, builder);
             }
             catch {
+                if(!HostScreen.IsThreadMain()) {
+                    await HostScreen.AsyncBack.ToFrameLoopEvent(FrameLoopTiming.Update);
+                }
                 Terminate();
                 // Don't throw. No one can catch it.
             }
