@@ -100,7 +100,7 @@ namespace Elffy.Serialization
             {
                 try {
                     await model.HostScreen.AsyncBack.ToFrameLoopEvent(FrameLoopTiming.Update, cancellationToken);
-                    if(model.LifeState == FrameObjectLifeState.Activated || model.LifeState == FrameObjectLifeState.Alive) {
+                    if(model.LifeState == LifeState.Activated || model.LifeState == LifeState.Alive) {
                         load.Invoke(vertices.AsSpan(), indices.AsSpan());
                     }
                 }

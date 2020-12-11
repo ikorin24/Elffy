@@ -14,7 +14,7 @@ namespace Elffy
         private IHostScreen? _hostScreen;
         private ILayer? _layer;
         private object? _tag;
-        private FrameObjectLifeState _state = FrameObjectLifeState.New;
+        private LifeState _state = LifeState.New;
         private bool _isFrozen;
 
         /// <summary>Event of activated, which fires when <see cref="Activate(Layer)"/> is called.</summary>
@@ -23,10 +23,10 @@ namespace Elffy
         /// <summary>Event of terminated, which fires when <see cref="Terminate"/> is called.</summary>
         public event ActionEventHandler<FrameObject>? Terminated;
 
-        /// <summary>Event of alive, which fires in the first frame where <see cref="LifeState"/> get <see cref="FrameObjectLifeState.Alive"/>.</summary>
+        /// <summary>Event of alive, which fires in the first frame where <see cref="LifeState"/> get <see cref="LifeState.Alive"/>.</summary>
         public event ActionEventHandler<FrameObject>? Alive;
 
-        /// <summary>Event of dead, which fires in the first frame where <see cref="LifeState"/> get <see cref="FrameObjectLifeState.Dead"/>.</summary>
+        /// <summary>Event of dead, which fires in the first frame where <see cref="LifeState"/> get <see cref="LifeState.Dead"/>.</summary>
         public event ActionEventHandler<FrameObject>? Dead;
 
         /// <summary>Event of early updating</summary>
@@ -39,17 +39,17 @@ namespace Elffy
         public event ActionEventHandler<FrameObject>? LateUpdated;
 
         /// <summary>Get life state of <see cref="FrameObject"/></summary>
-        public FrameObjectLifeState LifeState => _state;
+        public LifeState LifeState => _state;
 
-        public bool IsNew => _state == FrameObjectLifeState.New;
+        public bool IsNew => _state == LifeState.New;
 
-        public bool IsActivated => _state == FrameObjectLifeState.Activated;
+        public bool IsActivated => _state == LifeState.Activated;
 
-        public bool IsAlive => _state == FrameObjectLifeState.Alive;
+        public bool IsAlive => _state == LifeState.Alive;
 
-        public bool IsTerminated => _state == FrameObjectLifeState.Terminated;
+        public bool IsTerminated => _state == LifeState.Terminated;
 
-        public bool IsDead => _state == FrameObjectLifeState.Dead;
+        public bool IsDead => _state == LifeState.Dead;
 
         /// <summary>Get or set whether the <see cref="FrameObject"/> skips early updating, updating, and late updating. (Skips if true)</summary>
         public bool IsFrozen { get => _isFrozen; set => _isFrozen = value; }
@@ -105,7 +105,7 @@ namespace Elffy
         public void Activate(Layer layer)
         {
             if(layer is null) { ThrowNullArg(); }
-            if(_state != FrameObjectLifeState.New) { return; }
+            if(_state != LifeState.New) { return; }
 
             var screen = GetHostScreen(layer);
             if(screen is null) {
@@ -114,7 +114,7 @@ namespace Elffy
             screen.ThrowIfNotMainThread();
             _hostScreen = screen;
 
-            _state = FrameObjectLifeState.Activated;
+            _state = LifeState.Activated;
             _layer = layer;
             layer!.AddFrameObject(this);
             OnActivated();
@@ -126,13 +126,13 @@ namespace Elffy
         internal void Activate<TLayer>(TLayer layer) where TLayer : class, ILayer
         {
             if(layer is null) { ThrowNullArg(); }
-            if(_state != FrameObjectLifeState.New) { return; }
+            if(_state != LifeState.New) { return; }
 
             Debug.Assert(layer is Layer == false, $"'{typeof(Layer)}' type can't pass here. Where are you from ?");
             Debug.Assert(layer!.OwnerCollection is null == false);
             Debug.Assert(GetHostScreen(layer)!.IsThreadMain());
 
-            _state = FrameObjectLifeState.Activated;
+            _state = LifeState.Activated;
             _layer = layer;
             layer.AddFrameObject(this);
             OnActivated();
@@ -145,13 +145,13 @@ namespace Elffy
         {
             HostScreen.ThrowIfNotMainThread();
 
-            if(_state != FrameObjectLifeState.Activated && _state != FrameObjectLifeState.Alive) {
+            if(_state != LifeState.Activated && _state != LifeState.Alive) {
                 return;
             }
 
             Debug.Assert(_layer is not null);
 
-            _state = FrameObjectLifeState.Terminated;
+            _state = LifeState.Terminated;
             _layer.RemoveFrameObject(this);
             OnTerminated();
         }
@@ -172,15 +172,15 @@ namespace Elffy
 
         internal void AddToObjectStoreCallback()
         {
-            Debug.Assert(_state == FrameObjectLifeState.Activated);
-            _state = FrameObjectLifeState.Alive;
+            Debug.Assert(_state == LifeState.Activated);
+            _state = LifeState.Alive;
             OnAlive();
         }
 
         internal void RemovedFromObjectStoreCallback()
         {
-            Debug.Assert(_state == FrameObjectLifeState.Terminated);
-            _state = FrameObjectLifeState.Dead;
+            Debug.Assert(_state == LifeState.Terminated);
+            _state = LifeState.Dead;
             _layer = null;
             _hostScreen = null;
             OnDead();

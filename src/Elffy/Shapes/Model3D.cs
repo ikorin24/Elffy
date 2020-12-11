@@ -31,7 +31,7 @@ namespace Elffy.Shapes
         protected override async void OnActivated()
         {
             base.OnActivated();
-            if(LifeState == FrameObjectLifeState.Terminated) {  // if terminated in event of activation
+            if(LifeState == LifeState.Terminated) {  // if terminated in event of activation
                 return;
             }
             Debug.Assert(_builder is not null);

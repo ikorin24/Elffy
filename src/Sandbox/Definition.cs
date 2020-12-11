@@ -161,7 +161,7 @@ namespace Sandbox
             return new UniTask<Func<Model3D, UniTaskVoid>>(async (Model3D model) =>
             {
                 var startTime = Game.Time.TotalSeconds;
-                while(model.LifeState != FrameObjectLifeState.Dead && !model.IsFrozen) {
+                while(model.LifeState != LifeState.Dead && !model.IsFrozen) {
                     var theta = MathF.PI * 2 * (float)(startTime - Game.Time.TotalSeconds);
                     var scale = 0.5f + 0.1f * MathF.Sin(theta);
                     model.Scale = new Vector3(scale);

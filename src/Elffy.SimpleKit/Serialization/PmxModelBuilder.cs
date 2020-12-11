@@ -40,7 +40,7 @@ namespace Elffy.Serialization
             {
                 obj.CancellationToken.ThrowIfCancellationRequested();
 
-                Debug.Assert(model.LifeState == FrameObjectLifeState.Activated || model.LifeState == FrameObjectLifeState.Alive);
+                Debug.Assert(model.LifeState == LifeState.Activated || model.LifeState == LifeState.Alive);
 
                 // Run on thread pool
                 await UniTask.SwitchToThreadPool();
@@ -148,7 +148,7 @@ namespace Elffy.Serialization
                 // ------------------------------
                 //      ↓ main thread
                 Debug.Assert(model.HostScreen.IsThreadMain());
-                if(model.LifeState == FrameObjectLifeState.Activated || model.LifeState == FrameObjectLifeState.Alive) {
+                if(model.LifeState == LifeState.Activated || model.LifeState == LifeState.Alive) {
                     // create skeleton
                     var skeleton = new Skeleton();
                     skeleton.Load(bones.AsSpan());
