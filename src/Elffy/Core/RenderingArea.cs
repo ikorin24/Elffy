@@ -155,7 +155,7 @@ namespace Elffy.Core
             // Render
 
             FBO.Bind(FBO.Empty, FBO.Target.FrameBuffer);
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            ElffyGL.Clear(ElffyGL.ClearBufferMask.ColorBufferBit | ElffyGL.ClearBufferMask.DepthBufferBit);
             AsyncBack.DoQueuedEvents(FrameLoopTiming.BeforeRendering);
             foreach(var layer in layers) {
                 if(layer.IsVisible) {
