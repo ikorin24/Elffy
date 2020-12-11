@@ -7,6 +7,7 @@ using Elffy.Shapes;
 using SkiaSharp;
 using System;
 using System.IO;
+using System.Threading;
 
 namespace Elffy
 {
@@ -58,9 +59,9 @@ namespace Elffy
             Texture Load() => LoadTexture(source, name, bitmapType, expansionMode, shrinkMode, mipmapMode);
         }
 
-        public static Model3D CreateFbxModel(this IResourceLoader source, string name)
+        public static Model3D CreateFbxModel(this IResourceLoader source, string name, CancellationToken cancellationToken = default)
         {
-            return FbxModelBuilder.CreateLazyLoadingFbx(source, name);
+            return FbxModelBuilder.CreateLazyLoadingFbx(source, name, cancellationToken);
         }
 
         public static unsafe SKTypeface LoadTypeface(this IResourceLoader source, string name, int fontFaceIndex = 0)
