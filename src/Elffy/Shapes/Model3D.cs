@@ -2,6 +2,7 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Diagnostics.CodeAnalysis;
 using Cysharp.Threading.Tasks;
 using Elffy.Core;
 using Elffy.Effective;
@@ -30,7 +31,7 @@ namespace Elffy.Shapes
         protected override async void OnActivated()
         {
             base.OnActivated();
-            if(IsTerminated) {
+            if(LifeState == FrameObjectLifeState.Terminated) {  // if terminated in event of activation
                 return;
             }
             Debug.Assert(_builder is not null);
@@ -73,17 +74,29 @@ namespace Elffy.Shapes
             LoadGraphicBuffer(vertices, indices);
         }
 
+        // This method is used by Model3DLoadDelegate
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void DrawElementsInternal(int startIndex, int indexCount)
         {
             DrawElements(indexCount, startIndex * sizeof(int));
         }
 
+        /// <summary>Create new <see cref="Model3D"/> by using specified builder.</summary>
+        /// <typeparam name="T">type of the builder argument</typeparam>
+        /// <param name="obj">the argument of the builder</param>
+        /// <param name="builder">builder method delegate</param>
+        /// <param name="onRendering">rendering method delegate (null if use default rendering)</param>
+        /// <returns>new <see cref="Model3D"/> instance</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe Model3D Create<T>(T? obj,
                                                Model3DBuilderDelegate<T> builder,
                                                Model3DRenderingDelegate? onRendering = null) where T : class
         {
+            if(builder is null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(builder));
+            }
+
             return new Model3D(obj, &CallbackOnActivated, builder, onRendering);
 
             // ジェネリクス型<T>をローカル関数に含め、関数ポインタを渡すことで、

@@ -34,7 +34,7 @@ namespace Elffy
         //
         // =======================================================================================
 
-        /// <summary>Wait until <see cref="Renderable.IsLoaded"/> get true or <see cref="FrameObject.IsDead"/> get true. </summary>
+        /// <summary>Wait until <see cref="Renderable.IsLoaded"/> get true or <see cref="FrameObject.LifeState"/> get <see cref="FrameObjectLifeState.Dead"/>. </summary>
         /// <remarks>If not <see cref="Renderable"/>, no waiting.</remarks>
         /// <param name="timing">frame loop timing to get back</param>
         /// <param name="cancellationToken">cancellation token</param>
@@ -51,7 +51,7 @@ namespace Elffy
             // Early return if not Renderable or already loaded.
             if(source is Renderable renderable) {
                 if(renderable.HostScreen.IsThreadMain()) {
-                    if(renderable.IsLoaded && !renderable.IsDead) {
+                    if(renderable.IsLoaded && renderable.LifeState != FrameObjectLifeState.Dead) {
                         return new(true);
                     }
                     else {
@@ -63,7 +63,7 @@ namespace Elffy
                 }
             }
             else {
-                return (source.IsNew || source.IsDead) ? new(false) : new(true);
+                return (source.LifeState == FrameObjectLifeState.New || source.LifeState == FrameObjectLifeState.Dead) ? new(false) : new(true);
             }
 
             static async UniTask<bool> Wait(bool isMainThreadNow, Renderable renderable, FrameLoopTiming timing, CancellationToken cancellationToken)
@@ -72,7 +72,7 @@ namespace Elffy
                     await renderable.HostScreen.AsyncBack.ToFrameLoopEvent(timing, cancellationToken);
                 }
                 while(true) {
-                    if(renderable.IsDead) {
+                    if(renderable.LifeState == FrameObjectLifeState.Dead) {
                         return false;
                     }
                     else if(renderable.IsLoaded) {

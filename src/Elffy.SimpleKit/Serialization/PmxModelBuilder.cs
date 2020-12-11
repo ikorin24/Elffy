@@ -12,6 +12,7 @@ using Elffy.Imaging;
 using Elffy.Effective.Unsafes;
 using Elffy.Components;
 using Elffy.OpenGL;
+using Elffy.Core;
 using Cysharp.Threading.Tasks;
 using UnmanageUtility;
 using MMDTools.Unmanaged;
@@ -38,6 +39,8 @@ namespace Elffy.Serialization
                 builder: static async (obj, model, load) =>
             {
                 obj.CancellationToken.ThrowIfCancellationRequested();
+
+                Debug.Assert(model.LifeState == FrameObjectLifeState.Activated || model.LifeState == FrameObjectLifeState.Alive);
 
                 // Run on thread pool
                 await UniTask.SwitchToThreadPool();
@@ -145,7 +148,7 @@ namespace Elffy.Serialization
                 // ------------------------------
                 //      ↓ main thread
                 Debug.Assert(model.HostScreen.IsThreadMain());
-                if(model.IsActivated || model.IsAlive) {
+                if(model.LifeState == FrameObjectLifeState.Activated || model.LifeState == FrameObjectLifeState.Alive) {
                     // create skeleton
                     var skeleton = new Skeleton();
                     skeleton.Load(bones.AsSpan());

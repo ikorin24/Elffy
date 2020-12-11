@@ -2,15 +2,13 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Diagnostics.CodeAnalysis;
 using Elffy.Core;
 using Elffy.AssemblyServices;
 
 namespace Elffy
 {
-    /// <summary>
-    /// フレーム更新に関わるオブジェクトの基底クラス<para/>
-    /// フレームに関する操作・エンジンによって管理されるための操作を提供します。<para/>
-    /// </summary>
+    /// <summary>The base class which is controlled by the engine. It provides frame update operations and operations to be managed by the engine.</summary>
     public abstract class FrameObject
     {
         private IHostScreen? _hostScreen;
@@ -19,21 +17,28 @@ namespace Elffy
         private FrameObjectLifeState _state = FrameObjectLifeState.New;
         private bool _isFrozen;
 
-        /// <summary><see cref="Activate(Elffy.Layer)"/> が呼ばれたときのイベント</summary>
+        /// <summary>Event of activated, which fires when <see cref="Activate(Layer)"/> is called.</summary>
         public event ActionEventHandler<FrameObject>? Activated;
-        /// <summary><see cref="Terminate"/> が呼ばれたときのイベント</summary>
+
+        /// <summary>Event of terminated, which fires when <see cref="Terminate"/> is called.</summary>
         public event ActionEventHandler<FrameObject>? Terminated;
-        /// <summary><see cref="IsAlive"/> が true になった最初のフレームに発火するイベント</summary>
+
+        /// <summary>Event of alive, which fires in the first frame where <see cref="LifeState"/> get <see cref="FrameObjectLifeState.Alive"/>.</summary>
         public event ActionEventHandler<FrameObject>? Alive;
-        /// <summary><see cref="IsAlive"/> が false になった最初のフレームに発火するベント</summary>
+
+        /// <summary>Event of dead, which fires in the first frame where <see cref="LifeState"/> get <see cref="FrameObjectLifeState.Dead"/>.</summary>
         public event ActionEventHandler<FrameObject>? Dead;
-        /// <summary>事前更新時イベント</summary>
+
+        /// <summary>Event of early updating</summary>
         public event ActionEventHandler<FrameObject>? EarlyUpdated;
-        /// <summary>更新時イベント</summary>
+
+        /// <summary>Event of updating</summary>
         public event ActionEventHandler<FrameObject>? Updated;
-        /// <summary>事後更新時イベント</summary>
+
+        /// <summary>Event of late updating</summary>
         public event ActionEventHandler<FrameObject>? LateUpdated;
 
+        /// <summary>Get life state of <see cref="FrameObject"/></summary>
         public FrameObjectLifeState LifeState => _state;
 
         public bool IsNew => _state == FrameObjectLifeState.New;
@@ -46,21 +51,21 @@ namespace Elffy
 
         public bool IsDead => _state == FrameObjectLifeState.Dead;
 
-        /// <summary>フレームのUpdate処理をスキップするかどうかを返します</summary>
+        /// <summary>Get or set whether the <see cref="FrameObject"/> skips early updating, updating, and late updating. (Skips if true)</summary>
         public bool IsFrozen { get => _isFrozen; set => _isFrozen = value; }
 
-        /// <summary>このオブジェクトに付けられたタグ</summary>
+        /// <summary>Get or set the tag.</summary>
+        /// <remarks>The engine does not use the tag for any purpose.</remarks>
         public object? Tag { get => _tag; set => _tag = value; }
 
-        /// <summary>
-        /// このオブジェクトが所属するレイヤー。
-        /// <see cref="Activate(Elffy.Layer)"/> が呼ばれてから <see cref="Terminate"/> が呼ばれるまでの間は常にインスタンスを持ち、それ以外の場合常に null です。
-        /// </summary>
+        /// <summary>Get the layer where the <see cref="FrameObject"/> is.</summary>
         private protected ILayer? InternalLayer => _layer;
 
+        // [NOTE]
+        // DON'T call this property of the object which is on the internal layer. (e.g. UIRenderable.)
+        // Use 'InternalLayer' property instead.
 
-        // Layer クラス以外の internal なレイヤーに乗るオブジェクトはこのプロパティを呼んではいけない。代わりに ILayer の方を使う。
-        /// <summary>このオブジェクトのレイヤーを取得します</summary>
+        /// <summary>Get the layer where the <see cref="FrameObject"/> is.</summary>
         /// <exception cref="InvalidOperationException"> <see cref="FrameObject"/> is not activated yet or already dead.</exception>
         public Layer Layer
         {
@@ -68,7 +73,7 @@ namespace Elffy
             get => AssemblyState.IsDebug ? (Layer?)_layer ?? throw new InvalidOperationException()
                                          : Unsafe.As<Layer?>(_layer) ?? throw new InvalidOperationException();
 
-            // ↑Unsafe は怖いのでデバッグ時は通常キャストする。JITで分岐は消える。
+            // ↑ Use cast in the debug build. The branch is removed by JIT.
         }
 
 
@@ -79,32 +84,24 @@ namespace Elffy
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                return _hostScreen ?? TryGetSceen(_layer);
+                return _hostScreen ?? TryGetScreen(_layer);
 
-                static IHostScreen TryGetSceen(ILayer? layer) => GetHostScreen(layer) ?? throw new InvalidOperationException();
+                [MethodImpl(MethodImplOptions.NoInlining)]
+                static IHostScreen TryGetScreen(ILayer? layer) => GetHostScreen(layer) ?? throw new InvalidOperationException();
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void EarlyUpdate()
-        {
-            OnEarlyUpdate();
-        }
-
-        /// <summary>フレームの更新ごとに実行される更新処理</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void Update()
-        {
-            OnUpdate();
-        }
+        internal void EarlyUpdate() => OnEarlyUpdate();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void LateUpdate()
-        {
-            OnLateUpdte();
-        }
+        internal void Update() => OnUpdate();
 
-        /// <summary>このオブジェクトを指定のレイヤーでアクティブにします</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void LateUpdate() => OnLateUpdte();
+
+        /// <summary>Activate the object in the specified layer.</summary>
+        /// <param name="layer">layer where the object is activated</param>
         public void Activate(Layer layer)
         {
             if(layer is null) { ThrowNullArg(); }
@@ -114,27 +111,25 @@ namespace Elffy
             if(screen is null) {
                 ThrowInvalidLayer();
             }
-            else {
-                screen.ThrowIfNotMainThread();
-                _hostScreen = screen;
-            }
+            screen.ThrowIfNotMainThread();
+            _hostScreen = screen;
 
             _state = FrameObjectLifeState.Activated;
             _layer = layer;
             layer!.AddFrameObject(this);
             OnActivated();
 
-            static void ThrowNullArg() => throw new ArgumentNullException(nameof(layer));
-            static void ThrowInvalidLayer() => throw new ArgumentException($"{nameof(layer)} is not associated with {nameof(IHostScreen)}");
+            [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(layer));
+            [DoesNotReturn] static void ThrowInvalidLayer() => throw new ArgumentException($"{nameof(layer)} is not associated with {nameof(IHostScreen)}");
         }
 
         internal void Activate<TLayer>(TLayer layer) where TLayer : class, ILayer
         {
             if(layer is null) { ThrowNullArg(); }
-            Debug.Assert(layer is Layer == false, "Layer は具象型のオーバーロードを通っていないとおかしい。");
-            Debug.Assert(layer!.OwnerCollection is null == false);
             if(_state != FrameObjectLifeState.New) { return; }
 
+            Debug.Assert(layer is Layer == false, $"'{typeof(Layer)}' type can't pass here. Where are you from ?");
+            Debug.Assert(layer!.OwnerCollection is null == false);
             Debug.Assert(GetHostScreen(layer)!.IsThreadMain());
 
             _state = FrameObjectLifeState.Activated;
@@ -142,17 +137,22 @@ namespace Elffy
             layer.AddFrameObject(this);
             OnActivated();
 
-            static void ThrowNullArg() => throw new ArgumentNullException(nameof(layer));
+            [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(layer));
         }
 
-        /// <summary>このオブジェクトをエンジン管理下から外して破棄します</summary>
+        /// <summary>Terminate the object and remove it from the engine.</summary>
         public void Terminate()
         {
-            if(_state != FrameObjectLifeState.Alive) { return; }
-            Debug.Assert(_layer is null == false);
+            HostScreen.ThrowIfNotMainThread();
+
+            if(_state != FrameObjectLifeState.Activated && _state != FrameObjectLifeState.Alive) {
+                return;
+            }
+
+            Debug.Assert(_layer is not null);
 
             _state = FrameObjectLifeState.Terminated;
-            _layer!.RemoveFrameObject(this);
+            _layer.RemoveFrameObject(this);
             OnTerminated();
         }
 

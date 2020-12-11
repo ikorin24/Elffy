@@ -16,7 +16,7 @@ namespace Elffy
 
         internal AsyncBackEndPoint()
         {
-            _queues = new ConcurrentDictionary<FrameLoopTiming, ConcurrentQueue<WorkItem>>();
+            _queues = new();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -75,7 +75,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.NoInlining)]
         private ConcurrentQueue<WorkItem> InitQueue(FrameLoopTiming eventType)
         {
-            return _queues.GetOrAdd(eventType, new ConcurrentQueue<WorkItem>());
+            return _queues.GetOrAdd(eventType, _ => new());
         }
 
         private readonly struct WorkItem

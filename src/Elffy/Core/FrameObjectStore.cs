@@ -124,12 +124,9 @@ namespace Elffy.Core
                 Debug.Assert(item.LifeState == FrameObjectLifeState.Terminated);
                 var sucessRemoving = _list.Remove(item);
                 Debug.Assert(sucessRemoving);
-                switch(item) {
-                    case Renderable renderable: {
-                        var renderableRemoved = _renderables.Remove(renderable);
-                        Debug.Assert(renderableRemoved);
-                        break;
-                    }
+                if(item is Renderable renderable) {
+                    var renderableRemoved = _renderables.Remove(renderable);
+                    Debug.Assert(renderableRemoved);
                 }
                 item.RemovedFromObjectStoreCallback();
             }
