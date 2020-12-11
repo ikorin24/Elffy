@@ -42,9 +42,9 @@ namespace Elffy.UI
         {
             if(item is null) {
                 ThrowNullArg();
-                static void ThrowNullArg() => throw new ArgumentNullException(nameof(item));
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(item));
             }
-            if(item!.IsNew == false) { ThrowNotNewControl(); }
+            if(item.LifeState != LifeState.New) { ThrowNotNewControl(); }
             item.Parent = _owner;
             item.Renderable.Activate(item.Root!.UILayer);
             _list.Add(item);
@@ -57,7 +57,7 @@ namespace Elffy.UI
             if(items is null) { throw new ArgumentNullException(nameof(items)); }
             foreach(var item in items) {
                 if(item is null) { throw new ArgumentException($"{nameof(items)} contains null. Can not add null."); }
-                if(item.IsNew == false) { ThrowNotNewControl(); }
+                if(item.LifeState != LifeState.New) { ThrowNotNewControl(); }
                 item.Parent = _owner;
                 _list.Add(item);
                 item.Renderable.Activate(item.Root!.UILayer);
@@ -69,7 +69,7 @@ namespace Elffy.UI
         public void AddRange(ReadOnlySpan<Control> items)
         {
             foreach(var item in items) {
-                if(item.IsNew == false) { ThrowNotNewControl(); }
+                if(item.LifeState != LifeState.New) { ThrowNotNewControl(); }
                 item.Parent = _owner;
                 _list.Add(item);
                 item.Renderable.Activate(item.Root!.UILayer);
@@ -108,13 +108,13 @@ namespace Elffy.UI
         {
             if(item is null) {
                 ThrowNullArg();
-                static void ThrowNullArg() => throw new ArgumentNullException(nameof(item));
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(item));
             }
             if(index < 0 || index > _list.Count) {
                 ThrowOutOfRange(index);
-                static void ThrowOutOfRange(int value) => throw new ArgumentOutOfRangeException(nameof(index), value, $"{nameof(index)} is out of range.");
+                [DoesNotReturn] static void ThrowOutOfRange(int value) => throw new ArgumentOutOfRangeException(nameof(index), value, $"{nameof(index)} is out of range.");
             }
-            if(item!.IsNew == false) { ThrowNotNewControl(); }
+            if(item.LifeState == LifeState.New) { ThrowNotNewControl(); }
             item.Parent = _owner;
             _list.Insert(index, item);
             item.Renderable.Activate(item.Root!.UILayer);
@@ -127,11 +127,11 @@ namespace Elffy.UI
         {
             if(item is null) {
                 ThrowNullArg();
-                static void ThrowNullArg() => throw new ArgumentNullException(nameof(item));
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(item));
             }
-            var result = _list.Remove(item!);
+            var result = _list.Remove(item);
             if(result) {
-                item!.Parent = null;
+                item.Parent = null;
                 item.Renderable.Terminate();
             }
             return result;
@@ -143,7 +143,7 @@ namespace Elffy.UI
         {
             if((uint)index >= (uint)_list.Count) {
                 ThrowOutOfRange(index);
-                static void ThrowOutOfRange(int value) => throw new ArgumentOutOfRangeException(nameof(index), value, $"{nameof(index)} is out of range.");
+                [DoesNotReturn] static void ThrowOutOfRange(int value) => throw new ArgumentOutOfRangeException(nameof(index), value, $"{nameof(index)} is out of range.");
             }
             var removed = _list[index];
             _list.RemoveAt(index);

@@ -41,16 +41,6 @@ namespace Elffy
         /// <summary>Get life state of <see cref="FrameObject"/></summary>
         public LifeState LifeState => _state;
 
-        public bool IsNew => _state == LifeState.New;
-
-        public bool IsActivated => _state == LifeState.Activated;
-
-        public bool IsAlive => _state == LifeState.Alive;
-
-        public bool IsTerminated => _state == LifeState.Terminated;
-
-        public bool IsDead => _state == LifeState.Dead;
-
         /// <summary>Get whether the <see cref="FrameObject"/> is running in the current frame. (That means <see cref="LifeState"/> is <see cref="LifeState.Alive"/> of <see cref="LifeState.Terminated"/>)</summary>
         public bool IsRunning => _state == LifeState.Alive || _state == LifeState.Terminated;
 

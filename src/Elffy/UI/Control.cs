@@ -24,14 +24,11 @@ namespace Elffy.UI
     /// </remarks>
     public abstract class Control
     {
-        public bool IsNew => Renderable.IsNew;
-        public bool IsActivated => Renderable.IsActivated;
-        public bool IsAlive => Renderable.IsAlive;
-        public bool IsTerminated => Renderable.IsTerminated;
-        public bool IsDead => Renderable.IsDead;
-
         /// <summary>この <see cref="Control"/> を描画するオブジェクト</summary>
         internal UIRenderable Renderable { get; private set; }
+
+        /// <summary>Get life state</summary>
+        public LifeState LifeState => Renderable.LifeState;
 
         /// <summary>この <see cref="Control"/> のツリー構造の子要素を取得します</summary>
         public ControlCollection Children { get; }
