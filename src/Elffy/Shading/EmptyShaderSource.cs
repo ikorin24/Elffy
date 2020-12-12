@@ -27,9 +27,8 @@ namespace Elffy.Shading
                     _instance = new EmptyShaderSource<TVertex>();
                     return _instance;
                 }
-                else {
-                    throw new NotSupportedException($"{typeof(TVertex).FullName} is not supported.");
-                }
+
+                throw new NotSupportedException($"'{typeof(EmptyShaderSource<TVertex>)}' is not supported. The type must be '{nameof(Vertex)}' or '{nameof(VertexSlim)}'.");
             }
         }
 
