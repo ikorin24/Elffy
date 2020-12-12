@@ -50,6 +50,11 @@ namespace Elffy
             return continuation(state);
         }
 
+        public async UniTask AsUniTask()
+        {
+            await this;
+        }
+
         public readonly struct Awaiter : ICriticalNotifyCompletion, INotifyCompletion
         {
             private readonly AsyncBackEndPoint _asyncBack;
