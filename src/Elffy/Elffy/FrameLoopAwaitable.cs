@@ -8,22 +8,18 @@ namespace Elffy
 {
     public readonly struct FrameLoopAwaitable
     {
-        private readonly AsyncBackEndPoint _asyncBack;
-        private readonly FrameLoopTiming _eventType;
-        private readonly CancellationToken _cancellationToken;
+        private readonly Awaiter _awaiter;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public FrameLoopAwaitable(AsyncBackEndPoint asyncBack, FrameLoopTiming eventType, CancellationToken cancellationToken)
+        internal FrameLoopAwaitable(AsyncBackEndPoint endPoint, FrameLoopTiming eventType, CancellationToken cancellationToken)
         {
-            _asyncBack = asyncBack!;
-            _eventType = eventType;
-            _cancellationToken = cancellationToken;
+            _awaiter = new Awaiter(endPoint, eventType, cancellationToken);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Awaiter GetAwaiter()
         {
-            return new Awaiter(_asyncBack, _eventType, _cancellationToken);
+            return _awaiter;
         }
 
         public async UniTask ContinueWith(Action continuation)
@@ -57,16 +53,16 @@ namespace Elffy
 
         public readonly struct Awaiter : ICriticalNotifyCompletion, INotifyCompletion
         {
-            private readonly AsyncBackEndPoint _asyncBack;
+            private readonly AsyncBackEndPoint _endPoint;
             private readonly FrameLoopTiming _eventType;
             private readonly CancellationToken _cancellationToken;
 
             public bool IsCompleted => false;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public Awaiter(AsyncBackEndPoint asyncBack, FrameLoopTiming eventType, CancellationToken cancellationToken)
+            internal Awaiter(AsyncBackEndPoint endPoint, FrameLoopTiming eventType, CancellationToken cancellationToken)
             {
-                _asyncBack = asyncBack;
+                _endPoint = endPoint;
                 _eventType = eventType;
                 _cancellationToken = cancellationToken;
             }
@@ -81,14 +77,14 @@ namespace Elffy
             public void OnCompleted(Action continuation)
             {
                 _cancellationToken.ThrowIfCancellationRequested();
-                _asyncBack?.Post(_eventType, continuation);
+                _endPoint?.Post(_eventType, continuation);
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void UnsafeOnCompleted(Action continuation)
             {
                 _cancellationToken.ThrowIfCancellationRequested();
-                _asyncBack?.Post(_eventType, continuation);
+                _endPoint?.Post(_eventType, continuation);
             }
         }
     }
