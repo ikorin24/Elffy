@@ -8,13 +8,14 @@ using System.IO;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Diagnostics.CodeAnalysis;
+using Cysharp.Threading.Tasks;
 
 namespace Elffy
 {
     /// <summary>Game entry point class</summary>
     public static class GameEntryPoint
     {
-        private static Action _initialize = null!;
+        private static Func<UniTask> _entryPointAsync = null!;
 
         /// <summary>Start game</summary>
         /// <param name="width">game screen width</param>
@@ -22,14 +23,36 @@ namespace Elffy
         /// <param name="title">game screen title</param>
         /// <param name="iconName">icon name in the resources. (null if no icon)</param>
         /// <param name="resourceFilePath">resource file path, which is relative path from the directory of entry assembly.</param>
-        /// <param name="initialize"></param>
-        public static void Start(int width, int height, string title, string? iconName, string? resourceFilePath, Action initialize)
+        /// <param name="entryPointSync">entry point of the game</param>
+        public static void Start(int width, int height, string title, string? iconName, string? resourceFilePath, Action entryPointSync)
+        {
+            UniTask EntryPointAsync()
+            {
+                try {
+                    entryPointSync();
+                }
+                catch(Exception ex) {
+                    return UniTask.FromException(ex);
+                }
+                return UniTask.CompletedTask;
+            }
+            Start(width, height, title, iconName, resourceFilePath, EntryPointAsync);
+        }
+
+        /// <summary>Start game</summary>
+        /// <param name="width">game screen width</param>
+        /// <param name="height">game screen height</param>
+        /// <param name="title">game screen title</param>
+        /// <param name="iconName">icon name in the resources. (null if no icon)</param>
+        /// <param name="resourceFilePath">resource file path, which is relative path from the directory of entry assembly.</param>
+        /// <param name="entryPointAsync">entry point of the game</param>
+        public static void Start(int width, int height, string title, string? iconName, string? resourceFilePath, Func<UniTask> entryPointAsync)
         {
             if(resourceFilePath is null && iconName is not null) {
                 throw new ArgumentNullException($"{nameof(iconName)} is assigned but {nameof(resourceFilePath)} is null.");
             }
 
-            _initialize = initialize ?? throw new ArgumentNullException(nameof(initialize));
+            _entryPointAsync = entryPointAsync ?? throw new ArgumentNullException(nameof(entryPointAsync));
             ProcessHelper.SingleLaunch(Launch);
 
             void Launch()
@@ -48,10 +71,17 @@ namespace Elffy
                             screen = CreateScreen(width, height, title, stream);
                         }
                     }
-                    screen.Initialized += screen =>
+                    screen.Initialized += async screen =>
                     {
                         SetScreen(screen);
-                        _initialize();
+                        try {
+                            await _entryPointAsync();
+                        }
+                        catch {
+                            // TODO: logging
+                            screen.Dispose();
+                            // Don't throw. No one catch it.
+                        }
                     };
                     CustomSynchronizationContext.CreateIfNeeded(out _, out var syncContextReciever);
                     screen.Show();

@@ -13,7 +13,7 @@ namespace Sandbox
 {
     public static class Startup
     {
-        public static async void Start()
+        public static async UniTask Start()
         {
             Definition.Initialize();
 
