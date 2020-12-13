@@ -123,7 +123,7 @@ namespace Elffy
 
             Debug.Assert(layer is Layer == false, $"'{typeof(Layer)}' type can't pass here. Where are you from ?");
             Debug.Assert(layer!.OwnerCollection is null == false);
-            Debug.Assert(GetHostScreen(layer)!.IsThreadMain());
+            Debug.Assert(GetHostScreen(layer)!.IsThreadMain);
 
             _state = LifeState.Activated;
             _layer = layer;

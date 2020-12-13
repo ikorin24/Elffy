@@ -50,7 +50,7 @@ namespace Elffy
 
             // Early return if not Renderable or already loaded.
             if(source is Renderable renderable) {
-                if(renderable.HostScreen.IsThreadMain()) {
+                if(renderable.HostScreen.IsThreadMain) {
                     if(renderable.IsLoaded && renderable.LifeState != LifeState.Dead) {
                         return new(true);
                     }

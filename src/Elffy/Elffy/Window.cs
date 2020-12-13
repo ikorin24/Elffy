@@ -67,6 +67,9 @@ namespace Elffy
         /// <inheritdoc/>
         public ScreenCurrentTiming CurrentTiming => _renderingArea.CurrentTiming;
 
+        /// <inheritdoc/>
+        public bool IsThreadMain => _isThreadMain;
+
         /// <summary>初期化時イベント</summary>
         public event ActionEventHandler<IHostScreen>? Initialized
         {
@@ -148,12 +151,6 @@ namespace Elffy
             _renderingArea.Dispose();
             _windowImpl.Dispose();
             Engine.RemoveScreen(this);
-        }
-
-        /// <inheritdoc/>
-        public bool IsThreadMain()
-        {
-            return _isThreadMain;
         }
 
         /// <inheritdoc/>

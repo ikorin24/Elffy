@@ -41,6 +41,9 @@ namespace Elffy
         /// <remarks>If not main thread of <see cref="IHostScreen"/>, always returns <see cref="ScreenCurrentTiming.OutOfFrameLoop"/></remarks>
         ScreenCurrentTiming CurrentTiming { get; }
 
+        /// <summary>Return whether current thread is main thread of <see cref="IHostScreen"/> or not</summary>
+        bool IsThreadMain { get; }
+
         IDefaultResource DefaultResource { get; }
 
         internal TimeSpan FrameDelta { get; }
@@ -49,10 +52,6 @@ namespace Elffy
         event ActionEventHandler<IHostScreen> Initialized;
 
         void Show();
-
-        /// <summary>Return current thread is main or not of this <see cref="IHostScreen"/></summary>
-        /// <returns>true if main thread, otherwise false</returns>
-        bool IsThreadMain();
 
         /// <summary>Throw exception if current thread is not main of this <see cref="IHostScreen"/></summary>
         void ThrowIfNotMainThread();

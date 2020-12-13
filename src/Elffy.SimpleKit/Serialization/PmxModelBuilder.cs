@@ -81,7 +81,7 @@ namespace Elffy.Serialization
         {
             // ------------------------------
             //      ↓ thread pool
-            Debug.Assert(model.HostScreen.IsThreadMain() == false);
+            Debug.Assert(model.HostScreen.IsThreadMain == false);
 
             var textureNames = pmx.TextureList.AsSpan();
             var dir = ResourcePath.GetDirectoryName(obj.Name);
@@ -110,7 +110,7 @@ namespace Elffy.Serialization
         {
             // ------------------------------
             //      ↓ thread pool
-            Debug.Assert(model.HostScreen.IsThreadMain() == false);
+            Debug.Assert(model.HostScreen.IsThreadMain == false);
 
             UnmanagedArray<RigVertex>? vertices = default;
             ValueTypeRentMemory<int> vertexCountArray = default;
@@ -158,7 +158,7 @@ namespace Elffy.Serialization
                 await model.HostScreen.AsyncBack.ToFrameLoopEvent(FrameLoopTiming.Update, obj.CancellationToken);
                 // ------------------------------
                 //      ↓ main thread
-                Debug.Assert(model.HostScreen.IsThreadMain());
+                Debug.Assert(model.HostScreen.IsThreadMain);
                 if(model.LifeState == LifeState.Activated || model.LifeState == LifeState.Alive) {
                     // create skeleton
                     var skeleton = new Skeleton();
