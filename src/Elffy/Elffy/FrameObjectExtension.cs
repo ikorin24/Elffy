@@ -9,6 +9,7 @@ namespace Elffy
 {
     public static class FrameObjectExtension
     {
+        // TODO: fix comment
         // =======================================================================================
         // [State Transition]
         //
