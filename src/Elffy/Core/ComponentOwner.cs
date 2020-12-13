@@ -10,7 +10,9 @@ namespace Elffy.Core
     /// <summary>Base class that has components.</summary>
     public abstract class ComponentOwner : FrameObject
     {
+        /// <summary>Event which fires when a component get attached.</summary>
         public event ActionEventHandler<ComponentOwner, IComponent>? ComponentAttached;
+        /// <summary>Event which fires when a component get detached.</summary>
         public event ActionEventHandler<ComponentOwner, IComponent>? ComponentDetached;
 
         /// <summary>Get component of specified type</summary>
@@ -21,11 +23,15 @@ namespace Elffy.Core
             if(!ComponentStore<T>.TryGet(this, out var component)) {
                 ThrowDoesNotHaveComponent();
             }
-            return component!;
+            return component;
 
-            static void ThrowDoesNotHaveComponent() => throw new InvalidOperationException($"No component of type '{typeof(T).FullName}'");
+            [DoesNotReturn] static void ThrowDoesNotHaveComponent() => throw new InvalidOperationException($"No component of type '{typeof(T).FullName}'");
         }
 
+        /// <summary>Try to get a component of specified type</summary>
+        /// <typeparam name="T">component type</typeparam>
+        /// <param name="component">component object</param>
+        /// <returns>Returns true if the component was successfully retrieved, otherwise false.</returns>
         public bool TryGetComponent<T>([MaybeNullWhen(false)] out T component) where T : class, IComponent
         {
             return ComponentStore<T>.TryGet(this, out component);
@@ -38,32 +44,32 @@ namespace Elffy.Core
         {
             if(component is null) { ThrowNullArg(); }
             if(ComponentStore<T>.HasComponentOf(this)) { ThrowAlreadyExists(); }
-            ComponentStore<T>.Add(this, component!);
-            component!.OnAttached(this);
-            ComponentAttached?.Invoke(this, component!);
+            ComponentStore<T>.Add(this, component);
+            component.OnAttached(this);
+            ComponentAttached?.Invoke(this, component);
 
-            static void ThrowNullArg() => throw new ArgumentNullException(nameof(component));
-            static void ThrowAlreadyExists() => throw new ArgumentException($"Component type '{typeof(T).FullName}' already exists.");
+            [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(component));
+            [DoesNotReturn] static void ThrowAlreadyExists() => throw new ArgumentException($"Component type '{typeof(T).FullName}' already exists.");
         }
 
         /// <summary>Add or replace component whose type is <typeparamref name="T"/>. Return true if replaced, otherwize false.</summary>
         /// <typeparam name="T">component type</typeparam>
         /// <param name="component">the component</param>
         /// <returns>Return true if replaced, otherwize false.</returns>
-        public bool AddOrReplaceComponent<T>(T component, out T? old) where T : class, IComponent
+        public bool AddOrReplaceComponent<T>(T component, [MaybeNullWhen(false)] out T old) where T : class, IComponent
         {
             if(component is null) { ThrowNullArg(); }
-            var replaced = ComponentStore<T>.AddOrReplace(this, component!, out old);
+            var replaced = ComponentStore<T>.AddOrReplace(this, component, out old);
             if(replaced) {
-                Debug.Assert(old is null == false);
-                ComponentDetached?.Invoke(this, old!);
-                old!.OnDetached(this);
+                Debug.Assert(old is not null);
+                ComponentDetached?.Invoke(this, old);
+                old.OnDetached(this);
             }
-            component!.OnAttached(this);
-            ComponentAttached?.Invoke(this, component!);
+            component.OnAttached(this);
+            ComponentAttached?.Invoke(this, component);
             return replaced;
 
-            static void ThrowNullArg() => throw new ArgumentNullException(nameof(component));
+            [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(component));
         }
 
         /// <summary>Get whether <see cref="ComponentOwner"/> has a component of specified type</summary>
@@ -79,12 +85,14 @@ namespace Elffy.Core
         /// <returns>True if the component is removed. False if the component does not exist.</returns>
         public bool RemoveComponent<T>() where T : class, IComponent
         {
-            var removed = ComponentStore<T>.Remove(this, out var component);
-            if(removed) {
-                ComponentDetached?.Invoke(this, component!);
-                component!.OnDetached(this);
+            if(ComponentStore<T>.Remove(this, out var component)) {
+                ComponentDetached?.Invoke(this, component);
+                component.OnDetached(this);
+                return true;
             }
-            return removed;
+            else {
+                return false;
+            }
         }
 
         /// <summary>
@@ -121,17 +129,11 @@ namespace Elffy.Core
             /// <param name="component">the component</param>
             /// <param name="old">old component</param>
             /// <returns>Return true if replaced, otherwize false.</returns>
-            public static bool AddOrReplace(ComponentOwner owner, T component, out T? old)
+            public static bool AddOrReplace(ComponentOwner owner, T component, [MaybeNullWhen(false)] out T old)
             {
-                if(_components.TryGetValue(owner, out old)) {
-                    _components.Remove(owner);
-                    _components.Add(owner, component);
-                    return true;
-                }
-                else {
-                    _components.Add(owner, component);
-                    return false;
-                }
+                var isReplaced = _components.TryGetValue(owner, out old);
+                _components.AddOrUpdate(owner, component);
+                return isReplaced;
             }
 
             /// <summary>Get component of specified owner.</summary>
