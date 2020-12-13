@@ -108,7 +108,7 @@ namespace Elffy
                 [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(screen));
             }
 
-            Timing.Initialize(screen.AsyncBack);
+            Timing.Initialize(screen);
             Game.Initialize(screen);
             GameUI.Initialize(screen.UIRoot);
         }

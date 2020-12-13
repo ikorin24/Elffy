@@ -16,13 +16,19 @@ namespace Elffy
     {
         // I don't check null for performance.
         // So the user MUST call Initialize() before using this class.
+        private static IHostScreen? _screen;
         private static AsyncBackEndPoint? _endPoint;
 
-        internal static void Initialize(AsyncBackEndPoint endPoint)
+        internal static void Initialize(IHostScreen screen)
         {
             Debug.Assert(_endPoint is null);
-            _endPoint = endPoint;
+            _screen = screen;
+            _endPoint = screen.AsyncBack;
         }
+
+        /// <summary>Get current screen frame loop timing.</summary>
+        /// <remarks>If not main thread of <see cref="IHostScreen"/>, always returns <see cref="ScreenCurrentTiming.OutOfFrameLoop"/></remarks>
+        public static ScreenCurrentTiming CurrentTiming => _screen!.CurrentTiming;
 
         /// <summary>Wait for specified timing.</summary>
         /// <param name="timing">timing to wait</param>

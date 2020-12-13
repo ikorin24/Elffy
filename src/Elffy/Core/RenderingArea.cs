@@ -22,6 +22,9 @@ namespace Elffy.Core
         private Vector2i _size;
         private readonly CancellationTokenSource _runningTokenSource;
 
+        [ThreadStatic]
+        private ScreenCurrentTiming _currentTiming; // default value is 'OutOfFrameLoop'
+
         public event ActionEventHandler<IHostScreen>? Initialized;
 
         public CancellationToken RunningToken => _runningTokenSource.Token;
@@ -37,6 +40,8 @@ namespace Elffy.Core
         public Keyboard Keyboard { get; } = new Keyboard();
 
         public AsyncBackEndPoint AsyncBack { get; }
+
+        public ScreenCurrentTiming CurrentTiming => _currentTiming;
 
         public int Width
         {
@@ -118,6 +123,7 @@ namespace Elffy.Core
         /// <summary>フレームを更新して描画します</summary>
         public void RenderFrame()
         {
+            _currentTiming = ScreenCurrentTiming.FrameInitializing;
             var uiLayer = Layers.UILayer;
             var layers = Layers.AsReadOnlySpan();
 
@@ -132,6 +138,7 @@ namespace Elffy.Core
             uiLayer.ApplyAdd();
 
             // Early update
+            _currentTiming = ScreenCurrentTiming.EarlyUpdate;
             AsyncBack.DoQueuedEvents(FrameLoopTiming.EarlyUpdate);
             foreach(var layer in layers) {
                 layer.EarlyUpdate();
@@ -139,6 +146,7 @@ namespace Elffy.Core
             uiLayer.EarlyUpdate();
 
             // Update
+            _currentTiming = ScreenCurrentTiming.Update;
             AsyncBack.DoQueuedEvents(FrameLoopTiming.Update);
             foreach(var layer in layers) {
                 layer.Update();
@@ -146,6 +154,7 @@ namespace Elffy.Core
             uiLayer.Update();
 
             // Late update
+            _currentTiming = ScreenCurrentTiming.LateUpdate;
             AsyncBack.DoQueuedEvents(FrameLoopTiming.LateUpdate);
             foreach(var layer in layers) {
                 layer.LateUpdate();
@@ -153,7 +162,7 @@ namespace Elffy.Core
             uiLayer.LateUpdate();
 
             // Render
-
+            _currentTiming = ScreenCurrentTiming.BeforeRendering;
             FBO.Bind(FBO.Empty, FBO.Target.FrameBuffer);
             ElffyGL.Clear(ElffyGL.ClearBufferMask.ColorBufferBit | ElffyGL.ClearBufferMask.DepthBufferBit);
             AsyncBack.DoQueuedEvents(FrameLoopTiming.BeforeRendering);
@@ -166,13 +175,18 @@ namespace Elffy.Core
                 uiLayer.Render(_uiProjection);
             }
 
+            _currentTiming = ScreenCurrentTiming.AfterRendering;
             AsyncBack.DoQueuedEvents(FrameLoopTiming.AfterRendering);
+
+            _currentTiming = ScreenCurrentTiming.FrameFinalizing;
 
             // Apply FrameObject removed at previous frame.
             foreach(var layer in layers) {
                 layer.ApplyRemove();
             }
             uiLayer.ApplyRemove();
+
+            _currentTiming = ScreenCurrentTiming.OutOfFrameLoop;
         }
 
         public void RequestClose()
@@ -184,6 +198,8 @@ namespace Elffy.Core
         {
             if(_disposed) { return; }
             _disposed = true;
+
+            _currentTiming = ScreenCurrentTiming.OutOfFrameLoop;
 
             // Clear objects in all layers
             var layers = Layers;

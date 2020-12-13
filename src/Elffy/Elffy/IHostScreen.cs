@@ -37,7 +37,9 @@ namespace Elffy
         /// <summary>Get screen running token, which is canceled when screen got closed.</summary>
         CancellationToken RunningToken { get; }
 
-        //Shading.PostProcess? PostProcess { get; set; }
+        /// <summary>Get current screen frame loop timing.</summary>
+        /// <remarks>If not main thread of <see cref="IHostScreen"/>, always returns <see cref="ScreenCurrentTiming.OutOfFrameLoop"/></remarks>
+        ScreenCurrentTiming CurrentTiming { get; }
 
         IDefaultResource DefaultResource { get; }
 

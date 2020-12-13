@@ -64,7 +64,8 @@ namespace Elffy
         /// <inheritdoc/>
         public CancellationToken RunningToken => _renderingArea.RunningToken;
 
-        //public Shading.PostProcess? PostProcess { get => _renderingArea.PostProcess; set => _renderingArea.PostProcess = value; }
+        /// <inheritdoc/>
+        public ScreenCurrentTiming CurrentTiming => _renderingArea.CurrentTiming;
 
         /// <summary>初期化時イベント</summary>
         public event ActionEventHandler<IHostScreen>? Initialized
