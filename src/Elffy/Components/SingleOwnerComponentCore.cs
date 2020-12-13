@@ -1,65 +1,58 @@
 ﻿#nullable enable
 using Elffy.Core;
 using System;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Components
 {
-    // ISingleOwnerComponent の実質的なロジック部を実装した構造体。
-    // IValueTaskSource に対する ManualResetValueTaskSourceCore のようなもの。
+    // A structure that implements the actual logic part of ISingleOwnerComponent.
+    // Something like ManualResetValueTaskSourceCore for IValueTaskSource.
 
-    /// <summary>
-    /// <see cref="ISingleOwnerComponent"/> を継承したクラスの実装を簡略化するためのヘルパー構造体
-    /// </summary>
-    /// <typeparam name="TComponent">コンポーネントの型</typeparam>
+    /// <summary>Helper struct to implement <see cref="ISingleOwnerComponent"/> easily.</summary>
+    /// <typeparam name="TComponent">type of the component</typeparam>
     public struct SingleOwnerComponentCore<TComponent> where TComponent : class, ISingleOwnerComponent
     {
         private ComponentOwner? _owner;
         private readonly bool _autoDisposeOnDetached;
 
-        /// <summary>対象のコンポーネントの所有者を取得します</summary>
+        /// <summary>Get the owner of the component</summary>
         public readonly ComponentOwner? Owner => _owner;
 
-        /// <summary>
-        /// コンポーネントを自動的に破棄するかどうかを取得します。<para/>
-        /// true の場合、所有者の <see cref="FrameObject.Dead"/> イベント時または <see cref="IComponent.OnDetached(ComponentOwner)"/> 時に破棄が行われます。<para/>
-        /// </summary>
+        /// <summary>Get whether the component is automatically disposed on detached.</summary>
         public readonly bool AutoDisposeOnDetached => _autoDisposeOnDetached;
 
-        /// <summary><see cref="ISingleOwnerComponent"/> のロジックを提供する構造体を生成します</summary>
-        /// <param name="autoDisposeOnDetached">対象のコンポーネントを自動で破棄するかどうか</param>
+        /// <summary>Create a new <see cref="SingleOwnerComponentCore{TComponent}"/> instance</summary>
+        /// <param name="autoDisposeOnDetached">whether the component is automatically disposed on detached.</param>
         public SingleOwnerComponentCore(bool autoDisposeOnDetached)
         {
             _autoDisposeOnDetached = autoDisposeOnDetached;
             _owner = null;
         }
 
-        /// <summary><see cref="IComponent.OnAttached(ComponentOwner)"/> の処理を行います。</summary>
-        /// <param name="owner">コンポーネントの所有者</param>
+        /// <summary>Do <see cref="IComponent.OnAttached(ComponentOwner)"/></summary>
+        /// <param name="owner">the owner of the component</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void OnAttached(ComponentOwner owner)
         {
             if(_owner is null == false) {
                 ThrowAlreadyLoaded();
-                static void ThrowAlreadyLoaded() => throw new InvalidOperationException($"This component is already attached. Can not have multi {nameof(ComponentOwner)}s.");
+                [DoesNotReturn] static void ThrowAlreadyLoaded() => throw new InvalidOperationException($"This component is already attached. Can not have multi {nameof(ComponentOwner)}s.");
             }
             if(owner is null) {
                 ThrowNullArg();
-                static void ThrowNullArg() => throw new ArgumentNullException(nameof(owner));
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(owner));
             }
 
             _owner = owner;
             if(_autoDisposeOnDetached) {
-                owner!.Dead += sender => SafeCast.As<ComponentOwner>(sender).RemoveComponent<TComponent>();
+                owner.Dead += sender => SafeCast.As<ComponentOwner>(sender).RemoveComponent<TComponent>();
             }
         }
 
-        /// <summary>
-        /// <see cref="IComponent.OnDetached(ComponentOwner)"/> の処理を行います。<para/>
-        /// [NOTE] コンポーネントが <see cref="IDisposable"/> の場合は <see cref="OnDetachedForDisposable{T}(ComponentOwner, T)"/> を使用してください。<para/>
-        /// </summary>
-        /// <param name="owner">コンポーネントの所有者</param>
+        /// <summary>Do <see cref="IComponent.OnDetached(ComponentOwner)"/></summary>
+        /// <remarks>Use <see cref="OnDetachedForDisposable{T}(ComponentOwner, T)"/> if the component is <see cref="IDisposable"/></remarks>
+        /// <param name="owner">the owner of the component</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void OnDetached(ComponentOwner owner)
         {
@@ -68,20 +61,18 @@ namespace Elffy.Components
             }
         }
 
-        /// <summary>
-        /// <see cref="IComponent.OnDetached(ComponentOwner)"/> の処理を行います。<para/>
-        /// [NOTE] コンポーネントが <see cref="IDisposable"/> でない場合は <see cref="OnDetached(ComponentOwner)"/> を使用してください。<para/>
-        /// </summary>
-        /// <typeparam name="T">コンポーネントの型 (<see cref="IDisposable"/>)</typeparam>
-        /// <param name="owner">コンポーネントの所有者</param>
-        /// <param name="self"><see cref="IDisposable"/> を継承したコンポーネント</param>
+        /// <summary>Do <see cref="IComponent.OnDetached(ComponentOwner)"/></summary>
+        /// <remarks>Use <see cref="OnDetached(ComponentOwner)"/> if the component is not <see cref="IDisposable"/></remarks>
+        /// <typeparam name="T">type of the component which inherits (<see cref="IDisposable"/>)</typeparam>
+        /// <param name="owner">the owner of the component</param>
+        /// <param name="component">the component which inherits <see cref="IDisposable"/></param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void OnDetachedForDisposable<T>(ComponentOwner owner, T self) where T : IDisposable
+        public void OnDetachedForDisposable<T>(ComponentOwner owner, T component) where T : ISingleOwnerComponent, IDisposable
         {
             if(Owner == owner) {
                 _owner = null;
-                if(AutoDisposeOnDetached) {
-                    self.Dispose();
+                if(_autoDisposeOnDetached) {
+                    component.Dispose();
                 }
             }
         }
