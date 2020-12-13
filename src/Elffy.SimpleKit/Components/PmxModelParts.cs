@@ -26,6 +26,8 @@ namespace Elffy.Components
 
         public ReadOnlySpan<TextureObject> Textures => _textures.Span;
 
+        public int Current { get; set; }
+
         public PmxModelParts(ref ValueTypeRentMemory<int> vertexCountArray,
                              ref ValueTypeRentMemory<int> textureIndexArray,
                              ref ValueTypeRentMemory<TextureObject> textures)
@@ -40,6 +42,8 @@ namespace Elffy.Components
             textures = default;
         }
 
+        ~PmxModelParts() => Dispose(false);
+
         public void OnAttached(ComponentOwner owner)
         {
             _core.OnAttached(owner);
@@ -52,9 +56,14 @@ namespace Elffy.Components
 
         public void Dispose()
         {
+            GC.SuppressFinalize(this);
+            Dispose(true);
+        }
+
+        private void Dispose(bool disposing)
+        {
             if(!_disposed) {
                 _disposed = true;
-                GC.SuppressFinalize(this);
                 _vertexCountArray.Dispose();
                 _textureIndexArray.Dispose();
 

@@ -6,10 +6,12 @@ using System.Diagnostics.CodeAnalysis;
 using Elffy.Exceptions;
 using Elffy.Core;
 using Elffy.Shapes;
+using Elffy.Shading;
+using Elffy.Effective;
+using Elffy.OpenGL;
 using StringLiteral;
 using Cysharp.Threading.Tasks;
 using FbxTools;
-using Elffy.Effective;
 
 namespace Elffy.Serialization
 {
@@ -36,7 +38,17 @@ namespace Elffy.Serialization
 
             var obj = new StateObject(resourceLoader, name, cancellationToken);
 
-            return Model3D.Create(obj, Build);
+            return Model3D.Create(obj, Build, Hoge);
+        }
+
+        private static void Hoge(Model3D model3D, in Matrix4 model, in Matrix4 view, in Matrix4 projection, Model3DDrawElementsDelegate drawElements)
+        {
+            VAO.Bind(model3D.VAO);
+            IBO.Bind(model3D.IBO);
+            model3D.ShaderProgram!.Apply(model3D, in model, in view, in projection);
+            drawElements.Invoke(0, model3D.IBO.Length);
+            VAO.Unbind();
+            IBO.Unbind();
         }
 
         private static async UniTask Build(StateObject obj, Model3D model, Model3DLoadDelegate load)
@@ -62,6 +74,8 @@ namespace Elffy.Serialization
                 await model.HostScreen.AsyncBack.ToFrameLoopEvent(FrameLoopTiming.Update, token);
                 // --------------------------------------
                 //      ↓ main thread
+
+                model.Shader = PhongShaderSource.Instance;
 
                 if(model.LifeState == LifeState.Activated || model.LifeState == LifeState.Alive) {
                     load.Invoke(vertices.AsSpan(), indices.AsSpan());

@@ -3,9 +3,11 @@ using System;
 using Elffy;
 using Elffy.OpenGL;
 using Elffy.Shapes;
+using Elffy.Serialization;
 using Elffy.Shading;
 using Cysharp.Threading.Tasks;
 using System.Threading;
+using System.Diagnostics;
 
 namespace Sandbox
 {
@@ -19,10 +21,17 @@ namespace Sandbox
 
             await Definition.GenCameraMouse();
 
-            var alicia = Elffy.Serialization.PmxModelBuilder.CreateLazyLoadingPmx(Resources.Loader, "Alicia/Alicia_solid.pmx");
-            alicia.Activate();
-            var successed = await alicia.WaitLoadedOrDead();
-            System.Diagnostics.Debug.WriteLine($"alicia loaded : {successed}");
+            await UniTask.WhenAll(
+                Definition.GenAlicia(),
+                UniTask.Create(async () =>
+                {
+                    var dice = Resources.Loader.CreateFbxModel("Dice.fbx");
+                    dice.Activate();
+                    await dice.WaitLoadedOrDead();
+                    return dice;
+                }));
+            Debug.WriteLine("complete");
+
             //Resources.Loader
 
             //new Cube()

@@ -12,7 +12,7 @@ using Elffy.Imaging;
 using Elffy.Effective.Unsafes;
 using Elffy.Components;
 using Elffy.OpenGL;
-using Elffy.Core;
+using Elffy.Shading;
 using Cysharp.Threading.Tasks;
 using UnmanageUtility;
 using MMDTools.Unmanaged;
@@ -22,6 +22,8 @@ namespace Elffy.Serialization
 {
     public static class PmxModelBuilder
     {
+        private sealed record ModelState(IResourceLoader ResourceLoader, string Name, CancellationToken CancellationToken);
+
         public static Model3D CreateLazyLoadingPmx(IResourceLoader resourceLoader, string name, CancellationToken cancellationToken = default)
         {
             if(resourceLoader is null) {
@@ -35,40 +37,44 @@ namespace Elffy.Serialization
 
             var obj = new ModelState(resourceLoader, name, cancellationToken);
 
-            return Model3D.Create(obj,
-                builder: static async (obj, model, load) =>
-            {
-                obj.CancellationToken.ThrowIfCancellationRequested();
+            return Model3D.Create(obj, Build, RenderModel);
+        }
 
-                Debug.Assert(model.LifeState == LifeState.Activated || model.LifeState == LifeState.Alive);
+        private static void RenderModel(Model3D model3D, in Matrix4 model, in Matrix4 view, in Matrix4 projection, Model3DDrawElementsDelegate drawElements)
+        {
+            var parts = model3D.GetComponent<PmxModelParts>();
+            var vertexCountArray = parts.VertexCountArray;
 
-                // Run on thread pool
-                await UniTask.SwitchToThreadPool();
-                // ------------------------------
-                //      ↓ thread pool
+            VAO.Bind(model3D.VAO);
+            IBO.Bind(model3D.IBO);
+            var shaderProgram = model3D.ShaderProgram!;
+            var start = 0;
+            for(int i = 0; i < vertexCountArray.Length; i++) {
+                parts.Current = i;
+                shaderProgram.Apply(model3D, in model, in view, in projection);
+                drawElements.Invoke(start, vertexCountArray[i]);
+                start += vertexCountArray[i];
+            }
+            VAO.Unbind();
+            IBO.Unbind();
+        }
 
-                obj.CancellationToken.ThrowIfCancellationRequested();
+        private static async UniTask Build(ModelState obj, Model3D model, Model3DLoadDelegate load)
+        {
+            obj.CancellationToken.ThrowIfCancellationRequested();
 
-                // Parse pmx file
-                var pmx = PMXParser.Parse(obj.ResourceLoader.GetStream(obj.Name));
-                await BuildCore(pmx, model, load, obj);
-            },
-                onRendering: static (Model3D model3D, in Matrix4 model, in Matrix4 view, in Matrix4 projection, Model3DDrawElementsDelegate drawElements) =>
-            {
-                var info = model3D.GetComponent<PmxModelParts>();
-                var vertexCountArray = info.VertexCountArray;
-                var textureIndexArray = info.TextureIndexArray;
-                var textures = info.Textures;
+            Debug.Assert(model.LifeState == LifeState.Activated || model.LifeState == LifeState.Alive);
 
-                VAO.Bind(model3D.VAO);
-                IBO.Bind(model3D.IBO);
-                for(int i = 0; i < vertexCountArray.Length; i++) {
-                    TextureObject.Bind2D(textures[textureIndexArray[i]]);
-                    model3D.ShaderProgram!.Apply(model3D, in model, in view, in projection);
-                }
-                VAO.Unbind();
-                IBO.Unbind();
-            });
+            // Run on thread pool
+            await UniTask.SwitchToThreadPool();
+            // ------------------------------
+            //      ↓ thread pool
+
+            obj.CancellationToken.ThrowIfCancellationRequested();
+
+            // Parse pmx file
+            var pmx = PMXParser.Parse(obj.ResourceLoader.GetStream(obj.Name));
+            await BuildCore(pmx, model, load, obj);
         }
 
         private static UniTask BuildCore(PMXObject pmx, Model3D model, Model3DLoadDelegate load, ModelState obj)
@@ -169,6 +175,9 @@ namespace Elffy.Serialization
                     var partsComponent = new PmxModelParts(ref vertexCountArray, ref textureIndexArray, ref textures);
                     model.AddComponent(partsComponent);
 
+                    // set shader
+                    model.Shader = PmxModelShaderSource.Instance;
+
                     // load vertices and indices
                     load.Invoke(vertices.AsSpan().AsReadOnly(), pmx.SurfaceList.AsSpan().MarshalCast<Surface, int>());
                 }
@@ -222,20 +231,6 @@ namespace Elffy.Serialization
             catch {
                 pooledArray.Dispose();
                 throw;
-            }
-        }
-
-        private sealed class ModelState
-        {
-            public IResourceLoader ResourceLoader { get; }
-            public string Name { get; }
-            public CancellationToken CancellationToken { get; }
-
-            public ModelState(IResourceLoader resourceLoader, string name, CancellationToken token)
-            {
-                ResourceLoader = resourceLoader;
-                Name = name;
-                CancellationToken = token;
             }
         }
     }

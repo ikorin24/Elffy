@@ -47,7 +47,7 @@ namespace Elffy.Shading
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void Map<TVertex>(string vertexFieldName, string name) where TVertex : unmanaged
+        public unsafe void Map<TVertex>(string vertexFieldName, string name) where TVertex : unmanaged  // TODO: 引数の順序逆の方がいい、uniform に合わせる
         {
             var index = GL.GetAttribLocation(_program.Value, name);
             if(index < 0 && DevEnv.IsEnabled) {

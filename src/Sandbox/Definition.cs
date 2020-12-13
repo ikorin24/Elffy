@@ -114,16 +114,14 @@ namespace Sandbox
         #endregion Plain
 
         #region Alicia
-        public static UniTask<PmxModel> GenAlicia() => ObjectFactory.GenerateAsync<PmxModel>(ID_Alicia);
+        public static UniTask<Model3D> GenAlicia() => ObjectFactory.GenerateAsync<Model3D>(ID_Alicia);
 
-        private static async UniTask<PmxModel> DefineAlicia()
+        private static async UniTask<Model3D> DefineAlicia()
         {
-            var model = await Resources.Loader.LoadPmxModelAsync("Alicia/Alicia_solid.pmx");
-            await Timing.ToUpdate();
+            var model = Resources.Loader.CreatePmxModel("Alicia/Alicia_solid.pmx");
             model.Scale = new Vector3(0.3f);
-            model.AddComponent(new Material(new Color4(0.88f), new Color4(0.18f), new Color4(0.1f), 5f));
-            model.Shader = RigShaderSource.Instance;
             model.Activate();
+            await model.WaitLoadedOrDead();
             return model;
         }
 

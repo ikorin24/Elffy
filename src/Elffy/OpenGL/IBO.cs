@@ -16,7 +16,7 @@ namespace Elffy.OpenGL
 
         internal int Value => _ibo;
 
-        internal int Length => _length;
+        public int Length => _length;
 
         private IBO(int ibo)
         {

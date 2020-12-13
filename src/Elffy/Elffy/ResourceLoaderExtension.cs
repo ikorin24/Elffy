@@ -2,7 +2,6 @@
 using Cysharp.Threading.Tasks;
 using Elffy.Components;
 using Elffy.Imaging;
-using Elffy.Serialization;
 using Elffy.Shapes;
 using SkiaSharp;
 using System;
@@ -57,11 +56,6 @@ namespace Elffy
             return UniTask.Run(Load, false);
 
             Texture Load() => LoadTexture(source, name, bitmapType, expansionMode, shrinkMode, mipmapMode);
-        }
-
-        public static Model3D CreateFbxModel(this IResourceLoader source, string name, CancellationToken cancellationToken = default)
-        {
-            return FbxModelBuilder.CreateLazyLoadingFbx(source, name, cancellationToken);
         }
 
         public static unsafe SKTypeface LoadTypeface(this IResourceLoader source, string name, int fontFaceIndex = 0)

@@ -16,8 +16,8 @@ namespace Elffy.OpenGL
         private readonly int _elementSize;
 
         internal int Value => _vbo;
-        internal int Length => _length;
-        internal int ElementSize => _elementSize;
+        public int Length => _length;
+        public int ElementSize => _elementSize;
 
         /// <summary>Get whether the vertex buffer object is empty or not.</summary>
         public bool IsEmpty => _vbo == Consts.NULL;
