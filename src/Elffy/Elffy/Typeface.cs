@@ -54,6 +54,11 @@ namespace Elffy
 
         ~Typeface() => Dispose(false);
 
+        public Font CreateFont(float size)
+        {
+            return new Font(this, size);
+        }
+
         public void Dispose()
         {
             if(ReferenceEquals(this, Default)) {

@@ -37,5 +37,11 @@ namespace Elffy
                 return texture;
             }
         }
+
+        public static Typeface LoadTypeface(this IResourceLoader source, string name)
+        {
+            using var stream = source.GetStream(name);
+            return new Typeface(stream);
+        }
     }
 }
