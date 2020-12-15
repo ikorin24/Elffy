@@ -242,8 +242,8 @@ namespace Sandbox
 
         private static UniTask DefineUI()
         {
-            using var typeface = Resources.Loader.LoadTypeface("mplus-1p-regular.otf");
-            using var font = new SKFont(typeface, size: 12);
+            using var stream = Resources.Loader.GetStream("mplus-1p-regular.otf");
+            using var font = new Font(stream, 12);
 
             var button = new Button(90, 26);
             using(var p = button.GetPainter()) {

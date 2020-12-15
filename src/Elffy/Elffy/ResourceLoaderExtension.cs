@@ -57,32 +57,5 @@ namespace Elffy
 
             Texture Load() => LoadTexture(source, name, bitmapType, expansionMode, shrinkMode, mipmapMode);
         }
-
-        public static unsafe SKTypeface LoadTypeface(this IResourceLoader source, string name, int fontFaceIndex = 0)
-        {
-            var size = source.GetSize(name);
-
-            if(size <= int.MaxValue) {
-                using(var stream = source.GetStream(name))
-                using(var data = SKData.Create((ulong)size)) {
-                    // Copy stream to SKData directly.
-                    stream.Read(new Span<byte>((void*)data.Data, (int)size));
-                    return SKTypeface.FromData(data, fontFaceIndex);
-                }
-            }
-            else {
-                using(var stream = source.GetStream(name))
-                using(var data = SKData.Create(stream)) {
-                    return SKTypeface.FromData(data, fontFaceIndex);
-                }
-            }
-        }
-
-        public static UniTask<SKTypeface> LoadTypefaceAsync(this IResourceLoader source, string name, int fontFaceIndex = 0)
-        {
-            return UniTask.Run(Load, false);
-
-            SKTypeface Load() => LoadTypeface(source, name, fontFaceIndex);
-        }
     }
 }

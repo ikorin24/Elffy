@@ -141,12 +141,12 @@ namespace Elffy.Components
             SetDirty();
         }
 
-        public void DrawText(string text, SKFont font, in Vector2 pos, in ColorByte color)
+        public void DrawText(string text, Font font, in Vector2 pos, in ColorByte color)
         {
             DrawText(text.AsSpan(), font, pos, color);
         }
 
-        public void DrawText(ReadOnlySpan<char> text, SKFont font, in Vector2 pos, in ColorByte color)
+        public void DrawText(ReadOnlySpan<char> text, Font font, in Vector2 pos, in ColorByte color)
         {
             if(font is null) {
                 ThrowNullArg();
@@ -156,7 +156,7 @@ namespace Elffy.Components
             DrawTextCore(text.MarshalCast<char, byte>(), SKTextEncoding.Utf16, font, pos, GetSKColor(color));
         }
 
-        public void DrawText(ReadOnlySpan<byte> utf8Text, SKFont font, in Vector2 pos, in ColorByte color)
+        public void DrawText(ReadOnlySpan<byte> utf8Text, Font font, in Vector2 pos, in ColorByte color)
         {
             if(font is null) {
                 ThrowNullArg();
@@ -166,19 +166,20 @@ namespace Elffy.Components
             DrawTextCore(utf8Text, SKTextEncoding.Utf8, font, pos, GetSKColor(color));
         }
 
-        private void DrawTextCore(ReadOnlySpan<byte> text, SKTextEncoding enc, SKFont font, in Vector2 pos, SKColor color)
+        private void DrawTextCore(ReadOnlySpan<byte> text, SKTextEncoding enc, Font font, in Vector2 pos, SKColor color)
         {
-            var glyphCount = font.CountGlyphs(text, enc);
+            var skFont = font.GetSKFont();
+            var glyphCount = skFont.CountGlyphs(text, enc);
             if(glyphCount == 0) {
                 return;
             }
 
             var builder = TextBuilder;
 
-            var buffer = builder.AllocatePositionedRun(font, glyphCount);
+            var buffer = builder.AllocatePositionedRun(skFont, glyphCount);
             var glyphs = buffer.GetGlyphSpan();
-            font.GetGlyphs(text, enc, glyphs);
-            font.GetGlyphPositions(glyphs, buffer.GetPositionSpan());
+            skFont.GetGlyphs(text, enc, glyphs);
+            skFont.GetGlyphPositions(glyphs, buffer.GetPositionSpan());
 
             var paint = Paint;
 
