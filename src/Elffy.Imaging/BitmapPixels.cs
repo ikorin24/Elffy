@@ -3,6 +3,7 @@ using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.CompilerServices;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Imaging
 {
@@ -27,18 +28,38 @@ namespace Elffy.Imaging
 
         public BitmapPixels(Bitmap bitmap, ImageLockMode lockMode, PixelFormat format)
         {
-            _bitmap = bitmap ?? throw new ArgumentNullException(nameof(Bitmap));
+            if(bitmap is null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(bitmap));
+            }
+            _bitmap = bitmap;
             _bitmapData = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), lockMode, format);
         }
 
-        public BitmapPixels(Bitmap bitmap, Rectangle rect, ImageLockMode lockMode, PixelFormat format)
+        public BitmapPixels(Bitmap bitmap, in Rectangle rect, ImageLockMode lockMode, PixelFormat format)
         {
-            _bitmap = bitmap ?? throw new ArgumentNullException(nameof(Bitmap));
+            if(bitmap is null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(bitmap));
+            }
+            _bitmap = bitmap;
             _bitmapData = bitmap.LockBits(rect, lockMode, format);
         }
 
         public unsafe T* GetPtr<T>() where T : unmanaged 
             => !IsDisposed ? (T*)_bitmapData.Scan0 : throw DisposedException();
+
+        public unsafe Span<byte> GetRowLine(int row)
+        {
+            if(IsDisposed) { throw DisposedException(); }
+            if((uint)row >= (uint)Height) {
+                ThrowOutOfRange();
+                static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(row));
+            }
+            var stride = Math.Abs(_bitmapData.Stride);
+            var ptr = ((byte*)_bitmapData.Scan0) + stride * row;
+            return new Span<byte>(ptr, stride);
+        }
 
         /// <summary>バイト列を取得します。</summary>
         /// <returns>ピクセルのバイト列</returns>

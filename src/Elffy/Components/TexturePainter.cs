@@ -2,14 +2,20 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Runtime.CompilerServices;
+using System.Diagnostics.CodeAnalysis;
 using Elffy.Effective;
+using Elffy.Imaging;
 using SkiaSharp;
 
 namespace Elffy.Components
 {
+    /// <summary>Painter object for <see cref="Texture"/></summary>
     public unsafe struct TexturePainter : IDisposable
     {
-        // This color type is same as texture inner pixel format of opengl
+        // This color type is same as texture inner pixel format of opengl, and Elffy.ColorByte
         const SKColorType ColorType = SKColorType.Rgba8888;
 
         private readonly RectI _rect;
@@ -22,16 +28,7 @@ namespace Elffy.Components
         private ColorByte* _pixels;      // pointer to a head pixel
 
         private SKPaint Paint => _paint ??= new SKPaint();
-        private SKBitmap Bitmap
-        {
-            get
-            {
-                if(_bitmap is null) {
-                    _bitmap = new SKBitmap(new SKImageInfo(_rect.Width, _rect.Height, ColorType, SKAlphaType.Premul));
-                }
-                return _bitmap;
-            }
-        }
+        private SKBitmap Bitmap => _bitmap ??= new SKBitmap(new SKImageInfo(_rect.Width, _rect.Height, ColorType, SKAlphaType.Premul));
         private SKCanvas Canvas => _canvas ??= new SKCanvas(Bitmap);
         private SKTextBlobBuilder TextBuilder => _textBuilder ??= new SKTextBlobBuilder();
 
@@ -50,14 +47,23 @@ namespace Elffy.Components
             _canvas = null;
             _textBuilder = null;
             if(copyFromOriginal) {
-                CopyFromOriginal(rect);
+                texture.GetPixels(rect, new(Bitmap.GetPixels().ToPointer(), rect.Width * rect.Height));
             }
         }
 
         /// <summary>Get pixels as <see cref="Span{T}"/> of <see cref="ColorByte"/>.</summary>
         /// <remarks>If change pixels via span, you must call <see cref="SetDirty"/> method after that.</remarks>
         /// <returns><see cref="Span{T}"/> of <see cref="ColorByte"/></returns>
-        public Span<ColorByte> AsSpan() => MemoryMarshal.CreateSpan(ref *Ptr, _rect.Width * _rect.Height);
+        public Span<ColorByte> Pixels() => MemoryMarshal.CreateSpan(ref Unsafe.AsRef<ColorByte>(Ptr), _rect.Width * _rect.Height);
+
+        public Span<ColorByte> GetRowLine(int row)
+        {
+            if((uint)row >= (uint)_rect.Height) {
+                ThrowOutOfRange();
+                [DoesNotReturn] static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException();
+            }
+            return MemoryMarshal.CreateSpan(ref Unsafe.AsRef<ColorByte>(Ptr + row * _rect.Width), _rect.Width);
+        }
 
         /// <summary>Flush changes of pixels to <see cref="Texture"/> if dirty flag is set.</summary>
         /// <remarks>This method is automatically called from <see cref="Dispose"/></remarks>
@@ -79,18 +85,34 @@ namespace Elffy.Components
             _textBuilder?.Dispose();
         }
 
-        private void CopyFromOriginal(in RectI rect)
-        {
-            var texture = _t;
-            var pixCount = texture.Size.X * texture.Size.Y;
-            var buf = new Span<ColorByte>(Bitmap.GetPixels().ToPointer(), pixCount);
-            texture.GetPixels(rect, buf);
-        }
-
         public void Fill(in ColorByte color, bool flush = false)
         {
             var canvas = Canvas;
             canvas.Clear(GetSKColor(color));
+            SetDirty();
+            if(flush) {
+                Flush();
+            }
+        }
+
+        public void DrawBitmap(Bitmap bitmap, bool flush = false)
+        {
+            using var bitmapPixels = bitmap.GetPixels(ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+            var ptr = Ptr;
+            var height = Math.Min(bitmapPixels.Height, _rect.Height);
+            for(int row = 0; row < height; row++) {
+                var destRowLine = MemoryMarshal.CreateSpan(ref Unsafe.AsRef<byte>(ptr + row * _rect.Width), _rect.Width * sizeof(ColorByte));
+                var srcRowLine = bitmapPixels.GetRowLine(row);
+                srcRowLine.Slice(0, Math.Min(srcRowLine.Length, destRowLine.Length))
+                          .CopyTo(destRowLine);
+
+                var destPix = destRowLine.MarshalCast<byte, ColorByte>();
+                for(int i = 0; i < destPix.Length; i++) {
+
+                    // Swap R and B because System.Drawing.Bitmap is (B, G, R, A) but I need (R, G, B, A).
+                    (destPix[i].R, destPix[i].B) = (destPix[i].B, destPix[i].R);
+                }
+            }
             SetDirty();
             if(flush) {
                 Flush();
@@ -106,10 +128,10 @@ namespace Elffy.Components
         {
             if(font is null) {
                 ThrowNullArg();
-                static void ThrowNullArg() => throw new ArgumentNullException(nameof(font));
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(font));
             }
 
-            DrawTextCore(text.MarshalCast<char, byte>(), SKTextEncoding.Utf16, font!, pos, GetSKColor(color));
+            DrawTextCore(text.MarshalCast<char, byte>(), SKTextEncoding.Utf16, font, pos, GetSKColor(color));
             if(flush) {
                 Flush();
             }
@@ -119,10 +141,10 @@ namespace Elffy.Components
         {
             if(font is null) {
                 ThrowNullArg();
-                static void ThrowNullArg() => throw new ArgumentNullException(nameof(font));
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(font));
             }
 
-            DrawTextCore(utf8Text, SKTextEncoding.Utf8, font!, pos, GetSKColor(color));
+            DrawTextCore(utf8Text, SKTextEncoding.Utf8, font, pos, GetSKColor(color));
             if(flush) {
                 Flush();
             }
