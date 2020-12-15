@@ -251,7 +251,9 @@ namespace Elffy.UI
             if(texture.IsEmpty) {
                 texture.LoadUndefined(new Vector2i(Width, Height));
                 var p = texture.GetPainter(false);
-                p.Fill(ColorByte.White);
+                if(copyFromOriginal) {
+                    p.Fill(ColorByte.White);
+                }
                 return p;
             }
             else {
