@@ -1,11 +1,12 @@
 ﻿#nullable enable
-using Elffy.Effective;
 using System;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
+using Cysharp.Text;
 
 namespace Elffy
 {
+    [DebuggerDisplay("{DebugDisplay}")]
     [StructLayout(LayoutKind.Explicit)]
     public struct RectI : IEquatable<RectI>
     {
@@ -17,6 +18,8 @@ namespace Elffy
         public int Width;
         [FieldOffset(12)]
         public int Height;
+
+        private string DebugDisplay => ZString.Concat('(', X, ", ", Y, ", ", Width, ", ", Height, ')');
 
         public RectI(int x, int y, int width, int height)
         {
@@ -46,18 +49,7 @@ namespace Elffy
         public static bool operator ==(in RectI left, in RectI right) => left.Equals(right);
 
         public static bool operator !=(in RectI left, in RectI right) => !(left == right);
-    }
 
-    public static class RectIExtension
-    {
-        public static ref Vector2i Position(this ref RectI source)
-        {
-            return ref Unsafe.As<int, Vector2i>(ref source.X);
-        }
-
-        public static ref Vector2i Size(this ref RectI source)
-        {
-            return ref Unsafe.As<int, Vector2i>(ref source.Width);
-        }
+        public override string ToString() => DebugDisplay;
     }
 }
