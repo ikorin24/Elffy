@@ -3,6 +3,7 @@ using Elffy.Core;
 using Elffy.Imaging;
 using Elffy.Platforms;
 using Elffy.Threading;
+using Elffy.Exceptions;
 using System;
 using System.IO;
 using System.Drawing;
@@ -49,49 +50,40 @@ namespace Elffy
         public static void Start(int width, int height, string title, string? iconName, string? resourceFilePath, Func<UniTask> entryPointAsync)
         {
             if(resourceFilePath is null && iconName is not null) {
-                throw new ArgumentNullException($"{nameof(iconName)} is assigned but {nameof(resourceFilePath)} is null.");
+                ThrowNullResourceFile();
+                [DoesNotReturn] static void ThrowNullResourceFile() => throw new ArgumentNullException($"{nameof(iconName)} is assigned but {nameof(resourceFilePath)} is null.");
+            }
+            if(entryPointAsync is null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(entryPointAsync));
             }
 
-            _entryPointAsync = entryPointAsync ?? throw new ArgumentNullException(nameof(entryPointAsync));
-            ProcessHelper.SingleLaunch(Launch);
+            _entryPointAsync = entryPointAsync;
+            ProcessHelper.SingleLaunch(Launch, (width, height, title, iconName, resourceFilePath));
 
-            void Launch()
+            static void Launch(in (int width, int height, string title, string? iconName, string? resourceFilePath) arg)
             {
+                IHostScreen? screen = null;
                 try {
                     Engine.Run();
-                    if(resourceFilePath is not null) {
-                        Resources.Initialize(path => new LocalResourceLoader(path), resourceFilePath);
+                    if(arg.resourceFilePath is not null) {
+                        Resources.Initialize(path => new LocalResourceLoader(path), arg.resourceFilePath);
                     }
-                    IHostScreen screen;
-                    if(iconName is null) {
-                        screen = CreateScreen(width, height, title, null);
+                    using(var stream = arg.iconName is null ? Stream.Null : Resources.Loader.GetStream(arg.iconName)) {
+                        screen = CreateScreen(arg.width, arg.height, arg.title, stream);
                     }
-                    else {
-                        using(var stream = Resources.Loader.GetStream(iconName)) {
-                            screen = CreateScreen(width, height, title, stream);
-                        }
-                    }
-                    screen.Initialized += async screen =>
-                    {
-                        SetScreen(screen);
-                        try {
-                            await _entryPointAsync();
-                        }
-                        catch {
-                            // TODO: logging
-                            screen.Dispose();
-                            // Don't throw. No one catch it.
-                        }
-                    };
+                    screen.Initialized += OnScreenInitialized;
                     CustomSynchronizationContext.CreateIfNeeded(out _, out var syncContextReciever);
                     screen.Show();
 
                     while(Engine.HandleOnce()) {
                         syncContextReciever?.DoAll();
                     }
+                    ScreenExceptionHolder.ThrowIfExceptionExists(screen);
                 }
-                //catch(Exception ex) {
-                //    // TODO: logging of engine
+                //catch {
+                //    // TODO: logging here
+                //    throw;
                 //}
                 finally {
                     Resources.Close();
@@ -101,26 +93,29 @@ namespace Elffy
             }
         }
 
-        private static void SetScreen(IHostScreen screen)
+        private static async void OnScreenInitialized(IHostScreen screen)
         {
-            if(screen is null) {
-                ThrowNullArg();
-                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(screen));
-            }
-
             Timing.Initialize(screen);
             Game.Initialize(screen);
             GameUI.Initialize(screen.UIRoot);
+            try {
+                await _entryPointAsync();
+            }
+            catch(Exception ex) {
+                ScreenExceptionHolder.SetException(screen, ex);
+                screen.Dispose();
+                // Don't throw. No one catch it.
+            }
         }
 
-        private static unsafe IHostScreen CreateScreen(int width, int height, string title, Stream? iconStream)
+        private static unsafe IHostScreen CreateScreen(int width, int height, string title, Stream iconStream)
         {
             Bitmap? iconBitmap = null;
             try {
                 Span<RawImage> icon = stackalloc RawImage[1];
 
                 // TODO: This is low performance, which makes a lot of garbages. It is better to create custom .ico parser.
-                if(iconStream is not null) {
+                if(!ReferenceEquals(iconStream, Stream.Null)) {
                     // Get icon raw image from stream.
                     iconBitmap = new Bitmap(iconStream);
                     using(var pixels = iconBitmap.GetPixels(ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb)) {

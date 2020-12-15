@@ -1,60 +1,109 @@
 ﻿#nullable enable
-using Elffy.Exceptions;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Threading;
 
 namespace Elffy.Core
 {
-    /// <summary>アプリケーションのプロセスに関する処理を提供します</summary>
+    /// <summary>Provides utilities of the process</summary>
     public static class ProcessHelper
     {
-        /// <summary>名前付き Mutex の名前の最大長</summary>
-        private const int MUTEX_NAME_MAX_LEN = 259;
+        /// <summary>Max length of a mutex name</summary>
+        private const int MutexNameMaxLength = 259;
 
-        /// <summary>Mutex を用いてアプリケーションの多重起動を防止します</summary>
-        /// <param name="startAction">起動する処理</param>
-        public static void SingleLaunch(Action startAction) => SingleLaunch(startAction, () => { });
-
-        /// <summary>Mutex を用いてアプリケーションの多重起動を防止します</summary>
-        /// <param name="startAction">起動する処理</param>
-        /// <param name="multiLaunch">多重起動時に実行される処理</param>
-        public static void SingleLaunch(Action startAction, Action multiLaunch)
+        private static string DefaultUniqueName
         {
-            var assemblyName = Assembly.GetEntryAssembly()!.GetName();
-            var uniqueName = $"{assemblyName.Name}-{assemblyName.Version}";      // 最低1文字 (Empty では Mutex が機能しないため)
-            if(uniqueName.Length > MUTEX_NAME_MAX_LEN) {
-                uniqueName = uniqueName.Substring(0, MUTEX_NAME_MAX_LEN);                   // 名前付きMutexの名前は文字数制限があるため
+            get
+            {
+                var assemblyName = Assembly.GetEntryAssembly()!.GetName();
+                var uniqueName = $"{assemblyName.Name}-{assemblyName.Version}";      // at least one character
+                if(uniqueName.Length > MutexNameMaxLength) {
+                    uniqueName = uniqueName.Substring(0, MutexNameMaxLength);
+                }
+                return uniqueName;
             }
-            SingleLaunch(uniqueName, startAction, multiLaunch);
         }
 
-        /// <summary>Mutex を用いてアプリケーションの多重起動を防止します</summary>
-        /// <param name="uniqueName">Mutex の識別名 (他のアプリケーションと重複せず、このアプリケーションを表す固有名)</param>
-        /// <param name="startAction">起動する処理</param>
-        public static void SingleLaunch(string uniqueName, Action startAction) => SingleLaunch(uniqueName, startAction, () => { });
-
-        /// <summary>Mutex を用いてアプリケーションの多重起動を防止します</summary>
-        /// <param name="uniqueName">Mutex の識別名 (他のアプリケーションと重複せず、このアプリケーションを表す固有名)</param>
-        /// <param name="startAction">起動する処理</param>
-        /// <param name="multiLaunch">多重起動時に実行される処理</param>
-        public static void SingleLaunch(string uniqueName, Action startAction, Action multiLaunch)
+        /// <summary>Use mutex to prevent multiple launches of applications</summary>
+        /// <param name="startAction">action to launch</param>
+        /// <param name="multiLaunch">action executed at multiple startup</param>
+        public static void SingleLaunch(Action startAction, Action? multiLaunch = null)
         {
-            if(string.IsNullOrEmpty(uniqueName)) { throw new ArgumentException($"{nameof(uniqueName)} is null or empty."); }
-            if(startAction is null) { throw new ArgumentNullException(nameof(startAction)); }
-            if(multiLaunch is null) { throw new ArgumentNullException(nameof(multiLaunch)); }
-
-            if(uniqueName.Length > MUTEX_NAME_MAX_LEN) {
-                throw new ArgumentException($"{nameof(uniqueName)} is too long. Length must be between 0 and {MUTEX_NAME_MAX_LEN}.");
-            }
-            using(var mutex = new Mutex(true, uniqueName, out var createdNew)) {
-                if(createdNew) {
-                    startAction();
-                }
-                else {
-                    multiLaunch();
-                }
-            }
+            SingleLaunch(DefaultUniqueName, startAction, multiLaunch);
         }
+
+        /// <summary>Use mutex to prevent multiple launches of applications</summary>
+        /// <param name="uniqueName">mutex name (It must be unique that represents the application.)</param>
+        /// <param name="startAction">action to launch</param>
+        /// <param name="multiLaunch">action executed at multiple startup</param>
+        public static void SingleLaunch(string uniqueName, Action startAction, Action? multiLaunch = null)
+        {
+            if(string.IsNullOrEmpty(uniqueName)) { ThrowNullOrEmpty(nameof(uniqueName)); }
+            if(startAction is null) { ThrowNullArg(nameof(startAction)); }
+            if(uniqueName.Length > MutexNameMaxLength) { ThrowTooLong(nameof(uniqueName)); }
+
+            using var mutex = new Mutex(true, uniqueName, out var createdNew);
+            if(createdNew) {
+                startAction();
+            }
+            else {
+                multiLaunch?.Invoke();
+            }
+
+            [DoesNotReturn] static void ThrowNullArg(string name) => throw new ArgumentNullException(name);
+            [DoesNotReturn] static void ThrowNullOrEmpty(string name) => throw new ArgumentException($"{name} is null or empty.");
+            [DoesNotReturn] static void ThrowTooLong(string name) => throw new ArgumentException($"{name} is too long. Length must be between 0 and {MutexNameMaxLength}.");
+        }
+
+        /// <summary>Use mutex to prevent multiple launches of applications</summary>
+        /// <typeparam name="T">type of <paramref name="arg"/></typeparam>
+        /// <param name="startAction">action to launch</param>
+        /// <param name="arg">argument of <paramref name="startAction"/></param>
+        public static void SingleLaunch<T>(LaunchDelegate<T> startAction, in T arg)
+        {
+            SingleLaunch<T, int>(DefaultUniqueName, startAction, arg, null, default);
+        }
+
+        /// <summary>Use mutex to prevent multiple launches of applications</summary>
+        /// <typeparam name="T1">type of <paramref name="arg1"/></typeparam>
+        /// <typeparam name="T2">type of <paramref name="arg2"/></typeparam>
+        /// <param name="startAction">action to launch</param>
+        /// <param name="arg1">argument of <paramref name="startAction"/></param>
+        /// <param name="multiLaunch">action executed at multiple startup</param>
+        /// <param name="arg2">argument of <paramref name="multiLaunch"/></param>
+        public static void SingleLaunch<T1, T2>(LaunchDelegate<T1> startAction, in T1 arg1, LaunchDelegate<T2>? multiLaunch, in T2 arg2)
+        {
+            SingleLaunch(DefaultUniqueName, startAction, arg1, multiLaunch, arg2);
+        }
+
+        /// <summary>Use mutex to prevent multiple launches of applications</summary>
+        /// <typeparam name="T1">type of <paramref name="arg1"/></typeparam>
+        /// <typeparam name="T2">type of <paramref name="arg2"/></typeparam>
+        /// <param name="uniqueName">mutex name (It must be unique that represents the application.)</param>
+        /// <param name="startAction">action to launch</param>
+        /// <param name="arg1">argument of <paramref name="startAction"/></param>
+        /// <param name="multiLaunch">action executed at multiple startup</param>
+        /// <param name="arg2">argument of <paramref name="multiLaunch"/></param>
+        public static void SingleLaunch<T1, T2>(string uniqueName, LaunchDelegate<T1> startAction, in T1 arg1, LaunchDelegate<T2>? multiLaunch, in T2 arg2)
+        {
+            if(string.IsNullOrEmpty(uniqueName)) { ThrowNullOrEmpty(nameof(uniqueName)); }
+            if(startAction is null) { ThrowNullArg(nameof(startAction)); }
+            if(uniqueName.Length > MutexNameMaxLength) { ThrowTooLong(nameof(uniqueName)); }
+
+            using var mutex = new Mutex(true, uniqueName, out var createdNew);
+            if(createdNew) {
+                startAction(arg1);
+            }
+            else {
+                multiLaunch?.Invoke(arg2!);
+            }
+
+            [DoesNotReturn] static void ThrowNullArg(string name) => throw new ArgumentNullException(name);
+            [DoesNotReturn] static void ThrowNullOrEmpty(string name) => throw new ArgumentException($"{name} is null or empty.");
+            [DoesNotReturn] static void ThrowTooLong(string name) => throw new ArgumentException($"{name} is too long. Length must be between 0 and {MutexNameMaxLength}.");
+        }
+
+        public delegate void LaunchDelegate<T>(in T arg);
     }
 }
