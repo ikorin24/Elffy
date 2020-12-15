@@ -50,6 +50,10 @@ namespace Elffy.Components
 
         public ref readonly Vector2i Size => ref _size;
 
+        public Texture(bool autoDispose = true) : this(TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear, TextureMipmapMode.Bilinear, autoDispose)
+        {
+        }
+
         public Texture(TextureExpansionMode expansionMode, TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode, bool autoDispose = true)
         {
             ExpansionMode = expansionMode;

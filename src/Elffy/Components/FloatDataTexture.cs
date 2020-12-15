@@ -69,7 +69,7 @@ namespace Elffy.Components
             Length = texels.Length;
 
             TextureObject.Bind1D(TextureObject);
-            TextureObject.Parameter1DMinFilter(TextureShrinkMode.NearestNeighbor);
+            TextureObject.Parameter1DMinFilter(TextureShrinkMode.NearestNeighbor, TextureMipmapMode.None);
             TextureObject.Parameter1DMagFilter(TextureExpansionMode.NearestNeighbor);
             fixed(Color4* ptr = texels) {
                 TextureObject.Image1D(texels.Length, ptr, TextureObject.InternalFormat.Rgba32f);
@@ -92,7 +92,7 @@ namespace Elffy.Components
             Length = width;
 
             TextureObject.Bind1D(TextureObject);
-            TextureObject.Parameter1DMinFilter(TextureShrinkMode.NearestNeighbor);
+            TextureObject.Parameter1DMinFilter(TextureShrinkMode.NearestNeighbor, TextureMipmapMode.None);
             TextureObject.Parameter1DMagFilter(TextureExpansionMode.NearestNeighbor);
             TextureObject.Image1D(width, (Color4*)null, TextureObject.InternalFormat.Rgba32f);
             TextureObject.Unbind1D();

@@ -8,7 +8,7 @@ namespace Elffy
     public static class ResourceLoaderExtension
     {
         /// <summary>Create <see cref="Texture"/> from resource</summary>
-        /// <remarks>Created <see cref="Texture"/> expands and shrinks linearly, and has no mipmap.</remarks>
+        /// <remarks>Created <see cref="Texture"/> expands and shrinks linearly.</remarks>
         /// <param name="name">resource name</param>
         /// <param name="bitmapType">image file type</param>
         /// <returns><see cref="Texture"/> created from <see cref="Stream"/></returns>
@@ -17,7 +17,7 @@ namespace Elffy
             return LoadTexture(source, name, bitmapType,
                              TextureExpansionMode.Bilinear,
                              TextureShrinkMode.Bilinear,
-                             TextureMipmapMode.None);
+                             TextureMipmapMode.Bilinear);
         }
 
         /// <summary>Create <see cref="Texture"/> from resource</summary>

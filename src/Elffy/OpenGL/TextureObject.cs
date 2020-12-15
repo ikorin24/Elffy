@@ -159,8 +159,7 @@ namespace Elffy.OpenGL
         /// <summary>Call glTexParameter with texture2D and texture min filter</summary>
         /// <param name="shrinkMode">shrink mode</param>
         /// <param name="mipmapMode">mipmap mode</param>
-        public static void Parameter2DMinFilter(TextureShrinkMode shrinkMode,
-                                                TextureMipmapMode mipmapMode = TextureMipmapMode.None)
+        public static void Parameter2DMinFilter(TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode)
         {
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, GetMinParameter(shrinkMode, mipmapMode));
         }
@@ -253,8 +252,7 @@ namespace Elffy.OpenGL
         /// <summary>Call glTexParameter with texture1D and min filter</summary>
         /// <param name="shrinkMode">shrink mode</param>
         /// <param name="mipmapMode">mipmap mode</param>
-        public static void Parameter1DMinFilter(TextureShrinkMode shrinkMode,
-                                                TextureMipmapMode mipmapMode = TextureMipmapMode.None)
+        public static void Parameter1DMinFilter(TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode)
         {
             GL.TexParameter(TextureTarget.Texture1D, TextureParameterName.TextureMinFilter, GetMinParameter(shrinkMode, mipmapMode));
         }

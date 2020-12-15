@@ -2,32 +2,32 @@
 
 namespace Elffy
 {
-    /// <summary>テクスチャの拡大モード</summary>
+    /// <summary>Texture expansion mode</summary>
     public enum TextureExpansionMode
     {
-        /// <summary>線形補間</summary>
+        /// <summary>bilinear interpolation</summary>
         Bilinear,
-        /// <summary>最近傍補間</summary>
+        /// <summary>nearest neighbor interpolation</summary>
         NearestNeighbor,
     }
 
-    /// <summary>テクスチャの縮小モード</summary>
+    /// <summary>Texture shrink mode</summary>
     public enum TextureShrinkMode
     {
-        /// <summary>線形補間</summary>
+        /// <summary>bilinear interpolation</summary>
         Bilinear,
-        /// <summary>最近傍補間</summary>
+        /// <summary>nearest neighbor interpolation</summary>
         NearestNeighbor,
     }
 
-    /// <summary>テクスチャのミップマップモード</summary>
+    /// <summary>texture mipmap mode</summary>
     public enum TextureMipmapMode
     {
-        /// <summary>ミップマップを使用しません</summary>
-        None,
-        /// <summary>線形補間</summary>
+        /// <summary>bilinear interpolation</summary>
         Bilinear,
-        /// <summary>最近傍補間</summary>
+        /// <summary>nearest neighbor interpolation</summary>
         NearestNeighbor,
+        /// <summary>not use mipmap</summary>
+        None,
     }
 }
