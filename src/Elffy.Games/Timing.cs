@@ -102,7 +102,7 @@ namespace Elffy
             }
         }
 
-        /// <summary>Wait for the specified time span.</summary>
+        /// <summary>Wait for the specified time.</summary>
         /// <param name="time">time span for waiting</param>
         /// <param name="timing">timing of end point</param>
         /// <param name="cancellationToken">cancellation token</param>
@@ -111,9 +111,45 @@ namespace Elffy
         public static async UniTask DelayTime(TimeSpan time, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
         {
             var start = Game.Time;
-            while(Game.Time - start < time) {
+            while(Game.Time - start <= time) {
                 await ToFrameLoopTiming(timing, cancellationToken);
             }
+        }
+
+        /// <summary>Wait for the specified time.</summary>
+        /// <param name="millisecond">millisecond time for waiting</param>
+        /// <param name="timing">timing of end point</param>
+        /// <param name="cancellationToken">cancellation token</param>
+        /// <returns>awaitable object</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static UniTask DelayTime(int millisecond, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
+        {
+            return DelayTime(TimeSpan.FromMilliseconds(millisecond), timing, cancellationToken);
+        }
+
+        /// <summary>Wait for the specified real time.</summary>
+        /// <param name="time">time span for waiting</param>
+        /// <param name="timing">timing of end point</param>
+        /// <param name="cancellationToken">cancellation token</param>
+        /// <returns>awaitable object</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static async UniTask DelayRealTime(TimeSpan time, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
+        {
+            var start = Engine.RunningRealTime;
+            while(Engine.RunningRealTime - start <= time) {
+                await ToFrameLoopTiming(timing, cancellationToken);
+            }
+        }
+
+        /// <summary>Wait for the specified real time.</summary>
+        /// <param name="millisecond">millisecond time for waiting</param>
+        /// <param name="timing">timing of end point</param>
+        /// <param name="cancellationToken">cancellation token</param>
+        /// <returns>awaitable object</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static UniTask DelayRealTime(int millisecond, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
+        {
+            return DelayRealTime(TimeSpan.FromMilliseconds(millisecond), timing, cancellationToken);
         }
     }
 }
