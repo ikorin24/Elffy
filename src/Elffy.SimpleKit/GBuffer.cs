@@ -90,6 +90,8 @@ namespace Elffy
                 TextureObject.Image2D(screenSize, (Color4*)null, TextureObject.InternalFormat.Rgba16f);
                 TextureObject.Parameter2DMagFilter(TextureExpansionMode.NearestNeighbor);
                 TextureObject.Parameter2DMinFilter(TextureShrinkMode.NearestNeighbor, TextureMipmapMode.None);
+                TextureObject.Parameter2DWrapS(TextureWrapMode.ClampToEdge);
+                TextureObject.Parameter2DWrapT(TextureWrapMode.ClampToEdge);
                 FBO.SetTexture2DBuffer(position, FBO.Attachment.ColorAttachment0);
                 bufs[0] = DrawBuffersEnum.ColorAttachment0;
 
@@ -98,6 +100,8 @@ namespace Elffy
                 TextureObject.Image2D(screenSize, (Color4*)null, TextureObject.InternalFormat.Rgba16f);
                 TextureObject.Parameter2DMagFilter(TextureExpansionMode.NearestNeighbor);
                 TextureObject.Parameter2DMinFilter(TextureShrinkMode.NearestNeighbor, TextureMipmapMode.None);
+                TextureObject.Parameter2DWrapS(TextureWrapMode.ClampToEdge);
+                TextureObject.Parameter2DWrapT(TextureWrapMode.ClampToEdge);
                 FBO.SetTexture2DBuffer(normal, FBO.Attachment.ColorAttachment1);
                 bufs[1] = DrawBuffersEnum.ColorAttachment1;
 
@@ -106,6 +110,8 @@ namespace Elffy
                 TextureObject.Image2D(screenSize, (ColorByte*)null, TextureObject.InternalFormat.Rgba8);
                 TextureObject.Parameter2DMagFilter(TextureExpansionMode.NearestNeighbor);
                 TextureObject.Parameter2DMinFilter(TextureShrinkMode.NearestNeighbor, TextureMipmapMode.None);
+                TextureObject.Parameter2DWrapS(TextureWrapMode.ClampToEdge);
+                TextureObject.Parameter2DWrapT(TextureWrapMode.ClampToEdge);
                 FBO.SetTexture2DBuffer(color, FBO.Attachment.ColorAttachment2);
                 bufs[2] = DrawBuffersEnum.ColorAttachment2;
 

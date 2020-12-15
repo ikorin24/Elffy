@@ -39,6 +39,8 @@ namespace Elffy.Components
         public TextureExpansionMode ExpansionMode { get; }
         public TextureShrinkMode ShrinkMode { get; }
         public TextureMipmapMode MipmapMode { get; }
+        public TextureWrapMode WrapModeX { get; }
+        public TextureWrapMode WrapModeY { get; }
 
         public TextureObject TextureObject => _to;
 
@@ -50,15 +52,20 @@ namespace Elffy.Components
 
         public ref readonly Vector2i Size => ref _size;
 
-        public Texture(bool autoDispose = true) : this(TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear, TextureMipmapMode.Bilinear, autoDispose)
+        public Texture(TextureWrapMode wrapMode, bool autoDispose = true)
+            : this(TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear, TextureMipmapMode.Bilinear, wrapMode, wrapMode, autoDispose)
         {
         }
 
-        public Texture(TextureExpansionMode expansionMode, TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode, bool autoDispose = true)
+        public Texture(TextureExpansionMode expansionMode, TextureShrinkMode shrinkMode,
+                       TextureMipmapMode mipmapMode, TextureWrapMode wrapModeX, TextureWrapMode wrapModeY,
+                       bool autoDispose = true)
         {
             ExpansionMode = expansionMode;
             ShrinkMode = shrinkMode;
             MipmapMode = mipmapMode;
+            WrapModeX = wrapModeX;
+            WrapModeY = wrapModeY;
             _core = new SingleOwnerComponentCore<Texture>(autoDispose);
         }
 
@@ -82,6 +89,8 @@ namespace Elffy.Components
             TextureObject.Bind2D(_to);
             TextureObject.Parameter2DMinFilter(ShrinkMode, MipmapMode);
             TextureObject.Parameter2DMagFilter(ExpansionMode);
+            TextureObject.Parameter2DWrapS(WrapModeX);
+            TextureObject.Parameter2DWrapT(WrapModeY);
             TextureObject.Image2D(bitmap);
             if(MipmapMode != TextureMipmapMode.None) {
                 TextureObject.GenerateMipmap2D();
@@ -262,6 +271,8 @@ namespace Elffy.Components
             TextureObject.Bind2D(_to);
             TextureObject.Parameter2DMinFilter(ShrinkMode, MipmapMode);
             TextureObject.Parameter2DMagFilter(ExpansionMode);
+            TextureObject.Parameter2DWrapS(WrapModeX);
+            TextureObject.Parameter2DWrapT(WrapModeY);
             TextureObject.Image2D(size, pixels);
             if(MipmapMode != TextureMipmapMode.None) {
                 TextureObject.GenerateMipmap2D();

@@ -178,11 +178,14 @@ namespace Elffy.Serialization
                             TextureObject.Bind2D(t);
                             TextureObject.Parameter2DMinFilter(TextureShrinkMode.Bilinear, TextureMipmapMode.Bilinear);
                             TextureObject.Parameter2DMagFilter(TextureExpansionMode.Bilinear);
+                            TextureObject.Parameter2DWrapS(TextureWrapMode.Repeat);
+                            TextureObject.Parameter2DWrapT(TextureWrapMode.Repeat);
                             TextureObject.Image2D(bitmap);
                             TextureObject.GenerateMipmap2D();
                             textures[i] = t;
                         }
                     }
+                    TextureObject.Unbind2D();
                     var partsComponent = new PmxModelParts(ref vertexCountArray, ref textureIndexArray, ref textures);
                     model.AddComponent(partsComponent);
 

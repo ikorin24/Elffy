@@ -224,7 +224,7 @@ namespace Elffy.UI
         {
             Children = new ControlCollection(this);
             Renderable = new UIRenderable(this);
-            Texture = new Texture(TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear, TextureMipmapMode.None);
+            Texture = new Texture(TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear, TextureMipmapMode.None, TextureWrapMode.ClampToEdge, TextureWrapMode.ClampToEdge);
             Renderable.Alive += OnRenderableAlive;
             Renderable.Dead += OnRenderableDead;
         }

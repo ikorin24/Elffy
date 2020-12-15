@@ -3,11 +3,13 @@ using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Diagnostics.CodeAnalysis;
 using OpenTK.Graphics.OpenGL4;
 using Elffy.Core;
 using Elffy.Imaging;
 using TKPixelType = OpenTK.Graphics.OpenGL4.PixelType;
 using TKPixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
+using GLTextureWrapMode = OpenTK.Graphics.OpenGL4.TextureWrapMode;
 
 namespace Elffy.OpenGL
 {
@@ -173,16 +175,16 @@ namespace Elffy.OpenGL
 
         /// <summary>Call glTexparameter with texture2D and texture wrap s</summary>
         /// <param name="wrapMode">texture wrap mode</param>
-        public static void Parameter2DWrapS(WrapMode wrapMode)
+        public static void Parameter2DWrapS(TextureWrapMode wrapMode)
         {
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)wrapMode);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, GetWrapMode(wrapMode));
         }
 
         /// <summary>Call glTexparameter with texture2D and texture wrap t</summary>
         /// <param name="wrapMode">texture wrap mode</param>
-        public static void Parameter2DWrapT(WrapMode wrapMode)
+        public static void Parameter2DWrapT(TextureWrapMode wrapMode)
         {
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)wrapMode);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, GetWrapMode(wrapMode));
         }
 
         /// <summary>Call glGenerateMipmap with texture2D</summary>
@@ -264,6 +266,26 @@ namespace Elffy.OpenGL
             GL.TexParameter(TextureTarget.Texture1D, TextureParameterName.TextureMagFilter, GetMagParameter(expansionMode));
         }
 
+        /// <summary>Call glTexparameter with texture1D and texture wrap s</summary>
+        /// <param name="wrapMode">texture wrap mode</param>
+        public static void Parameter1DWrapS(TextureWrapMode wrapMode)
+        {
+            GL.TexParameter(TextureTarget.Texture1D, TextureParameterName.TextureWrapS, GetWrapMode(wrapMode));
+        }
+
+        /// <summary>Call glTexparameter with texture1D and texture wrap t</summary>
+        /// <param name="wrapMode">texture wrap mode</param>
+        public static void Parameter1DWrapT(TextureWrapMode wrapMode)
+        {
+            GL.TexParameter(TextureTarget.Texture1D, TextureParameterName.TextureWrapT, GetWrapMode(wrapMode));
+        }
+
+        /// <summary>Call glGenerateMipmap with texture1D</summary>
+        public static void GenerateMipmap1D()
+        {
+            GL.GenerateMipmap(GenerateMipmapTarget.Texture1D);
+        }
+
         /// <summary>Call glDeleteTexture</summary>
         /// <param name="to">texture object to delete</param>
         public static void Delete(ref TextureObject to)
@@ -314,6 +336,20 @@ namespace Elffy.OpenGL
             throw new ArgumentException();
         }
 
+        private static int GetWrapMode(TextureWrapMode wrapMode)
+        {
+            return (int)(wrapMode switch
+            {
+                TextureWrapMode.Repeat => GLTextureWrapMode.Repeat,
+                TextureWrapMode.MirroredRepeat => GLTextureWrapMode.MirroredRepeat,
+                TextureWrapMode.ClampToBorder => GLTextureWrapMode.ClampToBorder,
+                TextureWrapMode.ClampToEdge => GLTextureWrapMode.ClampToEdge,
+                _ => ThrowInvalidEnum(),
+            });
+            
+            [DoesNotReturn] static GLTextureWrapMode ThrowInvalidEnum() => throw new ArgumentException();
+        }
+
         public override string ToString() => _texture.ToString();
 
         public override bool Equals(object? obj) => obj is TextureObject to && Equals(to);
@@ -338,19 +374,6 @@ namespace Elffy.OpenGL
             DepthComponent16 = PixelInternalFormat.DepthComponent16,
             /// <summary>GL_DEPTH_COMPONENT24. Use texture as a depth buffer. 24 bits precision.</summary>
             DepthComponent24 = PixelInternalFormat.DepthComponent24,
-        }
-
-        /// <summary>Texture wrap mode</summary>
-        public enum WrapMode
-        {
-            /// <summary>GL_REPEAT</summary>
-            Repeat = TextureWrapMode.Repeat,
-            /// <summary>GL_MIRRORED_REPEAT</summary>
-            MirroredRepeat = TextureWrapMode.MirroredRepeat,
-            /// <summary>GL_CLAMP_TO_BORDER</summary>
-            ClampToBorder = TextureWrapMode.ClampToBorder,
-            /// <summary>GL_CLAMP_TO_EDGE</summary>
-            ClampToEdge = TextureWrapMode.ClampToEdge,
         }
     }
 }

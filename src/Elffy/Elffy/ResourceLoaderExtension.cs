@@ -15,9 +15,11 @@ namespace Elffy
         public static Texture LoadTexture(this IResourceLoader source, string name, BitmapType bitmapType)
         {
             return LoadTexture(source, name, bitmapType,
-                             TextureExpansionMode.Bilinear,
-                             TextureShrinkMode.Bilinear,
-                             TextureMipmapMode.Bilinear);
+                              TextureExpansionMode.Bilinear,
+                              TextureShrinkMode.Bilinear,
+                              TextureMipmapMode.Bilinear,
+                              TextureWrapMode.ClampToEdge,
+                              TextureWrapMode.ClampToEdge);
         }
 
         /// <summary>Create <see cref="Texture"/> from resource</summary>
@@ -26,13 +28,16 @@ namespace Elffy
         /// <param name="expansionMode">texture expansion mode</param>
         /// <param name="shrinkMode">textrue shrink mode</param>
         /// <param name="mipmapMode">texture mipmap mode</param>
+        /// <param name="wrapModeX">texture x wrap mode</param>
+        /// <param name="wrapModeY">texture y wrap mode</param>
         /// <returns><see cref="Texture"/> create from <see cref="Stream"/></returns>
         public static Texture LoadTexture(this IResourceLoader source, string name, BitmapType bitmapType, TextureExpansionMode expansionMode,
-                                        TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode)
+                                          TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode,
+                                          TextureWrapMode wrapModeX, TextureWrapMode wrapModeY)
         {
             using(var stream = source.GetStream(name))
             using(var bitmap = BitmapHelper.StreamToBitmap(stream, bitmapType)) {
-                var texture = new Texture(expansionMode, shrinkMode, mipmapMode);
+                var texture = new Texture(expansionMode, shrinkMode, mipmapMode, wrapModeX, wrapModeY);
                 texture.Load(bitmap);
                 return texture;
             }

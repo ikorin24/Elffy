@@ -30,4 +30,17 @@ namespace Elffy
         /// <summary>not use mipmap</summary>
         None,
     }
+
+    /// <summary>Texture wrap mode</summary>
+    public enum TextureWrapMode
+    {
+        /// <summary>clamp to edge</summary>
+        ClampToEdge,
+        /// <summary>repeat</summary>
+        Repeat,
+        /// <summary>mirrored repeat</summary>
+        MirroredRepeat,
+        /// <summary>clamp to border</summary>
+        ClampToBorder,
+    }
 }

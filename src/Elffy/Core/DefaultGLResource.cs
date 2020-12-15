@@ -23,6 +23,10 @@ namespace Elffy.Core
             var whiteEmpty = TextureObject.Create();
             var pixel = ColorByte.White;
             TextureObject.Bind2D(whiteEmpty);
+            TextureObject.Parameter2DMinFilter(TextureShrinkMode.NearestNeighbor, TextureMipmapMode.None);
+            TextureObject.Parameter2DMagFilter(TextureExpansionMode.NearestNeighbor);
+            TextureObject.Parameter2DWrapS(TextureWrapMode.ClampToEdge);
+            TextureObject.Parameter2DWrapT(TextureWrapMode.ClampToEdge);
             TextureObject.Image2D(new(1, 1), &pixel);
             _whiteEmptyTexture = whiteEmpty;
             TextureObject.Unbind2D();
