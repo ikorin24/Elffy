@@ -56,6 +56,9 @@ namespace Elffy.Components
         /// <returns><see cref="Span{T}"/> of <see cref="ColorByte"/></returns>
         public Span<ColorByte> Pixels() => MemoryMarshal.CreateSpan(ref Unsafe.AsRef<ColorByte>(Ptr), _rect.Width * _rect.Height);
 
+        /// <summary>Get pixels of a specified row line</summary>
+        /// <param name="row">number of the row</param>
+        /// <returns>pixels</returns>
         public Span<ColorByte> GetRowLine(int row)
         {
             if((uint)row >= (uint)_rect.Height) {
@@ -67,15 +70,23 @@ namespace Elffy.Components
 
         /// <summary>Flush changes of pixels to <see cref="Texture"/> if dirty flag is set.</summary>
         /// <remarks>This method is automatically called from <see cref="Dispose"/></remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Flush()
         {
             if(_isDirty) {
-                Debug.Assert(_pixels != null);
-                _t.UpdateSubTexture(_pixels, _rect);
-                _isDirty = false;
+                FlushCore(ref this);
+
+                [MethodImpl(MethodImplOptions.NoInlining)]  // no inlining
+                void FlushCore(ref TexturePainter @this)
+                {
+                    Debug.Assert(@this._pixels != null);
+                    @this._t.UpdateSubTexture(@this._pixels, @this._rect);
+                    @this._isDirty = false;
+                }
             }
         }
 
+        /// <summary>Flush modification and dispose the painter</summary>
         public void Dispose()
         {
             Flush();
@@ -85,6 +96,9 @@ namespace Elffy.Components
             _textBuilder?.Dispose();
         }
 
+        /// <summary>Fill the rect by specified color</summary>
+        /// <param name="color">color to fill the rect</param>
+        /// <param name="flush">flush modification immediately if true</param>
         public void Fill(in ColorByte color, bool flush = false)
         {
             var canvas = Canvas;
