@@ -196,7 +196,7 @@ namespace Elffy.Components
             SetDirty();
         }
 
-        private void SetDirty()
+        public void SetDirty()
         {
             _isDirty = true;
             if(_pixels == null) {
