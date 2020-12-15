@@ -3,6 +3,7 @@ using System;
 using Elffy.Core;
 using Elffy.AssemblyServices;
 using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics;
 
 namespace Elffy
 {
@@ -10,6 +11,7 @@ namespace Elffy
     public static class Engine
     {
         private static LazyApplyingList<IHostScreen> _screens = LazyApplyingList<IHostScreen>.New();
+        private static readonly Stopwatch _watch = new Stopwatch();
 
         /// <summary>Get whether the engine is running</summary>
         public static bool IsRunning { get; private set; }
@@ -19,6 +21,9 @@ namespace Elffy
 
         /// <summary>Get <see cref="IHostScreen"/> running on the engine.</summary>
         public static ReadOnlySpan<IHostScreen> Screens => _screens.AsSpan();
+
+        /// <summary>Get real time since the engine started.</summary>
+        public static TimeSpan RunningRealTime => _watch.Elapsed;
 
         internal static void AddScreen(IHostScreen screen, bool show = true)
         {
@@ -45,6 +50,7 @@ namespace Elffy
                 ThrowAlreadyRunning();
             }
             IsRunning = true;
+            _watch.Restart();
         }
 
         /// <summary>Handle next frame of all screens the engine has.</summary>
@@ -72,6 +78,8 @@ namespace Elffy
                 // TODO: 暫定的実装
                 GC.Collect();           // OpenGL 関連のメモリリーク検知用
             }
+            _watch.Stop();
+            _watch.Reset();
         }
 
         [DoesNotReturn]
