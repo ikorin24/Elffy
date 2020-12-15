@@ -98,24 +98,35 @@ namespace Elffy.Components
 
         /// <summary>Fill the rect by specified color</summary>
         /// <param name="color">color to fill the rect</param>
-        /// <param name="flush">flush modification immediately if true</param>
-        public void Fill(in ColorByte color, bool flush = false)
+        public void Fill(in ColorByte color)
         {
             var canvas = Canvas;
             canvas.Clear(GetSKColor(color));
             SetDirty();
-            if(flush) {
-                Flush();
-            }
         }
 
-        public void DrawBitmap(Bitmap bitmap, bool flush = false)
+        public void DrawBitmap(Bitmap bitmap)
         {
+            DrawBitmap(bitmap, new Vector2i(0, 0));
+        }
+
+        public void DrawBitmap(Bitmap bitmap, in Vector2i offset)
+        {
+            if((uint)offset.X >= _rect.Width) {
+                ThrowOutOfRange();
+            }
+            if((uint)offset.Y >= _rect.Height) {
+                ThrowOutOfRange();
+            }
+            [DoesNotReturn] static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(offset));
+
+
             using var bitmapPixels = bitmap.GetPixels(ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
             var ptr = Ptr;
-            var height = Math.Min(bitmapPixels.Height, _rect.Height);
+            var height = Math.Min(bitmapPixels.Height, _rect.Height - offset.Y);
             for(int row = 0; row < height; row++) {
-                var destRowLine = MemoryMarshal.CreateSpan(ref Unsafe.AsRef<byte>(ptr + row * _rect.Width), _rect.Width * sizeof(ColorByte));
+                var destRowLine = MemoryMarshal.CreateSpan(ref Unsafe.AsRef<byte>(ptr + (row + offset.Y) * _rect.Width + offset.X),
+                                                           (_rect.Width - offset.X) * sizeof(ColorByte));
                 var srcRowLine = bitmapPixels.GetRowLine(row);
                 srcRowLine.Slice(0, Math.Min(srcRowLine.Length, destRowLine.Length))
                           .CopyTo(destRowLine);
@@ -128,17 +139,14 @@ namespace Elffy.Components
                 }
             }
             SetDirty();
-            if(flush) {
-                Flush();
-            }
         }
 
-        public void DrawText(string text, SKFont font, in Vector2 pos, in ColorByte color, bool flush = false)
+        public void DrawText(string text, SKFont font, in Vector2 pos, in ColorByte color)
         {
-            DrawText(text.AsSpan(), font, pos, color, flush);
+            DrawText(text.AsSpan(), font, pos, color);
         }
 
-        public void DrawText(ReadOnlySpan<char> text, SKFont font, in Vector2 pos, in ColorByte color, bool flush = false)
+        public void DrawText(ReadOnlySpan<char> text, SKFont font, in Vector2 pos, in ColorByte color)
         {
             if(font is null) {
                 ThrowNullArg();
@@ -146,12 +154,9 @@ namespace Elffy.Components
             }
 
             DrawTextCore(text.MarshalCast<char, byte>(), SKTextEncoding.Utf16, font, pos, GetSKColor(color));
-            if(flush) {
-                Flush();
-            }
         }
 
-        public void DrawText(ReadOnlySpan<byte> utf8Text, SKFont font, in Vector2 pos, in ColorByte color, bool flush = false)
+        public void DrawText(ReadOnlySpan<byte> utf8Text, SKFont font, in Vector2 pos, in ColorByte color)
         {
             if(font is null) {
                 ThrowNullArg();
@@ -159,9 +164,6 @@ namespace Elffy.Components
             }
 
             DrawTextCore(utf8Text, SKTextEncoding.Utf8, font, pos, GetSKColor(color));
-            if(flush) {
-                Flush();
-            }
         }
 
         private void DrawTextCore(ReadOnlySpan<byte> text, SKTextEncoding enc, SKFont font, in Vector2 pos, SKColor color)
@@ -177,9 +179,6 @@ namespace Elffy.Components
             var glyphs = buffer.GetGlyphSpan();
             font.GetGlyphs(text, enc, glyphs);
             font.GetGlyphPositions(glyphs, buffer.GetPositionSpan());
-            //var width = font.MeasureText(glyphs, out _);
-            //var fontMetrics = font.Metrics;
-            //var changedSize = new Vector2i((int)width + 1, (int)(fontMetrics.Descent - fontMetrics.Ascent) + 1);
 
             var paint = Paint;
 
