@@ -10,6 +10,9 @@ namespace Elffy
     /// <summary>プラットフォームごとの画面を抽象化するためのインターフェース</summary>
     public interface IHostScreen : IDisposable
     {
+        /// <summary>Get or set title of the screen</summary>
+        string Title { get; set; }
+
         /// <summary>マウスを取得します</summary>
         Mouse Mouse { get; }
         /// <summary>Get keyborad</summary>
