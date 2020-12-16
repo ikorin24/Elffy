@@ -12,6 +12,11 @@ namespace Elffy.Shading
     {
         private readonly ProgramObject _program;
 
+        /// <summary>Get uniform location</summary>
+        /// <param name="name">name of the uniform variable</param>
+        /// <returns>location of the uniform variable</returns>
+        public int GetLocation(string name) => GL.GetUniformLocation(_program.Value, name);
+
         /// <summary>Send <see cref="float"/> value to uniform variable</summary>
         /// <param name="name">name of uniform variable</param>
         /// <param name="value">value to send</param>
