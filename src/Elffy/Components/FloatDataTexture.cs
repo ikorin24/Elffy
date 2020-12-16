@@ -4,31 +4,46 @@ using Elffy.OpenGL;
 using Elffy.Exceptions;
 using Elffy.Effective;
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Components
 {
+    /// <summary>Float data texture component</summary>
     public sealed class FloatDataTexture : ISingleOwnerComponent, IDisposable
     {
         private SingleOwnerComponentCore<FloatDataTexture> _core = new SingleOwnerComponentCore<FloatDataTexture>(true);    // Mutable object, Don't change into readonly
         private FloatDataTextureImpl _impl = new FloatDataTextureImpl();    // Mutable object, Don't change into readonly
 
+        /// <inheritdoc/>
         public ComponentOwner? Owner => _core.Owner;
 
+        /// <inheritdoc/>
         public bool AutoDisposeOnDetached => _core.AutoDisposeOnDetached;
 
+        /// <summary>Get texture object of opengl</summary>
+        /// <remarks>[NOTE] This is texture1D, NOT texture2D.</remarks>
+        public TextureObject TextureObject => _impl.TextureObject;
+
+        /// <summary>Get data length loaded in the texture.</summary>
+        /// <remarks>[NOTE] This is the count of pixels in the texture, NOT the count of float values.</remarks>
+        public int Length => _impl.Length;
+
+        /// <summary>Create new <see cref="FloatDataTexture"/></summary>
         public FloatDataTexture()
         {
         }
 
         ~FloatDataTexture() => Dispose(false);
 
-        public void Load(ReadOnlySpan<Vector4> texels) => _impl.Load(texels.MarshalCast<Vector4, Color4>());
+        /// <summary>Load data to texture1D</summary>
+        /// <param name="pixels"></param>
+        public void Load(ReadOnlySpan<Vector4> pixels) => _impl.Load(pixels.MarshalCast<Vector4, Color4>());
 
-        public void Load(ReadOnlySpan<Color4> texels) => _impl.Load(texels);
+        public void Load(ReadOnlySpan<Color4> pixels) => _impl.Load(pixels);
 
-        public void Update(ReadOnlySpan<Vector4> texels, int xOffset) => _impl.Update(texels.MarshalCast<Vector4, Color4>(), xOffset);
+        public void Update(ReadOnlySpan<Vector4> pixels, int xOffset) => _impl.Update(pixels.MarshalCast<Vector4, Color4>(), xOffset);
         
-        public void Update(ReadOnlySpan<Color4> texels, int xOffset) => _impl.Update(texels, xOffset);
+        public void Update(ReadOnlySpan<Color4> pixels, int xOffset) => _impl.Update(pixels, xOffset);
 
         public void Dispose()
         {
@@ -46,86 +61,105 @@ namespace Elffy.Components
             }
         }
 
-        void IComponent.OnAttached(ComponentOwner owner) => _core.OnAttached(owner);
+        public void OnAttached(ComponentOwner owner) => _core.OnAttached(owner);
 
-        void IComponent.OnDetached(ComponentOwner owner) => _core.OnDetachedForDisposable(owner, this);
+        public void OnDetached(ComponentOwner owner) => _core.OnDetachedForDisposable(owner, this);
     }
 
+    /// <summary>Float data texture implementation struct</summary>
     public struct FloatDataTextureImpl : IDisposable
     {
-        public TextureObject TextureObject;     // TODO: public field はやめる
-        public int Length;
+        private TextureObject _to;
+        private int _length;
 
-        public unsafe void Load(ReadOnlySpan<Color4> texels)
+        /// <summary>Get texture object of opengl</summary>
+        /// <remarks>[NOTE] This is texture1D, NOT texture2D.</remarks>
+        public readonly TextureObject TextureObject => _to;
+
+        /// <summary>Get data length loaded in the texture.</summary>
+        /// <remarks>[NOTE] This is the count of pixels in the texture, NOT the count of float values.</remarks>
+        public readonly int Length => _length;
+
+        /// <summary>Allocate memory and load pixels to the texture1D</summary>
+        /// <param name="pixels">pixels to load</param>
+        public unsafe void Load(ReadOnlySpan<Color4> pixels)
         {
             if(!TextureObject.IsEmpty) {
                 ThrowAlreadyLoaded();
-                static void ThrowAlreadyLoaded() => throw new InvalidOperationException("Already loaded");
+                [DoesNotReturn] static void ThrowAlreadyLoaded() => throw new InvalidOperationException("Already loaded");
             }
 
-            if(texels.IsEmpty) { return; }
+            if(pixels.IsEmpty) { return; }
 
-            TextureObject = TextureObject.Create();
-            Length = texels.Length;
+            _to = TextureObject.Create();
+            _length = pixels.Length;
 
-            TextureObject.Bind1D(TextureObject);
-            TextureObject.Parameter1DMinFilter(TextureShrinkMode.NearestNeighbor, TextureMipmapMode.None);
-            TextureObject.Parameter1DMagFilter(TextureExpansionMode.NearestNeighbor);
-            TextureObject.Parameter1DWrapS(TextureWrapMode.ClampToEdge);
-            TextureObject.Parameter1DWrapT(TextureWrapMode.ClampToEdge);
-            fixed(Color4* ptr = texels) {
-                TextureObject.Image1D(texels.Length, ptr, TextureObject.InternalFormat.Rgba32f);
+            TextureObject.Bind1D(_to);
+            SetTextureParams();
+            fixed(Color4* ptr = pixels) {
+                TextureObject.Image1D(pixels.Length, ptr, TextureObject.InternalFormat.Rgba32f);
             }
             TextureObject.Unbind1D();
         }
 
+        /// <summary>Allocate memory of the texture1D but not load pixels.</summary>
+        /// <param name="width">count of the pixels. (That means the width of the texture1D.)</param>
         public unsafe void LoadUndefined(int width)
         {
             if(!TextureObject.IsEmpty) {
                 ThrowAlreadyLoaded();
-                static void ThrowAlreadyLoaded() => throw new InvalidOperationException("Already loaded");
+                [DoesNotReturn] static void ThrowAlreadyLoaded() => throw new InvalidOperationException("Already loaded");
             }
             if(width < 0) {
                 ThrowOutOfRange();
-                static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(width));
+                [DoesNotReturn] static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(width));
             }
             if(width == 0) { return; }
-            TextureObject = TextureObject.Create();
-            Length = width;
+            _to = TextureObject.Create();
+            _length = width;
 
-            TextureObject.Bind1D(TextureObject);
-            TextureObject.Parameter1DMinFilter(TextureShrinkMode.NearestNeighbor, TextureMipmapMode.None);
-            TextureObject.Parameter1DMagFilter(TextureExpansionMode.NearestNeighbor);
-            TextureObject.Parameter1DWrapS(TextureWrapMode.ClampToEdge);
-            TextureObject.Parameter1DWrapT(TextureWrapMode.ClampToEdge);
+            TextureObject.Bind1D(_to);
+            SetTextureParams();
             TextureObject.Image1D(width, (Color4*)null, TextureObject.InternalFormat.Rgba32f);
             TextureObject.Unbind1D();
         }
 
-        public unsafe void Update(ReadOnlySpan<Color4> texels, int xOffset)
+        /// <summary>Update subpixels of the texture1D</summary>
+        /// <param name="pixels">pixels to update</param>
+        /// <param name="xOffset">offset pixels count of the beginning of the range to update</param>
+        public unsafe void Update(ReadOnlySpan<Color4> pixels, int xOffset)
         {
             if(TextureObject.IsEmpty) {
                 ThrowNotYetLoaded();
-                static void ThrowNotYetLoaded() => throw new InvalidOperationException("Cannnot update texels because not loaded yet.");
+                [DoesNotReturn] static void ThrowNotYetLoaded() => throw new InvalidOperationException("Cannnot update texels because not loaded yet.");
             }
-            if((uint)xOffset >= (uint)Length || texels.Length > Length - xOffset) {
-                ThrowOutOfRange($"Length: {Length}, {nameof(texels)}.Length: {texels.Length}, {nameof(xOffset)}: {xOffset}");
-                static void ThrowOutOfRange(string msg) => throw new ArgumentOutOfRangeException(msg);
+            if((uint)xOffset >= (uint)Length || pixels.Length > Length - xOffset) {
+                ThrowOutOfRange($"Length: {Length}, {nameof(pixels)}.Length: {pixels.Length}, {nameof(xOffset)}: {xOffset}");
+                [DoesNotReturn] static void ThrowOutOfRange(string msg) => throw new ArgumentOutOfRangeException(msg);
             }
 
-            if(texels.IsEmpty) { return; }
+            if(pixels.IsEmpty) { return; }
 
             TextureObject.Bind1D(TextureObject);
-            fixed(Color4* ptr = texels) {
-                TextureObject.SubImage1D(xOffset, texels.Length, ptr);
+            fixed(Color4* ptr = pixels) {
+                TextureObject.SubImage1D(xOffset, pixels.Length, ptr);
             }
             TextureObject.Unbind1D();
         }
 
+        private void SetTextureParams()
+        {
+            TextureObject.Parameter1DMinFilter(TextureShrinkMode.NearestNeighbor, TextureMipmapMode.None);
+            TextureObject.Parameter1DMagFilter(TextureExpansionMode.NearestNeighbor);
+            TextureObject.Parameter1DWrapS(TextureWrapMode.ClampToEdge);
+            TextureObject.Parameter1DWrapT(TextureWrapMode.ClampToEdge);
+        }
+
+        /// <summary>Dispose the texture1D</summary>
         public void Dispose()
         {
-            TextureObject.Delete(ref TextureObject);
-            Length = 0;
+            TextureObject.Delete(ref _to);
+            _length = 0;
         }
     }
 }

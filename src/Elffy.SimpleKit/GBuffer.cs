@@ -23,8 +23,8 @@ namespace Elffy
         internal ref readonly TextureObject Position => ref _position;
         internal ref readonly TextureObject Normal => ref _normal;
         internal ref readonly TextureObject Color => ref _color;
-        internal ref readonly TextureObject Lights => ref _lights.TextureObject;
-        internal ref readonly TextureObject LightPositions => ref _lightPositions.TextureObject;
+        internal TextureObject Lights => _lights.TextureObject;
+        internal TextureObject LightPositions => _lightPositions.TextureObject;
 
         public DeferedRenderingPostProcess PostProcess { get; }
 

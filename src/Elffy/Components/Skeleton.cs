@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using Cysharp.Text;
+using Cysharp.Threading.Tasks;
 using Elffy.Core;
 using Elffy.Effective;
 using Elffy.Exceptions;
@@ -41,7 +42,7 @@ namespace Elffy.Components
         public ReadOnlySpan<Matrix4> Translations => (_translations is not null) ? _translations.AsSpan() : default;
 
         /// <summary>Get <see cref="TextureObject"/> of bone translation matrices. (This is Texture1D)</summary>
-        public ref readonly TextureObject TranslationData => ref _boneTranslationData.TextureObject;
+        public TextureObject TranslationData => _boneTranslationData.TextureObject;
 
         public Skeleton()
         {
@@ -51,15 +52,15 @@ namespace Elffy.Components
 
         /// <summary>Load bone data</summary>
         /// <param name="bones">bone data</param>
-        public unsafe void Load(ReadOnlySpan<Bone> bones)
+        public void Load(ReadOnlySpan<Bone> bones)
         {
             if(IsBoneLoaded) { throw new InvalidOperationException("Already loaded"); }
 
             CreateBoneTree(bones, out _posMatrices, out _posInvMatrices, out _tree);
 
             // Round up pixel count of bone matrix buffer on data texture to 2^n.
-            var pixelCount = MathTool.RoundUpToPowerOfTwo(bones.Length * sizeof(Matrix4) / sizeof(Vector4));
-            var bufLen = pixelCount * sizeof(Vector4) / sizeof(Matrix4);
+            var pixelCount = MathTool.RoundUpToPowerOfTwo(bones.Length * Matrix4.SizeInBytes / Vector4.SizeInBytes);
+            var bufLen = pixelCount * Vector4.SizeInBytes / Matrix4.SizeInBytes;
 
             // Load matrices as identity
             _matrices = new UnmanagedArray<Matrix4>(bufLen, fill: Matrix4.Identity);
@@ -303,13 +304,36 @@ namespace Elffy.Components
         public BoneInternal* Parent;
         public BoneInternal* Next;
 
-        private string DebugView => ZString.Concat("ID: ", ID,
-                                                   ", Parent: ", Parent is null ? (int?)null : Parent->ID,
-                                                   ", Next: ", Next is null ? (int?)null : Next->ID);
+        private readonly string DebugView
+        {
+            get
+            {
+                using var sb = ZString.CreateStringBuilder();
+                sb.Append("ID: ");
+                sb.Append(ID);
+                sb.Append(", Parent: ");
+                if(Parent == null) {
+                    sb.Append("null");
+                }
+                else {
+                    sb.Append(Parent->ID);
+                }
+                sb.Append(", Next: ");
+                if(Next == null) {
+                    sb.Append("null");
+                }
+                else {
+                    sb.Append(Next->ID);
+                }
+                return sb.ToString();
+            }
+        }
+
+        public override string ToString() => DebugView;
     }
 
-    [DebuggerDisplay("Position: {Position}, Parent: {ParentBone}, Connected: {ConnectedBone}")]
-    public readonly struct Bone
+    [DebuggerDisplay("{DebugView}")]
+    public readonly struct Bone : IEquatable<Bone>
     {
         /// <summary>Get bone position</summary>
         public readonly Vector3 Position;
@@ -321,6 +345,31 @@ namespace Elffy.Components
         /// <remarks>This field has no special meaning. Only for debug viewing. If the bone has more than one child, choose one of them.</remarks>
         public readonly int? ConnectedBone;
 
+        private string DebugView
+        {
+            get
+            {
+                using var sb = ZString.CreateStringBuilder(false);
+                sb.Append("Position: ");
+                sb.Append(Position);
+                sb.Append(", Parent: ");
+                if(ParentBone == null) {
+                    sb.Append("null");
+                }
+                else {
+                    sb.Append(ParentBone.Value);
+                }
+                sb.Append(", Connected: ");
+                if(ConnectedBone == null) {
+                    sb.Append("null");
+                }
+                else {
+                    sb.Append(ConnectedBone.Value);
+                }
+                return sb.ToString();
+            }
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Bone(in Vector3 pos, int? parentBone, int? connectedBone)
         {
@@ -328,5 +377,18 @@ namespace Elffy.Components
             ParentBone = parentBone;
             ConnectedBone = connectedBone;
         }
+
+        public override bool Equals(object? obj) => obj is Bone bone && Equals(bone);
+
+        public bool Equals(Bone other)
+        {
+            return Position.Equals(other.Position) &&
+                   ParentBone == other.ParentBone &&
+                   ConnectedBone == other.ConnectedBone;
+        }
+
+        public override int GetHashCode() => HashCode.Combine(Position, ParentBone, ConnectedBone);
+
+        public override string ToString() => DebugView;
     }
 }
