@@ -4,12 +4,14 @@ using Elffy.Effective;
 using System;
 using System.ComponentModel;
 using System.Drawing;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using TKColor4 = OpenTK.Mathematics.Color4;
 
 namespace Elffy
 {
+    [DebuggerDisplay("{DebugView}")]
     [StructLayout(LayoutKind.Explicit)]
     public struct Color4 : IEquatable<Color4>
     {
@@ -21,6 +23,14 @@ namespace Elffy
         public float B;
         [FieldOffset(12)]
         public float A;
+
+        private readonly string DebugView
+        {
+            get
+            {
+                return $"(R, G, B, A) = ({R * byte.MaxValue}, {G * byte.MaxValue}, {B * byte.MaxValue}, {A * byte.MaxValue}) = ({R}, {G}, {B}, {A})";
+            }
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Color4(float r, float g, float b) => (R, G, B, A) = (r, g, b, 1f);
