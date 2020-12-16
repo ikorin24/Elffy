@@ -80,6 +80,8 @@ namespace Elffy
         [FieldOffset(60)]
         public float M33;
 
+        public static unsafe readonly int SizeInBytes = sizeof(Matrix4);
+
         public static readonly Matrix4 Identity = new Matrix4(1, 0, 0, 0,
                                                               0, 1, 0, 0,
                                                               0, 0, 1, 0,
