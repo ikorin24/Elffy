@@ -51,7 +51,7 @@ namespace Elffy.Core
         }
     }
 
-    public interface IDefaultResource
+    public interface IDefaultResource       // TODO: いる？
     {
         TextureObject WhiteEmptyTexture { get; }
     }
