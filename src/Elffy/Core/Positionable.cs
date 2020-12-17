@@ -179,7 +179,7 @@ namespace Elffy.Core
         /// <summary>オブジェクトを回転させます</summary>
         /// <param name="axis">回転軸</param>
         /// <param name="angle">回転角(ラジアン)</param>
-        public void Rotate(in Vector3 axis, float angle) => Rotate(new Quaternion(axis, angle));
+        public void Rotate(in Vector3 axis, float angle) => Rotate(Quaternion.FromAxisAngle(axis, angle));
 
         /// <summary>オブジェクトを回転させます</summary>
         /// <param name="quaternion">回転させるクオータニオン</param>

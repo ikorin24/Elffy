@@ -1,13 +1,11 @@
 ﻿#nullable enable
 using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using Elffy.Mathematics;
 using Elffy.Effective;
+using Elffy.Mathematics;
+using NumericsVector3 = System.Numerics.Vector3;
+using NumericsMatrix4x4 = System.Numerics.Matrix4x4;
 
 namespace Elffy
 {
@@ -292,6 +290,21 @@ namespace Elffy
                                  y.X, y.Y, y.Z, -y.Dot(eye),
                                  z.X, z.Y, z.Z, -z.Dot(eye),
                                  0,   0,   0,   1);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void FromAxisAngle(in Vector3 axis, float angle, out Matrix4 result)
+        {
+            result = UnsafeEx.As<NumericsMatrix4x4, Matrix4>(
+                NumericsMatrix4x4.CreateFromAxisAngle(UnsafeEx.As<Vector3, NumericsVector3>(axis), angle)
+            );
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Matrix4 FromAxisAngle(in Vector3 axis, float angle)
+        {
+            FromAxisAngle(axis, angle, out var result);
+            return result;
         }
 
         private static ref Vector4 Col0(in Matrix4 matrix) => ref Unsafe.As<float, Vector4>(ref Unsafe.AsRef(matrix.M00));

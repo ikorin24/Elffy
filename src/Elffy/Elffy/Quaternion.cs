@@ -4,6 +4,9 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Elffy.Mathematics;
 using TKQuaternion = OpenTK.Mathematics.Quaternion;
+using NumericsQuaternion = System.Numerics.Quaternion;
+using NumericsVector3 = System.Numerics.Vector3;
+using Elffy.Effective;
 
 namespace Elffy
 {
@@ -28,18 +31,6 @@ namespace Elffy
             Y = y;
             Z = z;
             W = w;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Quaternion(in Vector3 axis, float radian)
-        {
-            var nAxis = axis.Normalized();
-            var halfRadian = radian / 2;
-            var sin = MathF.Sin(halfRadian);
-            X = nAxis.X * sin;
-            Y = nAxis.Y * sin;
-            Z = nAxis.Z * sin;
-            W = MathF.Cos(halfRadian);
         }
 
         public Vector3 Xyz => new Vector3(X, Y, Z);
@@ -90,6 +81,21 @@ namespace Elffy
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly Matrix4 ToMatrix4() => new Matrix4(ToMatrix3());
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void FromAxisAngle(in Vector3 axis, float angle, out Quaternion result)
+        {
+            result = UnsafeEx.As<NumericsQuaternion, Quaternion>(
+                NumericsQuaternion.CreateFromAxisAngle(UnsafeEx.As<Vector3, NumericsVector3>(axis), angle)
+            );
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Quaternion FromAxisAngle(in Vector3 axis, float angle)
+        {
+            FromAxisAngle(axis, angle, out var result);
+            return result;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly override string ToString() => $"V:({X}, {Y}, {Z}), W:{W}";

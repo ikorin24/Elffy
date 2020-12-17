@@ -74,7 +74,7 @@ namespace Sandbox
                 Debug.Assert(sender is DirectLight);
                 var light = Unsafe.As<DirectLight>(sender);
                 var frameNum = Game.FrameNum;
-                var rotation = new Quaternion(Vector3.UnitX, (frameNum / 60f * 60).ToRadian());
+                var rotation = Quaternion.FromAxisAngle(Vector3.UnitX, (frameNum / 60f * 60).ToRadian());
                 light.Direction = rotation * new Vector3(0, -1, 0);
             };
             light.Activate();
@@ -103,7 +103,7 @@ namespace Sandbox
             var plain = new Plain()
             {
                 Scale = new Vector3(10),
-                Rotation = new Quaternion(Vector3.UnitX, -90f.ToRadian()),
+                Rotation = Quaternion.FromAxisAngle(Vector3.UnitX, -90f.ToRadian()),
                 Shader = TextureShaderSource<Vertex>.Instance,
             };
             plain.AddComponent(new Material(new Color4(1f), new Color4(0.25f), new Color4(0.2f), 400f));
@@ -215,7 +215,7 @@ namespace Sandbox
                 Debug.Assert(sender is Cube);
                 var cube = Unsafe.As<Cube>(sender);
                 var p = Game.FrameNum / 60f * 30f;
-                cube.Rotation = new Quaternion(Vector3.UnitY, p.ToRadian());
+                cube.Rotation = Quaternion.FromAxisAngle(Vector3.UnitY, p.ToRadian());
             };
             cube.Activate();
             return new UniTask<Cube>(cube);

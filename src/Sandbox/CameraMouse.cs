@@ -60,9 +60,9 @@ namespace Sandbox
             phiRad = MathF.Max(MathF.Min(phiRad, maxBeta - beta), minBeta - beta);
 
             // 経度を0に戻す → 緯度方向回転 → 元の経度+緯度回転
-            var q1 = new Quaternion(Vector3.UnitY, -alpha);
-            var q2 = new Quaternion(Vector3.UnitZ, phiRad);
-            var q3 = new Quaternion(Vector3.UnitY, alpha + thetaRad);
+            var q1 = Quaternion.FromAxisAngle(Vector3.UnitY, -alpha);
+            var q2 = Quaternion.FromAxisAngle(Vector3.UnitZ, phiRad);
+            var q3 = Quaternion.FromAxisAngle(Vector3.UnitY, alpha + thetaRad);
 
             _camera.Position = q3 * q2 * q1 * v + target;
             _camera.LookAt(target);
