@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using System;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using Elffy.OpenGL;
 using Elffy.Effective.Unsafes;
 using OpenTK.Graphics.OpenGL4;
@@ -28,9 +27,6 @@ namespace Elffy.Shading
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Send(string name, int value) => Send(GL.GetUniformLocation(_program.Value, name), value);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Send(string name, TextureUnitNumber value) => Send(GL.GetUniformLocation(_program.Value, name), value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Send(string name, in Vector2 value) => Send(GL.GetUniformLocation(_program.Value, name), value);
@@ -91,9 +87,6 @@ namespace Elffy.Shading
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Send(int location, int value) => GL.ProgramUniform1(_program.Value, location, value);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Send(int location, TextureUnitNumber value) => GL.ProgramUniform1(_program.Value, location, (int)value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Send(int location, in Vector2 value)
@@ -178,7 +171,8 @@ namespace Elffy.Shading
         {
             TextureObject.Bind1D(value, unit);
             GL.ProgramUniform1(_program.Value, location, (int)unit);
-            TextureObject.Unbind1D(unit);
+
+            // Don't unbind here.
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -186,7 +180,8 @@ namespace Elffy.Shading
         {
             TextureObject.Bind2D(value, unit);
             GL.ProgramUniform1(_program.Value, location, (int)unit);
-            TextureObject.Unbind1D(unit);
+
+            // Don't unbind here.
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

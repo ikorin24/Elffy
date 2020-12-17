@@ -26,13 +26,12 @@ namespace Elffy.Shading
             definition.Map<RigVertex>(nameof(RigVertex.Position), "vPos");
             definition.Map<RigVertex>(nameof(RigVertex.Normal), "vNormal");
             definition.Map<RigVertex>(nameof(RigVertex.TexCoord), "vUV");
-            //definition.Map<RigVertex>(nameof(RigVertex.Bone), "bone");
-            //definition.Map<RigVertex>(nameof(RigVertex.Weight), "weight");
+            definition.Map<RigVertex>(nameof(RigVertex.Bone), "bone");
+            definition.Map<RigVertex>(nameof(RigVertex.Weight), "weight");
         }
 
         protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
-            // new Color4(0.88f), new Color4(0.18f), new Color4(0.1f), 5f
             uniform.Send("ma", new Color3(0.88f));
             uniform.Send("md", new Color3(0.18f));
             uniform.Send("ms", new Color3(0.1f));
@@ -47,8 +46,8 @@ namespace Elffy.Shading
             uniform.Send("ld", new Vector3(0.8f));
             uniform.Send("ls", new Vector3(0.2f));
 
-            //var skeleton = target.GetComponent<Skeleton>();
-            //uniform.SendTexture1D("_boneTrans", skeleton.TranslationData, TextureUnitNumber.Unit0);
+            var skeleton = target.GetComponent<Skeleton>();
+            uniform.SendTexture1D("_boneTrans", skeleton.TranslationData, TextureUnitNumber.Unit0);
             var parts = target.GetComponent<PmxModelParts>();
             ref readonly var texture = ref parts.Textures[parts.TextureIndexArray[parts.Current]];
             uniform.SendTexture2D("tex_sampler", texture, TextureUnitNumber.Unit1);
@@ -60,36 +59,34 @@ namespace Elffy.Shading
 in vec3 vPos;
 in vec3 vNormal;
 in vec2 vUV;
-//in ivec4 bone;
-//in vec4 weight;
-out vec3 Pos;
+in ivec4 bone;
+in vec4 weight;
+out vec4 Pos;
 out vec3 Normal;
 out vec2 UV;
 
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
-//uniform sampler1D _boneTrans;
+uniform sampler1D _boneTrans;
 
-//mat4 GetMat(int boneIndex)
-//{
-//    return mat4(texelFetch(_boneTrans, boneIndex * 4,     0),
-//                texelFetch(_boneTrans, boneIndex * 4 + 1, 0),
-//                texelFetch(_boneTrans, boneIndex * 4 + 2, 0),
-//                texelFetch(_boneTrans, boneIndex * 4 + 3, 0));
-//}
+mat4 GetMat(int boneIndex)
+{
+    return mat4(texelFetch(_boneTrans, boneIndex * 4,     0),
+                texelFetch(_boneTrans, boneIndex * 4 + 1, 0),
+                texelFetch(_boneTrans, boneIndex * 4 + 2, 0),
+                texelFetch(_boneTrans, boneIndex * 4 + 3, 0));
+}
 
 void main()
 {
-    //vec4 skinned = weight.x * (GetMat(bone.x) * vec4(vPos, 1.0)) +
-    //               weight.y * (GetMat(bone.y) * vec4(vPos, 1.0)) +
-    //               weight.z * (GetMat(bone.z) * vec4(vPos, 1.0)) +
-    //               weight.w * (GetMat(bone.w) * vec4(vPos, 1.0));
-    //vec4 tmp = projection * view * model * skinned;
-    vec4 tmp = projection * view * model * vec4(vPos, 1.0);
-    Pos = tmp.xyz;
-    gl_Position = tmp;
-    Normal = vNormal;       // TODO: skinning of normal
+    mat4 skinning = weight.x * GetMat(bone.x) +
+                    weight.y * GetMat(bone.y) +
+                    weight.z * GetMat(bone.z) +
+                    weight.w * GetMat(bone.w);
+    Pos = projection * view * model * skinning * vec4(vPos, 1.0);
+    gl_Position = Pos;
+    Normal = transpose(inverse(mat3(skinning))) * vNormal;
     UV = vUV;
 }
 ";
@@ -98,7 +95,7 @@ void main()
 @"#version 440
 
 in vec2 UV;
-in vec3 Pos;
+in vec4 Pos;
 in vec3 Normal;
 out vec4 fragColor;
 
@@ -119,7 +116,7 @@ uniform sampler2D tex_sampler;
 void main()
 {
     mat4 modelView = view * model;
-    vec3 posView = (modelView * vec4(Pos, 1.0)).xyz;                    // vertex pos in eye space
+    vec3 posView = (modelView * Pos).xyz;                    // vertex pos in eye space
     vec3 normalView = transpose(inverse(mat3(modelView))) * Normal;    // normal in eye space
     vec4 lPosView = view * lPos;                                        // light pos in eye space
     vec3 L = (lPosView.w == 0.0) ? normalize(lPosView.xyz) : normalize(lPosView.xyz / lPosView.w - posView);
