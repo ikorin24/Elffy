@@ -169,7 +169,8 @@ namespace Elffy.Shading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SendTexture1D(int location, in TextureObject value, TextureUnitNumber unit)
         {
-            TextureObject.Bind1D(value, unit);
+            GL.ActiveTexture((TextureUnit)((int)TextureUnit.Texture0 + unit));
+            TextureObject.Bind1D(value);
             GL.ProgramUniform1(_program.Value, location, (int)unit);
 
             // Don't unbind here.
@@ -178,7 +179,8 @@ namespace Elffy.Shading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SendTexture2D(int location, in TextureObject value, TextureUnitNumber unit)
         {
-            TextureObject.Bind2D(value, unit);
+            GL.ActiveTexture((TextureUnit)((int)TextureUnit.Texture0 + unit));
+            TextureObject.Bind2D(value);
             GL.ProgramUniform1(_program.Value, location, (int)unit);
 
             // Don't unbind here.

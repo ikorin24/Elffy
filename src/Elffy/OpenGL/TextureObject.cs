@@ -54,42 +54,32 @@ namespace Elffy.OpenGL
             return count;
         }
 
-        /// <summary>Call glActivateTexture and glBindTexture</summary>
+        /// <summary>Call glBindTexture with texture2D</summary>
         /// <param name="to">texture object</param>
-        /// <param name="textureUnit">texture unit</param>
-        public static void Bind2D(in TextureObject to, TextureUnitNumber textureUnit = TextureUnitNumber.Unit0)
+        public static void Bind2D(in TextureObject to)
         {
-            var glTextureUnit = (TextureUnit)((int)TextureUnit.Texture0 + textureUnit);
-
             GLAssert.EnsureContext();
-            GL.ActiveTexture(glTextureUnit);
             GL.BindTexture(TextureTarget.Texture2D, to._texture);
         }
 
-        /// <summary>Call glActivateTexture adn glBindTexture</summary>
+        /// <summary>Call glBindTexture with texture1D</summary>
         /// <param name="to">texture object</param>
-        /// <param name="textureUnit">texture unit</param>
-        public static void Bind1D(in TextureObject to, TextureUnitNumber textureUnit = TextureUnitNumber.Unit0)
+        public static void Bind1D(in TextureObject to)
         {
-            var glTextureUnit = (TextureUnit)((int)TextureUnit.Texture0 + textureUnit);
-
             GLAssert.EnsureContext();
-            GL.ActiveTexture(glTextureUnit);
             GL.BindTexture(TextureTarget.Texture1D, to._texture);
         }
 
-        /// <summary>Call glBindTexture(0)</summary>
-        /// <param name="textureUnit"></param>
-        public static void Unbind2D(TextureUnitNumber textureUnit = TextureUnitNumber.Unit0)
+        /// <summary>Call glBindTexture with texture2D as 0</summary>
+        public static void Unbind2D()
         {
-            Bind2D(Empty, textureUnit);
+            Bind2D(Empty);
         }
 
-        /// <summary>Call glBindTexture(0)</summary>
-        /// <param name="textureUnit"></param>
-        public static void Unbind1D(TextureUnitNumber textureUnit = TextureUnitNumber.Unit0)
+        /// <summary>Call glBindTexture with texture1d as 0</summary>
+        public static void Unbind1D()
         {
-            Bind1D(Empty, textureUnit);
+            Bind1D(Empty);
         }
 
         /// <summary>Call glTexImage2D</summary>
