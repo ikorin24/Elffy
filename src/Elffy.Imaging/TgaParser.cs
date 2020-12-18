@@ -15,9 +15,12 @@ namespace Elffy.Imaging
     {
         public static unsafe Bitmap Parse(Stream stream)
         {
-            if(stream is null) { throw new ArgumentNullException(nameof(stream)); }
+            if(stream is null) {
+                ThrowNullArg();
+                static void ThrowNullArg() => throw new ArgumentNullException(nameof(stream));
+            }
 
-            using var reader = new ZBinaryReader(stream);
+            using var reader = new ZBinaryReader(stream!);
             ParseHeader(reader, out var header);
             var bitmap = new Bitmap(header.Width, header.Height, PixelFormat.Format32bppArgb);
             using var pixels = bitmap.GetPixels(ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
@@ -28,19 +31,8 @@ namespace Elffy.Imaging
                 ParseFooter(reader, header);
             }
             catch(Exception ex) {
-#if DEBUG
-                // Fill all pixels white for debug.
-                Debug.Fail(
-@$"[ERROR] Failed loading tga image pixels !!!
-    {ex.GetType().Name}
-Ignore to use white-filled bitmap instead.");
-
-                pixels.AsSpan().Fill(byte.MaxValue);
-#else
-                pixels.Dispose();
-                bitmap.Dispose();
-                throw ex;
-#endif
+                Debugger.Log(0, "", $"[ERROR] Failed loading tga image pixels. {ex.GetType().Name}");
+                MemoryMarshal.Cast<byte, uint>(pixels.AsSpan()).Fill(0xffff0000);   // fill pixels with white
             }
             return bitmap;
         }
@@ -82,7 +74,8 @@ Ignore to use white-filled bitmap instead.");
                 case TgaDataFormat.IndexedColorRLE:
                     throw new NotImplementedException();
                 case TgaDataFormat.FullColorRLE:
-                    throw new NotImplementedException();
+                    ParseFullColorRLE(reader, header, pixels);
+                    return;
                 case TgaDataFormat.GrayRLE:
                     throw new NotImplementedException();
                 default:
@@ -180,6 +173,64 @@ Ignore to use white-filled bitmap instead.");
                 }
             }
         }
+
+        private static unsafe void ParseFullColorRLE(in ZBinaryReader reader, in TgaHeader header, in Span<byte> pixels)
+        {
+            static int GetTopLeftIndex(ushort width, ushort height, int pos) => pos;
+            static int GetBottomLeftIndex(ushort width, ushort height, int pos) => ((height - 1 - pos / width) * width) + (pos % width);
+            static int GetTopRightIndex(ushort width, ushort height, int pos) => (pos / width * width) + (width - 1 - pos % width);
+            static int GetBottomRightIndex(ushort width, ushort height, int pos) => ((height - 1 - pos / width) * width) + (width - 1 - pos % width);
+
+            static uint GetPixel32(in ZBinaryReader reader) => reader.ReadUInt32();
+            static uint GetPixel24(in ZBinaryReader reader) => (uint)(reader.ReadByte() + (reader.ReadByte() << 8) + (reader.ReadByte() << 16) + (0xff << 24));
+
+            static void GetPixels(delegate*<ushort, ushort, int, int> getIndex,
+                                  delegate*<in ZBinaryReader, uint> getPixel,
+                                  in ZBinaryReader reader, in TgaHeader header, in Span<uint> pixels32)
+            {
+                var pos = 0;
+                while(true) {
+                    if(pos >= pixels32.Length) {
+                        break;
+                    }
+                    var tmp = reader.ReadByte();
+                    var isCompressed = (tmp & 0x80) == 0x80;
+                    var runLength = (tmp & 0x7f) + 1;     // 1 ~ 128
+                    if(isCompressed) {
+                        var bgra = (uint)(reader.ReadByte() + (reader.ReadByte() << 8) + (reader.ReadByte() << 16) + (0xff << 24));
+                        for(int i = 0; i < runLength; i++) {
+                            var index = getIndex(header.Width, header.Height, pos);
+                            pixels32[index] = bgra;
+                            pos++;
+                        }
+                    }
+                    else {
+                        for(int i = 0; i < runLength; i++) {
+                            var index = getIndex(header.Width, header.Height, pos);
+                            var bgra = (uint)(reader.ReadByte() + (reader.ReadByte() << 8) + (reader.ReadByte() << 16) + (0xff << 24));
+                            pixels32[index] = bgra;
+                            pos++;
+                        }
+                    }
+                }
+            }
+
+            var pixels32 = MemoryMarshal.Cast<byte, uint>(pixels);
+
+            delegate*<ushort, ushort, int, int> getIndex
+                = header.IsTopToBottom ? header.IsLeftToRight ? &GetTopLeftIndex : &GetTopRightIndex
+                                       : header.IsLeftToRight ? &GetBottomLeftIndex : &GetBottomRightIndex;
+
+            delegate*<in ZBinaryReader, uint> getPixel
+                = header.BitsPerPixel switch
+                {
+                    32 => &GetPixel32,
+                    24 => &GetPixel24,
+                    _ => throw new NotImplementedException(),
+                };
+
+            GetPixels(getIndex, getPixel, reader, header, pixels32);
+        }
     }
 
     internal readonly struct ZBinaryReader : IDisposable, IEquatable<ZBinaryReader>
@@ -195,9 +246,13 @@ Ignore to use white-filled bitmap instead.");
             _buf = ArrayPool<byte>.Shared.Rent(32);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly void Skip(int byteLength)
         {
-            if(byteLength < 0) { throw new ArgumentOutOfRangeException(nameof(byteLength)); }
+            if(byteLength < 0) {
+                ThrowOutOfRange();
+                static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(byteLength));
+            }
             if(byteLength == 0) { return; }
 
             var total = byteLength;
@@ -232,7 +287,10 @@ Ignore to use white-filled bitmap instead.");
         {
             // Must be readByteLen <= _buf.Length
             Debug.Assert(readByteLen <= _buf.Length);
-            if(_stream.Read(_buf, 0, readByteLen) != readByteLen) { throw new EndOfStreamException(); }
+            if(_stream.Read(_buf, 0, readByteLen) != readByteLen) {
+                ThrowEndOfStream();
+                static void ThrowEndOfStream() => throw new EndOfStreamException();
+            }
         }
 
         public void Dispose()
