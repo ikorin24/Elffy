@@ -51,8 +51,10 @@ namespace Elffy.Serialization
             var start = 0;
             for(int i = 0; i < vertexCountArray.Length; i++) {
                 parts.Current = i;
-                shaderProgram.Apply(model3D, in model, in view, in projection);
-                drawElements.Invoke(start, vertexCountArray[i]);
+                if(parts.TextureIndexArray[i] >= 0) {
+                    shaderProgram.Apply(model3D, in model, in view, in projection);
+                    drawElements.Invoke(start, vertexCountArray[i]);
+                }
                 start += vertexCountArray[i];
             }
             VAO.Unbind();
@@ -112,18 +114,29 @@ namespace Elffy.Serialization
             //      ↓ thread pool
             Debug.Assert(model.HostScreen.IsThreadMain == false);
 
-            UnmanagedArray<RigVertex>? vertices = default;
+            UnsafeRawArray<RigVertex> vertices = default;
             ValueTypeRentMemory<int> vertexCountArray = default;
             ValueTypeRentMemory<int> textureIndexArray = default;
             ValueTypeRentMemory<TextureObject> textures = default;
-            UnmanagedArray<Components.Bone>? bones = default;
+            UnsafeRawArray<Components.Bone> bones = default;
             try {
                 (vertices, (vertexCountArray, textureIndexArray), bones) = await UniTask.WhenAll(
                     // build vertices
                     UniTask.Run(pmx =>
                     {
                         Debug.Assert(pmx is PMXObject);
-                        return Unsafe.As<PMXObject>(pmx).VertexList.AsSpan().SelectToUnmanagedArray(v => v.ToRigVertex());
+                        var pmxVertexList = Unsafe.As<PMXObject>(pmx).VertexList.AsSpan();
+                        var vertices = new UnsafeRawArray<RigVertex>(pmxVertexList.Length);
+                        try {
+                            for(int i = 0; i < pmxVertexList.Length; i++) {
+                                vertices[i] = pmxVertexList[i].ToRigVertex();
+                            }
+                        }
+                        catch {
+                            vertices.Dispose();
+                            throw;
+                        }
+                        return vertices;
                     }, pmx, configureAwait: false),
                     
                     // build each parts
@@ -133,11 +146,18 @@ namespace Elffy.Serialization
                         var materials = Unsafe.As<PMXObject>(pmx).MaterialList.AsSpan();
                         var vertexCountArray = new ValueTypeRentMemory<int>(materials.Length);
                         var textureIndexArray = new ValueTypeRentMemory<int>(materials.Length);
-                        var vSpan = vertexCountArray.Span;
-                        var tSpan = textureIndexArray.Span;
-                        for(int i = 0; i < materials.Length; i++) {
-                            vSpan[i] = materials[i].VertexCount;
-                            tSpan[i] = materials[i].Texture;
+                        try {
+                            var vSpan = vertexCountArray.Span;
+                            var tSpan = textureIndexArray.Span;
+                            for(int i = 0; i < materials.Length; i++) {
+                                vSpan[i] = materials[i].VertexCount;
+                                tSpan[i] = materials[i].Texture;
+                            }
+                        }
+                        catch {
+                            vertexCountArray.Dispose();
+                            textureIndexArray.Dispose();
+                            throw;
                         }
                         return (vertexCountArray, textureIndexArray);
                     }, pmx, configureAwait: false),
@@ -146,12 +166,20 @@ namespace Elffy.Serialization
                     UniTask.Run(pmx =>
                     {
                         Debug.Assert(pmx is PMXObject);
-                        return Unsafe.As<PMXObject>(pmx)
-                                     .BoneList
-                                     .AsSpan()
-                                     .SelectToUnmanagedArray(b => new Components.Bone(UnsafeEx.As<PmxVector3, Vector3>(in b.Position),
-                                                                                      b.ParentBone != 65535 ? b.ParentBone : null,
-                                                                                      b.ConnectedBone != 65535 ? b.ConnectedBone : null));
+                        var pmxBones = Unsafe.As<PMXObject>(pmx).BoneList.AsSpan();
+                        var bones = new UnsafeRawArray<Components.Bone>(pmxBones.Length);
+                        try {
+                            for(int i = 0; i < pmxBones.Length; i++) {
+                                bones[i] = new(UnsafeEx.As<PmxVector3, Vector3>(in pmxBones[i].Position),
+                                               pmxBones[i].ParentBone >= 0 ? pmxBones[i].ParentBone : null,
+                                               pmxBones[i].ConnectedBone >= 0 ? pmxBones[i].ConnectedBone : null);
+                            }
+                        }
+                        catch {
+                            bones.Dispose();
+                            throw;
+                        }
+                        return bones;
                     }, pmx, configureAwait: false));
                 //      ↑ thread pool
                 // ------------------------------
@@ -208,12 +236,13 @@ namespace Elffy.Serialization
             }
             finally {
                 // I don't care about the thread.
+                bones.Dispose();
                 for(int i = 0; i < bitmaps.Length; i++) {
                     bitmaps[i]?.Dispose();
                 }
                 bitmaps.Dispose();
                 pmx.Dispose();
-                vertices?.Dispose();
+                vertices.Dispose();
             }
 
             static void DisposeObjects(in ValueTypeRentMemory<TextureObject> textures, in ValueTypeRentMemory<int> vertexCountArray, in ValueTypeRentMemory<int> textureIndexArray)

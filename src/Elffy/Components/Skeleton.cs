@@ -184,21 +184,13 @@ namespace Elffy.Components
                     pos[i].Inverted(out posInv[i]);                         // Calc inverse of pos matrix in advance.
                 }
 
-                // [NOTE] ---------------------------------------------------------
-                // If debug here and use debugger viewer,
-                // enable initializing 'UnsafeRawArray' and 'UnsafeRawList' zero-cleared by constructor arg.
-                // Otherwise, you may see undefined values, or it may cause exceptions in debugger.
-                // (but it is no matter)
-                // ----------------------------------------------------------------
-
                 // 'childrenBuf[i]' means IDs of children of tree[i].
                 // It is like 'List<int>[]'
-                var childrenBuf = new UnsafeRawArray<UnsafeRawList<int>>(boneTree.Length);
+                var childrenBuf = new UnsafeRawArray<UnsafeRawList<int>>(boneTree.Length, zeroFill: true);
 
                 try {
                     // Set children
                     for(int i = 0; i < childrenBuf.Length; i++) {
-                        childrenBuf[i] = new UnsafeRawList<int>(4);
                         if(tree[i].Parent != null) {
                             var parentID = tree[i].Parent->ID;
                             childrenBuf[parentID].Add(i);
