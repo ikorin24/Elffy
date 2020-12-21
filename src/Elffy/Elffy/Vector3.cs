@@ -30,16 +30,27 @@ namespace Elffy
         public static readonly Vector3 One = new Vector3(1, 1, 1);
         public static unsafe readonly int SizeInBytes = sizeof(Vector3);
 
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         public readonly Vector2 Xy => new Vector2(X, Y);
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         public readonly Vector2 Xz => new Vector2(X, Z);
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         public readonly Vector2 Yx => new Vector2(Y, X);
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         public readonly Vector2 Yz => new Vector2(Y, Z);
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         public readonly Vector2 Zx => new Vector2(Z, X);
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         public readonly Vector2 Zy => new Vector2(Z, Y);
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         public readonly Vector3 Xzy => new Vector3(X, Z, Y);
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         public readonly Vector3 Yxz => new Vector3(Y, X, Z);
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         public readonly Vector3 Yzx => new Vector3(Y, Z, X);
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         public readonly Vector3 Zxy => new Vector3(Z, X, Y);
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         public readonly Vector3 Zyx => new Vector3(Z, Y, X);
 
         public readonly float LengthSquared
