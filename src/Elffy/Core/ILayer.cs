@@ -1,7 +1,5 @@
 ﻿#nullable enable
 
-using System;
-
 namespace Elffy.Core
 {
     internal interface ILayer

@@ -1,9 +1,7 @@
 ﻿#nullable enable
 using System;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using OpenTK.Windowing.Common;
-using OpenTK.Windowing.Common.Input;
 using Elffy.OpenGL.Windowing;
 using GlfwInputAction = OpenTK.Windowing.GraphicsLibraryFramework.InputAction;
 using GlfwConnectedState = OpenTK.Windowing.GraphicsLibraryFramework.ConnectedState;

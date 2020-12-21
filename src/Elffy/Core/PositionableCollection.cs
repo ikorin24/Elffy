@@ -1,10 +1,8 @@
 ﻿#nullable enable
 using Elffy.Effective.Unsafes;
-using Elffy.Exceptions;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Elffy.Core
 {

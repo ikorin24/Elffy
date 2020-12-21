@@ -1,7 +1,5 @@
 ﻿#nullable enable
 using System;
-using System.Diagnostics;
-using Elffy.AssemblyServices;
 using Elffy.Effective;
 
 namespace Elffy.Diagnostics

@@ -1,7 +1,5 @@
 ﻿#nullable enable
 using Elffy.InputSystem;
-using System.Diagnostics;
-using System.Drawing;
 
 namespace Elffy.UI
 {

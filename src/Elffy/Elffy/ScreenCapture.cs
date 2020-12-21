@@ -1,17 +1,14 @@
 ﻿#nullable enable
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Drawing;
 using System.Drawing.Imaging;
-using OpenTK.Graphics.OpenGL4;
-using UnmanageUtility;
-using Elffy.Imaging;
-using TKPixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
-using PixelFormat = System.Drawing.Imaging.PixelFormat;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
+using Elffy.Imaging;
 using Elffy.Effective;
+using OpenTK.Graphics.OpenGL4;
+using TKPixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
+using PixelFormat = System.Drawing.Imaging.PixelFormat;
 
 namespace Elffy
 {

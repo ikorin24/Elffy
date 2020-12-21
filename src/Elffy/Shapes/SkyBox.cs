@@ -2,7 +2,6 @@
 using System;
 using System.Runtime.CompilerServices;
 using Elffy.Core;
-using Elffy.Shading;
 
 namespace Elffy.Shapes
 {

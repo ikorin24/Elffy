@@ -4,12 +4,11 @@ using System.Reflection;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Elffy.AssemblyServices;
-using Elffy.OpenGL.Windowing;
 using Elffy.Imaging;
 using Elffy.Effective;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
-using Monitor = OpenTK.Windowing.GraphicsLibraryFramework.Monitor;
+//using Monitor = OpenTK.Windowing.GraphicsLibraryFramework.Monitor;
 using Wnd = OpenTK.Windowing.GraphicsLibraryFramework.Window;
 
 namespace Elffy.OpenGL

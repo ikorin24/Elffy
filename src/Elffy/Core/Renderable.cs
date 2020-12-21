@@ -1,11 +1,11 @@
 ﻿#nullable enable
 using System;
+using System.Diagnostics.CodeAnalysis;
 using OpenTK.Graphics.OpenGL4;
 using Elffy.Shading;
 using Elffy.OpenGL;
 using Elffy.Effective;
 using Elffy.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Core
 {
