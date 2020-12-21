@@ -3,6 +3,7 @@ using System;
 using System.Runtime.InteropServices;
 using OpenTK.Windowing.Common;
 using Elffy.OpenGL.Windowing;
+using Elffy.Core;
 using GlfwInputAction = OpenTK.Windowing.GraphicsLibraryFramework.InputAction;
 using GlfwConnectedState = OpenTK.Windowing.GraphicsLibraryFramework.ConnectedState;
 using GLFWCallbacks = OpenTK.Windowing.GraphicsLibraryFramework.GLFWCallbacks;
@@ -46,7 +47,7 @@ namespace Elffy.OpenGL
 
         public event Action<WindowGLFW>? Refresh;
 
-        public event ClosingEventHandler? Closing;
+        public event ClosingEventHandler<WindowGLFW>? Closing;
 
         public event Action<WindowGLFW, MinimizedEventArgs>? Minimized;
 
@@ -224,6 +225,4 @@ namespace Elffy.OpenGL
     }
 
     internal delegate void FileDropEventHandler(WindowGLFW window, Utf8StringRefArray files);
-
-    internal delegate void ClosingEventHandler(WindowGLFW window, CancelEventArgs e);
 }

@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using System;
 using System.Threading;
-using System.ComponentModel;
 using Elffy.UI;
 using Elffy.Core;
 using Elffy.InputSystem;
@@ -73,7 +72,7 @@ namespace Elffy
         }
 
         /// <inheritdoc/>
-        public event Action<IHostScreen, CancelEventArgs>? Closing
+        public event ClosingEventHandler<IHostScreen>? Closing
         {
             add => _renderingArea.Closing += value;
             remove => _renderingArea.Closing -= value;

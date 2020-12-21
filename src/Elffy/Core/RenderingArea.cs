@@ -26,7 +26,7 @@ namespace Elffy.Core
 
         public event ActionEventHandler<IHostScreen>? Initialized;
 
-        public event Action<IHostScreen, CancelEventArgs>? Closing;
+        public event ClosingEventHandler<IHostScreen>? Closing;
 
         public event Action? Disposed;
 
@@ -198,12 +198,13 @@ namespace Elffy.Core
             }
         }
 
-        public void RequestClose()
+        public unsafe void RequestClose()
         {
             if(_isCloseRequested) {
                 return;
             }
-            var e = new CancelEventArgs();
+            var isCanceled = false;
+            var e = new CancelEventArgs(&isCanceled);
             try {
                 Closing?.Invoke(OwnerScreen, e);
                 _isCloseRequested = e.Cancel == false;

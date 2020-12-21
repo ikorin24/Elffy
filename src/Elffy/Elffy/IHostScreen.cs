@@ -4,7 +4,6 @@ using Elffy.UI;
 using Elffy.Core;
 using System;
 using System.Threading;
-using System.ComponentModel;
 
 namespace Elffy
 {
@@ -60,7 +59,7 @@ namespace Elffy
         event ActionEventHandler<IHostScreen> Initialized;
 
         /// <summary>Event which fires on closing</summary>
-        event Action<IHostScreen, CancelEventArgs> Closing;
+        event ClosingEventHandler<IHostScreen> Closing;
 
         void Show();
 
