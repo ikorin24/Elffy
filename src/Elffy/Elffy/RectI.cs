@@ -19,6 +19,7 @@ namespace Elffy
         [FieldOffset(12)]
         public int Height;
 
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private string DebugDisplay => ZString.Concat('(', X, ", ", Y, ", ", Width, ", ", Height, ')');
 
         public RectI(int x, int y, int width, int height)
