@@ -1,4 +1,6 @@
-﻿#nullable enable
+﻿#if NOT_SUPPORTED_YET // SSBO needs opengl 4.3 (Mac does not support)
+#nullable enable
+
 using Elffy.Core;
 using Elffy.Effective;
 using Elffy.Exceptions;
@@ -88,3 +90,5 @@ namespace Elffy.Components
         }
     }
 }
+
+#endif // NOT_SUPPORTED_YET
