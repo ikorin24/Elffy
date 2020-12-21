@@ -98,7 +98,8 @@ namespace Elffy
             _windowImpl = new WindowGLFW(width, height, title, windowStyle, icon);
 
             _frameDelta = TimeSpan.FromSeconds(1.0 / 60.0); // TODO: とりあえず固定で
-            _windowImpl.UpdateFrame += OnUpdateFrame;
+            _windowImpl.UpdateFrame += (_, e) => UpdateFrame();
+            _windowImpl.Refresh += _ => UpdateFrame();
             _windowImpl.Load += OnLoad;
             _windowImpl.Resize += OnResize;
             _windowImpl.MouseMove += (_, e) => Mouse.ChangePosition(e.Position);
@@ -166,7 +167,7 @@ namespace Elffy
             _renderingArea.Size = e.Size;
         }
 
-        private void OnUpdateFrame(WindowGLFW _, FrameEventArgs e)
+        private void UpdateFrame()
         {
             _renderingArea.RenderFrame();
             _time += _frameDelta;
