@@ -22,6 +22,7 @@ namespace Elffy
         [FieldOffset(8)]
         public float B;
 
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private readonly string DebugView => ZString.Concat("(R, G, B) = (", ToByte(R), ", ", ToByte(G), ", ", ToByte(B), ") = (", R, ", ", G, ", ", B, ')');
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

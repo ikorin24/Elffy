@@ -19,7 +19,8 @@ namespace Elffy
         [FieldOffset(4)]
         public float Y;
 
-        private readonly string DebuggerDisplay => ToString();
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private readonly string DebuggerDisplay => ZString.Concat('(', X, ", ", Y, ')');
 
         public static readonly Vector2 UnitX = new Vector2(1, 0);
         public static readonly Vector2 UnitY = new Vector2(0, 1);
@@ -68,7 +69,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly override int GetHashCode() => HashCode.Combine(X, Y);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly override string ToString() => ZString.Concat('(', X, ", ", Y, ')');
+        public readonly override string ToString() => DebuggerDisplay;
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

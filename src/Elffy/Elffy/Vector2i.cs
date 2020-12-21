@@ -20,7 +20,8 @@ namespace Elffy
         [FieldOffset(4)]
         public int Y;
 
-        private readonly string DebuggerDisplay => ToString();
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private readonly string DebuggerDisplay => ZString.Concat('(', X, ", ", Y, ')');
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector2i(int x, int y) => (X, Y) = (x, y);
@@ -38,7 +39,7 @@ namespace Elffy
         public override int GetHashCode() => HashCode.Combine(X, Y);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly override string ToString() => ZString.Concat('(', X, ", ", Y, ')');
+        public readonly override string ToString() => DebuggerDisplay;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(in Vector2i left, in Vector2i right) => left.Equals(right);

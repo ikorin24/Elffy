@@ -11,6 +11,7 @@ namespace Elffy
         private readonly IntPtr _ptr;   // Utf8StringRef*
         private readonly int _length;
 
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private string DebugDisplay => $"{nameof(Utf8StringRef)}[{_length}]";
 
         public int Length

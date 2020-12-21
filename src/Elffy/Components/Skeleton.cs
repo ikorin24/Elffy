@@ -295,6 +295,7 @@ namespace Elffy.Components
         public BoneInternal* Parent;
         public BoneInternal* Next;
 
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private readonly string DebugView
         {
             get
@@ -336,6 +337,7 @@ namespace Elffy.Components
         /// <remarks>This field has no special meaning. Only for debug viewing. If the bone has more than one child, choose one of them.</remarks>
         public readonly int? ConnectedBone;
 
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private string DebugView
         {
             get

@@ -13,6 +13,7 @@ namespace Elffy
         private readonly IntPtr _ptr;   // byte*
         private readonly int _length;
 
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private readonly string DebugView => ToString();
 
         public int Lenght
