@@ -4,12 +4,14 @@ using Elffy.Effective;
 using System;
 using System.ComponentModel;
 using System.Drawing;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using TKColor4 = OpenTK.Mathematics.Color4;
 
 namespace Elffy
 {
+    [DebuggerDisplay("{DebugView}")]
     [StructLayout(LayoutKind.Explicit)]
     public struct Color3 : IEquatable<Color3>
     {
@@ -19,6 +21,8 @@ namespace Elffy
         public float G;
         [FieldOffset(8)]
         public float B;
+
+        private readonly string DebugView => ZString.Concat("(R, G, B) = (", ToByte(R), ", ", ToByte(G), ", ", ToByte(B), ") = (", R, ", ", G, ", ", B, ')');
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Color3(float r, float g, float b) => (R, G, B) = (r, g, b);
@@ -35,9 +39,7 @@ namespace Elffy
 
         public readonly override int GetHashCode() => HashCode.Combine(R, G, B);
 
-        public readonly override string ToString() => ZString.Concat("(R: ", ToByte(R),
-                                                                     ", G: ", ToByte(G),
-                                                                     ", B: ", ToByte(B), ")");
+        public readonly override string ToString() => DebugView;
 
         public static bool operator ==(in Color3 left, in Color3 right) => left.Equals(right);
 
