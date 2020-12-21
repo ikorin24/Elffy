@@ -4,31 +4,38 @@ using Elffy.UI;
 using Elffy.Core;
 using System;
 using System.Threading;
+using System.ComponentModel;
 
 namespace Elffy
 {
-    /// <summary>プラットフォームごとの画面を抽象化するためのインターフェース</summary>
-    public interface IHostScreen : IDisposable
+    /// <summary>Interface for abstracting screens for each platform</summary>
+    public interface IHostScreen
     {
         /// <summary>Get or set title of the screen</summary>
         string Title { get; set; }
 
-        /// <summary>マウスを取得します</summary>
+        /// <summary>Get mouse</summary>
         Mouse Mouse { get; }
+
         /// <summary>Get keyborad</summary>
         Keyboard Keyboard { get; }
-        /// <summary>カメラを取得します</summary>
+
+        /// <summary>Get camera</summary>
         Camera Camera { get; }
-        /// <summary>UIのルートオブジェクト</summary>
+
+        /// <summary>Get UI root</summary>
         RootPanel UIRoot { get; }
 
+        /// <summary>Get asynchronous end point</summary>
         public AsyncBackEndPoint AsyncBack { get; }
-        /// <summary>描画領域のサイズ [pixel]</summary>
+
+        /// <summary>Get pixel size of rendering area.</summary>
         Vector2i ClientSize { get; set; }
 
+        /// <summary>Get location of the <see cref="IHostScreen"/></summary>
         Vector2i Location { get; set; }
 
-        /// <summary><see cref="FrameObject"/> を保持するためのレイヤーのリスト</summary>
+        /// <summary>Get list of the layers which has <see cref="FrameObject"/>s</summary>
         LayerCollection Layers { get; }
 
         /// <summary>Get time of current frame. (This is NOT real time.)</summary>
@@ -49,14 +56,17 @@ namespace Elffy
 
         IDefaultResource DefaultResource { get; }
 
-        internal TimeSpan FrameDelta { get; }
-
-        /// <summary>初期化時イベント</summary>
+        /// <summary>Event which fires on initialized</summary>
         event ActionEventHandler<IHostScreen> Initialized;
+
+        /// <summary>Event which fires on closing</summary>
+        event Action<IHostScreen, CancelEventArgs> Closing;
 
         void Show();
 
-        /// <summary>Throw exception if current thread is not main of this <see cref="IHostScreen"/></summary>
+        void Close();
+
+        /// <summary>Throw an exception if current thread is not main of the <see cref="IHostScreen"/></summary>
         void ThrowIfNotMainThread();
 
         internal void HandleOnce();

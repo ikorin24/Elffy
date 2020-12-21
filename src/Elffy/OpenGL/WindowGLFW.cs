@@ -19,8 +19,6 @@ namespace Elffy.OpenGL
     {
         const double MaxUpdateFrequency = 500;
 
-        private bool _isCloseRequested;
-
         private Wnd* _window;
         private Vector2i _clientSize;
         private Vector2i _size;
@@ -180,12 +178,7 @@ namespace Elffy.OpenGL
                 Load?.Invoke(this);
             }
 
-            if(_isCloseRequested || IsDisposed) {
-                if(IsDisposed == false) {
-                    GLFW.MakeContextCurrent(_window);
-                    Dispose();
-                    GLFW.MakeContextCurrent(null);
-                }
+            if(IsDisposed) {
                 return;
             }
 
@@ -302,7 +295,6 @@ namespace Elffy.OpenGL
             if(IsDisposed) { return; }  // Block re-entrant
             var window = _window;
             _window = null;
-            Closed?.Invoke(this);
             GLFW.DestroyWindow(window);
         }
 

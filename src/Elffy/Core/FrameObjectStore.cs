@@ -75,7 +75,12 @@ namespace Elffy.Core
         {
             foreach(var frameObject in _list.AsSpan()) {
                 if(frameObject.IsFrozen) { continue; }
-                frameObject.EarlyUpdate();
+                try {
+                    frameObject.EarlyUpdate();
+                }
+                catch {
+                    // Don't throw. (Ignore exceptions in user code)
+                }
             }
         }
 
@@ -84,7 +89,12 @@ namespace Elffy.Core
         {
             foreach(var frameObject in _list.AsSpan()) {
                 if(frameObject.IsFrozen) { continue; }
-                frameObject.Update();
+                try {
+                    frameObject.Update();
+                }
+                catch {
+                    // Don't throw. (Ignore exceptions in user code)
+                }
             }
         }
 
@@ -93,7 +103,27 @@ namespace Elffy.Core
         {
             foreach(var frameObject in _list.AsSpan()) {
                 if(frameObject.IsFrozen) { continue; }
-                frameObject.LateUpdate();
+                try {
+                    frameObject.LateUpdate();
+                }
+                catch {
+                    // Don't throw. (Ignore exceptions in user code)
+                }
+            }
+        }
+
+        public void Render(in Matrix4 projection, in Matrix4 view)
+        {
+            foreach(var renderable in _renderables.AsSpan()) {
+                // Render only root objects.
+                // Childen are rendered from thier parent 'Render' method.
+                if(!renderable.IsRoot || !renderable.IsVisible) { continue; }
+                try {
+                    renderable.Render(projection, view, Matrix4.Identity);
+                }
+                catch {
+                    // Don't throw. (Ignore exceptions in user code)
+                }
             }
         }
 
@@ -105,7 +135,12 @@ namespace Elffy.Core
 
             // Terminate all living object. (Terminated objects go to removed buffer.)
             foreach(var item in _list.AsSpan()) {
-                item.Terminate();
+                try {
+                    item.Terminate();
+                }
+                catch {
+                    // Don't throw. (Ignore exceptions in user code)
+                }
             }
 
             // Apply removing
@@ -128,7 +163,12 @@ namespace Elffy.Core
                     var renderableRemoved = _renderables.Remove(renderable);
                     Debug.Assert(renderableRemoved);
                 }
-                item.RemovedFromObjectStoreCallback();
+                try {
+                    item.RemovedFromObjectStoreCallback();
+                }
+                catch {
+                    // Don't throw. (Ignore exceptions in user code)
+                }
             }
             _removedBuf.Clear();
         }
@@ -139,12 +179,15 @@ namespace Elffy.Core
             _list.AddRange(_addedBuf);
             foreach(var item in _addedBuf.AsSpan()) {
                 Debug.Assert(item.LifeState == LifeState.Activated);
-                switch(item) {
-                    case Renderable renderable:
-                        _renderables.Add(renderable);
-                        break;
+                if(item is Renderable renderable) {
+                    _renderables.Add(renderable);
                 }
-                item.AddToObjectStoreCallback();
+                try {
+                    item.AddToObjectStoreCallback();
+                }
+                catch {
+                    // Don't throw. (Ignore exceptions in user code)
+                }
             }
             _addedBuf.Clear();
         }

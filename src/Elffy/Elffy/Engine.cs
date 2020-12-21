@@ -40,7 +40,6 @@ namespace Elffy
         internal static void RemoveScreen(IHostScreen screen)
         {
             _screens.Remove(screen);
-            screen.Dispose();
         }
 
         /// <summary>Start the engine</summary>

@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.Threading;
+using System.ComponentModel;
 using Elffy.UI;
 using Elffy.Core;
 using Elffy.InputSystem;
@@ -12,27 +13,24 @@ using TKMouseButtonEventArgs = OpenTK.Windowing.Common.MouseButtonEventArgs;
 
 namespace Elffy
 {
-    /// <summary>クロスプラットフォーム ウィンドウクラス</summary>
+    /// <summary>Cross platform window</summary>
     public class Window : IHostScreen
     {
         private const string DefaultTitle = "Window";
 
-        private bool _isClosed;
-        private readonly WindowGLFW _windowImpl;
-
         [ThreadStatic]
         private static bool _isThreadMain;
 
-        /// <summary>描画領域に関する処理を行うオブジェクト</summary>
+        private readonly WindowGLFW _windowImpl;
         private readonly RenderingArea _renderingArea;
         private TimeSpan _frameDelta;
         private TimeSpan _time;
         private long _frameNum;
 
-        /// <summary>ウィンドウの UI の Root</summary>
+        /// <summary>Get UI root of the window</summary>
         public RootPanel UIRoot => _renderingArea.Layers.UILayer.UIRoot;
 
-        /// <summary>マウスを取得します</summary>
+        /// <inheritdoc/>
         public Mouse Mouse => _renderingArea.Mouse;
         
         /// <inheritdoc/>
@@ -40,12 +38,9 @@ namespace Elffy
 
         public AsyncBackEndPoint AsyncBack => _renderingArea.AsyncBack;
 
-        /// <summary>このウィンドウのレイヤー</summary>
-        LayerCollection IHostScreen.Layers => _renderingArea.Layers;
-        /// <summary>カメラを取得します</summary>
-        Camera IHostScreen.Camera => _renderingArea.Camera;
+        public LayerCollection Layers => _renderingArea.Layers;
 
-        TimeSpan IHostScreen.FrameDelta => _frameDelta;
+        public Camera Camera => _renderingArea.Camera;
 
         public Vector2i ClientSize { get => _windowImpl.ClientSize; set => _windowImpl.ClientSize = value; }
 
@@ -70,31 +65,32 @@ namespace Elffy
         /// <inheritdoc/>
         public bool IsThreadMain => _isThreadMain;
 
-        /// <summary>初期化時イベント</summary>
+        /// <inheritdoc/>
         public event ActionEventHandler<IHostScreen>? Initialized
         {
-            add
-            {
-                _renderingArea.Initialized += value;
-            }
-            remove
-            {
-                _renderingArea.Initialized += value;
-            }
+            add => _renderingArea.Initialized += value;
+            remove => _renderingArea.Initialized -= value;
         }
 
-        /// <summary>ウィンドウを作成します</summary>
+        /// <inheritdoc/>
+        public event Action<IHostScreen, CancelEventArgs>? Closing
+        {
+            add => _renderingArea.Closing += value;
+            remove => _renderingArea.Closing -= value;
+        }
+
+        /// <summary>Create new <see cref="Window"/></summary>
         public Window() : this(WindowStyle.Default) { }
 
-        /// <summary>スタイルを指定してウィンドウを作成します</summary>
-        /// <param name="windowStyle">ウィンドウのスタイル</param>
+        /// <summary>Create new <see cref="Window"/></summary>
+        /// <param name="windowStyle">window style</param>
         public Window(WindowStyle windowStyle) : this(800, 450, DefaultTitle, windowStyle, ReadOnlySpan<RawImage>.Empty) { }
 
-        /// <summary>サイズとタイトルとスタイルを指定して、ウィンドウを作成します</summary>
-        /// <param name="width">ウィンドウの幅</param>
-        /// <param name="height">ウィンドウの高さ</param>
-        /// <param name="title">ウィンドウのタイトル</param>
-        /// <param name="windowStyle">ウィンドウのスタイル</param>
+        /// <summary>Create new <see cref="Window"/></summary>
+        /// <param name="width">width of the window</param>
+        /// <param name="height">height of the window</param>
+        /// <param name="title">title of the window</param>
+        /// <param name="windowStyle">window style</param>
         public Window(int width, int height, string title, WindowStyle windowStyle, ReadOnlySpan<RawImage> icon)
         {
             _isThreadMain = true;
@@ -104,7 +100,6 @@ namespace Elffy
             _frameDelta = TimeSpan.FromSeconds(1.0 / 60.0); // TODO: とりあえず固定で
             _windowImpl.UpdateFrame += OnUpdateFrame;
             _windowImpl.Load += OnLoad;
-            _windowImpl.Closed += _ => Dispose();
             _windowImpl.Resize += OnResize;
             _windowImpl.MouseMove += (_, e) => Mouse.ChangePosition(e.Position);
             _windowImpl.MouseWheel += (_, e) => Mouse.ChangeWheel(e.OffsetY);
@@ -114,6 +109,13 @@ namespace Elffy
             _windowImpl.MouseLeave += _ => Mouse.ChangeOnScreen(false);
             _windowImpl.KeyDown += (_, e) => Keyboard.ChangeToDown(e);
             _windowImpl.KeyUp += (_, e) => Keyboard.ChangeToUp(e);
+            _windowImpl.Closing += (_, e) => Close();
+
+            _renderingArea.Disposed += () =>
+            {
+                _windowImpl.Dispose();
+                Engine.RemoveScreen(this);
+            };
 
             Engine.AddScreen(this, show: false);
 
@@ -138,19 +140,10 @@ namespace Elffy
             };
         }
 
-        private void RequestClose()
-        {
-            _renderingArea.RequestClose();
-        }
-
-        public void Dispose()
+        public void Close()
         {
             ThrowIfNotMainThread();
-            if(_isClosed) { return; }
-            _isClosed = true;
-            _renderingArea.Dispose();
-            _windowImpl.Dispose();
-            Engine.RemoveScreen(this);
+            _renderingArea.RequestClose();
         }
 
         /// <inheritdoc/>

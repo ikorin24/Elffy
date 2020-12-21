@@ -3,7 +3,6 @@ using Elffy.Core;
 using Elffy.Imaging;
 using Elffy.Platforms;
 using Elffy.Threading;
-using Elffy.Exceptions;
 using System;
 using System.IO;
 using System.Drawing;
@@ -79,12 +78,7 @@ namespace Elffy
                     while(Engine.HandleOnce()) {
                         syncContextReciever?.DoAll();
                     }
-                    ScreenExceptionHolder.ThrowIfExceptionExists(screen);
                 }
-                //catch {
-                //    // TODO: logging here
-                //    throw;
-                //}
                 finally {
                     Resources.Close();
                     CustomSynchronizationContext.Restore();
@@ -101,10 +95,8 @@ namespace Elffy
             try {
                 await _entryPointAsync();
             }
-            catch(Exception ex) {
-                ScreenExceptionHolder.SetException(screen, ex);
-                screen.Dispose();
-                // Don't throw. No one catch it.
+            catch {
+                // Don't throw. (Ignore exceptions in user code)
             }
         }
 

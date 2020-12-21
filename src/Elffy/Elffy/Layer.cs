@@ -1,12 +1,13 @@
 ﻿#nullable enable
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Elffy.Core;
 
 namespace Elffy
 {
     /// <summary><see cref="FrameObject"/> のレイヤークラス</summary>
-    [DebuggerDisplay("Layer: {Name} (ObjectCount = {ObjectCount})", Type = nameof(Layer), TargetTypeName = nameof(Layer))]
+    [DebuggerDisplay("Layer: {Name} (ObjectCount = {ObjectCount})")]
     public class Layer : ILayer
     {
         private readonly FrameObjectStore _store = FrameObjectStore.New();
@@ -24,34 +25,30 @@ namespace Elffy
         }
         LayerCollection? ILayer.OwnerCollection => Owner;
 
+        /// <summary>Get name of the layer</summary>
         public string Name { get; }
 
         /// <inheritdoc/>
         public bool IsVisible { get; set; } = true;
 
-        /// <summary>レイヤー名を指定して <see cref="Layer"/> を作成します</summary>
-        /// <param name="name">レイヤー名</param>
+        /// <summary>Create new <see cref="Layer"/> with specified name.</summary>
+        /// <param name="name">name of the layer</param>
         public Layer(string name)
         {
             if(name is null) {
                 ThrowNullArg();
-                static void ThrowNullArg() => throw new ArgumentNullException(nameof(name));
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(name));
             }
-            Name = name!;
+            Name = name;
         }
 
-        /// <summary>現在生きている全オブジェクトの数を取得します</summary>
+        /// <summary>Get count of alive objects in the current frame.</summary>
         public int ObjectCount => _store.ObjectCount;
 
-        /// <summary>指定した<see cref="FrameObject"/>を追加します</summary>
-        /// <param name="frameObject">追加するオブジェクト</param>
         internal void AddFrameObject(FrameObject frameObject) => _store.AddFrameObject(frameObject);
 
         void ILayer.AddFrameObject(FrameObject frameObject) => AddFrameObject(frameObject);
 
-        /// <summary>指定した<see cref="FrameObject"/>を削除します</summary>
-        /// <param name="frameObject">削除するオブジェクト</param>
-        /// <returns>削除できたかどうか</returns>
         internal void RemoveFrameObject(FrameObject frameObject) => _store.RemoveFrameObject(frameObject);
 
         void ILayer.RemoveFrameObject(FrameObject frameObject) => RemoveFrameObject(frameObject);
@@ -62,26 +59,13 @@ namespace Elffy
 
         internal void EarlyUpdate() => _store.EarlyUpdate();
 
-        /// <summary>フレームの更新を行います</summary>
         internal void Update() => _store.Update();
 
         internal void LateUpdate() => _store.LateUpdate();
 
-        /// <summary>保持している <see cref="FrameObject"/> を全て破棄し、リストをクリアします</summary>
         internal void ClearFrameObject() => _store.ClearFrameObject();
         void ILayer.ClearFrameObject() => ClearFrameObject();
 
-        /// <summary>Render all <see cref="FrameObject"/>s in this layer</summary>
-        /// <param name="projection">projection matrix</param>
-        /// <param name="view">view matrix</param>
-        internal void Render(in Matrix4 projection, in Matrix4 view)
-        {
-            foreach(var renderable in _store.Renderables) {
-                // Render only root objects.
-                // Childen are rendered from thier parent 'Render' method.
-                if(!renderable.IsRoot || !renderable.IsVisible) { continue; }
-                renderable.Render(projection, view, Matrix4.Identity);
-            }
-        }
+        internal void Render(in Matrix4 projection, in Matrix4 view) => _store.Render(projection, view);
     }
 }

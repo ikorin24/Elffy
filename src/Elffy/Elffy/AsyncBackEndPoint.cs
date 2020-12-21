@@ -1,9 +1,6 @@
 ﻿#nullable enable
-using Cysharp.Threading.Tasks;
-using Elffy.Core;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -64,7 +61,12 @@ namespace Elffy
                     for(int i = 0; i < count; i++) {
                         var exists = queue.TryDequeue(out var action);
                         Debug.Assert(exists);
-                        action.Invoke();
+                        try {
+                            action.Invoke();
+                        }
+                        catch {
+                            // Don't throw
+                        }
                     }
                 }
             }

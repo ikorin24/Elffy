@@ -1,9 +1,9 @@
 ﻿#nullable enable
 using Elffy.InputSystem;
 using Elffy.OpenGL;
-using Elffy.Shading;
 using OpenTK.Graphics.OpenGL4;
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading;
 
@@ -17,7 +17,6 @@ namespace Elffy.Core
 
         private bool _isCloseRequested;
         private bool _disposed;
-        /// <summary>UI の投影行列</summary>
         private Matrix4 _uiProjection;
         private Vector2i _size;
         private readonly CancellationTokenSource _runningTokenSource;
@@ -27,19 +26,22 @@ namespace Elffy.Core
 
         public event ActionEventHandler<IHostScreen>? Initialized;
 
+        public event Action<IHostScreen, CancelEventArgs>? Closing;
+
+        public event Action? Disposed;
+
         public CancellationToken RunningToken => _runningTokenSource.Token;
 
         public DefaultGLResource DefaultGLResource { get; }
 
         public IHostScreen OwnerScreen { get; }
 
-        /// <summary>レイヤーのリスト</summary>
         public LayerCollection Layers { get; }
         public Camera Camera { get; } = new Camera();
         public Mouse Mouse { get; } = new Mouse();
         public Keyboard Keyboard { get; } = new Keyboard();
 
-        public AsyncBackEndPoint AsyncBack { get; }
+        public AsyncBackEndPoint AsyncBack { get; } = new AsyncBackEndPoint();
 
         public ScreenCurrentTiming CurrentTiming => _currentTiming;
 
@@ -89,7 +91,6 @@ namespace Elffy.Core
         {
             OwnerScreen = screen;
             Layers = new LayerCollection(this);
-            AsyncBack = new AsyncBackEndPoint();
             DefaultGLResource = new DefaultGLResource();
             _runningTokenSource = new CancellationTokenSource();
         }
@@ -123,6 +124,10 @@ namespace Elffy.Core
         /// <summary>フレームを更新して描画します</summary>
         public void RenderFrame()
         {
+            var isLastFrame = _isCloseRequested;
+            if(isLastFrame) {
+                _runningTokenSource.Cancel();
+            }
             _currentTiming = ScreenCurrentTiming.FrameInitializing;
             var uiLayer = Layers.UILayer;
             var layers = Layers.AsReadOnlySpan();
@@ -187,11 +192,25 @@ namespace Elffy.Core
             uiLayer.ApplyRemove();
 
             _currentTiming = ScreenCurrentTiming.OutOfFrameLoop;
+
+            if(isLastFrame) {
+                Dispose();
+            }
         }
 
         public void RequestClose()
         {
-            _isCloseRequested = true;
+            if(_isCloseRequested) {
+                return;
+            }
+            var e = new CancelEventArgs();
+            try {
+                Closing?.Invoke(OwnerScreen, e);
+                _isCloseRequested = e.Cancel == false;
+            }
+            catch {
+                _isCloseRequested = true;
+            }
         }
 
         public void Dispose()
@@ -211,6 +230,8 @@ namespace Elffy.Core
             AsyncBack.AbortAll();
 
             DefaultGLResource.Dispose();
+
+            Disposed?.Invoke();
         }
 
         private void OnSizeChanged(in Vector2i newSize)

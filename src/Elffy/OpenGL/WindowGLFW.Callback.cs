@@ -49,7 +49,6 @@ namespace Elffy.OpenGL
         public event Action<WindowGLFW>? Refresh;
 
         public event ClosingEventHandler? Closing;
-        public event Action<WindowGLFW>? Closed;
 
         public event Action<WindowGLFW, MinimizedEventArgs>? Minimized;
 
@@ -105,9 +104,6 @@ namespace Elffy.OpenGL
                 Closing?.Invoke(this, e);
                 if(e.Cancel) {
                     GLFW.SetWindowShouldClose(_window, false);
-                }
-                else {
-                    _isCloseRequested = true;
                 }
             };
             GLFW.SetWindowCloseCallback(_window, _closeCallback);

@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.Threading;
 using System.Diagnostics;
 using Elffy.InputSystem;
 
@@ -9,9 +10,13 @@ namespace Elffy
     public static class Game
     {
         private static IHostScreen? _screen;
+        private static CancellationToken _runningToken;
 
         /// <summary>Get singleton instance of <see cref="IHostScreen"/></summary>
         public static IHostScreen Screen => _screen!;
+
+        /// <summary>Get screen running token, which is canceled when screen got closed.</summary>
+        public static CancellationToken RunningToken => _runningToken;
 
         /// <summary>Get time of current frame. (This is NOT real time.)</summary>
         public static ref readonly TimeSpan Time => ref _screen!.Time;
@@ -31,10 +36,23 @@ namespace Elffy
         /// <summary>Get camera</summary>
         public static Camera Camera { get; private set; } = null!;
 
+        /// <summary>Return whether current thread is main thread of the game or not</summary>
+        public static bool IsThreadMain => _screen!.IsThreadMain;
+
+        /// <summary>Throw an exception if current thread is not main of the game</summary>
+        public static void ThrowIfNotMainThread() => _screen!.ThrowIfNotMainThread();
+
+        /// <summary>Close the game</summary>
+        public static void Close()
+        {
+            _screen!.Close();
+        }
+
         internal static void Initialize(IHostScreen screen)
         {
             Debug.Assert(_screen is null);
             _screen = screen;
+            _runningToken = screen.RunningToken;
             Keyboard = screen.Keyboard;
             Mouse = screen.Mouse;
             Layers = screen.Layers;
