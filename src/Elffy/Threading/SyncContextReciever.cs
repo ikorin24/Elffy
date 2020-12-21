@@ -23,7 +23,12 @@ namespace Elffy.Threading
             static void Do(int count, ConcurrentQueue<(SendOrPostCallback callback, object? state)> queue)
             {
                 while(count > 0 && queue.TryDequeue(out var item)) {
-                    item.callback(item.state);
+                    try {
+                        item.callback(item.state);
+                    }
+                    catch {
+                        // Don't throw. (Ignore exceptions in user code)
+                    }
                     count--;
                 }
             }
