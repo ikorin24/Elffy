@@ -1,4 +1,6 @@
-﻿#nullable enable
+﻿#if NOT_SUPPORTED_YET // SSBO needs opengl 4.3 (Mac does not support)
+
+#nullable enable
 using Elffy.Core;
 using OpenTK.Graphics.OpenGL4;
 using System;
@@ -100,3 +102,4 @@ namespace Elffy.OpenGL
         public override int GetHashCode() => HashCode.Combine(_ssbo, _length);
     }
 }
+#endif // NOT_SUPPORTED_YET
