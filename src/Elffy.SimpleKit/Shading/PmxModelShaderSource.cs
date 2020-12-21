@@ -25,7 +25,7 @@ namespace Elffy.Shading
         {
             definition.Map<RigVertex>(nameof(RigVertex.Position), "vPos");
             definition.Map<RigVertex>(nameof(RigVertex.Normal), "vNormal");
-            definition.Map<RigVertex>(nameof(RigVertex.TexCoord), "vUV");
+            definition.Map<RigVertex>(nameof(RigVertex.UV), "vUV");
             definition.Map<RigVertex>(nameof(RigVertex.Bone), "bone");
             definition.Map<RigVertex>(nameof(RigVertex.Weight), "weight");
         }

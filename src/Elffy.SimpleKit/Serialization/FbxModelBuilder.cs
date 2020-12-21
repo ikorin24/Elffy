@@ -173,17 +173,10 @@ namespace Elffy.Serialization
 
                 var p = new Vector3((float)positions[index * 3], (float)positions[index * 3 + 1], (float)positions[index * 3 + 2]);
                 var normal = new Vector3((float)normals[i * 3], (float)normals[i * 3 + 1], (float)normals[i * 3 + 2]);
-                //verticesMarged.Add(new RigVertex(
-                //    position: p,
-                //    normal: normal,
-                //    texcoord: default,      // TODO:
-                //    bone: default,          // TODO:
-                //    weight: Vector4.UnitX   // TODO:
-                //));
                 verticesMarged.Add(new Vertex(
                     position: p,
                     normal: normal,
-                    texcoord: default      // TODO:
+                    uv: default      // TODO:
                 ));
                 if(isLast) {
                     if(n_gon <= 2) { throw new FormatException(); }

@@ -43,7 +43,7 @@ namespace Elffy.Shading
             }
             else if(typeof(TVertex) == typeof(Vertex)) {
                 definition.Map<Vertex>(nameof(Vertex.Position), "_pos");
-                definition.Map<Vertex>(nameof(Vertex.TexCoord), "_uv");
+                definition.Map<Vertex>(nameof(Vertex.UV), "_uv");
             }
             else {
                 throw new NotSupportedException("Not supported vertex type.");

@@ -29,8 +29,8 @@ namespace Elffy.Shapes
                     var sinTheta = MathF.Sin(theta);
                     var pos = new Vector3((float)(r * cosPhi * cosTheta), (float)(r * sinPhi), (float)(r * cosPhi * sinTheta));
                     var normal = -pos.Normalized();
-                    var texCoord = new Vector2((float)i / b, 1 - (float)j / a);
-                    verticesSpan[(b + 1) * j + i] = new Vertex(pos, normal, texCoord);
+                    var uv = new Vector2((float)i / b, 1 - (float)j / a);
+                    verticesSpan[(b + 1) * j + i] = new Vertex(pos, normal, uv);
                 }
             }
             for(int j = 0; j < a; j++) {
