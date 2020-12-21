@@ -15,7 +15,7 @@ namespace Elffy.Shapes
         protected override void OnActivated()
         {
             throw new NotImplementedException();
-            base.OnActivated();
+            //base.OnActivated();
             //LoadGraphicBuffer(vertexArray.Span, indexArray.Span);
         }
     }
