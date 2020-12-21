@@ -1,7 +1,8 @@
 ﻿#nullable enable
 using System;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 
 namespace Elffy.Mathematics
 {
@@ -18,7 +19,10 @@ namespace Elffy.Mathematics
         /// <param name="seed">seed value (not zero)</param>
         public Xorshift64(long seed)
         {
-            if(seed == 0) { throw new ArgumentException("0 is invalid seed"); }
+            if(seed == 0) {
+                ThrowArgException();
+                [DoesNotReturn] static void ThrowArgException() => throw new ArgumentException("0 is invalid seed");
+            }
             _seed = (ulong)seed;
         }
 
@@ -26,18 +30,6 @@ namespace Elffy.Mathematics
         public static unsafe Xorshift64 GetDefault()
         {
             var seed = DateTime.Now.Ticks;
-
-            // get undefined value from new allocked unmanaged heap.
-            var ptr = default(IntPtr);
-            try {
-                ptr = Marshal.AllocHGlobal(sizeof(long));
-                seed ^= ((long*)ptr)[0];
-            }
-            finally {
-                if(ptr != default) {
-                    Marshal.FreeHGlobal(ptr);
-                }
-            }
 
             // avoid seed == 0. (It does not work if seed is 0)
             seed = (seed == 0) ? 1 : seed;
@@ -50,12 +42,28 @@ namespace Elffy.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ulong Uint64()
         {
-            var value = _seed;
-            value ^= (value << 13);
-            value ^= (value >> 7);
-            value ^= (value << 17);
-            _seed = value;
-            return value;
+            // IntPtr.Size is JIT constant. JIT removes the branch.
+            // This method is thread-safe.
+
+            if(IntPtr.Size == 8) {
+                var value = _seed;          // 64bits read/write is atomic
+                value ^= (value << 13);
+                value ^= (value >> 7);
+                value ^= (value << 17);
+                _seed = value;              // 64bits read/write is atomic
+                return value;
+            }
+
+            if(IntPtr.Size == 4) {
+                var value = Interlocked.Read(ref _seed);
+                value ^= (value << 13);
+                value ^= (value >> 7);
+                value ^= (value << 17);
+                Interlocked.Exchange(ref _seed, value);
+                return value;
+            }
+
+            throw new NotSupportedException("What is your runtime? 32 btis? 64 bits?");
         }
 
         /// <summary>Get next random value of <see cref="long"/>, ranged by <see cref="long.MinValue"/> &lt;= value &lt;= <see cref="long.MaxValue"/>, except 0</summary>

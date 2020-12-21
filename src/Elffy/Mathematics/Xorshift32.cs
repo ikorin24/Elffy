@@ -1,7 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Mathematics
 {
@@ -18,7 +18,10 @@ namespace Elffy.Mathematics
         /// <param name="seed">seed value (not zero)</param>
         public Xorshift32(int seed)
         {
-            if(seed == 0) { throw new ArgumentException("0 is invalid seed"); }
+            if(seed == 0) {
+                ThrowArgException();
+                [DoesNotReturn] static void ThrowArgException() => throw new ArgumentException("0 is invalid seed");
+            }
             _seed = (uint)seed;
         }
 
@@ -27,18 +30,6 @@ namespace Elffy.Mathematics
         {
             // get lower 32 bits value of 64 bits
             var seed = (int)DateTime.Now.Ticks;
-
-            // get undefined value from new allocked unmanaged heap.
-            var ptr = default(IntPtr);
-            try {
-                ptr = Marshal.AllocHGlobal(sizeof(int));
-                seed ^= ((int*)ptr)[0];
-            }
-            finally {
-                if(ptr != default) {
-                    Marshal.FreeHGlobal(ptr);
-                }
-            }
 
             // avoid seed == 0. (It does not work if seed is 0)
             seed = (seed == 0) ? 1 : seed;
@@ -51,6 +42,7 @@ namespace Elffy.Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public uint Uint32()
         {
+            // 32 bits read/write is atomic, so this method is thread-safe.
             var value = _seed;
             value ^= (value << 13);
             value ^= (value >> 17);

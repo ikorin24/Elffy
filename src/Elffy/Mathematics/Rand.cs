@@ -7,6 +7,7 @@ namespace Elffy.Mathematics
     /// <summary>Random value generator class</summary>
     public static class Rand
     {
+        // They are thread-safe
         private static Xorshift32 _xorshift32 = Xorshift32.GetDefault();    // do not change into readonly
         private static Xorshift64 _xorshift64 = Xorshift64.GetDefault();    // do not change into readonly
 
