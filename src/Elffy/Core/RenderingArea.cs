@@ -3,7 +3,6 @@ using Elffy.InputSystem;
 using Elffy.OpenGL;
 using OpenTK.Graphics.OpenGL4;
 using System;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading;
 
