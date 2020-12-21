@@ -1,15 +1,17 @@
 ﻿#nullable enable
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Elffy.Mathematics;
+using Elffy.Effective;
+using Cysharp.Text;
 using TKQuaternion = OpenTK.Mathematics.Quaternion;
 using NumericsQuaternion = System.Numerics.Quaternion;
 using NumericsVector3 = System.Numerics.Vector3;
-using Elffy.Effective;
 
 namespace Elffy
 {
+    [DebuggerDisplay("{DebugView}")]
     [StructLayout(LayoutKind.Explicit)]
     public struct Quaternion : IEquatable<Quaternion>
     {
@@ -21,6 +23,9 @@ namespace Elffy
         public float Z;
         [FieldOffset(12)]
         public float W;
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private readonly string DebugView => ZString.Concat("V:(", X, ", ", Y, ", ", Z, "), W:", W);
 
         public static readonly Quaternion Identity = new Quaternion(0f, 0f, 0f, 1f);
 
@@ -98,7 +103,7 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly override string ToString() => $"V:({X}, {Y}, {Z}), W:{W}";
+        public readonly override string ToString() => DebugView;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly override bool Equals(object? obj) => obj is Quaternion quaternion && Equals(quaternion);
