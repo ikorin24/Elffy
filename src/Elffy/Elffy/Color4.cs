@@ -24,11 +24,30 @@ namespace Elffy
         [FieldOffset(12)]
         public float A;
 
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private readonly string DebugView
         {
             get
             {
-                return $"(R, G, B, A) = ({R * byte.MaxValue}, {G * byte.MaxValue}, {B * byte.MaxValue}, {A * byte.MaxValue}) = ({R}, {G}, {B}, {A})";
+                using var sb = ZString.CreateStringBuilder();
+                sb.Append("(R, G, B, A) = (");
+                sb.Append(ToByte(R));
+                sb.Append(", ");
+                sb.Append(ToByte(G));
+                sb.Append(", ");
+                sb.Append(ToByte(B));
+                sb.Append(", ");
+                sb.Append(ToByte(A));
+                sb.Append(") = (");
+                sb.Append(R);
+                sb.Append(", ");
+                sb.Append(G);
+                sb.Append(", ");
+                sb.Append(B);
+                sb.Append(", ");
+                sb.Append(A);
+                sb.Append(')');
+                return sb.ToString();
             }
         }
 
@@ -53,12 +72,19 @@ namespace Elffy
             return new ColorByte((byte)(R * byte.MaxValue), (byte)(G * byte.MaxValue), (byte)(B * byte.MaxValue), (byte)(A * byte.MaxValue));
         }
 
+        private static byte ToByte(float value)
+        {
+            var tmp = value * byte.MaxValue;
+            return (tmp < 0f) ? (byte)0 :
+                   (tmp > (float)byte.MaxValue) ? byte.MaxValue : (byte)tmp;
+        }
+
         public readonly override bool Equals(object? obj) => obj is Color4 color && Equals(color);
 
         public readonly bool Equals(Color4 other) => R == other.R && G == other.G && B == other.B && A == other.A;
 
         public readonly override int GetHashCode() => HashCode.Combine(R, G, B, A);
-        public readonly override string ToString() => ToColorByte().ToString();
+        public readonly override string ToString() => DebugView;
 
         public static bool operator ==(in Color4 left, in Color4 right) => left.Equals(right);
 
