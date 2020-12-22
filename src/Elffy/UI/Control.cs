@@ -2,15 +2,16 @@
 using System;
 using System.Drawing;
 using System.Collections.Generic;
-using System.Diagnostics;
 using Elffy.InputSystem;
 using Elffy.Components;
 using Elffy.Core;
 
 namespace Elffy.UI
 {
+    // I don't support forcus of control.
+
     /// <summary>
-    /// UI の要素の基底クラス。UI への配置, フォーカス処理, ヒットテストの処理を提供します<para/>
+    /// UI の要素の基底クラス。UI への配置, ヒットテストの処理を提供します<para/>
     /// </summary>
     /// 
     /// <remarks>
@@ -173,29 +174,6 @@ namespace Elffy.UI
         public HorizontalAlignment HorizontalAlignment { get; set; }
         /// <summary>get or set vertical alignment of layout</summary>
         public VerticalAlignment VerticalAlignment { get; set; }
-        /// <summary>get or set whether this <see cref="Control"/> can be focused</summary>
-        public bool IsFocusable { get; set; }
-
-        /// <summary>get whether this <see cref="Control"/> is focused</summary>
-        public bool IsFocused
-        {
-            // TODO: 実装
-
-            get => _isFocused;
-            internal set
-            {
-                if(_isFocused == value) { return; }
-                _isFocused = value;
-                if(_isFocused) {
-                    Debug.Assert(IsFocusable);
-                    FocusEnter?.Invoke(this);
-                }
-                else {
-                    FocusLost?.Invoke(this);
-                }
-            }
-        }
-        private bool _isFocused;
 
         /// <summary>get or set whether this <see cref="Control"/> is enable in HitTest</summary>
         public bool IsHitTestVisible { get; set; } = true;
@@ -207,10 +185,6 @@ namespace Elffy.UI
 
         internal Texture Texture { get; }
 
-        /// <summary>Focus enter event</summary>
-        public event Action<Control>? FocusEnter;
-        /// <summary>Focus lost event</summary>
-        public event Action<Control>? FocusLost;
         /// <summary>Mouse enter event</summary>
         public event Action<Control, MouseEventArgs>? MouseEnter;
         /// <summary>Mouse leave event</summary>
