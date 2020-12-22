@@ -1,6 +1,6 @@
 ﻿#nullable enable
 using Elffy.Core;
-using Elffy.Effective;
+using Elffy.Effective.Unsafes;
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;

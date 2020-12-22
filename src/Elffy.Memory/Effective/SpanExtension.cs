@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using UnmanageUtility;
 using System.Diagnostics.CodeAnalysis;
+using Elffy.Effective.Unsafes;
 
 namespace Elffy.Effective
 {

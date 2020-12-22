@@ -5,7 +5,7 @@ using System;
 using System.Runtime.CompilerServices;
 using Elffy.OpenGL;
 using Elffy.Diagnostics;
-using Elffy.Effective;
+using Elffy.Effective.Unsafes;
 
 namespace Elffy.Shading
 {

@@ -2,7 +2,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Elffy.Effective;
+using Elffy.Effective.Unsafes;
 using Elffy.Mathematics;
 using NumericsVector3 = System.Numerics.Vector3;
 using NumericsMatrix4x4 = System.Numerics.Matrix4x4;

@@ -6,7 +6,7 @@ using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
-using Elffy.Effective;
+using Elffy.Effective.Unsafes;
 using TKVector2i = OpenTK.Mathematics.Vector2i;
 
 namespace Elffy

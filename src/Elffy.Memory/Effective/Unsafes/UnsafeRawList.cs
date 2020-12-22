@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
 
-namespace Elffy.Effective
+namespace Elffy.Effective.Unsafes
 {
     /// <summary>Variable-length array on unmanaged memory. (like <see cref="List{T}"/>)</summary>
     /// <remarks>

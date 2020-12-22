@@ -3,7 +3,7 @@ using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Elffy.Effective;
+using Elffy.Effective.Unsafes;
 using Cysharp.Text;
 using TKQuaternion = OpenTK.Mathematics.Quaternion;
 using NumericsQuaternion = System.Numerics.Quaternion;

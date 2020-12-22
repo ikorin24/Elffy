@@ -2,6 +2,7 @@
 using Cysharp.Text;
 using Elffy.Core;
 using Elffy.Effective;
+using Elffy.Effective.Unsafes;
 using Elffy.Exceptions;
 using Elffy.Mathematics;
 using Elffy.OpenGL;

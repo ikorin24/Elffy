@@ -1,7 +1,7 @@
 ﻿#nullable enable
 using System.Runtime.CompilerServices;
 
-namespace Elffy.Effective
+namespace Elffy.Effective.Unsafes
 {
     /// <summary>Helper class of <see cref="Unsafe"/></summary>
     public static class UnsafeEx

@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Elffy.Core;
-using Elffy.Effective.Unsafes;
+using Elffy.Effective;
 using System.Runtime.CompilerServices;
 
 namespace Elffy

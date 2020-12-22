@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using Elffy.AssemblyServices;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -12,17 +11,15 @@ namespace Elffy.Effective.Unsafes
         /// <param name="source">source <see cref="string"/></param>
         /// <returns>reference to first char</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [CriticalDotnetDependency("netcoreapp3.1 || net5.0")]
         public static ref char GetReference(this string source)
         {
-            return ref Unsafe.As<StringDummy>(source)._firstChar;
+            return ref Unsafe.AsRef(in source.GetPinnableReference());
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [CriticalDotnetDependency("netcoreapp3.1 || net5.0")]
         public static ReadOnlySpan<char> AsSpanUnsafe(this string source, int start)
         {
-            return MemoryMarshal.CreateReadOnlySpan(ref Unsafe.Add(ref Unsafe.As<StringDummy>(source)._firstChar, start), source.Length - start);
+            return MemoryMarshal.CreateReadOnlySpan(ref Unsafe.Add(ref source.GetReference(), start), source.Length - start);
         }
 
         /// <summary>Get span of <see cref="string"/>.</summary>
@@ -32,10 +29,9 @@ namespace Elffy.Effective.Unsafes
         /// <param name="length">length to slice</param>
         /// <returns>sliced span</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [CriticalDotnetDependency("netcoreapp3.1 || net5.0")]
         public static ReadOnlySpan<char> AsSpanUnsafe(this string source, int start, int length)
         {
-            return MemoryMarshal.CreateReadOnlySpan(ref Unsafe.Add(ref Unsafe.As<StringDummy>(source)._firstChar, start), length);
+            return MemoryMarshal.CreateReadOnlySpan(ref Unsafe.Add(ref source.GetReference(), start), length);
         }
 
         /// <summary>Get slice of <see cref="ReadOnlySpan{char}"/>.</summary>
@@ -59,16 +55,6 @@ namespace Elffy.Effective.Unsafes
         public static ReadOnlySpan<char> SliceUnsafe(this ReadOnlySpan<char> source, int start, int length)
         {
             return MemoryMarshal.CreateReadOnlySpan(ref Unsafe.AsRef(source.At(start)), length);
-        }
-
-        private sealed class StringDummy
-        {
-#pragma warning disable CS0649  // warning of field not set
-            internal readonly int _stringLength;
-            internal char _firstChar;
-#pragma warning restore CS0649
-
-            private StringDummy() { }
         }
     }
 }

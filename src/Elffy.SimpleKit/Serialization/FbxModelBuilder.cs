@@ -6,7 +6,7 @@ using Elffy.Exceptions;
 using Elffy.Core;
 using Elffy.Shapes;
 using Elffy.Shading;
-using Elffy.Effective;
+using Elffy.Effective.Unsafes;
 using Elffy.OpenGL;
 using StringLiteral;
 using Cysharp.Threading.Tasks;

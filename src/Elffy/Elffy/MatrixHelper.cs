@@ -3,7 +3,7 @@ using System;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 using System.Runtime.CompilerServices;
-using Elffy.Effective;
+using Elffy.Effective.Unsafes;
 using Matrix4x4 = System.Numerics.Matrix4x4;
 using N_Vector4 = System.Numerics.Vector4;
 

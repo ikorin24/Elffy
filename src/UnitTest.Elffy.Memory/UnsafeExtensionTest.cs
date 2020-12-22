@@ -1,6 +1,6 @@
 ﻿#nullable enable
 using System.Linq;
-using Elffy.Effective.Unsafes;
+using Elffy.Effective;
 using System;
 using System.Collections.Generic;
 using Xunit;

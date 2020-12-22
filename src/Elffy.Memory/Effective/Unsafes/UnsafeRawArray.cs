@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
 
-namespace Elffy.Effective
+namespace Elffy.Effective.Unsafes
 {
     /// <summary>Low level wrapper of malloc, free. There are no safety checking, no zero initialized</summary>
     /// <remarks>

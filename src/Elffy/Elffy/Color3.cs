@@ -1,6 +1,6 @@
 ﻿#nullable enable
 using Cysharp.Text;
-using Elffy.Effective;
+using Elffy.Effective.Unsafes;
 using System;
 using System.ComponentModel;
 using System.Drawing;
