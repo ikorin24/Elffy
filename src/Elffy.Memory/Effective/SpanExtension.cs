@@ -11,16 +11,16 @@ namespace Elffy.Effective
     public static class SpanExtension
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ref T Head<T>(this Span<T> source) => ref MemoryMarshal.GetReference(source);
+        public static ref T GetReference<T>(this Span<T> source) => ref MemoryMarshal.GetReference(source);
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ref readonly T Head<T>(this ReadOnlySpan<T> source) => ref MemoryMarshal.GetReference(source);
+        public static ref readonly T GetReference<T>(this ReadOnlySpan<T> source) => ref MemoryMarshal.GetReference(source);
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ref T HeadOrNull<T>(this Span<T> source) => ref source.GetPinnableReference();
+        public static ref T GetReferenceOrNull<T>(this Span<T> source) => ref source.GetPinnableReference();
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ref readonly T HeadOrNull<T>(this ReadOnlySpan<T> source) => ref source.GetPinnableReference();
+        public static ref readonly T GetReferenceOrNull<T>(this ReadOnlySpan<T> source) => ref source.GetPinnableReference();
         
         /// <summary>
         /// Cast whole <see cref="Span{T}"/> to another type of <see cref="Span{T}"/>.      <para/>
@@ -67,7 +67,10 @@ namespace Elffy.Effective
 
         public static unsafe UnmanagedArray<TTo> SelectToUnmanagedArray<TFrom, TTo>(this ReadOnlySpan<TFrom> source, Func<TFrom, TTo> selector) where TTo : unmanaged
         {
-            if(selector == null) { throw new ArgumentNullException(nameof(selector)); }
+            if(selector == null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(selector));
+            }
             var umArray = new UnmanagedArray<TTo>(source.Length);
             try {
                 var ptr = (TTo*)umArray.Ptr;
@@ -76,7 +79,7 @@ namespace Elffy.Effective
                 }
                 return umArray;
             }
-            catch(Exception) {
+            catch {
                 umArray.Dispose();
                 throw;
             }
@@ -95,7 +98,10 @@ namespace Elffy.Effective
 
         public static TTo[] SelectToArray<TFrom, TTo>(this ReadOnlySpan<TFrom> source, Func<TFrom, TTo> selector)
         {
-            if(selector is null) { throw new ArgumentNullException(nameof(selector)); }
+            if(selector is null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(selector));
+            }
             var array = new TTo[source.Length];
             for(int i = 0; i < array.Length; i++) {
                 array[i] = selector(source[i]);
@@ -109,7 +115,10 @@ namespace Elffy.Effective
 
         public static unsafe UnmanagedArray<TTo> SelectToUnmanagedArray<TFrom, TTo>(this ReadOnlySpan<TFrom> source, Func<TFrom, int, TTo> selector) where TTo : unmanaged
         {
-            if(selector == null) { throw new ArgumentNullException(nameof(selector)); }
+            if(selector == null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(selector));
+            }
             var umArray = new UnmanagedArray<TTo>(source.Length);
             try {
                 var ptr = (TTo*)umArray.Ptr;
@@ -118,7 +127,7 @@ namespace Elffy.Effective
                 }
                 return umArray;
             }
-            catch(Exception) {
+            catch {
                 umArray.Dispose();
                 throw;
             }
@@ -136,7 +145,7 @@ namespace Elffy.Effective
                 source.SelectToSpan(pooled.AsSpan(), selector);
                 return pooled;
             }
-            catch(Exception) {
+            catch {
                 pooled.Dispose();
                 throw;
             }
@@ -154,7 +163,7 @@ namespace Elffy.Effective
                 source.SelectToSpan(pooled.AsSpan(), selector);
                 return pooled;
             }
-            catch(Exception) {
+            catch {
                 pooled.Dispose();
                 throw;
             }
@@ -167,8 +176,14 @@ namespace Elffy.Effective
 
         public static Span<TTo> SelectToSpan<TFrom, TTo>(this ReadOnlySpan<TFrom> source, Span<TTo> buffer, Func<TFrom, TTo> selector)
         {
-            if(selector == null) { throw new ArgumentNullException(nameof(selector)); }
-            if(source.Length > buffer.Length) { throw new ArgumentException($"Length of {nameof(buffer)} is too short."); }
+            if(selector == null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(selector));
+            }
+            if(source.Length > buffer.Length) {
+                ThrowTooShort();
+                [DoesNotReturn] static void ThrowTooShort() => throw new ArgumentException($"Length of {nameof(buffer)} is too short.");
+            }
             for(int i = 0; i < source.Length; i++) {
                 buffer[i] = selector(source[i]);
             }
@@ -181,8 +196,14 @@ namespace Elffy.Effective
 
         public static Span<TTo> SelectToSpan<TFrom, TTo>(this ReadOnlySpan<TFrom> source, Span<TTo> buffer, Func<TFrom, int, TTo> selector)
         {
-            if(selector == null) { throw new ArgumentNullException(nameof(selector)); }
-            if(source.Length > buffer.Length) { throw new ArgumentException($"Length of {nameof(buffer)} is too short."); }
+            if(selector == null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(selector));
+            }
+            if(source.Length > buffer.Length) {
+                ThrowTooShort();
+                [DoesNotReturn] static void ThrowTooShort() => throw new ArgumentException($"Length of {nameof(buffer)} is too short.");
+            }
             for(int i = 0; i < source.Length; i++) {
                 buffer[i] = selector(source[i], i);
             }
@@ -195,7 +216,10 @@ namespace Elffy.Effective
 
         public static T First<T>(this ReadOnlySpan<T> source, Func<T, bool> selector)
         {
-            if(selector == null) { throw new ArgumentNullException(nameof(selector)); }
+            if(selector == null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(selector));
+            }
             foreach(var item in source) {
                 if(selector(item)) {
                     return item;
@@ -208,14 +232,17 @@ namespace Elffy.Effective
         public static T FirstOrDefault<T>(this Span<T> source) => FirstOrDefault((ReadOnlySpan<T>)source);
 
         [return: MaybeNull]
-        public static T FirstOrDefault<T>(this ReadOnlySpan<T> source) => source.Length > 0 ? source[0] : default;
+        public static T FirstOrDefault<T>(this ReadOnlySpan<T> source) => source.Length > 0 ? MemoryMarshal.GetReference(source) : default;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T FirstOrDefault<T>(this Span<T> source, Func<T, bool> selector) => FirstOrDefault((ReadOnlySpan<T>)source, selector);
 
         public static T FirstOrDefault<T>(this ReadOnlySpan<T> source, Func<T, bool> selector)
         {
-            if(selector == null) { throw new ArgumentNullException(nameof(selector)); }
+            if(selector == null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(selector));
+            }
             foreach(var item in source) {
                 if(selector(item)) {
                     return item;
@@ -230,7 +257,10 @@ namespace Elffy.Effective
 
         public static T? FirstOrNull<T>(this ReadOnlySpan<T> source, Func<T, bool> selector) where T : struct
         {
-            if(selector == null) { throw new ArgumentNullException(nameof(selector)); }
+            if(selector == null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(selector));
+            }
             foreach(var item in source) {
                 if(selector(item)) {
                     return item;
@@ -243,11 +273,17 @@ namespace Elffy.Effective
 
         public static T Aggregate<T>(this ReadOnlySpan<T> source, Func<T, T, T> func)
         {
-            if(func is null) { throw new ArgumentNullException(nameof(func)); }
-            if(source.Length == 0) { throw new InvalidOperationException("Sequence contains no elements."); }
-            T accum = source[0];
+            if(func is null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(func));
+            }
+            if(source.Length == 0) {
+                ThrowArg();
+                [DoesNotReturn] static void ThrowArg() => throw new ArgumentException("Sequence contains no elements.");
+            }
+            T accum = MemoryMarshal.GetReference(source);
             for(int i = 1; i < source.Length; i++) {
-                func(accum, source[i]);
+                func(accum, Unsafe.Add(ref MemoryMarshal.GetReference(source), i));
             }
             return accum;
         }
@@ -257,7 +293,10 @@ namespace Elffy.Effective
 
         public static TAccumulate Aggregate<TSource, TAccumulate>(this ReadOnlySpan<TSource> source, TAccumulate seed, Func<TAccumulate, TSource, TAccumulate> func)
         {
-            if(func is null) { throw new ArgumentNullException(nameof(func)); }
+            if(func is null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(func));
+            }
             var accum = seed;
             foreach(var item in source) {
                 accum = func(accum, item);
@@ -276,8 +315,14 @@ namespace Elffy.Effective
                                                                        Func<TAccumulate, TSource, TAccumulate> func, 
                                                                        Func<TAccumulate, TResult> resultSelector)
         {
-            if(func is null) { throw new ArgumentNullException(nameof(func)); }
-            if(resultSelector is null) { throw new ArgumentNullException(nameof(resultSelector)); }
+            if(func is null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(func));
+            }
+            if(resultSelector is null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(resultSelector));
+            }
             var accum = seed;
             foreach(var item in source) {
                 accum = func(accum, item);
@@ -298,7 +343,10 @@ namespace Elffy.Effective
 
         public static ReadOnlySpan<char> Replace(this ReadOnlySpan<char> source, char oldValue, char newValue, Span<char> destBuffer)
         {
-            if(destBuffer.Length != source.Length) { throw new ArgumentException($"Length of {nameof(destBuffer)} is not same as {nameof(source)}"); }
+            if(destBuffer.Length != source.Length) {
+                ThrowArg();
+                [DoesNotReturn] static void ThrowArg() => throw new ArgumentException($"Length of {nameof(destBuffer)} is not same as {nameof(source)}");
+            }
             for(int i = 0; i < source.Length; i++) {
                 destBuffer[i] = (source[i] == oldValue) ? newValue : source[i];
             }
