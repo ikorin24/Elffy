@@ -27,7 +27,10 @@ namespace Elffy.Effective
             readonly get => _array.Length;
             set
             {
-                if(value < _count) { throw new ArgumentOutOfRangeException(nameof(value)); }
+                if(value < _count) {
+                    ThrowOutOfRange();
+                    static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(value));
+                }
                 if(value != _count) {
                     var newArray = new UnsafeRawArray<T>(value, false);
                     if(_count > 0) {
