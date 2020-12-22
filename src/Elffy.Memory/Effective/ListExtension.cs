@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Collections.Generic;
 using Elffy.AssemblyServices;
@@ -12,18 +13,36 @@ namespace Elffy.Effective
     public static class ListExtension
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [CriticalDotnetDependency("netcoreapp3.1")]
-        public static ReadOnlySpan<T> AsReadOnlySpan<T>(this List<T> list) => list.AsSpan();
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [CriticalDotnetDependency("netcoreapp3.1 || net5.0")]
-        public static void AddRange<T>(this List<T> list, ReadOnlySpan<T> span) => list.InsertRange(list.Count, span);
+        public static void AddRange<T>(this List<T> list, ReadOnlySpan<T> span)
+        {
+            if(span.IsEmpty) { return; }
+
+            if(list.Capacity < list.Count + span.Length) {
+                int cap = list.Capacity + span.Length;
+                if(cap > (1 << 30)) {
+                    const int MaxArrayLength = 0X7FEFFFFF;      // This size is compatible with Array.MaxArrayLength. (This is internal)
+                    cap = MaxArrayLength;
+                }
+                else {
+                    if(cap == 0) {
+                        cap = 4;
+                    }
+                    // round up to power of two
+                    cap = (1 << (32 - BitOperations.LeadingZeroCount((uint)cap - 1)));
+                }
+                list.Capacity = cap;
+            }
+            var dest = Unsafe.As<ListDummy<T>>(list)._items.AsSpan(list.Count);
+            span.CopyTo(dest);
+            Unsafe.As<ListDummy<T>>(list)._size += span.Length;
+            Unsafe.As<ListDummy<T>>(list)._version++;
+        }
 
         [CriticalDotnetDependency("netcoreapp3.1 || net5.0")]
         public static void InsertRange<T>(this List<T> list, int index, ReadOnlySpan<T> span)
         {
-            // TODO: self insertion
-            if(list == null) { throw new ArgumentNullException(nameof(list)); }
+            if(list is null) { throw new ArgumentNullException(nameof(list)); }
             static void EnsureCapacity(List<T> original, ListDummy<T> dummy, int min)
             {
                 if(dummy._items.Length < min) {
@@ -68,6 +87,12 @@ namespace Elffy.Effective
             return CollectionsMarshal.AsSpan(list);
 #endif
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NETCOREAPP3_1
+        [CriticalDotnetDependency("netcoreapp3.1")]
+#endif
+        public static ReadOnlySpan<T> AsReadOnlySpan<T>(this List<T> list) => list.AsSpan();
 
 
         private abstract class ListDummy<T>
