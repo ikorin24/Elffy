@@ -73,10 +73,8 @@ namespace Elffy
         {
             if(!IsRunning) { return; }
             IsRunning = false;
-            if(AssemblyState.IsDebug) {
-                // TODO: 暫定的実装
-                GC.Collect();           // OpenGL 関連のメモリリーク検知用
-            }
+            // TODO: 暫定的実装
+            GC.Collect();           // OpenGL 関連のメモリリーク検知用
             _watch.Stop();
             _watch.Reset();
         }
