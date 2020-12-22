@@ -21,8 +21,8 @@ namespace Elffy.Shading
 
         protected override void DefineLocation(VertexDefinition definition, Renderable target)
         {
-            definition.Map<VertexSlim>(nameof(VertexSlim.Position), "vPos");
-            definition.Map<VertexSlim>(nameof(VertexSlim.UV), "vUV");
+            definition.Map<VertexSlim>("vPos", nameof(VertexSlim.Position));
+            definition.Map<VertexSlim>("vUV", nameof(VertexSlim.UV));
         }
 
         protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)

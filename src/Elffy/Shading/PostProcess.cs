@@ -25,8 +25,8 @@ void main()
 
         private void DefineLocation(VertexDefinition definition)
         {
-            definition.Map<VertexSlim>(nameof(VertexSlim.Position), "_pos");
-            definition.Map<VertexSlim>(nameof(VertexSlim.UV), "_v_uv");
+            definition.Map<VertexSlim>("_pos", nameof(VertexSlim.Position));
+            definition.Map<VertexSlim>("_v_uv", nameof(VertexSlim.UV));
         }
 
         /// <summary>Send uniform variables to glsl shader code.</summary>

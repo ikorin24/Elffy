@@ -38,12 +38,12 @@ namespace Elffy.Shading
         protected override void DefineLocation(VertexDefinition definition, Renderable target)
         {
             if(typeof(TVertex) == typeof(VertexSlim)) {
-                definition.Map<VertexSlim>(nameof(VertexSlim.Position), "_pos");
-                definition.Map<VertexSlim>(nameof(VertexSlim.UV), "_uv");
+                definition.Map<VertexSlim>("_pos", nameof(VertexSlim.Position));
+                definition.Map<VertexSlim>("_uv", nameof(VertexSlim.UV));
             }
             else if(typeof(TVertex) == typeof(Vertex)) {
-                definition.Map<Vertex>(nameof(Vertex.Position), "_pos");
-                definition.Map<Vertex>(nameof(Vertex.UV), "_uv");
+                definition.Map<Vertex>("_pos", nameof(Vertex.Position));
+                definition.Map<Vertex>("_uv", nameof(Vertex.UV));
             }
             else {
                 throw new NotSupportedException("Not supported vertex type.");

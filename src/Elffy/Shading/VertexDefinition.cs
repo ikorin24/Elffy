@@ -36,30 +36,30 @@ namespace Elffy.Shading
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void Map<TVertex>(string vertexFieldName, int index) where TVertex : unmanaged
+        public unsafe void Map<TVertex>(int index, string vertexFieldName) where TVertex : unmanaged
         {
             if(index < 0) {
                 ThrowInvalidIndex();
             }
-            MapPrivate<TVertex>(vertexFieldName, index);
+            MapPrivate<TVertex>(index, vertexFieldName);
 
             static void ThrowInvalidIndex() => throw new ArgumentException($"{nameof(index)} is negative value.");
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void Map<TVertex>(string vertexFieldName, string name) where TVertex : unmanaged  // TODO: 引数の順序逆の方がいい、uniform に合わせる
+        public unsafe void Map<TVertex>(string name, string vertexFieldName) where TVertex : unmanaged
         {
             var index = GL.GetAttribLocation(_program.Value, name);
             if(index < 0 && DevEnv.IsEnabled) {
                 DevEnv.ForceWriteLine($"[warning] '{name}' vertex field input is not found in shader program({_program.Value}).");
             }
             else {
-                MapPrivate<TVertex>(vertexFieldName, index);
+                MapPrivate<TVertex>(index, vertexFieldName);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private unsafe void MapPrivate<TVertex>(string vertexFieldName, int index) where TVertex : unmanaged
+        private unsafe void MapPrivate<TVertex>(int index, string vertexFieldName) where TVertex : unmanaged
         {
             // Call static constructor of TVertex to Register layout. (It is called only once)
             RuntimeHelpers.RunClassConstructor(typeof(TVertex).TypeHandle);

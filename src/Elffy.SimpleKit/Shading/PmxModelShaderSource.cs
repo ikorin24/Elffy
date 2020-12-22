@@ -23,11 +23,11 @@ namespace Elffy.Shading
 
         protected override void DefineLocation(VertexDefinition definition, Renderable target)
         {
-            definition.Map<RigVertex>(nameof(RigVertex.Position), "vPos");
-            definition.Map<RigVertex>(nameof(RigVertex.Normal), "vNormal");
-            definition.Map<RigVertex>(nameof(RigVertex.UV), "vUV");
-            definition.Map<RigVertex>(nameof(RigVertex.Bone), "bone");
-            definition.Map<RigVertex>(nameof(RigVertex.Weight), "weight");
+            definition.Map<RigVertex>("vPos", nameof(RigVertex.Position));
+            definition.Map<RigVertex>("vNormal", nameof(RigVertex.Normal));
+            definition.Map<RigVertex>("vUV", nameof(RigVertex.UV));
+            definition.Map<RigVertex>("bone", nameof(RigVertex.Bone));
+            definition.Map<RigVertex>("weight", nameof(RigVertex.Weight));
         }
 
         protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)

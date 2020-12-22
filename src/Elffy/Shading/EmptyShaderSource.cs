@@ -43,10 +43,10 @@ namespace Elffy.Shading
         protected override void DefineLocation(VertexDefinition definition, Renderable target)
         {
             if(typeof(TVertex) == typeof(Vertex)) {
-                definition.Map<Vertex>(nameof(Vertex.Position), "_pos");
+                definition.Map<Vertex>("_pos", nameof(Vertex.Position));
             }
             else if(typeof(TVertex) == typeof(VertexSlim)) {
-                definition.Map<VertexSlim>(nameof(VertexSlim.Position), "_pos");
+                definition.Map<VertexSlim>("_pos", nameof(VertexSlim.Position));
             }
             else {
                 throw new NotSupportedException($"{typeof(TVertex).FullName} is not supported.");
