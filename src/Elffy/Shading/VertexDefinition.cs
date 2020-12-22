@@ -14,7 +14,8 @@ namespace Elffy.Shading
 
         static VertexDefinition()
         {
-            _attribTypes = new int[7];   // TODO: get element count from enum
+            const int Count = 7;    // count of VertexFieldMarshalType elements
+            _attribTypes = new int[Count];
 
             // float type
             _attribTypes[(int)VertexFieldMarshalType.Float] = (int)VertexAttribPointerType.Float;
