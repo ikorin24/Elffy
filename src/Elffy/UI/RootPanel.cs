@@ -2,15 +2,13 @@
 using Elffy.Core;
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.UI
 {
     /// <summary>UI tree の Root となるオブジェクト</summary>
     public class RootPanel : Panel
     {
-        /// <summary>この <see cref="RootPanel"/> が レイアウト済みかどうかを取得します</summary>
-        public bool IsLayouted { get; private set; }
-
         /// <summary>この <see cref="RootPanel"/> とその子孫を描画するレイヤー</summary>
         internal UILayer UILayer { get; }
 
@@ -18,10 +16,16 @@ namespace Elffy.UI
         /// <param name="uiLayer">この <see cref="RootPanel"/> と子孫を描画する UI レイヤー</param>
         internal RootPanel(UILayer uiLayer)
         {
-            if(uiLayer is null) { throw new ArgumentNullException(nameof(uiLayer)); }
+            if(uiLayer is null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(uiLayer));
+            }
             UILayer = uiLayer;
             Root = this;
         }
+
+#if false   // future version, auto layout
+        public bool IsLayouted { get; private set; }
 
         /// <summary>Layout を実行します</summary>
         public void Layout()
@@ -69,5 +73,6 @@ namespace Elffy.UI
             }
             IsLayouted = true;
         }
+#endif      // future version, auto layout
     }
 }

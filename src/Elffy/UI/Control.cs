@@ -170,10 +170,15 @@ namespace Elffy.UI
         public int OffsetX { get; set; }
         /// <summary>get or set offset position Y of layout</summary>
         public int OffsetY { get; set; }
+
+#if false   // future version, auto layout
+
         /// <summary>get or set horizontal alignment of layout</summary>
         public HorizontalAlignment HorizontalAlignment { get; set; }
         /// <summary>get or set vertical alignment of layout</summary>
         public VerticalAlignment VerticalAlignment { get; set; }
+
+#endif      // future version, auto layout
 
         /// <summary>get or set whether this <see cref="Control"/> is enable in HitTest</summary>
         public bool IsHitTestVisible { get; set; } = true;
@@ -293,7 +298,8 @@ namespace Elffy.UI
         }
     }
 
-    #region enum HorizontalAlignment
+#if false   // future version, auto layout
+
     /// <summary>Layout horizontal alignment</summary>
     public enum HorizontalAlignment
     {
@@ -304,9 +310,7 @@ namespace Elffy.UI
         /// <summary>right alignment</summary>
         Right,
     }
-    #endregion
 
-    #region enum VerticalAlignment
     /// <summary>Layout vertical alignment</summary>
     public enum VerticalAlignment
     {
@@ -317,21 +321,6 @@ namespace Elffy.UI
         /// <summary>bottom alignment</summary>
         Bottom,
     }
-    #endregion
 
-    #region class MouseEventArgs
-    /// <summary>Mouse event argument class</summary>
-    public readonly struct MouseEventArgs
-    {
-        /// <summary>mouse position</summary>
-        public Vector2 MousePosition { get; }
-
-        /// <summary>constructor</summary>
-        /// <param name="mousePosition">mouse position</param>
-        public MouseEventArgs(in Vector2 mousePosition)
-        {
-            MousePosition = mousePosition;
-        }
-    }
-    #endregion
+#endif      // future version, auto layout
 }
