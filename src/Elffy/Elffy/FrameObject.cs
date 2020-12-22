@@ -18,25 +18,25 @@ namespace Elffy
         private bool _isFrozen;
 
         /// <summary>Event of activated, which fires when <see cref="Activate(Layer)"/> is called.</summary>
-        public event ActionEventHandler<FrameObject>? Activated;
+        public event Action<FrameObject>? Activated;
 
         /// <summary>Event of terminated, which fires when <see cref="Terminate"/> is called.</summary>
-        public event ActionEventHandler<FrameObject>? Terminated;
+        public event Action<FrameObject>? Terminated;
 
         /// <summary>Event of alive, which fires in the first frame where <see cref="LifeState"/> get <see cref="LifeState.Alive"/>.</summary>
-        public event ActionEventHandler<FrameObject>? Alive;
+        public event Action<FrameObject>? Alive;
 
         /// <summary>Event of dead, which fires in the first frame where <see cref="LifeState"/> get <see cref="LifeState.Dead"/>.</summary>
-        public event ActionEventHandler<FrameObject>? Dead;
+        public event Action<FrameObject>? Dead;
 
         /// <summary>Event of early updating</summary>
-        public event ActionEventHandler<FrameObject>? EarlyUpdated;
+        public event Action<FrameObject>? EarlyUpdated;
 
         /// <summary>Event of updating</summary>
-        public event ActionEventHandler<FrameObject>? Updated;
+        public event Action<FrameObject>? Updated;
 
         /// <summary>Event of late updating</summary>
-        public event ActionEventHandler<FrameObject>? LateUpdated;
+        public event Action<FrameObject>? LateUpdated;
 
         /// <summary>Get life state of <see cref="FrameObject"/></summary>
         public LifeState LifeState => _state;

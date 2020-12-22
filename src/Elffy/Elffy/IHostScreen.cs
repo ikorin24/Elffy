@@ -56,7 +56,7 @@ namespace Elffy
         IDefaultResource DefaultResource { get; }
 
         /// <summary>Event which fires on initialized</summary>
-        event ActionEventHandler<IHostScreen> Initialized;
+        event Action<IHostScreen> Initialized;
 
         /// <summary>Event which fires on closing</summary>
         event ClosingEventHandler<IHostScreen> Closing;

@@ -65,7 +65,7 @@ namespace Elffy
         public bool IsThreadMain => _isThreadMain;
 
         /// <inheritdoc/>
-        public event ActionEventHandler<IHostScreen>? Initialized
+        public event Action<IHostScreen>? Initialized
         {
             add => _renderingArea.Initialized += value;
             remove => _renderingArea.Initialized -= value;

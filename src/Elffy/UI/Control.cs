@@ -208,16 +208,16 @@ namespace Elffy.UI
         internal Texture Texture { get; }
 
         /// <summary>Focus enter event</summary>
-        public event ActionEventHandler<Control>? FocusEnter;
+        public event Action<Control>? FocusEnter;
         /// <summary>Focus lost event</summary>
-        public event ActionEventHandler<Control>? FocusLost;
+        public event Action<Control>? FocusLost;
         /// <summary>Mouse enter event</summary>
-        public event ActionEventHandler<Control, MouseEventArgs>? MouseEnter;
+        public event Action<Control, MouseEventArgs>? MouseEnter;
         /// <summary>Mouse leave event</summary>
-        public event ActionEventHandler<Control, MouseEventArgs>? MouseLeave;
+        public event Action<Control, MouseEventArgs>? MouseLeave;
 
-        public event ActionEventHandler<Control>? Alive;
-        public event ActionEventHandler<Control>? Dead;
+        public event Action<Control>? Alive;
+        public event Action<Control>? Dead;
 
         /// <summary>constructor of <see cref="Control"/></summary>
         public Control()

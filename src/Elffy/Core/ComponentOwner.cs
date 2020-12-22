@@ -11,9 +11,9 @@ namespace Elffy.Core
     public abstract class ComponentOwner : FrameObject
     {
         /// <summary>Event which fires when a component get attached.</summary>
-        public event ActionEventHandler<ComponentOwner, IComponent>? ComponentAttached;
+        public event Action<ComponentOwner, IComponent>? ComponentAttached;
         /// <summary>Event which fires when a component get detached.</summary>
-        public event ActionEventHandler<ComponentOwner, IComponent>? ComponentDetached;
+        public event Action<ComponentOwner, IComponent>? ComponentDetached;
 
         /// <summary>Get component of specified type</summary>
         /// <typeparam name="T">component type</typeparam>

@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using System;
 using Elffy.InputSystem;
 
 namespace Elffy.UI
@@ -9,11 +10,11 @@ namespace Elffy.UI
         private bool _keyPressed;
 
         /// <summary>Key down event</summary>
-        public event ActionEventHandler<Executable>? KeyDown;
+        public event Action<Executable>? KeyDown;
         /// <summary>Key press event</summary>
-        public event ActionEventHandler<Executable>? KeyPress;
+        public event Action<Executable>? KeyPress;
         /// <summary>Key up event</summary>
-        public event ActionEventHandler<Executable>? KeyUp;
+        public event Action<Executable>? KeyUp;
 
         public Executable()
         {

@@ -23,7 +23,7 @@ namespace Elffy.Core
         [ThreadStatic]
         private ScreenCurrentTiming _currentTiming; // default value is 'OutOfFrameLoop'
 
-        public event ActionEventHandler<IHostScreen>? Initialized;
+        public event Action<IHostScreen>? Initialized;
 
         public event ClosingEventHandler<IHostScreen>? Closing;
 
