@@ -68,6 +68,26 @@ namespace Elffy.Effective
             }
         }
 
+        /// <summary>Allocate array copied from <paramref name="span"/></summary>
+        /// <param name="span"></param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public UnsafeRawArray(ReadOnlySpan<T> span)
+        {
+            Length = span.Length;
+            if(span.IsEmpty) {
+                Ptr = IntPtr.Zero;
+                return;
+            }
+            Ptr = Marshal.AllocHGlobal(span.Length * sizeof(T));
+            try {
+                span.CopyTo(MemoryMarshal.CreateSpan(ref Unsafe.AsRef<T>((T*)Ptr), Length));
+            }
+            catch {
+                Marshal.FreeHGlobal(Ptr);
+                throw;
+            }
+        }
+
         /// <summary>Free the array</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()

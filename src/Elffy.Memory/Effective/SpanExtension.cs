@@ -86,6 +86,34 @@ namespace Elffy.Effective
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static UnsafeRawArray<T> ToRawArray<T>(this Span<T> source) where T : unmanaged
+        {
+            return new UnsafeRawArray<T>(source);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static UnsafeRawArray<T> ToRawArray<T>(this ReadOnlySpan<T> source) where T : unmanaged
+        {
+            return new UnsafeRawArray<T>(source);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ValueTypeRentMemory<T> ToValueTypeRentMemory<T>(this Span<T> source) where T : unmanaged
+        {
+            var dest = new ValueTypeRentMemory<T>(source.Length);
+            source.CopyTo(dest.Span);
+            return dest;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static RefTypeRentMemory<T> ToRefTypeRentMemory<T>(this Span<T> source) where T : class?
+        {
+            var dest = new RefTypeRentMemory<T>(source.Length);
+            source.CopyTo(dest.Span);
+            return dest;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static PooledArray<T> ToPooledArray<T>(this Span<T> source) => new PooledArray<T>(source);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
