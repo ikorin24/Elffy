@@ -12,8 +12,6 @@ namespace Elffy.Diagnostics
         private const string NewLine = "\n";
         private const string DebugSymbol = "DEBUG";
 
-        private static readonly Lazy<Action<string>?> _s_provider_Write = new Lazy<Action<string>?>(GetDebugProvider);
-
         public static bool IsEnabled { get; private set; }
 
         [Conditional(DebugSymbol)]
@@ -52,8 +50,7 @@ namespace Elffy.Diagnostics
         [Conditional(DebugSymbol)]
         public static void WriteLine(object? value, string? category)
         {
-            var msg = category + ": " + value + NewLine;
-            WritePrivate(msg);
+            WritePrivate(value.ToString() + NewLine, category);
         }
 
         [Conditional(DebugSymbol)]
@@ -66,45 +63,20 @@ namespace Elffy.Diagnostics
         [Conditional(DebugSymbol)]
         public static void WriteLine(string? value, string? category)
         {
-            var msg = category + ": " + value + NewLine;
-            WritePrivate(msg);
+            WritePrivate(value + NewLine, category);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void ForceWriteLine(string? value)
         {
             if(IsEnabled) {
-                WriteLine(value);
-
-                [MethodImpl(MethodImplOptions.NoInlining)]
-                static void WriteLine(string? value) => WritePrivate(value + NewLine);
+                WritePrivate(value + NewLine);
             }
         }
 
-        private static void WritePrivate(string message)
+        private static void WritePrivate(string message, string? category = null)
         {
-            // [NOTE]
-            // I have no idea how to use custom 'Debug.WriteLine'...
-
-            // This means 'Debug.Write(string)'. Force invoke in the both case of debug and release.
-            _s_provider_Write.Value?.Invoke(message);
-        }
-
-#pragma warning disable CS0436 // The type conflicts with the imported type
-        [CriticalDotnetDependency("netcoreapp3.1 || net5.0")]
-#pragma warning restore CS0436 // The type conflicts with the imported type
-        private static Action<string>? GetDebugProvider()
-        {
-            var s_provider = typeof(Debug).GetField("s_provider", BindingFlags.Static | BindingFlags.NonPublic)?.GetValue(null);
-            if(s_provider is null == false) {
-                return s_provider
-                    .GetType()
-                    .GetMethod("Write", BindingFlags.Public | BindingFlags.Instance)
-                    ?.CreateDelegate(typeof(Action<string>), s_provider) as Action<string>;
-            }
-            else {
-                return null;
-            }
+            Debugger.Log(0, category, message);
         }
     }
 }
