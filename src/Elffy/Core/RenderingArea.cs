@@ -31,8 +31,6 @@ namespace Elffy.Core
 
         public CancellationToken RunningToken => _runningTokenSource.Token;
 
-        public DefaultGLResource DefaultGLResource { get; }
-
         public IHostScreen OwnerScreen { get; }
 
         public LayerCollection Layers { get; }
@@ -90,7 +88,6 @@ namespace Elffy.Core
         {
             OwnerScreen = screen;
             Layers = new LayerCollection(this);
-            DefaultGLResource = new DefaultGLResource();
             _runningTokenSource = new CancellationTokenSource();
         }
 
@@ -109,8 +106,6 @@ namespace Elffy.Core
             GL.FrontFace(FrontFaceDirection.Ccw);
 
             GL.Disable(EnableCap.Multisample);  // I don't care about MSAA
-
-            DefaultGLResource.Init();
 
             Initialized?.Invoke(OwnerScreen);
 
@@ -228,9 +223,6 @@ namespace Elffy.Core
             layers.Clear();
 
             AsyncBack.AbortAll();
-
-            DefaultGLResource.Dispose();
-
             Disposed?.Invoke();
         }
 

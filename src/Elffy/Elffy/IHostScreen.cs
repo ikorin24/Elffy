@@ -53,8 +53,6 @@ namespace Elffy
         /// <summary>Return whether current thread is main thread of <see cref="IHostScreen"/> or not</summary>
         bool IsThreadMain { get; }
 
-        IDefaultResource DefaultResource { get; }
-
         /// <summary>Event which fires on initialized</summary>
         event Action<IHostScreen> Initialized;
 

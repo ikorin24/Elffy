@@ -53,8 +53,6 @@ namespace Elffy
         /// <inheritdoc/>
         public ref readonly long FrameNum => ref _frameNum;
 
-        public IDefaultResource DefaultResource => _renderingArea.DefaultGLResource;
-
         /// <inheritdoc/>
         public CancellationToken RunningToken => _renderingArea.RunningToken;
 

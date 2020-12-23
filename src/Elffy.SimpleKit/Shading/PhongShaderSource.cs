@@ -52,10 +52,10 @@ namespace Elffy.Shading
             uniform.Send("ld", new Vector3(0.8f));
             uniform.Send("ls", new Vector3(0.2f));
 
-            var texObj = target.TryGetComponent<Texture>(out var texture)
-                ? texture.TextureObject
-                : target.HostScreen.DefaultResource.WhiteEmptyTexture;
+            var hasTexture = target.TryGetComponent<Texture>(out var texture);
+            var texObj = hasTexture ? texture.TextureObject : TextureObject.Empty;
             uniform.SendTexture2D("tex_sampler", texObj, TextureUnitNumber.Unit0);
+            uniform.Send("hasTexture", hasTexture);
         }
 
         private const string VertSource =
@@ -103,6 +103,7 @@ uniform vec3 ms;
 uniform float shininess;
 
 uniform sampler2D tex_sampler;
+uniform bool hasTexture;
 
 void main()
 {
@@ -116,7 +117,8 @@ void main()
     vec3 V = normalize(-posView);
     vec3 color = (la * ma) + (ld * md * dot(N, L)) + (ls * ms * max(pow(max(0.0, dot(R, V)), shininess), 0.0));
 
-    fragColor = vec4(color, 1.0) * texture(tex_sampler, UV);
+    fragColor = hasTexture ? vec4(color, 1.0) * texture(tex_sampler, UV)
+                           : vec4(color, 1.0);
 }
 ";
 
