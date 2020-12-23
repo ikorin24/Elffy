@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using Cysharp.Threading.Tasks;
 
 namespace Elffy
 {
@@ -9,6 +10,12 @@ namespace Elffy
         public static void Activate(this FrameObject source)
         {
             source.Activate(Game.Layers.WorldLayer);
+        }
+
+        public static UniTask<bool> ActivateWaitLoaded(this FrameObject source)
+        {
+            source.Activate(Game.Layers.WorldLayer);
+            return source.WaitLoadedOrDead();
         }
     }
 }
