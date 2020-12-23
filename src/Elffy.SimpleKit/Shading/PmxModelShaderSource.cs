@@ -4,16 +4,17 @@ using Elffy.Core;
 using Elffy.Diagnostics;
 using Elffy.Effective;
 using Elffy.OpenGL;
+using System;
+using System.Threading;
 
 namespace Elffy.Shading
 {
     [ShaderTargetVertexType(typeof(RigVertex))]
     public sealed class PmxModelShaderSource : ShaderSource
     {
+        private static readonly Lazy<PmxModelShaderSource> _instance = new(() => new(), LazyThreadSafetyMode.ExecutionAndPublication);
 
-        private static PmxModelShaderSource? _instance;
-
-        public static PmxModelShaderSource Instance => _instance ??= new PmxModelShaderSource();
+        public static PmxModelShaderSource Instance => _instance.Value;
 
         protected override string VertexShaderSource => VertSource;
 

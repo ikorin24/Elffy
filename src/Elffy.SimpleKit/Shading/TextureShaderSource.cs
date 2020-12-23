@@ -4,6 +4,7 @@ using Elffy.Diagnostics;
 using Elffy.Components;
 using Elffy.OpenGL;
 using System;
+using System.Threading;
 using System.Runtime.CompilerServices;
 
 namespace Elffy.Shading
@@ -13,27 +14,22 @@ namespace Elffy.Shading
     [ShaderTargetVertexType(typeof(Vertex))]
     public sealed class TextureShaderSource<TVertex> : ShaderSource
     {
-        private static TextureShaderSource<TVertex>? _instance;
+        private static readonly Lazy<TextureShaderSource<TVertex>> _instance = new(() =>
+        {
+            if(typeof(TVertex) == typeof(VertexSlim) || typeof(TVertex) == typeof(Vertex)) {
+                return new();
+            }
+            throw new NotSupportedException("Not supported vertex type.");
+        }, LazyThreadSafetyMode.ExecutionAndPublication);
 
         /// <summary>Get singleton instance of <see cref="TextureShaderSource"/></summary>
-        public static TextureShaderSource<TVertex> Instance
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get
-            {
-                if(_instance is not null) {
-                    return _instance;
-                }
-                if(typeof(TVertex) == typeof(VertexSlim) || typeof(TVertex) == typeof(Vertex)) {
-                    return _instance = new();
-                }
-                throw new NotSupportedException("Not supported vertex type.");
-            }
-        }
+        public static TextureShaderSource<TVertex> Instance => _instance.Value;
 
         protected override string VertexShaderSource => VertSource;
 
         protected override string FragmentShaderSource => FragSource;
+
+        private TextureShaderSource() { }
 
         protected override void DefineLocation(VertexDefinition definition, Renderable target)
         {

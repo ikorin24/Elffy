@@ -3,6 +3,7 @@ using Elffy.Core;
 using Elffy.Components;
 using System;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using Elffy.OpenGL;
 using Elffy.Diagnostics;
 using Elffy.Effective.Unsafes;
@@ -12,8 +13,8 @@ namespace Elffy.Shading
     [ShaderTargetVertexType(typeof(Vertex))]
     public sealed class PhongShaderSource : ShaderSource
     {
-        private static PhongShaderSource? _instance;
-        public static PhongShaderSource Instance => _instance ??= new PhongShaderSource();
+        private static readonly Lazy<PhongShaderSource> _instance = new(() => new(), LazyThreadSafetyMode.ExecutionAndPublication);
+        public static PhongShaderSource Instance => _instance.Value;
 
         protected override string VertexShaderSource => VertSource;
 
