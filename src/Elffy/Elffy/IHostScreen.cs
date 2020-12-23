@@ -68,6 +68,6 @@ namespace Elffy
         /// <summary>Throw an exception if current thread is not main of the <see cref="IHostScreen"/></summary>
         void ThrowIfNotMainThread();
 
-        internal void HandleOnce();
+        void HandleOnce();
     }
 }
