@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Elffy.Effective.Unsafes;
 using Elffy.Mathematics;
+using Elffy.Effective;
 using NumericsVector3 = System.Numerics.Vector3;
 using NumericsMatrix4x4 = System.Numerics.Matrix4x4;
 
@@ -148,7 +149,9 @@ namespace Elffy
 
         public readonly bool Inverted(out Matrix4 result)
         {
-            return MatrixHelper.Invert(in this, out result);
+            Unsafe.SkipInit(out result);
+            return NumericsMatrix4x4.Invert(UnsafeEx.As<Matrix4, NumericsMatrix4x4>(in this),
+                                            out Unsafe.As<Matrix4, NumericsMatrix4x4>(ref result));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -178,24 +181,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode()
         {
-            var hash = new HashCode();
-            hash.Add(M00);
-            hash.Add(M10);
-            hash.Add(M20);
-            hash.Add(M30);
-            hash.Add(M01);
-            hash.Add(M11);
-            hash.Add(M21);
-            hash.Add(M31);
-            hash.Add(M02);
-            hash.Add(M12);
-            hash.Add(M22);
-            hash.Add(M32);
-            hash.Add(M03);
-            hash.Add(M13);
-            hash.Add(M23);
-            hash.Add(M33);
-            return hash.ToHashCode();
+            return HashCodeEx.Combine(M00, M10, M20, M30, M01, M11, M21, M31, M02, M12, M22, M32, M03, M13, M23, M33);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -209,21 +195,26 @@ namespace Elffy
             => new Vector4(Row0(matrix).Dot(vec), Row1(matrix).Dot(vec), Row2(matrix).Dot(vec), Row3(matrix).Dot(vec));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe Matrix4 operator *(in Matrix4 m1, in Matrix4 m2)
+        public static Matrix4 operator *(in Matrix4 m1, in Matrix4 m2)
         {
-            var m1Row0 = Row0(m1);
-            var m1Row1 = Row1(m1);
-            var m1Row2 = Row2(m1);
-            var m1Row3 = Row3(m1);
-            ref var m2Col0 = ref Col0(m2);
-            ref var m2Col1 = ref Col1(m2);
-            ref var m2Col2 = ref Col2(m2);
-            ref var m2Col3 = ref Col3(m2);
+            return UnsafeEx.As<NumericsMatrix4x4, Matrix4>(
+                NumericsMatrix4x4.Multiply(UnsafeEx.As<Matrix4, NumericsMatrix4x4>(m2),
+                                           UnsafeEx.As<Matrix4, NumericsMatrix4x4>(m1))
+                );
 
-            return new Matrix4(m1Row0.Dot(m2Col0), m1Row0.Dot(m2Col1), m1Row0.Dot(m2Col2), m1Row0.Dot(m2Col3),
-                               m1Row1.Dot(m2Col0), m1Row1.Dot(m2Col1), m1Row1.Dot(m2Col2), m1Row1.Dot(m2Col3),
-                               m1Row2.Dot(m2Col0), m1Row2.Dot(m2Col1), m1Row2.Dot(m2Col2), m1Row2.Dot(m2Col3),
-                               m1Row3.Dot(m2Col0), m1Row3.Dot(m2Col1), m1Row3.Dot(m2Col2), m1Row3.Dot(m2Col3));
+            //var m1Row0 = Row0(m1);
+            //var m1Row1 = Row1(m1);
+            //var m1Row2 = Row2(m1);
+            //var m1Row3 = Row3(m1);
+            //ref var m2Col0 = ref Col0(m2);
+            //ref var m2Col1 = ref Col1(m2);
+            //ref var m2Col2 = ref Col2(m2);
+            //ref var m2Col3 = ref Col3(m2);
+
+            //return new Matrix4(m1Row0.Dot(m2Col0), m1Row0.Dot(m2Col1), m1Row0.Dot(m2Col2), m1Row0.Dot(m2Col3),
+            //                   m1Row1.Dot(m2Col0), m1Row1.Dot(m2Col1), m1Row1.Dot(m2Col2), m1Row1.Dot(m2Col3),
+            //                   m1Row2.Dot(m2Col0), m1Row2.Dot(m2Col1), m1Row2.Dot(m2Col2), m1Row2.Dot(m2Col3),
+            //                   m1Row3.Dot(m2Col0), m1Row3.Dot(m2Col1), m1Row3.Dot(m2Col2), m1Row3.Dot(m2Col3));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
