@@ -138,6 +138,24 @@ namespace Elffy
             };
         }
 
+        public void Maximize()
+        {
+            ThrowIfNotMainThread();
+            _windowImpl.Maximize();
+        }
+
+        public void Normalize()
+        {
+            ThrowIfNotMainThread();
+            _windowImpl.Normalize();
+        }
+
+        public void Minimize()
+        {
+            ThrowIfNotMainThread();
+            _windowImpl.Minimize();
+        }
+
         public void Close()
         {
             ThrowIfNotMainThread();
@@ -151,6 +169,18 @@ namespace Elffy
                 ThrowThreadNotMain();
                 static void ThrowThreadNotMain() => throw new InvalidOperationException("Current thread is not main thread.");
             }
+        }
+
+        public void Show()
+        {
+            ThrowIfNotMainThread();
+            _windowImpl.Show();
+        }
+
+        void IHostScreen.HandleOnce()
+        {
+            ThrowIfNotMainThread();
+            _windowImpl.HandleOnce();
         }
 
         private void OnLoad(WindowGLFW _)
@@ -170,16 +200,6 @@ namespace Elffy
             _time += _frameDelta;
             _frameNum++;
             _windowImpl.SwapBuffers();
-        }
-
-        public void Show()
-        {
-            _windowImpl.Show();
-        }
-
-        void IHostScreen.HandleOnce()
-        {
-            _windowImpl.HandleOnce();
         }
     }
 }

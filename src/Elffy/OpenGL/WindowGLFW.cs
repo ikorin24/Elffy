@@ -6,6 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using Elffy.AssemblyServices;
 using Elffy.Imaging;
 using Elffy.Effective;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 //using Monitor = OpenTK.Windowing.GraphicsLibraryFramework.Monitor;
@@ -104,6 +105,7 @@ namespace Elffy.OpenGL
             if(monitor == null) {
                 throw new InvalidOperationException("This computer has no monitors. GLWF cannot create window.");
             }
+            GLFW.DefaultWindowHints();
             var isFullscreen = false;
             switch(style) {
                 case WindowStyle.Default:
@@ -119,12 +121,15 @@ namespace Elffy.OpenGL
                 default:
                     throw new ArgumentException(nameof(style));
             }
+            
             GLFW.WindowHint(WindowHintOpenGlProfile.OpenGlProfile, OpenGlProfile.Core);
             GLFW.WindowHint(WindowHintClientApi.ClientApi, ClientApi.OpenGlApi);
             GLFW.WindowHint(WindowHintInt.ContextVersionMajor, 4);
             GLFW.WindowHint(WindowHintInt.ContextVersionMinor, 1);
             GLFW.WindowHint(WindowHintBool.Focused, true);
             GLFW.WindowHint(WindowHintBool.Visible, false);
+            GLFW.WindowHint(WindowHintBool.FocusOnShow, true);
+            //GLFW.WindowHint(WindowHintBool.Decorated, false);
 
             var videoMode = GLFW.GetVideoMode(monitor);
             GLFW.WindowHint(WindowHintInt.RedBits, videoMode->RedBits);
@@ -156,13 +161,14 @@ namespace Elffy.OpenGL
                 GLFW.GetWindowPos(_window, out _location.X, out _location.Y);
 
                 GLFW.SwapInterval(1);               // Enable Vsync
-
             }
             catch {
                 GLFW.DestroyWindow(_window);
                 _window = null;
-                GLFW.DefaultWindowHints();
                 throw;
+            }
+            finally {
+                GLFW.DefaultWindowHints();
             }
             //finally {
             //    GLFW.MakeContextCurrent(null);
@@ -241,6 +247,24 @@ namespace Elffy.OpenGL
             GLFW.MakeContextCurrent(_window);
         }
 
+        public void Maximize()
+        {
+            if(IsDisposed) { ThrowDisposed(); }
+            GLFW.MaximizeWindow(_window);
+        }
+
+        public void Normalize()
+        {
+            if(IsDisposed) { ThrowDisposed(); }
+            GLFW.RestoreWindow(_window);
+        }
+
+        public void Minimize()
+        {
+            if(IsDisposed) { ThrowDisposed(); }
+            GLFW.IconifyWindow(_window);
+        }
+
         public void Show()
         {
             if(IsDisposed) { ThrowDisposed(); }
@@ -253,34 +277,14 @@ namespace Elffy.OpenGL
             GLFW.HideWindow(_window);
         }
 
-        private unsafe void OnClientSizeResized(int width, int height)
-        {
-            GLFW.SetWindowSize(_window, width, height);
-            GLFW.GetFramebufferSize(_window, out width, out height);
-            ClientSize = new Vector2i(width, height);
-        }
-
         private static void InitializeGlBindings()
         {
             // This method must be called for each gl context created.
 
             var provider = new GLFWBindingsContext();
             try {
-                var assembly = Assembly.Load("OpenTK.Graphics");
-
-                //LoadBindings("ES11");
-                //LoadBindings("ES20");
-                //LoadBindings("ES30");
-                //LoadBindings("OpenGL");
-                LoadBindings("OpenGL4");
-
-                void LoadBindings(string typeNamespace)
-                {
-                    assembly
-                        !.GetType("OpenTK.Graphics." + typeNamespace + ".GL")
-                        !.GetMethod("LoadBindings")
-                        !.Invoke(null, new object[1] { provider! });
-                }
+                //var assembly = Assembly.Load("OpenTK.Graphics");
+                GL.LoadBindings(provider);
             }
             catch {
                 if(AssemblyState.IsDebug) {

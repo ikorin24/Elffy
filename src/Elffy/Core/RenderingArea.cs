@@ -48,6 +48,7 @@ namespace Elffy.Core
             set
             {
                 if(value < 0) { ThrowOutOfRange(); }
+                if(_size.X == value) { return; }
                 _size.X = value;
                 OnSizeChanged(_size);
 
@@ -61,6 +62,7 @@ namespace Elffy.Core
             set
             {
                 if(value < 0) { ThrowOutOfRange(); }
+                if(_size.Y == value) { return; }
                 _size.Y = value;
                 OnSizeChanged(_size);
 
@@ -75,7 +77,7 @@ namespace Elffy.Core
             {
                 if(value.X < 0) { ThrowWidthOutOfRange(); }
                 if(value.Y < 0) { ThrowHeightOutOfRange(); }
-
+                if(_size == value) { return; }
                 _size = value;
                 OnSizeChanged(_size);
 
@@ -106,6 +108,8 @@ namespace Elffy.Core
             GL.FrontFace(FrontFaceDirection.Ccw);
 
             GL.Disable(EnableCap.Multisample);  // I don't care about MSAA
+
+            Size = OwnerScreen.ClientSize;  // Initialize viewport and so on.
 
             Initialized?.Invoke(OwnerScreen);
 
