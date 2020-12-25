@@ -1,4 +1,7 @@
 ﻿#nullable enable
+using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace Elffy
 {
@@ -23,5 +26,48 @@ namespace Elffy
 
         FrameInitializing = byte.MaxValue,
         FrameFinalizing = byte.MinValue,
+    }
+
+    public static class LoopTimingExtension
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsValid(this FrameLoopTiming source)
+        {
+            return (byte)source != 0 && (byte)source <= 5;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void ThrowArgExceptionIfInvalid(this FrameLoopTiming source, string msg)
+        {
+            if(!source.IsValid()) {
+                Throw(msg);
+                [DoesNotReturn] static void Throw(string msg) => throw new ArgumentException(msg);
+            }
+        }
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool Equals(this FrameLoopTiming source, ScreenCurrentTiming timing)
+        {
+            return source == (FrameLoopTiming)timing;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool Equals(this ScreenCurrentTiming source, FrameLoopTiming timing)
+        {
+            return source == (ScreenCurrentTiming)timing;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ScreenCurrentTiming ToCurrentTiming(this FrameLoopTiming timing)
+        {
+            return (ScreenCurrentTiming)timing;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static FrameLoopTiming ToLoopTiming(this ScreenCurrentTiming timing)
+        {
+            return (FrameLoopTiming)timing;
+        }
     }
 }

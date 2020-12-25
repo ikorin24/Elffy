@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.Threading;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Cysharp.Threading.Tasks;
 using Elffy.Core;
@@ -9,78 +10,95 @@ namespace Elffy
 {
     public static class FrameObjectExtension
     {
-        // TODO: fix comment
         // =======================================================================================
         // [State Transition]
         //
         // [@] : call Activate()
         // [#] : call Terminate()
         // [!] : load completed
-        // ---------------------------------------------------------------------------------------------
-        //      Frame Num:     |   0   | .. |         n        |  n+1  | .. |         m        |   m+1  | ..
-        //     User Action:    |       | .. |  [@]             |       | .. |  [#]             |        | ..
-        //        State:       |      New       |   Activated  |      Alive     |  Terminated  |   Dead   ..
-        //       IsLoaded:     |               false               [!]            true         |   false  ..
-        // Rendered on Screen: |                 No                 | ********** Yes ********* |    No    ..
-        // ---------------------------------------------------------------------------------------------
+        // ------------------------------------------------------------------------------------------------------------------------------
+        //         Frame Num:         |       0       | .. |        n        |        n+1       | .. |        m        |       m+1      | ..
+        //                            |               | .. |                 |                  | .. |                 |                | ..
+        //        User Action:        |               | .. |  [@]            |                  | .. |  [#]            |                | ..
+        //           State:           |           New          |  Activated  |           Alive           | Terminated  |      Dead      | ..
+        //         IsRunning:         |                 false                | ***************** true **************** |      false     | ..
+        //      IsLoaded (sync):      |         false         [!] ********************** true ************************ |      false     | ..
+        //   IsLoaded (async, case1): |                 false                    [!] *********** true **************** |      false     | ..
+        //   IsLoaded (async, case2): |                                    false                                       |      false     | ..
+        //                            |               | .. |                 |                  | .. |                 |                | ..
+        //                            |               | .. |                 |                  | .. |                 |                | ..
+        // ------------------------------------------------------------------------------------------------------------------------------
         //
         // Only one state flag is true from 'New' to 'Dead'
         // State get Alive in the next frame of Activate() called.
         // State get Dead in the next frame of Terminated() called.
         // 
-        // 'IsLoaded' is independent from them.
-        // 'IsLoaded' get true during 'Alive'. (or it may remain false if Terminated() called before load completion.)
+        // In the case of sync loading, 'IsLoaded' get true when Activate() is called.
+        // In the case of async loading, 'IsLoaded' get true between Activate() and Terminated(). (case1)
+        // If async loading is not completed before Terminated(), 'IsLoaded' remains false. (case2)
         // 
-        // Renderd On Screen : IsLoaded && (IsAlive || IsTerminated)
+        // Renderd on the Screen : IsLoaded && (IsAlive || IsTerminated)
         //
         // =======================================================================================
 
         /// <summary>Wait until <see cref="Renderable.IsLoaded"/> get true or <see cref="FrameObject.LifeState"/> get <see cref="LifeState.Dead"/>. </summary>
-        /// <remarks>If not <see cref="Renderable"/>, no waiting.</remarks>
+        /// <remarks>
+        /// Returns false if <paramref name="source"/> is <see cref="LifeState.Dead"/>. In that case, <paramref name="timing"/> is not guaranteed.<para/>
+        /// Throws <see cref="ArgumentException"/> if <paramref name="source"/> is <see cref="LifeState.New"/>.
+        /// </remarks>
+        /// <exception cref="ArgumentException"><paramref name="source"/> is not activated.</exception>
+        /// <exception cref="ArgumentNullException"></exception>
         /// <param name="timing">frame loop timing to get back</param>
         /// <param name="cancellationToken">cancellation token</param>
-        /// <returns>awaitable object</returns>
-        public static UniTask<bool> WaitLoadedOrDead(this FrameObject source, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
+        /// <returns>awaitable object (true if load completed. false if <see cref="Renderable"/> is dead.)</returns>
+        public static UniTask<bool> WaitLoaded(this Renderable source, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
         {
             if(source is null) {
                 ThrowNullArg();
                 [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(source));
             }
 
+            if(source.LifeState == LifeState.New) {
+                ThrowNotActivated();
+                [DoesNotReturn] static void ThrowNotActivated() => throw new ArgumentException($"{nameof(source)} is not activated.");
+            }
+
+            timing.ThrowArgExceptionIfInvalid(nameof(timing));
+
+            if(cancellationToken.IsCancellationRequested) {
+                return UniTask.FromCanceled<bool>(cancellationToken);
+            }
+
             // [NOTE] See class comment of state transition
 
-            // Early return if not Renderable or already loaded.
-            if(source is Renderable renderable) {
-                if(renderable.HostScreen.IsThreadMain) {
-                    if(renderable.IsLoaded && renderable.LifeState != LifeState.Dead) {
-                        return new(true);
-                    }
-                    else {
-                        return Wait(true, renderable, timing, cancellationToken);
-                    }
+            if(source.TryGetHostScreen(out var screen)) {
+                if(source.IsLoaded && screen.CurrentTiming.Equals(timing)) {
+                    // here is main thread
+                    Debug.Assert(screen.IsThreadMain);
+                    return new(true);
                 }
                 else {
-                    return Wait(false, renderable, timing, cancellationToken);
+                    // No one knonws the thread of here.
+                    return Wait(source, screen.AsyncBack, timing, cancellationToken);
                 }
             }
             else {
-                return (source.LifeState == LifeState.New || source.LifeState == LifeState.Dead) ? new(false) : new(true);
+                // No one knonws the thread of here.
+                Debug.Assert(source.LifeState == LifeState.Dead);
+                // Ignore timing to get back because no one knows the screen the object belongs to.
+                return new(false);
             }
 
-            static async UniTask<bool> Wait(bool isMainThreadNow, Renderable renderable, FrameLoopTiming timing, CancellationToken cancellationToken)
+            static async UniTask<bool> Wait(Renderable renderable, AsyncBackEndPoint asyncBack, FrameLoopTiming timing, CancellationToken cancellationToken)
             {
-                if(!isMainThreadNow) {
-                    await renderable.HostScreen.AsyncBack.ToFrameLoopEvent(timing, cancellationToken);
-                }
                 while(true) {
+                    await asyncBack.ToFrameLoopEvent(timing, cancellationToken);
                     if(renderable.LifeState == LifeState.Dead) {
+                        Debug.Assert(renderable.IsLoaded == false);
                         return false;
                     }
                     else if(renderable.IsLoaded) {
                         return true;
-                    }
-                    else {
-                        await renderable.HostScreen.AsyncBack.ToFrameLoopEvent(timing, cancellationToken);
                     }
                 }
             }

@@ -1,4 +1,6 @@
 ﻿#nullable enable
+using System.Threading;
+using Elffy.Core;
 using Cysharp.Threading.Tasks;
 
 namespace Elffy
@@ -12,10 +14,10 @@ namespace Elffy
             source.Activate(Game.Layers.WorldLayer);
         }
 
-        public static UniTask<bool> ActivateWaitLoaded(this FrameObject source)
+        public static UniTask<bool> ActivateWaitLoaded(this Renderable source, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
         {
             source.Activate(Game.Layers.WorldLayer);
-            return source.WaitLoadedOrDead();
+            return source.WaitLoaded(timing, cancellationToken);
         }
     }
 }

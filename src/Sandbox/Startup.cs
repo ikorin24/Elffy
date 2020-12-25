@@ -26,8 +26,7 @@ namespace Sandbox
                 UniTask.Create(async () =>
                 {
                     var dice = Resources.Loader.CreateFbxModel("Dice.fbx");
-                    dice.Activate();
-                    await dice.WaitLoadedOrDead();
+                    await dice.ActivateWaitLoaded();
                     return dice;
                 }));
             Debug.WriteLine("complete");

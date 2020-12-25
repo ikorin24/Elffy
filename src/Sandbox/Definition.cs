@@ -121,7 +121,7 @@ namespace Sandbox
             var model = Resources.Loader.CreatePmxModel("Alicia/Alicia_solid.pmx");
             model.Scale = new Vector3(0.3f);
             model.Activate();
-            await model.WaitLoadedOrDead();
+            await model.WaitLoaded();
             return model;
         }
 

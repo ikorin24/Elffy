@@ -63,8 +63,8 @@ namespace Elffy
         public Layer Layer
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => AssemblyState.IsDebug ? (Layer?)_layer ?? throw new InvalidOperationException()
-                                         : Unsafe.As<Layer?>(_layer) ?? throw new InvalidOperationException();
+            get => AssemblyState.IsDebug ? (Layer?)_layer ?? throw new InvalidOperationException($"{nameof(FrameObject)} is not activated yet or already dead.")
+                                         : Unsafe.As<Layer?>(_layer) ?? throw new InvalidOperationException($"{nameof(FrameObject)} is not activated yet or already dead.");
 
             // ↑ Use cast in the debug build. The branch is removed by JIT.
         }
@@ -75,12 +75,21 @@ namespace Elffy
         public IHostScreen HostScreen
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get
-            {
-                return _hostScreen ?? TryGetScreen(_layer);
+            get => _hostScreen ?? throw new InvalidOperationException($"{nameof(FrameObject)} is not activated yet or already dead.");
+        }
 
-                [MethodImpl(MethodImplOptions.NoInlining)]
-                static IHostScreen TryGetScreen(ILayer? layer) => GetHostScreen(layer) ?? throw new InvalidOperationException();
+        /// <summary>Try to get HostScreen of the <see cref="FrameObject"/></summary>
+        /// <param name="screen">HostScreen of the <see cref="FrameObject"/></param>
+        /// <returns>success or not</returns>
+        public bool TryGetHostScreen([MaybeNullWhen(false)] out IHostScreen screen)
+        {
+            if(_hostScreen is null) {
+                screen = null;
+                return false;
+            }
+            else {
+                screen = _hostScreen;
+                return true;
             }
         }
 
@@ -136,7 +145,7 @@ namespace Elffy
         /// <summary>Terminate the object and remove it from the engine.</summary>
         public void Terminate()
         {
-            HostScreen.ThrowIfNotMainThread();
+            _hostScreen?.ThrowIfNotMainThread();
 
             if(_state != LifeState.Activated && _state != LifeState.Alive) {
                 return;
