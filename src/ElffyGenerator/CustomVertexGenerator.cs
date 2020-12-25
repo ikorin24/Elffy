@@ -30,29 +30,21 @@ namespace Elffy
     internal sealed class GenerateCustomVertexAttribute : Attribute
     {
         public GenerateCustomVertexAttribute(string typeFullName,
-                                             string name0, Type type0, uint byteOffset0, VertexFieldMarshalType marshal0, uint marshalCount0)
-        { }
-
-        public GenerateCustomVertexAttribute(string typeFullName,
-                                             string name0, Type type0, uint byteOffset0, VertexFieldMarshalType marshal0, uint marshalCount0,
                                              string name1, Type type1, uint byteOffset1, VertexFieldMarshalType marshal1, uint marshalCount1)
         { }
 
         public GenerateCustomVertexAttribute(string typeFullName,
-                                             string name0, Type type0, uint byteOffset0, VertexFieldMarshalType marshal0, uint marshalCount0,
                                              string name1, Type type1, uint byteOffset1, VertexFieldMarshalType marshal1, uint marshalCount1,
                                              string name2, Type type2, uint byteOffset2, VertexFieldMarshalType marshal2, uint marshalCount2)
         { }
 
         public GenerateCustomVertexAttribute(string typeFullName,
-                                             string name0, Type type0, uint byteOffset0, VertexFieldMarshalType marshal0, uint marshalCount0,
                                              string name1, Type type1, uint byteOffset1, VertexFieldMarshalType marshal1, uint marshalCount1,
                                              string name2, Type type2, uint byteOffset2, VertexFieldMarshalType marshal2, uint marshalCount2,
                                              string name3, Type type3, uint byteOffset3, VertexFieldMarshalType marshal3, uint marshalCount3)
         { }
 
         public GenerateCustomVertexAttribute(string typeFullName,
-                                             string name0, Type type0, uint byteOffset0, VertexFieldMarshalType marshal0, uint marshalCount0,
                                              string name1, Type type1, uint byteOffset1, VertexFieldMarshalType marshal1, uint marshalCount1,
                                              string name2, Type type2, uint byteOffset2, VertexFieldMarshalType marshal2, uint marshalCount2,
                                              string name3, Type type3, uint byteOffset3, VertexFieldMarshalType marshal3, uint marshalCount3,
@@ -60,7 +52,6 @@ namespace Elffy
         { }
 
         public GenerateCustomVertexAttribute(string typeFullName,
-                                             string name0, Type type0, uint byteOffset0, VertexFieldMarshalType marshal0, uint marshalCount0,
                                              string name1, Type type1, uint byteOffset1, VertexFieldMarshalType marshal1, uint marshalCount1,
                                              string name2, Type type2, uint byteOffset2, VertexFieldMarshalType marshal2, uint marshalCount2,
                                              string name3, Type type3, uint byteOffset3, VertexFieldMarshalType marshal3, uint marshalCount3,
@@ -69,7 +60,6 @@ namespace Elffy
         { }
 
         public GenerateCustomVertexAttribute(string typeFullName,
-                                             string name0, Type type0, uint byteOffset0, VertexFieldMarshalType marshal0, uint marshalCount0,
                                              string name1, Type type1, uint byteOffset1, VertexFieldMarshalType marshal1, uint marshalCount1,
                                              string name2, Type type2, uint byteOffset2, VertexFieldMarshalType marshal2, uint marshalCount2,
                                              string name3, Type type3, uint byteOffset3, VertexFieldMarshalType marshal3, uint marshalCount3,
@@ -79,7 +69,6 @@ namespace Elffy
         { }
 
         public GenerateCustomVertexAttribute(string typeFullName,
-                                             string name0, Type type0, uint byteOffset0, VertexFieldMarshalType marshal0, uint marshalCount0,
                                              string name1, Type type1, uint byteOffset1, VertexFieldMarshalType marshal1, uint marshalCount1,
                                              string name2, Type type2, uint byteOffset2, VertexFieldMarshalType marshal2, uint marshalCount2,
                                              string name3, Type type3, uint byteOffset3, VertexFieldMarshalType marshal3, uint marshalCount3,
@@ -87,6 +76,17 @@ namespace Elffy
                                              string name5, Type type5, uint byteOffset5, VertexFieldMarshalType marshal5, uint marshalCount5,
                                              string name6, Type type6, uint byteOffset6, VertexFieldMarshalType marshal6, uint marshalCount6,
                                              string name7, Type type7, uint byteOffset7, VertexFieldMarshalType marshal7, uint marshalCount7)
+        { }
+
+        public GenerateCustomVertexAttribute(string typeFullName,
+                                             string name1, Type type1, uint byteOffset1, VertexFieldMarshalType marshal1, uint marshalCount1,
+                                             string name2, Type type2, uint byteOffset2, VertexFieldMarshalType marshal2, uint marshalCount2,
+                                             string name3, Type type3, uint byteOffset3, VertexFieldMarshalType marshal3, uint marshalCount3,
+                                             string name4, Type type4, uint byteOffset4, VertexFieldMarshalType marshal4, uint marshalCount4,
+                                             string name5, Type type5, uint byteOffset5, VertexFieldMarshalType marshal5, uint marshalCount5,
+                                             string name6, Type type6, uint byteOffset6, VertexFieldMarshalType marshal6, uint marshalCount6,
+                                             string name7, Type type7, uint byteOffset7, VertexFieldMarshalType marshal7, uint marshalCount7,
+                                             string name8, Type type8, uint byteOffset8, VertexFieldMarshalType marshal8, uint marshalCount8)
         { }
     }
 }
