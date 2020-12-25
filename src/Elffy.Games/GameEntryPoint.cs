@@ -131,7 +131,7 @@ namespace Elffy
                 switch(Platform.PlatformType) {
                     case PlatformType.Windows:
                     case PlatformType.MacOSX:
-                    case PlatformType.Unix:
+                    case PlatformType.Linux:
                         return new Window(width, height, title, WindowStyle.Default, icon);
                     case PlatformType.Android:
                     case PlatformType.Other:

@@ -1,12 +1,14 @@
 ﻿#nullable enable
 using System;
+using System.Runtime.InteropServices;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Platforms
 {
-    /// <summary>プラットフォームに関する機能を提供します</summary>
+    /// <summary>Provides platform information</summary>
     public static class Platform
     {
-        /// <summary>現在のプラットフォームの種類を取得します</summary>
+        /// <summary>Get current platform type</summary>
         public static PlatformType PlatformType { get; }
 
         static Platform()
@@ -14,25 +16,25 @@ namespace Elffy.Platforms
             PlatformType = GetPlatformType();
         }
 
-        /// <summary>特定の機能がこのプラットフォームでサポートされないことを示す例外を取得します</summary>
-        /// <returns><see cref="PlatformNotSupportedException"/> のインスタンス</returns>
-        public static PlatformNotSupportedException PlatformNotSupported() 
-            => new PlatformNotSupportedException($"Platform does not support this function.; Platform Type : '{PlatformType}'");
+        [DoesNotReturn]
+        internal static void ThrowPlatformNotSupported()
+        {
+            throw new PlatformNotSupportedException($"Platform does not support this function.; Platform Type : '{PlatformType}'");
+        }
 
         private static PlatformType GetPlatformType()
         {
-            switch(Environment.OSVersion.Platform) {
-                case PlatformID.Win32NT:
-                case PlatformID.Win32Windows:
-                case PlatformID.WinCE:
-                case PlatformID.Win32S:
-                    return PlatformType.Windows;
-                case PlatformID.MacOSX:
-                    return PlatformType.MacOSX;
-                case PlatformID.Unix:
-                    return PlatformType.Unix;
-                default:
-                    return PlatformType.Other;
+            if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+                return PlatformType.Windows;
+            }
+            else if(RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
+                return PlatformType.MacOSX;
+            }
+            else if(RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
+                return PlatformType.Linux;
+            }
+            else {
+                return PlatformType.Other;
             }
         }
     }

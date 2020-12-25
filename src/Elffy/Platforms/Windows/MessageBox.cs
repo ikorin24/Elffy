@@ -12,7 +12,7 @@ namespace Elffy.Platforms.Windows
         /// <returns>メッセージボックスの結果</returns>
         public static MessageBoxResult Show(string text)
         {
-            if(Platform.PlatformType != PlatformType.Windows) { throw Platform.PlatformNotSupported(); }
+            if(Platform.PlatformType != PlatformType.Windows) { Platform.ThrowPlatformNotSupported(); }
             return (MessageBoxResult)WinMessageBox(IntPtr.Zero, text, "", 0);
         }
 
@@ -22,7 +22,7 @@ namespace Elffy.Platforms.Windows
         /// <returns>メッセージボックスの結果</returns>
         public static MessageBoxResult Show(string text, string caption)
         {
-            if(Platform.PlatformType != PlatformType.Windows) { throw Platform.PlatformNotSupported(); }
+            if(Platform.PlatformType != PlatformType.Windows) { Platform.ThrowPlatformNotSupported(); }
             return (MessageBoxResult)WinMessageBox(IntPtr.Zero, text, caption ?? "", 0);
         }
 
@@ -33,7 +33,7 @@ namespace Elffy.Platforms.Windows
         /// <returns>メッセージボックスの結果</returns>
         public static MessageBoxResult Show(string text, string caption, MessageBoxType type)
         {
-            if(Platform.PlatformType != PlatformType.Windows) { throw Platform.PlatformNotSupported(); }
+            if(Platform.PlatformType != PlatformType.Windows) { Platform.ThrowPlatformNotSupported(); }
             return (MessageBoxResult)WinMessageBox(IntPtr.Zero, text, caption ?? "", (int)type);
         }
 
@@ -45,7 +45,7 @@ namespace Elffy.Platforms.Windows
         /// <returns>メッセージボックスの結果</returns>
         public static MessageBoxResult Show(string text, string caption, MessageBoxType type, MessageBoxIcon icon)
         {
-            if(Platform.PlatformType != PlatformType.Windows) { throw Platform.PlatformNotSupported(); }
+            if(Platform.PlatformType != PlatformType.Windows) { Platform.ThrowPlatformNotSupported(); }
             return (MessageBoxResult)WinMessageBox(IntPtr.Zero, text, caption, (int)type + (int)icon);
         }
 

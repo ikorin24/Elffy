@@ -6,7 +6,7 @@ namespace Elffy.Platforms
     {
         Windows,
         MacOSX,
-        Unix,
+        Linux,
         Android,
         Other,
     }
