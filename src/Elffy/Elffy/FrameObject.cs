@@ -132,8 +132,12 @@ namespace Elffy
 
             Debug.Assert(layer is Layer == false, $"'{typeof(Layer)}' type can't pass here. Where are you from ?");
             Debug.Assert(layer!.OwnerCollection is null == false);
-            Debug.Assert(GetHostScreen(layer)!.IsThreadMain);
 
+            var screen = GetHostScreen(layer);
+            Debug.Assert(screen is not null);
+            Debug.Assert(screen.IsThreadMain);
+
+            _hostScreen = screen;
             _state = LifeState.Activated;
             _layer = layer;
             layer.AddFrameObject(this);
