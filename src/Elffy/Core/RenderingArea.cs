@@ -174,9 +174,11 @@ namespace Elffy.Core
                     layer.Render(Camera.Projection, Camera.View);
                 }
             }
+            GL.Disable(EnableCap.DepthTest);
             if(uiLayer.IsVisible) {
                 uiLayer.Render(_uiProjection);
             }
+            GL.Enable(EnableCap.DepthTest);
 
             _currentTiming = ScreenCurrentTiming.AfterRendering;
             AsyncBack.DoQueuedEvents(FrameLoopTiming.AfterRendering);
