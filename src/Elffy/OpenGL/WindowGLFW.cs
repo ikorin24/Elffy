@@ -19,6 +19,7 @@ namespace Elffy.OpenGL
     {
         const double MaxUpdateFrequency = 500;
 
+        private IHostScreen _owner;
         private Wnd* _window;
         private Vector2i _clientSize;
         private Vector2i _size;
@@ -83,13 +84,10 @@ namespace Elffy.OpenGL
             }
         }
 
-        public WindowGLFW() : this(800, 600, "Window", WindowStyle.Default, ReadOnlySpan<RawImage>.Empty)
-        {
-        }
-
-        public WindowGLFW(int width, int height, string title, WindowStyle style, ReadOnlySpan<RawImage> icon)
+        public WindowGLFW(IHostScreen screen, int width, int height, string title, WindowStyle style, ReadOnlySpan<RawImage> icon)
         {
             title ??= "";
+            _owner = screen;
 
             // [Hard coded setting]
             // - Opengl core profile
@@ -146,7 +144,7 @@ namespace Elffy.OpenGL
             }
 
             try {
-                GLFW.MakeContextCurrent(_window);
+                MakeContextCurrent();
                 InitializeGlBindings();
                 RegisterWindowCallbacks();
                 GLFW.FocusWindow(_window);
@@ -169,17 +167,15 @@ namespace Elffy.OpenGL
             }
             finally {
                 GLFW.DefaultWindowHints();
+                ClearContextCurrent();
             }
-            //finally {
-            //    GLFW.MakeContextCurrent(null);
-            //}
         }
 
         public void HandleOnce()
         {
             if(!_isLoaded) {
                 _isLoaded = true;
-                GLFW.MakeContextCurrent(_window);
+                MakeContextCurrent();
                 Load?.Invoke(this);
             }
 
@@ -192,7 +188,7 @@ namespace Elffy.OpenGL
             }
 
             try {
-                GLFW.MakeContextCurrent(_window);
+                MakeContextCurrent();
                 var updateFrequency = _updateFrequency;
 
                 if(updateFrequency == null) {
@@ -221,7 +217,7 @@ namespace Elffy.OpenGL
                 }
             }
             finally {
-                //GLFW.MakeContextCurrent(null);
+                ClearContextCurrent();
             }
             
 
@@ -245,6 +241,7 @@ namespace Elffy.OpenGL
         {
             if(IsDisposed) { ThrowDisposed(); }
             GLFW.MakeContextCurrent(_window);
+            Engine.SetCurrentContext(_owner);
         }
 
         public void Maximize()
@@ -275,6 +272,12 @@ namespace Elffy.OpenGL
         {
             if(IsDisposed) { ThrowDisposed(); }
             GLFW.HideWindow(_window);
+        }
+
+        private static void ClearContextCurrent()
+        {
+            GLFW.MakeContextCurrent(null);
+            Engine.SetCurrentContext(null);
         }
 
         private static void InitializeGlBindings()

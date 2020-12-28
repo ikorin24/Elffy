@@ -114,6 +114,9 @@ namespace Elffy
                 ThrowInvalidLayer();
             }
             screen.ThrowIfNotMainThread();
+            if(Engine.CurrentContext != screen) {
+                ThrowContextMismatch();
+            }
             _hostScreen = screen;
 
             _state = LifeState.Activated;
@@ -123,6 +126,7 @@ namespace Elffy
 
             [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(layer));
             [DoesNotReturn] static void ThrowInvalidLayer() => throw new ArgumentException($"{nameof(layer)} is not associated with {nameof(IHostScreen)}");
+            [DoesNotReturn] static void ThrowContextMismatch() => throw new InvalidOperationException("Invalid current context.");
         }
 
         internal void Activate<TLayer>(TLayer layer) where TLayer : class, ILayer
@@ -136,6 +140,7 @@ namespace Elffy
             var screen = GetHostScreen(layer);
             Debug.Assert(screen is not null);
             Debug.Assert(screen.IsThreadMain);
+            Debug.Assert(Engine.CurrentContext == screen);
 
             _hostScreen = screen;
             _state = LifeState.Activated;

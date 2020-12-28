@@ -9,6 +9,8 @@ namespace Elffy
     /// <summary>Main engine class of Elffy</summary>
     public static class Engine
     {
+        [ThreadStatic]
+        private static IHostScreen? _currentContext;
         private static LazyApplyingList<IHostScreen> _screens = LazyApplyingList<IHostScreen>.New();
         private static readonly Stopwatch _watch = new Stopwatch();
 
@@ -20,6 +22,8 @@ namespace Elffy
 
         /// <summary>Get <see cref="IHostScreen"/> running on the engine.</summary>
         public static ReadOnlySpan<IHostScreen> Screens => _screens.AsSpan();
+
+        public static IHostScreen? CurrentContext => _currentContext;
 
         /// <summary>Get real time since the engine started.</summary>
         public static TimeSpan RunningRealTime => _watch.Elapsed;
@@ -39,6 +43,11 @@ namespace Elffy
         internal static void RemoveScreen(IHostScreen screen)
         {
             _screens.Remove(screen);
+        }
+
+        internal static void SetCurrentContext(IHostScreen? screen)
+        {
+            _currentContext = screen;
         }
 
         /// <summary>Start the engine</summary>
