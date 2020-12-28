@@ -57,6 +57,7 @@ namespace Elffy.Effective
             return new UnmanagedMemory<T>(new IntPtr((T*)_ptr + start), _length - start);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public UnmanagedMemory<T> Slice(int start, int length)
         {
             // start == _length is valid
