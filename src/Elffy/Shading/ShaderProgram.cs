@@ -11,8 +11,8 @@ namespace Elffy.Shading
 {
     public sealed class ShaderProgram : IDisposable // TODO: IDisposable をやめる、internal からしか破棄できないようにする
     {
-        private static readonly Dictionary<ShaderSource, (ProgramObject po, int count)> _onMemoryCache
-            = new Dictionary<ShaderSource, (ProgramObject po, int count)>();
+        //private static readonly Dictionary<ShaderSource, (ProgramObject po, int count)> _onMemoryCache
+        //    = new Dictionary<ShaderSource, (ProgramObject po, int count)>();
 
         private ProgramObject _program;
         private ShaderSource _shaderSource;
@@ -20,23 +20,26 @@ namespace Elffy.Shading
 
         internal bool IsReleased => _program.IsEmpty;
 
-        internal ShaderProgram(ShaderSource shaderSource, Func<ProgramObject> compiledProgramObjectFactory)
+        internal unsafe ShaderProgram(ShaderSource shaderSource,
+                                      string vertSource, string fragSource,
+                                      delegate*<string, string, ProgramObject> compiledProgramObjectFactory)
         {
-            if(shaderSource is null) { throw new ArgumentNullException(nameof(shaderSource)); }
-
             // OpenGL のシェーダーは実行時にしかコンパイルできないため、
             // 一度コンパイルしてGPU側にロードされたプログラムは、
             // ソースをキーにしてキャッシュしておくことで2回目以降コンパイルせずに済む。
 
-            if(_onMemoryCache.TryGetValue(shaderSource, out var onMemory)) {
-                _onMemoryCache[shaderSource] = (onMemory.po, onMemory.count + 1);
-                _program = onMemory.po;
-            }
-            else {
-                _program = compiledProgramObjectFactory();
-                _onMemoryCache.Add(shaderSource, (_program, 1));
-                Debug.Assert(_program.IsEmpty == false);
-            }
+            //if(_onMemoryCache.TryGetValue(shaderSource, out var onMemory)) {
+            //    _onMemoryCache[shaderSource] = (onMemory.po, onMemory.count + 1);
+            //    _program = onMemory.po;
+            //}
+            //else {
+            //    _program = compiledProgramObjectFactory(vertSource, fragSource);
+            //    _onMemoryCache.Add(shaderSource, (_program, 1));
+            //    Debug.Assert(_program.IsEmpty == false);
+            //}
+
+            _program = compiledProgramObjectFactory(vertSource, fragSource);
+
             _shaderSource = shaderSource;
         }
 
@@ -81,16 +84,17 @@ namespace Elffy.Shading
                 // このインスタンスの持つプログラムは Empty にしておくが、他に使っているインスタンスがまだあれば
                 // 削除自体は行わない。
 
-                var onMemory = _onMemoryCache[_shaderSource];
-                onMemory.count--;
-                if(onMemory.count == 0) {
-                    _onMemoryCache.Remove(_shaderSource);
-                    ProgramObject.Delete(ref _program);
-                }
-                else {
-                    _onMemoryCache[_shaderSource] = onMemory;
-                    _program = ProgramObject.Empty;
-                }
+                //var onMemory = _onMemoryCache[_shaderSource];
+                //onMemory.count--;
+                //if(onMemory.count == 0) {
+                //    _onMemoryCache.Remove(_shaderSource);
+                //    ProgramObject.Delete(ref _program);
+                //}
+                //else {
+                //    _onMemoryCache[_shaderSource] = onMemory;
+                //    _program = ProgramObject.Empty;
+                //}
+                ProgramObject.Delete(ref _program);
             }
             else {
                 // Can not release resources because finalizer is called from another thread.
