@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.Threading;
+using System.Diagnostics;
 using Elffy.UI;
 using Elffy.Core;
 using Elffy.InputSystem;
@@ -13,6 +14,7 @@ using TKMouseButtonEventArgs = OpenTK.Windowing.Common.MouseButtonEventArgs;
 namespace Elffy
 {
     /// <summary>Cross platform window</summary>
+    [DebuggerDisplay("Window ({Title})")]
     public class Window : IHostScreen
     {
         private const string DefaultTitle = "Window";
