@@ -12,6 +12,7 @@ namespace Elffy.Effective
     [DebuggerDisplay("{DebugView}")]
     public readonly unsafe struct UnmanagedMemory<T> : IEquatable<UnmanagedMemory<T>> where T : unmanaged
     {
+        private readonly object? _keepAlive;
         private readonly IntPtr _ptr;
         private readonly int _length;
 
@@ -31,10 +32,11 @@ namespace Elffy.Effective
         public bool IsEmpty => _length == 0;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public UnmanagedMemory(IntPtr ptr, int length)
+        public UnmanagedMemory(IntPtr ptr, int length, object? keepAlive)
         {
             _ptr = ptr;
             _length = length;
+            _keepAlive = keepAlive;
         }
 
         public void CopyTo(UnmanagedMemory<T> destination)
@@ -54,7 +56,7 @@ namespace Elffy.Effective
             if((uint)start > _length) {
                 throw new ArgumentOutOfRangeException(nameof(start));
             }
-            return new UnmanagedMemory<T>(new IntPtr((T*)_ptr + start), _length - start);
+            return new UnmanagedMemory<T>(new IntPtr((T*)_ptr + start), _length - start, _keepAlive);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -67,7 +69,7 @@ namespace Elffy.Effective
             if((uint)length > (uint)(_length - start)) {
                 throw new ArgumentOutOfRangeException(nameof(length));
             }
-            return new UnmanagedMemory<T>(new IntPtr((T*)_ptr + start), length);
+            return new UnmanagedMemory<T>(new IntPtr((T*)_ptr + start), length, _keepAlive);
         }
 
         public override string ToString() => DebugView;
@@ -104,25 +106,27 @@ namespace Elffy.Effective
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static UnmanagedMemory<T> AsUnmanagedMemory<T>(this UnsafeRawArray<T> source) where T : unmanaged
         {
-            return new UnmanagedMemory<T>(source.Ptr, source.Length);
+            return new UnmanagedMemory<T>(source.Ptr, source.Length, null);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static UnmanagedMemory<T> AsUnmanagedMemory<T>(this UnsafeRawList<T> source) where T : unmanaged
         {
-            return new UnmanagedMemory<T>(source.Ptr, source.Count);
+            return new UnmanagedMemory<T>(source.Ptr, source.Count, null);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static UnmanagedMemory<T> AsUnmanagedMemory<T>(this UnmanagedArray<T> source) where T : unmanaged
         {
-            return new UnmanagedMemory<T>(source.Ptr, source.Length);
+            // Must keep the instance alive in order not to call the finalizer which releases the pointer.
+            return new UnmanagedMemory<T>(source.Ptr, source.Length, source);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static UnmanagedMemory<T> AsUnmanagedMemory<T>(this UnmanagedList<T> source) where T : unmanaged
         {
-            return new UnmanagedMemory<T>(source.Ptr, source.Count);
+            // Must keep the instance alive in order not to call the finalizer which releases the pointer.
+            return new UnmanagedMemory<T>(source.Ptr, source.Count, source);
         }
     }
 }
