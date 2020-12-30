@@ -10,7 +10,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Shading
 {
-    public sealed class ShaderProgram : IDisposable // TODO: IDisposable をやめる、internal からしか破棄できないようにする
+    public sealed class ShaderProgram   // not IDisposable, dispose only from internal
     {
         private ProgramObject _program;
         private ShaderSource _shaderSource;
@@ -55,7 +55,7 @@ namespace Elffy.Shading
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Dispose()
+        internal void Dispose()     // not IDisposable, dispose only from internal
         {
             if(IsReleased) { return; }
             Dispose(true);
