@@ -42,26 +42,13 @@ namespace Elffy.Shading
         /// <summary>頂点シェーダー・フラグメントシェーダ―の読み込み、リンク、プログラムの作成を行います</summary>
         internal unsafe ShaderProgram Compile()
         {
-            return new ShaderProgram(this, VertexShaderSource, FragmentShaderSource, &CompileToProgramObject);
+            return new ShaderProgram(this);
         }
 
-        //public Task CreateCacheAsync()
-        //{
-        //    var program = CompilePrivate();
-        //    return ShaderPrecompileHelper.CreateCacheFromProgramAsync(GetType(), program);
-        //}
-
-        //public async Task<ShaderProgram> CompileOrGetCacheAsync()
-        //{
-        //    var (program, success) = await ShaderPrecompileHelper.TryLoadProgramCacheAsync(GetType())
-        //        .ConfigureAwait(true);
-        //    if(success) {
-        //        return new ShaderProgram(this, program);
-        //    }
-        //    else {
-        //        return Compile();
-        //    }
-        //}
+        internal static ProgramObject CompileToProgramObject(ShaderSource shaderSource)
+        {
+            return CompileToProgramObject(shaderSource.VertexShaderSource, shaderSource.FragmentShaderSource);
+        }
 
         internal static ProgramObject CompileToProgramObject(string vertSource, string fragSource)
         {

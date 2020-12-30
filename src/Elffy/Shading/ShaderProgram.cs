@@ -6,40 +6,27 @@ using Elffy.Core;
 using Elffy.OpenGL;
 using System.Diagnostics;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Shading
 {
     public sealed class ShaderProgram : IDisposable // TODO: IDisposable をやめる、internal からしか破棄できないようにする
     {
-        //private static readonly Dictionary<ShaderSource, (ProgramObject po, int count)> _onMemoryCache
-        //    = new Dictionary<ShaderSource, (ProgramObject po, int count)>();
-
         private ProgramObject _program;
         private ShaderSource _shaderSource;
         private bool _initialized;
 
         internal bool IsReleased => _program.IsEmpty;
 
-        internal unsafe ShaderProgram(ShaderSource shaderSource,
-                                      string vertSource, string fragSource,
-                                      delegate*<string, string, ProgramObject> compiledProgramObjectFactory)
+        internal unsafe ShaderProgram(ShaderSource shaderSource)
         {
-            // OpenGL のシェーダーは実行時にしかコンパイルできないため、
-            // 一度コンパイルしてGPU側にロードされたプログラムは、
-            // ソースをキーにしてキャッシュしておくことで2回目以降コンパイルせずに済む。
+            var screen = Engine.CurrentContext;
+            if(screen is null) {
+                ThrowInvalidContext();
+                [DoesNotReturn] static void ThrowInvalidContext() => throw new InvalidOperationException("Invaid context");
+            }
 
-            //if(_onMemoryCache.TryGetValue(shaderSource, out var onMemory)) {
-            //    _onMemoryCache[shaderSource] = (onMemory.po, onMemory.count + 1);
-            //    _program = onMemory.po;
-            //}
-            //else {
-            //    _program = compiledProgramObjectFactory(vertSource, fragSource);
-            //    _onMemoryCache.Add(shaderSource, (_program, 1));
-            //    Debug.Assert(_program.IsEmpty == false);
-            //}
-
-            _program = compiledProgramObjectFactory(vertSource, fragSource);
-
+            _program = ShaderProgramCache.Get(screen, shaderSource);
             _shaderSource = shaderSource;
         }
 
@@ -79,27 +66,79 @@ namespace Elffy.Shading
         private void Dispose(bool disposing)
         {
             if(disposing) {
-
-                // OpenGL 内のシェーダープログラムの実体は、参照数が0になった時に削除する。
-                // このインスタンスの持つプログラムは Empty にしておくが、他に使っているインスタンスがまだあれば
-                // 削除自体は行わない。
-
-                //var onMemory = _onMemoryCache[_shaderSource];
-                //onMemory.count--;
-                //if(onMemory.count == 0) {
-                //    _onMemoryCache.Remove(_shaderSource);
-                //    ProgramObject.Delete(ref _program);
-                //}
-                //else {
-                //    _onMemoryCache[_shaderSource] = onMemory;
-                //    _program = ProgramObject.Empty;
-                //}
-                ProgramObject.Delete(ref _program);
+                var screen = Engine.CurrentContext;
+                if(screen is null) {
+                    ThrowInvalidContext();
+                    [DoesNotReturn] static void ThrowInvalidContext() => throw new InvalidOperationException("Invaid context");
+                }
+                ShaderProgramCache.Delete(screen, _shaderSource, ref _program);
             }
             else {
                 // Can not release resources because finalizer is called from another thread.
                 throw new MemoryLeakException(GetType());
             }
+        }
+
+
+        private static class ShaderProgramCache
+        {
+            [ThreadStatic]
+            private static Dictionary<IHostScreen, Dictionary<ShaderSource, CompiledCache>>? _dic;
+
+            public static ProgramObject Get(IHostScreen screen, ShaderSource shaderSource)
+            {
+                _dic ??= new();
+                if(!_dic.TryGetValue(screen, out var dic)) {
+                    dic = new();
+                    _dic[screen] = dic;
+                }
+                if(!dic.TryGetValue(shaderSource, out var cache)) {
+                    cache = new() { Program = ShaderSource.CompileToProgramObject(shaderSource), Count = 1 };
+                }
+                else {
+                    cache.Count++;
+                }
+                dic[shaderSource] = cache;
+                Debug.Assert(cache.Count > 0);
+                Debug.Assert(!cache.Program.IsEmpty);
+                return cache.Program;
+            }
+
+            public static void Delete(IHostScreen screen, ShaderSource shaderSource, ref ProgramObject program)
+            {
+                if(_dic is null) {
+                    goto DELETE;
+                }
+                if(!_dic.TryGetValue(screen, out var dic)) {
+                    goto DELETE;
+                }
+                if(!dic.TryGetValue(shaderSource, out var cache)) {
+                    goto DELETE;
+                }
+                cache.Count--;
+                dic[shaderSource] = cache;
+                if(cache.Count <= 0) {
+                    dic.Remove(shaderSource, out _);
+                    goto DELETE;
+                }
+                return;
+            DELETE:
+                ProgramObject.Delete(ref program);
+                return;
+            }
+        }
+
+        [DebuggerDisplay("{Program}, Count={Count}")]
+        private struct CompiledCache : IEquatable<CompiledCache>
+        {
+            public ProgramObject Program;
+            public int Count;
+
+            public override bool Equals(object? obj) => obj is CompiledCache cache && Equals(cache);
+
+            public bool Equals(CompiledCache other) => Program.Equals(other.Program) && Count == other.Count;
+
+            public override int GetHashCode() => HashCode.Combine(Program, Count);
         }
     }
 }
