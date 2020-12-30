@@ -12,25 +12,23 @@ namespace Elffy.Core
         /// <summary>Max length of a mutex name</summary>
         private const int MutexNameMaxLength = 259;
 
-        private static string DefaultUniqueName
+        private static readonly Lazy<string> _defaultUniqueName = new(() =>
         {
-            get
-            {
-                var assemblyName = Assembly.GetEntryAssembly()!.GetName();
-                var uniqueName = $"{assemblyName.Name}-{assemblyName.Version}";      // at least one character
-                if(uniqueName.Length > MutexNameMaxLength) {
-                    uniqueName = uniqueName.Substring(0, MutexNameMaxLength);
-                }
-                return uniqueName;
+            var assemblyName = Assembly.GetEntryAssembly()!.GetName();
+            var uniqueName = $"{assemblyName.Name}-{assemblyName.Version}";      // at least one character
+            if(uniqueName.Length > MutexNameMaxLength) {
+                uniqueName = uniqueName.Substring(0, MutexNameMaxLength);
             }
-        }
+            return uniqueName;
+
+        }, LazyThreadSafetyMode.PublicationOnly);
 
         /// <summary>Use mutex to prevent multiple launches of applications</summary>
         /// <param name="startAction">action to launch</param>
         /// <param name="multiLaunch">action executed at multiple startup</param>
         public static void SingleLaunch(Action startAction, Action? multiLaunch = null)
         {
-            SingleLaunch(DefaultUniqueName, startAction, multiLaunch);
+            SingleLaunch(_defaultUniqueName.Value, startAction, multiLaunch);
         }
 
         /// <summary>Use mutex to prevent multiple launches of applications</summary>
@@ -62,7 +60,7 @@ namespace Elffy.Core
         /// <param name="arg">argument of <paramref name="startAction"/></param>
         public static void SingleLaunch<T>(LaunchDelegate<T> startAction, in T arg)
         {
-            SingleLaunch<T, int>(DefaultUniqueName, startAction, arg, null, default);
+            SingleLaunch<T, int>(_defaultUniqueName.Value, startAction, arg, null, default);
         }
 
         /// <summary>Use mutex to prevent multiple launches of applications</summary>
@@ -74,7 +72,7 @@ namespace Elffy.Core
         /// <param name="arg2">argument of <paramref name="multiLaunch"/></param>
         public static void SingleLaunch<T1, T2>(LaunchDelegate<T1> startAction, in T1 arg1, LaunchDelegate<T2>? multiLaunch, in T2 arg2)
         {
-            SingleLaunch(DefaultUniqueName, startAction, arg1, multiLaunch, arg2);
+            SingleLaunch(_defaultUniqueName.Value, startAction, arg1, multiLaunch, arg2);
         }
 
         /// <summary>Use mutex to prevent multiple launches of applications</summary>
