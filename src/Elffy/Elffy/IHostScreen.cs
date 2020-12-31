@@ -46,6 +46,9 @@ namespace Elffy
         /// <summary>Get screen running token, which is canceled when screen got closed.</summary>
         CancellationToken RunningToken { get; }
 
+        /// <summary>Get whether screen is running<summary>
+        bool IsRunning { get; }
+
         /// <summary>Get current screen frame loop timing.</summary>
         /// <remarks>If not main thread of <see cref="IHostScreen"/>, always returns <see cref="ScreenCurrentTiming.OutOfFrameLoop"/></remarks>
         ScreenCurrentTiming CurrentTiming { get; }
@@ -59,13 +62,16 @@ namespace Elffy
         /// <summary>Event which fires on closing</summary>
         event ClosingEventHandler<IHostScreen> Closing;
 
+        /// <summary>Show screen</summary>
         void Show();
 
+        /// <summary>Close screen</summary>
         void Close();
 
         /// <summary>Throw an exception if current thread is not main of the <see cref="IHostScreen"/></summary>
         void ThrowIfNotMainThread();
 
+        /// <summary>Execute next frame</summary>
         void HandleOnce();
     }
 }

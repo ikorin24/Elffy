@@ -25,6 +25,7 @@ namespace Elffy.OpenGL
         private Vector2i _size;
         private Vector2i _location;
         private string _title;
+        private bool _isRunning;
 
         private double? _updateFrequency = 60.0;
         private double _updateEpsilon; // 前回のアップデートからの持ちこし誤差 (sec), quantization error for Updating
@@ -34,6 +35,8 @@ namespace Elffy.OpenGL
         private bool _isLoaded;
 
         public bool IsDisposed => _window == null;
+
+        public bool IsRunning => _isRunning;
 
         /// <summary>Frequency of updating (Hz). If null, update is called as faster as possible.</summary>
         public double? UpdateFrequency
@@ -265,6 +268,7 @@ namespace Elffy.OpenGL
         public void Show()
         {
             if(IsDisposed) { ThrowDisposed(); }
+            _isRunning = true;
             GLFW.ShowWindow(_window);
         }
 
@@ -301,6 +305,7 @@ namespace Elffy.OpenGL
             if(IsDisposed) { return; }  // Block re-entrant
             var window = _window;
             _window = null;
+            _isRunning = false;
             GLFW.DestroyWindow(window);
         }
 

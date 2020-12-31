@@ -28,7 +28,7 @@ namespace Elffy
         private TimeSpan _time;
         private long _frameNum;
 
-        /// <summary>Get UI root of the window</summary>
+        /// <inheritdoc/>
         public RootPanel UIRoot => _renderingArea.Layers.UILayer.UIRoot;
 
         /// <inheritdoc/>
@@ -37,16 +37,22 @@ namespace Elffy
         /// <inheritdoc/>
         public Keyboard Keyboard => _renderingArea.Keyboard;
 
+        /// <inheritdoc/>
         public AsyncBackEndPoint AsyncBack => _renderingArea.AsyncBack;
 
+        /// <inheritdoc/>
         public LayerCollection Layers => _renderingArea.Layers;
 
+        /// <inheritdoc/>
         public Camera Camera => _renderingArea.Camera;
 
+        /// <inheritdoc/>
         public Vector2i ClientSize { get => _windowImpl.ClientSize; set => _windowImpl.ClientSize = value; }
 
+        /// <inheritdoc/>
         public Vector2i Location { get => _windowImpl.Location; set => _windowImpl.Location = value; }
 
+        /// <inheritdoc/>
         public string Title { get => _windowImpl.Title; set => _windowImpl.Title = value; }
 
         /// <inheritdoc/>
@@ -57,6 +63,9 @@ namespace Elffy
 
         /// <inheritdoc/>
         public CancellationToken RunningToken => _renderingArea.RunningToken;
+
+        /// <inheritdoc/>
+        public bool IsRunning => _windowImpl.IsRunning && !_renderingArea.RunningToken.IsCancellationRequested;
 
         /// <inheritdoc/>
         public ScreenCurrentTiming CurrentTiming => _renderingArea.CurrentTiming;
@@ -173,12 +182,14 @@ namespace Elffy
             }
         }
 
+        /// <summary>Show the window</summary>
         public void Show()
         {
             ThrowIfNotMainThread();
             _windowImpl.Show();
         }
 
+        /// <inheritdoc/>
         void IHostScreen.HandleOnce()
         {
             ThrowIfNotMainThread();
