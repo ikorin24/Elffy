@@ -56,10 +56,10 @@ namespace Elffy
         public string Title { get => _windowImpl.Title; set => _windowImpl.Title = value; }
 
         /// <inheritdoc/>
-        public ref readonly TimeSpan Time => ref _time;
+        public TimeSpan Time => _time;
 
         /// <inheritdoc/>
-        public ref readonly long FrameNum => ref _frameNum;
+        public long FrameNum => _frameNum;
 
         /// <inheritdoc/>
         public CancellationToken RunningToken => _renderingArea.RunningToken;

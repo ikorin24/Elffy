@@ -19,10 +19,10 @@ namespace Elffy
         public static CancellationToken RunningToken => _runningToken;
 
         /// <summary>Get time of current frame. (This is NOT real time.)</summary>
-        public static ref readonly TimeSpan Time => ref _screen!.Time;
+        public static TimeSpan Time => _screen!.Time;
 
         /// <summary>Get number of current frame.</summary>
-        public static ref readonly long FrameNum => ref _screen!.FrameNum;
+        public static long FrameNum => _screen!.FrameNum;
 
         /// <summary>Get keyborad</summary>
         public static Keyboard Keyboard { get; private set; } = null!;

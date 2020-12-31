@@ -38,10 +38,10 @@ namespace Elffy
         LayerCollection Layers { get; }
 
         /// <summary>Get time of current frame. (This is NOT real time.)</summary>
-        ref readonly TimeSpan Time { get; }
+        TimeSpan Time { get; }
 
         /// <summary>Get number of current frame.</summary>
-        ref readonly long FrameNum { get; }
+        long FrameNum { get; }
 
         /// <summary>Get screen running token, which is canceled when screen got closed.</summary>
         CancellationToken RunningToken { get; }
