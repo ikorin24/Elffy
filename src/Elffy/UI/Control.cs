@@ -166,10 +166,16 @@ namespace Elffy.UI
             }
         }
 
+        /// <summary>get or set size of <see cref="Control"/></summary>
+        public Vector2i Size { get => new(Width, Height); set => (Width, Height) = value; }
+
         /// <summary>get or set offset position X of layout</summary>
         public int OffsetX { get; set; }
         /// <summary>get or set offset position Y of layout</summary>
         public int OffsetY { get; set; }
+
+        /// <summary>get or set offset position of layout</summary>
+        public Vector2i Offset { get => new(OffsetX, OffsetY); set => (OffsetX, OffsetY) = value; }
 
 #if false   // future version, auto layout
 
@@ -203,6 +209,8 @@ namespace Elffy.UI
         {
             Children = new ControlCollection(this);
             Renderable = new UIRenderable(this);
+            Width = 30;
+            Height = 30;
             Texture = new Texture(TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear, TextureMipmapMode.None, TextureWrapMode.ClampToEdge, TextureWrapMode.ClampToEdge);
             Renderable.Alive += OnRenderableAlive;
             Renderable.Dead += OnRenderableDead;
