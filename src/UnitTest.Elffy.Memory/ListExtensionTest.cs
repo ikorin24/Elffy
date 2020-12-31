@@ -7,7 +7,8 @@ using Xunit;
 
 namespace UnitTest
 {
-    public class UnsafeExtensionTest
+    public class ListExtensionTest
+
     {
         [Fact]
         public void ListAddRageTest()
@@ -51,6 +52,38 @@ namespace UnitTest
                     Assert.True(list[i] == list[i + 50]);
                     Assert.True(list[i] == i);
                 }
+            }
+        }
+
+        [Fact]
+        public void ClearWithExtracting()
+        {
+            {
+                // List<int>
+                var list = Enumerable.Range(0, 100).ToList();
+                var copy = list.ToArray().AsSpan();
+                var data = list.ClearWithExtracting();
+                Assert.True(list.Count == 0);
+                Assert.True(list.Capacity == 0);
+                Assert.True(copy.SequenceEqual(data));
+            }
+            {
+                // List<string>
+                var list = Enumerable.Range(0, 100).Select(i => i.ToString()).ToList();
+                var copy = list.ToArray().AsSpan();
+                var data = list.ClearWithExtracting();
+                Assert.True(list.Count == 0);
+                Assert.True(list.Capacity == 0);
+                Assert.True(data.SequenceEqual(copy));
+            }
+            {
+                // Empty list
+                var list = Array.Empty<int>().ToList();
+                var copy = list.ToArray().AsSpan();
+                var data = list.ClearWithExtracting();
+                Assert.True(list.Count == 0);
+                Assert.True(list.Capacity == 0);
+                Assert.True(copy.SequenceEqual(data));
             }
         }
     }
