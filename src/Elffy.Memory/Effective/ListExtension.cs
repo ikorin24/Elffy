@@ -65,7 +65,7 @@ namespace Elffy.Effective
         /// <returns>cleared data as <see cref="Span{T}"/> in <see cref="List{T}"/></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [CriticalDotnetDependency("netcoreapp3.1 || net5.0")]
-        internal static Span<T> ClearWithExtracting<T>(this List<T> list)
+        public static Span<T> ClearWithExtracting<T>(this List<T> list)
         {
             var dummy = Unsafe.As<ListDummy<T>>(list);
             var items = dummy._items.AsSpan(0, dummy._size);
