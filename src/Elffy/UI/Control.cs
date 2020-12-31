@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Elffy.InputSystem;
 using Elffy.Components;
 using Elffy.Core;
+using System.Diagnostics;
 
 namespace Elffy.UI
 {
@@ -35,24 +36,7 @@ namespace Elffy.UI
         public ControlCollection Children { get; }
 
         /// <summary>この <see cref="Control"/> のツリー構造の親を取得します</summary>
-        public Control? Parent
-        {
-            get => _parent;
-            internal set
-            {
-                if(_parent == null) {
-                    _parent = value;
-                    Root = value?.Root;
-                }
-                else if(_parent != null && value == null) {
-                    _parent = null;
-                    Root = null;
-                }
-                else { ThrowInvalidOperation(); }
-
-                static void ThrowInvalidOperation() => throw new InvalidOperationException($"The instance is already a child of another object. Can not has multi parents.");
-            }
-        }
+        public Control? Parent => _parent;
         private Control? _parent;
 
         /// <summary>この <see cref="Control"/> を持つ UI tree の Root</summary>
@@ -291,6 +275,22 @@ namespace Elffy.UI
         internal void NotifyHitTestResult(bool isHit, Mouse mouse)
         {
             OnRecieveHitTestResult(isHit, mouse);
+        }
+
+        internal void AddedToListCallback(Control parent)
+        {
+            Debug.Assert(parent is not null);
+            Debug.Assert(parent.Root is not null);
+            _parent = parent;
+            Root = parent.Root;
+            Renderable.Activate(Root.UILayer);
+        }
+
+        internal void RemovedFromListCallback()
+        {
+            _parent = null;
+            Root = null;
+            Renderable.Terminate();
         }
 
         private void OnRenderableAlive(FrameObject sender)

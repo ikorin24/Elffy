@@ -45,9 +45,8 @@ namespace Elffy.UI
                 [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(item));
             }
             if(item.LifeState != LifeState.New) { ThrowNotNewControl(); }
-            item.Parent = _owner;
-            item.Renderable.Activate(item.Root!.UILayer);
             _list.Add(item);
+            item.AddedToListCallback(_owner);
         }
 
         /// <summary>要素を複数追加します</summary>
@@ -58,9 +57,8 @@ namespace Elffy.UI
             foreach(var item in items) {
                 if(item is null) { throw new ArgumentException($"{nameof(items)} contains null. Can not add null."); }
                 if(item.LifeState != LifeState.New) { ThrowNotNewControl(); }
-                item.Parent = _owner;
                 _list.Add(item);
-                item.Renderable.Activate(item.Root!.UILayer);
+                item.AddedToListCallback(_owner);
             }
         }
 
@@ -70,20 +68,18 @@ namespace Elffy.UI
         {
             foreach(var item in items) {
                 if(item.LifeState != LifeState.New) { ThrowNotNewControl(); }
-                item.Parent = _owner;
                 _list.Add(item);
-                item.Renderable.Activate(item.Root!.UILayer);
+                item.AddedToListCallback(_owner);
             }
         }
 
         /// <summary>要素をクリアします</summary>
         public void Clear()
         {
-            foreach(var item in _list.AsReadOnlySpan()) {
-                item.Parent = null;
-                item.Renderable.Terminate();
+            var items = _list.ClearWithExtracting();
+            foreach(var item in items) {
+                item.RemovedFromListCallback();
             }
-            _list.Clear();
         }
 
         /// <summary>リスト中に要素が含まれているかを取得します</summary>
@@ -115,9 +111,8 @@ namespace Elffy.UI
                 [DoesNotReturn] static void ThrowOutOfRange(int value) => throw new ArgumentOutOfRangeException(nameof(index), value, $"{nameof(index)} is out of range.");
             }
             if(item.LifeState == LifeState.New) { ThrowNotNewControl(); }
-            item.Parent = _owner;
             _list.Insert(index, item);
-            item.Renderable.Activate(item.Root!.UILayer);
+            item.AddedToListCallback(_owner);
         }
 
         /// <summary>要素をリストから削除します</summary>
@@ -131,8 +126,7 @@ namespace Elffy.UI
             }
             var result = _list.Remove(item);
             if(result) {
-                item.Parent = null;
-                item.Renderable.Terminate();
+                item.RemovedFromListCallback();
             }
             return result;
         }
@@ -147,8 +141,7 @@ namespace Elffy.UI
             }
             var removed = _list[index];
             _list.RemoveAt(index);
-            removed.Parent = null;
-            removed.Renderable.Terminate();
+            removed.RemovedFromListCallback();
         }
 
         [DoesNotReturn]
