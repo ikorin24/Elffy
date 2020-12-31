@@ -92,7 +92,7 @@ namespace Elffy
             static async UniTask<bool> Wait(Renderable renderable, AsyncBackEndPoint asyncBack, FrameLoopTiming timing, CancellationToken cancellationToken)
             {
                 while(true) {
-                    await asyncBack.ToFrameLoopEvent(timing, cancellationToken);
+                    await asyncBack.ToTiming(timing, cancellationToken);
                     if(renderable.LifeState == LifeState.Dead) {
                         Debug.Assert(renderable.IsLoaded == false);
                         return false;

@@ -35,9 +35,9 @@ namespace Elffy
         /// <param name="cancellationToken">cancellation token</param>
         /// <returns>awaitable object</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static FrameLoopAwaitable ToFrameLoopTiming(FrameLoopTiming timing, CancellationToken cancellationToken = default)
+        public static FrameLoopAwaitable ToTiming(FrameLoopTiming timing, CancellationToken cancellationToken = default)
         {
-            return _endPoint!.ToFrameLoopEvent(timing, cancellationToken);
+            return _endPoint!.ToTiming(timing, cancellationToken);
         }
 
         /// <summary>Wait for the next update timing.</summary>
@@ -46,7 +46,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static FrameLoopAwaitable ToUpdate(CancellationToken cancellationToken = default)
         {
-            return _endPoint!.ToFrameLoopEvent(FrameLoopTiming.Update, cancellationToken);
+            return _endPoint!.ToTiming(FrameLoopTiming.Update, cancellationToken);
         }
 
         /// <summary>Wait for the next early update timing.</summary>
@@ -55,7 +55,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static FrameLoopAwaitable ToEarlyUpdate(CancellationToken cancellationToken = default)
         {
-            return _endPoint!.ToFrameLoopEvent(FrameLoopTiming.EarlyUpdate, cancellationToken);
+            return _endPoint!.ToTiming(FrameLoopTiming.EarlyUpdate, cancellationToken);
         }
 
         /// <summary>Wait for the next late update timing.</summary>
@@ -64,7 +64,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static FrameLoopAwaitable ToLateUpdate(CancellationToken cancellationToken = default)
         {
-            return _endPoint!.ToFrameLoopEvent(FrameLoopTiming.LateUpdate, cancellationToken);
+            return _endPoint!.ToTiming(FrameLoopTiming.LateUpdate, cancellationToken);
         }
 
         /// <summary>Wait for the next before rendering timing.</summary>
@@ -73,7 +73,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static FrameLoopAwaitable ToBeforeRendering(CancellationToken cancellationToken = default)
         {
-            return _endPoint!.ToFrameLoopEvent(FrameLoopTiming.BeforeRendering, cancellationToken);
+            return _endPoint!.ToTiming(FrameLoopTiming.BeforeRendering, cancellationToken);
         }
 
         /// <summary>Wait for the next after rendering timing.</summary>
@@ -82,7 +82,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static FrameLoopAwaitable ToAfterRendering(CancellationToken cancellationToken = default)
         {
-            return _endPoint!.ToFrameLoopEvent(FrameLoopTiming.AfterRendering, cancellationToken);
+            return _endPoint!.ToTiming(FrameLoopTiming.AfterRendering, cancellationToken);
         }
 
         /// <summary>Wait for the specified number of frames.</summary>
@@ -98,7 +98,7 @@ namespace Elffy
                 static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(frameCount));
             }
             for(int i = 0; i < frameCount; i++) {
-                await ToFrameLoopTiming(timing, cancellationToken);
+                await ToTiming(timing, cancellationToken);
             }
         }
 
@@ -112,7 +112,7 @@ namespace Elffy
         {
             var start = Game.Time;
             while(Game.Time - start <= time) {
-                await ToFrameLoopTiming(timing, cancellationToken);
+                await ToTiming(timing, cancellationToken);
             }
         }
 
@@ -137,7 +137,7 @@ namespace Elffy
         {
             var start = Engine.RunningRealTime;
             while(Engine.RunningRealTime - start <= time) {
-                await ToFrameLoopTiming(timing, cancellationToken);
+                await ToTiming(timing, cancellationToken);
             }
         }
 

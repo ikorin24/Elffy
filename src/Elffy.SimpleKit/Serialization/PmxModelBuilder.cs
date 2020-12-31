@@ -183,7 +183,7 @@ namespace Elffy.Serialization
                     }, pmx, configureAwait: false));
                 //      ↑ thread pool
                 // ------------------------------
-                await model.HostScreen.AsyncBack.ToFrameLoopEvent(FrameLoopTiming.Update, obj.CancellationToken);
+                await model.HostScreen.AsyncBack.ToTiming(FrameLoopTiming.Update, obj.CancellationToken);
                 // ------------------------------
                 //      ↓ main thread
                 Debug.Assert(model.HostScreen.IsThreadMain);

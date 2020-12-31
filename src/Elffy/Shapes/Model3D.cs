@@ -48,7 +48,7 @@ namespace Elffy.Shapes
                 var screen = HostScreen;
                 if(!screen.RunningToken.IsCancellationRequested) {
                     if(!screen.IsThreadMain) {
-                        await screen.AsyncBack.ToFrameLoopEvent(FrameLoopTiming.Update);
+                        await screen.AsyncBack.ToTiming(FrameLoopTiming.Update);
                     }
                     Terminate();
                 }

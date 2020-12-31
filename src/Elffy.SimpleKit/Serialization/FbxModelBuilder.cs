@@ -70,7 +70,7 @@ namespace Elffy.Serialization
 
                 //      ↑ thread pool
                 // --------------------------------------
-                await model.HostScreen.AsyncBack.ToFrameLoopEvent(FrameLoopTiming.Update, token);
+                await model.HostScreen.AsyncBack.ToTiming(FrameLoopTiming.Update, token);
                 // --------------------------------------
                 //      ↓ main thread
 

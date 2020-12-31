@@ -17,7 +17,7 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public FrameLoopAwaitable ToFrameLoopEvent(FrameLoopTiming timing, CancellationToken cancellationToken = default)
+        public FrameLoopAwaitable ToTiming(FrameLoopTiming timing, CancellationToken cancellationToken = default)
         {
             return new FrameLoopAwaitable(this, timing, cancellationToken);
         }
