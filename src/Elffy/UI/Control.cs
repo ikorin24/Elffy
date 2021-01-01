@@ -2,6 +2,7 @@
 using System;
 using System.Drawing;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Elffy.InputSystem;
 using Elffy.Components;
 using Elffy.Core;
@@ -45,18 +46,41 @@ namespace Elffy.UI
         public Vector2i Position
         {
             get => (Vector2i)Renderable.Position.Xy;
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set
             {
-                var vec = value - Position;
-                Renderable.Position += new Vector3(vec.X, vec.Y, 0);
-                _absolutePosition += vec;
+                ref var pos = ref Renderable.Position;
+                var vec = value - (Vector2i)pos.Xy;
 
-                // Optimization for inlining in case of `this` has no children
-                // by making loop a function.
-                if(Children.Count > 0) {
-                    ApplyRecursively(Children, in vec);
+                if(vec.X != 0 && vec.Y != 0) {
+                    // change both x and y
+
+                    pos.X += vec.X;
+                    pos.Y += vec.Y;
+                    _absolutePosition += vec;
+                    if(Children.Count > 0) {
+                        ApplyRecursively(Children, in vec);
+                    }
+                }
+                else if(vec.X != 0) {
+                    // change only x
+                    pos.X += vec.X;
+                    _absolutePosition.X += vec.X;
+                    if(Children.Count > 0) {
+                        ApplyXRecursively(Children, vec.X);
+                    }
+                }
+                else if(vec.Y != 0) {
+                    // change only y
+                    pos.Y += vec.Y;
+                    _absolutePosition.Y += vec.Y;
+                    if(Children.Count > 0) {
+                        ApplyYRecursively(Children, vec.Y);
+                    }
                 }
 
+                [MethodImpl(MethodImplOptions.NoInlining)]  // no inlining
                 static void ApplyRecursively(ControlCollection children, in Vector2i vec)
                 {
                     foreach(var child in children.AsReadOnlySpan()) {
@@ -64,55 +88,22 @@ namespace Elffy.UI
                         ApplyRecursively(child.Children, vec);
                     }
                 }
-            }
-        }
 
-        public int PositionX
-        {
-            get => (int)Renderable.Position.X;
-            set
-            {
-                var diff = value - PositionX;
-                Renderable.Position.X += diff;
-                _absolutePosition.X += diff;
-
-                // Optimization for inlining in case of `this` has no children
-                // by making loop a function.
-                if(Children.Count > 0) {
-                    ApplyRecursively(Children, diff);
-                }
-
-                static void ApplyRecursively(ControlCollection children, int diff)
+                [MethodImpl(MethodImplOptions.NoInlining)]  // no inlining
+                static void ApplyXRecursively(ControlCollection children, int diff)
                 {
                     foreach(var child in children.AsReadOnlySpan()) {
                         child._absolutePosition.X += diff;
-                        ApplyRecursively(child.Children, diff);
+                        ApplyXRecursively(child.Children, diff);
                     }
                 }
-            }
-        }
 
-        /// <summary>オブジェクトのY座標</summary>
-        public int PositionY
-        {
-            get => (int)Renderable.Position.Y;
-            set
-            {
-                var diff = value - PositionY;
-                Renderable.Position.Y += diff;
-                _absolutePosition.Y += diff;
-
-                // Optimization for inlining in case of `this` has no children
-                // by making loop a function.
-                if(Children.Count > 0) {
-                    ApplyRecursively(Children, diff);
-                }
-
-                static void ApplyRecursively(ControlCollection children, int diff)
+                [MethodImpl(MethodImplOptions.NoInlining)]  // no inlining
+                static void ApplyYRecursively(ControlCollection children, int diff)
                 {
                     foreach(var child in children.AsReadOnlySpan()) {
                         child._absolutePosition.Y += diff;
-                        ApplyRecursively(child.Children, diff);
+                        ApplyYRecursively(child.Children, diff);
                     }
                 }
             }
