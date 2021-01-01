@@ -72,69 +72,6 @@ namespace Elffy.Core
             set => _position += value - WorldPosition;
         }
 
-        /// <summary>ワールド座標のX座標。get/set ともに Root までの親の数 N に対し O(N)</summary>
-        public float WorldPositionX
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get
-            {
-                return IsRoot ? _position.X : Calc(this);
-
-                static float Calc(Positionable source)
-                {
-                    var wPosX = source._position.X;
-                    while(!source.IsRoot) {
-                        source = source._parent!;
-                        wPosX += source._position.X;
-                    }
-                    return wPosX;
-                }
-            }
-            set => _position.X += value - WorldPositionX;
-        }
-
-        /// <summary>ワールド座標のY座標。get/set ともに Root までの親の数 N に対し O(N)</summary>
-        public float WorldPositionY
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get
-            {
-                return IsRoot ? _position.Y : Calc(this);
-
-                static float Calc(Positionable source)
-                {
-                    var wPosY = source._position.Y;
-                    while(!source.IsRoot) {
-                        source = source._parent!;
-                        wPosY += source._position.Y;
-                    }
-                    return wPosY;
-                }
-            }
-            set => _position.Y += value - WorldPositionY;
-        }
-
-        /// <summary>ワールド座標のZ座標。get/set ともに Root までの親の数 N に対し O(N)</summary>
-        public float WorldPositionZ
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get
-            {
-                return IsRoot ? _position.Z : Calc(this);
-
-                static float Calc(Positionable source)
-                {
-                    var wPosZ = source._position.Z;
-                    while(!source.IsRoot) {
-                        source = source._parent!;
-                        wPosZ += source._position.Z;
-                    }
-                    return wPosZ;
-                }
-            }
-            set => _position.Z += value - WorldPositionZ;
-        }
-
         /// <summary>オブジェクトの拡大率</summary>
         public ref Vector3 Scale => ref _scale;
         #endregion
