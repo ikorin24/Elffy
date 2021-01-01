@@ -5,10 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace Elffy.Core
 {
-    /// <summary>
-    /// 空間に置くことができるオブジェクトの基底クラス<para/>
-    /// 座標・サイズ・回転等に関する操作を提供します。<para/>
-    /// </summary>
+    /// <summary>Base class which exists in space. That provides position, size and rotation.</summary>
     public abstract class Positionable : ComponentOwner
     {
         private Quaternion _ratation = Quaternion.Identity;
@@ -17,11 +14,10 @@ namespace Elffy.Core
         private readonly PositionableCollection _children;
         private Positionable? _parent;
 
-        #region Proeprty
-        /// <summary>オブジェクトの回転を表すクオータニオン</summary>
+        /// <summary>Get or set <see cref="Quaternion"/> of rotation.</summary>
         public ref Quaternion Rotation => ref _ratation;
 
-        /// <summary>この <see cref="Positionable"/> のツリー構造の親を取得します</summary>
+        /// <summary>Get parent of the <see cref="Positionable"/>.</summary>
         public Positionable? Parent
         {
             get => _parent;
@@ -36,22 +32,21 @@ namespace Elffy.Core
             }
         }
 
-        /// <summary>この <see cref="Positionable"/> のツリー構造の子要素を取得します</summary>
+        /// <summary>Get children of the <see cref="Positionable"/></summary>
         public PositionableCollection Children => _children;
 
-        /// <summary>この <see cref="Positionable"/> がツリー構造の Root かどうかを取得します</summary>
+        /// <summary>Get whether the <see cref="Positionable"/> is a root object in the tree.</summary>
         public bool IsRoot => _parent is null;
 
-        /// <summary>この <see cref="Positionable"/> が子要素の <see cref="Positionable"/> を持っているかどうかを取得します</summary>
+        /// <summary>Get whether the <see cref="Positionable"/> has any children.</summary>
         public bool HasChild => Children.Count > 0;
 
-        /// <summary>
-        /// オブジェクトのローカル座標<para/>
-        /// <see cref="IsRoot"/> が true の場合は <see cref="WorldPosition"/> と同じ値。false の場合は親の <see cref="Position"/> を基準とした相対座標。
-        /// </summary>
+        /// <summary>Get or set local position whose origin is the position of <see cref="Parent"/>.</summary>
+        /// <remarks>The value is same as <see cref="WorldPosition"/> if <see cref="IsRoot"/> is true.</remarks>
         public ref Vector3 Position => ref _position;
 
-        /// <summary>オブジェクトのワールド座標。get/set ともに Root までの親の数 N に対し O(N)</summary>
+        /// <summary>Get or set world position.</summary>
+        /// <remarks>Both getter and setter are O(N); N is the number of all parents from self to the root object.</remarks>
         public Vector3 WorldPosition
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -72,61 +67,64 @@ namespace Elffy.Core
             set => _position += value - WorldPosition;
         }
 
-        /// <summary>オブジェクトの拡大率</summary>
+        /// <summary>Get or set scale of <see cref="Positionable"/>.</summary>
         public ref Vector3 Scale => ref _scale;
-        #endregion
 
         public Positionable()
         {
             _children = new PositionableCollection(this);
         }
 
-        /// <summary>オブジェクトを移動させます</summary>
-        /// <param name="x">x軸方向移動量</param>
-        /// <param name="y">y軸方向移動量</param>
-        /// <param name="z">z軸方向移動量</param>
+        /// <summary>Translate the <see cref="Positionable"/>.</summary>
+        /// <param name="x">translation of x</param>
+        /// <param name="y">translation of y</param>
+        /// <param name="z">translation of z</param>
         public void Translate(float x, float y, float z)
         {
-            Position += new Vector3(x, y, z);
+            _position.X += x;
+            _position.Y += y;
+            _position.Z += z;
         }
 
-        /// <summary>オブジェクトを移動させます</summary>
-        /// <param name="vector">移動ベクトル</param>
+        /// <summary>Translate the <see cref="Positionable"/>.</summary>
+        /// <param name="vector">translation vector</param>
         public void Translate(in Vector3 vector)
         {
-            Position += vector;
+            _position += vector;
         }
 
-        /// <summary>オブジェクトのサイズを変更します</summary>
-        /// <param name="scale">倍率</param>
-        public void MultiplyScale(float scale)
+        /// <summary>Multiply scale.</summary>
+        /// <param name="ratio">ratio</param>
+        public void MultiplyScale(float ratio)
         {
-            _scale *= scale;
+            _scale *= ratio;
         }
 
-        /// <summary>オブジェクトのサイズを変更します</summary>
-        /// <param name="x">x軸方向の倍率</param>
-        /// <param name="y">y軸方向の倍率</param>
-        /// <param name="z">z軸方向の倍率</param>
+        /// <summary>Multiply scale.</summary>
+        /// <param name="x">ratio of x</param>
+        /// <param name="y">ratio of y</param>
+        /// <param name="z">ratio of z</param>
         public void MultiplyScale(float x, float y, float z)
         {
-            _scale = _scale.Mult(new Vector3(x, y, z));
+            _scale.X *= x;
+            _scale.Y *= y;
+            _scale.Z *= z;
         }
 
-        /// <summary>オブジェクトを回転させます</summary>
-        /// <param name="axis">回転軸</param>
-        /// <param name="angle">回転角(ラジアン)</param>
+        /// <summary>Rotate the <see cref="Positionable"/> by axis and angle.</summary>
+        /// <param name="axis">Axis of rotation</param>
+        /// <param name="angle">Angle of rotation [radian]</param>
         public void Rotate(in Vector3 axis, float angle) => Rotate(Quaternion.FromAxisAngle(axis, angle));
 
-        /// <summary>オブジェクトを回転させます</summary>
-        /// <param name="quaternion">回転させるクオータニオン</param>
+        /// <summary>Rotate the <see cref="Positionable"/> by <see cref="Quaternion"/>.</summary>
+        /// <param name="quaternion"><see cref="Quaternion"/></param>
         public void Rotate(in Quaternion quaternion)
         {
             _ratation = quaternion * _ratation;
         }
 
-        /// <summary>このオブジェクトの <see cref="Children"/> 以下に存在する全ての子孫を取得します。列挙順は深さ優先探索 (DFS; depth-first search) です。</summary>
-        /// <returns>全ての子孫オブジェクト</returns>
+        /// <summary>Get all children recursively by DFS (depth-first search).</summary>
+        /// <returns>All offspring</returns>
         public IEnumerable<Positionable> GetOffspring()
         {
             foreach(var child in Children) {
@@ -137,8 +135,8 @@ namespace Elffy.Core
             }
         }
 
-        /// <summary>このオブジェクトの <see cref="Parent"/> 以上に存在する全ての先祖を取得します。列挙順は自身の親からRoot方向への順です。</summary>
-        /// <returns>全ての先祖オブジェクト</returns>
+        /// <summary>Get all parents recursively. Iterate objects from the parent of self to root.</summary>
+        /// <returns>All parents</returns>
         public IEnumerable<Positionable> GetAncestor()
         {
             Positionable? target = this;
@@ -148,8 +146,8 @@ namespace Elffy.Core
             }
         }
 
-        /// <summary>このオブジェクトの Root オブジェクトを取得します。</summary>
-        /// <returns>Root オブジェクト</returns>
+        /// <summary>Get the root <see cref="Positionable"/>.</summary>
+        /// <returns>The root object</returns>
         public Positionable GetRoot()
         {
             return IsRoot ? this : SerachRoot(this);
