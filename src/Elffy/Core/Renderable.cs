@@ -165,7 +165,6 @@ namespace Elffy.Core
 
         protected override void OnDead()
         {
-            HostScreen.ThrowIfNotMainThread();
             var isLoaded = IsLoaded;
             IsLoaded = false;
             base.OnDead();
