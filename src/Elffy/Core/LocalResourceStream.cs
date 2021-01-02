@@ -1,11 +1,10 @@
 ﻿#nullable enable
-using Elffy.Core;
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 
-namespace Elffy
+namespace Elffy.Core
 {
     /// <summary>Stream class used by <see cref="LocalResourceLoader"/></summary>
     internal sealed class LocalResourceStream : Stream

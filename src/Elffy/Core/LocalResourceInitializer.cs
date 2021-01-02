@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using Elffy.Effective;
-using Elffy.Effective.Unsafes;
 using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
@@ -12,7 +11,7 @@ using StringLiteral;
 
 namespace Elffy.Core
 {
-    internal static partial class ResourceInitializer
+    internal static partial class LocalResourceInitializer
     {
         [Utf8("1.0")]
         private static partial ReadOnlySpan<byte> FormatVersion();
