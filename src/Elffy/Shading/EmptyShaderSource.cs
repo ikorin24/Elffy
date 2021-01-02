@@ -9,16 +9,23 @@ namespace Elffy.Shading
 {
     [ShaderTargetVertexType(typeof(Vertex))]
     [ShaderTargetVertexType(typeof(VertexSlim))]
-    public sealed class EmptyShaderSource<TVertex> : ShaderSource where TVertex : unmanaged
+    internal sealed class EmptyShaderSource<TVertex> : ShaderSource where TVertex : unmanaged
     {
         private static readonly Lazy<EmptyShaderSource<TVertex>> _instance = new(() =>
         {
-            if(typeof(TVertex) == typeof(Vertex) || typeof(TVertex) == typeof(VertexSlim)) {
+            if(IsSupported) {
                 return new EmptyShaderSource<TVertex>();
             }
 
             throw new NotSupportedException($"'{typeof(EmptyShaderSource<TVertex>)}' is not supported. The type must be '{nameof(Vertex)}' or '{nameof(VertexSlim)}'.");
         }, LazyThreadSafetyMode.ExecutionAndPublication);
+
+
+        public static bool IsSupported
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => typeof(TVertex) == typeof(Vertex) || typeof(TVertex) == typeof(VertexSlim);
+        }
 
 
         /// <summary>Get instance of <see cref="EmptyShaderSource{TVertex}"/></summary>

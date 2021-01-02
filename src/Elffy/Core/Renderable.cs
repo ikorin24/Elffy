@@ -41,8 +41,6 @@ namespace Elffy.Core
             {
                 if(IsLoaded) { ThrowAlreadyLoaded(); }
                 _shader = value;
-
-                [DoesNotReturn] static void ThrowAlreadyLoaded() => throw new InvalidOperationException("already loaded");
             }
         }
 
@@ -141,9 +139,14 @@ namespace Elffy.Core
         protected void LoadGraphicBuffer<TVertex>(ReadOnlySpan<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged
         {
             HostScreen.ThrowIfNotMainThread();
-            if(IsLoaded) { throw new InvalidOperationException("already loaded"); }
+            if(IsLoaded) { ThrowAlreadyLoaded(); }
 
-            var shader = _shader ?? EmptyShaderSource<TVertex>.Instance;
+            var shader = _shader;
+            if(shader is null) {
+                shader = EmptyShaderSource<TVertex>.IsSupported ?
+                    EmptyShaderSource<TVertex>.Instance :
+                    throw new ArgumentException("Custom vertex types need a shader of the type.");
+            }
 
             // checking target vertex type of shader is valid.
             if(DevEnv.IsEnabled) {
@@ -176,6 +179,9 @@ namespace Elffy.Core
                 VAO.Delete(ref _vao);
             }
         }
+
+        [DoesNotReturn]
+        private static void ThrowAlreadyLoaded() => throw new InvalidOperationException("already loaded");
     }
 
     public delegate void RenderingEventHandler(Renderable sender, in Matrix4 model, in Matrix4 view, in Matrix4 projection);
