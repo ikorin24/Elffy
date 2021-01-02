@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using Elffy.Core;
-using Elffy.Effective.Unsafes;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -9,13 +8,13 @@ using System.Runtime.CompilerServices;
 namespace Elffy
 {
     /// <summary>Stream class used by <see cref="LocalResourceLoader"/></summary>
-    public sealed class ResourceStream : Stream
+    internal sealed class LocalResourceStream : Stream
     {
         // このクラスはもとになる Stream の一部だけを切り出した Stream として振る舞う。
         // _head と _length がもとの Stream 上での位置と長さ。
 
         private bool _disposed = false;
-        private AlloclessFileStream _innerStream = null!;
+        private FileStream _innerStream = null!;
         private readonly long _head;
         private readonly long _length;
 
@@ -38,7 +37,7 @@ namespace Elffy
         {
             get
             {
-                if(_disposed) { throw new ObjectDisposedException(nameof(ResourceStream)); }
+                if(_disposed) { throw new ObjectDisposedException(nameof(LocalResourceStream)); }
                 return _length;
             }
         }
@@ -48,35 +47,35 @@ namespace Elffy
         {
             get
             {
-                if(_disposed) { throw new ObjectDisposedException(nameof(ResourceStream)); }
+                if(_disposed) { throw new ObjectDisposedException(nameof(LocalResourceStream)); }
                 return _innerStream.Position - _head;
             }
             set
             {
-                if(_disposed) { throw new ObjectDisposedException(nameof(ResourceStream)); }
+                if(_disposed) { throw new ObjectDisposedException(nameof(LocalResourceStream)); }
                 if((ulong)value >= (ulong)_length) { throw new ArgumentOutOfRangeException(nameof(value), value, "value is out of range"); }
                 _innerStream.Position = _head + value;
             }
         }
 
-        internal ResourceStream(string resourceFilePath, in ResourceObject obj)
+        internal LocalResourceStream(string resourceFilePath, in ResourceObject obj)
         {
             Debug.Assert(obj.Position >= 0);
             Debug.Assert(obj.Length >= 0);
 
             _head = obj.Position;
             _length = obj.Length;
-            var stream = AlloclessFileStream.OpenRead(resourceFilePath);
+            var stream = File.OpenRead(resourceFilePath);
             stream.Position = _head;
             _innerStream = stream;
         }
 
-        ~ResourceStream() => Dispose(false);
+        ~LocalResourceStream() => Dispose(false);
 
         /// <inheritdoc/>
         public override int Read(byte[] buffer, int offset, int count)
         {
-            if(_disposed) { throw new ObjectDisposedException(nameof(ResourceStream)); }
+            if(_disposed) { throw new ObjectDisposedException(nameof(LocalResourceStream)); }
             if(buffer is null) { throw new ArgumentNullException(nameof(buffer)); }
             return ReadCore(buffer.AsSpan(offset, count));
         }
@@ -84,13 +83,17 @@ namespace Elffy
         /// <inheritdoc/>
         public override int Read(Span<byte> buffer)
         {
-            if(_disposed) { throw new ObjectDisposedException(nameof(ResourceStream)); }
+            if(_disposed) { throw new ObjectDisposedException(nameof(LocalResourceStream)); }
             return ReadCore(buffer);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int ReadCore(Span<byte> buffer)
         {
+            // [NOTE]
+            // Use FileStream.Read(Span<byte>) for performance.
+            // The method does not allocate inner buffer.
+
             var current = _innerStream.Position;
             var available = (int)(_head + _length - current);
             var readLen = Math.Min(buffer.Length, available);

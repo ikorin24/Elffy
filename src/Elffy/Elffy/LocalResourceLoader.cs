@@ -28,7 +28,7 @@ namespace Elffy
                 ThrowNotFound(name);
                 static void ThrowNotFound(string name) => throw new ResourceNotFoundException(name);
             }
-            return new ResourceStream(_resourcesFilePath, resource);
+            return new LocalResourceStream(_resourcesFilePath, resource);
         }
 
         public long GetSize(string name)
