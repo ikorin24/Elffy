@@ -6,13 +6,11 @@ using Elffy.Shading;
 using Elffy.OpenGL;
 using Elffy.Effective;
 using Elffy.Diagnostics;
+using System.Diagnostics;
 
 namespace Elffy.Core
 {
-    /// <summary>
-    /// 画面に描画されるオブジェクトの基底クラス<para/>
-    /// 描画に関する操作を提供します<para/>
-    /// </summary>
+    /// <summary>Base class that is rendered on the screen.</summary>
     public abstract class Renderable : Positionable
     {
         private VBO _vbo;
@@ -22,29 +20,28 @@ namespace Elffy.Core
         private ShaderProgram? _shaderProgram;
         private int _instancingCount;
 
-        /// <summary>Vertex Buffer Object</summary>
+        /// <summary>Vertex buffer object</summary>
         public ref readonly VBO VBO => ref _vbo;
-        /// <summary>Index Buffer Object</summary>
+        /// <summary>Index buffer object</summary>
         public ref readonly IBO IBO => ref _ibo;
-        /// <summary>VAO</summary>
+        /// <summary>Vertex array object</summary>
         public ref readonly VAO VAO => ref _vao;
 
+        /// <summary>Get whether the <see cref="Renderable"/> is loaded and ready to be rendered.</summary>
         public bool IsLoaded { get; private set; }
 
-        /// <summary>描画処理を行うかどうか</summary>
+        /// <summary>Get or set whether the <see cref="Renderable"/> is visible in rendering.</summary>
         public bool IsVisible { get; set; } = true;
 
-        [MaybeNull]
-        public ShaderSource Shader
+        /// <summary>Get or set a shader source</summary>
+        public ShaderSource? Shader
         {
             get => _shader;
             set
             {
-                if(value is null) { ThrowNullArg(); }
                 if(IsLoaded) { ThrowAlreadyLoaded(); }
                 _shader = value;
 
-                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(value));
                 [DoesNotReturn] static void ThrowAlreadyLoaded() => throw new InvalidOperationException("already loaded");
             }
         }
@@ -74,14 +71,24 @@ namespace Elffy.Core
         {
         }
 
-        /// <summary>描画を行います</summary>
-        /// <param name="projection">投影行列</param>
-        /// <param name="view">view 行列</param>
-        /// <param name="modelParent">親の model 行列</param>
+        /// <summary>Render the <see cref="Renderable"/>.</summary>
+        /// <param name="projection">projection matrix</param>
+        /// <param name="view">view matrix</param>
+        /// <param name="modelParent">parent model matrix</param>
         internal unsafe void Render(in Matrix4 projection, in Matrix4 view, in Matrix4 modelParent)
         {
-            var withoutScale = modelParent * Position.ToTranslationMatrix4() * Rotation.ToMatrix4();
-            var model = withoutScale * Scale.ToScaleMatrix4();
+            //var withoutScale = modelParent * Position.ToTranslationMatrix4() * Rotation.ToMatrix4();
+            var withoutScale = modelParent;
+            withoutScale.M03 += Position.X;
+            withoutScale.M13 += Position.Y;
+            withoutScale.M23 += Position.Z;
+            withoutScale *= Rotation.ToMatrix4();
+
+            // var model = withoutScale * Scale.ToScaleMatrix4();
+            var model = withoutScale;
+            model.M00 *= Scale.X;
+            model.M11 *= Scale.Y;
+            model.M22 *= Scale.Z;
 
             if(IsLoaded && IsVisible && !(_shaderProgram is null)) {
                 Rendering?.Invoke(this, in model, in view, in projection);
@@ -118,23 +125,29 @@ namespace Elffy.Core
             }
         }
 
+        /// <summary>Load buffer data</summary>
+        /// <typeparam name="TVertex">type of vertex</typeparam>
+        /// <param name="vertices">vertex data to load</param>
+        /// <param name="indices">index data to load</param>
+        protected void LoadGraphicBuffer<TVertex>(Span<TVertex> vertices, Span<int> indices) where TVertex : unmanaged
+        {
+            LoadGraphicBuffer(vertices.AsReadOnly(), indices.AsReadOnly());
+        }
 
-        protected unsafe void LoadGraphicBuffer<TVertex>(Span<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged
-            => LoadGraphicBuffer(vertices.AsReadOnly(), indices);
-
-        /// <summary>指定の頂点配列とインデックス配列で VBO, IBO を作成し、VAO を作成します</summary>
-        /// <param name="vertices">頂点配列</param>
-        /// <param name="indices">インデックス配列</param>
-        protected unsafe void LoadGraphicBuffer<TVertex>(ReadOnlySpan<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged
+        /// <summary>Load buffer data</summary>
+        /// <typeparam name="TVertex">type of vertex</typeparam>
+        /// <param name="vertices">vertex data to load</param>
+        /// <param name="indices">index data to load</param>
+        protected void LoadGraphicBuffer<TVertex>(ReadOnlySpan<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged
         {
             HostScreen.ThrowIfNotMainThread();
             if(IsLoaded) { throw new InvalidOperationException("already loaded"); }
 
-            _shader ??= EmptyShaderSource<TVertex>.Instance;
+            var shader = _shader ?? EmptyShaderSource<TVertex>.Instance;
 
             // checking target vertex type of shader is valid.
             if(DevEnv.IsEnabled) {
-                ShaderTargetVertexTypeAttribute.CheckVertexType(_shader.GetType(), typeof(TVertex));
+                ShaderTargetVertexTypeAttribute.CheckVertexType(shader.GetType(), typeof(TVertex));
             }
 
             _vbo = VBO.Create();
@@ -143,15 +156,16 @@ namespace Elffy.Core
             IBO.BindBufferData(ref _ibo, indices, BufferUsageHint.StaticDraw);
             _vao = VAO.Create();
             VAO.Bind(_vao);
-            IsLoaded = true;
-            _shaderProgram?.Dispose();
-            _shaderProgram = _shader.Compile();
+            Debug.Assert(_shaderProgram is null);
+            _shaderProgram = shader.Compile();
             _shaderProgram.Initialize(this);
+            IsLoaded = true;
         }
 
 
         protected override void OnDead()
         {
+            HostScreen.ThrowIfNotMainThread();
             var isLoaded = IsLoaded;
             IsLoaded = false;
             base.OnDead();
