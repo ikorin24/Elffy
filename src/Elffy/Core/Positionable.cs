@@ -39,7 +39,7 @@ namespace Elffy.Core
         public bool IsRoot => _parent is null;
 
         /// <summary>Get whether the <see cref="Positionable"/> has any children.</summary>
-        public bool HasChild => Children.Count > 0;
+        public bool HasChild => _children.Count > 0;
 
         /// <summary>Get or set local position whose origin is the position of <see cref="Parent"/>.</summary>
         /// <remarks>The value is same as <see cref="WorldPosition"/> if <see cref="IsRoot"/> is true.</remarks>
@@ -127,7 +127,7 @@ namespace Elffy.Core
         /// <returns>All offspring</returns>
         public IEnumerable<Positionable> GetOffspring()
         {
-            foreach(var child in Children) {
+            foreach(var child in _children) {
                 yield return child;
                 foreach(var offspring in child.GetOffspring()) {
                     yield return offspring;
