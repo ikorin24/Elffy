@@ -12,6 +12,10 @@ namespace Elffy.Shading
 {
     public abstract class ShaderSource
     {
+        // [NOTE]
+        // ShaderSource don't have any opengl resources. (e.g. ProgramObject)
+        // Keep it thread-independent and context-free.
+
         protected abstract string VertexShaderSource { get; }
 
         protected abstract string FragmentShaderSource { get; }
