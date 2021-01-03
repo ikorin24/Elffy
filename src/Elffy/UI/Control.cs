@@ -43,6 +43,8 @@ namespace Elffy.UI
         /// <summary>この <see cref="Control"/> を持つ UI tree の Root</summary>
         public RootPanel? Root { get; protected private set; }
 
+        public bool IsRoot => _parent is null;
+
         public Vector2i Position
         {
             get => (Vector2i)Renderable.Position.Xy;
@@ -161,7 +163,7 @@ namespace Elffy.UI
 
 #endif      // future version, auto layout
 
-        /// <summary>get or set whether this <see cref="Control"/> is enable in HitTest</summary>
+        /// <summary>get or set whether this <see cref="Control"/> is enabled in HitTest</summary>
         public bool IsHitTestVisible { get; set; } = true;
         /// <summary>get whether the mouse is over this <see cref="Control"/></summary>
         public bool IsMouseOver { get; private set; }
@@ -176,7 +178,7 @@ namespace Elffy.UI
         /// <summary>Mouse leave event</summary>
         public event Action<Control, MouseEventArgs>? MouseLeave;
 
-        public event Action<Control>? Alive;
+        public event Action<Control>? Activated;
         public event Action<Control>? Dead;
 
         /// <summary>constructor of <see cref="Control"/></summary>
@@ -187,7 +189,7 @@ namespace Elffy.UI
             Width = 30;
             Height = 30;
             Texture = new Texture(TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear, TextureMipmapMode.None, TextureWrapMode.ClampToEdge, TextureWrapMode.ClampToEdge);
-            Renderable.Alive += OnRenderableAlive;
+            Renderable.Activated += OnRenderableActivated;
             Renderable.Dead += OnRenderableDead;
         }
 
@@ -214,7 +216,7 @@ namespace Elffy.UI
                 texture.LoadUndefined(new Vector2i(Width, Height));
                 var p = texture.GetPainter(false);
                 if(copyFromOriginal) {
-                    p.Fill(ColorByte.White);
+                    p.Fill(ColorByte.White);        // TODO: デフォルトが白じゃない場合は？
                 }
                 return p;
             }
@@ -229,7 +231,7 @@ namespace Elffy.UI
             if(texture.IsEmpty) {
                 texture.LoadUndefined(new Vector2i(Width, Height));
                 var p = texture.GetPainter(rect, copyFromOriginal);
-                p.Fill(ColorByte.White);
+                p.Fill(ColorByte.White);            // TODO: デフォルトが白じゃない場合は？
                 return p;
             }
             else {
@@ -284,11 +286,11 @@ namespace Elffy.UI
             Renderable.Terminate();
         }
 
-        private void OnRenderableAlive(FrameObject sender)
+        private void OnRenderableActivated(FrameObject sender)
         {
             // Attached component is disposed automatically when Renderable dies.
             SafeCast.As<ComponentOwner>(sender).AddComponent(Texture);
-            Alive?.Invoke(this);
+            Activated?.Invoke(this);
         }
 
         private void OnRenderableDead(FrameObject sender)

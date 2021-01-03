@@ -111,6 +111,7 @@ namespace Elffy.Core
 
             Size = OwnerScreen.ClientSize;  // Initialize viewport and so on.
 
+            Layers.UILayer.Initialize();
             Initialized?.Invoke(OwnerScreen);
 
             foreach(var layer in Layers.AsReadOnlySpan()) {

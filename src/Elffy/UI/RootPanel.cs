@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using Elffy.Core;
+using Elffy.Shading;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -7,7 +8,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace Elffy.UI
 {
     /// <summary>UI tree の Root となるオブジェクト</summary>
-    public class RootPanel : Panel
+    public sealed class RootPanel : Panel
     {
         /// <summary>この <see cref="RootPanel"/> とその子孫を描画するレイヤー</summary>
         internal UILayer UILayer { get; }
@@ -21,7 +22,13 @@ namespace Elffy.UI
                 [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(uiLayer));
             }
             UILayer = uiLayer;
+        }
+
+        internal void Initialize()
+        {
             Root = this;
+            Renderable.Shader = new UISolidColorShaderSource(Color4.Transparent);
+            Renderable.Activate(UILayer);
         }
 
 #if false   // future version, auto layout

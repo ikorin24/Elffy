@@ -8,56 +8,49 @@ namespace Elffy.Core
     {
         private readonly FrameObjectStore _store = FrameObjectStore.New();
 
-        ///// <summary>現在フォーカスがある <see cref="Control"/></summary>
-        //private Control? _focusedControl;
-
-        /// <summary>このレイヤーを持つ親</summary>
-        internal LayerCollection Owner { get; }
-        LayerCollection? ILayer.OwnerCollection => Owner;
+        /// <inheritdoc/>
+        public int ObjectCount => _store.ObjectCount;
 
         /// <inheritdoc/>
         public bool IsVisible { get; set; } = true;
 
-        /// <summary>UI tree の Root</summary>
-        internal RootPanel UIRoot { get; }
+        /// <inheritdoc/>
+        public LayerCollection OwnerCollection { get; }
 
-        internal UILayer(LayerCollection owner)
+        /// <summary>Get root panel of UI</summary>
+        public RootPanel UIRoot { get; }
+
+        /// <summary>Get or set whether hit test is enabled.</summary>
+        public bool IsHitTestEnabled { get; set; } = true;
+
+        public UILayer(LayerCollection owner)
         {
-            Owner = owner;
+            OwnerCollection = owner;
             UIRoot = new RootPanel(this);
         }
 
-        internal bool IsHitTestEnabled { get; set; } = true;
-
-        /// <summary>現在生きている全オブジェクトの数を取得します</summary>
-        public int ObjectCount => _store.ObjectCount;
-
-        /// <summary>指定した<see cref="FrameObject"/>を追加します</summary>
-        /// <param name="frameObject">追加するオブジェクト</param>
+        /// <inheritdoc/>
         public void AddFrameObject(FrameObject frameObject) => _store.AddFrameObject(frameObject);
 
-        /// <summary>指定した<see cref="FrameObject"/>を削除します</summary>
-        /// <param name="frameObject">削除するオブジェクト</param>
-        /// <returns>削除できたかどうか</returns>
+        /// <inheritdoc/>
         public void RemoveFrameObject(FrameObject frameObject) => _store.RemoveFrameObject(frameObject);
 
-        internal void ApplyRemove() => _store.ApplyRemove();
-
-        internal void ApplyAdd() => _store.ApplyAdd();
-
-        internal void EarlyUpdate() => _store.EarlyUpdate();
-
-        /// <summary>フレームの更新を行います</summary>
-        internal void Update() => _store.Update();
-
-        internal void LateUpdate() => _store.LateUpdate();
-
-        /// <summary>保持している <see cref="FrameObject"/> を全て破棄し、リストをクリアします</summary>
+        /// <inheritdoc/>
         public void ClearFrameObject() => _store.ClearFrameObject();
 
-        /// <summary>画面への投影行列を指定して、描画を実行します</summary>
-        /// <param name="projection"></param>
-        internal unsafe void Render(in Matrix4 projection)
+        public void ApplyRemove() => _store.ApplyRemove();
+
+        public void ApplyAdd() => _store.ApplyAdd();
+
+        public void EarlyUpdate() => _store.EarlyUpdate();
+
+        public void Update() => _store.Update();
+
+        public void LateUpdate() => _store.LateUpdate();
+
+        /// <summary>Render objects with specified projection matrix</summary>
+        /// <param name="projection">projection matrix</param>
+        public unsafe void Render(in Matrix4 projection)
         {
             var view = new Matrix4(1, 0, 0, 0,
                                    0, -1, 0, UIRoot.Height,
@@ -69,8 +62,8 @@ namespace Elffy.Core
             }
         }
 
-        /// <summary><see cref="UILayer"/> 内の <see cref="Control"/> に対してマウスヒットテストを行います</summary>
-        /// <param name="mouse">マウスオブジェクト</param>
+        /// <summary>Do hit test</summary>
+        /// <param name="mouse">mouse object</param>
         public void HitTest(Mouse mouse)
         {
             if(IsHitTestEnabled == false) { return; }
@@ -92,6 +85,11 @@ namespace Elffy.Core
                     control.NotifyHitTestResult(false, mouse);                    // TODO: ヒット時イベント中に control を remove されるとまずい (Spanで回してるので)
                 }
             }
+        }
+
+        public void Initialize()
+        {
+            UIRoot.Initialize();
         }
     }
 }
