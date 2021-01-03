@@ -10,6 +10,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Shading
 {
+    // TODO: 構造体にできると思う
     public sealed class ShaderProgram   // not IDisposable, dispose only from internal
     {
         private ProgramObject _program;
@@ -83,22 +84,23 @@ namespace Elffy.Shading
         private static class ShaderProgramCache
         {
             [ThreadStatic]
-            private static Dictionary<IHostScreen, Dictionary<ShaderSource, CompiledCache>>? _dic;
+            private static Dictionary<IHostScreen, Dictionary<SourceKey, CompiledCache>>? _dic;
 
             public static ProgramObject Get(IHostScreen screen, ShaderSource shaderSource)
             {
+                var key = new SourceKey(shaderSource);
                 _dic ??= new();
                 if(!_dic.TryGetValue(screen, out var dic)) {
                     dic = new();
                     _dic[screen] = dic;
                 }
-                if(!dic.TryGetValue(shaderSource, out var cache)) {
-                    cache = new() { Program = ShaderSource.CompileToProgramObject(shaderSource), Count = 1 };
+                if(!dic.TryGetValue(key, out var cache)) {
+                    cache = new(ShaderSource.CompileToProgramObject(key.VertSoruce, key.FragSource), 1);
                 }
                 else {
                     cache.Count++;
                 }
-                dic[shaderSource] = cache;
+                dic[key] = cache;
                 Debug.Assert(cache.Count > 0);
                 Debug.Assert(!cache.Program.IsEmpty);
                 return cache.Program;
@@ -112,13 +114,14 @@ namespace Elffy.Shading
                 if(!_dic.TryGetValue(screen, out var dic)) {
                     goto DELETE;
                 }
-                if(!dic.TryGetValue(shaderSource, out var cache)) {
+                var key = new SourceKey(shaderSource);
+                if(!dic.TryGetValue(key, out var cache)) {
                     goto DELETE;
                 }
                 cache.Count--;
-                dic[shaderSource] = cache;
+                dic[key] = cache;
                 if(cache.Count <= 0) {
-                    dic.Remove(shaderSource, out _);
+                    dic.Remove(key, out _);
                     goto DELETE;
                 }
                 return;
@@ -134,11 +137,35 @@ namespace Elffy.Shading
             public ProgramObject Program;
             public int Count;
 
+            public CompiledCache(ProgramObject program, int count)
+            {
+                Program = program;
+                Count = count;
+            }
+
             public override bool Equals(object? obj) => obj is CompiledCache cache && Equals(cache);
 
             public bool Equals(CompiledCache other) => Program.Equals(other.Program) && Count == other.Count;
 
             public override int GetHashCode() => HashCode.Combine(Program, Count);
+        }
+
+        private readonly struct SourceKey : IEquatable<SourceKey>
+        {
+            public readonly string VertSoruce;
+            public readonly string FragSource;
+
+            public SourceKey(ShaderSource source)
+            {
+                VertSoruce = source.VertSourceInternal;
+                FragSource = source.FragSourceInternal;
+            }
+
+            public override bool Equals(object? obj) => obj is SourceKey key && Equals(key);
+
+            public bool Equals(SourceKey other) => VertSoruce == other.VertSoruce && FragSource == other.FragSource;
+
+            public override int GetHashCode() => HashCode.Combine(VertSoruce, FragSource);
         }
     }
 }

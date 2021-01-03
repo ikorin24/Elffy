@@ -20,6 +20,12 @@ namespace Elffy.Shading
 
         protected abstract string FragmentShaderSource { get; }
 
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        internal string VertSourceInternal => VertexShaderSource;
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        internal string FragSourceInternal => FragmentShaderSource;
+
         /// <summary>派生クラスでオーバーライドされた場合、このシェーダーに渡される頂点属性変数を定義します</summary>
         /// <param name="definition">頂点属性定義用オブジェクト</param>
         /// <param name="target">描画対象の <see cref="Renderable"/></param>
@@ -47,11 +53,6 @@ namespace Elffy.Shading
         internal unsafe ShaderProgram Compile()
         {
             return new ShaderProgram(this);
-        }
-
-        internal static ProgramObject CompileToProgramObject(ShaderSource shaderSource)
-        {
-            return CompileToProgramObject(shaderSource.VertexShaderSource, shaderSource.FragmentShaderSource);
         }
 
         internal static ProgramObject CompileToProgramObject(string vertSource, string fragSource)
