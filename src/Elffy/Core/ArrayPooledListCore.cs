@@ -42,6 +42,15 @@ namespace Elffy.Core
             _count++;
         }
 
+        public void AddRange(ReadOnlySpan<T> items)
+        {
+            if(items.IsEmpty) { return; }
+            EnsureCapacity(_count + items.Length);
+            Debug.Assert(_array is not null);
+            items.CopyTo(_array.AsSpan(_count));
+            _count += items.Length;
+        }
+
         public bool Remove(T item)
         {
             var span = AsSpan();
@@ -65,7 +74,6 @@ namespace Elffy.Core
         {
             _count = 0;
             Pool.TryPush(ref _array);
-            _array = null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
