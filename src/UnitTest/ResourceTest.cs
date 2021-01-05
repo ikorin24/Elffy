@@ -6,6 +6,7 @@ using System.Linq;
 using System.Collections.Generic;
 using ElffyResourceCompiler;
 using Elffy;
+using Elffy.Core;
 using Xunit;
 
 namespace UnitTest
