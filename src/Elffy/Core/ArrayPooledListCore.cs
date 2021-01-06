@@ -145,12 +145,10 @@ namespace Elffy.Core
         {
             if(_array is null || _array.Length < capacity) {
                 uint newCapacity = Math.Max(4, MathTool.RoundUpToPowerOfTwo((uint)capacity));
-                //Growth(newCapacity, _array, out _array);
                 Growth(newCapacity, ref this);
             }
 
             [MethodImpl(MethodImplOptions.NoInlining)]  // no inlining
-            //static void Growth(uint newCapacity, in ArrayPooledListCore<T> instance, T[]? current, [NotNull] out T[]? array)
             static void Growth(uint newCapacity, ref ArrayPooledListCore<T> instance)
             {
                 Debug.Assert(newCapacity > instance._count);
@@ -191,7 +189,7 @@ namespace Elffy.Core
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static bool TryGet(uint size, [MaybeNullWhen(false)] out T[] array)
             {
-                Debug.Assert((size & (size - 1u)) == 0u, $"{nameof(size)} must be power of two.");
+                Debug.Assert(MathTool.IsPowerOfTwo(size), $"{nameof(size)} must be power of two.");
 
                 var index = GetBucketIndex(size);
                 if((uint)index >= (uint)BucketCount) {
@@ -213,7 +211,7 @@ namespace Elffy.Core
                 if(array is null) {
                     return false;
                 }
-                Debug.Assert((array.Length & (array.Length - 1u)) == 0u, $"Length of array must be power of two.");
+                Debug.Assert(MathTool.IsPowerOfTwo(array.Length), $"Length of array must be power of two.");
 
                 if(RuntimeHelpers.IsReferenceOrContainsReferences<T>()) {
                     Array.Clear(array, 0, array.Length);
@@ -300,6 +298,7 @@ namespace Elffy.Core
             }
         }
 
+        [DebuggerDisplay("{Array}")]
         private struct ArrayWrap
         {
             public T[]? Array;
