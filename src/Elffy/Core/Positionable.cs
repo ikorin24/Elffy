@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.ComponentModel;
+using System.Diagnostics;
 
 namespace Elffy.Core
 {
@@ -11,8 +13,11 @@ namespace Elffy.Core
         private Quaternion _ratation = Quaternion.Identity;
         private Vector3 _scale = Vector3.One;
         private Vector3 _position;
-        private readonly PositionableCollection _children;
+        private ArrayPooledListCore<Positionable> _childrenCore = new();    // mutable object, don't make it readonly
         private Positionable? _parent;
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        internal ref ArrayPooledListCore<Positionable> ChildrenCore => ref _childrenCore;   // don't make it ref readonly
 
         /// <summary>Get or set <see cref="Quaternion"/> of rotation.</summary>
         public ref Quaternion Rotation => ref _ratation;
@@ -33,13 +38,13 @@ namespace Elffy.Core
         }
 
         /// <summary>Get children of the <see cref="Positionable"/></summary>
-        public PositionableCollection Children => _children;
+        public PositionableCollection Children => new(this);
 
         /// <summary>Get whether the <see cref="Positionable"/> is a root object in the tree.</summary>
         public bool IsRoot => _parent is null;
 
         /// <summary>Get whether the <see cref="Positionable"/> has any children.</summary>
-        public bool HasChild => _children.Count > 0;
+        public bool HasChild => _childrenCore.Count > 0;
 
         /// <summary>Get or set local position whose origin is the position of <see cref="Parent"/>.</summary>
         /// <remarks>The value is same as <see cref="WorldPosition"/> if <see cref="IsRoot"/> is true.</remarks>
@@ -72,7 +77,6 @@ namespace Elffy.Core
 
         public Positionable()
         {
-            _children = new PositionableCollection(this);
         }
 
         /// <summary>Translate the <see cref="Positionable"/>.</summary>
@@ -127,7 +131,7 @@ namespace Elffy.Core
         /// <returns>All offspring</returns>
         public IEnumerable<Positionable> GetOffspring()
         {
-            foreach(var child in _children) {
+            foreach(var child in _childrenCore) {
                 yield return child;
                 foreach(var offspring in child.GetOffspring()) {
                     yield return offspring;

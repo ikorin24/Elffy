@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Linq;
 using Elffy.Core;
 using Elffy;
@@ -9,6 +10,54 @@ namespace UnitTest
     public class PositionableTest
     {
         const int FloatPrecision = 5;
+
+        [Fact]
+        public void PositionableCollectionTest()
+        {
+            var root = new TestObject();
+            Assert.True(root.Children.Count == 0);
+            Assert.True(root.Children.AsSpan().IsEmpty);
+
+            // Invalid instance throws exception
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                var invalidCollection = new PositionableCollection();
+                invalidCollection.Add(new TestObject());
+            });
+
+            // Add ten items
+            var items = Enumerable.Range(0, 10).Select(i => new TestObject()).ToArray();
+            foreach(var item in items) {
+                root.Children.Add(item);
+            }
+            Assert.True(root.Children.Count == 10);
+
+            // Check added items
+            for(int i = 0; i < root.Children.Count; i++) {
+                Assert.True(root.Children[i] == items[i]);
+            }
+
+            // Check iteration by GetEnumerator()
+            {
+                int i = 0;
+                foreach(var item in root.Children) {
+                    Assert.True(item == root.Children[i]);
+                    i++;
+                }
+            }
+
+            // Check iteration by AsSpan()
+            {
+                int i = 0;
+                foreach(var item in root.Children.AsSpan()) {
+                    Assert.True(item == root.Children[i]);
+                    i++;
+                }
+            }
+
+            // Check GetOffspring() method
+            Assert.True(root.GetOffspring().SequenceEqual(items));
+        }
 
         /// <summary>Positionable のツリー構造のワールド座標・ローカル座標が正しいかテストします</summary>
         [Fact]

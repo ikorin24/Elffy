@@ -95,7 +95,7 @@ namespace Elffy.Core
             }
 
             if(HasChild) {
-                foreach(var child in Children.AsReadOnlySpan()) {
+                foreach(var child in Children.AsSpan()) {
                     if(child is Renderable renderable) {
                         renderable.Render(projection, view, withoutScale);
                     }

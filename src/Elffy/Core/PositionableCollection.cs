@@ -1,116 +1,134 @@
 ﻿#nullable enable
-using Elffy.Effective;
 using System;
-using System.Collections;
-using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace Elffy.Core
 {
-    /// <summary><see cref="Positionable"/> のツリー構造を表現するための <see cref="Positionable"/> のリスト</summary>
-    public class PositionableCollection : IReadOnlyList<Positionable>, IReadOnlyCollection<Positionable>, ICollection<Positionable>
+    [DebuggerTypeProxy(typeof(PositionableCollectionDebuggerTypeProxy))]
+    [DebuggerDisplay("{DebugDisplay}")]
+    public readonly struct PositionableCollection : IEquatable<PositionableCollection>
     {
-        /// <summary>この <see cref="PositionableCollection"/> インスタンスを持つ <see cref="Positionable"/> オブジェクト</summary>
-        private Positionable _owner;
-        private List<Positionable> _list;
+        private readonly Positionable _owner;
 
-        /// <summary>インデックスを指定してリストの要素にアクセスします</summary>
-        /// <param name="index">インデックス</param>
-        /// <returns>指定した要素</returns>
-        public Positionable this[int index] => _list[index];
+        private string DebugDisplay => $"{nameof(PositionableCollection)} (Count = {Count})";
 
-        /// <summary>リストの要素数</summary>
-        public int Count => _list.Count;
+        public Positionable this[int index] => _owner.ChildrenCore[index];
 
-        bool ICollection<Positionable>.IsReadOnly => false;
+        public int Count => _owner.ChildrenCore.Count;
 
-        /// <summary>コンストラクタ</summary>
-        /// <param name="owner">この <see cref="PositionableCollection"/> を持つ <see cref="Positionable"/> オブジェクト</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal PositionableCollection(Positionable owner)
         {
-            if(owner is null) { throw new ArgumentNullException(nameof(owner)); }
+            Debug.Assert(owner is not null);
             _owner = owner;
-            _list = new List<Positionable>();
         }
 
-        /// <summary>
-        /// 要素を追加します<para/>
-        /// ※パフォーマンスのため <see cref="Positionable"/> の親子関係は循環を検知しません。ツリーの循環は予期せぬ例外や無限ループに陥る可能性があります。
-        /// </summary>
-        /// <param name="item">追加する要素</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(Positionable item)
         {
-            if(item is null) { throw new ArgumentNullException(nameof(item)); }
+            ThrowIfInvalidInstance();
+            if(item is null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(item));
+            }
             item.Parent = _owner;
-            _list.Add(item);
+            _owner.ChildrenCore.Add(item);
         }
 
-        /// <summary>要素をクリアします</summary>
         public void Clear()
         {
-            _list.ForEach(x => x.Parent = null);
-            _list.Clear();
+            ThrowIfInvalidInstance();
+            ref var core = ref _owner.ChildrenCore;
+            foreach(var item in core.AsSpan()) {
+                item.Parent = null;
+            }
+            core.Clear();
         }
 
-        /// <summary>リスト中に要素が含まれているかを取得します</summary>
-        /// <param name="item">確認する要素</param>
-        /// <returns>リスト中に指定要素が含まれているか</returns>
-        public bool Contains(Positionable item) => _list.Contains(item);
+        public bool Contains(Positionable item)
+        {
+            ThrowIfInvalidInstance();
+            return _owner.ChildrenCore.IndexOf(item) >= 0;
+        }
 
-        /// <summary>リストの要素を配列にコピーします</summary>
-        /// <param name="array">コピー先の配列</param>
-        /// <param name="arrayIndex">コピー先の配列のコピーを開始するインデックス</param>
-        public void CopyTo(Positionable[] array, int arrayIndex) => _list.CopyTo(array, arrayIndex);
+        public int IndexOf(Positionable item)
+        {
+            ThrowIfInvalidInstance();
+            return _owner.ChildrenCore.IndexOf(item);
+        }
 
-        /// <summary>指定要素のインデックスを取得します</summary>
-        /// <param name="item">インデックスを取得する要素</param>
-        /// <returns>要素のインデックス</returns>
-        public int IndexOf(Positionable item) => _list.IndexOf(item);
-
-        /// <summary>インデックスを指定して要素を追加します</summary>
-        /// <param name="index">インデックス</param>
-        /// <param name="item">追加する要素</param>
         public void Insert(int index, Positionable item)
         {
-            if(item is null) { throw new ArgumentNullException(nameof(item)); }
-            if(index < 0 || index > _list.Count) { throw new ArgumentOutOfRangeException(nameof(index), index, "value is out of range."); }
+            ThrowIfInvalidInstance();
+            if(item is null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(item));
+            }
 
             item.Parent = _owner;
-            _list.Insert(index, item);
+            _owner.ChildrenCore.Insert(index, item);
         }
 
-        /// <summary>要素をリストから削除します</summary>
-        /// <param name="item">削除する要素</param>
-        /// <returns>削除に成功したか (指定した要素が存在しない場合 false)</returns>
         public bool Remove(Positionable item)
         {
-            if(item is null) { throw new ArgumentNullException(nameof(item)); }
-            var result = _list.Remove(item);
+            ThrowIfInvalidInstance();
+            if(item is null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(item));
+            }
+            var result = _owner.ChildrenCore.Remove(item);
             if(result) {
                 item.Parent = null;
             }
             return result;
         }
 
-        /// <summary>指定のインデックスの要素を削除します</summary>
-        /// <param name="index">インデックス</param>
         public void RemoveAt(int index)
         {
-            if(index < 0 || index >= _list.Count) { throw new ArgumentOutOfRangeException(nameof(index), index, $"{nameof(index)} is out of range"); }
-
-            _list[index].Parent = null;
-            _list.RemoveAt(index);
+            ThrowIfInvalidInstance();
+            ref var core = ref _owner.ChildrenCore;
+            core[index].Parent = null;
+            core.RemoveAt(index);
         }
 
-        internal ReadOnlySpan<Positionable> AsReadOnlySpan() => _list.AsReadOnlySpan();
+        public Positionable[] ToArray() => _owner.ChildrenCore.AsSpan().ToArray();
 
-        /// <summary>列挙子を取得します</summary>
-        /// <returns>列挙子</returns>
-        public List<Positionable>.Enumerator GetEnumerator() => _list.GetEnumerator();
+        public ReadOnlySpan<Positionable> AsSpan() => _owner.ChildrenCore.AsSpan();
 
-        IEnumerator<Positionable> IEnumerable<Positionable>.GetEnumerator() => _list.GetEnumerator();
+        public ArraySliceEnumerator<Positionable> GetEnumerator() => _owner.ChildrenCore.GetEnumerator();
 
-        /// <summary>列挙子を取得します</summary>
-        /// <returns>列挙子</returns>
-        IEnumerator IEnumerable.GetEnumerator() => (_list as IEnumerable).GetEnumerator();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ThrowIfInvalidInstance()
+        {
+            if(_owner is null || _owner.LifeState == LifeState.Dead) {
+                Throw();
+                [DoesNotReturn] static void Throw() => throw new InvalidOperationException($"Parent is already dead or the {nameof(PositionableCollection)} is invalid.");
+            }
+        }
+
+        public override string ToString() => nameof(PositionableCollection);
+
+        public override bool Equals(object? obj) => obj is PositionableCollection collection && Equals(collection);
+
+        public bool Equals(PositionableCollection other) => ReferenceEquals(_owner, other._owner);
+
+        public override int GetHashCode() => _owner.GetHashCode();
+
+        public static bool operator ==(PositionableCollection left, PositionableCollection right) => left.Equals(right);
+
+        public static bool operator !=(PositionableCollection left, PositionableCollection right) => !(left == right);
+    }
+
+    internal sealed class PositionableCollectionDebuggerTypeProxy
+    {
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private readonly PositionableCollection _entity;
+
+        [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+        public Positionable[] Items => _entity.ToArray();
+
+        public PositionableCollectionDebuggerTypeProxy(PositionableCollection entity) => _entity = entity;
     }
 }

@@ -4,7 +4,9 @@ using System.Numerics;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using Elffy.Effective.Unsafes;
 using Elffy.Mathematics;
 
@@ -17,7 +19,7 @@ namespace Elffy.Core
 
         public int Count => _count;
 
-        public int Capacity => _array?.Length ?? 0;
+        public int Capacity => _array?.Length ?? 0;     // Setter is not supported because capacity must be power of two.
 
         public ref T this[int index]
         {
@@ -54,19 +56,67 @@ namespace Elffy.Core
         public bool Remove(T item)
         {
             var span = AsSpan();
+            var index = IndexOf(item);
+            if(index < 0) {
+                return false;
+            }
+            else {
+                if(index != _count - 1) {
+                    span.Slice(index + 1).CopyTo(span.Slice(index));
+                }
+                _count--;
+                if(RuntimeHelpers.IsReferenceOrContainsReferences<T>()) {
+                    span[span.Length - 1] = default!;
+                }
+                return true;
+            }
+        }
+
+        public void RemoveAt(int index)
+        {
+            if((uint)index >= (uint)_count) {
+                ThrowOutOfRange();
+                [DoesNotReturn] static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(index));
+            }
+            var span = AsSpan();
+            if(index != _count - 1) {
+                span.Slice(index + 1).CopyTo(span.Slice(index));
+            }
+            _count--;
+            if(RuntimeHelpers.IsReferenceOrContainsReferences<T>()) {
+                span[span.Length - 1] = default!;
+            }
+        }
+
+        public void Insert(int index, T item)
+        {
+            if((uint)index > (uint)_count) {
+                ThrowOutOfRange();
+                [DoesNotReturn] static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(index));
+            }
+
+            EnsureCapacity(_count + 1);
+            Debug.Assert(_array is not null);
+            Debug.Assert(_array.Length >= _count + 1);
+            if(index != _count) {
+                Debug.Assert(index >= 0 && index < _count);
+
+                // 0 <= index < _count < _array.Length
+                _array.AsSpan(index).CopyTo(_array.AsSpan(index + 1));
+            }
+            _array.At(index) = item;
+            _count++;
+        }
+
+        public int IndexOf(T item)
+        {
+            var span = AsSpan();
             for(int i = 0; i < span.Length; i++) {
                 if(EqualityComparer<T>.Default.Equals(span[i], item)) {
-                    if(i != _count - 1) {
-                        span.Slice(i + 1).CopyTo(span.Slice(i));
-                    }
-                    _count--;
-                    if(RuntimeHelpers.IsReferenceOrContainsReferences<T>()) {
-                        span[span.Length - 1] = default!;
-                    }
-                    return true;
+                    return i;
                 }
             }
-            return false;
+            return -1;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -84,18 +134,45 @@ namespace Elffy.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ArraySliceEnumerator<T> GetEnumerator()
+        {
+            Debug.Assert((_array is null && _count == 0) || (_array is not null));     // count must be 0 when array is null.
+            return new ArraySliceEnumerator<T>(_array, _count);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void EnsureCapacity(int capacity)
         {
             if(_array is null || _array.Length < capacity) {
-                uint newCapacity = MathTool.RoundUpToPowerOfTwo((uint)capacity);
-                Growth(newCapacity, out _array);
+                uint newCapacity = Math.Max(4, MathTool.RoundUpToPowerOfTwo((uint)capacity));
+                //Growth(newCapacity, _array, out _array);
+                Growth(newCapacity, ref this);
             }
 
             [MethodImpl(MethodImplOptions.NoInlining)]  // no inlining
-            static void Growth(uint newCapacity, [NotNull] out T[]? array)
+            //static void Growth(uint newCapacity, in ArrayPooledListCore<T> instance, T[]? current, [NotNull] out T[]? array)
+            static void Growth(uint newCapacity, ref ArrayPooledListCore<T> instance)
             {
-                if(!Pool.TryGet(newCapacity, out array)) {
-                    array = GC.AllocateUninitializedArray<T>((int)newCapacity);
+                Debug.Assert(newCapacity > instance._count);
+                var current = instance._array;
+                if(!Pool.TryGet(newCapacity, out instance._array)) {
+                    if(RuntimeHelpers.IsReferenceOrContainsReferences<T>()) {
+                        instance._array = new T[newCapacity];
+                    }
+                    else {
+                        instance._array = GC.AllocateUninitializedArray<T>((int)newCapacity);
+                    }
+                }
+                Debug.Assert(instance._array.Length == newCapacity);
+
+                if(instance._count > 0) {
+                    Debug.Assert(current is not null);
+
+                    // No index checking because
+                    // instance._count < newCapacity == instance._array.Length
+                    current.AsSpanUnsafe(0, instance._count).CopyTo(instance._array.AsSpanUnsafe());
+
+                    Pool.TryPush(ref current);
                 }
             }
         }
@@ -229,6 +306,55 @@ namespace Elffy.Core
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public ArrayWrap(T[] array) => Array = array;
+        }
+    }
+
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public struct ArraySliceEnumerator<T> : IEnumerator<T>, IEnumerator
+    {
+        private readonly T[]? _array;
+        private readonly int _count;
+        private int _i;
+        private T _current;
+        public T Current => _current;
+
+        object IEnumerator.Current => _current!;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal ArraySliceEnumerator(T[]? array, int count)
+        {
+            Debug.Assert((array is null && count == 0) || (array is not null));     // count must be 0 when array is null.
+
+            _array = array;
+            _count = count;
+            _i = 0;
+            _current = default!;
+        }
+
+        public void Dispose() { }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool MoveNext()
+        {
+            // [NOTE]
+            // _count == 0 when _array is null, so the method always returns false.
+
+            if(_i < _count) {
+                Debug.Assert(_array is not null);
+                _current = _array.At(_i);
+                _i++;
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Reset()
+        {
+            _i = 0;
+            _current = default!;
         }
     }
 }
