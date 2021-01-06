@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.ComponentModel;
 using System.Diagnostics;
 
 namespace Elffy.Core
@@ -164,6 +163,13 @@ namespace Elffy.Core
                 }
                 return obj;
             }
+        }
+
+        protected override void OnDead()
+        {
+            base.OnDead();
+            // TODO: 子が生きてる場合、子の座標はどうする？
+            //Children.Clear();
         }
     }
 }
