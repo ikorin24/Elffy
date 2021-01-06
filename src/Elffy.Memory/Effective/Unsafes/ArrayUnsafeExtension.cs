@@ -1,9 +1,9 @@
 ﻿#nullable enable
 using System.Runtime.CompilerServices;
 using System;
-using Elffy.AssemblyServices;
-#if !NETCOREAPP3_1
 using System.Runtime.InteropServices;
+#if NETCOREAPP3_1
+using Elffy.AssemblyServices;
 #endif
 
 namespace Elffy.Effective.Unsafes
@@ -12,6 +12,7 @@ namespace Elffy.Effective.Unsafes
     {
         /// <summary>Get array element at specified index without range checking.</summary>
         /// <remarks>
+        /// [NOTE] 
         /// This method does not check null reference and does not check index range.
         /// *** That means UNDEFINED behaviors may occor in this method. ***
         /// </remarks>
@@ -35,6 +36,13 @@ namespace Elffy.Effective.Unsafes
 #endif
         }
 
+        /// <summary>Get reference to the 0th element without any checking.</summary>
+        /// <remarks>
+        /// [NOTE] DOES NOT use this method for empty array.
+        /// </remarks>
+        /// <typeparam name="T">type of element</typeparam>
+        /// <param name="array">source array</param>
+        /// <returns>reference to the 0th element</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #if NETCOREAPP3_1
         [CriticalDotnetDependency("netcoreapp3.1")]
@@ -51,6 +59,57 @@ namespace Elffy.Effective.Unsafes
 #else
             throw new NotSupportedException();
 #endif
+        }
+
+        /// <summary>Create span without any checking.</summary>
+        /// <typeparam name="T">type of element</typeparam>
+        /// <param name="array">source array</param>
+        /// <returns><see cref="Span{T}"/></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NETCOREAPP3_1
+        [CriticalDotnetDependency("netcoreapp3.1")]
+#endif
+#if !(NET5_0 || NETCOREAPP3_1)
+        [Obsolete("This method can be used only netcoreapp3.1 or after net5.0 ", true)]
+#endif
+        public static Span<T> AsSpanUnsafe<T>(this T[] array)
+        {
+            return MemoryMarshal.CreateSpan(ref GetReference(array), array.Length);
+        }
+
+        /// <summary>Create span without any checking.</summary>
+        /// <typeparam name="T">type of element</typeparam>
+        /// <param name="array">source array</param>
+        /// <param name="start">start index</param>
+        /// <returns><see cref="Span{T}"/></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NETCOREAPP3_1
+        [CriticalDotnetDependency("netcoreapp3.1")]
+#endif
+#if !(NET5_0 || NETCOREAPP3_1)
+        [Obsolete("This method can be used only netcoreapp3.1 or after net5.0 ", true)]
+#endif
+        public static Span<T> AsSpanUnsafe<T>(this T[] array, int start)
+        {
+            return MemoryMarshal.CreateSpan(ref array.At(start), array.Length - start);
+        }
+
+        /// <summary>Create span without any checking.</summary>
+        /// <typeparam name="T">type of element</typeparam>
+        /// <param name="array">source array</param>
+        /// <param name="start">start index</param>
+        /// <param name="length">length of span</param>
+        /// <returns><see cref="Span{T}"/></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#if NETCOREAPP3_1
+        [CriticalDotnetDependency("netcoreapp3.1")]
+#endif
+#if !(NET5_0 || NETCOREAPP3_1)
+        [Obsolete("This method can be used only netcoreapp3.1 or after net5.0 ", true)]
+#endif
+        public static Span<T> AsSpanUnsafe<T>(this T[] array, int start, int length)
+        {
+            return MemoryMarshal.CreateSpan(ref array.At(start), length);
         }
 
 #if NETCOREAPP3_1

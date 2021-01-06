@@ -6,6 +6,7 @@
     <IsPackable>false</IsPackable>
     <Configurations>Debug;Release</Configurations>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>UnitTest</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
