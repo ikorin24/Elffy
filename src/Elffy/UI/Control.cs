@@ -27,21 +27,28 @@ namespace Elffy.UI
     /// </remarks>
     public abstract class Control
     {
-        /// <summary>この <see cref="Control"/> を描画するオブジェクト</summary>
-        internal UIRenderable Renderable { get; private set; }
+        private readonly UIRenderable _renderable;
+        private Control? _parent;
+        private RootPanel? _root;
+        private Vector2i _absolutePosition;
+        private Vector2i _offset;
+        private ArrayPooledListCore<Control> _childrenCore;
+        private bool _isHitTestVisible;
+        private bool _isMouseOver;
+        private Texture _texture;
+
+        internal ref ArrayPooledListCore<Control> ChildrenCore => ref _childrenCore;
+
+        internal UIRenderable Renderable => _renderable;
 
         /// <summary>Get life state</summary>
         public LifeState LifeState => Renderable.LifeState;
 
-        /// <summary>この <see cref="Control"/> のツリー構造の子要素を取得します</summary>
-        public ControlCollection Children { get; }
+        public ControlCollection Children => new(this);
 
-        /// <summary>この <see cref="Control"/> のツリー構造の親を取得します</summary>
         public Control? Parent => _parent;
-        private Control? _parent;
 
-        /// <summary>この <see cref="Control"/> を持つ UI tree の Root</summary>
-        public RootPanel? Root { get; protected private set; }
+        public RootPanel? Root => _root;
 
         public bool IsRoot => _parent is null;
 
@@ -61,58 +68,57 @@ namespace Elffy.UI
                     pos.X += vec.X;
                     pos.Y += vec.Y;
                     _absolutePosition += vec;
-                    if(Children.Count > 0) {
-                        ApplyRecursively(Children, in vec);
+                    if(_childrenCore.Count > 0) {
+                        ApplyRecursively(this, in vec);
                     }
                 }
                 else if(vec.X != 0) {
                     // change only x
                     pos.X += vec.X;
                     _absolutePosition.X += vec.X;
-                    if(Children.Count > 0) {
-                        ApplyXRecursively(Children, vec.X);
+                    if(_childrenCore.Count > 0) {
+                        ApplyXRecursively(this, vec.X);
                     }
                 }
                 else if(vec.Y != 0) {
                     // change only y
                     pos.Y += vec.Y;
                     _absolutePosition.Y += vec.Y;
-                    if(Children.Count > 0) {
-                        ApplyYRecursively(Children, vec.Y);
+                    if(_childrenCore.Count > 0) {
+                        ApplyYRecursively(this, vec.Y);
                     }
                 }
 
                 [MethodImpl(MethodImplOptions.NoInlining)]  // no inlining
-                static void ApplyRecursively(ControlCollection children, in Vector2i vec)
+                static void ApplyRecursively(Control parent, in Vector2i vec)
                 {
-                    foreach(var child in children.AsReadOnlySpan()) {
+                    foreach(var child in parent._childrenCore.AsSpan()) {
                         child._absolutePosition += vec;
-                        ApplyRecursively(child.Children, vec);
+                        ApplyRecursively(child, vec);
                     }
                 }
 
                 [MethodImpl(MethodImplOptions.NoInlining)]  // no inlining
-                static void ApplyXRecursively(ControlCollection children, int diff)
+                static void ApplyXRecursively(Control parent, int diff)
                 {
-                    foreach(var child in children.AsReadOnlySpan()) {
+                    foreach(var child in parent._childrenCore.AsSpan()) {
                         child._absolutePosition.X += diff;
-                        ApplyXRecursively(child.Children, diff);
+                        ApplyXRecursively(child, diff);
                     }
                 }
 
                 [MethodImpl(MethodImplOptions.NoInlining)]  // no inlining
-                static void ApplyYRecursively(ControlCollection children, int diff)
+                static void ApplyYRecursively(Control parent, int diff)
                 {
-                    foreach(var child in children.AsReadOnlySpan()) {
+                    foreach(var child in parent._childrenCore.AsSpan()) {
                         child._absolutePosition.Y += diff;
-                        ApplyYRecursively(child.Children, diff);
+                        ApplyYRecursively(child, diff);
                     }
                 }
             }
         }
 
         public ref readonly Vector2i AbsolutePosition => ref _absolutePosition;
-        private Vector2i _absolutePosition;
 
         /// <summary>get or set Width of <see cref="Control"/></summary>
         public int Width
@@ -144,15 +150,22 @@ namespace Elffy.UI
         }
 
         /// <summary>get or set size of <see cref="Control"/></summary>
-        public Vector2i Size { get => new(Width, Height); set => (Width, Height) = value; }
-
-        /// <summary>get or set offset position X of layout</summary>
-        public int OffsetX { get; set; }
-        /// <summary>get or set offset position Y of layout</summary>
-        public int OffsetY { get; set; }
+        public Vector2i Size
+        {
+            get => (Vector2i)Renderable.Scale.Xy;
+            set
+            {
+                if(value.X < 0 || value.Y < 0) {
+                    ThrowOutOfRange();
+                    static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException();
+                }
+                Renderable.Scale.X = value.X;
+                Renderable.Scale.Y = value.Y;
+            }
+        }
 
         /// <summary>get or set offset position of layout</summary>
-        public Vector2i Offset { get => new(OffsetX, OffsetY); set => (OffsetX, OffsetY) = value; }
+        public ref Vector2i Offset => ref _offset;
 
 #if false   // future version, auto layout
 
@@ -164,14 +177,19 @@ namespace Elffy.UI
 #endif      // future version, auto layout
 
         /// <summary>get or set whether this <see cref="Control"/> is enabled in HitTest</summary>
-        public bool IsHitTestVisible { get; set; } = true;
+        public bool IsHitTestVisible
+        {
+            get => _isHitTestVisible;
+            set => _isHitTestVisible = value;
+        }
+
         /// <summary>get whether the mouse is over this <see cref="Control"/></summary>
-        public bool IsMouseOver { get; private set; }
+        public bool IsMouseOver => _isMouseOver;
 
         /// <summary>get or set <see cref="Control"/> is visible on rendering.</summary>
         public bool IsVisible { get => Renderable.IsVisible; set => Renderable.IsVisible = value; }
 
-        internal Texture Texture { get; }
+        internal Texture Texture => _texture;
 
         /// <summary>Mouse enter event</summary>
         public event Action<Control, MouseEventArgs>? MouseEnter;
@@ -184,19 +202,25 @@ namespace Elffy.UI
         /// <summary>constructor of <see cref="Control"/></summary>
         public Control()
         {
-            Children = new ControlCollection(this);
-            Renderable = new UIRenderable(this);
+            _isHitTestVisible = true;
+            _renderable = new UIRenderable(this);
             Width = 30;
             Height = 30;
-            Texture = new Texture(TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear, TextureMipmapMode.None, TextureWrapMode.ClampToEdge, TextureWrapMode.ClampToEdge);
+            _texture = new Texture(TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear, TextureMipmapMode.None, TextureWrapMode.ClampToEdge, TextureWrapMode.ClampToEdge);
             Renderable.Activated += OnRenderableActivated;
             Renderable.Dead += OnRenderableDead;
+        }
+
+        protected private void SetAsRootControl()
+        {
+            Debug.Assert(this is RootPanel);
+            _root = SafeCast.As<RootPanel>(this);
         }
 
         protected virtual void OnRecieveHitTestResult(bool isHit, Mouse mouse)
         {
             var isMouseOverPrev = IsMouseOver;
-            IsMouseOver = isHit;
+            _isMouseOver = isHit;
             if(isHit) {
                 if(isMouseOverPrev == false) {
                     MouseEnter?.Invoke(this, new MouseEventArgs(mouse.Position));
@@ -275,14 +299,14 @@ namespace Elffy.UI
             Debug.Assert(parent is not null);
             Debug.Assert(parent.Root is not null);
             _parent = parent;
-            Root = parent.Root;
-            Renderable.Activate(Root.UILayer);
+            _root = parent.Root;
+            Renderable.Activate(_root.UILayer);
         }
 
         internal void RemovedFromListCallback()
         {
             _parent = null;
-            Root = null;
+            _root = null;
             Renderable.Terminate();
         }
 

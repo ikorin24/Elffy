@@ -127,6 +127,13 @@ namespace Elffy.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe void Clear(delegate*<T[]?, void> cleared)
+        {
+            _count = 0;
+            Pool.TryPush(ref _array, cleared);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Span<T> AsSpan()
         {
             // this method is valid if '_array' is null.
@@ -206,20 +213,41 @@ namespace Elffy.Core
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static bool TryPush(ref T[]? array)
+            public static unsafe bool TryPush(ref T[]? array) => TryPush(ref array, null);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static unsafe bool TryPush(ref T[]? array, delegate*<T[]?, void> cleared)
             {
-                if(array is null) {
+                Debug.Assert(array is null || MathTool.IsPowerOfTwo(array.Length), $"Length of array must be power of two.");
+
+                // 1. array = null
+                // 2. Fire the delegete
+                // 3. Clear elements in the array. (If needed)
+                // 4. Pool the instance
+                // ----------------------------------------------
+
+
+                // 1. array = null
+                var copy = array;
+                array = null;
+
+                // 2. Fire the delegete
+                if(cleared != null) {
+                    cleared(copy);
+                }
+
+                if(copy is null) {
                     return false;
                 }
-                Debug.Assert(MathTool.IsPowerOfTwo(array.Length), $"Length of array must be power of two.");
 
+                // 3. Clear elements in the array. (If needed)
                 if(RuntimeHelpers.IsReferenceOrContainsReferences<T>()) {
-                    Array.Clear(array, 0, array.Length);
+                    Array.Clear(copy, 0, copy.Length);
                 }
 
-                var index = GetBucketIndex((uint)array.Length);
+                // 4. Pool the instance
+                var index = GetBucketIndex((uint)copy.Length);
                 if((uint)index >= (uint)BucketCount) {
-                    array = null;
                     return false;
                 }
                 _buckets ??= new Bucket[BucketCount];
@@ -228,13 +256,7 @@ namespace Elffy.Core
                     InitBucket(index, out bucket);
                 }
 
-                if(bucket.TryPush(array)) {
-                    array = null;
-                    return true;
-                }
-                else {
-                    return false;
-                }
+                return bucket.TryPush(copy);
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -301,6 +323,7 @@ namespace Elffy.Core
         [DebuggerDisplay("{Array}")]
         private struct ArrayWrap
         {
+            [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
             public T[]? Array;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]

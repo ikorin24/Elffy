@@ -63,8 +63,8 @@ namespace Elffy.UI
         protected override void OnRendering(in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             var control = Control;
-            var offset = new Vector2(control.OffsetX, control.OffsetY);
-            var hasOffset = offset != Vector2.Zero;
+            var offset = control.Offset;
+            var hasOffset = offset != Vector2i.Zero;
 
             // Add offset translation to the model matrix.
             // Overwrite it instead of creating a new matrix. (It's faster)
