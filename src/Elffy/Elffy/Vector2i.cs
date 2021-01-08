@@ -20,6 +20,8 @@ namespace Elffy
         [FieldOffset(4)]
         public int Y;
 
+        public static readonly Vector2i Zero = new Vector2i(0, 0);
+
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private readonly string DebuggerDisplay => ZString.Concat('(', X, ", ", Y, ')');
 
