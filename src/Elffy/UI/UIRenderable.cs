@@ -76,7 +76,7 @@ namespace Elffy.UI
                 VAO.Bind(VAO);
                 IBO.Bind(IBO);
                 ShaderProgram!.Apply(this, in model, in view, in projection);
-                DrawElements(IBO.Length, 0);
+                DrawElements(0, IBO.Length);
                 VAO.Unbind();
                 IBO.Unbind();
             }

@@ -108,12 +108,12 @@ namespace Elffy.Core
             VAO.Bind(_vao);
             IBO.Bind(_ibo);
             _shaderProgram!.Apply(this, in model, in view, in projection);
-            DrawElements(IBO.Length, 0);
+            DrawElements(0, IBO.Length);
             VAO.Unbind();
             IBO.Unbind();
         }
 
-        protected void DrawElements(int count, int byteOffset)
+        protected void DrawElements(int byteOffset, int count)
         {
             if(_instancingCount == 0) {
                 GL.DrawElements(BeginMode.Triangles, count, DrawElementsType.UnsignedInt, byteOffset);

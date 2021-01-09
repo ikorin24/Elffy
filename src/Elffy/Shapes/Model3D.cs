@@ -84,7 +84,7 @@ namespace Elffy.Shapes
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void DrawElementsInternal(int startIndex, int indexCount)
         {
-            DrawElements(indexCount, startIndex * sizeof(int));
+            DrawElements(startIndex * sizeof(int), indexCount);
         }
 
         /// <summary>Create new <see cref="Model3D"/> by using specified builder.</summary>
