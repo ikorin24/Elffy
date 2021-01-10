@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Diagnostics.CodeAnalysis;
 using Elffy.Effective;
 using Elffy.Imaging;
+using Elffy.OpenGL;
 using SkiaSharp;
 
 namespace Elffy.Components
@@ -19,7 +20,7 @@ namespace Elffy.Components
         const SKColorType ColorType = SKColorType.Rgba8888;
 
         private readonly RectI _rect;
-        private readonly Texture _t;
+        private readonly TextureObject _t;
         private SKPaint? _paint;
         private SKBitmap? _bitmap;
         private SKCanvas? _canvas;
@@ -36,8 +37,9 @@ namespace Elffy.Components
         /// <remarks>If change pixels via pointer, you must call <see cref="SetDirty"/> method after that.</remarks>
         public ColorByte* Ptr => (ColorByte*)Bitmap.GetPixels();
 
-        internal TexturePainter(Texture texture, in RectI rect, bool copyFromOriginal)
+        internal TexturePainter(in TextureObject texture, in RectI rect, bool copyFromOriginal)
         {
+            // I don't check that rect is valid here.
             _rect = rect;
             _t = texture;
             _isDirty = false;
@@ -47,7 +49,7 @@ namespace Elffy.Components
             _canvas = null;
             _textBuilder = null;
             if(copyFromOriginal) {
-                texture.GetPixels(rect, new(Bitmap.GetPixels().ToPointer(), rect.Width * rect.Height));
+                TextureCore.GetPixels(texture, rect, Pixels());
             }
         }
 
@@ -77,11 +79,11 @@ namespace Elffy.Components
                 FlushCore(ref this);
 
                 [MethodImpl(MethodImplOptions.NoInlining)]  // no inlining
-                void FlushCore(ref TexturePainter @this)
+                static void FlushCore(ref TexturePainter painter)
                 {
-                    Debug.Assert(@this._pixels != null);
-                    @this._t.UpdateSubTexture(@this._pixels, @this._rect);
-                    @this._isDirty = false;
+                    Debug.Assert(painter._pixels != null);
+                    TextureCore.UpdateSubTexture(painter._t, painter._pixels, painter._rect);
+                    painter._isDirty = false;
                 }
             }
         }
