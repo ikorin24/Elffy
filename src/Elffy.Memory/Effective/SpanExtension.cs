@@ -11,18 +11,42 @@ namespace Elffy.Effective
 {
     public static class SpanExtension
     {
+        /// <summary>Get reference to 0th element of span</summary>
+        /// <remarks>Don't call if empty span</remarks>
+        /// <typeparam name="T">element type</typeparam>
+        /// <param name="source">source span</param>
+        /// <returns>reference to 0th element</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref T GetReference<T>(this Span<T> source) => ref MemoryMarshal.GetReference(source);
-        
+
+        /// <summary>Get reference to 0th element of span</summary>
+        /// <remarks>Don't call if empty span</remarks>
+        /// <typeparam name="T">element type</typeparam>
+        /// <param name="source">source span</param>
+        /// <returns>reference to 0th element</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref readonly T GetReference<T>(this ReadOnlySpan<T> source) => ref MemoryMarshal.GetReference(source);
         
+        /// <summary>Get reference to 0th element. Returns reference to null if source span is empty.</summary>
+        /// <typeparam name="T">element type</typeparam>
+        /// <param name="source">source span</param>
+        /// <returns>reference to 0th element or reference to null</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref T GetReferenceOrNull<T>(this Span<T> source) => ref source.GetPinnableReference();
-        
+
+        /// <summary>Get reference to 0th element. Returns reference to null if source span is empty.</summary>
+        /// <typeparam name="T">element type</typeparam>
+        /// <param name="source">source span</param>
+        /// <returns>reference to 0th element or reference to null</returns>        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref readonly T GetReferenceOrNull<T>(this ReadOnlySpan<T> source) => ref source.GetPinnableReference();
-        
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Span<byte> AsBytes<T>(this Span<T> source) where T : unmanaged => MemoryMarshal.AsBytes(source);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ReadOnlySpan<byte> AsBytes<T>(this ReadOnlySpan<T> source) where T : unmanaged => MemoryMarshal.AsBytes(source);
+
         /// <summary>
         /// Cast whole <see cref="Span{T}"/> to another type of <see cref="Span{T}"/>.      <para/>
         /// This is not each-element cast. The memory layout is not changed.                <para/>
