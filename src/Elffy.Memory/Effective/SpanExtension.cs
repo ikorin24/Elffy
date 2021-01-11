@@ -41,9 +41,17 @@ namespace Elffy.Effective
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref readonly T GetReferenceOrNull<T>(this ReadOnlySpan<T> source) => ref source.GetPinnableReference();
 
+        /// <summary>Get byte span from source span</summary>
+        /// <typeparam name="T">element type</typeparam>
+        /// <param name="source">source span</param>
+        /// <returns>byte span</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Span<byte> AsBytes<T>(this Span<T> source) where T : unmanaged => MemoryMarshal.AsBytes(source);
 
+        /// <summary>Get byte span from source span</summary>
+        /// <typeparam name="T">element type</typeparam>
+        /// <param name="source">source span</param>
+        /// <returns>byte span</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ReadOnlySpan<byte> AsBytes<T>(this ReadOnlySpan<T> source) where T : unmanaged => MemoryMarshal.AsBytes(source);
 
@@ -59,8 +67,8 @@ namespace Elffy.Effective
         /// <param name="source">source <see cref="Span{T}"/></param>
         /// <returns>destination <see cref="Span{T}"/></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Span<TTo> MarshalCast<TFrom, TTo>(this Span<TFrom> source) where TFrom : struct
-                                                                                 where TTo : struct
+        public static Span<TTo> MarshalCast<TFrom, TTo>(this Span<TFrom> source) where TFrom : unmanaged
+                                                                                 where TTo : unmanaged
         {
             return MemoryMarshal.Cast<TFrom, TTo>(source);
         }
@@ -77,12 +85,16 @@ namespace Elffy.Effective
         /// <param name="source">source <see cref="ReadOnlySpan{T}"/></param>
         /// <returns>destination <see cref="ReadOnlySpan{T}"/></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ReadOnlySpan<TTo> MarshalCast<TFrom, TTo>(this ReadOnlySpan<TFrom> source) where TFrom : struct
-                                                                                                 where TTo : struct
+        public static ReadOnlySpan<TTo> MarshalCast<TFrom, TTo>(this ReadOnlySpan<TFrom> source) where TFrom : unmanaged
+                                                                                                 where TTo : unmanaged
         {
             return MemoryMarshal.Cast<TFrom, TTo>(source);
         }
 
+        /// <summary>Convert <see cref="Span{T}"/> to <see cref="ReadOnlySpan{T}"/></summary>
+        /// <typeparam name="T">element type</typeparam>
+        /// <param name="source">source span</param>
+        /// <returns><see cref="ReadOnlySpan{T}"/></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ReadOnlySpan<T> AsReadOnly<T>(this Span<T> source) => source;
 
