@@ -31,6 +31,30 @@ namespace Elffy.Effective.Unsafes
             return ref Unsafe.Add(ref MemoryMarshal.GetReference(source), i);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Span<T> SliceUnsafe<T>(this Span<T> source, int start)
+        {
+            return MemoryMarshal.CreateSpan(ref source.At(start), source.Length - start);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ReadOnlySpan<T> SliceUnsafe<T>(this ReadOnlySpan<T> source, int start)
+        {
+            return MemoryMarshal.CreateReadOnlySpan(ref Unsafe.AsRef(in source.At(start)), source.Length - start);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Span<T> SliceUnsafe<T>(this Span<T> source, int start, int length)
+        {
+            return MemoryMarshal.CreateSpan(ref source.At(start), length);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ReadOnlySpan<T> SliceUnsafe<T>(this ReadOnlySpan<T> source, int start, int length)
+        {
+            return MemoryMarshal.CreateReadOnlySpan(ref Unsafe.AsRef(in source.At(start)), length);
+        }
+
         /// <summary>
         /// Change <see cref="ReadOnlySpan{T}"/> into <see cref="Span{T}"/>, which is very DENGEROUS !!! Be carefull !!!
         /// </summary>

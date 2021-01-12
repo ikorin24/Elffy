@@ -137,6 +137,12 @@ namespace Elffy.Effective
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ValueTypeRentMemory<T> ToValueTypeRentMemory<T>(this Span<T> source) where T : unmanaged
         {
+            return ToValueTypeRentMemory((ReadOnlySpan<T>)source);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ValueTypeRentMemory<T> ToValueTypeRentMemory<T>(this ReadOnlySpan<T> source) where T : unmanaged
+        {
             var dest = new ValueTypeRentMemory<T>(source.Length);
             source.CopyTo(dest.Span);
             return dest;
@@ -144,6 +150,12 @@ namespace Elffy.Effective
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RefTypeRentMemory<T> ToRefTypeRentMemory<T>(this Span<T> source) where T : class?
+        {
+            return ToRefTypeRentMemory((ReadOnlySpan<T>)source);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static RefTypeRentMemory<T> ToRefTypeRentMemory<T>(this ReadOnlySpan<T> source) where T : class?
         {
             var dest = new RefTypeRentMemory<T>(source.Length);
             source.CopyTo(dest.Span);
@@ -175,7 +187,7 @@ namespace Elffy.Effective
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe UnmanagedArray<TTo> SelectToUnmanagedArray<TFrom, TTo>(this Span<TFrom> source, Func<TFrom, int, TTo> selector) where TTo : unmanaged
+        public static UnmanagedArray<TTo> SelectToUnmanagedArray<TFrom, TTo>(this Span<TFrom> source, Func<TFrom, int, TTo> selector) where TTo : unmanaged
             => SelectToUnmanagedArray((ReadOnlySpan<TFrom>)source, selector);
 
         public static unsafe UnmanagedArray<TTo> SelectToUnmanagedArray<TFrom, TTo>(this ReadOnlySpan<TFrom> source, Func<TFrom, int, TTo> selector) where TTo : unmanaged
@@ -250,7 +262,7 @@ namespace Elffy.Effective
                 [DoesNotReturn] static void ThrowTooShort() => throw new ArgumentException($"Length of {nameof(buffer)} is too short.");
             }
             for(int i = 0; i < source.Length; i++) {
-                buffer[i] = selector(source[i]);
+                buffer.At(i) = selector(source[i]);
             }
             return buffer;
         }
@@ -270,7 +282,7 @@ namespace Elffy.Effective
                 [DoesNotReturn] static void ThrowTooShort() => throw new ArgumentException($"Length of {nameof(buffer)} is too short.");
             }
             for(int i = 0; i < source.Length; i++) {
-                buffer[i] = selector(source[i], i);
+                buffer.At(i) = selector(source[i], i);
             }
             return buffer;
         }
@@ -290,7 +302,9 @@ namespace Elffy.Effective
                     return item;
                 }
             }
-            throw new InvalidOperationException("No element matched.");
+
+            return ThrowNoElement();
+            [DoesNotReturn] static T ThrowNoElement() => throw new InvalidOperationException("No element matched.");
         }
 
         [return: MaybeNull]
@@ -299,9 +313,11 @@ namespace Elffy.Effective
         [return: MaybeNull]
         public static T FirstOrDefault<T>(this ReadOnlySpan<T> source) => source.Length > 0 ? MemoryMarshal.GetReference(source) : default;
 
+        [return: MaybeNull]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T FirstOrDefault<T>(this Span<T> source, Func<T, bool> selector) => FirstOrDefault((ReadOnlySpan<T>)source, selector);
 
+        [return: MaybeNull]
         public static T FirstOrDefault<T>(this ReadOnlySpan<T> source, Func<T, bool> selector)
         {
             if(selector == null) {
@@ -313,7 +329,7 @@ namespace Elffy.Effective
                     return item;
                 }
             }
-            return default!;
+            return default;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -346,9 +362,9 @@ namespace Elffy.Effective
                 ThrowArg();
                 [DoesNotReturn] static void ThrowArg() => throw new ArgumentException("Sequence contains no elements.");
             }
-            T accum = MemoryMarshal.GetReference(source);
+            T accum = source.GetReference();
             for(int i = 1; i < source.Length; i++) {
-                func(accum, Unsafe.Add(ref MemoryMarshal.GetReference(source), i));
+                func(accum, source.At(i));
             }
             return accum;
         }
@@ -408,14 +424,14 @@ namespace Elffy.Effective
 
         public static ReadOnlySpan<char> Replace(this ReadOnlySpan<char> source, char oldValue, char newValue, Span<char> destBuffer)
         {
-            if(destBuffer.Length != source.Length) {
+            if(destBuffer.Length < source.Length) {
                 ThrowArg();
-                [DoesNotReturn] static void ThrowArg() => throw new ArgumentException($"Length of {nameof(destBuffer)} is not same as {nameof(source)}");
+                [DoesNotReturn] static void ThrowArg() => throw new ArgumentException($"Length of {nameof(destBuffer)} is too short.");
             }
             for(int i = 0; i < source.Length; i++) {
-                destBuffer[i] = (source[i] == oldValue) ? newValue : source[i];
+                destBuffer.At(i) = (source[i] == oldValue) ? newValue : source[i];
             }
-            return destBuffer;
+            return destBuffer.SliceUnsafe(0, source.Length);
         }
     }
 }
