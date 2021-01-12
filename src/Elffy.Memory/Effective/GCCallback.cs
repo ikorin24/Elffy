@@ -1,6 +1,6 @@
 ﻿#nullable enable
 using System;
-using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
 namespace Elffy.Effective
@@ -17,10 +17,14 @@ namespace Elffy.Effective
         /// <param name="generation">target generation of GC</param>
         public static void Register(Func<bool> callback, int generation)
         {
-            if(callback is null) { throw new ArgumentNullException(nameof(callback)); }
-            if((uint)generation > (uint)GC.MaxGeneration) { new ArgumentOutOfRangeException(nameof(generation)); }
-
-            Debug.Assert(callback is null == false);
+            if(callback is null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(callback));
+            }
+            if((uint)generation > (uint)GC.MaxGeneration) {
+                ThrowOutOfRange();
+                [DoesNotReturn] static void ThrowOutOfRange() => new ArgumentOutOfRangeException(nameof(generation));
+            }
 
             // This is zombie object. No one can access it but it survives.
             new CallbackHolder(callback, generation);
@@ -36,9 +40,18 @@ namespace Elffy.Effective
         /// <param name="generation">target generation of GC</param>
         public static void Register(Func<object, bool> callback, object callbackArg, int generation)
         {
-            if(callback is null) { throw new ArgumentNullException(nameof(callback)); }
-            if(callbackArg is null) { throw new ArgumentNullException(nameof(callbackArg)); }
-            if((uint)generation > (uint)GC.MaxGeneration) { new ArgumentOutOfRangeException(nameof(generation)); }
+            if(callback is null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(callback));
+            }
+            if(callbackArg is null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(callbackArg));
+            }
+            if((uint)generation > (uint)GC.MaxGeneration) {
+                ThrowOutOfRange();
+                [DoesNotReturn] static void ThrowOutOfRange() => new ArgumentOutOfRangeException(nameof(generation));
+            }
 
             // This is zombie object. No one can access it but it survives.
             new CallbackWithArgHolder(callback, callbackArg, generation);
