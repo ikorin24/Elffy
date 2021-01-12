@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 namespace Elffy.Effective
 {
     /// <summary>GC callback class</summary>
-    internal static class GCCallback
+    public static class GCCallback
     {
         /// <summary>Register callback of GC in specified generation. Callback is alive while it returns true.</summary>
         /// <remarks>
