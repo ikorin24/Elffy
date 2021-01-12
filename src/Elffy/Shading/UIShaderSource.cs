@@ -31,8 +31,8 @@ namespace Elffy.Shading
             var mvp = projection * view * model;
             uniform.Send("mvp", mvp);
 
-            var texture = uiRenderable.Control.Texture;
-            uniform.SendTexture2D("tex_sampler", texture.TextureObject, TextureUnitNumber.Unit0);
+            ref readonly var texture = ref uiRenderable.Control.Texture;
+            uniform.SendTexture2D("tex_sampler", texture.Texture, TextureUnitNumber.Unit0);
             uniform.Send("hasTexture", !texture.IsEmpty);
 
             var control = uiRenderable.Control;

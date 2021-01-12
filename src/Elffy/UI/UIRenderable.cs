@@ -11,15 +11,17 @@ namespace Elffy.UI
     /// <summary><see cref="UI.Control"/> を描画するためのオブジェクト。対象の <see cref="UI.Control"/> のインスタンスと一対一の関係を持つ</summary>
     internal sealed class UIRenderable : Renderable
     {
+        private readonly Control _control;
+
         /// <summary>このインスタンスの描画対象である論理 UI コントロール</summary>
-        public Control Control { get; private set; }
+        public Control Control => _control;
 
         /// <summary><see cref="UI.Control"/> の描画オブジェクトを作成します。</summary>
         /// <param name="control">描画対象の論理 UI コントロール</param>
         public UIRenderable(Control control)
         {
-            Debug.Assert(control is null == false);
-            Control = control;
+            Debug.Assert(control is not null);
+            _control = control;
             IsFrozen = true;        // disable calling update method per frame
             Shader = UIShaderSource.Instance;
         }

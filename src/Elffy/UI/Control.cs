@@ -33,9 +33,9 @@ namespace Elffy.UI
         private Vector2i _absolutePosition;
         private Vector2i _offset;
         private ArrayPooledListCore<Control> _childrenCore;
+        private TextureCore _texture;
         private bool _isHitTestVisible;
         private bool _isMouseOver;
-        private Texture _texture;
 
         internal ref ArrayPooledListCore<Control> ChildrenCore => ref _childrenCore;
 
@@ -189,7 +189,7 @@ namespace Elffy.UI
         /// <summary>get or set <see cref="Control"/> is visible on rendering.</summary>
         public bool IsVisible { get => Renderable.IsVisible; set => Renderable.IsVisible = value; }
 
-        internal Texture Texture => _texture;
+        internal ref readonly TextureCore Texture => ref _texture;
 
         /// <summary>Mouse enter event</summary>
         public event Action<Control, MouseEventArgs>? MouseEnter;
@@ -206,7 +206,7 @@ namespace Elffy.UI
             _renderable = new UIRenderable(this);
             Width = 30;
             Height = 30;
-            _texture = new Texture(TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear, TextureMipmapMode.None, TextureWrapMode.ClampToEdge, TextureWrapMode.ClampToEdge);
+            _texture = new TextureCore(TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear, TextureMipmapMode.None, TextureWrapMode.ClampToEdge, TextureWrapMode.ClampToEdge);
             Renderable.Activated += OnRenderableActivated;
             Renderable.Dead += OnRenderableDead;
         }
@@ -235,31 +235,29 @@ namespace Elffy.UI
 
         public TexturePainter GetPainter(bool copyFromOriginal = true)
         {
-            var texture = Texture;
-            if(texture.IsEmpty) {
-                texture.LoadUndefined(new Vector2i(Width, Height));
-                var p = texture.GetPainter(false);
+            if(_texture.IsEmpty) {
+                _texture.LoadUndefined(new Vector2i(Width, Height));
+                var p = _texture.GetPainter(false);
                 if(copyFromOriginal) {
                     p.Fill(ColorByte.White);        // TODO: デフォルトが白じゃない場合は？
                 }
                 return p;
             }
             else {
-                return texture.GetPainter(copyFromOriginal);
+                return _texture.GetPainter(copyFromOriginal);
             }
         }
 
         public TexturePainter GetPainter(in RectI rect, bool copyFromOriginal = true)
         {
-            var texture = Texture;
-            if(texture.IsEmpty) {
-                texture.LoadUndefined(new Vector2i(Width, Height));
-                var p = texture.GetPainter(rect, copyFromOriginal);
+            if(_texture.IsEmpty) {
+                _texture.LoadUndefined(new Vector2i(Width, Height));
+                var p = _texture.GetPainter(rect, copyFromOriginal);
                 p.Fill(ColorByte.White);            // TODO: デフォルトが白じゃない場合は？
                 return p;
             }
             else {
-                return texture.GetPainter(rect, copyFromOriginal);
+                return _texture.GetPainter(rect, copyFromOriginal);
             }
         }
 
@@ -312,8 +310,6 @@ namespace Elffy.UI
 
         private void OnRenderableActivated(FrameObject sender)
         {
-            // Attached component is disposed automatically when Renderable dies.
-            SafeCast.As<ComponentOwner>(sender).AddComponent(Texture);
             Activated?.Invoke(this);
         }
 
