@@ -27,17 +27,17 @@ namespace Elffy.Shading
 
         protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
-            var uiRenderable = SafeCast.As<UIRenderable>(target);
+            var control = SafeCast.As<UIRenderable>(target).Control;
             var mvp = projection * view * model;
             uniform.Send("mvp", mvp);
 
-            ref readonly var texture = ref uiRenderable.Control.Texture;
+            ref readonly var texture = ref control.Texture;
             uniform.SendTexture2D("tex_sampler", texture.Texture, TextureUnitNumber.Unit0);
-            uniform.Send("hasTexture", !texture.IsEmpty);
+            uniform.Send("hasTexture", texture.IsEmpty == false);
 
-            var control = uiRenderable.Control;
-            var uvScale = new Vector2(control.Width, control.Height) / texture.Size;
+            var uvScale = (Vector2)control.Size / texture.Size;
             uniform.Send("uvScale", uvScale);
+            uniform.Send("back", control.Background);
         }
 
         private const string VertSource =
@@ -64,10 +64,21 @@ in vec2 UV;
 out vec4 fragColor;
 uniform sampler2D tex_sampler;
 uniform bool hasTexture;
+uniform vec4 back;
 
 void main()
 {
-    fragColor = hasTexture ? texture(tex_sampler, UV) : vec4(1.0, 1.0, 1.0, 1.0);
+    if(hasTexture) {
+        vec4 t = texture(tex_sampler, UV);
+        float tai = 1.0 - t.a;
+        fragColor = vec4(t.r * t.a + back.r * tai,
+                         t.g * t.a + back.g * tai,
+                         t.b * t.a + back.b * tai,
+                         t.a + back.a * tai);
+    }
+    else {
+        fragColor = back;
+    }
 }
 ";
     }

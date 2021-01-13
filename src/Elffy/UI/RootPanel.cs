@@ -27,7 +27,6 @@ namespace Elffy.UI
         internal void Initialize()
         {
             SetAsRootControl();
-            Renderable.Shader = new UISolidColorShaderSource(Color4.Transparent);
             Renderable.Activate(UILayer);
         }
 

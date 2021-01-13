@@ -34,6 +34,7 @@ namespace Elffy.UI
         private Vector2i _offset;
         private ArrayPooledListCore<Control> _childrenCore;
         private TextureCore _texture;
+        private Color4 _background;
         private bool _isHitTestVisible;
         private bool _isMouseOver;
 
@@ -51,6 +52,8 @@ namespace Elffy.UI
         public RootPanel? Root => _root;
 
         public bool IsRoot => _parent is null;
+
+        public ref Color4 Background => ref _background;
 
         public Vector2i Position
         {
