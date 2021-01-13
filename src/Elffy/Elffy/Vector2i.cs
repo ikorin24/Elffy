@@ -82,9 +82,9 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator Vector2i(in Vector2 vec) => new Vector2i((int)vec.X, (int)vec.Y);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator Vector2(in Vector2i vec) => new Vector2(vec.X, vec.Y);
+        public static implicit operator Vector2(in Vector2i vec) => new Vector2(vec.X, vec.Y);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator Point(in Vector2i vec) => UnsafeEx.As<Vector2i, Point>(in vec);
+        public static implicit operator Point(in Vector2i vec) => UnsafeEx.As<Vector2i, Point>(in vec);
     }
 }
