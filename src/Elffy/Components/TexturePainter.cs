@@ -100,10 +100,27 @@ namespace Elffy.Components
 
         /// <summary>Fill the rect by specified color</summary>
         /// <param name="color">color to fill the rect</param>
-        public void Fill(in ColorByte color)
+        public void Fill(ColorByte color)
         {
             var canvas = Canvas;
             canvas.Clear(GetSKColor(color));
+            SetDirty();
+        }
+
+        public void DrawLine(in Vector2 p0, in Vector2 p1, ColorByte color, float width)
+        {
+            DrawLine(p0.X, p0.Y, p1.X, p1.Y, color, width);
+        }
+
+        public void DrawLine(float x0, float y0, float x1, float y1, ColorByte color, float width)
+        {
+            var canvas = Canvas;
+            var paint = Paint;
+            paint.Reset();
+            paint.Color = GetSKColor(color);
+            paint.IsAntialias = true;
+            paint.StrokeWidth = width;
+            canvas.DrawLine(x0, y0, x1, y1, paint);
             SetDirty();
         }
 
@@ -143,12 +160,12 @@ namespace Elffy.Components
             SetDirty();
         }
 
-        public void DrawText(string text, Font font, in Vector2 pos, in ColorByte color)
+        public void DrawText(string text, Font font, in Vector2 pos, ColorByte color)
         {
             DrawText(text.AsSpan(), font, pos, color);
         }
 
-        public void DrawText(ReadOnlySpan<char> text, Font font, in Vector2 pos, in ColorByte color)
+        public void DrawText(ReadOnlySpan<char> text, Font font, in Vector2 pos, ColorByte color)
         {
             if(font is null) {
                 ThrowNullArg();
@@ -158,7 +175,7 @@ namespace Elffy.Components
             DrawTextCore(text.MarshalCast<char, byte>(), SKTextEncoding.Utf16, font, pos, GetSKColor(color));
         }
 
-        public void DrawText(ReadOnlySpan<byte> utf8Text, Font font, in Vector2 pos, in ColorByte color)
+        public void DrawText(ReadOnlySpan<byte> utf8Text, Font font, in Vector2 pos, ColorByte color)
         {
             if(font is null) {
                 ThrowNullArg();
@@ -207,7 +224,8 @@ namespace Elffy.Components
             }
         }
 
-        private static SKColor GetSKColor(in ColorByte color)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static SKColor GetSKColor(ColorByte color)
         {
             // Don't use 'Unsafe.As'.
             return new SKColor(color.R, color.G, color.B, color.A);
