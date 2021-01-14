@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using TKColor4 = OpenTK.Mathematics.Color4;
+using NVec4 = System.Numerics.Vector4;
 
 namespace Elffy
 {
@@ -65,6 +66,22 @@ namespace Elffy
         [EditorBrowsable(EditorBrowsableState.Never)]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly void Deconstruct(out float r, out float g, out float b, out float a) => (r, g, b, a) = (R, G, B, A);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly Color4 PreMultiplied()
+        {
+            return UnsafeEx.As<NVec4, Color4>(
+                UnsafeEx.As<Color4, NVec4>(in this) * new NVec4(A, A, A, 1f)
+                );
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void PreMultiply()
+        {
+            this = UnsafeEx.As<NVec4, Color4>(
+                UnsafeEx.As<Color4, NVec4>(in this) * new NVec4(A, A, A, 1f)
+                );
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly ColorByte ToColorByte()

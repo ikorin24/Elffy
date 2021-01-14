@@ -3,7 +3,11 @@ using System;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
+using System.Runtime.Intrinsics;
+using System.Numerics;
 using Cysharp.Text;
+using Elffy.Effective.Unsafes;
+using NVec4 = System.Numerics.Vector4;
 
 namespace Elffy
 {
@@ -34,6 +38,30 @@ namespace Elffy
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly Color4 ToColor4() => new Color4(R / byte.MaxValue, G / byte.MaxValue, B / byte.MaxValue, A / byte.MaxValue);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly ColorByte PreMultiplied()
+        {
+            const float f = 1f / byte.MaxValue;
+            float af = A * f;
+
+            var c = new NVec4(R, G, B, A) * new NVec4(af, af, af, 1f);
+            return new ColorByte((byte)c.X, (byte)c.Y, (byte)c.Z, (byte)c.W);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void PreMultiply()
+        {
+            const float f = 1f / byte.MaxValue;
+            float af = A * f;
+
+            var c = new NVec4(R, G, B, A) * new NVec4(af, af, af, 1f);
+
+            R = (byte)c.X;
+            G = (byte)c.Y;
+            B = (byte)c.Z;
+            A = (byte)c.W;
+        }
 
         public readonly override bool Equals(object? obj) => obj is ColorByte color && Equals(color);
 
