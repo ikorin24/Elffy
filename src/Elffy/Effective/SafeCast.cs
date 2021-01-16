@@ -12,5 +12,12 @@ namespace Elffy
             Debug.Assert(value is null || value is T);
             return Unsafe.As<T>(value!);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static T NotNullAs<T>(object value) where T : class
+        {
+            Debug.Assert(value is T);
+            return Unsafe.As<T>(value);
+        }
     }
 }
