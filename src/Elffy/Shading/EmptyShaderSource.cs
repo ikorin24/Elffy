@@ -31,9 +31,9 @@ namespace Elffy.Shading
         /// <summary>Get instance of <see cref="EmptyShaderSource{TVertex}"/></summary>
         public static EmptyShaderSource<TVertex> Instance => _instance.Value;
 
-        protected override string VertexShaderSource => VertSource;
+        public override string VertexShaderSource => VertSource;
 
-        protected override string FragmentShaderSource => FragSource;
+        public override string FragmentShaderSource => FragSource;
 
         private EmptyShaderSource()
         {

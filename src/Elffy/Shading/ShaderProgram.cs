@@ -14,21 +14,26 @@ namespace Elffy.Shading
     public sealed class ShaderProgram   // not IDisposable, dispose only from internal
     {
         private ProgramObject _program;
-        private ShaderSource _shaderSource;
+        private IShaderSource _shaderSource;
         private bool _initialized;
 
         internal bool IsReleased => _program.IsEmpty;
 
-        internal unsafe ShaderProgram(ShaderSource shaderSource)
+        private ShaderProgram(ProgramObject program, IShaderSource shaderSource)
+        {
+            _program = program;
+            _shaderSource = shaderSource;
+        }
+
+        internal static unsafe ShaderProgram Create<T>(T shaderSource) where T : IShaderSource
         {
             var screen = Engine.CurrentContext;
             if(screen is null) {
                 ThrowInvalidContext();
                 [DoesNotReturn] static void ThrowInvalidContext() => throw new InvalidOperationException("Invaid context");
             }
-
-            _program = ShaderProgramCache.Get(screen, shaderSource);
-            _shaderSource = shaderSource;
+            var key = new SourceKey(shaderSource);
+            return new ShaderProgram(ShaderProgramCache.Get(screen, key), shaderSource);
         }
 
 
@@ -39,7 +44,10 @@ namespace Elffy.Shading
             if(IsReleased) { ThrowEmptyShader(); }
             if(!_initialized) { ThrowNotInitialized(); }
             ProgramObject.Bind(_program);
-            _shaderSource!.SendUniforms(_program, target, model, view, projection);
+
+            Debug.Assert(_shaderSource is ShaderSource);
+            SafeCast.NotNullAs<ShaderSource>(_shaderSource)
+                    .SendUniforms(_program, target, model, view, projection);
 
             static void ThrowEmptyShader() => throw new InvalidOperationException("this shader program is empty or deleted.");
             static void ThrowNotInitialized() => throw new InvalidOperationException("The shader is not initialized.");
@@ -49,7 +57,8 @@ namespace Elffy.Shading
         {
             VAO.Bind(target.VAO);
             VBO.Bind(target.VBO);
-            _shaderSource!.DefineLocation(_program, target);
+            SafeCast.NotNullAs<ShaderSource>(_shaderSource)
+                    .DefineLocation(_program, target);
             _initialized = true;
             VAO.Unbind();
             VBO.Unbind();
@@ -72,7 +81,8 @@ namespace Elffy.Shading
                     ThrowInvalidContext();
                     [DoesNotReturn] static void ThrowInvalidContext() => throw new InvalidOperationException("Invaid context");
                 }
-                ShaderProgramCache.Delete(screen, _shaderSource, ref _program);
+                var key = new SourceKey(_shaderSource);
+                ShaderProgramCache.Delete(screen, key, ref _program);
             }
             else {
                 // Can not release resources because finalizer is called from another thread.
@@ -86,9 +96,8 @@ namespace Elffy.Shading
             [ThreadStatic]
             private static Dictionary<IHostScreen, Dictionary<SourceKey, CompiledCache>>? _dic;
 
-            public static ProgramObject Get(IHostScreen screen, ShaderSource shaderSource)
+            public static ProgramObject Get(IHostScreen screen, SourceKey key)
             {
-                var key = new SourceKey(shaderSource);
                 _dic ??= new();
                 if(!_dic.TryGetValue(screen, out var dic)) {
                     dic = new();
@@ -106,7 +115,7 @@ namespace Elffy.Shading
                 return cache.Program;
             }
 
-            public static void Delete(IHostScreen screen, ShaderSource shaderSource, ref ProgramObject program)
+            public static void Delete(IHostScreen screen, SourceKey key, ref ProgramObject program)
             {
                 if(_dic is null) {
                     goto DELETE;
@@ -114,7 +123,6 @@ namespace Elffy.Shading
                 if(!_dic.TryGetValue(screen, out var dic)) {
                     goto DELETE;
                 }
-                var key = new SourceKey(shaderSource);
                 if(!dic.TryGetValue(key, out var cache)) {
                     goto DELETE;
                 }
@@ -152,20 +160,24 @@ namespace Elffy.Shading
 
         private readonly struct SourceKey : IEquatable<SourceKey>
         {
-            public readonly string VertSoruce;
-            public readonly string FragSource;
+            private readonly IShaderSource _shaderSource;
 
-            public SourceKey(ShaderSource source)
+            public string VertSoruce => _shaderSource.VertexShaderSource;
+            public string FragSource => _shaderSource.FragmentShaderSource;
+
+            public SourceKey(IShaderSource shaderSource)
             {
-                VertSoruce = source.VertSourceInternal;
-                FragSource = source.FragSourceInternal;
+                _shaderSource = shaderSource;
             }
 
             public override bool Equals(object? obj) => obj is SourceKey key && Equals(key);
 
-            public bool Equals(SourceKey other) => VertSoruce == other.VertSoruce && FragSource == other.FragSource;
+            public bool Equals(SourceKey other)
+            {
+                return ReferenceEquals(_shaderSource, other._shaderSource) || (VertSoruce == other.VertSoruce && FragSource == other.FragSource);
+            }
 
-            public override int GetHashCode() => HashCode.Combine(VertSoruce, FragSource);
+            public override int GetHashCode() => _shaderSource.GetSourceHash();
         }
     }
 }

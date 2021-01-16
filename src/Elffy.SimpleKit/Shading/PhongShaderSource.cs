@@ -16,9 +16,9 @@ namespace Elffy.Shading
         private static readonly Lazy<PhongShaderSource> _instance = new(() => new(), LazyThreadSafetyMode.ExecutionAndPublication);
         public static PhongShaderSource Instance => _instance.Value;
 
-        protected override string VertexShaderSource => VertSource;
+        public override string VertexShaderSource => VertSource;
 
-        protected override string FragmentShaderSource => FragSource;
+        public override string FragmentShaderSource => FragSource;
 
         private PhongShaderSource() { }
 

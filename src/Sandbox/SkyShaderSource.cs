@@ -12,9 +12,9 @@ namespace Sandbox
     {
         public static readonly SkyShaderSource Instance = new SkyShaderSource();
 
-        protected override string VertexShaderSource => VertSource;
+        public override string VertexShaderSource => VertSource;
 
-        protected override string FragmentShaderSource => FragSource;
+        public override string FragmentShaderSource => FragSource;
 
         private SkyShaderSource()
         {

@@ -25,9 +25,9 @@ namespace Elffy.Shading
         /// <summary>Get singleton instance of <see cref="TextureShaderSource"/></summary>
         public static TextureShaderSource<TVertex> Instance => _instance.Value;
 
-        protected override string VertexShaderSource => VertSource;
+        public override string VertexShaderSource => VertSource;
 
-        protected override string FragmentShaderSource => FragSource;
+        public override string FragmentShaderSource => FragSource;
 
         private TextureShaderSource() { }
 

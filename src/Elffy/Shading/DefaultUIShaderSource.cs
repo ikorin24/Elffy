@@ -9,9 +9,9 @@ namespace Elffy.Shading
     [ShaderTargetVertexType(typeof(VertexSlim))]
     internal sealed class DefaultUIShaderSource : ShaderSource
     {
-        protected override string VertexShaderSource => VertSource;
+        public override string VertexShaderSource => VertSource;
 
-        protected override string FragmentShaderSource => FragSource;
+        public override string FragmentShaderSource => FragSource;
 
         public static readonly DefaultUIShaderSource Instance = new DefaultUIShaderSource();
 

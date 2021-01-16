@@ -10,21 +10,17 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace Elffy.Shading
 {
-    public abstract class ShaderSource
+    public abstract class ShaderSource : IShaderSource
     {
         // [NOTE]
         // ShaderSource don't have any opengl resources. (e.g. ProgramObject)
         // Keep it thread-independent and context-free.
 
-        protected abstract string VertexShaderSource { get; }
+        private int _sourceHashCache;
 
-        protected abstract string FragmentShaderSource { get; }
+        public abstract string VertexShaderSource { get; }
 
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        internal string VertSourceInternal => VertexShaderSource;
-
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        internal string FragSourceInternal => FragmentShaderSource;
+        public abstract string FragmentShaderSource { get; }
 
         /// <summary>派生クラスでオーバーライドされた場合、このシェーダーに渡される頂点属性変数を定義します</summary>
         /// <param name="definition">頂点属性定義用オブジェクト</param>
@@ -52,7 +48,17 @@ namespace Elffy.Shading
         /// <summary>頂点シェーダー・フラグメントシェーダ―の読み込み、リンク、プログラムの作成を行います</summary>
         internal unsafe ShaderProgram Compile()
         {
-            return new ShaderProgram(this);
+            return ShaderProgram.Create(this);
+        }
+
+        int IShaderSource.GetSourceHash() => GetSourceHash();
+
+        internal int GetSourceHash()
+        {
+            if(_sourceHashCache == 0) {
+                _sourceHashCache = HashCode.Combine(VertexShaderSource, FragmentShaderSource);
+            }
+            return _sourceHashCache;
         }
 
         internal static ProgramObject CompileToProgramObject(string vertSource, string fragSource)
