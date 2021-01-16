@@ -7,15 +7,15 @@ using Elffy.UI;
 namespace Elffy.Shading
 {
     [ShaderTargetVertexType(typeof(VertexSlim))]
-    internal sealed class UIShaderSource : ShaderSource
+    internal sealed class DefaultUIShaderSource : ShaderSource
     {
         protected override string VertexShaderSource => VertSource;
 
         protected override string FragmentShaderSource => FragSource;
 
-        public static readonly UIShaderSource Instance = new UIShaderSource();
+        public static readonly DefaultUIShaderSource Instance = new DefaultUIShaderSource();
 
-        private UIShaderSource()
+        private DefaultUIShaderSource()
         {
         }
 
