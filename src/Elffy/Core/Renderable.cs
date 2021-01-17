@@ -17,9 +17,16 @@ namespace Elffy.Core
         private VBO _vbo;
         private IBO _ibo;
         private VAO _vao;
-        private IShaderSource? _shader;
+        private IShaderSource? _shader;     // ShaderSource (`this` is not Renderable) | UIShaderSource (`this` is Renderable) | null
         private ShaderProgram? _shaderProgram;
         private int _instancingCount;
+        private bool _isLoaded;
+        private bool _isVisible;
+
+        /// <summary>Before-rendering event</summary>
+        public event RenderingEventHandler? Rendering;
+        /// <summary>After-rendering event</summary>
+        public event RenderingEventHandler? Rendered;
 
         /// <summary>Vertex buffer object</summary>
         public ref readonly VBO VBO => ref _vbo;
@@ -29,10 +36,10 @@ namespace Elffy.Core
         public ref readonly VAO VAO => ref _vao;
 
         /// <summary>Get whether the <see cref="Renderable"/> is loaded and ready to be rendered.</summary>
-        public bool IsLoaded { get; private set; }
+        public bool IsLoaded => _isLoaded;
 
         /// <summary>Get or set whether the <see cref="Renderable"/> is visible in rendering.</summary>
-        public bool IsVisible { get; set; } = true;
+        public bool IsVisible { get => _isVisible; set => _isVisible = value; }
 
         /// <summary>Get or set a shader source</summary>
         public ShaderSource? Shader
@@ -40,7 +47,7 @@ namespace Elffy.Core
             get => SafeCast.As<ShaderSource>(_shader);
             set
             {
-                if(IsLoaded) { ThrowAlreadyLoaded(); }
+                if(_isLoaded) { ThrowAlreadyLoaded(); }
                 _shader = value;
             }
         }
@@ -50,7 +57,7 @@ namespace Elffy.Core
             get => _shader;
             set
             {
-                if(IsLoaded) { ThrowAlreadyLoaded(); }
+                if(_isLoaded) { ThrowAlreadyLoaded(); }
                 _shader = value;
             }
         }
@@ -71,13 +78,9 @@ namespace Elffy.Core
         /// <summary>Not null if <see cref="IsLoaded"/> == true</summary>
         public ShaderProgram? ShaderProgram => _shaderProgram;
 
-        /// <summary>Before-rendering event</summary>
-        public event RenderingEventHandler? Rendering;
-        /// <summary>After-rendering event</summary>
-        public event RenderingEventHandler? Rendered;
-
         public Renderable()
         {
+            _isVisible = true;
         }
 
         /// <summary>Render the <see cref="Renderable"/>.</summary>
@@ -188,16 +191,13 @@ namespace Elffy.Core
             else {
                 _shaderProgram.Initialize(this);
             }
-            
-            
-            IsLoaded = true;
+            _isLoaded = true;
         }
-
 
         protected override void OnDead()
         {
             var isLoaded = IsLoaded;
-            IsLoaded = false;
+            _isLoaded = false;
             base.OnDead();
             _shaderProgram?.Dispose();
             _shaderProgram = null;
