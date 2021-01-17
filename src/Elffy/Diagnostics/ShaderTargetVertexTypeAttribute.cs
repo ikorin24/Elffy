@@ -19,8 +19,8 @@ namespace Elffy.Diagnostics
         {
             if(shaderSourceType is null) { throw new ArgumentNullException(nameof(shaderSourceType)); }
             if(vertexType is null) { throw new ArgumentNullException(nameof(vertexType)); }
-            if(shaderSourceType.IsSubclassOf(typeof(ShaderSource)) == false) {
-                throw new ArgumentException($"{nameof(shaderSourceType)} is not subclass of {typeof(ShaderSource)}");
+            if(shaderSourceType.IsAssignableTo(typeof(IShaderSource)) == false) {
+                throw new ArgumentException($"{nameof(shaderSourceType)} does not inherit {typeof(IShaderSource)}.");
             }
 
             var isNonChecking = GetCustomAttribute(shaderSourceType, typeof(NonCheckingShaderTargetVertexTypeAttribute)) is not null;

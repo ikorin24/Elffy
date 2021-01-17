@@ -8,5 +8,7 @@ namespace Elffy.Shading
         string FragmentShaderSource { get; }
 
         internal int GetSourceHash();
+
+        internal ShaderProgram Compile();
     }
 }

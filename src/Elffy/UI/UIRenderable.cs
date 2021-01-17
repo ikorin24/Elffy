@@ -23,7 +23,6 @@ namespace Elffy.UI
             Debug.Assert(control is not null);
             _control = control;
             IsFrozen = true;        // disable calling update method per frame
-            Shader = DefaultUIShaderSource.Instance;
         }
 
         [SkipLocalsInit]

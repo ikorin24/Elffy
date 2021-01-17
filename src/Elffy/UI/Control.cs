@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using Elffy.InputSystem;
 using Elffy.Components;
 using Elffy.Core;
+using Elffy.Shading;
 using System.Diagnostics;
 
 namespace Elffy.UI
@@ -52,6 +53,12 @@ namespace Elffy.UI
         public RootPanel? Root => _root;
 
         public bool IsRoot => _parent is null;
+
+        public UIShaderSource? Shader
+        {
+            get => SafeCast.As<UIShaderSource>(_renderable.ShaderInternal);
+            set => _renderable.ShaderInternal = value;
+        }
 
         public ref Color4 Background => ref _background;
 

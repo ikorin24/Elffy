@@ -22,31 +22,37 @@ namespace Elffy.Shading
 
         public abstract string FragmentShaderSource { get; }
 
-        /// <summary>派生クラスでオーバーライドされた場合、このシェーダーに渡される頂点属性変数を定義します</summary>
-        /// <param name="definition">頂点属性定義用オブジェクト</param>
-        /// <param name="target">描画対象の <see cref="Renderable"/></param>
         protected abstract void DefineLocation(VertexDefinition definition, Renderable target);
 
-        internal void DefineLocation(ProgramObject program, Renderable target)
-            => DefineLocation(new VertexDefinition(program), target);
-
-        /// <summary>派生クラスでオーバーライドされた場合、このシェーダーに uniform 変数を送ります。</summary>
-        /// <param name="uniform">uniform 変数の送信用オブジェクト</param>
-        /// <param name="target">描画対象の <see cref="Renderable"/></param>
-        /// <param name="model">model 行列</param>
-        /// <param name="view">view 行列</param>
-        /// <param name="projection">projection 行列</param>
         protected abstract void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SendUniforms(ProgramObject program, Renderable target,
-                                   in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        internal void DefineLocationInternal(ProgramObject program, Renderable target)
+        {
+            DefineLocation(new VertexDefinition(program), target);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void DefineLocationInternal(VertexDefinition definition, Renderable target)
+        {
+            DefineLocation(definition, target);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void SendUniformsInternal(ProgramObject program, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             SendUniforms(new Uniform(program), target, model, view, projection);
         }
 
-        /// <summary>頂点シェーダー・フラグメントシェーダ―の読み込み、リンク、プログラムの作成を行います</summary>
-        internal unsafe ShaderProgram Compile()
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void SendUniformsInternal(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        {
+            SendUniforms(uniform, target, model, view, projection);
+        }
+
+        ShaderProgram IShaderSource.Compile() => Compile();
+
+        internal ShaderProgram Compile()
         {
             return ShaderProgram.Create(this);
         }

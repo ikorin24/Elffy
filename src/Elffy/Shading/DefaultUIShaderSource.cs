@@ -7,7 +7,7 @@ using Elffy.UI;
 namespace Elffy.Shading
 {
     [ShaderTargetVertexType(typeof(VertexSlim))]
-    internal sealed class DefaultUIShaderSource : ShaderSource
+    internal sealed class DefaultUIShaderSource : UIShaderSource
     {
         public override string VertexShaderSource => VertSource;
 
@@ -19,25 +19,24 @@ namespace Elffy.Shading
         {
         }
 
-        protected override void DefineLocation(VertexDefinition definition, Renderable target)
+        protected override void DefineLocation(VertexDefinition definition, Control target)
         {
             definition.Map<VertexSlim>("vPos", nameof(VertexSlim.Position));
             definition.Map<VertexSlim>("vUV", nameof(VertexSlim.UV));
         }
 
-        protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        protected override void SendUniforms(Uniform uniform, Control target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
-            var control = SafeCast.As<UIRenderable>(target).Control;
             var mvp = projection * view * model;
             uniform.Send("mvp", mvp);
 
-            ref readonly var texture = ref control.Texture;
+            ref readonly var texture = ref target.Texture;
             uniform.SendTexture2D("tex_sampler", texture.Texture, TextureUnitNumber.Unit0);
             uniform.Send("hasTexture", texture.IsEmpty == false);
 
-            var uvScale = (Vector2)control.Size / texture.Size;
+            var uvScale = (Vector2)target.Size / texture.Size;
             uniform.Send("uvScale", uvScale);
-            uniform.Send("back", control.Background);
+            uniform.Send("back", target.Background);
         }
 
         private const string VertSource =

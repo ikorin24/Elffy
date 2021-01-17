@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using Elffy.Exceptions;
 using Elffy.Core;
 using Elffy.OpenGL;
+using Elffy.UI;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -43,22 +44,42 @@ namespace Elffy.Shading
         {
             if(IsReleased) { ThrowEmptyShader(); }
             if(!_initialized) { ThrowNotInitialized(); }
+
+            Debug.Assert(target is not UIRenderable, $"Use another overload of {nameof(Apply)} method for {nameof(UIRenderable)}.");
+            
+            ProgramObject.Bind(_program);
+            SafeCast.NotNullAs<ShaderSource>(_shaderSource)
+                    .SendUniformsInternal(_program, target, model, view, projection);
+        }
+
+        internal void Apply(UIRenderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        {
+            if(IsReleased) { ThrowEmptyShader(); }
+            if(!_initialized) { ThrowNotInitialized(); }
             ProgramObject.Bind(_program);
 
-            Debug.Assert(_shaderSource is ShaderSource);
-            SafeCast.NotNullAs<ShaderSource>(_shaderSource)
-                    .SendUniforms(_program, target, model, view, projection);
-
-            static void ThrowEmptyShader() => throw new InvalidOperationException("this shader program is empty or deleted.");
-            static void ThrowNotInitialized() => throw new InvalidOperationException("The shader is not initialized.");
+            SafeCast.NotNullAs<UIShaderSource>(_shaderSource)
+                    .SendUniformsInternal(_program, target.Control, model, view, projection);
         }
 
         internal void Initialize(Renderable target)
         {
+            Debug.Assert(target is not UIRenderable, $"Use another overload of {nameof(Initialize)} method for {nameof(UIRenderable)}.");
             VAO.Bind(target.VAO);
             VBO.Bind(target.VBO);
             SafeCast.NotNullAs<ShaderSource>(_shaderSource)
-                    .DefineLocation(_program, target);
+                    .DefineLocationInternal(_program, target);
+            _initialized = true;
+            VAO.Unbind();
+            VBO.Unbind();
+        }
+
+        internal void Initialize(UIRenderable target)
+        {
+            VAO.Bind(target.VAO);
+            VBO.Bind(target.VBO);
+            SafeCast.NotNullAs<UIShaderSource>(_shaderSource)
+                    .DefineLocationInternal(_program, target.Control);
             _initialized = true;
             VAO.Unbind();
             VBO.Unbind();
@@ -89,6 +110,9 @@ namespace Elffy.Shading
                 throw new MemoryLeakException(GetType());
             }
         }
+
+        [DoesNotReturn] static void ThrowEmptyShader() => throw new InvalidOperationException("this shader program is empty or deleted.");
+        [DoesNotReturn] static void ThrowNotInitialized() => throw new InvalidOperationException("The shader is not initialized.");
 
 
         private static class ShaderProgramCache

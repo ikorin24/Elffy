@@ -6,6 +6,7 @@ using Elffy.Shading;
 using Elffy.OpenGL;
 using Elffy.Effective;
 using Elffy.Diagnostics;
+using Elffy.UI;
 using System.Diagnostics;
 
 namespace Elffy.Core
@@ -16,7 +17,7 @@ namespace Elffy.Core
         private VBO _vbo;
         private IBO _ibo;
         private VAO _vao;
-        private ShaderSource? _shader;
+        private IShaderSource? _shader;
         private ShaderProgram? _shaderProgram;
         private int _instancingCount;
 
@@ -35,6 +36,16 @@ namespace Elffy.Core
 
         /// <summary>Get or set a shader source</summary>
         public ShaderSource? Shader
+        {
+            get => SafeCast.As<ShaderSource>(_shader);
+            set
+            {
+                if(IsLoaded) { ThrowAlreadyLoaded(); }
+                _shader = value;
+            }
+        }
+
+        internal IShaderSource? ShaderInternal
         {
             get => _shader;
             set
@@ -142,10 +153,19 @@ namespace Elffy.Core
             if(IsLoaded) { ThrowAlreadyLoaded(); }
 
             var shader = _shader;
+            var isUIRenderable = this is UIRenderable;
+
             if(shader is null) {
-                shader = EmptyShaderSource<TVertex>.IsSupported ?
-                    EmptyShaderSource<TVertex>.Instance :
-                    throw new ArgumentException("Custom vertex types need a shader of the type.");
+                if(isUIRenderable) {
+                    Debug.Assert(typeof(TVertex) == typeof(VertexSlim));
+                    shader = DefaultUIShaderSource.Instance;
+                }
+                else {
+                    shader = EmptyShaderSource<TVertex>.IsSupported ? EmptyShaderSource<TVertex>.Instance : ThrowInvalid();
+
+                    [DoesNotReturn] static IShaderSource ThrowInvalid()
+                        => throw new ArgumentException("Custom vertex types need a shader of the type.");
+                }
             }
 
             // checking target vertex type of shader is valid.
@@ -161,7 +181,15 @@ namespace Elffy.Core
             VAO.Bind(_vao);
             Debug.Assert(_shaderProgram is null);
             _shaderProgram = shader.Compile();
-            _shaderProgram.Initialize(this);
+
+            if(isUIRenderable) {
+                _shaderProgram.Initialize(SafeCast.As<UIRenderable>(this));
+            }
+            else {
+                _shaderProgram.Initialize(this);
+            }
+            
+            
             IsLoaded = true;
         }
 
