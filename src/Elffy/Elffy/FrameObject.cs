@@ -13,7 +13,6 @@ namespace Elffy
     {
         private IHostScreen? _hostScreen;
         private ILayer? _layer;
-        private object? _tag;
         private LifeState _state = LifeState.New;
         private bool _isFrozen;
 
@@ -46,10 +45,6 @@ namespace Elffy
 
         /// <summary>Get or set whether the <see cref="FrameObject"/> skips early updating, updating, and late updating. (Skips if true)</summary>
         public bool IsFrozen { get => _isFrozen; set => _isFrozen = value; }
-
-        /// <summary>Get or set the tag.</summary>
-        /// <remarks>The engine does not use the tag for any purpose.</remarks>
-        public object? Tag { get => _tag; set => _tag = value; }
 
         /// <summary>Get the layer where the <see cref="FrameObject"/> is.</summary>
         private protected ILayer? InternalLayer => _layer;
