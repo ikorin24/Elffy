@@ -1,6 +1,8 @@
 ﻿#nullable enable
 using System;
 using System.Runtime.CompilerServices;
+using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using OpenTK.Graphics.OpenGL4;
 using Elffy.Core;
 using Elffy.OpenGL;
@@ -10,9 +12,94 @@ namespace Elffy.Shading
 {
     public readonly ref struct VertexDefinition
     {
+        private readonly ProgramObject _program;
+
+        internal VertexDefinition(ProgramObject program)
+        {
+            _program = program;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Map<TVertex>(int index, string vertexFieldName) where TVertex : unmanaged
+        {
+            if(index < 0) {
+                ThrowInvalidIndex();
+            }
+            VertexMapHelper.Map<TVertex>(index, vertexFieldName);
+
+            [DoesNotReturn] static void ThrowInvalidIndex() => throw new ArgumentException($"{nameof(index)} is negative value.");
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Map<TVertex>(string name, string vertexFieldName) where TVertex : unmanaged
+        {
+            var index = GL.GetAttribLocation(_program.Value, name);
+            if(index < 0 && DevEnv.IsEnabled) {
+                DevEnv.ForceWriteLine($"[warning] '{name}' vertex field input is not found in shader program({_program.Value}).");
+            }
+            else {
+                VertexMapHelper.Map<TVertex>(index, vertexFieldName);
+            }
+        }
+
+        public override int GetHashCode() => _program.GetHashCode();
+
+        public override bool Equals(object? obj) => false;
+
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public bool Equals(VertexDefinition d) => _program.Equals(d._program);
+
+        public override string ToString() => _program.ToString();
+    }
+
+
+    public readonly ref struct VertexDefinition<TVertex> where TVertex : unmanaged
+    {
+        private readonly ProgramObject _program;
+
+        internal VertexDefinition(ProgramObject program)
+        {
+            _program = program;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Map(int index, string vertexFieldName)
+        {
+            if(index < 0) {
+                ThrowInvalidIndex();
+            }
+            VertexMapHelper.Map<TVertex>(index, vertexFieldName);
+
+            [DoesNotReturn] static void ThrowInvalidIndex() => throw new ArgumentException($"{nameof(index)} is negative value.");
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Map(string name, string vertexFieldName)
+        {
+            var index = GL.GetAttribLocation(_program.Value, name);
+            if(index < 0 && DevEnv.IsEnabled) {
+                DevEnv.ForceWriteLine($"[warning] '{name}' vertex field input is not found in shader program({_program.Value}).");
+            }
+            else {
+                VertexMapHelper.Map<TVertex>(index, vertexFieldName);
+            }
+        }
+
+        public override int GetHashCode() => _program.GetHashCode();
+
+        public override bool Equals(object? obj) => false;
+
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public bool Equals(VertexDefinition<TVertex> d) => _program.Equals(d._program);
+
+        public override string ToString() => _program.ToString();
+    }
+
+    internal static class VertexMapHelper
+    {
         private static readonly int[] _attribTypes;
 
-        static VertexDefinition()
+        static VertexMapHelper()
         {
             const int Count = 7;    // count of VertexFieldMarshalType elements
             _attribTypes = new int[Count];
@@ -29,38 +116,8 @@ namespace Elffy.Shading
             _attribTypes[(int)VertexFieldMarshalType.Uint16] = (int)VertexAttribIntegerType.UnsignedShort;
         }
 
-        private readonly ProgramObject _program;
-
-        internal VertexDefinition(ProgramObject program)
-        {
-            _program = program;
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void Map<TVertex>(int index, string vertexFieldName) where TVertex : unmanaged
-        {
-            if(index < 0) {
-                ThrowInvalidIndex();
-            }
-            MapPrivate<TVertex>(index, vertexFieldName);
-
-            static void ThrowInvalidIndex() => throw new ArgumentException($"{nameof(index)} is negative value.");
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void Map<TVertex>(string name, string vertexFieldName) where TVertex : unmanaged
-        {
-            var index = GL.GetAttribLocation(_program.Value, name);
-            if(index < 0 && DevEnv.IsEnabled) {
-                DevEnv.ForceWriteLine($"[warning] '{name}' vertex field input is not found in shader program({_program.Value}).");
-            }
-            else {
-                MapPrivate<TVertex>(index, vertexFieldName);
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private unsafe void MapPrivate<TVertex>(int index, string vertexFieldName) where TVertex : unmanaged
+        public static unsafe void Map<TVertex>(int index, string vertexFieldName) where TVertex : unmanaged
         {
             // Call static constructor of TVertex to Register layout. (It is called only once)
             RuntimeHelpers.RunClassConstructor(typeof(TVertex).TypeHandle);
@@ -76,10 +133,5 @@ namespace Elffy.Shading
                 GL.VertexAttribIPointer(index, elementCount, (VertexAttribIntegerType)_attribTypes[(int)type], sizeof(TVertex), (IntPtr)offset);
             }
         }
-
-
-        public override int GetHashCode() => HashCode.Combine(_program);
-
-        public override string ToString() => _program.ToString();
     }
 }
