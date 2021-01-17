@@ -87,7 +87,7 @@ namespace Elffy.Core
         /// <param name="projection">projection matrix</param>
         /// <param name="view">view matrix</param>
         /// <param name="modelParent">parent model matrix</param>
-        internal unsafe void Render(in Matrix4 projection, in Matrix4 view, in Matrix4 modelParent)
+        internal void Render(in Matrix4 projection, in Matrix4 view, in Matrix4 modelParent)
         {
             //var withoutScale = modelParent * Position.ToTranslationMatrix4() * Rotation.ToMatrix4();
             var withoutScale = modelParent;
