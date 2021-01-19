@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using Elffy.Core;
 
 namespace Elffy.Shading
 {
@@ -9,6 +10,6 @@ namespace Elffy.Shading
 
         internal int GetSourceHash();
 
-        internal ShaderProgram Compile();
+        internal ShaderProgram Compile(Renderable owner);
     }
 }

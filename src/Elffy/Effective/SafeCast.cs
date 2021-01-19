@@ -25,7 +25,7 @@ namespace Elffy
         /// <param name="value">object to cast</param>
         /// <returns>casted object</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T NotNullAs<T>(object value) where T : class
+        public static T NotNullAs<T>(object? value) where T : class
         {
             Debug.Assert(value is T);
             return Unsafe.As<T>(value);

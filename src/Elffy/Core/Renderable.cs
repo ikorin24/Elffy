@@ -18,7 +18,7 @@ namespace Elffy.Core
         private IBO _ibo;
         private VAO _vao;
         private IShaderSource? _shader;     // ShaderSource (`this` is not Renderable) | UIShaderSource (`this` is Renderable) | null
-        private ShaderProgram? _shaderProgram;
+        private ShaderProgram _shaderProgram;
         private int _instancingCount;
         private bool _isLoaded;
         private bool _isVisible;
@@ -75,8 +75,7 @@ namespace Elffy.Core
             }
         }
 
-        /// <summary>Not null if <see cref="IsLoaded"/> == true</summary>
-        public ShaderProgram? ShaderProgram => _shaderProgram;
+        public ref readonly ShaderProgram ShaderProgram => ref _shaderProgram;
 
         public Renderable()
         {
@@ -102,7 +101,7 @@ namespace Elffy.Core
             model.M11 *= Scale.Y;
             model.M22 *= Scale.Z;
 
-            if(IsLoaded && IsVisible && !(_shaderProgram is null)) {
+            if(IsLoaded && IsVisible) {
                 Rendering?.Invoke(this, in model, in view, in projection);
                 OnRendering(in model, in view, in projection);
                 Rendered?.Invoke(this, in model, in view, in projection);
@@ -121,7 +120,7 @@ namespace Elffy.Core
         {
             VAO.Bind(_vao);
             IBO.Bind(_ibo);
-            _shaderProgram!.Apply(this, in model, in view, in projection);
+            _shaderProgram.Apply(in model, in view, in projection);
             DrawElements(0, IBO.Length);
             VAO.Unbind();
             IBO.Unbind();
@@ -155,16 +154,15 @@ namespace Elffy.Core
             HostScreen.ThrowIfNotMainThread();
             if(IsLoaded) { ThrowAlreadyLoaded(); }
 
-            var shader = _shader;
             var isUIRenderable = this is UIRenderable;
 
-            if(shader is null) {
+            if(_shader is null) {
                 if(isUIRenderable) {
                     Debug.Assert(typeof(TVertex) == typeof(VertexSlim));
-                    shader = DefaultUIShaderSource.Instance;
+                    _shader = DefaultUIShaderSource.Instance;
                 }
                 else {
-                    shader = EmptyShaderSource<TVertex>.IsSupported ? EmptyShaderSource<TVertex>.Instance : ThrowInvalid();
+                    _shader = EmptyShaderSource<TVertex>.IsSupported ? EmptyShaderSource<TVertex>.Instance : ThrowInvalid();
 
                     [DoesNotReturn] static IShaderSource ThrowInvalid()
                         => throw new ArgumentException("Custom vertex types need a shader of the type.");
@@ -173,7 +171,7 @@ namespace Elffy.Core
 
             // checking target vertex type of shader is valid.
             if(DevEnv.IsEnabled) {
-                ShaderTargetVertexTypeAttribute.CheckVertexType(shader.GetType(), typeof(TVertex));
+                ShaderTargetVertexTypeAttribute.CheckVertexType(_shader.GetType(), typeof(TVertex));
             }
 
             _vbo = VBO.Create();
@@ -182,14 +180,14 @@ namespace Elffy.Core
             IBO.BindBufferData(ref _ibo, indices, BufferUsageHint.StaticDraw);
             _vao = VAO.Create();
             VAO.Bind(_vao);
-            Debug.Assert(_shaderProgram is null);
-            _shaderProgram = shader.Compile();
+            Debug.Assert(_shaderProgram.IsEmpty);
+            _shaderProgram = _shader.Compile(this);
 
             if(isUIRenderable) {
-                _shaderProgram.Initialize(SafeCast.As<UIRenderable>(this));
+                _shaderProgram.InitializeForUI();
             }
             else {
-                _shaderProgram.Initialize(this);
+                _shaderProgram.Initialize();
             }
             _isLoaded = true;
         }
@@ -199,8 +197,8 @@ namespace Elffy.Core
             var isLoaded = IsLoaded;
             _isLoaded = false;
             base.OnDead();
-            _shaderProgram?.Dispose();
-            _shaderProgram = null;
+            _shaderProgram.Release();
+            _shaderProgram = ShaderProgram.Empty;
             if(isLoaded) {
                 VBO.Delete(ref _vbo);
                 IBO.Delete(ref _ibo);

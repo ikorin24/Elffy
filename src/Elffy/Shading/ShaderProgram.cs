@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using System;
 using System.Runtime.CompilerServices;
-using Elffy.Exceptions;
 using Elffy.Core;
 using Elffy.OpenGL;
 using Elffy.UI;
@@ -11,104 +10,101 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Shading
 {
-    // TODO: 構造体にできると思う
-    public sealed class ShaderProgram   // not IDisposable, dispose only from internal
+    /// <summary>Shader program associated with specific <see cref="Renderable"/>.</summary>
+    public readonly struct ShaderProgram   // not IDisposable, dispose only from internal
     {
-        private ProgramObject _program;
-        private IShaderSource _shaderSource;
-        private bool _initialized;
+        private readonly Renderable _owner;
+        private readonly ProgramObject _program;
 
-        internal bool IsReleased => _program.IsEmpty;
+        internal bool IsEmpty => _program.IsEmpty;
 
-        private ShaderProgram(ProgramObject program, IShaderSource shaderSource)
+        internal static ShaderProgram Empty => default;
+
+        private ShaderProgram(ProgramObject program, Renderable owner)
         {
             _program = program;
-            _shaderSource = shaderSource;
+            _owner = owner;
         }
 
-        internal static unsafe ShaderProgram Create<T>(T shaderSource) where T : IShaderSource
+        internal static ShaderProgram Create(Renderable owner)
         {
             var screen = Engine.CurrentContext;
             if(screen is null) {
                 ThrowInvalidContext();
                 [DoesNotReturn] static void ThrowInvalidContext() => throw new InvalidOperationException("Invaid context");
             }
-            var key = new SourceKey(shaderSource);
-            return new ShaderProgram(ShaderProgramCache.Get(screen, key), shaderSource);
+            var shader = owner.ShaderInternal;
+            Debug.Assert(shader is not null);
+            var key = new SourceKey(shader);
+            return new ShaderProgram(ShaderProgramCache.Get(screen, key), owner);
         }
 
-
-        ~ShaderProgram() => Dispose(false);
-
-        public void Apply(Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        /// <summary>Apply the shader program</summary>
+        /// <param name="model">model matrix</param>
+        /// <param name="view">view matrix</param>
+        /// <param name="projection">projection matrix</param>
+        public void Apply(in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
-            if(IsReleased) { ThrowEmptyShader(); }
-            if(!_initialized) { ThrowNotInitialized(); }
+            if(IsEmpty) { ThrowEmptyShader(); }
+            if(!_owner.IsLoaded) { ThrowNotInitialized(); }
 
-            Debug.Assert(target is not UIRenderable, $"Use another overload of {nameof(Apply)} method for {nameof(UIRenderable)}.");
+            Debug.Assert(_owner is not UIRenderable, $"Use {nameof(ApplyForUI)} method for {nameof(UIRenderable)}.");
+            Debug.Assert(_owner.Shader is not null);
             
             ProgramObject.Bind(_program);
-            SafeCast.NotNullAs<ShaderSource>(_shaderSource)
-                    .SendUniformsInternal(_program, target, model, view, projection);
+            _owner.Shader.SendUniformsInternal(_program, _owner, model, view, projection);
         }
 
-        internal void Apply(UIRenderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        internal void ApplyForUI(in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
-            if(IsReleased) { ThrowEmptyShader(); }
-            if(!_initialized) { ThrowNotInitialized(); }
+            if(IsEmpty) { ThrowEmptyShader(); }
+            if(!_owner.IsLoaded) { ThrowNotInitialized(); }
             ProgramObject.Bind(_program);
 
-            SafeCast.NotNullAs<UIShaderSource>(_shaderSource)
-                    .SendUniformsInternal(_program, target.Control, model, view, projection);
+            SafeCast.NotNullAs<UIShaderSource>(_owner.ShaderInternal)
+                    .SendUniformsInternal(_program, SafeCast.NotNullAs<UIRenderable>(_owner).Control, model, view, projection);
         }
 
-        internal void Initialize(Renderable target)
+        internal void Initialize()
         {
-            Debug.Assert(target is not UIRenderable, $"Use another overload of {nameof(Initialize)} method for {nameof(UIRenderable)}.");
-            VAO.Bind(target.VAO);
-            VBO.Bind(target.VBO);
-            SafeCast.NotNullAs<ShaderSource>(_shaderSource)
-                    .DefineLocationInternal(_program, target);
-            _initialized = true;
+            Debug.Assert(_owner is not UIRenderable, $"Use {nameof(InitializeForUI)} method for {nameof(UIRenderable)}.");
+            Debug.Assert(_owner.Shader is not null);
+
+            VAO.Bind(_owner.VAO);
+            VBO.Bind(_owner.VBO);
+            _owner.Shader.DefineLocationInternal(_program, _owner);
             VAO.Unbind();
             VBO.Unbind();
         }
 
-        internal void Initialize(UIRenderable target)
+        internal void InitializeForUI()
         {
-            VAO.Bind(target.VAO);
-            VBO.Bind(target.VBO);
-            SafeCast.NotNullAs<UIShaderSource>(_shaderSource)
-                    .DefineLocationInternal(_program, target.Control);
-            _initialized = true;
+            Debug.Assert(_owner is UIRenderable);
+
+            VAO.Bind(_owner.VAO);
+            VBO.Bind(_owner.VBO);
+            SafeCast.NotNullAs<UIShaderSource>(_owner.ShaderInternal)
+                    .DefineLocationInternal(_program, SafeCast.NotNullAs<UIRenderable>(_owner).Control);
             VAO.Unbind();
             VBO.Unbind();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void Dispose()     // not IDisposable, dispose only from internal
+        internal void Release()     // not IDisposable, dispose only from internal
         {
-            if(IsReleased) { return; }
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
+            // [NOTE] The struct is readonly struct, but I change the field by Unsafe.
+            // Be careful.
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Dispose(bool disposing)
-        {
-            if(disposing) {
-                var screen = Engine.CurrentContext;
-                if(screen is null) {
-                    ThrowInvalidContext();
-                    [DoesNotReturn] static void ThrowInvalidContext() => throw new InvalidOperationException("Invaid context");
-                }
-                var key = new SourceKey(_shaderSource);
-                ShaderProgramCache.Delete(screen, key, ref _program);
+            if(IsEmpty) { return; }
+            var screen = Engine.CurrentContext;
+            if(screen is null) {
+                ThrowInvalidContext();
+                [DoesNotReturn] static void ThrowInvalidContext() => throw new InvalidOperationException("Invaid context");
             }
-            else {
-                // Can not release resources because finalizer is called from another thread.
-                throw new MemoryLeakException(GetType());
-            }
+
+            Debug.Assert(_owner.ShaderInternal is not null);
+            var key = new SourceKey(_owner.ShaderInternal);
+            ShaderProgramCache.Delete(screen, key, ref Unsafe.AsRef(in _program));
         }
 
         [DoesNotReturn] static void ThrowEmptyShader() => throw new InvalidOperationException("this shader program is empty or deleted.");

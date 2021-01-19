@@ -31,11 +31,11 @@ namespace Elffy.Shading
             SendUniforms(new Uniform(program), target, model, view, projection);
         }
 
-        ShaderProgram IShaderSource.Compile() => Compile();
+        ShaderProgram IShaderSource.Compile(Renderable owner) => Compile(owner);
 
-        internal ShaderProgram Compile()
+        internal ShaderProgram Compile(Renderable owner)
         {
-            return ShaderProgram.Create(this);
+            return ShaderProgram.Create(owner);
         }
 
         int IShaderSource.GetSourceHash() => GetSourceHash();

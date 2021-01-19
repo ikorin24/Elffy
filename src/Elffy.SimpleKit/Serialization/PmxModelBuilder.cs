@@ -52,7 +52,7 @@ namespace Elffy.Serialization
             for(int i = 0; i < vertexCountArray.Length; i++) {
                 parts.Current = i;
                 if(parts.TextureIndexArray[i] >= 0) {
-                    shaderProgram.Apply(model3D, in model, in view, in projection);
+                    shaderProgram.Apply(in model, in view, in projection);
                     drawElements.Invoke(start, vertexCountArray[i]);
                 }
                 start += vertexCountArray[i];

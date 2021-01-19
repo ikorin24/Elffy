@@ -37,14 +37,14 @@ namespace Elffy.Serialization
 
             var obj = new StateObject(resourceLoader, name, cancellationToken);
 
-            return Model3D.Create(obj, Build, Hoge);
+            return Model3D.Create(obj, Build, RenderModel);
         }
 
-        private static void Hoge(Model3D model3D, in Matrix4 model, in Matrix4 view, in Matrix4 projection, Model3DDrawElementsDelegate drawElements)
+        private static void RenderModel(Model3D model3D, in Matrix4 model, in Matrix4 view, in Matrix4 projection, Model3DDrawElementsDelegate drawElements)
         {
             VAO.Bind(model3D.VAO);
             IBO.Bind(model3D.IBO);
-            model3D.ShaderProgram!.Apply(model3D, in model, in view, in projection);
+            model3D.ShaderProgram!.Apply(in model, in view, in projection);
             drawElements.Invoke(0, model3D.IBO.Length);
             VAO.Unbind();
             IBO.Unbind();
