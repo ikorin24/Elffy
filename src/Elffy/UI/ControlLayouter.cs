@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.UI
 {
-    public readonly ref struct ControlLayouter
+    public readonly ref struct ControlLayouter      // `ref struct` to ensure valid access. It is invalid to access pooled instance.
     {
         private readonly ControlLayouterInternal _l;
 
@@ -14,13 +14,17 @@ namespace Elffy.UI
         public ref TransformOrigin TransformOrigin => ref _l.TransformOrigin;
         public ref HorizontalAlignment HorizontalAlignment => ref _l.HorizontalAlignment;
         public ref VerticalAlignment VerticalAlignment => ref _l.VerticalAlignment;
-        public ref RectF Margin => ref _l.Margin;
-        public ref RectF Padding => ref _l.Padding;
+        public ref RectI Margin => ref _l.Margin;
+        public ref RectI Padding => ref _l.Padding;
 
         internal ControlLayouter(ControlLayouterInternal l)
         {
             _l = l;
         }
+
+        public override bool Equals(object? obj) => false;
+
+        public override int GetHashCode() => _l.GetHashCode();
     }
 
     internal sealed class ControlLayouterInternal
@@ -38,19 +42,33 @@ namespace Elffy.UI
         private TransformOrigin _transformOrigin;
         private HorizontalAlignment _horizontalAlignment;
         private VerticalAlignment _verticalAlignment;
-        private RectF _margin;
-        private RectF _padding;
+        private RectI _margin;
+        private RectI _padding;
 
         public ref LayoutLength Width => ref _width;
         public ref LayoutLength Height => ref _height;
         public ref TransformOrigin TransformOrigin => ref _transformOrigin;
         public ref HorizontalAlignment HorizontalAlignment => ref _horizontalAlignment;
         public ref VerticalAlignment VerticalAlignment => ref _verticalAlignment;
-        public ref RectF Margin => ref _margin;
-        public ref RectF Padding => ref _padding;
+        public ref RectI Margin => ref _margin;
+        public ref RectI Padding => ref _padding;
 
         private ControlLayouterInternal()
         {
+            Init(this);
+        }
+
+        private static void Init(ControlLayouterInternal instance)
+        {
+            // All fields must be initialized. (except _nextPooled)
+
+            instance._width = new LayoutLength(1f, LayoutLengthType.Proportion);
+            instance._height = new LayoutLength(1f, LayoutLengthType.Proportion);
+            instance._transformOrigin = TransformOrigin.LeftTop;
+            instance._horizontalAlignment = HorizontalAlignment.Left;
+            instance._verticalAlignment = VerticalAlignment.Top;
+            instance._margin = default;
+            instance._padding = default;
         }
 
 
@@ -66,6 +84,7 @@ namespace Elffy.UI
                 var ret = _pooled;
                 _pooled = ret._nextPooled;
                 ret._nextPooled = null;
+                Init(ret);
                 return ret;
             }
         }
