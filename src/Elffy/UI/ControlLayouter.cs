@@ -9,13 +9,13 @@ namespace Elffy.UI
     {
         private readonly ControlLayouterInternal _l;
 
-        public LayoutLength Width { get => _l.Width; set => _l.Height = value; }
-        public LayoutLength Height { get => _l.Height; set => _l.Height = value; }
-        public TransformOrigin TransformOrigin { get => _l.TransformOrigin; set => _l.TransformOrigin = value; }
-        public HorizontalAlignment HorizontalAlignment { get => _l.HorizontalAlignment; set => _l.HorizontalAlignment = value; }
-        public VerticalAlignment VerticalAlignment { get => _l.VerticalAlignment; set => _l.VerticalAlignment = value; }
-        public RectF Margin { get => _l.Margin; set => _l.Margin = value; }
-        public RectF Padding { get => _l.Padding; set => _l.Padding = value; }
+        public ref LayoutLength Width => ref _l.Width;
+        public ref LayoutLength Height => ref _l.Height;
+        public ref TransformOrigin TransformOrigin => ref _l.TransformOrigin;
+        public ref HorizontalAlignment HorizontalAlignment => ref _l.HorizontalAlignment;
+        public ref VerticalAlignment VerticalAlignment => ref _l.VerticalAlignment;
+        public ref RectF Margin => ref _l.Margin;
+        public ref RectF Padding => ref _l.Padding;
 
         internal ControlLayouter(ControlLayouterInternal l)
         {
@@ -33,13 +33,21 @@ namespace Elffy.UI
 
         private ControlLayouterInternal? _nextPooled;
 
-        public LayoutLength Width { get; set; }
-        public LayoutLength Height { get; set; }
-        public TransformOrigin TransformOrigin { get; set; }
-        public HorizontalAlignment HorizontalAlignment { get; set; }
-        public VerticalAlignment VerticalAlignment { get; set; }
-        public RectF Margin { get; set; }
-        public RectF Padding { get; set; }
+        private LayoutLength _width;
+        private LayoutLength _height;
+        private TransformOrigin _transformOrigin;
+        private HorizontalAlignment _horizontalAlignment;
+        private VerticalAlignment _verticalAlignment;
+        private RectF _margin;
+        private RectF _padding;
+
+        public ref LayoutLength Width => ref _width;
+        public ref LayoutLength Height => ref _height;
+        public ref TransformOrigin TransformOrigin => ref _transformOrigin;
+        public ref HorizontalAlignment HorizontalAlignment => ref _horizontalAlignment;
+        public ref VerticalAlignment VerticalAlignment => ref _verticalAlignment;
+        public ref RectF Margin => ref _margin;
+        public ref RectF Padding => ref _padding;
 
         private ControlLayouterInternal()
         {
