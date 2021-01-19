@@ -44,9 +44,12 @@ namespace Elffy.UI
 
             static void Callback(Control[]? items)
             {
-                if(items is not null) {
-                    foreach(var item in items) {
+                foreach(var item in items.AsSpan()) {
+                    if(item is not null) {
                         item.RemovedFromListCallback();
+                    }
+                    else {
+                        return;
                     }
                 }
             }
