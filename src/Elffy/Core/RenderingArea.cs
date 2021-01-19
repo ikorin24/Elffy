@@ -133,13 +133,15 @@ namespace Elffy.Core
 
             Mouse.InitFrame();
             Keyboard.InitFrame();
-            uiLayer.HitTest(Mouse);
 
             // Apply FrameObject added at previous frame.
             foreach(var layer in layers) {
                 layer.ApplyAdd();
             }
             uiLayer.ApplyAdd();
+
+            // UI hit test
+            uiLayer.HitTest(Mouse);
 
             // Early update
             _currentTiming = ScreenCurrentTiming.EarlyUpdate;
