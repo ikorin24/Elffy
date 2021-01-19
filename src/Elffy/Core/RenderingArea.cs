@@ -8,7 +8,7 @@ using System.Threading;
 
 namespace Elffy.Core
 {
-    /// <summary>OpenGL が描画を行う領域を扱うクラスです</summary>
+    /// <summary>Implementation of <see cref="IHostScreen"/>, which provides operations of rendering.</summary>
     internal sealed class RenderingArea : IDisposable
     {
         const float UI_FAR = 1f;
@@ -120,7 +120,7 @@ namespace Elffy.Core
             Layers.UILayer.ApplyAdd();
         }
 
-        /// <summary>フレームを更新して描画します</summary>
+        /// <summary>Update and render the next frame</summary>
         public void RenderFrame()
         {
             var isLastFrame = _isCloseRequested;
