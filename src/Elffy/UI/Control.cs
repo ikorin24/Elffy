@@ -29,6 +29,7 @@ namespace Elffy.UI
     public abstract class Control
     {
         private readonly UIRenderable _renderable;
+        private ControlLayouterInternal? _layouter;
         private Control? _parent;
         private RootPanel? _root;
         private Vector2i _absolutePosition;
@@ -53,6 +54,16 @@ namespace Elffy.UI
         public RootPanel? Root => _root;
 
         public bool IsRoot => _parent is null;
+
+        public ControlLayouter Layout
+        {
+            get
+            {
+                return _layouter is not null ? new ControlLayouter(_layouter) : Throw();
+
+                static ControlLayouter Throw() => throw new InvalidOperationException($"Cannot get {nameof(ControlLayouter)}.");
+            }
+        }
 
         public UIShaderSource? Shader
         {
@@ -177,15 +188,6 @@ namespace Elffy.UI
         /// <summary>get or set offset position of layout</summary>
         public ref Vector2i Offset => ref _offset;
 
-#if false   // future version, auto layout
-
-        /// <summary>get or set horizontal alignment of layout</summary>
-        public HorizontalAlignment HorizontalAlignment { get; set; }
-        /// <summary>get or set vertical alignment of layout</summary>
-        public VerticalAlignment VerticalAlignment { get; set; }
-
-#endif      // future version, auto layout
-
         /// <summary>get or set whether this <see cref="Control"/> is enabled in HitTest</summary>
         public bool IsHitTestVisible
         {
@@ -213,6 +215,7 @@ namespace Elffy.UI
         public Control()
         {
             _isHitTestVisible = true;
+            _layouter = ControlLayouterInternal.Create();
             _renderable = new UIRenderable(this);
             Width = 30;
             Height = 30;
@@ -326,32 +329,8 @@ namespace Elffy.UI
         private void OnRenderableDead(FrameObject sender)
         {
             Dead?.Invoke(this);
+            Debug.Assert(_layouter is not null);
+            ControlLayouterInternal.Return(ref _layouter);
         }
     }
-
-#if false   // future version, auto layout
-
-    /// <summary>Layout horizontal alignment</summary>
-    public enum HorizontalAlignment
-    {
-        /// <summary>left alignment</summary>
-        Left,
-        /// <summary>center alignment</summary>
-        Center,
-        /// <summary>right alignment</summary>
-        Right,
-    }
-
-    /// <summary>Layout vertical alignment</summary>
-    public enum VerticalAlignment
-    {
-        /// <summary>top alignment</summary>
-        Top,
-        /// <summary>center alignment</summary>
-        Center,
-        /// <summary>bottom alignment</summary>
-        Bottom,
-    }
-
-#endif      // future version, auto layout
 }
