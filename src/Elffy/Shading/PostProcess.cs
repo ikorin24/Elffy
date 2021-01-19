@@ -21,12 +21,12 @@ void main()
 }
 ";
         /// <summary>Get fragment shader code of glsl</summary>
-        protected abstract string FragShaderSource { get; }
+        public abstract string FragShaderSource { get; }
 
-        private void DefineLocation(VertexDefinition definition)
+        private void DefineLocation(VertexDefinition<VertexSlim> definition)
         {
-            definition.Map<VertexSlim>("_pos", nameof(VertexSlim.Position));
-            definition.Map<VertexSlim>("_v_uv", nameof(VertexSlim.UV));
+            definition.Map("_pos", nameof(VertexSlim.Position));
+            definition.Map("_v_uv", nameof(VertexSlim.UV));
         }
 
         /// <summary>Send uniform variables to glsl shader code.</summary>
@@ -35,7 +35,7 @@ void main()
         protected abstract void SendUniforms(Uniform uniform, in Vector2i screenSize);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SendUniforms(ProgramObject program, in Vector2i screenSize)
+        internal void SendUniformsInternal(ProgramObject program, in Vector2i screenSize)
         {
             SendUniforms(new Uniform(program), screenSize);
         }
@@ -74,7 +74,7 @@ void main()
                 vao = VAO.Create();
                 VAO.Bind(vao);
                 program = ShaderSource.CompileToProgramObject(VertShaderSource, FragShaderSource);
-                DefineLocation(new VertexDefinition(program));
+                DefineLocation(new VertexDefinition<VertexSlim>(program));
                 VAO.Unbind();
                 VBO.Unbind();
                 return new PostProcessProgram(this, program, vbo, ibo, vao);

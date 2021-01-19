@@ -8,7 +8,7 @@ namespace Elffy
     {
         private readonly GBuffer _gBuffer;
 
-        protected override string FragShaderSource => FragSource;
+        public override string FragShaderSource => FragSource;
 
         internal DeferedRenderingPostProcess(GBuffer gBuffer)
         {
