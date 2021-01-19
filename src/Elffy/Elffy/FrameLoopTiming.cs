@@ -7,6 +7,8 @@ namespace Elffy
 {
     public enum FrameLoopTiming : byte
     {
+        // All values of `FrameLoopTiming` can be cast to `ScreenCurrentTiming`. (as a same name)
+
         EarlyUpdate = 1,
         Update = 2,
         LateUpdate = 3,
@@ -33,7 +35,10 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsValid(this FrameLoopTiming source)
         {
-            return (byte)source != 0 && (byte)source <= 5;
+            const byte MaxValue = 5;    // max value of FrameLoopTiming
+            const byte Default = 0;
+
+            return (byte)source != Default && (byte)source <= MaxValue;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
