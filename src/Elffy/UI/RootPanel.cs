@@ -30,55 +30,16 @@ namespace Elffy.UI
             Renderable.Activate(UILayer);
         }
 
-#if false   // future version, auto layout
-        public bool IsLayouted { get; private set; }
-
-        /// <summary>Layout を実行します</summary>
-        public void Layout()
+        public void LayoutUI()
         {
-            if(IsLayouted) { throw new InvalidOperationException($"Already layouted."); }
+            // RootPanel.Layout is ignored.
 
-            // 深さ優先探索で列挙されるため子より親が先に Position が決定する
-            foreach(var target in GetOffspring()) {
-                Control parent = target.Parent!;
-                Debug.Assert(target.Parent != null);
+            var parentSize = (Vector2)Size;
+            var parentPadding = new LayoutThickness();
 
-                // 座標が NaN ならレイアウトを計算する。
-                var posXCalcRequirement = float.IsNaN(target.PositionX);
-                var posYCalcRequirement = float.IsNaN(target.PositionY);
-                if(posXCalcRequirement) {
-                    switch(target.HorizontalAlignment) {
-                        case HorizontalAlignment.Left:
-                            target.PositionX = target.OffsetX;
-                            break;
-                        case HorizontalAlignment.Center:
-                            target.PositionX = (parent.Width - target.Width) / 2 + target.OffsetX;
-                            break;
-                        case HorizontalAlignment.Right:
-                            target.PositionX = parent.Width - target.Width + target.OffsetX;
-                            break;
-                        default:
-                            throw new NotSupportedException($"Unknown type of {nameof(HorizontalAlignment)} : {target.HorizontalAlignment}");
-                    }
-                }
-                if(posYCalcRequirement) {
-                    switch(target.VerticalAlignment) {
-                        case VerticalAlignment.Top:
-                            target.PositionY = target.OffsetY;
-                            break;
-                        case VerticalAlignment.Center:
-                            target.PositionY = (parent.Height - target.Height) / 2 - target.OffsetY;
-                            break;
-                        case VerticalAlignment.Bottom:
-                            target.PositionY = parent.Height - target.Height - target.OffsetY;
-                            break;
-                        default:
-                            throw new NotSupportedException($"Unknown type of {nameof(VerticalAlignment)} : {target.VerticalAlignment}");
-                    }
-                }
+            foreach(var child in Children.AsSpan()) {
+                child.Layout(parentSize, parentPadding);
             }
-            IsLayouted = true;
         }
-#endif      // future version, auto layout
     }
 }

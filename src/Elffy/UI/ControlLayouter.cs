@@ -14,8 +14,8 @@ namespace Elffy.UI
         public ref TransformOrigin TransformOrigin => ref _l.TransformOrigin;
         public ref HorizontalAlignment HorizontalAlignment => ref _l.HorizontalAlignment;
         public ref VerticalAlignment VerticalAlignment => ref _l.VerticalAlignment;
-        public ref RectI Margin => ref _l.Margin;
-        public ref RectI Padding => ref _l.Padding;
+        public ref LayoutThickness Margin => ref _l.Margin;
+        public ref LayoutThickness Padding => ref _l.Padding;
 
         internal ControlLayouter(ControlLayouterInternal l)
         {
@@ -42,16 +42,16 @@ namespace Elffy.UI
         private TransformOrigin _transformOrigin;
         private HorizontalAlignment _horizontalAlignment;
         private VerticalAlignment _verticalAlignment;
-        private RectI _margin;
-        private RectI _padding;
+        private LayoutThickness _margin;
+        private LayoutThickness _padding;
 
         public ref LayoutLength Width => ref _width;
         public ref LayoutLength Height => ref _height;
         public ref TransformOrigin TransformOrigin => ref _transformOrigin;
         public ref HorizontalAlignment HorizontalAlignment => ref _horizontalAlignment;
         public ref VerticalAlignment VerticalAlignment => ref _verticalAlignment;
-        public ref RectI Margin => ref _margin;
-        public ref RectI Padding => ref _padding;
+        public ref LayoutThickness Margin => ref _margin;
+        public ref LayoutThickness Padding => ref _padding;
 
         private ControlLayouterInternal()
         {
@@ -71,6 +71,8 @@ namespace Elffy.UI
             instance._padding = default;
         }
 
+        [DoesNotReturn]
+        public static ControlLayouterInternal ThrowCannotGetInstance() => throw new InvalidOperationException($"Cannnot get a {nameof(ControlLayouterInternal)} instance.");
 
         internal static ControlLayouterInternal Create()
         {

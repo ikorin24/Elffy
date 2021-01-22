@@ -244,8 +244,7 @@ namespace Elffy.Core
             GL.Viewport(0, 0, newSize.X, newSize.Y);
             Matrix4.OrthographicProjection(0, newSize.X, 0, newSize.Y, UI_NEAR, UI_FAR, out _uiProjection);
             var uiRoot = Layers.UILayer.UIRoot;
-            uiRoot.Width = newSize.X;
-            uiRoot.Height = newSize.Y;
+            uiRoot.Size = newSize;
 
             Debug.WriteLine($"Size changed ({newSize.X}, {newSize.Y})");
         }
