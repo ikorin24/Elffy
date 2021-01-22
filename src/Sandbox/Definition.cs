@@ -25,7 +25,6 @@ namespace Sandbox
     {
         private static int _initialized;
 
-        private const uint ID_Light = 0;
         private const uint ID_CameraMouse = 1;
         private const uint ID_Plain = 2;
         private const uint ID_Alicia = 3;
@@ -48,7 +47,6 @@ namespace Sandbox
             [MethodImpl(MethodImplOptions.NoInlining)]
             static void Init()
             {
-                ObjectFactory.Register(ID_Light, DefineLight);
                 ObjectFactory.Register(ID_CameraMouse, DefineCameraMouse);
                 ObjectFactory.Register(ID_Plain, DefinePlain);
                 ObjectFactory.Register(ID_Alicia, DefineAlicia);
@@ -62,25 +60,6 @@ namespace Sandbox
                 ObjectFactory.Register(ID_KeyBoardInputDump, DefineKeyBoardInputDump);
             }
         }
-
-        #region Light
-        public static UniTask<Light> GenLight() => ObjectFactory.GenerateAsync<Light>(ID_Light);
-
-        private static UniTask<Light> DefineLight()
-        {
-            var light = new DirectLight();
-            light.Updated += sender =>
-            {
-                Debug.Assert(sender is DirectLight);
-                var light = Unsafe.As<DirectLight>(sender);
-                var frameNum = Game.FrameNum;
-                var rotation = Quaternion.FromAxisAngle(Vector3.UnitX, (frameNum / 60f * 60).ToRadian());
-                light.Direction = rotation * new Vector3(0, -1, 0);
-            };
-            light.Activate();
-            return new(light);
-        }
-        #endregion Light
 
         #region CameraMouse
         public static UniTask<CameraMouse> GenCameraMouse() => ObjectFactory.GenerateAsync<CameraMouse>(ID_CameraMouse);
