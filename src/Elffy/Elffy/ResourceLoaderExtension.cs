@@ -1,7 +1,10 @@
 ﻿#nullable enable
 using Elffy.Components;
 using Elffy.Imaging;
+using System;
 using System.IO;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 
 namespace Elffy
 {
@@ -41,6 +44,41 @@ namespace Elffy
                 texture.Load(bitmap);
                 return texture;
             }
+        }
+
+        public static UniTask<Texture> LoadTextureAsync(this IResourceLoader source, string name, BitmapType bitmapType,
+                                                        AsyncBackEndPoint endPoint,
+                                                        FrameLoopTiming timing,
+                                                        CancellationToken cancellationToken = default)
+        {
+            return LoadTextureAsync(source, name, bitmapType,
+                                    TextureExpansionMode.Bilinear,
+                                    TextureShrinkMode.Bilinear,
+                                    TextureMipmapMode.Bilinear,
+                                    TextureWrapMode.ClampToEdge,
+                                    TextureWrapMode.ClampToEdge, endPoint, timing, cancellationToken);
+        }
+
+        public static async UniTask<Texture> LoadTextureAsync(this IResourceLoader source, string name, BitmapType bitmapType, TextureExpansionMode expansionMode,
+                                                              TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode,
+                                                              TextureWrapMode wrapModeX, TextureWrapMode wrapModeY,
+                                                              AsyncBackEndPoint endPoint,
+                                                              FrameLoopTiming timing,
+                                                              CancellationToken cancellationToken = default)
+        {
+            if(endPoint is null) {
+                throw new ArgumentNullException(nameof(endPoint));
+            }
+            cancellationToken.ThrowIfCancellationRequested();
+            await UniTask.SwitchToThreadPool();
+            cancellationToken.ThrowIfCancellationRequested();
+
+            using var stream = source.GetStream(name);
+            using var bitmap = BitmapHelper.StreamToBitmap(stream, bitmapType);
+            await endPoint.ToTiming(timing, cancellationToken);
+            var texture = new Texture(expansionMode, shrinkMode, mipmapMode, wrapModeX, wrapModeY);
+            texture.Load(bitmap);
+            return texture;
         }
 
         public static Typeface LoadTypeface(this IResourceLoader source, string name)

@@ -19,6 +19,8 @@ namespace Elffy
         private static IHostScreen? _screen;
         private static AsyncBackEndPoint? _endPoint;
 
+        internal static AsyncBackEndPoint EndPoint => _endPoint!;
+
         internal static void Initialize(IHostScreen screen)
         {
             Debug.Assert(_endPoint is null);

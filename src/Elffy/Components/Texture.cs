@@ -28,6 +28,10 @@ namespace Elffy.Components
 
         public ref readonly Vector2i Size => ref _textureCore.Size;
 
+        public Texture(bool autoDispose = true) : this(TextureWrapMode.ClampToEdge, autoDispose)
+        {
+        }
+
         public Texture(TextureWrapMode wrapMode, bool autoDispose = true)
             : this(TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear, TextureMipmapMode.Bilinear, wrapMode, wrapMode, autoDispose)
         {
