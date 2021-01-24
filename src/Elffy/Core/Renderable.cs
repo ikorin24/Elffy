@@ -88,18 +88,9 @@ namespace Elffy.Core
         /// <param name="modelParent">parent model matrix</param>
         internal void Render(in Matrix4 projection, in Matrix4 view, in Matrix4 modelParent)
         {
-            //var withoutScale = modelParent * Position.ToTranslationMatrix4() * Rotation.ToMatrix4();
-            var withoutScale = modelParent;
-            withoutScale.M03 += Position.X;
-            withoutScale.M13 += Position.Y;
-            withoutScale.M23 += Position.Z;
-            withoutScale *= Rotation.ToMatrix4();
+            var withoutScale = modelParent * Position.ToTranslationMatrix4() * Rotation.ToMatrix4();
 
-            // var model = withoutScale * Scale.ToScaleMatrix4();
-            var model = withoutScale;
-            model.M00 *= Scale.X;
-            model.M11 *= Scale.Y;
-            model.M22 *= Scale.Z;
+            var model = withoutScale * Scale.ToScaleMatrix4();
 
             if(IsLoaded && IsVisible) {
                 Rendering?.Invoke(this, in model, in view, in projection);
