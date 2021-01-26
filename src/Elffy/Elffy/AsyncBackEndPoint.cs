@@ -9,10 +9,14 @@ namespace Elffy
 {
     public sealed class AsyncBackEndPoint
     {
+        private readonly IHostScreen _screen;
         private readonly ConcurrentDictionary<FrameLoopTiming, ConcurrentQueue<WorkItem>> _queues;
 
-        internal AsyncBackEndPoint()
+        internal IHostScreen Screen => _screen;
+
+        internal AsyncBackEndPoint(IHostScreen screen)
         {
+            _screen = screen;
             _queues = new();
         }
 

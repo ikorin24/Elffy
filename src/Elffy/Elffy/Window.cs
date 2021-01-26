@@ -58,8 +58,12 @@ namespace Elffy
         /// <inheritdoc/>
         public TimeSpan Time => _time;
 
+        public TimeSpan FrameDelta => _frameDelta;
+
         /// <inheritdoc/>
         public long FrameNum => _frameNum;
+
+        public FrameEnumerableSource Frames => _renderingArea.Frames;
 
         /// <inheritdoc/>
         public CancellationToken RunningToken => _renderingArea.RunningToken;

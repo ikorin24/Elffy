@@ -40,8 +40,13 @@ namespace Elffy
         /// <summary>Get time of current frame. (This is NOT real time.)</summary>
         TimeSpan Time { get; }
 
+        /// <summary>Get time span between frames</summary>
+        TimeSpan FrameDelta { get; }
+
         /// <summary>Get number of current frame.</summary>
         long FrameNum { get; }
+
+        FrameEnumerableSource Frames { get; }
 
         /// <summary>Get screen running token, which is canceled when screen got closed.</summary>
         CancellationToken RunningToken { get; }

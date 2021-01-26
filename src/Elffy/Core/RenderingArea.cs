@@ -38,7 +38,9 @@ namespace Elffy.Core
         public Mouse Mouse { get; } = new Mouse();
         public Keyboard Keyboard { get; } = new Keyboard();
 
-        public AsyncBackEndPoint AsyncBack { get; } = new AsyncBackEndPoint();
+        public AsyncBackEndPoint AsyncBack { get; }
+
+        public FrameEnumerableSource Frames { get; }
 
         public ScreenCurrentTiming CurrentTiming => _currentTiming;
 
@@ -89,6 +91,8 @@ namespace Elffy.Core
         internal RenderingArea(IHostScreen screen)
         {
             OwnerScreen = screen;
+            AsyncBack = new AsyncBackEndPoint(screen);
+            Frames = new FrameEnumerableSource(AsyncBack);
             Layers = new LayerCollection(this);
             _runningTokenSource = new CancellationTokenSource();
         }
