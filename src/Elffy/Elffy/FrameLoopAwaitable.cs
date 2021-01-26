@@ -74,6 +74,8 @@ namespace Elffy
             await this;
         }
 
+        public static implicit operator UniTask(FrameLoopAwaitable awaitable) => awaitable.AsUniTask();
+
         public readonly struct Awaiter : ICriticalNotifyCompletion, INotifyCompletion
         {
             private readonly AsyncBackEndPoint _endPoint;
