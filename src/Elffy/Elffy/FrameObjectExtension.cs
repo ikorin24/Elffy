@@ -72,7 +72,7 @@ namespace Elffy
             // [NOTE] See class comment of state transition
 
             if(source.TryGetHostScreen(out var screen)) {
-                if(source.IsLoaded && screen.CurrentTiming.Equals(timing)) {
+                if(source.IsLoaded && screen.CurrentTiming.TimingEquals(timing)) {
                     // here is main thread
                     Debug.Assert(screen.IsThreadMain);
                     return new(true);

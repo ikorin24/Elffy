@@ -52,13 +52,13 @@ namespace Elffy
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Equals(this FrameLoopTiming source, ScreenCurrentTiming timing)
+        public static bool TimingEquals(this FrameLoopTiming source, ScreenCurrentTiming timing)
         {
             return source == (FrameLoopTiming)timing;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Equals(this ScreenCurrentTiming source, FrameLoopTiming timing)
+        public static bool TimingEquals(this ScreenCurrentTiming source, FrameLoopTiming timing)
         {
             return source == (ScreenCurrentTiming)timing;
         }
