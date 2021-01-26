@@ -22,6 +22,8 @@ namespace Sandbox
                 UniTask.FromResult(CreateSky()),
                 Timing.DelayTime(800));
 
+            await Timing.Ensure(FrameLoopTiming.Update);
+
             var time = TimeSpan.FromMilliseconds(200);
             await foreach(var frame in Timing.Frames.OnTiming(FrameLoopTiming.Update)) {
                 if(frame.Time >= time) {

@@ -36,6 +36,19 @@ namespace Elffy
         /// <remarks>If not main thread of <see cref="IHostScreen"/>, always returns <see cref="ScreenCurrentTiming.OutOfFrameLoop"/></remarks>
         public static ScreenCurrentTiming CurrentTiming => _screen!.CurrentTiming;
 
+        /// <summary>Wait for specified timing if current timing is not the timing. Otherwise, do nothing.</summary>
+        /// <param name="timing">timing to wait</param>
+        /// <param name="cancellation">cancellation token</param>
+        /// <returns>awaitable object</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static UniTask Ensure(FrameLoopTiming timing, CancellationToken cancellation = default)
+        {
+            if(CurrentTiming.TimingEquals(timing)) {
+                return UniTask.CompletedTask;
+            }
+            return ToTiming(timing, cancellation).AsUniTask();
+        }
+
         /// <summary>Wait for specified timing.</summary>
         /// <param name="timing">timing to wait</param>
         /// <param name="cancellationToken">cancellation token</param>
