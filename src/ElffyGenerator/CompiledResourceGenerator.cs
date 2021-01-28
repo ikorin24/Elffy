@@ -32,9 +32,22 @@ namespace Elffy
 
         public void Execute(GeneratorExecutionContext context)
         {
+            // Dump the attribute.
             var attributeText = GeneratorUtil.GetGeneratorSigniture(typeof(CompiledResourceGenerator)) + AttributeText;
             context.AddSource("GenerateResourceFileAttribute", SourceText.From(attributeText, Encoding.UTF8));
 
+            // Ignore exceptions anytime because source generator must dump the attribute completely.
+            // (Invalid code is often input when incremental build of IDE is enabled, which occurs many exceptions.)
+            try {
+                Create(context);
+            }
+            catch {
+                // Ignore exceptions.
+            }
+        }
+
+        private void Create(GeneratorExecutionContext context)
+        {
             var compilation = context.Compilation;
             var attr = compilation
                    .SyntaxTrees
