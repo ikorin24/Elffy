@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
-using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Elffy.AssemblyServices;
@@ -290,8 +291,17 @@ namespace Elffy.OpenGL
 
             var provider = new GLFWBindingsContext();
             try {
-                //var assembly = Assembly.Load("OpenTK.Graphics");
                 GL.LoadBindings(provider);
+
+#if false
+                ReadOnlySpan<byte> name = new byte[]
+                {
+                    (byte)'g', (byte)'l', (byte)'S', (byte)'h', (byte)'a', (byte)'d', (byte)'e', (byte)'r',
+                    (byte)'S', (byte)'o', (byte)'u', (byte)'r', (byte)'c', (byte)'e',
+                };
+                var glShaderSource = (delegate* unmanaged[Stdcall]<uint, int, IntPtr, int*, void>)
+                    GLFW.GetProcAddressRaw((byte*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(name)));
+#endif
             }
             catch {
                 if(AssemblyState.IsDebug) {
