@@ -1,5 +1,8 @@
 ﻿#nullable enable
 using System;
+using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Imaging
 {
@@ -10,30 +13,54 @@ namespace Elffy.Imaging
         /// <summary>Get height of image</summary>
         public readonly int Height;
         /// <summary>Get pixels raw data, which is layouted as (R, G, B, A), each pixel is 4 bytes, each channel is 1 byte.</summary>
-        public readonly byte* Pixels;
+        public readonly ColorByte* Pixels;
 
-        public RawImage(int width, int height, byte* pixels)
+        public static RawImage Empty => default;
+
+        public ref ColorByte this[int x, int y]
         {
+            get
+            {
+                if((uint)x >= (uint)Width) {
+                    ThrowOutOfRange(nameof(x));
+                }
+                if((uint)y >= (uint)Height) {
+                    ThrowOutOfRange(nameof(y));
+                }
+                return ref Pixels[y * Width + x];
+            }
+        }
+
+        public RawImage(int width, int height, IntPtr pixels) : this(width, height, (ColorByte*)pixels)
+        {
+
+        }
+
+        public RawImage(int width, int height, ColorByte* pixels)
+        {
+            if(width < 0) {
+                ThrowOutOfRange(nameof(width));
+            }
+            if(height < 0) {
+                ThrowOutOfRange(nameof(height));
+            }
             Width = width;
             Height = height;
             Pixels = pixels;
         }
 
-        public override bool Equals(object? obj)
+        public Span<ColorByte> AsSpan()
         {
-            return obj is RawImage image && Equals(image);
+            return MemoryMarshal.CreateSpan(ref Unsafe.AsRef<ColorByte>(Pixels), Width * Height);
         }
 
-        public bool Equals(RawImage other)
-        {
-            return Width == other.Width &&
-                   Height == other.Height &&
-                   Pixels == other.Pixels;
-        }
+        public override bool Equals(object? obj) => obj is RawImage image && Equals(image);
 
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(Width, Height, (IntPtr)Pixels);
-        }
+        public bool Equals(RawImage other) => Width == other.Width && Height == other.Height && Pixels == other.Pixels;
+
+        public override int GetHashCode() => HashCode.Combine(Width, Height, (IntPtr)Pixels);
+
+        [DoesNotReturn]
+        private static void ThrowOutOfRange(string message) => throw new ArgumentOutOfRangeException(message);
     }
 }

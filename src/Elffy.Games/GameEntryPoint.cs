@@ -121,7 +121,7 @@ namespace Elffy
                             pixelSpan[i * 4 + 1] = g;
                             pixelSpan[i * 4 + 2] = b;
                         }
-                        icon[0] = new RawImage(pixels.Width, pixels.Height, pixels.GetPtr<byte>());
+                        icon[0] = new RawImage(pixels.Width, pixels.Height, pixels.Ptr);
                     }
                 }
                 else {
