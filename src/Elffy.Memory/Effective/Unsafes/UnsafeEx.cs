@@ -19,5 +19,21 @@ namespace Elffy.Effective.Unsafes
         {
             return ref Unsafe.As<TFrom, TTo>(ref Unsafe.AsRef(source));
         }
+
+        /// <summary>Determines whether the specified references point to the same location.</summary>
+        /// <typeparam name="T">The type of reference.</typeparam>
+        /// <param name="left">The first reference to compare.</param>
+        /// <param name="right">The second reference to compare.</param>
+        /// <returns>true if left and right point to the same location; otherwise, false.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool AreSame<T>(in T left, in T right)
+        {
+            return Unsafe.AreSame(ref Unsafe.AsRef(left), ref Unsafe.AsRef(right));
+        }
+
+        public static unsafe void* AsPointer<T>(in T value)
+        {
+            return Unsafe.AsPointer(ref Unsafe.AsRef(in value));
+        }
     }
 }
