@@ -1,16 +1,14 @@
 ﻿#nullable enable
 using System;
+using System.Diagnostics;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
-using System.Runtime.Intrinsics;
-using System.Numerics;
-using Cysharp.Text;
-using Elffy.Effective.Unsafes;
 using NVec4 = System.Numerics.Vector4;
 
 namespace Elffy
 {
+    [DebuggerDisplay("{DebugView}")]
     [StructLayout(LayoutKind.Explicit)]
     public struct ColorByte : IEquatable<ColorByte>
     {
@@ -22,6 +20,9 @@ namespace Elffy
         public byte B;
         [FieldOffset(3)]
         public byte A;
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private readonly string DebugView => $"(R, G, B) = ({R}, {G}, {B})";
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ColorByte(byte r, byte g, byte b, byte a)
@@ -73,7 +74,7 @@ namespace Elffy
 
         public static bool operator !=(in ColorByte left, in ColorByte right) => !(left == right);
 
-        public readonly override string ToString() => ZString.Concat("(R: ", R, ", G: ", G, ", B: ", B, ", A: ", A, ")");
+        public readonly override string ToString() => DebugView;
 
         public static explicit operator Color4(in ColorByte color) => color.ToColor4();
 

@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using Cysharp.Text;
 using Elffy.Effective.Unsafes;
 using System;
 using System.ComponentModel;
@@ -7,7 +6,6 @@ using System.Drawing;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using TKColor4 = OpenTK.Mathematics.Color4;
 using NVec4 = System.Numerics.Vector4;
 
 namespace Elffy
@@ -26,31 +24,7 @@ namespace Elffy
         public float A;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private readonly string DebugView
-        {
-            get
-            {
-                using var sb = ZString.CreateStringBuilder();
-                sb.Append("(R, G, B, A) = (");
-                sb.Append(ToByte(R));
-                sb.Append(", ");
-                sb.Append(ToByte(G));
-                sb.Append(", ");
-                sb.Append(ToByte(B));
-                sb.Append(", ");
-                sb.Append(ToByte(A));
-                sb.Append(") = (");
-                sb.Append(R);
-                sb.Append(", ");
-                sb.Append(G);
-                sb.Append(", ");
-                sb.Append(B);
-                sb.Append(", ");
-                sb.Append(A);
-                sb.Append(')');
-                return sb.ToString();
-            }
-        }
+        private readonly string DebugView => $"(R, G, B, A) = ({ToByte(R)}, {ToByte(G)}, {ToByte(B)}, {ToByte(A)}) = ({R}, {G}, {B}, {A})";
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Color4(float r, float g, float b) => (R, G, B, A) = (r, g, b, 1f);
@@ -109,11 +83,6 @@ namespace Elffy
 
         public static explicit operator Color4(in ColorByte color) => color.ToColor4();
         public static explicit operator ColorByte(in Color4 color) => color.ToColorByte();
-        public static implicit operator TKColor4(in Color4 color) => UnsafeEx.As<Color4, TKColor4>(in color);
-        public static implicit operator Color4(in TKColor4 color) => UnsafeEx.As<TKColor4, Color4>(in color);
-        public static explicit operator Color(in Color4 color) => (Color)(TKColor4)color;
-        public static implicit operator Color4(in Color color) => (TKColor4)color;
-        public static explicit operator Vector3(in Color4 color) => UnsafeEx.As<Color4, Vector3>(in color);
 
 
         /// <summary>Gets the system color with (R, G, B, A) = (102, 205, 170, 255).</summary>

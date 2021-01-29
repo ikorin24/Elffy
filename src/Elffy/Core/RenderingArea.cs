@@ -99,7 +99,8 @@ namespace Elffy.Core
 
         public void Initialize()
         {
-            GL.ClearColor(Color4.Gray);
+            var clearColor = Color4.Gray;
+            GL.ClearColor(clearColor.R, clearColor.G, clearColor.B, clearColor.A);
             GL.Enable(EnableCap.DepthTest);
 
             // Enable alpha blending.
