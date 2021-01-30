@@ -23,7 +23,7 @@ namespace Elffy.Imaging
         /// <summary>Get pixels raw data, which is layouted as (R, G, B, A), each pixel is <see cref="Color4"/>.</summary>
         public ref readonly Color4 Pixels => ref Unsafe.AsRef<Color4>(_pixels);
 
-        /// <summary>Get or set pixel of specified (x, y)</summary>
+        /// <summary>Get pixel of specified (x, y)</summary>
         /// <param name="x">x index (column line)</param>
         /// <param name="y">y index (row line)</param>
         /// <returns>pixel</returns>
