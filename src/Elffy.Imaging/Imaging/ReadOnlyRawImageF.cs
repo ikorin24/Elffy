@@ -96,6 +96,9 @@ namespace Elffy.Imaging
         public override int GetHashCode() => HashCode.Combine(Width, Height, (IntPtr)_pixels);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator ReadOnlyRawImageF(RawImageF image) => Unsafe.As<RawImageF, ReadOnlyRawImageF>(ref image);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(in ReadOnlyRawImageF left, in ReadOnlyRawImageF right) => left.Equals(right);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
