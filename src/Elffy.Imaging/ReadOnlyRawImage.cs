@@ -20,7 +20,7 @@ namespace Elffy.Imaging
         [FieldOffset(8)]
         private readonly ColorByte* _pixels;
 
-        /// <summary>Get pixels raw data, which is layouted as (R, G, B, A), each pixel is 4 bytes, each channel is 1 byte.</summary>
+        /// <summary>Get pixels raw data, which is layouted as (R, G, B, A), each pixel is <see cref="ColorByte"/>.</summary>
         public ref readonly ColorByte Pixels => ref Unsafe.AsRef<ColorByte>(_pixels);
 
         /// <summary>Get pixel of specified (x, y)</summary>
@@ -65,13 +65,12 @@ namespace Elffy.Imaging
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe ReadOnlySpan<ColorByte> GetRowLine(int row)
+        public ReadOnlySpan<ColorByte> GetRowLine(int row)
         {
             if((uint)row >= (uint)Height) {
                 ThrowOutOfRange(nameof(row));
             }
-            ref var head = ref Unsafe.AsRef<ColorByte>(_pixels + row * Width);
-            return MemoryMarshal.CreateReadOnlySpan(ref head, Width);
+            return MemoryMarshal.CreateReadOnlySpan(ref Unsafe.AsRef<ColorByte>(_pixels + row * Width), Width);
         }
 
         public override bool Equals(object? obj) => obj is ReadOnlyRawImage image && Equals(image);

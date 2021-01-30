@@ -14,17 +14,21 @@ namespace UnitTest
         public unsafe void RawImageLayout()
         {
             // Layout of Elffy.Imaging.RawImage must be same as OpenTK.Windowing.GraphicsLibraryFramework.Image
+            CheckLayout1();
+            static void CheckLayout1()
             {
                 Assert.Equal(sizeof(Image), sizeof(RawImage));
-                var rawImage = new RawImage();
                 var image = new Image();
-                Assert.Equal((byte*)&image.Width - (byte*)&image, (byte*)&rawImage.Width - (byte*)&rawImage);
-                Assert.Equal((byte*)&image.Height - (byte*)&image, (byte*)&rawImage.Height - (byte*)&rawImage);
-                Assert.Equal((byte*)&image.Pixels - (byte*)&image, (byte*)&rawImage.Pixels - (byte*)&rawImage);
+                ref var rawImage = ref Unsafe.As<Image, RawImage>(ref image);
+                Assert.True(UnsafeEx.AreSame(in rawImage.Width, in image.Width));
+                Assert.True(UnsafeEx.AreSame(in rawImage.Height, in image.Height));
+                Assert.True(Unsafe.AsPointer(ref rawImage.Pixels) == image.Pixels);
             }
 
 
             // Layout of RawImage must be same as ReadOnlyRawImage.
+            CheckLayout2();
+            static void CheckLayout2()
             {
                 Assert.Equal(sizeof(RawImage), sizeof(ReadOnlyRawImage));
                 var pixels = stackalloc ColorByte[60];
@@ -32,7 +36,20 @@ namespace UnitTest
                 ref var readOnlyRawImage = ref Unsafe.As<RawImage, ReadOnlyRawImage>(ref rawImage);
                 Assert.True(UnsafeEx.AreSame(in rawImage.Width, in readOnlyRawImage.Width));
                 Assert.True(UnsafeEx.AreSame(in rawImage.Height, in readOnlyRawImage.Height));
-                Assert.True(rawImage.Pixels == UnsafeEx.AsPointer(in readOnlyRawImage.Pixels));
+                Assert.True(UnsafeEx.AreSame(in rawImage.Pixels, in readOnlyRawImage.Pixels));
+            }
+
+            // Layout of RawImageF must be same as ReadOnlyRawImageF.
+            CheckLayout3();
+            static void CheckLayout3()
+            {
+                Assert.Equal(sizeof(RawImageF), sizeof(ReadOnlyRawImageF));
+                var pixels = stackalloc Color4[60];
+                var rawImageF = new RawImageF(10, 6, pixels);
+                ref var readOnlyRawImageF = ref Unsafe.As<RawImageF, ReadOnlyRawImageF>(ref rawImageF);
+                Assert.True(UnsafeEx.AreSame(in rawImageF.Width, in readOnlyRawImageF.Width));
+                Assert.True(UnsafeEx.AreSame(in rawImageF.Height, in readOnlyRawImageF.Height));
+                Assert.True(UnsafeEx.AreSame(in rawImageF.Pixels, in readOnlyRawImageF.Pixels));
             }
         }
     }
