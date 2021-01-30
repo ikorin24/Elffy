@@ -37,7 +37,7 @@ namespace Elffy.Components
         /// <summary>Load pixel data from <see cref="Bitmap"/></summary>
         /// <remarks>Texture width and height should be power of two for performance.</remarks>
         /// <param name="bitmap">bitmap to load pixels</param>
-        public unsafe void Load(Bitmap bitmap)
+        public void Load(Bitmap bitmap)
         {
             if(!Texture.IsEmpty) {
                 ThrowAlreadyLoaded();
@@ -83,6 +83,24 @@ namespace Elffy.Components
             }
         }
 
+        public unsafe void Load(in Vector2i size, ReadOnlySpan<Color4> pixels)
+        {
+            if(!Texture.IsEmpty) {
+                ThrowAlreadyLoaded();
+            }
+            if(size.X <= 0 || size.Y <= 0) {
+                ThrowInvalidSize();
+                [DoesNotReturn] static void ThrowInvalidSize() => throw new ArgumentOutOfRangeException($"{nameof(size)} is invalid");
+            }
+            if(pixels.Length < size.X * size.Y) {
+                ThrowPixelsTooShort();
+                [DoesNotReturn] static void ThrowPixelsTooShort() => throw new ArgumentException($"{nameof(pixels)} is too short");
+            }
+            fixed(Color4* ptr = pixels) {
+                LoadCore(size, ptr);
+            }
+        }
+
         public unsafe void Load(in Vector2i size, in ColorByte fill)
         {
             using var buf = new PooledArray<byte>(size.X * size.Y * sizeof(ColorByte));
@@ -98,7 +116,7 @@ namespace Elffy.Components
             if(!Texture.IsEmpty) {
                 ThrowAlreadyLoaded();
             }
-            LoadCore(size, null);
+            LoadCore<ColorByte>(size, null);
         }
 
         public unsafe void Update(in RectI rect, ReadOnlySpan<ColorByte> pixels)
@@ -112,6 +130,21 @@ namespace Elffy.Components
             }
 
             fixed(ColorByte* ptr = pixels) {
+                UpdateSubTexture(Texture, ptr, rect);
+            }
+        }
+
+        public unsafe void Update(in RectI rect, ReadOnlySpan<Color4> pixels)
+        {
+            if(Texture.IsEmpty) {
+                ThrowEmptyTexture();
+            }
+            if(rect.X < 0 || rect.Y < 0 || (uint)rect.Width >= (uint)(Size.X - rect.X) || (uint)rect.Height >= (uint)(Size.Y - rect.Y)) {
+                ThrowInvalidRect();
+                [DoesNotReturn] static void ThrowInvalidRect() => throw new ArgumentOutOfRangeException($"{nameof(rect)} is invalid");
+            }
+
+            fixed(Color4* ptr = pixels) {
                 UpdateSubTexture(Texture, ptr, rect);
             }
         }
@@ -135,6 +168,16 @@ namespace Elffy.Components
         }
 
         internal static unsafe void UpdateSubTexture(in TextureObject to, ColorByte* pixels, in RectI rect)
+        {
+            if(to.IsEmpty) {
+                ThrowEmptyTexture();
+            }
+            TextureObject.Bind2D(to);
+            TextureObject.SubImage2D(rect, pixels);
+            TextureObject.Unbind2D();
+        }
+
+        internal static unsafe void UpdateSubTexture(in TextureObject to, Color4* pixels, in RectI rect)
         {
             if(to.IsEmpty) {
                 ThrowEmptyTexture();
@@ -264,15 +307,27 @@ namespace Elffy.Components
             Size = default;
         }
 
-        private unsafe void LoadCore(in Vector2i size, ColorByte* pixels)
+        private unsafe void LoadCore<TColor>(in Vector2i size, TColor* pixels) where TColor : unmanaged
         {
+            if(typeof(TColor) != typeof(ColorByte) || typeof(TColor) != typeof(Color4)) {
+                ThrowNotSupported();
+                [DoesNotReturn] static void ThrowNotSupported() => throw new NotSupportedException();
+            }
+
             Texture = TextureObject.Create();
             TextureObject.Bind2D(Texture);
             TextureObject.Parameter2DMinFilter(ShrinkMode, MipmapMode);
             TextureObject.Parameter2DMagFilter(ExpansionMode);
             TextureObject.Parameter2DWrapS(WrapModeX);
             TextureObject.Parameter2DWrapT(WrapModeY);
-            TextureObject.Image2D(size, pixels);
+
+            if(typeof(TColor) == typeof(ColorByte)) {
+                TextureObject.Image2D(size, (ColorByte*)pixels);
+            }
+            else if(typeof(TColor) == typeof(Color4)) {
+                TextureObject.Image2D(size, (Color4*)pixels);
+            }
+
             if(MipmapMode != TextureMipmapMode.None) {
                 TextureObject.GenerateMipmap2D();
             }

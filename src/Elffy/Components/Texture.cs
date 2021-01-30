@@ -4,6 +4,7 @@ using System.Drawing;
 using Elffy.Core;
 using Elffy.Exceptions;
 using Elffy.OpenGL;
+using Elffy.Imaging;
 
 namespace Elffy.Components
 {
@@ -51,6 +52,10 @@ namespace Elffy.Components
         /// <remarks>Texture width and height should be power of two for performance.</remarks>
         /// <param name="bitmap">bitmap to load pixels</param>
         public void Load(Bitmap bitmap) => _textureCore.Load(bitmap);
+
+        /// <summary>Load pixel data from <see cref="ReadOnlyRawImage"/></summary>
+        /// <param name="image">image to load</param>
+        public void Load(in ReadOnlyRawImage image) => _textureCore.Load(new Vector2i(image.Width, image.Height), image.AsSpan());
 
         /// <summary>Load specified pixel data with specified texture size</summary>
         /// <remarks>Texture width and height should be power of two for performance.</remarks>
