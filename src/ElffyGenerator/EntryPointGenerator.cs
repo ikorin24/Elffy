@@ -14,7 +14,7 @@ using Elffy.Diagnostics;
 
 namespace ElffyGenerator
 {
-    //[Generator]
+    [Generator]
     public class EntryPointGenerator : ISourceGenerator
     {
         private const string AttributesDef =
@@ -24,7 +24,7 @@ using System.Diagnostics;
 
 namespace Elffy
 {
-    public static class GameLaunchSetting
+    internal static class GameLaunchSetting
     {
         [Conditional(""COMPILE_TIME_ONLY"")]
         [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = false, Inherited = false)]
@@ -78,9 +78,13 @@ namespace Elffy
 
         public void Execute(GeneratorExecutionContext context)
         {
-            if(context.SyntaxReceiver is not SyntaxReceiver receiver) { throw new Exception("Why is the receiver null ??"); }
-
-            context.AddSource(nameof(EntryPointGenerator), receiver.DumpSource(context.Compilation));
+            context.AddSource("GameLaunchSetting", SourceText.From(AttributesDef, Encoding.UTF8));
+            try {
+                if(context.SyntaxReceiver is not SyntaxReceiver receiver) { throw new Exception("Why is the receiver null ??"); }
+                context.AddSource("GameEntryPoint", receiver.DumpSource(context.Compilation));
+            }
+            catch {
+            }
         }
 
         public void Initialize(GeneratorInitializationContext context)
@@ -166,7 +170,8 @@ namespace Elffy
                 sb.Append(@"
         private static void Launch()
         {
-            try {");
+            try {
+                Engine.Run();");
                 sb.Append($@"
                 Resources.Initialize(arg => new {resourceTypeName}(arg), ""{resourceArg}"");");
                 sb.Append(@"
@@ -248,7 +253,7 @@ namespace Elffy
                     case PlatformType.Windows:
                     case PlatformType.MacOSX:
                     case PlatformType.Linux:
-                        return new Window(width, height, title, WindowStyle.Default, icon));
+                        return new Window(width, height, title, WindowStyle.Default, icon);
                     case PlatformType.Android:
                     case PlatformType.Other:
                     default:
@@ -264,12 +269,12 @@ namespace Elffy
                     var iconName = GetAttrArgString(_screenIcon, 0, compilation);
                     sb.Append(
 $@"
-            ReadOnlySpan<RawImage> icon = stackalloc RawImage[1];
+            Span<RawImage> icon = stackalloc RawImage[1];
             using var iconStream = Resources.Loader.GetStream(""{iconName}"");
             using var bitmap = new Bitmap(iconStream);");
                     sb.Append(
 @"
-            using var pixels = iconBitmap.GetPixels(ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+            using var pixels = bitmap.GetPixels(ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
             var pixelSpan = pixels.AsSpan();
 
             // Pixels of System.Drawing.Bitmap is layouted as (B, G, R, A).
@@ -284,7 +289,7 @@ $@"
 ");
                     sb.Append(
 $@"
-            return PlatformSwitch({width}, {height}, ""{title}"", icon)");
+            return PlatformSwitch({width}, {height}, ""{title}"", icon);");
                 }
 
                 sb.Append(@"

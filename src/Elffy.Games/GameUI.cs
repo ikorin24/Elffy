@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using Elffy.UI;
+using System.ComponentModel;
 
 namespace Elffy
 {
@@ -10,7 +11,8 @@ namespace Elffy
 
         public static RootPanel Root => _rootPanel!;
 
-        internal static void Initialize(RootPanel rootPanel)
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void Initialize(RootPanel rootPanel)
         {
             _rootPanel = rootPanel;
         }

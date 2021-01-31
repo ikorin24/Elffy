@@ -3,6 +3,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Runtime.CompilerServices;
+using System.ComponentModel;
 using Cysharp.Threading.Tasks;
 
 namespace Elffy
@@ -24,7 +25,8 @@ namespace Elffy
 
         public static FrameEnumerableSource Frames => _frames!;
 
-        internal static void Initialize(IHostScreen screen)
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void Initialize(IHostScreen screen)
         {
             Debug.Assert(_endPoint is null);
             _screen = screen;

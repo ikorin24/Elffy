@@ -2,6 +2,7 @@
 using System;
 using System.Threading;
 using System.Diagnostics;
+using System.ComponentModel;
 using Elffy.InputSystem;
 
 namespace Elffy
@@ -51,7 +52,8 @@ namespace Elffy
             _screen!.Close();
         }
 
-        internal static void Initialize(IHostScreen screen)
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void Initialize(IHostScreen screen)
         {
             Debug.Assert(_screen is null);
             _screen = screen;

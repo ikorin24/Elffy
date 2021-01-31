@@ -2,10 +2,12 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using System.ComponentModel;
 
 namespace Elffy.Threading
 {
-    internal sealed class SyncContextReceiver
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public sealed class SyncContextReceiver
     {
         private readonly ConcurrentQueue<(SendOrPostCallback callback, object? state)> _queue
             = new ConcurrentQueue<(SendOrPostCallback callback, object? state)>();
