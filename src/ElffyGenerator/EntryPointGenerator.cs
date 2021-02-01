@@ -4,13 +4,9 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using System;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
-using System.Globalization;
-using Elffy.Core;
-using Elffy.Diagnostics;
 
 namespace ElffyGenerator
 {
@@ -126,6 +122,10 @@ namespace Elffy
             private AttributeSyntax? _resourceLoader;
             private AttributeSyntax? _launchDevEnv;
 
+            private const int DefaultWidth = 800;
+            private const int DefaultHeight = 600;
+            private const string DefaultTitle = "Game";
+
             public void OnVisitSyntaxNode(SyntaxNode syntaxNode)
             {
                 if(syntaxNode.IsKind(SyntaxKind.Attribute) == false) { return; }
@@ -229,9 +229,9 @@ namespace Elffy
 
             private void AppendScreenRun(StringBuilder sb, Compilation compilation)
             {
-                var width = GeneratorUtil.GetAttrArgInt(_screenSize!, 0, compilation);
-                var height = GeneratorUtil.GetAttrArgInt(_screenSize!, 1, compilation);
-                var title = GeneratorUtil.GetAttrArgString(_screenTitle!, 0, compilation);
+                var width = _screenSize is not null ? GeneratorUtil.GetAttrArgInt(_screenSize, 0, compilation) : DefaultWidth;
+                var height = _screenSize is not null ? GeneratorUtil.GetAttrArgInt(_screenSize, 1, compilation) : DefaultHeight;
+                var title = _screenTitle is not null ? GeneratorUtil.GetAttrArgString(_screenTitle, 0, compilation) : DefaultTitle;
 
                 sb.Append(@"
         private static IHostScreen CreateScreen()
