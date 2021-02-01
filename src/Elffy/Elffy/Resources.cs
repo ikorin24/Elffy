@@ -1,24 +1,28 @@
 ﻿#nullable enable
 using System;
+using System.Threading;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using Elffy.Exceptions;
 
 namespace Elffy
 {
     /// <summary>Provides resource loader</summary>
     public static class Resources
     {
-        private static IResourceLoader? _loader;
+        private static IResourceLoader _loader = EmptyResourceLoader.Instance;
 
         /// <summary>Get resource loader instance</summary>
-        public static IResourceLoader Loader
+        public static IResourceLoader Loader => _loader;
+
+        public static void Initialize(IResourceLoader loader)
         {
-            get
-            {
-                if(_loader is null) {
-                    ThrowNotInitialized();
-                    [DoesNotReturn] void ThrowNotInitialized() => throw new InvalidOperationException("Resources is not initialized.");
-                }
-                return _loader;
+            if(loader is null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(loader));
+            }
+            if(Interlocked.CompareExchange(ref _loader, loader, EmptyResourceLoader.Instance) != EmptyResourceLoader.Instance) {
+                ThrowAlreadyInitialized();
             }
         }
 
@@ -27,10 +31,11 @@ namespace Elffy
         public static void Initialize(Func<IResourceLoader> loaderFactory)
         {
             if(loaderFactory is null) {
-                ThrowNullArg();
-                 [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(loaderFactory));
+                ThrowNullArg(nameof(loaderFactory));
             }
-            _loader = loaderFactory();
+            if(Interlocked.CompareExchange(ref _loader, loaderFactory(), EmptyResourceLoader.Instance) != EmptyResourceLoader.Instance) {
+                ThrowAlreadyInitialized();
+            }
         }
 
         /// <summary>Inject a <see cref="IResourceLoader"/> instance by a factory with spacified arg.</summary>
@@ -40,16 +45,38 @@ namespace Elffy
         public static void Initialize<T>(Func<T, IResourceLoader> loaderFactory, T arg)
         {
             if(loaderFactory is null) {
-                ThrowNullArg();
-                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(loaderFactory));
+                ThrowNullArg(nameof(loaderFactory));
             }
-            _loader = loaderFactory(arg);
+            if(Interlocked.CompareExchange(ref _loader, loaderFactory(arg), EmptyResourceLoader.Instance) != EmptyResourceLoader.Instance) {
+                ThrowAlreadyInitialized();
+            }
         }
 
         /// <summary>Release <see cref="IResourceLoader"/> instance.</summary>
         public static void Close()
         {
-            _loader = null;
+            _loader = EmptyResourceLoader.Instance;
+        }
+
+        [DoesNotReturn]
+        private static void ThrowNullArg(string name) => throw new ArgumentNullException(name);
+
+        [DoesNotReturn]
+        private static void ThrowAlreadyInitialized() => throw new InvalidOperationException("Resources is already initialized.");
+
+        private sealed class EmptyResourceLoader : IResourceLoader
+        {
+            public static readonly IResourceLoader Instance = new EmptyResourceLoader();
+
+            private EmptyResourceLoader()
+            {
+            }
+
+            public long GetSize(string name) => throw new ResourceNotFoundException(name);
+
+            public Stream GetStream(string name) => throw new ResourceNotFoundException(name);
+
+            public bool HasResource(string name) => false;
         }
     }
 }
