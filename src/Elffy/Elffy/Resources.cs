@@ -15,7 +15,7 @@ namespace Elffy
         /// <summary>Get resource loader instance</summary>
         public static IResourceLoader Loader => _loader;
 
-        public static void Initialize(IResourceLoader loader)
+        public static void Inject(IResourceLoader loader)
         {
             if(loader is null) {
                 ThrowNullArg();
@@ -28,7 +28,7 @@ namespace Elffy
 
         /// <summary>Inject a <see cref="IResourceLoader"/> instance by a factory.</summary>
         /// <param name="loaderFactory">factory function of <see cref="IResourceLoader"/> instance.</param>
-        public static void Initialize(Func<IResourceLoader> loaderFactory)
+        public static void Inject(Func<IResourceLoader> loaderFactory)
         {
             if(loaderFactory is null) {
                 ThrowNullArg(nameof(loaderFactory));
@@ -42,7 +42,7 @@ namespace Elffy
         /// <typeparam name="T">arg type</typeparam>
         /// <param name="loaderFactory">factory function of <see cref="IResourceLoader"/> instance.</param>
         /// <param name="arg">factory arg</param>
-        public static void Initialize<T>(Func<T, IResourceLoader> loaderFactory, T arg)
+        public static void Inject<T>(Func<T, IResourceLoader> loaderFactory, T arg)
         {
             if(loaderFactory is null) {
                 ThrowNullArg(nameof(loaderFactory));

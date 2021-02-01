@@ -185,7 +185,7 @@ namespace Elffy
             try {").AppendIf(useDevEnv, @"
                 Elffy.Diagnostics.DevEnv.Run();").Append(@"
                 Engine.Run();").AppendIf(useResource, $@"
-                Resources.Initialize(arg => new {resourceLoaderTypeName}(arg), ""{resourceLoaderArg}"");").Append(@"
+                Resources.Inject(new {resourceLoaderTypeName}(""{resourceLoaderArg}""));").Append(@"
                 var screen = CreateScreen();
                 screen.Initialized += OnScreenInitialized;").AppendIf(useSyncContext, @"
                 CustomSynchronizationContext.CreateIfNeeded(out _, out var syncContextReciever);").Append(@"
