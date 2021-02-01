@@ -12,10 +12,10 @@ using Sandbox;
 [assembly: GameLaunchSetting.EntryPoint(typeof(Startup), nameof(Startup.Start), true)]
 [assembly: GameLaunchSetting.ScreenSize(1200, 675)]
 [assembly: GameLaunchSetting.ScreenTitle("Sandbox")]
-[assembly: GameLaunchSetting.ScreenIcon("icon.ico")]
-[assembly: GameLaunchSetting.ResourceType(typeof(LocalResourceLoader), "Resources.dat")]
-//[assembly: GameLaunchSetting.AllowMultiLaunch]
-//[assembly: GameLaunchSetting.DoNotNeedSynchronizationContext]
+//[assembly: GameLaunchSetting.ScreenIcon("icon.ico")]
+[assembly: GameLaunchSetting.ResourceLoader(typeof(LocalResourceLoader), "Resources.dat")]
+[assembly: GameLaunchSetting.AllowMultiLaunch]
+[assembly: GameLaunchSetting.DoNotNeedSynchronizationContext]
 
 
 DevEnv.Run();

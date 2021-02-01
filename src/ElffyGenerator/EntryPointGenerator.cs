@@ -68,9 +68,9 @@ namespace Elffy
 
         [Conditional(""COMPILE_TIME_ONLY"")]
         [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = false, Inherited = false)]
-        public sealed class ResourceTypeAttribute : Attribute
+        public sealed class ResourceLoaderAttribute : Attribute
         {
-            public ResourceTypeAttribute(Type resourceType, string arg) { }
+            public ResourceLoaderAttribute(Type resourceLoaderType, string arg) { }
         }
     }
 }
@@ -100,7 +100,7 @@ namespace Elffy
             private readonly Regex _screenIconRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.ScreenIcon(Attribute)?$");
             private readonly Regex _allowMultiRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.AllowMultiLaunch(Attribute)?$");
             private readonly Regex _doNotNeedSyncContextRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.DoNotNeedSynchronizationContext(Attribute)?$");
-            private readonly Regex _resourceTypeRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.ResourceType(Attribute)?$");
+            private readonly Regex _resourceLoaderRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.ResourceLoader(Attribute)?$");
 
             private AttributeSyntax? _entryPoint;
             private AttributeSyntax? _screenSize;
@@ -108,7 +108,7 @@ namespace Elffy
             private AttributeSyntax? _screenIcon;
             private AttributeSyntax? _allowMulti;
             private AttributeSyntax? _doNotNeedSyncContext;
-            private AttributeSyntax? _resourceType;
+            private AttributeSyntax? _resourceLoader;
 
             public void OnVisitSyntaxNode(SyntaxNode syntaxNode)
             {
@@ -134,8 +134,8 @@ namespace Elffy
                 else if(_doNotNeedSyncContextRegex.IsMatch(attrName)) {
                     _doNotNeedSyncContext = attr;
                 }
-                else if(_resourceTypeRegex.IsMatch(attrName)) {
-                    _resourceType = attr;
+                else if(_resourceLoaderRegex.IsMatch(attrName)) {
+                    _resourceLoader = attr;
                 }
             }
 
@@ -165,15 +165,15 @@ namespace Elffy
             private void AppendLaunch(StringBuilder sb, Compilation compilation)
             {
                 Debug.Assert(_entryPoint is not null);
-                var resourceTypeName = GetAttrArgTypeName(_resourceType!, 0, compilation);
-                var resourceArg = GetAttrArgString(_resourceType!, 1, compilation);
+                var resourceLoaderTypeName = GetAttrArgTypeName(_resourceLoader!, 0, compilation);
+                var resourceLoaderArg = GetAttrArgString(_resourceLoader!, 1, compilation);
                 sb.Append(@"
         private static void Launch()
         {
             try {
                 Engine.Run();");
                 sb.Append($@"
-                Resources.Initialize(arg => new {resourceTypeName}(arg), ""{resourceArg}"");");
+                Resources.Initialize(arg => new {resourceLoaderTypeName}(arg), ""{resourceLoaderArg}"");");
                 sb.Append(@"
                 var screen = CreateScreen();
                 screen.Initialized += OnScreenInitialized;");
@@ -315,7 +315,6 @@ using System.IO;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Diagnostics.CodeAnalysis;
-using Cysharp.Threading.Tasks;
 
 namespace Elffy
 {
