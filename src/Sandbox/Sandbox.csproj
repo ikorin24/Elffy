@@ -7,7 +7,7 @@
     <LangVersion>9.0</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Nullable>enable</Nullable>
-    <ApplicationIcon>Elffy.ico</ApplicationIcon>
+    <ApplicationIcon>Resources/icon.ico</ApplicationIcon>
     <Configurations>Debug;Release</Configurations>
   </PropertyGroup>
 
