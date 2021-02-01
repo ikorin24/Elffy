@@ -1,4 +1,6 @@
 ﻿#nullable enable
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 
 namespace ElffyGenerator
@@ -14,6 +16,34 @@ namespace ElffyGenerator
 */
 
 ";
+        }
+
+        public static string GetAttrArgTypeName(AttributeSyntax attr, int argNum, Compilation compilation)
+        {
+            var expr = (TypeOfExpressionSyntax)attr.ArgumentList!.Arguments[argNum].Expression;
+
+            return compilation.GetSemanticModel(attr.SyntaxTree)
+                              .GetSymbolInfo(expr.Type)
+                              .Symbol!.ToString();      // fullname
+        }
+
+        public static string GetAttrArgString(AttributeSyntax attr, int argNum, Compilation compilation)
+        {
+            return compilation.GetSemanticModel(attr.SyntaxTree)
+                              .GetConstantValue(attr.ArgumentList!.Arguments[argNum].Expression).Value!.ToString();
+        }
+
+        public static int GetAttrArgInt(AttributeSyntax attr, int argNum, Compilation compilation)
+        {
+            var value = compilation.GetSemanticModel(attr.SyntaxTree)
+                                   .GetConstantValue(attr.ArgumentList!.Arguments[argNum].Expression).Value;
+            return (int)value!;
+        }
+
+        public static bool GetAttrArgBool(AttributeSyntax attr, int argNum, Compilation compilation)
+        {
+            return (bool)compilation.GetSemanticModel(attr.SyntaxTree)
+                                    .GetConstantValue(attr.ArgumentList!.Arguments[argNum].Expression).Value!;
         }
     }
 }

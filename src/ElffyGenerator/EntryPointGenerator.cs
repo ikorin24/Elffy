@@ -165,8 +165,8 @@ namespace Elffy
             private void AppendLaunch(StringBuilder sb, Compilation compilation)
             {
                 Debug.Assert(_entryPoint is not null);
-                var resourceLoaderTypeName = GetAttrArgTypeName(_resourceLoader!, 0, compilation);
-                var resourceLoaderArg = GetAttrArgString(_resourceLoader!, 1, compilation);
+                var resourceLoaderTypeName = GeneratorUtil.GetAttrArgTypeName(_resourceLoader!, 0, compilation);
+                var resourceLoaderArg = GeneratorUtil.GetAttrArgString(_resourceLoader!, 1, compilation);
                 sb.Append(@"
         private static void Launch()
         {
@@ -210,9 +210,9 @@ namespace Elffy
 
             private void AppendOnScreenInitialized(StringBuilder sb, Compilation compilation)
             {
-                var entryTypeName = GetAttrArgTypeName(_entryPoint!, 0, compilation);
-                var methodName = GetAttrArgString(_entryPoint!, 1, compilation);
-                var awaiting = GetAttrArgBool(_entryPoint!, 2, compilation);
+                var entryTypeName = GeneratorUtil.GetAttrArgTypeName(_entryPoint!, 0, compilation);
+                var methodName = GeneratorUtil.GetAttrArgString(_entryPoint!, 1, compilation);
+                var awaiting = GeneratorUtil.GetAttrArgBool(_entryPoint!, 2, compilation);
 
                 sb.Append(@"
         private static async void OnScreenInitialized(IHostScreen screen)
@@ -240,9 +240,9 @@ namespace Elffy
 
             private void AppendScreenRun(StringBuilder sb, Compilation compilation)
             {
-                var width = GetAttrArgInt(_screenSize!, 0, compilation);
-                var height = GetAttrArgInt(_screenSize!, 1, compilation);
-                var title = GetAttrArgString(_screenTitle!, 0, compilation);
+                var width = GeneratorUtil.GetAttrArgInt(_screenSize!, 0, compilation);
+                var height = GeneratorUtil.GetAttrArgInt(_screenSize!, 1, compilation);
+                var title = GeneratorUtil.GetAttrArgString(_screenTitle!, 0, compilation);
 
                 sb.Append(@"
         private static IHostScreen CreateScreen()
@@ -266,7 +266,7 @@ namespace Elffy
             return PlatformSwitch({width}, {height}, ""{title}"", ReadOnlySpan<RawImage>.Empty);");
                 }
                 else {
-                    var iconName = GetAttrArgString(_screenIcon, 0, compilation);
+                    var iconName = GeneratorUtil.GetAttrArgString(_screenIcon, 0, compilation);
                     sb.Append(
 $@"
             Span<RawImage> icon = stackalloc RawImage[1];
@@ -333,34 +333,6 @@ namespace Elffy
 
 
                 return SourceText.From(sb.ToString(), Encoding.UTF8);
-            }
-
-            private string GetAttrArgTypeName(AttributeSyntax attr, int argNum, Compilation compilation)
-            {
-                var expr = (TypeOfExpressionSyntax)attr.ArgumentList!.Arguments[argNum].Expression;
-
-                return compilation.GetSemanticModel(attr.SyntaxTree)
-                                  .GetSymbolInfo(expr.Type)
-                                  .Symbol!.ToString();      // fullname
-            }
-
-            private static string GetAttrArgString(AttributeSyntax attr, int argNum, Compilation compilation)
-            {
-                return compilation.GetSemanticModel(attr.SyntaxTree)
-                                  .GetConstantValue(attr.ArgumentList!.Arguments[argNum].Expression).Value!.ToString();
-            }
-
-            private static int GetAttrArgInt(AttributeSyntax attr, int argNum, Compilation compilation)
-            {
-                var value = compilation.GetSemanticModel(attr.SyntaxTree)
-                                       .GetConstantValue(attr.ArgumentList!.Arguments[argNum].Expression).Value;
-                return (int)value!;
-            }
-
-            private static bool GetAttrArgBool(AttributeSyntax attr, int argNum, Compilation compilation)
-            {
-                return (bool)compilation.GetSemanticModel(attr.SyntaxTree)
-                                        .GetConstantValue(attr.ArgumentList!.Arguments[argNum].Expression).Value!;
             }
         }
     }
