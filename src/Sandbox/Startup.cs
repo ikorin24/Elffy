@@ -14,24 +14,27 @@ namespace Sandbox
         public static async UniTask Start()
         {
             GameUI.Root.Background = Color4.Black;
+            try {
+                await UniTask.WhenAll(
+                    CreateBox(),
+                    UniTask.FromResult(CameraMouse()),
+                    UniTask.FromResult(CreatePlain()),
+                    UniTask.FromResult(CreateSky()),
+                    Timing.DelayTime(800));
 
-            await UniTask.WhenAll(
-                CreateBox(),
-                UniTask.FromResult(CameraMouse()),
-                UniTask.FromResult(CreatePlain()),
-                UniTask.FromResult(CreateSky()),
-                Timing.DelayTime(800));
+                await Timing.Ensure(FrameLoopTiming.Update);
 
-            await Timing.Ensure(FrameLoopTiming.Update);
-
-            var time = TimeSpan.FromMilliseconds(200);
-            await foreach(var frame in Timing.Frames.OnTiming(FrameLoopTiming.Update)) {
-                if(frame.Time >= time) {
-                    break;
+                var time = TimeSpan.FromMilliseconds(200);
+                await foreach(var frame in Timing.Frames.OnTiming(FrameLoopTiming.Update)) {
+                    if(frame.Time >= time) {
+                        break;
+                    }
+                    GameUI.Root.Background.A = 1f - (float)frame.Time.Ticks / time.Ticks;
                 }
-                GameUI.Root.Background.A = 1f - (float)frame.Time.Ticks / time.Ticks;
             }
-            GameUI.Root.Background = Color4.Transparent;
+            finally {
+                GameUI.Root.Background = Color4.Transparent;
+            }
         }
 
         private static SkySphere CreateSky()

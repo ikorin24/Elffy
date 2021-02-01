@@ -2,6 +2,7 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
+using System.Text;
 
 namespace ElffyGenerator
 {
@@ -44,6 +45,19 @@ namespace ElffyGenerator
         {
             return (bool)compilation.GetSemanticModel(attr.SyntaxTree)
                                     .GetConstantValue(attr.ArgumentList!.Arguments[argNum].Expression).Value!;
+        }
+    }
+
+    internal static class StringBuilderExtension
+    {
+        public static StringBuilder AppendIf(this StringBuilder sb, bool condition, string value)
+        {
+            return condition ? sb.Append(value) : sb;
+        }
+
+        public static StringBuilder AppendChoose(this StringBuilder sb, bool condition, string trueValue, string falseValue)
+        {
+            return condition ? sb.Append(trueValue) : sb.Append(falseValue);
         }
     }
 }

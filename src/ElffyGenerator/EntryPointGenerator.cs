@@ -72,16 +72,30 @@ namespace Elffy
         {
             public ResourceLoaderAttribute(Type resourceLoaderType, string arg) { }
         }
+
+        [Conditional(""COMPILE_TIME_ONLY"")]
+        [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = false, Inherited = false)]
+        public sealed class LaunchDevEnvAttribute : Attribute
+        {
+            public LaunchDevEnvAttribute() { }
+        }
     }
 }
 ";
 
         public void Execute(GeneratorExecutionContext context)
         {
-            context.AddSource("GameLaunchSetting", SourceText.From(AttributesDef, Encoding.UTF8));
+            var sb = new StringBuilder();
+            sb.Append(GeneratorUtil.GetGeneratorSigniture(typeof(EntryPointGenerator)));
+            sb.Append(AttributesDef);
+            context.AddSource("GameLaunchSetting", SourceText.From(sb.ToString(), Encoding.UTF8));
             try {
                 if(context.SyntaxReceiver is not SyntaxReceiver receiver) { throw new Exception("Why is the receiver null ??"); }
-                context.AddSource("GameEntryPoint", receiver.DumpSource(context.Compilation));
+
+                sb.Clear();
+                sb.Append(GeneratorUtil.GetGeneratorSigniture(typeof(EntryPointGenerator)));
+                receiver.DumpSource(sb, context.Compilation);
+                context.AddSource("GameEntryPoint", SourceText.From(sb.ToString(), Encoding.UTF8));
             }
             catch {
             }
@@ -101,6 +115,7 @@ namespace Elffy
             private readonly Regex _allowMultiRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.AllowMultiLaunch(Attribute)?$");
             private readonly Regex _doNotNeedSyncContextRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.DoNotNeedSynchronizationContext(Attribute)?$");
             private readonly Regex _resourceLoaderRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.ResourceLoader(Attribute)?$");
+            private readonly Regex _launchDevEnvRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.LaunchDevEnv(Attribute)?$");
 
             private AttributeSyntax? _entryPoint;
             private AttributeSyntax? _screenSize;
@@ -109,6 +124,7 @@ namespace Elffy
             private AttributeSyntax? _allowMulti;
             private AttributeSyntax? _doNotNeedSyncContext;
             private AttributeSyntax? _resourceLoader;
+            private AttributeSyntax? _launchDevEnv;
 
             public void OnVisitSyntaxNode(SyntaxNode syntaxNode)
             {
@@ -137,99 +153,72 @@ namespace Elffy
                 else if(_resourceLoaderRegex.IsMatch(attrName)) {
                     _resourceLoader = attr;
                 }
+                else if(_launchDevEnvRegex.IsMatch(attrName)) {
+                    _launchDevEnv = attr;
+                }
             }
 
             private void AppendStart(StringBuilder sb)
             {
-                sb.Append(
-@"
+                var singleLaunch = _allowMulti is null;
+                sb.Append(@"
         public static void Start()
-        {");
-                if(_allowMulti is null) {
-                    sb.Append(
-@"
-            ProcessHelper.SingleLaunch(Launch);");
-                }
-                else {
-                    sb.Append(
-@"
-            Launch();");
-                }
-
-                sb.Append(
-@"
+        {").AppendChoose(singleLaunch, @"
+            ProcessHelper.SingleLaunch(Launch);", @"
+            Launch();").Append(@"
         }
 ");
             }
 
             private void AppendLaunch(StringBuilder sb, Compilation compilation)
             {
-                Debug.Assert(_entryPoint is not null);
-                var resourceLoaderTypeName = GeneratorUtil.GetAttrArgTypeName(_resourceLoader!, 0, compilation);
-                var resourceLoaderArg = GeneratorUtil.GetAttrArgString(_resourceLoader!, 1, compilation);
+                var useResource = _resourceLoader is not null;
+                var resourceLoaderTypeName = useResource ? GeneratorUtil.GetAttrArgTypeName(_resourceLoader!, 0, compilation) : "";
+                var resourceLoaderArg = useResource ? GeneratorUtil.GetAttrArgString(_resourceLoader!, 1, compilation) : "";
+
+                var useDevEnv = _launchDevEnv is not null;
+
+                var useSyncContext = _doNotNeedSyncContext is null;
                 sb.Append(@"
         private static void Launch()
         {
-            try {
-                Engine.Run();");
-                sb.Append($@"
-                Resources.Initialize(arg => new {resourceLoaderTypeName}(arg), ""{resourceLoaderArg}"");");
-                sb.Append(@"
+            try {").AppendIf(useDevEnv, @"
+                Elffy.Diagnostics.DevEnv.Run();").Append(@"
+                Engine.Run();").AppendIf(useResource, $@"
+                Resources.Initialize(arg => new {resourceLoaderTypeName}(arg), ""{resourceLoaderArg}"");").Append(@"
                 var screen = CreateScreen();
-                screen.Initialized += OnScreenInitialized;");
-
-                if(_doNotNeedSyncContext is null) {
-                    sb.Append(@"
-                CustomSynchronizationContext.CreateIfNeeded(out _, out var syncContextReciever);
+                screen.Initialized += OnScreenInitialized;").AppendIf(useSyncContext, @"
+                CustomSynchronizationContext.CreateIfNeeded(out _, out var syncContextReciever);").Append(@"
                 screen.Show();
-                while(Engine.HandleOnce()) {
-                    syncContextReciever?.DoAll();
+                while(Engine.HandleOnce()) { ").AppendIf(useSyncContext, @"
+                    syncContextReciever?.DoAll();").Append(@"
                 }
             }
-            finally {
-                Resources.Close();
-                CustomSynchronizationContext.Restore();
-                Engine.Stop();
-            }");
-                }
-                else {
-                    sb.Append(@"
-                screen.Show();
-                while(Engine.HandleOnce()) { }
+            finally {").AppendIf(useResource, @"
+                Resources.Close();").AppendIf(useSyncContext, @"
+                CustomSynchronizationContext.Restore();").Append(@"
+                Engine.Stop();").AppendIf(useDevEnv, @"
+                Elffy.Diagnostics.DevEnv.Stop();").Append(@"
             }
-            finally {
-                Resources.Close();
-                Engine.Stop();
-            }");
-                }
-
-                sb.Append(@"
         }
 ");
             }
 
             private void AppendOnScreenInitialized(StringBuilder sb, Compilation compilation)
             {
+                Debug.Assert(_entryPoint is not null);
                 var entryTypeName = GeneratorUtil.GetAttrArgTypeName(_entryPoint!, 0, compilation);
                 var methodName = GeneratorUtil.GetAttrArgString(_entryPoint!, 1, compilation);
                 var awaiting = GeneratorUtil.GetAttrArgBool(_entryPoint!, 2, compilation);
 
                 sb.Append(@"
-        private static async void OnScreenInitialized(IHostScreen screen)
+        private static ").AppendIf(awaiting, "async ").Append("void OnScreenInitialized(IHostScreen screen)").Append(@"
         {
             Timing.Initialize(screen);
             Game.Initialize(screen);
             GameUI.Initialize(screen.UIRoot);
-            try {");
-                if(awaiting) {
-                    sb.Append($@"
-                await {entryTypeName}.{methodName}();");
-                }
-                else {
-                    sb.Append($@"
-                {entryTypeName}.{methodName}();");
-                }
-                sb.Append(@"
+            try {
+                ").AppendIf(awaiting, "await ").Append($"{entryTypeName}.{methodName}();").Append(@"
             }
             catch {
                 // Don't throw. (Ignore exceptions in user code)
@@ -267,13 +256,10 @@ namespace Elffy
                 }
                 else {
                     var iconName = GeneratorUtil.GetAttrArgString(_screenIcon, 0, compilation);
-                    sb.Append(
-$@"
-            Span<RawImage> icon = stackalloc RawImage[1];
-            using var iconStream = Resources.Loader.GetStream(""{iconName}"");
-            using var bitmap = new Bitmap(iconStream);");
-                    sb.Append(
-@"
+                    sb.Append($@"
+            Span<RawImage> icon = stackalloc RawImage[1];").Append($@"
+            using var iconStream = Resources.Loader.GetStream(""{iconName}"");").Append(@"
+            using var bitmap = new Bitmap(iconStream);
             using var pixels = bitmap.GetPixels(ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
             var pixelSpan = pixels.AsSpan();
 
@@ -285,25 +271,20 @@ $@"
                 pixelSpan[i * 4 + 1] = g;
                 pixelSpan[i * 4 + 2] = b;
             }
-            icon[0] = new RawImage(pixels.Width, pixels.Height, pixels.Ptr);
-");
-                    sb.Append(
-$@"
+            icon[0] = new RawImage(pixels.Width, pixels.Height, pixels.Ptr);").Append($@"
             return PlatformSwitch({width}, {height}, ""{title}"", icon);");
                 }
-
                 sb.Append(@"
         }
 ");
             }
 
-            public SourceText DumpSource(Compilation compilation)
+            public void DumpSource(StringBuilder sb, Compilation compilation)
             {
                 if(_entryPoint is null) {
-                    return SourceText.From("", Encoding.UTF8);
+                    return;
                 }
 
-                var sb = new StringBuilder();
                 sb.Append(
 @"#nullable enable
 using Elffy.Core;
@@ -330,9 +311,7 @@ namespace Elffy
     }
 }
 ");
-
-
-                return SourceText.From(sb.ToString(), Encoding.UTF8);
+                return;
             }
         }
     }

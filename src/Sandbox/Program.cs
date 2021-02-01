@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using Elffy;
-using Elffy.Diagnostics;
 using Elffy.Core;
 using Sandbox;
 
@@ -14,9 +13,8 @@ using Sandbox;
 [assembly: GameLaunchSetting.ScreenTitle("Sandbox")]
 [assembly: GameLaunchSetting.ScreenIcon("icon.ico")]
 [assembly: GameLaunchSetting.ResourceLoader(typeof(LocalResourceLoader), "Resources.dat")]
-[assembly: GameLaunchSetting.AllowMultiLaunch]
-[assembly: GameLaunchSetting.DoNotNeedSynchronizationContext]
+//[assembly: GameLaunchSetting.AllowMultiLaunch]
+//[assembly: GameLaunchSetting.DoNotNeedSynchronizationContext]
+[assembly: GameLaunchSetting.LaunchDevEnv]
 
-
-DevEnv.Run();
 GameEntryPoint.Start();
