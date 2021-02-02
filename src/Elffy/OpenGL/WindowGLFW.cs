@@ -140,7 +140,7 @@ namespace Elffy.OpenGL
             //GLFW.WindowHint(WindowHintInt.RefreshRate, videoMode->RefreshRate);
             GLFW.WindowHint(WindowHintInt.RefreshRate, 60);                         // TODO: とりあえず60fps固定
             if(isFullscreen) {
-                _window = GLFW.CreateWindow(width, height, title, monitor, null);
+                _window = GLFW.CreateWindow(videoMode->Width, videoMode->Height, title, monitor, null);
             }
             else {
                 _window = GLFW.CreateWindow(width, height, title, null, null);
