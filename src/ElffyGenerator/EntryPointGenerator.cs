@@ -52,6 +52,13 @@ namespace Elffy
 
         [Conditional(""COMPILE_TIME_ONLY"")]
         [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = false, Inherited = false)]
+        public sealed class WindowStyleAttribute : Attribute
+        {
+            public WindowStyleAttribute(WindowStyle windowStyle) { }
+        }
+
+        [Conditional(""COMPILE_TIME_ONLY"")]
+        [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = false, Inherited = false)]
         public sealed class AllowMultiLaunchAttribute : Attribute
         {
         }
@@ -108,6 +115,7 @@ namespace Elffy
             private readonly Regex _screenSizeRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.ScreenSize(Attribute)?$");
             private readonly Regex _screenTitleRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.ScreenTitle(Attribute)?$");
             private readonly Regex _screenIconRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.ScreenIcon(Attribute)?$");
+            private readonly Regex _windowStyleRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.WindowStyle(Attribute)?$");
             private readonly Regex _allowMultiRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.AllowMultiLaunch(Attribute)?$");
             private readonly Regex _doNotNeedSyncContextRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.DoNotNeedSynchronizationContext(Attribute)?$");
             private readonly Regex _resourceLoaderRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.ResourceLoader(Attribute)?$");
@@ -117,6 +125,7 @@ namespace Elffy
             private AttributeSyntax? _screenSize;
             private AttributeSyntax? _screenTitle;
             private AttributeSyntax? _screenIcon;
+            private AttributeSyntax? _windowStyle;
             private AttributeSyntax? _allowMulti;
             private AttributeSyntax? _doNotNeedSyncContext;
             private AttributeSyntax? _resourceLoader;
@@ -125,6 +134,7 @@ namespace Elffy
             private const int DefaultWidth = 800;
             private const int DefaultHeight = 600;
             private const string DefaultTitle = "Game";
+            private const string DefaultWindowStyle = "default";
 
             public void OnVisitSyntaxNode(SyntaxNode syntaxNode)
             {
@@ -143,6 +153,9 @@ namespace Elffy
                 }
                 else if(_screenIconRegex.IsMatch(attrName)) {
                     _screenIcon = attr;
+                }
+                else if(_windowStyleRegex.IsMatch(attrName)) {
+                    _windowStyle = attr;
                 }
                 else if(_allowMultiRegex.IsMatch(attrName)) {
                     _allowMulti = attr;
@@ -232,6 +245,7 @@ namespace Elffy
                 var width = _screenSize is not null ? GeneratorUtil.GetAttrArgInt(_screenSize, 0, compilation) : DefaultWidth;
                 var height = _screenSize is not null ? GeneratorUtil.GetAttrArgInt(_screenSize, 1, compilation) : DefaultHeight;
                 var title = _screenTitle is not null ? GeneratorUtil.GetAttrArgString(_screenTitle, 0, compilation) : DefaultTitle;
+                var windowStyle = _windowStyle is not null ? GeneratorUtil.GetAttrArgEnumNum(_windowStyle, 0, compilation) : DefaultWindowStyle;
 
                 sb.Append(@"
         private static IHostScreen CreateScreen()
@@ -242,7 +256,7 @@ namespace Elffy
                     case PlatformType.Windows:
                     case PlatformType.MacOSX:
                     case PlatformType.Linux:
-                        return new Window(width, height, title, WindowStyle.Default, icon);
+                        return new Window(width, height, title, ").Append($"(WindowStyle){windowStyle}, ").Append(@"icon);
                     case PlatformType.Android:
                     case PlatformType.Other:
                     default:

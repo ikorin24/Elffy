@@ -46,6 +46,12 @@ namespace ElffyGenerator
             return (bool)compilation.GetSemanticModel(attr.SyntaxTree)
                                     .GetConstantValue(attr.ArgumentList!.Arguments[argNum].Expression).Value!;
         }
+
+        public static string GetAttrArgEnumNum(AttributeSyntax attr, int argNum, Compilation compilation)
+        {
+            return compilation.GetSemanticModel(attr.SyntaxTree)
+                              .GetConstantValue(attr.ArgumentList!.Arguments[argNum].Expression).Value!.ToString();
+        }
     }
 
     internal static class StringBuilderExtension
