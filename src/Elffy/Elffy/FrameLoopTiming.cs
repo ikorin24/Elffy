@@ -65,13 +65,13 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ScreenCurrentTiming ToCurrentTiming(this FrameLoopTiming timing)
+        internal static ScreenCurrentTiming ToCurrentTiming(this FrameLoopTiming timing)
         {
             return (ScreenCurrentTiming)timing;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static FrameLoopTiming ToLoopTiming(this ScreenCurrentTiming timing)
+        internal static FrameLoopTiming ToLoopTiming(this ScreenCurrentTiming timing)
         {
             return (FrameLoopTiming)timing;
         }
