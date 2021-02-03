@@ -28,7 +28,7 @@ namespace Elffy
         AfterRendering = 5,
 
         FrameInitializing = byte.MaxValue,
-        FrameFinalizing = byte.MinValue,
+        FrameFinalizing = byte.MaxValue - 1,
     }
 
     public static class LoopTimingExtension
