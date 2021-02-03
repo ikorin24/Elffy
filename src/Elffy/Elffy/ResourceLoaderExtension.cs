@@ -69,6 +69,7 @@ namespace Elffy
             if(endPoint is null) {
                 throw new ArgumentNullException(nameof(endPoint));
             }
+            timing.ThrowArgExceptionIfInvalid(nameof(timing));
             cancellationToken.ThrowIfCancellationRequested();
             await UniTask.SwitchToThreadPool();
             cancellationToken.ThrowIfCancellationRequested();
