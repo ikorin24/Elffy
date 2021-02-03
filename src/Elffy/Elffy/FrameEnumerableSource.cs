@@ -18,6 +18,7 @@ namespace Elffy
 
         public FrameAsyncEnumerable OnTiming(FrameLoopTiming timing, CancellationToken cancellationToken = default)
         {
+            timing.ThrowArgExceptionIfInvalid(nameof(timing));
             return new FrameAsyncEnumerable(_endPoint, timing, cancellationToken);
         }
     }
@@ -30,6 +31,7 @@ namespace Elffy
 
         internal FrameAsyncEnumerable(AsyncBackEndPoint endPoint, FrameLoopTiming timing, CancellationToken cancellation)
         {
+            Debug.Assert(timing.IsValid());
             _endPoint = endPoint;
             _timing = timing;
             _cancellationToken = cancellation;
@@ -70,6 +72,7 @@ namespace Elffy
 
         internal FrameAsyncEnumerator(IHostScreen screen, FrameLoopTiming timing, CancellationToken cancellationToken)
         {
+            Debug.Assert(timing.IsValid());
             _screen = screen;
             _cancellationToken = cancellationToken;
             _startTime = screen.Time + screen.FrameDelta;

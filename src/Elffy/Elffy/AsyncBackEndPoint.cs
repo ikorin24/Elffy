@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -23,6 +24,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public FrameLoopAwaitable ToTiming(FrameLoopTiming timing, CancellationToken cancellationToken = default)
         {
+            timing.ThrowArgExceptionIfInvalid(nameof(timing));
             return new FrameLoopAwaitable(this, timing, cancellationToken);
         }
 
@@ -35,6 +37,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void Post(FrameLoopTiming timing, Action continuation)
         {
+            Debug.Assert(timing.IsValid());
             if(continuation is null) { return; }
             if(!_queues.TryGetValue(timing, out var queue)) {
                 queue = InitQueue(timing);
@@ -45,6 +48,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void Post(FrameLoopTiming timing, Action<object?> continuation, object? state)
         {
+            Debug.Assert(timing.IsValid());
             if(continuation is null) { return; }
             if(!_queues.TryGetValue(timing, out var queue)) {
                 queue = InitQueue(timing);
@@ -53,10 +57,11 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void DoQueuedEvents(FrameLoopTiming eventType)
+        internal void DoQueuedEvents(FrameLoopTiming timing)
         {
+            Debug.Assert(timing.IsValid());
             int count;
-            if(_queues.TryGetValue(eventType, out var queue) && (count = queue.Count) > 0) {
+            if(_queues.TryGetValue(timing, out var queue) && (count = queue.Count) > 0) {
                 Do(queue, count);
 
                 [MethodImpl(MethodImplOptions.NoInlining)]
