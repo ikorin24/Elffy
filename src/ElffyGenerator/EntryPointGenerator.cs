@@ -7,6 +7,7 @@ using System;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace ElffyGenerator
 {
@@ -22,13 +23,6 @@ namespace Elffy
 {
     internal static class GameLaunchSetting
     {
-        [Conditional(""COMPILE_TIME_ONLY"")]
-        [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = false, Inherited = false)]
-        public sealed class EntryPointAttribute : Attribute
-        {
-            public EntryPointAttribute(Type targetType, string methodName, bool awaiting) { }
-        }
-
         [Conditional(""COMPILE_TIME_ONLY"")]
         [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = false, Inherited = false)]
         public sealed class ScreenSizeAttribute : Attribute
@@ -97,7 +91,7 @@ namespace Elffy
 
                 sb.Clear();
                 sb.Append(GeneratorUtil.GetGeneratorSigniture(typeof(EntryPointGenerator)));
-                receiver.DumpSource(sb, context.Compilation);
+                receiver.DumpSource(sb, context);
                 context.AddSource("GameEntryPoint", SourceText.From(sb.ToString(), Encoding.UTF8));
             }
             catch {
@@ -111,7 +105,7 @@ namespace Elffy
 
         private class SyntaxReceiver : ISyntaxReceiver
         {
-            private readonly Regex _entryPointRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.EntryPoint(Attribute)?$");
+            private readonly Regex _gameEntryPointRegex = new Regex(@"^(global::)?(Elffy\.)?GameEntryPoint(Attribute)?$");
             private readonly Regex _screenSizeRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.ScreenSize(Attribute)?$");
             private readonly Regex _screenTitleRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.ScreenTitle(Attribute)?$");
             private readonly Regex _screenIconRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.ScreenIcon(Attribute)?$");
@@ -121,7 +115,7 @@ namespace Elffy
             private readonly Regex _resourceLoaderRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.ResourceLoader(Attribute)?$");
             private readonly Regex _launchDevEnvRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.LaunchDevEnv(Attribute)?$");
 
-            private AttributeSyntax? _entryPoint;
+            private AttributeSyntax? _gameEntryPoint;
             private AttributeSyntax? _screenSize;
             private AttributeSyntax? _screenTitle;
             private AttributeSyntax? _screenIcon;
@@ -130,6 +124,10 @@ namespace Elffy
             private AttributeSyntax? _doNotNeedSyncContext;
             private AttributeSyntax? _resourceLoader;
             private AttributeSyntax? _launchDevEnv;
+
+            private bool _error = true;
+
+            private readonly List<Diagnostic> _diagnostics = new List<Diagnostic>();
 
             private const int DefaultWidth = 800;
             private const int DefaultHeight = 600;
@@ -142,8 +140,16 @@ namespace Elffy
                 if(syntaxNode is not AttributeSyntax attr) { return; }
 
                 var attrName = attr.Name.ToString();
-                if(_entryPointRegex.IsMatch(attrName)) {
-                    _entryPoint = attr;
+
+                if(_gameEntryPointRegex.IsMatch(attrName)) {
+                    if(_gameEntryPoint is null) {
+                        _gameEntryPoint = attr;
+                        _error = false;
+                    }
+                    else {
+                        _error = true;
+                        Diagnostic.Create(DiagnosticDescriptors.MultiEntryPoints, attr.GetLocation());
+                    }
                 }
                 else if(_screenSizeRegex.IsMatch(attrName)) {
                     _screenSize = attr;
@@ -169,18 +175,6 @@ namespace Elffy
                 else if(_launchDevEnvRegex.IsMatch(attrName)) {
                     _launchDevEnv = attr;
                 }
-            }
-
-            private void AppendStart(StringBuilder sb)
-            {
-                var singleLaunch = _allowMulti is null;
-                sb.Append(@"
-        public static void Start()
-        {").AppendChoose(singleLaunch, @"
-            ProcessHelper.SingleLaunch(Launch);", @"
-            Launch();").Append(@"
-        }
-");
             }
 
             private void AppendLaunch(StringBuilder sb, Compilation compilation)
@@ -217,13 +211,8 @@ namespace Elffy
 ");
             }
 
-            private void AppendOnScreenInitialized(StringBuilder sb, Compilation compilation)
+            private void AppendOnScreenInitialized(StringBuilder sb, Compilation compilation, string entryMethodStr, bool awaiting)
             {
-                Debug.Assert(_entryPoint is not null);
-                var entryTypeName = GeneratorUtil.GetAttrArgTypeName(_entryPoint!, 0, compilation);
-                var methodName = GeneratorUtil.GetAttrArgString(_entryPoint!, 1, compilation);
-                var awaiting = GeneratorUtil.GetAttrArgBool(_entryPoint!, 2, compilation);
-
                 sb.Append(@"
         private static ").AppendIf(awaiting, "async ").Append("void OnScreenInitialized(IHostScreen screen)").Append(@"
         {
@@ -231,13 +220,12 @@ namespace Elffy
             Game.Initialize(screen);
             GameUI.Initialize(screen.UIRoot);
             try {
-                ").AppendIf(awaiting, "await ").Append($"{entryTypeName}.{methodName}();").Append(@"
+                ").AppendIf(awaiting, "await ").Append(entryMethodStr).Append(@";
             }
             catch {
                 // Don't throw. (Ignore exceptions in user code)
             }
-        }
-");
+        }");
             }
 
             private void AppendScreenRun(StringBuilder sb, Compilation compilation)
@@ -293,11 +281,27 @@ namespace Elffy
 ");
             }
 
-            public void DumpSource(StringBuilder sb, Compilation compilation)
+            public void DumpSource(StringBuilder sb, GeneratorExecutionContext context)
             {
-                if(_entryPoint is null) {
+                var compilation = context.Compilation;
+
+                foreach(var d in _diagnostics) {
+                    context.ReportDiagnostic(d);
+                }
+
+                if(_error) { return; }
+
+                var entryMethodSyntax = _gameEntryPoint?.Parent?.Parent as MethodDeclarationSyntax;
+                if(entryMethodSyntax is null) {
                     return;
                 }
+                var entryMethodSymbol = compilation.GetSemanticModel(entryMethodSyntax.SyntaxTree)
+                                                   .GetDeclaredSymbol(entryMethodSyntax)!;
+                var entryMethodStr = entryMethodSymbol.ToString();
+                var needAwait = entryMethodSymbol.IsAsync &&
+                                GeneratorUtil.IsAwaitableMethod(entryMethodSyntax, compilation);
+
+                var singleLaunch = _allowMulti is null;
 
                 sb.Append(
 @"#nullable enable
@@ -309,19 +313,23 @@ using System;
 using System.IO;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy
 {
+    /// <summary>Provides the game entry point</summary>
     internal static class GameEntryPoint
     {
+        /// <summary>Call game entry point method marked by <see cref=""Elffy.GameEntryPointAttribute""/></summary>
+        public static void Start()
+        {").AppendChoose(singleLaunch, @"
+            ProcessHelper.SingleLaunch(Launch);", @"
+            Launch();").Append(@"
+        }
 ");
-                AppendStart(sb);
                 AppendLaunch(sb, compilation);
                 AppendScreenRun(sb, compilation);
-                AppendOnScreenInitialized(sb, compilation);
-                sb.Append(
-@"
+                AppendOnScreenInitialized(sb, compilation, entryMethodStr, needAwait);
+                sb.Append(@"
     }
 }
 ");

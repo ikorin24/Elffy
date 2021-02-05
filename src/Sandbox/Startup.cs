@@ -7,9 +7,7 @@ using Elffy.Shapes;
 using Elffy.Imaging;
 using Elffy.Shading;
 using Cysharp.Threading.Tasks;
-using Sandbox;
 
-[assembly: GameLaunchSetting.EntryPoint(typeof(Startup), nameof(Startup.Start), true)]
 [assembly: GameLaunchSetting.ScreenSize(1200, 675)]
 [assembly: GameLaunchSetting.ScreenTitle("Sandbox")]
 [assembly: GameLaunchSetting.ScreenIcon("icon.ico")]
@@ -18,18 +16,13 @@ using Sandbox;
 [assembly: GameLaunchSetting.ResourceLoader(typeof(LocalResourceLoader), "Resources.dat")]
 [assembly: GenerateLocalResource("Resources", "Resources.dat")]
 
-//[assembly: GameLaunchSetting.AllowMultiLaunch]
-//[assembly: GameLaunchSetting.DoNotNeedSynchronizationContext]
-//[assembly: GenerateCustomVertex(nameof(Sandbox) + ".CustomVertex",
-//    "Position", typeof(Vector3), 0, VertexFieldMarshalType.Float, 3
-//)]
-
 GameEntryPoint.Start();
 
 namespace Sandbox
 {
     public static class Startup
     {
+        [GameEntryPoint]
         public static async UniTask Start()
         {
             GameUI.Root.Background = Color4.Black;
