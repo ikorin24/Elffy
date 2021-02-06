@@ -211,7 +211,7 @@ namespace Elffy
 ");
             }
 
-            private void AppendOnScreenInitialized(StringBuilder sb, Compilation compilation, string entryMethodStr, bool awaiting)
+            private void AppendOnScreenInitialized(StringBuilder sb, string entryMethodStr, bool awaiting)
             {
                 sb.Append(@"
         private static ").AppendIf(awaiting, "async ").Append("void OnScreenInitialized(IHostScreen screen)").Append(@"
@@ -328,7 +328,7 @@ namespace Elffy
 ");
                 AppendLaunch(sb, compilation);
                 AppendScreenRun(sb, compilation);
-                AppendOnScreenInitialized(sb, compilation, entryMethodStr, needAwait);
+                AppendOnScreenInitialized(sb, entryMethodStr, needAwait);
                 sb.Append(@"
     }
 }
