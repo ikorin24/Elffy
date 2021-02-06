@@ -8,6 +8,7 @@ using Elffy.Imaging;
 using Elffy.Shading;
 using Cysharp.Threading.Tasks;
 
+[assembly: GameLaunchSetting.GenerateMainMethod]
 [assembly: GameLaunchSetting.ScreenSize(1200, 675)]
 [assembly: GameLaunchSetting.ScreenTitle("Sandbox")]
 [assembly: GameLaunchSetting.ScreenIcon("icon.ico")]
@@ -15,8 +16,6 @@ using Cysharp.Threading.Tasks;
 [assembly: GameLaunchSetting.LaunchDevEnv]
 [assembly: GameLaunchSetting.ResourceLoader(typeof(LocalResourceLoader), "Resources.dat")]
 [assembly: GenerateLocalResource("Resources", "Resources.dat")]
-
-GameEntryPoint.Start();
 
 namespace Sandbox
 {

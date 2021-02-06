@@ -76,6 +76,13 @@ namespace Elffy
         {
             public LaunchDevEnvAttribute() { }
         }
+
+        [Conditional(""COMPILE_TIME_ONLY"")]
+        [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = false, Inherited = false)]
+        public sealed class GenerateMainMethodAttribute : Attribute
+        {
+            public GenerateMainMethodAttribute() { }
+        }
     }
 }
 ";
@@ -114,6 +121,7 @@ namespace Elffy
             private readonly Regex _doNotNeedSyncContextRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.DoNotNeedSynchronizationContext(Attribute)?$");
             private readonly Regex _resourceLoaderRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.ResourceLoader(Attribute)?$");
             private readonly Regex _launchDevEnvRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.LaunchDevEnv(Attribute)?$");
+            private readonly Regex _autoGenerateMainRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.GenerateMainMethod(Attribute)?$");
 
             private AttributeSyntax? _gameEntryPoint;
             private AttributeSyntax? _screenSize;
@@ -124,6 +132,7 @@ namespace Elffy
             private AttributeSyntax? _doNotNeedSyncContext;
             private AttributeSyntax? _resourceLoader;
             private AttributeSyntax? _launchDevEnv;
+            private AttributeSyntax? _generateMainMethod;
 
             private bool _error = true;
 
@@ -150,6 +159,9 @@ namespace Elffy
                         _error = true;
                         Diagnostic.Create(DiagnosticDescriptors.MultiEntryPoints, attr.GetLocation());
                     }
+                }
+                else if(_autoGenerateMainRegex.IsMatch(attrName)) {
+                    _generateMainMethod = attr;
                 }
                 else if(_screenSizeRegex.IsMatch(attrName)) {
                     _screenSize = attr;
@@ -292,6 +304,7 @@ namespace Elffy
                 if(_error) { return; }
 
                 var entryMethodSyntax = _gameEntryPoint?.Parent?.Parent as MethodDeclarationSyntax;
+                var generateMain = _generateMainMethod is not null;
                 if(entryMethodSyntax is null) {
                     return;
                 }
@@ -319,6 +332,14 @@ namespace Elffy
     /// <summary>Provides the game entry point</summary>
     internal static class GameEntryPoint
     {
+        ").AppendIf(generateMain, @"
+        public static int Main(string[] args)
+        {
+            Start();
+            return 0;
+        }
+
+        ").Append(@"
         /// <summary>Call game entry point method marked by <see cref=""Elffy.GameEntryPointAttribute""/></summary>
         public static void Start()
         {").AppendChoose(singleLaunch, @"
