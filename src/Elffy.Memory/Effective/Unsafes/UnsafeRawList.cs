@@ -42,8 +42,8 @@ namespace Elffy.Effective.Unsafes
                             throw;
                         }
                         _array.Dispose();
-                        _array = newArray;
                     }
+                    _array = newArray;
                 }
             }
         }
