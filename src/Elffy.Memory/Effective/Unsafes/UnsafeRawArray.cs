@@ -149,6 +149,12 @@ namespace Elffy.Effective.Unsafes
         {
             return MemoryMarshal.CreateSpan(ref this[start], length);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Span<byte> AsBytes()
+        {
+            return MemoryMarshal.CreateSpan(ref Unsafe.AsRef<byte>(Ptr.ToPointer()), Length);
+        }
     }
 
     internal class UnsafeRawArrayDebuggerTypeProxy<T> where T : unmanaged

@@ -28,6 +28,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElffyGenerator", "ElffyGene
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elffy.SimpleKit", "Elffy.SimpleKit\Elffy.SimpleKit.csproj", "{56F40F30-E379-471A-B9A8-F491EB04EDFD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageSample", "ImageSample\ImageSample.csproj", "{7D4846C6-5FED-495C-A7FF-091F22F30F97}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -158,6 +160,18 @@ Global
 		{56F40F30-E379-471A-B9A8-F491EB04EDFD}.Release|x64.Build.0 = Release|Any CPU
 		{56F40F30-E379-471A-B9A8-F491EB04EDFD}.Release|x86.ActiveCfg = Release|Any CPU
 		{56F40F30-E379-471A-B9A8-F491EB04EDFD}.Release|x86.Build.0 = Release|Any CPU
+		{7D4846C6-5FED-495C-A7FF-091F22F30F97}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D4846C6-5FED-495C-A7FF-091F22F30F97}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D4846C6-5FED-495C-A7FF-091F22F30F97}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{7D4846C6-5FED-495C-A7FF-091F22F30F97}.Debug|x64.Build.0 = Debug|Any CPU
+		{7D4846C6-5FED-495C-A7FF-091F22F30F97}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7D4846C6-5FED-495C-A7FF-091F22F30F97}.Debug|x86.Build.0 = Debug|Any CPU
+		{7D4846C6-5FED-495C-A7FF-091F22F30F97}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D4846C6-5FED-495C-A7FF-091F22F30F97}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7D4846C6-5FED-495C-A7FF-091F22F30F97}.Release|x64.ActiveCfg = Release|Any CPU
+		{7D4846C6-5FED-495C-A7FF-091F22F30F97}.Release|x64.Build.0 = Release|Any CPU
+		{7D4846C6-5FED-495C-A7FF-091F22F30F97}.Release|x86.ActiveCfg = Release|Any CPU
+		{7D4846C6-5FED-495C-A7FF-091F22F30F97}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
