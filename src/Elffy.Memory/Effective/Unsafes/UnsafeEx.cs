@@ -1,4 +1,9 @@
 ﻿#nullable enable
+
+#if !NETCOREAPP3_1
+#define CAN_SKIP_LOCALS_INIT
+#endif
+
 using System.Runtime.CompilerServices;
 
 namespace Elffy.Effective.Unsafes
@@ -34,6 +39,16 @@ namespace Elffy.Effective.Unsafes
         public static unsafe void* AsPointer<T>(in T value)
         {
             return Unsafe.AsPointer(ref Unsafe.AsRef(in value));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void SkipInitIfPossible<T>(out T value)
+        {
+#if CAN_SKIP_LOCALS_INIT
+            Unsafe.SkipInit(out value);
+#else
+            value = default!;
+#endif
         }
     }
 }
