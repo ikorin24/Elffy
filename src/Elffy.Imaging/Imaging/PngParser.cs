@@ -13,6 +13,7 @@ using Elffy.Effective.Unsafes;
 using UnmanageUtility;
 using System.Diagnostics;
 using System.IO.Compression;
+using Elffy.Imaging.Internal;
 
 namespace Elffy.Imaging
 {
@@ -158,8 +159,8 @@ namespace Elffy.Imaging
                 len = compressed.Count - 2;
             }
 
-            using var umStream = new UMStream(ptr, len);
-            using var deflateStream = new DeflateStream(umStream, CompressionMode.Decompress);
+            using var ptrStream = PointerStream.Create(ptr, len);
+            using var deflateStream = new DeflateStream(ptrStream, CompressionMode.Decompress);
             using var buf = new UnmanagedList<byte>(capacity: len);
             var end = false;
             var size = 0;
@@ -192,76 +193,6 @@ namespace Elffy.Imaging
 
 
             throw new NotImplementedException("Png parser is not implemented");
-        }
-
-
-        private sealed unsafe class UMStream : Stream
-        {
-            private IntPtr _ptr;
-            private long _length;
-            private long _pos;
-
-            private Span<byte> Span => MemoryMarshal.CreateSpan(ref Unsafe.AsRef<byte>(_ptr.ToPointer()), (int)_length);
-
-            public override bool CanRead => true;
-
-            public override bool CanSeek => true;
-
-            public override bool CanWrite => true;
-
-            public override long Length => _length;
-
-            public override long Position { get => _pos; set => _pos = value; }
-
-            public UMStream(void* ptr, int length)
-            {
-                _ptr = (IntPtr)ptr;
-                _length = length;
-            }
-
-            public override void Flush() { }    // nop
-
-            public override int Read(byte[] buffer, int offset, int count) => ReadCore(buffer.AsSpan(offset, count));
-
-            public override int Read(Span<byte> buffer) => ReadCore(buffer);
-
-            private int ReadCore(Span<byte> buffer)
-            {
-                var span = Span.SliceUnsafe((int)_pos);
-                var len = Math.Min(span.Length, buffer.Length);
-                span.SliceUnsafe(0, len).CopyTo(buffer);
-                _pos += len;
-                return len;
-            }
-
-            public override long Seek(long offset, SeekOrigin origin)
-            {
-                return Position = origin switch
-                {
-                    SeekOrigin.Begin => offset,
-                    SeekOrigin.Current => _pos + offset,
-                    SeekOrigin.End => _length + offset,
-                    _ => _pos,
-                };
-            }
-
-            public override void SetLength(long value) => throw new NotSupportedException();
-
-            public override void Write(byte[] buffer, int offset, int count)
-            {
-                WriteCore(buffer.AsSpan(offset, count));
-            }
-
-            public override void Write(ReadOnlySpan<byte> buffer)
-            {
-                WriteCore(buffer);
-            }
-
-            private void WriteCore(ReadOnlySpan<byte> buffer)
-            {
-                buffer.CopyTo(Span.SliceUnsafe((int)_pos));
-                _pos += buffer.Length;
-            }
         }
 
 
