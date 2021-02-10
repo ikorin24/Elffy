@@ -38,42 +38,47 @@ namespace Elffy.Imaging
 
             var buf = new BufferSpanReader(stackalloc byte[8]);
             using var data = new UnmanagedList<byte>();
-            var hasHeader = false;
-#if CAN_SKIP_LOCALS_INIT
-            Unsafe.SkipInit(out Header header);
-#else
-            Header header = default;
-#endif
+            UnsafeEx.SkipInitIfPossible(out Header header);
+
+            bool hasHeader = false;
             while(true) {
                 buf.Position = 0;
                 stream.SafeRead(buf.Span);
                 var chunkSize = buf.Next(4).Int32BigEndian();
                 var chunkType = buf.Next(4);
 
-                if(chunkType.SequenceEqual(ChunkTypeIHDR)) {
-                    hasHeader = true;
-                    ParseIHDR(stream, chunkSize, out header);
-                }
-                else if(chunkType.SequenceEqual(ChunkTypeIDAT)) {
-                    ParseIDAT(stream, chunkSize, data);
-                }
-                else if(chunkType.SequenceEqual(ChunkTypeIEND)) {
-                    if(chunkSize != 0) {
+                if(hasHeader == false) {
+                    if(chunkType.SequenceEqual(ChunkTypeIHDR)) {
+                        hasHeader = true;
+                        ParseIHDR(stream, chunkSize, out header);
+                        ValidateHeader(header);
+                    }
+                    else {
                         throw new Exception();
                     }
-                    break;
                 }
                 else {
-                    stream.SafeSkip(chunkSize);
+                    if(chunkType.SequenceEqual(ChunkTypeIDAT)) {
+                        ParseIDAT(stream, chunkSize, data);
+                    }
+                    else if(chunkType.SequenceEqual(ChunkTypeIEND)) {
+                        if(chunkSize != 0) {
+                            throw new Exception();
+                        }
+                        break;
+                    }
+                    else {
+                        stream.SafeSkip(chunkSize);     // Skip not supported chunk
+                    }
                 }
                 stream.SafeSkip(4);         // I don't validate CRC
             }
 
-            if(!hasHeader) { throw new Exception(); }
-            ValidateHeader(header);
-            BuildPixels(data, header);
+            Debug.Assert(hasHeader);
+            Decompress(data, header);
 
-            throw new NotImplementedException();
+            return default; // TODO:
+            //throw new NotImplementedException();
         }
 
 #if CAN_SKIP_LOCALS_INIT
@@ -135,7 +140,7 @@ namespace Elffy.Imaging
             }
         }
 
-        private static void BuildPixels(UnmanagedList<byte> compressed, in Header header)
+        private static void Decompress(UnmanagedList<byte> compressed, in Header header)
         {
             // | 1 byte  | 1 byte  | 0 or 4 bytes | N bytes ... |
             // |   CMF   |  CINFO  |    DICTID    |   data  ... |
@@ -170,8 +175,67 @@ namespace Elffy.Imaging
                 size += readlen;
                 end = readlen == 0;
             }
-            var decompressed = buf.AsSpan(0, size);
+            BuildPixels(buf.AsSpan(0, size), header);
             return;
+        }
+
+        private static void BuildPixels(ReadOnlySpan<byte> data, in Header header)
+        {
+            //var bytesPerPixel = header.ColorType switch
+            //{
+            //    ColorType.Gray => header.Bis
+            //}
+            //var isValid = header.ColorType switch
+            //{
+            //    ColorType.Gray => header.Bits switch { 1 or 2 or 4 or 8 or 16 => true, _ => false, },
+            //    ColorType.TrueColor => header.Bits switch { 8 or 16 => true, _ => false, },
+            //    ColorType.IndexColor => header.Bits switch { 1 or 2 or 4 or 8 => true, _ => false, },
+            //    ColorType.GrayAlpha => header.Bits switch { 8 or 16 => true, _ => false, },
+            //    ColorType.TrueColorAlpha => header.Bits switch { 8 or 16 => true, _ => false, },
+            //    _ => false,
+            //};
+
+            var sizePerPix = 3; // TODO:
+            using var pixels = new UnsafeRawArray<ColorByte>(header.Width * header.Height);
+
+            for(int y = 0; y < header.Height; y++) {
+                var offset = y * (header.Width * 3 + 1);
+                var type = (RowLineFilterType)data[offset];
+                var rowDest = pixels.AsSpan(y * header.Width, header.Width);
+                switch(type) {
+                    case RowLineFilterType.None: {
+                        var row = data.Slice(offset + 1, sizePerPix * header.Width).MarshalCast<byte, PngColor>();
+                        for(int x = 0; x < row.Length; x++) {
+                            rowDest[x].R = row[x].R;
+                            rowDest[x].G = row[x].G;
+                            rowDest[x].B = row[x].B;
+                            rowDest[x].A = 0xFF;
+                        }
+                        break;
+                    }
+                    //case RowLineFilterType.Sub:
+                    //    break;
+                    //case RowLineFilterType.Up:
+                    //    break;
+                    //case RowLineFilterType.Average:
+                    //    break;
+                    //case RowLineFilterType.Paeth:
+                    //    break;
+                    default:
+                        throw new Exception();
+                }
+            }
+
+            {
+                var b = new System.Drawing.Bitmap(header.Width, header.Height);
+                for(int y = 0; y < header.Height; y++) {
+                    for(int x = 0; x < header.Width; x++) {
+                        var c = pixels[y * header.Width + x];
+                        b.SetPixel(x, y, System.Drawing.Color.FromArgb(c.A, c.R, c.G, c.B));
+                    }
+                }
+                b.Save("hoge.png", System.Drawing.Imaging.ImageFormat.Png);
+            }
         }
 
         private static void ParseIDAT(Stream stream, int chunkSize, UnmanagedList<byte> data)
@@ -230,6 +294,22 @@ namespace Elffy.Imaging
         {
             None = 0,
             Adam7 = 1,
+        }
+
+        private enum RowLineFilterType : byte
+        {
+            None = 0,
+            Sub = 1,
+            Up = 2,
+            Average = 3,
+            Paeth = 4,
+        }
+
+        private readonly struct PngColor
+        {
+            public readonly byte R;
+            public readonly byte G;
+            public readonly byte B;
         }
     }
 }
