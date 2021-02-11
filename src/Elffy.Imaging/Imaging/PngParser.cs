@@ -54,7 +54,7 @@ namespace Elffy.Imaging
                         ValidateHeader(header);
                     }
                     else {
-                        throw new Exception();
+                        ThrowHelper.ThrowFormatException("No IHDR chunk");
                     }
                 }
                 else {
@@ -63,7 +63,7 @@ namespace Elffy.Imaging
                     }
                     else if(chunkType.SequenceEqual(ChunkTypeIEND)) {
                         if(chunkSize != 0) {
-                            throw new Exception();
+                            ThrowHelper.ThrowFormatException("IEND chunk size must be 0");
                         }
                         break;
                     }
@@ -89,7 +89,7 @@ namespace Elffy.Imaging
             Span<byte> pngSignature = stackalloc byte[8];
             stream.SafeRead(pngSignature);
             if(pngSignature.SequenceEqual(PngSignature) == false) {
-                throw new InvalidDataException("data is not png format.");
+                ThrowHelper.ThrowFormatException("PNG signature mismatch");
             }
         }
 
@@ -100,7 +100,7 @@ namespace Elffy.Imaging
         {
             const int ChunkSize = 13;
             if(chunkSize != ChunkSize) {
-                throw new Exception();
+                ThrowHelper.ThrowFormatException("Invalid IHDR chunk size");
             }
             var buf = new BufferSpanReader(stackalloc byte[ChunkSize]);
             stream.SafeRead(buf.Span);
@@ -118,13 +118,13 @@ namespace Elffy.Imaging
         private static void ValidateHeader(in Header header)
         {
             if(header.CompressionType != CompressionType.Default) {
-                throw new Exception();
+                ThrowHelper.ThrowFormatException("Invalid header");
             }
             if(header.FilterType != FilterType.Default) {
-                throw new Exception();
+                ThrowHelper.ThrowFormatException("Invalid header");
             }
             if(header.InterlaceType != InterlaceType.None && header.InterlaceType != InterlaceType.Adam7) {
-                throw new Exception();
+                ThrowHelper.ThrowFormatException("Invalid header");
             }
             var isValid = header.ColorType switch
             {
@@ -136,7 +136,7 @@ namespace Elffy.Imaging
                 _ => false,
             };
             if(!isValid) {
-                throw new Exception();
+                ThrowHelper.ThrowFormatException("Invalid header");
             }
         }
 
@@ -147,7 +147,7 @@ namespace Elffy.Imaging
 
             var cm = compressed[0] & 0x0f;
             if(cm != 8) {
-                throw new Exception();
+                ThrowHelper.ThrowFormatException("Invalid zlib compression mode");
             }
             //var cinfo = (compressed[0] & 0xf0) >> 4;  // I don't care about 'cinfo'
             var fdict = (compressed[1] & 0b_00100000) == 0b_00100000;
@@ -222,10 +222,12 @@ namespace Elffy.Imaging
                     //case RowLineFilterType.Paeth:
                     //    break;
                     default:
-                        throw new Exception();
+                        ThrowHelper.ThrowFormatException("not supported");
+                        break;
                 }
             }
 
+            // TODO: for debug
             {
                 var b = new System.Drawing.Bitmap(header.Width, header.Height);
                 for(int y = 0; y < header.Height; y++) {
@@ -242,21 +244,6 @@ namespace Elffy.Imaging
         {
             var span = data.Extend(chunkSize, false);
             stream.SafeRead(span);
-        }
-
-        public static RawImage Parse(ReadOnlySpan<byte> data)
-        {
-            if(data.Slice(0, PngSignature.Length).SequenceEqual(PngSignature) == false) {
-                throw new InvalidDataException("data is not png format.");
-            }
-            return ParseCore(data);
-        }
-
-        internal static RawImage ParseCore(ReadOnlySpan<byte> data)
-        {
-
-
-            throw new NotImplementedException("Png parser is not implemented");
         }
 
 

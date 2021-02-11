@@ -12,6 +12,7 @@ using System.Linq;
 using System.Diagnostics;
 using Elffy.Effective;
 using Elffy.Effective.Unsafes;
+using Elffy.Imaging.Internal;
 
 namespace Elffy.Imaging
 {
@@ -34,9 +35,9 @@ namespace Elffy.Imaging
                 }
                 using var pngData = new UnsafeRawArray<byte>((int)entry.dwBytesInRes);
                 *(BITMAPINFOHEADER*)pngData.Ptr = header;
-                stream.Read(pngData.AsSpan().Slice(sizeof(BITMAPINFOHEADER)));
-
-                return PngParser.Parse(pngData.AsSpan());
+                stream.SafeRead(pngData.AsSpan().Slice(sizeof(BITMAPINFOHEADER)));
+                using var pngStream = PointerStream.Create(pngData.Ptr.ToPointer(), pngData.Length);
+                return PngParser.Parse(pngStream);
             }
 
             var hasPalette = header.biBitCount <= 16 || header.biClrUsed > 0;
