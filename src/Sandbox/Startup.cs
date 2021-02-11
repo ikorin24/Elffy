@@ -11,7 +11,7 @@ using Cysharp.Threading.Tasks;
 [assembly: GameLaunchSetting.GenerateMainMethod]
 [assembly: GameLaunchSetting.ScreenSize(1200, 675)]
 [assembly: GameLaunchSetting.ScreenTitle("Sandbox")]
-[assembly: GameLaunchSetting.ScreenIcon("icon.ico")]
+//[assembly: GameLaunchSetting.ScreenIcon("icon.ico")]
 [assembly: GameLaunchSetting.WindowStyle(WindowStyle.FixedWindow)]
 [assembly: GameLaunchSetting.LaunchDevEnv]
 [assembly: GameLaunchSetting.ResourceLoader(typeof(LocalResourceLoader), "Resources.dat")]

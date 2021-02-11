@@ -10,7 +10,7 @@ namespace Elffy.Shading
     public abstract class PostProcess
     {
         private const string VertShaderSource =
-@"#version 440
+@"#version 410
 in vec3 _pos;
 in vec2 _v_uv;
 out vec2 _uv;

@@ -128,6 +128,7 @@ namespace Elffy.OpenGL
             GLFW.WindowHint(WindowHintClientApi.ClientApi, ClientApi.OpenGlApi);
             GLFW.WindowHint(WindowHintInt.ContextVersionMajor, 4);
             GLFW.WindowHint(WindowHintInt.ContextVersionMinor, 1);
+            GLFW.WindowHint(WindowHintBool.OpenGLForwardCompat, true);
             GLFW.WindowHint(WindowHintBool.Focused, true);
             GLFW.WindowHint(WindowHintBool.Visible, false);
             GLFW.WindowHint(WindowHintBool.FocusOnShow, true);
