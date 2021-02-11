@@ -18,7 +18,7 @@ namespace Elffy.Imaging
 {
     public static unsafe class IcoParser
     {
-        public static UnsafeRawArray<RawImage> Parse(Stream stream)
+        public static ImageRef[] Parse(Stream stream)
         {
             UnsafeEx.SkipInitIfPossible(out ICONDIR icondir);   // 6 bytes
             stream.SafeRead(UnsafeEx.AsBytes(ref icondir));
@@ -26,7 +26,7 @@ namespace Elffy.Imaging
             Span<ICONDIRENTRY> entries = stackalloc ICONDIRENTRY[icondir.idCount];         // 16 * n bytes
             stream.SafeRead(entries.AsBytes());
 
-            var images = new UnsafeRawArray<RawImage>(icondir.idCount, true);
+            var images = new ImageRef[icondir.idCount];     // TODO: 配列はだめ
             try {
                 for(int i = 0; i < icondir.idCount; i++) {
                     images[i] = ParseImage(stream, entries[i]);
@@ -34,15 +34,14 @@ namespace Elffy.Imaging
                 return images;
             }
             catch {
-                for(int i = 0; i < images.Length; i++) {
-                    Marshal.FreeHGlobal((IntPtr)images[i].GetPtr());
+                foreach(var image in images) {
+                    image.Dispose();
                 }
-                images.Dispose();
                 throw;
             }
         }
 
-        private static RawImage ParseImage(Stream stream, in ICONDIRENTRY entry)
+        private static ImageRef ParseImage(Stream stream, in ICONDIRENTRY entry)
         {
             UnsafeEx.SkipInitIfPossible(out BITMAPINFOHEADER header);
             stream.SafeRead(UnsafeEx.AsBytes(ref header));
@@ -79,8 +78,10 @@ namespace Elffy.Imaging
             using var andMaskData = andMaskByteSize != 0 ? ReadToUnsafeRawArray<byte>(stream, andMaskByteSize) : UnsafeRawArray<byte>.Empty;
             var andMask = andMaskData.AsSpan();
 
-            var pixels = new UnsafeRawArray<ColorByte>(width * height);
+            //var pixels = new UnsafeRawArray<ColorByte>(width * height);
+            var image = new ImageRef(width, height);
             try {
+                var pixels = image.GetPixels();
                 for(int d = 0; d < height; d++) {
                     var y = (header.biHeight < 0) ? d : height - d - 1;
                     var imod = y * (xorMask.Length / height) * 8 / header.biBitCount;
@@ -99,10 +100,10 @@ namespace Elffy.Imaging
                             (byte)~(BitArrayOperation.GetBit(andMask, mmod + x) - 1);  // 0 or 255
                     }
                 }
-                return new RawImage(width, height, pixels.Ptr);
+                return image;
             }
             catch {
-                pixels.Dispose();
+                image.Dispose();
                 throw;
             }
         }

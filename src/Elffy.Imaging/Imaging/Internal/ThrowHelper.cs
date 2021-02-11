@@ -17,5 +17,11 @@ namespace Elffy.Imaging.Internal
         {
             throw new ArgumentOutOfRangeException(message);
         }
+
+        [DoesNotReturn]
+        public static void ThrowInvalidOp(string message)
+        {
+            throw new InvalidOperationException(message);
+        }
     }
 }

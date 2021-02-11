@@ -32,7 +32,7 @@ namespace Elffy.Imaging
 #if CAN_SKIP_LOCALS_INIT
         [SkipLocalsInit]
 #endif
-        public static RawImage Parse(Stream stream)
+        public static ImageRef Parse(Stream stream)
         {
             CheckSignature(stream);
 
@@ -80,15 +80,11 @@ namespace Elffy.Imaging
                 }
 
                 Debug.Assert(hasHeader);
-                Decompress(data, header, palette.AsSpan());
+                return Decompress(data, header, palette.AsSpan());
             }
             finally {
                 palette.Dispose();
             }
-            
-
-            return default; // TODO:
-            //throw new NotImplementedException();
         }
 
 #if CAN_SKIP_LOCALS_INIT
@@ -151,7 +147,7 @@ namespace Elffy.Imaging
             }
         }
 
-        private static void Decompress(UnmanagedList<byte> compressed, in Header header, ReadOnlySpan<PngColor> palette)
+        private static ImageRef Decompress(UnmanagedList<byte> compressed, in Header header, ReadOnlySpan<PngColor> palette)
         {
             // | 1 byte  | 1 byte  | 0 or 4 bytes | N bytes ... |
             // |   CMF   |  CINFO  |    DICTID    |   data  ... |
@@ -186,41 +182,36 @@ namespace Elffy.Imaging
                 size += readlen;
                 end = readlen == 0;
             }
-            BuildPixels(buf.AsSpan(0, size), header, palette);
-            return;
+            return BuildPixels(buf.AsSpan(0, size), header, palette);
         }
 
-        private static void BuildPixels(ReadOnlySpan<byte> data, in Header header, ReadOnlySpan<PngColor> palette)
+        private static ImageRef BuildPixels(ReadOnlySpan<byte> data, in Header header, ReadOnlySpan<PngColor> palette)
         {
-            using var pixels = new UnsafeRawArray<ColorByte>(header.Width * header.Height);
-            switch(header.ColorType) {
-                case ColorType.Gray:
-                    break;
-                case ColorType.TrueColor:
-                    BuildTrueColor(data, header, pixels.AsSpan());
-                    break;
-                case ColorType.IndexColor: {
-                    BuildIndexColor(data, header, palette, pixels.AsSpan());
-                    break;
-                }
-                case ColorType.GrayAlpha:
-                    break;
-                case ColorType.TrueColorAlpha:
-                    break;
-                default:
-                    break;
-            }
-
-            // TODO: for debug
-            {
-                var b = new System.Drawing.Bitmap(header.Width, header.Height);
-                for(int y = 0; y < header.Height; y++) {
-                    for(int x = 0; x < header.Width; x++) {
-                        var c = pixels[y * header.Width + x];
-                        b.SetPixel(x, y, System.Drawing.Color.FromArgb(c.A, c.R, c.G, c.B));
+            var image = new ImageRef(header.Width, header.Height);
+            try {
+                switch(header.ColorType) {
+                    case ColorType.Gray:
+                        throw new NotImplementedException();
+                    case ColorType.TrueColor:
+                        BuildTrueColor(data, header, image.GetPixels());
+                        break;
+                    case ColorType.IndexColor: {
+                        BuildIndexColor(data, header, palette, image.GetPixels());
+                        break;
                     }
+                    case ColorType.GrayAlpha:
+                        throw new NotImplementedException();
+                    case ColorType.TrueColorAlpha:
+                        throw new NotImplementedException();
+                    default:
+                        ThrowHelper.ThrowFormatException();
+                        break;
                 }
-                b.Save("hoge.png", System.Drawing.Imaging.ImageFormat.Png);
+                return image;
+            }
+            catch {
+                image.Dispose();
+                throw;
             }
 
             static void BuildIndexColor(ReadOnlySpan<byte> data, in Header header, ReadOnlySpan<PngColor> palette, Span<ColorByte> pixels)
