@@ -4,7 +4,9 @@
 #define CAN_SKIP_LOCALS_INIT
 #endif
 
+using System;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Elffy.Effective.Unsafes
 {
@@ -36,6 +38,7 @@ namespace Elffy.Effective.Unsafes
             return Unsafe.AreSame(ref Unsafe.AsRef(left), ref Unsafe.AsRef(right));
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void* AsPointer<T>(in T value)
         {
             return Unsafe.AsPointer(ref Unsafe.AsRef(in value));
@@ -49,6 +52,18 @@ namespace Elffy.Effective.Unsafes
 #else
             value = default!;
 #endif
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe Span<byte> AsBytes<T>(ref T value) where T : unmanaged
+        {
+            return MemoryMarshal.CreateSpan(ref Unsafe.As<T, byte>(ref value), sizeof(T));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe ReadOnlySpan<byte> AsReadOnlyBytes<T>(in T value) where T : unmanaged
+        {
+            return MemoryMarshal.CreateReadOnlySpan(ref Unsafe.As<T, byte>(ref Unsafe.AsRef(in value)), sizeof(T));
         }
     }
 }
