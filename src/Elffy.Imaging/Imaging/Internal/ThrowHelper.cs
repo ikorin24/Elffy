@@ -11,5 +11,11 @@ namespace Elffy.Imaging.Internal
         {
             throw new FormatException(message);
         }
+
+        [DoesNotReturn]
+        public static void ThrowArgOutOfRange(string message)
+        {
+            throw new ArgumentOutOfRangeException(message);
+        }
     }
 }

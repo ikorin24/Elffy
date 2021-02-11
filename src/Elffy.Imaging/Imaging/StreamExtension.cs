@@ -8,6 +8,7 @@ using Elffy.Effective.Unsafes;
 using System;
 using System.IO;
 using System.Runtime.CompilerServices;
+using Elffy.Imaging.Internal;
 
 namespace Elffy.Imaging
 {
@@ -18,6 +19,9 @@ namespace Elffy.Imaging
 #endif
         public static void SafeSkip(this Stream stream, int byteLength)
         {
+            if(byteLength < 0) {
+                ThrowHelper.ThrowArgOutOfRange(nameof(byteLength));
+            }
             if(stream.CanSeek) {
                 var pos = stream.Position + byteLength;
                 if(pos > stream.Length) {

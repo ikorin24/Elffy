@@ -159,7 +159,7 @@ namespace Elffy.Imaging
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int GetBitAt(UnsafeRawArray<byte> array, int index)
+        private static int GetBitAt(UnsafeRawArray<byte> array, int index)
         {
             return ((array[index >> 3] >> (7 - (index & 7))) & 1);
         }

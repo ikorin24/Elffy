@@ -39,43 +39,53 @@ namespace Elffy.Imaging
             var buf = new BufferSpanReader(stackalloc byte[8]);
             using var data = new UnmanagedList<byte>();
             UnsafeEx.SkipInitIfPossible(out Header header);
+            var palette = UnsafeRawArray<PngColor>.Empty;
+            try {
+                bool hasHeader = false;
+                while(true) {
+                    buf.Position = 0;
+                    stream.SafeRead(buf.Span);
+                    var chunkSize = buf.Next(4).Int32BigEndian();
+                    var chunkType = buf.Next(4);
 
-            bool hasHeader = false;
-            while(true) {
-                buf.Position = 0;
-                stream.SafeRead(buf.Span);
-                var chunkSize = buf.Next(4).Int32BigEndian();
-                var chunkType = buf.Next(4);
-
-                if(hasHeader == false) {
-                    if(chunkType.SequenceEqual(ChunkTypeIHDR)) {
-                        hasHeader = true;
-                        ParseIHDR(stream, chunkSize, out header);
-                        ValidateHeader(header);
-                    }
-                    else {
-                        ThrowHelper.ThrowFormatException("No IHDR chunk");
-                    }
-                }
-                else {
-                    if(chunkType.SequenceEqual(ChunkTypeIDAT)) {
-                        ParseIDAT(stream, chunkSize, data);
-                    }
-                    else if(chunkType.SequenceEqual(ChunkTypeIEND)) {
-                        if(chunkSize != 0) {
-                            ThrowHelper.ThrowFormatException("IEND chunk size must be 0");
+                    if(hasHeader == false) {
+                        if(chunkType.SequenceEqual(ChunkTypeIHDR)) {
+                            hasHeader = true;
+                            ParseIHDR(stream, chunkSize, out header);
+                            ValidateHeader(header);
                         }
-                        break;
+                        else {
+                            ThrowHelper.ThrowFormatException("No IHDR chunk");
+                        }
                     }
                     else {
-                        stream.SafeSkip(chunkSize);     // Skip not supported chunk
+                        if(chunkType.SequenceEqual(ChunkTypeIDAT)) {
+                            ParseIDAT(stream, chunkSize, data);
+                        }
+                        else if(chunkType.SequenceEqual(ChunkTypeIEND)) {
+                            if(chunkSize != 0) {
+                                ThrowHelper.ThrowFormatException("IEND chunk size must be 0");
+                            }
+                            break;
+                        }
+                        else if(chunkType.SequenceEqual(ChunkTypePLTE)) {
+                            palette = ParsePLTE(stream, chunkSize);
+                        }
+                        else {
+                            Debug.WriteLine(System.Text.Encoding.ASCII.GetString(chunkType) + " (skip)");
+                            stream.SafeSkip(chunkSize);     // Skip not supported chunk
+                        }
                     }
+                    stream.SafeSkip(4);         // I don't validate CRC
                 }
-                stream.SafeSkip(4);         // I don't validate CRC
-            }
 
-            Debug.Assert(hasHeader);
-            Decompress(data, header);
+                Debug.Assert(hasHeader);
+                Decompress(data, header, palette.AsSpan());
+            }
+            finally {
+                palette.Dispose();
+            }
+            
 
             return default; // TODO:
             //throw new NotImplementedException();
@@ -98,6 +108,7 @@ namespace Elffy.Imaging
 #endif
         private static void ParseIHDR(Stream stream, int chunkSize, out Header header)
         {
+            Debug.WriteLine("IHDR");
             const int ChunkSize = 13;
             if(chunkSize != ChunkSize) {
                 ThrowHelper.ThrowFormatException("Invalid IHDR chunk size");
@@ -140,7 +151,7 @@ namespace Elffy.Imaging
             }
         }
 
-        private static void Decompress(UnmanagedList<byte> compressed, in Header header)
+        private static void Decompress(UnmanagedList<byte> compressed, in Header header, ReadOnlySpan<PngColor> palette)
         {
             // | 1 byte  | 1 byte  | 0 or 4 bytes | N bytes ... |
             // |   CMF   |  CINFO  |    DICTID    |   data  ... |
@@ -175,56 +186,29 @@ namespace Elffy.Imaging
                 size += readlen;
                 end = readlen == 0;
             }
-            BuildPixels(buf.AsSpan(0, size), header);
+            BuildPixels(buf.AsSpan(0, size), header, palette);
             return;
         }
 
-        private static void BuildPixels(ReadOnlySpan<byte> data, in Header header)
+        private static void BuildPixels(ReadOnlySpan<byte> data, in Header header, ReadOnlySpan<PngColor> palette)
         {
-            //var bytesPerPixel = header.ColorType switch
-            //{
-            //    ColorType.Gray => header.Bis
-            //}
-            //var isValid = header.ColorType switch
-            //{
-            //    ColorType.Gray => header.Bits switch { 1 or 2 or 4 or 8 or 16 => true, _ => false, },
-            //    ColorType.TrueColor => header.Bits switch { 8 or 16 => true, _ => false, },
-            //    ColorType.IndexColor => header.Bits switch { 1 or 2 or 4 or 8 => true, _ => false, },
-            //    ColorType.GrayAlpha => header.Bits switch { 8 or 16 => true, _ => false, },
-            //    ColorType.TrueColorAlpha => header.Bits switch { 8 or 16 => true, _ => false, },
-            //    _ => false,
-            //};
-
-            var sizePerPix = 3; // TODO:
             using var pixels = new UnsafeRawArray<ColorByte>(header.Width * header.Height);
-
-            for(int y = 0; y < header.Height; y++) {
-                var offset = y * (header.Width * 3 + 1);
-                var type = (RowLineFilterType)data[offset];
-                var rowDest = pixels.AsSpan(y * header.Width, header.Width);
-                switch(type) {
-                    case RowLineFilterType.None: {
-                        var row = data.Slice(offset + 1, sizePerPix * header.Width).MarshalCast<byte, PngColor>();
-                        for(int x = 0; x < row.Length; x++) {
-                            rowDest[x].R = row[x].R;
-                            rowDest[x].G = row[x].G;
-                            rowDest[x].B = row[x].B;
-                            rowDest[x].A = 0xFF;
-                        }
-                        break;
-                    }
-                    //case RowLineFilterType.Sub:
-                    //    break;
-                    //case RowLineFilterType.Up:
-                    //    break;
-                    //case RowLineFilterType.Average:
-                    //    break;
-                    //case RowLineFilterType.Paeth:
-                    //    break;
-                    default:
-                        ThrowHelper.ThrowFormatException("not supported");
-                        break;
+            switch(header.ColorType) {
+                case ColorType.Gray:
+                    break;
+                case ColorType.TrueColor:
+                    BuildTrueColor(data, header, pixels.AsSpan());
+                    break;
+                case ColorType.IndexColor: {
+                    BuildIndexColor(data, header, palette, pixels.AsSpan());
+                    break;
                 }
+                case ColorType.GrayAlpha:
+                    break;
+                case ColorType.TrueColorAlpha:
+                    break;
+                default:
+                    break;
             }
 
             // TODO: for debug
@@ -238,12 +222,96 @@ namespace Elffy.Imaging
                 }
                 b.Save("hoge.png", System.Drawing.Imaging.ImageFormat.Png);
             }
+
+            static void BuildIndexColor(ReadOnlySpan<byte> data, in Header header, ReadOnlySpan<PngColor> palette, Span<ColorByte> pixels)
+            {
+                var bits = header.Bits;
+                var rowSize = (int)MathF.Ceiling((float)header.Width / (8 / bits)) + 1;
+                for(int y = 0; y < header.Height; y++) {
+                    // Index color mode can not use row-line filter.
+                    //var type = (RowLineFilterType)data[y * rowSize];
+
+                    var rowSrc = data.Slice(y * rowSize + 1, rowSize - 1);
+                    var rowDst = pixels.Slice(y * header.Width, header.Width);
+
+                    for(int x = 0; x < header.Width; x++) {
+                        var index = BitArrayOperation.GetBitsValue(rowSrc, x, bits);
+                        var c = palette[index];
+                        ref var p = ref pixels[y * header.Width + x];
+                        p.R = c.R;
+                        p.G = c.G;
+                        p.B = c.B;
+                        p.A = 0xff;
+                    }
+                }
+            }
+
+            static void BuildTrueColor(ReadOnlySpan<byte> data, in Header header, Span<ColorByte> pixels)
+            {
+                // bits depth is 8 or 16
+                if(header.Bits == 8) {
+                    var rowSize = header.Width * 3 + 1;
+                    for(int y = 0; y < header.Height; y++) {
+                        var type = (RowLineFilterType)data[y * rowSize];
+                        var rowSrc = data.Slice(y * rowSize + 1, rowSize - 1);
+                        var rowDst = pixels.Slice(y * header.Width, header.Width);
+                        switch(type) {
+                            case RowLineFilterType.None: {
+                                for(int x = 0; x < header.Width; x++) {
+                                    var x3 = x * 3;
+                                    ref var p = ref pixels[y * header.Width + x];
+                                    p.R = rowSrc[x3];
+                                    p.G = rowSrc[x3 + 1];
+                                    p.B = rowSrc[x3 + 2];
+                                    p.A = 0xff;
+                                }
+                                break;
+                            }
+                            //case RowLineFilterType.Sub:
+                            //    break;
+                            //case RowLineFilterType.Up:
+                            //    break;
+                            //case RowLineFilterType.Average:
+                            //    break;
+                            //case RowLineFilterType.Paeth:
+                            //    break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+                else {
+                    Debug.Assert(header.Bits == 16);
+                    // TODO:
+                    throw new NotImplementedException("16 bits depth color (48 bits RGB) is not implemented.");
+                }
+            }
         }
 
         private static void ParseIDAT(Stream stream, int chunkSize, UnmanagedList<byte> data)
         {
+            Debug.WriteLine("IDAT");
             var span = data.Extend(chunkSize, false);
             stream.SafeRead(span);
+        }
+
+        private static UnsafeRawArray<PngColor> ParsePLTE(Stream stream, int chunkSize)
+        {
+            Debug.WriteLine("PLTE");
+            Debug.Assert(sizeof(PngColor) == 3);
+            var colorCount = Math.DivRem(chunkSize, 3, out var mod3);
+            if(mod3 != 0) {
+                ThrowHelper.ThrowFormatException("Invalid PLTE chunk size.");
+            }
+            var palette = new UnsafeRawArray<PngColor>(colorCount);
+            try {
+                stream.SafeRead(palette.AsBytes());
+                return palette;
+            }
+            catch {
+                palette.Dispose();
+                throw;
+            }
         }
 
 
@@ -292,10 +360,15 @@ namespace Elffy.Imaging
             Paeth = 4,
         }
 
+        [StructLayout(LayoutKind.Explicit, Size = 3)]
+        [DebuggerDisplay("(R={R}, G={G}, B={B})")]
         private readonly struct PngColor
         {
+            [FieldOffset(0)]
             public readonly byte R;
+            [FieldOffset(1)]
             public readonly byte G;
+            [FieldOffset(2)]
             public readonly byte B;
         }
     }
