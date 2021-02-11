@@ -8,7 +8,6 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
-using Elffy.Effective;
 using Elffy.Effective.Unsafes;
 using UnmanageUtility;
 using System.Diagnostics;

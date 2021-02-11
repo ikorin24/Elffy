@@ -1,16 +1,8 @@
 ﻿#nullable enable
-
-#if !NETCOREAPP3_1
-#define CAN_SKIP_LOCALS_INIT
-#endif
-
 using System;
 using System.IO;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Linq;
-using System.Diagnostics;
-using Elffy.Effective;
 using Elffy.Effective.Unsafes;
 using Elffy.Imaging.Internal;
 
@@ -18,24 +10,26 @@ namespace Elffy.Imaging
 {
     public static unsafe class IcoParser
     {
-        public static ImageRef[] Parse(Stream stream)
+        public static void ParseAll(Stream stream, Span<ImageRef> parsedImages)
         {
             UnsafeEx.SkipInitIfPossible(out ICONDIR icondir);   // 6 bytes
             stream.SafeRead(UnsafeEx.AsBytes(ref icondir));
 
-            Span<ICONDIRENTRY> entries = stackalloc ICONDIRENTRY[icondir.idCount];         // 16 * n bytes
+            if(parsedImages.Length < icondir.idCount) {
+                throw new ArgumentException();
+            }
+
+            using var entries = new UnsafeRawArray<ICONDIRENTRY>(icondir.idCount);
             stream.SafeRead(entries.AsBytes());
 
-            var images = new ImageRef[icondir.idCount];     // TODO: 配列はだめ
             try {
                 for(int i = 0; i < icondir.idCount; i++) {
-                    images[i] = ParseImage(stream, entries[i]);
+                    parsedImages[i] = ParseImage(stream, entries[i]);
                 }
-                return images;
             }
             catch {
-                foreach(var image in images) {
-                    image.Dispose();
+                for(int i = 0; i < icondir.idCount; i++) {
+                    parsedImages[i].Dispose();
                 }
                 throw;
             }
