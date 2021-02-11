@@ -153,7 +153,7 @@ namespace Elffy.Effective.Unsafes
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Span<byte> AsBytes()
         {
-            return MemoryMarshal.CreateSpan(ref Unsafe.AsRef<byte>(Ptr.ToPointer()), Length);
+            return AsSpan().AsBytes();
         }
     }
 
