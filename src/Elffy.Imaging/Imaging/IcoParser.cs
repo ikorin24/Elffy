@@ -15,6 +15,10 @@ namespace Elffy.Imaging
             UnsafeEx.SkipInitIfPossible(out ICONDIR icondir);   // 6 bytes
             stream.SafeRead(UnsafeEx.AsBytes(ref icondir));
 
+            if(icondir.idCount < 0) {
+                ThrowHelper.ThrowFormatException();
+            }
+
             if(parsedImages.Length < icondir.idCount) {
                 throw new ArgumentException();
             }
