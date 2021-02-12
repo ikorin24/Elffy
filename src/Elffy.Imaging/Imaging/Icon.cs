@@ -10,26 +10,26 @@ namespace Elffy.Imaging
 {
     public unsafe readonly struct Icon : IDisposable, IEquatable<Icon>
     {
-        private readonly ImageRef[]? _images;
+        private readonly Image[]? _images;
 
-        public ReadOnlySpan<ImageRef> Images => _images.AsSpan();
+        public ReadOnlySpan<Image> Images => _images.AsSpan();
 
         public int ImageCount => _images?.Length ?? 0;
 
         public static Icon Empty => default;
 
-        public Icon(Span<ImageRef> images)
+        public Icon(Span<Image> images)
         {
-            _images = new ImageRef[images.Length];  // TODO: instance pooling ?
+            _images = new Image[images.Length];  // TODO: instance pooling ?
             images.CopyTo(_images.AsSpanUnsafe());
         }
 
         internal Icon(int count)
         {
-            _images = new ImageRef[count];  // TODO: instance pooling ?
+            _images = new Image[count];  // TODO: instance pooling ?
         }
 
-        public ref readonly ImageRef GetImage(int index)
+        public ref readonly Image GetImage(int index)
         {
             if(_images is null || (uint)index >= _images.Length) {
                 ThrowHelper.ThrowArgOutOfRange(nameof(index));
@@ -37,7 +37,7 @@ namespace Elffy.Imaging
             return ref _images.At(index);
         }
 
-        internal Span<ImageRef> GetImagesSpan() => _images.AsSpan();
+        internal Span<Image> GetImagesSpan() => _images.AsSpan();
 
         public void Dispose()
         {

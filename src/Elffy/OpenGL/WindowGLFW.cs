@@ -12,6 +12,7 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 //using Monitor = OpenTK.Windowing.GraphicsLibraryFramework.Monitor;
 using Wnd = OpenTK.Windowing.GraphicsLibraryFramework.Window;
+using GLFWImage = OpenTK.Windowing.GraphicsLibraryFramework.Image;
 
 namespace Elffy.OpenGL
 {
@@ -161,7 +162,7 @@ namespace Elffy.OpenGL
                 _title = title;
                 if(icon.ImageCount != 0) {
                     var image = icon.GetImage(0);
-                    var img = new Image(image.Width, image.Height, (byte*)image.GetPtr());
+                    var img = new GLFWImage(image.Width, image.Height, (byte*)image.GetPtr());
                     GLFW.SetWindowIconRaw(_window, 1, &img);
                 }
 

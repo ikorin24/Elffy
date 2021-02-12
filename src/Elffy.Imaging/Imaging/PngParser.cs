@@ -31,7 +31,7 @@ namespace Elffy.Imaging
 #if CAN_SKIP_LOCALS_INIT
         [SkipLocalsInit]
 #endif
-        public static ImageRef Parse(Stream stream)
+        public static Image Parse(Stream stream)
         {
             CheckSignature(stream);
 
@@ -146,7 +146,7 @@ namespace Elffy.Imaging
             }
         }
 
-        private static ImageRef Decompress(UnmanagedList<byte> compressed, in Header header, ReadOnlySpan<PngColor> palette)
+        private static Image Decompress(UnmanagedList<byte> compressed, in Header header, ReadOnlySpan<PngColor> palette)
         {
             // | 1 byte  | 1 byte  | 0 or 4 bytes | N bytes ... |
             // |   CMF   |  CINFO  |    DICTID    |   data  ... |
@@ -184,9 +184,9 @@ namespace Elffy.Imaging
             return BuildPixels(buf.AsSpan(0, size), header, palette);
         }
 
-        private static ImageRef BuildPixels(ReadOnlySpan<byte> data, in Header header, ReadOnlySpan<PngColor> palette)
+        private static Image BuildPixels(ReadOnlySpan<byte> data, in Header header, ReadOnlySpan<PngColor> palette)
         {
-            var image = new ImageRef(header.Width, header.Height);
+            var image = new Image(header.Width, header.Height);
             try {
                 switch(header.ColorType) {
                     case ColorType.Gray:

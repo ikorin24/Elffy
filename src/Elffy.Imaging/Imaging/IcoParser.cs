@@ -36,7 +36,7 @@ namespace Elffy.Imaging
             }
         }
 
-        private static ImageRef ParseImage(Stream stream, in ICONDIRENTRY entry)
+        private static Image ParseImage(Stream stream, in ICONDIRENTRY entry)
         {
             UnsafeEx.SkipInitIfPossible(out BITMAPINFOHEADER header);
             stream.SafeRead(UnsafeEx.AsBytes(ref header));
@@ -74,7 +74,7 @@ namespace Elffy.Imaging
             var andMask = andMaskData.AsSpan();
 
             //var pixels = new UnsafeRawArray<ColorByte>(width * height);
-            var image = new ImageRef(width, height);
+            var image = new Image(width, height);
             try {
                 var pixels = image.GetPixels();
                 for(int d = 0; d < height; d++) {

@@ -7,7 +7,7 @@ using Elffy.Imaging.Internal;
 
 namespace Elffy.Imaging
 {
-    public unsafe readonly struct ImageRef : IEquatable<ImageRef>, IDisposable
+    public unsafe readonly struct Image : IEquatable<Image>, IDisposable
     {
         private readonly ImageObj? _image;
         private readonly uint _token;
@@ -18,7 +18,7 @@ namespace Elffy.Imaging
         /// <summary>Get pointer to pixels of type <see cref="ColorByte"/></summary>
         public IntPtr Ptr => _image is not null ? (IntPtr)_image.Pixels : IntPtr.Zero;
 
-        public static ImageRef Empty => default;
+        public static Image Empty => default;
 
         /// <summary>Get or set pixel of specified (x, y)</summary>
         /// <param name="x">x index (column line)</param>
@@ -42,7 +42,7 @@ namespace Elffy.Imaging
             }
         }
 
-        public ImageRef(int width, int height)
+        public Image(int width, int height)
         {
             if(width < 0) {
                 ThrowHelper.ThrowArgOutOfRange(nameof(width));
@@ -81,15 +81,15 @@ namespace Elffy.Imaging
             }
         }
 
-        public override bool Equals(object? obj) => obj is ImageRef image && Equals(image);
+        public override bool Equals(object? obj) => obj is Image image && Equals(image);
 
-        public bool Equals(ImageRef other) => _image == other._image && _token == other._token;
+        public bool Equals(Image other) => _image == other._image && _token == other._token;
 
         public override int GetHashCode() => HashCode.Combine(_image, _token);
 
-        public static bool operator ==(ImageRef left, ImageRef right) => left.Equals(right);
+        public static bool operator ==(Image left, Image right) => left.Equals(right);
 
-        public static bool operator !=(ImageRef left, ImageRef right) => !(left == right);
+        public static bool operator !=(Image left, Image right) => !(left == right);
 
         internal unsafe sealed class ImageObj : IDisposable
         {
