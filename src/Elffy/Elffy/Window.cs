@@ -114,6 +114,7 @@ namespace Elffy
             _windowImpl.Refresh += _ => UpdateFrame();
             _windowImpl.Load += OnLoad;
             _windowImpl.Resize += OnResize;
+            _windowImpl.ContentScaleChanged += (_, scale) => _renderingArea.SetContentScale(scale);
             _windowImpl.MouseMove += (_, e) => Mouse.ChangePosition(e.Position);
             _windowImpl.MouseWheel += (_, e) => Mouse.ChangeWheel(e.OffsetY);
             _windowImpl.MouseDown += MouseButtonStateChanged;

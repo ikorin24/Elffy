@@ -18,6 +18,7 @@ namespace Elffy.Core
         private bool _disposed;
         private Matrix4 _uiProjection;
         private Vector2i _size;
+        private Vector2 _contentScale;
         private readonly CancellationTokenSource _runningTokenSource;
 
         [ThreadStatic]
@@ -52,7 +53,7 @@ namespace Elffy.Core
                 if(value < 0) { ThrowOutOfRange(); }
                 if(_size.X == value) { return; }
                 _size.X = value;
-                OnSizeChanged(_size);
+                OnSizeChanged();
 
                 void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(value), value, $"{nameof(value)} is out of range.");
             }
@@ -66,7 +67,7 @@ namespace Elffy.Core
                 if(value < 0) { ThrowOutOfRange(); }
                 if(_size.Y == value) { return; }
                 _size.Y = value;
-                OnSizeChanged(_size);
+                OnSizeChanged();
 
                 void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(value), value, $"{nameof(value)} is out of range.");
             }
@@ -81,7 +82,7 @@ namespace Elffy.Core
                 if(value.Y < 0) { ThrowHeightOutOfRange(); }
                 if(_size == value) { return; }
                 _size = value;
-                OnSizeChanged(_size);
+                OnSizeChanged();
 
                 void ThrowWidthOutOfRange() => throw new ArgumentOutOfRangeException("Width", value.X, $"width is out of range.");
                 void ThrowHeightOutOfRange() => throw new ArgumentOutOfRangeException("Height", value.Y, $"height is out of range.");
@@ -240,13 +241,23 @@ namespace Elffy.Core
             Disposed?.Invoke();
         }
 
-        private void OnSizeChanged(in Vector2i newSize)
+        public void SetContentScale(in Vector2 scale)
         {
+            _contentScale = scale;
+            OnSizeChanged();
+        }
+
+        private void OnSizeChanged()
+        {
+            //in Vector2i newSize, in Vector2 contentScale
+            ref var newSize = ref _size;
+            ref var scale = ref _contentScale;
+
             // Change view and projection matrix (World).
             Camera.ChangeScreenSize(newSize.X, newSize.Y);
 
             // Change projection matrix (UI)
-            GL.Viewport(0, 0, newSize.X, newSize.Y);
+            GL.Viewport(0, 0, (int)(newSize.X * scale.X), (int)(newSize.Y * scale.Y));
             Matrix4.OrthographicProjection(0, newSize.X, 0, newSize.Y, UI_NEAR, UI_FAR, out _uiProjection);
             var uiRoot = Layers.UILayer.UIRoot;
             uiRoot.Width = newSize.X;

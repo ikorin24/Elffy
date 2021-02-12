@@ -24,6 +24,7 @@ namespace Elffy.OpenGL
         private Wnd* _window;
         private Vector2i _clientSize;
         private Vector2i _size;
+        private Vector2 _contentScale;
         private Vector2i _location;
         private string _title;
         private bool _isRunning;
@@ -77,6 +78,8 @@ namespace Elffy.OpenGL
         }
 
         public Vector2i Size => _size;
+
+        public Vector2 ContentScale => _contentScale;
 
         public Vector2i Location
         {
@@ -147,6 +150,8 @@ namespace Elffy.OpenGL
                 _window = GLFW.CreateWindow(width, height, title, null, null);
                 GLFW.SetWindowPos(_window, (videoMode->Width - width) / 2, (videoMode->Height - height) / 2);
             }
+
+            GLFW.GetWindowContentScale(_window, out _contentScale.X, out _contentScale.Y);
 
             try {
                 MakeContextCurrent();
