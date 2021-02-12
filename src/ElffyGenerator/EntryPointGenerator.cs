@@ -246,49 +246,29 @@ namespace Elffy
                 var height = _screenSize is not null ? GeneratorUtil.GetAttrArgInt(_screenSize, 1, compilation) : DefaultHeight;
                 var title = _screenTitle is not null ? GeneratorUtil.GetAttrArgString(_screenTitle, 0, compilation) : DefaultTitle;
                 var windowStyle = _windowStyle is not null ? GeneratorUtil.GetAttrArgEnumNum(_windowStyle, 0, compilation) : DefaultWindowStyle;
+                var iconName = _screenIcon is not null ? GeneratorUtil.GetAttrArgString(_screenIcon, 0, compilation) : null;
 
                 sb.Append(@"
         private static IHostScreen CreateScreen()
-        {
-            static IHostScreen PlatformSwitch(int width, int height, string title, ReadOnlySpan<RawImage> icon)
-            {
-                switch(Platform.PlatformType) {
-                    case PlatformType.Windows:
-                    case PlatformType.MacOSX:
-                    case PlatformType.Linux:
-                        return new Window(width, height, title, ").Append($"(WindowStyle){windowStyle}, ").Append(@"icon);
-                    case PlatformType.Android:
-                    case PlatformType.Other:
-                    default:
-                        throw new PlatformNotSupportedException();
+        {").Append($@"
+            const int width = {width};
+            const int height = {height};
+            const string title = ""{title}"";
+            const WindowStyle style = (WindowStyle){windowStyle};").Append(@"
+            switch(Platform.PlatformType) {
+                case PlatformType.Windows:
+                case PlatformType.MacOSX:
+                case PlatformType.Linux: {").AppendChoose(iconName is null, @"
+                    var icon = Icon.Empty;", $@"
+                    using var iconStream = Resources.Loader.GetStream(""{iconName}"");
+                    using var icon = IcoParser.Parse(iconStream);").Append(@"
+                    return new Window(width, height, title, style, icon);
                 }
+                case PlatformType.Android:
+                case PlatformType.Other:
+                default:
+                    throw new PlatformNotSupportedException();
             }
-");
-                if(_screenIcon is null) {
-                    sb.Append(@$"
-            return PlatformSwitch({width}, {height}, ""{title}"", ReadOnlySpan<RawImage>.Empty);");
-                }
-                else {
-                    var iconName = GeneratorUtil.GetAttrArgString(_screenIcon, 0, compilation);
-                    sb.Append($@"
-            Span<RawImage> icon = stackalloc RawImage[1];").Append($@"
-            using var iconStream = Resources.Loader.GetStream(""{iconName}"");").Append(@"
-            using var bitmap = new Bitmap(iconStream);
-            using var pixels = bitmap.GetPixels(ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
-            var pixelSpan = pixels.AsSpan();
-
-            // Pixels of System.Drawing.Bitmap is layouted as (B, G, R, A).
-            // Convert them as (R, G, B, A)
-            for(int i = 0; i < pixelSpan.Length / 4; i++) {
-                var (r, g, b) = (pixelSpan[i * 4 + 2], pixelSpan[i * 4 + 1], pixelSpan[i * 4]);
-                pixelSpan[i * 4] = r;
-                pixelSpan[i * 4 + 1] = g;
-                pixelSpan[i * 4 + 2] = b;
-            }
-            icon[0] = new RawImage(pixels.Width, pixels.Height, pixels.Ptr);").Append($@"
-            return PlatformSwitch({width}, {height}, ""{title}"", icon);");
-                }
-                sb.Append(@"
         }
 ");
             }
@@ -324,8 +304,6 @@ using Elffy.Platforms;
 using Elffy.Threading;
 using System;
 using System.IO;
-using System.Drawing;
-using System.Drawing.Imaging;
 
 namespace Elffy
 {

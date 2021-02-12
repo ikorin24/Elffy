@@ -15,6 +15,9 @@ namespace Elffy.Imaging
         public int Width => _image?.Width ?? 0;
         public int Height => _image?.Height ?? 0;
 
+        /// <summary>Get pointer to pixels of type <see cref="ColorByte"/></summary>
+        public IntPtr Ptr => _image is not null ? (IntPtr)_image.Pixels : IntPtr.Zero;
+
         public static ImageRef Empty => default;
 
         /// <summary>Get or set pixel of specified (x, y)</summary>
@@ -64,6 +67,8 @@ namespace Elffy.Imaging
             image?.Dispose();
             Unsafe.AsRef(_token) = 0;
         }
+
+        public ColorByte* GetPtr() => _image is not null ? _image.Pixels : null;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Span<ColorByte> GetPixels()

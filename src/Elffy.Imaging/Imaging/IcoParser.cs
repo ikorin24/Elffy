@@ -10,7 +10,7 @@ namespace Elffy.Imaging
 {
     public static unsafe class IcoParser
     {
-        public static void ParseAll(Stream stream, Span<ImageRef> parsedImages)
+        public static Icon Parse(Stream stream)
         {
             UnsafeEx.SkipInitIfPossible(out ICONDIR icondir);   // 6 bytes
             stream.SafeRead(UnsafeEx.AsBytes(ref icondir));
@@ -19,22 +19,19 @@ namespace Elffy.Imaging
                 ThrowHelper.ThrowFormatException();
             }
 
-            if(parsedImages.Length < icondir.idCount) {
-                throw new ArgumentException();
-            }
-
             using var entries = new UnsafeRawArray<ICONDIRENTRY>(icondir.idCount);
             stream.SafeRead(entries.AsBytes());
 
+            var icon = new Icon(icondir.idCount);
             try {
-                for(int i = 0; i < icondir.idCount; i++) {
-                    parsedImages[i] = ParseImage(stream, entries[i]);
+                var images = icon.GetImagesSpan();
+                for(int i = 0; i < images.Length; i++) {
+                    images[i] = ParseImage(stream, entries[i]);
                 }
+                return icon;
             }
             catch {
-                for(int i = 0; i < icondir.idCount; i++) {
-                    parsedImages[i].Dispose();
-                }
+                icon.Dispose();
                 throw;
             }
         }

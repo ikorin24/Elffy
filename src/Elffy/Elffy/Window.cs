@@ -96,14 +96,15 @@ namespace Elffy
 
         /// <summary>Create new <see cref="Window"/></summary>
         /// <param name="windowStyle">window style</param>
-        public Window(WindowStyle windowStyle) : this(800, 450, DefaultTitle, windowStyle, ReadOnlySpan<RawImage>.Empty) { }
+        public Window(WindowStyle windowStyle) : this(800, 450, DefaultTitle, windowStyle, Icon.Empty) { }
 
         /// <summary>Create new <see cref="Window"/></summary>
         /// <param name="width">width of the window</param>
         /// <param name="height">height of the window</param>
         /// <param name="title">title of the window</param>
         /// <param name="windowStyle">window style</param>
-        public Window(int width, int height, string title, WindowStyle windowStyle, ReadOnlySpan<RawImage> icon)
+        /// <param name="icon">window icon</param>
+        public Window(int width, int height, string title, WindowStyle windowStyle, Icon icon)
         {
             _isThreadMain = true;
             _renderingArea = new RenderingArea(this);
