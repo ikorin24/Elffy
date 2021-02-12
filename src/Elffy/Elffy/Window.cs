@@ -50,6 +50,9 @@ namespace Elffy
         public Vector2i ClientSize { get => _windowImpl.ClientSize; set => _windowImpl.ClientSize = value; }
 
         /// <inheritdoc/>
+        public Vector2 ContentScale => _windowImpl.ContentScale;
+
+        /// <inheritdoc/>
         public Vector2i Location { get => _windowImpl.Location; set => _windowImpl.Location = value; }
 
         /// <inheritdoc/>
@@ -113,7 +116,7 @@ namespace Elffy
             _windowImpl.UpdateFrame += (_, e) => UpdateFrame();
             _windowImpl.Refresh += _ => UpdateFrame();
             _windowImpl.Load += OnLoad;
-            _windowImpl.Resize += OnResize;
+            _windowImpl.Resize += (_, e) => _renderingArea.SetClientSize(e.Size);
             _windowImpl.ContentScaleChanged += (_, scale) => _renderingArea.SetContentScale(scale);
             _windowImpl.MouseMove += (_, e) => Mouse.ChangePosition(e.Position);
             _windowImpl.MouseWheel += (_, e) => Mouse.ChangeWheel(e.OffsetY);
@@ -205,11 +208,6 @@ namespace Elffy
         {
             ThrowIfNotMainThread();
             _renderingArea.Initialize();
-        }
-
-        private void OnResize(WindowGLFW _, ResizeEventArgs e)
-        {
-            _renderingArea.Size = e.Size;
         }
 
         private void UpdateFrame()
