@@ -91,7 +91,7 @@ namespace Elffy.OpenGL
             }
         }
 
-        public WindowGLFW(IHostScreen screen, int width, int height, string title, WindowStyle style, ReadOnlySpan<RawImage> icon)
+        public WindowGLFW(IHostScreen screen, int width, int height, string title, WindowStyle style, Icon icon)
         {
             title ??= "";
             _owner = screen;
@@ -159,8 +159,10 @@ namespace Elffy.OpenGL
                 RegisterWindowCallbacks();
                 GLFW.FocusWindow(_window);
                 _title = title;
-                if(icon.Length != 0) {
-                    GLFW.SetWindowIcon(_window, icon.MarshalCast<RawImage, Image>());
+                if(icon.ImageCount != 0) {
+                    var image = icon.GetImage(0);
+                    var img = new Image(image.Width, image.Height, (byte*)image.GetPtr());
+                    GLFW.SetWindowIconRaw(_window, 1, &img);
                 }
 
                 GLFW.GetWindowSize(_window, out _clientSize.X, out _clientSize.Y);
