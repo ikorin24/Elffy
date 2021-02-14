@@ -71,7 +71,7 @@ namespace Sandbox
             var cube = new Cube();
             cube.Position = new(0, 0.5f, 0);
             cube.Shader = PhongShaderSource.Instance;
-            cube.AddComponent(await Resources.Loader.LoadTextureAsync("box.png", BitmapType.Png, FrameLoopTiming.Update));
+            cube.AddComponent(await Resources.Loader.LoadTextureAsync("box.png", ImageType.Png, FrameLoopTiming.Update));
             cube.Activate();
             return cube;
         }

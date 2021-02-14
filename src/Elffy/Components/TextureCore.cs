@@ -309,7 +309,7 @@ namespace Elffy.Components
 
         private unsafe void LoadCore<TColor>(in Vector2i size, TColor* pixels) where TColor : unmanaged
         {
-            if(typeof(TColor) != typeof(ColorByte) || typeof(TColor) != typeof(Color4)) {
+            if(typeof(TColor) != typeof(ColorByte) && typeof(TColor) != typeof(Color4)) {
                 ThrowNotSupported();
                 [DoesNotReturn] static void ThrowNotSupported() => throw new NotSupportedException();
             }

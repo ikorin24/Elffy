@@ -13,11 +13,11 @@ namespace Elffy
         /// <summary>Create <see cref="Texture"/> from resource</summary>
         /// <remarks>Created <see cref="Texture"/> expands and shrinks linearly.</remarks>
         /// <param name="name">resource name</param>
-        /// <param name="bitmapType">image file type</param>
+        /// <param name="type">image file type</param>
         /// <returns><see cref="Texture"/> created from <see cref="Stream"/></returns>
-        public static Texture LoadTexture(this IResourceLoader source, string name, BitmapType bitmapType)
+        public static Texture LoadTexture(this IResourceLoader source, string name, ImageType type)
         {
-            return LoadTexture(source, name, bitmapType,
+            return LoadTexture(source, name, type,
                               TextureExpansionMode.Bilinear,
                               TextureShrinkMode.Bilinear,
                               TextureMipmapMode.Bilinear,
@@ -27,31 +27,30 @@ namespace Elffy
 
         /// <summary>Create <see cref="Texture"/> from resource</summary>
         /// <param name="name">resource name</param>
-        /// <param name="bitmapType">image file type</param>
+        /// <param name="type">image file type</param>
         /// <param name="expansionMode">texture expansion mode</param>
         /// <param name="shrinkMode">textrue shrink mode</param>
         /// <param name="mipmapMode">texture mipmap mode</param>
         /// <param name="wrapModeX">texture x wrap mode</param>
         /// <param name="wrapModeY">texture y wrap mode</param>
         /// <returns><see cref="Texture"/> create from <see cref="Stream"/></returns>
-        public static Texture LoadTexture(this IResourceLoader source, string name, BitmapType bitmapType, TextureExpansionMode expansionMode,
+        public static Texture LoadTexture(this IResourceLoader source, string name, ImageType type, TextureExpansionMode expansionMode,
                                           TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode,
                                           TextureWrapMode wrapModeX, TextureWrapMode wrapModeY)
         {
-            using(var stream = source.GetStream(name))
-            using(var bitmap = BitmapHelper.StreamToBitmap(stream, bitmapType)) {
-                var texture = new Texture(expansionMode, shrinkMode, mipmapMode, wrapModeX, wrapModeY);
-                texture.Load(bitmap);
-                return texture;
-            }
+            using var stream = source.GetStream(name);
+            using var image = Image.FromStream(stream, type);
+            var texture = new Texture(expansionMode, shrinkMode, mipmapMode, wrapModeX, wrapModeY);
+            texture.Load(image);
+            return texture;
         }
 
-        public static UniTask<Texture> LoadTextureAsync(this IResourceLoader source, string name, BitmapType bitmapType,
+        public static UniTask<Texture> LoadTextureAsync(this IResourceLoader source, string name, ImageType type,
                                                         AsyncBackEndPoint endPoint,
                                                         FrameLoopTiming timing,
                                                         CancellationToken cancellationToken = default)
         {
-            return LoadTextureAsync(source, name, bitmapType,
+            return LoadTextureAsync(source, name, type,
                                     TextureExpansionMode.Bilinear,
                                     TextureShrinkMode.Bilinear,
                                     TextureMipmapMode.Bilinear,
@@ -59,7 +58,7 @@ namespace Elffy
                                     TextureWrapMode.ClampToEdge, endPoint, timing, cancellationToken);
         }
 
-        public static async UniTask<Texture> LoadTextureAsync(this IResourceLoader source, string name, BitmapType bitmapType, TextureExpansionMode expansionMode,
+        public static async UniTask<Texture> LoadTextureAsync(this IResourceLoader source, string name, ImageType type, TextureExpansionMode expansionMode,
                                                               TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode,
                                                               TextureWrapMode wrapModeX, TextureWrapMode wrapModeY,
                                                               AsyncBackEndPoint endPoint,
@@ -75,10 +74,10 @@ namespace Elffy
             cancellationToken.ThrowIfCancellationRequested();
 
             using var stream = source.GetStream(name);
-            using var bitmap = BitmapHelper.StreamToBitmap(stream, bitmapType);
+            using var image = Image.FromStream(stream, type);
             await endPoint.ToTiming(timing, cancellationToken);
             var texture = new Texture(expansionMode, shrinkMode, mipmapMode, wrapModeX, wrapModeY);
-            texture.Load(bitmap);
+            texture.Load(image);
             return texture;
         }
 

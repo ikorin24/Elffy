@@ -86,7 +86,7 @@ namespace Sandbox
                 Shader = TextureShaderSource<Vertex>.Instance,
             };
             plain.AddComponent(new Material(new Color4(1f), new Color4(0.25f), new Color4(0.2f), 400f));
-            plain.AddComponent(Resources.Loader.LoadTexture("floor.png", BitmapType.Png));
+            plain.AddComponent(Resources.Loader.LoadTexture("floor.png", ImageType.Png));
             plain.Activate();
             return new(plain);
         }
@@ -188,7 +188,7 @@ namespace Sandbox
                 Position = new Vector3(-3, 0.5f, -3),
                 Shader = PhongShaderSource.Instance,
             };
-            cube.AddComponent(Resources.Loader.LoadTexture("box.png", BitmapType.Png));
+            cube.AddComponent(Resources.Loader.LoadTexture("box.png", ImageType.Png));
             cube.Updated += sender =>
             {
                 Debug.Assert(sender is Cube);

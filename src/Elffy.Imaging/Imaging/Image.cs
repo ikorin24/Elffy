@@ -3,6 +3,7 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.IO;
 using Elffy.Imaging.Internal;
 
 namespace Elffy.Imaging
@@ -17,6 +18,8 @@ namespace Elffy.Imaging
 
         /// <summary>Get pointer to pixels of type <see cref="ColorByte"/></summary>
         public IntPtr Ptr => _image is not null ? (IntPtr)_image.Pixels : IntPtr.Zero;
+
+        public bool IsEmpty => _token == 0;
 
         public static Image Empty => default;
 
@@ -80,6 +83,51 @@ namespace Elffy.Imaging
                 return MemoryMarshal.CreateSpan(ref *_image.Pixels, Width * Height);
             }
         }
+
+        public static Image FromStream(Stream stream, string fileExtension)
+        {
+            return FromStream(stream, GetTypeFromExt(fileExtension));
+        }
+
+        public static Image FromStream(Stream stream, ReadOnlySpan<char> fileExtension)
+        {
+            return FromStream(stream, GetTypeFromExt(fileExtension));
+        }
+
+        public static Image FromStream(Stream stream, ImageType type)
+        {
+            return type switch
+            {
+                ImageType.Png => PngParser.Parse(stream),
+                ImageType.Tga => TgaParser.Parse(stream),
+                // TODO: bmp, jpg
+                ImageType.Bmp or ImageType.Jpg or _ => throw new NotSupportedException($"Not supported type : {type}"),
+            };
+        }
+
+        public static ImageType GetTypeFromExt(ReadOnlySpan<char> ext)
+        {
+            static bool StringEquals(ReadOnlySpan<char> left, string right)
+                => left.Equals(right.AsSpan(), StringComparison.OrdinalIgnoreCase);
+
+            if(StringEquals(ext, ".png")) {
+                return ImageType.Png;
+            }
+            else if(StringEquals(ext, ".jpg") || StringEquals(ext, ".jpeg")) {
+                return ImageType.Jpg;
+            }
+            else if(StringEquals(ext, ".tga")) {
+                return ImageType.Tga;
+            }
+            else if(StringEquals(ext, ".bmp")) {
+                return ImageType.Bmp;
+            }
+            else {
+                throw new NotSupportedException($"Not supported extension. {ext.ToString()}");
+            }
+        }
+
+        public static ImageType GetTypeFromExt(string ext) => GetTypeFromExt(ext.AsSpan());
 
         public override bool Equals(object? obj) => obj is Image image && Equals(image);
 

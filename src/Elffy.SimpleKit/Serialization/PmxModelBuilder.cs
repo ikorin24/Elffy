@@ -1,6 +1,6 @@
 ﻿#nullable enable
 using System;
-using System.Drawing;
+//using System.Drawing;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Diagnostics;
@@ -87,10 +87,11 @@ namespace Elffy.Serialization
 
             var textureNames = pmx.TextureList.AsSpan();
             var dir = ResourcePath.GetDirectoryName(obj.Name);
-            var bitmaps = new RefTypeRentMemory<Bitmap?>(textureNames.Length);
-            var bitmapSpan = bitmaps.Span;
+            //var bitmaps = new RefTypeRentMemory<Bitmap?>(textureNames.Length);
+            //var bitmapSpan = bitmaps.Span;
+            var images = new Image[textureNames.Length];    // TODO:
 
-            for(int i = 0; i < bitmapSpan.Length; i++) {
+            for(int i = 0; i < images.Length; i++) {
                 using var _ = GetTexturePath(dir, textureNames[i], out var texturePath, out var ext);
                 var path = texturePath.ToString();
 
@@ -98,17 +99,17 @@ namespace Elffy.Serialization
                 // So skip them.
                 if(obj.ResourceLoader.HasResource(path)) {
                     using var stream = obj.ResourceLoader.GetStream(path);
-                    bitmapSpan[i] = BitmapHelper.StreamToBitmap(stream, ext);
+                    images[i] = Image.FromStream(stream, Image.GetTypeFromExt(ext));
                 }
             }
 
             // [NOTE] Though pmx is read only, overwrite pmx data.
             PmxModelLoadHelper.ReverseTrianglePolygon(pmx!.SurfaceList.AsSpan().AsWritable());
 
-            return LoadToModel(pmx, model, load, obj, bitmaps);
+            return LoadToModel(pmx, model, load, obj, images);
         }
 
-        private static async UniTask LoadToModel(PMXObject pmx, Model3D model, Model3DLoadDelegate load, ModelState obj, RefTypeRentMemory<Bitmap?> bitmaps)
+        private static async UniTask LoadToModel(PMXObject pmx, Model3D model, Model3DLoadDelegate load, ModelState obj, Image[] images)
         {
             // ------------------------------
             //      ↓ thread pool
@@ -194,11 +195,11 @@ namespace Elffy.Serialization
                     model.AddComponent(skeleton);
 
                     // create parts
-                    textures = new ValueTypeRentMemory<TextureObject>(bitmaps.Length);
+                    textures = new ValueTypeRentMemory<TextureObject>(images.Length);
                     textures.Span.Clear();  // must be cleared
                     for(int i = 0; i < textures.Length; i++) {
-                        var bitmap = bitmaps[i];
-                        if(bitmap is null) {
+                        var image = images[i];
+                        if(image.IsEmpty) {
                             textures[i] = TextureObject.Empty;
                         }
                         else {
@@ -208,7 +209,7 @@ namespace Elffy.Serialization
                             TextureObject.Parameter2DMagFilter(TextureExpansionMode.Bilinear);
                             TextureObject.Parameter2DWrapS(TextureWrapMode.Repeat);
                             TextureObject.Parameter2DWrapT(TextureWrapMode.Repeat);
-                            TextureObject.Image2D(bitmap);
+                            TextureObject.Image2D(image);
                             TextureObject.GenerateMipmap2D();
                             textures[i] = t;
                         }
@@ -237,10 +238,10 @@ namespace Elffy.Serialization
             finally {
                 // I don't care about the thread.
                 bones.Dispose();
-                for(int i = 0; i < bitmaps.Length; i++) {
-                    bitmaps[i]?.Dispose();
+                for(int i = 0; i < images.Length; i++) {
+                    images[i].Dispose();
                 }
-                bitmaps.Dispose();
+                //bitmaps.Dispose();
                 pmx.Dispose();
                 vertices.Dispose();
             }

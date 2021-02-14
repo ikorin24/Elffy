@@ -7,6 +7,9 @@ namespace Elffy.Imaging.Internal
     internal static class ThrowHelper
     {
         [DoesNotReturn]
+        public static void ThrowNullArg(string message) => throw new ArgumentNullException(message);
+
+        [DoesNotReturn]
         public static void ThrowFormatException(string message = "")
         {
             throw new FormatException(message);

@@ -1,8 +1,6 @@
 ﻿#nullable enable
 using System;
 using System.Diagnostics;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.Diagnostics.CodeAnalysis;
 using OpenTK.Graphics.OpenGL4;
 using Elffy.Core;
@@ -10,6 +8,8 @@ using Elffy.Imaging;
 using TKPixelType = OpenTK.Graphics.OpenGL4.PixelType;
 using TKPixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 using GLTextureWrapMode = OpenTK.Graphics.OpenGL4.TextureWrapMode;
+using Bitmap = System.Drawing.Bitmap;
+using ImageLockMode = System.Drawing.Imaging.ImageLockMode;
 
 namespace Elffy.OpenGL
 {
@@ -90,6 +90,13 @@ namespace Elffy.OpenGL
                 GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, pixels.Width, pixels.Height,
                               0, TKPixelFormat.Bgra, TKPixelType.UnsignedByte, pixels.Ptr);
             }
+        }
+
+        /// <summary>Call glTexImage2D</summary>
+        /// <param name="bitmap">image to load</param>
+        public static unsafe void Image2D(Image image)
+        {
+            Image2D(new Vector2i(image.Width, image.Height), image.GetPtr());
         }
 
         /// <summary>Call glTexImage2D</summary>
