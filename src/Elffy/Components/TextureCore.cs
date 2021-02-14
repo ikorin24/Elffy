@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using System;
-using System.Drawing;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Elffy.Effective;
@@ -32,33 +31,6 @@ namespace Elffy.Components
             WrapModeY = wrapModeY;
             Texture = TextureObject.Empty;
             Size = Vector2i.Zero;
-        }
-
-        /// <summary>Load pixel data from <see cref="Bitmap"/></summary>
-        /// <remarks>Texture width and height should be power of two for performance.</remarks>
-        /// <param name="bitmap">bitmap to load pixels</param>
-        public void Load(Bitmap bitmap)
-        {
-            if(!Texture.IsEmpty) {
-                ThrowAlreadyLoaded();
-            }
-            if(bitmap is null) {
-                ThrowNullArg();
-                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(bitmap));
-            }
-
-            Texture = TextureObject.Create();
-            TextureObject.Bind2D(Texture);
-            TextureObject.Parameter2DMinFilter(ShrinkMode, MipmapMode);
-            TextureObject.Parameter2DMagFilter(ExpansionMode);
-            TextureObject.Parameter2DWrapS(WrapModeX);
-            TextureObject.Parameter2DWrapT(WrapModeY);
-            TextureObject.Image2D(bitmap);
-            if(MipmapMode != TextureMipmapMode.None) {
-                TextureObject.GenerateMipmap2D();
-            }
-            TextureObject.Unbind2D();
-            Size = new(bitmap.Width, bitmap.Height);
         }
 
         /// <summary>Load specified pixel data with specified texture size</summary>

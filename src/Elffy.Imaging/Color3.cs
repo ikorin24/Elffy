@@ -2,7 +2,6 @@
 using Elffy.Effective.Unsafes;
 using System;
 using System.ComponentModel;
-using System.Drawing;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -44,8 +43,6 @@ namespace Elffy
 
         public static bool operator !=(in Color3 left, in Color3 right) => !(left == right);
 
-        public static explicit operator Color(in Color3 color) => Color.FromArgb(ToByte(color.R), ToByte(color.G), ToByte(color.B));
-        public static explicit operator Color3(in Color color) => new Color3(color.R / byte.MaxValue, color.G / byte.MaxValue, color.B / byte.MaxValue);
         public static explicit operator Color4(in Color3 color) => new Color4(color);
         public static explicit operator Color3(in Color4 color) => UnsafeEx.As<Color4, Color3>(in color);
 

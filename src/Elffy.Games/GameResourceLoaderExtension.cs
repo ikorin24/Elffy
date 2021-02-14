@@ -10,21 +10,21 @@ namespace Elffy
     public static class GameResourceLoaderExtension
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static UniTask<Texture> LoadTextureAsync(this IResourceLoader source, string name, ImageType type,
-                                                        FrameLoopTiming timing,
+        public static UniTask<Texture> LoadTextureAsync(this IResourceLoader source, string name,
+                                                        FrameLoopTiming timing = FrameLoopTiming.Update,
                                                         CancellationToken cancellationToken = default)
         {
-            return source.LoadTextureAsync(name, type, Timing.EndPoint, timing, cancellationToken);
+            return source.LoadTextureAsync(name, Timing.EndPoint, timing, cancellationToken);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static UniTask<Texture> LoadTextureAsync(this IResourceLoader source, string name, ImageType type, TextureExpansionMode expansionMode,
+        public static UniTask<Texture> LoadTextureAsync(this IResourceLoader source, string name, TextureExpansionMode expansionMode,
                                                               TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode,
                                                               TextureWrapMode wrapModeX, TextureWrapMode wrapModeY,
-                                                              FrameLoopTiming timing,
+                                                              FrameLoopTiming timing = FrameLoopTiming.Update,
                                                               CancellationToken cancellationToken = default)
         {
-            return source.LoadTextureAsync(name, type, expansionMode, shrinkMode, mipmapMode, wrapModeX, wrapModeY, Timing.EndPoint, timing, cancellationToken);
+            return source.LoadTextureAsync(name, expansionMode, shrinkMode, mipmapMode, wrapModeX, wrapModeY, Timing.EndPoint, timing, cancellationToken);
         }
     }
 }

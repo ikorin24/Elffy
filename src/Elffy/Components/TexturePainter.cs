@@ -2,8 +2,6 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.Runtime.CompilerServices;
 using System.Diagnostics.CodeAnalysis;
 using Elffy.Effective;
@@ -124,12 +122,12 @@ namespace Elffy.Components
             SetDirty();
         }
 
-        public void DrawBitmap(Bitmap bitmap)
+        public void DrawImage(in Image image)
         {
-            DrawBitmap(bitmap, new Vector2i(0, 0));
+            DrawImage(image, Vector2i.Zero);
         }
 
-        public void DrawBitmap(Bitmap bitmap, in Vector2i offset)
+        public void DrawImage(in Image image, in Vector2i offset)
         {
             if((uint)offset.X >= _rect.Width) {
                 ThrowOutOfRange();
@@ -139,23 +137,12 @@ namespace Elffy.Components
             }
             [DoesNotReturn] static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(offset));
 
-
-            using var bitmapPixels = bitmap.GetPixels(ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
             var ptr = Ptr;
-            var height = Math.Min(bitmapPixels.Height, _rect.Height - offset.Y);
+            var height = Math.Min(image.Height, _rect.Height - offset.Y);
             for(int row = 0; row < height; row++) {
-                var destRowLine = MemoryMarshal.CreateSpan(ref Unsafe.AsRef<byte>(ptr + (row + offset.Y) * _rect.Width + offset.X),
-                                                           (_rect.Width - offset.X) * sizeof(ColorByte));
-                var srcRowLine = bitmapPixels.GetRowLine(row);
-                srcRowLine.Slice(0, Math.Min(srcRowLine.Length, destRowLine.Length))
-                          .CopyTo(destRowLine);
-
-                var destPix = destRowLine.MarshalCast<byte, ColorByte>();
-                for(int i = 0; i < destPix.Length; i++) {
-
-                    // Swap R and B because System.Drawing.Bitmap is (B, G, R, A) but I need (R, G, B, A).
-                    (destPix[i].R, destPix[i].B) = (destPix[i].B, destPix[i].R);
-                }
+                var destRowLine = MemoryMarshal.CreateSpan(ref *(ptr + (row + offset.Y) * _rect.Width + offset.X), _rect.Width - offset.X);
+                var srcRowLine = image.GetRowLine(row);
+                srcRowLine.Slice(0, Math.Min(srcRowLine.Length, destRowLine.Length)).CopyTo(destRowLine);
             }
             SetDirty();
         }

@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using System;
-//using System.Drawing;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Diagnostics;

@@ -246,6 +246,13 @@ namespace Elffy.Imaging
                         var rowSrc = data.Slice(y * rowSize + 1, rowSize - 1);
                         var rowDst = pixels.Slice(y * header.Width, header.Width);
                         switch(type) {
+
+                            // TODO: 実装
+                            case RowLineFilterType.Sub:
+                            case RowLineFilterType.Up:
+                            case RowLineFilterType.Average:
+                            case RowLineFilterType.Paeth:
+
                             case RowLineFilterType.None: {
                                 for(int x = 0; x < header.Width; x++) {
                                     var x3 = x * 3;
@@ -257,15 +264,8 @@ namespace Elffy.Imaging
                                 }
                                 break;
                             }
-                            //case RowLineFilterType.Sub:
-                            //    break;
-                            //case RowLineFilterType.Up:
-                            //    break;
-                            //case RowLineFilterType.Average:
-                            //    break;
-                            //case RowLineFilterType.Paeth:
-                            //    break;
                             default:
+                                ThrowHelper.ThrowFormatException();
                                 break;
                         }
                     }

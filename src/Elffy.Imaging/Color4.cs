@@ -2,7 +2,6 @@
 using Elffy.Effective.Unsafes;
 using System;
 using System.ComponentModel;
-using System.Drawing;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;

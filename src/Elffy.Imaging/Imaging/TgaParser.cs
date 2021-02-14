@@ -3,8 +3,6 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -22,30 +20,6 @@ namespace Elffy.Imaging
             public byte R;
             public byte A;
         }
-
-        //public static unsafe Bitmap Parse(Stream stream)
-        //{
-        //    if(stream is null) {
-        //        ThrowNullArg();
-        //        static void ThrowNullArg() => throw new ArgumentNullException(nameof(stream));
-        //    }
-
-        //    using var reader = new ZBinaryReader(stream!);
-        //    ParseHeader(reader, out var header);
-        //    var bitmap = new Bitmap(header.Width, header.Height, PixelFormat.Format32bppArgb);
-        //    using var pixels = bitmap.GetPixels(ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
-        //    try {
-        //        ParseID(reader, header);
-        //        ParseColorMap(reader, header);
-        //        ParseData(reader, header, pixels.AsSpan());
-        //        ParseFooter(reader, header);
-        //    }
-        //    catch(Exception ex) {
-        //        Debugger.Log(0, "", $"[ERROR] Failed loading tga image pixels. {ex.GetType().Name}");
-        //        MemoryMarshal.Cast<byte, uint>(pixels.AsSpan()).Fill(0xffff0000);   // fill pixels with white
-        //    }
-        //    return bitmap;
-        //}
 
         public static Image Parse(Stream stream)
         {

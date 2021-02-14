@@ -1,11 +1,9 @@
 ﻿#nullable enable
 using System;
-using System.Drawing;
 using Elffy.Core;
 using Elffy.Exceptions;
 using Elffy.OpenGL;
 using Elffy.Imaging;
-using Image = Elffy.Imaging.Image;
 
 namespace Elffy.Components
 {
@@ -28,6 +26,10 @@ namespace Elffy.Components
 
         public bool AutoDisposeOnDetached => _core.AutoDisposeOnDetached;
 
+        public int Width => _textureCore.Size.X;
+
+        public int Height => _textureCore.Size.Y;
+
         public ref readonly Vector2i Size => ref _textureCore.Size;
 
         public Texture(bool autoDispose = true) : this(TextureWrapMode.ClampToEdge, autoDispose)
@@ -48,11 +50,6 @@ namespace Elffy.Components
         }
 
         ~Texture() => Dispose(false);
-
-        /// <summary>Load pixel data from <see cref="Bitmap"/></summary>
-        /// <remarks>Texture width and height should be power of two for performance.</remarks>
-        /// <param name="bitmap">bitmap to load pixels</param>
-        public void Load(Bitmap bitmap) => _textureCore.Load(bitmap);
 
         /// <summary>Load pixel data from <see cref="Image"/></summary>
         /// <param name="image">image to load</param>

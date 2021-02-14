@@ -8,8 +8,6 @@ using Elffy.Imaging;
 using TKPixelType = OpenTK.Graphics.OpenGL4.PixelType;
 using TKPixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 using GLTextureWrapMode = OpenTK.Graphics.OpenGL4.TextureWrapMode;
-using Bitmap = System.Drawing.Bitmap;
-using ImageLockMode = System.Drawing.Imaging.ImageLockMode;
 
 namespace Elffy.OpenGL
 {
@@ -80,16 +78,6 @@ namespace Elffy.OpenGL
         public static void Unbind1D()
         {
             Bind1D(Empty);
-        }
-
-        /// <summary>Call glTexImage2D</summary>
-        /// <param name="bitmap">texture to load</param>
-        public static unsafe void Image2D(Bitmap bitmap)
-        {
-            using(var pixels = bitmap.GetPixels(ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb)) {
-                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, pixels.Width, pixels.Height,
-                              0, TKPixelFormat.Bgra, TKPixelType.UnsignedByte, pixels.Ptr);
-            }
         }
 
         /// <summary>Call glTexImage2D</summary>

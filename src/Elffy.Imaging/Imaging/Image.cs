@@ -84,6 +84,15 @@ namespace Elffy.Imaging
             }
         }
 
+        public unsafe Span<ColorByte> GetRowLine(int row)
+        {
+            if((uint)row >= (uint)Height) {
+                ThrowOutOfRange();
+                static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(row));
+            }
+            return MemoryMarshal.CreateSpan(ref *(GetPtr() + Width * row), Width);
+        }
+
         public static Image FromStream(Stream stream, string fileExtension)
         {
             return FromStream(stream, GetTypeFromExt(fileExtension));
