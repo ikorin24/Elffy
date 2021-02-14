@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Diagnostics.CodeAnalysis;
 using Elffy.Core;
-using Elffy.AssemblyServices;
 
 namespace Elffy
 {
@@ -58,10 +57,12 @@ namespace Elffy
         public Layer Layer
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => AssemblyState.IsDebug ? (Layer?)_layer ?? throw new InvalidOperationException($"{nameof(FrameObject)} is not activated yet or already dead.")
-                                         : Unsafe.As<Layer?>(_layer) ?? throw new InvalidOperationException($"{nameof(FrameObject)} is not activated yet or already dead.");
-
-            // ↑ Use cast in the debug build. The branch is removed by JIT.
+            get =>
+#if DEBUG
+            (Layer?)_layer ?? throw new InvalidOperationException($"{nameof(FrameObject)} is not activated yet or already dead.");
+#else
+            Unsafe.As<Layer?>(_layer) ?? throw new InvalidOperationException($"{nameof(FrameObject)} is not activated yet or already dead.");
+#endif
         }
 
 

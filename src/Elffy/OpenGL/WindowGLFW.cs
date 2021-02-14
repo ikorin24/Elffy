@@ -4,7 +4,6 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using Elffy.AssemblyServices;
 using Elffy.Imaging;
 using Elffy.Effective;
 using OpenTK.Graphics.OpenGL4;
@@ -313,9 +312,9 @@ namespace Elffy.OpenGL
 #endif
             }
             catch {
-                if(AssemblyState.IsDebug) {
-                    throw;
-                }
+#if DEBUG
+                throw;
+#endif
             }
         }
 
