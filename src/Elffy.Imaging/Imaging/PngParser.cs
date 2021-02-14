@@ -246,13 +246,74 @@ namespace Elffy.Imaging
                         var rowSrc = data.Slice(y * rowSize + 1, rowSize - 1);
                         var rowDst = pixels.Slice(y * header.Width, header.Width);
                         switch(type) {
-
-                            // TODO: 実装
-                            case RowLineFilterType.Sub:
-                            case RowLineFilterType.Up:
-                            case RowLineFilterType.Average:
-                            case RowLineFilterType.Paeth:
-
+                            case RowLineFilterType.Sub: {
+                                ColorByte prev = default;
+                                for(int x = 0; x < header.Width; x++) {
+                                    var x3 = x * 3;
+                                    ref var p = ref pixels[y * header.Width + x];
+                                    p.R = (byte)(rowSrc[x3] + prev.R);
+                                    p.G = (byte)(rowSrc[x3 + 1] + prev.G);
+                                    p.B = (byte)(rowSrc[x3 + 2] + prev.B);
+                                    p.A = 0xff;
+                                    prev = p;
+                                }
+                                break;
+                            }
+                            case RowLineFilterType.Up: {
+                                if(y == 0) {
+                                    for(int x = 0; x < header.Width; x++) {
+                                        var x3 = x * 3;
+                                        ref var p = ref pixels[y * header.Width + x];
+                                        p.R = rowSrc[x3];
+                                        p.G = rowSrc[x3 + 1];
+                                        p.B = rowSrc[x3 + 2];
+                                        p.A = 0xff;
+                                    }
+                                }
+                                else {
+                                    var prevRow = pixels.Slice((y - 1) * header.Width, header.Width);
+                                    for(int x = 0; x < header.Width; x++) {
+                                        var x3 = x * 3;
+                                        ref var p = ref pixels[y * header.Width + x];
+                                        ref var prev = ref prevRow.At(x);
+                                        p.R = (byte)(rowSrc[x3] + prev.R);
+                                        p.G = (byte)(rowSrc[x3 + 1] + prev.G);
+                                        p.B = (byte)(rowSrc[x3 + 2] + prev.B);
+                                        p.A = 0xff;
+                                    }
+                                }
+                                break;
+                            }
+                            case RowLineFilterType.Average: {
+                                if(y == 0) {
+                                    ColorByte left = default;
+                                    for(int x = 0; x < header.Width; x++) {
+                                        var x3 = x * 3;
+                                        ref var p = ref pixels[y * header.Width + x];
+                                        p.R = (byte)(rowSrc[x3] + left.R);
+                                        p.G = (byte)(rowSrc[x3 + 1] + left.G);
+                                        p.B = (byte)(rowSrc[x3 + 2] + left.B);
+                                        p.A = 0xff;
+                                        left = p;
+                                    }
+                                }
+                                else {
+                                    ColorByte left = default;
+                                    var upRow = pixels.Slice((y - 1) * header.Width, header.Width);
+                                    for(int x = 0; x < header.Width; x++) {
+                                        var x3 = x * 3;
+                                        ref var p = ref pixels[y * header.Width + x];
+                                        ref var up = ref upRow.At(x);
+                                        p.R = (byte)(rowSrc[x3] + (up.R + left.R) / 2);
+                                        p.G = (byte)(rowSrc[x3 + 1] + (up.G + left.G) / 2);
+                                        p.B = (byte)(rowSrc[x3 + 2] + (up.B + left.B) / 2);
+                                        p.A = 0xff;
+                                        left = p;
+                                    }
+                                }
+                                break;
+                            }
+                            case RowLineFilterType.Paeth:   // TODO:
                             case RowLineFilterType.None: {
                                 for(int x = 0; x < header.Width; x++) {
                                     var x3 = x * 3;
