@@ -313,7 +313,38 @@ namespace Elffy.Imaging
                                 }
                                 break;
                             }
-                            case RowLineFilterType.Paeth:   // TODO:
+                            case RowLineFilterType.Paeth: {
+                                if(y == 0) {
+                                    ColorByte left = default;
+                                    for(int x = 0; x < header.Width; x++) {
+                                        var x3 = x * 3;
+                                        ref var p = ref pixels[y * header.Width + x];
+                                        p.R = (byte)(rowSrc[x3] + left.R);
+                                        p.G = (byte)(rowSrc[x3 + 1] + left.G);
+                                        p.B = (byte)(rowSrc[x3 + 2] + left.B);
+                                        p.A = 0xff;
+                                        left = p;
+                                    }
+                                    break;
+                                }
+                                else {
+                                    ColorByte left = default;
+                                    ColorByte leftUp = default;
+                                    var upRow = pixels.Slice((y - 1) * header.Width, header.Width);
+                                    for(int x = 0; x < header.Width; x++) {
+                                        var x3 = x * 3;
+                                        ref var p = ref pixels[y * header.Width + x];
+                                        ref var up = ref upRow.At(x);
+                                        p.R = (byte)(rowSrc[x3] + Paeth(left.R, up.R, leftUp.R));
+                                        p.G = (byte)(rowSrc[x3 + 1] + Paeth(left.G, up.G, leftUp.G));
+                                        p.B = (byte)(rowSrc[x3 + 2] + Paeth(left.B, up.B, leftUp.B));
+                                        p.A = 0xff;
+                                        left = p;
+                                        leftUp = up;
+                                    }
+                                }
+                                break;
+                            }
                             case RowLineFilterType.None: {
                                 for(int x = 0; x < header.Width; x++) {
                                     var x3 = x * 3;
@@ -335,6 +366,16 @@ namespace Elffy.Imaging
                     Debug.Assert(header.Bits == 16);
                     // TODO:
                     throw new NotImplementedException("16 bits depth color (48 bits RGB) is not implemented.");
+                }
+
+                static byte Paeth(byte left, byte up, byte leftUp)
+                {
+                    var p = left + up - leftUp;
+                    int a = Math.Abs(p - left);
+                    var b = Math.Abs(p - up);
+                    var c = Math.Abs(p - leftUp);
+                    return (a <= b && a <= c) ? left :
+                           (b <= c) ? up : leftUp;
                 }
             }
         }
