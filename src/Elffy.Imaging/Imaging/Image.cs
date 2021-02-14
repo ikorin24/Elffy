@@ -109,8 +109,9 @@ namespace Elffy.Imaging
             {
                 ImageType.Png => PngParser.Parse(stream),
                 ImageType.Tga => TgaParser.Parse(stream),
+                ImageType.Jpg => JpegParser.Parse(stream),
                 // TODO: bmp, jpg
-                ImageType.Bmp or ImageType.Jpg or _ => throw new NotSupportedException($"Not supported type : {type}"),
+                ImageType.Bmp or _ => throw new NotSupportedException($"Not supported type : {type}"),
             };
         }
 
