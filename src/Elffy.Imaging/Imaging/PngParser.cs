@@ -200,8 +200,10 @@ namespace Elffy.Imaging
                     }
                     case ColorType.GrayAlpha:
                         throw new NotImplementedException();
-                    case ColorType.TrueColorAlpha:
-                        throw new NotImplementedException();
+                    case ColorType.TrueColorAlpha: {
+                        BuildTrueColorAlpha(data, header, image.GetPixels());
+                        break;
+                    }
                     default:
                         ThrowHelper.ThrowFormatException();
                         break;
@@ -353,6 +355,149 @@ namespace Elffy.Imaging
                                     p.G = rowSrc[x3 + 1];
                                     p.B = rowSrc[x3 + 2];
                                     p.A = 0xff;
+                                }
+                                break;
+                            }
+                            default:
+                                ThrowHelper.ThrowFormatException();
+                                break;
+                        }
+                    }
+                }
+                else {
+                    Debug.Assert(header.Bits == 16);
+                    // TODO:
+                    throw new NotImplementedException("16 bits depth color (48 bits RGB) is not implemented.");
+                }
+
+                static byte Paeth(byte left, byte up, byte leftUp)
+                {
+                    var p = left + up - leftUp;
+                    int a = Math.Abs(p - left);
+                    var b = Math.Abs(p - up);
+                    var c = Math.Abs(p - leftUp);
+                    return (a <= b && a <= c) ? left :
+                           (b <= c) ? up : leftUp;
+                }
+            }
+        
+            static void BuildTrueColorAlpha(ReadOnlySpan<byte> data, in Header header, Span<ColorByte> pixels)
+            {
+                // bits depth is 8 or 16
+                if(header.Bits == 8) {
+                    var rowSize = header.Width * 4 + 1;
+                    for(int y = 0; y < header.Height; y++) {
+                        var type = (RowLineFilterType)data[y * rowSize];
+                        var rowSrc = data.Slice(y * rowSize + 1, rowSize - 1);
+                        var rowDst = pixels.Slice(y * header.Width, header.Width);
+                        switch(type) {
+                            case RowLineFilterType.Sub: {
+                                ColorByte prev = default;
+                                for(int x = 0; x < header.Width; x++) {
+                                    var x4 = x * 4;
+                                    ref var p = ref pixels[y * header.Width + x];
+                                    p.R = (byte)(rowSrc[x4] + prev.R);
+                                    p.G = (byte)(rowSrc[x4 + 1] + prev.G);
+                                    p.B = (byte)(rowSrc[x4 + 2] + prev.B);
+                                    p.A = (byte)(rowSrc[x4 + 3] + prev.A);
+                                    prev = p;
+                                }
+                                break;
+                            }
+                            case RowLineFilterType.Up: {
+                                if(y == 0) {
+                                    for(int x = 0; x < header.Width; x++) {
+                                        var x4 = x * 4;
+                                        ref var p = ref pixels[y * header.Width + x];
+                                        p.R = rowSrc[x4];
+                                        p.G = rowSrc[x4 + 1];
+                                        p.B = rowSrc[x4 + 2];
+                                        p.A = rowSrc[x4 + 3];
+                                    }
+                                }
+                                else {
+                                    var prevRow = pixels.Slice((y - 1) * header.Width, header.Width);
+                                    for(int x = 0; x < header.Width; x++) {
+                                        var x4 = x * 4;
+                                        ref var p = ref pixels[y * header.Width + x];
+                                        ref var prev = ref prevRow.At(x);
+                                        p.R = (byte)(rowSrc[x4] + prev.R);
+                                        p.G = (byte)(rowSrc[x4 + 1] + prev.G);
+                                        p.B = (byte)(rowSrc[x4 + 2] + prev.B);
+                                        p.A = (byte)(rowSrc[x4 + 3] + prev.A);
+                                    }
+                                }
+                                break;
+                            }
+                            case RowLineFilterType.Average: {
+                                if(y == 0) {
+                                    ColorByte left = default;
+                                    for(int x = 0; x < header.Width; x++) {
+                                        var x4 = x * 4;
+                                        ref var p = ref pixels[y * header.Width + x];
+                                        p.R = (byte)(rowSrc[x4] + left.R);
+                                        p.G = (byte)(rowSrc[x4 + 1] + left.G);
+                                        p.B = (byte)(rowSrc[x4 + 2] + left.B);
+                                        p.A = (byte)(rowSrc[x4 + 3] + left.A);
+                                        left = p;
+                                    }
+                                }
+                                else {
+                                    ColorByte left = default;
+                                    var upRow = pixels.Slice((y - 1) * header.Width, header.Width);
+                                    for(int x = 0; x < header.Width; x++) {
+                                        var x4 = x * 4;
+                                        ref var p = ref pixels[y * header.Width + x];
+                                        ref var up = ref upRow.At(x);
+                                        p.R = (byte)(rowSrc[x4] + (up.R + left.R) / 2);
+                                        p.G = (byte)(rowSrc[x4 + 1] + (up.G + left.G) / 2);
+                                        p.B = (byte)(rowSrc[x4 + 2] + (up.B + left.B) / 2);
+                                        p.A = (byte)(rowSrc[x4 + 3] + (up.A + left.A) / 2);
+                                        left = p;
+                                    }
+                                }
+                                break;
+                            }
+                            case RowLineFilterType.Paeth: {
+                                if(y == 0) {
+                                    ColorByte left = default;
+                                    for(int x = 0; x < header.Width; x++) {
+                                        var x4 = x * 4;
+                                        ref var p = ref pixels[y * header.Width + x];
+                                        p.R = (byte)(rowSrc[x4] + left.R);
+                                        p.G = (byte)(rowSrc[x4 + 1] + left.G);
+                                        p.B = (byte)(rowSrc[x4 + 2] + left.B);
+                                        p.A = (byte)(rowSrc[x4 + 3] + left.A);
+                                        left = p;
+                                    }
+                                    break;
+                                }
+                                else {
+                                    ColorByte left = default;
+                                    ColorByte leftUp = default;
+                                    var upRow = pixels.Slice((y - 1) * header.Width, header.Width);
+                                    for(int x = 0; x < header.Width; x++) {
+                                        var x4 = x * 4;
+                                        ref var p = ref pixels[y * header.Width + x];
+                                        ref var up = ref upRow.At(x);
+                                        p.R = (byte)(rowSrc[x4] + Paeth(left.R, up.R, leftUp.R));
+                                        p.G = (byte)(rowSrc[x4 + 1] + Paeth(left.G, up.G, leftUp.G));
+                                        p.B = (byte)(rowSrc[x4 + 2] + Paeth(left.B, up.B, leftUp.B));
+                                        p.A = (byte)(rowSrc[x4 + 3] + Paeth(left.A, up.A, leftUp.A));
+                                        left = p;
+                                        leftUp = up;
+                                    }
+                                }
+                                break;
+                            }
+                            case RowLineFilterType.None: {
+                                for(int x = 0; x < header.Width; x++) {
+                                    var x4 = x * 4;
+                                    ref var p = ref pixels[y * header.Width + x];
+                                    p.R = rowSrc[x4];
+                                    p.G = rowSrc[x4 + 1];
+                                    p.B = rowSrc[x4 + 2];
+                                    p.A = rowSrc[x4 + 3];
                                 }
                                 break;
                             }
