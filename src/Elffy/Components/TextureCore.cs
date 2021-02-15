@@ -2,7 +2,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using Elffy.Effective;
+using Elffy.Effective.Unsafes;
 using Elffy.OpenGL;
 using OpenTK.Graphics.OpenGL4;
 using TKPixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
@@ -75,12 +75,9 @@ namespace Elffy.Components
 
         public unsafe void Load(in Vector2i size, in ColorByte fill)
         {
-            using var buf = new PooledArray<byte>(size.X * size.Y * sizeof(ColorByte));
-            var pixels = buf.AsSpan().MarshalCast<byte, ColorByte>();
-            pixels.Fill(fill);
-            fixed(ColorByte* ptr = pixels) {
-                LoadCore(size, ptr);
-            }
+            using var pixels = new UnsafeRawArray<ColorByte>(size.X * size.Y, false);
+            pixels.AsSpan().Fill(fill);
+            LoadCore(size, pixels.GetPtr());
         }
 
         public unsafe void LoadUndefined(in Vector2i size)
@@ -131,12 +128,9 @@ namespace Elffy.Components
                 [DoesNotReturn] static void ThrowInvalidRect() => throw new ArgumentOutOfRangeException($"{nameof(rect)} is invalid");
             }
 
-            using var buf = new PooledArray<byte>(rect.Width * rect.Height * sizeof(ColorByte));
-            var pixels = buf.AsSpan().MarshalCast<byte, ColorByte>();
-            pixels.Fill(fill);
-            fixed(ColorByte* ptr = pixels) {
-                UpdateSubTexture(Texture, ptr, rect);
-            }
+            using var pixels = new UnsafeRawArray<ColorByte>(rect.Width * rect.Height, false);
+            pixels.AsSpan().Fill(fill);
+            UpdateSubTexture(Texture, pixels.GetPtr(), rect);
         }
 
         internal static unsafe void UpdateSubTexture(in TextureObject to, ColorByte* pixels, in RectI rect)
