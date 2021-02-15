@@ -129,7 +129,6 @@ namespace Elffy.Imaging
             else {  // 24 bits
                 Debug.Assert(header.BitsPerPixel == 24);
                 Span<byte> bgra = stackalloc byte[3];
-                bgra[3] = 0xff;
                 var b = header.IsLeftToRight ? 1 : -1;
                 for(int y = 0; y < header.Height; y++) {
                     var offset = header.IsTopToBottom ? y * header.Width : (header.Height - 1 - y) * header.Width;
