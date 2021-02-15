@@ -109,8 +109,9 @@ namespace Elffy.Imaging
             {
                 ImageType.Png => PngParser.Parse(stream),
                 ImageType.Tga => TgaParser.Parse(stream),
-                // TODO: bmp, jpg
-                ImageType.Bmp or ImageType.Jpg or _ => throw new NotSupportedException($"Not supported type : {type}"),
+                ImageType.Jpg => ImageParserTemporary.ParseJpegOrBmp(stream),    // TODO: jpg parser
+                ImageType.Bmp => ImageParserTemporary.ParseJpegOrBmp(stream),    // TODO: bmp parser
+                _ => throw new NotSupportedException($"Not supported type : {type}"),
             };
         }
 
@@ -186,6 +187,49 @@ namespace Elffy.Imaging
                 _height = 0;
                 _token = 0;
             }
+        }
+    }
+}
+
+namespace Elffy.Imaging.Internal
+{
+    using Bitmap = System.Drawing.Bitmap;
+    using ImageLockMode = System.Drawing.Imaging.ImageLockMode;
+    using Elffy.Effective.Unsafes;
+
+    internal unsafe static class ImageParserTemporary
+    {
+        // I want to remove dependency on System.Drawing (and other external libraries of image) in the future.
+        // It requires pure C# parser for 'jpeg' and 'bmp'.
+
+        public static Image ParseJpegOrBmp(Stream stream)
+        {
+            using var bitmap = new Bitmap(stream);
+            var image = new Image(bitmap.Width, bitmap.Height);
+            var data = bitmap.LockBits(new(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            try {
+                var pixels = new Span<DrawingColor>((void*)data.Scan0, bitmap.Width * bitmap.Height);
+                var dest = image.GetPixels();
+                for(int i = 0; i < pixels.Length; i++) {
+                    dest.At(i) = new ColorByte(pixels[i].R, pixels[i].G, pixels[i].B, pixels[i].A);
+                }
+                return image;
+            }
+            catch {
+                bitmap.UnlockBits(data);
+                image.Dispose();
+                throw;
+            }
+        }
+
+        private struct DrawingColor
+        {
+#pragma warning disable 0649
+            public byte B;
+            public byte G;
+            public byte R;
+            public byte A;
+#pragma warning restore 0649
         }
     }
 }

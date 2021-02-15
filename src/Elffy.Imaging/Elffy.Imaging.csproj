@@ -20,6 +20,14 @@
     <DocumentationFile></DocumentationFile>
     <DefineConstants>TRACE;</DefineConstants>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      I want to remove dependency on System.Drawing (and other external libraries of image) in the future.
+      It requires pure C# parser for 'jpeg' and 'bmp'.
+    -->
+    <PackageReference Include="System.Drawing.Common" Version="5.0.1" />
+  </ItemGroup>
   
   <ItemGroup>
     <ProjectReference Include="..\Elffy.Memory\Elffy.Memory.csproj" />
