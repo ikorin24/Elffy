@@ -18,12 +18,13 @@ namespace Elffy.Imaging
 {
     public unsafe static class JpegParser
     {
-        private static ReadOnlySpan<byte> APP0 => new byte[2] { 0xff, 0xe0, };
         private static ReadOnlySpan<byte> SOI => new byte[2] { 0xff, 0xd8 };
         private static ReadOnlySpan<byte> EOI => new byte[2] { 0xff, 0xd9 };
-        private static ReadOnlySpan<byte> DQT => new byte[2] { 0xff, 0xdb };
-        private static ReadOnlySpan<byte> DHT => new byte[2] { 0xff, 0xd4 };
         private static ReadOnlySpan<byte> SOS => new byte[2] { 0xff, 0xda };
+        private static ReadOnlySpan<byte> DQT => new byte[2] { 0xff, 0xdb };
+        private static ReadOnlySpan<byte> SOF0 => new byte[2] { 0xff, 0xc0 };
+        private static ReadOnlySpan<byte> DHT => new byte[2] { 0xff, 0xc4 };
+        private static ReadOnlySpan<byte> APP0 => new byte[2] { 0xff, 0xe0, };
 
 #if CAN_SKIP_LOCALS_INIT
         [SkipLocalsInit]
@@ -47,8 +48,12 @@ namespace Elffy.Imaging
                 stream.SafeRead(buf);
                 var segSize = BinaryPrimitives.ReadUInt16BigEndian(buf) - 2;
 
+
                 if(marker.SequenceEqual(SOS)) {
                     ParseSOS(stream, segSize);
+                }
+                else if(marker.SequenceEqual(SOF0)) {
+                    ParseSOF0(stream, segSize, out var sof0);
                 }
                 else {
                     // Skip the segment
@@ -57,6 +62,21 @@ namespace Elffy.Imaging
             }
 
             throw new NotImplementedException();
+        }
+
+
+#if CAN_SKIP_LOCALS_INIT
+        [SkipLocalsInit]
+#endif
+        private static void ParseSOF0(Stream stream, int segSize, out SOF0Info info)
+        {
+            Span<byte> buf = stackalloc byte[segSize];
+            stream.SafeRead(buf);
+
+            info.Precision = buf[0];
+            info.Height = BinaryPrimitives.ReadUInt16BigEndian(buf.Slice(1, 2));
+            info.Width = BinaryPrimitives.ReadUInt16BigEndian(buf.Slice(3, 2));
+            info.ComponentCount = buf[5];
         }
 
 #if CAN_SKIP_LOCALS_INIT
@@ -69,6 +89,15 @@ namespace Elffy.Imaging
             var n = buf[0];
 
             // ECS (Entropy-coded segment)
+            throw new NotImplementedException();
+        }
+
+        private struct SOF0Info
+        {
+            public byte Precision;
+            public ushort Height;
+            public ushort Width;
+            public byte ComponentCount;
         }
     }
 }
