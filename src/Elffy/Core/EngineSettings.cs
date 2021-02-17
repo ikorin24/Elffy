@@ -9,12 +9,12 @@ namespace Elffy.Core
         private static readonly object _syncObj = new object();
         private static bool _isLocked;
 
-        private static bool _enableContextBindedMemorySafety = true;
+        private static bool _enableContextAssociatedMemorySafety = true;
 
-        public static bool EnableContextBindedMemorySafety
+        public static bool EnableContextAssociatedMemorySafety
         {
-            get => _enableContextBindedMemorySafety;
-            set => SyncSet(ref _enableContextBindedMemorySafety, true);
+            get => _enableContextAssociatedMemorySafety;
+            set => SyncSet(ref _enableContextAssociatedMemorySafety, true);
         }
 
 
