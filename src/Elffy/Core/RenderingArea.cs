@@ -161,6 +161,8 @@ namespace Elffy.Core
 
             _currentTiming = ScreenCurrentTiming.OutOfFrameLoop;
 
+            ContextAssociatedMemorySafety.CollectIfExist(OwnerScreen);
+
             if(isLastFrame) {
                 Dispose();
             }
@@ -197,6 +199,7 @@ namespace Elffy.Core
             layers.Clear();
 
             AsyncBack.AbortAll();
+            ContextAssociatedMemorySafety.EnsureCollect(OwnerScreen);   // Must be called before the opengl context is deleted.
             Disposed?.Invoke();
         }
 

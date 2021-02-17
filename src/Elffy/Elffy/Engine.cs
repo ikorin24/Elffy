@@ -58,6 +58,7 @@ namespace Elffy
             }
             IsRunning = true;
             _watch.Restart();
+            EngineSettings.Lock();
         }
 
         /// <summary>Handle next frame of all screens the engine has.</summary>
@@ -81,10 +82,9 @@ namespace Elffy
         {
             if(!IsRunning) { return; }
             IsRunning = false;
-            // TODO: 暫定的実装
-            GC.Collect();           // OpenGL 関連のメモリリーク検知用
             _watch.Stop();
             _watch.Reset();
+            EngineSettings.Unlock();
         }
 
         [DoesNotReturn]
