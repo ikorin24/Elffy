@@ -3,7 +3,6 @@ using Cysharp.Text;
 using Elffy.Core;
 using Elffy.Effective;
 using Elffy.Effective.Unsafes;
-using Elffy.Exceptions;
 using Elffy.Mathematics;
 using Elffy.OpenGL;
 using System;
@@ -14,7 +13,7 @@ using UnmanageUtility;
 
 namespace Elffy.Components
 {
-    public sealed class Skeleton : ISingleOwnerComponent, IDisposable
+    public class Skeleton : ISingleOwnerComponent, IDisposable
     {
         private SingleOwnerComponentCore<Skeleton> _core = new SingleOwnerComponentCore<Skeleton>(true);    // Mutable object, Don't change into readonly
         private FloatDataTextureImpl _boneTranslationData = new FloatDataTextureImpl();                     // Mutable object, Don't change into readonly
@@ -68,6 +67,8 @@ namespace Elffy.Components
 
             // Initialize translations as identity
             _translations = new UnmanagedArray<Matrix4>(bones.Length, fill: Matrix4.Identity);
+
+            ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
         }
 
         /// <inheritdoc/>
@@ -127,7 +128,7 @@ namespace Elffy.Components
             Dispose(true);
         }
 
-        private void Dispose(bool disposing)
+        protected virtual void Dispose(bool disposing)
         {
             if(_disposed) { return; }
 
@@ -147,7 +148,7 @@ namespace Elffy.Components
                 _tree = null;
             }
             else {
-                throw new MemoryLeakException(typeof(Skeleton));
+                ContextAssociatedMemorySafety.OnFinalized(this);
             }
             _disposed = true;
         }

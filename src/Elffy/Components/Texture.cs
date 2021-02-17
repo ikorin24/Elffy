@@ -1,13 +1,12 @@
 ﻿#nullable enable
 using System;
 using Elffy.Core;
-using Elffy.Exceptions;
 using Elffy.OpenGL;
 using Elffy.Imaging;
 
 namespace Elffy.Components
 {
-    public sealed class Texture : ISingleOwnerComponent, IDisposable
+    public class Texture : ISingleOwnerComponent, IDisposable
     {
         private SingleOwnerComponentCore<Texture> _core;    // Mutable object, Don't change into readonly
         private TextureCore _textureCore;                   // Mutable object, Don't change into readonly
@@ -108,7 +107,7 @@ namespace Elffy.Components
             GC.SuppressFinalize(this);
         }
 
-        private void Dispose(bool disposing)
+        protected virtual void Dispose(bool disposing)
         {
             if(disposing) {
                 _textureCore.Dispose();

@@ -4,7 +4,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Elffy.Exceptions;
 using Elffy.Shapes;
 using Elffy.Effective;
 using Elffy.Imaging;

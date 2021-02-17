@@ -77,7 +77,7 @@ void main()
                 DefineLocation(new VertexDefinition<VertexSlim>(program));
                 VAO.Unbind();
                 VBO.Unbind();
-                return new PostProcessProgram(this, program, vbo, ibo, vao);
+                return new PostProcessProgram(this, program, vbo, ibo, vao, Engine.CurrentContext!);
             }
             catch {
                 VBO.Unbind();

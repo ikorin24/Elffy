@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using Elffy.Core;
 using Elffy.OpenGL;
-using Elffy.Exceptions;
 using Elffy.Effective;
 using System;
 using System.Diagnostics.CodeAnalysis;
@@ -9,7 +8,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace Elffy.Components
 {
     /// <summary>Float data texture component</summary>
-    public sealed class FloatDataTexture : ISingleOwnerComponent, IDisposable
+    public class FloatDataTexture : ISingleOwnerComponent, IDisposable
     {
         private SingleOwnerComponentCore<FloatDataTexture> _core = new SingleOwnerComponentCore<FloatDataTexture>(true);    // Mutable object, Don't change into readonly
         private FloatDataTextureImpl _impl = new FloatDataTextureImpl();    // Mutable object, Don't change into readonly
@@ -37,12 +36,20 @@ namespace Elffy.Components
 
         /// <summary>Load data to texture1D</summary>
         /// <param name="pixels"></param>
-        public void Load(ReadOnlySpan<Vector4> pixels) => _impl.Load(pixels.MarshalCast<Vector4, Color4>());
+        public void Load(ReadOnlySpan<Vector4> pixels)
+        {
+            _impl.Load(pixels.MarshalCast<Vector4, Color4>());
+            ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
+        }
 
-        public void Load(ReadOnlySpan<Color4> pixels) => _impl.Load(pixels);
+        public void Load(ReadOnlySpan<Color4> pixels)
+        {
+            _impl.Load(pixels);
+            ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
+        }
 
         public void Update(ReadOnlySpan<Vector4> pixels, int xOffset) => _impl.Update(pixels.MarshalCast<Vector4, Color4>(), xOffset);
-        
+
         public void Update(ReadOnlySpan<Color4> pixels, int xOffset) => _impl.Update(pixels, xOffset);
 
         public void Dispose()
@@ -51,13 +58,13 @@ namespace Elffy.Components
             GC.SuppressFinalize(this);
         }
 
-        private void Dispose(bool disposing)
+        protected virtual void Dispose(bool disposing)
         {
             if(disposing) {
                 _impl.Dispose();
             }
             else {
-                throw new MemoryLeakException(typeof(FloatDataTexture));     // GC スレッドからでは解放できないので
+                ContextAssociatedMemorySafety.OnFinalized(this);
             }
         }
 

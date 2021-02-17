@@ -24,6 +24,14 @@ namespace Sandbox
         [GameEntryPoint]
         public static async UniTask Start()
         {
+            for(int i = 0; i < 10; i++) {
+                //var c = new Cube();
+                var t = new Elffy.Components.Texture();
+                //c.AddComponent(t);
+                t.LoadUndefined(new(512, 512));
+            }
+
+
             GameUI.Root.Background = Color4.Black;
             try {
                 await UniTask.WhenAll(
