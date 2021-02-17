@@ -67,7 +67,7 @@ namespace Elffy.Diagnostics
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void ForceWriteLine(string? value)
+        internal static void ForceWriteLine(string? value, string? category = null)
         {
             if(IsEnabled) {
                 WritePrivate(value + NewLine);
