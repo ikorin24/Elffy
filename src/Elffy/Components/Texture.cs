@@ -108,7 +108,7 @@ namespace Elffy.Components
 
         protected void OnDetachedCore<TTexture>(ComponentOwner owner, TTexture @this) where TTexture : Texture
         {
-            _core.OnDetachedForDisposable<TTexture>(owner, @this);
+            _core.OnDetached<TTexture>(owner, @this);
         }
 
         public void Dispose()

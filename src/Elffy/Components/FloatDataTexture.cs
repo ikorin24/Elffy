@@ -79,7 +79,7 @@ namespace Elffy.Components
 
         protected void OnDetachedCore<T>(ComponentOwner owner, T @this) where T : FloatDataTexture
         {
-            _core.OnDetachedForDisposable<T>(owner, @this);
+            _core.OnDetached<T>(owner, @this);
         }
     }
 

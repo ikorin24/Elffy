@@ -84,7 +84,7 @@ namespace Elffy.Components
 
         protected void OnDetachedCore<T>(ComponentOwner owner, T @this) where T : Skeleton
         {
-            _core.OnDetachedForDisposable<T>(owner, @this);
+            _core.OnDetached<T>(owner, @this);
         }
 
         /// <summary>Get handler to edit translation matrices. (Call <see cref="SkeletonHandler.Dispose"/> to end editing.)</summary>

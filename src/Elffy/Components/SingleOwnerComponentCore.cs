@@ -19,7 +19,7 @@ namespace Elffy.Components
         /// <summary>Get the owner of the component</summary>
         public readonly ComponentOwner? Owner => _owner;
 
-        /// <summary>Get whether the component is automatically disposed on detached.</summary>
+        /// <summary>Get whether the component is automatically disposed on detached if the target component is <see cref="IDisposable"/>.</summary>
         public readonly bool AutoDisposeOnDetached => _autoDisposeOnDetached;
 
         /// <summary>Create a new <see cref="SingleOwnerComponentCore"/> instance</summary>
@@ -44,8 +44,10 @@ namespace Elffy.Components
                 [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(owner));
             }
             if(typeof(TComponent) != component.GetType()) {
-                ThrowTypeMismatch();
-                [DoesNotReturn] static void ThrowTypeMismatch() => throw new ArgumentException($"{nameof(component)} is not {typeof(TComponent).FullName}.");
+                ThrowTypeMismatch(component.GetType());
+
+                [DoesNotReturn] static void ThrowTypeMismatch(Type instanceType)
+                    => throw new ArgumentException($"Component type is mismatch. Attached as {typeof(TComponent).FullName}, but instance is {instanceType.FullName}.");
             }
 
             _owner = owner;
@@ -59,7 +61,7 @@ namespace Elffy.Components
         /// <param name="owner">the owner of the component</param>
         /// <param name="component">the component</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void OnDetachedForDisposable<TComponent>(ComponentOwner owner, TComponent component) where TComponent : class, ISingleOwnerComponent
+        public void OnDetached<TComponent>(ComponentOwner owner, TComponent component) where TComponent : class, ISingleOwnerComponent
         {
             if(Owner == owner) {
                 _owner = null;

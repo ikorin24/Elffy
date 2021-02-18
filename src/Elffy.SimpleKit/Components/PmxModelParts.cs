@@ -46,7 +46,7 @@ namespace Elffy.Components
 
         void IComponent.OnAttached(ComponentOwner owner) => _core.OnAttached<PmxModelParts>(owner, this);
 
-        void IComponent.OnDetached(ComponentOwner owner) => _core.OnDetachedForDisposable<PmxModelParts>(owner, this);
+        void IComponent.OnDetached(ComponentOwner owner) => _core.OnDetached<PmxModelParts>(owner, this);
 
         public void Dispose()
         {
