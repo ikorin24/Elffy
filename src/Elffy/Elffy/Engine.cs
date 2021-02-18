@@ -58,7 +58,7 @@ namespace Elffy
             }
             IsRunning = true;
             _watch.Restart();
-            EngineSettings.Lock();
+            EngineSetting.Lock();
         }
 
         /// <summary>Handle next frame of all screens the engine has.</summary>
@@ -84,7 +84,7 @@ namespace Elffy
             IsRunning = false;
             _watch.Stop();
             _watch.Reset();
-            EngineSettings.Unlock();
+            EngineSetting.Unlock();
         }
 
         [DoesNotReturn]

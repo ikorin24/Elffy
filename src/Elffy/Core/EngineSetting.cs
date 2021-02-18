@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Core
 {
-    public static class EngineSettings
+    public static class EngineSetting
     {
         private static readonly object _syncObj = new object();
         private static bool _isLocked;
@@ -45,6 +45,6 @@ namespace Elffy.Core
         }
 
         [DoesNotReturn]
-        private static void ThrowAlreadyLocked() => throw new InvalidOperationException($"{nameof(EngineSettings)} is locked. Set values before the Engine runs.");
+        private static void ThrowAlreadyLocked() => throw new InvalidOperationException($"{nameof(EngineSetting)} is locked. Set values before the Engine runs.");
     }
 }

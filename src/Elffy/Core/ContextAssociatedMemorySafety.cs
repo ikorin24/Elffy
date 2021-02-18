@@ -15,8 +15,8 @@ namespace Elffy.Core
         private static readonly Dictionary<IHostScreen, List<IDisposable>> _waitingDisposing = new();
 
         /// <summary>Get the safety is enabled.</summary>
-        /// <remarks>If you want to set the value, use <see cref="EngineSettings.EnableContextAssociatedMemorySafety"/>.</remarks>
-        public static bool IsEnabled => EngineSettings.EnableContextAssociatedMemorySafety;
+        /// <remarks>If you want to set the value, use <see cref="EngineSetting.EnableContextAssociatedMemorySafety"/>.</remarks>
+        public static bool IsEnabled => EngineSetting.EnableContextAssociatedMemorySafety;
 
         /// <summary>Register a resource</summary>
         /// <typeparam name="T">type of resource</typeparam>

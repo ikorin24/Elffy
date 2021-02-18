@@ -8,7 +8,7 @@ namespace Elffy.Components
 {
     public class Texture : ISingleOwnerComponent, IDisposable
     {
-        private SingleOwnerComponentCore<Texture> _core;    // Mutable object, Don't change into readonly
+        private SingleOwnerComponentCore _core;             // Mutable object, Don't change into readonly
         private TextureCore _textureCore;                   // Mutable object, Don't change into readonly
 
         public TextureExpansionMode ExpansionMode => _textureCore.ExpansionMode;
@@ -97,9 +97,19 @@ namespace Elffy.Components
 
         public TexturePainter GetPainter(in RectI rect, bool copyFromOriginal = true) => _textureCore.GetPainter(rect, copyFromOriginal);
 
-        void IComponent.OnAttached(ComponentOwner owner) => _core.OnAttached(owner);
+        public virtual void OnAttached(ComponentOwner owner) => OnAttachedCore<Texture>(owner, this);
 
-        void IComponent.OnDetached(ComponentOwner owner) => _core.OnDetachedForDisposable(owner, this);
+        public virtual void OnDetached(ComponentOwner owner) => OnDetachedCore<Texture>(owner, this);
+
+        protected void OnAttachedCore<TTexture>(ComponentOwner owner, TTexture @this) where TTexture : Texture
+        {
+            _core.OnAttached<TTexture>(owner, @this);
+        }
+
+        protected void OnDetachedCore<TTexture>(ComponentOwner owner, TTexture @this) where TTexture : Texture
+        {
+            _core.OnDetachedForDisposable<TTexture>(owner, @this);
+        }
 
         public void Dispose()
         {

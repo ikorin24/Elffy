@@ -10,7 +10,7 @@ namespace Elffy.Components
     /// <summary>Float data texture component</summary>
     public class FloatDataTexture : ISingleOwnerComponent, IDisposable
     {
-        private SingleOwnerComponentCore<FloatDataTexture> _core = new SingleOwnerComponentCore<FloatDataTexture>(true);    // Mutable object, Don't change into readonly
+        private SingleOwnerComponentCore _core = new(true);                 // Mutable object, Don't change into readonly
         private FloatDataTextureImpl _impl = new FloatDataTextureImpl();    // Mutable object, Don't change into readonly
 
         /// <inheritdoc/>
@@ -68,9 +68,19 @@ namespace Elffy.Components
             }
         }
 
-        public void OnAttached(ComponentOwner owner) => _core.OnAttached(owner);
+        public void OnAttached(ComponentOwner owner) => OnAttachedCore<FloatDataTexture>(owner, this);
 
-        public void OnDetached(ComponentOwner owner) => _core.OnDetachedForDisposable(owner, this);
+        public void OnDetached(ComponentOwner owner) => OnDetachedCore<FloatDataTexture>(owner, this);
+
+        protected void OnAttachedCore<T>(ComponentOwner owner, T @this) where T : FloatDataTexture
+        {
+            _core.OnAttached<T>(owner, @this);
+        }
+
+        protected void OnDetachedCore<T>(ComponentOwner owner, T @this) where T : FloatDataTexture
+        {
+            _core.OnDetachedForDisposable<T>(owner, @this);
+        }
     }
 
     /// <summary>Float data texture implementation struct</summary>
