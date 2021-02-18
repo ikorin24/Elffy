@@ -2,6 +2,7 @@
 using System;
 using System.Threading;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Elffy.UI;
 using Elffy.Core;
 using Elffy.InputSystem;
@@ -18,9 +19,6 @@ namespace Elffy
     public class Window : IHostScreen
     {
         private const string DefaultTitle = "Window";
-
-        [ThreadStatic]
-        private static bool _isThreadMain;
 
         private readonly WindowGLFW _windowImpl;
         private readonly RenderingArea _renderingArea;
@@ -78,9 +76,6 @@ namespace Elffy
         public ScreenCurrentTiming CurrentTiming => _renderingArea.CurrentTiming;
 
         /// <inheritdoc/>
-        public bool IsThreadMain => _isThreadMain;
-
-        /// <inheritdoc/>
         public event Action<IHostScreen>? Initialized
         {
             add => _renderingArea.Initialized += value;
@@ -109,7 +104,6 @@ namespace Elffy
         /// <param name="icon">window icon</param>
         public Window(int width, int height, string title, WindowStyle windowStyle, Icon icon)
         {
-            _isThreadMain = true;
             _renderingArea = new RenderingArea(this);
             _windowImpl = new WindowGLFW(this, width, height, title, windowStyle, icon);
 
@@ -160,54 +154,45 @@ namespace Elffy
 
         public void Maximize()
         {
-            ThrowIfNotMainThread();
+            if(!Engine.IsThreadMain) { ThrowNotMainThread(); }
             _windowImpl.Maximize();
         }
 
         public void Normalize()
         {
-            ThrowIfNotMainThread();
+            if(!Engine.IsThreadMain) { ThrowNotMainThread(); }
             _windowImpl.Normalize();
         }
 
         public void Minimize()
         {
-            ThrowIfNotMainThread();
+            if(!Engine.IsThreadMain) { ThrowNotMainThread(); }
             _windowImpl.Minimize();
         }
 
         public void Close()
         {
-            ThrowIfNotMainThread();
+            if(!Engine.IsThreadMain) { ThrowNotMainThread(); }
             _renderingArea.RequestClose();
-        }
-
-        /// <inheritdoc/>
-        public void ThrowIfNotMainThread()
-        {
-            if(!_isThreadMain) {
-                ThrowThreadNotMain();
-                static void ThrowThreadNotMain() => throw new InvalidOperationException("Current thread is not main thread.");
-            }
         }
 
         /// <summary>Show the window</summary>
         public void Show()
         {
-            ThrowIfNotMainThread();
+            if(!Engine.IsThreadMain) { ThrowNotMainThread(); }
             _windowImpl.Show();
         }
 
         /// <inheritdoc/>
         void IHostScreen.HandleOnce()
         {
-            ThrowIfNotMainThread();
+            if(!Engine.IsThreadMain) { ThrowNotMainThread(); }
             _windowImpl.HandleOnce();
         }
 
         private void OnLoad(WindowGLFW _)
         {
-            ThrowIfNotMainThread();
+            if(!Engine.IsThreadMain) { ThrowNotMainThread(); }
             _renderingArea.Initialize();
         }
 
@@ -218,5 +203,8 @@ namespace Elffy
             _frameNum++;
             _windowImpl.SwapBuffers();
         }
+
+        [DoesNotReturn]
+        private static void ThrowNotMainThread() => throw new InvalidOperationException("Current thread is not main thread of the Engine.");
     }
 }

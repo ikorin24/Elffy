@@ -40,12 +40,6 @@ namespace Elffy
         /// <summary>Get camera</summary>
         public static Camera Camera { get; private set; } = null!;
 
-        /// <summary>Return whether current thread is main thread of the game or not</summary>
-        public static bool IsThreadMain => _screen!.IsThreadMain;
-
-        /// <summary>Throw an exception if current thread is not main of the game</summary>
-        public static void ThrowIfNotMainThread() => _screen!.ThrowIfNotMainThread();
-
         /// <summary>Close the game</summary>
         public static void Close()
         {
