@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace Elffy.Effective.Unsafes
 {
@@ -46,8 +47,6 @@ namespace Elffy.Effective.Unsafes
         // _ptr == IntPtr.Zero
         // =============================================================
 
-        public static RawList<T> Null => default;
-
         private readonly IntPtr _ptr;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
@@ -55,6 +54,7 @@ namespace Elffy.Effective.Unsafes
 
         public int Count
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 if(_ptr == IntPtr.Zero) { ThrowNullRef(); }
@@ -64,6 +64,7 @@ namespace Elffy.Effective.Unsafes
 
         public int Capacity
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 if(_ptr == IntPtr.Zero) { ThrowNullRef(); }
@@ -97,6 +98,7 @@ namespace Elffy.Effective.Unsafes
         /// <summary>Get pointer to the head</summary>
         public readonly IntPtr Ptr
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 if(_ptr == IntPtr.Zero) { ThrowNullRef(); }
@@ -214,6 +216,12 @@ namespace Elffy.Effective.Unsafes
             Unsafe.AsRef(_ptr) = default;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T* GetPtr()
+        {
+            return ArrayRef().GetPtr();
+        }
+
         [MethodImpl(MethodImplOptions.NoInlining)]  // uncommon path
         private void Extend()
         {
@@ -246,15 +254,55 @@ namespace Elffy.Effective.Unsafes
 
         public override int GetHashCode() => _ptr.GetHashCode();
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(RawList<T> left, RawList<T> right) => left.Equals(right);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(RawList<T> left, RawList<T> right) => !(left == right);
 
         [DoesNotReturn]
         private static void ThrowOutOfRange(string message) => throw new ArgumentOutOfRangeException(message);
 
         [DoesNotReturn]
+        [DebuggerHidden]
         private static void ThrowNullRef() => throw new NullReferenceException();
+
+
+
+        // [NOTE]
+        // No one can make a instance of type 'NullLiteral' in the usual way.
+        // The only way you can use the following operator method is to specify null literal.
+        // So they work well.
+        // 
+        // I make sure 'NullLiteral' instance is actual null just in case.
+        // In the case that users set null literal and the methods get inlined,
+        // the check is removed. Therefore, it is no-cost.
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static bool operator ==(RawList<T> list, NullLiteral? @null) => @null is null && list._ptr == IntPtr.Zero;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static bool operator !=(RawList<T> list, NullLiteral? @null) => !(list == @null);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static bool operator ==(NullLiteral? @null, RawList<T> list) => @null is null && list._ptr == IntPtr.Zero;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static bool operator !=(NullLiteral? @null, RawList<T> list) => !(@null == list);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static implicit operator RawList<T>(NullLiteral? @null)
+        {
+            if(@null is null) {
+                return default;
+            }
+            throw new InvalidCastException();
+        }
     }
 
     internal class RawListDebuggerTypeProxy<T> where T : unmanaged
