@@ -12,6 +12,7 @@ namespace Elffy.Effective.Unsafes
     /// <remarks>
     /// 1) DO NOT create a default instance (<see langword="new"/> <see cref="RawList{T}"/>(), or <see langword="default"/>).
     ///    That means <see langword="null"/> for reference types.<para/>
+    ///    Use <see cref="New"/> instead.<para/>
     /// 2) You MUST call <see cref="Dispose"/> after use it. Or it causes MEMORY LEAK !<para/>
     /// 3) It DOES NOT check any boundary of access by index.<para/>
     /// </remarks>
@@ -49,6 +50,7 @@ namespace Elffy.Effective.Unsafes
 
         private readonly IntPtr _ptr;
 
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private string DebugView => _ptr == IntPtr.Zero ? "null" : $"UnsafeRawList<{typeof(T).Name}>[{CountRef()}]";
 
         public int Count
@@ -112,7 +114,13 @@ namespace Elffy.Effective.Unsafes
             }
         }
 
-        public RawList(int capacity)
+        public static RawList<T> New() => new RawList<T>(4);
+
+        public static RawList<T> New(int capacity) => new RawList<T>(capacity);
+
+        public static RawList<T> New(ReadOnlySpan<T> collection) => new RawList<T>(collection);
+
+        private RawList(int capacity)
         {
             if(capacity < 0) {
                 ThrowOutOfRange(nameof(capacity));
@@ -122,7 +130,7 @@ namespace Elffy.Effective.Unsafes
             ArrayRef() = new UnsafeRawArray<T>(capacity);
         }
 
-        public RawList(ReadOnlySpan<T> collection)
+        private RawList(ReadOnlySpan<T> collection)
         {
             _ptr = Marshal.AllocHGlobal(sizeof(int) + sizeof(UnsafeRawArray<T>));
             CountRef() = collection.Length;
