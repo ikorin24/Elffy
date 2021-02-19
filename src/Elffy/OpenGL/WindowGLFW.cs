@@ -34,7 +34,10 @@ namespace Elffy.OpenGL
 
         private readonly Stopwatch _watchUpdate = new Stopwatch();
 
-        private bool _isLoaded;
+        private bool _isLoaded; // It get true when the first frame is handled.
+
+        private (IHostScreen screen, int width, int height, string title, WindowStyle style, Icon icon) _initArgs;
+        private bool _isActivated;
 
         public bool IsDisposed => _window == null;
 
@@ -90,10 +93,6 @@ namespace Elffy.OpenGL
                 GLFW.SetWindowPos(_window, value.X, value.Y);
             }
         }
-
-
-        private (IHostScreen screen, int width, int height, string title, WindowStyle style, Icon icon) _initArgs;
-        private bool _isInit;
 
         public WindowGLFW(IHostScreen screen, int width, int height, string title, WindowStyle style, ref Icon icon)
         {
@@ -193,30 +192,10 @@ namespace Elffy.OpenGL
             }
         }
 
-        private void EnsureInit()
-        {
-            if(!_isInit) {
-                _isInit = true;
-                var (screen, width, height, title, style, icon) = _initArgs;
-                using(icon) {
-                    Init(screen, width, height, title, style, icon);
-                }
-                _initArgs = default;
-            }
-        }
-
         public void HandleOnce()
         {
-            if(!_isLoaded) {
-                EnsureInit();
-                _isLoaded = true;
-                MakeContextCurrent();
-                Load?.Invoke(this);
-            }
-
-            if(IsDisposed) {
-                return;
-            }
+            if(!_isActivated) { ThrowNotActivated(); }
+            if(IsDisposed) { return; }
 
             if(!_watchUpdate.IsRunning) {
                 _watchUpdate.Start();
@@ -224,6 +203,12 @@ namespace Elffy.OpenGL
 
             try {
                 MakeContextCurrent();
+                if(!_isLoaded) {
+                    Debug.Assert(_isActivated);
+                    _isLoaded = true;
+                    Load?.Invoke(this);
+                }
+
                 var updateFrequency = _updateFrequency;
 
                 if(updateFrequency == null) {
@@ -268,14 +253,14 @@ namespace Elffy.OpenGL
 
         public void SwapBuffers()
         {
-            EnsureInit();
+            if(!_isActivated) { ThrowNotActivated(); }
             if(IsDisposed) { return; }
             GLFW.SwapBuffers(_window);
         }
 
         public void MakeContextCurrent()
         {
-            EnsureInit();
+            if(!_isActivated) { ThrowNotActivated(); }
             if(IsDisposed) { ThrowDisposed(); }
             GLFW.MakeContextCurrent(_window);
             Engine.SetCurrentContext(_owner);
@@ -283,28 +268,35 @@ namespace Elffy.OpenGL
 
         public void Maximize()
         {
-            EnsureInit();
+            if(!_isActivated) { ThrowNotActivated(); }
             if(IsDisposed) { ThrowDisposed(); }
             GLFW.MaximizeWindow(_window);
         }
 
         public void Normalize()
         {
-            EnsureInit();
+            if(!_isActivated) { ThrowNotActivated(); }
             if(IsDisposed) { ThrowDisposed(); }
             GLFW.RestoreWindow(_window);
         }
 
         public void Minimize()
         {
-            EnsureInit();
+            if(!_isActivated) { ThrowNotActivated(); }
             if(IsDisposed) { ThrowDisposed(); }
             GLFW.IconifyWindow(_window);
         }
 
-        public void Show()
+        public void Activate()
         {
-            EnsureInit();
+            if(!_isActivated) {
+                _isActivated = true;
+                var (screen, width, height, title, style, icon) = _initArgs;
+                using(icon) {
+                    Init(screen, width, height, title, style, icon);
+                }
+                _initArgs = default;
+            }
             if(IsDisposed) { ThrowDisposed(); }
             _isRunning = true;
             GLFW.ShowWindow(_window);
@@ -312,7 +304,7 @@ namespace Elffy.OpenGL
 
         public void Hide()
         {
-            EnsureInit();
+            if(!_isActivated) { ThrowNotActivated(); }
             if(IsDisposed) { ThrowDisposed(); }
             GLFW.HideWindow(_window);
         }
@@ -350,7 +342,7 @@ namespace Elffy.OpenGL
 
         public void Dispose()
         {
-            if(IsDisposed) { return; }  // Block re-entrant
+            if(!_isActivated || IsDisposed) { return; }  // Block re-entrant
             var window = _window;
             _window = null;
             _isRunning = false;
@@ -358,6 +350,9 @@ namespace Elffy.OpenGL
         }
 
         [DoesNotReturn]
-        private void ThrowDisposed() => throw new ObjectDisposedException(nameof(WindowGLFW), "This window is already disposed.");
+        private static void ThrowNotActivated() => throw new InvalidOperationException("The window is not activated.");
+
+        [DoesNotReturn]
+        private static void ThrowDisposed() => throw new ObjectDisposedException(nameof(WindowGLFW), "The window is already disposed.");
     }
 }

@@ -68,8 +68,8 @@ namespace Elffy
         /// <summary>Event which fires on closing</summary>
         event ClosingEventHandler<IHostScreen> Closing;
 
-        /// <summary>Show screen</summary>
-        void Show();
+        /// <summary>Acticate screen</summary>
+        void Activate();
 
         /// <summary>Close screen</summary>
         void Close();

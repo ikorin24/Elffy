@@ -20,8 +20,8 @@ namespace Elffy
         private const string DefaultTitle = "Window";
 
         private bool _isActivated;
-        private WindowGLFW _windowImpl;
-        private RenderingArea _renderingArea;
+        private readonly WindowGLFW _windowImpl;
+        private readonly RenderingArea _renderingArea;
         private TimeSpan _frameDelta;
         private TimeSpan _time;
         private long _frameNum;
@@ -97,9 +97,7 @@ namespace Elffy
         public Window(WindowStyle windowStyle)
         {
             var icon = Icon.Empty;
-            Ctor(800, 450, DefaultTitle, windowStyle, ref icon);
-            Debug.Assert(_renderingArea is not null);
-            Debug.Assert(_windowImpl is not null);
+            Ctor(out _renderingArea, out _windowImpl, 800, 450, DefaultTitle, windowStyle, ref icon);
         }
 
         /// <summary>Create new <see cref="Window"/></summary>
@@ -110,15 +108,13 @@ namespace Elffy
         /// <param name="icon">window icon</param>
         public Window(int width, int height, string title, WindowStyle windowStyle, ref Icon icon)
         {
-            Ctor(width, height, title, windowStyle, ref icon);
-            Debug.Assert(_renderingArea is not null);
-            Debug.Assert(_windowImpl is not null);
+            Ctor(out _renderingArea, out _windowImpl, width, height, title, windowStyle, ref icon);
         }
 
-        private void Ctor(int width, int height, string title, WindowStyle windowStyle, ref Icon icon)
+        private void Ctor(out RenderingArea renderingArea, out WindowGLFW windowImpl, int width, int height, string title, WindowStyle windowStyle, ref Icon icon)
         {
-            _renderingArea = new RenderingArea(this);
-            _windowImpl = new WindowGLFW(this, width, height, title, windowStyle, ref icon);
+            renderingArea = new RenderingArea(this);
+            windowImpl = new WindowGLFW(this, width, height, title, windowStyle, ref icon);
 
             _frameDelta = TimeSpan.FromSeconds(1.0 / 60.0); // TODO: とりあえず固定で
             _windowImpl.UpdateFrame += (_, e) => UpdateFrame();
@@ -188,14 +184,14 @@ namespace Elffy
             _renderingArea.RequestClose();
         }
 
-        /// <summary>Show the window</summary>
-        public void Show()
+        /// <summary>Acticate the window</summary>
+        public void Activate()
         {
             if(!Engine.IsThreadMain) { ThrowNotMainThread(); }
             if(_isActivated == false) {
                 _isActivated = true;
+                _windowImpl.Activate();
                 Engine.AddScreen(this);
-                _windowImpl.Show();
             }
         }
 

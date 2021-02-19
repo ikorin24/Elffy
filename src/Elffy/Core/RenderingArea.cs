@@ -77,7 +77,12 @@ namespace Elffy.Core
             OnSizeChanged();
 
             Layers.UILayer.Initialize();
-            Initialized?.Invoke(OwnerScreen);
+            try {
+                Initialized?.Invoke(OwnerScreen);
+            }
+            catch {
+                // Don't throw. (Ignore exceptions in user code)
+            }
 
             foreach(var layer in Layers.AsReadOnlySpan()) {
                 layer.ApplyAdd();
