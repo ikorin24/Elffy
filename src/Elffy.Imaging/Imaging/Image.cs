@@ -4,10 +4,12 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.IO;
+using System.Diagnostics;
 using Elffy.Imaging.Internal;
 
 namespace Elffy.Imaging
 {
+    [DebuggerDisplay("{DebugView,nq}")]
     public unsafe readonly struct Image : IEquatable<Image>, IDisposable
     {
         private readonly ImageObj? _image;
@@ -22,6 +24,9 @@ namespace Elffy.Imaging
         public bool IsEmpty => _token == 0;
 
         public static Image Empty => default;
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private string DebugView => $"{typeof(Image).FullName} ({Width}x{Height})";
 
         /// <summary>Get or set pixel of specified (x, y)</summary>
         /// <param name="x">x index (column line)</param>
@@ -64,6 +69,8 @@ namespace Elffy.Imaging
             }
         }
 
+        public override string ToString() => DebugView;
+
         public void Dispose()
         {
             var image = Interlocked.Exchange(ref Unsafe.AsRef(in _image), null);
@@ -91,6 +98,16 @@ namespace Elffy.Imaging
                 static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(row));
             }
             return MemoryMarshal.CreateSpan(ref *(GetPtr() + Width * row), Width);
+        }
+
+        public Image Clone()
+        {
+            if(IsEmpty) {
+                return Empty;
+            }
+            var image = new Image(Width, Height);
+            GetPixels().CopyTo(image.GetPixels());
+            return image;
         }
 
         public static Image FromStream(Stream stream, string fileExtension)
@@ -149,8 +166,11 @@ namespace Elffy.Imaging
 
         public static bool operator !=(Image left, Image right) => !(left == right);
 
-        internal unsafe sealed class ImageObj : IDisposable
+        [DebuggerDisplay("{DebugView,nq}")]
+        private unsafe sealed class ImageObj : IDisposable
         {
+            private static uint _tokenFactory;
+
             private int _width;
             private int _height;
             private ColorByte* _pixels;
@@ -161,6 +181,9 @@ namespace Elffy.Imaging
             public ColorByte* Pixels => _pixels;
             public uint Token => _token;
 
+            [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+            private string DebugView => $"(Token = {_token})";
+
             public ImageObj(int width, int height)
             {
                 _width = width;
@@ -168,7 +191,11 @@ namespace Elffy.Imaging
                 var len = width * height;
                 _pixels = (ColorByte*)Marshal.AllocHGlobal(sizeof(ColorByte) * len);
                 new Span<ColorByte>(_pixels, len).Clear();
-                _token = 1;
+
+                do {
+                    _token = (uint)Interlocked.Increment(ref Unsafe.As<uint, int>(ref _tokenFactory));
+                }
+                while(_token == 0);
             }
 
             ~ImageObj() => Dispose(false);
@@ -187,6 +214,8 @@ namespace Elffy.Imaging
                 _height = 0;
                 _token = 0;
             }
+
+            public override string ToString() => DebugView;
         }
     }
 }
