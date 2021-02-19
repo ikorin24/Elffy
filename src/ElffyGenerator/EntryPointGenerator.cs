@@ -208,7 +208,7 @@ namespace Elffy
                 var screen = CreateScreen();
                 screen.Initialized += OnScreenInitialized;").AppendIf(useSyncContext, @"
                 CustomSynchronizationContext.CreateIfNeeded(out _, out var syncContextReciever);").Append(@"
-                screen.Show();
+                screen.Activate();
                 while(Engine.HandleOnce()) { ").AppendIf(useSyncContext, @"
                     syncContextReciever?.DoAll();").Append(@"
                 }
@@ -261,8 +261,8 @@ namespace Elffy
                 case PlatformType.Linux: {").AppendChoose(iconName is null, @"
                     var icon = Icon.Empty;", $@"
                     using var iconStream = Resources.Loader.GetStream(""{iconName}"");
-                    using var icon = IcoParser.Parse(iconStream);").Append(@"
-                    return new Window(width, height, title, style, icon);
+                    var icon = IcoParser.Parse(iconStream);").Append(@"
+                    return new Window(width, height, title, style, ref icon);
                 }
                 case PlatformType.Android:
                 case PlatformType.Other:

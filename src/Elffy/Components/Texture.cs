@@ -1,15 +1,14 @@
 ﻿#nullable enable
 using System;
 using Elffy.Core;
-using Elffy.Exceptions;
 using Elffy.OpenGL;
 using Elffy.Imaging;
 
 namespace Elffy.Components
 {
-    public sealed class Texture : ISingleOwnerComponent, IDisposable
+    public class Texture : ISingleOwnerComponent, IDisposable
     {
-        private SingleOwnerComponentCore<Texture> _core;    // Mutable object, Don't change into readonly
+        private SingleOwnerComponentCore _core;             // Mutable object, Don't change into readonly
         private TextureCore _textureCore;                   // Mutable object, Don't change into readonly
 
         public TextureExpansionMode ExpansionMode => _textureCore.ExpansionMode;
@@ -53,24 +52,40 @@ namespace Elffy.Components
 
         /// <summary>Load pixel data from <see cref="Image"/></summary>
         /// <param name="image">image to load</param>
-        public void Load(in Image image) => _textureCore.Load(new Vector2i(image.Width, image.Height), image.GetPixels());
+        public void Load(in Image image)
+        {
+            _textureCore.Load(new Vector2i(image.Width, image.Height), image.GetPixels());
+            ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
+        }
 
         /// <summary>Load specified pixel data with specified texture size</summary>
         /// <remarks>Texture width and height should be power of two for performance.</remarks>
         /// <param name="size">texture size</param>
         /// <param name="pixels">pixel data</param>
-        public void Load(in Vector2i size, ReadOnlySpan<ColorByte> pixels) => _textureCore.Load(size, pixels);
+        public void Load(in Vector2i size, ReadOnlySpan<ColorByte> pixels)
+        {
+            _textureCore.Load(size, pixels);
+            ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
+        }
 
         /// <summary>Load pixel data filled with specified color</summary>
         /// <remarks>Texture width and height should be power of two for performance.</remarks>
         /// <param name="size">texture size</param>
         /// <param name="fill">color to fill all pixels with</param>
-        public unsafe void Load(in Vector2i size, in ColorByte fill) => _textureCore.Load(size, fill);
+        public unsafe void Load(in Vector2i size, in ColorByte fill)
+        {
+            _textureCore.Load(size, fill);
+            ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
+        }
 
         /// <summary>Create gpu texture buffer with specified size, but no uploading pixels. Pixels color remain undefined.</summary>
         /// <remarks>Texture width and height should be power of two for performance.</remarks>
         /// <param name="size">texture size</param>
-        public void LoadUndefined(in Vector2i size) => _textureCore.LoadUndefined(size);
+        public void LoadUndefined(in Vector2i size)
+        {
+            _textureCore.LoadUndefined(size);
+            ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
+        }
 
         public void Update(in RectI rect, ReadOnlySpan<ColorByte> pixels) => _textureCore.Update(rect, pixels);
 
@@ -82,9 +97,19 @@ namespace Elffy.Components
 
         public TexturePainter GetPainter(in RectI rect, bool copyFromOriginal = true) => _textureCore.GetPainter(rect, copyFromOriginal);
 
-        void IComponent.OnAttached(ComponentOwner owner) => _core.OnAttached(owner);
+        public virtual void OnAttached(ComponentOwner owner) => OnAttachedCore<Texture>(owner, this);
 
-        void IComponent.OnDetached(ComponentOwner owner) => _core.OnDetachedForDisposable(owner, this);
+        public virtual void OnDetached(ComponentOwner owner) => OnDetachedCore<Texture>(owner, this);
+
+        protected void OnAttachedCore<TTexture>(ComponentOwner owner, TTexture @this) where TTexture : Texture
+        {
+            _core.OnAttached<TTexture>(owner, @this);
+        }
+
+        protected void OnDetachedCore<TTexture>(ComponentOwner owner, TTexture @this) where TTexture : Texture
+        {
+            _core.OnDetached<TTexture>(owner, @this);
+        }
 
         public void Dispose()
         {
@@ -92,14 +117,13 @@ namespace Elffy.Components
             GC.SuppressFinalize(this);
         }
 
-        private void Dispose(bool disposing)
+        protected virtual void Dispose(bool disposing)
         {
             if(disposing) {
                 _textureCore.Dispose();
             }
             else {
-                // Cannot release objects of OpenGL from the finalizer thread.
-                throw new MemoryLeakException(typeof(Texture));
+                ContextAssociatedMemorySafety.OnFinalized(this);
             }
         }
     }

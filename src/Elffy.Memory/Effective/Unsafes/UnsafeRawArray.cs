@@ -121,6 +121,9 @@ namespace Elffy.Effective.Unsafes
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T GetReference() => ref Unsafe.AsRef<T>((void*)Ptr);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T* GetPtr() => (T*)Ptr;
+
         /// <summary>Get <see cref="Span{T}"/> of type <see cref="T"/></summary>
         /// <returns><see cref="Span{T}"/> of type <see cref="T"/></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

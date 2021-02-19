@@ -11,7 +11,7 @@ namespace Elffy.Components
 
     /// <summary>Helper struct to implement <see cref="ISingleOwnerComponent"/> easily.</summary>
     /// <typeparam name="TComponent">type of the component</typeparam>
-    public struct SingleOwnerComponentCore<TComponent> where TComponent : class, ISingleOwnerComponent
+    public struct SingleOwnerComponentCore
     {
         private ComponentOwner? _owner;
         private readonly bool _autoDisposeOnDetached;
@@ -19,10 +19,10 @@ namespace Elffy.Components
         /// <summary>Get the owner of the component</summary>
         public readonly ComponentOwner? Owner => _owner;
 
-        /// <summary>Get whether the component is automatically disposed on detached.</summary>
+        /// <summary>Get whether the component is automatically disposed on detached if the target component is <see cref="IDisposable"/>.</summary>
         public readonly bool AutoDisposeOnDetached => _autoDisposeOnDetached;
 
-        /// <summary>Create a new <see cref="SingleOwnerComponentCore{TComponent}"/> instance</summary>
+        /// <summary>Create a new <see cref="SingleOwnerComponentCore"/> instance</summary>
         /// <param name="autoDisposeOnDetached">whether the component is automatically disposed on detached.</param>
         public SingleOwnerComponentCore(bool autoDisposeOnDetached)
         {
@@ -33,7 +33,7 @@ namespace Elffy.Components
         /// <summary>Do <see cref="IComponent.OnAttached(ComponentOwner)"/></summary>
         /// <param name="owner">the owner of the component</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void OnAttached(ComponentOwner owner)
+        public void OnAttached<TComponent>(ComponentOwner owner, TComponent component) where TComponent : class, ISingleOwnerComponent
         {
             if(_owner is null == false) {
                 ThrowAlreadyLoaded();
@@ -43,6 +43,12 @@ namespace Elffy.Components
                 ThrowNullArg();
                 [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(owner));
             }
+            if(typeof(TComponent) != component.GetType()) {
+                ThrowTypeMismatch(component.GetType());
+
+                [DoesNotReturn] static void ThrowTypeMismatch(Type instanceType)
+                    => throw new ArgumentException($"Component type is mismatch. Attached as {typeof(TComponent).FullName}, but instance is {instanceType.FullName}.");
+            }
 
             _owner = owner;
             if(_autoDisposeOnDetached) {
@@ -51,28 +57,18 @@ namespace Elffy.Components
         }
 
         /// <summary>Do <see cref="IComponent.OnDetached(ComponentOwner)"/></summary>
-        /// <remarks>Use <see cref="OnDetachedForDisposable{T}(ComponentOwner, T)"/> if the component is <see cref="IDisposable"/></remarks>
+        /// <typeparam name="TComponent">type of the component</typeparam>
         /// <param name="owner">the owner of the component</param>
+        /// <param name="component">the component</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void OnDetached(ComponentOwner owner)
+        public void OnDetached<TComponent>(ComponentOwner owner, TComponent component) where TComponent : class, ISingleOwnerComponent
         {
             if(Owner == owner) {
                 _owner = null;
-            }
-        }
-
-        /// <summary>Do <see cref="IComponent.OnDetached(ComponentOwner)"/></summary>
-        /// <remarks>Use <see cref="OnDetached(ComponentOwner)"/> if the component is not <see cref="IDisposable"/></remarks>
-        /// <typeparam name="T">type of the component which inherits (<see cref="IDisposable"/>)</typeparam>
-        /// <param name="owner">the owner of the component</param>
-        /// <param name="component">the component which inherits <see cref="IDisposable"/></param>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void OnDetachedForDisposable<T>(ComponentOwner owner, T component) where T : ISingleOwnerComponent, IDisposable
-        {
-            if(Owner == owner) {
-                _owner = null;
-                if(_autoDisposeOnDetached) {
-                    component.Dispose();
+                if(typeof(TComponent).IsAssignableTo(typeof(IDisposable))) {
+                    if(_autoDisposeOnDetached) {
+                        Unsafe.As<IDisposable>(component).Dispose();
+                    }
                 }
             }
         }

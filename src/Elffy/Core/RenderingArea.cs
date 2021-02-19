@@ -77,7 +77,12 @@ namespace Elffy.Core
             OnSizeChanged();
 
             Layers.UILayer.Initialize();
-            Initialized?.Invoke(OwnerScreen);
+            try {
+                Initialized?.Invoke(OwnerScreen);
+            }
+            catch {
+                // Don't throw. (Ignore exceptions in user code)
+            }
 
             foreach(var layer in Layers.AsReadOnlySpan()) {
                 layer.ApplyAdd();
@@ -161,6 +166,8 @@ namespace Elffy.Core
 
             _currentTiming = ScreenCurrentTiming.OutOfFrameLoop;
 
+            ContextAssociatedMemorySafety.CollectIfExist(OwnerScreen);
+
             if(isLastFrame) {
                 Dispose();
             }
@@ -197,6 +204,7 @@ namespace Elffy.Core
             layers.Clear();
 
             AsyncBack.AbortAll();
+            ContextAssociatedMemorySafety.EnsureCollect(OwnerScreen);   // Must be called before the opengl context is deleted.
             Disposed?.Invoke();
         }
 
@@ -225,8 +233,7 @@ namespace Elffy.Core
             GL.Viewport(0, 0, (int)(size.X * scale.X), (int)(size.Y * scale.Y));
             Matrix4.OrthographicProjection(0, size.X, 0, size.Y, UI_NEAR, UI_FAR, out _uiProjection);
             var uiRoot = Layers.UILayer.UIRoot;
-            uiRoot.Width = size.X;
-            uiRoot.Height = size.Y;
+            uiRoot.Size = size;
 
             Debug.WriteLine($"Size changed ({size.X}, {size.Y})");
         }

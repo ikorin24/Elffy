@@ -2,12 +2,12 @@
 using System;
 using System.Threading;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Elffy.UI;
 using Elffy.Core;
 using Elffy.InputSystem;
 using Elffy.OpenGL;
 using Elffy.Imaging;
-using OpenTK.Windowing.Common;
 using TKMouseButton = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
 using TKMouseButtonEventArgs = OpenTK.Windowing.Common.MouseButtonEventArgs;
 
@@ -19,9 +19,7 @@ namespace Elffy
     {
         private const string DefaultTitle = "Window";
 
-        [ThreadStatic]
-        private static bool _isThreadMain;
-
+        private bool _isActivated;
         private readonly WindowGLFW _windowImpl;
         private readonly RenderingArea _renderingArea;
         private TimeSpan _frameDelta;
@@ -78,9 +76,6 @@ namespace Elffy
         public ScreenCurrentTiming CurrentTiming => _renderingArea.CurrentTiming;
 
         /// <inheritdoc/>
-        public bool IsThreadMain => _isThreadMain;
-
-        /// <inheritdoc/>
         public event Action<IHostScreen>? Initialized
         {
             add => _renderingArea.Initialized += value;
@@ -99,7 +94,11 @@ namespace Elffy
 
         /// <summary>Create new <see cref="Window"/></summary>
         /// <param name="windowStyle">window style</param>
-        public Window(WindowStyle windowStyle) : this(800, 450, DefaultTitle, windowStyle, Icon.Empty) { }
+        public Window(WindowStyle windowStyle)
+        {
+            var icon = Icon.Empty;
+            Ctor(out _renderingArea, out _windowImpl, 800, 450, DefaultTitle, windowStyle, ref icon);
+        }
 
         /// <summary>Create new <see cref="Window"/></summary>
         /// <param name="width">width of the window</param>
@@ -107,16 +106,20 @@ namespace Elffy
         /// <param name="title">title of the window</param>
         /// <param name="windowStyle">window style</param>
         /// <param name="icon">window icon</param>
-        public Window(int width, int height, string title, WindowStyle windowStyle, Icon icon)
+        public Window(int width, int height, string title, WindowStyle windowStyle, ref Icon icon)
         {
-            _isThreadMain = true;
-            _renderingArea = new RenderingArea(this);
-            _windowImpl = new WindowGLFW(this, width, height, title, windowStyle, icon);
+            Ctor(out _renderingArea, out _windowImpl, width, height, title, windowStyle, ref icon);
+        }
+
+        private void Ctor(out RenderingArea renderingArea, out WindowGLFW windowImpl, int width, int height, string title, WindowStyle windowStyle, ref Icon icon)
+        {
+            renderingArea = new RenderingArea(this);
+            windowImpl = new WindowGLFW(this, width, height, title, windowStyle, ref icon);
 
             _frameDelta = TimeSpan.FromSeconds(1.0 / 60.0); // TODO: とりあえず固定で
             _windowImpl.UpdateFrame += (_, e) => UpdateFrame();
             _windowImpl.Refresh += _ => UpdateFrame();
-            _windowImpl.Load += OnLoad;
+            _windowImpl.Load += _ => _renderingArea.Initialize();
             _windowImpl.Resize += (_, e) => _renderingArea.SetClientSize(e.Size);
             _windowImpl.ContentScaleChanged += (_, scale) => _renderingArea.SetContentScale(scale);
             _windowImpl.MouseMove += (_, e) => Mouse.ChangePosition(e.Position);
@@ -135,80 +138,69 @@ namespace Elffy
                 Engine.RemoveScreen(this);
             };
 
-            Engine.AddScreen(this, show: false);
-
-
             void MouseButtonStateChanged(WindowGLFW _, TKMouseButtonEventArgs e)
             {
-                MouseButton button;
                 switch(e.Button) {
                     case TKMouseButton.Left:
-                        button = MouseButton.Left;
+                        Mouse.ChangePressedState(MouseButton.Left, e.IsPressed);
                         break;
                     case TKMouseButton.Middle:
-                        button = MouseButton.Middle;
+                        Mouse.ChangePressedState(MouseButton.Middle, e.IsPressed);
                         break;
                     case TKMouseButton.Right:
-                        button = MouseButton.Right;
+                        Mouse.ChangePressedState(MouseButton.Right, e.IsPressed);
                         break;
                     default:
                         return;
                 }
-                Mouse.ChangePressedState(button, e.IsPressed);
             };
         }
 
         public void Maximize()
         {
-            ThrowIfNotMainThread();
+            if(!Engine.IsThreadMain) { ThrowNotMainThread(); }
+            if(!_isActivated) { ThrowNotActivated(); }
             _windowImpl.Maximize();
         }
 
         public void Normalize()
         {
-            ThrowIfNotMainThread();
+            if(!Engine.IsThreadMain) { ThrowNotMainThread(); }
+            if(!_isActivated) { ThrowNotActivated(); }
             _windowImpl.Normalize();
         }
 
         public void Minimize()
         {
-            ThrowIfNotMainThread();
+            if(!Engine.IsThreadMain) { ThrowNotMainThread(); }
+            if(!_isActivated) { ThrowNotActivated(); }
             _windowImpl.Minimize();
         }
 
         public void Close()
         {
-            ThrowIfNotMainThread();
+            if(!Engine.IsThreadMain) { ThrowNotMainThread(); }
+            if(!_isActivated) { return; }
             _renderingArea.RequestClose();
         }
 
-        /// <inheritdoc/>
-        public void ThrowIfNotMainThread()
+        /// <summary>Acticate the window</summary>
+        public void Activate()
         {
-            if(!_isThreadMain) {
-                ThrowThreadNotMain();
-                static void ThrowThreadNotMain() => throw new InvalidOperationException("Current thread is not main thread.");
+            if(!Engine.IsThreadMain) { ThrowNotMainThread(); }
+            if(_isActivated == false) {
+                _isActivated = true;
+                _windowImpl.Activate();
+                Engine.AddScreen(this);
             }
-        }
-
-        /// <summary>Show the window</summary>
-        public void Show()
-        {
-            ThrowIfNotMainThread();
-            _windowImpl.Show();
         }
 
         /// <inheritdoc/>
         void IHostScreen.HandleOnce()
         {
-            ThrowIfNotMainThread();
+            if(!Engine.IsThreadMain) { ThrowNotMainThread(); }
+            if(!_isActivated) { ThrowNotActivated(); }
             _windowImpl.HandleOnce();
-        }
-
-        private void OnLoad(WindowGLFW _)
-        {
-            ThrowIfNotMainThread();
-            _renderingArea.Initialize();
         }
 
         private void UpdateFrame()
@@ -218,5 +210,11 @@ namespace Elffy
             _frameNum++;
             _windowImpl.SwapBuffers();
         }
+
+        [DoesNotReturn]
+        private static void ThrowNotActivated() => throw new InvalidOperationException("Window is not activated yet.");
+
+        [DoesNotReturn]
+        private static void ThrowNotMainThread() => throw new InvalidOperationException("Current thread is not main thread of the Engine.");
     }
 }

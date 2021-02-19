@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Elffy;
 using Elffy.InputSystem;
 using Elffy.Components;
 using Elffy.Core;
@@ -10,7 +11,36 @@ using System.Diagnostics;
 
 namespace Elffy.UI
 {
-    // I don't support forcus of control.
+    // [Rendering]
+    // 
+    // `Control` and `UIRenderable` are always a pair.
+    // `Control` is an element of the UI, which forms a UI tree. (UI tree means logical tree and visual tree.)
+    // `UIRenderable` is a subclass of `Renderable` (that means `FrameObject`),
+    // which is managed by the engine and renders the control.
+    // `Control` is just a data structure, so it doesn't know how it is rendered on the screen.
+    // On the other hand, `UIRenderable` doesn't know UI tree.
+    // They don't know each other well, and they shouldn't.
+    // `Control` forms a UI tree, but `UIRenderable` always exists as a root in the tree of `Positionable`.
+    // They are independent from each other.
+
+
+    // [UIRenderable object]
+    // 
+    // `UIRenderable` is an internal class, and subclass of `FrameObject`.
+    // It is always on the internal layer when it is activated, and users can not access the instance.
+    // Don't put the instance public even if as `Renderable` or `FrameObject`.
+
+
+    // [UI tree structure]
+    // 
+    // UI tree means both logical tree and visual tree.
+    // Logical tree is hierarchical structure of UI formed by `Control`s.
+    // We can access it by Control.Children or Control.Parent.
+    //
+    // Visual tree is similar to logical tree, but some Controls exist only in visual tree.
+    // For example, in the case that I create a control of checkbox with a text by combining
+    // checkbox image and text label, they are in visual tree but not in logical tree.
+    // All controls in logical tree are in visual tree.
 
     /// <summary>
     /// UI の要素の基底クラス。UI への配置, ヒットテストの処理を提供します<para/>
@@ -28,22 +58,41 @@ namespace Elffy.UI
     public abstract class Control
     {
         private readonly UIRenderable _renderable;
+        private ControlLayouterInternal? _layouter;
         private Control? _parent;
         private RootPanel? _root;
-        private Vector2i _absolutePosition;
+        private Control? _firstVisualChild;
+        private Control? _lastVisualChild;
+        private Control? _nextVisualSibling;
+        private Control? _prevVisualSibling;
+        private Vector2 _absolutePosition;
         private Vector2i _offset;
         private ArrayPooledListCore<Control> _childrenCore;
         private TextureCore _texture;
         private Color4 _background;
+        private int _visualIndex;
         private bool _isHitTestVisible;
         private bool _isMouseOver;
+        private ControlLifeState _lifeState;
+
+        protected private ControlLayouterInternal Layouter => _layouter ?? ControlLayouterInternal.ThrowCannotGetInstance();
 
         internal ref ArrayPooledListCore<Control> ChildrenCore => ref _childrenCore;
+
+        internal Control? FirstVisualChild => _firstVisualChild;
+
+        internal Control? LastVisualChild => _lastVisualChild;
+
+        internal int VisualIndex => _visualIndex;
+
+        internal Control? NextVisualSibling => _nextVisualSibling;
+
+        internal Control? PrevVisualSibling => _prevVisualSibling;
 
         internal UIRenderable Renderable => _renderable;
 
         /// <summary>Get life state</summary>
-        public LifeState LifeState => Renderable.LifeState;
+        public ControlLifeState LifeState => _lifeState;
 
         public ControlCollection Children => new(this);
 
@@ -51,7 +100,7 @@ namespace Elffy.UI
 
         public RootPanel? Root => _root;
 
-        public bool IsRoot => _parent is null;
+        public bool IsRoot => ReferenceEquals(_root, this);
 
         public UIShaderSource? Shader
         {
@@ -127,7 +176,7 @@ namespace Elffy.UI
             }
         }
 
-        public ref readonly Vector2i AbsolutePosition => ref _absolutePosition;
+        public Vector2i AbsolutePosition => (Vector2i)_absolutePosition;
 
         /// <summary>get or set Width of <see cref="Control"/></summary>
         public int Width
@@ -176,15 +225,6 @@ namespace Elffy.UI
         /// <summary>get or set offset position of layout</summary>
         public ref Vector2i Offset => ref _offset;
 
-#if false   // future version, auto layout
-
-        /// <summary>get or set horizontal alignment of layout</summary>
-        public HorizontalAlignment HorizontalAlignment { get; set; }
-        /// <summary>get or set vertical alignment of layout</summary>
-        public VerticalAlignment VerticalAlignment { get; set; }
-
-#endif      // future version, auto layout
-
         /// <summary>get or set whether this <see cref="Control"/> is enabled in HitTest</summary>
         public bool IsHitTestVisible
         {
@@ -200,6 +240,14 @@ namespace Elffy.UI
 
         internal ref readonly TextureCore Texture => ref _texture;
 
+        public ref LayoutLength LayoutWidth => ref Layouter.Width;
+        public ref LayoutLength LayoutHeight => ref Layouter.Height;
+        public ref TransformOrigin TransformOrigin => ref Layouter.TransformOrigin;
+        public ref HorizontalAlignment HorizontalAlignment => ref Layouter.HorizontalAlignment;
+        public ref VerticalAlignment VerticalAlignment => ref Layouter.VerticalAlignment;
+        public ref LayoutThickness Margin => ref Layouter.Margin;
+        public ref LayoutThickness Padding => ref Layouter.Padding;
+
         /// <summary>Mouse enter event</summary>
         public event Action<Control, MouseEventArgs>? MouseEnter;
         /// <summary>Mouse leave event</summary>
@@ -212,12 +260,13 @@ namespace Elffy.UI
         public Control()
         {
             _isHitTestVisible = true;
+            _layouter = ControlLayouterInternal.Create();
             _renderable = new UIRenderable(this);
             Width = 30;
             Height = 30;
             _texture = new TextureCore(TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear, TextureMipmapMode.None, TextureWrapMode.ClampToEdge, TextureWrapMode.ClampToEdge);
-            Renderable.Activated += OnRenderableActivated;
-            Renderable.Dead += OnRenderableDead;
+            Renderable.Activated += OnRenderableActivatedPrivate;
+            Renderable.Dead += OnRenderableDeadPrivate;
         }
 
         protected private void SetAsRootControl()
@@ -304,10 +353,29 @@ namespace Elffy.UI
             OnRecieveHitTestResult(isHit, mouse);
         }
 
-        internal void AddedToListCallback(Control parent)
+        internal void AddedToListCallback(Control parent, int index)
         {
             Debug.Assert(parent is not null);
             Debug.Assert(parent.Root is not null);
+            Debug.Assert(_lifeState == ControlLifeState.New);
+            Debug.Assert(index >= 0);
+
+            // Item is always added to the tail.
+            if(index == 0) {
+                Debug.Assert(parent._firstVisualChild is null);
+                parent._firstVisualChild = this;
+                parent._lastVisualChild = this;
+            }
+            else {
+                Debug.Assert(parent._lastVisualChild is not null);
+                var last = parent._lastVisualChild;
+                last._nextVisualSibling = this;
+                _prevVisualSibling = last;
+                parent._lastVisualChild = this;
+            }
+
+            _visualIndex = index;
+            _lifeState = ControlLifeState.InLogicalTree;
             _parent = parent;
             _root = parent.Root;
             Renderable.Activate(_root.UILayer);
@@ -315,45 +383,119 @@ namespace Elffy.UI
 
         internal void RemovedFromListCallback()
         {
+            Debug.Assert(_lifeState == ControlLifeState.InLogicalTree);
+            _lifeState = ControlLifeState.Dead;
             _parent = null;
             _root = null;
+
+            // TODO: 子供の削除 (logical, visual 両方)
+
             Renderable.Terminate();
         }
 
-        private void OnRenderableActivated(FrameObject sender)
+        protected virtual void OnActivated()
         {
             Activated?.Invoke(this);
         }
 
-        private void OnRenderableDead(FrameObject sender)
+        protected virtual void OnDead()
         {
             Dead?.Invoke(this);
         }
+
+        private void OnRenderableActivatedPrivate(FrameObject sender)
+        {
+            OnActivated();
+        }
+
+        private void OnRenderableDeadPrivate(FrameObject sender)
+        {
+            OnDead();
+            Debug.Assert(_layouter is not null);
+            ControlLayouterInternal.Return(ref _layouter);
+        }
+
+        internal void Layout(in Vector2 parentSize, in LayoutThickness parentPadding)
+        {
+            LayoutRecursively(parentSize, parentPadding);
+        }
+
+        protected void LayoutSelf(in Vector2 parentSize, in LayoutThickness parentPadding, out Vector2 size)
+        {
+            Debug.Assert(this is not RootPanel);
+            Debug.Assert(_parent is not null);
+            Debug.Assert(parentSize.X >= 0f && parentSize.Y >= 0f);
+            var layouter = Layouter;
+            ref var margin = ref layouter.Margin;
+            ref var layoutWidth = ref layouter.Width;
+            ref var layoutHeight = ref layouter.Height;
+            ref var horizontalAlignment = ref layouter.HorizontalAlignment;
+            ref var verticalAlignment = ref layouter.VerticalAlignment;
+            var availableSize = new Vector2(MathF.Max(0, parentSize.X - parentPadding.Left - parentPadding.Right),
+                                            MathF.Max(0, parentSize.Y - parentPadding.Top - parentPadding.Bottom));
+            var maxSize = new Vector2(MathF.Max(0, availableSize.X - margin.Left - margin.Right),
+                                      MathF.Max(0, availableSize.Y - margin.Top - margin.Bottom));
+
+            // Calc size
+            switch(layoutWidth.Type) {
+                case LayoutLengthType.Length:
+                default:
+                    size.X = MathF.Max(0, MathF.Min(maxSize.X, layoutWidth.Value));
+                    break;
+                case LayoutLengthType.Proportion:
+                    size.X = MathF.Max(0, MathF.Min(maxSize.X, layoutWidth.Value * parentSize.X));
+                    break;
+            }
+            switch(layoutHeight.Type) {
+                case LayoutLengthType.Length:
+                default:
+                    size.Y = MathF.Max(0, MathF.Min(maxSize.Y, layoutHeight.Value));
+                    break;
+                case LayoutLengthType.Proportion:
+                    size.Y = MathF.Max(0, MathF.Min(maxSize.Y, layoutHeight.Value * parentSize.Y));
+                    break;
+            }
+
+            // Calc position
+            Vector2 pos;
+            switch(horizontalAlignment) {
+                case HorizontalAlignment.Center:
+                default:
+                    pos.X = parentPadding.Left + margin.Left + (maxSize.X - size.X) / 2;
+                    break;
+                case HorizontalAlignment.Left:
+                    pos.X = parentPadding.Left + margin.Left;
+                    break;
+                case HorizontalAlignment.Right:
+                    pos.X = parentSize.X - parentPadding.Right - margin.Right - size.X;
+                    break;
+            }
+            switch(verticalAlignment) {
+                case VerticalAlignment.Center:
+                default:
+                    pos.Y = parentPadding.Top + margin.Top + (maxSize.Y - size.Y) / 2;
+                    break;
+                case VerticalAlignment.Top:
+                    pos.Y = parentPadding.Top + margin.Top;
+                    break;
+                case VerticalAlignment.Bottom:
+                    pos.Y = parentSize.Y - parentPadding.Bottom - margin.Bottom - size.Y;
+                    break;
+            }
+
+            Size = (Vector2i)size;
+            Renderable.Position.X = pos.X;
+            Renderable.Position.Y = pos.Y;
+            _absolutePosition = _parent._absolutePosition + (Vector2i)pos;
+        }
+
+        protected virtual void LayoutRecursively(in Vector2 parentSize, in LayoutThickness parentPadding)
+        {
+            LayoutSelf(parentSize, parentPadding, out var size);
+            ref var padding = ref Padding;
+            foreach(var child in VisualTree.GetChildren(this)) {
+                child.LayoutRecursively(size, padding);
+            }
+        }
     }
-
-#if false   // future version, auto layout
-
-    /// <summary>Layout horizontal alignment</summary>
-    public enum HorizontalAlignment
-    {
-        /// <summary>left alignment</summary>
-        Left,
-        /// <summary>center alignment</summary>
-        Center,
-        /// <summary>right alignment</summary>
-        Right,
-    }
-
-    /// <summary>Layout vertical alignment</summary>
-    public enum VerticalAlignment
-    {
-        /// <summary>top alignment</summary>
-        Top,
-        /// <summary>center alignment</summary>
-        Center,
-        /// <summary>bottom alignment</summary>
-        Bottom,
-    }
-
-#endif      // future version, auto layout
 }

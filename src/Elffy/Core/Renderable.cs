@@ -142,7 +142,9 @@ namespace Elffy.Core
         /// <param name="indices">index data to load</param>
         protected void LoadGraphicBuffer<TVertex>(ReadOnlySpan<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged
         {
-            HostScreen.ThrowIfNotMainThread();
+            if(Engine.CurrentContext != HostScreen) {
+                throw new InvalidOperationException("Invalid current context.");
+            }
             if(IsLoaded) { ThrowAlreadyLoaded(); }
 
             var isUIRenderable = this is UIRenderable;
