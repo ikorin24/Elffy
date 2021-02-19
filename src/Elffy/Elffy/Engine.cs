@@ -40,20 +40,19 @@ namespace Elffy
         /// <summary>Get real time since the engine started.</summary>
         public static TimeSpan RunningRealTime => _watch.Elapsed;
 
-        internal static void AddScreen(IHostScreen screen, bool show = true)
+        internal static void AddScreen(IHostScreen screen)
         {
             if(!IsRunning) {
                 ThrowInvalidOperation("The engine is not running.");
             }
-
             _screens.Add(screen);
-            if(show) {
-                screen.Show();
-            }
         }
 
         internal static void RemoveScreen(IHostScreen screen)
         {
+            if(!IsRunning) {
+                ThrowInvalidOperation("The engine is not running.");
+            }
             _screens.Remove(screen);
         }
 
@@ -109,8 +108,8 @@ namespace Elffy
 
                 _isThreadMain = false;
                 _watch.Stop();
-                _watch.Reset();
-                EngineSetting.Unlock();
+                //_watch.Reset();
+                //EngineSetting.Unlock();
                 Volatile.Write(ref _mainThreadID, 0);   // This means 'IsRunning = false'
             }
         }

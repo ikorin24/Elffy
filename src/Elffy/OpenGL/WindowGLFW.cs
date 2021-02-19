@@ -20,13 +20,13 @@ namespace Elffy.OpenGL
     {
         const double MaxUpdateFrequency = 500;
 
-        private IHostScreen _owner;
+        private IHostScreen? _owner;
         private Wnd* _window;
         private Vector2i _clientSize;
         private Vector2i _size;
         private Vector2 _contentScale;
         private Vector2i _location;
-        private string _title;
+        private string? _title;
         private bool _isRunning;
 
         private double? _updateFrequency = 60.0;
@@ -57,7 +57,7 @@ namespace Elffy.OpenGL
 
         public string Title
         {
-            get => _title;
+            get => _title ?? "";
             set
             {
                 if(IsDisposed) { ThrowDisposed(); }
@@ -91,17 +91,25 @@ namespace Elffy.OpenGL
             }
         }
 
-        public WindowGLFW(IHostScreen screen, int width, int height, string title, WindowStyle style, Icon icon)
-        {
-            title ??= "";
-            _owner = screen;
 
+        private (IHostScreen screen, int width, int height, string title, WindowStyle style, Icon icon) _initArgs;
+        private bool _isInit;
+
+        public WindowGLFW(IHostScreen screen, int width, int height, string title, WindowStyle style, ref Icon icon)
+        {
+            _initArgs = (screen, width, height, title ?? "", style, icon);
+            icon = default;
+        }
+
+        private void Init(IHostScreen screen, int width, int height, string title, WindowStyle style, in Icon icon)
+        {
             // [Hard coded setting]
             // - Opengl core profile
             // - Opengl api (not es)
             // - 4.1 or later (4.1 is the last version Mac supports)
             // Vsync is enabled
 
+            _owner = screen;
 
             GLFW.Init();
             GLFW.SetErrorCallback((errorCode, description) => throw new GLFWException(description, errorCode));
@@ -126,7 +134,7 @@ namespace Elffy.OpenGL
                 default:
                     throw new ArgumentException(nameof(style));
             }
-            
+
             GLFW.WindowHint(WindowHintOpenGlProfile.OpenGlProfile, OpenGlProfile.Core);
             GLFW.WindowHint(WindowHintClientApi.ClientApi, ClientApi.OpenGlApi);
             GLFW.WindowHint(WindowHintInt.ContextVersionMajor, 4);
@@ -159,10 +167,12 @@ namespace Elffy.OpenGL
                 RegisterWindowCallbacks();
                 GLFW.FocusWindow(_window);
                 _title = title;
-                if(icon.ImageCount != 0) {
+                if(icon.ImageCount > 0) {
                     var image = icon.GetImage(0);
-                    var img = new GLFWImage(image.Width, image.Height, (byte*)image.GetPtr());
-                    GLFW.SetWindowIconRaw(_window, 1, &img);
+                    if(image.IsEmpty == false) {
+                        var img = new GLFWImage(image.Width, image.Height, (byte*)image.GetPtr());
+                        GLFW.SetWindowIconRaw(_window, 1, &img);
+                    }
                 }
 
                 GLFW.GetWindowSize(_window, out _clientSize.X, out _clientSize.Y);
@@ -183,9 +193,22 @@ namespace Elffy.OpenGL
             }
         }
 
+        private void EnsureInit()
+        {
+            if(!_isInit) {
+                _isInit = true;
+                var (screen, width, height, title, style, icon) = _initArgs;
+                using(icon) {
+                    Init(screen, width, height, title, style, icon);
+                }
+                _initArgs = default;
+            }
+        }
+
         public void HandleOnce()
         {
             if(!_isLoaded) {
+                EnsureInit();
                 _isLoaded = true;
                 MakeContextCurrent();
                 Load?.Invoke(this);
@@ -245,12 +268,14 @@ namespace Elffy.OpenGL
 
         public void SwapBuffers()
         {
+            EnsureInit();
             if(IsDisposed) { return; }
             GLFW.SwapBuffers(_window);
         }
 
         public void MakeContextCurrent()
         {
+            EnsureInit();
             if(IsDisposed) { ThrowDisposed(); }
             GLFW.MakeContextCurrent(_window);
             Engine.SetCurrentContext(_owner);
@@ -258,24 +283,28 @@ namespace Elffy.OpenGL
 
         public void Maximize()
         {
+            EnsureInit();
             if(IsDisposed) { ThrowDisposed(); }
             GLFW.MaximizeWindow(_window);
         }
 
         public void Normalize()
         {
+            EnsureInit();
             if(IsDisposed) { ThrowDisposed(); }
             GLFW.RestoreWindow(_window);
         }
 
         public void Minimize()
         {
+            EnsureInit();
             if(IsDisposed) { ThrowDisposed(); }
             GLFW.IconifyWindow(_window);
         }
 
         public void Show()
         {
+            EnsureInit();
             if(IsDisposed) { ThrowDisposed(); }
             _isRunning = true;
             GLFW.ShowWindow(_window);
@@ -283,6 +312,7 @@ namespace Elffy.OpenGL
 
         public void Hide()
         {
+            EnsureInit();
             if(IsDisposed) { ThrowDisposed(); }
             GLFW.HideWindow(_window);
         }

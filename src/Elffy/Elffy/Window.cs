@@ -8,7 +8,6 @@ using Elffy.Core;
 using Elffy.InputSystem;
 using Elffy.OpenGL;
 using Elffy.Imaging;
-using OpenTK.Windowing.Common;
 using TKMouseButton = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
 using TKMouseButtonEventArgs = OpenTK.Windowing.Common.MouseButtonEventArgs;
 
@@ -20,8 +19,9 @@ namespace Elffy
     {
         private const string DefaultTitle = "Window";
 
-        private readonly WindowGLFW _windowImpl;
-        private readonly RenderingArea _renderingArea;
+        private bool _isActivated;
+        private WindowGLFW _windowImpl;
+        private RenderingArea _renderingArea;
         private TimeSpan _frameDelta;
         private TimeSpan _time;
         private long _frameNum;
@@ -94,7 +94,13 @@ namespace Elffy
 
         /// <summary>Create new <see cref="Window"/></summary>
         /// <param name="windowStyle">window style</param>
-        public Window(WindowStyle windowStyle) : this(800, 450, DefaultTitle, windowStyle, Icon.Empty) { }
+        public Window(WindowStyle windowStyle)
+        {
+            var icon = Icon.Empty;
+            Ctor(800, 450, DefaultTitle, windowStyle, ref icon);
+            Debug.Assert(_renderingArea is not null);
+            Debug.Assert(_windowImpl is not null);
+        }
 
         /// <summary>Create new <see cref="Window"/></summary>
         /// <param name="width">width of the window</param>
@@ -102,15 +108,22 @@ namespace Elffy
         /// <param name="title">title of the window</param>
         /// <param name="windowStyle">window style</param>
         /// <param name="icon">window icon</param>
-        public Window(int width, int height, string title, WindowStyle windowStyle, Icon icon)
+        public Window(int width, int height, string title, WindowStyle windowStyle, ref Icon icon)
+        {
+            Ctor(width, height, title, windowStyle, ref icon);
+            Debug.Assert(_renderingArea is not null);
+            Debug.Assert(_windowImpl is not null);
+        }
+
+        private void Ctor(int width, int height, string title, WindowStyle windowStyle, ref Icon icon)
         {
             _renderingArea = new RenderingArea(this);
-            _windowImpl = new WindowGLFW(this, width, height, title, windowStyle, icon);
+            _windowImpl = new WindowGLFW(this, width, height, title, windowStyle, ref icon);
 
             _frameDelta = TimeSpan.FromSeconds(1.0 / 60.0); // TODO: とりあえず固定で
             _windowImpl.UpdateFrame += (_, e) => UpdateFrame();
             _windowImpl.Refresh += _ => UpdateFrame();
-            _windowImpl.Load += OnLoad;
+            _windowImpl.Load += _ => _renderingArea.Initialize();
             _windowImpl.Resize += (_, e) => _renderingArea.SetClientSize(e.Size);
             _windowImpl.ContentScaleChanged += (_, scale) => _renderingArea.SetContentScale(scale);
             _windowImpl.MouseMove += (_, e) => Mouse.ChangePosition(e.Position);
@@ -129,50 +142,49 @@ namespace Elffy
                 Engine.RemoveScreen(this);
             };
 
-            Engine.AddScreen(this, show: false);
-
-
             void MouseButtonStateChanged(WindowGLFW _, TKMouseButtonEventArgs e)
             {
-                MouseButton button;
                 switch(e.Button) {
                     case TKMouseButton.Left:
-                        button = MouseButton.Left;
+                        Mouse.ChangePressedState(MouseButton.Left, e.IsPressed);
                         break;
                     case TKMouseButton.Middle:
-                        button = MouseButton.Middle;
+                        Mouse.ChangePressedState(MouseButton.Middle, e.IsPressed);
                         break;
                     case TKMouseButton.Right:
-                        button = MouseButton.Right;
+                        Mouse.ChangePressedState(MouseButton.Right, e.IsPressed);
                         break;
                     default:
                         return;
                 }
-                Mouse.ChangePressedState(button, e.IsPressed);
             };
         }
 
         public void Maximize()
         {
             if(!Engine.IsThreadMain) { ThrowNotMainThread(); }
+            if(!_isActivated) { ThrowNotActivated(); }
             _windowImpl.Maximize();
         }
 
         public void Normalize()
         {
             if(!Engine.IsThreadMain) { ThrowNotMainThread(); }
+            if(!_isActivated) { ThrowNotActivated(); }
             _windowImpl.Normalize();
         }
 
         public void Minimize()
         {
             if(!Engine.IsThreadMain) { ThrowNotMainThread(); }
+            if(!_isActivated) { ThrowNotActivated(); }
             _windowImpl.Minimize();
         }
 
         public void Close()
         {
             if(!Engine.IsThreadMain) { ThrowNotMainThread(); }
+            if(!_isActivated) { return; }
             _renderingArea.RequestClose();
         }
 
@@ -180,20 +192,19 @@ namespace Elffy
         public void Show()
         {
             if(!Engine.IsThreadMain) { ThrowNotMainThread(); }
-            _windowImpl.Show();
+            if(_isActivated == false) {
+                _isActivated = true;
+                Engine.AddScreen(this);
+                _windowImpl.Show();
+            }
         }
 
         /// <inheritdoc/>
         void IHostScreen.HandleOnce()
         {
             if(!Engine.IsThreadMain) { ThrowNotMainThread(); }
+            if(!_isActivated) { ThrowNotActivated(); }
             _windowImpl.HandleOnce();
-        }
-
-        private void OnLoad(WindowGLFW _)
-        {
-            if(!Engine.IsThreadMain) { ThrowNotMainThread(); }
-            _renderingArea.Initialize();
         }
 
         private void UpdateFrame()
@@ -203,6 +214,9 @@ namespace Elffy
             _frameNum++;
             _windowImpl.SwapBuffers();
         }
+
+        [DoesNotReturn]
+        private static void ThrowNotActivated() => throw new InvalidOperationException("Window is not activated yet.");
 
         [DoesNotReturn]
         private static void ThrowNotMainThread() => throw new InvalidOperationException("Current thread is not main thread of the Engine.");
