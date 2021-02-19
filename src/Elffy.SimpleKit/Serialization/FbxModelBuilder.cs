@@ -62,31 +62,34 @@ namespace Elffy.Serialization
 
             // Parse fbx file
             using var fbx = FbxParser.Parse(resourceLoader.GetStream(name));
-            var vertices = new UnsafeRawList<Vertex>();
-            var indices = new UnsafeRawList<int>();
-            try {
-                BuildCore(fbx, token, ref vertices, ref indices);
+            using var vertices = RawList<Vertex>.New();
+            using var indices = RawList<int>.New();
+            BuildCore(fbx, token, vertices, indices);
 
-                //      ↑ thread pool
-                // --------------------------------------
-                await model.HostScreen.AsyncBack.ToTiming(FrameLoopTiming.Update, token);
-                // --------------------------------------
-                //      ↓ main thread
+            //      ↑ thread pool
+            // --------------------------------------
+            await model.HostScreen.AsyncBack.ToTiming(FrameLoopTiming.Update, token);
+            // --------------------------------------
+            //      ↓ main thread
 
-                model.Shader = PhongShaderSource.Instance;
+            model.Shader = PhongShaderSource.Instance;
 
-                if(model.LifeState == LifeState.Activated || model.LifeState == LifeState.Alive) {
-                    load.Invoke(vertices.AsSpan(), indices.AsSpan());
-                }
+            if(model.LifeState == LifeState.Activated || model.LifeState == LifeState.Alive) {
+                load.Invoke(vertices.AsSpan(), indices.AsSpan());
             }
-            finally {
-                // I don't care about thread.
-                vertices.Dispose();
-                indices.Dispose();
-            }
+
+            //      ↑ main thread
+            // --------------------------------------
+            await UniTask.SwitchToThreadPool();
+            // --------------------------------------
+            //      ↓ thread pool
+
+            // 'using' scope ends here. Dispose resources on a thread pool. 
+            // Nobody knows the thread if exceptions are thrown in this method,
+            // but I don't care about that.
         }
 
-        private static void BuildCore(FbxObject fbx, CancellationToken cancellationToken, ref UnsafeRawList<Vertex> vertices, ref UnsafeRawList<int> indices)
+        private static void BuildCore(FbxObject fbx, CancellationToken cancellationToken, RawList<Vertex> vertices, RawList<int> indices)
         {
             // --------------------------------------
             //      ↓ thread pool
@@ -114,7 +117,7 @@ namespace Elffy.Serialization
                 indices.Capacity += indicesRaw.Length;
 
                 // Resolve geometry data into vertices and indices.
-                ResolveVertices(indicesRaw, positions, normals, ref vertices, ref indices);
+                ResolveVertices(indicesRaw, positions, normals, vertices, indices);
                 cancellationToken.ThrowIfCancellationRequested();
             }
         }
@@ -155,8 +158,8 @@ namespace Elffy.Serialization
         private static void ResolveVertices(ReadOnlySpan<int> indicesRaw,
                                             ReadOnlySpan<double> positions,
                                             ReadOnlySpan<double> normals,
-                                            ref UnsafeRawList<Vertex> verticesMarged,
-                                            ref UnsafeRawList<int> indicesMarged)
+                                            RawList<Vertex> verticesMarged,
+                                            RawList<int> indicesMarged)
         {
             // positions の数は幾何的な頂点の数
             // normals の数は属性が同じ頂点の数 (属性: 座標・法線・頂点色など) (== indices の数)

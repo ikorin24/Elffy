@@ -196,13 +196,14 @@ namespace Elffy.Components
 
                 // 'childrenBuf[i]' means IDs of children of tree[i].
                 // It is like 'List<int>[]'
-                var childrenBuf = new UnsafeRawArray<UnsafeRawList<int>>(boneTree.Length, zeroFill: true);
+                var childrenBuf = new UnsafeRawArray<RawList<int>>(boneTree.Length, zeroFill: true);
 
                 try {
                     // Set children
                     for(int i = 0; i < childrenBuf.Length; i++) {
                         if(tree[i].Parent != null) {
                             var parentID = tree[i].Parent->ID;
+                            childrenBuf[parentID] = RawList<int>.New();
                             childrenBuf[parentID].Add(i);
                         }
                     }
@@ -210,7 +211,7 @@ namespace Elffy.Components
                     // Initialize tree of 'Next'
                     // Create tree to walk around all bones in the way of DFS (depth first search).
                     for(int i = 0; i < boneTree.Length; i++) {
-                        if(childrenBuf[i].Count > 0) {              // If tree[i] has any children
+                        if(childrenBuf[i] != null && childrenBuf[i].Count > 0) {  // If tree[i] has any children
                             var firstChildID = childrenBuf[i][0];
                             tree[i].Next = &tree[firstChildID];     // tree[i].Next is first child of itself.
                         }
