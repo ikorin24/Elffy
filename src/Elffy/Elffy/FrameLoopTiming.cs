@@ -8,6 +8,7 @@ namespace Elffy
     public enum FrameLoopTiming : byte
     {
         // All values of `FrameLoopTiming` can be cast to `ScreenCurrentTiming`. (as a same name)
+        //None = 0, // default is invalid
 
         EarlyUpdate = 1,
         Update = 2,
@@ -27,13 +28,13 @@ namespace Elffy
         AfterRendering = 5,
 
         FrameInitializing = byte.MaxValue,
-        FrameFinalizing = byte.MinValue,
+        FrameFinalizing = byte.MaxValue - 1,
     }
 
     public static class LoopTimingExtension
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsValid(this FrameLoopTiming source)
+        internal static bool IsValid(this FrameLoopTiming source)
         {
             const byte MaxValue = 5;    // max value of FrameLoopTiming
             const byte Default = 0;
@@ -42,7 +43,7 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void ThrowArgExceptionIfInvalid(this FrameLoopTiming source, string msg)
+        internal static void ThrowArgExceptionIfInvalid(this FrameLoopTiming source, string msg)
         {
             if(!source.IsValid()) {
                 Throw(msg);
@@ -52,25 +53,25 @@ namespace Elffy
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Equals(this FrameLoopTiming source, ScreenCurrentTiming timing)
+        public static bool TimingEquals(this FrameLoopTiming source, ScreenCurrentTiming timing)
         {
             return source == (FrameLoopTiming)timing;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Equals(this ScreenCurrentTiming source, FrameLoopTiming timing)
+        public static bool TimingEquals(this ScreenCurrentTiming source, FrameLoopTiming timing)
         {
             return source == (ScreenCurrentTiming)timing;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ScreenCurrentTiming ToCurrentTiming(this FrameLoopTiming timing)
+        internal static ScreenCurrentTiming ToCurrentTiming(this FrameLoopTiming timing)
         {
             return (ScreenCurrentTiming)timing;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static FrameLoopTiming ToLoopTiming(this ScreenCurrentTiming timing)
+        internal static FrameLoopTiming ToLoopTiming(this ScreenCurrentTiming timing)
         {
             return (FrameLoopTiming)timing;
         }

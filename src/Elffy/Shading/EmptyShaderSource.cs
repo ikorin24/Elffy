@@ -58,7 +58,7 @@ namespace Elffy.Shading
         }
 
         private const string VertSource =
-@"#version 440
+@"#version 410
 in vec3 _pos;
 uniform mat4 _mvp;
 void main()
@@ -67,7 +67,7 @@ void main()
 }
 ";
         private const string FragSource =
-@"#version 440
+@"#version 410
 out vec4 _fragColor;
 void main()
 {

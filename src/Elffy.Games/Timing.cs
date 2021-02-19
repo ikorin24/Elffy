@@ -3,6 +3,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Runtime.CompilerServices;
+using System.ComponentModel;
 using Cysharp.Threading.Tasks;
 
 namespace Elffy
@@ -18,17 +19,37 @@ namespace Elffy
         // So the user MUST call Initialize() before using this class.
         private static IHostScreen? _screen;
         private static AsyncBackEndPoint? _endPoint;
+        private static FrameEnumerableSource? _frames;
 
-        internal static void Initialize(IHostScreen screen)
+        internal static AsyncBackEndPoint EndPoint => _endPoint!;
+
+        public static FrameEnumerableSource Frames => _frames!;
+
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void Initialize(IHostScreen screen)
         {
             Debug.Assert(_endPoint is null);
             _screen = screen;
             _endPoint = screen.AsyncBack;
+            _frames = screen.Frames;
         }
 
         /// <summary>Get current screen frame loop timing.</summary>
         /// <remarks>If not main thread of <see cref="IHostScreen"/>, always returns <see cref="ScreenCurrentTiming.OutOfFrameLoop"/></remarks>
         public static ScreenCurrentTiming CurrentTiming => _screen!.CurrentTiming;
+
+        /// <summary>Wait for specified timing if current timing is not the timing. Otherwise, do nothing.</summary>
+        /// <param name="timing">timing to wait</param>
+        /// <param name="cancellation">cancellation token</param>
+        /// <returns>awaitable object</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static UniTask Ensure(FrameLoopTiming timing, CancellationToken cancellation = default)
+        {
+            if(CurrentTiming.TimingEquals(timing)) {
+                return UniTask.CompletedTask;
+            }
+            return ToTiming(timing, cancellation).AsUniTask();
+        }
 
         /// <summary>Wait for specified timing.</summary>
         /// <param name="timing">timing to wait</param>

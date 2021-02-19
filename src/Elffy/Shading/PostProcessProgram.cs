@@ -1,7 +1,7 @@
 ﻿#nullable enable
 using System;
 using Elffy.OpenGL;
-using Elffy.Exceptions;
+using Elffy.Core;
 using OpenTK.Graphics.OpenGL4;
 
 namespace Elffy.Shading
@@ -16,13 +16,14 @@ namespace Elffy.Shading
         private IBO _ibo;
         private VAO _vao;
 
-        internal PostProcessProgram(PostProcess source, in ProgramObject program, in VBO vbo, in IBO ibo, in VAO vao)
+        internal PostProcessProgram(PostProcess source, in ProgramObject program, in VBO vbo, in IBO ibo, in VAO vao, IHostScreen associatedScreen)
         {
             _source = source;
             _program = program;
             _vbo = vbo;
             _ibo = ibo;
             _vao = vao;
+            ContextAssociatedMemorySafety.Register(this, associatedScreen);
         }
 
         ~PostProcessProgram() => Dispose(false);
@@ -55,7 +56,7 @@ namespace Elffy.Shading
                 VAO.Delete(ref _vao);
             }
             else {
-                throw new MemoryLeakException(typeof(PostProcessProgram));
+                ContextAssociatedMemorySafety.OnFinalized(this);
             }
         }
     }

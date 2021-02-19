@@ -1,5 +1,9 @@
 ﻿#nullable enable
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
+using System.Text;
+using System.Linq;
 
 namespace ElffyGenerator
 {
@@ -14,6 +18,96 @@ namespace ElffyGenerator
 */
 
 ";
+        }
+
+        public static string GetAttrArgTypeName(AttributeSyntax attr, int argNum, Compilation compilation)
+        {
+            var expr = (TypeOfExpressionSyntax)attr.ArgumentList!.Arguments[argNum].Expression;
+
+            return compilation.GetSemanticModel(attr.SyntaxTree)
+                              .GetSymbolInfo(expr.Type)
+                              .Symbol!.ToString();      // fullname
+        }
+
+        public static string GetAttrArgString(AttributeSyntax attr, int argNum, Compilation compilation)
+        {
+            return compilation.GetSemanticModel(attr.SyntaxTree)
+                              .GetConstantValue(attr.ArgumentList!.Arguments[argNum].Expression).Value!.ToString();
+        }
+
+        public static int GetAttrArgInt(AttributeSyntax attr, int argNum, Compilation compilation)
+        {
+            var value = compilation.GetSemanticModel(attr.SyntaxTree)
+                                   .GetConstantValue(attr.ArgumentList!.Arguments[argNum].Expression).Value;
+            return (int)value!;
+        }
+
+        public static bool GetAttrArgBool(AttributeSyntax attr, int argNum, Compilation compilation)
+        {
+            return (bool)compilation.GetSemanticModel(attr.SyntaxTree)
+                                    .GetConstantValue(attr.ArgumentList!.Arguments[argNum].Expression).Value!;
+        }
+
+        public static string GetAttrArgEnumNum(AttributeSyntax attr, int argNum, Compilation compilation)
+        {
+            return compilation.GetSemanticModel(attr.SyntaxTree)
+                              .GetConstantValue(attr.ArgumentList!.Arguments[argNum].Expression).Value!.ToString();
+        }
+
+        public static bool IsAwaitableMethod(MethodDeclarationSyntax method, Compilation compilation)
+        {
+            var methodGetAwaiter = compilation.GetSemanticModel(method.ReturnType.SyntaxTree)
+                                     .GetTypeInfo(method.ReturnType)
+                                     .Type!
+                                     .GetMembers()
+                                     .OfType<IMethodSymbol>()
+                                     .FirstOrDefault(m => m.Name == "GetAwaiter" && m.Parameters.IsEmpty);
+
+            if(methodGetAwaiter is null) {
+                return false;
+            }
+
+            var required = (get_IsCompleted: false, OnCompleted: false, GetResult: false);
+
+            foreach(var member in methodGetAwaiter.ReturnType.GetMembers()) {
+                switch(member.Name) {
+                    case "get_IsCompleted": {
+                        if(member is IMethodSymbol prop && prop.ReturnType.SpecialType == SpecialType.System_Boolean) {
+                            required.get_IsCompleted = true;
+                        }
+                        break;
+                    }
+                    case "OnCompleted": {
+                        if(member is IMethodSymbol m && m.ReturnsVoid && m.Parameters.Length == 1 && m.Parameters[0].Type.ToString() == "System.Action") {
+                            required.OnCompleted = true;
+                        }
+                        break;
+                    }
+                    case "GetResult": {
+                        if(member is IMethodSymbol m && m.Parameters.Length == 0) {
+                            required.GetResult = true;
+                        }
+                        break;
+                    }
+                    default:
+                        break;
+                }
+            }
+
+            return required.get_IsCompleted && required.OnCompleted && required.GetResult;
+        }
+    }
+
+    internal static class StringBuilderExtension
+    {
+        public static StringBuilder AppendIf(this StringBuilder sb, bool condition, string value)
+        {
+            return condition ? sb.Append(value) : sb;
+        }
+
+        public static StringBuilder AppendChoose(this StringBuilder sb, bool condition, string trueValue, string falseValue)
+        {
+            return condition ? sb.Append(trueValue) : sb.Append(falseValue);
         }
     }
 }

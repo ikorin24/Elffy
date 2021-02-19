@@ -18,6 +18,7 @@ namespace Elffy.Core
         private bool _disposed;
         private Matrix4 _uiProjection;
         private Vector2i _size;
+        private Vector2 _contentScale;
         private readonly CancellationTokenSource _runningTokenSource;
 
         [ThreadStatic]
@@ -38,64 +39,25 @@ namespace Elffy.Core
         public Mouse Mouse { get; } = new Mouse();
         public Keyboard Keyboard { get; } = new Keyboard();
 
-        public AsyncBackEndPoint AsyncBack { get; } = new AsyncBackEndPoint();
+        public AsyncBackEndPoint AsyncBack { get; }
+
+        public FrameEnumerableSource Frames { get; }
 
         public ScreenCurrentTiming CurrentTiming => _currentTiming;
-
-        public int Width
-        {
-            get => _size.X;
-            set
-            {
-                if(value < 0) { ThrowOutOfRange(); }
-                if(_size.X == value) { return; }
-                _size.X = value;
-                OnSizeChanged(_size);
-
-                void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(value), value, $"{nameof(value)} is out of range.");
-            }
-        }
-
-        public int Height
-        {
-            get => _size.Y;
-            set
-            {
-                if(value < 0) { ThrowOutOfRange(); }
-                if(_size.Y == value) { return; }
-                _size.Y = value;
-                OnSizeChanged(_size);
-
-                void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(value), value, $"{nameof(value)} is out of range.");
-            }
-        }
-
-        public Vector2i Size
-        {
-            get => _size;
-            set
-            {
-                if(value.X < 0) { ThrowWidthOutOfRange(); }
-                if(value.Y < 0) { ThrowHeightOutOfRange(); }
-                if(_size == value) { return; }
-                _size = value;
-                OnSizeChanged(_size);
-
-                void ThrowWidthOutOfRange() => throw new ArgumentOutOfRangeException("Width", value.X, $"width is out of range.");
-                void ThrowHeightOutOfRange() => throw new ArgumentOutOfRangeException("Height", value.Y, $"height is out of range.");
-            }
-        }
 
         internal RenderingArea(IHostScreen screen)
         {
             OwnerScreen = screen;
+            AsyncBack = new AsyncBackEndPoint(screen);
+            Frames = new FrameEnumerableSource(AsyncBack);
             Layers = new LayerCollection(this);
             _runningTokenSource = new CancellationTokenSource();
         }
 
         public void Initialize()
         {
-            GL.ClearColor(Color4.Gray);
+            var clearColor = Color4.Gray;
+            GL.ClearColor(clearColor.R, clearColor.G, clearColor.B, clearColor.A);
             GL.Enable(EnableCap.DepthTest);
 
             // Enable alpha blending.
@@ -109,10 +71,18 @@ namespace Elffy.Core
 
             GL.Disable(EnableCap.Multisample);  // I don't care about MSAA
 
-            Size = OwnerScreen.ClientSize;  // Initialize viewport and so on.
+            // Initialize viewport and so on.
+            _size = OwnerScreen.ClientSize;
+            _contentScale = OwnerScreen.ContentScale;
+            OnSizeChanged();
 
             Layers.UILayer.Initialize();
-            Initialized?.Invoke(OwnerScreen);
+            try {
+                Initialized?.Invoke(OwnerScreen);
+            }
+            catch {
+                // Don't throw. (Ignore exceptions in user code)
+            }
 
             foreach(var layer in Layers.AsReadOnlySpan()) {
                 layer.ApplyAdd();
@@ -196,6 +166,8 @@ namespace Elffy.Core
 
             _currentTiming = ScreenCurrentTiming.OutOfFrameLoop;
 
+            ContextAssociatedMemorySafety.CollectIfExist(OwnerScreen);
+
             if(isLastFrame) {
                 Dispose();
             }
@@ -232,21 +204,38 @@ namespace Elffy.Core
             layers.Clear();
 
             AsyncBack.AbortAll();
+            ContextAssociatedMemorySafety.EnsureCollect(OwnerScreen);   // Must be called before the opengl context is deleted.
             Disposed?.Invoke();
         }
 
-        private void OnSizeChanged(in Vector2i newSize)
+        public void SetClientSize(in Vector2i size)
         {
+            if(_size == size) { return; }
+            _size = size;
+            OnSizeChanged();
+        }
+
+        public void SetContentScale(in Vector2 scale)
+        {
+            _contentScale = scale;
+            OnSizeChanged();
+        }
+
+        private void OnSizeChanged()
+        {
+            var size = _size;
+            var scale = _contentScale;
+
             // Change view and projection matrix (World).
-            Camera.ChangeScreenSize(newSize.X, newSize.Y);
+            Camera.ChangeScreenSize(size.X, size.Y);
 
             // Change projection matrix (UI)
-            GL.Viewport(0, 0, newSize.X, newSize.Y);
-            Matrix4.OrthographicProjection(0, newSize.X, 0, newSize.Y, UI_NEAR, UI_FAR, out _uiProjection);
+            GL.Viewport(0, 0, (int)(size.X * scale.X), (int)(size.Y * scale.Y));
+            Matrix4.OrthographicProjection(0, size.X, 0, size.Y, UI_NEAR, UI_FAR, out _uiProjection);
             var uiRoot = Layers.UILayer.UIRoot;
-            uiRoot.Size = newSize;
+            uiRoot.Size = size;
 
-            Debug.WriteLine($"Size changed ({newSize.X}, {newSize.Y})");
+            Debug.WriteLine($"Size changed ({size.X}, {size.Y})");
         }
     }
 }

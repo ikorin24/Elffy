@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Diagnostics.CodeAnalysis;
 using Elffy.Core;
-using Elffy.AssemblyServices;
 
 namespace Elffy
 {
@@ -58,10 +57,12 @@ namespace Elffy
         public Layer Layer
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => AssemblyState.IsDebug ? (Layer?)_layer ?? throw new InvalidOperationException($"{nameof(FrameObject)} is not activated yet or already dead.")
-                                         : Unsafe.As<Layer?>(_layer) ?? throw new InvalidOperationException($"{nameof(FrameObject)} is not activated yet or already dead.");
-
-            // ↑ Use cast in the debug build. The branch is removed by JIT.
+            get =>
+#if DEBUG
+            (Layer?)_layer ?? throw new InvalidOperationException($"{nameof(FrameObject)} is not activated yet or already dead.");
+#else
+            Unsafe.As<Layer?>(_layer) ?? throw new InvalidOperationException($"{nameof(FrameObject)} is not activated yet or already dead.");
+#endif
         }
 
 
@@ -108,7 +109,6 @@ namespace Elffy
             if(screen is null) {
                 ThrowInvalidLayer();
             }
-            screen.ThrowIfNotMainThread();
             if(Engine.CurrentContext != screen) {
                 ThrowContextMismatch();
             }
@@ -134,7 +134,6 @@ namespace Elffy
 
             var screen = GetHostScreen(layer);
             Debug.Assert(screen is not null);
-            Debug.Assert(screen.IsThreadMain);
             Debug.Assert(Engine.CurrentContext == screen);
 
             _hostScreen = screen;
@@ -149,10 +148,11 @@ namespace Elffy
         /// <summary>Terminate the object and remove it from the engine.</summary>
         public void Terminate()
         {
-            _hostScreen?.ThrowIfNotMainThread();
-
             if(_state != LifeState.Activated && _state != LifeState.Alive) {
                 return;
+            }
+            if(Engine.CurrentContext != _hostScreen) {
+                ThrowContextMismatch();
             }
 
             Debug.Assert(_layer is not null);
@@ -160,6 +160,8 @@ namespace Elffy
             _state = LifeState.Terminated;
             _layer.RemoveFrameObject(this);
             OnTerminated();
+
+            [DoesNotReturn] static void ThrowContextMismatch() => throw new InvalidOperationException("Invalid current context.");
         }
 
         protected virtual void OnEarlyUpdate() => EarlyUpdated?.Invoke(this);

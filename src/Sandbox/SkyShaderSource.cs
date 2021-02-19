@@ -33,7 +33,7 @@ namespace Sandbox
 
 
         private const string VertSource =
-@"#version 440
+@"#version 410
 precision highp float;
 
 in vec3 vPos;
@@ -50,7 +50,7 @@ void main()
 ";
 
         private const string FragSource =
-@"#version 440
+@"#version 410
 precision highp float;
 
 in vec2 UV;

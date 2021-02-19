@@ -20,11 +20,6 @@ namespace Elffy.Core
         /// <summary>The property returns true</summary>
         public override bool CanRead => true;
 
-        // [NOTE]
-        // Stream から System.Drawing.Bitmap を作る時に、Stream.CanSeek が false だと
-        // Stream から MemoryStream へのコピーが起こり、メモリの無駄。
-        // Seek を許可しても特に問題はないため、CanSeek は true にして Seek も実装する。
-
         /// <summary>The property returns true</summary>
         public override bool CanSeek => true;
 

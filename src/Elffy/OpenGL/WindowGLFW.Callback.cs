@@ -20,6 +20,7 @@ namespace Elffy.OpenGL
         private GLFWCallbacks.WindowCloseCallback? _closeCallback;
         private GLFWCallbacks.WindowPosCallback? _posCallback;
         private GLFWCallbacks.WindowSizeCallback? _sizeCallback;
+        private GLFWCallbacks.WindowContentScaleCallback? _contentScaleCallback;
         private GLFWCallbacks.WindowIconifyCallback? _iconifyCallback;
         private GLFWCallbacks.WindowFocusCallback? _focusCallback;
         private GLFWCallbacks.CharCallback? _charCallback;
@@ -44,6 +45,8 @@ namespace Elffy.OpenGL
 
         public event Action<WindowGLFW, WindowPositionEventArgs>? Move;
         public event Action<WindowGLFW, ResizeEventArgs>? Resize;
+
+        public event Action<WindowGLFW, Vector2>? ContentScaleChanged;
 
         public event Action<WindowGLFW>? Refresh;
 
@@ -95,6 +98,13 @@ namespace Elffy.OpenGL
                 Resize?.Invoke(this, new ResizeEventArgs(width, height));
             };
             GLFW.SetWindowSizeCallback(_window, _sizeCallback);
+
+            _contentScaleCallback = (_, xScale, yScale) =>
+            {
+                _contentScale = new Vector2(xScale, yScale);
+                ContentScaleChanged?.Invoke(this, _contentScale);
+            };
+            GLFW.SetWindowContentScaleCallback(_window, _contentScaleCallback);
 
             _closeCallback = _ =>
             {

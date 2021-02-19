@@ -1,8 +1,6 @@
 ﻿#nullable enable
 using System;
 using System.Diagnostics;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.Diagnostics.CodeAnalysis;
 using OpenTK.Graphics.OpenGL4;
 using Elffy.Core;
@@ -83,13 +81,10 @@ namespace Elffy.OpenGL
         }
 
         /// <summary>Call glTexImage2D</summary>
-        /// <param name="bitmap">texture to load</param>
-        public static unsafe void Image2D(Bitmap bitmap)
+        /// <param name="bitmap">image to load</param>
+        public static unsafe void Image2D(Image image)
         {
-            using(var pixels = bitmap.GetPixels(ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb)) {
-                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, pixels.Width, pixels.Height,
-                              0, TKPixelFormat.Bgra, TKPixelType.UnsignedByte, pixels.Ptr);
-            }
+            Image2D(new Vector2i(image.Width, image.Height), image.GetPtr());
         }
 
         /// <summary>Call glTexImage2D</summary>

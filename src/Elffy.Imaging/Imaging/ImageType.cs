@@ -2,7 +2,7 @@
 
 namespace Elffy.Imaging
 {
-    public enum BitmapType
+    public enum ImageType
     {
         Png,
         Jpg,

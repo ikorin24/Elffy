@@ -3,6 +3,7 @@ using System;
 using System.Threading;
 using System.Runtime.CompilerServices;
 using Cysharp.Threading.Tasks;
+using System.Diagnostics;
 
 namespace Elffy
 {
@@ -12,9 +13,10 @@ namespace Elffy
         private readonly Awaiter _awaiter;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal FrameLoopAwaitable(AsyncBackEndPoint endPoint, FrameLoopTiming eventType, CancellationToken cancellationToken)
+        internal FrameLoopAwaitable(AsyncBackEndPoint endPoint, FrameLoopTiming timing, CancellationToken cancellationToken)
         {
-            _awaiter = new Awaiter(endPoint, eventType, cancellationToken);
+            Debug.Assert(timing.IsValid());
+            _awaiter = new Awaiter(endPoint, timing, cancellationToken);
         }
 
         /// <summary>Get awaiter of <see cref="FrameLoopAwaitable"/></summary>
@@ -74,19 +76,22 @@ namespace Elffy
             await this;
         }
 
+        public static implicit operator UniTask(FrameLoopAwaitable awaitable) => awaitable.AsUniTask();
+
         public readonly struct Awaiter : ICriticalNotifyCompletion, INotifyCompletion
         {
             private readonly AsyncBackEndPoint _endPoint;
-            private readonly FrameLoopTiming _eventType;
+            private readonly FrameLoopTiming _timing;
             private readonly CancellationToken _cancellationToken;
 
             public bool IsCompleted => false;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            internal Awaiter(AsyncBackEndPoint endPoint, FrameLoopTiming eventType, CancellationToken cancellationToken)
+            internal Awaiter(AsyncBackEndPoint endPoint, FrameLoopTiming timing, CancellationToken cancellationToken)
             {
+                Debug.Assert(timing.IsValid());
                 _endPoint = endPoint;
-                _eventType = eventType;
+                _timing = timing;
                 _cancellationToken = cancellationToken;
             }
 
@@ -100,14 +105,14 @@ namespace Elffy
             public void OnCompleted(Action continuation)
             {
                 _cancellationToken.ThrowIfCancellationRequested();
-                _endPoint?.Post(_eventType, continuation);
+                _endPoint?.Post(_timing, continuation);
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void UnsafeOnCompleted(Action continuation)
             {
                 _cancellationToken.ThrowIfCancellationRequested();
-                _endPoint?.Post(_eventType, continuation);
+                _endPoint?.Post(_timing, continuation);
             }
         }
     }

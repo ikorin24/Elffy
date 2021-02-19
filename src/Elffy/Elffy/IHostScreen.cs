@@ -31,6 +31,10 @@ namespace Elffy
         /// <summary>Get pixel size of rendering area.</summary>
         Vector2i ClientSize { get; set; }
 
+        /// <summary>Get content scale.</summary>
+        /// <remarks>The value is usually (1.0, 1.0) in the case of most screens. Retina display MacOS may be other values.</remarks>
+        Vector2 ContentScale { get; }
+
         /// <summary>Get location of the <see cref="IHostScreen"/></summary>
         Vector2i Location { get; set; }
 
@@ -40,8 +44,13 @@ namespace Elffy
         /// <summary>Get time of current frame. (This is NOT real time.)</summary>
         TimeSpan Time { get; }
 
+        /// <summary>Get time span between frames</summary>
+        TimeSpan FrameDelta { get; }
+
         /// <summary>Get number of current frame.</summary>
         long FrameNum { get; }
+
+        FrameEnumerableSource Frames { get; }
 
         /// <summary>Get screen running token, which is canceled when screen got closed.</summary>
         CancellationToken RunningToken { get; }
@@ -53,23 +62,17 @@ namespace Elffy
         /// <remarks>If not main thread of <see cref="IHostScreen"/>, always returns <see cref="ScreenCurrentTiming.OutOfFrameLoop"/></remarks>
         ScreenCurrentTiming CurrentTiming { get; }
 
-        /// <summary>Return whether current thread is main thread of <see cref="IHostScreen"/> or not</summary>
-        bool IsThreadMain { get; }
-
         /// <summary>Event which fires on initialized</summary>
         event Action<IHostScreen> Initialized;
 
         /// <summary>Event which fires on closing</summary>
         event ClosingEventHandler<IHostScreen> Closing;
 
-        /// <summary>Show screen</summary>
-        void Show();
+        /// <summary>Acticate screen</summary>
+        void Activate();
 
         /// <summary>Close screen</summary>
         void Close();
-
-        /// <summary>Throw an exception if current thread is not main of the <see cref="IHostScreen"/></summary>
-        void ThrowIfNotMainThread();
 
         /// <summary>Execute next frame</summary>
         void HandleOnce();

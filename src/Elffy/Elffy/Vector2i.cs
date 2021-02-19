@@ -2,7 +2,6 @@
 using Cysharp.Text;
 using System;
 using System.ComponentModel;
-using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
@@ -76,15 +75,10 @@ namespace Elffy
         public static implicit operator TKVector2i(in Vector2i vec) => UnsafeEx.As<Vector2i, TKVector2i>(in vec);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Vector2i(in TKVector2i vec) => UnsafeEx.As<TKVector2i, Vector2i>(in vec);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Vector2i(in Point point) => UnsafeEx.As<Point, Vector2i>(in point);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator Vector2i(in Vector2 vec) => new Vector2i((int)vec.X, (int)vec.Y);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator Vector2(in Vector2i vec) => new Vector2(vec.X, vec.Y);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Point(in Vector2i vec) => UnsafeEx.As<Vector2i, Point>(in vec);
     }
 }

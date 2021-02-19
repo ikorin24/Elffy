@@ -2,7 +2,6 @@
 using System;
 using System.Threading;
 using System.Diagnostics.CodeAnalysis;
-using Elffy.Exceptions;
 using Elffy.Core;
 using Elffy.Shapes;
 using Elffy.Shading;

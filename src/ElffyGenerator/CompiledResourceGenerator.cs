@@ -22,19 +22,32 @@ namespace Elffy
 {
     [System.Diagnostics.Conditional(""COMPILE_TIME_ONLY"")]
     [AttributeUsage(AttributeTargets.Assembly, Inherited = false, AllowMultiple = false)]
-    internal sealed class GenerateResourceFileAttribute : Attribute
+    internal sealed class GenerateLocalResourceAttribute : Attribute
     {
-        public GenerateResourceFileAttribute(string resourceDir, string output, bool forceCompile = false) { }
+        public GenerateLocalResourceAttribute(string resourceDir, string output, bool forceCompile = false) { }
     }
 }
 ";
-        private readonly Regex _attrRegex = new Regex(@"^(global::)?(Elffy\.)?GenerateResourceFile(Attribute)?$");
+        private readonly Regex _attrRegex = new Regex(@"^(global::)?(Elffy\.)?GenerateLocalResource(Attribute)?$");
 
         public void Execute(GeneratorExecutionContext context)
         {
+            // Dump the attribute.
             var attributeText = GeneratorUtil.GetGeneratorSigniture(typeof(CompiledResourceGenerator)) + AttributeText;
-            context.AddSource("GenerateResourceFileAttribute", SourceText.From(attributeText, Encoding.UTF8));
+            context.AddSource("GenerateLocalResourceAttribute", SourceText.From(attributeText, Encoding.UTF8));
 
+            // Ignore exceptions anytime because source generator must dump the attribute completely.
+            // (Invalid code is often input when incremental build of IDE is enabled, which occurs many exceptions.)
+            try {
+                Create(context);
+            }
+            catch {
+                // Ignore exceptions.
+            }
+        }
+
+        private void Create(GeneratorExecutionContext context)
+        {
             var compilation = context.Compilation;
             var attr = compilation
                    .SyntaxTrees

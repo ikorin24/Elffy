@@ -2,6 +2,7 @@
 using System;
 using System.Threading;
 using System.Diagnostics;
+using System.ComponentModel;
 using Elffy.InputSystem;
 
 namespace Elffy
@@ -21,6 +22,9 @@ namespace Elffy
         /// <summary>Get time of current frame. (This is NOT real time.)</summary>
         public static TimeSpan Time => _screen!.Time;
 
+        /// <summary>Get time span between frames</summary>
+        public static TimeSpan FrameDelta => _screen!.FrameDelta;
+
         /// <summary>Get number of current frame.</summary>
         public static long FrameNum => _screen!.FrameNum;
 
@@ -36,19 +40,14 @@ namespace Elffy
         /// <summary>Get camera</summary>
         public static Camera Camera { get; private set; } = null!;
 
-        /// <summary>Return whether current thread is main thread of the game or not</summary>
-        public static bool IsThreadMain => _screen!.IsThreadMain;
-
-        /// <summary>Throw an exception if current thread is not main of the game</summary>
-        public static void ThrowIfNotMainThread() => _screen!.ThrowIfNotMainThread();
-
         /// <summary>Close the game</summary>
         public static void Close()
         {
             _screen!.Close();
         }
 
-        internal static void Initialize(IHostScreen screen)
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void Initialize(IHostScreen screen)
         {
             Debug.Assert(_screen is null);
             _screen = screen;

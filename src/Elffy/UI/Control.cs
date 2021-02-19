@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using System;
-using System.Drawing;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Elffy;
@@ -337,10 +336,13 @@ namespace Elffy.UI
         /// <returns>マウスオーバーしているか</returns>
         internal bool MouseOverTest(Mouse mouse)
         {
+            var mousePos = (Vector2i)mouse.Position;
             return IsVisible &&
                    IsHitTestVisible &&
-                   new Rectangle((int)_absolutePosition.X, (int)_absolutePosition.Y, Width, Height)
-                        .Contains((int)mouse.Position.X, (int)mouse.Position.Y);
+                   _absolutePosition.X <= mousePos.X &&
+                   mousePos.X < _absolutePosition.X + Width &&
+                   _absolutePosition.Y <= mousePos.Y &&
+                   mousePos.Y < _absolutePosition.Y + Height;
         }
 
         /// <summary>ヒットテストの結果を通知します</summary>

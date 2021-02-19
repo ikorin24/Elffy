@@ -1,7 +1,7 @@
 ﻿#nullable enable
 using System;
 
-namespace Elffy.Exceptions
+namespace Elffy
 {
     public class ResourceNotFoundException : Exception
     {

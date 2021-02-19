@@ -94,26 +94,35 @@ namespace Elffy
 
         public void Execute(GeneratorExecutionContext context)
         {
+            // Dump the attribute.
             var attributeSource = GeneratorUtil.GetGeneratorSigniture(typeof(CustomVertexGenerator)) + AttributeSource;
             context.AddSource("GenerateCustomVertexAttribute", SourceText.From(attributeSource, Encoding.UTF8));
-            var compilation = context.Compilation;
-            var attrs = compilation
-                    .SyntaxTrees
-                    .SelectMany(s => s.GetRoot().DescendantNodes())
-                    .Where(s => s.IsKind(SyntaxKind.Attribute))
-                    .OfType<AttributeSyntax>()
-                    .Where(s => _attrRegex.IsMatch(s.Name.ToString()))
-                    .ToArray();
-            if(!attrs.Any()) {
-                return;
+
+            // Ignore exceptions anytime because source generator must dump the attribute completely.
+            // (Invalid code is often input when incremental build of IDE is enabled, which occurs many exceptions.)
+            try {
+                var compilation = context.Compilation;
+                var attrs = compilation
+                        .SyntaxTrees
+                        .SelectMany(s => s.GetRoot().DescendantNodes())
+                        .Where(s => s.IsKind(SyntaxKind.Attribute))
+                        .OfType<AttributeSyntax>()
+                        .Where(s => _attrRegex.IsMatch(s.Name.ToString()))
+                        .ToArray();
+                if(!attrs.Any()) {
+                    return;
+                }
+                foreach(var attr in attrs) {
+                    if(attr.ArgumentList is null) { throw new Exception("Can't be null here."); }
+                    var fields = ParseArgs(attr,
+                                           compilation.GetSemanticModel(attr.SyntaxTree),
+                                           out var vertexTypeName);
+                    var source = CreateSource(vertexTypeName, fields);
+                    context.AddSource(vertexTypeName, SourceText.From(source, Encoding.UTF8));
+                }
             }
-            foreach(var attr in attrs) {
-                if(attr.ArgumentList is null) { throw new Exception("Can't be null here."); }
-                var fields = ParseArgs(attr,
-                                       compilation.GetSemanticModel(attr.SyntaxTree),
-                                       out var vertexTypeName);
-                var source = CreateSource(vertexTypeName, fields);
-                context.AddSource(vertexTypeName, SourceText.From(source, Encoding.UTF8));
+            catch {
+                // Ignore exceptions.
             }
         }
 

@@ -42,8 +42,8 @@ namespace Elffy.Effective.Unsafes
                             throw;
                         }
                         _array.Dispose();
-                        _array = newArray;
                     }
+                    _array = newArray;
                 }
             }
         }
@@ -131,9 +131,22 @@ namespace Elffy.Effective.Unsafes
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly Span<T> AsSpan()
         {
             return _array.AsSpan(0, _count);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly Span<T> AsSpan(int start)
+        {
+            return _array.AsSpan(start, _count - start);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly Span<T> AsSpan(int start, int length)
+        {
+            return _array.AsSpan(start, length);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]  // uncommon path

@@ -10,7 +10,7 @@ namespace Elffy.Shading
     public abstract class PostProcess
     {
         private const string VertShaderSource =
-@"#version 440
+@"#version 410
 in vec3 _pos;
 in vec2 _v_uv;
 out vec2 _uv;
@@ -77,7 +77,7 @@ void main()
                 DefineLocation(new VertexDefinition<VertexSlim>(program));
                 VAO.Unbind();
                 VBO.Unbind();
-                return new PostProcessProgram(this, program, vbo, ibo, vao);
+                return new PostProcessProgram(this, program, vbo, ibo, vao, Engine.CurrentContext!);
             }
             catch {
                 VBO.Unbind();

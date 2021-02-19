@@ -9,7 +9,7 @@ namespace Elffy.Components
 {
     internal sealed class PmxModelParts : ISingleOwnerComponent, IDisposable
     {
-        private SingleOwnerComponentCore<PmxModelParts> _core = new(true);
+        private SingleOwnerComponentCore _core = new(true);
 
         private bool _disposed;
         private ValueTypeRentMemory<int> _vertexCountArray;
@@ -44,15 +44,9 @@ namespace Elffy.Components
 
         ~PmxModelParts() => Dispose(false);
 
-        public void OnAttached(ComponentOwner owner)
-        {
-            _core.OnAttached(owner);
-        }
+        void IComponent.OnAttached(ComponentOwner owner) => _core.OnAttached<PmxModelParts>(owner, this);
 
-        public void OnDetached(ComponentOwner owner)
-        {
-            _core.OnDetachedForDisposable(owner, this);
-        }
+        void IComponent.OnDetached(ComponentOwner owner) => _core.OnDetached<PmxModelParts>(owner, this);
 
         public void Dispose()
         {

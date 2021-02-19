@@ -7,7 +7,7 @@
     <LangVersion>9.0</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Nullable>enable</Nullable>
-    <ApplicationIcon>Elffy.ico</ApplicationIcon>
+    <ApplicationIcon>Resources/icon.ico</ApplicationIcon>
     <Configurations>Debug;Release</Configurations>
   </PropertyGroup>
 
@@ -17,7 +17,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Elffy.Games\Elffy.Games.csproj" />
-    <ProjectReference Include="..\Elffy\Elffy.csproj" />
     <ProjectReference Include="..\Elffy.SimpleKit\Elffy.SimpleKit.csproj" />
     <ProjectReference Include="..\ElffyGenerator\ElffyGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>

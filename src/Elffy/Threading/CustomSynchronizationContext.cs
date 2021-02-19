@@ -47,7 +47,8 @@ namespace Elffy.Threading
             return new CustomSynchronizationContext(DestinationThread, _syncContextReceiver);
         }
 
-        internal static bool CreateIfNeeded(out CustomSynchronizationContext? syncContext, out SyncContextReceiver? reciever)
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static bool CreateIfNeeded(out CustomSynchronizationContext? syncContext, out SyncContextReceiver? reciever)
         {
             var context = AsyncOperationManager.SynchronizationContext;
             if(context is null || context.GetType() == typeof(SynchronizationContext)) {
@@ -64,7 +65,8 @@ namespace Elffy.Threading
             }
         }
 
-        internal static void Restore()
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void Restore()
         {
             if(AsyncOperationManager.SynchronizationContext is CustomSynchronizationContext) {
                 AsyncOperationManager.SynchronizationContext = _previousSyncContext!;   // It is valid to set null
