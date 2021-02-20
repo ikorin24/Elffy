@@ -199,6 +199,26 @@ namespace Elffy.Effective.Unsafes
             CountRef() = 0;
         }
 
+        public Span<T> Extend(int count, bool zeroFill = false)
+        {
+            if(count < 0) { ThrowOutOfRange(nameof(count)); }
+            if(count == 0) { return Span<T>.Empty; }
+
+            ref readonly var array = ref ArrayRef();
+            ref var itemCount = ref CountRef();
+
+            var margin = array.Length - itemCount;
+            if(margin < count) {
+                Capacity += count - margin;
+            }
+            var newSpan = array.AsSpan(itemCount, count);
+            itemCount += count;
+            if(zeroFill) {
+                newSpan.Clear();
+            }
+            return newSpan;
+        }
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Span<T> AsSpan()
