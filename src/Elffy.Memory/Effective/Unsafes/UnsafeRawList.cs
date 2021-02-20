@@ -1,167 +1,340 @@
 ﻿#nullable enable
 using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
+using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace Elffy.Effective.Unsafes
 {
-    /// <summary>Variable-length array on unmanaged memory. (like <see cref="List{T}"/>)</summary>
+    /// <summary>Provides list which is allocated in unmanaged memory.</summary>
     /// <remarks>
-    /// [NOTE] if you use debugger viewer, enable zero-initialized at constructor. (otherwise shows random values or throws an exception in debugger.)
+    /// 1) DO NOT create a default instance (<see langword="new"/> <see cref="UnsafeRawList{T}"/>(), or <see langword="default"/>).
+    ///    That means <see langword="null"/> for reference types.<para/>
+    ///    Use <see cref="New"/> instead.<para/>
+    /// 2) You MUST call <see cref="Dispose"/> after use it. Or it causes MEMORY LEAK !<para/>
+    /// 3) It DOES NOT check any boundary of access by index.<para/>
     /// </remarks>
-    /// <typeparam name="T">type of element</typeparam>
+    /// <typeparam name="T">element type</typeparam>
     [DebuggerTypeProxy(typeof(UnsafeRawListDebuggerTypeProxy<>))]
-    [DebuggerDisplay("UnsafeRawList<{typeof(T).Name}>[{Count}]")]
-    public unsafe struct UnsafeRawList<T> : IDisposable where T : unmanaged
+    [DebuggerDisplay("{DebugView,nq}")]
+    public unsafe readonly struct UnsafeRawList<T> : IDisposable, IEquatable<UnsafeRawList<T>> where T : unmanaged
     {
-        private UnsafeRawArray<T> _array;
-        private int _count;
+        // =============================================================
+        // new UnsafeRawList<T>(n)   (n > 0)
+        //
+        //   UnsafeRawList<T>
+        //   +--------------+
+        //   |    IntPtr    |
+        //   | 4 or 8 bytes |
+        //   |    _ptr      |
+        //   +----|---------+             on unmanaged memory
+        //        |    +---------+----------+--------------+
+        //        |    |   int   |    UnsafeRawArray<T>    |
+        //        |    |         |   int    |    IntPtr    |
+        //        `--> | 4 bytes | 4 bytes  | 4 or 8 bytes |
+        //             |  Count  | Capacity |     Ptr      |
+        //             +---------+----------+---|----------+      on unmanaged memory
+        //                                      |    +-----------------+----
+        //                                      |    |        T        | ... 
+        //                                      `--> | sizeof(T) bytes | ... 
+        //                                           |     item[0]     | ... 
+        //                                           +-----------------+----
+        // default(UnsafeRawList<T>)   (That means null)
+        //
+        // _ptr == IntPtr.Zero
+        // =============================================================
 
-        /// <summary>Get count of element</summary>
-        public readonly int Count => _count;
+        private readonly IntPtr _ptr;
 
-        /// <summary>Get capacity of the inner array</summary>
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private string DebugView => _ptr == IntPtr.Zero ? "null" : $"UnsafeRawList<{typeof(T).Name}>[{CountRef()}]";
+
+        public int Count
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                if(_ptr == IntPtr.Zero) { ThrowNullRef(); }
+                return CountRef();
+            }
+        }
+
         public int Capacity
         {
-            readonly get => _array.Length;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                if(_ptr == IntPtr.Zero) { ThrowNullRef(); }
+                return ArrayRef().Length;
+            }
             set
             {
-                if(value < _count) {
-                    ThrowOutOfRange();
-                    static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(value));
+                if(_ptr == IntPtr.Zero) { ThrowNullRef(); }
+                var count = CountRef();
+                if(value < count) {
+                    ThrowOutOfRange(nameof(value));
                 }
-                if(value != _count) {
-                    var newArray = new UnsafeRawArray<T>(value, false);
-                    if(_count > 0) {
-                        try {
-                            AsSpan().CopyTo(newArray.AsSpan());
-                        }
-                        catch {
-                            newArray.Dispose();
-                            throw;
-                        }
-                        _array.Dispose();
+                ref var array = ref ArrayRef();
+                if(value == array.Length) { return; }
+                Debug.Assert(value > array.Length);
+                var newArray = new UnsafeRawArray<T>(value, false);
+                try {
+                    if(count > 0) {
+                        array.AsSpan(0, count).CopyTo(newArray.AsSpan());
                     }
-                    _array = newArray;
                 }
+                catch {
+                    newArray.Dispose();
+                    throw;
+                }
+                array.Dispose();
+                array = newArray;
             }
         }
 
         /// <summary>Get pointer to the head</summary>
-        public readonly IntPtr Ptr => _array.Ptr;
+        public readonly IntPtr Ptr
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                if(_ptr == IntPtr.Zero) { ThrowNullRef(); }
+                return ArrayRef().Ptr;
+            }
+        }
 
-        /// <summary>Get or set an element of specified index. (Boundary is not checked, be careful.)</summary>
-        /// <param name="index">index of the element</param>
-        /// <returns>an element of specified index</returns>
         public ref T this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => ref _array[index];
+            get
+            {
+                if(_ptr == IntPtr.Zero) { ThrowNullRef(); }
+                return ref ArrayRef()[index];
+            }
         }
 
-        /// <summary>Allocate new list of spicified capacity. ()</summary>
-        /// <param name="capacity">capacity of the inner array</param>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public UnsafeRawList(int capacity)
+        public static UnsafeRawList<T> Null => default;
+
+        public static UnsafeRawList<T> New() => new UnsafeRawList<T>(4);
+
+        public static UnsafeRawList<T> New(int capacity) => new UnsafeRawList<T>(capacity);
+
+        public static UnsafeRawList<T> New(ReadOnlySpan<T> collection) => new UnsafeRawList<T>(collection);
+
+        private UnsafeRawList(int capacity)
         {
-            _array = new UnsafeRawArray<T>(capacity, zeroFill: false);
-            _count = 0;
+            if(capacity < 0) {
+                ThrowOutOfRange(nameof(capacity));
+            }
+            _ptr = Marshal.AllocHGlobal(sizeof(int) + sizeof(UnsafeRawArray<T>));
+            CountRef() = 0;
+            ArrayRef() = new UnsafeRawArray<T>(capacity);
         }
 
-        /// <summary>Allocate new list of spicified capacity. ()</summary>
-        /// <param name="capacity">capacity of the inner array</param>
-        /// <param name="zeroFill">Whether to initialized the inner array by zero.</param>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public UnsafeRawList(int capacity, bool zeroFill)
+        private UnsafeRawList(ReadOnlySpan<T> collection)
         {
-            _array = new UnsafeRawArray<T>(capacity, zeroFill);
-            _count = 0;
+            _ptr = Marshal.AllocHGlobal(sizeof(int) + sizeof(UnsafeRawArray<T>));
+            CountRef() = collection.Length;
+            ref var array = ref ArrayRef();
+            array = new UnsafeRawArray<T>(collection.Length);
+            collection.CopyTo(array.AsSpan());
         }
 
-        /// <summary>Add specified item to tail of the list.</summary>
-        /// <param name="item">item to add</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(in T item)
         {
-            if(_count >= _array.Length) {
+            if(_ptr == IntPtr.Zero) { ThrowNullRef(); }
+            ref var array = ref ArrayRef();
+            ref var count = ref CountRef();
+            if(count >= array.Length) {
                 Extend();   // Never inlined for performance because uncommon path.
+                Debug.Assert(count < array.Length);
             }
-            _array[_count] = item;
-            _count++;
+            array[count] = item;
+            count++;
         }
 
-        /// <summary>Get index of specified item. Return -1 if not contained.</summary>
-        /// <param name="item">item to get index</param>
-        /// <returns>index of the item</returns>
-        public int IndexOf(in T item)
+        public void AddRange(ReadOnlySpan<T> collection)
         {
-            for(int i = 0; i < _count; i++) {
-                if(EqualityComparer<T>.Default.Equals(_array[i], item)) {
+            if(_ptr == IntPtr.Zero) { ThrowNullRef(); }
+            if(collection.IsEmpty) { return; }
+            ref var array = ref ArrayRef();
+            ref var count = ref CountRef();
+            if(count + collection.Length >= array.Length) {
+                var newArray = new UnsafeRawArray<T>(count + collection.Length);
+                try {
+                    array.AsSpan(0, count).CopyTo(newArray.AsSpan());
+                }
+                catch {
+                    newArray.Dispose();
+                    throw;
+                }
+                array.Dispose();
+                array = newArray;
+            }
+            collection.CopyTo(array.AsSpan(count));
+            count += collection.Length;
+        }
+
+        public int IndexOf(T item)
+        {
+            if(_ptr == IntPtr.Zero) { ThrowNullRef(); }
+            var count = CountRef();
+            var array = ArrayRef();
+            for(int i = 0; i < count; i++) {
+                if(EqualityComparer<T>.Default.Equals(array[i], item)) {
                     return i;
                 }
             }
             return -1;
         }
 
-        /// <summary>Free alocated memory.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Clear()
+        {
+            if(_ptr == IntPtr.Zero) { ThrowNullRef(); }
+            CountRef() = 0;
+        }
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Span<T> AsSpan()
+        {
+            if(_ptr == IntPtr.Zero) {
+                return Span<T>.Empty;
+            }
+            return ArrayRef().AsSpan(0, CountRef());
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Span<T> AsSpan(int start)
+        {
+            if(_ptr == IntPtr.Zero) {
+                ThrowOutOfRange(nameof(start));
+            }
+            return ArrayRef().AsSpan(start, CountRef() - start);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Span<T> AsSpan(int start, int length)
+        {
+            if(_ptr == IntPtr.Zero) {
+                ThrowOutOfRange(nameof(start));
+            }
+            return ArrayRef().AsSpan(start, length);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
-            _array.Dispose();
-            _count = 0;
-        }
-
-        /// <summary>Copy to managed memory</summary>
-        /// <param name="array">managed memory array</param>
-        /// <param name="arrayIndex">start index of destination array</param>
-        public void CopyTo(T[] array, int arrayIndex)
-        {
-            if(array == null) { throw new ArgumentNullException(nameof(array)); }
-            if((uint)arrayIndex >= (uint)array.Length) { throw new ArgumentOutOfRangeException(nameof(arrayIndex)); }
-            if(arrayIndex + _count > array.Length) { throw new ArgumentException("There is not enouph length of destination array"); }
-
-            if(_count == 0) {
-                return;
-            }
-
-            fixed(T* arrayPtr = array) {
-                var byteLen = (long)(_count * sizeof(T));
-                Buffer.MemoryCopy((void*)Ptr, arrayPtr + arrayIndex, byteLen, byteLen);
-            }
+            if(_ptr == IntPtr.Zero) { return; }
+            ArrayRef().Dispose();
+            Marshal.FreeHGlobal(_ptr);
+            Unsafe.AsRef(_ptr) = default;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly Span<T> AsSpan()
+        public T* GetPtr()
         {
-            return _array.AsSpan(0, _count);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly Span<T> AsSpan(int start)
-        {
-            return _array.AsSpan(start, _count - start);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly Span<T> AsSpan(int start, int length)
-        {
-            return _array.AsSpan(start, length);
+            return ArrayRef().GetPtr();
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]  // uncommon path
         private void Extend()
         {
-            var newArray = new UnsafeRawArray<T>(_array.Length == 0 ? 4 : _array.Length * 2);
-            try {
-                Buffer.MemoryCopy(_array.Ptr.ToPointer(), newArray.Ptr.ToPointer(), newArray.Length * sizeof(T), _array.Length * sizeof(T));
+            Debug.Assert(_ptr != IntPtr.Zero);
+            var count = CountRef();
+            if(count == 0) {
+                ArrayRef() = new UnsafeRawArray<T>(4, false);
             }
-            catch {
-                newArray.Dispose();
-                throw;
+            else {
+                ref var array = ref ArrayRef();
+                var newArray = new UnsafeRawArray<T>(array.Length * 2, false);
+                array.AsSpan().CopyTo(newArray.AsSpan());
+                array.Dispose();
+                array = newArray;
             }
-            _array.Dispose();
-            _array = newArray;
+        }
+
+        private ref int CountRef() => ref *(int*)_ptr;
+        private ref UnsafeRawArray<T> ArrayRef() => ref *(UnsafeRawArray<T>*)(((int*)_ptr) + 1);
+
+        public override string? ToString()
+        {
+            if(_ptr == IntPtr.Zero) { ThrowNullRef(); }
+            return base.ToString();
+        }
+
+        public override bool Equals(object? obj)
+        {
+            if(obj is UnsafeRawList<T> list) {
+                return Equals(list);
+            }
+            else if(obj is NullLiteral @null){
+                return this == @null;       // See '==' operator comments
+            }
+            else if(obj is null) {
+                return this == null;        // See '==' operator comments
+            }
+            else {
+                return false;
+            }
+        }
+
+        public bool Equals(UnsafeRawList<T> other) => _ptr == other._ptr;
+
+        public override int GetHashCode() => _ptr.GetHashCode();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator ==(UnsafeRawList<T> left, UnsafeRawList<T> right) => left.Equals(right);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator !=(UnsafeRawList<T> left, UnsafeRawList<T> right) => !(left == right);
+
+        [DoesNotReturn]
+        private static void ThrowOutOfRange(string message) => throw new ArgumentOutOfRangeException(message);
+
+        [DoesNotReturn]
+        private static void ThrowNullRef() => throw new NullReferenceException($"An instance of type {nameof(UnsafeRawList<T>)} is null.");
+
+
+
+        // [NOTE]
+        // No one can make an instance of type 'NullLiteral' in the usual way.
+        // The only way you can use the following operator method is to specify null literal.
+        // So they work well.
+        // 
+        // I make sure 'NullLiteral' instance is actual null just in case.
+        // In the case that users set null literal and the methods get inlined,
+        // the check is removed. Therefore, it is no-cost.
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static bool operator ==(UnsafeRawList<T> list, NullLiteral? @null) => @null is null && list._ptr == IntPtr.Zero;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static bool operator !=(UnsafeRawList<T> list, NullLiteral? @null) => !(list == @null);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static bool operator ==(NullLiteral? @null, UnsafeRawList<T> list) => @null is null && list._ptr == IntPtr.Zero;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static bool operator !=(NullLiteral? @null, UnsafeRawList<T> list) => !(@null == list);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static implicit operator UnsafeRawList<T>(NullLiteral? @null)
+        {
+            if(@null is null) {
+                return default;
+            }
+            throw new InvalidCastException();
         }
     }
 
@@ -171,15 +344,7 @@ namespace Elffy.Effective.Unsafes
         private readonly UnsafeRawList<T> _entity;
 
         [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-        public T[] Items
-        {
-            get
-            {
-                var items = new T[_entity.Count];
-                _entity.CopyTo(items, 0);
-                return items;
-            }
-        }
+        public T[] Items => _entity.AsSpan().ToArray();
 
         public UnsafeRawListDebuggerTypeProxy(UnsafeRawList<T> entity) => _entity = entity;
     }

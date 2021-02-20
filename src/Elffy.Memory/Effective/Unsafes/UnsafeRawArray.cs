@@ -8,13 +8,32 @@ namespace Elffy.Effective.Unsafes
 {
     /// <summary>Low level wrapper of malloc, free. There are no safety checking, no zero initialized</summary>
     /// <remarks>
-    /// [NOTE] if you use debugger viewer, enable zero-initialized at constructor. (otherwise shows random values or throws an exception in debugger.)
+    /// You MUST call <see cref="Dispose"/> after use it. Or it causes MEMORY LEAK !<para/>
     /// </remarks>
     /// <typeparam name="T">type of element</typeparam>
     [DebuggerTypeProxy(typeof(UnsafeRawArrayDebuggerTypeProxy<>))]
-    [DebuggerDisplay("UnsafeRawArray<{typeof(T).Name}>[{Length}]")]
-    public readonly unsafe struct UnsafeRawArray<T> : IDisposable where T : unmanaged
+    [DebuggerDisplay("UnsafeRawArray<{typeof(T).Name,nq}>[{Length}]")]
+    public readonly unsafe struct UnsafeRawArray<T> : IDisposable, IEquatable<UnsafeRawArray<T>> where T : unmanaged
     {
+        // =============================================================
+        // new UnsafeRawArray(n)   (n > 0)
+        //
+        //      UnsafeRawArray<T>
+        // +----------+--------------+
+        // |   int    |    IntPtr    |
+        // | 4 bytes  | 4 or 8 bytes |
+        // |  Length  |      Ptr     |
+        // +----------+-----|--------+
+        //                  |    +-----------------+----
+        //                  |    |        T        | ...
+        //                  `--> | sizeof(T) bytes | ...
+        //                       |     item[0]     | ...
+        //                       +-----------------+----
+        //
+        // If n == 0, Ptr is always IntPtr.Zero
+        //
+        // =============================================================
+
         /// <summary>Get length of array</summary>
         public readonly int Length;
         /// <summary>Get pointer to array</summary>
@@ -158,6 +177,16 @@ namespace Elffy.Effective.Unsafes
         {
             return AsSpan().AsBytes();
         }
+
+        public override bool Equals(object? obj) => obj is UnsafeRawArray<T> array && Equals(array);
+
+        public bool Equals(UnsafeRawArray<T> other) => Length == other.Length && Ptr == other.Ptr;
+
+        public override int GetHashCode() => HashCode.Combine(Length, Ptr);
+
+        public static bool operator ==(in UnsafeRawArray<T> left, in UnsafeRawArray<T> right) => left.Equals(right);
+
+        public static bool operator !=(in UnsafeRawArray<T> left, in UnsafeRawArray<T> right) => !(left == right);
     }
 
     internal class UnsafeRawArrayDebuggerTypeProxy<T> where T : unmanaged
