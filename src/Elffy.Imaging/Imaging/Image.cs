@@ -6,6 +6,8 @@ using System.Threading;
 using System.IO;
 using System.Diagnostics;
 using Elffy.Imaging.Internal;
+using Elffy.Effective;
+using SkiaSharp;
 
 namespace Elffy.Imaging
 {
@@ -50,7 +52,11 @@ namespace Elffy.Imaging
             }
         }
 
-        public Image(int width, int height)
+        public Image(int width, int height) : this(width, height, true)
+        {
+        }
+
+        public Image(int width, int height, bool zeroFill)
         {
             if(width < 0) {
                 ThrowHelper.ThrowArgOutOfRange(nameof(width));
@@ -64,7 +70,7 @@ namespace Elffy.Imaging
             }
             else {
                 // TODO: instance pooling
-                _image = new ImageObj(width, height);
+                _image = new ImageObj(width, height, zeroFill);
                 _token = _image.Token;
             }
         }
@@ -126,8 +132,8 @@ namespace Elffy.Imaging
             {
                 ImageType.Png => PngParser.Parse(stream),
                 ImageType.Tga => TgaParser.Parse(stream),
-                ImageType.Jpg => ImageParserTemporary.ParseJpegOrBmp(stream),    // TODO: jpg parser
-                ImageType.Bmp => ImageParserTemporary.ParseJpegOrBmp(stream),    // TODO: bmp parser
+                ImageType.Jpg => ImageParserTemporary.Parse(stream),    // TODO: jpg parser
+                ImageType.Bmp => ImageParserTemporary.Parse(stream),    // TODO: bmp parser
                 _ => throw new NotSupportedException($"Not supported type : {type}"),
             };
         }
@@ -184,13 +190,15 @@ namespace Elffy.Imaging
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
             private string DebugView => $"(Token = {_token})";
 
-            public ImageObj(int width, int height)
+            public ImageObj(int width, int height, bool zeroFill)
             {
                 _width = width;
                 _height = height;
                 var len = width * height;
                 _pixels = (ColorByte*)Marshal.AllocHGlobal(sizeof(ColorByte) * len);
-                new Span<ColorByte>(_pixels, len).Clear();
+                if(zeroFill) {
+                    new Span<ColorByte>(_pixels, len).Clear();
+                }
 
                 do {
                     _token = (uint)Interlocked.Increment(ref Unsafe.As<uint, int>(ref _tokenFactory));
@@ -222,43 +230,36 @@ namespace Elffy.Imaging
 
 namespace Elffy.Imaging.Internal
 {
-    using Bitmap = System.Drawing.Bitmap;
-    using ImageLockMode = System.Drawing.Imaging.ImageLockMode;
-    using Elffy.Effective.Unsafes;
-
     internal unsafe static class ImageParserTemporary
     {
-        // I want to remove dependency on System.Drawing (and other external libraries of image) in the future.
-        // It requires pure C# parser for 'jpeg' and 'bmp'.
+        // I want to parse 'jpg' and 'bmp' by my own pure C# parser in the future.
 
-        public static Image ParseJpegOrBmp(Stream stream)
+        public static Image Parse(Stream stream)
         {
-            using var bitmap = new Bitmap(stream);
-            var image = new Image(bitmap.Width, bitmap.Height);
-            var data = bitmap.LockBits(new(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-            try {
-                var pixels = new Span<DrawingColor>((void*)data.Scan0, bitmap.Width * bitmap.Height);
-                var dest = image.GetPixels();
-                for(int i = 0; i < pixels.Length; i++) {
-                    dest.At(i) = new ColorByte(pixels[i].R, pixels[i].G, pixels[i].B, pixels[i].A);
+            using var buf = stream.ReadToEnd(out var len);
+            using var skBitmap = SKBitmap.Decode(buf.AsSpan(0, len));
+            if(skBitmap.ColorType != SKColorType.Rgba8888) {
+                using var tmp = skBitmap.Copy(SKColorType.Rgba8888);
+                return CreateImage(tmp);
+            }
+            else {
+                return CreateImage(skBitmap);
+            }
+
+            static Image CreateImage(SKBitmap bitmap)
+            {
+                var image = new Image(bitmap.Width, bitmap.Height, false);
+                try {
+                    bitmap.GetPixelSpan()
+                          .MarshalCast<byte, ColorByte>()
+                          .CopyTo(image.GetPixels());
+                    return image;
                 }
-                return image;
+                catch {
+                    image.Dispose();
+                    throw;
+                }
             }
-            catch {
-                bitmap.UnlockBits(data);
-                image.Dispose();
-                throw;
-            }
-        }
-
-        private struct DrawingColor
-        {
-#pragma warning disable 0649
-            public byte B;
-            public byte G;
-            public byte R;
-            public byte A;
-#pragma warning restore 0649
         }
     }
 }
