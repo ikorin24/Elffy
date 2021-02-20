@@ -210,6 +210,24 @@ namespace Elffy.Effective.Unsafes
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Span<T> AsSpan(int start)
+        {
+            if(_ptr == IntPtr.Zero) {
+                ThrowOutOfRange(nameof(start));
+            }
+            return ArrayRef().AsSpan(start, CountRef() - start);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Span<T> AsSpan(int start, int length)
+        {
+            if(_ptr == IntPtr.Zero) {
+                ThrowOutOfRange(nameof(start));
+            }
+            return ArrayRef().AsSpan(start, length);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
             if(_ptr == IntPtr.Zero) { return; }
