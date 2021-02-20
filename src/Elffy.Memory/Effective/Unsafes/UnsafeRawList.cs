@@ -116,6 +116,8 @@ namespace Elffy.Effective.Unsafes
             }
         }
 
+        public static UnsafeRawList<T> Null => default;
+
         public static UnsafeRawList<T> New() => new UnsafeRawList<T>(4);
 
         public static UnsafeRawList<T> New(int capacity) => new UnsafeRawList<T>(capacity);
@@ -248,7 +250,21 @@ namespace Elffy.Effective.Unsafes
             return base.ToString();
         }
 
-        public override bool Equals(object? obj) => obj is UnsafeRawList<T> list && Equals(list);
+        public override bool Equals(object? obj)
+        {
+            if(obj is UnsafeRawList<T> list) {
+                return Equals(list);
+            }
+            else if(obj is NullLiteral @null){
+                return this == @null;       // See '==' operator comments
+            }
+            else if(obj is null) {
+                return this == null;        // See '==' operator comments
+            }
+            else {
+                return false;
+            }
+        }
 
         public bool Equals(UnsafeRawList<T> other) => _ptr == other._ptr;
 
