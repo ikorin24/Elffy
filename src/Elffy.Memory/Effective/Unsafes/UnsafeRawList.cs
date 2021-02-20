@@ -201,6 +201,7 @@ namespace Elffy.Effective.Unsafes
 
         public Span<T> Extend(int count, bool zeroFill = false)
         {
+            if(_ptr == IntPtr.Zero) { ThrowNullRef(); }
             if(count < 0) { ThrowOutOfRange(nameof(count)); }
             if(count == 0) { return Span<T>.Empty; }
 
