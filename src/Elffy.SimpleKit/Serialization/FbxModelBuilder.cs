@@ -62,8 +62,8 @@ namespace Elffy.Serialization
 
             // Parse fbx file
             using var fbx = FbxParser.Parse(resourceLoader.GetStream(name));
-            using var vertices = RawList<Vertex>.New();
-            using var indices = RawList<int>.New();
+            using var vertices = UnsafeRawList<Vertex>.New();
+            using var indices = UnsafeRawList<int>.New();
             BuildCore(fbx, token, vertices, indices);
 
             //      ↑ thread pool
@@ -89,7 +89,7 @@ namespace Elffy.Serialization
             // but I don't care about that.
         }
 
-        private static void BuildCore(FbxObject fbx, CancellationToken cancellationToken, RawList<Vertex> vertices, RawList<int> indices)
+        private static void BuildCore(FbxObject fbx, CancellationToken cancellationToken, UnsafeRawList<Vertex> vertices, UnsafeRawList<int> indices)
         {
             // --------------------------------------
             //      ↓ thread pool
@@ -158,8 +158,8 @@ namespace Elffy.Serialization
         private static void ResolveVertices(ReadOnlySpan<int> indicesRaw,
                                             ReadOnlySpan<double> positions,
                                             ReadOnlySpan<double> normals,
-                                            RawList<Vertex> verticesMarged,
-                                            RawList<int> indicesMarged)
+                                            UnsafeRawList<Vertex> verticesMarged,
+                                            UnsafeRawList<int> indicesMarged)
         {
             // positions の数は幾何的な頂点の数
             // normals の数は属性が同じ頂点の数 (属性: 座標・法線・頂点色など) (== indices の数)

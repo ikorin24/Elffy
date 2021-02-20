@@ -196,14 +196,14 @@ namespace Elffy.Components
 
                 // 'childrenBuf[i]' means IDs of children of tree[i].
                 // It is like 'List<int>[]'
-                var childrenBuf = new UnsafeRawArray<RawList<int>>(boneTree.Length, zeroFill: true);
+                var childrenBuf = new UnsafeRawArray<UnsafeRawList<int>>(boneTree.Length, zeroFill: true);
 
                 try {
                     // Set children
                     for(int i = 0; i < childrenBuf.Length; i++) {
                         if(tree[i].Parent != null) {
                             var parentID = tree[i].Parent->ID;
-                            childrenBuf[parentID] = RawList<int>.New();
+                            childrenBuf[parentID] = UnsafeRawList<int>.New();
                             childrenBuf[parentID].Add(i);
                         }
                     }

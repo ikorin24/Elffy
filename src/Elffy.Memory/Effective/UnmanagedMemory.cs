@@ -110,7 +110,7 @@ namespace Elffy.Effective
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static UnmanagedMemory<T> AsUnmanagedMemory<T>(this RawList<T> source) where T : unmanaged
+        public static UnmanagedMemory<T> AsUnmanagedMemory<T>(this UnsafeRawList<T> source) where T : unmanaged
         {
             return new UnmanagedMemory<T>(source.Ptr, source.Count, null);
         }

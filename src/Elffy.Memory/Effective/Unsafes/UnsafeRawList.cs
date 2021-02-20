@@ -11,16 +11,16 @@ namespace Elffy.Effective.Unsafes
 {
     /// <summary>Provides list which is allocated in unmanaged memory.</summary>
     /// <remarks>
-    /// 1) DO NOT create a default instance (<see langword="new"/> <see cref="RawList{T}"/>(), or <see langword="default"/>).
+    /// 1) DO NOT create a default instance (<see langword="new"/> <see cref="UnsafeRawList{T}"/>(), or <see langword="default"/>).
     ///    That means <see langword="null"/> for reference types.<para/>
     ///    Use <see cref="New"/> instead.<para/>
     /// 2) You MUST call <see cref="Dispose"/> after use it. Or it causes MEMORY LEAK !<para/>
     /// 3) It DOES NOT check any boundary of access by index.<para/>
     /// </remarks>
     /// <typeparam name="T">element type</typeparam>
-    [DebuggerTypeProxy(typeof(RawListDebuggerTypeProxy<>))]
+    [DebuggerTypeProxy(typeof(UnsafeRawListDebuggerTypeProxy<>))]
     [DebuggerDisplay("{DebugView,nq}")]
-    public unsafe readonly struct RawList<T> : IDisposable, IEquatable<RawList<T>> where T : unmanaged
+    public unsafe readonly struct UnsafeRawList<T> : IDisposable, IEquatable<UnsafeRawList<T>> where T : unmanaged
     {
         // =============================================================
         // new UnsafeRawList<T>(n)   (n > 0)
@@ -30,13 +30,13 @@ namespace Elffy.Effective.Unsafes
         //   |    IntPtr    |
         //   | 4 or 8 bytes |
         //   |    _ptr      |
-        //   +----|---------+
+        //   +----|---------+             on unmanaged memory
         //        |    +---------+----------+--------------+
         //        |    |   int   |    UnsafeRawArray<T>    |
         //        |    |         |   int    |    IntPtr    |
         //        `--> | 4 bytes | 4 bytes  | 4 or 8 bytes |
-        //             |  Count  | Capacity |  (array ptr) |
-        //             +---------+----------+---|----------+
+        //             |  Count  | Capacity |     Ptr      |
+        //             +---------+----------+---|----------+      on unmanaged memory
         //                                      |    +-----------------+----
         //                                      |    |        T        | ... 
         //                                      `--> | sizeof(T) bytes | ... 
@@ -116,13 +116,13 @@ namespace Elffy.Effective.Unsafes
             }
         }
 
-        public static RawList<T> New() => new RawList<T>(4);
+        public static UnsafeRawList<T> New() => new UnsafeRawList<T>(4);
 
-        public static RawList<T> New(int capacity) => new RawList<T>(capacity);
+        public static UnsafeRawList<T> New(int capacity) => new UnsafeRawList<T>(capacity);
 
-        public static RawList<T> New(ReadOnlySpan<T> collection) => new RawList<T>(collection);
+        public static UnsafeRawList<T> New(ReadOnlySpan<T> collection) => new UnsafeRawList<T>(collection);
 
-        private RawList(int capacity)
+        private UnsafeRawList(int capacity)
         {
             if(capacity < 0) {
                 ThrowOutOfRange(nameof(capacity));
@@ -132,7 +132,7 @@ namespace Elffy.Effective.Unsafes
             ArrayRef() = new UnsafeRawArray<T>(capacity);
         }
 
-        private RawList(ReadOnlySpan<T> collection)
+        private UnsafeRawList(ReadOnlySpan<T> collection)
         {
             _ptr = Marshal.AllocHGlobal(sizeof(int) + sizeof(UnsafeRawArray<T>));
             CountRef() = collection.Length;
@@ -248,29 +248,28 @@ namespace Elffy.Effective.Unsafes
             return base.ToString();
         }
 
-        public override bool Equals(object? obj) => obj is RawList<T> list && Equals(list);
+        public override bool Equals(object? obj) => obj is UnsafeRawList<T> list && Equals(list);
 
-        public bool Equals(RawList<T> other) => _ptr == other._ptr;
+        public bool Equals(UnsafeRawList<T> other) => _ptr == other._ptr;
 
         public override int GetHashCode() => _ptr.GetHashCode();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator ==(RawList<T> left, RawList<T> right) => left.Equals(right);
+        public static bool operator ==(UnsafeRawList<T> left, UnsafeRawList<T> right) => left.Equals(right);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator !=(RawList<T> left, RawList<T> right) => !(left == right);
+        public static bool operator !=(UnsafeRawList<T> left, UnsafeRawList<T> right) => !(left == right);
 
         [DoesNotReturn]
         private static void ThrowOutOfRange(string message) => throw new ArgumentOutOfRangeException(message);
 
         [DoesNotReturn]
-        [DebuggerHidden]
-        private static void ThrowNullRef() => throw new NullReferenceException();
+        private static void ThrowNullRef() => throw new NullReferenceException($"An instance of type {nameof(UnsafeRawList<T>)} is null.");
 
 
 
         // [NOTE]
-        // No one can make a instance of type 'NullLiteral' in the usual way.
+        // No one can make an instance of type 'NullLiteral' in the usual way.
         // The only way you can use the following operator method is to specify null literal.
         // So they work well.
         // 
@@ -280,23 +279,23 @@ namespace Elffy.Effective.Unsafes
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public static bool operator ==(RawList<T> list, NullLiteral? @null) => @null is null && list._ptr == IntPtr.Zero;
+        public static bool operator ==(UnsafeRawList<T> list, NullLiteral? @null) => @null is null && list._ptr == IntPtr.Zero;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public static bool operator !=(RawList<T> list, NullLiteral? @null) => !(list == @null);
+        public static bool operator !=(UnsafeRawList<T> list, NullLiteral? @null) => !(list == @null);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public static bool operator ==(NullLiteral? @null, RawList<T> list) => @null is null && list._ptr == IntPtr.Zero;
+        public static bool operator ==(NullLiteral? @null, UnsafeRawList<T> list) => @null is null && list._ptr == IntPtr.Zero;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public static bool operator !=(NullLiteral? @null, RawList<T> list) => !(@null == list);
+        public static bool operator !=(NullLiteral? @null, UnsafeRawList<T> list) => !(@null == list);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public static implicit operator RawList<T>(NullLiteral? @null)
+        public static implicit operator UnsafeRawList<T>(NullLiteral? @null)
         {
             if(@null is null) {
                 return default;
@@ -305,14 +304,14 @@ namespace Elffy.Effective.Unsafes
         }
     }
 
-    internal class RawListDebuggerTypeProxy<T> where T : unmanaged
+    internal class UnsafeRawListDebuggerTypeProxy<T> where T : unmanaged
     {
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private readonly RawList<T> _entity;
+        private readonly UnsafeRawList<T> _entity;
 
         [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
         public T[] Items => _entity.AsSpan().ToArray();
 
-        public RawListDebuggerTypeProxy(RawList<T> entity) => _entity = entity;
+        public UnsafeRawListDebuggerTypeProxy(UnsafeRawList<T> entity) => _entity = entity;
     }
 }
