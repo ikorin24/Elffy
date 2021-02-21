@@ -26,22 +26,22 @@ namespace Elffy.Effective.Unsafes
         // new UnsafeRawList<T>(n)   (n > 0)
         //
         //   UnsafeRawList<T>
-        //   +--------------+
-        //   |    IntPtr    |
-        //   | 4 or 8 bytes |
-        //   |    _ptr      |
-        //   +----|---------+             on unmanaged memory
-        //        |    +---------+----------+--------------+
-        //        |    |   int   |    UnsafeRawArray<T>    |
-        //        |    |         |   int    |    IntPtr    |
-        //        `--> | 4 bytes | 4 bytes  | 4 or 8 bytes |
-        //             |  Count  | Capacity |     Ptr      |
-        //             +---------+----------+---|----------+      on unmanaged memory
-        //                                      |    +-----------------+----
-        //                                      |    |        T        | ... 
-        //                                      `--> | sizeof(T) bytes | ... 
-        //                                           |     item[0]     | ... 
-        //                                           +-----------------+----
+        //   +--------------+   ┌- ref CountRef()
+        //   |    IntPtr    |   |          ref ArrayRef()           ref GetReference()
+        //   | 4 or 8 bytes |   |          |                         |
+        //   |    _ptr      |   |          |                         |
+        //   +----|---------+   ↓         ↓   on unmanaged memory  |
+        //        |           +---------+----------+--------------+  |
+        //        |           |   int   |    UnsafeRawArray<T>    |  |
+        //        |           |         |   int    |    IntPtr    |  |
+        //        `---------> | 4 bytes | 4 bytes  | 4 or 8 bytes |  |
+        //                    |  Count  | Capacity |     Ptr      |  |
+        //                    +---------+----------+---|----------+  ↓    on unmanaged memory
+        //                                             |    +-----------------+----
+        //                                             |    |        T        | ... 
+        //                                             `--> | sizeof(T) bytes | ... 
+        //                                                  |     item[0]     | ... 
+        //                                                  +-----------------+----
         // default(UnsafeRawList<T>)   (That means null)
         //
         // _ptr == IntPtr.Zero
@@ -143,6 +143,15 @@ namespace Elffy.Effective.Unsafes
             collection.CopyTo(array.AsSpan());
         }
 
+        /// <summary>Get reference to the 0th element of the list. (If <see cref="Capacity"/> is 0, returns reference to null)</summary>
+        /// <returns>reference</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref T GetReference()
+        {
+            if(_ptr == IntPtr.Zero) { ThrowNullRef(); }
+            return ref ArrayRef().GetReference();
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(in T item)
         {
@@ -150,7 +159,7 @@ namespace Elffy.Effective.Unsafes
             ref var array = ref ArrayRef();
             ref var count = ref CountRef();
             if(count >= array.Length) {
-                Extend();   // Never inlined for performance because uncommon path.
+                ExtendCapcityToNextSize();   // Never inlined for performance because uncommon path.
                 Debug.Assert(count < array.Length);
             }
             array[count] = item;
@@ -190,6 +199,29 @@ namespace Elffy.Effective.Unsafes
                 }
             }
             return -1;
+        }
+
+        public void RemoveAt(int index)
+        {
+            if(_ptr == IntPtr.Zero) { ThrowNullRef(); }
+            ref var count = ref CountRef();
+            count--;
+            if(index < count) {
+                ref var array = ref ArrayRef();
+                array.AsSpan(index + 1).CopyTo(array.AsSpan(index));
+            }
+        }
+
+        public bool Remove(in T item)
+        {
+            var index = IndexOf(item);
+            if(index <= 0) {
+                RemoveAt(index);
+                return true;
+            }
+            else {
+                return false;
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -270,20 +302,20 @@ namespace Elffy.Effective.Unsafes
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]  // uncommon path
-        private void Extend()
+        private void ExtendCapcityToNextSize()
         {
             Debug.Assert(_ptr != IntPtr.Zero);
-            var count = CountRef();
-            if(count == 0) {
-                ArrayRef() = new UnsafeRawArray<T>(4, false);
+
+            // Double the capacity. If the current capacity is 0, set it to 4.
+
+            var size = ArrayRef().Length;
+            if(size * 2 < 0) {  // overflow int
+                size = int.MaxValue;
             }
             else {
-                ref var array = ref ArrayRef();
-                var newArray = new UnsafeRawArray<T>(array.Length * 2, false);
-                array.AsSpan().CopyTo(newArray.AsSpan());
-                array.Dispose();
-                array = newArray;
+                size = Math.Max(4, size * 2);
             }
+            Capacity = size;
         }
 
         private ref int CountRef() => ref *(int*)_ptr;
