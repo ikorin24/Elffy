@@ -234,6 +234,9 @@ namespace Elffy.Effective.Unsafes
         public Span<T> AsSpan(int start)
         {
             if(_ptr == IntPtr.Zero) {
+                if(start == 0) {
+                    return Span<T>.Empty;
+                }
                 ThrowOutOfRange(nameof(start));
             }
             return ArrayRef().AsSpan(start, CountRef() - start);
@@ -243,6 +246,9 @@ namespace Elffy.Effective.Unsafes
         public Span<T> AsSpan(int start, int length)
         {
             if(_ptr == IntPtr.Zero) {
+                if(start == 0 && length == 0) {
+                    return Span<T>.Empty;
+                }
                 ThrowOutOfRange(nameof(start));
             }
             return ArrayRef().AsSpan(start, length);
