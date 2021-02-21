@@ -4,6 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Elffy.Effective.Unsafes;
 using Elffy.OpenGL;
+using Elffy.Imaging;
 using OpenTK.Graphics.OpenGL4;
 using TKPixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
@@ -31,6 +32,41 @@ namespace Elffy.Components
             WrapModeY = wrapModeY;
             Texture = TextureObject.Empty;
             Size = Vector2i.Zero;
+        }
+
+        public unsafe void Load(in Vector2i size, ImageBuilderDelegate imageBuilder)
+        {
+            var texture = TextureObject.Create();
+            try {
+                TextureObject.Bind2D(Texture);
+                TextureObject.Parameter2DMinFilter(ShrinkMode, MipmapMode);
+                TextureObject.Parameter2DMagFilter(ExpansionMode);
+                TextureObject.Parameter2DWrapS(WrapModeX);
+                TextureObject.Parameter2DWrapT(WrapModeY);
+                var pbo = PBO.Create();
+                try {
+                    PBO.Bind(pbo);
+                    PBO.BufferData(pbo, size.X * size.Y * sizeof(ColorByte), IntPtr.Zero, BufferUsage.DynamicDraw);
+                    var pixels = PBO.MapBuffer<ColorByte>(BufferAccess.WriteOnly);
+                    try {
+                        imageBuilder.Invoke(size, pixels);
+                    }
+                    finally {
+                        PBO.UnmapBuffer();
+                    }
+                }
+                finally {
+                    PBO.Delete(ref pbo);
+                }
+                if(MipmapMode != TextureMipmapMode.None) {
+                    TextureObject.GenerateMipmap2D();
+                }
+            }
+            finally {
+                TextureObject.Unbind2D();
+            }
+            Texture = texture;
+            Size = size;
         }
 
         /// <summary>Load specified pixel data with specified texture size</summary>
