@@ -226,6 +226,8 @@ namespace Elffy.Imaging
 
         public static bool operator !=(Image left, Image right) => !(left == right);
 
+        public static implicit operator ImageRef(in Image image) => image.AsImageRef();
+
         [DebuggerDisplay("{DebugView,nq}")]
         private unsafe sealed class ImageObj : IDisposable
         {
