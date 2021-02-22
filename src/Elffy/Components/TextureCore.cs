@@ -37,6 +37,9 @@ namespace Elffy.Components
         public unsafe void Load<T>(T state, in Vector2i size, ImageBuilderDelegate<T> imageBuilder)
         {
             throw new NotImplementedException();
+            if(imageBuilder == null) {
+                throw new ArgumentNullException(nameof(imageBuilder));
+            }
             var texture = TextureObject.Create();
             try {
                 TextureObject.Bind2D(Texture);

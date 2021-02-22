@@ -36,15 +36,23 @@ namespace Elffy.Imaging
         // the check is removed. Therefore, it is no-cost.
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator ==(ImageBuilderDelegate<T> d, NullLiteral @null) => @null is null && d._func == null;
+        public static bool operator ==(ImageBuilderDelegate<T> d, NullLiteral? @null) => @null is null && d._func == null;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator !=(ImageBuilderDelegate<T> d, NullLiteral @null) => !(d == @null);
+        public static bool operator !=(ImageBuilderDelegate<T> d, NullLiteral? @null) => !(d == @null);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator ==(NullLiteral @null, ImageBuilderDelegate<T> d) => d == @null;
+        public static bool operator ==(NullLiteral? @null, ImageBuilderDelegate<T> d) => d == @null;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator !=(NullLiteral @null, ImageBuilderDelegate<T> d) => !(d == @null);
+        public static bool operator !=(NullLiteral? @null, ImageBuilderDelegate<T> d) => !(d == @null);
+
+        // [NOTE]
+        // Don't implement the following cast.
+        // It makes '==' operator ambiguous and C# compiler can not resolve it.
+        //     ImageBuilderDelegate<T> d;
+        //     if(d == null) ...            // <- 'null' is ImageBuilderDelegate<T> or NullLiteral ?
+
+        //public static implicit operator ImageBuilderDelegate<T>(delegate*<T, ImageRef, void> d) => new(d);
     }
 }
