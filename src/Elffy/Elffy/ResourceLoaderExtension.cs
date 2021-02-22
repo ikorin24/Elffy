@@ -87,7 +87,7 @@ namespace Elffy
             // ↓ main thread
 
             unsafe {
-                texture.Load(image, new(image.Width, image.Height), new(&BuildImage));
+                texture.Load(new(image.Width, image.Height), new(&BuildImage), image);
             }
             return texture;
 

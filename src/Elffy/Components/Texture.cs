@@ -50,7 +50,7 @@ namespace Elffy.Components
 
         ~Texture() => Dispose(false);
 
-        public void Load<T>(T state, in Vector2i size, ImageBuilderDelegate<T> imageBuilder)
+        public void Load<T>(in Vector2i size, ImageBuilderDelegate<T> imageBuilder, T state)
         {
             _textureCore.Load(state, size, imageBuilder);
             ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
