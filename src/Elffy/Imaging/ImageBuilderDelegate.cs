@@ -5,6 +5,8 @@ using Elffy.Effective.Unsafes;
 
 namespace Elffy.Imaging
 {
+    /// <summary>Wrapper of <see langword="delegate"/>*&lt;<typeparamref name="T"/>, <see cref="ImageRef"/>, <see langword="void"/>&gt;</summary>
+    /// <typeparam name="T">type of state</typeparam>
     public unsafe readonly struct ImageBuilderDelegate<T> : IEquatable<ImageBuilderDelegate<T>>
     {
         private readonly delegate*<T, ImageRef, void> _func;
