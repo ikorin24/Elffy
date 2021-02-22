@@ -91,7 +91,7 @@ namespace Elffy
             }
             return texture;
 
-            static unsafe void BuildImage(Image original, ImageRef image)
+            static void BuildImage(Image original, ImageRef image)
             {
                 original.GetPixels().CopyTo(image.GetPixels());
             }
