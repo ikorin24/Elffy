@@ -14,16 +14,19 @@ namespace Elffy.Imaging
     [DebuggerDisplay("{DebugView,nq}")]
     public unsafe readonly struct Image : IEquatable<Image>, IDisposable
     {
+        private const string Message_EmptyOrDisposed = "The image is empty or already disposed.";
+
         private readonly ImageObj? _image;
         private readonly uint _token;
 
         public int Width => _image?.Width ?? 0;
         public int Height => _image?.Height ?? 0;
 
-        /// <summary>Get pointer to pixels of type <see cref="ColorByte"/></summary>
-        public IntPtr Ptr => _image is not null ? (IntPtr)_image.Pixels : IntPtr.Zero;
-
-        public bool IsEmpty => _token == 0;
+        public bool IsEmpty
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _image is null || _image.Token != _token;
+        }
 
         public static Image Empty => default;
 
@@ -39,23 +42,32 @@ namespace Elffy.Imaging
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                if((uint)x >= (uint)Width) {
+                var image = _image;
+                if(image is null) {
+                    ThrowHelper.ThrowInvalidOp(Message_EmptyOrDisposed);
+                }
+                if((uint)x >= (uint)image.Width) {
                     ThrowHelper.ThrowArgOutOfRange(nameof(x));
                 }
-                if((uint)y >= (uint)Height) {
+                if((uint)y >= (uint)image.Height) {
                     ThrowHelper.ThrowArgOutOfRange(nameof(y));
                 }
-                if(_image is null || _image.Token != _token) {
-                    ThrowHelper.ThrowInvalidOp("The image is empty or already disposed.");
-                }
-                return ref _image.Pixels[y * Width + x];
+                return ref image.Pixels[y * Width + x];
             }
         }
 
+        /// <summary>Create a new image with specified size, which pixels are initialized as (0, 0, 0, 0).</summary>
+        /// <param name="width">image width</param>
+        /// <param name="height">image height</param>
         public Image(int width, int height) : this(width, height, true)
         {
         }
 
+        /// <summary>Create a new image with specified size.</summary>
+        /// <remarks>If <paramref name="zeroFill"/> is false, the pixels are not initialized. You must set them before using the image.</remarks>
+        /// <param name="width">image width</param>
+        /// <param name="height">image height</param>
+        /// <param name="zeroFill">initializing all pixels as (0, 0, 0, 0) or not.</param>
         public Image(int width, int height, bool zeroFill)
         {
             if(width < 0) {
@@ -84,36 +96,63 @@ namespace Elffy.Imaging
             Unsafe.AsRef(_token) = 0;
         }
 
-        public ColorByte* GetPtr() => _image is not null ? _image.Pixels : null;
+        /// <summary>Get pointer to the pixels.</summary>
+        /// <remarks>Throws <see cref="InvalidOperationException"/> if <see cref="IsEmpty"/> == <see langword="true"/>.</remarks>
+        /// <exception cref="InvalidOperationException">The image is empty</exception>
+        /// <returns>pointer to the pixels</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ColorByte* GetPtr()
+        {
+            if(IsEmpty) {
+                ThrowHelper.ThrowInvalidOp(Message_EmptyOrDisposed);
+            }
+            Debug.Assert(_image is not null);
+            return _image.Pixels;
+        }
 
+        /// <summary>Get span of the pixels.</summary>
+        /// <remarks>Returns empty span if <see cref="IsEmpty"/> == <see langword="true"/></remarks>
+        /// <returns>span of the pixels</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Span<ColorByte> GetPixels()
         {
-            if(_image is null) {
+            if(IsEmpty) {
                 return Span<ColorByte>.Empty;
             }
-            else {
-                return MemoryMarshal.CreateSpan(ref *_image.Pixels, Width * Height);
-            }
+            Debug.Assert(_image is not null);
+            return MemoryMarshal.CreateSpan(ref *_image.Pixels, Width * Height);
         }
 
+        /// <summary>Get span of the specified row line pixels.</summary>
+        /// <param name="row">row index</param>
+        /// <returns>row line span</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe Span<ColorByte> GetRowLine(int row)
         {
-            if((uint)row >= (uint)Height) {
-                ThrowOutOfRange();
-                static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(row));
+            var image = _image;
+            if(image is null || image.Token != _token) {
+                ThrowHelper.ThrowInvalidOp(Message_EmptyOrDisposed);
             }
-            return MemoryMarshal.CreateSpan(ref *(GetPtr() + Width * row), Width);
+            if((uint)row >= (uint)image.Height) {
+                ThrowHelper.ThrowArgOutOfRange(nameof(row));
+            }
+            return MemoryMarshal.CreateSpan(ref *(image.Pixels + image.Width * row), image.Width);
         }
 
+        /// <summary>Create deep copy of the image</summary>
+        /// <returns></returns>
         public Image Clone()
         {
-            if(IsEmpty) {
+            var image = _image;
+            if(image is null || image.Token != _token) {
                 return Empty;
             }
-            var image = new Image(Width, Height);
-            GetPixels().CopyTo(image.GetPixels());
-            return image;
+            var clone = new Image(image.Width, image.Height);
+            Debug.Assert(clone._image is not null);
+            var source = MemoryMarshal.CreateSpan(ref *image.Pixels, image.Width * image.Height);
+            var dest = MemoryMarshal.CreateSpan(ref *clone._image.Pixels, clone._image.Width * clone._image.Height);
+            source.CopyTo(dest);
+            return clone;
         }
 
         public static Image FromStream(Stream stream, string fileExtension)
