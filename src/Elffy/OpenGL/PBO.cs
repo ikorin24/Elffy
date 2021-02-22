@@ -51,7 +51,7 @@ namespace Elffy.OpenGL
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void BufferData(in PBO pbo, int size, IntPtr ptr BufferUsage usage)
+        public static void BufferData(in PBO pbo, int size, IntPtr ptr, BufferUsage usage)
         {
             GLAssert.EnsureContext();
             GL.BufferData(BufferTarget.PixelUnpackBuffer, size, ptr, usage.ToBufferUsageHint());
