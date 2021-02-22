@@ -140,19 +140,34 @@ namespace Elffy.Imaging
         }
 
         /// <summary>Create deep copy of the image</summary>
-        /// <returns></returns>
-        public Image Clone()
+        /// <returns>clone image</returns>
+        public Image ToImage()
         {
             var image = _image;
             if(image is null || image.Token != _token) {
                 return Empty;
             }
             var clone = new Image(image.Width, image.Height);
-            Debug.Assert(clone._image is not null);
-            var source = MemoryMarshal.CreateSpan(ref *image.Pixels, image.Width * image.Height);
-            var dest = MemoryMarshal.CreateSpan(ref *clone._image.Pixels, clone._image.Width * clone._image.Height);
-            source.CopyTo(dest);
-            return clone;
+            try {
+                Debug.Assert(clone._image is not null);
+                var source = MemoryMarshal.CreateSpan(ref *image.Pixels, image.Width * image.Height);
+                var dest = MemoryMarshal.CreateSpan(ref *clone._image.Pixels, clone._image.Width * clone._image.Height);
+                source.CopyTo(dest);
+                return clone;
+            }
+            catch {
+                clone.Dispose();
+                throw;
+            }
+        }
+
+        public ImageRef AsImageRef()
+        {
+            var image = _image;
+            if(image is null || image.Token != _token) {
+                return ImageRef.Empty;
+            }
+            return new ImageRef(ref *image.Pixels, image.Width, image.Height, dummyArg: 0);
         }
 
         public static Image FromStream(Stream stream, string fileExtension)
