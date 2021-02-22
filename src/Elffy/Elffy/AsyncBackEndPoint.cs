@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using Cysharp.Threading.Tasks;
 
 namespace Elffy
 {
@@ -14,6 +15,10 @@ namespace Elffy
         private readonly ConcurrentDictionary<FrameLoopTiming, ConcurrentQueue<WorkItem>> _queues;
 
         internal IHostScreen Screen => _screen;
+
+        /// <summary>Get current screen frame loop timing.</summary>
+        /// <remarks>If not main thread of <see cref="IHostScreen"/>, always returns <see cref="ScreenCurrentTiming.OutOfFrameLoop"/></remarks>
+        public ScreenCurrentTiming CurrentTiming => _screen.CurrentTiming;
 
         internal AsyncBackEndPoint(IHostScreen screen)
         {
@@ -26,6 +31,15 @@ namespace Elffy
         {
             timing.ThrowArgExceptionIfInvalid(nameof(timing));
             return new FrameLoopAwaitable(this, timing, cancellationToken);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public UniTask Ensure(FrameLoopTiming timing, CancellationToken cancellation = default)
+        {
+            if(CurrentTiming.TimingEquals(timing)) {
+                return UniTask.CompletedTask;
+            }
+            return ToTiming(timing, cancellation).AsUniTask();
         }
 
         /// <summary>Abort all suspended tasks by clearing the queue.</summary>

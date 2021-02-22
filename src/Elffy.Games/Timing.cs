@@ -45,10 +45,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static UniTask Ensure(FrameLoopTiming timing, CancellationToken cancellation = default)
         {
-            if(CurrentTiming.TimingEquals(timing)) {
-                return UniTask.CompletedTask;
-            }
-            return ToTiming(timing, cancellation).AsUniTask();
+            return _endPoint!.Ensure(timing, cancellation);
         }
 
         /// <summary>Wait for specified timing.</summary>
