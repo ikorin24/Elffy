@@ -34,8 +34,9 @@ namespace Elffy.Components
             Size = Vector2i.Zero;
         }
 
-        public unsafe void Load(in Vector2i size, ImageBuilderDelegate imageBuilder)
+        public unsafe void Load<T>(T state, in Vector2i size, ImageBuilderDelegate<T> imageBuilder)
         {
+            throw new NotImplementedException();
             var texture = TextureObject.Create();
             try {
                 TextureObject.Bind2D(Texture);
@@ -43,16 +44,18 @@ namespace Elffy.Components
                 TextureObject.Parameter2DMagFilter(ExpansionMode);
                 TextureObject.Parameter2DWrapS(WrapModeX);
                 TextureObject.Parameter2DWrapT(WrapModeY);
+                TextureObject.Image2D(size, (ColorByte*)null);
                 var pbo = PBO.Create();
                 try {
-                    PBO.Bind(pbo);
-                    PBO.BufferData(pbo, size.X * size.Y * sizeof(ColorByte), IntPtr.Zero, BufferUsage.DynamicDraw);
-                    var pixels = PBO.MapBuffer<ColorByte>(BufferAccess.WriteOnly);
+                    PBO.Bind(pbo, BufferPackTarget.PixelUnpackBuffer);
+                    PBO.BufferData(BufferPackTarget.PixelUnpackBuffer, size.X * size.Y * sizeof(ColorByte), IntPtr.Zero, BufferUsage.DynamicDraw);
+                    var pixels = PBO.MapBuffer<ColorByte>(BufferPackTarget.PixelUnpackBuffer, BufferAccess.WriteOnly);
                     try {
-                        imageBuilder.Invoke(size, pixels);
+                        var image = new ImageRef(pixels, size.X, size.Y);
+                        imageBuilder.Invoke(state, image);
                     }
                     finally {
-                        PBO.UnmapBuffer();
+                        PBO.UnmapBuffer(BufferPackTarget.PixelUnpackBuffer);
                     }
                 }
                 finally {

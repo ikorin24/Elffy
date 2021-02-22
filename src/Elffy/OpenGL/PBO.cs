@@ -37,38 +37,38 @@ namespace Elffy.OpenGL
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Bind(in PBO pbo)
+        public static void Bind(in PBO pbo, BufferPackTarget target)
         {
             GLAssert.EnsureContext();
-            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, pbo._pbo);
+            GL.BindBuffer(target.Compat(), pbo._pbo);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Unbind()
+        public static void Unbind(BufferPackTarget target)
         {
             GLAssert.EnsureContext();
-            GL.BindBuffer(BufferTarget.PixelUnpackBuffer, Consts.NULL);
+            GL.BindBuffer(target.Compat(), Consts.NULL);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void BufferData(in PBO pbo, int size, IntPtr ptr, BufferUsage usage)
+        public static void BufferData(BufferPackTarget target, int size, IntPtr ptr, BufferUsage usage)
         {
             GLAssert.EnsureContext();
-            GL.BufferData(BufferTarget.PixelUnpackBuffer, size, ptr, usage.ToBufferUsageHint());
+            GL.BufferData(target.Compat(), size, ptr, usage.Compat());
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe T* MapBuffer<T>(BufferAccess access) where T : unmanaged
+        public static unsafe T* MapBuffer<T>(BufferPackTarget target, BufferAccess access) where T : unmanaged
         {
             GLAssert.EnsureContext();
-            return (T*)GL.MapBuffer(BufferTarget.PixelUnpackBuffer, access);
+            return (T*)GL.MapBuffer(target.Compat(), access);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void UnmapBuffer()
+        public static void UnmapBuffer(BufferPackTarget target)
         {
             GLAssert.EnsureContext();
-            GL.UnmapBuffer(BufferTarget.PixelUnpackBuffer);
+            GL.UnmapBuffer(target.Compat());
         }
 
         public override bool Equals(object? obj) => obj is PBO pBO && Equals(pBO);

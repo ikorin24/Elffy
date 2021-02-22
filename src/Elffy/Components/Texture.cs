@@ -50,6 +50,12 @@ namespace Elffy.Components
 
         ~Texture() => Dispose(false);
 
+        public void Load<T>(T state, in Vector2i size, ImageBuilderDelegate<T> imageBuilder)
+        {
+            _textureCore.Load(state, size, imageBuilder);
+            ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
+        }
+
         /// <summary>Load pixel data from <see cref="Image"/></summary>
         /// <param name="image">image to load</param>
         public void Load(in Image image)
