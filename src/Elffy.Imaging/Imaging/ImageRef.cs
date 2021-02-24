@@ -28,7 +28,7 @@ namespace Elffy.Imaging
         public static ImageRef Empty => default;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private string DebugView => $"{typeof(ImageRef).FullName} ({Width}x{Height})";
+        private string DebugView => $"{nameof(ImageRef)} ({Width}x{Height})";
 
         /// <summary>Get or set pixel of specified (x, y)</summary>
         /// <param name="x">x index (column line)</param>
@@ -95,7 +95,7 @@ namespace Elffy.Imaging
         /// <param name="row">row index</param>
         /// <returns>row line span</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe Span<ColorByte> GetRowLine(int row)
+        public Span<ColorByte> GetRowLine(int row)
         {
             if((uint)row >= _height) {
                 ThrowHelper.ThrowArgOutOfRange(nameof(row));
