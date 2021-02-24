@@ -8,6 +8,7 @@ using NVec4 = System.Numerics.Vector4;
 
 namespace Elffy
 {
+    /// <summary>Color structure with RGBA bytes format</summary>
     [DebuggerDisplay("{DebugView,nq}")]
     [StructLayout(LayoutKind.Explicit)]
     public struct ColorByte : IEquatable<ColorByte>
