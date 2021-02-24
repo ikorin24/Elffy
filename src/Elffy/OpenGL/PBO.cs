@@ -71,7 +71,7 @@ namespace Elffy.OpenGL
             GL.UnmapBuffer(target.Compat());
         }
 
-        public override bool Equals(object? obj) => obj is PBO pBO && Equals(pBO);
+        public override bool Equals(object? obj) => obj is PBO pbo && Equals(pbo);
 
         public bool Equals(PBO other) => _pbo == other._pbo;
 
