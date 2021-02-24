@@ -36,43 +36,42 @@ namespace Elffy.Components
 
         public unsafe void Load<T>(T state, in Vector2i size, ImageBuilderDelegate<T> imageBuilder)
         {
-            throw new NotImplementedException();
             if(imageBuilder == null) {
                 throw new ArgumentNullException(nameof(imageBuilder));
             }
-            var texture = TextureObject.Create();
+
+            var pbo = PBO.Create();
+            PBO.Bind(pbo, BufferPackTarget.PixelUnpackBuffer);
             try {
-                TextureObject.Bind2D(Texture);
-                TextureObject.Parameter2DMinFilter(ShrinkMode, MipmapMode);
-                TextureObject.Parameter2DMagFilter(ExpansionMode);
-                TextureObject.Parameter2DWrapS(WrapModeX);
-                TextureObject.Parameter2DWrapT(WrapModeY);
-                TextureObject.Image2D(size, (ColorByte*)null);
-                var pbo = PBO.Create();
+                PBO.BufferData(BufferPackTarget.PixelUnpackBuffer, size.X * size.Y * sizeof(ColorByte), IntPtr.Zero, BufferUsage.StaticDraw);
+                var pixels = PBO.MapBuffer<ColorByte>(BufferPackTarget.PixelUnpackBuffer, BufferAccess.WriteOnly);
                 try {
-                    PBO.Bind(pbo, BufferPackTarget.PixelUnpackBuffer);
-                    PBO.BufferData(BufferPackTarget.PixelUnpackBuffer, size.X * size.Y * sizeof(ColorByte), IntPtr.Zero, BufferUsage.DynamicDraw);
-                    var pixels = PBO.MapBuffer<ColorByte>(BufferPackTarget.PixelUnpackBuffer, BufferAccess.WriteOnly);
-                    try {
-                        var image = new ImageRef(pixels, size.X, size.Y);
-                        imageBuilder.Invoke(state, image);
-                    }
-                    finally {
-                        PBO.UnmapBuffer(BufferPackTarget.PixelUnpackBuffer);
+                    var image = new ImageRef(pixels, size.X, size.Y);
+                    imageBuilder.Invoke(state, image);
+                }
+                finally {
+                    PBO.UnmapBuffer(BufferPackTarget.PixelUnpackBuffer);
+                }
+                var tex = TextureObject.Create();
+                TextureObject.Bind2D(tex);
+                try {
+                    TextureObject.Parameter2DMinFilter(ShrinkMode, MipmapMode);
+                    TextureObject.Parameter2DMagFilter(ExpansionMode);
+                    TextureObject.Image2D(size, (ColorByte*)null);      // Allocate texture in VRAM and copy pixels data
+                    if(MipmapMode != TextureMipmapMode.None) {
+                        TextureObject.GenerateMipmap2D();
                     }
                 }
                 finally {
-                    PBO.Delete(ref pbo);
+                    TextureObject.Unbind2D();
                 }
-                if(MipmapMode != TextureMipmapMode.None) {
-                    TextureObject.GenerateMipmap2D();
-                }
+                Texture = tex;
+                Size = size;
             }
             finally {
-                TextureObject.Unbind2D();
+                PBO.Unbind(BufferPackTarget.PixelUnpackBuffer);
+                PBO.Delete(ref pbo);
             }
-            Texture = texture;
-            Size = size;
         }
 
         /// <summary>Load specified pixel data with specified texture size</summary>
