@@ -56,9 +56,9 @@ namespace Elffy.Components
             ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
         }
 
-        /// <summary>Load pixel data from <see cref="Image"/></summary>
+        /// <summary>Load pixel data</summary>
         /// <param name="image">image to load</param>
-        public void Load(in Image image)
+        public void Load(in ImageRef image)
         {
             _textureCore.Load(new Vector2i(image.Width, image.Height), image.GetPixels());
             ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
