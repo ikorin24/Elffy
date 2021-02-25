@@ -28,8 +28,11 @@ namespace Elffy.Imaging
         /// <summary>Get whether the image is empty or not.</summary>
         public bool IsEmpty
         {
+            // A valid empty instance has (width, height) == (0, 0).
+            // So I use '||' operator because it's faster than '&&'.
+
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _firstRowLine.Length == 0 && _height == 0;
+            get => _firstRowLine.Length == 0 || _height == 0;
         }
 
         /// <summary>Get an empty instance of type <see cref="ReadOnlyImageRef"/>.</summary>
@@ -65,10 +68,22 @@ namespace Elffy.Imaging
         public ReadOnlyImageRef(ColorByte* pixels, int width, int height)
         {
             if(width <= 0) {
-                ThrowHelper.ThrowArgOutOfRange(nameof(width));
+                if(width == 0) {
+                    this = default;
+                    return;
+                }
+                else {
+                    ThrowHelper.ThrowArgOutOfRange(nameof(width));
+                }
             }
             if(height <= 0) {
-                ThrowHelper.ThrowArgOutOfRange(nameof(height));
+                if(height == 0) {
+                    this = default;
+                    return;
+                }
+                else {
+                    ThrowHelper.ThrowArgOutOfRange(nameof(height));
+                }
             }
             _firstRowLine = MemoryMarshal.CreateSpan(ref *pixels, width);
             _height = height;
@@ -82,10 +97,22 @@ namespace Elffy.Imaging
         public ReadOnlyImageRef(ref ColorByte pixels, int width, int height)
         {
             if(width <= 0) {
-                ThrowHelper.ThrowArgOutOfRange(nameof(width));
+                if(width == 0) {
+                    this = default;
+                    return;
+                }
+                else {
+                    ThrowHelper.ThrowArgOutOfRange(nameof(width));
+                }
             }
             if(height <= 0) {
-                ThrowHelper.ThrowArgOutOfRange(nameof(height));
+                if(height == 0) {
+                    this = default;
+                    return;
+                }
+                else {
+                    ThrowHelper.ThrowArgOutOfRange(nameof(height));
+                }
             }
             _firstRowLine = MemoryMarshal.CreateSpan(ref pixels, width);
             _height = height;
@@ -98,10 +125,10 @@ namespace Elffy.Imaging
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ReadOnlyImageRef(ReadOnlySpan<ColorByte> pixels, int width, int height)
         {
-            if(width <= 0) {
+            if(width < 0) {
                 ThrowHelper.ThrowArgOutOfRange(nameof(width));
             }
-            if(height <= 0) {
+            if(height < 0) {
                 ThrowHelper.ThrowArgOutOfRange(nameof(height));
             }
             if(pixels.Length != width * height) {
@@ -115,7 +142,10 @@ namespace Elffy.Imaging
         private ReadOnlyImageRef(ReadOnlySpan<ColorByte> firstRowLine, int height)
         {
             // Create an instance without any check.
-            Debug.Assert(height > 0);
+            Debug.Assert(
+                (firstRowLine.Length > 0 && height > 0) ||      // not empty image
+                (firstRowLine.Length == 0 && height == 0)       // empty image
+                );
             _firstRowLine = firstRowLine;
             _height = height;
         }
