@@ -161,13 +161,28 @@ namespace Elffy.Imaging
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ImageRef AsImageRef()
         {
             var image = _image;
             if(image is null || image.Token != _token) {
                 return ImageRef.Empty;
             }
-            return new ImageRef(ref *image.Pixels, image.Width, image.Height, dummyArg: 0);
+            Debug.Assert(image.Height > 0 && image.Height > 0);
+            var firstRowLine = MemoryMarshal.CreateSpan(ref *image.Pixels, image.Width);
+            return ImageRef.CreateUnsafe(firstRowLine, image.Height);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ReadOnlyImageRef AsReadOnlyImageRef()
+        {
+            var image = _image;
+            if(image is null || image.Token != _token) {
+                return ImageRef.Empty;
+            }
+            Debug.Assert(image.Height > 0 && image.Height > 0);
+            var firstRowLine = MemoryMarshal.CreateSpan(ref *image.Pixels, image.Width);
+            return ReadOnlyImageRef.CreateUnsafe(firstRowLine, image.Height);
         }
 
         public static Image FromStream(Stream stream, string fileExtension)
@@ -222,11 +237,17 @@ namespace Elffy.Imaging
 
         public override int GetHashCode() => HashCode.Combine(_image, _token);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(Image left, Image right) => left.Equals(right);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(Image left, Image right) => !(left == right);
 
-        public static implicit operator ImageRef(in Image image) => image.AsImageRef();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator ImageRef(Image image) => image.AsImageRef();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator ReadOnlyImageRef(Image image) => image.AsReadOnlyImageRef();
 
         [DebuggerDisplay("{DebugView,nq}")]
         private unsafe sealed class ImageObj : IDisposable

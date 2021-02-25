@@ -56,21 +56,11 @@ namespace Elffy.Components
             ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
         }
 
-        /// <summary>Load pixel data</summary>
+        /// <summary>Load image</summary>
         /// <param name="image">image to load</param>
-        public void Load(in ImageRef image)
+        public void Load(in ReadOnlyImageRef image)
         {
-            _textureCore.Load(new Vector2i(image.Width, image.Height), image.GetPixels());
-            ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
-        }
-
-        /// <summary>Load specified pixel data with specified texture size</summary>
-        /// <remarks>Texture width and height should be power of two for performance.</remarks>
-        /// <param name="size">texture size</param>
-        /// <param name="pixels">pixel data</param>
-        public void Load(in Vector2i size, ReadOnlySpan<ColorByte> pixels)
-        {
-            _textureCore.Load(size, pixels);
+            _textureCore.Load(image);
             ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
         }
 

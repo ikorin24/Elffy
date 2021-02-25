@@ -11,8 +11,8 @@ using Elffy.Effective.Unsafes;
 using Elffy.Components;
 using Elffy.OpenGL;
 using Elffy.Shading;
+using Elffy.Core;
 using Cysharp.Threading.Tasks;
-using UnmanageUtility;
 using MMDTools.Unmanaged;
 using PmxVector3 = MMDTools.Unmanaged.Vector3;
 
@@ -201,15 +201,8 @@ namespace Elffy.Serialization
                             textures[i] = TextureObject.Empty;
                         }
                         else {
-                            var t = TextureObject.Create();
-                            TextureObject.Bind2D(t);
-                            TextureObject.Parameter2DMinFilter(TextureShrinkMode.Bilinear, TextureMipmapMode.Bilinear);
-                            TextureObject.Parameter2DMagFilter(TextureExpansionMode.Bilinear);
-                            TextureObject.Parameter2DWrapS(TextureWrapMode.Repeat);
-                            TextureObject.Parameter2DWrapT(TextureWrapMode.Repeat);
-                            TextureObject.Image2D(image);
-                            TextureObject.GenerateMipmap2D();
-                            textures[i] = t;
+                            textures[i] = TextureLoadHelper.LoadByDMA(image, TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear,
+                                                TextureMipmapMode.Bilinear, TextureWrapMode.Repeat, TextureWrapMode.Repeat);
                         }
                     }
                     TextureObject.Unbind2D();

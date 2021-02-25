@@ -2,9 +2,11 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using Elffy.Effective;
 using Elffy.Effective.Unsafes;
 using Elffy.OpenGL;
 using Elffy.Imaging;
+using Elffy.Core;
 using OpenTK.Graphics.OpenGL4;
 using TKPixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
@@ -34,68 +36,27 @@ namespace Elffy.Components
             Size = Vector2i.Zero;
         }
 
-        public unsafe void Load<T>(T state, in Vector2i size, ImageBuilderDelegate<T> imageBuilder)
-        {
-            if(imageBuilder == null) {
-                throw new ArgumentNullException(nameof(imageBuilder));
-            }
-
-            var pbo = PBO.Create();
-            PBO.Bind(pbo, BufferPackTarget.PixelUnpackBuffer);
-            try {
-                PBO.BufferData(BufferPackTarget.PixelUnpackBuffer, size.X * size.Y * sizeof(ColorByte), IntPtr.Zero, BufferUsage.StaticDraw);
-                var pixels = PBO.MapBuffer<ColorByte>(BufferPackTarget.PixelUnpackBuffer, BufferAccess.WriteOnly);
-                try {
-                    var image = new ImageRef(pixels, size.X, size.Y);
-                    imageBuilder.Invoke(state, image);
-                }
-                finally {
-                    PBO.UnmapBuffer(BufferPackTarget.PixelUnpackBuffer);
-                }
-                var tex = TextureObject.Create();
-                TextureObject.Bind2D(tex);
-                try {
-                    TextureObject.Parameter2DMinFilter(ShrinkMode, MipmapMode);
-                    TextureObject.Parameter2DMagFilter(ExpansionMode);
-                    TextureObject.Image2D(size, (ColorByte*)null);      // Allocate texture in VRAM and copy pixels data
-                    if(MipmapMode != TextureMipmapMode.None) {
-                        TextureObject.GenerateMipmap2D();
-                    }
-                }
-                finally {
-                    TextureObject.Unbind2D();
-                }
-                Texture = tex;
-                Size = size;
-            }
-            finally {
-                PBO.Unbind(BufferPackTarget.PixelUnpackBuffer);
-                PBO.Delete(ref pbo);
-            }
-        }
-
-        /// <summary>Load specified pixel data with specified texture size</summary>
-        /// <remarks>Texture width and height should be power of two for performance.</remarks>
-        /// <param name="size">texture size</param>
-        /// <param name="pixels">pixel data</param>
-        public unsafe void Load(in Vector2i size, ReadOnlySpan<ColorByte> pixels)
+        public void Load<T>(T state, in Vector2i size, ImageBuilderDelegate<T> imageBuilder)
         {
             if(!Texture.IsEmpty) {
                 ThrowAlreadyLoaded();
             }
-            if(size.X <= 0 || size.Y <= 0) {
-                ThrowInvalidSize();
-                [DoesNotReturn] static void ThrowInvalidSize() => throw new ArgumentOutOfRangeException($"{nameof(size)} is invalid");
-            }
-            if(pixels.Length < size.X * size.Y) {
-                ThrowPixelsTooShort();
-                [DoesNotReturn] static void ThrowPixelsTooShort() => throw new ArgumentException($"{nameof(pixels)} is too short");
-            }
-            fixed(ColorByte* ptr = pixels) {
-                LoadCore(size, ptr);
-            }
+            Texture = TextureLoadHelper.LoadByDMA(state, size, imageBuilder, 
+                                                  ExpansionMode, ShrinkMode, 
+                                                  MipmapMode, WrapModeX, WrapModeY);
+            Size = size;
         }
 
+        public void Load(in ReadOnlyImageRef image)
+        {
+            if(!Texture.IsEmpty) {
+                ThrowAlreadyLoaded();
+            }
+            Texture = TextureLoadHelper.LoadByDMA(image, ExpansionMode, ShrinkMode, MipmapMode, WrapModeX, WrapModeY);
+            Size = new(image.Width, image.Height);
+        }
+
+        [Obsolete("obsolete", true)]
         public unsafe void Load(in Vector2i size, ReadOnlySpan<Color4> pixels)
         {
             if(!Texture.IsEmpty) {

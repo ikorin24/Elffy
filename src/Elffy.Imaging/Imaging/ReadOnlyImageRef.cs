@@ -10,14 +10,14 @@ using Elffy.Imaging.Internal;
 
 namespace Elffy.Imaging
 {
-    /// <summary>Provides view of image-like object.</summary>
+    /// <summary>Provides read-only view of image-like object.</summary>
     /// <remarks>
     /// The layout of pixels is (R8, G8, B8, A8) which is similar to <see cref="ColorByte"/>.
     /// </remarks>
     [DebuggerDisplay("{DebugView,nq}")]
-    public unsafe readonly ref struct ImageRef
+    public unsafe readonly ref struct ReadOnlyImageRef
     {
-        private readonly Span<ColorByte> _firstRowLine;     // (ref ColorByte head, int width)
+        private readonly ReadOnlySpan<ColorByte> _firstRowLine;     // (ref ColorByte head, int width)
         private readonly int _height;
 
         /// <summary>Get width of the image.</summary>
@@ -32,13 +32,13 @@ namespace Elffy.Imaging
             get => _firstRowLine.Length == 0 && _height == 0;
         }
 
-        /// <summary>Get an empty instance of type <see cref="ImageRef"/>.</summary>
-        public static ImageRef Empty => default;
+        /// <summary>Get an empty instance of type <see cref="ReadOnlyImageRef"/>.</summary>
+        public static ReadOnlyImageRef Empty => default;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private string DebugView => $"{nameof(ImageRef)} ({Width}x{Height})";
+        private string DebugView => $"{nameof(ReadOnlyImageRef)} ({Width}x{Height})";
 
-        /// <summary>Get or set pixel of specified (x, y)</summary>
+        /// <summary>Get pixel of specified (x, y)</summary>
         /// <param name="x">x index (column line)</param>
         /// <param name="y">y index (row line)</param>
         /// <returns>pixel</returns>
@@ -57,8 +57,12 @@ namespace Elffy.Imaging
             }
         }
 
+        /// <summary>Create <see cref="ReadOnlyImageRef"/> from a pointer, width, and height.</summary>
+        /// <param name="pixels">pointer of the head pixel</param>
+        /// <param name="width">image width</param>
+        /// <param name="height">image height</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ImageRef(ColorByte* pixels, int width, int height)
+        public ReadOnlyImageRef(ColorByte* pixels, int width, int height)
         {
             if(width <= 0) {
                 ThrowHelper.ThrowArgOutOfRange(nameof(width));
@@ -70,8 +74,12 @@ namespace Elffy.Imaging
             _height = height;
         }
 
+        /// <summary>Create <see cref="ReadOnlyImageRef"/> from a reference, width, and height.</summary>
+        /// <param name="pixels">reference to the head pixel</param>
+        /// <param name="width">image width</param>
+        /// <param name="height">image height</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ImageRef(ref ColorByte pixels, int width, int height)
+        public ReadOnlyImageRef(ref ColorByte pixels, int width, int height)
         {
             if(width <= 0) {
                 ThrowHelper.ThrowArgOutOfRange(nameof(width));
@@ -83,8 +91,12 @@ namespace Elffy.Imaging
             _height = height;
         }
 
+        /// <summary>Create <see cref="ReadOnlyImageRef"/> from whole pixels data, width, and height.</summary>
+        /// <param name="pixels">whole pixels data</param>
+        /// <param name="width">image width</param>
+        /// <param name="height">image height</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ImageRef(Span<ColorByte> pixels, int width, int height)
+        public ReadOnlyImageRef(ReadOnlySpan<ColorByte> pixels, int width, int height)
         {
             if(width <= 0) {
                 ThrowHelper.ThrowArgOutOfRange(nameof(width));
@@ -100,7 +112,7 @@ namespace Elffy.Imaging
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ImageRef(Span<ColorByte> firstRowLine, int height)
+        private ReadOnlyImageRef(ReadOnlySpan<ColorByte> firstRowLine, int height)
         {
             // Create an instance without any check.
             Debug.Assert(height > 0);
@@ -108,13 +120,13 @@ namespace Elffy.Imaging
             _height = height;
         }
 
-        /// <summary>Create an instance without any checking.</summary>
-        /// <remarks>[Caution] The first argument is the first row line span, not whole pixels span.</remarks>
-        /// <param name="firstRowLine">first row line pixels (That means pair of the pointer and width.)</param>
-        /// <param name="height">image height</param>
-        /// <returns></returns>
+        /// <summary>Create <see cref="ReadOnlyImageRef"/> without any check.</summary>
+        /// <remarks>[Caution] Arguments are not checked.</remarks>
+        /// <param name="firstRowLine">pixels span of first row line</param>
+        /// <param name="height">height of image</param>
+        /// <returns><see cref="ReadOnlyImageRef"/> instance</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static ImageRef CreateUnsafe(Span<ColorByte> firstRowLine, int height)
+        internal static ReadOnlyImageRef CreateUnsafe(ReadOnlySpan<ColorByte> firstRowLine, int height)
         {
             return new(firstRowLine, height);
         }
@@ -122,21 +134,21 @@ namespace Elffy.Imaging
         /// <summary>Get pixels span</summary>
         /// <returns>pixels span</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Span<ColorByte> GetPixels()
+        public ReadOnlySpan<ColorByte> GetPixels()
         {
-            return MemoryMarshal.CreateSpan(ref _firstRowLine.GetReference(), _firstRowLine.Length * _height);
+            return MemoryMarshal.CreateReadOnlySpan(ref _firstRowLine.At(0), _firstRowLine.Length * _height);
         }
 
         /// <summary>Get span of the specified row line pixels.</summary>
         /// <param name="row">row index</param>
         /// <returns>row line span</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Span<ColorByte> GetRowLine(int row)
+        public ReadOnlySpan<ColorByte> GetRowLine(int row)
         {
             if((uint)row >= _height) {
                 ThrowHelper.ThrowArgOutOfRange(nameof(row));
             }
-            return MemoryMarshal.CreateSpan(ref _firstRowLine.At(row * Width), Width);
+            return MemoryMarshal.CreateReadOnlySpan(ref _firstRowLine.At(row * Width), Width);
         }
 
         /// <summary>Create copy image</summary>
@@ -154,19 +166,15 @@ namespace Elffy.Imaging
             }
         }
 
-        /// <summary>Cast <see langword="this"/> as <see cref="ReadOnlyImageRef"/>.</summary>
-        /// <returns></returns>
-        public ReadOnlyImageRef AsReadOnly() => this;
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref ColorByte GetReference()
+        public ref readonly ColorByte GetReference()
         {
             return ref _firstRowLine.GetReference();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public ref ColorByte GetPinnableReference()
+        public ref readonly ColorByte GetPinnableReference()
         {
             return ref _firstRowLine.GetPinnableReference();
         }
@@ -184,18 +192,15 @@ namespace Elffy.Imaging
 #pragma warning restore 0809
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator ==(ImageRef left, ImageRef right)
+        public static bool operator ==(ReadOnlyImageRef left, ReadOnlyImageRef right)
         {
             return left._firstRowLine == right._firstRowLine && left._height == right._height;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator !=(ImageRef left, ImageRef right) => !(left == right);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator ReadOnlyImageRef(ImageRef image)
+        public static bool operator !=(ReadOnlyImageRef left, ReadOnlyImageRef right)
         {
-            return ReadOnlyImageRef.CreateUnsafe(image._firstRowLine, image.Height);
+            return !(left == right);
         }
     }
 }
