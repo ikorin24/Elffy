@@ -204,8 +204,9 @@ namespace Elffy.Serialization
                             textures[i] = TextureLoadHelper.LoadByDMA(image, TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear,
                                                 TextureMipmapMode.Bilinear, TextureWrapMode.Repeat, TextureWrapMode.Repeat);
                         }
+                        // Scadule the loading of textures to each frame.
+                        await model.HostScreen.AsyncBack.ToTiming(FrameLoopTiming.Update, obj.CancellationToken);
                     }
-                    TextureObject.Unbind2D();
                     var partsComponent = new PmxModelParts(ref vertexCountArray, ref textureIndexArray, ref textures);
                     model.AddComponent(partsComponent);
 
