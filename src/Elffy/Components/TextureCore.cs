@@ -90,6 +90,33 @@ namespace Elffy.Components
             LoadCore<ColorByte>(size, null);
         }
 
+        public unsafe void Update(in Vector2i offset, in ReadOnlyImageRef subImage)
+        {
+            if(Texture.IsEmpty) {
+                ThrowEmptyTexture();
+            }
+            // Requirements
+            // 0 <= offset.X < Size.X
+            // 0 <= offset.Y < Size.Y
+            // 0 <= subImage.Width <= Size.X - offset.X     (if subImage.Width == 0, do nothing)
+            // 0 <= subImage.Height <= Size.Y - offset.Y    (if subImage.Height == 0, do nothing)
+
+            if((uint)offset.X >= (uint)Size.X || (uint)offset.Y >= (uint)Size.Y) {
+                ThrowOutOfRange(nameof(offset));
+            }
+            if(subImage.IsEmpty) { return; }
+            if(subImage.Width > Size.X || subImage.Height > Size.Y) {
+                ThrowOutOfRange($"Rect to update is larger than texture size.");
+            }
+
+            fixed(ColorByte* ptr = subImage) {
+                UpdateSubTexture(Texture, ptr, new RectI(offset.X, offset.Y, subImage.Width, subImage.Height));
+            }
+
+
+            [DoesNotReturn] static void ThrowOutOfRange(string message) => throw new ArgumentOutOfRangeException(message);
+        }
+
         public unsafe void Update(in RectI rect, ReadOnlySpan<ColorByte> pixels)
         {
             if(Texture.IsEmpty) {

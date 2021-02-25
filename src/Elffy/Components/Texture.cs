@@ -83,7 +83,8 @@ namespace Elffy.Components
             ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
         }
 
-        public void Update(in RectI rect, ReadOnlySpan<ColorByte> pixels) => _textureCore.Update(rect, pixels);
+        public void Update(in Vector2i offset, in ReadOnlyImageRef subImage) => _textureCore.Update(offset, subImage);
+        //public void Update(in RectI rect, ReadOnlySpan<ColorByte> pixels) => _textureCore.Update(rect, pixels);
 
         public void Update(in RectI rect, in ColorByte fill) => _textureCore.Update(rect, fill);
 
