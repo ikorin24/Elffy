@@ -199,7 +199,8 @@ namespace Elffy.Imaging
         {
             return type switch
             {
-                ImageType.Png => PngParser.Parse(stream),
+                //ImageType.Png => PngParser.Parse(stream),     // TODO: can not parse some png well.
+                ImageType.Png => ImageParserTemporary.Parse(stream),
                 ImageType.Tga => TgaParser.Parse(stream),
                 ImageType.Jpg => ImageParserTemporary.Parse(stream),    // TODO: jpg parser
                 ImageType.Bmp => ImageParserTemporary.Parse(stream),    // TODO: bmp parser
