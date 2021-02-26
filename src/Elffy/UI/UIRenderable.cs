@@ -58,7 +58,7 @@ namespace Elffy.UI
                 new(new(0, 1, 0), new(0, 1)),
             };
             ReadOnlySpan<int> indices = stackalloc int[6] { 0, 2, 1, 2, 0, 3 };
-            LoadGraphicBuffer(vertices, indices);
+            LoadMesh(vertices, indices);
         }
 
         protected override void OnRendering(in Matrix4 model, in Matrix4 view, in Matrix4 projection)

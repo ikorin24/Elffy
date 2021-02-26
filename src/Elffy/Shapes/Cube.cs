@@ -93,7 +93,7 @@ namespace Elffy.Shapes
                 16, 17, 18, 16, 18, 19,   // back
                 20, 21, 22, 20, 22, 23,   // down
             };
-            LoadGraphicBuffer(vertices, indices);
+            LoadMesh(vertices, indices);
         }
     }
 }

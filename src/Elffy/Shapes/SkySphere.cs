@@ -56,7 +56,7 @@ namespace Elffy.Shapes
             GenerateMesh(out var vertices, out var indices);
             using(vertices)
             using(indices) {
-                LoadGraphicBuffer(vertices.AsSpan(), indices.AsSpan());
+                LoadMesh(vertices.AsSpan(), indices.AsSpan());
             }
         }
     }

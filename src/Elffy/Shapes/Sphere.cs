@@ -16,7 +16,7 @@ namespace Elffy.Shapes
         {
             throw new NotImplementedException();
             //base.OnActivated();
-            //LoadGraphicBuffer(vertexArray.Span, indexArray.Span);
+            //LoadMesh(vertexArray.Span, indexArray.Span);
         }
     }
 }

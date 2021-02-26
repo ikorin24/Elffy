@@ -75,9 +75,9 @@ namespace Elffy.Shapes
 
         // This method is used by Model3DLoadDelegate
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void LoadGraphicBufferInternal<TVertex>(ReadOnlySpan<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged
+        internal void LoadMeshInternal<TVertex>(ReadOnlySpan<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged
         {
-            LoadGraphicBuffer(vertices, indices);
+            LoadMesh(vertices, indices);
         }
 
         // This method is used by Model3DLoadDelegate
@@ -90,7 +90,7 @@ namespace Elffy.Shapes
         /// <summary>Create new <see cref="Model3D"/> by using specified builder.</summary>
         /// <typeparam name="T">type of the builder argument</typeparam>
         /// <param name="obj">the argument of the builder</param>
-        /// <param name="builder">builder method delegate</param>
+        /// <param name="builder">builder method delegate which is called when <see cref="OnActivated"/></param>
         /// <param name="onRendering">rendering method delegate (null if use default rendering)</param>
         /// <returns>new <see cref="Model3D"/> instance</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -139,7 +139,7 @@ namespace Elffy.Shapes
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke<TVertex>(ReadOnlySpan<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged
         {
-            _model.LoadGraphicBufferInternal(vertices, indices);
+            _model.LoadMeshInternal(vertices, indices);
         }
 
         /// <summary>Load vertices and indices to <see cref="Model3D"/></summary>
@@ -149,7 +149,7 @@ namespace Elffy.Shapes
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke<TVertex>(Span<TVertex> vertices, Span<int> indices) where TVertex : unmanaged
         {
-            _model.LoadGraphicBufferInternal(vertices.AsReadOnly(), indices.AsReadOnly());
+            _model.LoadMeshInternal(vertices.AsReadOnly(), indices.AsReadOnly());
         }
     }
 

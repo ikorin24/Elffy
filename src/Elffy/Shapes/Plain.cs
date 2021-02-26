@@ -54,7 +54,7 @@ namespace Elffy.Shapes
             {
                 0, 1, 2, 0, 2, 3,
             };
-            LoadGraphicBuffer(vertice, indices);
+            LoadMesh(vertice, indices);
         }
     }
 }

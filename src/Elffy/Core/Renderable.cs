@@ -127,20 +127,20 @@ namespace Elffy.Core
             }
         }
 
-        /// <summary>Load buffer data</summary>
+        /// <summary>Load mesh data</summary>
         /// <typeparam name="TVertex">type of vertex</typeparam>
         /// <param name="vertices">vertex data to load</param>
         /// <param name="indices">index data to load</param>
-        protected void LoadGraphicBuffer<TVertex>(Span<TVertex> vertices, Span<int> indices) where TVertex : unmanaged
+        protected void LoadMesh<TVertex>(Span<TVertex> vertices, Span<int> indices) where TVertex : unmanaged
         {
-            LoadGraphicBuffer(vertices.AsReadOnly(), indices.AsReadOnly());
+            LoadMesh(vertices.AsReadOnly(), indices.AsReadOnly());
         }
 
-        /// <summary>Load buffer data</summary>
+        /// <summary>Load mesh data</summary>
         /// <typeparam name="TVertex">type of vertex</typeparam>
         /// <param name="vertices">vertex data to load</param>
         /// <param name="indices">index data to load</param>
-        protected void LoadGraphicBuffer<TVertex>(ReadOnlySpan<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged
+        protected void LoadMesh<TVertex>(ReadOnlySpan<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged
         {
             if(Engine.CurrentContext != HostScreen) {
                 throw new InvalidOperationException("Invalid current context.");
