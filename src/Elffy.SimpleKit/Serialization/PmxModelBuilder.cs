@@ -45,7 +45,7 @@ namespace Elffy.Serialization
 
             VAO.Bind(model3D.VAO);
             IBO.Bind(model3D.IBO);
-            var shaderProgram = model3D.ShaderProgram!;
+            var shaderProgram = model3D.ShaderProgram;
             var start = 0;
             for(int i = 0; i < vertexCountArray.Length; i++) {
                 parts.Current = i;
