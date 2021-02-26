@@ -49,7 +49,7 @@ namespace Elffy.Shapes
                 var screen = HostScreen;
                 if(!screen.RunningToken.IsCancellationRequested) {
                     if(Engine.CurrentContext != screen) {
-                        await screen.AsyncBack.ToTiming(FrameLoopTiming.Update);
+                        await screen.AsyncBack.Ensure(FrameLoopTiming.Update);
                     }
                     Terminate();
                 }
