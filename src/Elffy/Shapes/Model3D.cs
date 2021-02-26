@@ -103,10 +103,16 @@ namespace Elffy.Shapes
                 [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(builder));
             }
 
-            return new Model3D(obj, &CallbackOnActivated, builder, onRendering);
-
             // ジェネリクス型<T>をローカル関数に含め、関数ポインタを渡すことで、
             // builder の呼び出しを OnActivated() まで遅延させつつ、<T>を復元できる。
+            // 参考: https://ikorin2.hatenablog.jp/entry/2021/01/15/110845
+
+            // Capture the generics type <T> in the local function and store its function pointer in the instance.
+            // Model3D can restore the generics type as <T>, not 'Type', when calls OnActivated().
+            // Reference (my blog in Japanese): https://ikorin2.hatenablog.jp/entry/2021/01/15/110845
+
+            return new Model3D(obj, &CallbackOnActivated, builder, onRendering);
+
             static UniTask CallbackOnActivated(Model3D model, object? obj, Delegate builder)
             {
                 // Restore types of builder and obj.
