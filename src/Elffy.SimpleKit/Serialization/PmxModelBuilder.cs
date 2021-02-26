@@ -59,7 +59,7 @@ namespace Elffy.Serialization
             IBO.Unbind();
         }
 
-        private static async UniTask Build(ModelState obj, Model3D model, Model3DLoadDelegate load)
+        private static async UniTask Build(ModelState obj, Model3D model, Model3DLoadMeshDelegate load)
         {
             obj.CancellationToken.ThrowIfCancellationRequested();
 
@@ -77,7 +77,7 @@ namespace Elffy.Serialization
             await BuildCore(pmx, model, load, obj);
         }
 
-        private static UniTask BuildCore(PMXObject pmx, Model3D model, Model3DLoadDelegate load, ModelState obj)
+        private static UniTask BuildCore(PMXObject pmx, Model3D model, Model3DLoadMeshDelegate load, ModelState obj)
         {
             // ------------------------------
             //      ↓ thread pool
@@ -107,7 +107,7 @@ namespace Elffy.Serialization
             return LoadToModel(pmx, model, load, obj, images);
         }
 
-        private static async UniTask LoadToModel(PMXObject pmx, Model3D model, Model3DLoadDelegate load, ModelState obj, Image[] images)
+        private static async UniTask LoadToModel(PMXObject pmx, Model3D model, Model3DLoadMeshDelegate load, ModelState obj, Image[] images)
         {
             // ------------------------------
             //      ↓ thread pool
