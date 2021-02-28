@@ -50,7 +50,7 @@ namespace Elffy.Diagnostics
         [Conditional(DebugSymbol)]
         public static void WriteLine(object? value, string? category)
         {
-            WritePrivate(value.ToString() + NewLine, category);
+            WritePrivate(value?.ToString() + NewLine, category);
         }
 
         [Conditional(DebugSymbol)]
