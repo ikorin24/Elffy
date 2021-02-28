@@ -168,7 +168,7 @@ namespace Elffy.Components
                 ThrowEmptyTexture();
             }
             TextureObject.Bind2D(to);
-            TextureObject.SubImage2D(rect, pixels);
+            TextureObject.SubImage2D(rect, pixels, 0);
             TextureObject.Unbind2D();
         }
 
@@ -178,7 +178,7 @@ namespace Elffy.Components
                 ThrowEmptyTexture();
             }
             TextureObject.Bind2D(to);
-            TextureObject.SubImage2D(rect, pixels);
+            TextureObject.SubImage2D(rect, pixels, 0);
             TextureObject.Unbind2D();
         }
 
@@ -317,10 +317,10 @@ namespace Elffy.Components
             TextureObject.Parameter2DWrapT(WrapModeY);
 
             if(typeof(TColor) == typeof(ColorByte)) {
-                TextureObject.Image2D(size, (ColorByte*)pixels);
+                TextureObject.Image2D(size, (ColorByte*)pixels, 0);
             }
             else if(typeof(TColor) == typeof(Color4)) {
-                TextureObject.Image2D(size, (Color4*)pixels);
+                TextureObject.Image2D(size, (Color4*)pixels, 0);
             }
 
             if(MipmapMode != TextureMipmapMode.None) {

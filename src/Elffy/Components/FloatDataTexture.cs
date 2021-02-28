@@ -114,7 +114,7 @@ namespace Elffy.Components
             TextureObject.Bind1D(_to);
             SetTextureParams();
             fixed(Color4* ptr = pixels) {
-                TextureObject.Image1D(pixels.Length, ptr, TextureObject.InternalFormat.Rgba32f);
+                TextureObject.Image1D(pixels.Length, ptr, TextureObject.InternalFormat.Rgba32f, 0);
             }
             TextureObject.Unbind1D();
         }
@@ -137,7 +137,7 @@ namespace Elffy.Components
 
             TextureObject.Bind1D(_to);
             SetTextureParams();
-            TextureObject.Image1D(width, (Color4*)null, TextureObject.InternalFormat.Rgba32f);
+            TextureObject.Image1D(width, (Color4*)null, TextureObject.InternalFormat.Rgba32f, 0);
             TextureObject.Unbind1D();
         }
 
@@ -159,7 +159,7 @@ namespace Elffy.Components
 
             TextureObject.Bind1D(TextureObject);
             fixed(Color4* ptr = pixels) {
-                TextureObject.SubImage1D(xOffset, pixels.Length, ptr);
+                TextureObject.SubImage1D(xOffset, pixels.Length, ptr, 0);
             }
             TextureObject.Unbind1D();
         }

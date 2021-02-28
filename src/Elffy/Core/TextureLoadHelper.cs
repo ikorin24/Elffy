@@ -55,7 +55,7 @@ namespace Elffy.Core
                     TextureObject.Parameter2DMagFilter(expansionMode);
                     TextureObject.Parameter2DWrapS(wrapModeX);
                     TextureObject.Parameter2DWrapT(wrapModeY);
-                    TextureObject.Image2D(size, (ColorByte*)null);      // Allocate texture in VRAM and copy pixels data
+                    TextureObject.Image2D(size, (ColorByte*)null, 0);      // Allocate texture in VRAM and copy pixels data
                     if(mipmapMode != TextureMipmapMode.None) {
                         TextureObject.GenerateMipmap2D();
                     }

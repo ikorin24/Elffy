@@ -81,27 +81,29 @@ namespace Elffy.OpenGL
         }
 
         /// <summary>Call glTexImage2D</summary>
-        /// <param name="bitmap">image to load</param>
-        public static unsafe void Image2D(Image image)
+        /// <param name="image">image to load</param>
+        /// <param name="level">texture level</param>
+        public static unsafe void Image2D(Image image, int level)
         {
-            Image2D(new Vector2i(image.Width, image.Height), image.GetPtr());
+            Image2D(new Vector2i(image.Width, image.Height), image.GetPtr(), level);
         }
 
         /// <summary>Call glTexImage2D</summary>
         /// <param name="size">texture size</param>
         /// <param name="pixels">texture to load</param>
-        public static unsafe void Image2D(in Vector2i size, ColorByte* pixels)
+        /// <param name="level">texture level</param>
+        public static unsafe void Image2D(in Vector2i size, ColorByte* pixels, int level)
         {
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, size.X, size.Y,
+            GL.TexImage2D(TextureTarget.Texture2D, level, PixelInternalFormat.Rgba, size.X, size.Y,
                           0, TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
         }
 
         /// <summary>Call glTexImage2D</summary>
         /// <param name="size">texture size</param>
         /// <param name="pixels">texture to load</param>
-        public static unsafe void Image2D(in Vector2i size, Color4* pixels)
+        public static unsafe void Image2D(in Vector2i size, Color4* pixels, int level)
         {
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, size.X, size.Y,
+            GL.TexImage2D(TextureTarget.Texture2D, level, PixelInternalFormat.Rgba, size.X, size.Y,
                           0, TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
         }
 
@@ -109,9 +111,10 @@ namespace Elffy.OpenGL
         /// <param name="size">texture size</param>
         /// <param name="pixels">texture to load</param>
         /// <param name="internalFormat">internal format</param>
-        public static unsafe void Image2D(in Vector2i size, ColorByte* pixels, InternalFormat internalFormat)
+        /// <param name="level">texture level</param>
+        public static unsafe void Image2D(in Vector2i size, ColorByte* pixels, InternalFormat internalFormat, int level)
         {
-            GL.TexImage2D(TextureTarget.Texture2D, 0, (PixelInternalFormat)internalFormat, size.X, size.Y,
+            GL.TexImage2D(TextureTarget.Texture2D, level, (PixelInternalFormat)internalFormat, size.X, size.Y,
                           0, TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
         }
 
@@ -119,27 +122,30 @@ namespace Elffy.OpenGL
         /// <param name="size">texture size</param>
         /// <param name="pixels">texture to load</param>
         /// <param name="internalFormat">internal format</param>
-        public static unsafe void Image2D(in Vector2i size, Color4* pixels, InternalFormat internalFormat)
+        /// <param name="level">texture level</param>
+        public static unsafe void Image2D(in Vector2i size, Color4* pixels, InternalFormat internalFormat, int level)
         {
-            GL.TexImage2D(TextureTarget.Texture2D, 0, (PixelInternalFormat)internalFormat, size.X, size.Y,
+            GL.TexImage2D(TextureTarget.Texture2D, level, (PixelInternalFormat)internalFormat, size.X, size.Y,
                           0, TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
         }
 
         /// <summary>Call glTexSubImage2D</summary>
         /// <param name="rect">sub texture rect</param>
         /// <param name="pixels">sub texture to load</param>
-        public static unsafe void SubImage2D(in RectI rect, ColorByte* pixels)
+        /// <param name="level">texture level</param>
+        public static unsafe void SubImage2D(in RectI rect, ColorByte* pixels, int level)
         {
-            GL.TexSubImage2D(TextureTarget.Texture2D, 0, rect.X, rect.Y, rect.Width, rect.Height,
+            GL.TexSubImage2D(TextureTarget.Texture2D, level, rect.X, rect.Y, rect.Width, rect.Height,
                              TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
         }
 
         /// <summary>Call glTexSubImage2D</summary>
         /// <param name="rect">sub texture rect</param>
         /// <param name="pixels">sub texture to load</param>
-        public static unsafe void SubImage2D(in RectI rect, Color4* pixels)
+        /// <param name="level">texture level</param>
+        public static unsafe void SubImage2D(in RectI rect, Color4* pixels, int level)
         {
-            GL.TexSubImage2D(TextureTarget.Texture2D, 0, rect.X, rect.Y, rect.Width, rect.Height,
+            GL.TexSubImage2D(TextureTarget.Texture2D, level, rect.X, rect.Y, rect.Width, rect.Height,
                              TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
         }
 
@@ -181,18 +187,20 @@ namespace Elffy.OpenGL
         /// <summary>Call glTexImage1D</summary>
         /// <param name="width">texture width</param>
         /// <param name="pixels">texture to load</param>
-        public static unsafe void Image1D(int width, ColorByte* pixels)
+        /// <param name="level">texture level</param>
+        public static unsafe void Image1D(int width, ColorByte* pixels, int level)
         {
-            GL.TexImage1D(TextureTarget.Texture1D, 0, PixelInternalFormat.Rgba, width,
+            GL.TexImage1D(TextureTarget.Texture1D, level, PixelInternalFormat.Rgba, width,
                           0, TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
         }
 
         /// <summary>Call glTexImage1D</summary>
         /// <param name="width">texture width</param>
         /// <param name="pixels">texture to load</param>
-        public static unsafe void Image1D(int width, Color4* pixels)
+        /// <param name="level">texture level</param>
+        public static unsafe void Image1D(int width, Color4* pixels, int level)
         {
-            GL.TexImage1D(TextureTarget.Texture1D, 0, PixelInternalFormat.Rgba, width,
+            GL.TexImage1D(TextureTarget.Texture1D, level, PixelInternalFormat.Rgba, width,
                           0, TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
         }
 
@@ -200,9 +208,10 @@ namespace Elffy.OpenGL
         /// <param name="width">texture width</param>
         /// <param name="pixels">texture to load</param>
         /// <param name="internalFormat">internal format</param>
-        public static unsafe void Image1D(int width, ColorByte* pixels, InternalFormat internalFormat)
+        /// <param name="level">texture level</param>
+        public static unsafe void Image1D(int width, ColorByte* pixels, InternalFormat internalFormat, int level)
         {
-            GL.TexImage1D(TextureTarget.Texture1D, 0, (PixelInternalFormat)internalFormat, width,
+            GL.TexImage1D(TextureTarget.Texture1D, level, (PixelInternalFormat)internalFormat, width,
                           0, TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
         }
 
@@ -210,9 +219,10 @@ namespace Elffy.OpenGL
         /// <param name="width">texture width</param>
         /// <param name="pixels">texture to load</param>
         /// <param name="internalFormat">internal format</param>
-        public static unsafe void Image1D(int width, Color4* pixels, InternalFormat internalFormat)
+        /// <param name="level">texture level</param>
+        public static unsafe void Image1D(int width, Color4* pixels, InternalFormat internalFormat, int level)
         {
-            GL.TexImage1D(TextureTarget.Texture1D, 0, (PixelInternalFormat)internalFormat, width,
+            GL.TexImage1D(TextureTarget.Texture1D, level, (PixelInternalFormat)internalFormat, width,
                           0, TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
         }
 
@@ -220,9 +230,10 @@ namespace Elffy.OpenGL
         /// <param name="xOffset">offset of sub texture</param>
         /// <param name="width">width of sub texture</param>
         /// <param name="pixels">sub texture to load</param>
-        public static unsafe void SubImage1D(int xOffset, int width, ColorByte* pixels)
+        /// <param name="level">texture level</param>
+        public static unsafe void SubImage1D(int xOffset, int width, ColorByte* pixels, int level)
         {
-            GL.TexSubImage1D(TextureTarget.Texture1D, 0, xOffset, width,
+            GL.TexSubImage1D(TextureTarget.Texture1D, level, xOffset, width,
                              TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
         }
 
@@ -230,9 +241,10 @@ namespace Elffy.OpenGL
         /// <param name="xOffset">offset of sub texture</param>
         /// <param name="width">width of sub texture</param>
         /// <param name="pixels">sub texture to load</param>
-        public static unsafe void SubImage1D(int xOffset, int width, Color4* pixels)
+        /// <param name="level">texture level</param>
+        public static unsafe void SubImage1D(int xOffset, int width, Color4* pixels, int level)
         {
-            GL.TexSubImage1D(TextureTarget.Texture1D, 0, xOffset, width,
+            GL.TexSubImage1D(TextureTarget.Texture1D, level, xOffset, width,
                              TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
         }
 
