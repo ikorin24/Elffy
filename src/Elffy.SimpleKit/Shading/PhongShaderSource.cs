@@ -54,7 +54,7 @@ namespace Elffy.Shading
             uniform.Send("ls", new Vector3(0.2f));
 
             var hasTexture = target.TryGetComponent<Texture>(out var texture);
-            var texObj = hasTexture ? texture.TextureObject : TextureObject.Empty;
+            var texObj = hasTexture ? texture!.TextureObject : TextureObject.Empty;
             uniform.SendTexture2D("tex_sampler", texObj, TextureUnitNumber.Unit0);
             uniform.Send("hasTexture", hasTexture);
         }
