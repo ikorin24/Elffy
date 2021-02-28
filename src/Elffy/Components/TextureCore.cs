@@ -57,6 +57,7 @@ namespace Elffy.Components
         }
 
         [Obsolete("obsolete", true)]
+        [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public unsafe void Load(in Vector2i size, ReadOnlySpan<Color4> pixels)
         {
             if(!Texture.IsEmpty) {
