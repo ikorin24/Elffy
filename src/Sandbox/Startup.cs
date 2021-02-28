@@ -4,7 +4,6 @@ using Elffy;
 using Elffy.Core;
 using Elffy.Mathematics;
 using Elffy.Shapes;
-using Elffy.Imaging;
 using Elffy.Shading;
 using Cysharp.Threading.Tasks;
 
@@ -27,9 +26,10 @@ namespace Sandbox
             GameUI.Root.Background = Color4.Black;
             try {
                 await UniTask.WhenAll(
+                    CreateModel(),
                     CreateBox(),
                     UniTask.FromResult(CameraMouse()),
-                    UniTask.FromResult(CreatePlain()),
+                    CreateFloor(),
                     UniTask.FromResult(CreateSky()),
                     Timing.DelayTime(800));
 
@@ -48,6 +48,14 @@ namespace Sandbox
             }
         }
 
+        private static async UniTask<Model3D> CreateModel()
+        {
+            var model = Resources.Loader.CreatePmxModel("Alicia/Alicia_solid.pmx");
+            model.Scale = new Vector3(0.3f);
+            await model.ActivateWaitLoaded();
+            return model;
+        }
+
         private static SkySphere CreateSky()
         {
             var sky = new SkySphere();
@@ -57,23 +65,36 @@ namespace Sandbox
             return sky;
         }
 
-        private static Plain CreatePlain()
+        private static async UniTask<Plain> CreateFloor()
         {
-            var p = new Plain();
-            p.Scale = new Vector3(100f);
-            p.Rotation = Quaternion.FromAxisAngle(Vector3.UnitX, -90.ToRadian());
-            p.Activate();
-            return p;
+            var plain = new Plain();
+            plain.Scale = new Vector3(10f);
+            plain.Shader = PhongShaderSource.Instance;
+            var texture = await Resources.Loader.LoadTextureAsync("floor.png", TextureExpansionMode.NearestNeighbor, TextureShrinkMode.NearestNeighbor,
+                                TextureMipmapMode.None, TextureWrapMode.ClampToEdge, TextureWrapMode.ClampToEdge);
+            plain.AddComponent(texture);
+            plain.Rotation = Quaternion.FromAxisAngle(Vector3.UnitX, -90.ToRadian());
+            plain.Activate();
+            return plain;
         }
 
         private static async UniTask<Cube> CreateBox()
         {
             var cube = new Cube();
-            cube.Position = new(0, 0.5f, 0);
+            cube.Position = new(-3, 0.5f, 0);
             cube.Shader = PhongShaderSource.Instance;
             cube.AddComponent(await Resources.Loader.LoadTextureAsync("box.png"));
             cube.Activate();
+            StartMotion(cube).Forget();
             return cube;
+
+            static async UniTaskVoid StartMotion(Cube cube)
+            {
+                while(Game.IsRunning) {
+                    cube.Rotate(Vector3.UnitY, 1f.ToRadian());
+                    await Timing.ToUpdate();
+                }
+            }
         }
 
         private static CameraMouse CameraMouse()
