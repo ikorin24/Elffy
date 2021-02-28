@@ -112,9 +112,9 @@ namespace Elffy.OpenGL
         /// <param name="pixels">texture to load</param>
         /// <param name="internalFormat">internal format</param>
         /// <param name="level">texture level</param>
-        public static unsafe void Image2D(in Vector2i size, ColorByte* pixels, InternalFormat internalFormat, int level)
+        public static unsafe void Image2D(in Vector2i size, ColorByte* pixels, TextureInternalFormat internalFormat, int level)
         {
-            GL.TexImage2D(TextureTarget.Texture2D, level, (PixelInternalFormat)internalFormat, size.X, size.Y,
+            GL.TexImage2D(TextureTarget.Texture2D, level, internalFormat.Compat(), size.X, size.Y,
                           0, TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
         }
 
@@ -123,9 +123,9 @@ namespace Elffy.OpenGL
         /// <param name="pixels">texture to load</param>
         /// <param name="internalFormat">internal format</param>
         /// <param name="level">texture level</param>
-        public static unsafe void Image2D(in Vector2i size, Color4* pixels, InternalFormat internalFormat, int level)
+        public static unsafe void Image2D(in Vector2i size, Color4* pixels, TextureInternalFormat internalFormat, int level)
         {
-            GL.TexImage2D(TextureTarget.Texture2D, level, (PixelInternalFormat)internalFormat, size.X, size.Y,
+            GL.TexImage2D(TextureTarget.Texture2D, level, internalFormat.Compat(), size.X, size.Y,
                           0, TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
         }
 
@@ -209,9 +209,9 @@ namespace Elffy.OpenGL
         /// <param name="pixels">texture to load</param>
         /// <param name="internalFormat">internal format</param>
         /// <param name="level">texture level</param>
-        public static unsafe void Image1D(int width, ColorByte* pixels, InternalFormat internalFormat, int level)
+        public static unsafe void Image1D(int width, ColorByte* pixels, TextureInternalFormat internalFormat, int level)
         {
-            GL.TexImage1D(TextureTarget.Texture1D, level, (PixelInternalFormat)internalFormat, width,
+            GL.TexImage1D(TextureTarget.Texture1D, level, internalFormat.Compat(), width,
                           0, TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
         }
 
@@ -220,9 +220,9 @@ namespace Elffy.OpenGL
         /// <param name="pixels">texture to load</param>
         /// <param name="internalFormat">internal format</param>
         /// <param name="level">texture level</param>
-        public static unsafe void Image1D(int width, Color4* pixels, InternalFormat internalFormat, int level)
+        public static unsafe void Image1D(int width, Color4* pixels, TextureInternalFormat internalFormat, int level)
         {
-            GL.TexImage1D(TextureTarget.Texture1D, level, (PixelInternalFormat)internalFormat, width,
+            GL.TexImage1D(TextureTarget.Texture1D, level, internalFormat.Compat(), width,
                           0, TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
         }
 
@@ -354,23 +354,5 @@ namespace Elffy.OpenGL
         public bool Equals(TextureObject other) => _texture == other._texture;
 
         public override int GetHashCode() => _texture.GetHashCode();
-
-
-        public enum InternalFormat
-        {
-            /// <summary>(R8 G8 B8 A8), each channel is unsigned byte (0 ~ 255)</summary>
-            Rgba8 = PixelInternalFormat.Rgba8,
-            /// <summary>(R16 G16 B16 A16), each channel is 16bit floating point value</summary>
-            Rgba16f = PixelInternalFormat.Rgba16f,
-            /// <summary>(R32 G32 B32 A32), each channel is 32bit floating point value</summary>
-            Rgba32f = PixelInternalFormat.Rgba32f,
-
-            /// <summary>GL_DEPTH_COMPONENT. Use texture as a depth buffer. The driver chooses its precision.</summary>
-            DepthComponent = PixelInternalFormat.DepthComponent,
-            /// <summary>GL_DEPTH_COMPONENT16. Use texture as a depth buffer. 16 bits precision.</summary>
-            DepthComponent16 = PixelInternalFormat.DepthComponent16,
-            /// <summary>GL_DEPTH_COMPONENT24. Use texture as a depth buffer. 24 bits precision.</summary>
-            DepthComponent24 = PixelInternalFormat.DepthComponent24,
-        }
     }
 }
