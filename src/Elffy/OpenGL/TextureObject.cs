@@ -80,51 +80,70 @@ namespace Elffy.OpenGL
             Bind1D(Empty);
         }
 
-        /// <summary>Call glTexImage2D</summary>
+        /// <summary>Call glTexImge2D</summary>
         /// <param name="image">image to load</param>
         /// <param name="level">texture level</param>
-        public static unsafe void Image2D(Image image, int level)
+        public static unsafe void Image2D(in ReadOnlyImageRef image, int level)
         {
-            Image2D(new Vector2i(image.Width, image.Height), image.GetPtr(), level);
+            fixed(ColorByte* pixels = image) {
+                GL.TexImage2D(TextureTarget.Texture2D, level, PixelInternalFormat.Rgba, image.Width, image.Height,
+                              0, TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
+            }
         }
 
         /// <summary>Call glTexImage2D</summary>
+        /// <remarks>Allocate memory of specified <paramref name="size"/> without initialization when set <see langword="null"/> to <paramref name="pixels"/>.</remarks>
         /// <param name="size">texture size</param>
         /// <param name="pixels">texture to load</param>
         /// <param name="level">texture level</param>
         public static unsafe void Image2D(in Vector2i size, ColorByte* pixels, int level)
         {
+            // Allocate memory of specified size without initialization
+            // if pixels == null.
+
             GL.TexImage2D(TextureTarget.Texture2D, level, PixelInternalFormat.Rgba, size.X, size.Y,
                           0, TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
         }
 
         /// <summary>Call glTexImage2D</summary>
+        /// <remarks>Allocate memory of specified <paramref name="size"/> without initialization when set <see langword="null"/> to <paramref name="pixels"/>.</remarks>
         /// <param name="size">texture size</param>
         /// <param name="pixels">texture to load</param>
         public static unsafe void Image2D(in Vector2i size, Color4* pixels, int level)
         {
+            // Allocate memory of specified size without initialization
+            // if pixels == null.
+
             GL.TexImage2D(TextureTarget.Texture2D, level, PixelInternalFormat.Rgba, size.X, size.Y,
                           0, TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
         }
 
         /// <summary>Call glTexImage2D</summary>
+        /// <remarks>Allocate memory of specified <paramref name="size"/> without initialization when set <see langword="null"/> to <paramref name="pixels"/>.</remarks>
         /// <param name="size">texture size</param>
         /// <param name="pixels">texture to load</param>
         /// <param name="internalFormat">internal format</param>
         /// <param name="level">texture level</param>
         public static unsafe void Image2D(in Vector2i size, ColorByte* pixels, TextureInternalFormat internalFormat, int level)
         {
+            // Allocate memory of specified size without initialization
+            // if pixels == null.
+
             GL.TexImage2D(TextureTarget.Texture2D, level, internalFormat.Compat(), size.X, size.Y,
                           0, TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
         }
 
         /// <summary>Call glTexImage2D</summary>
+        /// <remarks>Allocate memory of specified <paramref name="size"/> without initialization when set <see langword="null"/> to <paramref name="pixels"/>.</remarks>
         /// <param name="size">texture size</param>
         /// <param name="pixels">texture to load</param>
         /// <param name="internalFormat">internal format</param>
         /// <param name="level">texture level</param>
         public static unsafe void Image2D(in Vector2i size, Color4* pixels, TextureInternalFormat internalFormat, int level)
         {
+            // Allocate memory of specified size without initialization
+            // if pixels == null.
+
             GL.TexImage2D(TextureTarget.Texture2D, level, internalFormat.Compat(), size.X, size.Y,
                           0, TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
         }
