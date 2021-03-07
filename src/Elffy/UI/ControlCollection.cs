@@ -9,7 +9,7 @@ namespace Elffy.UI
 {
     [DebuggerTypeProxy(typeof(ControlCollectionDebuggerTypeProxy))]
     [DebuggerDisplay("{DebugDisplay}")]
-    public readonly struct ControlCollection
+    public readonly struct ControlCollection : IEquatable<ControlCollection>
     {
         private readonly Control _owner;
 
@@ -33,10 +33,9 @@ namespace Elffy.UI
                 ThrowNullArg();
                 [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(item));
             }
-            if(item.LifeState != ControlLifeState.New) { ThrowNotNewControl(); }
-            var index = _owner.ChildrenCore.Count;
+            if(item.LifeState != LifeState.New) { ThrowNotNewControl(); }
             _owner.ChildrenCore.Add(item);
-            item.AddedToListCallback(_owner, index);
+            item.AddedToListCallback(_owner);
         }
 
         public unsafe void Clear()
@@ -78,17 +77,22 @@ namespace Elffy.UI
             return result;
         }
 
-        [DoesNotReturn]
-        private static void ThrowNotNewControl()
-        {
-            throw new ArgumentException($"{nameof(Control)} object is not new.");
-        }
-
-        public Control[] ToArray() => _owner.ChildrenCore.AsSpan().ToArray();
-
         public ReadOnlySpan<Control> AsSpan() => _owner.ChildrenCore.AsSpan();
 
         public ArraySliceEnumerator<Control> GetEnumerator() => _owner.ChildrenCore.GetEnumerator();
+
+        public override bool Equals(object? obj) => obj is ControlCollection collection && Equals(collection);
+
+        public bool Equals(ControlCollection other) => _owner == other._owner;
+
+        public override int GetHashCode() => _owner is null ? 0 : _owner.GetHashCode();
+
+        public static bool operator ==(ControlCollection left, ControlCollection right) => left.Equals(right);
+
+        public static bool operator !=(ControlCollection left, ControlCollection right) => !(left == right);
+
+        [DoesNotReturn]
+        private static void ThrowNotNewControl() => throw new ArgumentException($"{nameof(Control)} object is not new.");
     }
 
     internal sealed class ControlCollectionDebuggerTypeProxy
@@ -97,7 +101,7 @@ namespace Elffy.UI
         private readonly ControlCollection _entity;
 
         [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-        public Control[] Items => _entity.ToArray();
+        public Control[] Items => _entity.AsSpan().ToArray();
 
         public ControlCollectionDebuggerTypeProxy(ControlCollection entity) => _entity = entity;
     }

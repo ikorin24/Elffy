@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Elffy;
 using Elffy.InputSystem;
 using Elffy.Components;
 using Elffy.Core;
@@ -13,86 +12,46 @@ namespace Elffy.UI
 {
     // [Rendering]
     // 
-    // `Control` and `UIRenderable` are always a pair.
-    // `Control` is an element of the UI, which forms a UI tree. (UI tree means logical tree and visual tree.)
-    // `UIRenderable` is a subclass of `Renderable` (that means `FrameObject`),
+    // Control and UIRenderable are always a pair.
+    // Control is an element of the UI, which forms a UI tree. (UI tree means logical tree and visual tree.)
+    // UIRenderable is a subclass of Renderable (that means FrameObject),
     // which is managed by the engine and renders the control.
-    // `Control` is just a data structure, so it doesn't know how it is rendered on the screen.
+    // Control is just a data structure, so it doesn't know how it is rendered on the screen.
     // On the other hand, `UIRenderable` doesn't know UI tree.
     // They don't know each other well, and they shouldn't.
-    // `Control` forms a UI tree, but `UIRenderable` always exists as a root in the tree of `Positionable`.
+    // Control forms a UI tree, but UIRenderable always exists as a root in the tree of Positionable.
     // They are independent from each other.
-
-
+    //
+    //
     // [UIRenderable object]
     // 
-    // `UIRenderable` is an internal class, and subclass of `FrameObject`.
+    // UIRenderable is an internal class, and subclass of FrameObject.
     // It is always on the internal layer when it is activated, and users can not access the instance.
-    // Don't put the instance public even if as `Renderable` or `FrameObject`.
+    // Don't put the instance public even if as Renderable or FrameObject.
 
-
-    // [UI tree structure]
-    // 
-    // UI tree means both logical tree and visual tree.
-    // Logical tree is hierarchical structure of UI formed by `Control`s.
-    // We can access it by Control.Children or Control.Parent.
-    //
-    // Visual tree is similar to logical tree, but some Controls exist only in visual tree.
-    // For example, in the case that I create a control of checkbox with a text by combining
-    // checkbox image and text label, they are in visual tree but not in logical tree.
-    // All controls in logical tree are in visual tree.
-
-    /// <summary>
-    /// UI の要素の基底クラス。UI への配置, ヒットテストの処理を提供します<para/>
-    /// </summary>
-    /// 
-    /// <remarks>
-    /// <see cref="Control"/> はUIを構成する論理的なコントロールとしての機能のみを提供します。
-    /// 画面への描画に関する処理は、このクラスと対になる <see cref="Core.Renderable"/> 継承クラス <see cref="UIRenderable"/> のインスタンスに任されます。
-    /// <see cref="UIRenderable"/> による描画は <see cref="Control"/> によって完全に隠蔽され、外部からは描画を気にすることなく論理的 UI 構造を扱えます。
-    /// 
-    /// <see cref="Control"/> の木構造は、描画を担当する <see cref="Core.Renderable"/> オブジェクトの木構造とは独立しています。
-    /// <see cref="Control"/> が親子関係の木構造を形成している場合でも、その描画オブジェクトは木構造を作らず、
-    /// 常に <see cref="UIRenderable"/> は Root に存在します。
-    /// </remarks>
+    /// <summary>Base class of UI element, which forms a UI tree and provides hit test.</summary>
     public abstract class Control
     {
         private readonly UIRenderable _renderable;
         private ControlLayouterInternal? _layouter;
         private Control? _parent;
         private RootPanel? _root;
-        private Control? _firstVisualChild;
-        private Control? _lastVisualChild;
-        private Control? _nextVisualSibling;
-        private Control? _prevVisualSibling;
         private Vector2 _absolutePosition;
         private Vector2i _offset;
         private ArrayPooledListCore<Control> _childrenCore;
         private TextureCore _texture;
         private Color4 _background;
-        private int _visualIndex;
         private bool _isHitTestVisible;
         private bool _isMouseOver;
-        private ControlLifeState _lifeState;
 
         protected private ControlLayouterInternal Layouter => _layouter ?? ControlLayouterInternal.ThrowCannotGetInstance();
 
         internal ref ArrayPooledListCore<Control> ChildrenCore => ref _childrenCore;
 
-        internal Control? FirstVisualChild => _firstVisualChild;
-
-        internal Control? LastVisualChild => _lastVisualChild;
-
-        internal int VisualIndex => _visualIndex;
-
-        internal Control? NextVisualSibling => _nextVisualSibling;
-
-        internal Control? PrevVisualSibling => _prevVisualSibling;
-
         internal UIRenderable Renderable => _renderable;
 
         /// <summary>Get life state</summary>
-        public ControlLifeState LifeState => _lifeState;
+        public LifeState LifeState => _renderable.LifeState;
 
         public ControlCollection Children => new(this);
 
@@ -353,29 +312,11 @@ namespace Elffy.UI
             OnRecieveHitTestResult(isHit, mouse);
         }
 
-        internal void AddedToListCallback(Control parent, int index)
+        internal void AddedToListCallback(Control parent)
         {
             Debug.Assert(parent is not null);
             Debug.Assert(parent.Root is not null);
-            Debug.Assert(_lifeState == ControlLifeState.New);
-            Debug.Assert(index >= 0);
-
-            // Item is always added to the tail.
-            if(index == 0) {
-                Debug.Assert(parent._firstVisualChild is null);
-                parent._firstVisualChild = this;
-                parent._lastVisualChild = this;
-            }
-            else {
-                Debug.Assert(parent._lastVisualChild is not null);
-                var last = parent._lastVisualChild;
-                last._nextVisualSibling = this;
-                _prevVisualSibling = last;
-                parent._lastVisualChild = this;
-            }
-
-            _visualIndex = index;
-            _lifeState = ControlLifeState.InLogicalTree;
+            Debug.Assert(LifeState == LifeState.New);
             _parent = parent;
             _root = parent.Root;
             Renderable.Activate(_root.UILayer);
@@ -383,13 +324,8 @@ namespace Elffy.UI
 
         internal void RemovedFromListCallback()
         {
-            Debug.Assert(_lifeState == ControlLifeState.InLogicalTree);
-            _lifeState = ControlLifeState.Dead;
             _parent = null;
             _root = null;
-
-            // TODO: 子供の削除 (logical, visual 両方)
-
             Renderable.Terminate();
         }
 
@@ -493,7 +429,7 @@ namespace Elffy.UI
         {
             LayoutSelf(parentSize, parentPadding, out var size);
             ref var padding = ref Padding;
-            foreach(var child in VisualTree.GetChildren(this)) {
+            foreach(var child in _childrenCore.AsSpan()) {
                 child.LayoutRecursively(size, padding);
             }
         }
