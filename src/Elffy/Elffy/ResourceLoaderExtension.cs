@@ -70,15 +70,31 @@ namespace Elffy
             timing.ThrowArgExceptionIfInvalid(nameof(timing));
             cancellationToken.ThrowIfCancellationRequested();
             await UniTask.SwitchToThreadPool();
+            // -------------------------------------
+            // ↓ thread pool
+
             cancellationToken.ThrowIfCancellationRequested();
 
             var type = Image.GetTypeFromExt(ResourcePath.GetExtension(name));
             using var stream = source.GetStream(name);
             using var image = Image.FromStream(stream, type);
-            await endPoint.ToTiming(timing, cancellationToken);
             var texture = new Texture(expansionMode, shrinkMode, mipmapMode, wrapModeX, wrapModeY);
-            texture.Load(image);
+
+            // ↑ thread pool
+            // -------------------------------------
+            await endPoint.ToTiming(timing, cancellationToken);
+            // -------------------------------------
+            // ↓ main thread
+
+            unsafe {
+                texture.Load(new(image.Width, image.Height), new(&BuildImage), image);
+            }
             return texture;
+
+            static void BuildImage(Image original, ImageRef image)
+            {
+                original.GetPixels().CopyTo(image.GetPixels());
+            }
         }
 
         public static Typeface LoadTypeface(this IResourceLoader source, string name)

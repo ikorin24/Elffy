@@ -9,6 +9,7 @@ using Elffy.Effective;
 
 namespace Elffy.Shapes
 {
+    /// <summary><see cref="Renderable"/> which users can inject how to build and how to render.</summary>
     public sealed class Model3D : Renderable
     {
         private object? _obj;
@@ -48,7 +49,7 @@ namespace Elffy.Shapes
                 var screen = HostScreen;
                 if(!screen.RunningToken.IsCancellationRequested) {
                     if(Engine.CurrentContext != screen) {
-                        await screen.AsyncBack.ToTiming(FrameLoopTiming.Update);
+                        await screen.AsyncBack.Ensure(FrameLoopTiming.Update);
                     }
                     Terminate();
                 }
@@ -73,14 +74,14 @@ namespace Elffy.Shapes
             }
         }
 
-        // This method is used by Model3DLoadDelegate
+        // This method is used by Model3DLoadMeshDelegate
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void LoadGraphicBufferInternal<TVertex>(ReadOnlySpan<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged
+        internal void LoadMeshInternal<TVertex>(ReadOnlySpan<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged
         {
-            LoadGraphicBuffer(vertices, indices);
+            LoadMesh(vertices, indices);
         }
 
-        // This method is used by Model3DLoadDelegate
+        // This method is used by Model3DLoadMeshDelegate
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void DrawElementsInternal(int startIndex, int indexCount)
         {
@@ -90,7 +91,7 @@ namespace Elffy.Shapes
         /// <summary>Create new <see cref="Model3D"/> by using specified builder.</summary>
         /// <typeparam name="T">type of the builder argument</typeparam>
         /// <param name="obj">the argument of the builder</param>
-        /// <param name="builder">builder method delegate</param>
+        /// <param name="builder">builder method delegate which is called when <see cref="OnActivated"/></param>
         /// <param name="onRendering">rendering method delegate (null if use default rendering)</param>
         /// <returns>new <see cref="Model3D"/> instance</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -103,10 +104,16 @@ namespace Elffy.Shapes
                 [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(builder));
             }
 
-            return new Model3D(obj, &CallbackOnActivated, builder, onRendering);
-
             // ジェネリクス型<T>をローカル関数に含め、関数ポインタを渡すことで、
             // builder の呼び出しを OnActivated() まで遅延させつつ、<T>を復元できる。
+            // 参考: https://ikorin2.hatenablog.jp/entry/2021/01/15/110845
+
+            // Capture the generics type <T> in the local function and store its function pointer in the instance.
+            // Model3D can restore the generics type as <T>, not 'Type', when calls OnActivated().
+            // Reference (my blog in Japanese): https://ikorin2.hatenablog.jp/entry/2021/01/15/110845
+
+            return new Model3D(obj, &CallbackOnActivated, builder, onRendering);
+
             static UniTask CallbackOnActivated(Model3D model, object? obj, Delegate builder)
             {
                 // Restore types of builder and obj.
@@ -114,46 +121,56 @@ namespace Elffy.Shapes
                 var typedObj = SafeCast.As<T>(obj);
                 
                 // Call builder
-                return typedBuilder(typedObj, model, new Model3DLoadDelegate(model));
+                return typedBuilder(typedObj, model, new Model3DLoadMeshDelegate(model));
             }
         }
     }
 
-    public delegate UniTask Model3DBuilderDelegate<T>(T obj, Model3D model3D, Model3DLoadDelegate load) where T : class;
+    public delegate UniTask Model3DBuilderDelegate<T>(T obj, Model3D model3D, Model3DLoadMeshDelegate loadMesh) where T : class;
 
     public delegate void Model3DRenderingDelegate(Model3D model3D, in Matrix4 model, in Matrix4 view, in Matrix4 projection, Model3DDrawElementsDelegate drawElements);
 
-    public readonly struct Model3DLoadDelegate
+    public readonly struct Model3DLoadMeshDelegate : IEquatable<Model3DLoadMeshDelegate>
     {
         private readonly Model3D _model;
 
-        internal Model3DLoadDelegate(Model3D model)
+        internal Model3DLoadMeshDelegate(Model3D model)
         {
             _model = model;
         }
 
-        /// <summary>Load vertices and indices to <see cref="Model3D"/></summary>
+        /// <summary>Load mesh to <see cref="Model3D"/></summary>
         /// <typeparam name="TVertex">type of vertex</typeparam>
         /// <param name="vertices">vertices to load <see cref="Model3D"/></param>
         /// <param name="indices">indices to load <see cref="Model3D"/></param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke<TVertex>(ReadOnlySpan<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged
         {
-            _model.LoadGraphicBufferInternal(vertices, indices);
+            _model.LoadMeshInternal(vertices, indices);
         }
 
-        /// <summary>Load vertices and indices to <see cref="Model3D"/></summary>
+        /// <summary>Load mesh to <see cref="Model3D"/></summary>
         /// <typeparam name="TVertex">type of vertex</typeparam>
         /// <param name="vertices">vertices to load <see cref="Model3D"/></param>
         /// <param name="indices">indices to load <see cref="Model3D"/></param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke<TVertex>(Span<TVertex> vertices, Span<int> indices) where TVertex : unmanaged
         {
-            _model.LoadGraphicBufferInternal(vertices.AsReadOnly(), indices.AsReadOnly());
+            _model.LoadMeshInternal(vertices.AsReadOnly(), indices.AsReadOnly());
         }
+
+        public override bool Equals(object? obj) => obj is Model3DLoadMeshDelegate d && Equals(d);
+
+        public bool Equals(Model3DLoadMeshDelegate other) => ReferenceEquals(_model, other._model);
+
+        public override int GetHashCode() => _model.GetHashCode();
+
+        public static bool operator ==(Model3DLoadMeshDelegate left, Model3DLoadMeshDelegate right) => left.Equals(right);
+
+        public static bool operator !=(Model3DLoadMeshDelegate left, Model3DLoadMeshDelegate right) => !(left == right);
     }
 
-    public readonly struct Model3DDrawElementsDelegate
+    public readonly struct Model3DDrawElementsDelegate : IEquatable<Model3DDrawElementsDelegate>
     {
         private readonly Model3D _model;
 
@@ -173,5 +190,15 @@ namespace Elffy.Shapes
         {
             _model.DrawElementsInternal(startIndex, indexCount);
         }
+
+        public override bool Equals(object? obj) => obj is Model3DDrawElementsDelegate d && Equals(d);
+
+        public bool Equals(Model3DDrawElementsDelegate other) => ReferenceEquals(_model, other._model);
+
+        public override int GetHashCode() => _model.GetHashCode();
+
+        public static bool operator ==(Model3DDrawElementsDelegate left, Model3DDrawElementsDelegate right) => left.Equals(right);
+
+        public static bool operator !=(Model3DDrawElementsDelegate left, Model3DDrawElementsDelegate right) => !(left == right);
     }
 }

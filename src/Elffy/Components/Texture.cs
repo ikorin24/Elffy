@@ -50,21 +50,17 @@ namespace Elffy.Components
 
         ~Texture() => Dispose(false);
 
-        /// <summary>Load pixel data from <see cref="Image"/></summary>
-        /// <param name="image">image to load</param>
-        public void Load(in Image image)
+        public void Load<T>(in Vector2i size, ImageBuilderDelegate<T> imageBuilder, T state)
         {
-            _textureCore.Load(new Vector2i(image.Width, image.Height), image.GetPixels());
+            _textureCore.Load(state, size, imageBuilder);
             ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
         }
 
-        /// <summary>Load specified pixel data with specified texture size</summary>
-        /// <remarks>Texture width and height should be power of two for performance.</remarks>
-        /// <param name="size">texture size</param>
-        /// <param name="pixels">pixel data</param>
-        public void Load(in Vector2i size, ReadOnlySpan<ColorByte> pixels)
+        /// <summary>Load image</summary>
+        /// <param name="image">image to load</param>
+        public void Load(in ReadOnlyImageRef image)
         {
-            _textureCore.Load(size, pixels);
+            _textureCore.Load(image);
             ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
         }
 
@@ -87,7 +83,8 @@ namespace Elffy.Components
             ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
         }
 
-        public void Update(in RectI rect, ReadOnlySpan<ColorByte> pixels) => _textureCore.Update(rect, pixels);
+        public void Update(in Vector2i offset, in ReadOnlyImageRef subImage) => _textureCore.Update(offset, subImage);
+        //public void Update(in RectI rect, ReadOnlySpan<ColorByte> pixels) => _textureCore.Update(rect, pixels);
 
         public void Update(in RectI rect, in ColorByte fill) => _textureCore.Update(rect, fill);
 

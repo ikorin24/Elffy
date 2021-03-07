@@ -8,7 +8,8 @@ using NVec4 = System.Numerics.Vector4;
 
 namespace Elffy
 {
-    [DebuggerDisplay("{DebugView}")]
+    /// <summary>Color structure with RGBA bytes format</summary>
+    [DebuggerDisplay("{DebugView,nq}")]
     [StructLayout(LayoutKind.Explicit)]
     public struct ColorByte : IEquatable<ColorByte>
     {
@@ -22,7 +23,7 @@ namespace Elffy
         public byte A;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private readonly string DebugView => $"(R, G, B) = ({R}, {G}, {B})";
+        private readonly string DebugView => $"(R, G, B, A) = ({R}, {G}, {B}, {A})";
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ColorByte(byte r, byte g, byte b, byte a)

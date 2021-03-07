@@ -55,6 +55,18 @@ namespace Elffy.Effective.Unsafes
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe static ref T NullRef<T>()
+        {
+            return ref Unsafe.AsRef<T>(null);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe static bool IsNullRef<T>(ref T source)
+        {
+            return Unsafe.AreSame(ref source, ref Unsafe.AsRef<T>(null));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe Span<byte> AsBytes<T>(ref T value) where T : unmanaged
         {
             return MemoryMarshal.CreateSpan(ref Unsafe.As<T, byte>(ref value), sizeof(T));

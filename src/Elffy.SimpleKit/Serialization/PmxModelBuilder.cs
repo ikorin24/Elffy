@@ -11,8 +11,8 @@ using Elffy.Effective.Unsafes;
 using Elffy.Components;
 using Elffy.OpenGL;
 using Elffy.Shading;
+using Elffy.Core;
 using Cysharp.Threading.Tasks;
-using UnmanageUtility;
 using MMDTools.Unmanaged;
 using PmxVector3 = MMDTools.Unmanaged.Vector3;
 
@@ -45,7 +45,7 @@ namespace Elffy.Serialization
 
             VAO.Bind(model3D.VAO);
             IBO.Bind(model3D.IBO);
-            var shaderProgram = model3D.ShaderProgram!;
+            var shaderProgram = model3D.ShaderProgram;
             var start = 0;
             for(int i = 0; i < vertexCountArray.Length; i++) {
                 parts.Current = i;
@@ -59,7 +59,7 @@ namespace Elffy.Serialization
             IBO.Unbind();
         }
 
-        private static async UniTask Build(ModelState obj, Model3D model, Model3DLoadDelegate load)
+        private static async UniTask Build(ModelState obj, Model3D model, Model3DLoadMeshDelegate load)
         {
             obj.CancellationToken.ThrowIfCancellationRequested();
 
@@ -77,7 +77,7 @@ namespace Elffy.Serialization
             await BuildCore(pmx, model, load, obj);
         }
 
-        private static UniTask BuildCore(PMXObject pmx, Model3D model, Model3DLoadDelegate load, ModelState obj)
+        private static UniTask BuildCore(PMXObject pmx, Model3D model, Model3DLoadMeshDelegate load, ModelState obj)
         {
             // ------------------------------
             //      ↓ thread pool
@@ -107,7 +107,7 @@ namespace Elffy.Serialization
             return LoadToModel(pmx, model, load, obj, images);
         }
 
-        private static async UniTask LoadToModel(PMXObject pmx, Model3D model, Model3DLoadDelegate load, ModelState obj, Image[] images)
+        private static async UniTask LoadToModel(PMXObject pmx, Model3D model, Model3DLoadMeshDelegate load, ModelState obj, Image[] images)
         {
             // ------------------------------
             //      ↓ thread pool
@@ -201,18 +201,12 @@ namespace Elffy.Serialization
                             textures[i] = TextureObject.Empty;
                         }
                         else {
-                            var t = TextureObject.Create();
-                            TextureObject.Bind2D(t);
-                            TextureObject.Parameter2DMinFilter(TextureShrinkMode.Bilinear, TextureMipmapMode.Bilinear);
-                            TextureObject.Parameter2DMagFilter(TextureExpansionMode.Bilinear);
-                            TextureObject.Parameter2DWrapS(TextureWrapMode.Repeat);
-                            TextureObject.Parameter2DWrapT(TextureWrapMode.Repeat);
-                            TextureObject.Image2D(image);
-                            TextureObject.GenerateMipmap2D();
-                            textures[i] = t;
+                            textures[i] = TextureLoadHelper.LoadByDMA(image, TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear,
+                                                TextureMipmapMode.Bilinear, TextureWrapMode.Repeat, TextureWrapMode.Repeat);
                         }
+                        // Scadule the loading of textures to each frame.
+                        await model.HostScreen.AsyncBack.ToTiming(FrameLoopTiming.Update, obj.CancellationToken);
                     }
-                    TextureObject.Unbind2D();
                     var partsComponent = new PmxModelParts(ref vertexCountArray, ref textureIndexArray, ref textures);
                     model.AddComponent(partsComponent);
 

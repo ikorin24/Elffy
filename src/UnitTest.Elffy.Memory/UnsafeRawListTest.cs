@@ -2,6 +2,7 @@
 using System.Linq;
 using Elffy.Effective.Unsafes;
 using System;
+using System.Runtime.CompilerServices;
 using Xunit;
 
 namespace UnitTest
@@ -88,6 +89,50 @@ namespace UnitTest
                 for(int i = 0; i < list.Count; i++) {
                     Assert.True(list.IndexOf(i) == list[i]);
                 }
+            }
+        }
+
+        [Fact]
+        public void Remove()
+        {
+            const int Count = 10;
+            ReadOnlySpan<int> source = Enumerable.Range(0, Count).ToArray();
+            using(var list = UnsafeRawList<int>.New(source)) {
+                for(int i = 0; i < Count; i++) {
+                    var removed = list.Remove(i);
+                    Assert.True(removed);
+                    Assert.Equal(Count - i - 1, list.Count);
+                }
+            }
+        }
+
+        [Fact]
+        public void RemoveAt()
+        {
+            const int Count = 10;
+            ReadOnlySpan<int> source = Enumerable.Range(0, Count).ToArray();
+            using(var list = UnsafeRawList<int>.New(source)) {
+                Assert.True(list.AsSpan().SequenceEqual(source));
+                list.RemoveAt(5);
+                Assert.True(list.AsSpan().SequenceEqual(new[] { 0, 1, 2, 3, 4, 6, 7, 8, 9 }));
+                list.RemoveAt(0);
+                Assert.True(list.AsSpan().SequenceEqual(new[] { 1, 2, 3, 4, 6, 7, 8, 9 }));
+                list.RemoveAt(1);
+                Assert.True(list.AsSpan().SequenceEqual(new[] { 1, 3, 4, 6, 7, 8, 9 }));
+                list.RemoveAt(6);
+                Assert.True(list.AsSpan().SequenceEqual(new[] { 1, 3, 4, 6, 7, 8, }));
+            }
+        }
+
+        [Fact]
+        public unsafe void GetReference()
+        {
+            using(var list = UnsafeRawList<int>.New(capacity: 0)) {
+                Assert.True(Unsafe.AsPointer(ref list.GetReference()) == null);
+            }
+
+            using(var list = UnsafeRawList<int>.New(new[] { 0, 1, 2, 3, 4 })) {
+                Assert.True(Unsafe.AreSame(ref list.GetReference(), ref list[0]));
             }
         }
     }

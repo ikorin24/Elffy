@@ -6,22 +6,27 @@ using System.Threading;
 using System.IO;
 using System.Diagnostics;
 using Elffy.Imaging.Internal;
+using Elffy.Effective;
+using SkiaSharp;
 
 namespace Elffy.Imaging
 {
     [DebuggerDisplay("{DebugView,nq}")]
     public unsafe readonly struct Image : IEquatable<Image>, IDisposable
     {
+        private const string Message_EmptyOrDisposed = "The image is empty or already disposed.";
+
         private readonly ImageObj? _image;
         private readonly uint _token;
 
         public int Width => _image?.Width ?? 0;
         public int Height => _image?.Height ?? 0;
 
-        /// <summary>Get pointer to pixels of type <see cref="ColorByte"/></summary>
-        public IntPtr Ptr => _image is not null ? (IntPtr)_image.Pixels : IntPtr.Zero;
-
-        public bool IsEmpty => _token == 0;
+        public bool IsEmpty
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _image is null || _image.Token != _token;
+        }
 
         public static Image Empty => default;
 
@@ -37,20 +42,33 @@ namespace Elffy.Imaging
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                if((uint)x >= (uint)Width) {
+                var image = _image;
+                if(image is null) {
+                    ThrowHelper.ThrowInvalidOp(Message_EmptyOrDisposed);
+                }
+                if((uint)x >= (uint)image.Width) {
                     ThrowHelper.ThrowArgOutOfRange(nameof(x));
                 }
-                if((uint)y >= (uint)Height) {
+                if((uint)y >= (uint)image.Height) {
                     ThrowHelper.ThrowArgOutOfRange(nameof(y));
                 }
-                if(_image is null || _image.Token != _token) {
-                    ThrowHelper.ThrowInvalidOp("The image is empty or already disposed.");
-                }
-                return ref _image.Pixels[y * Width + x];
+                return ref image.Pixels[y * Width + x];
             }
         }
 
-        public Image(int width, int height)
+        /// <summary>Create a new image with specified size, which pixels are initialized as (0, 0, 0, 0).</summary>
+        /// <param name="width">image width</param>
+        /// <param name="height">image height</param>
+        public Image(int width, int height) : this(width, height, true)
+        {
+        }
+
+        /// <summary>Create a new image with specified size.</summary>
+        /// <remarks>If <paramref name="zeroFill"/> is false, the pixels are not initialized. You must set them before using the image.</remarks>
+        /// <param name="width">image width</param>
+        /// <param name="height">image height</param>
+        /// <param name="zeroFill">initializing all pixels as (0, 0, 0, 0) or not.</param>
+        public Image(int width, int height, bool zeroFill)
         {
             if(width < 0) {
                 ThrowHelper.ThrowArgOutOfRange(nameof(width));
@@ -64,7 +82,7 @@ namespace Elffy.Imaging
             }
             else {
                 // TODO: instance pooling
-                _image = new ImageObj(width, height);
+                _image = new ImageObj(width, height, zeroFill);
                 _token = _image.Token;
             }
         }
@@ -78,36 +96,93 @@ namespace Elffy.Imaging
             Unsafe.AsRef(_token) = 0;
         }
 
-        public ColorByte* GetPtr() => _image is not null ? _image.Pixels : null;
+        /// <summary>Get pointer to the pixels.</summary>
+        /// <remarks>Throws <see cref="InvalidOperationException"/> if <see cref="IsEmpty"/> == <see langword="true"/>.</remarks>
+        /// <exception cref="InvalidOperationException">The image is empty</exception>
+        /// <returns>pointer to the pixels</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ColorByte* GetPtr()
+        {
+            if(IsEmpty) {
+                ThrowHelper.ThrowInvalidOp(Message_EmptyOrDisposed);
+            }
+            Debug.Assert(_image is not null);
+            return _image.Pixels;
+        }
 
+        /// <summary>Get span of the pixels.</summary>
+        /// <remarks>Returns empty span if <see cref="IsEmpty"/> == <see langword="true"/></remarks>
+        /// <returns>span of the pixels</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Span<ColorByte> GetPixels()
         {
-            if(_image is null) {
+            if(IsEmpty) {
                 return Span<ColorByte>.Empty;
             }
-            else {
-                return MemoryMarshal.CreateSpan(ref *_image.Pixels, Width * Height);
-            }
+            Debug.Assert(_image is not null);
+            return MemoryMarshal.CreateSpan(ref *_image.Pixels, Width * Height);
         }
 
+        /// <summary>Get span of the specified row line pixels.</summary>
+        /// <param name="row">row index</param>
+        /// <returns>row line span</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe Span<ColorByte> GetRowLine(int row)
         {
-            if((uint)row >= (uint)Height) {
-                ThrowOutOfRange();
-                static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(row));
+            var image = _image;
+            if(image is null || image.Token != _token) {
+                ThrowHelper.ThrowInvalidOp(Message_EmptyOrDisposed);
             }
-            return MemoryMarshal.CreateSpan(ref *(GetPtr() + Width * row), Width);
+            if((uint)row >= (uint)image.Height) {
+                ThrowHelper.ThrowArgOutOfRange(nameof(row));
+            }
+            return MemoryMarshal.CreateSpan(ref *(image.Pixels + image.Width * row), image.Width);
         }
 
-        public Image Clone()
+        /// <summary>Create deep copy of the image</summary>
+        /// <returns>clone image</returns>
+        public Image ToImage()
         {
-            if(IsEmpty) {
+            var image = _image;
+            if(image is null || image.Token != _token) {
                 return Empty;
             }
-            var image = new Image(Width, Height);
-            GetPixels().CopyTo(image.GetPixels());
-            return image;
+            var clone = new Image(image.Width, image.Height);
+            try {
+                Debug.Assert(clone._image is not null);
+                var source = MemoryMarshal.CreateSpan(ref *image.Pixels, image.Width * image.Height);
+                var dest = MemoryMarshal.CreateSpan(ref *clone._image.Pixels, clone._image.Width * clone._image.Height);
+                source.CopyTo(dest);
+                return clone;
+            }
+            catch {
+                clone.Dispose();
+                throw;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ImageRef AsImageRef()
+        {
+            var image = _image;
+            if(image is null || image.Token != _token) {
+                return ImageRef.Empty;
+            }
+            Debug.Assert(image.Height > 0 && image.Height > 0);
+            var firstRowLine = MemoryMarshal.CreateSpan(ref *image.Pixels, image.Width);
+            return ImageRef.CreateUnsafe(firstRowLine, image.Height);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ReadOnlyImageRef AsReadOnlyImageRef()
+        {
+            var image = _image;
+            if(image is null || image.Token != _token) {
+                return ImageRef.Empty;
+            }
+            Debug.Assert(image.Height > 0 && image.Height > 0);
+            var firstRowLine = MemoryMarshal.CreateSpan(ref *image.Pixels, image.Width);
+            return ReadOnlyImageRef.CreateUnsafe(firstRowLine, image.Height);
         }
 
         public static Image FromStream(Stream stream, string fileExtension)
@@ -124,10 +199,11 @@ namespace Elffy.Imaging
         {
             return type switch
             {
-                ImageType.Png => PngParser.Parse(stream),
+                //ImageType.Png => PngParser.Parse(stream),     // TODO: can not parse some png well.
+                ImageType.Png => ImageParserTemporary.Parse(stream),
                 ImageType.Tga => TgaParser.Parse(stream),
-                ImageType.Jpg => ImageParserTemporary.ParseJpegOrBmp(stream),    // TODO: jpg parser
-                ImageType.Bmp => ImageParserTemporary.ParseJpegOrBmp(stream),    // TODO: bmp parser
+                ImageType.Jpg => ImageParserTemporary.Parse(stream),    // TODO: jpg parser
+                ImageType.Bmp => ImageParserTemporary.Parse(stream),    // TODO: bmp parser
                 _ => throw new NotSupportedException($"Not supported type : {type}"),
             };
         }
@@ -162,9 +238,17 @@ namespace Elffy.Imaging
 
         public override int GetHashCode() => HashCode.Combine(_image, _token);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(Image left, Image right) => left.Equals(right);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(Image left, Image right) => !(left == right);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator ImageRef(Image image) => image.AsImageRef();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator ReadOnlyImageRef(Image image) => image.AsReadOnlyImageRef();
 
         [DebuggerDisplay("{DebugView,nq}")]
         private unsafe sealed class ImageObj : IDisposable
@@ -184,13 +268,15 @@ namespace Elffy.Imaging
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
             private string DebugView => $"(Token = {_token})";
 
-            public ImageObj(int width, int height)
+            public ImageObj(int width, int height, bool zeroFill)
             {
                 _width = width;
                 _height = height;
                 var len = width * height;
                 _pixels = (ColorByte*)Marshal.AllocHGlobal(sizeof(ColorByte) * len);
-                new Span<ColorByte>(_pixels, len).Clear();
+                if(zeroFill) {
+                    new Span<ColorByte>(_pixels, len).Clear();
+                }
 
                 do {
                     _token = (uint)Interlocked.Increment(ref Unsafe.As<uint, int>(ref _tokenFactory));
@@ -222,43 +308,36 @@ namespace Elffy.Imaging
 
 namespace Elffy.Imaging.Internal
 {
-    using Bitmap = System.Drawing.Bitmap;
-    using ImageLockMode = System.Drawing.Imaging.ImageLockMode;
-    using Elffy.Effective.Unsafes;
-
     internal unsafe static class ImageParserTemporary
     {
-        // I want to remove dependency on System.Drawing (and other external libraries of image) in the future.
-        // It requires pure C# parser for 'jpeg' and 'bmp'.
+        // I want to parse 'jpg' and 'bmp' by my own pure C# parser in the future.
 
-        public static Image ParseJpegOrBmp(Stream stream)
+        public static Image Parse(Stream stream)
         {
-            using var bitmap = new Bitmap(stream);
-            var image = new Image(bitmap.Width, bitmap.Height);
-            var data = bitmap.LockBits(new(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-            try {
-                var pixels = new Span<DrawingColor>((void*)data.Scan0, bitmap.Width * bitmap.Height);
-                var dest = image.GetPixels();
-                for(int i = 0; i < pixels.Length; i++) {
-                    dest.At(i) = new ColorByte(pixels[i].R, pixels[i].G, pixels[i].B, pixels[i].A);
+            using var buf = stream.ReadToEnd(out var len);
+            using var skBitmap = SKBitmap.Decode(buf.AsSpan(0, len));
+            if(skBitmap.ColorType != SKColorType.Rgba8888) {
+                using var tmp = skBitmap.Copy(SKColorType.Rgba8888);
+                return CreateImage(tmp);
+            }
+            else {
+                return CreateImage(skBitmap);
+            }
+
+            static Image CreateImage(SKBitmap bitmap)
+            {
+                var image = new Image(bitmap.Width, bitmap.Height, false);
+                try {
+                    bitmap.GetPixelSpan()
+                          .MarshalCast<byte, ColorByte>()
+                          .CopyTo(image.GetPixels());
+                    return image;
                 }
-                return image;
+                catch {
+                    image.Dispose();
+                    throw;
+                }
             }
-            catch {
-                bitmap.UnlockBits(data);
-                image.Dispose();
-                throw;
-            }
-        }
-
-        private struct DrawingColor
-        {
-#pragma warning disable 0649
-            public byte B;
-            public byte G;
-            public byte R;
-            public byte A;
-#pragma warning restore 0649
         }
     }
 }

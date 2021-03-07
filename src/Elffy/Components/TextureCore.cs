@@ -2,8 +2,11 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using Elffy.Effective;
 using Elffy.Effective.Unsafes;
 using Elffy.OpenGL;
+using Elffy.Imaging;
+using Elffy.Core;
 using OpenTK.Graphics.OpenGL4;
 using TKPixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
@@ -33,28 +36,28 @@ namespace Elffy.Components
             Size = Vector2i.Zero;
         }
 
-        /// <summary>Load specified pixel data with specified texture size</summary>
-        /// <remarks>Texture width and height should be power of two for performance.</remarks>
-        /// <param name="size">texture size</param>
-        /// <param name="pixels">pixel data</param>
-        public unsafe void Load(in Vector2i size, ReadOnlySpan<ColorByte> pixels)
+        public void Load<T>(T state, in Vector2i size, ImageBuilderDelegate<T> imageBuilder)
         {
             if(!Texture.IsEmpty) {
                 ThrowAlreadyLoaded();
             }
-            if(size.X <= 0 || size.Y <= 0) {
-                ThrowInvalidSize();
-                [DoesNotReturn] static void ThrowInvalidSize() => throw new ArgumentOutOfRangeException($"{nameof(size)} is invalid");
-            }
-            if(pixels.Length < size.X * size.Y) {
-                ThrowPixelsTooShort();
-                [DoesNotReturn] static void ThrowPixelsTooShort() => throw new ArgumentException($"{nameof(pixels)} is too short");
-            }
-            fixed(ColorByte* ptr = pixels) {
-                LoadCore(size, ptr);
-            }
+            Texture = TextureLoadHelper.LoadByDMA(state, size, imageBuilder, 
+                                                  ExpansionMode, ShrinkMode, 
+                                                  MipmapMode, WrapModeX, WrapModeY);
+            Size = size;
         }
 
+        public void Load(in ReadOnlyImageRef image)
+        {
+            if(!Texture.IsEmpty) {
+                ThrowAlreadyLoaded();
+            }
+            Texture = TextureLoadHelper.LoadByDMA(image, ExpansionMode, ShrinkMode, MipmapMode, WrapModeX, WrapModeY);
+            Size = new(image.Width, image.Height);
+        }
+
+        [Obsolete("obsolete", true)]
+        [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public unsafe void Load(in Vector2i size, ReadOnlySpan<Color4> pixels)
         {
             if(!Texture.IsEmpty) {
@@ -86,6 +89,33 @@ namespace Elffy.Components
                 ThrowAlreadyLoaded();
             }
             LoadCore<ColorByte>(size, null);
+        }
+
+        public unsafe void Update(in Vector2i offset, in ReadOnlyImageRef subImage)
+        {
+            if(Texture.IsEmpty) {
+                ThrowEmptyTexture();
+            }
+            // Requirements
+            // 0 <= offset.X < Size.X
+            // 0 <= offset.Y < Size.Y
+            // 0 <= subImage.Width <= Size.X - offset.X     (if subImage.Width == 0, do nothing)
+            // 0 <= subImage.Height <= Size.Y - offset.Y    (if subImage.Height == 0, do nothing)
+
+            if((uint)offset.X >= (uint)Size.X || (uint)offset.Y >= (uint)Size.Y) {
+                ThrowOutOfRange(nameof(offset));
+            }
+            if(subImage.IsEmpty) { return; }
+            if(subImage.Width > Size.X || subImage.Height > Size.Y) {
+                ThrowOutOfRange($"Rect to update is larger than texture size.");
+            }
+
+            fixed(ColorByte* ptr = subImage) {
+                UpdateSubTexture(Texture, ptr, new RectI(offset.X, offset.Y, subImage.Width, subImage.Height));
+            }
+
+
+            [DoesNotReturn] static void ThrowOutOfRange(string message) => throw new ArgumentOutOfRangeException(message);
         }
 
         public unsafe void Update(in RectI rect, ReadOnlySpan<ColorByte> pixels)
@@ -139,7 +169,7 @@ namespace Elffy.Components
                 ThrowEmptyTexture();
             }
             TextureObject.Bind2D(to);
-            TextureObject.SubImage2D(rect, pixels);
+            TextureObject.SubImage2D(rect, pixels, 0);
             TextureObject.Unbind2D();
         }
 
@@ -149,7 +179,7 @@ namespace Elffy.Components
                 ThrowEmptyTexture();
             }
             TextureObject.Bind2D(to);
-            TextureObject.SubImage2D(rect, pixels);
+            TextureObject.SubImage2D(rect, pixels, 0);
             TextureObject.Unbind2D();
         }
 
@@ -288,10 +318,10 @@ namespace Elffy.Components
             TextureObject.Parameter2DWrapT(WrapModeY);
 
             if(typeof(TColor) == typeof(ColorByte)) {
-                TextureObject.Image2D(size, (ColorByte*)pixels);
+                TextureObject.Image2D(size, (ColorByte*)pixels, 0);
             }
             else if(typeof(TColor) == typeof(Color4)) {
-                TextureObject.Image2D(size, (Color4*)pixels);
+                TextureObject.Image2D(size, (Color4*)pixels, 0);
             }
 
             if(MipmapMode != TextureMipmapMode.None) {

@@ -49,7 +49,7 @@ namespace Elffy.Serialization
             IBO.Unbind();
         }
 
-        private static async UniTask Build(StateObject obj, Model3D model, Model3DLoadDelegate load)
+        private static async UniTask Build(StateObject obj, Model3D model, Model3DLoadMeshDelegate load)
         {
             var (resourceLoader, name, token) = obj;
             token.ThrowIfCancellationRequested();

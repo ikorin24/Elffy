@@ -140,7 +140,7 @@ namespace Elffy.Core
             // Render
             _currentTiming = ScreenCurrentTiming.BeforeRendering;
             FBO.Bind(FBO.Empty, FBO.Target.FrameBuffer);
-            ElffyGL.Clear(ElffyGL.ClearBufferMask.ColorBufferBit | ElffyGL.ClearBufferMask.DepthBufferBit);
+            ElffyGL.Clear(ClearMask.ColorBufferBit | ClearMask.DepthBufferBit);
             AsyncBack.DoQueuedEvents(FrameLoopTiming.BeforeRendering);
             foreach(var layer in layers) {
                 if(layer.IsVisible) {
