@@ -10,7 +10,7 @@ namespace Elffy
     [DebuggerDisplay("Layer: {Name} (ObjectCount = {ObjectCount})")]
     public class Layer : ILayer
     {
-        private readonly FrameObjectStore _store = FrameObjectStore.New();
+        private readonly FrameObjectStore _store;
         private LayerCollection? _owner;
 
         /// <summary>
@@ -33,13 +33,22 @@ namespace Elffy
 
         /// <summary>Create new <see cref="Layer"/> with specified name.</summary>
         /// <param name="name">name of the layer</param>
-        public Layer(string name)
+        public Layer(string name) : this(name, 32)
+        {
+        }
+
+        /// <summary>Create new <see cref="Layer"/> with specified name.</summary>
+        /// <param name="name">name of the layer</param>
+        /// <param name="capacityHint">capacity hint</param>
+        public Layer(string name, int capacityHint)
         {
             if(name is null) {
                 ThrowNullArg();
                 [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(name));
             }
+            capacityHint = Math.Max(0, capacityHint);
             Name = name;
+            _store = FrameObjectStore.New(capacityHint);
         }
 
         /// <summary>Get count of alive objects in the current frame.</summary>

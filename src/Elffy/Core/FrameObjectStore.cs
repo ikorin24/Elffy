@@ -20,19 +20,21 @@ namespace Elffy.Core
         public ReadOnlySpan<FrameObject> Removed => _removedBuf.AsReadOnlySpan();
         public ReadOnlySpan<Renderable> Renderables => _renderables.AsReadOnlySpan();
 
-        private FrameObjectStore(int dummyArg)
+        private FrameObjectStore(int capacityHint)
         {
-            _list = new List<FrameObject>();
-            _addedBuf = new List<FrameObject>();
-            _removedBuf = new List<FrameObject>();
-            _renderables = new List<Renderable>();
+            Debug.Assert(capacityHint >= 0);
+            _list = new List<FrameObject>(capacityHint);
+            _addedBuf = new List<FrameObject>(capacityHint / 2);
+            _removedBuf = new List<FrameObject>(capacityHint / 2);
+            _renderables = new List<Renderable>(capacityHint);
         }
 
         /// <summary>Create new <see cref="FrameObjectStore"/></summary>
+        /// <param name="capacityHint">capacity hint</param>
         /// <returns>instance</returns>
-        public static FrameObjectStore New()
+        public static FrameObjectStore New(int capacityHint)
         {
-            return new FrameObjectStore(0);
+            return new FrameObjectStore(capacityHint);
         }
 
         /// <summary>指定した<see cref="FrameObject"/>を追加します</summary>

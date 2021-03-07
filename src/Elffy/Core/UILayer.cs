@@ -6,7 +6,7 @@ namespace Elffy.Core
 {
     internal sealed class UILayer : ILayer
     {
-        private readonly FrameObjectStore _store = FrameObjectStore.New();
+        private readonly FrameObjectStore _store;
 
         /// <inheritdoc/>
         public int ObjectCount => _store.ObjectCount;
@@ -25,6 +25,7 @@ namespace Elffy.Core
 
         public UILayer(LayerCollection owner)
         {
+            _store = FrameObjectStore.New(64);
             OwnerCollection = owner;
             UIRoot = new RootPanel(this);
         }
