@@ -1,8 +1,6 @@
 ﻿#nullable enable
 using Elffy.Core;
-using Elffy.Shading;
 using System;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.UI
@@ -33,13 +31,7 @@ namespace Elffy.UI
         public void LayoutUI()
         {
             // RootPanel.Layout is ignored.
-
-            var parentSize = (Vector2)Size;
-            var parentPadding = new LayoutThickness();
-
-            foreach(var child in Children.AsSpan()) {
-                child.Layout(parentSize, parentPadding);
-            }
+            LayoutChildren();
         }
     }
 }

@@ -351,11 +351,6 @@ namespace Elffy.UI
             ControlLayouterInternal.Return(ref _layouter);
         }
 
-        internal void Layout(in Vector2 parentSize, in LayoutThickness parentPadding)
-        {
-            LayoutRecursively(parentSize, parentPadding);
-        }
-
         protected void LayoutSelf(in Vector2 parentSize, in LayoutThickness parentPadding, out Vector2 size)
         {
             Debug.Assert(this is not RootPanel);
@@ -425,12 +420,13 @@ namespace Elffy.UI
             _absolutePosition = _parent._absolutePosition + (Vector2i)pos;
         }
 
-        protected virtual void LayoutRecursively(in Vector2 parentSize, in LayoutThickness parentPadding)
+        protected void LayoutChildren()
         {
-            LayoutSelf(parentSize, parentPadding, out var size);
             ref var padding = ref Padding;
+            var size = Size;
             foreach(var child in _childrenCore.AsSpan()) {
-                child.LayoutRecursively(size, padding);
+                child.LayoutSelf(size, padding, out _);
+                child.LayoutChildren();
             }
         }
     }
