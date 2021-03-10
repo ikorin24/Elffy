@@ -54,22 +54,27 @@ namespace Elffy.UI
                    _gridRow.TryGetValue(control, out var row) ? row : 0;
         }
 
-        //protected override void LayoutRecursively(in Vector2 parentSize, in LayoutThickness parentPadding)
-        //{
-        //    LayoutSelf(parentSize, parentPadding, out var size);
+        public override void LayoutChildren()
+        {
+            foreach(var child in ChildrenCore.AsSpan()) {
+                child.LayoutSelf(static (child, grid) =>
+                {
+                    ref readonly var pad = ref grid.Padding;
+                    var contentSize = grid.Size - new Vector2(pad.Left + pad.Right, pad.Top + pad.Bottom);
+                    var col = child.GetGridColumn(grid);
+                    var row = child.GetGridRow(grid);
+                    var splitSize = new Vector2(grid._colDef.EvalSize(contentSize.X, col),
+                                                grid._rowDef.EvalSize(contentSize.Y, row));
+                    var offset1 = new Vector2(grid._colDef.EvalPosition(contentSize.X, col),
+                                              grid._rowDef.EvalPosition(contentSize.Y, row));
+                    var (childSize, offset2) = DefaultLayoutingMethod(splitSize, default, child.Layouter);
+                    var pos = new Vector2(pad.Left, pad.Top) + offset1 + offset2;
+                    return (childSize, pos);
+                }, this);
 
-        //    //_rowDef.EvalSize
-        //    foreach(var child in Children.AsSpan()) {
-        //        var col = child.GetGridColumn(this);
-        //        var row = child.GetGridRow(this);
-
-        //        var childSize = new Vector2(_colDef.EvalSize(parentSize.X, col),
-        //                                    _rowDef.EvalSize(parentSize.Y, row));
-        //        var childPos = new Vector2(_colDef.EvalPosition(parentSize.X, col),
-        //                                   _rowDef.EvalPosition(parentSize.Y, row));
-        //        // TODO: どうしよ…
-        //    }
-        //}
+                child.LayoutChildren();
+            }
+        }
 
         protected override void OnDead()
         {

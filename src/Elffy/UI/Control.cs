@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Elffy.InputSystem;
@@ -44,7 +45,7 @@ namespace Elffy.UI
         private bool _isHitTestVisible;
         private bool _isMouseOver;
 
-        protected private ControlLayouterInternal Layouter => _layouter ?? ControlLayouterInternal.ThrowCannotGetInstance();
+        private ControlLayouterInternal LayouterPrivate => _layouter ?? ControlLayouterInternal.ThrowCannotGetInstance();
 
         internal ref ArrayPooledListCore<Control> ChildrenCore => ref _childrenCore;
 
@@ -199,13 +200,14 @@ namespace Elffy.UI
 
         internal ref readonly TextureCore Texture => ref _texture;
 
-        public ref LayoutLength LayoutWidth => ref Layouter.Width;
-        public ref LayoutLength LayoutHeight => ref Layouter.Height;
-        public ref TransformOrigin TransformOrigin => ref Layouter.TransformOrigin;
-        public ref HorizontalAlignment HorizontalAlignment => ref Layouter.HorizontalAlignment;
-        public ref VerticalAlignment VerticalAlignment => ref Layouter.VerticalAlignment;
-        public ref LayoutThickness Margin => ref Layouter.Margin;
-        public ref LayoutThickness Padding => ref Layouter.Padding;
+        public ControlLayouter Layouter => new ControlLayouter(LayouterPrivate);
+        public ref LayoutLength LayoutWidth => ref LayouterPrivate.Width;
+        public ref LayoutLength LayoutHeight => ref LayouterPrivate.Height;
+        public ref TransformOrigin TransformOrigin => ref LayouterPrivate.TransformOrigin;
+        public ref HorizontalAlignment HorizontalAlignment => ref LayouterPrivate.HorizontalAlignment;
+        public ref VerticalAlignment VerticalAlignment => ref LayouterPrivate.VerticalAlignment;
+        public ref LayoutThickness Margin => ref LayouterPrivate.Margin;
+        public ref LayoutThickness Padding => ref LayouterPrivate.Padding;
 
         /// <summary>Mouse enter event</summary>
         public event Action<Control, MouseEventArgs>? MouseEnter;
@@ -351,30 +353,74 @@ namespace Elffy.UI
             ControlLayouterInternal.Return(ref _layouter);
         }
 
-        protected void LayoutSelf(in Vector2 parentSize, in LayoutThickness parentPadding, out Vector2 size)
+        /// <summary>Layout itself and update <see cref="Size"/>, <see cref="Position"/> and <see cref="AbsolutePosition"/>.</summary>
+        public void LayoutSelf()
         {
+            if(IsRoot) { return; }
             Debug.Assert(this is not RootPanel);
             Debug.Assert(_parent is not null);
+            var parentSize = _parent.Size;
+            ref readonly var parentPadding = ref _parent.Padding;
             Debug.Assert(parentSize.X >= 0f && parentSize.Y >= 0f);
-            var layouter = Layouter;
+            var (size, pos) = DefaultLayoutingMethod(_parent.Size, _parent.Padding, Layouter);
+
+            // Change size, position and absolutePosition
+            Size = (Vector2i)size;
+            Renderable.Position.X = pos.X;
+            Renderable.Position.Y = pos.Y;
+            _absolutePosition = _parent._absolutePosition + (Vector2i)pos;
+        }
+
+        public void LayoutSelf<T>(ControlLayoutResolver<T> resolver, T state)
+        {
+            if(resolver is null) {
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(resolver));
+                ThrowNullArg();
+            }
+            if(IsRoot) { return; }
+            Debug.Assert(this is not RootPanel);
+            Debug.Assert(_parent is not null);
+
+            var (size, pos) = resolver.Invoke(this, state);
+            // Change size, position and absolutePosition
+            Size = (Vector2i)size;
+            Renderable.Position.X = pos.X;
+            Renderable.Position.Y = pos.Y;
+            _absolutePosition = _parent._absolutePosition + (Vector2i)pos;
+        }
+
+        /// <summary>Layout children recursively.</summary>
+        public virtual void LayoutChildren()
+        {
+            foreach(var child in _childrenCore.AsSpan()) {
+                child.LayoutSelf();
+                child.LayoutChildren();
+            }
+        }
+
+        protected static (Vector2 size, Vector2 position) DefaultLayoutingMethod(
+            in Vector2 areaSize, in LayoutThickness areaPadding, in ControlLayouter layouter)
+        {
+            Debug.Assert(areaSize.X >= 0f && areaSize.Y >= 0f);
             ref var margin = ref layouter.Margin;
             ref var layoutWidth = ref layouter.Width;
             ref var layoutHeight = ref layouter.Height;
             ref var horizontalAlignment = ref layouter.HorizontalAlignment;
             ref var verticalAlignment = ref layouter.VerticalAlignment;
-            var availableSize = new Vector2(MathF.Max(0, parentSize.X - parentPadding.Left - parentPadding.Right),
-                                            MathF.Max(0, parentSize.Y - parentPadding.Top - parentPadding.Bottom));
+            var availableSize = new Vector2(MathF.Max(0, areaSize.X - areaPadding.Left - areaPadding.Right),
+                                            MathF.Max(0, areaSize.Y - areaPadding.Top - areaPadding.Bottom));
             var maxSize = new Vector2(MathF.Max(0, availableSize.X - margin.Left - margin.Right),
                                       MathF.Max(0, availableSize.Y - margin.Top - margin.Bottom));
 
             // Calc size
+            Vector2 size;
             switch(layoutWidth.Type) {
                 case LayoutLengthType.Length:
                 default:
                     size.X = MathF.Max(0, MathF.Min(maxSize.X, layoutWidth.Value));
                     break;
                 case LayoutLengthType.Proportion:
-                    size.X = MathF.Max(0, MathF.Min(maxSize.X, layoutWidth.Value * parentSize.X));
+                    size.X = MathF.Max(0, MathF.Min(maxSize.X, layoutWidth.Value * areaSize.X));
                     break;
             }
             switch(layoutHeight.Type) {
@@ -383,7 +429,7 @@ namespace Elffy.UI
                     size.Y = MathF.Max(0, MathF.Min(maxSize.Y, layoutHeight.Value));
                     break;
                 case LayoutLengthType.Proportion:
-                    size.Y = MathF.Max(0, MathF.Min(maxSize.Y, layoutHeight.Value * parentSize.Y));
+                    size.Y = MathF.Max(0, MathF.Min(maxSize.Y, layoutHeight.Value * areaSize.Y));
                     break;
             }
 
@@ -392,42 +438,31 @@ namespace Elffy.UI
             switch(horizontalAlignment) {
                 case HorizontalAlignment.Center:
                 default:
-                    pos.X = parentPadding.Left + margin.Left + (maxSize.X - size.X) / 2;
+                    pos.X = areaPadding.Left + margin.Left + (maxSize.X - size.X) / 2;
                     break;
                 case HorizontalAlignment.Left:
-                    pos.X = parentPadding.Left + margin.Left;
+                    pos.X = areaPadding.Left + margin.Left;
                     break;
                 case HorizontalAlignment.Right:
-                    pos.X = parentSize.X - parentPadding.Right - margin.Right - size.X;
+                    pos.X = areaSize.X - areaPadding.Right - margin.Right - size.X;
                     break;
             }
             switch(verticalAlignment) {
                 case VerticalAlignment.Center:
                 default:
-                    pos.Y = parentPadding.Top + margin.Top + (maxSize.Y - size.Y) / 2;
+                    pos.Y = areaPadding.Top + margin.Top + (maxSize.Y - size.Y) / 2;
                     break;
                 case VerticalAlignment.Top:
-                    pos.Y = parentPadding.Top + margin.Top;
+                    pos.Y = areaPadding.Top + margin.Top;
                     break;
                 case VerticalAlignment.Bottom:
-                    pos.Y = parentSize.Y - parentPadding.Bottom - margin.Bottom - size.Y;
+                    pos.Y = areaSize.Y - areaPadding.Bottom - margin.Bottom - size.Y;
                     break;
             }
 
-            Size = (Vector2i)size;
-            Renderable.Position.X = pos.X;
-            Renderable.Position.Y = pos.Y;
-            _absolutePosition = _parent._absolutePosition + (Vector2i)pos;
-        }
-
-        protected void LayoutChildren()
-        {
-            ref var padding = ref Padding;
-            var size = Size;
-            foreach(var child in _childrenCore.AsSpan()) {
-                child.LayoutSelf(size, padding, out _);
-                child.LayoutChildren();
-            }
+            return (size, pos);
         }
     }
+
+    public delegate (Vector2 size, Vector2 position) ControlLayoutResolver<T>(Control self, T state);
 }
