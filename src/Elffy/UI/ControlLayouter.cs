@@ -71,6 +71,8 @@ namespace Elffy.UI
             instance._padding = default;
         }
 
+        public static implicit operator ControlLayouter(ControlLayouterInternal l) => new(l);
+
         [DoesNotReturn]
         public static ControlLayouterInternal ThrowCannotGetInstance() => throw new InvalidOperationException($"Cannnot get a {nameof(ControlLayouterInternal)} instance.");
 
