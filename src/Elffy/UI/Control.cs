@@ -399,9 +399,11 @@ namespace Elffy.UI
         }
 
         protected static (Vector2 size, Vector2 position) DefaultLayoutingMethod(
-            in Vector2 areaSize, in LayoutThickness areaPadding, in ControlLayouter layouter)
+            Vector2 areaSize, in LayoutThickness areaPadding, in ControlLayouter layouter)
         {
-            Debug.Assert(areaSize.X >= 0f && areaSize.Y >= 0f);
+            //Debug.Assert(areaSize.X >= 0f && areaSize.Y >= 0f);
+            areaSize.X = MathF.Max(0, areaSize.X);
+            areaSize.Y = MathF.Max(0, areaSize.Y);
             ref var margin = ref layouter.Margin;
             ref var layoutWidth = ref layouter.Width;
             ref var layoutHeight = ref layouter.Height;
