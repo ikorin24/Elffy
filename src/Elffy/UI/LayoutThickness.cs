@@ -30,6 +30,14 @@ namespace Elffy.UI
             }
         }
 
+        public LayoutThickness(float value)
+        {
+            Left = value;
+            Top = value;
+            Right = value;
+            Bottom = value;
+        }
+
         public LayoutThickness(float left, float top, float right, float bottom)
         {
             Left = left;
