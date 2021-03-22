@@ -31,9 +31,8 @@ namespace Elffy
         /// <summary>Get pixel size of rendering area.</summary>
         Vector2i ClientSize { get; set; }
 
-        /// <summary>Get content scale.</summary>
-        /// <remarks>The value is usually (1.0, 1.0) in the case of most screens. Retina display MacOS may be other values.</remarks>
-        Vector2 ContentScale { get; }
+        /// <summary>Get frame buffer size</summary>
+        Vector2i FrameBufferSize { get; }
 
         /// <summary>Get location of the <see cref="IHostScreen"/></summary>
         Vector2i Location { get; set; }

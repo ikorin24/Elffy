@@ -20,7 +20,7 @@ namespace Elffy.OpenGL
         private GLFWCallbacks.WindowCloseCallback? _closeCallback;
         private GLFWCallbacks.WindowPosCallback? _posCallback;
         private GLFWCallbacks.WindowSizeCallback? _sizeCallback;
-        private GLFWCallbacks.WindowContentScaleCallback? _contentScaleCallback;
+        private GLFWCallbacks.FramebufferSizeCallback? _frameBufferSizeCallback;
         private GLFWCallbacks.WindowIconifyCallback? _iconifyCallback;
         private GLFWCallbacks.WindowFocusCallback? _focusCallback;
         private GLFWCallbacks.CharCallback? _charCallback;
@@ -46,7 +46,7 @@ namespace Elffy.OpenGL
         public event Action<WindowGLFW, WindowPositionEventArgs>? Move;
         public event Action<WindowGLFW, ResizeEventArgs>? Resize;
 
-        public event Action<WindowGLFW, Vector2>? ContentScaleChanged;
+        public event Action<WindowGLFW, Vector2i>? FrameBufferSizeChanged;
 
         public event Action<WindowGLFW>? Refresh;
 
@@ -99,12 +99,12 @@ namespace Elffy.OpenGL
             };
             GLFW.SetWindowSizeCallback(_window, _sizeCallback);
 
-            _contentScaleCallback = (_, xScale, yScale) =>
+            _frameBufferSizeCallback = (_, width, height) =>
             {
-                _contentScale = new Vector2(xScale, yScale);
-                ContentScaleChanged?.Invoke(this, _contentScale);
+                _frameBufferSize = new Vector2i(width, height);
+                FrameBufferSizeChanged?.Invoke(this, _frameBufferSize);
             };
-            GLFW.SetWindowContentScaleCallback(_window, _contentScaleCallback);
+            GLFW.SetFramebufferSizeCallback(_window, _frameBufferSizeCallback);
 
             _closeCallback = _ =>
             {

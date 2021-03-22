@@ -120,12 +120,12 @@ namespace Elffy
             SetViewMatrix(_position, _direction, _up);
         }
 
-        /// <summary>描画先のサイズを変更します。<see cref="Projection"/> が変更されます</summary>
-        /// <param name="width">幅</param>
-        /// <param name="height">高さ</param>
+        /// <summary>Set screen size. (frame buffer size)</summary>
+        /// <param name="width">frame buffer width</param>
+        /// <param name="height">frame buffer height</param>
         internal void ChangeScreenSize(int width, int height)
         {
-            if(width < 0) { throw new ArgumentOutOfRangeException(nameof(width), width, "value si negative."); }
+            if(width < 0) { throw new ArgumentOutOfRangeException(nameof(width), width, "value is negative."); }
             if(height < 0) { throw new ArgumentOutOfRangeException(nameof(height), height, "value is negative."); }
 
             _aspect = (float)width / height;
