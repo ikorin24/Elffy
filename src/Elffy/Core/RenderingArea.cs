@@ -40,15 +40,12 @@ namespace Elffy.Core
 
         public AsyncBackEndPoint AsyncBack { get; }
 
-        public FrameEnumerableSource Frames { get; }
-
         public ScreenCurrentTiming CurrentTiming => _currentTiming;
 
         internal RenderingArea(IHostScreen screen)
         {
             OwnerScreen = screen;
             AsyncBack = new AsyncBackEndPoint(screen);
-            Frames = new FrameEnumerableSource(AsyncBack);
             Layers = new LayerCollection(this);
             _runningTokenSource = new CancellationTokenSource();
         }

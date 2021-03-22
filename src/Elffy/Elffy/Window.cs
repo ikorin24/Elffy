@@ -64,8 +64,6 @@ namespace Elffy
         /// <inheritdoc/>
         public long FrameNum => _frameNum;
 
-        public FrameEnumerableSource Frames => _renderingArea.Frames;
-
         /// <inheritdoc/>
         public CancellationToken RunningToken => _renderingArea.RunningToken;
 
@@ -153,6 +151,11 @@ namespace Elffy
                         return;
                 }
             };
+        }
+
+        public FrameAsyncEnumerable Frames(FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
+        {
+            return new FrameAsyncEnumerable(AsyncBack, timing, cancellationToken);
         }
 
         public void Maximize()

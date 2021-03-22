@@ -36,7 +36,7 @@ namespace Sandbox
                 await Timing.Ensure(FrameLoopTiming.Update);
 
                 var time = TimeSpan.FromMilliseconds(200);
-                await foreach(var frame in Timing.Frames.OnTiming(FrameLoopTiming.Update)) {
+                await foreach(var frame in Timing.Frames()) {
                     if(frame.Time >= time) {
                         break;
                     }

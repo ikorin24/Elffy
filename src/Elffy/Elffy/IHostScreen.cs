@@ -49,8 +49,6 @@ namespace Elffy
         /// <summary>Get number of current frame.</summary>
         long FrameNum { get; }
 
-        FrameEnumerableSource Frames { get; }
-
         /// <summary>Get screen running token, which is canceled when screen got closed.</summary>
         CancellationToken RunningToken { get; }
 
@@ -66,6 +64,8 @@ namespace Elffy
 
         /// <summary>Event which fires on closing</summary>
         event ClosingEventHandler<IHostScreen> Closing;
+
+        FrameAsyncEnumerable Frames(FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default);
 
         /// <summary>Acticate screen</summary>
         void Activate();
