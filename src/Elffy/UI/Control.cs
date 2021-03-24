@@ -74,66 +74,66 @@ namespace Elffy.UI
         {
             get => (Vector2i)Renderable.Position.Xy;
 
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set
-            {
-                ref var pos = ref Renderable.Position;
-                var vec = value - (Vector2i)pos.Xy;
+            //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+            //set
+            //{
+            //    ref var pos = ref Renderable.Position;
+            //    var vec = value - (Vector2i)pos.Xy;
 
-                if(vec.X != 0 && vec.Y != 0) {
-                    // change both x and y
+            //    if(vec.X != 0 && vec.Y != 0) {
+            //        // change both x and y
 
-                    pos.X += vec.X;
-                    pos.Y += vec.Y;
-                    _absolutePosition += vec;
-                    if(_childrenCore.Count > 0) {
-                        ApplyRecursively(this, in vec);
-                    }
-                }
-                else if(vec.X != 0) {
-                    // change only x
-                    pos.X += vec.X;
-                    _absolutePosition.X += vec.X;
-                    if(_childrenCore.Count > 0) {
-                        ApplyXRecursively(this, vec.X);
-                    }
-                }
-                else if(vec.Y != 0) {
-                    // change only y
-                    pos.Y += vec.Y;
-                    _absolutePosition.Y += vec.Y;
-                    if(_childrenCore.Count > 0) {
-                        ApplyYRecursively(this, vec.Y);
-                    }
-                }
+            //        pos.X += vec.X;
+            //        pos.Y += vec.Y;
+            //        _absolutePosition += vec;
+            //        if(_childrenCore.Count > 0) {
+            //            ApplyRecursively(this, in vec);
+            //        }
+            //    }
+            //    else if(vec.X != 0) {
+            //        // change only x
+            //        pos.X += vec.X;
+            //        _absolutePosition.X += vec.X;
+            //        if(_childrenCore.Count > 0) {
+            //            ApplyXRecursively(this, vec.X);
+            //        }
+            //    }
+            //    else if(vec.Y != 0) {
+            //        // change only y
+            //        pos.Y += vec.Y;
+            //        _absolutePosition.Y += vec.Y;
+            //        if(_childrenCore.Count > 0) {
+            //            ApplyYRecursively(this, vec.Y);
+            //        }
+            //    }
 
-                [MethodImpl(MethodImplOptions.NoInlining)]  // no inlining
-                static void ApplyRecursively(Control parent, in Vector2i vec)
-                {
-                    foreach(var child in parent._childrenCore.AsSpan()) {
-                        child._absolutePosition += vec;
-                        ApplyRecursively(child, vec);
-                    }
-                }
+            //    [MethodImpl(MethodImplOptions.NoInlining)]  // no inlining
+            //    static void ApplyRecursively(Control parent, in Vector2i vec)
+            //    {
+            //        foreach(var child in parent._childrenCore.AsSpan()) {
+            //            child._absolutePosition += vec;
+            //            ApplyRecursively(child, vec);
+            //        }
+            //    }
 
-                [MethodImpl(MethodImplOptions.NoInlining)]  // no inlining
-                static void ApplyXRecursively(Control parent, int diff)
-                {
-                    foreach(var child in parent._childrenCore.AsSpan()) {
-                        child._absolutePosition.X += diff;
-                        ApplyXRecursively(child, diff);
-                    }
-                }
+            //    [MethodImpl(MethodImplOptions.NoInlining)]  // no inlining
+            //    static void ApplyXRecursively(Control parent, int diff)
+            //    {
+            //        foreach(var child in parent._childrenCore.AsSpan()) {
+            //            child._absolutePosition.X += diff;
+            //            ApplyXRecursively(child, diff);
+            //        }
+            //    }
 
-                [MethodImpl(MethodImplOptions.NoInlining)]  // no inlining
-                static void ApplyYRecursively(Control parent, int diff)
-                {
-                    foreach(var child in parent._childrenCore.AsSpan()) {
-                        child._absolutePosition.Y += diff;
-                        ApplyYRecursively(child, diff);
-                    }
-                }
-            }
+            //    [MethodImpl(MethodImplOptions.NoInlining)]  // no inlining
+            //    static void ApplyYRecursively(Control parent, int diff)
+            //    {
+            //        foreach(var child in parent._childrenCore.AsSpan()) {
+            //            child._absolutePosition.Y += diff;
+            //            ApplyYRecursively(child, diff);
+            //        }
+            //    }
+            //}
         }
 
         public Vector2i AbsolutePosition => (Vector2i)_absolutePosition;
