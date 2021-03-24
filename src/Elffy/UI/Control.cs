@@ -14,7 +14,7 @@ namespace Elffy.UI
     // [Rendering]
     // 
     // Control and UIRenderable are always a pair.
-    // Control is an element of the UI, which forms a UI tree. (UI tree means logical tree and visual tree.)
+    // Control is an element of the UI, which forms a UI tree.
     // UIRenderable is a subclass of Renderable (that means FrameObject),
     // which is managed by the engine and renders the control.
     // Control is just a data structure, so it doesn't know how it is rendered on the screen.
