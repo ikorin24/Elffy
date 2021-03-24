@@ -9,12 +9,22 @@ namespace Elffy.UI
     /// <summary>Root panel of UI tree</summary>
     public sealed class RootPanel : Panel
     {
-        internal UILayer UILayer { get; }
+        private readonly UILayer _uiLayer;
+        private LayoutExecutionType _layoutExecutionType;
 
-        /// <summary>Don't call the property. <see cref="RootPanel"/> doesn't support it. It throws <see cref="InvalidOperationException"/>.</summary>
+        internal UILayer UILayer => _uiLayer;
+
+        /// <summary>Get or set layout execution type.</summary>
+        public LayoutExecutionType LayoutExecutionType
+        {
+            get => _layoutExecutionType;
+            set => _layoutExecutionType = value;
+        }
+
+        /// <summary><see cref="RootPanel"/> doesn't support it. It throws <see cref="InvalidOperationException"/>.</summary>
         [EditorBrowsable(EditorBrowsableState.Never)]
-        [Obsolete("RootPanel does not support 'Padding'.", true)]
-        public new ref LayoutThickness Padding => throw new InvalidOperationException($"{nameof(RootPanel)} does not support '{nameof(Padding)}'.");
+        [Obsolete("RootPanel does not support 'Margin'.", true)]
+        public new ref LayoutThickness Margin => throw new InvalidOperationException($"{nameof(RootPanel)} does not support '{nameof(Margin)}'.");
 
         internal RootPanel(UILayer uiLayer)
         {
@@ -22,18 +32,37 @@ namespace Elffy.UI
                 ThrowNullArg();
                 [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(uiLayer));
             }
-            UILayer = uiLayer;
+            _uiLayer = uiLayer;
         }
 
         internal void Initialize()
         {
             SetAsRootControl();
             Renderable.Activate(UILayer);
+            Renderable.Rendering += ExecuteRelayout;
         }
 
-        /// <summary>Don't call the method. <see cref="RootPanel"/> doesn't support it. It throws <see cref="InvalidOperationException"/>.</summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]   // Hide the method. (RootPanel do nothing even if the method is called.)
+        private void ExecuteRelayout(Renderable sender, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        {
+            switch(_layoutExecutionType) {
+                case LayoutExecutionType.Explicit:
+                    return;
+                case LayoutExecutionType.EveryFrame:
+                    LayoutChildren();
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+
+        /// <summary><see cref="RootPanel"/> doesn't support it. It throws <see cref="InvalidOperationException"/>.</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
         [Obsolete("RootPanel does not support 'LayoutSelf'.", true)]
         public new void LayoutSelf() => throw new InvalidOperationException($"{nameof(RootPanel)} does not support '{nameof(LayoutSelf)}'.");
+
+        /// <summary><see cref="RootPanel"/> doesn't support it. It throws <see cref="InvalidOperationException"/>.</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("RootPanel does not support 'LayoutSelf'.", true)]
+        public new void LayoutSelf<T>(ControlLayoutResolver<T> resolver, T state) => throw new InvalidOperationException($"{nameof(RootPanel)} does not support '{nameof(LayoutSelf)}'.");
     }
 }

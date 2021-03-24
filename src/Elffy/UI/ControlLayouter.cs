@@ -16,6 +16,8 @@ namespace Elffy.UI
         public ref VerticalAlignment VerticalAlignment => ref _l.VerticalAlignment;
         public ref LayoutThickness Margin => ref _l.Margin;
         public ref LayoutThickness Padding => ref _l.Padding;
+        public ref Matrix3 RenderTransform => ref _l.RenderTransform;
+        public ref Vector2 RenderTransformOrigin => ref _l.RenderTransformOrigin;
 
         internal ControlLayouter(ControlLayouterInternal l)
         {
@@ -44,6 +46,8 @@ namespace Elffy.UI
         private VerticalAlignment _verticalAlignment;
         private LayoutThickness _margin;
         private LayoutThickness _padding;
+        private Matrix3 _renderTransform;
+        private Vector2 _renderTransformOrigin;
 
         public ref LayoutLength Width => ref _width;
         public ref LayoutLength Height => ref _height;
@@ -52,6 +56,8 @@ namespace Elffy.UI
         public ref VerticalAlignment VerticalAlignment => ref _verticalAlignment;
         public ref LayoutThickness Margin => ref _margin;
         public ref LayoutThickness Padding => ref _padding;
+        public ref Matrix3 RenderTransform => ref _renderTransform;
+        public ref Vector2 RenderTransformOrigin => ref _renderTransformOrigin;
 
         private ControlLayouterInternal()
         {
@@ -69,6 +75,8 @@ namespace Elffy.UI
             instance._verticalAlignment = VerticalAlignment.Top;
             instance._margin = default;
             instance._padding = default;
+            instance._renderTransform = Matrix3.Identity;
+            instance._renderTransformOrigin = default;
         }
 
         public static implicit operator ControlLayouter(ControlLayouterInternal l) => new(l);

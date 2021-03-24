@@ -182,9 +182,6 @@ namespace Elffy.UI
             }
         }
 
-        /// <summary>get or set offset position of layout</summary>
-        public ref Vector2i Offset => ref _offset;
-
         /// <summary>get or set whether this <see cref="Control"/> is enabled in HitTest</summary>
         public bool IsHitTestVisible
         {
@@ -208,6 +205,8 @@ namespace Elffy.UI
         public ref VerticalAlignment VerticalAlignment => ref LayouterPrivate.VerticalAlignment;
         public ref LayoutThickness Margin => ref LayouterPrivate.Margin;
         public ref LayoutThickness Padding => ref LayouterPrivate.Padding;
+        public ref Matrix3 RenderTransform => ref LayouterPrivate.RenderTransform;
+        public ref Vector2 RenderTransformOrigin => ref LayouterPrivate.RenderTransformOrigin;
 
         /// <summary>Mouse enter event</summary>
         public event Action<Control, MouseEventArgs>? MouseEnter;
