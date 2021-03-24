@@ -138,49 +138,14 @@ namespace Elffy.UI
 
         public Vector2i AbsolutePosition => (Vector2i)_absolutePosition;
 
-        /// <summary>get or set Width of <see cref="Control"/></summary>
-        public int Width
-        {
-            get => (int)Renderable.Scale.X;
-            set
-            {
-                if(value < 0) {
-                    ThrowOutOfRange();
-                    static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException();
-                }
-                Renderable.Scale.X = value;
-            }
-        }
+        /// <summary>Get width of <see cref="Control"/></summary>
+        public int Width => (int)Renderable.Scale.X;
 
+        /// <summary>Get height of <see cref="Control"/></summary>
+        public int Height => (int)Renderable.Scale.Y;
 
-        /// <summary>get or set Height of <see cref="Control"/></summary>
-        public int Height
-        {
-            get => (int)Renderable.Scale.Y;
-            set
-            {
-                if(value < 0) {
-                    ThrowOutOfRange();
-                    static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException();
-                }
-                Renderable.Scale.Y = value;
-            }
-        }
-
-        /// <summary>get or set size of <see cref="Control"/></summary>
-        public Vector2i Size
-        {
-            get => (Vector2i)Renderable.Scale.Xy;
-            set
-            {
-                if(value.X < 0 || value.Y < 0) {
-                    ThrowOutOfRange();
-                    static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException();
-                }
-                Renderable.Scale.X = value.X;
-                Renderable.Scale.Y = value.Y;
-            }
-        }
+        /// <summary>Get size of <see cref="Control"/></summary>
+        public Vector2i Size => (Vector2i)Renderable.Scale.Xy;      // To set size, use the internal method 'SetSize'
 
         /// <summary>get or set whether this <see cref="Control"/> is enabled in HitTest</summary>
         public bool IsHitTestVisible
@@ -222,11 +187,16 @@ namespace Elffy.UI
             _isHitTestVisible = true;
             _layouter = ControlLayouterInternal.Create();
             _renderable = new UIRenderable(this);
-            Width = 30;
-            Height = 30;
             _texture = new TextureCore(TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear, TextureMipmapMode.None, TextureWrapMode.ClampToEdge, TextureWrapMode.ClampToEdge);
             Renderable.Activated += OnRenderableActivatedPrivate;
             Renderable.Dead += OnRenderableDeadPrivate;
+        }
+
+        internal void SetSize(in Vector2 size)
+        {
+            ref var scale = ref Renderable.Scale;
+            scale.X = size.X;
+            scale.Y = size.Y;
         }
 
         protected private void SetAsRootControl()
@@ -364,10 +334,11 @@ namespace Elffy.UI
             var (size, pos) = DefaultLayoutingMethod(_parent.Size, _parent.Padding, Layouter);
 
             // Change size, position and absolutePosition
-            Size = (Vector2i)size;
-            Renderable.Position.X = pos.X;
-            Renderable.Position.Y = pos.Y;
-            _absolutePosition = _parent._absolutePosition + (Vector2i)pos;
+            SetSize(size);
+            ref var position = ref Renderable.Position;
+            position.X = pos.X;
+            position.Y = pos.Y;
+            _absolutePosition = _parent._absolutePosition + pos;
         }
 
         public void LayoutSelf<T>(ControlLayoutResolver<T> resolver, T state)
@@ -382,10 +353,11 @@ namespace Elffy.UI
 
             var (size, pos) = resolver.Invoke(this, state);
             // Change size, position and absolutePosition
-            Size = (Vector2i)size;
-            Renderable.Position.X = pos.X;
-            Renderable.Position.Y = pos.Y;
-            _absolutePosition = _parent._absolutePosition + (Vector2i)pos;
+            SetSize(size);
+            ref var position = ref Renderable.Position;
+            position.X = pos.X;
+            position.Y = pos.Y;
+            _absolutePosition = _parent._absolutePosition + pos;
         }
 
         /// <summary>Layout children recursively.</summary>
