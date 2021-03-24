@@ -2,6 +2,7 @@
 using Elffy.Core;
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.ComponentModel;
 
 namespace Elffy.UI
 {
@@ -9,6 +10,11 @@ namespace Elffy.UI
     public sealed class RootPanel : Panel
     {
         internal UILayer UILayer { get; }
+
+        /// <summary>Don't call the property. <see cref="RootPanel"/> doesn't support it. It throws <see cref="InvalidOperationException"/>.</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("RootPanel does not support 'Padding'.", true)]
+        public new ref LayoutThickness Padding => throw new InvalidOperationException($"{nameof(RootPanel)} does not support '{nameof(Padding)}'.");
 
         internal RootPanel(UILayer uiLayer)
         {
@@ -25,10 +31,9 @@ namespace Elffy.UI
             Renderable.Activate(UILayer);
         }
 
-        public void LayoutUI()
-        {
-            // RootPanel.Layout is ignored.
-            LayoutChildren();
-        }
+        /// <summary>Don't call the method. <see cref="RootPanel"/> doesn't support it. It throws <see cref="InvalidOperationException"/>.</summary>
+        [EditorBrowsable(EditorBrowsableState.Never)]   // Hide the method. (RootPanel do nothing even if the method is called.)
+        [Obsolete("RootPanel does not support 'LayoutSelf'.", true)]
+        public new void LayoutSelf() => throw new InvalidOperationException($"{nameof(RootPanel)} does not support '{nameof(LayoutSelf)}'.");
     }
 }
