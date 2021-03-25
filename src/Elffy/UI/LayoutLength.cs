@@ -1,24 +1,15 @@
 ﻿#nullable enable
 using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.UI
 {
+    [DebuggerDisplay("{ToString(),nq}")]
     public readonly struct LayoutLength : IEquatable<LayoutLength>
     {
         public readonly float Value;
         public readonly LayoutLengthType Type;
-
-        public LayoutLength(float length)
-        {
-            if(length < 0) {
-                ThrowOutOfRange();
-            }
-            Value = length;
-            Type = LayoutLengthType.Length;
-
-            [DoesNotReturn] static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(length));
-        }
 
         public LayoutLength(float value, LayoutLengthType type)
         {
@@ -31,7 +22,7 @@ namespace Elffy.UI
             [DoesNotReturn] static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(value));
         }
 
-        public static LayoutLength CreateLength(float length) => new LayoutLength(length);
+        public static LayoutLength CreateLength(float length) => new LayoutLength(length, LayoutLengthType.Length);
 
         public static LayoutLength CreateProportion(float proportion) => new LayoutLength(proportion, LayoutLengthType.Proportion);
 
@@ -57,6 +48,9 @@ namespace Elffy.UI
         public static bool operator ==(LayoutLength left, LayoutLength right) => left.Equals(right);
 
         public static bool operator !=(LayoutLength left, LayoutLength right) => !(left == right);
+
+        public static implicit operator LayoutLength(float value) => new LayoutLength(value, LayoutLengthType.Length);
+        public static implicit operator LayoutLength(int value) => new LayoutLength(value, LayoutLengthType.Length);
     }
 
     public enum LayoutLengthType : byte

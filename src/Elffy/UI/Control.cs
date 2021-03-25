@@ -37,8 +37,6 @@ namespace Elffy.UI
         private ControlLayouterInternal? _layouter;
         private Control? _parent;
         private RootPanel? _root;
-        private Vector2 _absolutePosition;
-        private Vector2i _offset;
         private ArrayPooledListCore<Control> _childrenCore;
         private TextureCore _texture;
         private Color4 _background;
@@ -70,10 +68,12 @@ namespace Elffy.UI
 
         public ref Color4 Background => ref _background;
 
+        /// <summary>Get absolute position of the control.</summary>
         public Vector2i Position
         {
             get => (Vector2i)Renderable.Position.Xy;
 
+            #region Removed
             //[MethodImpl(MethodImplOptions.AggressiveInlining)]
             //set
             //{
@@ -134,9 +134,8 @@ namespace Elffy.UI
             //        }
             //    }
             //}
+            #endregion
         }
-
-        public Vector2i AbsolutePosition => (Vector2i)_absolutePosition;
 
         /// <summary>Get width of <see cref="Control"/></summary>
         public int Width => (int)Renderable.Scale.X;
@@ -266,13 +265,15 @@ namespace Elffy.UI
         /// <returns>マウスオーバーしているか</returns>
         internal bool MouseOverTest(Mouse mouse)
         {
+            if(IsVisible == false || IsHitTestVisible == false) {
+                return false;
+            }
             var mousePos = (Vector2i)mouse.Position;
-            return IsVisible &&
-                   IsHitTestVisible &&
-                   _absolutePosition.X <= mousePos.X &&
-                   mousePos.X < _absolutePosition.X + Width &&
-                   _absolutePosition.Y <= mousePos.Y &&
-                   mousePos.Y < _absolutePosition.Y + Height;
+            var pos = Position;
+            return pos.X <= mousePos.X &&
+                   mousePos.X < pos.X + Width &&
+                   pos.Y <= mousePos.Y &&
+                   mousePos.Y < pos.Y + Height;
         }
 
         /// <summary>ヒットテストの結果を通知します</summary>
@@ -331,14 +332,15 @@ namespace Elffy.UI
             var parentSize = _parent.Size;
             ref readonly var parentPadding = ref _parent.Padding;
             Debug.Assert(parentSize.X >= 0f && parentSize.Y >= 0f);
-            var (size, pos) = DefaultLayoutingMethod(_parent.Size, _parent.Padding, Layouter);
+            var (size, relativePos) = DefaultLayoutingMethod(_parent.Size, _parent.Padding, Layouter);
 
             // Change size, position and absolutePosition
             SetSize(size);
+
+            ref var parentPos = ref _parent.Renderable.Position;
             ref var position = ref Renderable.Position;
-            position.X = pos.X;
-            position.Y = pos.Y;
-            _absolutePosition = _parent._absolutePosition + pos;
+            position.X = relativePos.X + parentPos.X;
+            position.Y = relativePos.Y + parentPos.Y;
         }
 
         public void LayoutSelf<T>(ControlLayoutResolver<T> resolver, T state)
@@ -354,10 +356,11 @@ namespace Elffy.UI
             var (size, pos) = resolver.Invoke(this, state);
             // Change size, position and absolutePosition
             SetSize(size);
+
+            ref var parentPos = ref _parent.Renderable.Position;
             ref var position = ref Renderable.Position;
-            position.X = pos.X;
-            position.Y = pos.Y;
-            _absolutePosition = _parent._absolutePosition + pos;
+            position.X = pos.X + parentPos.X;
+            position.Y = pos.Y + parentPos.Y;
         }
 
         /// <summary>Layout children recursively.</summary>
@@ -369,10 +372,14 @@ namespace Elffy.UI
             }
         }
 
+        /// <summary>Layout size and relative position to the parent</summary>
+        /// <param name="areaSize">Size of the area to locate the control. </param>
+        /// <param name="areaPadding">Padding in the area specified by the parent control.</param>
+        /// <param name="layouter">layouter of the control</param>
+        /// <returns>'size' is control size. 'position' is relative position to the parent.</returns>
         protected static (Vector2 size, Vector2 position) DefaultLayoutingMethod(
             Vector2 areaSize, in LayoutThickness areaPadding, in ControlLayouter layouter)
         {
-            //Debug.Assert(areaSize.X >= 0f && areaSize.Y >= 0f);
             areaSize.X = MathF.Max(0, areaSize.X);
             areaSize.Y = MathF.Max(0, areaSize.Y);
             ref var margin = ref layouter.Margin;
