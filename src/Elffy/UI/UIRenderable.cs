@@ -7,6 +7,9 @@ using Elffy.OpenGL;
 
 namespace Elffy.UI
 {
+    // [NOTE]
+    // See the comments of Control to know how UIRenderable and Control work.
+
     /// <summary>Renderable object which render <see cref="UI.Control"/>. <see cref="UIRenderable"/> object has a one-to-one relationship with <see cref="UI.Control"/>.</summary>
     internal sealed class UIRenderable : Renderable
     {
