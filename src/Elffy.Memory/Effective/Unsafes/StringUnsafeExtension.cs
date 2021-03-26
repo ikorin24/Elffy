@@ -34,9 +34,9 @@ namespace Elffy.Effective.Unsafes
             return MemoryMarshal.CreateReadOnlySpan(ref Unsafe.Add(ref source.GetReference(), start), length);
         }
 
-        /// <summary>Get slice of <see cref="ReadOnlySpan{char}"/>.</summary>
+        /// <summary>Get slice of <see cref="ReadOnlySpan{T}"/> of type <see cref="char"/>.</summary>
         /// <remarks>[CAUTION] This method DOES NOT check boundary !! Be careful !!</remarks>
-        /// <param name="source">source <see cref="ReadOnlySpan{char}"/></param>
+        /// <param name="source">source <see cref="ReadOnlySpan{T}"/> of type <see cref="char"/></param>
         /// <param name="start">start index to slice</param>
         /// <returns>sliced span</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -45,9 +45,9 @@ namespace Elffy.Effective.Unsafes
             return MemoryMarshal.CreateReadOnlySpan(ref Unsafe.AsRef(source.At(start)), source.Length - start);
         }
 
-        /// <summary>Get slice of <see cref="ReadOnlySpan{char}"/>.</summary>
+        /// <summary>Get slice of <see cref="ReadOnlySpan{T}"/> of type <see cref="char"/>.</summary>
         /// <remarks>[CAUTION] This method DOES NOT check boundary !! Be careful !!</remarks>
-        /// <param name="source">source <see cref="ReadOnlySpan{char}"/></param>
+        /// <param name="source">source <see cref="ReadOnlySpan{T}"/> of type <see cref="char"/></param>
         /// <param name="start">start index to slice</param>
         /// <param name="length">length to slice</param>
         /// <returns>sliced span</returns>

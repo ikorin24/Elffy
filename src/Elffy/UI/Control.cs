@@ -323,7 +323,7 @@ namespace Elffy.UI
             ControlLayouterInternal.Return(ref _layouter);
         }
 
-        /// <summary>Layout itself and update <see cref="Size"/>, <see cref="Position"/> and <see cref="AbsolutePosition"/>.</summary>
+        /// <summary>Layout itself and update <see cref="Size"/> and <see cref="Position"/>.</summary>
         public void LayoutSelf()
         {
             if(IsRoot) { return; }

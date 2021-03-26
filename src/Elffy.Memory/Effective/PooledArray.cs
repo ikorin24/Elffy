@@ -16,9 +16,9 @@ namespace Elffy.Effective
 
         public readonly bool IsDisposed => _array is null;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         /// <summary><see cref="ArrayPool{T}.Shared"/> から配列バッファを取得します</summary>
         /// <param name="length">配列の長さ</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public PooledArray(int length)
         {
             if(length < 0) { throw new ArgumentOutOfRangeException(nameof(length)); }

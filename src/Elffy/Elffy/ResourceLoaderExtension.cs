@@ -12,6 +12,7 @@ namespace Elffy
     {
         /// <summary>Create <see cref="Texture"/> from resource</summary>
         /// <remarks>Created <see cref="Texture"/> expands and shrinks linearly.</remarks>
+        /// <param name="source">source instance</param>
         /// <param name="name">resource name</param>
         /// <returns><see cref="Texture"/> created from <see cref="Stream"/></returns>
         public static Texture LoadTexture(this IResourceLoader source, string name)
@@ -25,6 +26,7 @@ namespace Elffy
         }
 
         /// <summary>Create <see cref="Texture"/> from resource</summary>
+        /// /// <param name="source">source instance</param>
         /// <param name="name">resource name</param>
         /// <param name="expansionMode">texture expansion mode</param>
         /// <param name="shrinkMode">textrue shrink mode</param>

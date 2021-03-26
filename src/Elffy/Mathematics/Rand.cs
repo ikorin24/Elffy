@@ -32,7 +32,7 @@ namespace Elffy.Mathematics
         public static Vector3 Vector3() => new Vector3(_xorshift32.Single(), _xorshift32.Single(), _xorshift32.Single()).Normalized();
 
         /// <summary>Get random <see cref="Vector4"/>, that is normalized.</summary>
-        /// <returns>random <see cref="Vectot4"/></returns>
+        /// <returns>random <see cref="Vector4"/></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 Vector4() => new Vector4(_xorshift32.Single(), _xorshift32.Single(), _xorshift32.Single(), _xorshift32.Single()).Normalized();
 

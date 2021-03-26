@@ -52,7 +52,7 @@ namespace Elffy
         /// <summary>Get screen running token, which is canceled when screen got closed.</summary>
         CancellationToken RunningToken { get; }
 
-        /// <summary>Get whether screen is running<summary>
+        /// <summary>Get whether screen is running</summary>
         bool IsRunning { get; }
 
         /// <summary>Get current screen frame loop timing.</summary>

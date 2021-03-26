@@ -55,6 +55,7 @@ namespace Elffy.Core
         /// <summary>Add or replace component whose type is <typeparamref name="T"/>. Return true if replaced, otherwize false.</summary>
         /// <typeparam name="T">component type</typeparam>
         /// <param name="component">the component</param>
+        /// <param name="old">old component</param>
         /// <returns>Return true if replaced, otherwize false.</returns>
         public bool AddOrReplaceComponent<T>(T component, [MaybeNullWhen(false)] out T old) where T : class, IComponent
         {
@@ -138,6 +139,7 @@ namespace Elffy.Core
 
             /// <summary>Get component of specified owner.</summary>
             /// <param name="owner">the owner of the component</param>
+            /// <param name="value">value</param>
             /// <returns>the component</returns>
             public static bool TryGet(ComponentOwner owner, [MaybeNullWhen(false)] out T value)
             {

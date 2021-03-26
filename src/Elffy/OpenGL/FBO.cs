@@ -100,7 +100,7 @@ namespace Elffy.OpenGL
         }
 
         /// <summary>Call glCheckFramebufferStatus</summary>
-        /// <param name="status"></param>
+        /// <param name="error">error message</param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool CheckStatus(out string error)

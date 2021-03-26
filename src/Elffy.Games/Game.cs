@@ -19,7 +19,7 @@ namespace Elffy
         /// <summary>Get screen running token, which is canceled when screen got closed.</summary>
         public static CancellationToken RunningToken => _runningToken;
 
-        /// <summary>Get whether screen is running<summary>
+        /// <summary>Get whether screen is running</summary>
         public static bool IsRunning => _screen!.IsRunning;
 
         /// <summary>Get time of current frame. (This is NOT real time.)</summary>

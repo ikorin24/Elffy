@@ -48,6 +48,7 @@ namespace Elffy
         /// </remarks>
         /// <exception cref="ArgumentException"><paramref name="source"/> is not activated.</exception>
         /// <exception cref="ArgumentNullException"></exception>
+        /// <param name="source">source instance</param>
         /// <param name="timing">frame loop timing to get back</param>
         /// <param name="cancellationToken">cancellation token</param>
         /// <returns>awaitable object (true if load completed. false if <see cref="Renderable"/> is dead.)</returns>

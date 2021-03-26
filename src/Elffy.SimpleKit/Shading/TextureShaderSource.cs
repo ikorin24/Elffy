@@ -22,7 +22,7 @@ namespace Elffy.Shading
             throw new NotSupportedException("Not supported vertex type.");
         }, LazyThreadSafetyMode.ExecutionAndPublication);
 
-        /// <summary>Get singleton instance of <see cref="TextureShaderSource"/></summary>
+        /// <summary>Get singleton instance of <see cref="TextureShaderSource{TVertex}"/></summary>
         public static TextureShaderSource<TVertex> Instance => _instance.Value;
 
         public override string VertexShaderSource => VertSource;

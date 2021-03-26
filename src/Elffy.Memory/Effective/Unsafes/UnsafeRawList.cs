@@ -13,7 +13,7 @@ namespace Elffy.Effective.Unsafes
     /// <remarks>
     /// 1) DO NOT create a default instance (<see langword="new"/> <see cref="UnsafeRawList{T}"/>(), or <see langword="default"/>).
     ///    That means <see langword="null"/> for reference types.<para/>
-    ///    Use <see cref="New"/> instead.<para/>
+    ///    Use <see cref="New()"/> instead.<para/>
     /// 2) You MUST call <see cref="Dispose"/> after use it. Or it causes MEMORY LEAK !<para/>
     /// 3) It DOES NOT check any boundary of access by index.<para/>
     /// </remarks>

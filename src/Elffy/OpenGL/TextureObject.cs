@@ -109,6 +109,7 @@ namespace Elffy.OpenGL
         /// <remarks>Allocate memory of specified <paramref name="size"/> without initialization when set <see langword="null"/> to <paramref name="pixels"/>.</remarks>
         /// <param name="size">texture size</param>
         /// <param name="pixels">texture to load</param>
+        /// <param name="level">texture level</param>
         public static unsafe void Image2D(in Vector2i size, Color4* pixels, int level)
         {
             // Allocate memory of specified size without initialization

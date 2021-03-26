@@ -7,7 +7,6 @@ using OpenTK.Graphics.OpenGL4;
 namespace Elffy.Shading
 {
     /// <summary>Compiled post process program</summary>
-    /// <remarks>Don't forget to call <see cref="Dispose"/></remarks>
     public sealed class PostProcessProgram : IDisposable
     {
         private PostProcess _source;

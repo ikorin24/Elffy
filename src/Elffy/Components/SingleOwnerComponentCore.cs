@@ -10,7 +10,6 @@ namespace Elffy.Components
     // Something like ManualResetValueTaskSourceCore for IValueTaskSource.
 
     /// <summary>Helper struct to implement <see cref="ISingleOwnerComponent"/> easily.</summary>
-    /// <typeparam name="TComponent">type of the component</typeparam>
     public struct SingleOwnerComponentCore
     {
         private ComponentOwner? _owner;
@@ -32,6 +31,7 @@ namespace Elffy.Components
 
         /// <summary>Do <see cref="IComponent.OnAttached(ComponentOwner)"/></summary>
         /// <param name="owner">the owner of the component</param>
+        /// <param name="component">component instance</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void OnAttached<TComponent>(ComponentOwner owner, TComponent component) where TComponent : class, ISingleOwnerComponent
         {
