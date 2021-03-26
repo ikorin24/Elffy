@@ -56,6 +56,15 @@ namespace Elffy
 
         public static readonly Matrix3 Identity = new Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1);
 
+        /// <summary>Get whether the matrix is identity</summary>
+        public bool IsIdentity
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => M00 == 1 && M11 == 1 && M22 == 1 &&          // Early return if diagonal elements are not 1.
+                   M01 == 0 && M02 == 0 && M10 == 0 &&
+                   M12 == 0 && M20 == 0 && M21 == 0;
+        }
+
         /// <summary>
         /// Create new <see cref="Matrix3"/><para/>
         /// [NOTE] Argument order is NOT same as memory layout order !!! (Memory layout is column-major order.)<para/>

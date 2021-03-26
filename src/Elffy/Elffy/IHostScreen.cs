@@ -31,9 +31,8 @@ namespace Elffy
         /// <summary>Get pixel size of rendering area.</summary>
         Vector2i ClientSize { get; set; }
 
-        /// <summary>Get content scale.</summary>
-        /// <remarks>The value is usually (1.0, 1.0) in the case of most screens. Retina display MacOS may be other values.</remarks>
-        Vector2 ContentScale { get; }
+        /// <summary>Get frame buffer size</summary>
+        Vector2i FrameBufferSize { get; }
 
         /// <summary>Get location of the <see cref="IHostScreen"/></summary>
         Vector2i Location { get; set; }
@@ -50,8 +49,6 @@ namespace Elffy
         /// <summary>Get number of current frame.</summary>
         long FrameNum { get; }
 
-        FrameEnumerableSource Frames { get; }
-
         /// <summary>Get screen running token, which is canceled when screen got closed.</summary>
         CancellationToken RunningToken { get; }
 
@@ -67,6 +64,8 @@ namespace Elffy
 
         /// <summary>Event which fires on closing</summary>
         event ClosingEventHandler<IHostScreen> Closing;
+
+        FrameAsyncEnumerable Frames(FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default);
 
         /// <summary>Acticate screen</summary>
         void Activate();

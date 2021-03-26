@@ -4,20 +4,20 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Elffy.Core;
 using Elffy.OpenGL;
-using Elffy.Shading;
 
 namespace Elffy.UI
 {
-    /// <summary><see cref="UI.Control"/> を描画するためのオブジェクト。対象の <see cref="UI.Control"/> のインスタンスと一対一の関係を持つ</summary>
+    // [NOTE]
+    // See the comments of Control to know how UIRenderable and Control work.
+
+    /// <summary>Renderable object which render <see cref="UI.Control"/>. <see cref="UIRenderable"/> object has a one-to-one relationship with <see cref="UI.Control"/>.</summary>
     internal sealed class UIRenderable : Renderable
     {
         private readonly Control _control;
 
-        /// <summary>このインスタンスの描画対象である論理 UI コントロール</summary>
+        /// <summary>Target control which <see cref="UIRenderable"/> renders.</summary>
         public Control Control => _control;
 
-        /// <summary><see cref="UI.Control"/> の描画オブジェクトを作成します。</summary>
-        /// <param name="control">描画対象の論理 UI コントロール</param>
         public UIRenderable(Control control)
         {
             Debug.Assert(control is not null);
@@ -64,31 +64,22 @@ namespace Elffy.UI
         protected override void OnRendering(in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             var control = Control;
-            var offset = control.Offset;
-            var hasOffset = offset != Vector2i.Zero;
+            ref var rt = ref control.RenderTransform;
 
-            // Add offset translation to the model matrix.
-            // Overwrite it instead of creating a new matrix. (It's faster)
-            if(hasOffset) {
-                Unsafe.AsRef(model).M03 += offset.X;
-                Unsafe.AsRef(model).M13 += offset.Y;
-            }
-            try {
-                VAO.Bind(VAO);
-                IBO.Bind(IBO);
+            VAO.Bind(VAO);
+            IBO.Bind(IBO);
+            if(rt.IsIdentity) {
                 ShaderProgram!.ApplyForUI(in model, in view, in projection);
-                DrawElements(0, IBO.Length);
-                VAO.Unbind();
-                IBO.Unbind();
             }
-            finally {
-                // Restore the model matrix for safety.
-                // (Though this is no needed I think.)
-                if(hasOffset) {
-                    Unsafe.AsRef(model).M03 -= offset.X;
-                    Unsafe.AsRef(model).M13 -= offset.Y;
-                }
+            else {
+                // TODO: 実装
+                var modelTransformed = model;
+                //ref var rto = ref control.RenderTransformOrigin;
+                ShaderProgram!.ApplyForUI(in modelTransformed, in view, in projection);
             }
+            DrawElements(0, IBO.Length);
+            VAO.Unbind();
+            IBO.Unbind();
         }
     }
 }

@@ -147,6 +147,13 @@ namespace Elffy.Core
             return new ArraySliceEnumerator<T>(_array, _count);
         }
 
+        /// <summary>Release all pooled arrays in the current thread.</summary>
+        /// <remarks>This method can increase the time it takes for the next GC.</remarks>
+        public static void ReleasePool()
+        {
+            Pool.ReleasePool();
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void EnsureCapacity(int capacity)
         {
@@ -266,7 +273,7 @@ namespace Elffy.Core
             }
 
             [MethodImpl(MethodImplOptions.NoInlining)]  // no inlining
-            static void InitBucket(int index, out Bucket bucket)
+            private static void InitBucket(int index, out Bucket bucket)
             {
                 if(index <= 16) {
                     bucket = new Bucket(PoolCount1);
@@ -277,6 +284,13 @@ namespace Elffy.Core
                 else {
                     bucket = new Bucket(PoolCount3);
                 }
+            }
+
+            /// <summary>Release all pooled arrays in the current thread.</summary>
+            /// <remarks>This method can increase the time it takes for the next GC.</remarks>
+            public static void ReleasePool()
+            {
+                _buckets = null;
             }
         }
 

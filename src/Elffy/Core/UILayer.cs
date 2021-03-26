@@ -6,7 +6,7 @@ namespace Elffy.Core
 {
     internal sealed class UILayer : ILayer
     {
-        private readonly FrameObjectStore _store = FrameObjectStore.New();
+        private readonly FrameObjectStore _store;
 
         /// <inheritdoc/>
         public int ObjectCount => _store.ObjectCount;
@@ -25,6 +25,7 @@ namespace Elffy.Core
 
         public UILayer(LayerCollection owner)
         {
+            _store = FrameObjectStore.New(64);
             OwnerCollection = owner;
             UIRoot = new RootPanel(this);
         }
@@ -71,18 +72,37 @@ namespace Elffy.Core
             if(mouse.OnScreen) {
                 // Hit control is the last control where mouse over test is true
                 var hitControl = default(Control);
-                foreach(var control in uiRoot.Children.AsSpan()) {
-                    if(control.MouseOverTest(mouse)) {
-                        hitControl = control;
-                    }
-                }
-                foreach(var control in uiRoot.Children.AsSpan()) {
-                    control.NotifyHitTestResult(control == hitControl, mouse);    // TODO: ヒット時イベント中に control を remove されるとまずい (Spanで回してるので)
-                }
+                RecursiveMouseOverTest(uiRoot, mouse, ref hitControl);
+                RecursiveNotifyHitTestResult(uiRoot, mouse, hitControl);        // TODO: ヒット時イベント中に control を remove されるとまずい (Spanで回してるので)
             }
             else {
-                foreach(var control in uiRoot.Children.AsSpan()) {
-                    control.NotifyHitTestResult(false, mouse);                    // TODO: ヒット時イベント中に control を remove されるとまずい (Spanで回してるので)
+                RecursiveNotifyHitTestFalse(uiRoot, mouse);         // TODO: ヒット時イベント中に control を remove されるとまずい (Spanで回してるので)
+            }
+            return;
+
+            static void RecursiveMouseOverTest(Control control, Mouse mouse, ref Control? hitControl)
+            {
+                if(control.MouseOverTest(mouse)) {
+                    hitControl = control;
+                }
+                foreach(var child in control.ChildrenCore.AsSpan()) {
+                    RecursiveMouseOverTest(child, mouse, ref hitControl);
+                }
+            }
+
+            static void RecursiveNotifyHitTestResult(Control control, Mouse mouse, Control? hitControl)
+            {
+                control.NotifyHitTestResult(ReferenceEquals(control, hitControl), mouse);
+                foreach(var child in control.ChildrenCore.AsSpan()) {
+                    RecursiveNotifyHitTestResult(child, mouse, hitControl);
+                }
+            }
+
+            static void RecursiveNotifyHitTestFalse(Control control, Mouse mouse)
+            {
+                control.NotifyHitTestResult(false, mouse);
+                foreach(var child in control.ChildrenCore.AsSpan()) {
+                    RecursiveNotifyHitTestFalse(child, mouse);
                 }
             }
         }

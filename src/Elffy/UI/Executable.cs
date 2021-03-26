@@ -4,7 +4,7 @@ using Elffy.InputSystem;
 
 namespace Elffy.UI
 {
-    /// <summary>実行可能なUIの基底クラス</summary>
+    /// <summary>Base class which fires event on mouse click.</summary>
     public abstract class Executable : Control
     {
         private bool _keyPressed;

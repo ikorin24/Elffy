@@ -38,7 +38,7 @@ namespace Elffy
         {
             OwnerRenderingArea = owner;
             UILayer = new UILayer(this);
-            WorldLayer = new Layer(WorldLayerName);
+            WorldLayer = new Layer(WorldLayerName, 256);
             AddDefaltLayers();
         }
 

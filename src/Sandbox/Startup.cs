@@ -6,12 +6,13 @@ using Elffy.Mathematics;
 using Elffy.Shapes;
 using Elffy.Shading;
 using Cysharp.Threading.Tasks;
+using Elffy.UI;
 
 [assembly: GameLaunchSetting.GenerateMainMethod]
-[assembly: GameLaunchSetting.ScreenSize(1200, 675)]
+[assembly: GameLaunchSetting.ScreenSize((int)(1200 * 1.5), (int)(675 * 1.5f))]
 [assembly: GameLaunchSetting.ScreenTitle("Sandbox")]
 [assembly: GameLaunchSetting.ScreenIcon("icon.ico")]
-[assembly: GameLaunchSetting.WindowStyle(WindowStyle.FixedWindow)]
+[assembly: GameLaunchSetting.WindowStyle(WindowStyle.Default)]
 [assembly: GameLaunchSetting.LaunchDevEnv]
 [assembly: GameLaunchSetting.ResourceLoader(typeof(LocalResourceLoader), "Resources.dat")]
 [assembly: GenerateLocalResource("Resources", "Resources.dat")]
@@ -36,7 +37,7 @@ namespace Sandbox
                 await Timing.Ensure(FrameLoopTiming.Update);
 
                 var time = TimeSpan.FromMilliseconds(200);
-                await foreach(var frame in Timing.Frames.OnTiming(FrameLoopTiming.Update)) {
+                await foreach(var frame in Timing.Frames()) {
                     if(frame.Time >= time) {
                         break;
                     }
@@ -46,6 +47,19 @@ namespace Sandbox
             finally {
                 GameUI.Root.Background = Color4.Transparent;
             }
+
+            InitializeUI();
+        }
+
+        private static void InitializeUI()
+        {
+            var root = GameUI.Root;
+            root.LayoutExecutionType = LayoutExecutionType.EveryFrame;
+            root.Padding = new LayoutThickness(10);
+            var grid = new Grid();
+            grid.Background = new Color4(1f, 1f, 0, 0.3f);
+            root.Children.Add(grid);
+            root.LayoutChildren();
         }
 
         private static async UniTask<Model3D> CreateModel()

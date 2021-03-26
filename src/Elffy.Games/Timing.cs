@@ -19,11 +19,8 @@ namespace Elffy
         // So the user MUST call Initialize() before using this class.
         private static IHostScreen? _screen;
         private static AsyncBackEndPoint? _endPoint;
-        private static FrameEnumerableSource? _frames;
 
         internal static AsyncBackEndPoint EndPoint => _endPoint!;
-
-        public static FrameEnumerableSource Frames => _frames!;
 
         [EditorBrowsable(EditorBrowsableState.Never)]
         public static void Initialize(IHostScreen screen)
@@ -31,12 +28,17 @@ namespace Elffy
             Debug.Assert(_endPoint is null);
             _screen = screen;
             _endPoint = screen.AsyncBack;
-            _frames = screen.Frames;
         }
 
         /// <summary>Get current screen frame loop timing.</summary>
         /// <remarks>If not main thread of <see cref="IHostScreen"/>, always returns <see cref="ScreenCurrentTiming.OutOfFrameLoop"/></remarks>
         public static ScreenCurrentTiming CurrentTiming => _screen!.CurrentTiming;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static FrameAsyncEnumerable Frames(FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
+        {
+            return _screen!.Frames(timing, cancellationToken);
+        }
 
         /// <summary>Wait for specified timing if current timing is not the timing. Otherwise, do nothing.</summary>
         /// <param name="timing">timing to wait</param>

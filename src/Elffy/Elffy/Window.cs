@@ -48,7 +48,7 @@ namespace Elffy
         public Vector2i ClientSize { get => _windowImpl.ClientSize; set => _windowImpl.ClientSize = value; }
 
         /// <inheritdoc/>
-        public Vector2 ContentScale => _windowImpl.ContentScale;
+        public Vector2i FrameBufferSize => _windowImpl.FrameBufferSize;
 
         /// <inheritdoc/>
         public Vector2i Location { get => _windowImpl.Location; set => _windowImpl.Location = value; }
@@ -63,8 +63,6 @@ namespace Elffy
 
         /// <inheritdoc/>
         public long FrameNum => _frameNum;
-
-        public FrameEnumerableSource Frames => _renderingArea.Frames;
 
         /// <inheritdoc/>
         public CancellationToken RunningToken => _renderingArea.RunningToken;
@@ -120,8 +118,7 @@ namespace Elffy
             _windowImpl.UpdateFrame += (_, e) => UpdateFrame();
             _windowImpl.Refresh += _ => UpdateFrame();
             _windowImpl.Load += _ => _renderingArea.Initialize();
-            _windowImpl.Resize += (_, e) => _renderingArea.SetClientSize(e.Size);
-            _windowImpl.ContentScaleChanged += (_, scale) => _renderingArea.SetContentScale(scale);
+            _windowImpl.FrameBufferSizeChanged += (_, size) => _renderingArea.SetFrameBufferSize(size);
             _windowImpl.MouseMove += (_, e) => Mouse.ChangePosition(e.Position);
             _windowImpl.MouseWheel += (_, e) => Mouse.ChangeWheel(e.OffsetY);
             _windowImpl.MouseDown += MouseButtonStateChanged;
@@ -154,6 +151,11 @@ namespace Elffy
                         return;
                 }
             };
+        }
+
+        public FrameAsyncEnumerable Frames(FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
+        {
+            return new FrameAsyncEnumerable(AsyncBack, timing, cancellationToken);
         }
 
         public void Maximize()

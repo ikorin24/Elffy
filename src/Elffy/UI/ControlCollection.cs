@@ -9,7 +9,7 @@ namespace Elffy.UI
 {
     [DebuggerTypeProxy(typeof(ControlCollectionDebuggerTypeProxy))]
     [DebuggerDisplay("{DebugDisplay}")]
-    public readonly struct ControlCollection
+    public readonly struct ControlCollection : IEquatable<ControlCollection>
     {
         private readonly Control _owner;
 
@@ -44,9 +44,12 @@ namespace Elffy.UI
 
             static void Callback(Control[]? items)
             {
-                if(items is not null) {
-                    foreach(var item in items) {
+                foreach(var item in items.AsSpan()) {
+                    if(item is not null) {
                         item.RemovedFromListCallback();
+                    }
+                    else {
+                        return;
                     }
                 }
             }
@@ -62,23 +65,10 @@ namespace Elffy.UI
             return _owner.ChildrenCore.IndexOf(item);
         }
 
-        public void Insert(int index, Control item)
-        {
-            if(item is null) {
-                ThrowNullArg();
-                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(item));
-            }
-
-            if(item.LifeState == LifeState.New) { ThrowNotNewControl(); }
-            _owner.ChildrenCore.Insert(index, item);
-            item.AddedToListCallback(_owner);
-        }
-
         public bool Remove(Control item)
         {
             if(item is null) {
-                ThrowNullArg();
-                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(item));
+                return false;
             }
             var result = _owner.ChildrenCore.Remove(item);
             if(result) {
@@ -87,26 +77,22 @@ namespace Elffy.UI
             return result;
         }
 
-        [DoesNotReturn]
-        private static void ThrowNotNewControl()
-        {
-            throw new ArgumentException($"{nameof(Control)} object is not new.");
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void ThrowIfInvalidInstance()
-        {
-            if(_owner is null || _owner.LifeState == LifeState.Dead) {
-                Throw();
-                [DoesNotReturn] static void Throw() => throw new InvalidOperationException($"Parent is already dead or the {nameof(ControlCollection)} is invalid.");
-            }
-        }
-
-        public Control[] ToArray() => _owner.ChildrenCore.AsSpan().ToArray();
-
         public ReadOnlySpan<Control> AsSpan() => _owner.ChildrenCore.AsSpan();
 
         public ArraySliceEnumerator<Control> GetEnumerator() => _owner.ChildrenCore.GetEnumerator();
+
+        public override bool Equals(object? obj) => obj is ControlCollection collection && Equals(collection);
+
+        public bool Equals(ControlCollection other) => _owner == other._owner;
+
+        public override int GetHashCode() => _owner is null ? 0 : _owner.GetHashCode();
+
+        public static bool operator ==(ControlCollection left, ControlCollection right) => left.Equals(right);
+
+        public static bool operator !=(ControlCollection left, ControlCollection right) => !(left == right);
+
+        [DoesNotReturn]
+        private static void ThrowNotNewControl() => throw new ArgumentException($"{nameof(Control)} object is not new.");
     }
 
     internal sealed class ControlCollectionDebuggerTypeProxy
@@ -115,7 +101,7 @@ namespace Elffy.UI
         private readonly ControlCollection _entity;
 
         [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-        public Control[] Items => _entity.ToArray();
+        public Control[] Items => _entity.AsSpan().ToArray();
 
         public ControlCollectionDebuggerTypeProxy(ControlCollection entity) => _entity = entity;
     }

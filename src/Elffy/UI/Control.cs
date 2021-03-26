@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Elffy.InputSystem;
@@ -10,40 +11,46 @@ using System.Diagnostics;
 
 namespace Elffy.UI
 {
-    // I don't support forcus of control.
+    // [Rendering]
+    // 
+    // Control and UIRenderable are always a pair.
+    // Control is an element of the UI, which forms a UI tree.
+    // UIRenderable is a subclass of Renderable (that means FrameObject),
+    // which is managed by the engine and renders the control.
+    // Control is just a data structure, so it doesn't know how it is rendered on the screen.
+    // On the other hand, `UIRenderable` doesn't know UI tree.
+    // They don't know each other well, and they shouldn't.
+    // Control forms a UI tree, but UIRenderable always exists as a root in the tree of Positionable.
+    // They are independent from each other.
+    //
+    //
+    // [UIRenderable object]
+    // 
+    // UIRenderable is an internal class, and subclass of FrameObject.
+    // It is always on the internal layer when it is activated, and users can not access the instance.
+    // Don't put the instance public even if as Renderable or FrameObject.
 
-    /// <summary>
-    /// UI の要素の基底クラス。UI への配置, ヒットテストの処理を提供します<para/>
-    /// </summary>
-    /// 
-    /// <remarks>
-    /// <see cref="Control"/> はUIを構成する論理的なコントロールとしての機能のみを提供します。
-    /// 画面への描画に関する処理は、このクラスと対になる <see cref="Core.Renderable"/> 継承クラス <see cref="UIRenderable"/> のインスタンスに任されます。
-    /// <see cref="UIRenderable"/> による描画は <see cref="Control"/> によって完全に隠蔽され、外部からは描画を気にすることなく論理的 UI 構造を扱えます。
-    /// 
-    /// <see cref="Control"/> の木構造は、描画を担当する <see cref="Core.Renderable"/> オブジェクトの木構造とは独立しています。
-    /// <see cref="Control"/> が親子関係の木構造を形成している場合でも、その描画オブジェクトは木構造を作らず、
-    /// 常に <see cref="UIRenderable"/> は Root に存在します。
-    /// </remarks>
+    /// <summary>Base class of UI element, which forms a UI tree and provides hit test.</summary>
     public abstract class Control
     {
         private readonly UIRenderable _renderable;
+        private ControlLayouterInternal? _layouter;
         private Control? _parent;
         private RootPanel? _root;
-        private Vector2i _absolutePosition;
-        private Vector2i _offset;
         private ArrayPooledListCore<Control> _childrenCore;
         private TextureCore _texture;
         private Color4 _background;
         private bool _isHitTestVisible;
         private bool _isMouseOver;
 
+        private ControlLayouterInternal LayouterPrivate => _layouter ?? ControlLayouterInternal.ThrowCannotGetInstance();
+
         internal ref ArrayPooledListCore<Control> ChildrenCore => ref _childrenCore;
 
         internal UIRenderable Renderable => _renderable;
 
         /// <summary>Get life state</summary>
-        public LifeState LifeState => Renderable.LifeState;
+        public LifeState LifeState => _renderable.LifeState;
 
         public ControlCollection Children => new(this);
 
@@ -51,7 +58,7 @@ namespace Elffy.UI
 
         public RootPanel? Root => _root;
 
-        public bool IsRoot => _parent is null;
+        public bool IsRoot => ReferenceEquals(_root, this);
 
         public UIShaderSource? Shader
         {
@@ -61,129 +68,83 @@ namespace Elffy.UI
 
         public ref Color4 Background => ref _background;
 
+        /// <summary>Get absolute position of the control.</summary>
         public Vector2i Position
         {
             get => (Vector2i)Renderable.Position.Xy;
 
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set
-            {
-                ref var pos = ref Renderable.Position;
-                var vec = value - (Vector2i)pos.Xy;
+            #region Removed
+            //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+            //set
+            //{
+            //    ref var pos = ref Renderable.Position;
+            //    var vec = value - (Vector2i)pos.Xy;
 
-                if(vec.X != 0 && vec.Y != 0) {
-                    // change both x and y
+            //    if(vec.X != 0 && vec.Y != 0) {
+            //        // change both x and y
 
-                    pos.X += vec.X;
-                    pos.Y += vec.Y;
-                    _absolutePosition += vec;
-                    if(_childrenCore.Count > 0) {
-                        ApplyRecursively(this, in vec);
-                    }
-                }
-                else if(vec.X != 0) {
-                    // change only x
-                    pos.X += vec.X;
-                    _absolutePosition.X += vec.X;
-                    if(_childrenCore.Count > 0) {
-                        ApplyXRecursively(this, vec.X);
-                    }
-                }
-                else if(vec.Y != 0) {
-                    // change only y
-                    pos.Y += vec.Y;
-                    _absolutePosition.Y += vec.Y;
-                    if(_childrenCore.Count > 0) {
-                        ApplyYRecursively(this, vec.Y);
-                    }
-                }
+            //        pos.X += vec.X;
+            //        pos.Y += vec.Y;
+            //        _absolutePosition += vec;
+            //        if(_childrenCore.Count > 0) {
+            //            ApplyRecursively(this, in vec);
+            //        }
+            //    }
+            //    else if(vec.X != 0) {
+            //        // change only x
+            //        pos.X += vec.X;
+            //        _absolutePosition.X += vec.X;
+            //        if(_childrenCore.Count > 0) {
+            //            ApplyXRecursively(this, vec.X);
+            //        }
+            //    }
+            //    else if(vec.Y != 0) {
+            //        // change only y
+            //        pos.Y += vec.Y;
+            //        _absolutePosition.Y += vec.Y;
+            //        if(_childrenCore.Count > 0) {
+            //            ApplyYRecursively(this, vec.Y);
+            //        }
+            //    }
 
-                [MethodImpl(MethodImplOptions.NoInlining)]  // no inlining
-                static void ApplyRecursively(Control parent, in Vector2i vec)
-                {
-                    foreach(var child in parent._childrenCore.AsSpan()) {
-                        child._absolutePosition += vec;
-                        ApplyRecursively(child, vec);
-                    }
-                }
+            //    [MethodImpl(MethodImplOptions.NoInlining)]  // no inlining
+            //    static void ApplyRecursively(Control parent, in Vector2i vec)
+            //    {
+            //        foreach(var child in parent._childrenCore.AsSpan()) {
+            //            child._absolutePosition += vec;
+            //            ApplyRecursively(child, vec);
+            //        }
+            //    }
 
-                [MethodImpl(MethodImplOptions.NoInlining)]  // no inlining
-                static void ApplyXRecursively(Control parent, int diff)
-                {
-                    foreach(var child in parent._childrenCore.AsSpan()) {
-                        child._absolutePosition.X += diff;
-                        ApplyXRecursively(child, diff);
-                    }
-                }
+            //    [MethodImpl(MethodImplOptions.NoInlining)]  // no inlining
+            //    static void ApplyXRecursively(Control parent, int diff)
+            //    {
+            //        foreach(var child in parent._childrenCore.AsSpan()) {
+            //            child._absolutePosition.X += diff;
+            //            ApplyXRecursively(child, diff);
+            //        }
+            //    }
 
-                [MethodImpl(MethodImplOptions.NoInlining)]  // no inlining
-                static void ApplyYRecursively(Control parent, int diff)
-                {
-                    foreach(var child in parent._childrenCore.AsSpan()) {
-                        child._absolutePosition.Y += diff;
-                        ApplyYRecursively(child, diff);
-                    }
-                }
-            }
+            //    [MethodImpl(MethodImplOptions.NoInlining)]  // no inlining
+            //    static void ApplyYRecursively(Control parent, int diff)
+            //    {
+            //        foreach(var child in parent._childrenCore.AsSpan()) {
+            //            child._absolutePosition.Y += diff;
+            //            ApplyYRecursively(child, diff);
+            //        }
+            //    }
+            //}
+            #endregion
         }
 
-        public ref readonly Vector2i AbsolutePosition => ref _absolutePosition;
+        /// <summary>Get width of <see cref="Control"/></summary>
+        public int Width => (int)Renderable.Scale.X;
 
-        /// <summary>get or set Width of <see cref="Control"/></summary>
-        public int Width
-        {
-            get => (int)Renderable.Scale.X;
-            set
-            {
-                if(value < 0) {
-                    ThrowOutOfRange();
-                    static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException();
-                }
-                Renderable.Scale.X = value;
-            }
-        }
+        /// <summary>Get height of <see cref="Control"/></summary>
+        public int Height => (int)Renderable.Scale.Y;
 
-
-        /// <summary>get or set Height of <see cref="Control"/></summary>
-        public int Height
-        {
-            get => (int)Renderable.Scale.Y;
-            set
-            {
-                if(value < 0) {
-                    ThrowOutOfRange();
-                    static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException();
-                }
-                Renderable.Scale.Y = value;
-            }
-        }
-
-        /// <summary>get or set size of <see cref="Control"/></summary>
-        public Vector2i Size
-        {
-            get => (Vector2i)Renderable.Scale.Xy;
-            set
-            {
-                if(value.X < 0 || value.Y < 0) {
-                    ThrowOutOfRange();
-                    static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException();
-                }
-                Renderable.Scale.X = value.X;
-                Renderable.Scale.Y = value.Y;
-            }
-        }
-
-        /// <summary>get or set offset position of layout</summary>
-        public ref Vector2i Offset => ref _offset;
-
-#if false   // future version, auto layout
-
-        /// <summary>get or set horizontal alignment of layout</summary>
-        public HorizontalAlignment HorizontalAlignment { get; set; }
-        /// <summary>get or set vertical alignment of layout</summary>
-        public VerticalAlignment VerticalAlignment { get; set; }
-
-#endif      // future version, auto layout
+        /// <summary>Get size of <see cref="Control"/></summary>
+        public Vector2i Size => (Vector2i)Renderable.Scale.Xy;      // To set size, use the internal method 'SetSize'
 
         /// <summary>get or set whether this <see cref="Control"/> is enabled in HitTest</summary>
         public bool IsHitTestVisible
@@ -200,6 +161,17 @@ namespace Elffy.UI
 
         internal ref readonly TextureCore Texture => ref _texture;
 
+        public ControlLayouter Layouter => new ControlLayouter(LayouterPrivate);
+        public ref LayoutLength LayoutWidth => ref LayouterPrivate.Width;
+        public ref LayoutLength LayoutHeight => ref LayouterPrivate.Height;
+        public ref TransformOrigin TransformOrigin => ref LayouterPrivate.TransformOrigin;
+        public ref HorizontalAlignment HorizontalAlignment => ref LayouterPrivate.HorizontalAlignment;
+        public ref VerticalAlignment VerticalAlignment => ref LayouterPrivate.VerticalAlignment;
+        public ref LayoutThickness Margin => ref LayouterPrivate.Margin;
+        public ref LayoutThickness Padding => ref LayouterPrivate.Padding;
+        public ref Matrix3 RenderTransform => ref LayouterPrivate.RenderTransform;
+        public ref Vector2 RenderTransformOrigin => ref LayouterPrivate.RenderTransformOrigin;
+
         /// <summary>Mouse enter event</summary>
         public event Action<Control, MouseEventArgs>? MouseEnter;
         /// <summary>Mouse leave event</summary>
@@ -212,12 +184,18 @@ namespace Elffy.UI
         public Control()
         {
             _isHitTestVisible = true;
+            _layouter = ControlLayouterInternal.Create();
             _renderable = new UIRenderable(this);
-            Width = 30;
-            Height = 30;
             _texture = new TextureCore(TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear, TextureMipmapMode.None, TextureWrapMode.ClampToEdge, TextureWrapMode.ClampToEdge);
-            Renderable.Activated += OnRenderableActivated;
-            Renderable.Dead += OnRenderableDead;
+            Renderable.Activated += OnRenderableActivatedPrivate;
+            Renderable.Dead += OnRenderableDeadPrivate;
+        }
+
+        internal void SetSize(in Vector2 size)
+        {
+            ref var scale = ref Renderable.Scale;
+            scale.X = size.X;
+            scale.Y = size.Y;
         }
 
         protected private void SetAsRootControl()
@@ -287,13 +265,15 @@ namespace Elffy.UI
         /// <returns>マウスオーバーしているか</returns>
         internal bool MouseOverTest(Mouse mouse)
         {
+            if(IsVisible == false || IsHitTestVisible == false) {
+                return false;
+            }
             var mousePos = (Vector2i)mouse.Position;
-            return IsVisible &&
-                   IsHitTestVisible &&
-                   _absolutePosition.X <= mousePos.X &&
-                   mousePos.X < _absolutePosition.X + Width &&
-                   _absolutePosition.Y <= mousePos.Y &&
-                   mousePos.Y < _absolutePosition.Y + Height;
+            var pos = Position;
+            return pos.X <= mousePos.X &&
+                   mousePos.X < pos.X + Width &&
+                   pos.Y <= mousePos.Y &&
+                   mousePos.Y < pos.Y + Height;
         }
 
         /// <summary>ヒットテストの結果を通知します</summary>
@@ -308,6 +288,7 @@ namespace Elffy.UI
         {
             Debug.Assert(parent is not null);
             Debug.Assert(parent.Root is not null);
+            Debug.Assert(LifeState == LifeState.New);
             _parent = parent;
             _root = parent.Root;
             Renderable.Activate(_root.UILayer);
@@ -320,40 +301,148 @@ namespace Elffy.UI
             Renderable.Terminate();
         }
 
-        private void OnRenderableActivated(FrameObject sender)
+        protected virtual void OnActivated()
         {
             Activated?.Invoke(this);
         }
 
-        private void OnRenderableDead(FrameObject sender)
+        protected virtual void OnDead()
         {
             Dead?.Invoke(this);
         }
+
+        private void OnRenderableActivatedPrivate(FrameObject sender)
+        {
+            OnActivated();
+        }
+
+        private void OnRenderableDeadPrivate(FrameObject sender)
+        {
+            OnDead();
+            Debug.Assert(_layouter is not null);
+            ControlLayouterInternal.Return(ref _layouter);
+        }
+
+        /// <summary>Layout itself and update <see cref="Size"/>, <see cref="Position"/> and <see cref="AbsolutePosition"/>.</summary>
+        public void LayoutSelf()
+        {
+            if(IsRoot) { return; }
+            Debug.Assert(this is not RootPanel);
+            Debug.Assert(_parent is not null);
+            var parentSize = _parent.Size;
+            ref readonly var parentPadding = ref _parent.Padding;
+            Debug.Assert(parentSize.X >= 0f && parentSize.Y >= 0f);
+            var (size, relativePos) = DefaultLayoutingMethod(_parent.Size, _parent.Padding, Layouter);
+
+            // Change size, position and absolutePosition
+            SetSize(size);
+
+            ref var parentPos = ref _parent.Renderable.Position;
+            ref var position = ref Renderable.Position;
+            position.X = relativePos.X + parentPos.X;
+            position.Y = relativePos.Y + parentPos.Y;
+        }
+
+        public void LayoutSelf<T>(ControlLayoutResolver<T> resolver, T state)
+        {
+            if(resolver is null) {
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(resolver));
+                ThrowNullArg();
+            }
+            if(IsRoot) { return; }
+            Debug.Assert(this is not RootPanel);
+            Debug.Assert(_parent is not null);
+
+            var (size, pos) = resolver.Invoke(this, state);
+            // Change size, position and absolutePosition
+            SetSize(size);
+
+            ref var parentPos = ref _parent.Renderable.Position;
+            ref var position = ref Renderable.Position;
+            position.X = pos.X + parentPos.X;
+            position.Y = pos.Y + parentPos.Y;
+        }
+
+        /// <summary>Layout children recursively.</summary>
+        public virtual void LayoutChildren()
+        {
+            foreach(var child in _childrenCore.AsSpan()) {
+                child.LayoutSelf();
+                child.LayoutChildren();
+            }
+        }
+
+        /// <summary>Layout size and relative position to the parent</summary>
+        /// <param name="areaSize">Size of the area to locate the control. </param>
+        /// <param name="areaPadding">Padding in the area specified by the parent control.</param>
+        /// <param name="layouter">layouter of the control</param>
+        /// <returns>'size' is control size. 'position' is relative position to the parent.</returns>
+        protected static (Vector2 size, Vector2 position) DefaultLayoutingMethod(
+            Vector2 areaSize, in LayoutThickness areaPadding, in ControlLayouter layouter)
+        {
+            areaSize.X = MathF.Max(0, areaSize.X);
+            areaSize.Y = MathF.Max(0, areaSize.Y);
+            ref var margin = ref layouter.Margin;
+            ref var layoutWidth = ref layouter.Width;
+            ref var layoutHeight = ref layouter.Height;
+            ref var horizontalAlignment = ref layouter.HorizontalAlignment;
+            ref var verticalAlignment = ref layouter.VerticalAlignment;
+            var availableSize = new Vector2(MathF.Max(0, areaSize.X - areaPadding.Left - areaPadding.Right),
+                                            MathF.Max(0, areaSize.Y - areaPadding.Top - areaPadding.Bottom));
+            var maxSize = new Vector2(MathF.Max(0, availableSize.X - margin.Left - margin.Right),
+                                      MathF.Max(0, availableSize.Y - margin.Top - margin.Bottom));
+
+            // Calc size
+            Vector2 size;
+            switch(layoutWidth.Type) {
+                case LayoutLengthType.Length:
+                default:
+                    size.X = MathF.Max(0, MathF.Min(maxSize.X, layoutWidth.Value));
+                    break;
+                case LayoutLengthType.Proportion:
+                    size.X = MathF.Max(0, MathF.Min(maxSize.X, layoutWidth.Value * areaSize.X));
+                    break;
+            }
+            switch(layoutHeight.Type) {
+                case LayoutLengthType.Length:
+                default:
+                    size.Y = MathF.Max(0, MathF.Min(maxSize.Y, layoutHeight.Value));
+                    break;
+                case LayoutLengthType.Proportion:
+                    size.Y = MathF.Max(0, MathF.Min(maxSize.Y, layoutHeight.Value * areaSize.Y));
+                    break;
+            }
+
+            // Calc position
+            Vector2 pos;
+            switch(horizontalAlignment) {
+                case HorizontalAlignment.Center:
+                default:
+                    pos.X = areaPadding.Left + margin.Left + (maxSize.X - size.X) / 2;
+                    break;
+                case HorizontalAlignment.Left:
+                    pos.X = areaPadding.Left + margin.Left;
+                    break;
+                case HorizontalAlignment.Right:
+                    pos.X = areaSize.X - areaPadding.Right - margin.Right - size.X;
+                    break;
+            }
+            switch(verticalAlignment) {
+                case VerticalAlignment.Center:
+                default:
+                    pos.Y = areaPadding.Top + margin.Top + (maxSize.Y - size.Y) / 2;
+                    break;
+                case VerticalAlignment.Top:
+                    pos.Y = areaPadding.Top + margin.Top;
+                    break;
+                case VerticalAlignment.Bottom:
+                    pos.Y = areaSize.Y - areaPadding.Bottom - margin.Bottom - size.Y;
+                    break;
+            }
+
+            return (size, pos);
+        }
     }
 
-#if false   // future version, auto layout
-
-    /// <summary>Layout horizontal alignment</summary>
-    public enum HorizontalAlignment
-    {
-        /// <summary>left alignment</summary>
-        Left,
-        /// <summary>center alignment</summary>
-        Center,
-        /// <summary>right alignment</summary>
-        Right,
-    }
-
-    /// <summary>Layout vertical alignment</summary>
-    public enum VerticalAlignment
-    {
-        /// <summary>top alignment</summary>
-        Top,
-        /// <summary>center alignment</summary>
-        Center,
-        /// <summary>bottom alignment</summary>
-        Bottom,
-    }
-
-#endif      // future version, auto layout
+    public delegate (Vector2 size, Vector2 position) ControlLayoutResolver<T>(Control self, T state);
 }

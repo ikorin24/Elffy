@@ -17,8 +17,7 @@ namespace Elffy.Core
         private bool _isCloseRequested;
         private bool _disposed;
         private Matrix4 _uiProjection;
-        private Vector2i _size;
-        private Vector2 _contentScale;
+        private Vector2i _frameBufferSize;
         private readonly CancellationTokenSource _runningTokenSource;
 
         [ThreadStatic]
@@ -41,15 +40,12 @@ namespace Elffy.Core
 
         public AsyncBackEndPoint AsyncBack { get; }
 
-        public FrameEnumerableSource Frames { get; }
-
         public ScreenCurrentTiming CurrentTiming => _currentTiming;
 
         internal RenderingArea(IHostScreen screen)
         {
             OwnerScreen = screen;
             AsyncBack = new AsyncBackEndPoint(screen);
-            Frames = new FrameEnumerableSource(AsyncBack);
             Layers = new LayerCollection(this);
             _runningTokenSource = new CancellationTokenSource();
         }
@@ -72,9 +68,7 @@ namespace Elffy.Core
             GL.Disable(EnableCap.Multisample);  // I don't care about MSAA
 
             // Initialize viewport and so on.
-            _size = OwnerScreen.ClientSize;
-            _contentScale = OwnerScreen.ContentScale;
-            OnSizeChanged();
+            SetFrameBufferSize(OwnerScreen.FrameBufferSize);
 
             Layers.UILayer.Initialize();
             try {
@@ -208,34 +202,21 @@ namespace Elffy.Core
             Disposed?.Invoke();
         }
 
-        public void SetClientSize(in Vector2i size)
+        public void SetFrameBufferSize(in Vector2i frameBufferSize)
         {
-            if(_size == size) { return; }
-            _size = size;
-            OnSizeChanged();
-        }
-
-        public void SetContentScale(in Vector2 scale)
-        {
-            _contentScale = scale;
+            if(_frameBufferSize == frameBufferSize) { return; }
+            _frameBufferSize = frameBufferSize;
             OnSizeChanged();
         }
 
         private void OnSizeChanged()
         {
-            var size = _size;
-            var scale = _contentScale;
-
-            // Change view and projection matrix (World).
+            var size = _frameBufferSize;
             Camera.ChangeScreenSize(size.X, size.Y);
 
-            // Change projection matrix (UI)
-            GL.Viewport(0, 0, (int)(size.X * scale.X), (int)(size.Y * scale.Y));
+            GL.Viewport(0, 0, size.X, size.Y);
             Matrix4.OrthographicProjection(0, size.X, 0, size.Y, UI_NEAR, UI_FAR, out _uiProjection);
-            var uiRoot = Layers.UILayer.UIRoot;
-            uiRoot.Width = size.X;
-            uiRoot.Height = size.Y;
-
+            Layers.UILayer.UIRoot.SetSize(size);
             Debug.WriteLine($"Size changed ({size.X}, {size.Y})");
         }
     }
