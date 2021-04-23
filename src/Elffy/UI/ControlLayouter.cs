@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.UI
 {
-    public readonly ref struct ControlLayouter      // `ref struct` to ensure valid access. It is invalid to access pooled instance.
+    public readonly ref struct ControlLayouter      // `ref struct` to ensure valid access to the pooled instance.
     {
         private readonly ControlLayouterInternal _l;
 
@@ -48,6 +48,8 @@ namespace Elffy.UI
         private LayoutThickness _padding;
         private Matrix3 _renderTransform;
         private Vector2 _renderTransformOrigin;
+        private Vector2i _textureSize;
+        private LayoutThickness _textureFixedArea;
 
         public ref LayoutLength Width => ref _width;
         public ref LayoutLength Height => ref _height;
@@ -58,6 +60,8 @@ namespace Elffy.UI
         public ref LayoutThickness Padding => ref _padding;
         public ref Matrix3 RenderTransform => ref _renderTransform;
         public ref Vector2 RenderTransformOrigin => ref _renderTransformOrigin;
+        public ref Vector2i TextureSize => ref _textureSize;
+        public ref LayoutThickness TextureFixedArea => ref _textureFixedArea;
 
         private ControlLayouterInternal()
         {
@@ -77,6 +81,8 @@ namespace Elffy.UI
             instance._padding = default;
             instance._renderTransform = Matrix3.Identity;
             instance._renderTransformOrigin = default;
+            instance._textureSize = default;
+            instance._textureFixedArea = default;
         }
 
         public static implicit operator ControlLayouter(ControlLayouterInternal l) => new(l);

@@ -8,6 +8,7 @@ using Elffy.Components;
 using Elffy.Core;
 using Elffy.Shading;
 using System.Diagnostics;
+using Elffy.OpenGL;
 
 namespace Elffy.UI
 {
@@ -159,7 +160,9 @@ namespace Elffy.UI
         /// <summary>get or set <see cref="Control"/> is visible on rendering.</summary>
         public bool IsVisible { get => Renderable.IsVisible; set => Renderable.IsVisible = value; }
 
-        internal ref readonly TextureCore Texture => ref _texture;
+        public bool HasTexture => _texture.IsEmpty == false;
+        internal ref readonly TextureObject Texture => ref _texture.Texture;
+        public ref readonly Vector2i ActualTextureSize => ref _texture.Size;
 
         public ControlLayouter Layouter => new ControlLayouter(LayouterPrivate);
         public ref LayoutLength LayoutWidth => ref LayouterPrivate.Width;
@@ -171,6 +174,8 @@ namespace Elffy.UI
         public ref LayoutThickness Padding => ref LayouterPrivate.Padding;
         public ref Matrix3 RenderTransform => ref LayouterPrivate.RenderTransform;
         public ref Vector2 RenderTransformOrigin => ref LayouterPrivate.RenderTransformOrigin;
+        public ref Vector2i TextureSize => ref LayouterPrivate.TextureSize;
+        public ref LayoutThickness TextureFixedArea => ref LayouterPrivate.TextureFixedArea;
 
         /// <summary>Mouse enter event</summary>
         public event Action<Control, MouseEventArgs>? MouseEnter;
@@ -187,6 +192,7 @@ namespace Elffy.UI
             _layouter = ControlLayouterInternal.Create();
             _renderable = new UIRenderable(this);
             _texture = new TextureCore(TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear, TextureMipmapMode.None, TextureWrapMode.ClampToEdge, TextureWrapMode.ClampToEdge);
+            SetSize(Vector2.Zero);
             Renderable.Activated += OnRenderableActivatedPrivate;
             Renderable.Dead += OnRenderableDeadPrivate;
         }
@@ -222,29 +228,31 @@ namespace Elffy.UI
 
         public TexturePainter GetPainter(bool copyFromOriginal = true)
         {
-            if(_texture.IsEmpty) {
-                _texture.LoadUndefined(new Vector2i(Width, Height));
-                var p = _texture.GetPainter(false);
-                if(copyFromOriginal) {
-                    p.Fill(ColorByte.White);        // TODO: デフォルトが白じゃない場合は？
-                }
-                return p;
-            }
-            else {
-                return _texture.GetPainter(copyFromOriginal);
-            }
+            return GetPainter(new RectI(default, TextureSize), copyFromOriginal);
         }
 
         public TexturePainter GetPainter(in RectI rect, bool copyFromOriginal = true)
         {
             if(_texture.IsEmpty) {
-                _texture.LoadUndefined(new Vector2i(Width, Height));
-                var p = _texture.GetPainter(rect, copyFromOriginal);
-                p.Fill(ColorByte.White);            // TODO: デフォルトが白じゃない場合は？
-                return p;
+                return CreateAndGetPainter(rect, copyFromOriginal);
             }
             else {
                 return _texture.GetPainter(rect, copyFromOriginal);
+            }
+
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            TexturePainter CreateAndGetPainter(in RectI rect, bool copyFromOriginal = true)     // capture 'this'
+            {
+                ref var textureSize = ref TextureSize;
+                if(textureSize.X <= 0 || textureSize.Y <= 0) {
+                    throw new InvalidOperationException($"{nameof(TextureSize)} must be positive value.");
+                }
+                _texture.LoadUndefined(textureSize);
+                var p = _texture.GetPainter(rect, false);
+                if(copyFromOriginal) {
+                    p.Fill(ColorByte.Transparent);
+                }
+                return p;
             }
         }
 
