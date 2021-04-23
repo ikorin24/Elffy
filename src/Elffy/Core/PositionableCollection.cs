@@ -12,6 +12,7 @@ namespace Elffy.Core
     {
         private readonly Positionable _owner;
 
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private string DebugDisplay => $"{nameof(PositionableCollection)} (Count = {Count})";
 
         public Positionable this[int index] => _owner.ChildrenCore[index];
