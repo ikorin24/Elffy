@@ -54,7 +54,7 @@ namespace Elffy.Core
         public unsafe void Render(in Matrix4 projection)
         {
             var view = new Matrix4(1, 0, 0, 0,
-                                   0, -1, 0, UIRoot.Height,
+                                   0, -1, 0, UIRoot.ActualHeight,
                                    0, 0, 1, 0,
                                    0, 0, 0, 1);
             foreach(var renderable in _store.Renderables) {

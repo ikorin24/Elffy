@@ -60,7 +60,7 @@ namespace Elffy.UI
                 child.LayoutSelf(static (child, grid) =>
                 {
                     ref readonly var pad = ref grid.Padding;
-                    var contentSize = grid.Size - new Vector2(pad.Left + pad.Right, pad.Top + pad.Bottom);
+                    var contentSize = grid.ActualSize - new Vector2(pad.Left + pad.Right, pad.Top + pad.Bottom);
                     var col = child.GetGridColumn(grid);
                     var row = child.GetGridRow(grid);
                     var splitSize = new Vector2(grid._colDef.EvalSize(contentSize.X, col),

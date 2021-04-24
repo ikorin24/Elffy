@@ -27,6 +27,8 @@ namespace Elffy.UI
         public override bool Equals(object? obj) => false;
 
         public override int GetHashCode() => _l.GetHashCode();
+
+        public override string ToString() => typeof(ControlLayouter).FullName!;
     }
 
     internal sealed class ControlLayouterInternal
@@ -88,7 +90,7 @@ namespace Elffy.UI
         public static implicit operator ControlLayouter(ControlLayouterInternal l) => new(l);
 
         [DoesNotReturn]
-        public static ControlLayouterInternal ThrowCannotGetInstance() => throw new InvalidOperationException($"Cannnot get a {nameof(ControlLayouterInternal)} instance.");
+        public static ControlLayouterInternal ThrowCannotGetInstance() => throw new InvalidOperationException($"Can not get a {nameof(ControlLayouterInternal)} instance.");
 
         internal static ControlLayouterInternal Create()
         {

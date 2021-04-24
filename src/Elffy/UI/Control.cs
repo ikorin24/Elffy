@@ -138,14 +138,14 @@ namespace Elffy.UI
             #endregion
         }
 
-        /// <summary>Get width of <see cref="Control"/></summary>
-        public int Width => (int)Renderable.Scale.X;
+        /// <summary>Get actual width of <see cref="Control"/></summary>
+        public int ActualWidth => (int)Renderable.Scale.X;
 
-        /// <summary>Get height of <see cref="Control"/></summary>
-        public int Height => (int)Renderable.Scale.Y;
+        /// <summary>Get actual height of <see cref="Control"/></summary>
+        public int ActualHeight => (int)Renderable.Scale.Y;
 
         /// <summary>Get size of <see cref="Control"/></summary>
-        public Vector2i Size => (Vector2i)Renderable.Scale.Xy;      // To set size, use the internal method 'SetSize'
+        public Vector2i ActualSize => (Vector2i)Renderable.Scale.Xy;      // To set size, use the internal method 'SetSize'
 
         /// <summary>get or set whether this <see cref="Control"/> is enabled in HitTest</summary>
         public bool IsHitTestVisible
@@ -164,17 +164,45 @@ namespace Elffy.UI
         internal ref readonly TextureObject Texture => ref _texture.Texture;
         public ref readonly Vector2i ActualTextureSize => ref _texture.Size;
 
+        /// <summary>Get control layouter which has properties for layouting</summary>
         public ControlLayouter Layouter => new ControlLayouter(LayouterPrivate);
-        public ref LayoutLength LayoutWidth => ref LayouterPrivate.Width;
-        public ref LayoutLength LayoutHeight => ref LayouterPrivate.Height;
+
+        /// <summary>Get or set width for layouting.</summary>
+        /// <remarks>Use <see cref="ActualWidth"/> if you need actual width on rendering.</remarks>
+        public ref LayoutLength Width => ref LayouterPrivate.Width;
+
+        /// <summary>Get or set height for layouting.</summary>
+        /// <remarks>Use <see cref="ActualHeight"/> if you need actual height on rendering.</remarks>
+        public ref LayoutLength Height => ref LayouterPrivate.Height;
+
+        /// <summary></summary>
         public ref TransformOrigin TransformOrigin => ref LayouterPrivate.TransformOrigin;
+
+        /// <summary>Get or set horizontal alignment to the <see cref="Parent"/>.</summary>
         public ref HorizontalAlignment HorizontalAlignment => ref LayouterPrivate.HorizontalAlignment;
+
+        /// <summary>Get or set vertical alignment to the <see cref="Parent"/>.</summary>
         public ref VerticalAlignment VerticalAlignment => ref LayouterPrivate.VerticalAlignment;
+
+        /// <summary>Get or set margin to the <see cref="Parent"/></summary>
         public ref LayoutThickness Margin => ref LayouterPrivate.Margin;
+        
+        /// <summary>Get or set padding to the <see cref="Children"/></summary>
         public ref LayoutThickness Padding => ref LayouterPrivate.Padding;
+
+        /// <summary>Get or set transform matrix for rendering.</summary>
+        /// <remarks>This matrix is independent from layouting controls. It is only for rendering.</remarks>
         public ref Matrix3 RenderTransform => ref LayouterPrivate.RenderTransform;
+
+        /// <summary>Get or set transform origin for rendering.</summary>
+        /// <remarks>This value is independent from layouting controls. It is only for rendering.</remarks>
         public ref Vector2 RenderTransformOrigin => ref LayouterPrivate.RenderTransformOrigin;
+
+        /// <summary>Get or set the texture size if you use a texture.</summary>
+        /// <remarks>Use <see cref="ActualTextureSize"/> if you need actual size of the texture the control has.</remarks>
         public ref Vector2i TextureSize => ref LayouterPrivate.TextureSize;
+
+        /// <summary>Get or set the size of the unstretched area of the image.</summary>
         public ref LayoutThickness TextureFixedArea => ref LayouterPrivate.TextureFixedArea;
 
         /// <summary>Mouse enter event</summary>
@@ -279,9 +307,9 @@ namespace Elffy.UI
             var mousePos = (Vector2i)mouse.Position;
             var pos = Position;
             return pos.X <= mousePos.X &&
-                   mousePos.X < pos.X + Width &&
+                   mousePos.X < pos.X + ActualWidth &&
                    pos.Y <= mousePos.Y &&
-                   mousePos.Y < pos.Y + Height;
+                   mousePos.Y < pos.Y + ActualHeight;
         }
 
         /// <summary>ヒットテストの結果を通知します</summary>
@@ -331,16 +359,16 @@ namespace Elffy.UI
             ControlLayouterInternal.Return(ref _layouter);
         }
 
-        /// <summary>Layout itself and update <see cref="Size"/> and <see cref="Position"/>.</summary>
+        /// <summary>Layout itself and update <see cref="ActualSize"/> and <see cref="Position"/>.</summary>
         public void LayoutSelf()
         {
             if(IsRoot) { return; }
             Debug.Assert(this is not RootPanel);
             Debug.Assert(_parent is not null);
-            var parentSize = _parent.Size;
+            var parentSize = _parent.ActualSize;
             ref readonly var parentPadding = ref _parent.Padding;
             Debug.Assert(parentSize.X >= 0f && parentSize.Y >= 0f);
-            var (size, relativePos) = DefaultLayoutingMethod(_parent.Size, _parent.Padding, Layouter);
+            var (size, relativePos) = DefaultLayoutingMethod(_parent.ActualSize, _parent.Padding, Layouter);
 
             // Change size, position and absolutePosition
             SetSize(size);

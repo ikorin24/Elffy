@@ -58,6 +58,15 @@ namespace Sandbox
             root.Padding = new LayoutThickness(10);
             var grid = new Grid();
             grid.Background = new Color4(1f, 1f, 0, 0.3f);
+            grid.TextureSize = new Vector2i(100, 100);
+            grid.TextureFixedArea.Left = grid.TextureSize.X;
+            grid.TextureFixedArea.Top = grid.TextureSize.Y;
+            using(var p = grid.GetPainter()) {
+                p.Fill(ColorByte.Red);
+                p.DrawText("aaa", new Font(50), new Vector2(50, 50), ColorByte.Black);
+            }
+
+
             root.Children.Add(grid);
             root.LayoutChildren();
         }
