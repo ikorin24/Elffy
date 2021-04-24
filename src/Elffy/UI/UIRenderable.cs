@@ -31,7 +31,7 @@ namespace Elffy.UI
             base.OnActivated();
             Debug.Assert(InternalLayer is UILayer);
 
-            //     Position                    UI
+            //     Position                    UV
             //                          
             //     p3(0,1,0) -- p2(1,1,0)     (0,1) --- (1,1)
             //     |         /     |           |      /   |
