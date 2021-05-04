@@ -232,6 +232,15 @@ namespace Elffy.Imaging
 
         public static ImageType GetTypeFromExt(string ext) => GetTypeFromExt(ext.AsSpan());
 
+        public static ImageType GetTypeFromFileName(ReadOnlySpan<char> fileName)
+        {
+            var i = fileName.IndexOf('.');
+            if(i < 0) { ThrowHelper.ThrowArgException("fileName has no extension."); }
+            return GetTypeFromExt(fileName.Slice(i));
+        }
+
+        public static ImageType GetTypeFromFileName(string fileName) => GetTypeFromFileName(fileName.AsSpan());
+
         public override bool Equals(object? obj) => obj is Image image && Equals(image);
 
         public bool Equals(Image other) => _image == other._image && _token == other._token;

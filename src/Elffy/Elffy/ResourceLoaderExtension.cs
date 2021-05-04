@@ -104,5 +104,39 @@ namespace Elffy
             using var stream = source.GetStream(name);
             return new Typeface(stream);
         }
+
+        public static Image LoadImage(this IResourceLoader source, string name)
+        {
+            using var stream = source.GetStream(name);
+            return Image.FromStream(stream, Image.GetTypeFromExt(name));
+        }
+
+        public static async UniTask<Image> LoadImageAsync(this IResourceLoader source, string name, AsyncBackEndPoint endPoint,
+                                                          FrameLoopTiming timing = FrameLoopTiming.Update,
+                                                          CancellationToken cancellationToken = default)
+        {
+            if(endPoint is null) {
+                throw new ArgumentNullException(nameof(endPoint));
+            }
+            timing.ThrowArgExceptionIfInvalid(nameof(timing));
+
+            // Check image type first.
+            // An exception is thrown if not supported type.
+            var imageType = Image.GetTypeFromFileName(name);
+
+            cancellationToken.ThrowIfCancellationRequested();
+            await UniTask.SwitchToThreadPool();
+            cancellationToken.ThrowIfCancellationRequested();
+            using var stream = source.GetStream(name);
+            var image = Image.FromStream(stream, imageType);
+            try {
+                await endPoint.ToTiming(timing, cancellationToken);
+            }
+            catch {
+                image.Dispose();
+                throw;
+            }
+            return image;
+        }
     }
 }

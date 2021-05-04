@@ -26,5 +26,12 @@ namespace Elffy
         {
             return source.LoadTextureAsync(name, expansionMode, shrinkMode, mipmapMode, wrapModeX, wrapModeY, Timing.EndPoint, timing, cancellationToken);
         }
+
+        public static UniTask<Image> LoadImageAsync(this IResourceLoader source, string name,
+                                                  FrameLoopTiming timing = FrameLoopTiming.Update,
+                                                  CancellationToken cancellationToken = default)
+        {
+            return source.LoadImageAsync(name, Timing.EndPoint, timing, cancellationToken);
+        }
     }
 }
