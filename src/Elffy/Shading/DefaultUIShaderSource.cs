@@ -56,6 +56,7 @@ namespace Elffy.Shading
                 uniform.Send("p", p);
                 uniform.Send("q", q);
                 uniform.Send("z", z);
+                uniform.Send("textureSize", textureSize);
             }
             uniform.Send("back", target.Background);
         }
@@ -84,6 +85,7 @@ uniform vec2 b;
 uniform vec2 p;
 uniform vec2 q;
 uniform vec2 z;
+uniform vec2 textureSize;
 uniform sampler2D tex_sampler;
 uniform bool hasTexture;
 uniform vec4 back;
@@ -100,8 +102,8 @@ void main()
         vec2 uv1 = Filter(vec2(0.0, 0.0), a, UV) * UV * r;
         vec2 uv2 = Filter(a, b, UV) * (p + (UV - a) * z);
         vec2 uv3 = Filter(b, vec2(1.0, 1.0), UV) * (q + (UV - b) * r);
-        vec2 uv = uv1 + uv2 + uv3;
-        vec4 t = texture(tex_sampler, uv);
+        ivec2 texelPos = ivec2((uv1 + uv2 + uv3) * textureSize);
+        vec4 t = texelFetch(tex_sampler, texelPos, 0);
         float tai = 1.0 - t.a;
         fragColor = vec4(t.r * t.a + back.r * tai,
                          t.g * t.a + back.g * tai,
