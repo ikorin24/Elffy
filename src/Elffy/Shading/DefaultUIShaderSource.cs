@@ -3,7 +3,6 @@ using Elffy.Core;
 using Elffy.Diagnostics;
 using Elffy.OpenGL;
 using Elffy.UI;
-using System;
 
 namespace Elffy.Shading
 {
@@ -40,19 +39,29 @@ namespace Elffy.Shading
 
             if(hasTexture) {
                 var controlSize = (Vector2)target.ActualSize;
-                var a = new Vector2(fixedArea.Left, fixedArea.Bottom) / controlSize;
-                var b = (controlSize - new Vector2(fixedArea.Right, fixedArea.Top)) / controlSize;
-                var uvScale = controlSize / target.ActualTextureSize;
+                var textureSize = (Vector2)target.ActualTextureSize;
+                var lt = new Vector2(fixedArea.Left, fixedArea.Top);
+                var rb = new Vector2(fixedArea.Right, fixedArea.Bottom);
+
+                var r = controlSize / textureSize;
+                var a = lt / controlSize;
+                var b = Vector2.One - (rb / controlSize);
+                var p = lt / textureSize;
+                var q = Vector2.One - (rb / textureSize);
+                var z = ((textureSize - lt - rb) * controlSize) / ((controlSize - lt - rb) * textureSize);
+
+                uniform.Send("r", r);
                 uniform.Send("a", a);
                 uniform.Send("b", b);
-                uniform.Send("uvScale", uvScale);
+                uniform.Send("p", p);
+                uniform.Send("q", q);
+                uniform.Send("z", z);
             }
             uniform.Send("back", target.Background);
         }
 
         private const string VertSource =
 @"#version 410
-
 in vec3 vPos;
 in vec2 vUV;
 out vec2 UV;
@@ -67,35 +76,32 @@ void main()
 
         private const string FragSource =
 @"#version 410
-
 in vec2 UV;
 out vec4 fragColor;
-uniform vec2 uvScale;
+uniform vec2 r;
 uniform vec2 a;
 uniform vec2 b;
+uniform vec2 p;
+uniform vec2 q;
+uniform vec2 z;
 uniform sampler2D tex_sampler;
 uniform bool hasTexture;
 uniform vec4 back;
 
+vec2 Filter(vec2 start, vec2 end, vec2 value)
+{
+    return vec2(step(start.x, value.x) * (1 - step(end.x, value.x)),
+                step(start.y, value.y) * (1 - step(end.y, value.y)));
+}
+
 void main()
 {
     if(hasTexture) {
-        float[3] xValues = float[](
-            UV.x * uvScale.x,
-            a.x * uvScale.x + UV.x - a.x,
-            b.x + (UV.x - b.x) * uvScale.x
-        );
-        float[3] yValues = float[](
-            UV.y * uvScale.y,
-            a.y * uvScale.y + UV.y - a.y,
-            b.y + (UV.y - b.y) * uvScale.y
-        );
-        vec2 uv = vec2(xValues[int(step(a.x, UV.x) + step(b.x, UV.x))],
-                       yValues[int(step(a.y, UV.y) + step(b.y, UV.y))]);
-        float isOutOfRange = step(0.5, (1.0 - step(0, uv.x)) + step(1, uv.x) + (1.0 - step(0, uv.y)) + step(1, uv.y));
-
-        vec4 t = texture(tex_sampler, uv) * (1.0 - isOutOfRange);
-        
+        vec2 uv1 = Filter(vec2(0.0, 0.0), a, UV) * UV * r;
+        vec2 uv2 = Filter(a, b, UV) * (p + (UV - a) * z);
+        vec2 uv3 = Filter(b, vec2(1.0, 1.0), UV) * (q + (UV - b) * r);
+        vec2 uv = uv1 + uv2 + uv3;
+        vec4 t = texture(tex_sampler, uv);
         float tai = 1.0 - t.a;
         fragColor = vec4(t.r * t.a + back.r * tai,
                          t.g * t.a + back.g * tai,
