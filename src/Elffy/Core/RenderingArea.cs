@@ -19,9 +19,8 @@ namespace Elffy.Core
         private Matrix4 _uiProjection;
         private Vector2i _frameBufferSize;
         private readonly CancellationTokenSource _runningTokenSource;
-
-        [ThreadStatic]
         private ScreenCurrentTiming _currentTiming; // default value is 'OutOfFrameLoop'
+        private int _threadID;
 
         public event Action<IHostScreen>? Initialized;
 
@@ -40,7 +39,7 @@ namespace Elffy.Core
 
         public AsyncBackEndPoint AsyncBack { get; }
 
-        public ScreenCurrentTiming CurrentTiming => _currentTiming;
+        public ScreenCurrentTiming CurrentTiming => _threadID == Environment.CurrentManagedThreadId ? _currentTiming : ScreenCurrentTiming.OutOfFrameLoop;
 
         internal RenderingArea(IHostScreen screen)
         {
@@ -52,6 +51,7 @@ namespace Elffy.Core
 
         public void Initialize()
         {
+            _threadID = Environment.CurrentManagedThreadId;
             var clearColor = Color4.Gray;
             GL.ClearColor(clearColor.R, clearColor.G, clearColor.B, clearColor.A);
             GL.Enable(EnableCap.DepthTest);
@@ -200,6 +200,7 @@ namespace Elffy.Core
             AsyncBack.AbortAll();
             ContextAssociatedMemorySafety.EnsureCollect(OwnerScreen);   // Must be called before the opengl context is deleted.
             Disposed?.Invoke();
+            _threadID = 0;
         }
 
         public void SetFrameBufferSize(in Vector2i frameBufferSize)
