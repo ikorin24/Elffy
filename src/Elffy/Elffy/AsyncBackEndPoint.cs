@@ -29,7 +29,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public FrameLoopAwaitable ToTiming(FrameLoopTiming timing, CancellationToken cancellationToken = default)
         {
-            timing.ThrowArgExceptionIfInvalid(nameof(timing));
+            timing.ThrowArgExceptionIfInvalidExceptNone(nameof(timing));
             return new FrameLoopAwaitable(this, timing, cancellationToken);
         }
 

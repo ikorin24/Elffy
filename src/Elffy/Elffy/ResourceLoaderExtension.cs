@@ -118,7 +118,8 @@ namespace Elffy
             if(endPoint is null) {
                 throw new ArgumentNullException(nameof(endPoint));
             }
-            timing.ThrowArgExceptionIfInvalid(nameof(timing));
+            // timing 'None' passes the test.
+            timing.ThrowArgExceptionIfInvalidExceptNone(nameof(timing));
 
             // Check image type first.
             // An exception is thrown if not supported type.

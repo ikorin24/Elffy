@@ -15,7 +15,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal FrameLoopAwaitable(AsyncBackEndPoint endPoint, FrameLoopTiming timing, CancellationToken cancellationToken)
         {
-            Debug.Assert(timing.IsValid());
+            Debug.Assert(timing.IsValidOrNone());
             _awaiter = new Awaiter(endPoint, timing, cancellationToken);
         }
 
@@ -84,12 +84,12 @@ namespace Elffy
             private readonly FrameLoopTiming _timing;
             private readonly CancellationToken _cancellationToken;
 
-            public bool IsCompleted => false;
+            public bool IsCompleted => _timing == FrameLoopTiming.None;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             internal Awaiter(AsyncBackEndPoint endPoint, FrameLoopTiming timing, CancellationToken cancellationToken)
             {
-                Debug.Assert(timing.IsValid());
+                Debug.Assert(timing.IsValidOrNone());
                 _endPoint = endPoint;
                 _timing = timing;
                 _cancellationToken = cancellationToken;

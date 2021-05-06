@@ -8,7 +8,7 @@ namespace Elffy
     public enum FrameLoopTiming : byte
     {
         // All values of `FrameLoopTiming` can be cast to `ScreenCurrentTiming`. (as a same name)
-        //None = 0, // default is invalid
+        None = 0,
 
         EarlyUpdate = 1,
         Update = 2,
@@ -33,19 +33,34 @@ namespace Elffy
 
     public static class LoopTimingExtension
     {
+        private const byte MaxValue = 5;    // max value of FrameLoopTiming
+        private const byte Default = 0;
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static bool IsValid(this FrameLoopTiming source)
         {
-            const byte MaxValue = 5;    // max value of FrameLoopTiming
-            const byte Default = 0;
-
             return (byte)source != Default && (byte)source <= MaxValue;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static bool IsValidOrNone(this FrameLoopTiming timing)
+        {
+            return (byte)timing <= MaxValue;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void ThrowArgExceptionIfInvalid(this FrameLoopTiming source, string msg)
         {
             if(!source.IsValid()) {
+                Throw(msg);
+                [DoesNotReturn] static void Throw(string msg) => throw new ArgumentException(msg);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void ThrowArgExceptionIfInvalidExceptNone(this FrameLoopTiming timing, string msg)
+        {
+            if(!timing.IsValidOrNone()) {
                 Throw(msg);
                 [DoesNotReturn] static void Throw(string msg) => throw new ArgumentException(msg);
             }
