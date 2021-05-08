@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using Cysharp.Text;
+using Cysharp.Threading.Tasks;
 using Elffy.Core;
 using Elffy.Effective;
 using Elffy.Effective.Unsafes;
@@ -7,8 +8,9 @@ using Elffy.Mathematics;
 using Elffy.OpenGL;
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+using System.Threading;
 using UnmanageUtility;
 
 namespace Elffy.Components
@@ -72,19 +74,19 @@ namespace Elffy.Components
         }
 
         /// <inheritdoc/>
-        public virtual void OnAttached(ComponentOwner owner) => OnAttachedCore<Skeleton>(owner, this);
+        public virtual void OnAttached(ComponentOwner owner) => OnAttachedCore<Skeleton>(owner);
 
         /// <inheritdoc/>
-        public virtual void OnDetached(ComponentOwner owner) => OnDetachedCore<Skeleton>(owner, this);
+        public virtual void OnDetached(ComponentOwner owner) => OnDetachedCore<Skeleton>(owner);
 
-        protected void OnAttachedCore<T>(ComponentOwner owner, T @this) where T : Skeleton
+        protected void OnAttachedCore<T>(ComponentOwner owner) where T : Skeleton
         {
-            _core.OnAttached<T>(owner, @this);
+            _core.OnAttached<T>(owner, (T)this);
         }
 
-        protected void OnDetachedCore<T>(ComponentOwner owner, T @this) where T : Skeleton
+        protected void OnDetachedCore<T>(ComponentOwner owner) where T : Skeleton
         {
-            _core.OnDetached<T>(owner, @this);
+            _core.OnDetached<T>(owner, (T)this);
         }
 
         /// <summary>Get handler to edit translation matrices. (Call <see cref="SkeletonHandler.Dispose"/> to end editing.)</summary>
@@ -92,38 +94,35 @@ namespace Elffy.Components
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe SkeletonHandler StartTranslation()
         {
-            return (_translations is not null) ? new SkeletonHandler(this, _translations.Ptr, _translations.Length)
-                                               : new SkeletonHandler(this, IntPtr.Zero, 0);
+            if(!IsBoneLoaded) {
+                Throw();
+                [DoesNotReturn] static void Throw() => throw new InvalidOperationException("Bones are not loaded.");
+            }
+            AssertValid();
+            return new SkeletonHandler(this, (Matrix4*)_posMatrices!.Ptr, (Matrix4*)_translations!.Ptr, (BoneInternal*)_tree!.Ptr, _translations.Length);
         }
 
         /// <summary>Send matrices to opengl. This method is called from <see cref="SkeletonHandler"/></summary>
         internal unsafe void UpdateTranslations()
         {
             if(!IsBoneLoaded) { return; }
-            Debug.Assert(_tree is not null);
-            Debug.Assert(_matrices is not null);
-            Debug.Assert(_translations is not null);
-            Debug.Assert(_posMatrices is not null);
-            Debug.Assert(_posInvMatrices is not null);
-            Debug.Assert(_tree.Length <= _matrices.Length &&        // _matrices.Length is rounded up to power of two.
-                         _tree.Length == _translations.Length &&
-                         _tree.Length == _posMatrices.Length &&
-                         _tree.Length == _posInvMatrices.Length);
+            AssertValid();
 
-            var matrices = (Matrix4*)_matrices.Ptr;
-            var tree = (BoneInternal*)_tree.Ptr;
-            var translations = (Matrix4*)_translations.Ptr;
-            var pos = (Matrix4*)_posMatrices.Ptr;
-            var posInv = (Matrix4*)_posInvMatrices.Ptr;
+            var matrices = (Matrix4*)_matrices!.Ptr;
+            var tree = (BoneInternal*)_tree!.Ptr;
+            var translations = (Matrix4*)_translations!.Ptr;
+            var pos = (Matrix4*)_posMatrices!.Ptr;
+            var posInv = (Matrix4*)_posInvMatrices!.Ptr;
 
             // Calc matrices in model local coordinate.
             // You can walk around all bones in the tree by following to "b->Next".
             // The order is DFS (Depth First Search).
             // Therefore, matrices[b->Parent->ID] has been calculated when you will calculate matrices[b->ID].
             for(BoneInternal* b = tree; b != null; b = b->Next) {
-                matrices[b->ID] = pos[b->ID] * translations[b->ID] * posInv[b->ID];
+                var i = b->ID;
+                matrices[i] = pos[i] * translations[i] * posInv[i];
                 if(b->Parent != null) {
-                    matrices[b->ID] = matrices[b->Parent->ID] * matrices[b->ID];
+                    matrices[i] = matrices[b->Parent->ID] * matrices[i];
                 }
             }
 
@@ -160,6 +159,20 @@ namespace Elffy.Components
                 ContextAssociatedMemorySafety.OnFinalized(this);
             }
             _disposed = true;
+        }
+
+        [Conditional("DEBUG")]
+        private void AssertValid()
+        {
+            Debug.Assert(_tree is not null);
+            Debug.Assert(_matrices is not null);
+            Debug.Assert(_translations is not null);
+            Debug.Assert(_posMatrices is not null);
+            Debug.Assert(_posInvMatrices is not null);
+            Debug.Assert(_tree.Length <= _matrices.Length &&        // _matrices.Length is rounded up to power of two.
+                         _tree.Length == _translations.Length &&
+                         _tree.Length == _posMatrices.Length &&
+                         _tree.Length == _posInvMatrices.Length);
         }
 
         private unsafe static void CreateBoneTree(ReadOnlySpan<Bone> bones,
@@ -250,53 +263,6 @@ namespace Elffy.Components
                 boneTree?.Dispose();
                 throw;
             }
-        }
-    }
-
-    /// <summary>Translation matrices handler of <see cref="Skeleton"/></summary>
-    public readonly unsafe struct SkeletonHandler : IDisposable
-    {
-        private readonly Skeleton _skeleton;
-        private readonly IntPtr _ptr;
-        private readonly int _length;
-
-        /// <summary>Get or set translation matrix of specified bone</summary>
-        /// <param name="index">index to get translation matrix</param>
-        /// <returns>translation matrix of specified index</returns>
-        public ref Matrix4 this[int index]
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get
-            {
-                if((uint)index >= (uint)_length) {
-                    throw new ArgumentOutOfRangeException(nameof(index));
-                }
-                return ref Unsafe.Add(ref Unsafe.AsRef<Matrix4>((void*)_ptr), index);
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal SkeletonHandler(Skeleton skeleton, IntPtr translationsPtr, int length)
-        {
-            Debug.Assert(length >= 0);
-            _skeleton = skeleton;
-            _ptr = translationsPtr;
-            _length = length;
-        }
-
-        /// <summary>Get translation matrices as <see cref="Span{T}"/></summary>
-        /// <returns>translation matrices</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Span<Matrix4> AsSpan()
-        {
-            return MemoryMarshal.CreateSpan(ref Unsafe.AsRef<Matrix4>((void*)_ptr), _length);
-        }
-
-        /// <summary>Flush to update translation matrices.</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Dispose()
-        {
-            _skeleton?.UpdateTranslations();
         }
     }
 
