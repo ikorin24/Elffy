@@ -56,21 +56,44 @@ namespace Elffy.Components
         public void Load(ReadOnlySpan<Bone> bones)
         {
             if(IsBoneLoaded) { throw new InvalidOperationException("Already loaded"); }
+            InitializeSkeletonData(this, bones);
+            _boneTranslationData.Load(_matrices!.AsSpan().MarshalCast<Matrix4, Color4>());
+            ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
+        }
 
-            CreateBoneTree(bones, out _posMatrices, out _posInvMatrices, out _tree);
+        public async UniTask LoadAsync<TBoneSpan>(TBoneSpan bones, AsyncBackEndPoint endPoint,
+                                                  FrameLoopTiming timing = FrameLoopTiming.Update,
+                                                  CancellationToken cancellationToken = default) where TBoneSpan : IReadOnlySpan<Bone>
+        {
+            if(IsBoneLoaded) { throw new InvalidOperationException("Already loaded"); }
+            if(endPoint is null) { throw new ArgumentNullException(nameof(endPoint)); }
+            timing.ThrowArgExceptionIfInvalid(nameof(timing));
 
-            // Round up pixel count of bone matrix buffer on data texture to 2^n.
-            var pixelCount = MathTool.RoundUpToPowerOfTwo(bones.Length * Matrix4.SizeInBytes / Vector4.SizeInBytes);
-            var bufLen = pixelCount * Vector4.SizeInBytes / Matrix4.SizeInBytes;
-
-            // Load matrices as identity
-            _matrices = new UnmanagedArray<Matrix4>(bufLen, fill: Matrix4.Identity);
-            _boneTranslationData.Load(_matrices.AsSpan().MarshalCast<Matrix4, Color4>());
-
-            // Initialize translations as identity
-            _translations = new UnmanagedArray<Matrix4>(bones.Length, fill: Matrix4.Identity);
+            cancellationToken.ThrowIfCancellationRequested();
+            await UniTask.SwitchToThreadPool();
+            cancellationToken.ThrowIfCancellationRequested();
+            try {
+                InitializeSkeletonData(this, bones.AsReadOnlySpan());
+                await endPoint.ToTiming(timing, cancellationToken);
+                if(IsBoneLoaded) { throw new InvalidOperationException("Already loaded"); }
+                _boneTranslationData.Load(_matrices!.AsSpan().MarshalCast<Matrix4, Color4>());
+            }
+            catch {
+                _posMatrices?.Dispose();
+                _posInvMatrices?.Dispose();
+                _tree?.Dispose();
+                _matrices?.Dispose();
+                _translations?.Dispose();
+                _posMatrices = null;
+                _posInvMatrices = null;
+                _tree = null;
+                _matrices = null;
+                _translations = null;
+                throw;
+            }
 
             ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
+            return;
         }
 
         /// <inheritdoc/>
@@ -173,6 +196,24 @@ namespace Elffy.Components
                          _tree.Length == _translations.Length &&
                          _tree.Length == _posMatrices.Length &&
                          _tree.Length == _posInvMatrices.Length);
+        }
+
+        private static void InitializeSkeletonData(Skeleton skeleton, ReadOnlySpan<Bone> bones)
+        {
+            // This method can run in any thread.
+
+
+            CreateBoneTree(bones, out skeleton._posMatrices, out skeleton._posInvMatrices, out skeleton._tree);
+
+            // Round up pixel count of bone matrix buffer on data texture to 2^n.
+            var pixelCount = MathTool.RoundUpToPowerOfTwo(bones.Length * Matrix4.SizeInBytes / Vector4.SizeInBytes);
+            var bufLen = pixelCount * Vector4.SizeInBytes / Matrix4.SizeInBytes;
+
+            // Load matrices as identity
+            skeleton._matrices = new UnmanagedArray<Matrix4>(bufLen, fill: Matrix4.Identity);
+
+            // Initialize translations as identity
+            skeleton._translations = new UnmanagedArray<Matrix4>(bones.Length, fill: Matrix4.Identity);
         }
 
         private unsafe static void CreateBoneTree(ReadOnlySpan<Bone> bones,

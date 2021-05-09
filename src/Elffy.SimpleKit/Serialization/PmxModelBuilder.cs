@@ -189,7 +189,7 @@ namespace Elffy.Serialization
                 if(model.LifeState == LifeState.Activated || model.LifeState == LifeState.Alive) {
                     // create skeleton
                     var skeleton = new Skeleton();
-                    skeleton.Load(bones.AsSpan());
+                    await skeleton.LoadAsync(bones.AsSpanLike(), model.HostScreen.AsyncBack);
                     model.AddComponent(skeleton);
 
                     // create parts
