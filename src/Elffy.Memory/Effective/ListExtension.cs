@@ -43,7 +43,7 @@ namespace Elffy.Effective
 #if NETCOREAPP3_1
         [CriticalDotnetDependency("netcoreapp3.1")]
 #endif
-        public static Span<T> AsSpan<T>(this List<T> list)
+        public static Span<T> AsSpan<T>(this List<T>? list)
         {
 #if NETCOREAPP3_1
             return (list is null) ? default : Unsafe.As<ListDummy<T>>(list)._items.AsSpan(0, list.Count);
@@ -56,7 +56,7 @@ namespace Elffy.Effective
 #if NETCOREAPP3_1
         [CriticalDotnetDependency("netcoreapp3.1")]
 #endif
-        public static ReadOnlySpan<T> AsReadOnlySpan<T>(this List<T> list) => list.AsSpan();
+        public static ReadOnlySpan<T> AsReadOnlySpan<T>(this List<T>? list) => list.AsSpan();
 
         /// <summary>Clear <see cref="List{T}"/> and get the data as <see cref="Span{T}"/>.</summary>
         /// <remarks>Capacity of <see cref="List{T}"/> gets 0 after calling this method.</remarks>
