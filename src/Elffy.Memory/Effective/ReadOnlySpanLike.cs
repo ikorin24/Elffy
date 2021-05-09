@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using Elffy.Effective.Unsafes;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -21,47 +20,13 @@ namespace Elffy.Effective
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ReadOnlySpanLike(T[]? array)
         {
-            if(array is null) {
-                this = default;
-            }
-            else {
-                _obj = array;
-                _pointer = (delegate*<object, ReadOnlySpan<T>>)&AsSpan;
-                _len = 0;
-            }
-
-            static ReadOnlySpan<T> AsSpan(object obj)
-            {
-                return MemoryMarshal.CreateReadOnlySpan(ref Unsafe.As<T[]>(obj).GetReference(), Unsafe.As<T[]>(obj).Length);
-            }
+            this = new SpanLike<T>(array).AsReadOnly();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ReadOnlySpanLike(List<T>? list)
         {
-            _obj = list;
-            _pointer = (delegate*<object, ReadOnlySpan<T>>)&AsSpan;
-            _len = 0;
-
-            // It's safe if obj is null.
-            static ReadOnlySpan<T> AsSpan(object obj) => Unsafe.As<List<T>?>(obj).AsReadOnlySpan();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal ReadOnlySpanLike(object obj, delegate*<object, Span<T>> asSpan)
-        {
-            Debug.Assert(obj is not null);
-            _obj = obj;
-            _pointer = asSpan;
-            _len = 0;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal ReadOnlySpanLike(void* pointer, int length)
-        {
-            _obj = null;
-            _pointer = pointer;
-            _len = length;
+            this = new SpanLike<T>(list).AsReadOnly();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -90,6 +55,6 @@ namespace Elffy.Effective
 
         public bool Equals(ReadOnlySpanLike<T> other) => (_obj == other._obj) && (_pointer == other._pointer) && (_len == other._len);
 
-        public override int GetHashCode() => HashCode.Combine(_obj, (IntPtr)_pointer, _len);
+        public override int GetHashCode() => HashCode.Combine(RuntimeHelpers.GetHashCode(_obj!), (IntPtr)_pointer, _len);   // No problem if _obj is null.
     }
 }

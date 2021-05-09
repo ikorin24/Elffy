@@ -87,7 +87,7 @@ namespace Elffy.Effective
 
         public bool Equals(SpanLike<T> other) => (_obj == other._obj) && (_pointer == other._pointer) && (_len == other._len);
 
-        public override int GetHashCode() => HashCode.Combine(_obj, (IntPtr)_pointer, _len);
+        public override int GetHashCode() => HashCode.Combine(RuntimeHelpers.GetHashCode(_obj!), (IntPtr)_pointer, _len);   // No problem if _obj is null.
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator ReadOnlySpanLike<T>(SpanLike<T> spanLike) => spanLike.AsReadOnly();
@@ -107,6 +107,12 @@ namespace Elffy.Effective
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ReadOnlySpanLike<T> AsReadOnlySpanLike<T>(this UnmanagedArray<T> array) where T : unmanaged
+        {
+            return array.AsSpanLike().AsReadOnly();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static SpanLike<T> AsSpanLike<T>(this UnmanagedList<T> list) where T : unmanaged
         {
             if(list is null) {
@@ -118,15 +124,33 @@ namespace Elffy.Effective
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ReadOnlySpanLike<T> AsReadOnlySpanLike<T>(this UnmanagedList<T> list) where T : unmanaged
+        {
+            return list.AsSpanLike().AsReadOnly();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static SpanLike<T> AsSpanLike<T>(this UnsafeRawArray<T> array) where T : unmanaged
         {
             return new SpanLike<T>(array.GetPtr(), array.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ReadOnlySpanLike<T> AsReadOnlySpanLike<T>(this UnsafeRawArray<T> array) where T : unmanaged
+        {
+            return array.AsSpanLike().AsReadOnly();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static SpanLike<T> AsSpanLike<T>(this UnsafeRawList<T> list) where T : unmanaged
         {
             return new SpanLike<T>(list.GetPtr(), list.Count);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ReadOnlySpanLike<T> AsReadOnlySpanLike<T>(this UnsafeRawList<T> list) where T : unmanaged
+        {
+            return list.AsSpanLike().AsReadOnly();
         }
     }
 }
