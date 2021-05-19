@@ -180,17 +180,20 @@ namespace Elffy.Serialization
                         }
                         return bones;
                     }, pmx, configureAwait: false));
+
+                // create skeleton
+                var screen = model.HostScreen;
+                var skeleton = new HumanoidSkeleton();
+                model.AddComponent(skeleton);
+                await skeleton.LoadAsync(bones.AsSpanLike(), screen.AsyncBack);
+
                 //      ↑ thread pool
                 // ------------------------------
-                await model.HostScreen.AsyncBack.ToTiming(FrameLoopTiming.Update, obj.CancellationToken);
+                await screen.AsyncBack.Ensure(FrameLoopTiming.Update, obj.CancellationToken);
                 // ------------------------------
                 //      ↓ main thread
-                Debug.Assert(Engine.CurrentContext == model.HostScreen);
+                Debug.Assert(Engine.CurrentContext == screen);
                 if(model.LifeState == LifeState.Activated || model.LifeState == LifeState.Alive) {
-                    // create skeleton
-                    var skeleton = new Skeleton();
-                    await skeleton.LoadAsync(bones.AsSpanLike(), model.HostScreen.AsyncBack);
-                    model.AddComponent(skeleton);
 
                     // create parts
                     textures = new ValueTypeRentMemory<TextureObject>(images.Length);
@@ -205,7 +208,7 @@ namespace Elffy.Serialization
                                                 TextureMipmapMode.Bilinear, TextureWrapMode.Repeat, TextureWrapMode.Repeat);
                         }
                         // Scadule the loading of textures to each frame.
-                        await model.HostScreen.AsyncBack.ToTiming(FrameLoopTiming.Update, obj.CancellationToken);
+                        await screen.AsyncBack.ToTiming(FrameLoopTiming.Update, obj.CancellationToken);
                     }
                     var partsComponent = new PmxModelParts(ref vertexCountArray, ref textureIndexArray, ref textures);
                     model.AddComponent(partsComponent);

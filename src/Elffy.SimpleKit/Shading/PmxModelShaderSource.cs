@@ -47,7 +47,7 @@ namespace Elffy.Shading
             uniform.Send("ld", new Vector3(0.8f));
             uniform.Send("ls", new Vector3(0.2f));
 
-            var skeleton = target.GetComponent<Skeleton>();
+            var skeleton = target.GetComponent<HumanoidSkeleton>();
             uniform.SendTexture1D("_boneTrans", skeleton.TranslationData, TextureUnitNumber.Unit0);
             var parts = target.GetComponent<PmxModelParts>();
             ref readonly var texture = ref parts.Textures[parts.TextureIndexArray[parts.Current]];
