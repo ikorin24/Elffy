@@ -4,13 +4,13 @@ using System.Threading;
 using System.Diagnostics.CodeAnalysis;
 using Elffy.Shapes;
 using Elffy.Shading;
-using Elffy.OpenGL;
 using Cysharp.Threading.Tasks;
 using FbxTools;
 using Elffy.Serialization.Fbx;
 
 namespace Elffy.Serialization
 {
+    /// <summary>Provides methods for creating <see cref="Model3D"/> from <see cref="IResourceLoader"/>.</summary>
     public static class FbxModelBuilder
     {
         private sealed record StateObject(IResourceLoader ResourceLoader, string Name, CancellationToken CancellationToken);
@@ -34,17 +34,7 @@ namespace Elffy.Serialization
 
             var obj = new StateObject(resourceLoader, name, cancellationToken);
 
-            return Model3D.Create(obj, Build, RenderModel);
-        }
-
-        private static void RenderModel(Model3D model3D, in Matrix4 model, in Matrix4 view, in Matrix4 projection, Model3DDrawElementsDelegate drawElements)
-        {
-            VAO.Bind(model3D.VAO);
-            IBO.Bind(model3D.IBO);
-            model3D.ShaderProgram!.Apply(in model, in view, in projection);
-            drawElements.Invoke(0, model3D.IBO.Length);
-            VAO.Unbind();
-            IBO.Unbind();
+            return Model3D.Create(obj, Build);
         }
 
         private static async UniTask Build(StateObject obj, Model3D model, Model3DLoadMeshDelegate load)

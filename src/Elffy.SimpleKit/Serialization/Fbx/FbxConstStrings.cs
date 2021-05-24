@@ -24,6 +24,15 @@ namespace Elffy.Serialization.Fbx
         [Utf8("LayerElementNormal")]
         public static partial ReadOnlySpan<byte> LayerElementNormal();
 
+        [Utf8("LayerElementUV")]
+        public static partial ReadOnlySpan<byte> LayerElementUV();
+
+        [Utf8("UV")]
+        public static partial ReadOnlySpan<byte> UV();
+
+        [Utf8("UVIndex")]
+        public static partial ReadOnlySpan<byte> UVIndex();
+
         [Utf8("Normals")]
         public static partial ReadOnlySpan<byte> Normals();
 
@@ -38,6 +47,9 @@ namespace Elffy.Serialization.Fbx
 
         [Utf8("ByPolygonVertex")]
         public static partial ReadOnlySpan<byte> ByPolygonVertex();
+
+        [Utf8("ByControllPoint")]
+        public static partial ReadOnlySpan<byte> ByControllPoint();
 
         [Utf8("Direct")]
         public static partial ReadOnlySpan<byte> Direct();

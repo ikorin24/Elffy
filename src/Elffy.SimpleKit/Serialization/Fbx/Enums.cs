@@ -10,7 +10,8 @@ namespace Elffy.Serialization.Fbx
 
     internal enum MappingInformationType
     {
-        ByVertice,
         ByPolygonVertex,
+        ByVertice,
+        ByControllPoint,
     }
 }

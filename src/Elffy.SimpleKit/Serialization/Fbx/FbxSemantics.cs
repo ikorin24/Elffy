@@ -72,6 +72,17 @@ namespace Elffy.Serialization.Fbx
             //                          |                            |--- "ReferenceInformationType"
             //                          |                                 ([0]:string "Direct" or "IndexToDirect")
             //                          |
+            //                          |--- "LayerElementUV" -------+--- "UV"
+            //                          |                            |    ([0]:double[] UV)
+            //                          |                            |
+            //                          |                            |--- "UVIndex"
+            //                          |                            |    ([0]:int[] UVIndices; i ReferenceInformationType == "IndexToDirect")
+            //                          |                            |
+            //                          |                            |--- "MappingInformationType"
+            //                          |                            |    ([0]:string "ByControllPoint" or "ByPolygonVertex")
+            //                          |                            |
+            //                          |                            |--- "ReferenceInformationType"
+            //                          |                                 ([0]:string "Direct" or "IndexToDirect")
             //                          |
             //                          |--- "LayerElementMaterial" ----- "Materials"
             //                                                            ([0]:int[] Materials)
@@ -108,6 +119,19 @@ namespace Elffy.Serialization.Fbx
                         meshGeometry.NormalIndices = node.Find(FbxConstStrings.NormalIndex()).Properties[0].AsInt32Array();
                     }
                 }
+                else if(nodeName.SequenceEqual(FbxConstStrings.LayerElementUV())) {
+                    // "LayerElementUV"
+
+                    meshGeometry.UV = node.Find(FbxConstStrings.UV()).Properties[0].AsDoubleArray();
+                    var referenceType = node.Find(FbxConstStrings.ReferenceInformationType()).Properties[0].AsString();
+                    var mappingType = node.Find(FbxConstStrings.MappingInformationType()).Properties[0].AsString();
+                    meshGeometry.UVReferenceType = GetReferenceInformationType(referenceType);
+                    meshGeometry.UVMappingType = GetMappingInformationType(mappingType);
+
+                    if(meshGeometry.UVReferenceType == ReferenceInformationType.IndexToDirect) {
+                        meshGeometry.UVIndices = node.Find(FbxConstStrings.UVIndex()).Properties[0].AsInt32Array();
+                    }
+                }
                 else if(nodeName.SequenceEqual(FbxConstStrings.LayerElementMaterial())) {
                     // "LayerElementMaterial"
 
@@ -116,43 +140,59 @@ namespace Elffy.Serialization.Fbx
             }
         }
 
-        private static void ResolveMesh(in MeshGeometry meshGeometry, UnsafeRawList<int> indicesMarged, UnsafeRawList<Vertex> verticesMarged)
+        private static void ResolveMesh(MeshGeometry mesh, UnsafeRawList<int> indicesMarged, UnsafeRawList<Vertex> verticesMarged)
         {
-            var normalMappingType = meshGeometry.NormalMappingType;
             var indicesOffset = indicesMarged.Count;
-            var indicesRaw = meshGeometry.IndicesRaw;
-            var positions = meshGeometry.Positions.MarshalCast<double, VecD3>();
-            var normals = meshGeometry.Normals.MarshalCast<double, VecD3>();
-            var normalIndices = meshGeometry.NormalIndices;
-            var normalRefType = meshGeometry.NormalReferenceType;
+            var positions = mesh.Positions.MarshalCast<double, VecD3>();
+            var normals = mesh.Normals.MarshalCast<double, VecD3>();
+            var uv = mesh.UV.MarshalCast<double, VecD2>();
 
-            switch(normalMappingType) {
-                case MappingInformationType.ByVertice: {
-                    if(positions.Length != normals.Length) { throw new FormatException(); }
+            switch(mesh.NormalMappingType) {
+                case MappingInformationType.ByPolygonVertex: {
+                    if(normals.Length != mesh.IndicesRaw.Length) { throw new FormatException(); }
                     break;
                 }
-                case MappingInformationType.ByPolygonVertex:
-                    if(indicesRaw.Length != normals.Length) { throw new FormatException(); }
+                case MappingInformationType.ByVertice: {
+                    if(normals.Length != positions.Length) { throw new FormatException(); }
                     break;
+                }
                 default:
                     throw new FormatException();
             }
 
-            int n_gon = 0;
-            for(int i = 0; i < indicesRaw.Length; i++) {
-                n_gon++;
-                var isLast = indicesRaw[i] < 0;
-                var index = isLast ? (-indicesRaw[i] - 1) : indicesRaw[i];     // 負のインデックスは多角形ポリゴンの最後の頂点を表す (2の補数が元の値)
+            //switch(mesh.UVMappingType) {
+            //    case MappingInformationType.ByPolygonVertex: {
+            //        if(uv.Length != mesh.IndicesRaw.Length) { throw new FormatException(); }
+            //        break;
+            //    }
+            //    case MappingInformationType.ByControllPoint: {
+            //        if(uv.Length != positions.Length) { throw new FormatException(); }
+            //        break;
+            //    }
+            //    default:
+            //        throw new FormatException();
+            //}
 
-                var normalIndex = normalMappingType == MappingInformationType.ByVertice ? index : i;
-                if(normalRefType == ReferenceInformationType.IndexToDirect) {
-                    normalIndex = normalIndices[normalIndex];
+            int n_gon = 0;
+            for(int i = 0; i < mesh.IndicesRaw.Length; i++) {
+                n_gon++;
+                var isLast = mesh.IndicesRaw[i] < 0;
+                var index = isLast ? (-mesh.IndicesRaw[i] - 1) : mesh.IndicesRaw[i];     // 負のインデックスは多角形ポリゴンの最後の頂点を表す (2の補数が元の値)
+
+                var normalIndex = mesh.NormalMappingType == MappingInformationType.ByPolygonVertex ? i : index;
+                if(mesh.NormalReferenceType == ReferenceInformationType.IndexToDirect) {
+                    normalIndex = mesh.NormalIndices[normalIndex];
+                }
+
+                var uvIndex = mesh.UVMappingType == MappingInformationType.ByPolygonVertex ? i : index;
+                if(mesh.UVReferenceType == ReferenceInformationType.IndexToDirect) {
+                    uvIndex = mesh.UVIndices[uvIndex];
                 }
 
                 verticesMarged.Add(new Vertex(
                     position: (Vector3)positions[index],
                     normal: (Vector3)normals[normalIndex],
-                    uv: default      // TODO:
+                    uv: (Vector2)uv[uvIndex]
                 ));
                 if(isLast) {
                     if(n_gon <= 2) { throw new FormatException(); }
@@ -174,6 +214,9 @@ namespace Elffy.Serialization.Fbx
             }
             else if(str.SequenceEqual(FbxConstStrings.ByPolygonVertex())) {
                 return MappingInformationType.ByPolygonVertex;
+            }
+            else if(str.SequenceEqual(FbxConstStrings.ByPolygonVertex())) {
+                return MappingInformationType.ByControllPoint;
             }
             else {
                 throw new FormatException();
@@ -201,18 +244,34 @@ namespace Elffy.Serialization.Fbx
             public ReadOnlySpan<double> Positions;
             public ReadOnlySpan<double> Normals;
             public ReadOnlySpan<int> NormalIndices;
-            public ReadOnlySpan<int> Materials;
             public MappingInformationType NormalMappingType;
             public ReferenceInformationType NormalReferenceType;
+            public ReadOnlySpan<double> UV;
+            public ReadOnlySpan<int> UVIndices;
+            public MappingInformationType UVMappingType;
+            public ReferenceInformationType UVReferenceType;
+            public ReadOnlySpan<int> Materials;
         }
 
         private struct VecD3
         {
+#pragma warning disable 0649    // The field is never assigned to, and will always have its default value.
             public double X;
             public double Y;
             public double Z;
+#pragma warning restore 0649
 
             public static explicit operator Vector3(in VecD3 vec) => new Vector3((float)vec.X, (float)vec.Y, (float)vec.Z);
+        }
+
+        private struct VecD2
+        {
+#pragma warning disable 0649    // The field is never assigned to, and will always have its default value.
+            public double X;
+            public double Y;
+#pragma warning restore 0649
+
+            public static explicit operator Vector2(in VecD2 vec) => new Vector2((float)vec.X, (float)vec.Y);
         }
     }
 }
