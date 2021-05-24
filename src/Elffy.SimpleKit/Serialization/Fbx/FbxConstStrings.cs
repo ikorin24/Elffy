@@ -68,5 +68,20 @@ namespace Elffy.Serialization.Fbx
 
         [Utf8("Mesh")]
         public static partial ReadOnlySpan<byte> Mesh();
+
+        [Utf8("Model")]
+        public static partial ReadOnlySpan<byte> Model();
+
+        [Utf8("Properties70")]
+        public static partial ReadOnlySpan<byte> Properties70();
+
+        [Utf8("Lcl Translation")]
+        public static partial ReadOnlySpan<byte> Lcl_Translation();
+
+        [Utf8("Lcl Rotation")]
+        public static partial ReadOnlySpan<byte> Lcl_Rotation();
+
+        [Utf8("Lcl Scaling")]
+        public static partial ReadOnlySpan<byte> Lcl_Scaling();
     }
 }

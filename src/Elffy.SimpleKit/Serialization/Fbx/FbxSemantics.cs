@@ -12,13 +12,22 @@ namespace Elffy.Serialization.Fbx
     {
         public static void GetMesh(FbxObject fbx, out UnsafeRawList<Vertex> vertices, out UnsafeRawList<int> indices, CancellationToken cancellationToken)
         {
-            //ref readonly var globalSetting = ref fbx.Find(FbxConstStrings.GlobalSettings());
+            // [root] --+-- "Objects"  ------+---- "Geometry"
+            //          |                    |---- "Geometry"
+            //          |                    |---- "Geometry"
+            //          |                    |----  ...
+            //          |
+            //          |
+            //          |-- "GlobalSettings"
+            //          |                                      <*1>
+            //          |-- "Model" ----- "Properties70" --+-- "P" ([0]:string propTypeName, ...)
+            //          |                                  |-- "P" ([0]:string propTypeName, ...)
+            //          |                                  |-- ...
+            //          |-- "Model" ---- ...
+            //          |-- ...
 
-            // [root] --|-- "Objects"  ---------|---- "Geometry"
-            //          |                       |---- "Geometry"
-            //          |-- "GlobalSettings"    |---- "Geometry"
-            //                                  |----  ...
-
+            // <*1> has translation, rotation, and scaling of the model.
+            // They are (double x, double y, double z) = ([4], [5], [6])
 
             vertices = default;
             indices = default;
@@ -43,6 +52,40 @@ namespace Elffy.Serialization.Fbx
                     GetGeometryMesh(geometry, out var meshGeometry);
                     ResolveMesh(meshGeometry, indices, vertices);
                 }
+
+
+                var modelCount = objects.FindIndexAll(FbxConstStrings.Model(), buf.AsSpan());
+                foreach(var i in buf.AsSpan(0, modelCount)) {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    ref readonly var model = ref objects.Children[i];
+                    ref readonly var property70 = ref model.Find(FbxConstStrings.Properties70());
+
+                    foreach(var p in property70.Children) {
+                        var props = p.Properties;
+                        if(props.Length < 1 || props[0].Type != FbxPropertyType.String) { continue; }
+                        var propTypeName = props[0].AsString();
+
+                        if(propTypeName.SequenceEqual(FbxConstStrings.Lcl_Translation())) {
+                            var translation = new Vector3(
+                                (float)props[4].AsDouble(),
+                                (float)props[5].AsDouble(),
+                                (float)props[6].AsDouble());
+                        }
+                        else if(propTypeName.SequenceEqual(FbxConstStrings.Lcl_Rotation())) {
+                            var rotation = new Vector3(
+                                (float)props[4].AsDouble(),
+                                (float)props[5].AsDouble(),
+                                (float)props[6].AsDouble());
+                        }
+                        else if(propTypeName.SequenceEqual(FbxConstStrings.Lcl_Scaling())) {
+                            var scale = new Vector3(
+                                (float)props[4].AsDouble(),
+                                (float)props[5].AsDouble(),
+                                (float)props[6].AsDouble());
+                        }
+                    }
+                }
+                return;
             }
             catch {
                 vertices.Dispose();
