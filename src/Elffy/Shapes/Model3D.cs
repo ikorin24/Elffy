@@ -132,7 +132,7 @@ namespace Elffy.Shapes
 
     public readonly struct Model3DLoadMeshDelegate : IEquatable<Model3DLoadMeshDelegate>
     {
-        private readonly Model3D _model;
+        private readonly Model3D? _model;
 
         internal Model3DLoadMeshDelegate(Model3D model)
         {
@@ -146,7 +146,7 @@ namespace Elffy.Shapes
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke<TVertex>(ReadOnlySpan<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged
         {
-            _model.LoadMeshInternal(vertices, indices);
+            _model?.LoadMeshInternal(vertices, indices);
         }
 
         /// <summary>Load mesh to <see cref="Model3D"/></summary>
@@ -156,14 +156,14 @@ namespace Elffy.Shapes
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke<TVertex>(Span<TVertex> vertices, Span<int> indices) where TVertex : unmanaged
         {
-            _model.LoadMeshInternal(vertices.AsReadOnly(), indices.AsReadOnly());
+            _model?.LoadMeshInternal(vertices.AsReadOnly(), indices.AsReadOnly());
         }
 
         public override bool Equals(object? obj) => obj is Model3DLoadMeshDelegate d && Equals(d);
 
         public bool Equals(Model3DLoadMeshDelegate other) => ReferenceEquals(_model, other._model);
 
-        public override int GetHashCode() => _model.GetHashCode();
+        public override int GetHashCode() => _model?.GetHashCode() ?? 0;
 
         public static bool operator ==(Model3DLoadMeshDelegate left, Model3DLoadMeshDelegate right) => left.Equals(right);
 
@@ -172,7 +172,7 @@ namespace Elffy.Shapes
 
     public readonly struct Model3DDrawElementsDelegate : IEquatable<Model3DDrawElementsDelegate>
     {
-        private readonly Model3D _model;
+        private readonly Model3D? _model;
 
         internal Model3DDrawElementsDelegate(Model3D model)
         {
@@ -182,20 +182,20 @@ namespace Elffy.Shapes
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke()
         {
-            _model.DrawElementsInternal(0, _model.IBO.Length);
+            _model?.DrawElementsInternal(0, _model.IBO.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Invoke(int startIndex, int indexCount)
         {
-            _model.DrawElementsInternal(startIndex, indexCount);
+            _model?.DrawElementsInternal(startIndex, indexCount);
         }
 
         public override bool Equals(object? obj) => obj is Model3DDrawElementsDelegate d && Equals(d);
 
         public bool Equals(Model3DDrawElementsDelegate other) => ReferenceEquals(_model, other._model);
 
-        public override int GetHashCode() => _model.GetHashCode();
+        public override int GetHashCode() => _model?.GetHashCode() ?? 0;
 
         public static bool operator ==(Model3DDrawElementsDelegate left, Model3DDrawElementsDelegate right) => left.Equals(right);
 
