@@ -14,7 +14,7 @@ namespace Elffy.Serialization.Fbx
     internal sealed class FbxSemantics : IDisposable
     {
         private FbxObject _fbx;
-        private UnsafeRawList<MeshGeometry> _meshes = default;
+        private UnsafeRawList<MeshGeometry> _meshes;
         private UnsafeRawList<int> _indices;
         private UnsafeRawList<Vertex> _vertices;
 
@@ -90,7 +90,9 @@ namespace Elffy.Serialization.Fbx
             //          |
             //          |-- "GlobalSettings"
             //          | 
-            //          |-- "Connections"
+            //          |-- "Connections" --+-- "C" ([0]:string ConnectionType, [1]:long sourceID, [2]:long destID)
+            //          |                   |-- "C" ([0]:string ConnectionType, [1]:long sourceID, [2]:long destID)
+            //          |                   |-- ...
 
 
             // <*1> has translation, rotation, and scaling of the model.
@@ -98,67 +100,62 @@ namespace Elffy.Serialization.Fbx
 
             Debug.Assert(_vertices.IsNull);
             Debug.Assert(_indices.IsNull);
-            try {
-                _vertices = UnsafeRawList<Vertex>.New(1024);
-                _indices = UnsafeRawList<int>.New(1024);
+            Debug.Assert(_meshes.IsNull);
+            _vertices = UnsafeRawList<Vertex>.New(1024);
+            _indices = UnsafeRawList<int>.New(1024);
+            _meshes = UnsafeRawList<MeshGeometry>.New(128);
 
-                var objects = _fbx.Find(FbxConstStrings.Objects());
+            var objects = _fbx.Find(FbxConstStrings.Objects());
 
-                using var buf = new UnsafeRawArray<int>(objects.Children.Count);
-                var geometryCount = objects.FindIndexAll(FbxConstStrings.Geometry(), buf.AsSpan());
-                foreach(var i in buf.AsSpan(0, geometryCount)) {
-                    cancellationToken.ThrowIfCancellationRequested();
+            using var buf = new UnsafeRawArray<int>(objects.Children.Count);
+            var geometryCount = objects.FindIndexAll(FbxConstStrings.Geometry(), buf.AsSpan());
+            foreach(var i in buf.AsSpan(0, geometryCount)) {
+                cancellationToken.ThrowIfCancellationRequested();
 
-                    var geometry = objects.Children[i];
-                    var props = geometry.Properties;
-                    var isMeshGeometry = (props.Length >= 3) &&
-                                         (props[2].Type == FbxPropertyType.String) &&
-                                         props[2].AsString().SequenceEqual(FbxConstStrings.Mesh());
-                    if(isMeshGeometry == false) { continue; }
+                var geometry = objects.Children[i];
+                var props = geometry.Properties;
+                var isMeshGeometry = (props.Length >= 3) &&
+                                     (props[2].Type == FbxPropertyType.String) &&
+                                     props[2].AsString().SequenceEqual(FbxConstStrings.Mesh());
+                if(isMeshGeometry == false) { continue; }
 
-                    GetGeometryMesh(geometry, out var meshGeometry);
-                    ResolveMesh(meshGeometry, _indices, _vertices);
-                }
+                GetGeometryMesh(geometry, out var meshGeometry);
+                ResolveMesh(meshGeometry, _indices, _vertices);
+                _meshes.Add(meshGeometry);
+            }
 
+            var modelCount = objects.FindIndexAll(FbxConstStrings.Model(), buf.AsSpan());
+            foreach(var i in buf.AsSpan(0, modelCount)) {
+                cancellationToken.ThrowIfCancellationRequested();
+                var model = objects.Children[i];
+                var property70 = model.Find(FbxConstStrings.Properties70());
 
-                var modelCount = objects.FindIndexAll(FbxConstStrings.Model(), buf.AsSpan());
-                foreach(var i in buf.AsSpan(0, modelCount)) {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    var model = objects.Children[i];
-                    var property70 = model.Find(FbxConstStrings.Properties70());
+                foreach(var p in property70.Children) {
+                    var props = p.Properties;
+                    if(props.Length < 1 || props[0].Type != FbxPropertyType.String) { continue; }
+                    var propTypeName = props[0].AsString();
 
-                    foreach(var p in property70.Children) {
-                        var props = p.Properties;
-                        if(props.Length < 1 || props[0].Type != FbxPropertyType.String) { continue; }
-                        var propTypeName = props[0].AsString();
-
-                        if(propTypeName.SequenceEqual(FbxConstStrings.Lcl_Translation())) {
-                            var translation = new Vector3(
-                                (float)props[4].AsDouble(),
-                                (float)props[5].AsDouble(),
-                                (float)props[6].AsDouble());
-                        }
-                        else if(propTypeName.SequenceEqual(FbxConstStrings.Lcl_Rotation())) {
-                            var rotation = new Vector3(
-                                (float)props[4].AsDouble(),
-                                (float)props[5].AsDouble(),
-                                (float)props[6].AsDouble());
-                        }
-                        else if(propTypeName.SequenceEqual(FbxConstStrings.Lcl_Scaling())) {
-                            var scale = new Vector3(
-                                (float)props[4].AsDouble(),
-                                (float)props[5].AsDouble(),
-                                (float)props[6].AsDouble());
-                        }
+                    if(propTypeName.SequenceEqual(FbxConstStrings.Lcl_Translation())) {
+                        var translation = new Vector3(
+                            (float)props[4].AsDouble(),
+                            (float)props[5].AsDouble(),
+                            (float)props[6].AsDouble());
+                    }
+                    else if(propTypeName.SequenceEqual(FbxConstStrings.Lcl_Rotation())) {
+                        var rotation = new Vector3(
+                            (float)props[4].AsDouble(),
+                            (float)props[5].AsDouble(),
+                            (float)props[6].AsDouble());
+                    }
+                    else if(propTypeName.SequenceEqual(FbxConstStrings.Lcl_Scaling())) {
+                        var scale = new Vector3(
+                            (float)props[4].AsDouble(),
+                            (float)props[5].AsDouble(),
+                            (float)props[6].AsDouble());
                     }
                 }
-                return;
             }
-            catch {
-                _vertices.Dispose();
-                _indices.Dispose();
-                throw;
-            }
+            return;
         }
 
         private static void GetGeometryMesh(in FbxNode geometry, out MeshGeometry mesh)
