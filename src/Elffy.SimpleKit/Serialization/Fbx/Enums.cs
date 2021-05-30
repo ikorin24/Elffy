@@ -17,6 +17,12 @@ namespace Elffy.Serialization.Fbx
         ByControllPoint,
     }
 
+    internal enum ConnectionType
+    {
+        OO,
+        OP,
+    }
+
     internal static class EnumFromRawStringExtension
     {
         public static MappingInformationType ToMappingInformationType(this RawString str)
@@ -45,6 +51,23 @@ namespace Elffy.Serialization.Fbx
             }
             else {
                 throw new FormatException();
+            }
+        }
+
+        public static ConnectionType ToConnectionType(this RawString str)
+        {
+            ReadOnlySpan<byte> OO = stackalloc byte[2] { (byte)'O', (byte)'O' };
+            ReadOnlySpan<byte> OP = stackalloc byte[2] { (byte)'O', (byte)'P' };
+
+            if(str.SequenceEqual(OO)) {
+                return ConnectionType.OO;
+            }
+            else if(str.SequenceEqual(OP)) {
+                return ConnectionType.OP;
+            }
+            else {
+                return Throw();
+                static ConnectionType Throw() => throw new FormatException();
             }
         }
     }

@@ -83,5 +83,8 @@ namespace Elffy.Serialization.Fbx
 
         [Utf8("Lcl Scaling")]
         public static partial ReadOnlySpan<byte> Lcl_Scaling();
+
+        [Utf8("Connections")]
+        public static partial ReadOnlySpan<byte> Connections();
     }
 }

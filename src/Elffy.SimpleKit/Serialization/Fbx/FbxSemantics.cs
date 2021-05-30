@@ -1,17 +1,79 @@
 ﻿#nullable enable
 using System;
 using System.Threading;
+using System.IO;
 using FbxTools;
 using Elffy.Effective.Unsafes;
 using Elffy.Core;
 using Elffy.Effective;
-using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Elffy.Serialization.Fbx
 {
-    internal static class FbxSemantics
+    internal sealed class FbxSemantics : IDisposable
     {
-        public static void GetMesh(FbxObject fbx, out UnsafeRawList<Vertex> vertices, out UnsafeRawList<int> indices, CancellationToken cancellationToken)
+        private FbxObject _fbx;
+        private UnsafeRawList<MeshGeometry> _meshes = default;
+        private UnsafeRawList<Connection> _connections = default;
+        private UnsafeRawList<int> _indices;
+        private UnsafeRawList<Vertex> _vertices;
+
+        public ReadOnlySpan<int> Indices => _indices.AsSpan();
+
+        public ReadOnlySpan<Vertex> Vertices => _vertices.AsSpan();
+
+        private FbxSemantics(FbxObject fbx)
+        {
+            _fbx = fbx;
+        }
+
+        ~FbxSemantics() => Dispose(false);
+
+        public void Dispose()
+        {
+            GC.SuppressFinalize(this);
+            Dispose(true);
+        }
+
+        private void Dispose(bool disposing)
+        {
+            var fbx = _fbx;
+            if(fbx is null) { return; }
+
+            // Release unmanaged resources
+            _meshes.Dispose();
+            _connections.Dispose();
+            _indices.Dispose();
+            _vertices.Dispose();
+
+            if(disposing) {
+                // Release managed resources if IDisposable.Dispose() called
+                fbx.Dispose();
+                Unsafe.AsRef(_fbx) = null!;
+            }
+        }
+
+        public static FbxSemantics Parse(Stream stream, CancellationToken cancellationToken = default)
+        {
+            FbxSemantics? sem = null;
+            try {
+                var fbx = FbxParser.Parse(stream);
+                sem = new FbxSemantics(fbx);
+                GetMesh(fbx, out sem._vertices, out sem._indices, cancellationToken);
+                
+                var connections = GetConnections(fbx);
+                // TODO: resolve connections
+
+                return sem;
+            }
+            catch {
+                sem?.Dispose();
+                throw;
+            }
+        }
+
+
+        private static void GetMesh(FbxObject fbx, out UnsafeRawList<Vertex> vertices, out UnsafeRawList<int> indices, CancellationToken cancellationToken)
         {
             // [root] --+-- "Objects"  ------+---- "Geometry"
             //          |                    |---- "Geometry"
@@ -252,6 +314,11 @@ namespace Elffy.Serialization.Fbx
                     n_gon = 0;
                 }
             }
+        }
+
+        private static ConnectionList GetConnections(FbxObject fbx)
+        {
+            return new ConnectionList(fbx.Find(FbxConstStrings.Connections()));
         }
     }
 }
