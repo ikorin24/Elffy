@@ -52,6 +52,8 @@ namespace Elffy.Effective.Unsafes
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private string DebugView => _ptr == IntPtr.Zero ? "null" : $"UnsafeRawList<{typeof(T).Name}>[{CountRef()}]";
 
+        public bool IsNull => _ptr == IntPtr.Zero;
+
         public int Count
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]

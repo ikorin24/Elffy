@@ -7,6 +7,7 @@ using Elffy.Effective.Unsafes;
 using Elffy.Core;
 using Elffy.Effective;
 using System.Runtime.CompilerServices;
+using System.Diagnostics;
 
 namespace Elffy.Serialization.Fbx
 {
@@ -14,9 +15,10 @@ namespace Elffy.Serialization.Fbx
     {
         private FbxObject _fbx;
         private UnsafeRawList<MeshGeometry> _meshes = default;
-        private UnsafeRawList<Connection> _connections = default;
         private UnsafeRawList<int> _indices;
         private UnsafeRawList<Vertex> _vertices;
+
+        private ConnectionList Connections => new ConnectionList(_fbx.Find(FbxConstStrings.Connections()));
 
         public ReadOnlySpan<int> Indices => _indices.AsSpan();
 
@@ -42,7 +44,6 @@ namespace Elffy.Serialization.Fbx
 
             // Release unmanaged resources
             _meshes.Dispose();
-            _connections.Dispose();
             _indices.Dispose();
             _vertices.Dispose();
 
@@ -55,25 +56,25 @@ namespace Elffy.Serialization.Fbx
 
         public static FbxSemantics Parse(Stream stream, CancellationToken cancellationToken = default)
         {
-            FbxSemantics? sem = null;
+            FbxSemantics? semantics = null;
             try {
                 var fbx = FbxParser.Parse(stream);
-                sem = new FbxSemantics(fbx);
-                GetMesh(fbx, out sem._vertices, out sem._indices, cancellationToken);
-                
-                var connections = GetConnections(fbx);
+                semantics = new FbxSemantics(fbx);
+                semantics.ReadMesh(cancellationToken);
+
+                var connections = semantics.Connections;
                 // TODO: resolve connections
 
-                return sem;
+                return semantics;
             }
             catch {
-                sem?.Dispose();
+                semantics?.Dispose();
                 throw;
             }
         }
 
 
-        private static void GetMesh(FbxObject fbx, out UnsafeRawList<Vertex> vertices, out UnsafeRawList<int> indices, CancellationToken cancellationToken)
+        private void ReadMesh(CancellationToken cancellationToken)
         {
             // [root] --+-- "Objects"  ------+---- "Geometry"
             //          |                    |---- "Geometry"
@@ -95,13 +96,13 @@ namespace Elffy.Serialization.Fbx
             // <*1> has translation, rotation, and scaling of the model.
             // They are (double x, double y, double z) = ([4], [5], [6])
 
-            vertices = default;
-            indices = default;
+            Debug.Assert(_vertices.IsNull);
+            Debug.Assert(_indices.IsNull);
             try {
-                vertices = UnsafeRawList<Vertex>.New(1024);
-                indices = UnsafeRawList<int>.New(1024);
+                _vertices = UnsafeRawList<Vertex>.New(1024);
+                _indices = UnsafeRawList<int>.New(1024);
 
-                var objects = fbx.Find(FbxConstStrings.Objects());
+                var objects = _fbx.Find(FbxConstStrings.Objects());
 
                 using var buf = new UnsafeRawArray<int>(objects.Children.Count);
                 var geometryCount = objects.FindIndexAll(FbxConstStrings.Geometry(), buf.AsSpan());
@@ -116,7 +117,7 @@ namespace Elffy.Serialization.Fbx
                     if(isMeshGeometry == false) { continue; }
 
                     GetGeometryMesh(geometry, out var meshGeometry);
-                    ResolveMesh(meshGeometry, indices, vertices);
+                    ResolveMesh(meshGeometry, _indices, _vertices);
                 }
 
 
@@ -154,8 +155,8 @@ namespace Elffy.Serialization.Fbx
                 return;
             }
             catch {
-                vertices.Dispose();
-                indices.Dispose();
+                _vertices.Dispose();
+                _indices.Dispose();
                 throw;
             }
         }
@@ -314,11 +315,6 @@ namespace Elffy.Serialization.Fbx
                     n_gon = 0;
                 }
             }
-        }
-
-        private static ConnectionList GetConnections(FbxObject fbx)
-        {
-            return new ConnectionList(fbx.Find(FbxConstStrings.Connections()));
         }
     }
 }
