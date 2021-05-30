@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using Cysharp.Text;
 using Cysharp.Threading.Tasks;
 using Elffy.Core;
 using Elffy.Effective;
@@ -244,7 +243,8 @@ namespace Elffy.Components
                     if(bones[i].ParentBone != null) {
                         tree[i].Parent = &tree[(int)bones[i].ParentBone!];
                     }
-                    bones[i].Position.ToTranslationMatrix4(out pos[i]);
+                    //bones[i].Position.ToTranslationMatrix4(out pos[i]);
+                    pos[i] = bones[i].Transform;
                     pos[i].Inverted(out posInv[i]);                         // Calc inverse of pos matrix in advance.
                 }
 
@@ -319,24 +319,7 @@ namespace Elffy.Components
         {
             get
             {
-                using var sb = ZString.CreateStringBuilder();
-                sb.Append("ID: ");
-                sb.Append(ID);
-                sb.Append(", Parent: ");
-                if(Parent == null) {
-                    sb.Append("null");
-                }
-                else {
-                    sb.Append(Parent->ID);
-                }
-                sb.Append(", Next: ");
-                if(Next == null) {
-                    sb.Append("null");
-                }
-                else {
-                    sb.Append(Next->ID);
-                }
-                return sb.ToString();
+                return $"ID: {ID}, Parent: {(Parent == null ? "null" : Parent->ID.ToString())}, Next: {(Next == null ? "null" : Next->ID.ToString())}";
             }
         }
 
@@ -346,61 +329,53 @@ namespace Elffy.Components
     [DebuggerDisplay("{DebugView}")]
     public readonly struct Bone : IEquatable<Bone>
     {
-        /// <summary>Get bone position</summary>
-        public readonly Vector3 Position;
-
         /// <summary>Get parent bone. (null if root bone)</summary>
         public readonly int? ParentBone;
 
-        /// <summary>Get connected bone. (null if not connected, that means this bone is tail.)</summary>
-        /// <remarks>This field has no special meaning. Only for debug viewing. If the bone has more than one child, choose one of them.</remarks>
-        public readonly int? ConnectedBone;
+        /// <summary>The transformation matrix from the model coordinate system to the bone coordinate system.</summary>
+        /// <remarks>
+        /// To get length of the bone, multiply the matrix to (1, 0, 0).<para/>
+        /// To get position of the bone, multiply the matrix to (0, 0, 0).<para/>
+        /// </remarks>
+        public readonly Matrix4 Transform;
+
+        /// <summary>Get direction of the bone. <see cref="Direction"/>.Length means length of the bone.</summary>
+        public Vector3 Direction => (Transform * new Vector4(1f, 0, 0, 1f)).Xyz;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private string DebugView
         {
             get
             {
-                using var sb = ZString.CreateStringBuilder(false);
-                sb.Append("Position: ");
-                sb.Append(Position);
-                sb.Append(", Parent: ");
-                if(ParentBone == null) {
-                    sb.Append("null");
-                }
-                else {
-                    sb.Append(ParentBone.Value);
-                }
-                sb.Append(", Connected: ");
-                if(ConnectedBone == null) {
-                    sb.Append("null");
-                }
-                else {
-                    sb.Append(ConnectedBone.Value);
-                }
-                return sb.ToString();
+                return $"Position: {this.GetPosition()}, Parent: {(ParentBone == null ? "null" : ParentBone.Value.ToString())}, Direction: {Direction}";
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Bone(in Vector3 pos, int? parentBone, int? connectedBone)
+        public Bone(int? parentBone, in Matrix4 transform)
         {
-            Position = pos;
             ParentBone = parentBone;
-            ConnectedBone = connectedBone;
+            Transform = transform;
         }
 
         public override bool Equals(object? obj) => obj is Bone bone && Equals(bone);
 
-        public bool Equals(Bone other)
-        {
-            return Position.Equals(other.Position) &&
-                   ParentBone == other.ParentBone &&
-                   ConnectedBone == other.ConnectedBone;
-        }
+        public bool Equals(Bone other) => (ParentBone == other.ParentBone) && (Transform == other.Transform);
 
-        public override int GetHashCode() => HashCode.Combine(Position, ParentBone, ConnectedBone);
+        public override int GetHashCode() => HashCode.Combine(ParentBone, Transform);
 
         public override string ToString() => DebugView;
+    }
+
+    public static class BoneExtension
+    {
+        /// <summary>Get position of the bone in model coordinage system.</summary>
+        /// <param name="bone">the bone</param>
+        /// <returns>position of the bone</returns>
+        public static ref readonly Vector3 GetPosition(this in Bone bone)
+        {
+            //(bone.Transform * new Vector4(0f, 0, 0, 1f)).Xyz;
+            return ref UnsafeEx.As<Vector4, Vector3>(in Matrix4.Col3(bone.Transform));
+        }
     }
 }

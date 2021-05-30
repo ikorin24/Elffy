@@ -40,10 +40,27 @@ namespace Sandbox
 
         private static async UniTask<Model3D> CreateModel()
         {
-            var model = Resources.Loader.CreatePmxModel("Alicia/Alicia_solid.pmx");
-            model.Scale = new Vector3(0.3f);
-            await model.ActivateWaitLoaded();
-            return model;
+            //var model = Resources.Loader.CreatePmxModel("Alicia/Alicia_solid.pmx");
+            //model.Scale = new Vector3(0.3f);
+            //await model.ActivateWaitLoaded();
+            //UniTask.Create(async () =>
+            //{
+            //    var humanoid = model.GetComponent<Elffy.Components.HumanoidSkeleton>();
+            //    await foreach(var frame in Timing.Frames()) {
+            //        using var handler = humanoid.StartTranslation();
+            //        handler.MoveBoneCCDIK(11, Vector3.UnitY * 10, 3);
+            //    }
+            //}).Forget();
+
+            //return model;
+
+
+            var dice = Resources.Loader.CreateFbxModel("Hidden/julia.fbx");
+            await dice.ActivateWaitLoaded();
+            dice.Position.X = 1;
+            dice.Position.Y = 0;
+            dice.Scale = new Vector3(0.05f);
+            return dice;
         }
 
         private static SkySphere CreateSky()
