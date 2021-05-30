@@ -39,6 +39,9 @@ namespace Elffy.Effective.Unsafes
         /// <summary>Get pointer to array</summary>
         public readonly IntPtr Ptr;
 
+        /// <summary>Get whether the array is empty or not</summary>
+        public bool IsEmpty => Length == 0;
+
         /// <summary>Get empty array</summary>
         public static UnsafeRawArray<T> Empty => default;
 
@@ -48,7 +51,13 @@ namespace Elffy.Effective.Unsafes
         public ref T this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => ref Unsafe.Add(ref GetReference(), index);
+            get
+            {
+#if DEBUG
+                if((uint)index >= (uint)Length) { throw new ArgumentOutOfRangeException(nameof(index)); }
+#endif
+                return ref Unsafe.Add(ref GetReference(), index);
+            }
         }
 
         /// <summary>Allocate non-zero-initialized array of specified length.</summary>
@@ -199,6 +208,7 @@ namespace Elffy.Effective.Unsafes
         {
             get
             {
+                if(_entity.IsEmpty) { return Array.Empty<T>(); }
                 var items = new T[_entity.Length];
                 _entity.CopyTo(items, 0);
                 return items;
