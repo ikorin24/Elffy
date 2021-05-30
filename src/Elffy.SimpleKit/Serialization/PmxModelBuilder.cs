@@ -169,9 +169,24 @@ namespace Elffy.Serialization
                         var bones = new UnsafeRawArray<Components.Bone>(pmxBones.Length);
                         try {
                             for(int i = 0; i < pmxBones.Length; i++) {
-                                bones[i] = new(UnsafeEx.As<PmxVector3, Vector3>(in pmxBones[i].Position),
-                                               pmxBones[i].ParentBone >= 0 ? pmxBones[i].ParentBone : null,
-                                               pmxBones[i].ConnectedBone >= 0 ? pmxBones[i].ConnectedBone : null);
+                                //bones[i] = new(UnsafeEx.As<PmxVector3, Vector3>(in pmxBones[i].Position),
+                                //               pmxBones[i].ParentBone >= 0 ? pmxBones[i].ParentBone : null,
+                                //               pmxBones[i].ConnectedBone >= 0 ? pmxBones[i].ConnectedBone : null);
+
+                                var parentBone = pmxBones[i].ParentBone >= 0 ? pmxBones[i].ParentBone : (int?)null;
+                                //var transform = pmxBones[i].ConnectedBone >= 0 ? new Vector3()
+
+                                Vector3 boneVec;
+                                var c = pmxBones[i].ConnectedBone;
+                                if(c >= 0) {
+                                    boneVec = pmxBones[c].Position.ToVector3() - pmxBones[i].Position.ToVector3();
+                                }
+                                else {
+                                    boneVec = pmxBones[i].PositionOffset.ToVector3();
+                                }
+                                
+                                bones[i] = new Components.Bone();
+
                             }
                         }
                         catch {

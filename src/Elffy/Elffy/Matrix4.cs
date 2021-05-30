@@ -298,13 +298,13 @@ namespace Elffy
             return result;
         }
 
-        private static ref Vector4 Col0(in Matrix4 matrix) => ref Unsafe.As<float, Vector4>(ref Unsafe.AsRef(matrix.M00));
-        private static ref Vector4 Col1(in Matrix4 matrix) => ref Unsafe.As<float, Vector4>(ref Unsafe.AsRef(matrix.M01));
-        private static ref Vector4 Col2(in Matrix4 matrix) => ref Unsafe.As<float, Vector4>(ref Unsafe.AsRef(matrix.M02));
-        private static ref Vector4 Col3(in Matrix4 matrix) => ref Unsafe.As<float, Vector4>(ref Unsafe.AsRef(matrix.M03));
-        private static Vector4 Row0(in Matrix4 matrix) => new Vector4(matrix.M00, matrix.M01, matrix.M02, matrix.M03);
-        private static Vector4 Row1(in Matrix4 matrix) => new Vector4(matrix.M10, matrix.M11, matrix.M12, matrix.M13);
-        private static Vector4 Row2(in Matrix4 matrix) => new Vector4(matrix.M20, matrix.M21, matrix.M22, matrix.M23);
-        private static Vector4 Row3(in Matrix4 matrix) => new Vector4(matrix.M30, matrix.M31, matrix.M32, matrix.M33);
+        public static ref readonly Vector4 Col0(in Matrix4 matrix) => ref Unsafe.As<float, Vector4>(ref Unsafe.AsRef(matrix.M00));
+        public static ref readonly Vector4 Col1(in Matrix4 matrix) => ref Unsafe.As<float, Vector4>(ref Unsafe.AsRef(matrix.M01));
+        public static ref readonly Vector4 Col2(in Matrix4 matrix) => ref Unsafe.As<float, Vector4>(ref Unsafe.AsRef(matrix.M02));
+        public static ref readonly Vector4 Col3(in Matrix4 matrix) => ref Unsafe.As<float, Vector4>(ref Unsafe.AsRef(matrix.M03));
+        public static Vector4 Row0(in Matrix4 matrix) => new Vector4(matrix.M00, matrix.M01, matrix.M02, matrix.M03);
+        public static Vector4 Row1(in Matrix4 matrix) => new Vector4(matrix.M10, matrix.M11, matrix.M12, matrix.M13);
+        public static Vector4 Row2(in Matrix4 matrix) => new Vector4(matrix.M20, matrix.M21, matrix.M22, matrix.M23);
+        public static Vector4 Row3(in Matrix4 matrix) => new Vector4(matrix.M30, matrix.M31, matrix.M32, matrix.M33);
     }
 }

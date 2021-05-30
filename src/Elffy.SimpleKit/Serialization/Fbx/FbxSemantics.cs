@@ -5,6 +5,7 @@ using FbxTools;
 using Elffy.Effective.Unsafes;
 using Elffy.Core;
 using Elffy.Effective;
+using System.Diagnostics;
 
 namespace Elffy.Serialization.Fbx
 {
@@ -16,15 +17,18 @@ namespace Elffy.Serialization.Fbx
             //          |                    |---- "Geometry"
             //          |                    |---- "Geometry"
             //          |                    |----  ...
-            //          |
+            //          |                    |                                        <*1>
+            //          |                    |---- "Model" ----- "Properties70" --+-- "P" ([0]:string propTypeName, ...)
+            //          |                    |                                    |-- "P" ([0]:string propTypeName, ...)
+            //          |                    |                                    |-- ...
+            //          |                    |---- "Model" ---- ...
+            //          |                    |---- ...
+            //          |                   
             //          |
             //          |-- "GlobalSettings"
-            //          |                                      <*1>
-            //          |-- "Model" ----- "Properties70" --+-- "P" ([0]:string propTypeName, ...)
-            //          |                                  |-- "P" ([0]:string propTypeName, ...)
-            //          |                                  |-- ...
-            //          |-- "Model" ---- ...
-            //          |-- ...
+            //          | 
+            //          |-- "Connections"
+
 
             // <*1> has translation, rotation, and scaling of the model.
             // They are (double x, double y, double z) = ([4], [5], [6])
@@ -35,14 +39,14 @@ namespace Elffy.Serialization.Fbx
                 vertices = UnsafeRawList<Vertex>.New(1024);
                 indices = UnsafeRawList<int>.New(1024);
 
-                ref readonly var objects = ref fbx.Find(FbxConstStrings.Objects());
+                var objects = fbx.Find(FbxConstStrings.Objects());
 
-                using var buf = new UnsafeRawArray<int>(objects.Children.Length);
+                using var buf = new UnsafeRawArray<int>(objects.Children.Count);
                 var geometryCount = objects.FindIndexAll(FbxConstStrings.Geometry(), buf.AsSpan());
                 foreach(var i in buf.AsSpan(0, geometryCount)) {
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    ref readonly var geometry = ref objects.Children[i];
+                    var geometry = objects.Children[i];
                     var props = geometry.Properties;
                     var isMeshGeometry = (props.Length >= 3) &&
                                          (props[2].Type == FbxPropertyType.String) &&
@@ -57,8 +61,8 @@ namespace Elffy.Serialization.Fbx
                 var modelCount = objects.FindIndexAll(FbxConstStrings.Model(), buf.AsSpan());
                 foreach(var i in buf.AsSpan(0, modelCount)) {
                     cancellationToken.ThrowIfCancellationRequested();
-                    ref readonly var model = ref objects.Children[i];
-                    ref readonly var property70 = ref model.Find(FbxConstStrings.Properties70());
+                    var model = objects.Children[i];
+                    var property70 = model.Find(FbxConstStrings.Properties70());
 
                     foreach(var p in property70.Children) {
                         var props = p.Properties;
@@ -94,7 +98,7 @@ namespace Elffy.Serialization.Fbx
             }
         }
 
-        private static void GetGeometryMesh(in FbxNode geometry, out MeshGeometry meshGeometry)
+        private static void GetGeometryMesh(in FbxNode geometry, out MeshGeometry mesh)
         {
             // - "Geometry"     --------+--- "Vertices"
             //   ([0]:long ID,          |    ([0]:double[] Positions)
@@ -131,54 +135,54 @@ namespace Elffy.Serialization.Fbx
             //                                                            ([0]:int[] Materials)
 
 
-            meshGeometry = default;
-            meshGeometry.ID = geometry.Properties[0].AsInt64();
-            meshGeometry.Name = geometry.Properties[1].AsString();
+            mesh = default;
+            mesh.ID = geometry.Properties[0].AsInt64();
+            mesh.Name = geometry.Properties[1].AsString();
 
             foreach(var node in geometry.Children) {
                 var nodeName = node.Name;
                 if(nodeName.SequenceEqual(FbxConstStrings.Vertices())) {
                     // "Vertices"
 
-                    meshGeometry.Positions = node.Properties[0].AsDoubleArray();
+                    mesh.Positions = node.Properties[0].AsDoubleArray();
                 }
                 else if(nodeName.SequenceEqual(FbxConstStrings.PolygonVertexIndex())) {
                     // "PolygonVertexindex"
 
-                    meshGeometry.IndicesRaw = node.Properties[0].AsInt32Array();
+                    mesh.IndicesRaw = node.Properties[0].AsInt32Array();
                 }
                 else if(nodeName.SequenceEqual(FbxConstStrings.LayerElementNormal())) {
                     // "LayerElementNormal"
 
-                    meshGeometry.Normals = node.Find(FbxConstStrings.Normals()).Properties[0].AsDoubleArray();
+                    mesh.Normals = node.Find(FbxConstStrings.Normals()).Properties[0].AsDoubleArray();
 
                     var referenceType = node.Find(FbxConstStrings.ReferenceInformationType()).Properties[0].AsString();
                     var mappingType = node.Find(FbxConstStrings.MappingInformationType()).Properties[0].AsString();
 
-                    meshGeometry.NormalReferenceType = GetReferenceInformationType(referenceType);
-                    meshGeometry.NormalMappingType = GetMappingInformationType(mappingType);
+                    mesh.NormalReferenceType = referenceType.ToReferenceInformationType();
+                    mesh.NormalMappingType = mappingType.ToMappingInformationType();
 
-                    if(meshGeometry.NormalReferenceType == ReferenceInformationType.IndexToDirect) {
-                        meshGeometry.NormalIndices = node.Find(FbxConstStrings.NormalIndex()).Properties[0].AsInt32Array();
+                    if(mesh.NormalReferenceType == ReferenceInformationType.IndexToDirect) {
+                        mesh.NormalIndices = node.Find(FbxConstStrings.NormalIndex()).Properties[0].AsInt32Array();
                     }
                 }
                 else if(nodeName.SequenceEqual(FbxConstStrings.LayerElementUV())) {
                     // "LayerElementUV"
 
-                    meshGeometry.UV = node.Find(FbxConstStrings.UV()).Properties[0].AsDoubleArray();
+                    mesh.UV = node.Find(FbxConstStrings.UV()).Properties[0].AsDoubleArray();
                     var referenceType = node.Find(FbxConstStrings.ReferenceInformationType()).Properties[0].AsString();
                     var mappingType = node.Find(FbxConstStrings.MappingInformationType()).Properties[0].AsString();
-                    meshGeometry.UVReferenceType = GetReferenceInformationType(referenceType);
-                    meshGeometry.UVMappingType = GetMappingInformationType(mappingType);
+                    mesh.UVReferenceType = referenceType.ToReferenceInformationType();
+                    mesh.UVMappingType = mappingType.ToMappingInformationType();
 
-                    if(meshGeometry.UVReferenceType == ReferenceInformationType.IndexToDirect) {
-                        meshGeometry.UVIndices = node.Find(FbxConstStrings.UVIndex()).Properties[0].AsInt32Array();
+                    if(mesh.UVReferenceType == ReferenceInformationType.IndexToDirect) {
+                        mesh.UVIndices = node.Find(FbxConstStrings.UVIndex()).Properties[0].AsInt32Array();
                     }
                 }
                 else if(nodeName.SequenceEqual(FbxConstStrings.LayerElementMaterial())) {
                     // "LayerElementMaterial"
 
-                    meshGeometry.Materials = node.Find(FbxConstStrings.Materials()).Properties[0].AsInt32Array();
+                    mesh.Materials = node.Find(FbxConstStrings.Materials()).Properties[0].AsInt32Array();
                 }
             }
         }
@@ -186,9 +190,9 @@ namespace Elffy.Serialization.Fbx
         private static void ResolveMesh(MeshGeometry mesh, UnsafeRawList<int> indicesMarged, UnsafeRawList<Vertex> verticesMarged)
         {
             var indicesOffset = indicesMarged.Count;
-            var positions = mesh.Positions.MarshalCast<double, VecD3>();
-            var normals = mesh.Normals.MarshalCast<double, VecD3>();
-            var uv = mesh.UV.MarshalCast<double, VecD2>();
+            var positions = mesh.Positions.AsSpan().MarshalCast<double, VecD3>();
+            var normals = mesh.Normals.AsSpan().MarshalCast<double, VecD3>();
+            var uv = mesh.UV.AsSpan().MarshalCast<double, VecD2>();
 
             switch(mesh.NormalMappingType) {
                 case MappingInformationType.ByPolygonVertex: {
@@ -248,73 +252,6 @@ namespace Elffy.Serialization.Fbx
                     n_gon = 0;
                 }
             }
-        }
-
-        private static MappingInformationType GetMappingInformationType(ReadOnlySpan<byte> str)
-        {
-            if(str.SequenceEqual(FbxConstStrings.ByVertice())) {
-                return MappingInformationType.ByVertice;
-            }
-            else if(str.SequenceEqual(FbxConstStrings.ByPolygonVertex())) {
-                return MappingInformationType.ByPolygonVertex;
-            }
-            else if(str.SequenceEqual(FbxConstStrings.ByPolygonVertex())) {
-                return MappingInformationType.ByControllPoint;
-            }
-            else {
-                throw new FormatException();
-            }
-        }
-
-        public static ReferenceInformationType GetReferenceInformationType(ReadOnlySpan<byte> str)
-        {
-            if(str.SequenceEqual(FbxConstStrings.Direct())) {
-                return ReferenceInformationType.Direct;
-            }
-            else if(str.SequenceEqual(FbxConstStrings.IndexToDirect())) {
-                return ReferenceInformationType.IndexToDirect;
-            }
-            else {
-                throw new FormatException();
-            }
-        }
-
-        public ref struct MeshGeometry
-        {
-            public long ID;
-            public ReadOnlySpan<byte> Name;
-            public ReadOnlySpan<int> IndicesRaw;
-            public ReadOnlySpan<double> Positions;
-            public ReadOnlySpan<double> Normals;
-            public ReadOnlySpan<int> NormalIndices;
-            public MappingInformationType NormalMappingType;
-            public ReferenceInformationType NormalReferenceType;
-            public ReadOnlySpan<double> UV;
-            public ReadOnlySpan<int> UVIndices;
-            public MappingInformationType UVMappingType;
-            public ReferenceInformationType UVReferenceType;
-            public ReadOnlySpan<int> Materials;
-        }
-
-        private struct VecD3
-        {
-#pragma warning disable 0649    // The field is never assigned to, and will always have its default value.
-            public double X;
-            public double Y;
-            public double Z;
-#pragma warning restore 0649
-
-            public static explicit operator Vector3(in VecD3 vec) => new Vector3((float)vec.X, (float)vec.Y, (float)vec.Z);
-        }
-
-        private struct VecD2
-        {
-#pragma warning disable 0649    // The field is never assigned to, and will always have its default value.
-            public double X;
-            public double Y;
-#pragma warning restore 0649
-
-            public static explicit operator Vector2(in VecD2 vec) => new Vector2((float)vec.X, (float)vec.Y);
         }
     }
 }

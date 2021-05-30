@@ -5,7 +5,9 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using NVec3 = System.Numerics.Vector3;
 using TKVector3 = OpenTK.Mathematics.Vector3;
+using Elffy.Effective.Unsafes;
 
 namespace Elffy
 {
@@ -104,13 +106,10 @@ namespace Elffy
         public readonly void Deconstruct(out float x, out float y, out float z) => (x, y, z) = (X, Y, Z);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly float Dot(in Vector3 vec) => Mult(this, vec).SumElement();
+        public readonly float Dot(in Vector3 vec) => (this * vec).SumElement();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float Dot(in Vector3 vec1, in Vector3 vec2) => vec1.Dot(vec2);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly Vector3 Mult(in Vector3 vec) => new Vector3(X * vec.X, Y * vec.Y, Z * vec.Z);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 Mult(in Vector3 vec1, in Vector3 vec2) => vec1.Mult(vec2);
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly Vector3 Cross(in Vector3 vec) => Cross(this, vec);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -127,7 +126,11 @@ namespace Elffy
             Z /= len;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly Vector3 Normalized() => ((TKVector3)this).Normalized();
+        public readonly Vector3 Normalized()
+        {
+            var len = Length;
+            return new Vector3(X / len, Y / len, Z / len);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly Matrix4 ToTranslationMatrix4() => new Matrix4(1, 0, 0, X,
@@ -182,6 +185,13 @@ namespace Elffy
         public static Vector3 operator *(in Vector3 vec1, float right) => new Vector3(vec1.X * right, vec1.Y * right, vec1.Z * right);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 operator *(float right, in Vector3 vec1) => new Vector3(vec1.X * right, vec1.Y * right, vec1.Z * right);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 operator *(in Vector3 vec1, in Vector3 vec2)
+        {
+            return new Vector3(vec1.X * vec2.X, vec1.Y * vec2.Y, vec1.Z * vec2.Z);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 operator /(in Vector3 vec1, float right) => new Vector3(vec1.X / right, vec1.Y / right, vec1.Z / right);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
