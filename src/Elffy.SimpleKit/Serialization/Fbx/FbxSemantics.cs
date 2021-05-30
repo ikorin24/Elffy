@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using System;
 using System.Threading;
-using System.IO;
 using FbxTools;
 using Elffy.Effective.Unsafes;
 using Elffy.Core;
@@ -15,6 +14,7 @@ namespace Elffy.Serialization.Fbx
     {
         private FbxObject _fbx;
         private UnsafeRawList<MeshGeometry> _meshes;
+        private UnsafeRawArray<Texture> _textures = default;
         private UnsafeRawList<int> _indices;
         private UnsafeRawList<Vertex> _vertices;
 
@@ -46,6 +46,7 @@ namespace Elffy.Serialization.Fbx
             _meshes.Dispose();
             _indices.Dispose();
             _vertices.Dispose();
+            _textures.Dispose();
 
             if(disposing) {
                 // Release managed resources if IDisposable.Dispose() called
@@ -54,13 +55,15 @@ namespace Elffy.Serialization.Fbx
             }
         }
 
-        public static FbxSemantics Parse(Stream stream, CancellationToken cancellationToken = default)
+        public static FbxSemantics Parse(IResourceLoader loader, string name, CancellationToken cancellationToken = default)
         {
             FbxSemantics? semantics = null;
             try {
+                using var stream = loader.GetStream(name);
                 var fbx = FbxParser.Parse(stream);
                 semantics = new FbxSemantics(fbx);
                 semantics.ReadMesh(cancellationToken);
+                semantics.ReadTexture(cancellationToken);
 
                 var connections = semantics.Connections;
                 // TODO: resolve connections
@@ -73,6 +76,25 @@ namespace Elffy.Serialization.Fbx
             }
         }
 
+        private void ReadTexture(CancellationToken cancellationToken)
+        {
+            Debug.Assert(_textures.IsEmpty);
+
+            var objects = _fbx.Find(FbxConstStrings.Objects());
+            using var buf = new UnsafeRawArray<int>(objects.Children.Count);
+            var textureCount = objects.FindIndexAll(FbxConstStrings.Texture(), buf.AsSpan());
+            _textures = new UnsafeRawArray<Texture>(textureCount);
+            int i = 0;
+            foreach(var index in buf.AsSpan(0, textureCount)) {
+                cancellationToken.ThrowIfCancellationRequested();
+                var textureNode = objects.Children[index];
+                var id = textureNode.Properties[0].AsInt64();
+                var fileName = textureNode.Find(FbxConstStrings.RelativeFilename()).Properties[0].AsString();
+                _textures[i] = new Texture(id, fileName);
+                i++;
+            }
+            return;
+        }
 
         private void ReadMesh(CancellationToken cancellationToken)
         {
@@ -106,6 +128,10 @@ namespace Elffy.Serialization.Fbx
             _meshes = UnsafeRawList<MeshGeometry>.New(128);
 
             var objects = _fbx.Find(FbxConstStrings.Objects());
+
+
+            var te = objects.Find(System.Text.Encoding.ASCII.GetBytes("Texture"));
+
 
             using var buf = new UnsafeRawArray<int>(objects.Children.Count);
             var geometryCount = objects.FindIndexAll(FbxConstStrings.Geometry(), buf.AsSpan());

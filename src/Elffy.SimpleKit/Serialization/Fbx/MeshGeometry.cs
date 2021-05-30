@@ -24,6 +24,21 @@ namespace Elffy.Serialization.Fbx
     }
 
     [DebuggerDisplay("{DebugDisplay(),nq}")]
+    internal struct Texture
+    {
+        public long ID;
+        public RawString FileName;
+
+        public Texture(long id, RawString fileName)
+        {
+            ID = id;
+            FileName = fileName;
+        }
+
+        private string DebugDisplay() => $"(id:{ID}) \"{FileName.ToString()}\"";
+    }
+
+    [DebuggerDisplay("{DebugDisplay(),nq}")]
     internal struct Connection
     {
         public ConnectionType ConnectionType;

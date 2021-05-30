@@ -12,6 +12,12 @@ namespace Elffy.Serialization.Fbx
         [Utf8("Objects")]
         public static partial ReadOnlySpan<byte> Objects();
 
+        [Utf8("Texture")]
+        public static partial ReadOnlySpan<byte> Texture();
+
+        [Utf8("RelativeFilename")]
+        public static partial ReadOnlySpan<byte> RelativeFilename();
+
         [Utf8("Geometry")]
         public static partial ReadOnlySpan<byte> Geometry();
 
