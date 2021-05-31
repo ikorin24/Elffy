@@ -1,24 +1,23 @@
 ﻿#nullable enable
 using System;
 using System.Threading;
+using System.Linq;
 using FbxTools;
 using Elffy.Effective.Unsafes;
 using Elffy.Core;
 using Elffy.Effective;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace Elffy.Serialization.Fbx
 {
     internal sealed class FbxSemantics : IDisposable
     {
         private FbxObject _fbx;
-        private UnsafeRawList<MeshGeometry> _meshes;
-        private UnsafeRawArray<Texture> _textures = default;
+        private UnsafeRawArray<Texture> _textures;
         private UnsafeRawList<int> _indices;
         private UnsafeRawList<Vertex> _vertices;
-
-        private ConnectionList Connections => new ConnectionList(_fbx.Find(FbxConstStrings.Connections()));
 
         public ReadOnlySpan<int> Indices => _indices.AsSpan();
 
@@ -43,7 +42,6 @@ namespace Elffy.Serialization.Fbx
             if(fbx is null) { return; }
 
             // Release unmanaged resources
-            _meshes.Dispose();
             _indices.Dispose();
             _vertices.Dispose();
             _textures.Dispose();
@@ -58,45 +56,45 @@ namespace Elffy.Serialization.Fbx
         public static FbxSemantics Parse(IResourceLoader loader, string name, CancellationToken cancellationToken = default)
         {
             FbxSemantics? semantics = null;
+            ParserTemporalInfo temporalInfo = default;
             try {
                 using var stream = loader.GetStream(name);
                 var fbx = FbxParser.Parse(stream);
                 semantics = new FbxSemantics(fbx);
-                semantics.ReadMesh(cancellationToken);
-                semantics.ReadTexture(cancellationToken);
 
-                var connections = semantics.Connections;
-                // TODO: resolve connections
+                var objects = fbx.Find(FbxConstStrings.Objects());
+                using var buf = new UnsafeRawArray<int>(objects.Children.Count);
+                var bufSpan = buf.AsSpan();
+                ReadMesh(objects, bufSpan, ref semantics._vertices, ref semantics._indices, ref temporalInfo.Meshes, cancellationToken);
+                ReadTexture(objects, bufSpan, ref semantics._textures, cancellationToken);
+                ReadModel(objects, bufSpan, ref temporalInfo.Models, cancellationToken);
 
+                var objectDic = new Dictionary<long, ObjectInfo>();
+                int i = 0;
+                foreach(var item in temporalInfo.Meshes.AsSpan()) {
+                    objectDic.Add(item.ID, new ObjectInfo(ObjectType.MeshGeometry, i));
+                    i++;
+                }
+
+                CreateDic(ref temporalInfo);
+
+                var connections = new ConnectionList(fbx.Find(FbxConstStrings.Connections()));
+                Connect(connections, temporalInfo, cancellationToken);
                 return semantics;
             }
             catch {
+                temporalInfo.Dispose();
                 semantics?.Dispose();
                 throw;
             }
         }
 
-        private void ReadTexture(CancellationToken cancellationToken)
-        {
-            Debug.Assert(_textures.IsEmpty);
-
-            var objects = _fbx.Find(FbxConstStrings.Objects());
-            using var buf = new UnsafeRawArray<int>(objects.Children.Count);
-            var textureCount = objects.FindIndexAll(FbxConstStrings.Texture(), buf.AsSpan());
-            _textures = new UnsafeRawArray<Texture>(textureCount);
-            int i = 0;
-            foreach(var index in buf.AsSpan(0, textureCount)) {
-                cancellationToken.ThrowIfCancellationRequested();
-                var textureNode = objects.Children[index];
-                var id = textureNode.Properties[0].AsInt64();
-                var fileName = textureNode.Find(FbxConstStrings.RelativeFilename()).Properties[0].AsString();
-                _textures[i] = new Texture(id, fileName);
-                i++;
-            }
-            return;
-        }
-
-        private void ReadMesh(CancellationToken cancellationToken)
+        private static void ReadMesh(FbxNode objects,
+                                     Span<int> indexBuf,
+                                     ref UnsafeRawList<Vertex> vertices,
+                                     ref UnsafeRawList<int> indices,
+                                     ref UnsafeRawList<MeshGeometry> meshes,
+                                     CancellationToken cancellationToken)
         {
             // [root] --+-- "Objects"  ------+---- "Geometry"
             //          |                    |---- "Geometry"
@@ -120,22 +118,17 @@ namespace Elffy.Serialization.Fbx
             // <*1> has translation, rotation, and scaling of the model.
             // They are (double x, double y, double z) = ([4], [5], [6])
 
-            Debug.Assert(_vertices.IsNull);
-            Debug.Assert(_indices.IsNull);
-            Debug.Assert(_meshes.IsNull);
-            _vertices = UnsafeRawList<Vertex>.New(1024);
-            _indices = UnsafeRawList<int>.New(1024);
-            _meshes = UnsafeRawList<MeshGeometry>.New(128);
+            Debug.Assert(vertices.IsNull);
+            Debug.Assert(indices.IsNull);
+            Debug.Assert(meshes.IsNull);
+            Debug.Assert(indexBuf.Length >= objects.Children.Count);
 
-            var objects = _fbx.Find(FbxConstStrings.Objects());
+            vertices = UnsafeRawList<Vertex>.New(1024);
+            indices = UnsafeRawList<int>.New(1024);
+            meshes = UnsafeRawList<MeshGeometry>.New(128);
 
-
-            var te = objects.Find(System.Text.Encoding.ASCII.GetBytes("Texture"));
-
-
-            using var buf = new UnsafeRawArray<int>(objects.Children.Count);
-            var geometryCount = objects.FindIndexAll(FbxConstStrings.Geometry(), buf.AsSpan());
-            foreach(var i in buf.AsSpan(0, geometryCount)) {
+            var geometryCount = objects.FindIndexAll(FbxConstStrings.Geometry(), indexBuf);
+            foreach(var i in indexBuf.Slice(0, geometryCount)) {
                 cancellationToken.ThrowIfCancellationRequested();
 
                 var geometry = objects.Children[i];
@@ -146,41 +139,10 @@ namespace Elffy.Serialization.Fbx
                 if(isMeshGeometry == false) { continue; }
 
                 GetGeometryMesh(geometry, out var meshGeometry);
-                ResolveMesh(meshGeometry, _indices, _vertices);
-                _meshes.Add(meshGeometry);
+                ResolveMesh(meshGeometry, indices, vertices, out meshGeometry.ResolvedIndicesRange, out meshGeometry.ResolvedVerticesRange);
+                meshes.Add(meshGeometry);
             }
 
-            var modelCount = objects.FindIndexAll(FbxConstStrings.Model(), buf.AsSpan());
-            foreach(var i in buf.AsSpan(0, modelCount)) {
-                cancellationToken.ThrowIfCancellationRequested();
-                var model = objects.Children[i];
-                var property70 = model.Find(FbxConstStrings.Properties70());
-
-                foreach(var p in property70.Children) {
-                    var props = p.Properties;
-                    if(props.Length < 1 || props[0].Type != FbxPropertyType.String) { continue; }
-                    var propTypeName = props[0].AsString();
-
-                    if(propTypeName.SequenceEqual(FbxConstStrings.Lcl_Translation())) {
-                        var translation = new Vector3(
-                            (float)props[4].AsDouble(),
-                            (float)props[5].AsDouble(),
-                            (float)props[6].AsDouble());
-                    }
-                    else if(propTypeName.SequenceEqual(FbxConstStrings.Lcl_Rotation())) {
-                        var rotation = new Vector3(
-                            (float)props[4].AsDouble(),
-                            (float)props[5].AsDouble(),
-                            (float)props[6].AsDouble());
-                    }
-                    else if(propTypeName.SequenceEqual(FbxConstStrings.Lcl_Scaling())) {
-                        var scale = new Vector3(
-                            (float)props[4].AsDouble(),
-                            (float)props[5].AsDouble(),
-                            (float)props[6].AsDouble());
-                    }
-                }
-            }
             return;
         }
 
@@ -273,9 +235,11 @@ namespace Elffy.Serialization.Fbx
             }
         }
 
-        private static void ResolveMesh(MeshGeometry mesh, UnsafeRawList<int> indicesMarged, UnsafeRawList<Vertex> verticesMarged)
+        private static void ResolveMesh(MeshGeometry mesh, UnsafeRawList<int> indicesMarged, UnsafeRawList<Vertex> verticesMarged,
+                                        out Range indicesRange, out Range verticesRange)
         {
             var indicesOffset = indicesMarged.Count;
+            var verticesOffset = verticesMarged.Count;
             var positions = mesh.Positions.AsSpan().MarshalCast<double, VecD3>();
             var normals = mesh.Normals.AsSpan().MarshalCast<double, VecD3>();
             var uv = mesh.UV.AsSpan().MarshalCast<double, VecD2>();
@@ -337,6 +301,148 @@ namespace Elffy.Serialization.Fbx
                     }
                     n_gon = 0;
                 }
+            }
+
+            indicesRange = new Range(indicesOffset, indicesMarged.Count);
+            verticesRange = new Range(verticesOffset, verticesMarged.Count);
+        }
+
+
+        private static void ReadTexture(FbxNode objects,
+                                        Span<int> indexBuf,
+                                        ref UnsafeRawArray<Texture> textures,
+                                        CancellationToken cancellationToken)
+        {
+            Debug.Assert(textures.IsEmpty);
+
+            var textureCount = objects.FindIndexAll(FbxConstStrings.Texture(), indexBuf);
+            textures = new UnsafeRawArray<Texture>(textureCount);
+            int i = 0;
+            foreach(var index in indexBuf.Slice(0, textureCount)) {
+                cancellationToken.ThrowIfCancellationRequested();
+                var textureNode = objects.Children[index];
+                var id = textureNode.Properties[0].AsInt64();
+                var fileName = textureNode.Find(FbxConstStrings.RelativeFilename()).Properties[0].AsString();
+                textures[i] = new Texture(id, fileName);
+                i++;
+            }
+            return;
+        }
+
+        private static void ReadModel(FbxNode objects, Span<int> indexBuf, ref UnsafeRawList<Model> models, CancellationToken cancellationToken)
+        {
+            Debug.Assert(models.IsNull);
+            models = UnsafeRawList<Model>.New(128);
+
+            var modelCount = objects.FindIndexAll(FbxConstStrings.Model(), indexBuf);
+            foreach(var i in indexBuf.Slice(0, modelCount)) {
+                cancellationToken.ThrowIfCancellationRequested();
+                var modelNode = objects.Children[i];
+                var id = modelNode.Properties[0].AsInt64();
+                var property70 = modelNode.Find(FbxConstStrings.Properties70());
+
+
+                var translation = new Vector3();
+                var rotation = new Vector3();
+                var scale = new Vector3(1f, 1f, 1f);
+                foreach(var p in property70.Children) {
+                    var props = p.Properties;
+                    if(props.Length < 1 || props[0].Type != FbxPropertyType.String) { continue; }
+                    var propTypeName = props[0].AsString();
+
+                    if(propTypeName.SequenceEqual(FbxConstStrings.Lcl_Translation())) {
+                        translation = new Vector3(
+                            (float)props[4].AsDouble(),
+                            (float)props[5].AsDouble(),
+                            (float)props[6].AsDouble());
+                    }
+                    else if(propTypeName.SequenceEqual(FbxConstStrings.Lcl_Rotation())) {
+                        rotation = new Vector3(
+                            (float)props[4].AsDouble(),
+                            (float)props[5].AsDouble(),
+                            (float)props[6].AsDouble());
+                    }
+                    else if(propTypeName.SequenceEqual(FbxConstStrings.Lcl_Scaling())) {
+                        scale = new Vector3(
+                            (float)props[4].AsDouble(),
+                            (float)props[5].AsDouble(),
+                            (float)props[6].AsDouble());
+                    }
+                }
+                models.Add(new Model(id, translation, rotation, scale));
+            }
+        }
+
+        private static void Connect(ConnectionList connections, in ParserTemporalInfo temporalInfo, CancellationToken cancellationToken)
+        {
+            // TODO: resolve connections
+
+            var objectDic = temporalInfo.ObjectDic;
+            foreach(var connect in connections) {
+                cancellationToken.ThrowIfCancellationRequested();
+                switch(connect.ConnectionType) {
+                    case ConnectionType.OO: {
+                        if(objectDic.TryGetValue(connect.SourceID, out var src) && objectDic.TryGetValue(connect.DestID, out var dest)) {
+
+                            var s = src.Type switch
+                            {
+                                ObjectType.MeshGeometry => $"mesh[{src.Index}]",
+                                ObjectType.Model => $"model[{src.Index}]",
+                                _ => throw new Exception(),
+                            };
+                            var d = src.Type switch
+                            {
+                                ObjectType.MeshGeometry => $"mesh[{dest.Index}]",
+                                ObjectType.Model => $"model[{dest.Index}]",
+                                _ => throw new Exception(),
+                            };
+
+                            Debug.WriteLine($"{s}---{d}");
+                        }
+                        //else if(objectDic.TryGetValue(connect.DestID, out var b)) {
+                        //    Debug.WriteLine($"{connect.SourceID}---mesh[{b}]");
+                        //}
+                        break;
+                    }
+                    case ConnectionType.OP: {
+                        break;
+                    }
+                    default: {
+                        continue;
+                    }
+                }
+            }
+        }
+
+        private static void CreateDic(ref ParserTemporalInfo temporalInfo)
+        {
+            // TODO: don't use Dictionary
+            temporalInfo.ObjectDic = new Dictionary<long, ObjectInfo>();
+            var dic = temporalInfo.ObjectDic;
+
+            var meshes = temporalInfo.Meshes.AsSpan();
+            for(int i = 0; i < meshes.Length; i++) {
+                dic.Add(meshes[i].ID, new ObjectInfo(ObjectType.MeshGeometry, i));
+            }
+
+            var models = temporalInfo.Models.AsSpan();
+            for(int i = 0; i < models.Length; i++) {
+                dic.Add(models[i].ID, new ObjectInfo(ObjectType.Model, i));
+            }
+        }
+
+
+        private ref struct ParserTemporalInfo
+        {
+            public UnsafeRawList<MeshGeometry> Meshes;
+            public UnsafeRawList<Model> Models;
+
+            public Dictionary<long, ObjectInfo> ObjectDic;
+
+            public void Dispose()
+            {
+                Meshes.Dispose();
+                Models.Dispose();
             }
         }
     }

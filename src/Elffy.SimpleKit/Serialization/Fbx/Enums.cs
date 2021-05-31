@@ -19,7 +19,9 @@ namespace Elffy.Serialization.Fbx
 
     internal enum ConnectionType
     {
+        /// <summary>object-object connection</summary>
         OO,
+        /// <summary>object-property connection</summary>
         OP,
     }
 
