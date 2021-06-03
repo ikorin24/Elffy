@@ -63,11 +63,13 @@ namespace Elffy.Serialization.Fbx
                 semantics = new FbxSemantics(fbx);
 
                 var objects = fbx.Find(FbxConstStrings.Objects());
+
                 using var buf = new UnsafeRawArray<int>(objects.Children.Count);
                 var bufSpan = buf.AsSpan();
                 ReadMesh(objects, bufSpan, ref semantics._vertices, ref semantics._indices, ref temporalInfo.Meshes, cancellationToken);
                 ReadTexture(objects, bufSpan, ref semantics._textures, cancellationToken);
                 ReadModel(objects, bufSpan, ref temporalInfo.Models, cancellationToken);
+                ReadMaterial(objects, bufSpan);
 
                 var objectDic = new Dictionary<long, ObjectInfo>();
                 int i = 0;
@@ -370,6 +372,25 @@ namespace Elffy.Serialization.Fbx
                     }
                 }
                 models.Add(new Model(id, translation, rotation, scale));
+            }
+        }
+
+        private static void ReadMaterial(FbxNode objects, Span<int> indexBuf)
+        {
+            //Debug.Assert(models.IsNull);
+            var count = objects.FindIndexAll("Material", indexBuf);
+            foreach(var index in indexBuf.Slice(0, count)) {
+                var material = objects.Children[index];
+                var id = material.Properties[0].AsInt64();
+                var properties70 = material.Find("Properties70");
+
+                var a = properties70.Children.ToArray().FirstOrDefault(c => c.Properties[0].AsString() == "Diffuse");
+                if(a != default) {
+                    var v = (Vector3)new VecD3(a.Properties[4].AsDouble(),
+                                               a.Properties[5].AsDouble(),
+                                               a.Properties[6].AsDouble());
+                    Debug.WriteLine(v);
+                }
             }
         }
 
