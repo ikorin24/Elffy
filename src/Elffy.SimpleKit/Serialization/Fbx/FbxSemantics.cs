@@ -296,7 +296,7 @@ namespace Elffy.Serialization.Fbx
                 if(isLast) {
                     if(n_gon <= 2) { throw new FormatException(); }
                     for(int n = 0; n < n_gon - 2; n++) {
-                        var j = indicesOffset + i - n_gon + 1;
+                        var j = verticesOffset + i - n_gon + 1;
                         indicesMarged.Add(j);
                         indicesMarged.Add(j + n + 1);
                         indicesMarged.Add(j + n + 2);
