@@ -81,7 +81,7 @@ namespace Elffy.Serialization.Fbx
                 CreateDic(ref temporalInfo);
 
                 var connections = new ConnectionList(fbx.Find(FbxConstStrings.Connections()));
-                Connect(connections, temporalInfo, cancellationToken);
+                Connect(connections, temporalInfo, semantics._vertices.AsSpan(), cancellationToken);
                 return semantics;
             }
             catch {
@@ -394,42 +394,44 @@ namespace Elffy.Serialization.Fbx
             }
         }
 
-        private static void Connect(ConnectionList connections, in ParserTemporalInfo temporalInfo, CancellationToken cancellationToken)
+        private static void Connect(ConnectionList connections, in ParserTemporalInfo temporalInfo, Span<Vertex> vertices, CancellationToken cancellationToken)
         {
             // TODO: resolve connections
 
-            var objectDic = temporalInfo.ObjectDic;
+            var objDic = temporalInfo.ObjectDic;
+            var models = temporalInfo.Models.AsSpan();
+            var meshes = temporalInfo.Meshes.AsSpan();
             foreach(var connect in connections) {
                 cancellationToken.ThrowIfCancellationRequested();
                 switch(connect.ConnectionType) {
                     case ConnectionType.OO: {
-                        if(objectDic.TryGetValue(connect.SourceID, out var src) && objectDic.TryGetValue(connect.DestID, out var dest)) {
-
-                            var s = src.Type switch
-                            {
-                                ObjectType.MeshGeometry => $"mesh[{src.Index}]",
-                                ObjectType.Model => $"model[{src.Index}]",
-                                _ => throw new Exception(),
-                            };
-                            var d = src.Type switch
-                            {
-                                ObjectType.MeshGeometry => $"mesh[{dest.Index}]",
-                                ObjectType.Model => $"model[{dest.Index}]",
-                                _ => throw new Exception(),
-                            };
-
-                            Debug.WriteLine($"{s}---{d}");
+                        if(!objDic.TryGetValue(connect.SourceID, out var src) || !objDic.TryGetValue(connect.DestID, out var dest)) {
+                            break;
                         }
-                        //else if(objectDic.TryGetValue(connect.DestID, out var b)) {
-                        //    Debug.WriteLine($"{connect.SourceID}---mesh[{b}]");
-                        //}
+
+                        switch((src.Type, dest.Type)) {
+                            case (ObjectType.MeshGeometry, ObjectType.Model): {
+                                ref readonly var mesh = ref meshes[src.Index];
+                                ref readonly var model = ref models[dest.Index];
+                                // TODO: Scale, Rotation
+                                var translation = model.Translation;
+                                var meshVertices = vertices[mesh.ResolvedVerticesRange];
+                                for(int i = 0; i < meshVertices.Length; i++) {
+                                    meshVertices[i].Position += translation;
+                                }
+
+                                break;
+                            }
+                            default: { break; }
+                        }
                         break;
                     }
                     case ConnectionType.OP: {
+                        // I don't use this connection so far.
                         break;
                     }
                     default: {
-                        continue;
+                        break;
                     }
                 }
             }
