@@ -104,5 +104,11 @@ namespace Elffy.Serialization.Fbx
 
         [Utf8("Diffuse")]
         public static partial ReadOnlySpan<byte> Diffuse();
+
+        [Utf8("Indexes")]
+        public static partial ReadOnlySpan<byte> Indexes();
+
+        [Utf8("Weights")]
+        public static partial ReadOnlySpan<byte> Weights();
     }
 }

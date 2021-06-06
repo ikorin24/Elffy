@@ -98,8 +98,16 @@ namespace Elffy.Serialization.Fbx
                 if(props.Length <= 2 || props[2].AsString().SequenceEqual(FbxConstStrings.Cluster()) == false) {
                     continue;
                 }
+                if(deformer.Children.Count < 6) {
+                    continue;
+                }
+                if(!deformer.TryFind(FbxConstStrings.Indexes(), out var indexesNode) || !deformer.TryFind(FbxConstStrings.Weights(), out var weightsNode)) {
+                    continue;
+                }
                 Bone bone;
                 bone.ID = id;
+                var indexes = indexesNode.Properties[0].AsInt32Array();
+                var weights = weightsNode.Properties[0].AsDoubleArray();
                 var array = deformer.Find(FbxConstStrings.TransformLink()).Properties[0].AsDoubleArray();
                 GetMatrix(array, out bone.InitPosition);
                 bones.Add(bone);
