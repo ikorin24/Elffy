@@ -167,7 +167,7 @@ namespace Elffy.Effective.Unsafes
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Span<T> AsSpan(int start)
         {
-            return MemoryMarshal.CreateSpan(ref this[start], Length - start);
+            return MemoryMarshal.CreateSpan(ref Unsafe.Add(ref GetReference(), start), Length - start);
         }
 
         /// <summary>Get <see cref="Span{T}"/></summary>
@@ -178,7 +178,7 @@ namespace Elffy.Effective.Unsafes
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Span<T> AsSpan(int start, int length)
         {
-            return MemoryMarshal.CreateSpan(ref this[start], length);
+            return MemoryMarshal.CreateSpan(ref Unsafe.Add(ref GetReference(), start), length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
