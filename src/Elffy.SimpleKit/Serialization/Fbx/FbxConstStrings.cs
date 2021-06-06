@@ -92,5 +92,14 @@ namespace Elffy.Serialization.Fbx
 
         [Utf8("Connections")]
         public static partial ReadOnlySpan<byte> Connections();
+
+        [Utf8("Deformer")]
+        public static partial ReadOnlySpan<byte> Deformer();
+
+        [Utf8("Cluster")]
+        public static partial ReadOnlySpan<byte> Cluster();
+
+        [Utf8("TransformLink")]
+        public static partial ReadOnlySpan<byte> TransformLink();
     }
 }

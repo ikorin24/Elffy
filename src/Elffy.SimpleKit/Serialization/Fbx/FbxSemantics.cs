@@ -17,6 +17,7 @@ namespace Elffy.Serialization.Fbx
         private UnsafeRawArray<Texture> _textures;
         private UnsafeRawList<int> _indices;
         private UnsafeRawList<Vertex> _vertices;
+        private UnsafeRawList<Bone> _bones;
 
         public ReadOnlySpan<int> Indices => _indices.AsSpan();
 
@@ -44,6 +45,7 @@ namespace Elffy.Serialization.Fbx
             _indices.Dispose();
             _vertices.Dispose();
             _textures.Dispose();
+            _bones.Dispose();
 
             if(disposing) {
                 // Release managed resources if IDisposable.Dispose() called
@@ -62,21 +64,13 @@ namespace Elffy.Serialization.Fbx
                 semantics = new FbxSemantics(fbx);
 
                 var objects = fbx.Find(FbxConstStrings.Objects());
-
                 using var buf = new UnsafeRawArray<int>(objects.Children.Count);
                 var bufSpan = buf.AsSpan();
                 ReadMesh(objects, bufSpan, ref semantics._vertices, ref semantics._indices, ref temporalInfo.Meshes, cancellationToken);
                 ReadTexture(objects, bufSpan, ref semantics._textures, cancellationToken);
                 ReadModel(objects, bufSpan, ref temporalInfo.Models, cancellationToken);
                 ReadMaterial(objects, bufSpan);
-
-                //var objectDic = new Dictionary<long, ObjectInfo>();
-                //int i = 0;
-                //foreach(var item in temporalInfo.Meshes.AsSpan()) {
-                //    objectDic.Add(item.ID, new ObjectInfo(ObjectType.MeshGeometry, i));
-                //    i++;
-                //}
-
+                ReadDeformer(objects, bufSpan, ref semantics._bones, cancellationToken);
                 CreateDic(ref temporalInfo);
 
                 var connections = new ConnectionList(fbx.Find(FbxConstStrings.Connections()));
@@ -88,6 +82,49 @@ namespace Elffy.Serialization.Fbx
                 semantics?.Dispose();
                 throw;
             }
+        }
+
+        private static void ReadDeformer(FbxNode objects, Span<int> indexBuf, ref UnsafeRawList<Bone> bones, CancellationToken cancellationToken)
+        {
+            Debug.Assert(bones.IsNull);
+            bones = UnsafeRawList<Bone>.New();
+            var deformerCount = objects.FindIndexAll(FbxConstStrings.Deformer(), indexBuf);
+            foreach(var index in indexBuf.Slice(0, deformerCount)) {
+                cancellationToken.ThrowIfCancellationRequested();
+                var deformer = objects.Children[index];
+                var props = deformer.Properties;
+                var id = props[0].AsInt64();
+                var name = props[1].AsString();
+                if(props.Length <= 2 || props[2].AsString().SequenceEqual(FbxConstStrings.Cluster()) == false) {
+                    continue;
+                }
+                Bone bone;
+                bone.ID = id;
+                var array = deformer.Find(FbxConstStrings.TransformLink()).Properties[0].AsDoubleArray();
+                GetMatrix(array, out bone.InitPosition);
+                bones.Add(bone);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void GetMatrix(RawArray<double> array, out Matrix4 mat)
+        {
+            mat.M00 = (float)array[0];
+            mat.M10 = (float)array[1];
+            mat.M20 = (float)array[2];
+            mat.M30 = (float)array[3];
+            mat.M01 = (float)array[4];
+            mat.M11 = (float)array[5];
+            mat.M21 = (float)array[6];
+            mat.M31 = (float)array[7];
+            mat.M02 = (float)array[8];
+            mat.M12 = (float)array[9];
+            mat.M22 = (float)array[10];
+            mat.M32 = (float)array[11];
+            mat.M03 = (float)array[12];
+            mat.M13 = (float)array[13];
+            mat.M23 = (float)array[14];
+            mat.M33 = (float)array[15];
         }
 
         private static void ReadMesh(FbxNode objects,
@@ -437,7 +474,8 @@ namespace Elffy.Serialization.Fbx
 
         private static void CreateDic(ref ParserTemporalInfo temporalInfo)
         {
-            var dic = InternalDictionary<long, ObjectInfo>.New();
+            //var dic = InternalDictionary<long, ObjectInfo>.New();
+            var dic = new System.Collections.Generic.Dictionary<long, ObjectInfo>();
             temporalInfo.ObjectDic = dic;
 
             var meshes = temporalInfo.Meshes.AsSpan();
@@ -457,13 +495,14 @@ namespace Elffy.Serialization.Fbx
             public UnsafeRawList<MeshGeometry> Meshes;
             public UnsafeRawList<Model> Models;
 
-            public InternalDictionary<long, ObjectInfo> ObjectDic;
+            //public InternalDictionary<long, ObjectInfo> ObjectDic;
+            public System.Collections.Generic.Dictionary<long, ObjectInfo> ObjectDic;
 
             public void Dispose()
             {
                 Meshes.Dispose();
                 Models.Dispose();
-                ObjectDic.Dispose();
+                //ObjectDic.Dispose();
             }
         }
     }
