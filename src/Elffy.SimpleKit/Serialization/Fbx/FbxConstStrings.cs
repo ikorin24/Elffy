@@ -101,5 +101,8 @@ namespace Elffy.Serialization.Fbx
 
         [Utf8("TransformLink")]
         public static partial ReadOnlySpan<byte> TransformLink();
+
+        [Utf8("Diffuse")]
+        public static partial ReadOnlySpan<byte> Diffuse();
     }
 }
