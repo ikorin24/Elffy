@@ -8,7 +8,6 @@ using Elffy.Core;
 using Elffy.Effective;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
-using System.Collections.Generic;
 
 namespace Elffy.Serialization.Fbx
 {
@@ -71,12 +70,12 @@ namespace Elffy.Serialization.Fbx
                 ReadModel(objects, bufSpan, ref temporalInfo.Models, cancellationToken);
                 ReadMaterial(objects, bufSpan);
 
-                var objectDic = new Dictionary<long, ObjectInfo>();
-                int i = 0;
-                foreach(var item in temporalInfo.Meshes.AsSpan()) {
-                    objectDic.Add(item.ID, new ObjectInfo(ObjectType.MeshGeometry, i));
-                    i++;
-                }
+                //var objectDic = new Dictionary<long, ObjectInfo>();
+                //int i = 0;
+                //foreach(var item in temporalInfo.Meshes.AsSpan()) {
+                //    objectDic.Add(item.ID, new ObjectInfo(ObjectType.MeshGeometry, i));
+                //    i++;
+                //}
 
                 CreateDic(ref temporalInfo);
 
@@ -438,9 +437,8 @@ namespace Elffy.Serialization.Fbx
 
         private static void CreateDic(ref ParserTemporalInfo temporalInfo)
         {
-            // TODO: don't use Dictionary
-            temporalInfo.ObjectDic = new Dictionary<long, ObjectInfo>();
-            var dic = temporalInfo.ObjectDic;
+            var dic = InternalDictionary<long, ObjectInfo>.New();
+            temporalInfo.ObjectDic = dic;
 
             var meshes = temporalInfo.Meshes.AsSpan();
             for(int i = 0; i < meshes.Length; i++) {
@@ -459,12 +457,13 @@ namespace Elffy.Serialization.Fbx
             public UnsafeRawList<MeshGeometry> Meshes;
             public UnsafeRawList<Model> Models;
 
-            public Dictionary<long, ObjectInfo> ObjectDic;
+            public InternalDictionary<long, ObjectInfo> ObjectDic;
 
             public void Dispose()
             {
                 Meshes.Dispose();
                 Models.Dispose();
+                ObjectDic.Dispose();
             }
         }
     }
