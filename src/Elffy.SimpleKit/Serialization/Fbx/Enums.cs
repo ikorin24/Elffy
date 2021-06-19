@@ -25,8 +25,29 @@ namespace Elffy.Serialization.Fbx
         OP,
     }
 
+    internal enum ModelType
+    {
+        Null,
+        LimbNode,
+        Mesh,
+
+        Unknown,    // There are no 'Unknown' model type in fbx. It represents everything else except what I use in this program.
+    }
+
     internal static class EnumFromRawStringExtension
     {
+        public static ModelType ToModelType(this RawString str)
+        {
+            ReadOnlySpan<byte> Null = stackalloc byte[4] { (byte)'N', (byte)'u', (byte)'l', (byte)'l' };
+            ReadOnlySpan<byte> LimbNode = stackalloc byte[8] { (byte)'L', (byte)'i', (byte)'m', (byte)'b', (byte)'N', (byte)'o', (byte)'d', (byte)'e' };
+            ReadOnlySpan<byte> Mesh = stackalloc byte[4] { (byte)'M', (byte)'e', (byte)'s', (byte)'h' };
+
+            return str.SequenceEqual(Null) ? ModelType.Null
+                 : str.SequenceEqual(LimbNode) ? ModelType.LimbNode
+                 : str.SequenceEqual(Mesh) ? ModelType.Mesh
+                 : ModelType.Unknown;
+        }
+
         public static MappingInformationType ToMappingInformationType(this RawString str)
         {
             if(str.SequenceEqual(FbxConstStrings.ByVertice())) {
