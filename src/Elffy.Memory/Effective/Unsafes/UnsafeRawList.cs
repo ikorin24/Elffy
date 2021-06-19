@@ -255,6 +255,13 @@ namespace Elffy.Effective.Unsafes
         }
 
 
+        /// <summary>Copy elements to a new array.</summary>
+        /// <returns>array</returns>
+        public T[] ToArray()
+        {
+            return AsSpan().ToArray();
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Span<T> AsSpan()
         {

@@ -152,6 +152,13 @@ namespace Elffy.Effective.Unsafes
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T* GetPtr() => (T*)Ptr;
 
+        /// <summary>Copy elements to a new array.</summary>
+        /// <returns>array</returns>
+        public T[] ToArray()
+        {
+            return AsSpan().ToArray();
+        }
+
         /// <summary>Get <see cref="Span{T}"/>.</summary>
         /// <returns><see cref="Span{T}"/></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
