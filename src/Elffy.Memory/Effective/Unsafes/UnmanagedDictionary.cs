@@ -9,9 +9,11 @@ namespace Elffy.Effective.Unsafes
 {
     //[DebuggerTypeProxy(typeof(IDictionaryDebugView<,>))]
     [DebuggerDisplay("Count = {Count}")]
-    public class UnmanagedDictionary<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TValue>> where TKey : unmanaged where TValue : unmanaged
+    public sealed class UnmanagedDictionary<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TValue>>, IDisposable
+        where TKey : unmanaged
+        where TValue : unmanaged
     {
-        private int[]? _buckets;
+        private ValueTypeRentMemory<int> _buckets;
         private Entry[]? _entries;
         private ulong _fastModMultiplier;
         private int _count;
@@ -107,10 +109,10 @@ namespace Elffy.Effective.Unsafes
         {
             int count = _count;
             if(count > 0) {
-                Debug.Assert(_buckets != null, "_buckets should be non-null");
+                Debug.Assert(!_buckets.IsEmpty, "_buckets should be non-empty");
                 Debug.Assert(_entries != null, "_entries should be non-null");
 
-                _buckets.AsSpan().Clear();
+                _buckets.Span.Clear();
 
                 _count = 0;
                 _freeList = -1;
@@ -156,7 +158,7 @@ namespace Elffy.Effective.Unsafes
         internal ref TValue FindValue(TKey key)
         {
             ref Entry entry = ref UnsafeEx.NullRef<Entry>();
-            if(_buckets != null) {
+            if(_buckets.IsEmpty == false) {
                 Debug.Assert(_entries != null, "expected entries to be != null");
                 uint hashCode = (uint)key.GetHashCode();
                 int i = GetBucket(hashCode);
@@ -203,7 +205,7 @@ namespace Elffy.Effective.Unsafes
         private int Initialize(int capacity)
         {
             int size = HashHelpers.GetPrime(capacity);
-            int[] buckets = new int[size];
+            var buckets = new ValueTypeRentMemory<int>(size, true);
             Entry[] entries = new Entry[size];
 
             // Assign member variables after both arrays allocated to guard against corruption from OOM if second fails
@@ -212,6 +214,7 @@ namespace Elffy.Effective.Unsafes
             if(IntPtr.Size == 8) {
                 _fastModMultiplier = HashHelpers.GetFastModMultiplier((uint)size);
             }
+            _buckets.Dispose();
             _buckets = buckets;
             _entries = entries;
 
@@ -220,10 +223,10 @@ namespace Elffy.Effective.Unsafes
 
         private bool TryInsert(TKey key, in TValue value, InsertionBehavior behavior)
         {
-            if(_buckets == null) {
+            if(_buckets.IsEmpty) {
                 Initialize(0);
             }
-            Debug.Assert(_buckets != null);
+            Debug.Assert(!_buckets.IsEmpty);
 
             Entry[]? entries = _entries;
             Debug.Assert(entries != null, "expected entries to be non-null");
@@ -308,7 +311,10 @@ namespace Elffy.Effective.Unsafes
             Array.Copy(_entries, entries, count);
 
             // Assign member variables after both arrays allocated to guard against corruption from OOM if second fails
-            _buckets = new int[newSize];
+            var newBuckets = new ValueTypeRentMemory<int>(newSize, true);
+            _buckets.Dispose();
+            _buckets = newBuckets;
+
             if(IntPtr.Size == 8) {
                 _fastModMultiplier = HashHelpers.GetFastModMultiplier((uint)newSize);
             }
@@ -329,7 +335,7 @@ namespace Elffy.Effective.Unsafes
             // statement to copy the value for entry being removed into the output parameter.
             // Code has been intentionally duplicated for performance reasons.
 
-            if(_buckets != null) {
+            if(_buckets.IsEmpty == false) {
                 Debug.Assert(_entries != null, "entries should be non-null");
                 uint collisionCount = 0;
                 uint hashCode = (uint)key.GetHashCode();
@@ -384,7 +390,7 @@ namespace Elffy.Effective.Unsafes
             // statement to copy the value for entry being removed into the output parameter.
             // Code has been intentionally duplicated for performance reasons.
 
-            if(_buckets != null) {
+            if(_buckets.IsEmpty == false) {
                 Debug.Assert(_entries != null, "entries should be non-null");
                 uint collisionCount = 0;
                 uint hashCode = (uint)key.GetHashCode();
@@ -469,7 +475,7 @@ namespace Elffy.Effective.Unsafes
 
             _version++;
 
-            if(_buckets == null) {
+            if(_buckets.IsEmpty) {
                 return Initialize(capacity);
             }
 
@@ -546,13 +552,26 @@ namespace Elffy.Effective.Unsafes
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ref int GetBucket(uint hashCode)
         {
-            int[] buckets = _buckets!;
+            var buckets = _buckets;
             if(IntPtr.Size == 8) {
-                return ref buckets[HashHelpers.FastMod(hashCode, (uint)buckets.Length, _fastModMultiplier)];
+                return ref buckets[(int)(HashHelpers.FastMod(hashCode, (uint)buckets.Length, _fastModMultiplier))];
             }
             else {
-                return ref buckets[hashCode % (uint)buckets.Length];
+                return ref buckets[(int)(hashCode % (uint)buckets.Length)];
             }
+        }
+
+        ~UnmanagedDictionary() => Dispose(false);
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        private void Dispose(bool disposing)
+        {
+            _buckets.Dispose();
         }
 
         private struct Entry
@@ -643,7 +662,7 @@ namespace Elffy.Effective.Unsafes
 
         //[DebuggerTypeProxy(typeof(DictionaryKeyCollectionDebugView<,>))]
         [DebuggerDisplay("Count = {Count}")]
-        public sealed class KeyCollection : ICollection<TKey>, ICollection, IReadOnlyCollection<TKey>
+        public sealed class KeyCollection : ICollection<TKey>, IReadOnlyCollection<TKey>
         {
             private readonly UnmanagedDictionary<TKey, TValue> _dictionary;
 
@@ -694,12 +713,6 @@ namespace Elffy.Effective.Unsafes
             IEnumerator<TKey> IEnumerable<TKey>.GetEnumerator() => new Enumerator(_dictionary);
 
             IEnumerator IEnumerable.GetEnumerator() => new Enumerator(_dictionary);
-
-            void ICollection.CopyTo(Array array, int index) => CopyTo((TKey[])array, index);
-
-            bool ICollection.IsSynchronized => false;
-
-            object ICollection.SyncRoot => ((ICollection)_dictionary).SyncRoot;
 
             public struct Enumerator : IEnumerator<TKey>, IEnumerator
             {
@@ -766,7 +779,7 @@ namespace Elffy.Effective.Unsafes
 
         //[DebuggerTypeProxy(typeof(DictionaryValueCollectionDebugView<,>))]
         [DebuggerDisplay("Count = {Count}")]
-        public sealed class ValueCollection : ICollection<TValue>, ICollection, IReadOnlyCollection<TValue>
+        public sealed class ValueCollection : ICollection<TValue>, IReadOnlyCollection<TValue>
         {
             private readonly UnmanagedDictionary<TKey, TValue> _dictionary;
 
@@ -817,12 +830,6 @@ namespace Elffy.Effective.Unsafes
             IEnumerator<TValue> IEnumerable<TValue>.GetEnumerator() => new Enumerator(_dictionary);
 
             IEnumerator IEnumerable.GetEnumerator() => new Enumerator(_dictionary);
-
-            void ICollection.CopyTo(Array array, int index) => CopyTo((TValue[])array, index);
-
-            bool ICollection.IsSynchronized => false;
-
-            object ICollection.SyncRoot => ((ICollection)_dictionary).SyncRoot;
 
             public struct Enumerator : IEnumerator<TValue>, IEnumerator
             {

@@ -78,7 +78,7 @@ namespace Elffy.Effective
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe ValueTypeRentMemory(int length)
+        public unsafe ValueTypeRentMemory(int length, bool zeroFill = false)
         {
             if(length == 0) {
                 this = default;
@@ -94,6 +94,10 @@ namespace Elffy.Effective
                 _start = Marshal.AllocHGlobal(sizeof(T) * length);
             }
             _length = length;
+
+            if(zeroFill) {
+                Span.Clear();
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
