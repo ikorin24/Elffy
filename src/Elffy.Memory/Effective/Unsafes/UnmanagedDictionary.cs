@@ -14,7 +14,7 @@ namespace Elffy.Effective.Unsafes
         where TValue : unmanaged
     {
         private ValueTypeRentMemory<int> _buckets;
-        private Entry[]? _entries;
+        private ValueTypeRentMemory<Entry> _entries;
         private ulong _fastModMultiplier;
         private int _count;
         private int _freeList;
@@ -56,12 +56,10 @@ namespace Elffy.Effective.Unsafes
 
                 // This is not currently a true .AddRange as it needs to be an initalized dictionary
                 // of the correct size, and also an empty dictionary with no current entities (and no argument checks).
-                Debug.Assert(source._entries is not null);
-                Debug.Assert(_entries is not null);
                 Debug.Assert(_entries.Length >= source.Count);
                 Debug.Assert(_count == 0);
 
-                Entry[] oldEntries = source._entries;
+                var oldEntries = source._entries.Span;
                 CopyEntries(oldEntries, source._count);
                 return;
             }
@@ -110,14 +108,14 @@ namespace Elffy.Effective.Unsafes
             int count = _count;
             if(count > 0) {
                 Debug.Assert(!_buckets.IsEmpty, "_buckets should be non-empty");
-                Debug.Assert(_entries != null, "_entries should be non-null");
+                Debug.Assert(!_entries.IsEmpty, "_entries should be non-empty");
 
                 _buckets.Span.Clear();
 
                 _count = 0;
                 _freeList = -1;
                 _freeCount = 0;
-                Array.Clear(_entries, 0, count);
+                _entries.Span.Slice(0, count).Clear();
             }
         }
 
@@ -125,7 +123,7 @@ namespace Elffy.Effective.Unsafes
 
         public bool ContainsValue(TValue value)
         {
-            Entry[]? entries = _entries;
+            var entries = _entries.Span;
             // ValueType: Devirtualize with EqualityComparer<TValue>.Default intrinsic
             for(int i = 0; i < _count; i++) {
                 if(entries![i].next >= -1 && EqualityComparer<TValue>.Default.Equals(entries[i].value, value)) {
@@ -143,7 +141,7 @@ namespace Elffy.Effective.Unsafes
             if(array.Length - index < Count) { ThrowHelper.Arg(nameof(array) + " is too short"); }
 
             int count = _count;
-            Entry[]? entries = _entries;
+            var entries = _entries.Span;
             for(int i = 0; i < count; i++) {
                 if(entries![i].next >= -1) {
                     array[index++] = new KeyValuePair<TKey, TValue>(entries[i].key, entries[i].value);
@@ -159,10 +157,9 @@ namespace Elffy.Effective.Unsafes
         {
             ref Entry entry = ref UnsafeEx.NullRef<Entry>();
             if(_buckets.IsEmpty == false) {
-                Debug.Assert(_entries != null, "expected entries to be != null");
                 uint hashCode = (uint)key.GetHashCode();
                 int i = GetBucket(hashCode);
-                Entry[]? entries = _entries;
+                var entries = _entries.Span;
                 uint collisionCount = 0;
                 // ValueType: Devirtualize with EqualityComparer<TValue>.Default intrinsic
 
@@ -206,7 +203,7 @@ namespace Elffy.Effective.Unsafes
         {
             int size = HashHelpers.GetPrime(capacity);
             var buckets = new ValueTypeRentMemory<int>(size, true);
-            Entry[] entries = new Entry[size];
+            var entries = new ValueTypeRentMemory<Entry>(size, true);
 
             // Assign member variables after both arrays allocated to guard against corruption from OOM if second fails
             _freeList = -1;
@@ -216,6 +213,7 @@ namespace Elffy.Effective.Unsafes
             }
             _buckets.Dispose();
             _buckets = buckets;
+            _entries.Dispose();
             _entries = entries;
 
             return size;
@@ -228,9 +226,7 @@ namespace Elffy.Effective.Unsafes
             }
             Debug.Assert(!_buckets.IsEmpty);
 
-            Entry[]? entries = _entries;
-            Debug.Assert(entries != null, "expected entries to be non-null");
-
+            var entries = _entries.Span;
             uint hashCode = (uint)key.GetHashCode();
 
             uint collisionCount = 0;
@@ -283,10 +279,10 @@ namespace Elffy.Effective.Unsafes
                 }
                 index = count;
                 _count = count + 1;
-                entries = _entries;
+                entries = _entries.Span;
             }
 
-            ref Entry entry = ref entries![index];
+            ref Entry entry = ref entries[index];
             entry.hashCode = hashCode;
             entry.next = bucket - 1; // Value in _buckets is 1-based
             entry.key = key;
@@ -302,13 +298,13 @@ namespace Elffy.Effective.Unsafes
         {
             // Value types never rehash
             Debug.Assert(!forceNewHashCodes || !typeof(TKey).IsValueType);
-            Debug.Assert(_entries != null, "_entries should be non-null");
             Debug.Assert(newSize >= _entries.Length);
 
-            Entry[] entries = new Entry[newSize];
+            var entries = new ValueTypeRentMemory<Entry>(newSize, false);
 
             int count = _count;
-            Array.Copy(_entries, entries, count);
+            _entries.Span.Slice(0, count).CopyTo(entries.Span);
+            entries.Span.Slice(count).Clear();
 
             // Assign member variables after both arrays allocated to guard against corruption from OOM if second fails
             var newBuckets = new ValueTypeRentMemory<int>(newSize, true);
@@ -326,6 +322,7 @@ namespace Elffy.Effective.Unsafes
                 }
             }
 
+            _entries.Dispose();
             _entries = entries;
         }
 
@@ -336,11 +333,10 @@ namespace Elffy.Effective.Unsafes
             // Code has been intentionally duplicated for performance reasons.
 
             if(_buckets.IsEmpty == false) {
-                Debug.Assert(_entries != null, "entries should be non-null");
                 uint collisionCount = 0;
                 uint hashCode = (uint)key.GetHashCode();
                 ref int bucket = ref GetBucket(hashCode);
-                Entry[]? entries = _entries;
+                var entries = _entries.Span;
                 int last = -1;
                 int i = bucket - 1; // Value in buckets is 1-based
                 while(i >= 0) {
@@ -391,11 +387,10 @@ namespace Elffy.Effective.Unsafes
             // Code has been intentionally duplicated for performance reasons.
 
             if(_buckets.IsEmpty == false) {
-                Debug.Assert(_entries != null, "entries should be non-null");
                 uint collisionCount = 0;
                 uint hashCode = (uint)key.GetHashCode();
                 ref int bucket = ref GetBucket(hashCode);
-                Entry[]? entries = _entries;
+                var entries = _entries.Span;
                 int last = -1;
                 int i = bucket - 1; // Value in buckets is 1-based
                 while(i >= 0) {
@@ -468,7 +463,7 @@ namespace Elffy.Effective.Unsafes
                 ThrowHelper.ArgOutOfRange(nameof(capacity));
             }
 
-            int currentCapacity = _entries == null ? 0 : _entries.Length;
+            int currentCapacity = _entries.Length;
             if(currentCapacity >= capacity) {
                 return currentCapacity;
             }
@@ -512,8 +507,8 @@ namespace Elffy.Effective.Unsafes
             }
 
             int newSize = HashHelpers.GetPrime(capacity);
-            Entry[]? oldEntries = _entries;
-            int currentCapacity = oldEntries == null ? 0 : oldEntries.Length;
+            var oldEntries = _entries.Span;
+            int currentCapacity = oldEntries.Length;
             if(newSize >= currentCapacity) {
                 return;
             }
@@ -521,17 +516,14 @@ namespace Elffy.Effective.Unsafes
             int oldCount = _count;
             _version++;
             Initialize(newSize);
-
-            Debug.Assert(oldEntries is not null);
-
             CopyEntries(oldEntries, oldCount);
         }
 
-        private void CopyEntries(Entry[] entries, int count)
+        private void CopyEntries(ReadOnlySpan<Entry> entries, int count)
         {
-            Debug.Assert(_entries is not null);
+            Debug.Assert(_entries.IsEmpty == false);
 
-            Entry[] newEntries = _entries;
+            var newEntries = _entries.Span;
             int newCount = 0;
             for(int i = 0; i < count; i++) {
                 uint hashCode = entries[i].hashCode;
@@ -572,6 +564,7 @@ namespace Elffy.Effective.Unsafes
         private void Dispose(bool disposing)
         {
             _buckets.Dispose();
+            _entries.Dispose();
         }
 
         private struct Entry
@@ -615,8 +608,10 @@ namespace Elffy.Effective.Unsafes
 
                 // Use unsigned comparison since we set index to dictionary.count+1 when the enumeration ends.
                 // dictionary.count+1 could be negative if dictionary.count is int.MaxValue
+
+                var entries = _dictionary._entries.Span;
                 while((uint)_index < (uint)_dictionary._count) {
-                    ref Entry entry = ref _dictionary._entries![_index++];
+                    ref Entry entry = ref entries[_index++];
 
                     if(entry.next >= -1) {
                         _current = new KeyValuePair<TKey, TValue>(entry.key, entry.value);
@@ -692,7 +687,7 @@ namespace Elffy.Effective.Unsafes
                 }
 
                 int count = _dictionary._count;
-                Entry[]? entries = _dictionary._entries;
+                var entries = _dictionary._entries.Span;
                 for(int i = 0; i < count; i++) {
                     if(entries![i].next >= -1) array[index++] = entries[i].key;
                 }
@@ -737,8 +732,9 @@ namespace Elffy.Effective.Unsafes
                         ThrowHelper.InvalidOperation_ModifiedOnEnumerating();
                     }
 
+                    var entries = _dictionary._entries.Span;
                     while((uint)_index < (uint)_dictionary._count) {
-                        ref Entry entry = ref _dictionary._entries![_index++];
+                        ref Entry entry = ref entries[_index++];
 
                         if(entry.next >= -1) {
                             _currentKey = entry.key;
@@ -809,7 +805,7 @@ namespace Elffy.Effective.Unsafes
                 }
 
                 int count = _dictionary._count;
-                Entry[]? entries = _dictionary._entries;
+                var entries = _dictionary._entries.Span;
                 for(int i = 0; i < count; i++) {
                     if(entries![i].next >= -1) array[index++] = entries[i].value;
                 }
@@ -855,7 +851,7 @@ namespace Elffy.Effective.Unsafes
                     }
 
                     while((uint)_index < (uint)_dictionary._count) {
-                        ref Entry entry = ref _dictionary._entries![_index++];
+                        ref Entry entry = ref _dictionary._entries[_index++];
 
                         if(entry.next >= -1) {
                             _currentValue = entry.value;
