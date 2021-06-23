@@ -13,59 +13,28 @@ namespace Elffy.Effective.Unsafes
     {
         private int[]? _buckets;
         private Entry[]? _entries;
-#if TARGET_64BIT
         private ulong _fastModMultiplier;
-#endif
         private int _count;
         private int _freeList;
         private int _freeCount;
         private int _version;
-        private IEqualityComparer<TKey>? _comparer;
         private KeyCollection? _keys;
         private ValueCollection? _values;
         private const int StartOfFreeList = -3;
 
-        public UnmanagedDictionary() : this(0, null) { }
+        public UnmanagedDictionary() : this(0) { }
 
-        public UnmanagedDictionary(int capacity) : this(capacity, null) { }
-
-        public UnmanagedDictionary(IEqualityComparer<TKey>? comparer) : this(0, comparer) { }
-
-        public UnmanagedDictionary(int capacity, IEqualityComparer<TKey>? comparer)
+        public UnmanagedDictionary(int capacity)
         {
-            if(capacity < 0) {
-                ThrowHelper.ArgOutOfRange(nameof(capacity));
-            }
-
+            if(capacity < 0) { ThrowHelper.ArgOutOfRange(nameof(capacity)); }
             if(capacity > 0) {
                 Initialize(capacity);
             }
-
-            if(comparer is not null && comparer != EqualityComparer<TKey>.Default) // first check for null to avoid forcing default comparer instantiation unnecessarily
-            {
-                _comparer = comparer;
-            }
-
-            //// Special-case EqualityComparer<string>.Default, StringComparer.Ordinal, and StringComparer.OrdinalIgnoreCase.
-            //// We use a non-randomized comparer for improved perf, falling back to a randomized comparer if the
-            //// hash buckets become unbalanced.
-            //if(typeof(TKey) == typeof(string)) {
-            //    IEqualityComparer<string>? stringComparer = NonRandomizedStringEqualityComparer.GetStringComparer(_comparer);
-            //    if(stringComparer is not null) {
-            //        _comparer = (IEqualityComparer<TKey>?)stringComparer;
-            //    }
-            //}s
         }
 
-        public UnmanagedDictionary(IEnumerable<KeyValuePair<TKey, TValue>> collection) : this(collection, null) { }
-
-        public UnmanagedDictionary(IEnumerable<KeyValuePair<TKey, TValue>> collection, IEqualityComparer<TKey>? comparer) :
-            this((collection as ICollection<KeyValuePair<TKey, TValue>>)?.Count ?? 0, comparer)
+        public UnmanagedDictionary(IEnumerable<KeyValuePair<TKey, TValue>> collection) : this((collection as ICollection<KeyValuePair<TKey, TValue>>)?.Count ?? 0)
         {
-            if(collection == null) {
-                ThrowHelper.NullArg(nameof(collection));
-            }
-
+            if(collection == null) { ThrowHelper.NullArg(nameof(collection)); }
             AddRange(collection);
         }
 
@@ -91,34 +60,13 @@ namespace Elffy.Effective.Unsafes
                 Debug.Assert(_count == 0);
 
                 Entry[] oldEntries = source._entries;
-                if(source._comparer == _comparer) {
-                    // If comparers are the same, we can copy _entries without rehashing.
-                    CopyEntries(oldEntries, source._count);
-                    return;
-                }
-
-                // Comparers differ need to rehash all the entires via Add
-                int count = source._count;
-                for(int i = 0; i < count; i++) {
-                    // Only copy if an entry
-                    if(oldEntries[i].next >= -1) {
-                        Add(oldEntries[i].key, oldEntries[i].value);
-                    }
-                }
+                CopyEntries(oldEntries, source._count);
                 return;
             }
 
             // Fallback path for IEnumerable that isn't a non-subclassed Dictionary<TKey,TValue>.
             foreach(KeyValuePair<TKey, TValue> pair in collection) {
                 Add(pair.Key, pair.Value);
-            }
-        }
-
-        public IEqualityComparer<TKey> Comparer
-        {
-            get
-            {
-                return _comparer ?? EqualityComparer<TKey>.Default;
             }
         }
 
@@ -149,7 +97,7 @@ namespace Elffy.Effective.Unsafes
             }
         }
 
-        public void Add(TKey key, TValue value)
+        public void Add(TKey key, in TValue value)
         {
             bool modified = TryInsert(key, value, InsertionBehavior.ThrowOnExisting);
             Debug.Assert(modified); // If there was an existing key and the Add failed, an exception will already have been thrown.
@@ -162,7 +110,6 @@ namespace Elffy.Effective.Unsafes
                 Debug.Assert(_buckets != null, "_buckets should be non-null");
                 Debug.Assert(_entries != null, "_entries should be non-null");
 
-                //Array.Clear(_buckets);
                 _buckets.AsSpan().Clear();
 
                 _count = 0;
@@ -189,17 +136,9 @@ namespace Elffy.Effective.Unsafes
 
         private void CopyTo(KeyValuePair<TKey, TValue>[] array, int index)
         {
-            if(array == null) {
-                ThrowHelper.NullArg(nameof(array));
-            }
-
-            if((uint)index > (uint)array.Length) {
-                ThrowHelper.ArgOutOfRange(nameof(index));
-            }
-
-            if(array.Length - index < Count) {
-                ThrowHelper.Arg(nameof(array) + " is too short");
-            }
+            if(array == null) { ThrowHelper.NullArg(nameof(array)); }
+            if((uint)index > (uint)array.Length) { ThrowHelper.ArgOutOfRange(nameof(index)); }
+            if(array.Length - index < Count) { ThrowHelper.Arg(nameof(array) + " is too short"); }
 
             int count = _count;
             Entry[]? entries = _entries;
@@ -219,63 +158,33 @@ namespace Elffy.Effective.Unsafes
             ref Entry entry = ref UnsafeEx.NullRef<Entry>();
             if(_buckets != null) {
                 Debug.Assert(_entries != null, "expected entries to be != null");
-                IEqualityComparer<TKey>? comparer = _comparer;
-                if(comparer == null) {
-                    uint hashCode = (uint)key.GetHashCode();
-                    int i = GetBucket(hashCode);
-                    Entry[]? entries = _entries;
-                    uint collisionCount = 0;
-                    // ValueType: Devirtualize with EqualityComparer<TValue>.Default intrinsic
+                uint hashCode = (uint)key.GetHashCode();
+                int i = GetBucket(hashCode);
+                Entry[]? entries = _entries;
+                uint collisionCount = 0;
+                // ValueType: Devirtualize with EqualityComparer<TValue>.Default intrinsic
 
-                    i--; // Value in _buckets is 1-based; subtract 1 from i. We do it here so it fuses with the following conditional.
-                    do {
-                        // Should be a while loop https://github.com/dotnet/runtime/issues/9422
-                        // Test in if to drop range check for following array access
-                        if((uint)i >= (uint)entries.Length) {
-                            goto ReturnNotFound;
-                        }
+                i--; // Value in _buckets is 1-based; subtract 1 from i. We do it here so it fuses with the following conditional.
+                do {
+                    // Should be a while loop https://github.com/dotnet/runtime/issues/9422
+                    // Test in if to drop range check for following array access
+                    if((uint)i >= (uint)entries.Length) {
+                        goto ReturnNotFound;
+                    }
 
-                        entry = ref entries[i];
-                        if(entry.hashCode == hashCode && EqualityComparer<TKey>.Default.Equals(entry.key, key)) {
-                            goto ReturnFound;
-                        }
+                    entry = ref entries[i];
+                    if(entry.hashCode == hashCode && EqualityComparer<TKey>.Default.Equals(entry.key, key)) {
+                        goto ReturnFound;
+                    }
 
-                        i = entry.next;
+                    i = entry.next;
 
-                        collisionCount++;
-                    } while(collisionCount <= (uint)entries.Length);
+                    collisionCount++;
+                } while(collisionCount <= (uint)entries.Length);
 
-                    // The chain of entries forms a loop; which means a concurrent update has happened.
-                    // Break out of the loop and throw, rather than looping forever.
-                    goto ConcurrentOperation;
-                }
-                else {
-                    uint hashCode = (uint)comparer.GetHashCode(key);
-                    int i = GetBucket(hashCode);
-                    Entry[]? entries = _entries;
-                    uint collisionCount = 0;
-                    i--; // Value in _buckets is 1-based; subtract 1 from i. We do it here so it fuses with the following conditional.
-                    do {
-                        // Should be a while loop https://github.com/dotnet/runtime/issues/9422
-                        // Test in if to drop range check for following array access
-                        if((uint)i >= (uint)entries.Length) {
-                            goto ReturnNotFound;
-                        }
-
-                        entry = ref entries[i];
-                        if(entry.hashCode == hashCode && comparer.Equals(entry.key, key)) {
-                            goto ReturnFound;
-                        }
-
-                        i = entry.next;
-
-                        collisionCount++;
-                    } while(collisionCount <= (uint)entries.Length);
-
-                    // The chain of entries forms a loop; which means a concurrent update has happened.
-                    // Break out of the loop and throw, rather than looping forever.
-                    goto ConcurrentOperation;
-                }
+                // The chain of entries forms a loop; which means a concurrent update has happened.
+                // Break out of the loop and throw, rather than looping forever.
+                goto ConcurrentOperation;
             }
 
             goto ReturnNotFound;
@@ -299,16 +208,17 @@ namespace Elffy.Effective.Unsafes
 
             // Assign member variables after both arrays allocated to guard against corruption from OOM if second fails
             _freeList = -1;
-#if TARGET_64BIT
-            _fastModMultiplier = HashHelpers.GetFastModMultiplier((uint)size);
-#endif
+
+            if(IntPtr.Size == 8) {
+                _fastModMultiplier = HashHelpers.GetFastModMultiplier((uint)size);
+            }
             _buckets = buckets;
             _entries = entries;
 
             return size;
         }
 
-        private bool TryInsert(TKey key, TValue value, InsertionBehavior behavior)
+        private bool TryInsert(TKey key, in TValue value, InsertionBehavior behavior)
         {
             if(_buckets == null) {
                 Initialize(0);
@@ -318,74 +228,40 @@ namespace Elffy.Effective.Unsafes
             Entry[]? entries = _entries;
             Debug.Assert(entries != null, "expected entries to be non-null");
 
-            IEqualityComparer<TKey>? comparer = _comparer;
-            uint hashCode = (uint)((comparer == null) ? key.GetHashCode() : comparer.GetHashCode(key));
+            uint hashCode = (uint)key.GetHashCode();
 
             uint collisionCount = 0;
             ref int bucket = ref GetBucket(hashCode);
             int i = bucket - 1; // Value in _buckets is 1-based
 
-            if(comparer == null) {
-                // ValueType: Devirtualize with EqualityComparer<TValue>.Default intrinsic
-                while(true) {
-                    // Should be a while loop https://github.com/dotnet/runtime/issues/9422
-                    // Test uint in if rather than loop condition to drop range check for following array access
-                    if((uint)i >= (uint)entries.Length) {
-                        break;
-                    }
-
-                    if(entries[i].hashCode == hashCode && EqualityComparer<TKey>.Default.Equals(entries[i].key, key)) {
-                        if(behavior == InsertionBehavior.OverwriteExisting) {
-                            entries[i].value = value;
-                            return true;
-                        }
-
-                        if(behavior == InsertionBehavior.ThrowOnExisting) {
-                            ThrowHelper.Arg_KeyDuplicated(key);
-                        }
-
-                        return false;
-                    }
-
-                    i = entries[i].next;
-
-                    collisionCount++;
-                    if(collisionCount > (uint)entries.Length) {
-                        // The chain of entries forms a loop; which means a concurrent update has happened.
-                        // Break out of the loop and throw, rather than looping forever.
-                        ThrowHelper.InvalidOperation_ConcurrentOperationsNotSupported();
-                    }
+            // ValueType: Devirtualize with EqualityComparer<TValue>.Default intrinsic
+            while(true) {
+                // Should be a while loop https://github.com/dotnet/runtime/issues/9422
+                // Test uint in if rather than loop condition to drop range check for following array access
+                if((uint)i >= (uint)entries.Length) {
+                    break;
                 }
-            }
-            else {
-                while(true) {
-                    // Should be a while loop https://github.com/dotnet/runtime/issues/9422
-                    // Test uint in if rather than loop condition to drop range check for following array access
-                    if((uint)i >= (uint)entries.Length) {
-                        break;
+
+                if(entries[i].hashCode == hashCode && EqualityComparer<TKey>.Default.Equals(entries[i].key, key)) {
+                    if(behavior == InsertionBehavior.OverwriteExisting) {
+                        entries[i].value = value;
+                        return true;
                     }
 
-                    if(entries[i].hashCode == hashCode && comparer.Equals(entries[i].key, key)) {
-                        if(behavior == InsertionBehavior.OverwriteExisting) {
-                            entries[i].value = value;
-                            return true;
-                        }
-
-                        if(behavior == InsertionBehavior.ThrowOnExisting) {
-                            ThrowHelper.Arg_KeyDuplicated(key);
-                        }
-
-                        return false;
+                    if(behavior == InsertionBehavior.ThrowOnExisting) {
+                        ThrowHelper.Arg_KeyDuplicated(key);
                     }
 
-                    i = entries[i].next;
+                    return false;
+                }
 
-                    collisionCount++;
-                    if(collisionCount > (uint)entries.Length) {
-                        // The chain of entries forms a loop; which means a concurrent update has happened.
-                        // Break out of the loop and throw, rather than looping forever.
-                        ThrowHelper.InvalidOperation_ConcurrentOperationsNotSupported();
-                    }
+                i = entries[i].next;
+
+                collisionCount++;
+                if(collisionCount > (uint)entries.Length) {
+                    // The chain of entries forms a loop; which means a concurrent update has happened.
+                    // Break out of the loop and throw, rather than looping forever.
+                    ThrowHelper.InvalidOperation_ConcurrentOperationsNotSupported();
                 }
             }
 
@@ -433,9 +309,9 @@ namespace Elffy.Effective.Unsafes
 
             // Assign member variables after both arrays allocated to guard against corruption from OOM if second fails
             _buckets = new int[newSize];
-#if TARGET_64BIT
-            _fastModMultiplier = HashHelpers.GetFastModMultiplier((uint)newSize);
-#endif
+            if(IntPtr.Size == 8) {
+                _fastModMultiplier = HashHelpers.GetFastModMultiplier((uint)newSize);
+            }
             for(int i = 0; i < count; i++) {
                 if(entries[i].next >= -1) {
                     ref int bucket = ref GetBucket(entries[i].hashCode);
@@ -456,7 +332,7 @@ namespace Elffy.Effective.Unsafes
             if(_buckets != null) {
                 Debug.Assert(_entries != null, "entries should be non-null");
                 uint collisionCount = 0;
-                uint hashCode = (uint)(_comparer?.GetHashCode(key) ?? key.GetHashCode());
+                uint hashCode = (uint)key.GetHashCode();
                 ref int bucket = ref GetBucket(hashCode);
                 Entry[]? entries = _entries;
                 int last = -1;
@@ -464,7 +340,7 @@ namespace Elffy.Effective.Unsafes
                 while(i >= 0) {
                     ref Entry entry = ref entries[i];
 
-                    if(entry.hashCode == hashCode && (_comparer?.Equals(entry.key, key) ?? EqualityComparer<TKey>.Default.Equals(entry.key, key))) {
+                    if(entry.hashCode == hashCode && EqualityComparer<TKey>.Default.Equals(entry.key, key)) {
                         if(last < 0) {
                             bucket = entry.next + 1; // Value in buckets is 1-based
                         }
@@ -511,7 +387,7 @@ namespace Elffy.Effective.Unsafes
             if(_buckets != null) {
                 Debug.Assert(_entries != null, "entries should be non-null");
                 uint collisionCount = 0;
-                uint hashCode = (uint)(_comparer?.GetHashCode(key) ?? key.GetHashCode());
+                uint hashCode = (uint)key.GetHashCode();
                 ref int bucket = ref GetBucket(hashCode);
                 Entry[]? entries = _entries;
                 int last = -1;
@@ -519,7 +395,7 @@ namespace Elffy.Effective.Unsafes
                 while(i >= 0) {
                     ref Entry entry = ref entries[i];
 
-                    if(entry.hashCode == hashCode && (_comparer?.Equals(entry.key, key) ?? EqualityComparer<TKey>.Default.Equals(entry.key, key))) {
+                    if(entry.hashCode == hashCode && EqualityComparer<TKey>.Default.Equals(entry.key, key)) {
                         if(last < 0) {
                             bucket = entry.next + 1; // Value in buckets is 1-based
                         }
@@ -573,8 +449,7 @@ namespace Elffy.Effective.Unsafes
             return false;
         }
 
-        public bool TryAdd(TKey key, TValue value) =>
-            TryInsert(key, value, InsertionBehavior.None);
+        public bool TryAdd(TKey key, in TValue value) => TryInsert(key, value, InsertionBehavior.None);
 
         IEnumerator IEnumerable.GetEnumerator() => new Enumerator(this, Enumerator.KeyValuePair);
 
@@ -672,11 +547,12 @@ namespace Elffy.Effective.Unsafes
         private ref int GetBucket(uint hashCode)
         {
             int[] buckets = _buckets!;
-#if TARGET_64BIT
-            return ref buckets[HashHelpers.FastMod(hashCode, (uint)buckets.Length, _fastModMultiplier)];
-#else
-            return ref buckets[hashCode % (uint)buckets.Length];
-#endif
+            if(IntPtr.Size == 8) {
+                return ref buckets[HashHelpers.FastMod(hashCode, (uint)buckets.Length, _fastModMultiplier)];
+            }
+            else {
+                return ref buckets[hashCode % (uint)buckets.Length];
+            }
         }
 
         private struct Entry
