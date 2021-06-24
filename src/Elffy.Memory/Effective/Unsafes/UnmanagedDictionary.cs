@@ -20,8 +20,6 @@ namespace Elffy.Effective.Unsafes
         private int _freeList;
         private int _freeCount;
         private int _version;
-        private KeyCollection? _keys;
-        private ValueCollection? _values;
         private const int StartOfFreeList = -3;
 
         public UnmanagedDictionary() : this(0) { }
@@ -72,10 +70,10 @@ namespace Elffy.Effective.Unsafes
 
         public int Count => _count - _freeCount;
 
-        public KeyCollection Keys => _keys ??= new KeyCollection(this);
+        public KeyCollection Keys => new KeyCollection(this);
 
 
-        public ValueCollection Values => _values ??= new ValueCollection(this);
+        public ValueCollection Values => new ValueCollection(this);
 
 
         public TValue this[TKey key]
@@ -353,14 +351,6 @@ namespace Elffy.Effective.Unsafes
                         Debug.Assert((StartOfFreeList - _freeList) < 0, "shouldn't underflow because max hashtable length is MaxPrimeArrayLength = 0x7FEFFFFD(2146435069) _freelist underflow threshold 2147483646");
                         entry.next = StartOfFreeList - _freeList;
 
-                        if(RuntimeHelpers.IsReferenceOrContainsReferences<TKey>()) {
-                            entry.key = default!;
-                        }
-
-                        if(RuntimeHelpers.IsReferenceOrContainsReferences<TValue>()) {
-                            entry.value = default!;
-                        }
-
                         _freeList = i;
                         _freeCount++;
                         return true;
@@ -408,14 +398,6 @@ namespace Elffy.Effective.Unsafes
 
                         Debug.Assert((StartOfFreeList - _freeList) < 0, "shouldn't underflow because max hashtable length is MaxPrimeArrayLength = 0x7FEFFFFD(2146435069) _freelist underflow threshold 2147483646");
                         entry.next = StartOfFreeList - _freeList;
-
-                        if(RuntimeHelpers.IsReferenceOrContainsReferences<TKey>()) {
-                            entry.key = default!;
-                        }
-
-                        if(RuntimeHelpers.IsReferenceOrContainsReferences<TValue>()) {
-                            entry.value = default!;
-                        }
 
                         _freeList = i;
                         _freeCount++;
@@ -657,7 +639,7 @@ namespace Elffy.Effective.Unsafes
 
         //[DebuggerTypeProxy(typeof(DictionaryKeyCollectionDebugView<,>))]
         [DebuggerDisplay("Count = {Count}")]
-        public sealed class KeyCollection : ICollection<TKey>, IReadOnlyCollection<TKey>
+        public readonly struct KeyCollection : ICollection<TKey>, IReadOnlyCollection<TKey>
         {
             private readonly UnmanagedDictionary<TKey, TValue> _dictionary;
 
@@ -775,7 +757,7 @@ namespace Elffy.Effective.Unsafes
 
         //[DebuggerTypeProxy(typeof(DictionaryValueCollectionDebugView<,>))]
         [DebuggerDisplay("Count = {Count}")]
-        public sealed class ValueCollection : ICollection<TValue>, IReadOnlyCollection<TValue>
+        public readonly struct ValueCollection : ICollection<TValue>, IReadOnlyCollection<TValue>
         {
             private readonly UnmanagedDictionary<TKey, TValue> _dictionary;
 
@@ -888,23 +870,23 @@ namespace Elffy.Effective.Unsafes
                 }
             }
         }
-    }
 
-    internal enum InsertionBehavior : byte
-    {
-        /// <summary>
-        /// The default insertion behavior.
-        /// </summary>
-        None = 0,
+        private enum InsertionBehavior : byte
+        {
+            /// <summary>
+            /// The default insertion behavior.
+            /// </summary>
+            None = 0,
 
-        /// <summary>
-        /// Specifies that an existing entry with the same key should be overwritten if encountered.
-        /// </summary>
-        OverwriteExisting = 1,
+            /// <summary>
+            /// Specifies that an existing entry with the same key should be overwritten if encountered.
+            /// </summary>
+            OverwriteExisting = 1,
 
-        /// <summary>
-        /// Specifies that if an existing entry with the same key is encountered, an exception should be thrown.
-        /// </summary>
-        ThrowOnExisting = 2
+            /// <summary>
+            /// Specifies that if an existing entry with the same key is encountered, an exception should be thrown.
+            /// </summary>
+            ThrowOnExisting = 2
+        }
     }
 }
