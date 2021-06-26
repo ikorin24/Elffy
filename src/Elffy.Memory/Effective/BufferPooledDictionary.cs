@@ -1,15 +1,17 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Collections;
+using Elffy.Effective.Unsafes;
 
-namespace Elffy.Effective.Unsafes
+namespace Elffy.Effective
 {
-    //[DebuggerTypeProxy(typeof(IDictionaryDebugView<,>))]
+    [DebuggerTypeProxy(typeof(BufferPooledDebugView<,>))]
     [DebuggerDisplay("Count = {Count}")]
-    public sealed class UnmanagedDictionary<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TValue>>, IDisposable
+    public sealed class BufferPooledDictionary<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TValue>>, IDisposable
         where TKey : unmanaged
         where TValue : unmanaged
     {
@@ -20,11 +22,12 @@ namespace Elffy.Effective.Unsafes
         private int _freeList;
         private int _freeCount;
         private int _version;
+
         private const int StartOfFreeList = -3;
 
-        public UnmanagedDictionary() : this(0) { }
+        public BufferPooledDictionary() : this(0) { }
 
-        public UnmanagedDictionary(int capacity)
+        public BufferPooledDictionary(int capacity)
         {
             if(capacity < 0) { ThrowHelper.ArgOutOfRange(nameof(capacity)); }
             if(capacity > 0) {
@@ -32,11 +35,20 @@ namespace Elffy.Effective.Unsafes
             }
         }
 
-        public UnmanagedDictionary(IEnumerable<KeyValuePair<TKey, TValue>> collection) : this((collection as ICollection<KeyValuePair<TKey, TValue>>)?.Count ?? 0)
+        public BufferPooledDictionary(IEnumerable<KeyValuePair<TKey, TValue>> collection)
+            : this((collection as ICollection<KeyValuePair<TKey, TValue>>)?.Count ?? 0)
         {
-            if(collection == null) { ThrowHelper.NullArg(nameof(collection)); }
+            if(collection is null) { ThrowHelper.NullArg(nameof(collection)); }
             AddRange(collection);
         }
+
+        public BufferPooledDictionary(ReadOnlySpan<KeyValuePair<TKey, TValue>> span) : this(span.Length)
+        {
+            foreach(var (key, value) in span) {
+                Add(key, value);
+            }
+        }
+
 
         private void AddRange(IEnumerable<KeyValuePair<TKey, TValue>> collection)
         {
@@ -44,8 +56,8 @@ namespace Elffy.Effective.Unsafes
             // avoid the enumerator allocation and overhead by looping through the entries array directly.
             // We only do this when dictionary is Dictionary<TKey,TValue> and not a subclass, to maintain
             // back-compat with subclasses that may have overridden the enumerator behavior.
-            if(collection.GetType() == typeof(UnmanagedDictionary<TKey, TValue>)) {
-                UnmanagedDictionary<TKey, TValue> source = (UnmanagedDictionary<TKey, TValue>)collection;
+            if(collection.GetType() == typeof(BufferPooledDictionary<TKey, TValue>)) {
+                BufferPooledDictionary<TKey, TValue> source = (BufferPooledDictionary<TKey, TValue>)collection;
 
                 if(source.Count == 0) {
                     // Nothing to copy, all done
@@ -132,7 +144,7 @@ namespace Elffy.Effective.Unsafes
             return false;
         }
 
-        private void CopyTo(KeyValuePair<TKey, TValue>[] array, int index)
+        internal void CopyTo(KeyValuePair<TKey, TValue>[] array, int index)
         {
             if(array == null) { ThrowHelper.NullArg(nameof(array)); }
             if((uint)index > (uint)array.Length) { ThrowHelper.ArgOutOfRange(nameof(index)); }
@@ -151,7 +163,7 @@ namespace Elffy.Effective.Unsafes
 
         IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator() => new Enumerator(this, Enumerator.KeyValuePair);
 
-        internal ref TValue FindValue(TKey key)
+        private ref TValue FindValue(TKey key)
         {
             ref Entry entry = ref UnsafeEx.NullRef<Entry>();
             if(_buckets.IsEmpty == false) {
@@ -535,7 +547,7 @@ namespace Elffy.Effective.Unsafes
             }
         }
 
-        ~UnmanagedDictionary() => Dispose(false);
+        ~BufferPooledDictionary() => Dispose(false);
 
         public void Dispose()
         {
@@ -564,7 +576,7 @@ namespace Elffy.Effective.Unsafes
 
         public struct Enumerator : IEnumerator<KeyValuePair<TKey, TValue>>
         {
-            private readonly UnmanagedDictionary<TKey, TValue> _dictionary;
+            private readonly BufferPooledDictionary<TKey, TValue> _dictionary;
             private readonly int _version;
             private int _index;
             private KeyValuePair<TKey, TValue> _current;
@@ -573,7 +585,7 @@ namespace Elffy.Effective.Unsafes
             internal const int DictEntry = 1;
             internal const int KeyValuePair = 2;
 
-            internal Enumerator(UnmanagedDictionary<TKey, TValue> dictionary, int getEnumeratorRetType)
+            internal Enumerator(BufferPooledDictionary<TKey, TValue> dictionary, int getEnumeratorRetType)
             {
                 _dictionary = dictionary;
                 _version = dictionary._version;
@@ -637,13 +649,13 @@ namespace Elffy.Effective.Unsafes
             }
         }
 
-        //[DebuggerTypeProxy(typeof(DictionaryKeyCollectionDebugView<,>))]
+        [DebuggerTypeProxy(typeof(BufferPooledKeyCollectionDebugView<,>))]
         [DebuggerDisplay("Count = {Count}")]
         public readonly struct KeyCollection : ICollection<TKey>, IReadOnlyCollection<TKey>
         {
-            private readonly UnmanagedDictionary<TKey, TValue> _dictionary;
+            private readonly BufferPooledDictionary<TKey, TValue> _dictionary;
 
-            public KeyCollection(UnmanagedDictionary<TKey, TValue> dictionary)
+            public KeyCollection(BufferPooledDictionary<TKey, TValue> dictionary)
             {
                 if(dictionary == null) {
                     ThrowHelper.NullArg(nameof(dictionary));
@@ -693,12 +705,12 @@ namespace Elffy.Effective.Unsafes
 
             public struct Enumerator : IEnumerator<TKey>, IEnumerator
             {
-                private readonly UnmanagedDictionary<TKey, TValue> _dictionary;
+                private readonly BufferPooledDictionary<TKey, TValue> _dictionary;
                 private int _index;
                 private readonly int _version;
                 private TKey? _currentKey;
 
-                internal Enumerator(UnmanagedDictionary<TKey, TValue> dictionary)
+                internal Enumerator(BufferPooledDictionary<TKey, TValue> dictionary)
                 {
                     _dictionary = dictionary;
                     _version = dictionary._version;
@@ -755,13 +767,13 @@ namespace Elffy.Effective.Unsafes
             }
         }
 
-        //[DebuggerTypeProxy(typeof(DictionaryValueCollectionDebugView<,>))]
+        [DebuggerTypeProxy(typeof(BufferPooledValueCollectionDebugView<,>))]
         [DebuggerDisplay("Count = {Count}")]
         public readonly struct ValueCollection : ICollection<TValue>, IReadOnlyCollection<TValue>
         {
-            private readonly UnmanagedDictionary<TKey, TValue> _dictionary;
+            private readonly BufferPooledDictionary<TKey, TValue> _dictionary;
 
-            public ValueCollection(UnmanagedDictionary<TKey, TValue> dictionary)
+            public ValueCollection(BufferPooledDictionary<TKey, TValue> dictionary)
             {
                 if(dictionary == null) {
                     ThrowHelper.NullArg(nameof(dictionary));
@@ -811,12 +823,12 @@ namespace Elffy.Effective.Unsafes
 
             public struct Enumerator : IEnumerator<TValue>, IEnumerator
             {
-                private readonly UnmanagedDictionary<TKey, TValue> _dictionary;
+                private readonly BufferPooledDictionary<TKey, TValue> _dictionary;
                 private int _index;
                 private readonly int _version;
                 private TValue? _currentValue;
 
-                internal Enumerator(UnmanagedDictionary<TKey, TValue> dictionary)
+                internal Enumerator(BufferPooledDictionary<TKey, TValue> dictionary)
                 {
                     _dictionary = dictionary;
                     _version = dictionary._version;
@@ -887,6 +899,75 @@ namespace Elffy.Effective.Unsafes
             /// Specifies that if an existing entry with the same key is encountered, an exception should be thrown.
             /// </summary>
             ThrowOnExisting = 2
+        }
+    }
+
+    internal sealed class BufferPooledDebugView<K, V> where K : unmanaged where V : unmanaged
+    {
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private readonly BufferPooledDictionary<K, V> _dict;
+
+        internal BufferPooledDebugView(BufferPooledDictionary<K, V> dictionary)
+        {
+            if(dictionary == null)
+                throw new ArgumentNullException(nameof(dictionary));
+
+            _dict = dictionary;
+        }
+
+        [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+        public KeyValuePair<K, V>[] Items
+        {
+            get
+            {
+                KeyValuePair<K, V>[] items = new KeyValuePair<K, V>[_dict.Count];
+                _dict.CopyTo(items, 0);
+                return items;
+            }
+        }
+    }
+
+    internal sealed class BufferPooledKeyCollectionDebugView<TKey, TValue> where TKey : unmanaged where TValue : unmanaged
+    {
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private readonly BufferPooledDictionary<TKey, TValue>.KeyCollection _collection;
+
+        internal BufferPooledKeyCollectionDebugView(BufferPooledDictionary<TKey, TValue>.KeyCollection collection)
+        {
+            _collection = collection;
+        }
+
+        [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+        public TKey[] Items
+        {
+            get
+            {
+                TKey[] items = new TKey[_collection.Count];
+                _collection.CopyTo(items, 0);
+                return items;
+            }
+        }
+    }
+
+    internal sealed class BufferPooledValueCollectionDebugView<TKey, TValue> where TKey : unmanaged where TValue : unmanaged
+    {
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private readonly BufferPooledDictionary<TKey, TValue>.ValueCollection _collection;
+
+        internal BufferPooledValueCollectionDebugView(BufferPooledDictionary<TKey, TValue>.ValueCollection collection)
+        {
+            _collection = collection;
+        }
+
+        [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+        public TValue[] Items
+        {
+            get
+            {
+                TValue[] items = new TValue[_collection.Count];
+                _collection.CopyTo(items, 0);
+                return items;
+            }
         }
     }
 }
