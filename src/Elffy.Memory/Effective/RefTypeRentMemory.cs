@@ -17,6 +17,7 @@ namespace Elffy.Effective
     /// <summary>Shared memories from memory pool, that provides <see cref="Span{T}"/> like <see cref="Memory{T}"/>.</summary>
     /// <typeparam name="T">element type</typeparam>
     [DebuggerDisplay("{DebugDisplay}")]
+    [DebuggerTypeProxy(typeof(RefTypeRentMemoryDebuggerTypeProxy<>))]
     public readonly struct RefTypeRentMemory<T> : IEquatable<RefTypeRentMemory<T>>, IDisposable where T : class?
     {
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
@@ -118,5 +119,19 @@ namespace Elffy.Effective
         public override int GetHashCode() => HashCode.Combine(_array, _start, _length, _id, _lender);
 
         public override string ToString() => DebugDisplay;
+    }
+
+    internal sealed class RefTypeRentMemoryDebuggerTypeProxy<T> where T : class?
+    {
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private readonly RefTypeRentMemory<T> _entity;
+
+        [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+        public T[] Items => _entity.Span.ToArray();
+
+        internal RefTypeRentMemoryDebuggerTypeProxy(RefTypeRentMemory<T> entity)
+        {
+            _entity = entity;
+        }
     }
 }

@@ -17,6 +17,7 @@ namespace Elffy.Effective
     /// <summary>Shared memories from memory pool, that provides <see cref="Span{T}"/> like <see cref="Memory{T}"/>.</summary>
     /// <typeparam name="T">element type</typeparam>
     [DebuggerDisplay("{DebugDisplay}")]
+    [DebuggerTypeProxy(typeof(ValueTypeRentMemoryDebuggerTypeProxy<>))]
     public readonly struct ValueTypeRentMemory<T> : IEquatable<ValueTypeRentMemory<T>>, IDisposable where T : unmanaged
     {
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
@@ -143,5 +144,19 @@ namespace Elffy.Effective
         }
 
         public override string ToString() => DebugDisplay;
+    }
+
+    internal sealed class ValueTypeRentMemoryDebuggerTypeProxy<T> where T : unmanaged
+    {
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private readonly ValueTypeRentMemory<T> _entity;
+
+        [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+        public T[] Items => _entity.Span.ToArray();
+
+        internal ValueTypeRentMemoryDebuggerTypeProxy(ValueTypeRentMemory<T> entity)
+        {
+            _entity = entity;
+        }
     }
 }
