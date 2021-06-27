@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace Elffy.Serialization.Fbx
 {
-    internal struct FbxConnectionResolver // Be careful, mutable object
+    internal struct FbxConnectionResolver : IDisposable // Be careful, mutable object
     {
         private BufferPooledDictionary<long, int>? _srcToDest;
         private UnsafeRawList<UnsafeRawList<long>> _destLists;

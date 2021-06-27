@@ -3,10 +3,11 @@ using FbxTools;
 using Elffy.Effective;
 using System.Runtime.CompilerServices;
 using Elffy.Effective.Unsafes;
+using System;
 
 namespace Elffy.Serialization.Fbx
 {
-    internal struct DeformerList
+    internal struct DeformerList : IDisposable
     {
         private readonly BufferPooledDictionary<long, FbxNode>? _dic;
 

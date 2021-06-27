@@ -16,17 +16,24 @@ namespace Elffy.Serialization.Fbx
     {
         private FbxObject _fbx;
         private UnsafeRawArray<Texture> _textures;
-        private UnsafeRawList<int> _indices;
-        private UnsafeRawList<Vertex> _vertices;
+
+        //private UnsafeRawList<int> _indices;
+        //private UnsafeRawList<Vertex> _vertices;
+        private UnsafeRawArray<int> _indices;
+        private UnsafeRawArray<Vertex> _vertices;
+
         private UnsafeRawList<Bone> _bones;
 
         public ReadOnlySpan<int> Indices => _indices.AsSpan();
 
         public ReadOnlySpan<Vertex> Vertices => _vertices.AsSpan();
 
-        private FbxSemantics(FbxObject fbx)
+        private FbxSemantics(FbxObject fbx, UnsafeRawArray<int> indices, UnsafeRawArray<Vertex> vertices, UnsafeRawArray<Texture> textures)
         {
             _fbx = fbx;
+            _indices = indices;
+            _vertices = vertices;
+            _textures = textures;
         }
 
         ~FbxSemantics() => Dispose(false);
@@ -57,14 +64,17 @@ namespace Elffy.Serialization.Fbx
 
         public static FbxSemantics Parse(IResourceLoader loader, string name, CancellationToken cancellationToken = default)
         {
-            FbxSemantics? semantics = null;
+            //FbxSemantics? semantics = null;
             ParserTemporalInfo temporalInfo = default;
+            UnsafeRawArray<int> indices = default;
+            UnsafeRawArray<Vertex> vertices = default;
+            UnsafeRawArray<Texture> textures = default;
             using var combinedMesh = CombinedMesh.New();
+            using var stream = loader.GetStream(name);
             try {
-                using var stream = loader.GetStream(name);
                 var fbx = FbxParser.Parse(stream);
                 temporalInfo = new ParserTemporalInfo(fbx);
-                semantics = new FbxSemantics(fbx);
+                //semantics = new FbxSemantics(fbx);
                 //temporalInfo.ConnSourceToDest = CreateConnectionDicSourceToDest(fbx);
 
                 var objects = fbx.Find(FbxConstStrings.Objects());
@@ -72,24 +82,31 @@ namespace Elffy.Serialization.Fbx
                 using var buf = new UnsafeRawArray<int>(objects.Children.Count);
                 var bufSpan = buf.AsSpan();
 
-                ReadMesh2(objects, bufSpan, combinedMesh, cancellationToken);
+                ReadMesh2(objects, bufSpan, combinedMesh, temporalInfo, cancellationToken);
+                //(semantics._vertices, semantics._indices) = combinedMesh.CreateCombined();
+                (vertices, indices) = combinedMesh.CreateCombined();
 
-                ReadMesh(objects, bufSpan, ref semantics._vertices, ref semantics._indices, ref temporalInfo.Meshes, cancellationToken);
-                ReadTexture(objects, bufSpan, ref semantics._textures, cancellationToken);
+                //ReadMesh(objects, bufSpan, ref semantics._vertices, ref semantics._indices, ref temporalInfo.Meshes, cancellationToken);
+                textures = ReadTexture(objects, bufSpan, cancellationToken);
                 ReadModel(objects, bufSpan, ref temporalInfo.Models, cancellationToken);
                 ReadMaterial(objects, bufSpan);
-                ReadDeformer(objects, bufSpan, ref semantics._bones, cancellationToken);
+                //ReadDeformer(objects, bufSpan, ref semantics._bones, cancellationToken);
 
-                var connections = new ConnectionList(fbx.Find(FbxConstStrings.Connections()));
+                //var connections = new ConnectionList(fbx.Find(FbxConstStrings.Connections()));
 
 
-                GetDeformderFromMesh(objects, connections, temporalInfo);
+                //GetDeformderFromMesh(objects, connections, temporalInfo);
 
-                Connect(connections, temporalInfo, semantics._vertices.AsSpan(), cancellationToken);
-                return semantics;
+                //Connect(connections, temporalInfo, semantics._vertices.AsSpan(), cancellationToken);
+
+                return new FbxSemantics(fbx, indices, vertices, textures);
             }
             catch {
-                semantics?.Dispose();
+                temporalInfo.Dispose();
+                indices.Dispose();
+                vertices.Dispose();
+                textures.Dispose();
+                //semantics?.Dispose();
                 throw;
             }
             finally {
@@ -229,7 +246,7 @@ namespace Elffy.Serialization.Fbx
             return;
         }
 
-        private static void ReadMesh2(FbxNode objects, Span<int> indexBuf, in CombinedMesh combinedMesh, CancellationToken cancellationToken)
+        private static void ReadMesh2(FbxNode objects, Span<int> indexBuf, in CombinedMesh combinedMesh, in ParserTemporalInfo info, CancellationToken cancellationToken)
         {
             // [root] --+-- "Objects"  ------+---- "Geometry"
             //          |                    |---- "Geometry"
@@ -270,6 +287,8 @@ namespace Elffy.Serialization.Fbx
 
                 GetGeometryMesh(geometry, out var meshGeometry);
                 ResolveMesh2(meshGeometry, combinedMesh);
+                DeformerOfMesh(meshGeometry, info);
+
                 meshes.Add(meshGeometry);
             }
 
@@ -520,25 +539,27 @@ namespace Elffy.Serialization.Fbx
         }
 
 
-        private static void ReadTexture(FbxNode objects,
-                                        Span<int> indexBuf,
-                                        ref UnsafeRawArray<Texture> textures,
-                                        CancellationToken cancellationToken)
+        private static UnsafeRawArray<Texture> ReadTexture(FbxNode objects, Span<int> indexBuf, CancellationToken cancellationToken)
         {
-            Debug.Assert(textures.IsEmpty);
 
             var textureCount = objects.FindIndexAll(FbxConstStrings.Texture(), indexBuf);
-            textures = new UnsafeRawArray<Texture>(textureCount);
-            int i = 0;
-            foreach(var index in indexBuf.Slice(0, textureCount)) {
-                cancellationToken.ThrowIfCancellationRequested();
-                var textureNode = objects.Children[index];
-                var id = textureNode.Properties[0].AsInt64();
-                var fileName = textureNode.Find(FbxConstStrings.RelativeFilename()).Properties[0].AsString();
-                textures[i] = new Texture(id, fileName);
-                i++;
+            var textures = new UnsafeRawArray<Texture>(textureCount);
+            try {
+                int i = 0;
+                foreach(var index in indexBuf.Slice(0, textureCount)) {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    var textureNode = objects.Children[index];
+                    var id = textureNode.Properties[0].AsInt64();
+                    var fileName = textureNode.Find(FbxConstStrings.RelativeFilename()).Properties[0].AsString();
+                    textures[i] = new Texture(id, fileName);
+                    i++;
+                }
+                return textures;
             }
-            return;
+            catch {
+                textures.Dispose();
+                throw;
+            }
         }
 
         private static void ReadModel(FbxNode objects, Span<int> indexBuf, ref Dictionary<long, Model>? models, CancellationToken cancellationToken)
@@ -607,6 +628,22 @@ namespace Elffy.Serialization.Fbx
                     }
                 }
             }
+        }
+
+        private static void DeformerOfMesh(in MeshGeometry meshGeometry, in ParserTemporalInfo info)
+        {
+            if(info.TryGetSkinDeformer(meshGeometry, out var skin) == false) { return; }
+            using var memory = info.GetClusterDeformers(skin, out var count);
+            var clusters = memory.Span.Slice(0, count);
+            Debug.WriteLine($"---------------------------------");
+            Debug.WriteLine($"{meshGeometry.Name}");
+            foreach(var cluster in clusters) {
+                var indices = cluster.GetIndices();
+                var weights = cluster.GetWeights();
+                cluster.GetInitialPosition(out var mat);
+                Debug.WriteLine($"    {cluster.Name}");
+            }
+            Debug.WriteLine($"---------------------------------");
         }
 
         private static void GetDeformderFromMesh(FbxNode objects, ConnectionList connections, in ParserTemporalInfo temporalInfo)
@@ -717,10 +754,11 @@ namespace Elffy.Serialization.Fbx
             }
         }
 
-        private struct ParserTemporalInfo
+        private struct ParserTemporalInfo : IDisposable
         {
-            private FbxConnectionResolver _connResolver;
-            private DeformerList _deformerList;
+            private readonly FbxConnectionResolver _connResolver;
+            private readonly DeformerList _deformerList;
+            private readonly LimbNodeList _limbNodeList;
 
             public UnsafeRawList<MeshGeometry> Meshes;
             public Dictionary<long, Model> Models;
@@ -735,6 +773,7 @@ namespace Elffy.Serialization.Fbx
                 var connectionsNode = fbx.Find(FbxConstStrings.Connections());
                 _deformerList = new(objectsNode);
                 _connResolver = new(connectionsNode);
+                _limbNodeList = new(objectsNode);
                 Meshes = default;
                 Models = default;
                 ObjectDic = default;
@@ -777,6 +816,27 @@ namespace Elffy.Serialization.Fbx
                 return count;
             }
 
+            public readonly ValueTypeRentMemory<ClusterDeformer> GetClusterDeformers(in SkinDeformer skin, out int count)
+            {
+                var sourceIDList = GetSources(skin.ID);
+                count = 0;
+                var clusters = new ValueTypeRentMemory<ClusterDeformer>(sourceIDList.Length);
+                try {
+                    foreach(var id in sourceIDList) {
+                        if(_deformerList.TryGetDeformer(id, out var deformerNode) == false) { continue; }
+                        if(deformerNode.Properties.Length > 2 && deformerNode.Properties[2].AsString().SequenceEqual(FbxConstStrings.Cluster()) && deformerNode.Children.Count >= 6) {
+                            clusters[count++] = new ClusterDeformer(deformerNode);
+                        }
+                    }
+                    return clusters;
+                }
+                catch {
+                    clusters.Dispose();
+                    count = 0;
+                    throw;
+                }
+            }
+
             [Obsolete]
             public readonly bool TryGetDeformer(in MeshGeometry mesh, out FbxNode deformer)
             {
@@ -797,6 +857,7 @@ namespace Elffy.Serialization.Fbx
             {
                 _connResolver.Dispose();
                 _deformerList.Dispose();
+                _limbNodeList.Dispose();
                 Meshes.Dispose();
             }
         }
