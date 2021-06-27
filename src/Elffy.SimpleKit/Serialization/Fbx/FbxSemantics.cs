@@ -8,6 +8,7 @@ using Elffy.Core;
 using Elffy.Effective;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace Elffy.Serialization.Fbx
 {
@@ -58,29 +59,41 @@ namespace Elffy.Serialization.Fbx
         {
             FbxSemantics? semantics = null;
             ParserTemporalInfo temporalInfo = default;
+            using var combinedMesh = CombinedMesh.New();
             try {
                 using var stream = loader.GetStream(name);
                 var fbx = FbxParser.Parse(stream);
+                temporalInfo = new ParserTemporalInfo(fbx);
                 semantics = new FbxSemantics(fbx);
+                //temporalInfo.ConnSourceToDest = CreateConnectionDicSourceToDest(fbx);
 
                 var objects = fbx.Find(FbxConstStrings.Objects());
+
                 using var buf = new UnsafeRawArray<int>(objects.Children.Count);
                 var bufSpan = buf.AsSpan();
+
+                ReadMesh2(objects, bufSpan, combinedMesh, cancellationToken);
+
                 ReadMesh(objects, bufSpan, ref semantics._vertices, ref semantics._indices, ref temporalInfo.Meshes, cancellationToken);
                 ReadTexture(objects, bufSpan, ref semantics._textures, cancellationToken);
                 ReadModel(objects, bufSpan, ref temporalInfo.Models, cancellationToken);
                 ReadMaterial(objects, bufSpan);
                 ReadDeformer(objects, bufSpan, ref semantics._bones, cancellationToken);
-                CreateDic(ref temporalInfo);
 
                 var connections = new ConnectionList(fbx.Find(FbxConstStrings.Connections()));
+
+
+                GetDeformderFromMesh(objects, connections, temporalInfo);
+
                 Connect(connections, temporalInfo, semantics._vertices.AsSpan(), cancellationToken);
                 return semantics;
             }
             catch {
-                temporalInfo.Dispose();
                 semantics?.Dispose();
                 throw;
+            }
+            finally {
+                temporalInfo.Dispose();
             }
         }
 
@@ -93,11 +106,9 @@ namespace Elffy.Serialization.Fbx
                 cancellationToken.ThrowIfCancellationRequested();
                 var deformer = objects.Children[index];
                 var props = deformer.Properties;
-                var id = props[0].AsInt64();
-                var name = props[1].AsString();
-                if(props.Length <= 2 || props[2].AsString().SequenceEqual(FbxConstStrings.Cluster()) == false) {
-                    continue;
-                }
+                if(props.Length <= 2) { continue; }
+                var (id, name, type) = (props[0].AsInt64(), props[1].AsString(), props[2].AsString());
+                if(type.SequenceEqual(FbxConstStrings.Cluster()) == false) { continue; }
                 if(deformer.Children.Count < 6) {
                     continue;
                 }
@@ -106,12 +117,25 @@ namespace Elffy.Serialization.Fbx
                 }
                 Bone bone;
                 bone.ID = id;
+                bone.Name = name;
                 var indexes = indexesNode.Properties[0].AsInt32Array();
                 var weights = weightsNode.Properties[0].AsDoubleArray();
                 var array = deformer.Find(FbxConstStrings.TransformLink()).Properties[0].AsDoubleArray();
                 GetMatrix(array, out bone.InitPosition);
                 bones.Add(bone);
             }
+
+
+            // tmp
+            var aa = indexBuf.Slice(0, deformerCount)
+                .ToArray()
+                .Select(i => objects.Children[i])
+                .Where(def => def.Properties.Length > 2 && def.Properties[2].AsString().SequenceEqual(FbxConstStrings.Cluster()))
+                .Where(def => def.Children.Count >= 6)
+                .Where(def => def.TryFind(FbxConstStrings.Indexes(), out _) && def.TryFind(FbxConstStrings.Weights(), out _))
+                .Select(def => (def.Find(FbxConstStrings.Indexes()).Properties[0].AsInt32Array().ToArray(), def.Find(FbxConstStrings.Weights()).Properties[0].AsDoubleArray().ToArray()))
+                .ToArray();
+            return;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -188,6 +212,79 @@ namespace Elffy.Serialization.Fbx
                 ResolveMesh(meshGeometry, indices, vertices, out meshGeometry.ResolvedIndicesRange, out meshGeometry.ResolvedVerticesRange);
                 meshes.Add(meshGeometry);
             }
+
+            var a = objects.Children.Select(n => n.Name).Distinct().ToArray();
+            var c = objects.Children.Count(n => n.Name == "Pose");
+            var pose = objects.Children.Where(n => n.Name == "Pose").ToArray();
+
+            var types = objects.Children
+                .Where(n => n.Name == "NodeAttribute")
+                .Where(n => n.Children.Count > 1)
+                .Select(n => n.Children[1])
+                .Where(n => n.Properties.Length > 0)
+                .Where(n => n.Properties[0].Type == FbxPropertyType.String)
+                .Select(n => n.Properties[0].AsString().ToString())
+                .ToArray();
+
+            return;
+        }
+
+        private static void ReadMesh2(FbxNode objects, Span<int> indexBuf, in CombinedMesh combinedMesh, CancellationToken cancellationToken)
+        {
+            // [root] --+-- "Objects"  ------+---- "Geometry"
+            //          |                    |---- "Geometry"
+            //          |                    |---- "Geometry"
+            //          |                    |----  ...
+            //          |                    |                                        <*1>
+            //          |                    |---- "Model" ----- "Properties70" --+-- "P" ([0]:string propTypeName, ...)
+            //          |                    |                                    |-- "P" ([0]:string propTypeName, ...)
+            //          |                    |                                    |-- ...
+            //          |                    |---- "Model" ---- ...
+            //          |                    |---- ...
+            //          |                   
+            //          |
+            //          |-- "GlobalSettings"
+            //          | 
+            //          |-- "Connections" --+-- "C" ([0]:string ConnectionType, [1]:long sourceID, [2]:long destID)
+            //          |                   |-- "C" ([0]:string ConnectionType, [1]:long sourceID, [2]:long destID)
+            //          |                   |-- ...
+
+
+            // <*1> has translation, rotation, and scaling of the model.
+            // They are (double x, double y, double z) = ([4], [5], [6])
+
+            Debug.Assert(indexBuf.Length >= objects.Children.Count);
+
+            using var meshes = UnsafeRawList<MeshGeometry>.New(128);
+
+            var geometryCount = objects.FindIndexAll(FbxConstStrings.Geometry(), indexBuf);
+            foreach(var i in indexBuf.Slice(0, geometryCount)) {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var geometry = objects.Children[i];
+                var props = geometry.Properties;
+                var isMeshGeometry = (props.Length >= 3) &&
+                                     (props[2].Type == FbxPropertyType.String) &&
+                                     props[2].AsString().SequenceEqual(FbxConstStrings.Mesh());
+                if(isMeshGeometry == false) { continue; }
+
+                GetGeometryMesh(geometry, out var meshGeometry);
+                ResolveMesh2(meshGeometry, combinedMesh);
+                meshes.Add(meshGeometry);
+            }
+
+            //var a = objects.Children.Select(n => n.Name).Distinct().ToArray();
+            //var c = objects.Children.Count(n => n.Name == "Pose");
+            //var pose = objects.Children.Where(n => n.Name == "Pose").ToArray();
+
+            //var types = objects.Children
+            //    .Where(n => n.Name == "NodeAttribute")
+            //    .Where(n => n.Children.Count > 1)
+            //    .Select(n => n.Children[1])
+            //    .Where(n => n.Properties.Length > 0)
+            //    .Where(n => n.Properties[0].Type == FbxPropertyType.String)
+            //    .Select(n => n.Properties[0].AsString().ToString())
+            //    .ToArray();
 
             return;
         }
@@ -280,6 +377,75 @@ namespace Elffy.Serialization.Fbx
                 }
             }
         }
+
+        private static void ResolveMesh2(MeshGeometry mesh, in CombinedMesh combinedMesh)
+        {
+            var positions = mesh.Positions.AsSpan().MarshalCast<double, VecD3>();
+            var normals = mesh.Normals.AsSpan().MarshalCast<double, VecD3>();
+            var uv = mesh.UV.AsSpan().MarshalCast<double, VecD2>();
+
+            switch(mesh.NormalMappingType) {
+                case MappingInformationType.ByPolygonVertex: {
+                    if(normals.Length != mesh.IndicesRaw.Length) { throw new FormatException(); }
+                    break;
+                }
+                case MappingInformationType.ByVertice: {
+                    if(normals.Length != positions.Length) { throw new FormatException(); }
+                    break;
+                }
+                default:
+                    throw new FormatException();
+            }
+
+            //switch(mesh.UVMappingType) {
+            //    case MappingInformationType.ByPolygonVertex: {
+            //        if(uv.Length != mesh.IndicesRaw.Length) { throw new FormatException(); }
+            //        break;
+            //    }
+            //    case MappingInformationType.ByControllPoint: {
+            //        if(uv.Length != positions.Length) { throw new FormatException(); }
+            //        break;
+            //    }
+            //    default:
+            //        throw new FormatException();
+            //}
+
+            ref var m = ref combinedMesh.NewMeshToAdd();
+
+            int n_gon = 0;
+            for(int i = 0; i < mesh.IndicesRaw.Length; i++) {
+                n_gon++;
+                var isLast = mesh.IndicesRaw[i] < 0;
+                var index = isLast ? (-mesh.IndicesRaw[i] - 1) : mesh.IndicesRaw[i];     // 負のインデックスは多角形ポリゴンの最後の頂点を表す (2の補数が元の値)
+
+                var normalIndex = mesh.NormalMappingType == MappingInformationType.ByPolygonVertex ? i : index;
+                if(mesh.NormalReferenceType == ReferenceInformationType.IndexToDirect) {
+                    normalIndex = mesh.NormalIndices[normalIndex];
+                }
+
+                var uvIndex = mesh.UVMappingType == MappingInformationType.ByPolygonVertex ? i : index;
+                if(mesh.UVReferenceType == ReferenceInformationType.IndexToDirect) {
+                    uvIndex = mesh.UVIndices[uvIndex];
+                }
+
+                m.AddVertex(new Vertex(
+                    position: (Vector3)positions[index],
+                    normal: (Vector3)normals[normalIndex],
+                    uv: (Vector2)uv[uvIndex]
+                ));
+                if(isLast) {
+                    if(n_gon <= 2) { throw new FormatException(); }
+                    for(int n = 0; n < n_gon - 2; n++) {
+                        var j = i - n_gon + 1;
+                        m.AddIndex(j);
+                        m.AddIndex(j + n + 1);
+                        m.AddIndex(j + n + 2);
+                    }
+                    n_gon = 0;
+                }
+            }
+        }
+
 
         private static void ResolveMesh(MeshGeometry mesh, UnsafeRawList<int> indicesMarged, UnsafeRawList<Vertex> verticesMarged,
                                         out Range indicesRange, out Range verticesRange)
@@ -375,16 +541,20 @@ namespace Elffy.Serialization.Fbx
             return;
         }
 
-        private static void ReadModel(FbxNode objects, Span<int> indexBuf, ref UnsafeRawList<Model> models, CancellationToken cancellationToken)
+        private static void ReadModel(FbxNode objects, Span<int> indexBuf, ref Dictionary<long, Model>? models, CancellationToken cancellationToken)
         {
-            Debug.Assert(models.IsNull);
-            models = UnsafeRawList<Model>.New(128);
+            Debug.Assert(models is null);
+            models = new Dictionary<long, Model>();
+            //Debug.Assert(models.IsNull);
+            //models = UnsafeRawList<Model>.New(128);
 
             var modelCount = objects.FindIndexAll(FbxConstStrings.Model(), indexBuf);
             foreach(var i in indexBuf.Slice(0, modelCount)) {
                 cancellationToken.ThrowIfCancellationRequested();
                 var modelNode = objects.Children[i];
                 var id = modelNode.Properties[0].AsInt64();
+                var name = modelNode.Properties[1].AsString();
+                var modelType = modelNode.Properties[2].AsString().ToModelType();
                 var property70 = modelNode.Find(FbxConstStrings.Properties70());
 
 
@@ -415,7 +585,8 @@ namespace Elffy.Serialization.Fbx
                             (float)props[6].AsDouble());
                     }
                 }
-                models.Add(new Model(id, translation, rotation, scale));
+                //models.Add(new Model(id, name, modelType, translation, rotation, scale));
+                models.Add(id, new Model(id, name, modelType, translation, rotation, scale));
             }
         }
 
@@ -438,11 +609,74 @@ namespace Elffy.Serialization.Fbx
             }
         }
 
+        private static void GetDeformderFromMesh(FbxNode objects, ConnectionList connections, in ParserTemporalInfo temporalInfo)
+        {
+            var deformersDic = objects.FindIndexAll(FbxConstStrings.Deformer())
+                                   .Select(index => objects.Children[index])
+                                   .ToDictionary(d => d.Properties[0].AsInt64(), d => d);
+
+            var objDic = temporalInfo.ObjectDic;
+            var models = temporalInfo.Models.ToArray();
+            var meshes = temporalInfo.Meshes.ToArray();
+
+            foreach(var mesh in meshes) {
+                temporalInfo.TryGetSkinDeformer(mesh, out var skin);
+                var clusters = new ClusterDeformer[temporalInfo.GetClusterDeformerCount(skin)];
+                temporalInfo.GetClusterDeformers(skin, clusters);
+                foreach(var cluster in clusters) {
+                    var indices = cluster.GetIndices();
+                    var weights = cluster.GetWeights();
+                    cluster.GetInitialPosition(out var pos);
+                }
+            }
+
+            var tmp = temporalInfo;
+
+            var a = meshes.Select(mesh =>
+            {
+
+                return (
+                    Mesh: mesh,
+                    Deformer: tmp.TryGetDeformer(mesh, out var d) ? d : default
+                    );
+            }).Select(x =>
+            {
+                var deformerID = x.Deformer.Properties[0].AsInt64();
+                var sub = connections
+                    .Where(conn => conn.DestID == deformerID && deformersDic.TryGetValue(conn.SourceID, out var d) && d.Children.Count >= 6)
+                    .Select(conn => deformersDic[conn.SourceID])
+                    .ToArray();
+
+                return (Mesh: x.Mesh, Deformer: x.Deformer, SubDeformer: sub);
+            }).ToArray();
+
+            foreach(var (mesh, deformer, subDeformers) in a) {
+
+                if(!deformer.TryFind(FbxConstStrings.Indexes(), out var indexesNode) || !deformer.TryFind(FbxConstStrings.Weights(), out var weightsNode)) {
+                    continue;
+                }
+                Bone bone;
+                bone.ID = deformer.Properties[0].AsInt64();
+                bone.Name = deformer.Properties[1].AsString();
+                var indexes = indexesNode.Properties[0].AsInt32Array();
+                var weights = weightsNode.Properties[0].AsDoubleArray();
+                var array = deformer.Find(FbxConstStrings.TransformLink()).Properties[0].AsDoubleArray();
+                GetMatrix(array, out bone.InitPosition);
+
+                continue;
+            }
+
+            return;
+        }
+
         private static void Connect(ConnectionList connections, in ParserTemporalInfo temporalInfo, Span<Vertex> vertices, CancellationToken cancellationToken)
         {
+            return;
             var objDic = temporalInfo.ObjectDic;
-            var models = temporalInfo.Models.AsSpan();
+            //var models = temporalInfo.Models.AsSpan();
+            var models = temporalInfo.Models;
             var meshes = temporalInfo.Meshes.AsSpan();
+
             foreach(var connect in connections) {
                 cancellationToken.ThrowIfCancellationRequested();
                 switch(connect.ConnectionType) {
@@ -453,15 +687,19 @@ namespace Elffy.Serialization.Fbx
 
                         switch((src.Type, dest.Type)) {
                             case (ObjectType.MeshGeometry, ObjectType.Model): {
-                                ref readonly var mesh = ref meshes[src.Index];
-                                ref readonly var model = ref models[dest.Index];
-                                // TODO: Scale, Rotation
-                                var translation = model.Translation;
-                                var meshVertices = vertices[mesh.ResolvedVerticesRange];
-                                for(int i = 0; i < meshVertices.Length; i++) {
-                                    meshVertices[i].Position += translation;
-                                }
+                                //ref readonly var mesh = ref meshes[src.Index];
+                                //ref readonly var model = ref models[dest.Index];
+                                //// TODO: Scale, Rotation
+                                //var translation = model.Translation;
+                                //var meshVertices = vertices[mesh.ResolvedVerticesRange];
+                                //for(int i = 0; i < meshVertices.Length; i++) {
+                                //    meshVertices[i].Position += translation;
+                                //}
 
+                                break;
+                            }
+                            case (ObjectType.MeshGeometry, ObjectType.Bone): {
+                                Debug.WriteLine("aaaaaa!!");
                                 break;
                             }
                             default: { break; }
@@ -479,37 +717,87 @@ namespace Elffy.Serialization.Fbx
             }
         }
 
-        private static void CreateDic(ref ParserTemporalInfo temporalInfo)
+        private struct ParserTemporalInfo
         {
-            //var dic = InternalDictionary<long, ObjectInfo>.New();
-            var dic = new System.Collections.Generic.Dictionary<long, ObjectInfo>();
-            temporalInfo.ObjectDic = dic;
+            private FbxConnectionResolver _connResolver;
+            private DeformerList _deformerList;
 
-            var meshes = temporalInfo.Meshes.AsSpan();
-            for(int i = 0; i < meshes.Length; i++) {
-                dic.Add(meshes[i].ID, new ObjectInfo(ObjectType.MeshGeometry, i));
-            }
-
-            var models = temporalInfo.Models.AsSpan();
-            for(int i = 0; i < models.Length; i++) {
-                dic.Add(models[i].ID, new ObjectInfo(ObjectType.Model, i));
-            }
-        }
-
-
-        private ref struct ParserTemporalInfo
-        {
             public UnsafeRawList<MeshGeometry> Meshes;
-            public UnsafeRawList<Model> Models;
+            public Dictionary<long, Model> Models;
+            //public Dictionary<long, List<(ConnectionType Type, long DestID)>> ConnSourceToDest;
 
             //public InternalDictionary<long, ObjectInfo> ObjectDic;
             public System.Collections.Generic.Dictionary<long, ObjectInfo> ObjectDic;
 
+            public ParserTemporalInfo(FbxObject fbx)
+            {
+                var objectsNode = fbx.Find(FbxConstStrings.Objects());
+                var connectionsNode = fbx.Find(FbxConstStrings.Connections());
+                _deformerList = new(objectsNode);
+                _connResolver = new(connectionsNode);
+                Meshes = default;
+                Models = default;
+                ObjectDic = default;
+            }
+
+            public readonly bool TryGetSkinDeformer(in MeshGeometry mesh, out SkinDeformer skin)
+            {
+                foreach(var id in GetSources(mesh.ID)) {
+                    if(_deformerList.TryGetDeformer(id, out var deformerNode) == false) { continue; }
+                    if(deformerNode.Properties.Length > 2 && deformerNode.Properties[2].AsString() == "Skin") {
+                        skin = new SkinDeformer(deformerNode);
+                        return true;
+                    }
+                }
+                skin = default;
+                return false;
+            }
+
+            public readonly int GetClusterDeformerCount(in SkinDeformer skin)
+            {
+                int count = 0;
+                foreach(var id in GetSources(skin.ID)) {
+                    if(_deformerList.TryGetDeformer(id, out var deformerNode) == false) { continue; }
+                    if(deformerNode.Properties.Length > 2 && deformerNode.Properties[2].AsString().SequenceEqual(FbxConstStrings.Cluster()) && deformerNode.Children.Count >= 6) {
+                        count++;
+                    }
+                }
+                return count;
+            }
+
+            public readonly int GetClusterDeformers(in SkinDeformer skin, Span<ClusterDeformer> clusters)
+            {
+                int count = 0;
+                foreach(var id in GetSources(skin.ID)) {
+                    if(_deformerList.TryGetDeformer(id, out var deformerNode) == false) { continue; }
+                    if(deformerNode.Properties.Length > 2 && deformerNode.Properties[2].AsString().SequenceEqual(FbxConstStrings.Cluster()) && deformerNode.Children.Count >= 6) {
+                        clusters[count++] = new ClusterDeformer(deformerNode);
+                    }
+                }
+                return count;
+            }
+
+            [Obsolete]
+            public readonly bool TryGetDeformer(in MeshGeometry mesh, out FbxNode deformer)
+            {
+                foreach(var id in GetSources(mesh.ID)) {
+                    if(_deformerList.TryGetDeformer(id, out deformer) == false) { continue; }
+                    if(deformer.Properties.Length > 2 && deformer.Properties[2].AsString() == "Skin") {
+                        return true;
+                    }
+                }
+                deformer = default;
+                return false;
+            }
+
+            public readonly ReadOnlySpan<long> GetSources(long destID) => _connResolver.GetSources(destID);
+            public readonly ReadOnlySpan<long> GetDests(long sourceID) => _connResolver.GetDests(sourceID);
+
             public void Dispose()
             {
+                _connResolver.Dispose();
+                _deformerList.Dispose();
                 Meshes.Dispose();
-                Models.Dispose();
-                //ObjectDic.Dispose();
             }
         }
     }

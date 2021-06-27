@@ -6,5 +6,6 @@ namespace Elffy.Serialization.Fbx
     {
         MeshGeometry,
         Model,
+        Bone,
     }
 }
