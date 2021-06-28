@@ -110,5 +110,8 @@ namespace Elffy.Serialization.Fbx
 
         [Utf8("Weights")]
         public static partial ReadOnlySpan<byte> Weights();
+
+        [Utf8("Skin")]
+        public static partial ReadOnlySpan<byte> Skin();
     }
 }

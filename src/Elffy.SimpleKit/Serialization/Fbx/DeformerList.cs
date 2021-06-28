@@ -7,7 +7,7 @@ using System;
 
 namespace Elffy.Serialization.Fbx
 {
-    internal struct DeformerList : IDisposable
+    internal readonly ref struct DeformerList
     {
         private readonly BufferPooledDictionary<long, FbxNode>? _dic;
 

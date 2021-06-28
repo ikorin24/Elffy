@@ -7,64 +7,68 @@ using System.Diagnostics;
 
 namespace Elffy.Serialization.Fbx
 {
-    internal struct FbxConnectionResolver : IDisposable // Be careful, mutable object
+    internal readonly ref struct FbxConnectionResolver
     {
-        private BufferPooledDictionary<long, int>? _srcToDest;
-        private UnsafeRawList<UnsafeRawList<long>> _destLists;
+        private readonly BufferPooledDictionary<long, int>? _srcToDest;
+        private readonly UnsafeRawList<UnsafeRawList<long>> _destLists;
 
-        private BufferPooledDictionary<long, int>? _destToSrc;
-        private UnsafeRawList<UnsafeRawList<long>> _srcLists;
+        private readonly BufferPooledDictionary<long, int>? _destToSrc;
+        private readonly UnsafeRawList<UnsafeRawList<long>> _srcLists;
 
         public FbxConnectionResolver(FbxNode connectionsNode)
         {
-            _srcToDest = null;
-            _destLists = default;
-            _destToSrc = null;
-            _srcLists = default;
-            CreateConnectionDic(connectionsNode);
-        }
+            var count = connectionsNode.Children.Count;
+            var destLists = UnsafeRawList<UnsafeRawList<long>>.New(capacity: count);
+            var srcToDest = new BufferPooledDictionary<long, int>(capacity: count);
+            var destToSrc = new BufferPooledDictionary<long, int>(capacity: count);
+            var srcLists = UnsafeRawList<UnsafeRawList<long>>.New(capacity: count);
 
-        private void CreateConnectionDic(FbxNode connections)
-        {
-            var count = connections.Children.Count;
-            _destLists = UnsafeRawList<UnsafeRawList<long>>.New(capacity: count);
-            _srcToDest = new BufferPooledDictionary<long, int>(capacity: count);
-            _destToSrc = new BufferPooledDictionary<long, int>(capacity: count);
-            _srcLists = UnsafeRawList<UnsafeRawList<long>>.New(capacity: count);
+            try {
+                foreach(var c in connectionsNode.Children) {
+                    var props = c.Properties;
+                    var conn = new Connection(props[0].AsString().ToConnectionType(), props[1].AsInt64(), props[2].AsInt64());
 
-            foreach(var c in connections.Children) {
-                var props = c.Properties;
-                var conn = new Connection(props[0].AsString().ToConnectionType(), props[1].AsInt64(), props[2].AsInt64());
-
-                // Create source-to-dest dictionary
-                {
-                    UnsafeRawList<long> dests;
-                    if(_srcToDest.TryAdd(conn.SourceID, _destLists.Count)) {
-                        dests = UnsafeRawList<long>.New();
-                        _destLists.Add(dests);
+                    // Create source-to-dest dictionary
+                    {
+                        UnsafeRawList<long> dests;
+                        if(srcToDest.TryAdd(conn.SourceID, destLists.Count)) {
+                            dests = UnsafeRawList<long>.New();
+                            destLists.Add(dests);
+                        }
+                        else {
+                            dests = destLists[srcToDest[conn.SourceID]];
+                        }
+                        Debug.Assert(dests.IsNull == false);
+                        dests.Add(conn.DestID);
                     }
-                    else {
-                        dests = _destLists[_srcToDest[conn.SourceID]];
+
+                    // Create dest-to-source dictionary
+                    {
+                        UnsafeRawList<long> sources;
+                        if(destToSrc.TryAdd(conn.DestID, srcLists.Count)) {
+                            sources = UnsafeRawList<long>.New();
+                            srcLists.Add(sources);
+                        }
+                        else {
+                            sources = srcLists[destToSrc[conn.DestID]];
+                        }
+                        Debug.Assert(sources.IsNull == false);
+                        sources.Add(conn.SourceID);
                     }
-                    Debug.Assert(dests.IsNull == false);
-                    dests.Add(conn.DestID);
                 }
-
-                // Create dest-to-source dictionary
-                {
-                    UnsafeRawList<long> sources;
-                    if(_destToSrc.TryAdd(conn.DestID, _srcLists.Count)) {
-                        sources = UnsafeRawList<long>.New();
-                        _srcLists.Add(sources);
-                    }
-                    else {
-                        sources = _srcLists[_destToSrc[conn.DestID]];
-                    }
-                    Debug.Assert(sources.IsNull == false);
-                    sources.Add(conn.SourceID);
-                }
-
             }
+            catch {
+                destLists.Dispose();
+                srcToDest.Dispose();
+                destToSrc.Dispose();
+                srcLists.Dispose();
+                throw;
+            }
+
+            _destLists = destLists;
+            _srcToDest = srcToDest;
+            _destToSrc = destToSrc;
+            _srcLists = srcLists;
         }
 
         public ReadOnlySpan<long> GetDests(long sourceID)
