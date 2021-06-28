@@ -47,7 +47,7 @@ namespace Elffy.Serialization
             // Parse fbx file
             using var fbx = FbxSemanticParser.Parse(resourceLoader, name, token);
             await model.HostScreen.AsyncBack.ToTiming(FrameLoopTiming.Update, token);   // ↓ main thread --------------------------------------
-            model.Shader = PhongShaderSource.Instance;
+            //model.Shader = PhongShaderSource.Instance;
             if(model.LifeState == LifeState.Activated || model.LifeState == LifeState.Alive) {
                 load.Invoke(fbx.Vertices, fbx.Indices);
             }
