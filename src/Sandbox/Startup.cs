@@ -5,6 +5,7 @@ using Elffy.Mathematics;
 using Elffy.Shapes;
 using Elffy.Shading;
 using Cysharp.Threading.Tasks;
+using System.Diagnostics;
 
 namespace Sandbox
 {
@@ -54,12 +55,39 @@ namespace Sandbox
 
             //return model;
 
+            //{
+            //    var a = Resources.Loader.CreateFbxModel("Hidden/untitled.fbx");
+            //    a.Position.X = -2;
+            //    a.Position.Y = 0;
+            //    a.Position.Z = 5;
+            //    a.Scale = new Vector3(0.05f);
+            //    await a.ActivateWaitLoaded();
+            //}
+            //{
+            //    var a = Resources.Loader.CreateFbxModel("Hidden/untitled2.fbx");
+            //    a.Position.X = 0;
+            //    a.Position.Y = 0;
+            //    a.Position.Z = 5;
+            //    a.Scale = new Vector3(0.05f);
+            //    await a.ActivateWaitLoaded();
+            //}
 
             var dice = Resources.Loader.CreateFbxModel("Hidden/julia.fbx");
+            //var dice = Resources.Loader.CreateFbxModel("Hidden/julia_swim.fbx");
+            //var dice = Resources.Loader.CreateFbxModel("Hidden/untitled.fbx");
+            //var dice = Resources.Loader.CreateFbxModel("Hidden/untitled2.fbx");
+            //var dice = Resources.Loader.CreateFbxModel("Hidden/untitled3.fbx");
+            //var dice = Resources.Loader.CreateFbxModel("Hidden/Rushina.fbx");
+            //var dice = Resources.Loader.CreateFbxModel("Hidden/USUMMER1.1.fbx");
+            //var dice = Resources.Loader.CreateFbxModel("Hidden/USUMMER_Costume1.1.fbx");
+            //dice.Shader = PhongShaderSource.Instance;
             await dice.ActivateWaitLoaded();
-            dice.Position.X = 1;
+            //dice.Position.X = 2;
             dice.Position.Y = 0;
+            //dice.Position.Z = 5;
             dice.Scale = new Vector3(0.05f);
+            //dice.Scale = new Vector3(5f);
+            //dice.Rotation = Quaternion.FromAxisAngle(Vector3.UnitX, -90.ToRadian());
             return dice;
         }
 

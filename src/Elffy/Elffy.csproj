@@ -32,7 +32,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Elffy.Imaging\Elffy.Imaging.csproj" />
-    <ProjectReference Include="..\Elffy.Memory\Elffy.Memory.csproj" />
   </ItemGroup>
 
 </Project>
