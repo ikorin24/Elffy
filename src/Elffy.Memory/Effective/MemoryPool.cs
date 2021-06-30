@@ -116,12 +116,32 @@ namespace Elffy.Effective
 
             public int AvailableCount => _availableIDStack.Length - _availableHead;
 
+            public bool IsArrayPinned =>
+#if NET5_0_OR_GREATER
+                !RuntimeHelpers.IsReferenceOrContainsReferences<T>();
+#else
+                false;
+#endif
+
             protected MemoryLender(int segmentSize, int segmentCount)
             {
                 if(segmentSize <= 0) { throw new ArgumentOutOfRangeException(nameof(segmentSize)); }
                 if(segmentCount <= 0) { throw new ArgumentOutOfRangeException(nameof(segmentCount)); }
                 SegmentSize = segmentSize;
-                _array = new T[segmentSize * segmentCount];
+
+                if(RuntimeHelpers.IsReferenceOrContainsReferences<T>()) {
+                    _array = new T[segmentSize * segmentCount];
+                    Debug.Assert(IsArrayPinned == false);
+                }
+                else {
+#if NET5_0_OR_GREATER
+                    _array = GC.AllocateUninitializedArray<T>(segmentSize * segmentCount, pinned: true);
+                    Debug.Assert(IsArrayPinned);
+#else
+                    _array = new T[segmentSize * segmentCount];
+                    Debug.Assert(IsArrayPinned == false);
+#endif
+                }
                 _segmentState = new BitArray(segmentCount);
 
                 _availableHead = 0;
@@ -140,7 +160,9 @@ namespace Elffy.Effective
                 }
                 // --- begin sync
 
-                if(_availableHead >= _availableIDStack.Length) {
+                var head = _availableHead;
+
+                if(head >= _availableIDStack.Length) {
                     Volatile.Write(ref _syncFlag, SYNC_EXIT);
                     // --- end sync
 
@@ -150,8 +172,8 @@ namespace Elffy.Effective
                     return false;
                 }
                 else {
-                    segID = _availableIDStack[_availableHead];
-                    _availableHead++;
+                    segID = _availableIDStack[head];
+                    _availableHead = head + 1;
                     _segmentState[segID] = true;
 
                     Volatile.Write(ref _syncFlag, SYNC_EXIT);
