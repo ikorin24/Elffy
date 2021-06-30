@@ -3,7 +3,6 @@ using FbxTools;
 using Elffy.Effective;
 using System.Runtime.CompilerServices;
 using Elffy.Effective.Unsafes;
-using System;
 
 namespace Elffy.Serialization.Fbx
 {
