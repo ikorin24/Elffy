@@ -13,8 +13,8 @@ namespace Elffy.Shading
     [ShaderTargetVertexType(typeof(Vertex))]
     public sealed class PhongShaderSource : ShaderSource
     {
-        private static readonly Lazy<PhongShaderSource> _instance = new(() => new(), LazyThreadSafetyMode.ExecutionAndPublication);
-        public static PhongShaderSource Instance => _instance.Value;
+        private static PhongShaderSource? _instance;
+        public static PhongShaderSource Instance => _instance ??= new();
 
         public override string VertexShaderSource => VertSource;
 
@@ -31,18 +31,10 @@ namespace Elffy.Shading
 
         protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
-            if(target.TryGetComponent<Material>(out var m)) {
-                uniform.Send("ma", UnsafeEx.As<Color4, Color3>(m.Ambient));
-                uniform.Send("md", UnsafeEx.As<Color4, Color3>(m.Diffuse));
-                uniform.Send("ms", UnsafeEx.As<Color4, Color3>(m.Specular));
-                uniform.Send("shininess", m.Shininess);
-            }
-            else {
-                uniform.Send("ma", new Color3(0.8f));
-                uniform.Send("md", new Color3(0.35f));
-                uniform.Send("ms", new Color3(0.5f));
-                uniform.Send("shininess", 10f);
-            }
+            uniform.Send("ma", new Color3(0.8f));
+            uniform.Send("md", new Color3(0.35f));
+            uniform.Send("ms", new Color3(0.5f));
+            uniform.Send("shininess", 10f);
 
             uniform.Send("model", model);
             uniform.Send("view", view);

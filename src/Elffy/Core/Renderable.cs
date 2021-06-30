@@ -154,6 +154,9 @@ namespace Elffy.Core
                     Debug.Assert(typeof(TVertex) == typeof(VertexSlim));
                     _shader = DefaultUIShaderSource.Instance;
                 }
+                else if(typeof(TVertex) == typeof(Vertex)) {
+                    _shader = PhongShaderSource.Instance;
+                }
                 else {
                     _shader = EmptyShaderSource<TVertex>.IsSupported ? EmptyShaderSource<TVertex>.Instance : ThrowInvalid();
 
