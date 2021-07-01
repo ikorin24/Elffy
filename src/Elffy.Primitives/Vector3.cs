@@ -1,13 +1,9 @@
 ﻿#nullable enable
-using Cysharp.Text;
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
-using NVec3 = System.Numerics.Vector3;
-using TKVector3 = OpenTK.Mathematics.Vector3;
-using Elffy.Effective.Unsafes;
 
 namespace Elffy
 {
@@ -23,7 +19,7 @@ namespace Elffy
         public float Z;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private readonly string DebuggerDisplay => ZString.Concat('(', X, ", ", Y, ", ", Z, ')');
+        private readonly string DebuggerDisplay => $"({X}, {Y}, {Z})";
 
         public static readonly Vector3 UnitX = new Vector3(1, 0, 0);
         public static readonly Vector3 UnitY = new Vector3(0, 1, 0);
@@ -196,10 +192,5 @@ namespace Elffy
         public static Vector3 operator /(in Vector3 vec1, float right) => new Vector3(vec1.X / right, vec1.Y / right, vec1.Z / right);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 operator /(float right, in Vector3 vec1) => new Vector3(vec1.X / right, vec1.Y / right, vec1.Z / right);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator TKVector3(in Vector3 vec) => Unsafe.As<Vector3, TKVector3>(ref Unsafe.AsRef(vec));
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Vector3(in TKVector3 vec) => Unsafe.As<TKVector3, Vector3>(ref Unsafe.AsRef(vec));
     }
 }

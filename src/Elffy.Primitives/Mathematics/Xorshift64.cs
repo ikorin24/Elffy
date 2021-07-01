@@ -55,11 +55,11 @@ namespace Elffy.Mathematics
             }
 
             if(IntPtr.Size == 4) {
-                var value = Interlocked.Read(ref _seed);
+                var value = (ulong)Interlocked.Read(ref Unsafe.As<ulong, long>(ref _seed));
                 value ^= (value << 13);
                 value ^= (value >> 7);
                 value ^= (value << 17);
-                Interlocked.Exchange(ref _seed, value);
+                Interlocked.Exchange(ref Unsafe.As<ulong, long>(ref _seed), (long)value);
                 return value;
             }
 

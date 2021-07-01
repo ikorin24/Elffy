@@ -1,11 +1,9 @@
 ﻿#nullable enable
-using Cysharp.Text;
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
-using TKVector4 = OpenTK.Mathematics.Vector4;
 
 namespace Elffy
 {
@@ -23,7 +21,7 @@ namespace Elffy
         public float W;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private readonly string DebuggerDisplay => ZString.Concat('(', X, ", ", Y, ", ", Z, ", ", W, ')');
+        private readonly string DebuggerDisplay => $"({X}, {Y}, {Z}, {W})";
 
         public static readonly Vector4 UnitX = new Vector4(1, 0, 0, 0);
         public static readonly Vector4 UnitY = new Vector4(0, 1, 0, 0);
@@ -195,7 +193,11 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 Mult(in Vector4 vec1, in Vector4 vec2) => vec1.Mult(vec2);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly Vector4 Normalized() => ((TKVector4)this).Normalized();
+        public readonly Vector4 Normalized()
+        {
+            var len = Length;
+            return new Vector4(X / len, Y / len, Z / len, W / len);
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly override bool Equals(object? obj) => obj is Vector4 vector && Equals(vector);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -227,10 +229,5 @@ namespace Elffy
         public static Vector4 operator /(in Vector4 vec1, float right) => new Vector4(vec1.X / right, vec1.Y / right, vec1.Z / right, vec1.W / right);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector4 operator /(float right, in Vector4 vec1) => new Vector4(vec1.X / right, vec1.Y / right, vec1.Z / right, vec1.W / right);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator TKVector4(Vector4 vec) => Unsafe.As<Vector4, TKVector4>(ref vec);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Vector4(TKVector4 vec) => Unsafe.As<TKVector4, Vector4>(ref vec);
     }
 }

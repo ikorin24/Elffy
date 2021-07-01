@@ -1,11 +1,9 @@
 ﻿#nullable enable
-using Cysharp.Text;
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
-using TKVector2 = OpenTK.Mathematics.Vector2;
 
 namespace Elffy
 {
@@ -19,7 +17,7 @@ namespace Elffy
         public float Y;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private readonly string DebuggerDisplay => ZString.Concat('(', X, ", ", Y, ')');
+        private readonly string DebuggerDisplay => $"({X}, {Y})";
 
         public static readonly Vector2 UnitX = new Vector2(1, 0);
         public static readonly Vector2 UnitY = new Vector2(0, 1);
@@ -61,7 +59,11 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 Mult(in Vector2 vec1, in Vector2 vec2) => vec1.Mult(vec2);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly Vector2 Normalized() => ((TKVector2)this).Normalized();
+        public readonly Vector2 Normalized()
+        {
+            var len = Length;
+            return new Vector2(X / len, Y / len);
+        }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly override bool Equals(object? obj) => obj is Vector2 vector && Equals(vector);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -99,9 +101,5 @@ namespace Elffy
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2 operator /(float right, in Vector2 vec1) => new Vector2(vec1.X / right, vec1.Y / right);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator TKVector2(Vector2 vec) => Unsafe.As<Vector2, TKVector2>(ref vec);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Vector2(TKVector2 vec) => Unsafe.As<TKVector2, Vector2>(ref vec);
     }
 }

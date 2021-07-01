@@ -1,12 +1,9 @@
 ﻿#nullable enable
-using Cysharp.Text;
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
-using Elffy.Effective.Unsafes;
-using TKVector3i = OpenTK.Mathematics.Vector3i;
 
 namespace Elffy
 {
@@ -22,7 +19,7 @@ namespace Elffy
         public int Z;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private readonly string DebuggerDisplay => ZString.Concat('(', X, ", ", Y, ", ", Z, ')');
+        private readonly string DebuggerDisplay => $"({X}, {Y}, {Z})";
 
         public static readonly Vector3i UnitX = new Vector3i(1, 0, 0);
         public static readonly Vector3i UnitY = new Vector3i(0, 1, 0);
@@ -72,11 +69,6 @@ namespace Elffy
         public static Vector3i operator /(in Vector3i vec1, int right) => new Vector3i(vec1.X / right, vec1.Y / right, vec1.Z / right);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3i operator /(int right, in Vector3i vec1) => new Vector3i(vec1.X / right, vec1.Y / right, vec1.Z / right);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator TKVector3i(in Vector3i vec) => UnsafeEx.As<Vector3i, TKVector3i>(in vec);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Vector3i(in TKVector3i vec) => UnsafeEx.As<TKVector3i, Vector3i>(in vec);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator Vector3i(in Vector3 vec) => new Vector3i((int)vec.X, (int)vec.Y, (int)vec.Z);

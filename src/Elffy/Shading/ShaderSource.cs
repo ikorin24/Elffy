@@ -3,7 +3,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
-using Cysharp.Text;
+using System.Text;
 using Elffy.Core;
 using Elffy.OpenGL;
 using OpenTK.Graphics.OpenGL4;
@@ -123,12 +123,12 @@ namespace Elffy.Shading
             static InvalidDataException ShaderCompileFailure(int shaderID, string source)
             {
                 var log = GL.GetShaderInfoLog(shaderID);
-                using var sb = ZString.CreateStringBuilder();
+                var sb = new StringBuilder();
                 sb.AppendLine("Compiling shader is Failed.");
                 sb.AppendLine(log);
                 var lines = source.Split('\n');
                 for(int l = 0; l < lines.Length; l++) {
-                    sb.Append(string.Format("{0, 3}\t", l));
+                    sb.Append(string.Format("{0, 3}\t", l + 1));
                     sb.Append(lines[l]);
                     sb.Append('\n');
                 }

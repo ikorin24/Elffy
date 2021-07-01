@@ -2,7 +2,6 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
-using Cysharp.Text;
 
 namespace Elffy.UI
 {
@@ -20,15 +19,7 @@ namespace Elffy.UI
         public float Bottom;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private string DebugDisplay
-        {
-            get
-            {
-                using var sb = ZString.CreateStringBuilder(false);
-                sb.AppendFormat("({0}, {1}, {2}, {3})", Left, Top, Right, Bottom);
-                return sb.ToString();
-            }
-        }
+        private string DebugDisplay => $"({Left}, {Top}, {Right}, {Bottom})";
 
         public LayoutThickness(float value)
         {

@@ -2,7 +2,6 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
-using Cysharp.Text;
 
 namespace Elffy
 {
@@ -20,7 +19,7 @@ namespace Elffy
         public int Height;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private string DebugDisplay => ZString.Concat('(', X, ", ", Y, ", ", Width, ", ", Height, ')');
+        private string DebugDisplay => $"({X}, {Y}, {Width}, {Height})";
 
         public RectI(int x, int y, int width, int height)
         {

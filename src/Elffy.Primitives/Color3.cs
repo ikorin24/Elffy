@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using Elffy.Effective.Unsafes;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -44,7 +43,7 @@ namespace Elffy
         public static bool operator !=(in Color3 left, in Color3 right) => !(left == right);
 
         public static explicit operator Color4(in Color3 color) => new Color4(color);
-        public static explicit operator Color3(in Color4 color) => UnsafeEx.As<Color4, Color3>(in color);
+        public static explicit operator Color3(in Color4 color) => new Color3(color.R, color.G, color.B);
 
         private static byte ToByte(float value)
         {

@@ -16,10 +16,6 @@
     <NoWarn>1591;</NoWarn>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>DEBUG</DefineConstants>
-  </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="FbxParser" Version="1.1.0-pre2" />
     <PackageReference Include="OpenTK" Version="4.3.0" />
@@ -27,11 +23,15 @@
     <PackageReference Include="SkiaSharp" Version="2.80.2" />
     <PackageReference Include="StringLiteralGenerator" Version="1.0.0" />
     <PackageReference Include="UniTask" Version="2.0.36" />
-    <PackageReference Include="ZString" Version="2.2.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Elffy.Imaging\Elffy.Imaging.csproj" />
+    <ProjectReference Include="..\Elffy.Primitives\Elffy.Primitives.csproj" />
   </ItemGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>DEBUG</DefineConstants>
+  </PropertyGroup>
 
 </Project>

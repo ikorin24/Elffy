@@ -3,9 +3,6 @@ using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Elffy.Effective.Unsafes;
-using Cysharp.Text;
-using TKQuaternion = OpenTK.Mathematics.Quaternion;
 using NumericsQuaternion = System.Numerics.Quaternion;
 using NumericsVector3 = System.Numerics.Vector3;
 
@@ -25,7 +22,7 @@ namespace Elffy
         public float W;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private readonly string DebugView => ZString.Concat("V:(", X, ", ", Y, ", ", Z, "), W:", W);
+        private readonly string DebugView => $"V:({X}, {Y}, {Z}), W:{W}";
 
         public static readonly Quaternion Identity = new Quaternion(0f, 0f, 0f, 1f);
 
@@ -90,8 +87,8 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void FromAxisAngle(in Vector3 axis, float angle, out Quaternion result)
         {
-            result = UnsafeEx.As<NumericsQuaternion, Quaternion>(
-                NumericsQuaternion.CreateFromAxisAngle(UnsafeEx.As<Vector3, NumericsVector3>(axis), angle)
+            result = UnsafeAs<NumericsQuaternion, Quaternion>(
+                NumericsQuaternion.CreateFromAxisAngle(UnsafeAs<Vector3, NumericsVector3>(axis), angle)
             );
         }
 
@@ -137,7 +134,11 @@ namespace Elffy
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator Vector4(in Quaternion quaternion) => Unsafe.As<Quaternion, Vector4>(ref Unsafe.AsRef(quaternion));
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator TKQuaternion(Quaternion q) => Unsafe.As<Quaternion, TKQuaternion>(ref q);
+        private static ref readonly TTo UnsafeAs<TFrom, TTo>(in TFrom source)
+        {
+            return ref Unsafe.As<TFrom, TTo>(ref Unsafe.AsRef(source));
+        }
     }
 }

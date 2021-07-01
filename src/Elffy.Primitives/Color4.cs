@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using Elffy.Effective.Unsafes;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -43,16 +42,16 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly Color4 PreMultiplied()
         {
-            return UnsafeEx.As<NVec4, Color4>(
-                UnsafeEx.As<Color4, NVec4>(in this) * new NVec4(A, A, A, 1f)
+            return UnsafeAs<NVec4, Color4>(
+                UnsafeAs<Color4, NVec4>(in this) * new NVec4(A, A, A, 1f)
                 );
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void PreMultiply()
         {
-            this = UnsafeEx.As<NVec4, Color4>(
-                UnsafeEx.As<Color4, NVec4>(in this) * new NVec4(A, A, A, 1f)
+            this = UnsafeAs<NVec4, Color4>(
+                UnsafeAs<Color4, NVec4>(in this) * new NVec4(A, A, A, 1f)
                 );
         }
 
@@ -82,6 +81,12 @@ namespace Elffy
 
         public static explicit operator Color4(in ColorByte color) => color.ToColor4();
         public static explicit operator ColorByte(in Color4 color) => color.ToColorByte();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static ref readonly TTo UnsafeAs<TFrom, TTo>(in TFrom source)
+        {
+            return ref Unsafe.As<TFrom, TTo>(ref Unsafe.AsRef(source));
+        }
 
 
         /// <summary>Gets the system color with (R, G, B, A) = (102, 205, 170, 255).</summary>

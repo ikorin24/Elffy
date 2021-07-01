@@ -2,7 +2,6 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
-using Cysharp.Text;
 
 namespace Elffy
 {
@@ -20,15 +19,7 @@ namespace Elffy
         public float Height;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private string DebugDisplay
-        {
-            get
-            {
-                using var sb = ZString.CreateStringBuilder(false);
-                sb.AppendFormat("({0}, {1}, {2}, {3})", X, Y, Width, Height);
-                return sb.ToString();
-            }
-        }
+        private string DebugDisplay => $"({X}, {Y}, {Width}, {Height})";
 
         public RectF(float x, float y, float width, float height)
         {
