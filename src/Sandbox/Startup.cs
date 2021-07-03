@@ -6,6 +6,7 @@ using Elffy.Shapes;
 using Elffy.Shading;
 using Cysharp.Threading.Tasks;
 using System.Diagnostics;
+using Elffy.Components;
 
 namespace Sandbox
 {
@@ -105,8 +106,9 @@ namespace Sandbox
             var plain = new Plain();
             plain.Scale = new Vector3(10f);
             plain.Shader = PhongShaderSource.Instance;
-            var texture = await Resources.Loader.LoadTextureAsync("floor.png", TextureExpansionMode.NearestNeighbor, TextureShrinkMode.NearestNeighbor,
-                                TextureMipmapMode.None, TextureWrapMode.ClampToEdge, TextureWrapMode.ClampToEdge);
+            var config = new TextureConfig(TextureExpansionMode.NearestNeighbor, TextureShrinkMode.NearestNeighbor,
+                                           TextureMipmapMode.None, TextureWrapMode.ClampToEdge, TextureWrapMode.ClampToEdge);
+            var texture = await Resources.Loader.LoadTextureAsync("floor.png", config);
             plain.AddComponent(texture);
             plain.Rotation = Quaternion.FromAxisAngle(Vector3.UnitX, -90.ToRadian());
             plain.Activate();

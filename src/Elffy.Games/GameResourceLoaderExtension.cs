@@ -18,13 +18,11 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static UniTask<Texture> LoadTextureAsync(this IResourceLoader source, string name, TextureExpansionMode expansionMode,
-                                                              TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode,
-                                                              TextureWrapMode wrapModeX, TextureWrapMode wrapModeY,
-                                                              FrameLoopTiming timing = FrameLoopTiming.Update,
-                                                              CancellationToken cancellationToken = default)
+        public static UniTask<Texture> LoadTextureAsync(this IResourceLoader source, string name, TextureConfig config,
+                                                        FrameLoopTiming timing = FrameLoopTiming.Update,
+                                                        CancellationToken cancellationToken = default)
         {
-            return source.LoadTextureAsync(name, expansionMode, shrinkMode, mipmapMode, wrapModeX, wrapModeY, Timing.EndPoint, timing, cancellationToken);
+            return source.LoadTextureAsync(name, config, Timing.EndPoint, timing, cancellationToken);
         }
     }
 }

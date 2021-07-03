@@ -186,7 +186,8 @@ namespace Elffy.UI
             _isHitTestVisible = true;
             _layouter = ControlLayouterInternal.Create();
             _renderable = new UIRenderable(this);
-            _texture = new TextureCore(TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear, TextureMipmapMode.None, TextureWrapMode.ClampToEdge, TextureWrapMode.ClampToEdge);
+            var textureConfig = new TextureConfig(TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear, TextureMipmapMode.None, TextureWrapMode.ClampToEdge, TextureWrapMode.ClampToEdge);
+            _texture = new TextureCore(textureConfig);
             Renderable.Activated += OnRenderableActivatedPrivate;
             Renderable.Dead += OnRenderableDeadPrivate;
         }

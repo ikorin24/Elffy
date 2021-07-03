@@ -2,7 +2,6 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using Elffy.Effective;
 using Elffy.Effective.Unsafes;
 using Elffy.OpenGL;
 using Elffy.Imaging;
@@ -14,24 +13,21 @@ namespace Elffy.Components
 {
     internal struct TextureCore : IDisposable
     {
+        private TextureConfig _config;
         public TextureObject Texture;
         public Vector2i Size;
-        public TextureExpansionMode ExpansionMode { get; }
-        public TextureShrinkMode ShrinkMode { get; }
-        public TextureMipmapMode MipmapMode { get; }
-        public TextureWrapMode WrapModeX { get; }
-        public TextureWrapMode WrapModeY { get; }
+        public TextureExpansionMode ExpansionMode => _config.ExpansionMode;
+        public TextureShrinkMode ShrinkMode => _config.ShrinkMode;
+        public TextureMipmapMode MipmapMode => _config.MipmapMode;
+        public TextureWrapMode WrapModeX => _config.WrapModeX;
+        public TextureWrapMode WrapModeY => _config.WrapModeY;
 
         public bool IsEmpty => Texture.IsEmpty;
 
-        public TextureCore(TextureExpansionMode expansionMode, TextureShrinkMode shrinkMode,
-                           TextureMipmapMode mipmapMode, TextureWrapMode wrapModeX, TextureWrapMode wrapModeY)
+
+        public TextureCore(in TextureConfig config)
         {
-            ExpansionMode = expansionMode;
-            ShrinkMode = shrinkMode;
-            MipmapMode = mipmapMode;
-            WrapModeX = wrapModeX;
-            WrapModeY = wrapModeY;
+            _config = config;
             Texture = TextureObject.Empty;
             Size = Vector2i.Zero;
         }
