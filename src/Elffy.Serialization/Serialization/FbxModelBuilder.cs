@@ -44,10 +44,25 @@ namespace Elffy.Serialization
             await UniTask.SwitchToThreadPool();                                         // ↓ thread pool -------------------------------------- 
             token.ThrowIfCancellationRequested();
 
+
+            // TODO:
+            // - サブメッシュの実装 (メッシュごとにテクスチャを設定したい、実態は結合メッシュへのスライス、CPU側からのアクセスはとりあえず実装しない、表示/非表示切り替えもなし)
+            // - マルチテクスチャの実装
+
+
             // Parse fbx file
             using var fbx = FbxSemanticParser.Parse(resourceLoader, name, token);
+            CreateTextures(resourceLoader, fbx);
+
+            static void CreateTextures(IResourceLoader resourceLoader, FbxSemantics fbx)
+            {
+                foreach(var textureName in fbx.Textures) {
+                    var path = textureName.ToString().Replace('\\', '/');
+                    System.Diagnostics.Debug.WriteLine(path);
+                }
+            }
+
             await model.HostScreen.AsyncBack.ToTiming(FrameLoopTiming.Update, token);   // ↓ main thread --------------------------------------
-            //model.Shader = PhongShaderSource.Instance;
             if(model.LifeState == LifeState.Activated || model.LifeState == LifeState.Alive) {
                 load.Invoke(fbx.Vertices, fbx.Indices);
             }

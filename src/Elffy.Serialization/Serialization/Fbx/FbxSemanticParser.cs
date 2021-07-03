@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using System.IO;
 using System;
 using System.Threading;
 using FbxTools;
@@ -12,11 +13,16 @@ namespace Elffy.Serialization.Fbx
     {
         public static FbxSemantics Parse(IResourceLoader loader, string name, CancellationToken cancellationToken = default)
         {
+            using var stream = loader.GetStream(name);
+            return Parse(stream, cancellationToken);
+        }
+
+        public static FbxSemantics Parse(Stream stream, CancellationToken cancellationToken = default)
+        {
             UnsafeRawArray<int> indices = default;
             UnsafeRawArray<Vertex> vertices = default;
-            UnsafeRawArray<Texture> textures = default;
+            ValueTypeRentMemory<RawString> textures = default;
             FbxObject? fbx = null;
-            using var stream = loader.GetStream(name);
             try {
                 fbx = FbxParser.Parse(stream);
                 using var resolver = new SemanticResolver(fbx);
@@ -25,7 +31,7 @@ namespace Elffy.Serialization.Fbx
                 textures = ParseTexture(objectsNode, cancellationToken);
                 ParseMaterial(objectsNode);
 
-                return new FbxSemantics(fbx, indices, vertices, textures);
+                return new FbxSemantics(fbx, indices, vertices, ref textures);
             }
             catch {
                 fbx?.Dispose();
@@ -145,26 +151,27 @@ namespace Elffy.Serialization.Fbx
             }
         }
 
-        private static UnsafeRawArray<Texture> ParseTexture(FbxNode objects, CancellationToken cancellationToken)
+        private static ValueTypeRentMemory<RawString> ParseTexture(FbxNode objects, CancellationToken cancellationToken)
         {
             using var buf = new ValueTypeRentMemory<int>(objects.Children.Count);
             var bufSpan = buf.Span;
             var textureCount = objects.FindIndexAll(FbxConstStrings.Texture(), bufSpan);
-            var textures = new UnsafeRawArray<Texture>(textureCount);
+            var textureNames = new ValueTypeRentMemory<RawString>(textureCount);
+            var span = textureNames.Span;
             try {
                 int i = 0;
                 foreach(var index in bufSpan.Slice(0, textureCount)) {
                     cancellationToken.ThrowIfCancellationRequested();
                     var textureNode = objects.Children[index];
-                    var id = textureNode.Properties[0].AsInt64();
+                    //var id = textureNode.Properties[0].AsInt64();
                     var fileName = textureNode.Find(FbxConstStrings.RelativeFilename()).Properties[0].AsString();
-                    textures[i] = new Texture(id, fileName);
+                    span[i] = fileName;
                     i++;
                 }
-                return textures;
+                return textureNames;
             }
             catch {
-                textures.Dispose();
+                textureNames.Dispose();
                 throw;
             }
         }

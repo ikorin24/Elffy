@@ -3,6 +3,7 @@ using System;
 using FbxTools;
 using Elffy.Effective.Unsafes;
 using Elffy.Core;
+using Elffy.Effective;
 
 namespace Elffy.Serialization.Fbx
 {
@@ -11,16 +12,18 @@ namespace Elffy.Serialization.Fbx
         private readonly FbxObject? _fbx;
         private readonly UnsafeRawArray<int> _indices;
         private readonly UnsafeRawArray<Vertex> _vertices;
-        private readonly UnsafeRawArray<Texture> _textures;
+        private readonly ValueTypeRentMemory<RawString> _textures;
 
         public ReadOnlySpan<int> Indices => _indices.AsSpan();
 
         public ReadOnlySpan<Vertex> Vertices => _vertices.AsSpan();
 
-        internal FbxSemantics(FbxObject fbx, UnsafeRawArray<int> indices, UnsafeRawArray<Vertex> vertices, UnsafeRawArray<Texture> texture)
+        public ReadOnlySpan<RawString> Textures => _textures.Span;
+
+        internal FbxSemantics(FbxObject fbx, UnsafeRawArray<int> indices, UnsafeRawArray<Vertex> vertices, ref ValueTypeRentMemory<RawString> texture)
         {
             _fbx = fbx;
-            _textures = texture;
+            (_textures, texture) = (texture, default);
             _indices = indices;
             _vertices = vertices;
         }
