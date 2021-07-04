@@ -164,11 +164,6 @@ namespace Elffy.Core
                 }
             }
 
-            // checking target vertex type of shader is valid.
-            if(DevEnv.IsEnabled) {
-                ShaderTargetVertexTypeAttribute.CheckVertexType(_shader.GetType(), typeof(TVertex));
-            }
-
             _vbo = VBO.Create();
             VBO.BindBufferData(ref _vbo, vertices, BufferUsageHint.StaticDraw);
             _ibo = IBO.Create();

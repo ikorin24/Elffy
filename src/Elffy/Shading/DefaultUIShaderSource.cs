@@ -1,12 +1,10 @@
 ﻿#nullable enable
 using Elffy.Core;
-using Elffy.Diagnostics;
 using Elffy.OpenGL;
 using Elffy.UI;
 
 namespace Elffy.Shading
 {
-    [ShaderTargetVertexType(typeof(VertexSlim))]
     internal sealed class DefaultUIShaderSource : UIShaderSource
     {
         public override string VertexShaderSource => VertSource;

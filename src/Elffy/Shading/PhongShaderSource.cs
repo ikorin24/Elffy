@@ -2,12 +2,10 @@
 using Elffy.Core;
 using Elffy.Components;
 using Elffy.OpenGL;
-using Elffy.Diagnostics;
 using System;
 
 namespace Elffy.Shading
 {
-    [ShaderTargetVertexType(typeof(Vertex))]
     public sealed class PhongShaderSource : ShaderSource
     {
         private static PhongShaderSource? _instance;

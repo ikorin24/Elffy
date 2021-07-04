@@ -1,17 +1,12 @@
 ﻿#nullable enable
 using Elffy.Core;
-using Elffy.Diagnostics;
 using Elffy.Components;
 using Elffy.OpenGL;
 using System;
-using System.Threading;
-using System.Runtime.CompilerServices;
 
 namespace Elffy.Shading
 {
     /// <summary>Simple shader which displays texture.</summary>
-    [ShaderTargetVertexType(typeof(VertexSlim))]
-    [ShaderTargetVertexType(typeof(Vertex))]
     public sealed class TextureShaderSource : ShaderSource
     {
         private static TextureShaderSource? _instance;

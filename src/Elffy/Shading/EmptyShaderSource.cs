@@ -5,8 +5,6 @@ using System;
 
 namespace Elffy.Shading
 {
-    [ShaderTargetVertexType(typeof(Vertex))]
-    [ShaderTargetVertexType(typeof(VertexSlim))]
     internal sealed class EmptyShaderSource : ShaderSource
     {
         private static EmptyShaderSource? _instance;

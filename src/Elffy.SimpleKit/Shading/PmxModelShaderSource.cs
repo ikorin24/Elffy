@@ -1,13 +1,11 @@
 ﻿#nullable enable
 using Elffy.Components;
 using Elffy.Core;
-using Elffy.Diagnostics;
 using Elffy.OpenGL;
 using System;
 
 namespace Elffy.Shading
 {
-    [ShaderTargetVertexType(typeof(RigVertex))]
     public sealed class PmxModelShaderSource : ShaderSource
     {
         private static PmxModelShaderSource? _instance;
