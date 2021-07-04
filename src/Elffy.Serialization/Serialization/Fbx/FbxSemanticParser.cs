@@ -20,7 +20,7 @@ namespace Elffy.Serialization.Fbx
         public static FbxSemantics Parse(Stream stream, CancellationToken cancellationToken = default)
         {
             UnsafeRawArray<int> indices = default;
-            UnsafeRawArray<Vertex> vertices = default;
+            UnsafeRawArray<SkinnedVertex> vertices = default;
             ValueTypeRentMemory<RawString> textures = default;
             FbxObject? fbx = null;
             try {
@@ -42,7 +42,7 @@ namespace Elffy.Serialization.Fbx
             }
         }
 
-        private static (UnsafeRawArray<Vertex> vertices, UnsafeRawArray<int> indices) ParseMesh(FbxNode objects, in SemanticResolver resolver, CancellationToken cancellationToken)
+        private static (UnsafeRawArray<SkinnedVertex> vertices, UnsafeRawArray<int> indices) ParseMesh(FbxNode objects, in SemanticResolver resolver, CancellationToken cancellationToken)
         {
             // [root] --+-- "Objects"  ------+---- "Geometry"
             //          |                    |---- "Geometry"
@@ -133,10 +133,18 @@ namespace Elffy.Serialization.Fbx
                     uvIndex = uvIndices[uvIndex];
                 }
 
-                resolved.AddVertex(new Vertex(
+                //resolved.AddVertex(new Vertex(
+                //    position: (Vector3)positions[index] + meshModel.Translation,
+                //    normal: (Vector3)normals[normalIndex],
+                //    uv: (Vector2)uv[uvIndex]
+                //));
+                resolved.AddVertex(new SkinnedVertex(
                     position: (Vector3)positions[index] + meshModel.Translation,
                     normal: (Vector3)normals[normalIndex],
-                    uv: (Vector2)uv[uvIndex]
+                    uv: (Vector2)uv[uvIndex],
+                    bone: default,
+                    weight: default,
+                    textureIndex: default
                 ));
                 if(isLast) {
                     if(n_gon <= 2) { throw new FormatException(); }

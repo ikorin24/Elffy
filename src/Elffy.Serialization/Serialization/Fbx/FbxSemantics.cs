@@ -11,16 +11,16 @@ namespace Elffy.Serialization.Fbx
     {
         private readonly FbxObject? _fbx;
         private readonly UnsafeRawArray<int> _indices;
-        private readonly UnsafeRawArray<Vertex> _vertices;
+        private readonly UnsafeRawArray<SkinnedVertex> _vertices;
         private readonly ValueTypeRentMemory<RawString> _textures;
 
         public ReadOnlySpan<int> Indices => _indices.AsSpan();
 
-        public ReadOnlySpan<Vertex> Vertices => _vertices.AsSpan();
+        public ReadOnlySpan<SkinnedVertex> Vertices => _vertices.AsSpan();
 
         public ReadOnlySpan<RawString> Textures => _textures.Span;
 
-        internal FbxSemantics(FbxObject fbx, UnsafeRawArray<int> indices, UnsafeRawArray<Vertex> vertices, ref ValueTypeRentMemory<RawString> texture)
+        internal FbxSemantics(FbxObject fbx, UnsafeRawArray<int> indices, UnsafeRawArray<SkinnedVertex> vertices, ref ValueTypeRentMemory<RawString> texture)
         {
             _fbx = fbx;
             (_textures, texture) = (texture, default);
