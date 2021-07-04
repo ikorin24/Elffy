@@ -20,6 +20,33 @@ namespace Elffy.Shading
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Map(Type vertexType, int index, VertexSpecialField specialField)
+        {
+            if(vertexType is null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(vertexType));
+            }
+            if(index < 0) {
+                ThrowInvalidIndex();
+            }
+            VertexMapHelper.Map(vertexType, index, specialField);
+
+            [DoesNotReturn] static void ThrowInvalidIndex() => throw new ArgumentException($"{nameof(index)} is negative value.");
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Map(Type vertexType, string name, VertexSpecialField specialField)
+        {
+            var index = GL.GetAttribLocation(_program.Value, name);
+            if(index < 0 && DevEnv.IsEnabled) {
+                DevEnv.ForceWriteLine($"[warning] '{name}' vertex field input is not found in shader program({_program.Value}).");
+            }
+            else {
+                VertexMapHelper.Map(vertexType, index, specialField);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Map<TVertex>(int index, string vertexFieldName) where TVertex : unmanaged
         {
             if(index < 0) {
@@ -117,20 +144,49 @@ namespace Elffy.Shading
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void Map<TVertex>(int index, string vertexFieldName) where TVertex : unmanaged
+        public static unsafe void Map<TVertex>(int index, VertexSpecialField specialField) where TVertex : unmanaged
+        {
+            var vertexType = typeof(TVertex);
+            Map(typeof(TVertex), index, specialField);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe void Map(Type vertexType, int index, VertexSpecialField specialField)
         {
             // Call static constructor of TVertex to Register layout. (It is called only once)
-            RuntimeHelpers.RunClassConstructor(typeof(TVertex).TypeHandle);
+            RuntimeHelpers.RunClassConstructor(vertexType.TypeHandle);
+            var (offset, type, elementCount, vertexSize) = VertexMarshalHelper.GetLayout(vertexType, specialField);
+            MapPrivate(index, offset, type, elementCount, vertexSize);
+        }
 
-            var (offset, type, elementCount) = VertexMarshalHelper<TVertex>.GetLayout(vertexFieldName);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe void Map<TVertex>(int index, string vertexFieldName) where TVertex : unmanaged
+        {
+            var vertexType = typeof(TVertex);
+            Map(typeof(TVertex), index, vertexFieldName);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe void Map(Type vertexType, int index, string vertexFieldName)
+        {
+            // Call static constructor of TVertex to Register layout. (It is called only once)
+            RuntimeHelpers.RunClassConstructor(vertexType.TypeHandle);
+
+            var (offset, type, elementCount, vertexSize) = VertexMarshalHelper.GetLayout(vertexType, vertexFieldName);
+            MapPrivate(index, offset, type, elementCount, vertexSize);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void MapPrivate(int index, int offset, VertexFieldMarshalType type, int elementCount, int vertexSize)
+        {
             GL.EnableVertexAttribArray(index);
 
             if(type <= VertexFieldMarshalType.HalfFloat) {
                 // float or half
-                GL.VertexAttribPointer(index, elementCount, (VertexAttribPointerType)_attribTypes[(int)type], false, sizeof(TVertex), offset);
+                GL.VertexAttribPointer(index, elementCount, (VertexAttribPointerType)_attribTypes[(int)type], false, vertexSize, offset);
             }
             else {
-                GL.VertexAttribIPointer(index, elementCount, (VertexAttribIntegerType)_attribTypes[(int)type], sizeof(TVertex), (IntPtr)offset);
+                GL.VertexAttribIPointer(index, elementCount, (VertexAttribIntegerType)_attribTypes[(int)type], vertexSize, (IntPtr)offset);
             }
         }
     }

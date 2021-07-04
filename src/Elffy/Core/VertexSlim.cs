@@ -21,11 +21,18 @@ namespace Elffy.Core
         static VertexSlim()
         {
             // Register struct layout cache
-            VertexMarshalHelper<VertexSlim>.Register(fieldName => fieldName switch
+            VertexMarshalHelper.Register<VertexSlim>(
+                fieldName => fieldName switch
             {
                 nameof(Position) => (0, VertexFieldMarshalType.Float, 3),
                 nameof(UV) => (12, VertexFieldMarshalType.Float, 2),
                 _ => throw new ArgumentException(),
+            },
+                specialField => specialField switch
+            {
+                VertexSpecialField.Position => nameof(Position),
+                VertexSpecialField.UV => nameof(UV),
+                _ => throw new NotSupportedException($"{nameof(VertexSlim)} does not support {specialField}"),
             });
         }
 

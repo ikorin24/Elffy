@@ -21,12 +21,20 @@ namespace Elffy.Core
 
         static Vertex()
         {
-            VertexMarshalHelper<Vertex>.Register(fieldName => fieldName switch
+            VertexMarshalHelper.Register<Vertex>(
+                fieldName => fieldName switch
             {
                 nameof(Position) => (0, VertexFieldMarshalType.Float, 3),
-                nameof(Normal) =>   (12,   VertexFieldMarshalType.Float, 3),
+                nameof(Normal) => (12, VertexFieldMarshalType.Float, 3),
                 nameof(UV) => (24, VertexFieldMarshalType.Float, 2),
                 _ => throw new ArgumentException(),
+            },
+                specialField => specialField switch
+            {
+                VertexSpecialField.Position => nameof(Position),
+                VertexSpecialField.Normal => nameof(Normal),
+                VertexSpecialField.UV => nameof(UV),
+                _ => throw new NotSupportedException($"{nameof(VertexSlim)} does not support {specialField}"),
             });
         }
 

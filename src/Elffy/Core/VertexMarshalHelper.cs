@@ -1,56 +1,85 @@
 ﻿#nullable enable
 using System;
+using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Elffy.Diagnostics;
 
 namespace Elffy.Core
 {
-    public static class VertexMarshalHelper<TVertex> where TVertex : unmanaged
+    public static class VertexMarshalHelper
     {
-        private static VertexLayoutDelegate? _layouter;
+        private static readonly object _lockObj = new object();
+        private static readonly Hashtable _dic = new Hashtable();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static (int offset, VertexFieldMarshalType type, int elementCount) GetLayout(string fieldName)
+        public static void Register<TVertex>(VertexLayoutDelegate layout, VertexSpecialFieldMapDelegate? specialFieldMap = null) where TVertex : unmanaged
         {
-            var layouter = _layouter;
-            if(layouter is null) {
-                ThrowLayoutNotRegistered();
-            }
-            return layouter.Invoke(fieldName);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Register(VertexLayoutDelegate layout)
-        {
+            var type = typeof(TVertex);
             if(DevEnv.IsEnabled) {
-                CheckVertexLikeType();
+                CheckVertexLikeType(type);
             }
 
             if(layout is null) {
                 ThrowNullArg();
                 [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(layout));
             }
-            if(_layouter is not null) {
-                ThrowLayoutAlreadyRegistered();
+
+            var vertexSize = Unsafe.SizeOf<TVertex>();
+
+            specialFieldMap ??= _ => throw new NotSupportedException($"{nameof(TVertex)} does not support special fields mapping.");
+
+            lock(_lockObj) {
+                var data = new VertexTypeData(vertexSize, layout, specialFieldMap);
+                _dic.Add(type, data);
             }
-            _layouter = layout;
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]  // no inlining
-        private static void CheckVertexLikeType()
+        internal static (int offset, VertexFieldMarshalType type, int elementCount, int vertexSize) GetLayout(Type type, VertexSpecialField specialField)
         {
-            if(Attribute.GetCustomAttribute(typeof(TVertex), typeof(VertexLikeAttribute)) is null) {
+            var data = SafeCast.As<VertexTypeData>(_dic[type]);
+            var specialFieldMap = data.SpecialFieldMap;
+            if(specialFieldMap is null) {
+                ThrowInvalidOp();
+                [DoesNotReturn] static void ThrowInvalidOp() => throw new InvalidOperationException("special fields are not registerd.");
+            }
+            var fieldName = specialFieldMap.Invoke(specialField);
+            var (offset, fieldType, elementCount) = data.Layouter.Invoke(fieldName);
+            return (offset, fieldType, elementCount, data.VertexSize);
+        }
+
+        internal static (int offset, VertexFieldMarshalType type, int elementCount, int vertexSize) GetLayout(Type type, string fieldName)
+        {
+            var data = SafeCast.As<VertexTypeData>(_dic[type]);
+            var (offset, fieldType, elementCount) = data.Layouter.Invoke(fieldName);
+            return (offset, fieldType, elementCount, data.VertexSize);
+        }
+
+        private static void CheckVertexLikeType(Type type)
+        {
+            if(type.IsValueType == false) {
+                throw new ArgumentException($"Vertex type must be struct");
+            }
+            if(Attribute.GetCustomAttribute(type, typeof(VertexLikeAttribute)) is null) {
                 throw new ArgumentException($"Invalid type of vertex, which has no {nameof(VertexLikeAttribute)}");
             }
         }
 
-        [DoesNotReturn]
-        private static void ThrowLayoutNotRegistered() => throw new InvalidOperationException("Layouter is not registered");
-
-        [DoesNotReturn]
-        private static void ThrowLayoutAlreadyRegistered() => throw new InvalidOperationException("Layouter is already registered");
+        private sealed class VertexTypeData
+        {
+            public VertexLayoutDelegate Layouter { get; }
+            public VertexSpecialFieldMapDelegate? SpecialFieldMap { get; }
+            public int VertexSize { get; }
+            public VertexTypeData(int vertexSize, VertexLayoutDelegate layouter, VertexSpecialFieldMapDelegate? specialFieldMap)
+            {
+                VertexSize = vertexSize;
+                Layouter = layouter;
+                SpecialFieldMap = specialFieldMap;
+            }
+        }
     }
 
     public delegate (int offset, VertexFieldMarshalType type, int elementCount) VertexLayoutDelegate(string fieldName);
+
+    public delegate string VertexSpecialFieldMapDelegate(VertexSpecialField specialField);
 }

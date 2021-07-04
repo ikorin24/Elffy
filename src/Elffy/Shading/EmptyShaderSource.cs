@@ -41,15 +41,8 @@ namespace Elffy.Shading
 
         protected override void DefineLocation(VertexDefinition definition, Renderable target)
         {
-            if(typeof(TVertex) == typeof(Vertex)) {
-                definition.Map<Vertex>("_pos", nameof(Vertex.Position));
-            }
-            else if(typeof(TVertex) == typeof(VertexSlim)) {
-                definition.Map<VertexSlim>("_pos", nameof(VertexSlim.Position));
-            }
-            else {
-                throw new NotSupportedException($"{typeof(TVertex).FullName} is not supported.");
-            }
+            var vertexType = typeof(TVertex);
+            definition.Map(typeof(TVertex), "_pos", VertexSpecialField.Position);
         }
 
         protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)

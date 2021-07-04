@@ -1,12 +1,8 @@
 ﻿#nullable enable
 using Elffy.Core;
 using Elffy.Components;
-using System;
-using System.Runtime.CompilerServices;
-using System.Threading;
 using Elffy.OpenGL;
 using Elffy.Diagnostics;
-using Elffy.Effective.Unsafes;
 
 namespace Elffy.Shading
 {
@@ -24,9 +20,10 @@ namespace Elffy.Shading
 
         protected override void DefineLocation(VertexDefinition definition, Renderable target)
         {
-            definition.Map<Vertex>("vPos", nameof(Vertex.Position));
-            definition.Map<Vertex>("vNormal", nameof(Vertex.Normal));
-            definition.Map<Vertex>("vUV", nameof(Vertex.UV));
+            var vertexType = typeof(Vertex);
+            definition.Map(vertexType, "vPos", VertexSpecialField.Position);
+            definition.Map(vertexType, "vNormal", VertexSpecialField.Normal);
+            definition.Map(vertexType, "vUV", VertexSpecialField.UV);
         }
 
         protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
