@@ -27,7 +27,7 @@ namespace Elffy.Core
 
             var vertexSize = Unsafe.SizeOf<TVertex>();
 
-            specialFieldMap ??= _ => throw new NotSupportedException($"{nameof(TVertex)} does not support special fields mapping.");
+            specialFieldMap ??= _ => "";
 
             lock(_lockObj) {
                 var data = new VertexTypeData(vertexSize, layout, specialFieldMap);
@@ -55,6 +55,19 @@ namespace Elffy.Core
             return (offset, fieldType, elementCount, data.VertexSize);
         }
 
+        internal static bool HasSpecialField(Type vertexType, VertexSpecialField specialField)
+        {
+            RuntimeHelpers.RunClassConstructor(vertexType.TypeHandle);
+            var data = SafeCast.As<VertexTypeData>(_dic[vertexType]);
+            try {
+                var fieldName = data.SpecialFieldMap.Invoke(specialField);
+                return !string.IsNullOrEmpty(fieldName);
+            }
+            catch {
+                return false;
+            }
+        }
+
         private static void CheckVertexLikeType(Type type)
         {
             if(type.IsValueType == false) {
@@ -68,9 +81,9 @@ namespace Elffy.Core
         private sealed class VertexTypeData
         {
             public VertexLayoutDelegate Layouter { get; }
-            public VertexSpecialFieldMapDelegate? SpecialFieldMap { get; }
+            public VertexSpecialFieldMapDelegate SpecialFieldMap { get; }
             public int VertexSize { get; }
-            public VertexTypeData(int vertexSize, VertexLayoutDelegate layouter, VertexSpecialFieldMapDelegate? specialFieldMap)
+            public VertexTypeData(int vertexSize, VertexLayoutDelegate layouter, VertexSpecialFieldMapDelegate specialFieldMap)
             {
                 VertexSize = vertexSize;
                 Layouter = layouter;

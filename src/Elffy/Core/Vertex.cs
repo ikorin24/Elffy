@@ -34,7 +34,7 @@ namespace Elffy.Core
                 VertexSpecialField.Position => nameof(Position),
                 VertexSpecialField.Normal => nameof(Normal),
                 VertexSpecialField.UV => nameof(UV),
-                _ => throw new NotSupportedException($"{nameof(VertexSlim)} does not support {specialField}"),
+                _ => "",
             });
         }
 

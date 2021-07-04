@@ -154,14 +154,13 @@ namespace Elffy.Core
                     Debug.Assert(typeof(TVertex) == typeof(VertexSlim));
                     _shader = DefaultUIShaderSource.Instance;
                 }
-                else if(typeof(TVertex) == typeof(Vertex)) {
-                    _shader = PhongShaderSource.Instance;
-                }
                 else {
-                    _shader = EmptyShaderSource<TVertex>.IsSupported ? EmptyShaderSource<TVertex>.Instance : ThrowInvalid();
-
-                    [DoesNotReturn] static IShaderSource ThrowInvalid()
-                        => throw new ArgumentException("Custom vertex types need a shader of the type.");
+                    if(VertexMarshalHelper.HasSpecialField(typeof(TVertex), VertexSpecialField.Normal)) {
+                        _shader = PhongShaderSource.Instance;
+                    }
+                    else {
+                        _shader = EmptyShaderSource.Instance;
+                    }
                 }
             }
 

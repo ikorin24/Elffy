@@ -2,34 +2,17 @@
 using Elffy.Core;
 using Elffy.Diagnostics;
 using System;
-using System.Runtime.CompilerServices;
-using System.Threading;
 
 namespace Elffy.Shading
 {
     [ShaderTargetVertexType(typeof(Vertex))]
     [ShaderTargetVertexType(typeof(VertexSlim))]
-    internal sealed class EmptyShaderSource<TVertex> : ShaderSource where TVertex : unmanaged
+    internal sealed class EmptyShaderSource : ShaderSource
     {
-        private static readonly Lazy<EmptyShaderSource<TVertex>> _instance = new(() =>
-        {
-            if(IsSupported) {
-                return new EmptyShaderSource<TVertex>();
-            }
+        private static EmptyShaderSource? _instance;
 
-            throw new NotSupportedException($"'{typeof(EmptyShaderSource<TVertex>)}' is not supported. The type must be '{nameof(Vertex)}' or '{nameof(VertexSlim)}'.");
-        }, LazyThreadSafetyMode.ExecutionAndPublication);
-
-
-        public static bool IsSupported
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => typeof(TVertex) == typeof(Vertex) || typeof(TVertex) == typeof(VertexSlim);
-        }
-
-
-        /// <summary>Get instance of <see cref="EmptyShaderSource{TVertex}"/></summary>
-        public static EmptyShaderSource<TVertex> Instance => _instance.Value;
+        /// <summary>Get singleton instance</summary>
+        public static EmptyShaderSource Instance => _instance ??= new();
 
         public override string VertexShaderSource => VertSource;
 

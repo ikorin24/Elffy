@@ -230,7 +230,7 @@ namespace {ns}
 
             sb.Append(
 @$"
-                _ => throw new NotSupportedException($""{typeName} does not support {{specialField}}""),
+                _ => """",
             }});
         }}
 ");
