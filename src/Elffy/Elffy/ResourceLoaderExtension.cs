@@ -10,6 +10,39 @@ namespace Elffy
 {
     public static class ResourceLoaderExtension
     {
+        public static Image LoadImage(this IResourceLoader resourceLoader, string name)
+        {
+            using var stream = resourceLoader.GetStream(name);
+            return Image.FromStream(stream, Image.GetTypeFromExt(ResourcePath.GetExtension(name)));
+        }
+
+        public static async UniTask<Image> LoadImageAsync(this IResourceLoader resourceLoader, string name,
+                                                          AsyncBackEndPoint endPoint,
+                                                          FrameLoopTiming timing = FrameLoopTiming.Update,
+                                                          CancellationToken cancellationToken = default)
+        {
+            if(endPoint is null) {
+                throw new ArgumentNullException(nameof(endPoint));
+            }
+            timing.ThrowArgExceptionIfInvalid(nameof(timing));
+
+            cancellationToken.ThrowIfCancellationRequested();
+            using var stream = resourceLoader.GetStream(name);
+            await UniTask.SwitchToThreadPool();
+            cancellationToken.ThrowIfCancellationRequested();
+            var image = Image.FromStream(stream, Image.GetTypeFromExt(ResourcePath.GetExtension(name)));
+
+            // TODO: await しないモードもほしい
+            try {
+                await endPoint.ToTiming(timing, cancellationToken);
+            }
+            catch {
+                image.Dispose();
+                throw;
+            }
+            return image;
+        }
+
         public static Texture LoadTexture(this IResourceLoader resourceLoader, string name)
         {
             return LoadTexture(resourceLoader, name, TextureConfig.Default);

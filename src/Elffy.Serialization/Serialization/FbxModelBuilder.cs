@@ -3,9 +3,10 @@ using System;
 using System.Threading;
 using System.Diagnostics.CodeAnalysis;
 using Elffy.Shapes;
-using Elffy.Shading;
 using Cysharp.Threading.Tasks;
 using Elffy.Serialization.Fbx;
+using Elffy.Components;
+using System.Diagnostics;
 
 namespace Elffy.Serialization
 {
@@ -52,17 +53,10 @@ namespace Elffy.Serialization
 
             // Parse fbx file
             using var fbx = FbxSemanticParser.Parse(resourceLoader, name, token);
-            CreateTextures(resourceLoader, fbx);
-
-            static void CreateTextures(IResourceLoader resourceLoader, FbxSemantics fbx)
-            {
-                foreach(var textureName in fbx.Textures) {
-                    var path = textureName.ToString().Replace('\\', '/');
-                    System.Diagnostics.Debug.WriteLine(path);
-                }
-            }
-
             await model.HostScreen.AsyncBack.ToTiming(FrameLoopTiming.Update, token);   // ↓ main thread --------------------------------------
+
+            await CreateTexture(resourceLoader, fbx, model);
+
             if(model.LifeState == LifeState.Activated || model.LifeState == LifeState.Alive) {
                 load.Invoke(fbx.Vertices, fbx.Indices);
             }
@@ -71,6 +65,32 @@ namespace Elffy.Serialization
             // 'using' scope ends here. Dispose resources on a thread pool. 
             // Nobody knows the thread if exceptions are thrown in this method,
             // but I don't care about that.
+        }
+
+        private static async UniTask CreateTexture(IResourceLoader resourceLoader, FbxSemantics fbx, Model3D model)
+        {
+            // ↓ main thread --------------------------------------
+            var contextExist = model.TryGetHostScreen(out var screen);
+            Debug.Assert(contextExist && Engine.CurrentContext == screen);
+            var texture = new MultiTexture();
+            model.AddComponent(texture);
+            using var textureLoader = texture.GetLoaderContext(fbx.Textures.Length);
+            try {
+                for(int i = 0; i < fbx.Textures.Length; i++) {
+                    var path = fbx.Textures[i].ToString().Replace('\\', '/');
+                    Debug.WriteLine(path);
+                    continue;
+
+                    // TODO: パスの解決
+                    var name = path;
+                    using var image = await resourceLoader.LoadImageAsync(name, screen.AsyncBack, FrameLoopTiming.Update);
+                    textureLoader.Load(i, image);
+                }
+            }
+            catch {
+                texture.Dispose();
+                throw;
+            }
         }
     }
 }

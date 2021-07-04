@@ -11,7 +11,7 @@ namespace Elffy.Components
 {
     public class MultiTexture : ISingleOwnerComponent, IDisposable
     {
-        private SingleOwnerComponentCore _core;             // Mutable object, Don't change into readonly
+        private SingleOwnerComponentCore _core = new SingleOwnerComponentCore(true);             // Mutable object, Don't change into readonly
         private ValueTypeRentMemory<TextureCore> _textureCores;
         private bool _isLoaded;
 
@@ -43,6 +43,7 @@ namespace Elffy.Components
 
         public unsafe void Load(ReadOnlySpan<Image> images)
         {
+            CheckContext();
             if(images.IsEmpty) { return; }
 
             var texCores = new ValueTypeRentMemory<TextureCore>(images.Length, true);
@@ -64,7 +65,19 @@ namespace Elffy.Components
 
         public MultiTextureLoaderContext GetLoaderContext(int count)
         {
+            CheckContext();
             return new MultiTextureLoaderContext(this, count);
+        }
+
+        private void CheckContext()
+        {
+            var owner = Owner;
+            if(owner is null) {
+                throw new InvalidOperationException("Cannot load image before the component is attached.");
+            }
+            if(Engine.CurrentContext is null) {
+                throw new InvalidOperationException("Invalid context");
+            }
         }
 
         protected virtual void Dispose(bool disposing)
