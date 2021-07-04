@@ -179,11 +179,12 @@ namespace Elffy.Core
             Debug.Assert(_shaderProgram.IsEmpty);
             _shaderProgram = _shader.Compile(this);
 
+            var vertexType = typeof(TVertex);
             if(isUIRenderable) {
                 _shaderProgram.InitializeForUI();
             }
             else {
-                _shaderProgram.Initialize();
+                _shaderProgram.Initialize(vertexType);
             }
             _isLoaded = true;
         }

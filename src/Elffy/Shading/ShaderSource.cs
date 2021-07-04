@@ -22,20 +22,20 @@ namespace Elffy.Shading
 
         public abstract string FragmentShaderSource { get; }
 
-        protected abstract void DefineLocation(VertexDefinition definition, Renderable target);
+        protected abstract void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType);
 
         protected abstract void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void DefineLocationInternal(ProgramObject program, Renderable target)
+        internal void DefineLocationInternal(ProgramObject program, Renderable target, Type vertexType)
         {
-            DefineLocation(new VertexDefinition(program), target);
+            DefineLocation(new VertexDefinition(program), target, vertexType);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void DefineLocationInternal(VertexDefinition definition, Renderable target)
+        internal void DefineLocationInternal(VertexDefinition definition, Renderable target, Type vertexType)
         {
-            DefineLocation(definition, target);
+            DefineLocation(definition, target, vertexType);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

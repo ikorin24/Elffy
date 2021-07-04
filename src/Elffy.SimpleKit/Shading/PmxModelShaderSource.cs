@@ -2,19 +2,16 @@
 using Elffy.Components;
 using Elffy.Core;
 using Elffy.Diagnostics;
-using Elffy.Effective;
 using Elffy.OpenGL;
 using System;
-using System.Threading;
 
 namespace Elffy.Shading
 {
     [ShaderTargetVertexType(typeof(RigVertex))]
     public sealed class PmxModelShaderSource : ShaderSource
     {
-        private static readonly Lazy<PmxModelShaderSource> _instance = new(() => new(), LazyThreadSafetyMode.ExecutionAndPublication);
-
-        public static PmxModelShaderSource Instance => _instance.Value;
+        private static PmxModelShaderSource? _instance;
+        public static PmxModelShaderSource Instance => _instance ??= new();
 
         public override string VertexShaderSource => VertSource;
 
@@ -22,13 +19,13 @@ namespace Elffy.Shading
 
         private PmxModelShaderSource() { }
 
-        protected override void DefineLocation(VertexDefinition definition, Renderable target)
+        protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
         {
-            definition.Map<RigVertex>("vPos", nameof(RigVertex.Position));
-            definition.Map<RigVertex>("vNormal", nameof(RigVertex.Normal));
-            definition.Map<RigVertex>("vUV", nameof(RigVertex.UV));
-            definition.Map<RigVertex>("bone", nameof(RigVertex.Bone));
-            definition.Map<RigVertex>("weight", nameof(RigVertex.Weight));
+            definition.Map(vertexType, "vPos", VertexSpecialField.Position);
+            definition.Map(vertexType, "vNormal", VertexSpecialField.Normal);
+            definition.Map(vertexType, "vUV", VertexSpecialField.UV);
+            definition.Map(vertexType, "bone", VertexSpecialField.Bone);
+            definition.Map(vertexType, "weight", VertexSpecialField.Weight);
         }
 
         protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)

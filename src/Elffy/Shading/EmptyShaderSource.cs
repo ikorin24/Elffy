@@ -39,10 +39,9 @@ namespace Elffy.Shading
         {
         }
 
-        protected override void DefineLocation(VertexDefinition definition, Renderable target)
+        protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
         {
-            var vertexType = typeof(TVertex);
-            definition.Map(typeof(TVertex), "_pos", VertexSpecialField.Position);
+            definition.Map(vertexType, "_pos", VertexSpecialField.Position);
         }
 
         protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)

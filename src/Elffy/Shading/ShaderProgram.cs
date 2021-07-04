@@ -65,14 +65,14 @@ namespace Elffy.Shading
                     .SendUniformsInternal(_program, SafeCast.NotNullAs<UIRenderable>(_owner).Control, model, view, projection);
         }
 
-        internal void Initialize()
+        internal void Initialize(Type vertexType)
         {
             Debug.Assert(_owner is not UIRenderable, $"Use {nameof(InitializeForUI)} method for {nameof(UIRenderable)}.");
             Debug.Assert(_owner.Shader is not null);
 
             VAO.Bind(_owner.VAO);
             VBO.Bind(_owner.VBO);
-            _owner.Shader.DefineLocationInternal(_program, _owner);
+            _owner.Shader.DefineLocationInternal(_program, _owner, vertexType);
             VAO.Unbind();
             VBO.Unbind();
         }

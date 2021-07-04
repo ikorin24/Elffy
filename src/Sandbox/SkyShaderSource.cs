@@ -20,10 +20,10 @@ namespace Sandbox
         {
         }
 
-        protected override void DefineLocation(VertexDefinition definition, Renderable target)
+        protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
         {
-            definition.Map<Vertex>("vPos", nameof(Vertex.Position));
-            definition.Map<Vertex>("vUV", nameof(Vertex.UV));
+            definition.Map(vertexType, "vPos", VertexSpecialField.Position);
+            definition.Map(vertexType, "vUV", VertexSpecialField.UV);
         }
 
         protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)

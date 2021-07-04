@@ -12,18 +12,12 @@ namespace Elffy.Shading
     /// <summary>Simple shader which displays texture.</summary>
     [ShaderTargetVertexType(typeof(VertexSlim))]
     [ShaderTargetVertexType(typeof(Vertex))]
-    public sealed class TextureShaderSource<TVertex> : ShaderSource
+    public sealed class TextureShaderSource : ShaderSource
     {
-        private static readonly Lazy<TextureShaderSource<TVertex>> _instance = new(() =>
-        {
-            if(typeof(TVertex) == typeof(VertexSlim) || typeof(TVertex) == typeof(Vertex)) {
-                return new();
-            }
-            throw new NotSupportedException("Not supported vertex type.");
-        }, LazyThreadSafetyMode.ExecutionAndPublication);
+        private static TextureShaderSource? _instance;
 
-        /// <summary>Get singleton instance of <see cref="TextureShaderSource{TVertex}"/></summary>
-        public static TextureShaderSource<TVertex> Instance => _instance.Value;
+        /// <summary>Get singleton instance</summary>
+        public static TextureShaderSource Instance => _instance ??= new();
 
         public override string VertexShaderSource => VertSource;
 
@@ -31,19 +25,10 @@ namespace Elffy.Shading
 
         private TextureShaderSource() { }
 
-        protected override void DefineLocation(VertexDefinition definition, Renderable target)
+        protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
         {
-            if(typeof(TVertex) == typeof(VertexSlim)) {
-                definition.Map<VertexSlim>("_pos", nameof(VertexSlim.Position));
-                definition.Map<VertexSlim>("_uv", nameof(VertexSlim.UV));
-            }
-            else if(typeof(TVertex) == typeof(Vertex)) {
-                definition.Map<Vertex>("_pos", nameof(Vertex.Position));
-                definition.Map<Vertex>("_uv", nameof(Vertex.UV));
-            }
-            else {
-                throw new NotSupportedException("Not supported vertex type.");
-            }
+            definition.Map(vertexType, "_pos", VertexSpecialField.Position);
+            definition.Map(vertexType, "_uv", VertexSpecialField.UV);
         }
 
         protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)

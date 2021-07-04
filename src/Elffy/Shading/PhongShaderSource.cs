@@ -3,6 +3,7 @@ using Elffy.Core;
 using Elffy.Components;
 using Elffy.OpenGL;
 using Elffy.Diagnostics;
+using System;
 
 namespace Elffy.Shading
 {
@@ -18,9 +19,8 @@ namespace Elffy.Shading
 
         private PhongShaderSource() { }
 
-        protected override void DefineLocation(VertexDefinition definition, Renderable target)
+        protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
         {
-            var vertexType = typeof(Vertex);
             definition.Map(vertexType, "vPos", VertexSpecialField.Position);
             definition.Map(vertexType, "vNormal", VertexSpecialField.Normal);
             definition.Map(vertexType, "vUV", VertexSpecialField.UV);
