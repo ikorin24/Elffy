@@ -89,6 +89,14 @@ namespace Elffy.Effective
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Span<T> AsSpan() => Span;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Span<T> AsSpan(int start) => Span.Slice(start);
+
+        public Span<T> AsSpan(int start, int length) => Span.Slice(start, length);
+
         /// <summary>複数回このメソッドを呼んだ場合の動作は未定義です</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly void Dispose()
