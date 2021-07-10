@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using Elffy.Effective;
+using Elffy.Effective.Unsafes;
 using FbxTools;
 using System;
 using System.Diagnostics;
@@ -10,11 +11,13 @@ namespace Elffy.Serialization.Fbx
     {
         private readonly BufferPooledDictionary<long, MeshModel>? _meshDic;
         private readonly BufferPooledDictionary<long, LimbNode>? _limbDic;
+        private readonly BufferPooledDictionary<long, NullModel>? _nullDic;
 
         public ModelList(FbxNode objectsNode)
         {
             var meshDic = new BufferPooledDictionary<long, MeshModel>();
             var limbDic = new BufferPooledDictionary<long, LimbNode>();
+            var nullDic = new BufferPooledDictionary<long, NullModel>();
             try {
                 using var indexBuf = new ValueTypeRentMemory<int>(objectsNode.Children.Count);
                 var modelCount = objectsNode.FindIndexAll(FbxConstStrings.Model(), indexBuf.Span);
@@ -33,7 +36,11 @@ namespace Elffy.Serialization.Fbx
                             meshDic.Add(meshModel.ID, meshModel);
                             break;
                         }
-                        case ModelType.Null:
+                        case ModelType.Null: {
+                            var nullModel = new NullModel(modelNode);
+                            nullDic.Add(nullModel.ID, nullModel);
+                            break;
+                        }
                         case ModelType.Unknown:
                         default:
                             break;
@@ -41,10 +48,12 @@ namespace Elffy.Serialization.Fbx
                 }
                 _meshDic = meshDic;
                 _limbDic = limbDic;
+                _nullDic = nullDic;
             }
             catch {
                 meshDic.Dispose();
                 limbDic.Dispose();
+                nullDic.Dispose();
                 throw;
             }
         }
@@ -67,10 +76,27 @@ namespace Elffy.Serialization.Fbx
             return _limbDic.TryGetValue(id, out limb);
         }
 
+        public BufferPooledDictionary<long, NullModel>.ValueCollection GetNullModels()
+        {
+            var nullDic = _nullDic;
+            if(nullDic is null) { throw new InvalidOperationException(); }
+            return nullDic.Values;
+        }
+
+        public bool TryGetNullModel(long id, out NullModel nullModel)
+        {
+            if(_nullDic is null) {
+                nullModel = default;
+                return false;
+            }
+            return _nullDic.TryGetValue(id, out nullModel);
+        }
+
         public void Dispose()
         {
             _meshDic?.Dispose();
             _limbDic?.Dispose();
+            _nullDic?.Dispose();
         }
     }
 
@@ -180,5 +206,99 @@ namespace Elffy.Serialization.Fbx
         public override int GetHashCode() => Node.GetHashCode();
 
         public override string ToString() => $"{nameof(MeshModel)} (ID: {ID}, Name: {Name})";
+    }
+
+    [DebuggerDisplay("{ToString(),nq}")]
+    internal readonly struct NullModel : IEquatable<NullModel>
+    {
+        public readonly FbxNode Node;
+        public readonly long ID;
+        public readonly RawString Name;
+
+        public NullModel(FbxNode node)
+        {
+            Debug.Assert(node.Properties[2].AsString().ToModelType() == ModelType.Null);
+            Node = node;
+            ID = node.Properties[0].AsInt64();
+            Name = node.Properties[1].AsString();
+        }
+
+        public override bool Equals(object? obj) => obj is NullModel model && Equals(model);
+
+        public bool Equals(NullModel other) => Node.Equals(other.Node) && ID == other.ID && Name.Equals(other.Name);
+
+        public override int GetHashCode() => HashCode.Combine(Node, ID, Name);
+
+        public override string ToString() => $"{nameof(NullModel)} (ID: {ID}, Name: {Name})";
+    }
+
+    internal readonly struct SemanticModelList : IDisposable
+    {
+        private readonly ValueTypeRentMemory<SemanticModel> _models;
+
+        public ReadOnlySpan<SemanticModel> Models => _models.AsSpan();
+
+        public SemanticModelList(in SemanticResolver resolver)
+        {
+            var nullModels = resolver.GetNullModels();
+            var models = new ValueTypeRentMemory<SemanticModel>(nullModels.Count);
+            try {
+                var i = 0;
+                foreach(var nullModel in nullModels) {
+                    models[i] = new SemanticModel(resolver, nullModel);
+                    i++;
+                }
+                _models = models;
+            }
+            catch {
+                models.Dispose();
+                throw;
+            }
+        }
+
+        public void Dispose()
+        {
+            foreach(var model in _models.Span) {
+                model.Dispose();
+            }
+            _models.Dispose();
+        }
+    }
+
+    internal readonly struct SemanticModel : IDisposable
+    {
+        private readonly UnsafeRawList<Bone> _bones;
+
+        public SemanticModel(in SemanticResolver resolver, in NullModel nullModel)
+        {
+            if(resolver.TryGetChildLimb(nullModel, out var limb) == false) {
+                _bones = default;
+                return;
+            }
+            var bones = UnsafeRawList<Bone>.New(256);
+            try {
+                bones.Add(new Bone(null, limb));
+                CreateBoneTree(resolver, bones, 0, limb);
+                _bones = bones;
+            }
+            catch {
+                bones.Dispose();
+                throw;
+            }
+
+            static void CreateBoneTree(in SemanticResolver resolver, UnsafeRawList<Bone> bones, int parentIndex, in LimbNode parentLimb)
+            {
+                using var children = resolver.GetChildrenLimbs(parentLimb);
+                foreach(var childLimb in children.AsSpan()) {
+                    bones.Add(new Bone(parentIndex, childLimb));
+                    CreateBoneTree(resolver, bones, bones.Count - 1, childLimb);
+                }
+            }
+        }
+
+        public void Dispose()
+        {
+            _bones.Dispose();
+        }
     }
 }

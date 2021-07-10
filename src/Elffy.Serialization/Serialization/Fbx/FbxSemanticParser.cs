@@ -1,11 +1,13 @@
 ﻿#nullable enable
 using System.IO;
 using System;
+using System.Linq;
 using System.Threading;
 using FbxTools;
 using Elffy.Effective.Unsafes;
 using Elffy.Core;
 using Elffy.Effective;
+using System.Collections.Generic;
 
 namespace Elffy.Serialization.Fbx
 {
@@ -26,10 +28,17 @@ namespace Elffy.Serialization.Fbx
             try {
                 fbx = FbxParser.Parse(stream);
                 using var resolver = new SemanticResolver(fbx);
+                using var models = new SemanticModelList(resolver);
+
                 var objectsNode = fbx.Find(FbxConstStrings.Objects());
                 (vertices, indices) = ParseMesh(objectsNode, resolver, cancellationToken);
                 textures = ParseTexture(objectsNode, cancellationToken);
                 ParseMaterial(objectsNode);
+
+
+                // Model(LimbNode) のソースが、子のボーンModel(LimbNode)
+                // 子供からは遡れないので注意
+                // Model(Null)がルート
 
                 return new FbxSemantics(fbx, indices, vertices, ref textures);
             }
@@ -215,6 +224,7 @@ namespace Elffy.Serialization.Fbx
                 var weights = cluster.GetWeights();
                 cluster.GetInitialPosition(out var mat);
             }
+            return;
         }
     }
 }

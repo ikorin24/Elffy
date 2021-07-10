@@ -2,6 +2,7 @@
 using System;
 using FbxTools;
 using Elffy.Effective;
+using Elffy.Effective.Unsafes;
 
 namespace Elffy.Serialization.Fbx
 {
@@ -18,6 +19,39 @@ namespace Elffy.Serialization.Fbx
             _deformerList = new(objectsNode);
             _connResolver = new(connectionsNode);
             _modelList = new(objectsNode);
+        }
+
+        public BufferPooledDictionary<long, NullModel>.ValueCollection GetNullModels()
+        {
+            return _modelList.GetNullModels();
+        }
+
+        public bool TryGetChildLimb(in NullModel parent, out LimbNode limb)
+        {
+            foreach(var childID in GetSources(parent.ID)) {
+                if(_modelList.TryGetLimb(childID, out limb)) {
+                    return true;
+                }
+            }
+            limb = default;
+            return false;
+        }
+
+        public UnsafeRawList<LimbNode> GetChildrenLimbs(in LimbNode parent)
+        {
+            var list = UnsafeRawList<LimbNode>.New(32);
+            try {
+                foreach(var childID in GetSources(parent.ID)) {
+                    if(_modelList.TryGetLimb(childID, out var limb)) {
+                        list.Add(limb);
+                    }
+                }
+                return list;
+            }
+            catch {
+                list.Dispose();
+                throw;
+            }
         }
 
         public bool TryGetMeshModel(in MeshGeometry mesh, out MeshModel model)

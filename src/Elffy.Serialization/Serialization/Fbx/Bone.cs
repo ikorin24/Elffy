@@ -4,11 +4,16 @@ using System.Diagnostics;
 
 namespace Elffy.Serialization.Fbx
 {
-    internal struct Bone
+    internal readonly struct Bone
     {
-        public long ID;
-        public RawString Name;
-        public Matrix4 InitPosition;
+        public readonly int? ParentIndex;
+        public readonly LimbNode LimbNode;
+
+        public Bone(int? parentIndex, in LimbNode limbNode)
+        {
+            ParentIndex = parentIndex;
+            LimbNode = limbNode;
+        }
     }
 
     internal readonly struct SkinDeformer
