@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using System.IO;
 using System;
-using System.Linq;
 using System.Threading;
 using FbxTools;
 using Elffy.Effective.Unsafes;
@@ -263,9 +262,6 @@ namespace Elffy.Serialization.Fbx
                     offset++;
                 }
             }
-
-            var max = boneCounts.ToArray().Max();
-            Debug.WriteLine($"max: {max} ({boneCounts.ToArray().Count(x => x == max)})");
             return;
 
             static bool TryGetSkeletonIndex(in SkeletonDataList skeletonList, in LimbNode limb, out int skeletonIndex, out int boneIndex)
