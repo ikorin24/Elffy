@@ -26,6 +26,9 @@ namespace Sandbox
         protected override void OnEarlyUpdate()
         {
             base.OnEarlyUpdate();
+            var wheel = _mouse.Wheel();
+            ZoomCamera(wheel);
+
             if(_mouse.IsDown(MouseButton.Left)) {
                 _mousePos = _mouse.Position;
                 _isMousePressed = true;
@@ -66,6 +69,14 @@ namespace Sandbox
 
             _camera.Position = q3 * q2 * q1 * v + target;
             _camera.LookAt(target);
+        }
+
+        private void ZoomCamera(float delta)
+        {
+            var ratio = 1 + delta;
+            var vec = _camera.Position - Target;
+            _camera.Position = _camera.Position + vec * delta * -0.1f;
+            _camera.LookAt(Target);
         }
     }
 }
