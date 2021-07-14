@@ -45,7 +45,7 @@ namespace Elffy.Imaging
         /// <param name="x">x index (column line)</param>
         /// <param name="y">y index (row line)</param>
         /// <returns>pixel</returns>
-        public ref ColorByte this[int x, int y]
+        public ref readonly ColorByte this[int x, int y]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
@@ -166,7 +166,7 @@ namespace Elffy.Imaging
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ReadOnlySpan<ColorByte> GetPixels()
         {
-            return MemoryMarshal.CreateReadOnlySpan(ref _firstRowLine.At(0), _firstRowLine.Length * _height);
+            return MemoryMarshal.CreateReadOnlySpan(ref Unsafe.AsRef(_firstRowLine.GetReference()), _firstRowLine.Length * _height);
         }
 
         /// <summary>Get span of the specified row line pixels.</summary>
@@ -178,7 +178,7 @@ namespace Elffy.Imaging
             if((uint)row >= _height) {
                 ThrowHelper.ThrowArgOutOfRange(nameof(row));
             }
-            return MemoryMarshal.CreateReadOnlySpan(ref _firstRowLine.At(row * Width), Width);
+            return MemoryMarshal.CreateReadOnlySpan(ref Unsafe.AsRef(_firstRowLine.At(row * Width)), Width);
         }
 
         /// <summary>Create copy image</summary>

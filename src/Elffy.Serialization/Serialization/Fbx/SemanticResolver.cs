@@ -8,17 +8,21 @@ namespace Elffy.Serialization.Fbx
 {
     internal readonly ref struct SemanticResolver
     {
+        private readonly FbxNode _objectsNode;
         private readonly FbxConnectionResolver _connResolver;
         private readonly DeformerList _deformerList;
         private readonly ModelList _modelList;
 
+
+        public FbxNode ObjectsNode => _objectsNode;
+
         public SemanticResolver(FbxObject fbx)
         {
-            var objectsNode = fbx.Find(FbxConstStrings.Objects());
+            _objectsNode = fbx.Find(FbxConstStrings.Objects());
             var connectionsNode = fbx.Find(FbxConstStrings.Connections());
-            _deformerList = new(objectsNode);
+            _deformerList = new(_objectsNode);
             _connResolver = new(connectionsNode);
-            _modelList = new(objectsNode);
+            _modelList = new(_objectsNode);
         }
 
         public BufferPooledDictionary<long, NullModel>.ValueCollection GetNullModels()
@@ -52,6 +56,17 @@ namespace Elffy.Serialization.Fbx
                 list.Dispose();
                 throw;
             }
+        }
+
+        public bool TryGetLimb(in ClusterDeformer cluster, out LimbNode limb)
+        {
+            foreach(var childID in GetSources(cluster.ID)) {
+                if(_modelList.TryGetLimb(childID, out limb)) {
+                    return true;
+                }
+            }
+            limb = default;
+            return false;
         }
 
         public bool TryGetMeshModel(in MeshGeometry mesh, out MeshModel model)

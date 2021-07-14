@@ -35,9 +35,15 @@ namespace Elffy.Core
             }
         }
 
-        internal static (int offset, VertexFieldMarshalType type, int elementCount, int vertexSize) GetLayout(Type type, VertexSpecialField specialField)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static VertexTypeData GetVertexTypeData(Type type)
         {
-            var data = SafeCast.As<VertexTypeData>(_dic[type]);
+            return SafeCast.As<VertexTypeData>(_dic[type]);
+        }
+
+        public static (int offset, VertexFieldMarshalType type, int elementCount, int vertexSize) GetLayout(Type type, VertexSpecialField specialField)
+        {
+            var data = GetVertexTypeData(type);
             var specialFieldMap = data.SpecialFieldMap;
             if(specialFieldMap is null) {
                 ThrowInvalidOp();
@@ -48,17 +54,17 @@ namespace Elffy.Core
             return (offset, fieldType, elementCount, data.VertexSize);
         }
 
-        internal static (int offset, VertexFieldMarshalType type, int elementCount, int vertexSize) GetLayout(Type type, string fieldName)
+        public static (int offset, VertexFieldMarshalType type, int elementCount, int vertexSize) GetLayout(Type type, string fieldName)
         {
-            var data = SafeCast.As<VertexTypeData>(_dic[type]);
+            var data = GetVertexTypeData(type);
             var (offset, fieldType, elementCount) = data.Layouter.Invoke(fieldName);
             return (offset, fieldType, elementCount, data.VertexSize);
         }
 
-        internal static bool HasSpecialField(Type vertexType, VertexSpecialField specialField)
+        public static bool HasSpecialField(Type vertexType, VertexSpecialField specialField)
         {
             RuntimeHelpers.RunClassConstructor(vertexType.TypeHandle);
-            var data = SafeCast.As<VertexTypeData>(_dic[vertexType]);
+            var data = GetVertexTypeData(vertexType);
             try {
                 var fieldName = data.SpecialFieldMap.Invoke(specialField);
                 return !string.IsNullOrEmpty(fieldName);
@@ -77,18 +83,18 @@ namespace Elffy.Core
                 throw new ArgumentException($"Invalid type of vertex, which has no {nameof(VertexLikeAttribute)}");
             }
         }
+    }
 
-        private sealed class VertexTypeData
+    public sealed class VertexTypeData
+    {
+        public VertexLayoutDelegate Layouter { get; }
+        public VertexSpecialFieldMapDelegate SpecialFieldMap { get; }
+        public int VertexSize { get; }
+        public VertexTypeData(int vertexSize, VertexLayoutDelegate layouter, VertexSpecialFieldMapDelegate specialFieldMap)
         {
-            public VertexLayoutDelegate Layouter { get; }
-            public VertexSpecialFieldMapDelegate SpecialFieldMap { get; }
-            public int VertexSize { get; }
-            public VertexTypeData(int vertexSize, VertexLayoutDelegate layouter, VertexSpecialFieldMapDelegate specialFieldMap)
-            {
-                VertexSize = vertexSize;
-                Layouter = layouter;
-                SpecialFieldMap = specialFieldMap;
-            }
+            VertexSize = vertexSize;
+            Layouter = layouter;
+            SpecialFieldMap = specialFieldMap;
         }
     }
 

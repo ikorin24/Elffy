@@ -133,7 +133,7 @@ namespace Elffy.Serialization.Fbx
         }
     }
 
-    internal readonly struct CombinedMesh : IDisposable     // Don't use default struct
+    internal readonly struct CombinedMesh<TVertex> : IDisposable where TVertex : unmanaged    // Don't use default struct
     {
         private readonly UnsafeRawList<ResolvedMeshPrivate> _meshes;
 
@@ -144,9 +144,9 @@ namespace Elffy.Serialization.Fbx
             _meshes = UnsafeRawList<ResolvedMeshPrivate>.New(capacity);
         }
 
-        public static CombinedMesh New()
+        public static CombinedMesh<TVertex> New()
         {
-            return new CombinedMesh(0);
+            return new CombinedMesh<TVertex>(0);
         }
 
         public ref ResolvedMesh NewMeshToAdd()
@@ -159,9 +159,9 @@ namespace Elffy.Serialization.Fbx
             return ref Unsafe.As<ResolvedMeshPrivate, ResolvedMesh>(ref mesh);
         }
 
-        public (UnsafeRawArray<SkinnedVertex> vertices, UnsafeRawArray<int> indices) CreateCombined()
+        public (UnsafeRawArray<TVertex> vertices, UnsafeRawArray<int> indices) CreateCombined()
         {
-            UnsafeRawArray<SkinnedVertex> vertices = default;
+            UnsafeRawArray<TVertex> vertices = default;
             UnsafeRawArray<int> indices = default;
             try {
                 var indicesCout = 0;
@@ -170,7 +170,7 @@ namespace Elffy.Serialization.Fbx
                     indicesCout += mesh.Indices.Count;
                     verticesCount += mesh.Vertices.Count;
                 }
-                vertices = new UnsafeRawArray<SkinnedVertex>(verticesCount);
+                vertices = new UnsafeRawArray<TVertex>(verticesCount);
                 indices = new UnsafeRawArray<int>(indicesCout);
 
                 var offsetV = 0;
@@ -210,10 +210,10 @@ namespace Elffy.Serialization.Fbx
 
         private readonly struct ResolvedMeshPrivate     // Don't use default struct
         {
-            public readonly UnsafeRawList<SkinnedVertex> Vertices;
+            public readonly UnsafeRawList<TVertex> Vertices;
             public readonly UnsafeRawList<int> Indices;
 
-            private ResolvedMeshPrivate(UnsafeRawList<SkinnedVertex> v, UnsafeRawList<int> i)
+            private ResolvedMeshPrivate(UnsafeRawList<TVertex> v, UnsafeRawList<int> i)
             {
                 Vertices = v;
                 Indices = i;
@@ -222,7 +222,7 @@ namespace Elffy.Serialization.Fbx
             public static ResolvedMeshPrivate New()
             {
                 const int InitialCapacity = 1024;
-                return new ResolvedMeshPrivate(UnsafeRawList<SkinnedVertex>.New(InitialCapacity), UnsafeRawList<int>.New(InitialCapacity));
+                return new ResolvedMeshPrivate(UnsafeRawList<TVertex>.New(InitialCapacity), UnsafeRawList<int>.New(InitialCapacity));
             }
 
             public void Dispose()
@@ -236,11 +236,11 @@ namespace Elffy.Serialization.Fbx
         {
             private readonly ResolvedMeshPrivate _mesh;
 
-            public ReadOnlySpan<SkinnedVertex> Vertices => _mesh.Vertices.AsSpan();
+            public ReadOnlySpan<TVertex> Vertices => _mesh.Vertices.AsSpan();
 
             public ReadOnlySpan<int> Indices => _mesh.Indices.AsSpan();
 
-            public void AddVertex(in SkinnedVertex v)
+            public void AddVertex(in TVertex v)
             {
                 _mesh.Vertices.Add(v);
             }

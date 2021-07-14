@@ -5,33 +5,34 @@ using System.Linq;
 using System.Threading;
 using FbxTools;
 using Elffy.Effective.Unsafes;
-using Elffy.Core;
 using Elffy.Effective;
-using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Diagnostics;
 
 namespace Elffy.Serialization.Fbx
 {
-    internal sealed class FbxSemanticParser
+    internal sealed class FbxSemanticParser<TVertex> where TVertex : unmanaged
     {
-        public static FbxSemantics Parse(IResourceLoader loader, string name, CancellationToken cancellationToken = default)
+        public static FbxSemantics<TVertex> Parse(IResourceLoader loader, string name, CancellationToken cancellationToken = default)
         {
             using var stream = loader.GetStream(name);
             return Parse(stream, cancellationToken);
         }
 
-        public static FbxSemantics Parse(Stream stream, CancellationToken cancellationToken = default)
+        public static FbxSemantics<TVertex> Parse(Stream stream, CancellationToken cancellationToken = default)
         {
+            var vertexCreator = SkinnedVertexCreator<TVertex>.Build();
+
             UnsafeRawArray<int> indices = default;
-            UnsafeRawArray<SkinnedVertex> vertices = default;
+            UnsafeRawArray<TVertex> vertices = default;
             ValueTypeRentMemory<RawString> textures = default;
             FbxObject? fbx = null;
             try {
                 fbx = FbxParser.Parse(stream);
                 using var resolver = new SemanticResolver(fbx);
-                using var models = new SemanticModelList(resolver);
 
-                var objectsNode = fbx.Find(FbxConstStrings.Objects());
-                (vertices, indices) = ParseMesh(objectsNode, resolver, cancellationToken);
+                var objectsNode = resolver.ObjectsNode;
+                (vertices, indices) = ParseMesh(resolver, vertexCreator, cancellationToken);
                 textures = ParseTexture(objectsNode, cancellationToken);
                 ParseMaterial(objectsNode);
 
@@ -40,7 +41,7 @@ namespace Elffy.Serialization.Fbx
                 // 子供からは遡れないので注意
                 // Model(Null)がルート
 
-                return new FbxSemantics(fbx, indices, vertices, ref textures);
+                return new FbxSemantics<TVertex>(fbx, indices, vertices, ref textures);
             }
             catch {
                 fbx?.Dispose();
@@ -51,7 +52,7 @@ namespace Elffy.Serialization.Fbx
             }
         }
 
-        private static (UnsafeRawArray<SkinnedVertex> vertices, UnsafeRawArray<int> indices) ParseMesh(FbxNode objects, in SemanticResolver resolver, CancellationToken cancellationToken)
+        private static (UnsafeRawArray<TVertex> vertices, UnsafeRawArray<int> indices) ParseMesh(in SemanticResolver resolver, SkinnedVertexCreator<TVertex> vertexCreator, CancellationToken cancellationToken)
         {
             // [root] --+-- "Objects"  ------+---- "Geometry"
             //          |                    |---- "Geometry"
@@ -75,23 +76,27 @@ namespace Elffy.Serialization.Fbx
             // <*1> has translation, rotation, and scaling of the model.
             // They are (double x, double y, double z) = ([4], [5], [6])
 
-            using var combinedMesh = CombinedMesh.New();
-            using var buf = new ValueTypeRentMemory<int>(objects.Children.Count);
-            var bufSpan = buf.Span;
-            var geometryCount = objects.FindIndexAll(FbxConstStrings.Geometry(), bufSpan);
-            foreach(var i in bufSpan.Slice(0, geometryCount)) {
+            using var skeletons = new SkeletonDataList(resolver);
+
+            var objects = resolver.ObjectsNode;
+            using var combinedMesh = CombinedMesh<TVertex>.New();
+            using var _ = new ValueTypeRentMemory<int>(objects.Children.Count);
+            var buf = _.Span;
+            var geometryCount = objects.FindIndexAll(FbxConstStrings.Geometry(), buf);
+            foreach(var i in buf.Slice(0, geometryCount)) {
                 cancellationToken.ThrowIfCancellationRequested();
                 var geometryNode = objects.Children[i];
                 if(geometryNode.IsMeshGeometry() == false) { continue; }
                 var meshGeometry = new MeshGeometry(geometryNode);
                 if(resolver.TryGetMeshModel(meshGeometry, out var model) == false) { throw new FormatException(); }
-                ResolveMesh(meshGeometry, model, combinedMesh.NewMeshToAdd());
-                DeformerOfMesh(meshGeometry, resolver);
+                ref var mesh = ref combinedMesh.NewMeshToAdd();
+                ResolveMesh(meshGeometry, model, mesh, vertexCreator);
+                DeformerOfMesh(meshGeometry, mesh, resolver, skeletons, vertexCreator);
             }
             return combinedMesh.CreateCombined();
         }
 
-        private static void ResolveMesh(in MeshGeometry mesh, in MeshModel meshModel, in CombinedMesh.ResolvedMesh resolved)
+        private static void ResolveMesh(in MeshGeometry mesh, in MeshModel meshModel, in CombinedMesh<TVertex>.ResolvedMesh resolved, SkinnedVertexCreator<TVertex> vertexCreator)
         {
             var positions = mesh.Positions;
             var normals = mesh.Normals;
@@ -141,20 +146,11 @@ namespace Elffy.Serialization.Fbx
                 if(mesh.UVReferenceType == ReferenceInformationType.IndexToDirect) {
                     uvIndex = uvIndices[uvIndex];
                 }
-
-                //resolved.AddVertex(new Vertex(
-                //    position: (Vector3)positions[index] + meshModel.Translation,
-                //    normal: (Vector3)normals[normalIndex],
-                //    uv: (Vector2)uv[uvIndex]
-                //));
-                resolved.AddVertex(new SkinnedVertex(
-                    position: (Vector3)positions[index] + meshModel.Translation,
-                    normal: (Vector3)normals[normalIndex],
-                    uv: (Vector2)uv[uvIndex],
-                    bone: default,
-                    weight: default,
-                    textureIndex: default
-                ));
+                var v = new TVertex();
+                vertexCreator.PositionOf(ref v) = (Vector3)positions[index] + meshModel.Translation;
+                vertexCreator.NormalOf(ref v) = (Vector3)normals[normalIndex];
+                vertexCreator.UVOf(ref v) = (Vector2)uv[uvIndex];
+                resolved.AddVertex(v);
                 if(isLast) {
                     if(n_gon <= 2) { throw new FormatException(); }
                     for(int n = 0; n < n_gon - 2; n++) {
@@ -214,17 +210,91 @@ namespace Elffy.Serialization.Fbx
             }
         }
 
-        private static void DeformerOfMesh(in MeshGeometry meshGeometry, in SemanticResolver resolver)
+        private static void DeformerOfMesh(in MeshGeometry meshGeometry, in CombinedMesh<TVertex>.ResolvedMesh mesh, in SemanticResolver resolver, in SkeletonDataList skeletonList, SkinnedVertexCreator<TVertex> vertexCreator)
         {
             if(resolver.TryGetSkinDeformer(meshGeometry, out var skin) == false) { return; }
-            using var memory = resolver.GetClusterDeformers(skin, out var count);
-            var clusters = memory.Span.Slice(0, count);
+            using var _ = resolver.GetClusterDeformers(skin, out var count);
+            var clusters = _.AsSpan(0, count);
+
+            var skeletons = skeletonList.Span;
+            var skeletonIndex = 0;
+            ref readonly var skeleton = ref Unsafe.NullRef<SkeletonData>();
+
+            var vertices = mesh.Vertices.AsWritable();  // TODO: 危険なので実装変える
+            using var boneCountsMem = new ValueTypeRentMemory<int>(vertices.Length, true);
+            var boneCounts = boneCountsMem.Span;
+
             foreach(var cluster in clusters) {
-                var indices = cluster.GetIndices();
-                var weights = cluster.GetWeights();
+                if(resolver.TryGetLimb(cluster, out var limb) == false) { throw new FormatException(); }
+
+                int boneIndex;
+                if(UnsafeEx.IsNullRefReadOnly(in skeleton)) {
+                    if(TryGetSkeletonIndex(skeletonList, limb, out skeletonIndex, out boneIndex) == false) { throw new FormatException(); }
+                    skeleton = ref skeletons[skeletonIndex];
+                }
+                else {
+                    if(TryGetBoneIndex(skeleton, limb, out boneIndex) == false) { throw new FormatException(); }
+                }
+
+                var indices = cluster.GetIndices().AsSpan();
+                var weights = cluster.GetWeights().AsSpan();
+                if(indices.Length != weights.Length) {
+                    throw new FormatException();
+                }
+
                 cluster.GetInitialPosition(out var mat);
+
+                Debug.Assert(indices.Length == weights.Length);
+                for(int i = 0; i < indices.Length; i++) {
+                    ref readonly var index = ref indices.At(i);
+                    ref readonly var weight = ref weights.At(i);
+                    ref var offset = ref boneCounts[index];
+                    if(offset >= 4) {
+                        offset++;
+                        continue;       // TODO: 4つ以上のボーンを持つ場合
+                        //throw new NotSupportedException("No single vertex can be associated with more than four bones.");
+                    }
+                    if(offset >= 1) {
+                        int a = 1;
+                    }
+                    ref var v = ref vertices[index];
+                    Unsafe.Add(ref Unsafe.As<Vector4i, int>(ref vertexCreator.BoneOf(ref v)), offset) = boneIndex;
+                    Unsafe.Add(ref Unsafe.As<Vector4, float>(ref vertexCreator.WeightOf(ref v)), offset) = (float)weight;
+                    offset++;
+                }
             }
+
+            var max = boneCounts.ToArray().Max();
+            Debug.WriteLine($"max: {max} ({boneCounts.ToArray().Count(x => x == max)})");
             return;
+
+            static bool TryGetSkeletonIndex(in SkeletonDataList skeletonList, in LimbNode limb, out int skeletonIndex, out int boneIndex)
+            {
+                var skeletons = skeletonList.Span;
+                for(int i = 0; i < skeletons.Length; i++) {
+                    if(TryGetBoneIndex(skeletons[i], limb, out boneIndex)) {
+                        skeletonIndex = i;
+                        return true;
+                    }
+                }
+                skeletonIndex = -1;
+                boneIndex = -1;
+                return false;
+            }
+
+            static bool TryGetBoneIndex(in SkeletonData skeleton, in LimbNode limb, out int index)
+            {
+                var bones = skeleton.Bones;
+                for(int i = 0; i < bones.Length; i++) {
+                    if(bones[i].LimbNode.ID == limb.ID) {
+                        index = i;
+                        return true;
+                    }
+                }
+                index = -1;
+                return false;
+            }
+
         }
     }
 }

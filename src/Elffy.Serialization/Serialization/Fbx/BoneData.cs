@@ -4,12 +4,12 @@ using System.Diagnostics;
 
 namespace Elffy.Serialization.Fbx
 {
-    internal readonly struct Bone
+    internal readonly struct BoneData
     {
         public readonly int? ParentIndex;
         public readonly LimbNode LimbNode;
 
-        public Bone(int? parentIndex, in LimbNode limbNode)
+        public BoneData(int? parentIndex, in LimbNode limbNode)
         {
             ParentIndex = parentIndex;
             LimbNode = limbNode;

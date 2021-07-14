@@ -7,6 +7,7 @@ using Cysharp.Threading.Tasks;
 using Elffy.Serialization.Fbx;
 using Elffy.Components;
 using System.Diagnostics;
+using Elffy.Core;
 
 namespace Elffy.Serialization
 {
@@ -52,7 +53,7 @@ namespace Elffy.Serialization
 
 
             // Parse fbx file
-            using var fbx = FbxSemanticParser.Parse(resourceLoader, name, token);
+            using var fbx = FbxSemanticParser<SkinnedVertex>.Parse(resourceLoader, name, token);
             await model.HostScreen.AsyncBack.ToTiming(FrameLoopTiming.Update, token);   // ↓ main thread --------------------------------------
 
             await CreateTexture(resourceLoader, fbx, model);
@@ -67,7 +68,7 @@ namespace Elffy.Serialization
             // but I don't care about that.
         }
 
-        private static async UniTask CreateTexture(IResourceLoader resourceLoader, FbxSemantics fbx, Model3D model)
+        private static async UniTask CreateTexture(IResourceLoader resourceLoader, FbxSemantics<SkinnedVertex> fbx, Model3D model)
         {
             // ↓ main thread --------------------------------------
             var contextExist = model.TryGetHostScreen(out var screen);

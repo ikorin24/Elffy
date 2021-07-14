@@ -26,7 +26,7 @@ namespace Elffy.Effective.Unsafes
         /// <param name="i">index</param>
         /// <returns>reference to element</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ref T At<T>(this ReadOnlySpan<T> source, int i)
+        public static ref readonly T At<T>(this ReadOnlySpan<T> source, int i)
         {
             return ref Unsafe.Add(ref MemoryMarshal.GetReference(source), i);
         }

@@ -4,6 +4,7 @@ using Elffy.Effective.Unsafes;
 using FbxTools;
 using System;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Elffy.Serialization.Fbx
 {
@@ -232,52 +233,54 @@ namespace Elffy.Serialization.Fbx
         public override string ToString() => $"{nameof(NullModel)} (ID: {ID}, Name: {Name})";
     }
 
-    internal readonly struct SemanticModelList : IDisposable
+    internal readonly struct SkeletonDataList : IDisposable
     {
-        private readonly ValueTypeRentMemory<SemanticModel> _models;
+        private readonly ValueTypeRentMemory<SkeletonData> _skeletons;
 
-        public ReadOnlySpan<SemanticModel> Models => _models.AsSpan();
+        public ReadOnlySpan<SkeletonData> Span => _skeletons.AsSpan();
 
-        public SemanticModelList(in SemanticResolver resolver)
+        public SkeletonDataList(in SemanticResolver resolver)
         {
             var nullModels = resolver.GetNullModels();
-            var models = new ValueTypeRentMemory<SemanticModel>(nullModels.Count);
+            var skeletons = new ValueTypeRentMemory<SkeletonData>(nullModels.Count);
             try {
                 var i = 0;
                 foreach(var nullModel in nullModels) {
-                    models[i] = new SemanticModel(resolver, nullModel);
+                    skeletons[i] = new SkeletonData(resolver, nullModel);
                     i++;
                 }
-                _models = models;
+                _skeletons = skeletons;
             }
             catch {
-                models.Dispose();
+                skeletons.Dispose();
                 throw;
             }
         }
 
         public void Dispose()
         {
-            foreach(var model in _models.Span) {
+            foreach(var model in _skeletons.Span) {
                 model.Dispose();
             }
-            _models.Dispose();
+            _skeletons.Dispose();
         }
     }
 
-    internal readonly struct SemanticModel : IDisposable
+    internal readonly struct SkeletonData : IDisposable
     {
-        private readonly UnsafeRawList<Bone> _bones;
+        private readonly UnsafeRawList<BoneData> _bones;
 
-        public SemanticModel(in SemanticResolver resolver, in NullModel nullModel)
+        public ReadOnlySpan<BoneData> Bones => _bones.AsSpan();
+
+        public SkeletonData(in SemanticResolver resolver, in NullModel nullModel)
         {
             if(resolver.TryGetChildLimb(nullModel, out var limb) == false) {
                 _bones = default;
                 return;
             }
-            var bones = UnsafeRawList<Bone>.New(256);
+            var bones = UnsafeRawList<BoneData>.New(256);
             try {
-                bones.Add(new Bone(null, limb));
+                bones.Add(new BoneData(null, limb));
                 CreateBoneTree(resolver, bones, 0, limb);
                 _bones = bones;
             }
@@ -286,11 +289,11 @@ namespace Elffy.Serialization.Fbx
                 throw;
             }
 
-            static void CreateBoneTree(in SemanticResolver resolver, UnsafeRawList<Bone> bones, int parentIndex, in LimbNode parentLimb)
+            static void CreateBoneTree(in SemanticResolver resolver, UnsafeRawList<BoneData> bones, int parentIndex, in LimbNode parentLimb)
             {
                 using var children = resolver.GetChildrenLimbs(parentLimb);
                 foreach(var childLimb in children.AsSpan()) {
-                    bones.Add(new Bone(parentIndex, childLimb));
+                    bones.Add(new BoneData(parentIndex, childLimb));
                     CreateBoneTree(resolver, bones, bones.Count - 1, childLimb);
                 }
             }
