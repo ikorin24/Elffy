@@ -1,24 +1,38 @@
 ﻿#nullable enable
-using System.IO;
 using System;
+using System.IO;
 using System.Threading;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using FbxTools;
 using Elffy.Effective.Unsafes;
 using Elffy.Effective;
-using System.Runtime.CompilerServices;
-using System.Diagnostics;
+using Elffy.Serialization.Fbx.Internal;
+using Elffy.Serialization.Fbx.Semantic;
 
 namespace Elffy.Serialization.Fbx
 {
-    internal sealed class FbxSemanticParser<TVertex> where TVertex : unmanaged
+    public static class FbxSemanticParser<TVertex> where TVertex : unmanaged
     {
         public static FbxSemantics<TVertex> Parse(IResourceLoader loader, string name, CancellationToken cancellationToken = default)
         {
-            using var stream = loader.GetStream(name);
-            return Parse(stream, cancellationToken);
+            var sem = ParseInternal(loader, name, cancellationToken);
+            return new FbxSemantics<TVertex>(sem);
         }
 
         public static FbxSemantics<TVertex> Parse(Stream stream, CancellationToken cancellationToken = default)
+        {
+            var sem = ParseInternal(stream, cancellationToken);
+            return new FbxSemantics<TVertex>(sem);
+        }
+
+        internal static FbxSemanticsStruct<TVertex> ParseInternal(IResourceLoader loader, string name, CancellationToken cancellationToken = default)
+        {
+            using var stream = loader.GetStream(name);
+            return ParseInternal(stream, cancellationToken);
+        }
+
+        internal static FbxSemanticsStruct<TVertex> ParseInternal(Stream stream, CancellationToken cancellationToken = default)
         {
             var vertexCreator = SkinnedVertexCreator<TVertex>.Build();
 
@@ -33,7 +47,7 @@ namespace Elffy.Serialization.Fbx
                     textures = ParseTexture(objectsNode, cancellationToken);
                     ParseMaterial(objectsNode);
                     var (vertices, indices) = meshes.CreateCombined();
-                    return new FbxSemantics<TVertex>(ref fbx, ref indices, ref vertices, ref textures);
+                    return new FbxSemanticsStruct<TVertex>(ref fbx, ref indices, ref vertices, ref textures);
                 }
             }
             catch {
@@ -212,10 +226,10 @@ namespace Elffy.Serialization.Fbx
         }
 
         private static void ResolveBone(in MeshGeometry meshGeometry,
-                                           Span<TVertex> vertices,
-                                           in SemanticResolver resolver,
-                                           in SkeletonDataList skeletonList,
-                                           SkinnedVertexCreator<TVertex> vertexCreator)
+                                        Span<TVertex> vertices,
+                                        in SemanticResolver resolver,
+                                        in SkeletonDataList skeletonList,
+                                        SkinnedVertexCreator<TVertex> vertexCreator)
         {
             if(resolver.TryGetSkinDeformer(meshGeometry, out var skin) == false) { return; }
             using var _ = resolver.GetClusterDeformers(skin, out var count);

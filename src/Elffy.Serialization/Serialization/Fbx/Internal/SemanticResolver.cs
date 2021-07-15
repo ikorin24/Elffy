@@ -3,8 +3,9 @@ using System;
 using FbxTools;
 using Elffy.Effective;
 using Elffy.Effective.Unsafes;
+using Elffy.Serialization.Fbx.Semantic;
 
-namespace Elffy.Serialization.Fbx
+namespace Elffy.Serialization.Fbx.Internal
 {
     internal readonly ref struct SemanticResolver
     {
@@ -138,14 +139,14 @@ namespace Elffy.Serialization.Fbx
             }
         }
 
-        public ReadOnlySpan<long> GetSources(long destID) => _connResolver.GetSources(destID);
-        public ReadOnlySpan<long> GetDests(long sourceID) => _connResolver.GetDests(sourceID);
-
         public void Dispose()
         {
             _connResolver.Dispose();
             _deformerList.Dispose();
             _modelList.Dispose();
         }
+
+        private ReadOnlySpan<long> GetSources(long destID) => _connResolver.GetSources(destID);
+        private ReadOnlySpan<long> GetDests(long sourceID) => _connResolver.GetDests(sourceID);
     }
 }

@@ -2,7 +2,7 @@
 using System;
 using StringLiteral;
 
-namespace Elffy.Serialization.Fbx
+namespace Elffy.Serialization.Fbx.Internal
 {
     internal static partial class FbxConstStrings
     {

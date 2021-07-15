@@ -1,7 +1,7 @@
 ﻿#nullable enable
 using FbxTools;
 
-namespace Elffy.Serialization.Fbx
+namespace Elffy.Serialization.Fbx.Internal
 {
     internal static class FbxParsingExtension
     {

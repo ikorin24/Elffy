@@ -1,10 +1,11 @@
 ﻿#nullable enable
-using Elffy.Effective;
-using FbxTools;
 using System;
 using System.Diagnostics;
+using FbxTools;
+using Elffy.Effective;
+using Elffy.Serialization.Fbx.Internal;
 
-namespace Elffy.Serialization.Fbx
+namespace Elffy.Serialization.Fbx.Semantic
 {
     // - "Geometry"     --------+--- "Vertices"
     //   ([0]:long ID,          |    ([0]:double[] Positions)

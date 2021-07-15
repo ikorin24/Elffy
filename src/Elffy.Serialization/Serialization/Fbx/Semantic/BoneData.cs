@@ -1,8 +1,9 @@
 ﻿#nullable enable
 using FbxTools;
 using System.Diagnostics;
+using Elffy.Serialization.Fbx.Internal;
 
-namespace Elffy.Serialization.Fbx
+namespace Elffy.Serialization.Fbx.Semantic
 {
     internal readonly struct BoneData
     {
@@ -23,7 +24,9 @@ namespace Elffy.Serialization.Fbx
 
         public SkinDeformer(FbxNode skinDeformerNode)
         {
+#if DEBUG
             Debug.Assert(skinDeformerNode.Properties[2].AsString() == "Skin");
+#endif
             ID = skinDeformerNode.Properties[0].AsInt64();
             Name = skinDeformerNode.Properties[1].AsString();
         }

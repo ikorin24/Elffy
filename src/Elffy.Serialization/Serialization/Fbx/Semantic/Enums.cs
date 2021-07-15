@@ -1,8 +1,9 @@
 ﻿#nullable enable
 using System;
 using FbxTools;
+using Elffy.Serialization.Fbx.Internal;
 
-namespace Elffy.Serialization.Fbx
+namespace Elffy.Serialization.Fbx.Semantic
 {
     internal enum ReferenceInformationType
     {

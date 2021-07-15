@@ -1,11 +1,12 @@
 ﻿#nullable enable
 using Elffy.Effective;
 using Elffy.Effective.Unsafes;
+using Elffy.Serialization.Fbx.Semantic;
 using FbxTools;
 using System;
 using System.Diagnostics;
 
-namespace Elffy.Serialization.Fbx
+namespace Elffy.Serialization.Fbx.Internal
 {
     internal readonly ref struct FbxConnectionResolver
     {

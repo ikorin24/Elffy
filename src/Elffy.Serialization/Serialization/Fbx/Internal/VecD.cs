@@ -2,7 +2,7 @@
 using System;
 using System.Diagnostics;
 
-namespace Elffy.Serialization.Fbx
+namespace Elffy.Serialization.Fbx.Internal
 {
     [DebuggerDisplay("{DebugDisplay(),nq}")]
     internal struct VecD3 : IEquatable<VecD3>

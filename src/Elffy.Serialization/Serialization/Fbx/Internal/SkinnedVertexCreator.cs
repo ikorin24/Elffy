@@ -3,7 +3,7 @@ using System;
 using Elffy.Core;
 using System.Runtime.CompilerServices;
 
-namespace Elffy.Serialization.Fbx
+namespace Elffy.Serialization.Fbx.Internal
 {
     internal unsafe readonly struct SkinnedVertexCreator<TVertex> where TVertex : unmanaged
     {

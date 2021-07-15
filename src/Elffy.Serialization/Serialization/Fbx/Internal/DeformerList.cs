@@ -4,7 +4,7 @@ using Elffy.Effective;
 using System.Runtime.CompilerServices;
 using Elffy.Effective.Unsafes;
 
-namespace Elffy.Serialization.Fbx
+namespace Elffy.Serialization.Fbx.Internal
 {
     internal readonly ref struct DeformerList
     {

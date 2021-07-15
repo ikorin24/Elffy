@@ -1,39 +1,41 @@
 ﻿#nullable enable
 using System;
 using FbxTools;
-using Elffy.Effective.Unsafes;
-using Elffy.Effective;
-using System.Diagnostics.CodeAnalysis;
+using Elffy.Serialization.Fbx.Internal;
 
 namespace Elffy.Serialization.Fbx
 {
-    internal readonly struct FbxSemantics<TVertex> : IDisposable where TVertex : unmanaged
+    public sealed class FbxSemantics<TVertex> : IDisposable where TVertex : unmanaged
     {
-        private readonly FbxObject? _fbx;
-        private readonly UnsafeRawArray<int> _indices;
-        private readonly UnsafeRawArray<TVertex> _vertices;
-        private readonly ValueTypeRentMemory<RawString> _textures;
+        private FbxSemanticsStruct<TVertex> _core;
 
-        public ReadOnlySpan<int> Indices => _indices.AsSpan();
+        public ReadOnlySpan<int> Indices => _core.Indices;
 
-        public ReadOnlySpan<TVertex> Vertices => _vertices.AsSpan();
+        public ReadOnlySpan<TVertex> Vertices => _core.Vertices;
 
-        public ReadOnlySpan<RawString> Textures => _textures.Span;
+        public ReadOnlySpan<RawString> Textures => _core.Textures;
 
-        internal FbxSemantics([MaybeNull] ref FbxObject fbx, ref UnsafeRawArray<int> indices, ref UnsafeRawArray<TVertex> vertices, ref ValueTypeRentMemory<RawString> texture)
+        internal FbxSemantics(in FbxSemanticsStruct<TVertex> core)
         {
-            (_fbx, fbx) = (fbx, default);
-            (_textures, texture) = (texture, default);
-            (_indices, indices) = (indices, default);
-            (_vertices, vertices) = (vertices, default);
+            _core = core;
         }
+
+        ~FbxSemantics() => Dispose(false);
 
         public void Dispose()
         {
-            _fbx?.Dispose();
-            _textures.Dispose();
-            _indices.Dispose();
-            _vertices.Dispose();
+            GC.SuppressFinalize(this);
+            Dispose(true);
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if(disposing) {
+                _core.Dispose();
+            }
+            else {
+                _core.OnFinalized();
+            }
         }
     }
 }

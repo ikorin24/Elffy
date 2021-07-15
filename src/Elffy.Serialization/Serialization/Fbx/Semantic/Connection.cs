@@ -2,7 +2,7 @@
 using System;
 using System.Diagnostics;
 
-namespace Elffy.Serialization.Fbx
+namespace Elffy.Serialization.Fbx.Semantic
 {
     [DebuggerDisplay("{DebugDisplay(),nq}")]
     internal readonly struct Connection : IEquatable<Connection>
