@@ -22,36 +22,31 @@ namespace Elffy.Serialization.Fbx
         {
             var vertexCreator = SkinnedVertexCreator<TVertex>.Build();
 
-            UnsafeRawArray<int> indices = default;
-            UnsafeRawArray<TVertex> vertices = default;
             ValueTypeRentMemory<RawString> textures = default;
-            FbxObject? fbx = null;
+            var fbx = FbxParser.Parse(stream);
             try {
-                fbx = FbxParser.Parse(stream);
                 using var resolver = new SemanticResolver(fbx);
-
                 var objectsNode = resolver.ObjectsNode;
-                (vertices, indices) = ParseMesh(resolver, vertexCreator, cancellationToken);
-                textures = ParseTexture(objectsNode, cancellationToken);
-                ParseMaterial(objectsNode);
-
-
-                // Model(LimbNode) のソースが、子のボーンModel(LimbNode)
-                // 子供からは遡れないので注意
-                // Model(Null)がルート
-
-                return new FbxSemantics<TVertex>(fbx, indices, vertices, ref textures);
+                var (meshes, skeletons) = ParseMeshAndSkeleton(resolver, vertexCreator, cancellationToken);
+                using(meshes)
+                using(skeletons) {
+                    textures = ParseTexture(objectsNode, cancellationToken);
+                    ParseMaterial(objectsNode);
+                    var (vertices, indices) = meshes.CreateCombined();
+                    return new FbxSemantics<TVertex>(ref fbx, ref indices, ref vertices, ref textures);
+                }
             }
             catch {
                 fbx?.Dispose();
-                indices.Dispose();
-                vertices.Dispose();
                 textures.Dispose();
                 throw;
             }
         }
 
-        private static (UnsafeRawArray<TVertex> vertices, UnsafeRawArray<int> indices) ParseMesh(in SemanticResolver resolver, SkinnedVertexCreator<TVertex> vertexCreator, CancellationToken cancellationToken)
+        private static (ResolvedMeshList<TVertex> meshes, SkeletonDataList skeletons) ParseMeshAndSkeleton(
+            in SemanticResolver resolver,
+            SkinnedVertexCreator<TVertex> vertexCreator,
+            CancellationToken cancellationToken)
         {
             // [root] --+-- "Objects"  ------+---- "Geometry"
             //          |                    |---- "Geometry"
@@ -75,27 +70,36 @@ namespace Elffy.Serialization.Fbx
             // <*1> has translation, rotation, and scaling of the model.
             // They are (double x, double y, double z) = ([4], [5], [6])
 
-            using var skeletons = new SkeletonDataList(resolver);
-
-            var objects = resolver.ObjectsNode;
-            using var combinedMesh = CombinedMesh<TVertex>.New();
-            using var _ = new ValueTypeRentMemory<int>(objects.Children.Count);
-            var buf = _.Span;
-            var geometryCount = objects.FindIndexAll(FbxConstStrings.Geometry(), buf);
-            foreach(var i in buf.Slice(0, geometryCount)) {
-                cancellationToken.ThrowIfCancellationRequested();
-                var geometryNode = objects.Children[i];
-                if(geometryNode.IsMeshGeometry() == false) { continue; }
-                var meshGeometry = new MeshGeometry(geometryNode);
-                if(resolver.TryGetMeshModel(meshGeometry, out var model) == false) { throw new FormatException(); }
-                ref var mesh = ref combinedMesh.NewMeshToAdd();
-                ResolveMesh(meshGeometry, model, mesh, vertexCreator);
-                DeformerOfMesh(meshGeometry, mesh, resolver, skeletons, vertexCreator);
+            var skeletons = new SkeletonDataList(resolver);
+            var resolvedMeshes = ResolvedMeshList<TVertex>.New();
+            try {
+                var objects = resolver.ObjectsNode;
+                using var _ = new ValueTypeRentMemory<int>(objects.Children.Count);
+                var buf = _.Span;
+                var geometryCount = objects.FindIndexAll(FbxConstStrings.Geometry(), buf);
+                foreach(var i in buf.Slice(0, geometryCount)) {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    var geometryNode = objects.Children[i];
+                    if(geometryNode.IsMeshGeometry() == false) { continue; }
+                    var meshGeometry = new MeshGeometry(geometryNode);
+                    if(resolver.TryGetMeshModel(meshGeometry, out var model) == false) { throw new FormatException(); }
+                    var resolvedMesh = ResolveMesh(meshGeometry, model, vertexCreator, resolver, skeletons);
+                    resolvedMeshes.Add(resolvedMesh);
+                }
             }
-            return combinedMesh.CreateCombined();
+            catch {
+                skeletons.Dispose();
+                resolvedMeshes.Dispose();
+                throw;
+            }
+            return (resolvedMeshes, skeletons);
         }
 
-        private static void ResolveMesh(in MeshGeometry mesh, in MeshModel meshModel, in CombinedMesh<TVertex>.ResolvedMesh resolved, SkinnedVertexCreator<TVertex> vertexCreator)
+        private static ResolvedMesh<TVertex> ResolveMesh(in MeshGeometry mesh,
+                                                         in MeshModel meshModel,
+                                                         SkinnedVertexCreator<TVertex> vertexCreator,
+                                                         in SemanticResolver resolver,
+                                                         in SkeletonDataList skeletons)
         {
             var positions = mesh.Positions;
             var normals = mesh.Normals;
@@ -117,49 +121,47 @@ namespace Elffy.Serialization.Fbx
                     throw new FormatException();
             }
 
-            //switch(mesh.UVMappingType) {
-            //    case MappingInformationType.ByPolygonVertex: {
-            //        if(uv.Length != mesh.IndicesRaw.Length) { throw new FormatException(); }
-            //        break;
-            //    }
-            //    case MappingInformationType.ByControllPoint: {
-            //        if(uv.Length != positions.Length) { throw new FormatException(); }
-            //        break;
-            //    }
-            //    default:
-            //        throw new FormatException();
-            //}
+            var resolvedMesh = ResolvedMesh<TVertex>.New();
+            try {
+                int n_gon = 0;
+                for(int i = 0; i < indicesRaw.Length; i++) {
+                    n_gon++;
+                    var isLast = indicesRaw[i] < 0;
+                    var index = isLast ? (-indicesRaw[i] - 1) : indicesRaw[i];     // 負のインデックスは多角形ポリゴンの最後の頂点を表す (2の補数が元の値)
 
-            int n_gon = 0;
-            for(int i = 0; i < indicesRaw.Length; i++) {
-                n_gon++;
-                var isLast = indicesRaw[i] < 0;
-                var index = isLast ? (-indicesRaw[i] - 1) : indicesRaw[i];     // 負のインデックスは多角形ポリゴンの最後の頂点を表す (2の補数が元の値)
-
-                var normalIndex = mesh.NormalMappingType == MappingInformationType.ByPolygonVertex ? i : index;
-                if(mesh.NormalReferenceType == ReferenceInformationType.IndexToDirect) {
-                    normalIndex = normalIndices[normalIndex];
-                }
-
-                var uvIndex = mesh.UVMappingType == MappingInformationType.ByPolygonVertex ? i : index;
-                if(mesh.UVReferenceType == ReferenceInformationType.IndexToDirect) {
-                    uvIndex = uvIndices[uvIndex];
-                }
-                var v = new TVertex();
-                vertexCreator.PositionOf(ref v) = (Vector3)positions[index] + meshModel.Translation;
-                vertexCreator.NormalOf(ref v) = (Vector3)normals[normalIndex];
-                vertexCreator.UVOf(ref v) = (Vector2)uv[uvIndex];
-                resolved.AddVertex(v);
-                if(isLast) {
-                    if(n_gon <= 2) { throw new FormatException(); }
-                    for(int n = 0; n < n_gon - 2; n++) {
-                        var j = i - n_gon + 1;
-                        resolved.AddIndex(j);
-                        resolved.AddIndex(j + n + 1);
-                        resolved.AddIndex(j + n + 2);
+                    var normalIndex = mesh.NormalMappingType == MappingInformationType.ByPolygonVertex ? i : index;
+                    if(mesh.NormalReferenceType == ReferenceInformationType.IndexToDirect) {
+                        normalIndex = normalIndices[normalIndex];
                     }
-                    n_gon = 0;
+
+                    var uvIndex = mesh.UVMappingType == MappingInformationType.ByPolygonVertex ? i : index;
+                    if(mesh.UVReferenceType == ReferenceInformationType.IndexToDirect) {
+                        uvIndex = uvIndices[uvIndex];
+                    }
+                    var v = new TVertex();
+                    vertexCreator.PositionOf(ref v) = (Vector3)positions[index] + meshModel.Translation;
+                    vertexCreator.NormalOf(ref v) = (Vector3)normals[normalIndex];
+                    vertexCreator.UVOf(ref v) = (Vector2)uv[uvIndex];
+                    resolvedMesh.AddVertex(v);
+
+                    if(isLast) {
+                        if(n_gon <= 2) { throw new FormatException(); }
+                        for(int n = 0; n < n_gon - 2; n++) {
+                            var j = i - n_gon + 1;
+                            resolvedMesh.AddIndex(j);
+                            resolvedMesh.AddIndex(j + n + 1);
+                            resolvedMesh.AddIndex(j + n + 2);
+                        }
+                        n_gon = 0;
+                    }
                 }
+
+                ResolveBone(mesh, resolvedMesh.Vertices, resolver, skeletons, vertexCreator);
+                return resolvedMesh;
+            }
+            catch {
+                resolvedMesh.Dispose();
+                throw;
             }
         }
 
@@ -209,7 +211,11 @@ namespace Elffy.Serialization.Fbx
             }
         }
 
-        private static void DeformerOfMesh(in MeshGeometry meshGeometry, in CombinedMesh<TVertex>.ResolvedMesh mesh, in SemanticResolver resolver, in SkeletonDataList skeletonList, SkinnedVertexCreator<TVertex> vertexCreator)
+        private static void ResolveBone(in MeshGeometry meshGeometry,
+                                           Span<TVertex> vertices,
+                                           in SemanticResolver resolver,
+                                           in SkeletonDataList skeletonList,
+                                           SkinnedVertexCreator<TVertex> vertexCreator)
         {
             if(resolver.TryGetSkinDeformer(meshGeometry, out var skin) == false) { return; }
             using var _ = resolver.GetClusterDeformers(skin, out var count);
@@ -219,7 +225,6 @@ namespace Elffy.Serialization.Fbx
             var skeletonIndex = 0;
             ref readonly var skeleton = ref Unsafe.NullRef<SkeletonData>();
 
-            var vertices = mesh.Vertices.AsWritable();  // TODO: 危険なので実装変える
             using var boneCountsMem = new ValueTypeRentMemory<int>(vertices.Length, true);
             var boneCounts = boneCountsMem.Span;
 
@@ -252,9 +257,6 @@ namespace Elffy.Serialization.Fbx
                         offset++;
                         continue;       // TODO: 4つ以上のボーンを持つ場合
                         //throw new NotSupportedException("No single vertex can be associated with more than four bones.");
-                    }
-                    if(offset >= 1) {
-                        int a = 1;
                     }
                     ref var v = ref vertices[index];
                     Unsafe.Add(ref Unsafe.As<Vector4i, int>(ref vertexCreator.BoneOf(ref v)), offset) = boneIndex;
