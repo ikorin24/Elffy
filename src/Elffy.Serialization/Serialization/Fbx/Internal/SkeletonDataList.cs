@@ -10,7 +10,7 @@ namespace Elffy.Serialization.Fbx.Internal
 
         public ReadOnlySpan<SkeletonData> Span => _skeletons.AsSpan();
 
-        public SkeletonDataList(in SemanticResolver resolver)
+        internal SkeletonDataList(in SemanticResolver resolver)
         {
             var nullModels = resolver.GetNullModels();
             var skeletons = new ValueTypeRentMemory<SkeletonData>(nullModels.Count);
@@ -23,6 +23,9 @@ namespace Elffy.Serialization.Fbx.Internal
                 _skeletons = skeletons;
             }
             catch {
+                foreach(var model in skeletons.Span) {
+                    model.DisposeInternal();
+                }
                 skeletons.Dispose();
                 throw;
             }
@@ -31,7 +34,7 @@ namespace Elffy.Serialization.Fbx.Internal
         public void Dispose()
         {
             foreach(var model in _skeletons.Span) {
-                model.Dispose();
+                model.DisposeInternal();
             }
             _skeletons.Dispose();
         }

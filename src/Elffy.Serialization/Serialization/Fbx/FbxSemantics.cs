@@ -7,7 +7,7 @@ namespace Elffy.Serialization.Fbx
 {
     public sealed class FbxSemantics<TVertex> : IDisposable where TVertex : unmanaged
     {
-        private FbxSemanticsStruct<TVertex> _core;
+        private FbxSemanticsUnsafe<TVertex> _core;
 
         public ReadOnlySpan<int> Indices => _core.Indices;
 
@@ -15,7 +15,9 @@ namespace Elffy.Serialization.Fbx
 
         public ReadOnlySpan<RawString> Textures => _core.Textures;
 
-        internal FbxSemantics(in FbxSemanticsStruct<TVertex> core)
+        public ReadOnlySpan<SkeletonData> Skeletons => _core.Skeletons;
+
+        internal FbxSemantics(in FbxSemanticsUnsafe<TVertex> core)
         {
             _core = core;
         }

@@ -27,6 +27,8 @@ namespace Elffy.Serialization.Fbx.Internal
 
         public (UnsafeRawArray<TVertex> vertices, UnsafeRawArray<int> indices) CreateCombined()
         {
+            // In many cases, the number of vertices is quite large and `ValueTypeRentMemory` does not work well,
+            // so use `UnsafeRawArray`.
             UnsafeRawArray<TVertex> vertices = default;
             UnsafeRawArray<int> indices = default;
             try {

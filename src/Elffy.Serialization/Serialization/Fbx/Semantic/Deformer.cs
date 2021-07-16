@@ -2,20 +2,10 @@
 using FbxTools;
 using System.Diagnostics;
 using Elffy.Serialization.Fbx.Internal;
+using System;
 
 namespace Elffy.Serialization.Fbx.Semantic
 {
-    internal readonly struct BoneData
-    {
-        public readonly int? ParentIndex;
-        public readonly LimbNode LimbNode;
-
-        public BoneData(int? parentIndex, in LimbNode limbNode)
-        {
-            ParentIndex = parentIndex;
-            LimbNode = limbNode;
-        }
-    }
 
     internal readonly struct SkinDeformer
     {
@@ -40,7 +30,9 @@ namespace Elffy.Serialization.Fbx.Semantic
 
         public ClusterDeformer(FbxNode clusterDeformerNode)
         {
+#if DEBUG
             Debug.Assert(clusterDeformerNode.Properties[2].AsString() == "Cluster");
+#endif
             _node = clusterDeformerNode;
             ID = clusterDeformerNode.Properties[0].AsInt64();
             Name = clusterDeformerNode.Properties[1].AsString();
@@ -56,7 +48,7 @@ namespace Elffy.Serialization.Fbx.Semantic
             return _node.Find(FbxConstStrings.Weights()).Properties[0].AsDoubleArray();
         }
 
-        public void GetInitialPosition(out Matrix4 mat)
+        public void GetInitialMatrix(out Matrix4 mat)
         {
             var array = _node.Find(FbxConstStrings.TransformLink()).Properties[0].AsDoubleArray();
             mat.M00 = (float)array[0];

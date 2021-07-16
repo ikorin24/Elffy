@@ -16,23 +16,23 @@ namespace Elffy.Serialization.Fbx
     {
         public static FbxSemantics<TVertex> Parse(IResourceLoader loader, string name, CancellationToken cancellationToken = default)
         {
-            var sem = ParseInternal(loader, name, cancellationToken);
+            var sem = ParseUnsafe(loader, name, cancellationToken);
             return new FbxSemantics<TVertex>(sem);
         }
 
         public static FbxSemantics<TVertex> Parse(Stream stream, CancellationToken cancellationToken = default)
         {
-            var sem = ParseInternal(stream, cancellationToken);
+            var sem = ParseUnsafe(stream, cancellationToken);
             return new FbxSemantics<TVertex>(sem);
         }
 
-        internal static FbxSemanticsStruct<TVertex> ParseInternal(IResourceLoader loader, string name, CancellationToken cancellationToken = default)
+        internal static FbxSemanticsUnsafe<TVertex> ParseUnsafe(IResourceLoader loader, string name, CancellationToken cancellationToken = default)
         {
             using var stream = loader.GetStream(name);
-            return ParseInternal(stream, cancellationToken);
+            return ParseUnsafe(stream, cancellationToken);
         }
 
-        internal static FbxSemanticsStruct<TVertex> ParseInternal(Stream stream, CancellationToken cancellationToken = default)
+        internal static FbxSemanticsUnsafe<TVertex> ParseUnsafe(Stream stream, CancellationToken cancellationToken = default)
         {
             var vertexCreator = SkinnedVertexCreator<TVertex>.Build();
 
@@ -42,12 +42,17 @@ namespace Elffy.Serialization.Fbx
                 using var resolver = new SemanticResolver(fbx);
                 var objectsNode = resolver.ObjectsNode;
                 var (meshes, skeletons) = ParseMeshAndSkeleton(resolver, vertexCreator, cancellationToken);
-                using(meshes)
-                using(skeletons) {
-                    textures = ParseTexture(objectsNode, cancellationToken);
-                    ParseMaterial(objectsNode);
-                    var (vertices, indices) = meshes.CreateCombined();
-                    return new FbxSemanticsStruct<TVertex>(ref fbx, ref indices, ref vertices, ref textures);
+                try {
+                    using(meshes) {
+                        textures = ParseTexture(objectsNode, cancellationToken);
+                        //ParseMaterial(objectsNode);
+                        var (vertices, indices) = meshes.CreateCombined();
+                        return new FbxSemanticsUnsafe<TVertex>(ref fbx, ref indices, ref vertices, ref textures, ref skeletons);
+                    }
+                }
+                catch {
+                    skeletons.Dispose();
+                    throw;
                 }
             }
             catch {
@@ -260,7 +265,7 @@ namespace Elffy.Serialization.Fbx
                     throw new FormatException();
                 }
 
-                cluster.GetInitialPosition(out var mat);
+                cluster.GetInitialMatrix(out skeleton.BoneMatricesInternal[boneIndex]);
 
                 Debug.Assert(indices.Length == weights.Length);
                 for(int i = 0; i < indices.Length; i++) {
@@ -298,7 +303,7 @@ namespace Elffy.Serialization.Fbx
             {
                 var bones = skeleton.Bones;
                 for(int i = 0; i < bones.Length; i++) {
-                    if(bones[i].LimbNode.ID == limb.ID) {
+                    if(bones[i].LimbNodeID == limb.ID) {
                         index = i;
                         return true;
                     }

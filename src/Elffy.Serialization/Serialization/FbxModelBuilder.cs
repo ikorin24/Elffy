@@ -54,7 +54,7 @@ namespace Elffy.Serialization
 
 
             // Parse fbx file
-            using var fbx = FbxSemanticParser<SkinnedVertex>.ParseInternal(resourceLoader, name, token);
+            using var fbx = FbxSemanticParser<SkinnedVertex>.ParseUnsafe(resourceLoader, name, token);
             await model.HostScreen.AsyncBack.ToTiming(FrameLoopTiming.Update, token);   // ↓ main thread --------------------------------------
 
             await CreateTexture(resourceLoader, fbx, model);
@@ -69,7 +69,7 @@ namespace Elffy.Serialization
             // but I don't care about that.
         }
 
-        private static async UniTask CreateTexture(IResourceLoader resourceLoader, FbxSemanticsStruct<SkinnedVertex> fbx, Model3D model)
+        private static async UniTask CreateTexture(IResourceLoader resourceLoader, FbxSemanticsUnsafe<SkinnedVertex> fbx, Model3D model)
         {
             // ↓ main thread --------------------------------------
             var contextExist = model.TryGetHostScreen(out var screen);

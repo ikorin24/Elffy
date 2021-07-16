@@ -7,12 +7,13 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Serialization.Fbx.Internal
 {
-    internal readonly struct FbxSemanticsStruct<TVertex> : IDisposable where TVertex : unmanaged
+    internal readonly struct FbxSemanticsUnsafe<TVertex> : IDisposable where TVertex : unmanaged
     {
         private readonly FbxObject? _fbx;
         private readonly UnsafeRawArray<int> _indices;
         private readonly UnsafeRawArray<TVertex> _vertices;
         private readonly ValueTypeRentMemory<RawString> _textures;
+        private readonly SkeletonDataList _skeletons;
 
         public ReadOnlySpan<int> Indices => _indices.AsSpan();
 
@@ -20,12 +21,19 @@ namespace Elffy.Serialization.Fbx.Internal
 
         public ReadOnlySpan<RawString> Textures => _textures.Span;
 
-        internal FbxSemanticsStruct([MaybeNull] ref FbxObject fbx, ref UnsafeRawArray<int> indices, ref UnsafeRawArray<TVertex> vertices, ref ValueTypeRentMemory<RawString> texture)
+        public ReadOnlySpan<SkeletonData> Skeletons => _skeletons.Span;
+
+        internal FbxSemanticsUnsafe([MaybeNull] ref FbxObject fbx,
+                                    ref UnsafeRawArray<int> indices,
+                                    ref UnsafeRawArray<TVertex> vertices,
+                                    ref ValueTypeRentMemory<RawString> texture,
+                                    ref SkeletonDataList skeletons)
         {
             (_fbx, fbx) = (fbx, default);
             (_textures, texture) = (texture, default);
             (_indices, indices) = (indices, default);
             (_vertices, vertices) = (vertices, default);
+            (_skeletons, skeletons) = (skeletons, default);
         }
 
         public void Dispose()
@@ -34,6 +42,7 @@ namespace Elffy.Serialization.Fbx.Internal
             _textures.Dispose();
             _indices.Dispose();
             _vertices.Dispose();
+            _skeletons.Dispose();
         }
 
         public void OnFinalized()
@@ -43,6 +52,7 @@ namespace Elffy.Serialization.Fbx.Internal
             _textures.Dispose();
             _indices.Dispose();
             _vertices.Dispose();
+            _skeletons.Dispose();
         }
     }
 }
