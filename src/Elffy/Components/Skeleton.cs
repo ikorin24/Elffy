@@ -265,7 +265,7 @@ namespace Elffy.Components
                     // Initialize tree of 'Next'
                     // Create tree to walk around all bones in the way of DFS (depth first search).
                     for(int i = 0; i < boneTree.Length; i++) {
-                        if(childrenBuf[i] != null && childrenBuf[i].Count > 0) {  // If tree[i] has any children
+                        if(childrenBuf[i].IsNull == false && childrenBuf[i].Count > 0) {  // If tree[i] has any children
                             var firstChildID = childrenBuf[i][0];
                             tree[i].Next = &tree[firstChildID];     // tree[i].Next is first child of itself.
                         }
@@ -290,12 +290,11 @@ namespace Elffy.Components
                         }
                     }
                 }
-                catch {
+                finally {
                     for(int i = 0; i < childrenBuf.Length; i++) {
                         childrenBuf[i].Dispose();
                     }
                     childrenBuf.Dispose();
-                    throw;
                 }
             }
             catch {

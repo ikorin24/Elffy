@@ -14,31 +14,19 @@ namespace Elffy.Serialization.Fbx
 {
     public static class FbxSemanticParser<TVertex> where TVertex : unmanaged
     {
-        public static FbxSemantics<TVertex> Parse(IResourceLoader loader, string name, CancellationToken cancellationToken = default)
+        public static FbxSemantics<TVertex> Parse(Stream stream, bool leaveStreamOpen = true, CancellationToken cancellationToken = default)
         {
-            var sem = ParseUnsafe(loader, name, cancellationToken);
+            var sem = ParseUnsafe(stream, leaveStreamOpen, cancellationToken);
             return new FbxSemantics<TVertex>(sem);
         }
 
-        public static FbxSemantics<TVertex> Parse(Stream stream, CancellationToken cancellationToken = default)
+        internal static FbxSemanticsUnsafe<TVertex> ParseUnsafe(Stream stream, bool leaveStreamOpen = true, CancellationToken cancellationToken = default)
         {
-            var sem = ParseUnsafe(stream, cancellationToken);
-            return new FbxSemantics<TVertex>(sem);
-        }
-
-        internal static FbxSemanticsUnsafe<TVertex> ParseUnsafe(IResourceLoader loader, string name, CancellationToken cancellationToken = default)
-        {
-            using var stream = loader.GetStream(name);
-            return ParseUnsafe(stream, cancellationToken);
-        }
-
-        internal static FbxSemanticsUnsafe<TVertex> ParseUnsafe(Stream stream, CancellationToken cancellationToken = default)
-        {
-            var vertexCreator = SkinnedVertexCreator<TVertex>.Build();
-
             ValueTypeRentMemory<RawString> textures = default;
-            var fbx = FbxParser.Parse(stream);
+            FbxObject? fbx = null;
             try {
+                var vertexCreator = SkinnedVertexCreator<TVertex>.Build();
+                fbx = FbxParser.Parse(stream);
                 using var resolver = new SemanticResolver(fbx);
                 var objectsNode = resolver.ObjectsNode;
                 var (meshes, skeletons) = ParseMeshAndSkeleton(resolver, vertexCreator, cancellationToken);
@@ -59,6 +47,11 @@ namespace Elffy.Serialization.Fbx
                 fbx?.Dispose();
                 textures.Dispose();
                 throw;
+            }
+            finally {
+                if(leaveStreamOpen == false) {
+                    stream?.Dispose();
+                }
             }
         }
 

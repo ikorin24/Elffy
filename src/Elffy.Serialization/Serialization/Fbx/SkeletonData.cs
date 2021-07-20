@@ -14,7 +14,7 @@ namespace Elffy.Serialization.Fbx
         private readonly UnsafeRawArray<Matrix4> _matrices;
         internal Span<Matrix4> BoneMatricesInternal => _matrices.AsSpan();
 
-        public int BoneCount => _bones.Count;
+        public int BoneCount => _bones.IsNull ? 0 : _bones.Count;
 
         public ReadOnlySpan<BoneData> Bones => _bones.AsSpan();
 
@@ -41,8 +41,8 @@ namespace Elffy.Serialization.Fbx
             var matrices = new UnsafeRawArray<Matrix4>(bones.Count);
             try {
                 // I don't know which way is better.
-                matrices.AsSpan().Clear();
-                //matrices.AsSpan().Fill(Matrix4.Identity);
+                //matrices.AsSpan().Clear();
+                matrices.AsSpan().Fill(Matrix4.Identity);
 
                 _matrices = matrices;
             }
