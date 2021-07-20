@@ -9,6 +9,7 @@ using Elffy.Core;
 using Elffy.Components;
 using Elffy.Serialization.Fbx;
 using Elffy.Serialization.Fbx.Internal;
+using Elffy.Effective;
 
 namespace Elffy.Serialization
 {
@@ -58,6 +59,16 @@ namespace Elffy.Serialization
             await model.HostScreen.AsyncBack.ToTiming(FrameLoopTiming.Update, token);   // ↓ main thread --------------------------------------
 
             await CreateTexture(resourceLoader, fbx, model);
+
+            // Create a skeleton component
+            {
+                var skeleton = new HumanoidSkeleton();
+                model.AddComponent(skeleton);
+                using var bones = new ValueTypeRentMemory<Bone>(fbx.Skeletons[0].BoneCount);
+                fbx.Skeletons[0].CreateBones(bones.Span);
+
+                await skeleton.LoadAsync(bones, model.HostScreen.AsyncBack, cancellationToken: token);
+            }
 
             if(model.LifeState == LifeState.Activated || model.LifeState == LifeState.Alive) {
                 load.Invoke(fbx.Vertices, fbx.Indices);

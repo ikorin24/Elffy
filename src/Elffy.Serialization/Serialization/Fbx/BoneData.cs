@@ -1,9 +1,10 @@
 ﻿#nullable enable
 using System;
-using Elffy.Serialization.Fbx.Semantic;
+using System.Diagnostics;
 
 namespace Elffy.Serialization.Fbx
 {
+    [DebuggerDisplay("Parent={ParentIndex}")]
     public readonly struct BoneData : IEquatable<BoneData>
     {
         public readonly int? ParentIndex;

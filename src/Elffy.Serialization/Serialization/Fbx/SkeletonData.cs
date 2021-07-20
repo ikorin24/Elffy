@@ -3,6 +3,8 @@ using System;
 using Elffy.Effective.Unsafes;
 using Elffy.Serialization.Fbx.Semantic;
 using Elffy.Serialization.Fbx.Internal;
+using Elffy.Components;
+using System.Diagnostics;
 
 namespace Elffy.Serialization.Fbx
 {
@@ -11,6 +13,8 @@ namespace Elffy.Serialization.Fbx
         private readonly UnsafeRawList<BoneData> _bones;
         private readonly UnsafeRawArray<Matrix4> _matrices;
         internal Span<Matrix4> BoneMatricesInternal => _matrices.AsSpan();
+
+        public int BoneCount => _bones.Count;
 
         public ReadOnlySpan<BoneData> Bones => _bones.AsSpan();
 
@@ -36,7 +40,10 @@ namespace Elffy.Serialization.Fbx
             }
             var matrices = new UnsafeRawArray<Matrix4>(bones.Count);
             try {
-                matrices.AsSpan().Fill(Matrix4.Identity);
+                // I don't know which way is better.
+                matrices.AsSpan().Clear();
+                //matrices.AsSpan().Fill(Matrix4.Identity);
+
                 _matrices = matrices;
             }
             catch {
@@ -53,6 +60,32 @@ namespace Elffy.Serialization.Fbx
                     CreateBoneTree(resolver, bones, bones.Count - 1, childLimb);
                 }
             }
+        }
+
+        /// <summary>Create bones to load to <see cref="Skeleton"/></summary>
+        /// <param name="dest">the destination buffer to create bones</param>
+        /// <returns>the number of created bones</returns>
+        public int CreateBones(Span<Bone> dest)
+        {
+            var boneCount = BoneCount;
+            if(dest.Length < boneCount) { throw new ArgumentException("The destination is too short."); }
+
+            var bones = _bones.AsSpan();
+            var matrices = _matrices.AsSpan();
+            Debug.Assert(bones.Length == matrices.Length);
+            for(int i = 0; i < boneCount; i++) {
+                dest[i] = new Bone(bones[i].ParentIndex, matrices[i]);
+            }
+            return boneCount;
+        }
+
+        /// <summary>Create bones to load to <see cref="Skeleton"/></summary>
+        /// <returns>the array of <see cref="Bone"/> to load to <see cref="Skeleton"/></returns>
+        public Bone[] CreateBones()
+        {
+            var bones = new Bone[BoneCount];
+            CreateBones(bones);
+            return bones;
         }
 
         internal void DisposeInternal()

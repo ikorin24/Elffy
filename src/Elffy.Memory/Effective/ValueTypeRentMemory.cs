@@ -18,7 +18,7 @@ namespace Elffy.Effective
     /// <typeparam name="T">element type</typeparam>
     [DebuggerDisplay("{DebugDisplay}")]
     [DebuggerTypeProxy(typeof(ValueTypeRentMemoryDebuggerTypeProxy<>))]
-    public readonly struct ValueTypeRentMemory<T> : IEquatable<ValueTypeRentMemory<T>>, IDisposable where T : unmanaged
+    public readonly struct ValueTypeRentMemory<T> : IEquatable<ValueTypeRentMemory<T>>, IDisposable, ISpan<T> where T : unmanaged
     {
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private readonly string DebugDisplay => $"{nameof(ValueTypeRentMemory<T>)}<{typeof(T).Name}>[{Span.Length}]";
@@ -119,6 +119,8 @@ namespace Elffy.Effective
         public Span<T> AsSpan(int start) => Span.Slice(start);
 
         public Span<T> AsSpan(int start, int length) => Span.Slice(start, length);
+
+        public ReadOnlySpan<T> AsReadOnlySpan() => Span;
 
         /// <summary>複数回このメソッドを呼んだ場合の動作は未定義です</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
