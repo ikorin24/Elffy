@@ -7,8 +7,9 @@ namespace Elffy.Serialization.Fbx.Internal
     internal readonly struct SkeletonDataList : IDisposable
     {
         private readonly ValueTypeRentMemory<SkeletonData> _skeletons;
+        private readonly int _count;
 
-        public ReadOnlySpan<SkeletonData> Span => _skeletons.AsSpan();
+        public ReadOnlySpan<SkeletonData> Span => _skeletons.AsSpan(0, _count);
 
         internal SkeletonDataList(in SemanticResolver resolver)
         {
@@ -17,14 +18,21 @@ namespace Elffy.Serialization.Fbx.Internal
             try {
                 var i = 0;
                 foreach(var nullModel in nullModels) {
-                    skeletons[i] = new SkeletonData(resolver, nullModel);
-                    i++;
+                    var skeleton = new SkeletonData(resolver, nullModel);
+                    if(skeleton.BoneCount == 0) {
+                        skeleton.DisposeInternal();
+                    }
+                    else {
+                        skeletons[i] = new SkeletonData(resolver, nullModel);
+                        i++;
+                    }
                 }
+                _count = i;
                 _skeletons = skeletons;
             }
             catch {
-                foreach(var model in skeletons.Span) {
-                    model.DisposeInternal();
+                foreach(var skeleton in skeletons.Span) {
+                    skeleton.DisposeInternal();
                 }
                 skeletons.Dispose();
                 throw;
@@ -33,7 +41,7 @@ namespace Elffy.Serialization.Fbx.Internal
 
         public void Dispose()
         {
-            foreach(var model in _skeletons.Span) {
+            foreach(var model in Span) {
                 model.DisposeInternal();
             }
             _skeletons.Dispose();
