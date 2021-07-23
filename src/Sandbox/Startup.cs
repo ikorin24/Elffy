@@ -42,53 +42,9 @@ namespace Sandbox
 
         private static async UniTask<Model3D> CreateModel()
         {
-            //var model = Resources.Loader.CreatePmxModel("Alicia/Alicia_solid.pmx");
-            //model.Scale = new Vector3(0.3f);
-            //await model.ActivateWaitLoaded();
-            //UniTask.Create(async () =>
-            //{
-            //    var humanoid = model.GetComponent<Elffy.Components.HumanoidSkeleton>();
-            //    await foreach(var frame in Timing.Frames()) {
-            //        using var handler = humanoid.StartTranslation();
-            //        handler.MoveBoneCCDIK(11, Vector3.UnitY * 10, 3);
-            //    }
-            //}).Forget();
-
-            //return model;
-
-            //{
-            //    var a = Resources.Loader.CreateFbxModel("Hidden/untitled.fbx");
-            //    a.Position.X = -2;
-            //    a.Position.Y = 0;
-            //    a.Position.Z = 5;
-            //    a.Scale = new Vector3(0.05f);
-            //    await a.ActivateWaitLoaded();
-            //}
-            //{
-            //    var a = Resources.Loader.CreateFbxModel("Hidden/untitled2.fbx");
-            //    a.Position.X = 0;
-            //    a.Position.Y = 0;
-            //    a.Position.Z = 5;
-            //    a.Scale = new Vector3(0.05f);
-            //    await a.ActivateWaitLoaded();
-            //}
-
-            var dice = Resources.Loader.CreateFbxModel("Hidden/julia.fbx");
-            //var dice = Resources.Loader.CreateFbxModel("Hidden/julia_swim.fbx");
-            //var dice = Resources.Loader.CreateFbxModel("Hidden/untitled.fbx");
-            //var dice = Resources.Loader.CreateFbxModel("Hidden/untitled2.fbx");
-            //var dice = Resources.Loader.CreateFbxModel("Hidden/untitled3.fbx");
-            //var dice = Resources.Loader.CreateFbxModel("Hidden/Rushina.fbx");
-            //var dice = Resources.Loader.CreateFbxModel("Hidden/USUMMER1.1.fbx");
-            //var dice = Resources.Loader.CreateFbxModel("Hidden/USUMMER_Costume1.1.fbx");
-            //dice.Shader = PhongShaderSource.Instance;
+            var dice = Resources.Loader.CreateFbxModel("Dice.fbx");
             await dice.ActivateWaitLoaded();
-            //dice.Position.X = 2;
-            dice.Position.Y = 0;
-            //dice.Position.Z = 5;
-            dice.Scale = new Vector3(0.05f);
-            //dice.Scale = new Vector3(5f);
-            //dice.Rotation = Quaternion.FromAxisAngle(Vector3.UnitX, -90.ToRadian());
+            dice.Position.Y = 1.5f;
             return dice;
         }
 

@@ -153,7 +153,7 @@ namespace Elffy.Serialization.Fbx
                     var v = new TVertex();
                     vertexCreator.PositionOf(ref v) = (Vector3)positions[index] + meshModel.Translation;
                     vertexCreator.NormalOf(ref v) = (Vector3)normals[normalIndex];
-                    vertexCreator.UVOf(ref v) = (Vector2)uv[uvIndex];
+                    vertexCreator.UVOf(ref v) = uv.IsEmpty ? default : (Vector2)uv[uvIndex];
                     vertexCreator.WeightOf(ref v) = new Vector4(1f, 0f, 0f, 0f);
                     resolvedMesh.AddVertex(v);
 

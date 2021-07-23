@@ -61,13 +61,12 @@ namespace Elffy.Serialization
             await CreateTexture(resourceLoader, fbx, model);
 
             // Create a skeleton component
-            {
+            if(fbx.Skeletons.IsEmpty == false) {
                 var skeletonIndex = 0;
                 var skeleton = new HumanoidSkeleton();
                 model.AddComponent(skeleton);
                 using var bones = new ValueTypeRentMemory<Bone>(fbx.Skeletons[skeletonIndex].BoneCount);
                 fbx.Skeletons[skeletonIndex].CreateBones(bones.Span);
-
                 await skeleton.LoadAsync(bones, model.HostScreen.AsyncBack, cancellationToken: token);
             }
 
