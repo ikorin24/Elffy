@@ -10,7 +10,6 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using UnmanageUtility;
 
 namespace Elffy.Components
 {
@@ -19,11 +18,11 @@ namespace Elffy.Components
         private SingleOwnerComponentCore _core = new(true);                             // Mutable object, Don't change into readonly
         private FloatDataTextureImpl _boneTranslationData = new FloatDataTextureImpl();                     // Mutable object, Don't change into readonly
 
-        private UnmanagedArray<Matrix4>? _posMatrices;      // Position matrix of each model in model local coordinate (It's read-only after loaded once.)
-        private UnmanagedArray<Matrix4>? _posInvMatrices;   // Inverse of _posMatrices (It's read-only after loaded once.)
-        private UnmanagedArray<Matrix4>? _translations;     // Translation matrix of each bone, which coordinate is bone local. (not model local)
-        private UnmanagedArray<Matrix4>? _matrices;         // Buffer to send matrix to data texture
-        private UnmanagedArray<BoneInternal>? _tree;        // Bone tree to walk around all bones
+        private UnsafeRawArray<Matrix4> _posMatrices;      // Position matrix of each model in model local coordinate (It's read-only after loaded once.)
+        private UnsafeRawArray<Matrix4> _posInvMatrices;   // Inverse of _posMatrices (It's read-only after loaded once.)
+        private UnsafeRawArray<Matrix4> _translations;     // Translation matrix of each bone, which coordinate is bone local. (not model local)
+        private UnsafeRawArray<Matrix4> _matrices;         // Buffer to send matrix to data texture
+        private UnsafeRawArray<BoneInternal> _tree;        // Bone tree to walk around all bones
         private bool _disposed;
 
         private bool IsBoneLoaded => !_boneTranslationData.TextureObject.IsEmpty;
@@ -35,11 +34,11 @@ namespace Elffy.Components
         public bool AutoDisposeOnDetached => _core.AutoDisposeOnDetached;
 
         /// <summary>Get bone count</summary>
-        public int BoneCount => _tree?.Length ?? 0;
+        public int BoneCount => _tree.Length;
 
         /// <summary>Get translation matrices of each bone as readonly.</summary>
         /// <remarks>If you want to edit matrices, use <see cref="StartTranslation"/> method.</remarks>
-        public ReadOnlySpan<Matrix4> Translations => (_translations is not null) ? _translations.AsSpan() : default;
+        public ReadOnlySpan<Matrix4> Translations => _translations.AsSpan();
 
         /// <summary>Get <see cref="TextureObject"/> of bone translation matrices. (This is Texture1D)</summary>
         public TextureObject TranslationData => _boneTranslationData.TextureObject;
@@ -78,16 +77,11 @@ namespace Elffy.Components
                 _boneTranslationData.Load(_matrices!.AsSpan().MarshalCast<Matrix4, Color4>());
             }
             catch {
-                _posMatrices?.Dispose();
-                _posInvMatrices?.Dispose();
-                _tree?.Dispose();
-                _matrices?.Dispose();
-                _translations?.Dispose();
-                _posMatrices = null;
-                _posInvMatrices = null;
-                _tree = null;
-                _matrices = null;
-                _translations = null;
+                _posMatrices.Dispose();
+                _posInvMatrices.Dispose();
+                _tree.Dispose();
+                _matrices.Dispose();
+                _translations.Dispose();
                 throw;
             }
 
@@ -162,20 +156,13 @@ namespace Elffy.Components
         {
             if(_disposed) { return; }
 
+            _posMatrices.Dispose();
+            _posInvMatrices.Dispose();
+            _matrices.Dispose();
+            _translations.Dispose();
+            _tree.Dispose();
             if(disposing) {
                 _boneTranslationData.Dispose();
-
-                _posMatrices?.Dispose();
-                _posInvMatrices?.Dispose();
-                _matrices?.Dispose();
-                _translations?.Dispose();
-                _tree?.Dispose();
-
-                _posMatrices = null;
-                _posInvMatrices = null;
-                _matrices = null;
-                _translations = null;
-                _tree = null;
             }
             else {
                 ContextAssociatedMemorySafety.OnFinalized(this);
@@ -186,11 +173,11 @@ namespace Elffy.Components
         [Conditional("DEBUG")]
         private void AssertValid()
         {
-            Debug.Assert(_tree is not null);
-            Debug.Assert(_matrices is not null);
-            Debug.Assert(_translations is not null);
-            Debug.Assert(_posMatrices is not null);
-            Debug.Assert(_posInvMatrices is not null);
+            Debug.Assert(_tree.IsEmpty == false);
+            Debug.Assert(_matrices.IsEmpty == false);
+            Debug.Assert(_translations.IsEmpty == false);
+            Debug.Assert(_posMatrices.IsEmpty == false);
+            Debug.Assert(_posInvMatrices.IsEmpty == false);
             Debug.Assert(_tree.Length <= _matrices.Length &&        // _matrices.Length is rounded up to power of two.
                          _tree.Length == _translations.Length &&
                          _tree.Length == _posMatrices.Length &&
@@ -209,31 +196,35 @@ namespace Elffy.Components
             var bufLen = pixelCount * Vector4.SizeInBytes / Matrix4.SizeInBytes;
 
             // Load matrices as identity
-            skeleton._matrices = new UnmanagedArray<Matrix4>(bufLen, fill: Matrix4.Identity);
+            var matrices = new UnsafeRawArray<Matrix4>(bufLen, false);
+            matrices.AsSpan().Fill(Matrix4.Identity);
+            skeleton._matrices = matrices;
 
             // Initialize translations as identity
-            skeleton._translations = new UnmanagedArray<Matrix4>(bones.Length, fill: Matrix4.Identity);
+            var translations = new UnsafeRawArray<Matrix4>(bones.Length, false);
+            translations.AsSpan().Fill(Matrix4.Identity);
+            skeleton._translations = translations;
         }
 
         private unsafe static void CreateBoneTree(ReadOnlySpan<Bone> bones,
-                                                  out UnmanagedArray<Matrix4> posMatrices,
-                                                  out UnmanagedArray<Matrix4> posInvMatrices,
-                                                  out UnmanagedArray<BoneInternal> boneTree)
+                                                  out UnsafeRawArray<Matrix4> posMatrices,
+                                                  out UnsafeRawArray<Matrix4> posInvMatrices,
+                                                  out UnsafeRawArray<BoneInternal> boneTree)
         {
             // This method is O(NM). (in the worst case)
             // N is bones.Length, M is depth of bone tree
 
-            boneTree = null!;
-            posMatrices = null!;
-            posInvMatrices = null!;
+            boneTree = default;
+            posMatrices = default;
+            posInvMatrices = default;
             try {
-                posMatrices = new UnmanagedArray<Matrix4>(bones.Length);
-                posInvMatrices = new UnmanagedArray<Matrix4>(bones.Length);
+                posMatrices = new UnsafeRawArray<Matrix4>(bones.Length, true);
+                posInvMatrices = new UnsafeRawArray<Matrix4>(bones.Length, true);
 
                 var pos = (Matrix4*)posMatrices.Ptr;
                 var posInv = (Matrix4*)posInvMatrices.Ptr;
 
-                boneTree = new UnmanagedArray<BoneInternal>(bones.Length);
+                boneTree = new UnsafeRawArray<BoneInternal>(bones.Length, true);
                 var tree = (BoneInternal*)boneTree.Ptr;
 
                 // Initialize tree of 'ID' and 'Parent'.
@@ -298,9 +289,9 @@ namespace Elffy.Components
                 }
             }
             catch {
-                posMatrices?.Dispose();
-                posInvMatrices?.Dispose();
-                boneTree?.Dispose();
+                posMatrices.Dispose();
+                posInvMatrices.Dispose();
+                boneTree.Dispose();
                 throw;
             }
         }

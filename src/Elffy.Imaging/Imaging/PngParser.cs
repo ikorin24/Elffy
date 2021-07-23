@@ -9,7 +9,6 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 using Elffy.Effective.Unsafes;
-using UnmanageUtility;
 using System.Diagnostics;
 using System.IO.Compression;
 using Elffy.Imaging.Internal;
@@ -36,7 +35,7 @@ namespace Elffy.Imaging
             CheckSignature(stream);
 
             var buf = new BufferSpanReader(stackalloc byte[8]);
-            using var data = new UnmanagedList<byte>();
+            using var data = UnsafeRawList<byte>.New();
             UnsafeEx.SkipInitIfPossible(out Header header);
             var palette = UnsafeRawArray<PngColor>.Empty;
             try {
@@ -146,7 +145,7 @@ namespace Elffy.Imaging
             }
         }
 
-        private static Image Decompress(UnmanagedList<byte> compressed, in Header header, ReadOnlySpan<PngColor> palette)
+        private static Image Decompress(UnsafeRawList<byte> compressed, in Header header, ReadOnlySpan<PngColor> palette)
         {
             // | 1 byte  | 1 byte  | 0 or 4 bytes | N bytes ... |
             // |   CMF   |  CINFO  |    DICTID    |   data  ... |
@@ -172,7 +171,7 @@ namespace Elffy.Imaging
 
             using var ptrStream = PointerStream.Create(ptr, len);
             using var deflateStream = new DeflateStream(ptrStream, CompressionMode.Decompress);
-            using var buf = new UnmanagedList<byte>(capacity: len);
+            using var buf = UnsafeRawList<byte>.New(capacity: len);
             var end = false;
             var size = 0;
             while(!end) {
@@ -525,7 +524,7 @@ namespace Elffy.Imaging
             }
         }
 
-        private static void ParseIDAT(Stream stream, int chunkSize, UnmanagedList<byte> data)
+        private static void ParseIDAT(Stream stream, int chunkSize, UnsafeRawList<byte> data)
         {
             Debug.WriteLine("IDAT");
             var span = data.Extend(chunkSize, false);

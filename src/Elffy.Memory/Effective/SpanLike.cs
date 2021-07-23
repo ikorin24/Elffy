@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using UnmanageUtility;
 
 namespace Elffy.Effective
 {
@@ -95,40 +94,6 @@ namespace Elffy.Effective
 
     public static unsafe class SpanLikeExtension
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static SpanLike<T> AsSpanLike<T>(this UnmanagedArray<T> array) where T : unmanaged
-        {
-            if(array is null) {
-                ThrowNullArg();
-                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(array));
-            }
-            return new SpanLike<T>(array, &AsSpan);
-            static Span<T> AsSpan(object obj) => Unsafe.As<UnmanagedArray<T>>(obj).AsSpan();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ReadOnlySpanLike<T> AsReadOnlySpanLike<T>(this UnmanagedArray<T> array) where T : unmanaged
-        {
-            return array.AsSpanLike().AsReadOnly();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static SpanLike<T> AsSpanLike<T>(this UnmanagedList<T> list) where T : unmanaged
-        {
-            if(list is null) {
-                ThrowNullArg();
-                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(list));
-            }
-            return new SpanLike<T>(list, &AsSpan);
-            static Span<T> AsSpan(object obj) => Unsafe.As<UnmanagedList<T>>(obj).AsSpan();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ReadOnlySpanLike<T> AsReadOnlySpanLike<T>(this UnmanagedList<T> list) where T : unmanaged
-        {
-            return list.AsSpanLike().AsReadOnly();
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static SpanLike<T> AsSpanLike<T>(this UnsafeRawArray<T> array) where T : unmanaged
         {

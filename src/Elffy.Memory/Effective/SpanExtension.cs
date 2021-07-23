@@ -3,7 +3,6 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
-using UnmanageUtility;
 using System.Diagnostics.CodeAnalysis;
 using Elffy.Effective.Unsafes;
 
@@ -99,30 +98,6 @@ namespace Elffy.Effective
         public static ReadOnlySpan<T> AsReadOnly<T>(this Span<T> source) => source;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe UnmanagedArray<TTo> SelectToUnmanagedArray<TFrom, TTo>(this Span<TFrom> source, Func<TFrom, TTo> selector) where TTo : unmanaged
-            => SelectToUnmanagedArray((ReadOnlySpan<TFrom>)source, selector);
-
-        public static unsafe UnmanagedArray<TTo> SelectToUnmanagedArray<TFrom, TTo>(this ReadOnlySpan<TFrom> source, Func<TFrom, TTo> selector) where TTo : unmanaged
-        {
-            if(selector == null) {
-                ThrowNullArg();
-                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(selector));
-            }
-            var umArray = new UnmanagedArray<TTo>(source.Length);
-            try {
-                var ptr = (TTo*)umArray.Ptr;
-                for(int i = 0; i < source.Length; i++) {
-                    ptr[i] = selector(source[i]);
-                }
-                return umArray;
-            }
-            catch {
-                umArray.Dispose();
-                throw;
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static UnsafeRawArray<T> ToRawArray<T>(this Span<T> source) where T : unmanaged
         {
             return new UnsafeRawArray<T>(source);
@@ -184,30 +159,6 @@ namespace Elffy.Effective
                 array[i] = selector(source[i]);
             }
             return array;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static UnmanagedArray<TTo> SelectToUnmanagedArray<TFrom, TTo>(this Span<TFrom> source, Func<TFrom, int, TTo> selector) where TTo : unmanaged
-            => SelectToUnmanagedArray((ReadOnlySpan<TFrom>)source, selector);
-
-        public static unsafe UnmanagedArray<TTo> SelectToUnmanagedArray<TFrom, TTo>(this ReadOnlySpan<TFrom> source, Func<TFrom, int, TTo> selector) where TTo : unmanaged
-        {
-            if(selector == null) {
-                ThrowNullArg();
-                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(selector));
-            }
-            var umArray = new UnmanagedArray<TTo>(source.Length);
-            try {
-                var ptr = (TTo*)umArray.Ptr;
-                for(int i = 0; i < source.Length; i++) {
-                    ptr[i] = selector(source[i], i);
-                }
-                return umArray;
-            }
-            catch {
-                umArray.Dispose();
-                throw;
-            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
