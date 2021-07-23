@@ -18,7 +18,8 @@ namespace Sandbox
             GameUI.Root.Background = Color4.Black;
             try {
                 await UniTask.WhenAll(
-                    CreateModel(),
+                    CreateModel1(),
+                    CreateModel2(),
                     CreateBox(),
                     UniTask.FromResult(CameraMouse()),
                     CreateFloor(),
@@ -40,12 +41,21 @@ namespace Sandbox
             }
         }
 
-        private static async UniTask<Model3D> CreateModel()
+        private static async UniTask<Model3D> CreateModel1()
         {
             var dice = Resources.Loader.CreateFbxModel("Dice.fbx");
             await dice.ActivateWaitLoaded();
+            dice.Position.X = 3f;
             dice.Position.Y = 1.5f;
             return dice;
+        }
+
+        private static async UniTask<Model3D> CreateModel2()
+        {
+            var model = Resources.Loader.CreatePmxModel("Alicia/Alicia_solid.pmx");
+            model.Scale = new Vector3(0.3f);
+            await model.ActivateWaitLoaded();
+            return model;
         }
 
         private static SkySphere CreateSky()
