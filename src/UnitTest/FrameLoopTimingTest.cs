@@ -11,13 +11,25 @@ namespace UnitTest
         [Fact]
         public void CastTest()
         {
-            // All values of `FrameLoopTiming` can be cast to `ScreenCurrentTiming`. (as a same name)
+            var allTimings = Enum.GetValues<FrameLoopTiming>();
+            var specifiedTimings = allTimings
+                                      .Where(t => t != FrameLoopTiming.NotSpecified)
+                                      .ToArray();
 
-            var all = Enum.GetNames<FrameLoopTiming>()
-                          .All(name => Enum.Parse<FrameLoopTiming>(name) == (FrameLoopTiming)Enum.Parse<ScreenCurrentTiming>(name));
-            Assert.True(all);
+            // All values of `FrameLoopTiming` can be cast to `ScreenCurrentTiming` except NotSpecified. (as a same name)
 
-            Assert.True(Enum.GetValues<FrameLoopTiming>().All(v => v.IsValid()));
+            var isSameName = specifiedTimings
+                .Select(t => t.ToString())
+                .All(name => Enum.Parse<FrameLoopTiming>(name) == (FrameLoopTiming)Enum.Parse<ScreenCurrentTiming>(name));
+            Assert.True(isSameName);
+            Assert.True((byte)FrameLoopTiming.NotSpecified == (byte)ScreenCurrentTiming.OutOfFrameLoop);
+            Assert.True(sizeof(FrameLoopTiming) == sizeof(byte));
+            Assert.True(sizeof(ScreenCurrentTiming) == sizeof(byte));
+
+
+            Assert.True(specifiedTimings.All(t => t.IsSpecified()));
+            Assert.True(FrameLoopTiming.NotSpecified.IsSpecified() == false);
+            Assert.True(allTimings.All(t => t.IsValid()));
         }
     }
 }

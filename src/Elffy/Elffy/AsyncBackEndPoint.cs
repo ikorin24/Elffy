@@ -27,19 +27,19 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public FrameLoopAwaitable ToTiming(FrameLoopTiming timing, CancellationToken cancellationToken = default)
+        public UniTask<AsyncUnit> ToTiming(FrameLoopTiming timing, CancellationToken cancellationToken = default)
         {
-            timing.ThrowArgExceptionIfInvalid(nameof(timing));
-            return new FrameLoopAwaitable(this, timing, cancellationToken);
+            timing.ThrowArgExceptionIfNotSpecified(nameof(timing));
+            return new UniTask<AsyncUnit>(FrameLoopAwaitableTaskSource.Create(this, timing, cancellationToken), 0);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public UniTask Ensure(FrameLoopTiming timing, CancellationToken cancellation = default)
+        public UniTask<AsyncUnit> Ensure(FrameLoopTiming timing, CancellationToken cancellation = default)
         {
             if(CurrentTiming.TimingEquals(timing)) {
-                return UniTask.CompletedTask;
+                return new UniTask<AsyncUnit>(AsyncUnit.Default);
             }
-            return ToTiming(timing, cancellation).AsUniTask();
+            return ToTiming(timing, cancellation);
         }
 
         /// <summary>Abort all suspended tasks by clearing the queue.</summary>
@@ -51,7 +51,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void Post(FrameLoopTiming timing, Action continuation)
         {
-            Debug.Assert(timing.IsValid());
+            Debug.Assert(timing.IsSpecified());
             if(continuation is null) { return; }
             if(!_queues.TryGetValue(timing, out var queue)) {
                 queue = InitQueue(timing);
@@ -62,7 +62,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void Post(FrameLoopTiming timing, Action<object?> continuation, object? state)
         {
-            Debug.Assert(timing.IsValid());
+            Debug.Assert(timing.IsSpecified());
             if(continuation is null) { return; }
             if(!_queues.TryGetValue(timing, out var queue)) {
                 queue = InitQueue(timing);
@@ -73,7 +73,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void DoQueuedEvents(FrameLoopTiming timing)
         {
-            Debug.Assert(timing.IsValid());
+            Debug.Assert(timing.IsSpecified());
             int count;
             if(_queues.TryGetValue(timing, out var queue) && (count = queue.Count) > 0) {
                 Do(queue, count);

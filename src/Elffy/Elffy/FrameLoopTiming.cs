@@ -7,8 +7,8 @@ namespace Elffy
 {
     public enum FrameLoopTiming : byte
     {
-        // All values of `FrameLoopTiming` can be cast to `ScreenCurrentTiming`. (as a same name)
-        //None = 0, // default is invalid
+        // All values of `FrameLoopTiming` can be cast to `ScreenCurrentTiming` except NotSpecified. (as a same name)
+        NotSpecified = 0,
 
         EarlyUpdate = 1,
         Update = 2,
@@ -31,21 +31,26 @@ namespace Elffy
         FrameFinalizing = byte.MaxValue - 1,
     }
 
-    public static class LoopTimingExtension
+    public static class FrameLoopTimingExtension
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static bool IsValid(this FrameLoopTiming source)
-        {
-            const byte MaxValue = 5;    // max value of FrameLoopTiming
-            const byte Default = 0;
+        private const byte MaxValue = 5;    // max value of FrameLoopTiming
 
-            return (byte)source != Default && (byte)source <= MaxValue;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static bool IsSpecified(this FrameLoopTiming source)
+        {
+            return source != FrameLoopTiming.NotSpecified && (byte)source <= MaxValue;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void ThrowArgExceptionIfInvalid(this FrameLoopTiming source, string msg)
+        internal static bool IsValid(this FrameLoopTiming source)
         {
-            if(!source.IsValid()) {
+            return (byte)source <= MaxValue;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void ThrowArgExceptionIfNotSpecified(this FrameLoopTiming source, string msg)
+        {
+            if(!source.IsSpecified()) {
                 Throw(msg);
                 [DoesNotReturn] static void Throw(string msg) => throw new ArgumentException(msg);
             }

@@ -66,7 +66,7 @@ namespace Elffy.Components
         {
             if(IsBoneLoaded) { throw new InvalidOperationException("Already loaded"); }
             if(endPoint is null) { throw new ArgumentNullException(nameof(endPoint)); }
-            timing.ThrowArgExceptionIfInvalid(nameof(timing));
+            timing.ThrowArgExceptionIfNotSpecified(nameof(timing));
 
             cancellationToken.ThrowIfCancellationRequested();
             await UniTask.SwitchToThreadPool();

@@ -7,22 +7,6 @@ using Elffy.Threading;
 
 namespace Elffy
 {
-    public sealed class FrameEnumerableSource
-    {
-        private readonly AsyncBackEndPoint _endPoint;
-          
-        internal FrameEnumerableSource(AsyncBackEndPoint endPoint)
-        {
-            _endPoint = endPoint;
-        }
-
-        public FrameAsyncEnumerable OnTiming(FrameLoopTiming timing, CancellationToken cancellationToken = default)
-        {
-            timing.ThrowArgExceptionIfInvalid(nameof(timing));
-            return new FrameAsyncEnumerable(_endPoint, timing, cancellationToken);
-        }
-    }
-
     public readonly struct FrameAsyncEnumerable : IUniTaskAsyncEnumerable<FrameInfo>
     {
         private readonly AsyncBackEndPoint _endPoint;
@@ -31,7 +15,7 @@ namespace Elffy
 
         internal FrameAsyncEnumerable(AsyncBackEndPoint endPoint, FrameLoopTiming timing, CancellationToken cancellation)
         {
-            Debug.Assert(timing.IsValid());
+            Debug.Assert(timing.IsSpecified());
             _endPoint = endPoint;
             _timing = timing;
             _cancellationToken = cancellation;
@@ -72,7 +56,7 @@ namespace Elffy
 
         internal FrameAsyncEnumerator(IHostScreen screen, FrameLoopTiming timing, CancellationToken cancellationToken)
         {
-            Debug.Assert(timing.IsValid());
+            Debug.Assert(timing.IsSpecified());
             _screen = screen;
             _cancellationToken = cancellationToken;
             _startTime = screen.Time + screen.FrameDelta;

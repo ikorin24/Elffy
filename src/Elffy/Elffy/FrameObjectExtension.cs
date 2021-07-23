@@ -64,7 +64,7 @@ namespace Elffy
                 [DoesNotReturn] static void ThrowNotActivated() => throw new ArgumentException($"{nameof(source)} is not activated.");
             }
 
-            timing.ThrowArgExceptionIfInvalid(nameof(timing));
+            timing.ThrowArgExceptionIfNotSpecified(nameof(timing));
 
             if(cancellationToken.IsCancellationRequested) {
                 return UniTask.FromCanceled<bool>(cancellationToken);

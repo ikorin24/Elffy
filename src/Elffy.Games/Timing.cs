@@ -45,7 +45,7 @@ namespace Elffy
         /// <param name="cancellation">cancellation token</param>
         /// <returns>awaitable object</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static UniTask Ensure(FrameLoopTiming timing, CancellationToken cancellation = default)
+        public static UniTask<AsyncUnit> Ensure(FrameLoopTiming timing, CancellationToken cancellation = default)
         {
             return _endPoint!.Ensure(timing, cancellation);
         }
@@ -55,7 +55,7 @@ namespace Elffy
         /// <param name="cancellationToken">cancellation token</param>
         /// <returns>awaitable object</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static FrameLoopAwaitable ToTiming(FrameLoopTiming timing, CancellationToken cancellationToken = default)
+        public static UniTask<AsyncUnit> ToTiming(FrameLoopTiming timing, CancellationToken cancellationToken = default)
         {
             return _endPoint!.ToTiming(timing, cancellationToken);
         }
@@ -64,7 +64,7 @@ namespace Elffy
         /// <param name="cancellationToken">cancellation token</param>
         /// <returns>awaitable object</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static FrameLoopAwaitable ToUpdate(CancellationToken cancellationToken = default)
+        public static UniTask<AsyncUnit> ToUpdate(CancellationToken cancellationToken = default)
         {
             return _endPoint!.ToTiming(FrameLoopTiming.Update, cancellationToken);
         }
@@ -73,7 +73,7 @@ namespace Elffy
         /// <param name="cancellationToken">cancellation token</param>
         /// <returns>awaitable object</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static FrameLoopAwaitable ToEarlyUpdate(CancellationToken cancellationToken = default)
+        public static UniTask<AsyncUnit> ToEarlyUpdate(CancellationToken cancellationToken = default)
         {
             return _endPoint!.ToTiming(FrameLoopTiming.EarlyUpdate, cancellationToken);
         }
@@ -82,7 +82,7 @@ namespace Elffy
         /// <param name="cancellationToken">cancellation token</param>
         /// <returns>awaitable object</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static FrameLoopAwaitable ToLateUpdate(CancellationToken cancellationToken = default)
+        public static UniTask<AsyncUnit> ToLateUpdate(CancellationToken cancellationToken = default)
         {
             return _endPoint!.ToTiming(FrameLoopTiming.LateUpdate, cancellationToken);
         }
@@ -91,7 +91,7 @@ namespace Elffy
         /// <param name="cancellationToken">cancellation token</param>
         /// <returns>awaitable object</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static FrameLoopAwaitable ToBeforeRendering(CancellationToken cancellationToken = default)
+        public static UniTask<AsyncUnit> ToBeforeRendering(CancellationToken cancellationToken = default)
         {
             return _endPoint!.ToTiming(FrameLoopTiming.BeforeRendering, cancellationToken);
         }
@@ -100,7 +100,7 @@ namespace Elffy
         /// <param name="cancellationToken">cancellation token</param>
         /// <returns>awaitable object</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static FrameLoopAwaitable ToAfterRendering(CancellationToken cancellationToken = default)
+        public static UniTask<AsyncUnit> ToAfterRendering(CancellationToken cancellationToken = default)
         {
             return _endPoint!.ToTiming(FrameLoopTiming.AfterRendering, cancellationToken);
         }
@@ -111,7 +111,7 @@ namespace Elffy
         /// <param name="cancellationToken">cancellation token</param>
         /// <returns>awaitable object</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static async UniTask DelayFrame(int frameCount, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
+        public static async UniTask<AsyncUnit> DelayFrame(int frameCount, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
         {
             if(frameCount < 0) {
                 ThrowOutOfRange();
@@ -120,6 +120,7 @@ namespace Elffy
             for(int i = 0; i < frameCount; i++) {
                 await ToTiming(timing, cancellationToken);
             }
+            return AsyncUnit.Default;
         }
 
         /// <summary>Wait for the specified time.</summary>
@@ -128,12 +129,13 @@ namespace Elffy
         /// <param name="cancellationToken">cancellation token</param>
         /// <returns>awaitable object</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static async UniTask DelayTime(TimeSpan time, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
+        public static async UniTask<AsyncUnit> DelayTime(TimeSpan time, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
         {
             var start = Game.Time;
             while(Game.Time - start <= time) {
                 await ToTiming(timing, cancellationToken);
             }
+            return AsyncUnit.Default;
         }
 
         /// <summary>Wait for the specified time.</summary>
@@ -142,7 +144,7 @@ namespace Elffy
         /// <param name="cancellationToken">cancellation token</param>
         /// <returns>awaitable object</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static UniTask DelayTime(int millisecond, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
+        public static UniTask<AsyncUnit> DelayTime(int millisecond, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
         {
             return DelayTime(TimeSpan.FromMilliseconds(millisecond), timing, cancellationToken);
         }
@@ -153,12 +155,13 @@ namespace Elffy
         /// <param name="cancellationToken">cancellation token</param>
         /// <returns>awaitable object</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static async UniTask DelayRealTime(TimeSpan time, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
+        public static async UniTask<AsyncUnit> DelayRealTime(TimeSpan time, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
         {
             var start = Engine.RunningRealTime;
             while(Engine.RunningRealTime - start <= time) {
                 await ToTiming(timing, cancellationToken);
             }
+            return AsyncUnit.Default;
         }
 
         /// <summary>Wait for the specified real time.</summary>
@@ -167,7 +170,7 @@ namespace Elffy
         /// <param name="cancellationToken">cancellation token</param>
         /// <returns>awaitable object</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static UniTask DelayRealTime(int millisecond, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
+        public static UniTask<AsyncUnit> DelayRealTime(int millisecond, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
         {
             return DelayRealTime(TimeSpan.FromMilliseconds(millisecond), timing, cancellationToken);
         }
