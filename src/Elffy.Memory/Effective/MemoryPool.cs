@@ -22,7 +22,6 @@ namespace Elffy.Effective
             new ObjectMemoryLender(segmentSize: 1024, segmentCount: 128),    // ~= 1024 kB (on 64bit)
         }, LazyThreadSafetyMode.ExecutionAndPublication);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe bool TryRentByteMemory<T>(int length, out byte[]? array, out int start, out int id, out int lenderNum) where T : unmanaged
         {
             var byteLength = sizeof(T) * length;
@@ -40,7 +39,6 @@ namespace Elffy.Effective
             return false;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryRentObjectMemory(int length, out object[]? array, out int start, out int id, out int lenderNum)
         {
             var lenders = _objLenders.Value;
@@ -101,15 +99,12 @@ namespace Elffy.Effective
             //                            _availableHead
             // ---------------------------------------------------------------------
 
-            private const int SYNC_ENTER = 1;
-            private const int SYNC_EXIT = 0;
-
             private readonly T[] _array;
             private readonly BitArray _segmentState;        // true は貸し出し中、false は貸出可能
             private readonly int[] _availableIDStack;
             private int _availableHead;
 
-            private int _syncFlag = 0;
+            private FastSyncLock _sync;
 
             public int SegmentSize { get; }
             public int MaxCount => _availableIDStack.Length;
@@ -154,17 +149,10 @@ namespace Elffy.Effective
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool TryRent(out T[]? array, out int start, out int segID)
             {
-                var spinner = new SpinWait();
-                while(Interlocked.CompareExchange(ref _syncFlag, SYNC_ENTER, SYNC_EXIT) == SYNC_ENTER) {
-                    spinner.SpinOnce();
-                }
-                // --- begin sync
-
+                _sync.Enter();          // --- begin sync
                 var head = _availableHead;
-
                 if(head >= _availableIDStack.Length) {
-                    Volatile.Write(ref _syncFlag, SYNC_EXIT);
-                    // --- end sync
+                    _sync.Exit();       // --- end sync
 
                     segID = -1;
                     array = null;
@@ -172,12 +160,14 @@ namespace Elffy.Effective
                     return false;
                 }
                 else {
-                    segID = _availableIDStack[head];
-                    _availableHead = head + 1;
-                    _segmentState[segID] = true;
-
-                    Volatile.Write(ref _syncFlag, SYNC_EXIT);
-                    // --- end sync
+                    try {
+                        segID = _availableIDStack[head];
+                        _availableHead = head + 1;
+                        _segmentState[segID] = true;
+                    }
+                    finally {
+                        _sync.Exit();   // --- end sync
+                    }
 
                     array = _array;
                     start = segID * SegmentSize;
@@ -189,18 +179,17 @@ namespace Elffy.Effective
             public void Return(int segID)
             {
                 if((uint)segID >= (uint)MaxCount) { return; }
-                var spinner = new SpinWait();
-                while(Interlocked.CompareExchange(ref _syncFlag, SYNC_ENTER, SYNC_EXIT) == SYNC_ENTER) {
-                    spinner.SpinOnce();
+                _sync.Enter();          // --- begin sync
+                try {
+                    if(_segmentState[segID] == true) {
+                        _availableHead--;
+                        _availableIDStack[_availableHead] = segID;
+                        _segmentState[segID] = false;
+                    }
                 }
-                // --- begin sync
-                if(_segmentState[segID] == true) {
-                    _availableHead--;
-                    _availableIDStack[_availableHead] = segID;
-                    _segmentState[segID] = false;
+                finally {
+                    _sync.Exit();       // --- end sync
                 }
-                Volatile.Write(ref _syncFlag, SYNC_EXIT);
-                // --- end sync
             }
         }
 
