@@ -6,6 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using Cysharp.Threading.Tasks;
 using Elffy.Core;
 using Elffy.Effective;
+using System.Threading;
 
 namespace Elffy.Shapes
 {
@@ -29,12 +30,8 @@ namespace Elffy.Shapes
             _onRendering = onRendering;
         }
 
-        protected override async void OnActivated()
+        protected override async UniTask<AsyncUnit> OnActivating(CancellationToken cancellationToken)
         {
-            base.OnActivated();
-            if(LifeState == LifeState.Terminated) {  // if terminated in event of activation
-                return;
-            }
             Debug.Assert(_builder is not null);
             unsafe {
                 Debug.Assert(_callbackOnActivated is not null);
@@ -42,18 +39,10 @@ namespace Elffy.Shapes
 
             try {
                 await InvokeCallback(this, _obj, _builder);
+                cancellationToken.ThrowIfCancellationRequested();
+                return AsyncUnit.Default;
 
                 unsafe UniTask InvokeCallback(Model3D model, object? obj, Delegate builder) => _callbackOnActivated(model, obj, builder);
-            }
-            catch {
-                var screen = HostScreen;
-                if(!screen.RunningToken.IsCancellationRequested) {
-                    if(Engine.CurrentContext != screen) {
-                        await screen.AsyncBack.Ensure(FrameLoopTiming.Update);
-                    }
-                    Terminate();
-                }
-                // Don't throw. No one can catch it.
             }
             finally {
                 _obj = null;
@@ -91,7 +80,7 @@ namespace Elffy.Shapes
         /// <summary>Create new <see cref="Model3D"/> by using specified builder.</summary>
         /// <typeparam name="T">type of the builder argument</typeparam>
         /// <param name="obj">the argument of the builder</param>
-        /// <param name="builder">builder method delegate which is called when <see cref="OnActivated"/></param>
+        /// <param name="builder">builder method delegate</param>
         /// <param name="onRendering">rendering method delegate (null if use default rendering)</param>
         /// <returns>new <see cref="Model3D"/> instance</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -119,7 +108,7 @@ namespace Elffy.Shapes
                 // Restore types of builder and obj.
                 var typedBuilder = SafeCast.As<Model3DBuilderDelegate<T>>(builder);
                 var typedObj = SafeCast.As<T>(obj);
-                
+
                 // Call builder
                 return typedBuilder(typedObj, model, new Model3DLoadMeshDelegate(model));
             }

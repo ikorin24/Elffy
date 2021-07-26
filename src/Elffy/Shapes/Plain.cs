@@ -1,7 +1,9 @@
 ﻿#nullable enable
+using Cysharp.Threading.Tasks;
 using Elffy.Core;
 using System;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Elffy.Shapes
 {
@@ -14,10 +16,8 @@ namespace Elffy.Shapes
         }
 
         [SkipLocalsInit]
-        protected override void OnActivated()
+        protected override UniTask<AsyncUnit> OnActivating(CancellationToken cancellationToken)
         {
-            base.OnActivated();
-
             // [indices]
             //
             //        0 ----- 3
@@ -55,6 +55,7 @@ namespace Elffy.Shapes
                 0, 1, 2, 0, 2, 3,
             };
             LoadMesh(vertice, indices);
+            return AsyncUnit.Default.AsCompletedTask();
         }
     }
 }

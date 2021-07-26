@@ -2,6 +2,8 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using Elffy.Core;
 using Elffy.OpenGL;
 
@@ -26,9 +28,8 @@ namespace Elffy.UI
         }
 
         [SkipLocalsInit]
-        protected override void OnActivated()
+        protected override UniTask<AsyncUnit> OnActivating(CancellationToken cancellationToken)
         {
-            base.OnActivated();
             Debug.Assert(InternalLayer is UILayer);
 
             //     Position                    UI
@@ -59,6 +60,7 @@ namespace Elffy.UI
             };
             ReadOnlySpan<int> indices = stackalloc int[6] { 0, 2, 1, 2, 0, 3 };
             LoadMesh(vertices, indices);
+            return AsyncUnit.Default.AsCompletedTask();
         }
 
         protected override void OnRendering(in Matrix4 model, in Matrix4 view, in Matrix4 projection)

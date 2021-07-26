@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using System.Runtime.CompilerServices;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 
@@ -11,7 +12,8 @@ namespace Elffy
         /// <param name="timing"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public static UniTask<bool> Activate(this FrameObject source, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static UniTask<AsyncUnit> Activate(this FrameObject source, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
         {
             return source.Activate(Game.Layers.WorldLayer, timing, cancellationToken);
         }

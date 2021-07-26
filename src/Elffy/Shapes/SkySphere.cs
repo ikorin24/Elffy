@@ -1,8 +1,10 @@
 ﻿#nullable enable
+using Cysharp.Threading.Tasks;
 using Elffy.Core;
 using Elffy.Effective.Unsafes;
 using Elffy.Mathematics;
 using System;
+using System.Threading;
 
 namespace Elffy.Shapes
 {
@@ -50,14 +52,14 @@ namespace Elffy.Shapes
             }
         }
 
-        protected override void OnActivated()
+        protected override UniTask<AsyncUnit> OnActivating(CancellationToken cancellationToken)
         {
-            base.OnActivated();
             GenerateMesh(out var vertices, out var indices);
             using(vertices)
             using(indices) {
                 LoadMesh(vertices.AsSpan(), indices.AsSpan());
             }
+            return AsyncUnit.Default.AsCompletedTask();
         }
     }
 }

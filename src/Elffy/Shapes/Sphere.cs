@@ -1,6 +1,8 @@
 ﻿#nullable enable
+using Cysharp.Threading.Tasks;
 using Elffy.Core;
 using System;
+using System.Threading;
 
 namespace Elffy.Shapes
 {
@@ -12,11 +14,9 @@ namespace Elffy.Shapes
             throw new NotImplementedException();
         }
 
-        protected override void OnActivated()
+        protected override UniTask<AsyncUnit> OnActivating(CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
-            //base.OnActivated();
-            //LoadMesh(vertexArray.Span, indexArray.Span);
         }
     }
 }

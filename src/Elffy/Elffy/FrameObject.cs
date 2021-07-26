@@ -105,7 +105,7 @@ namespace Elffy
         /// <param name="timing"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public UniTask<bool> Activate(Layer layer, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
+        public async UniTask<AsyncUnit> Activate(Layer layer, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
         {
             if(layer is null) { ThrowNullArg(); }
             var screen = GetHostScreen(layer);
@@ -116,37 +116,53 @@ namespace Elffy
                 ThrowContextMismatch();
             }
             timing.ThrowArgExceptionIfNotSpecified(nameof(timing));
-            if(cancellationToken.IsCancellationRequested) {
-                return UniTask.FromCanceled<bool>(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if(_state != LifeState.New) {
+                return AsyncUnit.Default;     // TODO: activating の完了を待つようにしなければならない
             }
 
-            if(_state == LifeState.New) {
-                _hostScreen = screen;
-                _state = LifeState.Activated;
-                _layer = layer;
-                layer.AddFrameObject(this);
-                OnActivated();
-            }
+            _hostScreen = screen;
+            _state = LifeState.Activated;
+            _layer = layer;
+            layer.AddFrameObject(this);
 
-            if(this is Renderable renderable) {
-                return renderable.WaitLoaded(timing, cancellationToken);
+            // TODO: LifeState.Activating を作るべき
+            try {
+                await OnActivating(cancellationToken);
             }
-            else {
-                return UniTask.FromResult(LifeState != LifeState.Dead);
+            catch {
+                // If exceptions throw on activating, terminate the object if possible.
+
+                if(screen.RunningToken.IsCancellationRequested == false) {
+                    await screen.AsyncBack.Ensure(FrameLoopTiming.Update, cancellation: default);
+                    try {
+                        Terminate();
+                    }
+                    catch {
+                        // Ignore exceptions in Terminate()
+                    }
+                    finally {
+                        Debug.Assert(_state == LifeState.Dead);
+                    }
+                }
+
+                throw;  // Throw exceptions of activating.
             }
+            OnActivated();
+            return AsyncUnit.Default;
 
             [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(layer));
             [DoesNotReturn] static void ThrowInvalidLayer() => throw new ArgumentException($"{nameof(layer)} is not associated with {nameof(IHostScreen)}");
             [DoesNotReturn] static void ThrowContextMismatch() => throw new InvalidOperationException("Invalid current context.");
         }
 
-        internal void ActivateOnInternalLayer<TLayer>(TLayer layer) where TLayer : class, ILayer
+        internal void ActivateOnInternalLayer(ILayer layer)
         {
             if(layer is null) { ThrowNullArg(); }
             if(_state != LifeState.New) { return; }
-
             Debug.Assert(layer is Layer == false, $"'{typeof(Layer)}' type can't pass here. Where are you from ?");
-            Debug.Assert(layer!.OwnerCollection is null == false);
+            Debug.Assert(layer.OwnerCollection is null == false);
 
             var screen = GetHostScreen(layer);
             Debug.Assert(screen is not null);
@@ -156,6 +172,10 @@ namespace Elffy
             _state = LifeState.Activated;
             _layer = layer;
             layer.AddFrameObject(this);
+
+            var activatingTask = OnActivating(cancellationToken: default);  // TODO: UIRenderable は同期的に読み込まれるが、必ずそうなるような別メソッド用意すべき
+            Debug.Assert(activatingTask.Status == UniTaskStatus.Succeeded);
+
             OnActivated();
 
             [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(layer));
@@ -185,6 +205,8 @@ namespace Elffy
         protected virtual void OnUpdate() => Updated?.Invoke(this);
 
         protected virtual void OnLateUpdte() => LateUpdated?.Invoke(this);
+
+        protected virtual UniTask<AsyncUnit> OnActivating(CancellationToken cancellationToken) => UniTask.FromResult(AsyncUnit.Default);
 
         protected virtual void OnActivated() => Activated?.Invoke(this);
 
