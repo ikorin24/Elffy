@@ -21,9 +21,9 @@ namespace Sandbox
                     CreateModel1(),
                     CreateModel2(),
                     CreateBox(),
-                    UniTask.FromResult(CameraMouse()),
+                    CreateCameraMouse(),
                     CreateFloor(),
-                    UniTask.FromResult(CreateSky()),
+                    CreateSky(),
                     Timing.DelayTime(800));
 
                 await Timing.Ensure(FrameLoopTiming.Update);
@@ -44,7 +44,7 @@ namespace Sandbox
         private static async UniTask<Model3D> CreateModel1()
         {
             var dice = Resources.Loader.CreateFbxModel("Dice.fbx");
-            await dice.ActivateWaitLoaded();
+            await dice.Activate();
             dice.Position.X = 3f;
             dice.Position.Y = 1.5f;
             return dice;
@@ -54,16 +54,16 @@ namespace Sandbox
         {
             var model = Resources.Loader.CreatePmxModel("Alicia/Alicia_solid.pmx");
             model.Scale = new Vector3(0.3f);
-            await model.ActivateWaitLoaded();
+            await model.Activate();
             return model;
         }
 
-        private static SkySphere CreateSky()
+        private static async UniTask<SkySphere> CreateSky()
         {
             var sky = new SkySphere();
             sky.Shader = SkyShaderSource.Instance;
             sky.Scale = new Vector3(500f);
-            sky.Activate();
+            await sky.Activate();
             return sky;
         }
 
@@ -77,7 +77,7 @@ namespace Sandbox
             var texture = await Resources.Loader.LoadTextureAsync("floor.png", config);
             plain.AddComponent(texture);
             plain.Rotation = Quaternion.FromAxisAngle(Vector3.UnitX, -90.ToRadian());
-            plain.Activate();
+            await plain.Activate();
             return plain;
         }
 
@@ -87,7 +87,7 @@ namespace Sandbox
             cube.Position = new(-3, 0.5f, 0);
             cube.Shader = PhongShaderSource.Instance;
             cube.AddComponent(await Resources.Loader.LoadTextureAsync("box.png"));
-            cube.Activate();
+            await cube.Activate();
             StartMotion(cube).Forget();
             return cube;
 
@@ -100,12 +100,12 @@ namespace Sandbox
             }
         }
 
-        private static CameraMouse CameraMouse()
+        private static async UniTask<CameraMouse> CreateCameraMouse()
         {
             var cameraTarget = new Vector3(0, 3, 0);
             Game.Camera.LookAt(cameraTarget, new Vector3(0, 4.5f, 20));
             var cameraMouse = new CameraMouse(Game.Camera, Game.Mouse, cameraTarget);
-            cameraMouse.Activate();
+            await cameraMouse.Activate();
             return cameraMouse;
         }
     }

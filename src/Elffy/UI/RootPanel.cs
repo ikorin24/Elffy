@@ -38,7 +38,7 @@ namespace Elffy.UI
         internal void Initialize()
         {
             SetAsRootControl();
-            Renderable.Activate(UILayer);
+            Renderable.ActivateOnInternalLayer(UILayer);
             Renderable.Rendering += ExecuteRelayout;
         }
 

@@ -292,7 +292,7 @@ namespace Elffy.UI
             Debug.Assert(LifeState == LifeState.New);
             _parent = parent;
             _root = parent.Root;
-            Renderable.Activate(_root.UILayer);
+            Renderable.ActivateOnInternalLayer(_root.UILayer);
         }
 
         internal void RemovedFromListCallback()

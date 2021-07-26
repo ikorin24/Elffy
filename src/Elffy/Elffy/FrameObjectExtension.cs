@@ -8,7 +8,7 @@ using Elffy.Core;
 
 namespace Elffy
 {
-    public static class FrameObjectExtension
+    internal static class FrameObjectExtension
     {
         // =======================================================================================
         // [State Transition]

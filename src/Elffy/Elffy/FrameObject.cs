@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Diagnostics.CodeAnalysis;
 using Elffy.Core;
+using Cysharp.Threading.Tasks;
+using System.Threading;
 
 namespace Elffy
 {
@@ -100,11 +102,12 @@ namespace Elffy
 
         /// <summary>Activate the object in the specified layer.</summary>
         /// <param name="layer">layer where the object is activated</param>
-        public void Activate(Layer layer)
+        /// <param name="timing"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public UniTask<bool> Activate(Layer layer, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
         {
             if(layer is null) { ThrowNullArg(); }
-            if(_state != LifeState.New) { return; }
-
             var screen = GetHostScreen(layer);
             if(screen is null) {
                 ThrowInvalidLayer();
@@ -112,19 +115,32 @@ namespace Elffy
             if(Engine.CurrentContext != screen) {
                 ThrowContextMismatch();
             }
-            _hostScreen = screen;
+            timing.ThrowArgExceptionIfNotSpecified(nameof(timing));
+            if(cancellationToken.IsCancellationRequested) {
+                return UniTask.FromCanceled<bool>(cancellationToken);
+            }
 
-            _state = LifeState.Activated;
-            _layer = layer;
-            layer!.AddFrameObject(this);
-            OnActivated();
+            if(_state == LifeState.New) {
+                _hostScreen = screen;
+                _state = LifeState.Activated;
+                _layer = layer;
+                layer.AddFrameObject(this);
+                OnActivated();
+            }
+
+            if(this is Renderable renderable) {
+                return renderable.WaitLoaded(timing, cancellationToken);
+            }
+            else {
+                return UniTask.FromResult(LifeState != LifeState.Dead);
+            }
 
             [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(layer));
             [DoesNotReturn] static void ThrowInvalidLayer() => throw new ArgumentException($"{nameof(layer)} is not associated with {nameof(IHostScreen)}");
             [DoesNotReturn] static void ThrowContextMismatch() => throw new InvalidOperationException("Invalid current context.");
         }
 
-        internal void Activate<TLayer>(TLayer layer) where TLayer : class, ILayer
+        internal void ActivateOnInternalLayer<TLayer>(TLayer layer) where TLayer : class, ILayer
         {
             if(layer is null) { ThrowNullArg(); }
             if(_state != LifeState.New) { return; }

@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using System.Threading;
-using Elffy.Core;
 using Cysharp.Threading.Tasks;
 
 namespace Elffy
@@ -9,15 +8,12 @@ namespace Elffy
     {
         /// <summary>Activate <see cref="FrameObject"/> in world layer.</summary>
         /// <param name="source">source object to activate</param>
-        public static void Activate(this FrameObject source)
+        /// <param name="timing"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public static UniTask<bool> Activate(this FrameObject source, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
         {
-            source.Activate(Game.Layers.WorldLayer);
-        }
-
-        public static UniTask<bool> ActivateWaitLoaded(this Renderable source, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
-        {
-            source.Activate(Game.Layers.WorldLayer);
-            return source.WaitLoaded(timing, cancellationToken);
+            return source.Activate(Game.Layers.WorldLayer, timing, cancellationToken);
         }
     }
 }

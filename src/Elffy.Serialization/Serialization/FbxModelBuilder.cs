@@ -19,7 +19,6 @@ namespace Elffy.Serialization
         private sealed record StateObject(IResourceLoader ResourceLoader, string Name, CancellationToken CancellationToken);
 
         /// <summary>Create <see cref="Model3D"/> instance from resource with lazy loading.</summary>
-        /// <remarks>Loading will run after <see cref="FrameObject.Activate(Layer)"/> on thread pool.</remarks>
         /// <param name="resourceLoader">resource loader</param>
         /// <param name="name">resource name</param>
         /// <param name="cancellationToken">cancellation token</param>
