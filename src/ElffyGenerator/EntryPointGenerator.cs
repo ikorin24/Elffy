@@ -226,6 +226,7 @@ namespace Elffy
             private void AppendOnScreenInitialized(StringBuilder sb, string entryMethodStr, bool awaiting)
             {
                 sb.Append(@"
+        [DebuggerHidden]
         private static ").AppendIf(awaiting, "async ").Append("void OnScreenInitialized(IHostScreen screen)").Append(@"
         {
             Timing.Initialize(screen);
@@ -304,6 +305,7 @@ using Elffy.Platforms;
 using Elffy.Threading;
 using System;
 using System.IO;
+using System.Diagnostics;
 
 namespace Elffy
 {
