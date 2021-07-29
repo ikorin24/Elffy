@@ -142,7 +142,10 @@ namespace Elffy.Core
         /// <param name="indices">index data to load</param>
         protected void LoadMesh<TVertex>(ReadOnlySpan<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged
         {
-            if(Engine.CurrentContext != HostScreen) {
+            if(TryGetHostScreen(out var screen) == false) {
+                throw new InvalidOperationException();
+            }
+            if(Engine.CurrentContext != screen) {
                 throw new InvalidOperationException("Invalid current context.");
             }
             if(IsLoaded) { ThrowAlreadyLoaded(); }

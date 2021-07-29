@@ -17,7 +17,7 @@ namespace Elffy
         private LifeState _state = LifeState.New;
         private bool _isFrozen;
 
-        /// <summary>Event of activated, which fires when <see cref="Activate(Layer)"/> is called.</summary>
+        /// <summary>Event of activated</summary>
         public event Action<FrameObject>? Activated;
 
         /// <summary>Event of terminated, which fires when <see cref="Terminate"/> is called.</summary>
@@ -50,35 +50,21 @@ namespace Elffy
         /// <summary>Get the layer where the <see cref="FrameObject"/> is.</summary>
         private protected ILayer? InternalLayer => _layer;
 
-        // [NOTE]
-        // DON'T call this property of the object which is on the internal layer. (e.g. UIRenderable.)
-        // Use 'InternalLayer' property instead.
-
-        /// <summary>Get the layer where the <see cref="FrameObject"/> is.</summary>
-        /// <exception cref="InvalidOperationException"> <see cref="FrameObject"/> is not activated yet or already dead.</exception>
-        public Layer Layer
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetLayer([MaybeNullWhen(false)] out Layer layer)
         {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get =>
-#if DEBUG
-            (Layer?)_layer ?? throw new InvalidOperationException($"{nameof(FrameObject)} is not activated yet or already dead.");
-#else
-            Unsafe.As<Layer?>(_layer) ?? throw new InvalidOperationException($"{nameof(FrameObject)} is not activated yet or already dead.");
-#endif
-        }
+            // [NOTE]
+            // DON'T call this method if the object on the internal layer. (e.g. UIRenderable.)
+            // Use 'InternalLayer' property instead.
 
-
-        /// <summary>Get HostScreen of this <see cref="FrameObject"/>.</summary>
-        /// <exception cref="InvalidOperationException"> <see cref="FrameObject"/> is not activated yet or already dead.</exception>
-        public IHostScreen HostScreen
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _hostScreen ?? throw new InvalidOperationException($"{nameof(FrameObject)} is not activated yet or already dead.");
+            layer = SafeCast.As<Layer>(_layer);
+            return layer is not null;
         }
 
         /// <summary>Try to get HostScreen of the <see cref="FrameObject"/></summary>
         /// <param name="screen">HostScreen of the <see cref="FrameObject"/></param>
         /// <returns>success or not</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetHostScreen([MaybeNullWhen(false)] out IHostScreen screen)
         {
             if(_hostScreen is null) {

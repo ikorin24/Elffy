@@ -197,7 +197,8 @@ namespace Elffy.Serialization
                     }, pmx, configureAwait: false));
 
                 // create skeleton
-                var screen = model.HostScreen;
+                model.TryGetHostScreen(out var screen);
+                Debug.Assert(screen is not null);
                 var skeleton = new HumanoidSkeleton();
                 model.AddComponent(skeleton);
                 await skeleton.LoadAsync(bones.AsSpanLike(), screen.AsyncBack);

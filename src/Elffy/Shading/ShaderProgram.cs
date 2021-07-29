@@ -50,7 +50,7 @@ namespace Elffy.Shading
 
             Debug.Assert(_owner is not UIRenderable, $"Use {nameof(ApplyForUI)} method for {nameof(UIRenderable)}.");
             Debug.Assert(_owner.Shader is not null);
-            
+
             ProgramObject.Bind(_program);
             _owner.Shader.SendUniformsInternal(_program, _owner, model, view, projection);
         }
@@ -61,8 +61,10 @@ namespace Elffy.Shading
             if(!_owner.IsLoaded) { ThrowNotInitialized(); }
             ProgramObject.Bind(_program);
 
-            SafeCast.NotNullAs<UIShaderSource>(_owner.ShaderInternal)
-                    .SendUniformsInternal(_program, SafeCast.NotNullAs<UIRenderable>(_owner).Control, model, view, projection);
+            var shaderSource = SafeCast.As<UIShaderSource>(_owner.ShaderInternal);
+            Debug.Assert(shaderSource is not null);
+            var control = SafeCast.As<UIRenderable>(_owner).Control;
+            shaderSource.SendUniformsInternal(_program, control, model, view, projection);
         }
 
         internal void Initialize(Type vertexType)
@@ -80,11 +82,13 @@ namespace Elffy.Shading
         internal void InitializeForUI()
         {
             Debug.Assert(_owner is UIRenderable);
+            var shaderSource = SafeCast.As<UIShaderSource>(_owner.ShaderInternal);
+            Debug.Assert(shaderSource is not null);
+            var control = SafeCast.As<UIRenderable>(_owner).Control;
 
             VAO.Bind(_owner.VAO);
             VBO.Bind(_owner.VBO);
-            SafeCast.NotNullAs<UIShaderSource>(_owner.ShaderInternal)
-                    .DefineLocationInternal(_program, SafeCast.NotNullAs<UIRenderable>(_owner).Control);
+            shaderSource.DefineLocationInternal(_program, control);
             VAO.Unbind();
             VBO.Unbind();
         }

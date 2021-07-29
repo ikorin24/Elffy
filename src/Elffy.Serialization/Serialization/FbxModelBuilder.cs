@@ -42,6 +42,9 @@ namespace Elffy.Serialization
         private static async UniTask Build(StateObject obj, Model3D model, Model3DLoadMeshDelegate load)
         {
             var (resourceLoader, name, token) = obj;
+            model.TryGetHostScreen(out var screen);
+            Debug.Assert(screen is not null);
+            var endPoint = screen.AsyncBack;
             token.ThrowIfCancellationRequested();
 
             await UniTask.SwitchToThreadPool();                                         // ↓ thread pool -------------------------------------- 
@@ -55,7 +58,7 @@ namespace Elffy.Serialization
 
             // Parse fbx file
             using var fbx = FbxSemanticParser<SkinnedVertex>.ParseUnsafe(resourceLoader.GetStream(name), false, token);
-            await model.HostScreen.AsyncBack.ToTiming(FrameLoopTiming.Update, token);   // ↓ main thread --------------------------------------
+            await endPoint.ToTiming(FrameLoopTiming.Update, token);   // ↓ main thread --------------------------------------
 
             await CreateTexture(resourceLoader, fbx, model);
 
@@ -66,7 +69,7 @@ namespace Elffy.Serialization
                 model.AddComponent(skeleton);
                 using var bones = new ValueTypeRentMemory<Bone>(fbx.Skeletons[skeletonIndex].BoneCount);
                 fbx.Skeletons[skeletonIndex].CreateBones(bones.Span);
-                await skeleton.LoadAsync(bones, model.HostScreen.AsyncBack, cancellationToken: token);
+                await skeleton.LoadAsync(bones, endPoint, cancellationToken: token);
             }
 
             if(model.LifeState == LifeState.Activated || model.LifeState == LifeState.Alive) {
