@@ -150,6 +150,11 @@ namespace Elffy.Core
             }
             if(IsLoaded) { ThrowAlreadyLoaded(); }
 
+            var lifeState = LifeState;
+            if(lifeState.Is(LifeState.New) || lifeState.IsSameOrAfter(LifeState.Terminated)) {
+                return;
+            }
+
             var isUIRenderable = this is UIRenderable;
 
             if(_shader is null) {

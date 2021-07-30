@@ -41,9 +41,6 @@ namespace Elffy
         /// <summary>Get life state of <see cref="FrameObject"/></summary>
         public LifeState LifeState => _state;
 
-        /// <summary>Get whether the <see cref="FrameObject"/> is running in the current frame. (That means <see cref="LifeState"/> is <see cref="LifeState.Alive"/> of <see cref="LifeState.Terminated"/>)</summary>
-        public bool IsRunning => _state == LifeState.Alive || _state == LifeState.Terminated;
-
         /// <summary>Get or set whether the <see cref="FrameObject"/> skips early updating, updating, and late updating. (Skips if true)</summary>
         public bool IsFrozen { get => _isFrozen; set => _isFrozen = value; }
 
@@ -101,20 +98,22 @@ namespace Elffy
             if(Engine.CurrentContext != screen) {
                 ThrowContextMismatch();
             }
+
             timing.ThrowArgExceptionIfNotSpecified(nameof(timing));
             cancellationToken.ThrowIfCancellationRequested();
 
-            if(_state != LifeState.New) {
-                return AsyncUnit.Default;     // TODO: activating の完了を待つようにしなければならない
+            if(_state.IsAfter(LifeState.New)) {
+                if(_state == LifeState.Activating) {
+                    throw new InvalidOperationException($"Cannot call {nameof(Activate)} method when the life state is {LifeState.Activating}.");
+                }
+                return AsyncUnit.Default;
             }
 
+            Debug.Assert(_state == LifeState.New);
             _hostScreen = screen;
-            _state = LifeState.Activated;
             _layer = layer;
-            layer.AddFrameObject(this);
-
-            // TODO: LifeState.Activating を作るべき
             try {
+                _state = LifeState.Activating;
                 await OnActivating(cancellationToken);
             }
             catch {
@@ -128,13 +127,19 @@ namespace Elffy
                     catch {
                         // Ignore exceptions in Terminate()
                     }
+#if DEBUG
                     finally {
+                        Debug.Assert(_hostScreen == null);
+                        Debug.Assert(_layer == null);
                         Debug.Assert(_state == LifeState.Dead);
                     }
+#endif
                 }
 
                 throw;  // Throw exceptions of activating.
             }
+            _state = LifeState.Activated;
+            layer.AddFrameObject(this);
             OnActivated();
             return AsyncUnit.Default;
 
@@ -155,12 +160,14 @@ namespace Elffy
             Debug.Assert(Engine.CurrentContext == screen);
 
             _hostScreen = screen;
-            _state = LifeState.Activated;
+            _state = LifeState.Activating;
             _layer = layer;
-            layer.AddFrameObject(this);
 
             var activatingTask = OnActivating(cancellationToken: default);  // TODO: UIRenderable は同期的に読み込まれるが、必ずそうなるような別メソッド用意すべき
             Debug.Assert(activatingTask.Status == UniTaskStatus.Succeeded);
+
+            _state = LifeState.Activated;
+            layer.AddFrameObject(this);
 
             OnActivated();
 
@@ -170,11 +177,12 @@ namespace Elffy
         /// <summary>Terminate the object and remove it from the engine.</summary>
         public void Terminate()
         {
-            if(_state != LifeState.Activated && _state != LifeState.Alive) {
-                return;
-            }
-            if(Engine.CurrentContext != _hostScreen) {
+            var context = Engine.CurrentContext;
+            if(context is null || context != _hostScreen) {
                 ThrowContextMismatch();
+            }
+            if(_state == LifeState.New || _state.IsSameOrAfter(LifeState.Terminated)) {
+                return;
             }
 
             Debug.Assert(_layer is not null);
@@ -211,6 +219,8 @@ namespace Elffy
 
         internal void RemovedFromObjectStoreCallback()
         {
+            Debug.Assert(_hostScreen is not null);
+            Debug.Assert(Engine.CurrentContext == _hostScreen);
             Debug.Assert(_state == LifeState.Terminated);
             _state = LifeState.Dead;
             _layer = null;
@@ -219,7 +229,7 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static IHostScreen? GetHostScreen<TLayer>(TLayer? layer) where TLayer : class, ILayer
+        private static IHostScreen? GetHostScreen(ILayer? layer)
         {
             return layer?.OwnerCollection?.OwnerRenderingArea.OwnerScreen;
         }

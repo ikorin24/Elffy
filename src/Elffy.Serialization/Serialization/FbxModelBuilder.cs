@@ -58,7 +58,7 @@ namespace Elffy.Serialization
 
             // Parse fbx file
             using var fbx = FbxSemanticParser<SkinnedVertex>.ParseUnsafe(resourceLoader.GetStream(name), false, token);
-            await endPoint.ToTiming(FrameLoopTiming.Update, token);   // ↓ main thread --------------------------------------
+            await endPoint.ToTiming(FrameLoopTiming.Update, token);                     // ↓ main thread --------------------------------------
 
             await CreateTexture(resourceLoader, fbx, model);
 
@@ -72,9 +72,7 @@ namespace Elffy.Serialization
                 await skeleton.LoadAsync(bones, endPoint, cancellationToken: token);
             }
 
-            if(model.LifeState == LifeState.Activated || model.LifeState == LifeState.Alive) {
-                load.Invoke(fbx.Vertices, fbx.Indices);
-            }
+            load.Invoke(fbx.Vertices, fbx.Indices);
             await UniTask.SwitchToThreadPool();                                         // ↓ thread pool -------------------------------------- 
 
             // 'using' scope ends here. Dispose resources on a thread pool. 

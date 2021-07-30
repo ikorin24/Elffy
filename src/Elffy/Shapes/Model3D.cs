@@ -94,19 +94,19 @@ namespace Elffy.Shapes
             }
 
             // ジェネリクス型<T>をローカル関数に含め、関数ポインタを渡すことで、
-            // builder の呼び出しを OnActivated() まで遅延させつつ、<T>を復元できる。
+            // builder の呼び出しを OnActivating() まで遅延させつつ、<T>を復元できる。
             // 参考: https://ikorin2.hatenablog.jp/entry/2021/01/15/110845
 
             // Capture the generics type <T> in the local function and store its function pointer in the instance.
-            // Model3D can restore the generics type as <T>, not 'Type', when calls OnActivated().
+            // Model3D can restore the generics type as <T>, not 'Type', when calls OnActivating().
             // Reference (my blog in Japanese): https://ikorin2.hatenablog.jp/entry/2021/01/15/110845
 
-            return new Model3D(obj, &CallbackOnActivated, builder, onRendering);
+            return new Model3D(obj, &CallbackOnActivating, builder, onRendering);
 
-            static UniTask CallbackOnActivated(Model3D model, object? obj, Delegate builder)
+            static UniTask CallbackOnActivating(Model3D model, object? obj, Delegate builder)
             {
                 // Restore types of builder and obj.
-                var typedBuilder = SafeCast.As<Model3DBuilderDelegate<T>>(builder);
+                var typedBuilder = SafeCast.As<Model3DBuilderDelegate<T?>>(builder);
                 var typedObj = SafeCast.As<T>(obj);
 
                 // Call builder
@@ -115,7 +115,7 @@ namespace Elffy.Shapes
         }
     }
 
-    public delegate UniTask Model3DBuilderDelegate<T>(T obj, Model3D model3D, Model3DLoadMeshDelegate loadMesh) where T : class;
+    public delegate UniTask Model3DBuilderDelegate<T>(T obj, Model3D model3D, Model3DLoadMeshDelegate loadMesh) where T : class?;
 
     public delegate void Model3DRenderingDelegate(Model3D model3D, in Matrix4 model, in Matrix4 view, in Matrix4 projection, Model3DDrawElementsDelegate drawElements);
 

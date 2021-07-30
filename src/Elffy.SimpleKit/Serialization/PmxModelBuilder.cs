@@ -14,7 +14,6 @@ using Elffy.Shading;
 using Elffy.Core;
 using Cysharp.Threading.Tasks;
 using MMDTools.Unmanaged;
-using PmxVector3 = MMDTools.Unmanaged.Vector3;
 
 namespace Elffy.Serialization
 {
@@ -63,7 +62,7 @@ namespace Elffy.Serialization
         {
             obj.CancellationToken.ThrowIfCancellationRequested();
 
-            Debug.Assert(model.LifeState == LifeState.Activated || model.LifeState == LifeState.Alive);
+            Debug.Assert(model.LifeState == LifeState.Activating);
 
             // Run on thread pool
             await UniTask.SwitchToThreadPool();
@@ -85,9 +84,7 @@ namespace Elffy.Serialization
 
             var textureNames = pmx.TextureList.AsSpan();
             var dir = ResourcePath.GetDirectoryName(obj.Name);
-            //var bitmaps = new RefTypeRentMemory<Bitmap?>(textureNames.Length);
-            //var bitmapSpan = bitmaps.Span;
-            var images = new Image[textureNames.Length];    // TODO:
+            var images = new Image[textureNames.Length];
 
             for(int i = 0; i < images.Length; i++) {
                 using var _ = GetTexturePath(dir, textureNames[i], out var texturePath, out var ext);
@@ -137,7 +134,7 @@ namespace Elffy.Serialization
                         }
                         return vertices;
                     }, pmx, configureAwait: false),
-                    
+
                     // build each parts
                     UniTask.Run(pmx =>
                     {
@@ -184,7 +181,7 @@ namespace Elffy.Serialization
                                 else {
                                     boneVec = pmxBones[i].PositionOffset.ToVector3();
                                 }
-                                
+
                                 bones[i] = new Components.Bone();
 
                             }
@@ -209,35 +206,32 @@ namespace Elffy.Serialization
                 // ------------------------------
                 //      ↓ main thread
                 Debug.Assert(Engine.CurrentContext == screen);
-                if(model.LifeState == LifeState.Activated || model.LifeState == LifeState.Alive) {
+                Debug.Assert(model.LifeState == LifeState.Activating);
 
-                    // create parts
-                    textures = new ValueTypeRentMemory<TextureObject>(images.Length);
-                    textures.Span.Clear();  // must be cleared
-                    for(int i = 0; i < textures.Length; i++) {
-                        var image = images[i];
-                        if(image.IsEmpty) {
-                            textures[i] = TextureObject.Empty;
-                        }
-                        else {
-                            textures[i] = TextureLoadHelper.LoadByDMA(image, TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear,
-                                                TextureMipmapMode.Bilinear, TextureWrapMode.Repeat, TextureWrapMode.Repeat);
-                        }
-                        // Scadule the loading of textures to each frame.
-                        await screen.AsyncBack.ToTiming(FrameLoopTiming.Update, obj.CancellationToken);
+                // create parts
+                textures = new ValueTypeRentMemory<TextureObject>(images.Length);
+                textures.Span.Clear();  // must be cleared
+                for(int i = 0; i < textures.Length; i++) {
+                    var image = images[i];
+                    if(image.IsEmpty) {
+                        textures[i] = TextureObject.Empty;
                     }
-                    var partsComponent = new PmxModelParts(ref vertexCountArray, ref textureIndexArray, ref textures);
-                    model.AddComponent(partsComponent);
-
-                    // set shader
-                    model.Shader = PmxModelShaderSource.Instance;
-
-                    // load vertices and indices
-                    load.Invoke(vertices.AsSpan().AsReadOnly(), pmx.SurfaceList.AsSpan().MarshalCast<Surface, int>());
+                    else {
+                        textures[i] = TextureLoadHelper.LoadByDMA(image, TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear,
+                                            TextureMipmapMode.Bilinear, TextureWrapMode.Repeat, TextureWrapMode.Repeat);
+                    }
+                    // Scadule the loading of textures to each frame.
+                    await screen.AsyncBack.ToTiming(FrameLoopTiming.Update, obj.CancellationToken);
                 }
-                else {
-                    DisposeObjects(textures, vertexCountArray, textureIndexArray);
-                }
+                var partsComponent = new PmxModelParts(ref vertexCountArray, ref textureIndexArray, ref textures);
+                model.AddComponent(partsComponent);
+
+                // set shader
+                model.Shader = PmxModelShaderSource.Instance;
+
+                // load vertices and indices
+                load.Invoke(vertices.AsSpan().AsReadOnly(), pmx.SurfaceList.AsSpan().MarshalCast<Surface, int>());
+
                 //      ↑ main thread
                 // ------------------------------
             }
