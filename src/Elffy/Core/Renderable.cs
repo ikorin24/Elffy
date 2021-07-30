@@ -4,8 +4,6 @@ using System.Diagnostics.CodeAnalysis;
 using OpenTK.Graphics.OpenGL4;
 using Elffy.Shading;
 using Elffy.OpenGL;
-using Elffy.Effective;
-using Elffy.Diagnostics;
 using Elffy.UI;
 using System.Diagnostics;
 
@@ -21,7 +19,7 @@ namespace Elffy.Core
         private ShaderProgram _shaderProgram;
         private int _instancingCount;
         private bool _isLoaded;
-        private bool _isVisible;
+        private RenderVisibility _visibility;
 
         /// <summary>Before-rendering event</summary>
         public event RenderingEventHandler? Rendering;
@@ -38,8 +36,8 @@ namespace Elffy.Core
         /// <summary>Get whether the <see cref="Renderable"/> is loaded and ready to be rendered.</summary>
         public bool IsLoaded => _isLoaded;
 
-        /// <summary>Get or set whether the <see cref="Renderable"/> is visible in rendering.</summary>
-        public bool IsVisible { get => _isVisible; set => _isVisible = value; }
+        /// <summary>Get or set visibility in rendering.</summary>
+        public RenderVisibility Visibility { get => _visibility; set => _visibility = value; }
 
         /// <summary>Get or set a shader source</summary>
         public ShaderSource? Shader
@@ -79,7 +77,6 @@ namespace Elffy.Core
 
         public Renderable()
         {
-            _isVisible = true;
         }
 
         /// <summary>Render the <see cref="Renderable"/>.</summary>
@@ -88,20 +85,20 @@ namespace Elffy.Core
         /// <param name="modelParent">parent model matrix</param>
         internal void Render(in Matrix4 projection, in Matrix4 view, in Matrix4 modelParent)
         {
-            var withoutScale = modelParent * Position.ToTranslationMatrix4() * Rotation.ToMatrix4();
-
-            var model = withoutScale * Scale.ToScaleMatrix4();
-
-            if(IsLoaded && IsVisible) {
-                Rendering?.Invoke(this, in model, in view, in projection);
-                OnRendering(in model, in view, in projection);
-                Rendered?.Invoke(this, in model, in view, in projection);
-            }
-
-            if(HasChild) {
-                foreach(var child in Children.AsSpan()) {
-                    if(child is Renderable renderable) {
-                        renderable.Render(projection, view, withoutScale);
+            var visibility = _visibility;
+            if(IsLoaded && visibility == RenderVisibility.Visible || visibility == RenderVisibility.InvisibleSelf) {
+                var withoutScale = modelParent * Position.ToTranslationMatrix4() * Rotation.ToMatrix4();
+                if(visibility == RenderVisibility.Visible) {
+                    var model = withoutScale * Scale.ToScaleMatrix4();
+                    Rendering?.Invoke(this, in model, in view, in projection);
+                    OnRendering(in model, in view, in projection);
+                    Rendered?.Invoke(this, in model, in view, in projection);
+                }
+                if(HasChild) {
+                    foreach(var child in Children.AsSpan()) {
+                        if(child is Renderable renderable) {
+                            renderable.Render(projection, view, withoutScale);
+                        }
                     }
                 }
             }
@@ -210,4 +207,11 @@ namespace Elffy.Core
     }
 
     public delegate void RenderingEventHandler(Renderable sender, in Matrix4 model, in Matrix4 view, in Matrix4 projection);
+
+    public enum RenderVisibility : byte
+    {
+        Visible = 0,
+        InvisibleSelf = 1,
+        InvisibleHierarchical = 2,
+    }
 }

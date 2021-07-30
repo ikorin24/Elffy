@@ -58,7 +58,7 @@ namespace Elffy.Core
                                    0, 0, 1, 0,
                                    0, 0, 0, 1);
             foreach(var renderable in _store.Renderables) {
-                if(!renderable.IsRoot || !renderable.IsVisible) { continue; }
+                if(renderable.IsRoot == false) { continue; }
                 renderable.Render(projection, view, Matrix4.Identity);
             }
         }

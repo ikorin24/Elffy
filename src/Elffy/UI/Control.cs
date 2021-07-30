@@ -157,7 +157,11 @@ namespace Elffy.UI
         public bool IsMouseOver => _isMouseOver;
 
         /// <summary>get or set <see cref="Control"/> is visible on rendering.</summary>
-        public bool IsVisible { get => Renderable.IsVisible; set => Renderable.IsVisible = value; }
+        public bool IsVisible
+        {
+            get => Renderable.Visibility == RenderVisibility.Visible;
+            set => Renderable.Visibility = value ? RenderVisibility.Visible : RenderVisibility.InvisibleSelf;
+        }
 
         internal ref readonly TextureCore Texture => ref _texture;
 

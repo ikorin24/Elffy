@@ -119,7 +119,7 @@ namespace Elffy.Core
             foreach(var renderable in _renderables.AsSpan()) {
                 // Render only root objects.
                 // Childen are rendered from thier parent 'Render' method.
-                if(!renderable.IsRoot || !renderable.IsVisible) { continue; }
+                if(renderable.IsRoot == false) { continue; }
                 try {
                     renderable.Render(projection, view, Matrix4.Identity);
                 }
