@@ -128,15 +128,6 @@ namespace Elffy.Core
         /// <typeparam name="TVertex">type of vertex</typeparam>
         /// <param name="vertices">vertex data to load</param>
         /// <param name="indices">index data to load</param>
-        protected void LoadMesh<TVertex>(Span<TVertex> vertices, Span<int> indices) where TVertex : unmanaged
-        {
-            LoadMesh(vertices.AsReadOnly(), indices.AsReadOnly());
-        }
-
-        /// <summary>Load mesh data</summary>
-        /// <typeparam name="TVertex">type of vertex</typeparam>
-        /// <param name="vertices">vertex data to load</param>
-        /// <param name="indices">index data to load</param>
         protected void LoadMesh<TVertex>(ReadOnlySpan<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged
         {
             if(TryGetHostScreen(out var screen) == false) {

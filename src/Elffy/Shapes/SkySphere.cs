@@ -57,7 +57,7 @@ namespace Elffy.Shapes
             GenerateMesh(out var vertices, out var indices);
             using(vertices)
             using(indices) {
-                LoadMesh(vertices.AsSpan(), indices.AsSpan());
+                LoadMesh<Vertex>(vertices.AsSpan(), indices.AsSpan());
             }
             return AsyncUnit.Default.AsCompletedTask();
         }
