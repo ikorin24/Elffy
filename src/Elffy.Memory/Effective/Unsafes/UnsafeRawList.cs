@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
-using System.ComponentModel;
 
 namespace Elffy.Effective.Unsafes
 {
@@ -57,24 +56,15 @@ namespace Elffy.Effective.Unsafes
         public int Count
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get
-            {
-                if(_ptr == IntPtr.Zero) { ThrowNullRef(); }
-                return CountRef();
-            }
+            get => CountRef();
         }
 
         public int Capacity
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get
-            {
-                if(_ptr == IntPtr.Zero) { ThrowNullRef(); }
-                return ArrayRef().Length;
-            }
+            get => ArrayRef().Length;
             set
             {
-                if(_ptr == IntPtr.Zero) { ThrowNullRef(); }
                 var count = CountRef();
                 if(value < count) {
                     ThrowOutOfRange(nameof(value));
@@ -101,21 +91,13 @@ namespace Elffy.Effective.Unsafes
         public readonly IntPtr Ptr
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get
-            {
-                if(_ptr == IntPtr.Zero) { ThrowNullRef(); }
-                return ArrayRef().Ptr;
-            }
+            get => ArrayRef().Ptr;
         }
 
         public ref T this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get
-            {
-                if(_ptr == IntPtr.Zero) { ThrowNullRef(); }
-                return ref ArrayRef()[index];
-            }
+            get => ref ArrayRef()[index];
         }
 
         public static UnsafeRawList<T> Null => default;
@@ -148,16 +130,11 @@ namespace Elffy.Effective.Unsafes
         /// <summary>Get reference to the 0th element of the list. (If <see cref="Capacity"/> is 0, returns reference to null)</summary>
         /// <returns>reference</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T GetReference()
-        {
-            if(_ptr == IntPtr.Zero) { ThrowNullRef(); }
-            return ref ArrayRef().GetReference();
-        }
+        public ref T GetReference() => ref ArrayRef().GetReference();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(in T item)
         {
-            if(_ptr == IntPtr.Zero) { ThrowNullRef(); }
             ref var array = ref ArrayRef();
             ref var count = ref CountRef();
             if(count >= array.Length) {
@@ -170,9 +147,10 @@ namespace Elffy.Effective.Unsafes
 
         public void AddRange(ReadOnlySpan<T> collection)
         {
-            if(_ptr == IntPtr.Zero) { ThrowNullRef(); }
-            if(collection.IsEmpty) { return; }
+            // Get array reference at first. NullReferenceException is thrown if 'this' is null.
             ref var array = ref ArrayRef();
+            if(collection.IsEmpty) { return; }
+
             ref var count = ref CountRef();
             if(count + collection.Length >= array.Length) {
                 var newArray = new UnsafeRawArray<T>(count + collection.Length);
@@ -192,7 +170,6 @@ namespace Elffy.Effective.Unsafes
 
         public int IndexOf(T item)
         {
-            if(_ptr == IntPtr.Zero) { ThrowNullRef(); }
             var count = CountRef();
             var array = ArrayRef();
             for(int i = 0; i < count; i++) {
@@ -205,7 +182,6 @@ namespace Elffy.Effective.Unsafes
 
         public void RemoveAt(int index)
         {
-            if(_ptr == IntPtr.Zero) { ThrowNullRef(); }
             ref var count = ref CountRef();
             count--;
             if(index < count) {
@@ -229,17 +205,16 @@ namespace Elffy.Effective.Unsafes
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear()
         {
-            if(_ptr == IntPtr.Zero) { ThrowNullRef(); }
             CountRef() = 0;
         }
 
         public Span<T> Extend(int count, bool zeroFill = false)
         {
-            if(_ptr == IntPtr.Zero) { ThrowNullRef(); }
+            // Get array reference at first. NullReferenceException is thrown if 'this' is null.
+            ref readonly var array = ref ArrayRef();
             if(count < 0) { ThrowOutOfRange(nameof(count)); }
             if(count == 0) { return Span<T>.Empty; }
 
-            ref readonly var array = ref ArrayRef();
             ref var itemCount = ref CountRef();
 
             var margin = array.Length - itemCount;
@@ -332,7 +307,7 @@ namespace Elffy.Effective.Unsafes
 
         public override string? ToString()
         {
-            if(_ptr == IntPtr.Zero) { ThrowNullRef(); }
+            if(_ptr == IntPtr.Zero) { throw new NullReferenceException(); }
             return base.ToString();
         }
 
@@ -350,9 +325,6 @@ namespace Elffy.Effective.Unsafes
 
         [DoesNotReturn]
         private static void ThrowOutOfRange(string message) => throw new ArgumentOutOfRangeException(message);
-
-        [DoesNotReturn]
-        private static void ThrowNullRef() => throw new NullReferenceException($"An instance of type {nameof(UnsafeRawList<T>)} is null.");
     }
 
     internal class UnsafeRawListDebuggerTypeProxy<T> where T : unmanaged
