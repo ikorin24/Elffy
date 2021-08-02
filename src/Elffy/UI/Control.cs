@@ -196,6 +196,11 @@ namespace Elffy.UI
             Renderable.Dead += OnRenderableDeadPrivate;
         }
 
+        public bool TryGetHostScreen([MaybeNullWhen(false)] out IHostScreen screen)
+        {
+            return Renderable.TryGetHostScreen(out screen);
+        }
+
         internal void SetSize(in Vector2 size)
         {
             ref var scale = ref Renderable.Scale;
