@@ -13,10 +13,6 @@ namespace UnitTest
         public void New()
         {
             using(var list = UnsafeRawList<int>.Null) {
-                Assert.True(list == null);
-                Assert.False(list != null);
-                Assert.True(null == list);
-                Assert.False(null != list);
                 Assert.True(list.Equals(list));
 
                 Assert.Throws<NullReferenceException>(() => list.Count);

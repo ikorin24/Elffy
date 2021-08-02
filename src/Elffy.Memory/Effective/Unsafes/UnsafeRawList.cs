@@ -336,21 +336,7 @@ namespace Elffy.Effective.Unsafes
             return base.ToString();
         }
 
-        public override bool Equals(object? obj)
-        {
-            if(obj is UnsafeRawList<T> list) {
-                return Equals(list);
-            }
-            else if(obj is NullLiteral @null){
-                return this == @null;       // See '==' operator comments
-            }
-            else if(obj is null) {
-                return this == null;        // See '==' operator comments
-            }
-            else {
-                return false;
-            }
-        }
+        public override bool Equals(object? obj) => obj is UnsafeRawList<T> list && Equals(list);
 
         public bool Equals(UnsafeRawList<T> other) => _ptr == other._ptr;
 
@@ -367,43 +353,6 @@ namespace Elffy.Effective.Unsafes
 
         [DoesNotReturn]
         private static void ThrowNullRef() => throw new NullReferenceException($"An instance of type {nameof(UnsafeRawList<T>)} is null.");
-
-
-
-        // [NOTE]
-        // No one can make an instance of type 'NullLiteral' in the usual way.
-        // The only way you can use the following operator method is to specify null literal.
-        // So they work well.
-        // 
-        // I make sure 'NullLiteral' instance is actual null just in case.
-        // In the case that users set null literal and the methods get inlined,
-        // the check is removed. Therefore, it is no-cost.
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static bool operator ==(UnsafeRawList<T> list, NullLiteral? @null) => @null is null && list._ptr == IntPtr.Zero;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static bool operator !=(UnsafeRawList<T> list, NullLiteral? @null) => !(list == @null);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static bool operator ==(NullLiteral? @null, UnsafeRawList<T> list) => @null is null && list._ptr == IntPtr.Zero;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static bool operator !=(NullLiteral? @null, UnsafeRawList<T> list) => !(@null == list);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static implicit operator UnsafeRawList<T>(NullLiteral? @null)
-        {
-            if(@null is null) {
-                return default;
-            }
-            throw new InvalidCastException();
-        }
     }
 
     internal class UnsafeRawListDebuggerTypeProxy<T> where T : unmanaged

@@ -33,7 +33,7 @@ namespace Elffy.Core
             if(size.X <= 0 || size.Y <= 0) {
                 ThrowInvalidSize($"{nameof(size)} is invalid");
             }
-            if(imageBuilder == null) {
+            if(imageBuilder.IsNull) {
                 ThrowNullArg(nameof(imageBuilder));
             }
             var pbo = PBO.Create();
