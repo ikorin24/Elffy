@@ -189,26 +189,8 @@ namespace Elffy.OpenGL
 
             _dropCallback = (_, count, paths) =>
             {
-                Utf8StringRef* files;
-                var isHeap = count > 16;
-                if(isHeap) {
-                    files = (Utf8StringRef*)Marshal.AllocHGlobal(count * sizeof(Utf8StringRef));
-                }
-                else {
-                    var p = stackalloc Utf8StringRef[count];
-                    files = p;
-                }
-                try {
-                    for(int i = 0; i < count; i++) {
-                        files[i] = new Utf8StringRef(paths[i]);
-                    }
-                    FileDrop?.Invoke(this, new Utf8StringRefArray(files, count));
-                }
-                finally {
-                    if(isHeap) {
-                        Marshal.FreeHGlobal((IntPtr)files);
-                    }
-                }
+                var e = new FileDropEventArgs(count, paths);
+                FileDrop?.Invoke(this, e);
             };
             GLFW.SetDropCallback(_window, _dropCallback);
 
@@ -233,6 +215,4 @@ namespace Elffy.OpenGL
             GLFW.SetWindowRefreshCallback(_window, _refreshCallback);
         }
     }
-
-    internal delegate void FileDropEventHandler(WindowGLFW window, Utf8StringRefArray files);
 }
