@@ -69,73 +69,7 @@ namespace Elffy.UI
         public ref Color4 Background => ref _background;
 
         /// <summary>Get absolute position of the control.</summary>
-        public Vector2i Position
-        {
-            get => (Vector2i)Renderable.Position.Xy;
-
-            #region Removed
-            //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-            //set
-            //{
-            //    ref var pos = ref Renderable.Position;
-            //    var vec = value - (Vector2i)pos.Xy;
-
-            //    if(vec.X != 0 && vec.Y != 0) {
-            //        // change both x and y
-
-            //        pos.X += vec.X;
-            //        pos.Y += vec.Y;
-            //        _absolutePosition += vec;
-            //        if(_childrenCore.Count > 0) {
-            //            ApplyRecursively(this, in vec);
-            //        }
-            //    }
-            //    else if(vec.X != 0) {
-            //        // change only x
-            //        pos.X += vec.X;
-            //        _absolutePosition.X += vec.X;
-            //        if(_childrenCore.Count > 0) {
-            //            ApplyXRecursively(this, vec.X);
-            //        }
-            //    }
-            //    else if(vec.Y != 0) {
-            //        // change only y
-            //        pos.Y += vec.Y;
-            //        _absolutePosition.Y += vec.Y;
-            //        if(_childrenCore.Count > 0) {
-            //            ApplyYRecursively(this, vec.Y);
-            //        }
-            //    }
-
-            //    [MethodImpl(MethodImplOptions.NoInlining)]  // no inlining
-            //    static void ApplyRecursively(Control parent, in Vector2i vec)
-            //    {
-            //        foreach(var child in parent._childrenCore.AsSpan()) {
-            //            child._absolutePosition += vec;
-            //            ApplyRecursively(child, vec);
-            //        }
-            //    }
-
-            //    [MethodImpl(MethodImplOptions.NoInlining)]  // no inlining
-            //    static void ApplyXRecursively(Control parent, int diff)
-            //    {
-            //        foreach(var child in parent._childrenCore.AsSpan()) {
-            //            child._absolutePosition.X += diff;
-            //            ApplyXRecursively(child, diff);
-            //        }
-            //    }
-
-            //    [MethodImpl(MethodImplOptions.NoInlining)]  // no inlining
-            //    static void ApplyYRecursively(Control parent, int diff)
-            //    {
-            //        foreach(var child in parent._childrenCore.AsSpan()) {
-            //            child._absolutePosition.Y += diff;
-            //            ApplyYRecursively(child, diff);
-            //        }
-            //    }
-            //}
-            #endregion
-        }
+        public Vector2i Position => (Vector2i)Renderable.Position.Xy;
 
         /// <summary>Get width of <see cref="Control"/></summary>
         public int Width => (int)Renderable.Scale.X;
@@ -192,8 +126,6 @@ namespace Elffy.UI
             _renderable = new UIRenderable(this);
             var textureConfig = new TextureConfig(TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear, TextureMipmapMode.None, TextureWrapMode.ClampToEdge, TextureWrapMode.ClampToEdge);
             _texture = new TextureCore(textureConfig);
-            Renderable.Activated += OnRenderableActivatedPrivate;
-            Renderable.Dead += OnRenderableDeadPrivate;
         }
 
         public bool TryGetHostScreen([MaybeNullWhen(false)] out IHostScreen screen)
@@ -311,26 +243,24 @@ namespace Elffy.UI
             Renderable.Terminate();
         }
 
-        protected virtual void OnActivated()
-        {
-            Activated?.Invoke(this);
-        }
+        protected virtual void OnActivated() => Activated?.Invoke(this);
 
-        protected virtual void OnDead()
-        {
-            Dead?.Invoke(this);
-        }
+        protected virtual void OnDead() => Dead?.Invoke(this);
 
-        private void OnRenderableActivatedPrivate(FrameObject sender)
+        internal void OnRenderableActivated()
         {
             OnActivated();
         }
 
-        private void OnRenderableDeadPrivate(FrameObject sender)
+        internal void OnRenderableDead()
         {
-            OnDead();
-            Debug.Assert(_layouter is not null);
-            ControlLayouterInternal.Return(ref _layouter);
+            try {
+                OnDead();
+            }
+            finally {
+                Debug.Assert(_layouter is not null);
+                ControlLayouterInternal.Return(ref _layouter);
+            }
         }
 
         /// <summary>Layout itself and update <see cref="Size"/> and <see cref="Position"/>.</summary>

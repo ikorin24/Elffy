@@ -83,5 +83,17 @@ namespace Elffy.UI
             VAO.Unbind();
             IBO.Unbind();
         }
+
+        protected override void OnActivated()
+        {
+            base.OnActivated();
+            _control.OnRenderableActivated();
+        }
+
+        protected override void OnDead()
+        {
+            base.OnDead();
+            _control.OnRenderableDead();
+        }
     }
 }
