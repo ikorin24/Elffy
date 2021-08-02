@@ -22,7 +22,7 @@ namespace Elffy.Core
         private RenderVisibility _visibility;
 
         /// <summary>Before-rendering event</summary>
-        public event RenderingEventHandler? Rendering;
+        public event RenderingEventHandler? BeforeRendering;
         /// <summary>After-rendering event</summary>
         public event RenderingEventHandler? Rendered;
 
@@ -90,7 +90,7 @@ namespace Elffy.Core
                 var withoutScale = modelParent * Position.ToTranslationMatrix4() * Rotation.ToMatrix4();
                 if(visibility == RenderVisibility.Visible) {
                     var model = withoutScale * Scale.ToScaleMatrix4();
-                    Rendering?.Invoke(this, in model, in view, in projection);
+                    BeforeRendering?.Invoke(this, in model, in view, in projection);
                     OnRendering(in model, in view, in projection);
                     Rendered?.Invoke(this, in model, in view, in projection);
                 }

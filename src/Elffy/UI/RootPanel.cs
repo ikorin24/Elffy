@@ -39,7 +39,7 @@ namespace Elffy.UI
         {
             SetAsRootControl();
             Renderable.ActivateOnInternalLayer(UILayer);
-            Renderable.Rendering += ExecuteRelayout;
+            Renderable.BeforeRendering += ExecuteRelayout;
         }
 
         private void ExecuteRelayout(Renderable sender, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
