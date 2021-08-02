@@ -6,30 +6,26 @@ using Elffy.Core;
 
 namespace Elffy
 {
-    /// <summary><see cref="FrameObject"/> のレイヤークラス</summary>
+    /// <summary>Layer class which has the list of <see cref="FrameObject"/></summary>
     [DebuggerDisplay("Layer: {Name} (ObjectCount = {ObjectCount})")]
     public class Layer : ILayer
     {
         private readonly FrameObjectStore _store;
         private LayerCollection? _owner;
+        private readonly string _name;
+        private bool _isVisible;
 
-        /// <summary>
-        /// このレイヤーを持つ親 (<see cref="LayerCollection"/>)<para/>
-        /// ※ このレイヤーを <see cref="LayerCollection"/> に追加する時、必ず <see cref="LayerCollection"/> をこのプロパティに入れるように実装されなければならない。
-        /// 削除時は null を必ず入れる。<para/>
-        /// </summary>
-        internal LayerCollection? Owner
-        {
-            get => _owner;
-            set => _owner = value;
-        }
+        // I must set the owner when the layer is added to the LayerCollection. Set null when removed.
+
+        /// <summary>The owner of the layer</summary>
+        internal LayerCollection? Owner { get => _owner; set => _owner = value; }
         LayerCollection? ILayer.OwnerCollection => Owner;
 
         /// <summary>Get name of the layer</summary>
-        public string Name { get; }
+        public string Name => _name;
 
         /// <inheritdoc/>
-        public bool IsVisible { get; set; } = true;
+        public bool IsVisible { get => _isVisible; set => _isVisible = value; }
 
         /// <summary>Create new <see cref="Layer"/> with specified name.</summary>
         /// <param name="name">name of the layer</param>
@@ -47,7 +43,8 @@ namespace Elffy
                 [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(name));
             }
             capacityHint = Math.Max(0, capacityHint);
-            Name = name;
+            _name = name;
+            _isVisible = true;
             _store = FrameObjectStore.New(capacityHint);
         }
 
