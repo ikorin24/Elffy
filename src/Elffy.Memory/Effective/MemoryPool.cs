@@ -104,7 +104,7 @@ namespace Elffy.Effective
             private readonly int[] _availableIDStack;
             private int _availableHead;
 
-            private FastSyncLock _sync;
+            private FastSpinLock _sync;
 
             public int SegmentSize { get; }
             public int MaxCount => _availableIDStack.Length;

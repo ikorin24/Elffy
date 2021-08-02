@@ -101,7 +101,7 @@ namespace Elffy.Serialization
                 }
             }
             catch {
-                texture.Dispose();
+                (texture as IDisposable).Dispose();
                 throw;
             }
         }

@@ -9,9 +9,9 @@ using System.Runtime.CompilerServices;
 
 namespace Elffy.Components
 {
-    public class MultiTexture : ISingleOwnerComponent, IDisposable
+    public class MultiTexture : ISingleOwnerComponent
     {
-        private SingleOwnerComponentCore _core = new SingleOwnerComponentCore(true);             // Mutable object, Don't change into readonly
+        private SingleOwnerComponentCore _core;             // Mutable object, Don't change into readonly
         private ValueTypeRentMemory<TextureCore> _textureCores;
         private bool _isLoaded;
 
@@ -29,10 +29,10 @@ namespace Elffy.Components
 
         ~MultiTexture() => Dispose(false);
 
-        public void Dispose()
+        void IDisposable.Dispose()
         {
-            Dispose(true);
             GC.SuppressFinalize(this);
+            Dispose(true);
         }
 
         public (Vector2i size, TextureObject texture) GetTextureInfo(int index)
@@ -91,9 +91,9 @@ namespace Elffy.Components
             }
         }
 
-        public virtual void OnAttached(ComponentOwner owner) => _core.OnAttached(owner, this);
+        void IComponent.OnAttached(ComponentOwner owner) => _core.OnAttached(owner, this);
 
-        public virtual void OnDetached(ComponentOwner owner) => _core.OnDetached(owner, this);
+        void IComponent.OnDetached(ComponentOwner owner) => _core.OnDetached(owner, this);
 
         private static void DisposeTextures(ref ValueTypeRentMemory<TextureCore> cores)
         {

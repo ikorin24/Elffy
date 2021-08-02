@@ -6,7 +6,7 @@ using Elffy.Imaging;
 
 namespace Elffy.Components
 {
-    public class Texture : ISingleOwnerComponent, IDisposable
+    public class Texture : ISingleOwnerComponent
     {
         private SingleOwnerComponentCore _core;             // Mutable object, Don't change into readonly
         private TextureCore _textureCore;                   // Mutable object, Don't change into readonly
@@ -31,10 +31,10 @@ namespace Elffy.Components
 
         public ref readonly Vector2i Size => ref _textureCore.Size;
 
-        public Texture(in TextureConfig config, bool autoDispose = true)
+        public Texture(in TextureConfig config)
         {
             _textureCore = new TextureCore(config);
-            _core = new SingleOwnerComponentCore(autoDispose);
+            _core = new SingleOwnerComponentCore();
         }
 
         ~Texture() => Dispose(false);
@@ -83,21 +83,11 @@ namespace Elffy.Components
 
         public TexturePainter GetPainter(in RectI rect, bool copyFromOriginal = true) => _textureCore.GetPainter(rect, copyFromOriginal);
 
-        public virtual void OnAttached(ComponentOwner owner) => OnAttachedCore<Texture>(owner, this);
+        void IComponent.OnAttached(ComponentOwner owner) => _core.OnAttached(owner, this);
 
-        public virtual void OnDetached(ComponentOwner owner) => OnDetachedCore<Texture>(owner, this);
+        void IComponent.OnDetached(ComponentOwner owner) => _core.OnDetached(owner, this);
 
-        protected void OnAttachedCore<TTexture>(ComponentOwner owner, TTexture @this) where TTexture : Texture
-        {
-            _core.OnAttached<TTexture>(owner, @this);
-        }
-
-        protected void OnDetachedCore<TTexture>(ComponentOwner owner, TTexture @this) where TTexture : Texture
-        {
-            _core.OnDetached<TTexture>(owner, @this);
-        }
-
-        public void Dispose()
+        void IDisposable.Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);

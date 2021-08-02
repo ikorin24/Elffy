@@ -13,10 +13,10 @@ using System.Threading;
 
 namespace Elffy.Components
 {
-    public class Skeleton : ISingleOwnerComponent, IDisposable
+    public class Skeleton : ISingleOwnerComponent
     {
-        private SingleOwnerComponentCore _core = new(true);                             // Mutable object, Don't change into readonly
-        private FloatDataTextureImpl _boneTranslationData = new FloatDataTextureImpl();                     // Mutable object, Don't change into readonly
+        private SingleOwnerComponentCore _core;             // Mutable object, Don't change into readonly
+        private FloatDataTextureImpl _boneTranslationData;  // Mutable object, Don't change into readonly
 
         private UnsafeRawArray<Matrix4> _posMatrices;      // Position matrix of each model in model local coordinate (It's read-only after loaded once.)
         private UnsafeRawArray<Matrix4> _posInvMatrices;   // Inverse of _posMatrices (It's read-only after loaded once.)
@@ -90,20 +90,10 @@ namespace Elffy.Components
         }
 
         /// <inheritdoc/>
-        public virtual void OnAttached(ComponentOwner owner) => OnAttachedCore<Skeleton>(owner);
+        void IComponent.OnAttached(ComponentOwner owner) => _core.OnAttached(owner, this);
 
         /// <inheritdoc/>
-        public virtual void OnDetached(ComponentOwner owner) => OnDetachedCore<Skeleton>(owner);
-
-        protected void OnAttachedCore<T>(ComponentOwner owner) where T : Skeleton
-        {
-            _core.OnAttached<T>(owner, (T)this);
-        }
-
-        protected void OnDetachedCore<T>(ComponentOwner owner) where T : Skeleton
-        {
-            _core.OnDetached<T>(owner, (T)this);
-        }
+        void IComponent.OnDetached(ComponentOwner owner) => _core.OnDetached(owner, this);
 
         /// <summary>Get handler to edit translation matrices. (Call <see cref="SkeletonHandler.Dispose"/> to end editing.)</summary>
         /// <returns>handler to edit translation matrices.</returns>
@@ -146,7 +136,7 @@ namespace Elffy.Components
         }
 
         /// <summary>Dispose resources</summary>
-        public void Dispose()
+        void IDisposable.Dispose()
         {
             GC.SuppressFinalize(this);
             Dispose(true);

@@ -6,9 +6,6 @@ namespace Elffy.Components
 {
     public class HumanoidSkeleton : Skeleton
     {
-        public override void OnAttached(ComponentOwner owner) => OnAttachedCore<HumanoidSkeleton>(owner);
-
-        public override void OnDetached(ComponentOwner owner) => OnDetachedCore<HumanoidSkeleton>(owner);
     }
 
     public enum HumanoidBone : byte

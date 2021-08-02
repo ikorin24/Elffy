@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace Elffy.Effective
 {
-    public struct FastSyncLock
+    public struct FastSpinLock
     {
         private const int SYNC_ENTER = 1;
         private const int SYNC_EXIT = 0;

@@ -8,10 +8,10 @@ using System.Diagnostics.CodeAnalysis;
 namespace Elffy.Components
 {
     /// <summary>Float data texture component</summary>
-    public class FloatDataTexture : ISingleOwnerComponent, IDisposable
+    public class FloatDataTexture : ISingleOwnerComponent
     {
-        private SingleOwnerComponentCore _core = new(true);                 // Mutable object, Don't change into readonly
-        private FloatDataTextureImpl _impl = new FloatDataTextureImpl();    // Mutable object, Don't change into readonly
+        private SingleOwnerComponentCore _core; // Mutable object, Don't change into readonly
+        private FloatDataTextureImpl _impl;     // Mutable object, Don't change into readonly
 
         /// <inheritdoc/>
         public ComponentOwner? Owner => _core.Owner;
@@ -52,7 +52,7 @@ namespace Elffy.Components
 
         public void Update(ReadOnlySpan<Color4> pixels, int xOffset) => _impl.Update(pixels, xOffset);
 
-        public void Dispose()
+        void IDisposable.Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
@@ -68,19 +68,9 @@ namespace Elffy.Components
             }
         }
 
-        public void OnAttached(ComponentOwner owner) => OnAttachedCore<FloatDataTexture>(owner, this);
+        void IComponent.OnAttached(ComponentOwner owner) => _core.OnAttached(owner, this);
 
-        public void OnDetached(ComponentOwner owner) => OnDetachedCore<FloatDataTexture>(owner, this);
-
-        protected void OnAttachedCore<T>(ComponentOwner owner, T @this) where T : FloatDataTexture
-        {
-            _core.OnAttached<T>(owner, @this);
-        }
-
-        protected void OnDetachedCore<T>(ComponentOwner owner, T @this) where T : FloatDataTexture
-        {
-            _core.OnDetached<T>(owner, @this);
-        }
+        void IComponent.OnDetached(ComponentOwner owner) => _core.OnDetached(owner, this);
     }
 
     /// <summary>Float data texture implementation struct</summary>

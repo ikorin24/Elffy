@@ -7,9 +7,9 @@ using System.Diagnostics;
 
 namespace Elffy.Components
 {
-    internal sealed class PmxModelParts : ISingleOwnerComponent, IDisposable
+    internal sealed class PmxModelParts : ISingleOwnerComponent
     {
-        private SingleOwnerComponentCore _core = new(true);
+        private SingleOwnerComponentCore _core;
 
         private bool _disposed;
         private ValueTypeRentMemory<int> _vertexCountArray;
@@ -44,11 +44,11 @@ namespace Elffy.Components
 
         ~PmxModelParts() => Dispose(false);
 
-        void IComponent.OnAttached(ComponentOwner owner) => _core.OnAttached<PmxModelParts>(owner, this);
+        void IComponent.OnAttached(ComponentOwner owner) => _core.OnAttached(owner, this);
 
-        void IComponent.OnDetached(ComponentOwner owner) => _core.OnDetached<PmxModelParts>(owner, this);
+        void IComponent.OnDetached(ComponentOwner owner) => _core.OnDetached(owner, this);
 
-        public void Dispose()
+        void IDisposable.Dispose()
         {
             GC.SuppressFinalize(this);
             Dispose(true);
