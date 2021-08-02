@@ -114,14 +114,15 @@ namespace Elffy.Core
             }
         }
 
-        public void Render(in Matrix4 projection, in Matrix4 view)
+        public void Render(in Matrix4 view, in Matrix4 projection)
         {
+            var identity = Matrix4.Identity;
             foreach(var renderable in _renderables.AsSpan()) {
                 // Render only root objects.
                 // Childen are rendered from thier parent 'Render' method.
                 if(renderable.IsRoot == false) { continue; }
                 try {
-                    renderable.Render(projection, view, Matrix4.Identity);
+                    renderable.Render(identity, view, projection);
                 }
                 catch {
                     // Don't throw. (Ignore exceptions in user code)

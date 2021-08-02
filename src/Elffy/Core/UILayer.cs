@@ -57,9 +57,10 @@ namespace Elffy.Core
                                    0, -1, 0, UIRoot.Height,
                                    0, 0, 1, 0,
                                    0, 0, 0, 1);
+            var identity = Matrix4.Identity;
             foreach(var renderable in _store.Renderables) {
                 if(renderable.IsRoot == false) { continue; }
-                renderable.Render(projection, view, Matrix4.Identity);
+                renderable.Render(identity, view, projection);
             }
         }
 

@@ -80,10 +80,10 @@ namespace Elffy.Core
         }
 
         /// <summary>Render the <see cref="Renderable"/>.</summary>
-        /// <param name="projection">projection matrix</param>
-        /// <param name="view">view matrix</param>
         /// <param name="modelParent">parent model matrix</param>
-        internal void Render(in Matrix4 projection, in Matrix4 view, in Matrix4 modelParent)
+        /// <param name="view">view matrix</param>
+        /// <param name="projection">projection matrix</param>
+        internal void Render(in Matrix4 modelParent, in Matrix4 view, in Matrix4 projection)
         {
             var visibility = _visibility;
             if(IsLoaded && visibility == RenderVisibility.Visible || visibility == RenderVisibility.InvisibleSelf) {
@@ -97,7 +97,7 @@ namespace Elffy.Core
                 if(HasChild) {
                     foreach(var child in Children.AsSpan()) {
                         if(child is Renderable renderable) {
-                            renderable.Render(projection, view, withoutScale);
+                            renderable.Render(withoutScale, view, projection);
                         }
                     }
                 }

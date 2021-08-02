@@ -72,6 +72,6 @@ namespace Elffy
         internal void ClearFrameObject() => _store.ClearFrameObject();
         void ILayer.ClearFrameObject() => ClearFrameObject();
 
-        internal void Render(in Matrix4 projection, in Matrix4 view) => _store.Render(projection, view);
+        internal void Render(in Matrix4 view, in Matrix4 projection) => _store.Render(view, projection);
     }
 }

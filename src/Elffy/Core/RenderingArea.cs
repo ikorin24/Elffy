@@ -138,7 +138,7 @@ namespace Elffy.Core
             AsyncBack.DoQueuedEvents(FrameLoopTiming.BeforeRendering);
             foreach(var layer in layers) {
                 if(layer.IsVisible) {
-                    layer.Render(Camera.Projection, Camera.View);
+                    layer.Render(Camera.View, Camera.Projection);
                 }
             }
             GL.Disable(EnableCap.DepthTest);
