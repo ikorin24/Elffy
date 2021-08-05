@@ -13,9 +13,11 @@ namespace Elffy
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static UniTask<AsyncUnit> Activate(this FrameObject source, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
+        public static async UniTask<T> Activate<T>(this T source, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
+            where T : FrameObject
         {
-            return source.Activate(Game.Layers.WorldLayer, timing, cancellationToken);
+            await source.Activate(Game.Layers.WorldLayer, timing, cancellationToken);
+            return source;
         }
     }
 }

@@ -41,30 +41,27 @@ namespace Sandbox
             }
         }
 
-        private static async UniTask<Model3D> CreateModel1()
+        private static UniTask<Model3D> CreateModel1()
         {
             var dice = Resources.Loader.CreateFbxModel("Dice.fbx");
-            await dice.Activate();
             dice.Position.X = 3f;
             dice.Position.Y = 1.5f;
-            return dice;
+            return dice.Activate();
         }
 
-        private static async UniTask<Model3D> CreateModel2()
+        private static UniTask<Model3D> CreateModel2()
         {
             var model = Resources.Loader.CreatePmxModel("Alicia/Alicia_solid.pmx");
             model.Scale = new Vector3(0.3f);
-            await model.Activate();
-            return model;
+            return model.Activate();
         }
 
-        private static async UniTask<SkySphere> CreateSky()
+        private static UniTask<SkySphere> CreateSky()
         {
             var sky = new SkySphere();
             sky.Shader = SkyShaderSource.Instance;
             sky.Scale = new Vector3(500f);
-            await sky.Activate();
-            return sky;
+            return sky.Activate();
         }
 
         private static async UniTask<Plain> CreateFloor()
@@ -77,8 +74,7 @@ namespace Sandbox
             var texture = await Resources.Loader.LoadTextureAsync("floor.png", config);
             plain.AddComponent(texture);
             plain.Rotation = Quaternion.FromAxisAngle(Vector3.UnitX, -90.ToRadian());
-            await plain.Activate();
-            return plain;
+            return await plain.Activate();
         }
 
         private static async UniTask<Cube> CreateBox()
@@ -100,13 +96,12 @@ namespace Sandbox
             }
         }
 
-        private static async UniTask<CameraMouse> CreateCameraMouse()
+        private static UniTask<CameraMouse> CreateCameraMouse()
         {
             var cameraTarget = new Vector3(0, 3, 0);
             Game.Camera.LookAt(cameraTarget, new Vector3(0, 4.5f, 20));
             var cameraMouse = new CameraMouse(Game.Camera, Game.Mouse, cameraTarget);
-            await cameraMouse.Activate();
-            return cameraMouse;
+            return cameraMouse.Activate();
         }
     }
 }

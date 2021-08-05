@@ -88,7 +88,7 @@ namespace Elffy
         /// <param name="timing"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async UniTask<AsyncUnit> Activate(Layer layer, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
+        public async UniTask<FrameObject> Activate(Layer layer, FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
         {
             if(layer is null) { ThrowNullArg(); }
             var screen = GetHostScreen(layer);
@@ -106,7 +106,7 @@ namespace Elffy
                 if(_state == LifeState.Activating) {
                     throw new InvalidOperationException($"Cannot call {nameof(Activate)} method when the life state is {LifeState.Activating}.");
                 }
-                return AsyncUnit.Default;
+                return this;
             }
 
             Debug.Assert(_state == LifeState.New);
@@ -141,7 +141,7 @@ namespace Elffy
             _state = LifeState.Activated;
             layer.AddFrameObject(this);
             OnActivated();
-            return AsyncUnit.Default;
+            return this;
 
             [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(layer));
             [DoesNotReturn] static void ThrowInvalidLayer() => throw new ArgumentException($"{nameof(layer)} is not associated with {nameof(IHostScreen)}");
