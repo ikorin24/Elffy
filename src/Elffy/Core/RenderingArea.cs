@@ -87,10 +87,16 @@ namespace Elffy.Core
         /// <summary>Update and render the next frame</summary>
         public void RenderFrame()
         {
+            // ------------------------------------------------------------
+            // Out of frame loop
+            Debug.Assert(_currentTiming == ScreenCurrentTiming.OutOfFrameLoop);
             var isLastFrame = _isCloseRequested;
             if(isLastFrame) {
                 _runningTokenSource.Cancel();
             }
+
+            // ------------------------------------------------------------
+            // Frame initializing
             _currentTiming = ScreenCurrentTiming.FrameInitializing;
             var uiLayer = Layers.UILayer;
             var layers = Layers.AsReadOnlySpan();
@@ -107,14 +113,17 @@ namespace Elffy.Core
             // UI hit test
             uiLayer.HitTest(Mouse);
 
+            // ------------------------------------------------------------
             // Early update
             _currentTiming = ScreenCurrentTiming.EarlyUpdate;
+            uiLayer.UIEvent();
             AsyncBack.DoQueuedEvents(FrameLoopTiming.EarlyUpdate);
             foreach(var layer in layers) {
                 layer.EarlyUpdate();
             }
             uiLayer.EarlyUpdate();
 
+            // ------------------------------------------------------------
             // Update
             _currentTiming = ScreenCurrentTiming.Update;
             AsyncBack.DoQueuedEvents(FrameLoopTiming.Update);
@@ -123,6 +132,7 @@ namespace Elffy.Core
             }
             uiLayer.Update();
 
+            // ------------------------------------------------------------
             // Late update
             _currentTiming = ScreenCurrentTiming.LateUpdate;
             AsyncBack.DoQueuedEvents(FrameLoopTiming.LateUpdate);
@@ -131,7 +141,8 @@ namespace Elffy.Core
             }
             uiLayer.LateUpdate();
 
-            // Render
+            // ------------------------------------------------------------
+            // Before rendering
             _currentTiming = ScreenCurrentTiming.BeforeRendering;
             FBO.Bind(FBO.Empty, FBO.Target.FrameBuffer);
             ElffyGL.Clear(ClearMask.ColorBufferBit | ClearMask.DepthBufferBit);
@@ -147,9 +158,13 @@ namespace Elffy.Core
             }
             GL.Enable(EnableCap.DepthTest);
 
+            // ------------------------------------------------------------
+            // After rendering
             _currentTiming = ScreenCurrentTiming.AfterRendering;
             AsyncBack.DoQueuedEvents(FrameLoopTiming.AfterRendering);
 
+            // ------------------------------------------------------------
+            // Frame finalizing
             _currentTiming = ScreenCurrentTiming.FrameFinalizing;
 
             // Apply FrameObject removed at previous frame.
@@ -158,10 +173,10 @@ namespace Elffy.Core
             }
             uiLayer.ApplyRemove();
 
+            // ------------------------------------------------------------
+            // Out of frame loop
             _currentTiming = ScreenCurrentTiming.OutOfFrameLoop;
-
             ContextAssociatedMemorySafety.CollectIfExist(OwnerScreen);
-
             if(isLastFrame) {
                 Dispose();
             }

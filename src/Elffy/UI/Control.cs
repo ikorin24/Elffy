@@ -42,6 +42,7 @@ namespace Elffy.UI
         private Color4 _background;
         private bool _isHitTestVisible;
         private bool _isMouseOver;
+        private bool _isMouseOverPrevious;
 
         private ControlLayouterInternal LayouterPrivate => _layouter ?? ControlLayouterInternal.ThrowCannotGetInstance();
 
@@ -90,6 +91,9 @@ namespace Elffy.UI
         /// <summary>get whether the mouse is over this <see cref="Control"/></summary>
         public bool IsMouseOver => _isMouseOver;
 
+        /// <summary>get <see cref="IsMouseOver"/> of the previouse frame</summary>
+        public bool IsMouseOverPreviouse => _isMouseOverPrevious;
+
         /// <summary>get or set <see cref="Control"/> is visible on rendering.</summary>
         public bool IsVisible
         {
@@ -111,9 +115,9 @@ namespace Elffy.UI
         public ref Vector2 RenderTransformOrigin => ref LayouterPrivate.RenderTransformOrigin;
 
         /// <summary>Mouse enter event</summary>
-        public event Action<Control, MouseEventArgs>? MouseEnter;
+        public event Action<Control>? MouseEnter;
         /// <summary>Mouse leave event</summary>
-        public event Action<Control, MouseEventArgs>? MouseLeave;
+        public event Action<Control>? MouseLeave;
 
         public event Action<Control>? Activated;
         public event Action<Control>? Dead;
@@ -140,26 +144,28 @@ namespace Elffy.UI
             scale.Y = size.Y;
         }
 
+        internal void DoUIEvent() => OnUIEvent();
+
+        protected virtual void OnUIEvent()
+        {
+            if(_isMouseOver && !_isMouseOverPrevious) {
+                try {
+                    MouseEnter?.Invoke(this);
+                }
+                catch { }   // Don't throw, ignore exceptions in user code.
+            }
+            if(!_isMouseOver && _isMouseOverPrevious) {
+                try {
+                    MouseLeave?.Invoke(this);
+                }
+                catch { }   // Don't throw, ignore exceptions in user code.
+            }
+        }
+
         protected private void SetAsRootControl()
         {
             Debug.Assert(this is RootPanel);
             _root = SafeCast.As<RootPanel>(this);
-        }
-
-        protected virtual void OnRecieveHitTestResult(bool isHit, Mouse mouse)
-        {
-            var isMouseOverPrev = IsMouseOver;
-            _isMouseOver = isHit;
-            if(isHit) {
-                if(isMouseOverPrev == false) {
-                    MouseEnter?.Invoke(this, new MouseEventArgs(mouse.Position));
-                }
-            }
-            else {
-                if(isMouseOverPrev) {
-                    MouseLeave?.Invoke(this, new MouseEventArgs(mouse.Position));
-                }
-            }
         }
 
         public TexturePainter GetPainter(bool copyFromOriginal = true)
@@ -218,12 +224,12 @@ namespace Elffy.UI
                    mousePos.Y < pos.Y + Height;
         }
 
-        /// <summary>ヒットテストの結果を通知します</summary>
-        /// <param name="isHit">ヒットテスト結果</param>
-        /// <param name="mouse">マウス</param>
-        internal void NotifyHitTestResult(bool isHit, Mouse mouse)
+        /// <summary>Notify the result of the hit test</summary>
+        /// <param name="isHit">the result of the hit test</param>
+        internal void NotifyHitTestResult(bool isHit)
         {
-            OnRecieveHitTestResult(isHit, mouse);
+            _isMouseOverPrevious = _isMouseOver;
+            _isMouseOver = isHit;
         }
 
         internal void AddedToListCallback(Control parent)

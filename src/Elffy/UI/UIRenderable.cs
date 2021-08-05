@@ -27,6 +27,8 @@ namespace Elffy.UI
             IsFrozen = true;        // disable calling update method per frame
         }
 
+        internal void DoUIEvent() => _control.DoUIEvent();
+
         [SkipLocalsInit]
         protected override UniTask<AsyncUnit> OnActivating(CancellationToken cancellationToken)
         {

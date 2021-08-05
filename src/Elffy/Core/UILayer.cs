@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using Elffy.InputSystem;
 using Elffy.UI;
+using System.Diagnostics;
 
 namespace Elffy.Core
 {
@@ -31,7 +32,11 @@ namespace Elffy.Core
         }
 
         /// <inheritdoc/>
-        public void AddFrameObject(FrameObject frameObject) => _store.AddFrameObject(frameObject);
+        public void AddFrameObject(FrameObject frameObject)
+        {
+            Debug.Assert(frameObject is UIRenderable);
+            _store.AddFrameObject(frameObject);
+        }
 
         /// <inheritdoc/>
         public void RemoveFrameObject(FrameObject frameObject) => _store.RemoveFrameObject(frameObject);
@@ -42,6 +47,13 @@ namespace Elffy.Core
         public void ApplyRemove() => _store.ApplyRemove();
 
         public void ApplyAdd() => _store.ApplyAdd();
+
+        public void UIEvent()
+        {
+            foreach(var frameObject in _store.List) {
+                SafeCast.As<UIRenderable>(frameObject).DoUIEvent();
+            }
+        }
 
         public void EarlyUpdate() => _store.EarlyUpdate();
 
@@ -74,10 +86,10 @@ namespace Elffy.Core
                 // Hit control is the last control where mouse over test is true
                 var hitControl = default(Control);
                 RecursiveMouseOverTest(uiRoot, mouse, ref hitControl);
-                RecursiveNotifyHitTestResult(uiRoot, mouse, hitControl);        // TODO: ヒット時イベント中に control を remove されるとまずい (Spanで回してるので)
+                RecursiveNotifyHitTestResult(uiRoot, hitControl);
             }
             else {
-                RecursiveNotifyHitTestFalse(uiRoot, mouse);         // TODO: ヒット時イベント中に control を remove されるとまずい (Spanで回してるので)
+                RecursiveNotifyHitTestFalse(uiRoot);
             }
             return;
 
@@ -91,19 +103,23 @@ namespace Elffy.Core
                 }
             }
 
-            static void RecursiveNotifyHitTestResult(Control control, Mouse mouse, Control? hitControl)
+            static void RecursiveNotifyHitTestResult(Control control, Control? hitControl)
             {
-                control.NotifyHitTestResult(ReferenceEquals(control, hitControl), mouse);
+                // Span で回しているので途中でコントロールを add/remove してはいけない。
+                // そのため、途中でイベントの実行等のユーザーコードを差し込める実装にしてはいけない。
+                control.NotifyHitTestResult(ReferenceEquals(control, hitControl));
                 foreach(var child in control.ChildrenCore.AsSpan()) {
-                    RecursiveNotifyHitTestResult(child, mouse, hitControl);
+                    RecursiveNotifyHitTestResult(child, hitControl);
                 }
             }
 
-            static void RecursiveNotifyHitTestFalse(Control control, Mouse mouse)
+            static void RecursiveNotifyHitTestFalse(Control control)
             {
-                control.NotifyHitTestResult(false, mouse);
+                // Span で回しているので途中でコントロールを add/remove してはいけない。
+                // そのため、途中でイベントの実行等のユーザーコードを差し込める実装にしてはいけない。
+                control.NotifyHitTestResult(false);
                 foreach(var child in control.ChildrenCore.AsSpan()) {
-                    RecursiveNotifyHitTestFalse(child, mouse);
+                    RecursiveNotifyHitTestFalse(child);
                 }
             }
         }

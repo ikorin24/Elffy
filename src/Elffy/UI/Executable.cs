@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.Runtime.CompilerServices;
 using Elffy.InputSystem;
 
 namespace Elffy.UI
@@ -20,56 +21,49 @@ namespace Elffy.UI
         {
         }
 
-        internal void Execute(ExecutableExecutionType type)
+        protected override void OnUIEvent()
         {
-            switch(type) {
-                case ExecutableExecutionType.KeyDown:
-                    KeyDown?.Invoke(this);
-                    break;
-                case ExecutableExecutionType.KeyPress:
-                    KeyPress?.Invoke(this);
-                    break;
-                case ExecutableExecutionType.KeyUp:
-                    KeyUp?.Invoke(this);
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        protected override void OnRecieveHitTestResult(bool isHit, Mouse mouse)
-        {
-            base.OnRecieveHitTestResult(isHit, mouse);
-
+            base.OnUIEvent();
+            var isMouseOver = IsMouseOver;
             // ヒットテストがヒットしていなくても、押しっぱなしなら処理を継続
-            if((isHit || _keyPressed) == false) { return; }
+            if((isMouseOver || _keyPressed) == false) { return; }
 
-            // isHit か _keyPressed の少なくともいずれか1つは true
+            // isMouseOver か _keyPressed の少なくともいずれか1つは true
 
+            if(TryGetHostScreen(out var screen) == false) { return; }
+            var mouse = screen.Mouse;
             if(mouse.IsPressed(MouseButton.Left)) {
-
-                if(isHit) {
+                if(isMouseOver) {
                     if(_keyPressed) {
-                        Execute(ExecutableExecutionType.KeyPress);
+                        FireEvent(KeyPress, this);
                     }
                     else {
                         if(mouse.IsDown(MouseButton.Left)) {
                             _keyPressed = true;
-                            Execute(ExecutableExecutionType.KeyDown);
-                            Execute(ExecutableExecutionType.KeyPress);
+                            FireEvent(KeyDown, this);
+                            FireEvent(KeyPress, this);
                         }
                     }
                 }
                 else if(_keyPressed) {
-                    Execute(ExecutableExecutionType.KeyPress);
+                    FireEvent(KeyPress, this);
                 }
             }
             else {
                 if(_keyPressed) {
                     _keyPressed = false;
-                    Execute(ExecutableExecutionType.KeyUp);
+                    FireEvent(KeyUp, this);
                 }
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void FireEvent(Action<Executable>? action, Executable arg)
+        {
+            try {
+                action?.Invoke(arg);
+            }
+            catch { }   // Don't throw, ignore exceptions in user code.
         }
     }
 }
