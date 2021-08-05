@@ -8,62 +8,44 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy
 {
-    internal sealed class FrameLoopAwaitableTaskSource : IUniTaskSource<AsyncUnit>
+    internal sealed partial class FrameLoopAwaitableTaskSource : IUniTaskSource<AsyncUnit>
     {
         private static readonly object _completedEndPoint = new object();
 
-        private object _endPoint;
-        private FrameLoopTiming _timing;
+        private object? _endPoint;      // AsyncBackEndPoint instance (pending) || '_completedEndPoint' (completed) || null (after completed)
+        private FrameLoopAwaitableTaskSource? _next;
         private CancellationToken _cancellationToken;
-
-        internal static FrameLoopAwaitableTaskSource Create(AsyncBackEndPoint endPoint, FrameLoopTiming timing, CancellationToken cancellationToken)
-        {
-            // TODO: instance pooling
-            var instance = new FrameLoopAwaitableTaskSource(endPoint, timing, cancellationToken);
-            return instance;
-        }
-
-        private FrameLoopAwaitableTaskSource(AsyncBackEndPoint endPoint, FrameLoopTiming timing, CancellationToken cancellationToken)
-        {
-            InitFields(endPoint, timing, cancellationToken);
-        }
-
-        [MemberNotNull(nameof(_endPoint))]
-        private void InitFields(AsyncBackEndPoint endPoint, FrameLoopTiming timing, CancellationToken cancellationToken)
-        {
-            // All fields must be set.
-            if(timing == 0) {
-                _endPoint = _completedEndPoint;
-            }
-            else {
-                _endPoint = endPoint;
-            }
-            _timing = timing;
-            _cancellationToken = cancellationToken;
-        }
+        private short _token;
+        private FrameLoopTiming _timing;
 
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public AsyncUnit GetResult(short token)
         {
             ValidateToken(token);
-            return UnsafeGetStatus() switch
-            {
-                UniTaskStatus.Pending => ThrowInvalidOperation(),
-                UniTaskStatus.Succeeded => AsyncUnit.Default,
-                UniTaskStatus.Faulted => ThrowInvalidStatus(),      // The status will never be UniTaskStatus.Faulted
-                UniTaskStatus.Canceled => ThrowCanceled(),
-                _ => ThrowInvalidStatus(),
-            };
+            if(Interlocked.CompareExchange(ref _endPoint, null, _completedEndPoint) == _completedEndPoint) {
+                Return(this);
+                return AsyncUnit.Default;   // It means success
+            }
+            else {
+                return NotSuccess();
 
-            [DoesNotReturn]
-            static AsyncUnit ThrowInvalidOperation() => throw new InvalidOperationException("Not yet completed, UniTask only allow to use await.");
-
-            [DoesNotReturn]
-            static AsyncUnit ThrowCanceled() => throw new OperationCanceledException();
-
-            [DoesNotReturn]
-            static AsyncUnit ThrowInvalidStatus() => throw new Exception("Invalid status. How did you get here ?");
+                [DebuggerHidden]
+                [MethodImpl(MethodImplOptions.NoInlining)]
+                AsyncUnit NotSuccess()
+                {
+                    var status = UnsafeGetStatus();
+                    Debug.Assert(status != UniTaskStatus.Succeeded);    // 'Succeeded' never come here.
+                    return status switch
+                    {
+                        UniTaskStatus.Pending => throw new InvalidOperationException("Not yet completed, UniTask only allow to use await."),
+                        UniTaskStatus.Canceled => throw new OperationCanceledException(),
+                        UniTaskStatus.Succeeded or
+                        UniTaskStatus.Faulted or
+                        _ => throw new Exception("Invalid status. How did you get here ?"),
+                    };
+                }
+            }
         }
 
         [DebuggerHidden]
@@ -82,7 +64,8 @@ namespace Elffy
         public void OnCompleted(Action<object?> continuation, object? state, short token)
         {
             var endPoint = Interlocked.Exchange(ref _endPoint, _completedEndPoint);
-            if(ReferenceEquals(endPoint, _completedEndPoint)) {
+            if(ReferenceEquals(endPoint, _completedEndPoint) || endPoint is null) {
+                _endPoint = null;
                 ThrowForAwaitTwice();
             }
             else {
@@ -110,12 +93,12 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ValidateToken(short token)
         {
-            return;
-            //if(token != _token) {
-            //    throw new InvalidOperationException("Token version is not matched, can not await twice or get Status after await.");
-            //}
+            if(token != _token) {
+                throw new InvalidOperationException("Token version is not matched, can not await twice or get Status after await.");
+            }
         }
 
+        [DebuggerHidden]
         [DoesNotReturn]
         private static void ThrowForAwaitTwice() => throw new InvalidOperationException("Can not await twice");
     }

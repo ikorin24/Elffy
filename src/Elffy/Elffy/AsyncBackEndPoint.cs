@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -30,7 +29,7 @@ namespace Elffy
         public UniTask<AsyncUnit> ToTiming(FrameLoopTiming timing, CancellationToken cancellationToken = default)
         {
             timing.ThrowArgExceptionIfNotSpecified(nameof(timing));
-            return new UniTask<AsyncUnit>(FrameLoopAwaitableTaskSource.Create(this, timing, cancellationToken), 0);
+            return FrameLoopAwaitableTaskSource.CreateTask(this, timing, cancellationToken);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
