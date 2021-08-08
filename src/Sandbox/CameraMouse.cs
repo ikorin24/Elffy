@@ -73,6 +73,7 @@ namespace Sandbox
 
         private void ZoomCamera(float delta)
         {
+            if(delta == 0) { return; }
             var ratio = 1 + delta;
             var vec = _camera.Position - Target;
             _camera.Position = _camera.Position + vec * delta * -0.1f;
