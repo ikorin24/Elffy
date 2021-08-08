@@ -2,7 +2,6 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using Elffy.InputSystem;
 using Elffy.Components;
 using Elffy.Core;

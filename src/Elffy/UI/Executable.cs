@@ -9,6 +9,9 @@ namespace Elffy.UI
     public abstract class Executable : Control
     {
         private bool _keyPressed;
+        private bool _isEventFlowCanceled;
+
+        public bool IsKeyPressed => _keyPressed;
 
         /// <summary>Key down event</summary>
         public event Action<Executable>? KeyDown;
@@ -24,6 +27,25 @@ namespace Elffy.UI
         protected override void OnUIEvent()
         {
             base.OnUIEvent();
+            OnExecutableEvent();
+        }
+
+        protected private void ForceCancelExecutableEventFlow()
+        {
+            _isEventFlowCanceled = true;
+        }
+
+        private void OnExecutableEvent()
+        {
+            if(_isEventFlowCanceled) {
+                if(_keyPressed) {
+                    _keyPressed = false;
+                    _isEventFlowCanceled = false;
+                    FireEvent(KeyUp, this);
+                }
+                return;
+            }
+
             var isMouseOver = IsMouseOver;
             // ヒットテストがヒットしていなくても、押しっぱなしなら処理を継続
             if((isMouseOver || _keyPressed) == false) { return; }
