@@ -1,96 +1,184 @@
 ﻿#nullable enable
 using Elffy.Mathematics;
 using System;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace Elffy
 {
     /// <summary>Camera class</summary>
-    public class Camera
+    public sealed class Camera
     {
-        private const float NEAR = 3f;
-        /// <summary>Aspect ratio (width / height)</summary>
-        private float _aspect = 1f;
+        private Matrix4 _view;
+        private Matrix4 _projection;
+        private Vector3 _position;
+        private Vector3 _direction;
+        private Vector3 _up;
+        private float _aspect;  // Aspect ratio (width / height). It may be NaN when height is 0.
+        private float _near;
+        private float _far;
+        private CameraProjectionMode _projectionMode;
+        private float _fovy;
+        private float _height;
+
+        /// <summary>Get or set camera projection mode</summary>
+        public CameraProjectionMode ProjectionMode
+        {
+            get => _projectionMode;
+            set
+            {
+                if(_projectionMode == value) { return; }
+                if(_projectionMode != CameraProjectionMode.Perspective && _projectionMode != CameraProjectionMode.Orthographic) {
+                    ThrowArgument($"Invalid value of {nameof(CameraProjectionMode)}");
+                }
+                _projectionMode = value;
+                UpdateProjectionMatrix();
+            }
+        }
 
         /// <summary>Get or set position of the camera.</summary>
         public Vector3 Position
         {
-            get { return _position; }
+            get => _position;
             set
             {
                 _position = value;
-                SetViewMatrix(_position, _direction, _up);
+                CalcViewMatrix(_position, _direction, _up, out _view);
             }
         }
-        private Vector3 _position = new Vector3(0, 0, 10);
 
         /// <summary>Get or set direction of the camera eye.</summary>
+        /// <remarks>The value is noamlized.</remarks>
         public Vector3 Direction
         {
-            get { return _direction; }
+            get => _direction;
             set
             {
                 if(value == Vector3.Zero) { return; }
-                _direction = value;
-                SetViewMatrix(_position, _direction, _up);
+                _direction = value.Normalized();
+                CalcViewMatrix(_position, _direction, _up, out _view);
             }
         }
-        private Vector3 _direction = -Vector3.UnitZ;
 
         /// <summary>Get or set direction of up.</summary>
+        /// <remarks>The value is noamlized.</remarks>
         public Vector3 Up
         {
-            get { return _up; }
+            get => _up;
             set
             {
                 if(value == Vector3.Zero) { return; }
-                _up = value;
-                SetViewMatrix(_position, _direction, _up);
+                _up = value.Normalized();
+                CalcViewMatrix(_position, _direction, _up, out _view);
             }
         }
-        private Vector3 _up = Vector3.UnitY;
 
-        /// <summary>Get or set radian Y field of view of the camera. [0 ~ π]</summary>
-        public float Fovy
-        {
-            get { return _fovy; }
-            set
-            {
-                if(value <= 0 || value > MathTool.Pi) { throw new ArgumentOutOfRangeException("Value must be 0 ~ π. (not include 0)"); }
-                _fovy = value;
-                SetProjectionMatrix(_fovy, _far, _aspect);
-            }
-        }
-        private float _fovy = 25f.ToRadian();
+        /// <summary>Get max distance from the camera. (Use <see cref="SetNearFar(float, float)"/> method to set the value.)</summary>
+        public float Far => _far;
 
-        /// <summary>Get or set max distance from the camera.</summary>
-        public float Far
-        {
-            get { return _far; }
-            set
-            {
-                if(value <= NEAR) { throw new ArgumentException("Value must be bigger than 0. (or value is too small.)"); }
-                _far = value;
-                SetProjectionMatrix(_fovy, _far, _aspect);
-            }
-        }
-        private float _far = 2000f;
+        /// <summary>Get min distance from the camera. (Use <see cref="SetNearFar(float, float)"/> method to set the value.)</summary>
+        public float Near => _near;
 
-        /// <summary>Get View Matrix</summary>
-        internal Matrix4 View { get; private set; } = Matrix4.Identity;
+        /// <summary>Get or set view matrix</summary>
+        public ref readonly Matrix4 View => ref _view;
 
-        /// <summary>Get projection Matrix</summary>
-        internal Matrix4 Projection { get; private set; } = Matrix4.Identity;
+        /// <summary>Get or set projection matrix</summary>
+        public ref readonly Matrix4 Projection => ref _projection;
 
         /// <summary>Constructor</summary>
         internal Camera()
         {
-            SetProjectionMatrix(_fovy, _far, _aspect);
-            SetViewMatrix(_position, _direction, _up);
+            _view = Matrix4.Identity;
+            _projection = Matrix4.Identity;
+            _position = new Vector3(0, 0, 10);
+            _direction = -Vector3.UnitZ;
+            _up = Vector3.UnitY;
+            _near = 0.5f;
+            _far = 2000f;
+            _aspect = 1f;
+            _fovy = 25f.ToRadian();
+            _height = 10;
+
+            UpdateProjectionMatrix();
+            CalcViewMatrix(_position, _direction, _up, out _view);
+        }
+
+        /// <summary>Try to get field of view Y in the case that <see cref="ProjectionMode"/> is <see cref="CameraProjectionMode.Perspective"/>, otherwise return false.</summary>
+        /// <param name="fovy">field of view Y (It is 0 if the method returnes false)</param>
+        /// <returns>succeeded or not</returns>
+        public bool TryGetFovy(out float fovy)
+        {
+            if(_projectionMode == CameraProjectionMode.Perspective) {
+                fovy = _fovy;
+                return true;
+            }
+            fovy = 0;
+            return false;
+        }
+
+        /// <summary>Try to set field of view Y in the case that <see cref="ProjectionMode"/> is <see cref="CameraProjectionMode.Perspective"/>, otherwise return false.</summary>
+        /// <param name="fovy">field of view Y</param>
+        /// <returns>succeeded or not</returns>
+        public bool TrySetFovy(float fovy)
+        {
+            if(_projectionMode == CameraProjectionMode.Perspective) {
+                if(fovy <= 0 || fovy > MathTool.Pi) { ThrowOutOfRange("Value must be 0 ~ π. (not include 0)"); }
+                _fovy = fovy;
+                UpdateProjectionMatrix();
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>Try to get the height of the camera rect in the case that <see cref="ProjectionMode"/> is <see cref="CameraProjectionMode.Orthographic"/>, otherwise return false.</summary>
+        /// <param name="height">height of the camera rect</param>
+        /// <returns>succeeded or not</returns>
+        public bool TryGetHeight(out float height)
+        {
+            if(_projectionMode == CameraProjectionMode.Orthographic) {
+                height = _height;
+                UpdateProjectionMatrix();
+                return true;
+            }
+            height = 0;
+            return false;
+        }
+
+        /// <summary>Try to set the height of the camera rect in the case that <see cref="ProjectionMode"/> is <see cref="CameraProjectionMode.Orthographic"/>, otherwise return false.</summary>
+        /// <param name="height">height of the camera rect</param>
+        /// <returns>succeeded or not</returns>
+        public bool TrySetHeight(float height)
+        {
+            if(_projectionMode == CameraProjectionMode.Orthographic) {
+                _height = height;
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>Set values of near and far</summary>
+        /// <param name="near"></param>
+        /// <param name="far"></param>
+        public void SetNearFar(float near, float far)
+        {
+            if(near <= 0) { ThrowOutOfRange("The value of near is 0 or negative."); }
+            if(far <= 0) { ThrowOutOfRange("The value of far is 0 or negative."); }
+            if(near > far) { ThrowOutOfRange("The value of near must be smaller than the value of far."); }
+            _near = near;
+            _far = far;
+            UpdateProjectionMatrix();
         }
 
         /// <summary>Look at the specified target position.</summary>
         /// <param name="target">position of target</param>
-        public void LookAt(in Vector3 target) => LookAt(target, Position);
+        public void LookAt(in Vector3 target)
+        {
+            var vec = target - _position;
+            if(vec == Vector3.Zero) { return; }
+            _direction = vec.Normalized();
+            CalcViewMatrix(_position, _direction, _up, out _view);
+        }
 
         /// <summary>Look at the specified target position from specified camera position.</summary>
         /// <param name="target">position of target</param>
@@ -99,25 +187,25 @@ namespace Elffy
         {
             var vec = target - cameraPos;
             if(vec == Vector3.Zero) { return; }
-            _direction = vec;
+            _direction = vec.Normalized();
             _position = cameraPos;
-            SetViewMatrix(_position, _direction, _up);
+            CalcViewMatrix(_position, _direction, _up, out _view);
         }
 
-        /// <summary>
-        /// Change fovy with same screen region.<para/>
-        /// [NOTE] Position of the camera is changed in this method.<para/>
-        /// </summary>
+        /// <summary>Change fovy with same screen region.</summary>
+        /// <remarks>Position of the camera is changed in this method.</remarks>
         /// <param name="fovy">Y field of view radian. 0 ~ π</param>
         /// <param name="target">target position where screen region is same as current.</param>
         public void ChangeFovy(float fovy, in Vector3 target)
         {
-            if(fovy <= 0 || fovy > MathTool.Pi) { throw new ArgumentOutOfRangeException($"{nameof(fovy)} must be 0 ~ π. (not include 0)"); }
-            var pos = (1 - MathF.Tan(_fovy / 2f) / MathF.Tan(fovy / 2f)) * (target - Position);
-            _position += pos;
+            if(fovy <= 0 || fovy > MathTool.Pi) { ThrowOutOfRange($"{nameof(fovy)} must be 0 ~ π. (not include 0)"); }
+
+            var pos = _position;
+            var vec = (1 - MathF.Tan(_fovy / 2f) / MathF.Tan(fovy / 2f)) * (target - pos);
+            _position = pos + vec;
             _fovy = fovy;
-            SetProjectionMatrix(_fovy, _far, _aspect);
-            SetViewMatrix(_position, _direction, _up);
+            UpdateProjectionMatrix();
+            CalcViewMatrix(_position, _direction, _up, out _view);
         }
 
         /// <summary>Set screen size. (frame buffer size)</summary>
@@ -125,25 +213,63 @@ namespace Elffy
         /// <param name="height">frame buffer height</param>
         internal void ChangeScreenSize(int width, int height)
         {
-            if(width < 0) { throw new ArgumentOutOfRangeException(nameof(width), width, "value is negative."); }
-            if(height < 0) { throw new ArgumentOutOfRangeException(nameof(height), height, "value is negative."); }
+            if(width < 0) { ThrowOutOfRange($"{nameof(width)} is negative."); }
+            if(height < 0) { ThrowOutOfRange($"{nameof(height)} is negative."); }
 
             _aspect = (float)width / height;
-            SetProjectionMatrix(_fovy, _far, _aspect);
+            UpdateProjectionMatrix();
         }
 
-        private void SetViewMatrix(in Vector3 pos, in Vector3 dir, in Vector3 up)
+        private void UpdateProjectionMatrix()
         {
-            Matrix4.LookAt(pos, pos + dir, up, out var view);
-            View = view;
-        }
-
-        private void SetProjectionMatrix(float radian, float far, float aspect)
-        {
-            if(aspect > 0) {
-                Matrix4.PerspectiveProjection(radian, aspect, NEAR, far, out var projection);
-                Projection = projection;
+            if(_projectionMode == CameraProjectionMode.Perspective) {
+                CalcPerspectiveProjection(_fovy, _near, _far, _aspect, ref _projection);
+            }
+            else if(_projectionMode == CameraProjectionMode.Orthographic) {
+                CalcOrthographicProjection(_height, _near, _far, _aspect, ref _projection);
+            }
+            else {
+                Debug.Fail("Invalid projection mode");
             }
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void CalcViewMatrix(in Vector3 pos, in Vector3 dir, in Vector3 up, out Matrix4 view)
+        {
+            Matrix4.LookAt(pos, pos + dir, up, out view);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void CalcPerspectiveProjection(float fovy, float near, float far, float aspect, ref Matrix4 projection)
+        {
+            // 'aspect' may be NaN, in which case the following condition will be false.
+            if(aspect > 0) {
+                Matrix4.PerspectiveProjection(fovy, aspect, near, far, out projection);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void CalcOrthographicProjection(float height, float near, float far, float aspect, ref Matrix4 projection)
+        {
+            // 'aspect' may be NaN, in which case the following condition will be false.
+            if(aspect > 0) {
+                var y = height / 2f;
+                var x = y * aspect;
+                Matrix4.OrthographicProjection(-x, x, -y, y, near, far, out projection);
+            }
+        }
+
+        [DoesNotReturn]
+        private static void ThrowOutOfRange(string message) => throw new ArgumentOutOfRangeException(message);
+
+        [DoesNotReturn]
+        private static void ThrowArgument(string message) => throw new ArgumentException(message);
+    }
+
+    /// <summary>Camera projection mode</summary>
+    public enum CameraProjectionMode : byte
+    {
+        Perspective = 0,
+        Orthographic = 1,
     }
 }
