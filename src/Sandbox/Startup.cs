@@ -13,6 +13,23 @@ namespace Sandbox
     public static class Startup
     {
         [GameEntryPoint]
+        public static async UniTask Start2()
+        {
+            await new DeferedRenderer().Activate();
+            var cube = Resources.Loader.CreateFbxModel("Dice.fbx");
+            cube.Shader = DeferedRenderingShaderSource.Instance;
+            await cube.Activate();
+
+            var sky = new SkySphere();
+            sky.Shader = DeferedRenderingShaderSource.Instance;
+            sky.Scale = new Vector3(500f);
+            await sky.Activate();
+            
+            await CreateCameraMouse();
+            return;
+        }
+
+        //[GameEntryPoint]
         public static async UniTask Start()
         {
             GameUI.Root.Background = Color4.Black;
