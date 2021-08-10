@@ -128,13 +128,6 @@ namespace Elffy
                     catch {
                         // Ignore exceptions in Terminate()
                     }
-#if DEBUG
-                    finally {
-                        Debug.Assert(_hostScreen == null);
-                        Debug.Assert(_layer == null);
-                        Debug.Assert(_state == LifeState.Dead);
-                    }
-#endif
                 }
 
                 throw;  // Throw exceptions of activating.

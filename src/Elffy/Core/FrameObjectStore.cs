@@ -158,13 +158,16 @@ namespace Elffy.Core
         [MethodImpl(MethodImplOptions.NoInlining)]  // uncommon path, no inlining
         private void ApplyRemovePrivate()
         {
+            var list = _list;
+            var renderables = _renderables;
+
             foreach(var item in _removedBuf.AsSpan()) {
                 Debug.Assert(item.LifeState == LifeState.Terminated);
-                var sucessRemoving = _list.Remove(item);
-                Debug.Assert(sucessRemoving);
+
+                // The FrameObject is not in the list if it failed to activate.
+                list.Remove(item);
                 if(item is Renderable renderable) {
-                    var renderableRemoved = _renderables.Remove(renderable);
-                    Debug.Assert(renderableRemoved);
+                    renderables.Remove(renderable);
                 }
                 try {
                     item.RemovedFromObjectStoreCallback();
