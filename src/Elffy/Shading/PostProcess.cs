@@ -41,10 +41,14 @@ void main()
         }
 
         /// <summary>Compile post process fragment shader.</summary>
+        /// <param name="screen"></param>
         /// <returns>compiled program of post process</returns>
         [SkipLocalsInit]
-        public PostProcessProgram Compile()
+        public PostProcessProgram Compile(IHostScreen screen)
         {
+            if(screen is null) { throw new ArgumentNullException(); }
+            if(Engine.CurrentContext != screen) { throw new InvalidOperationException(); }
+
             // 0 - 3    polygon
             // | / |
             // 1 - 2
@@ -77,7 +81,7 @@ void main()
                 DefineLocation(new VertexDefinition<VertexSlim>(program));
                 VAO.Unbind();
                 VBO.Unbind();
-                return new PostProcessProgram(this, program, vbo, ibo, vao, Engine.CurrentContext!);
+                return new PostProcessProgram(this, program, vbo, ibo, vao, screen);
             }
             catch {
                 VBO.Unbind();

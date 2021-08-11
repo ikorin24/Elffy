@@ -6,29 +6,21 @@ using Elffy.OpenGL;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using OpenTK.Graphics.OpenGL4;
 
 namespace Elffy.Shading
 {
-    internal sealed class GBuffer : IDisposable
+    internal sealed class GBuffer : IGBuffer, IDisposable
     {
         private FBO _fbo;
         private TextureObject _position;
         private TextureObject _normal;
         private TextureObject _color;
         private RBO _depth;
-        private FloatDataTextureImpl _lights;
-        private FloatDataTextureImpl _lightPositions;
-        private int _lightCount;
         private bool _initialized;
 
         public ref readonly FBO FBO => ref _fbo;
-        public ref readonly TextureObject Position => ref _position;
-        public ref readonly TextureObject Normal => ref _normal;
-        public ref readonly TextureObject Color => ref _color;
-        public TextureObject Lights => _lights.TextureObject;
-        public TextureObject LightPositions => _lightPositions.TextureObject;
-        public int LightCount => _lightCount;
 
         public GBuffer()
         {
@@ -36,7 +28,12 @@ namespace Elffy.Shading
 
         ~GBuffer() => Dispose(false);
 
-        public DeferedRenderingPostProcess Initialize(IHostScreen screen, ReadOnlySpan<Vector4> lightPositions, ReadOnlySpan<Color4> lightColors)
+        public GBufferData GetBufferData()
+        {
+            return new GBufferData(_fbo, _position, _normal, _color);
+        }
+
+        public void Initialize(IHostScreen screen)
         {
             if(screen is null) {
                 ThrowNullArg();
@@ -46,37 +43,13 @@ namespace Elffy.Shading
                 ThrowInvalidContext();
                 [DoesNotReturn] static void ThrowInvalidContext() => throw new InvalidOperationException("Invalid current context");
             }
-            if(lightPositions.Length != lightColors.Length) {
-                ThrowInvalidLength();
-                [DoesNotReturn] static void ThrowInvalidLength() => throw new ArgumentException($"{nameof(lightPositions)} and {nameof(lightColors)} must have same length.");
-            }
             if(_initialized) {
                 ThrowNotInitialized();
             }
 
             CreateGBuffer(screen.FrameBufferSize, out _fbo, out _position, out _normal, out _color, out _depth);
-            CreateLightsBuffer(lightPositions, lightColors, out _lights, out _lightPositions);
-            _lightCount = lightPositions.Length;
-            var postProcess = new DeferedRenderingPostProcess(this);
             ContextAssociatedMemorySafety.Register(this, screen);
             _initialized = true;
-            return postProcess;
-        }
-
-        public void UpdateLightPositions(ReadOnlySpan<Vector4> positions, int offset)
-        {
-            if(_initialized) {
-                ThrowNotInitialized();
-            }
-            _lightPositions.Update(positions.MarshalCast<Vector4, Color4>(), offset);
-        }
-
-        public void UpdateLightColors(ReadOnlySpan<Color4> colors, int offset)
-        {
-            if(_initialized) {
-                ThrowNotInitialized();
-            }
-            _lights.Update(colors, offset);
         }
 
         public void Dispose()
@@ -95,8 +68,6 @@ namespace Elffy.Shading
                 TextureObject.Delete(ref _normal);
                 TextureObject.Delete(ref _color);
                 RBO.Delete(ref _depth);
-                _lights.Dispose();
-                _lightPositions.Dispose();
             }
             else {
                 ContextAssociatedMemorySafety.OnFinalized(this);
@@ -192,5 +163,27 @@ namespace Elffy.Shading
 
         [DoesNotReturn]
         private static void ThrowNotInitialized() => throw new InvalidOperationException($"{nameof(GBuffer)} is not initialized.");
+    }
+
+    internal interface IGBuffer
+    {
+        GBufferData GetBufferData();
+    }
+
+    internal readonly ref struct GBufferData
+    {
+        public readonly FBO FBO;
+        public readonly TextureObject Position;
+        public readonly TextureObject Normal;
+        public readonly TextureObject Color;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public GBufferData(in FBO fbo, in TextureObject position, in TextureObject normal, in TextureObject color)
+        {
+            FBO = fbo;
+            Position = position;
+            Normal = normal;
+            Color = color;
+        }
     }
 }
