@@ -56,10 +56,10 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Inverse() => (X, Y, Z) = (-X, -Y, -Z);
+        public void Invert() => (X, Y, Z) = (-X, -Y, -Z);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly Quaternion Inversed() => new Quaternion(-X, -Y, -Z, W);
+        public readonly Quaternion Inverted() => new Quaternion(-X, -Y, -Z, W);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly Matrix3 ToMatrix3()
@@ -129,7 +129,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 operator *(in Quaternion rot, in Vector3 vec)
         {
-            return (rot * new Quaternion(vec.X, vec.Y, vec.Z, 0) * rot.Inversed()).Xyz;
+            return (rot * new Quaternion(vec.X, vec.Y, vec.Z, 0) * rot.Inverted()).Xyz;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
