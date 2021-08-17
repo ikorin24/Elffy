@@ -277,7 +277,7 @@ namespace Elffy.UI
             var parentSize = _parent.Size;
             ref readonly var parentPadding = ref _parent.Padding;
             Debug.Assert(parentSize.X >= 0f && parentSize.Y >= 0f);
-            var (size, relativePos) = DefaultLayoutingMethod(_parent.Size, _parent.Padding, Layouter);
+            var (size, relativePos) = DefaultLayoutingMethod((Vector2)_parent.Size, _parent.Padding, Layouter);
 
             // Change size, position and absolutePosition
             SetSize(size);

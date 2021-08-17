@@ -231,7 +231,7 @@ namespace Elffy.Core
 
             GL.Viewport(0, 0, size.X, size.Y);
             Matrix4.OrthographicProjection(0, size.X, 0, size.Y, UI_NEAR, UI_FAR, out _uiProjection);
-            Layers.UILayer.UIRoot.SetSize(size);
+            Layers.UILayer.UIRoot.SetSize((Vector2)size);
             Debug.WriteLine($"Size changed ({size.X}, {size.Y})");
         }
     }

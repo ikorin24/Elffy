@@ -32,19 +32,28 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector3i(int x, int y, int z) => (X, Y, Z) = (x, y, z);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Vector3i(int value)
+        {
+            X = value;
+            Y = value;
+            Z = value;
+        }
+
         [EditorBrowsable(EditorBrowsableState.Never)]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly void Deconstruct(out int x, out int y, out int z) => (x, y, z) = (X, Y, Z);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly int SumElement() => X + Y + Z;
 
         public readonly override bool Equals(object? obj) => obj is Vector3i i && Equals(i);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly bool Equals(Vector3i other) => X == other.X && Y == other.Y && Z == other.Z;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly override int GetHashCode() => HashCode.Combine(X, Y, Z);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly override string ToString() => DebuggerDisplay;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -53,24 +62,38 @@ namespace Elffy
         public static bool operator ==(in Vector3i left, in Vector3i right) => left.Equals(right);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(in Vector3i left, in Vector3i right) => !(left == right);
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3i operator +(in Vector3i vec1, in Vector3i vec2) => new Vector3i(vec1.X + vec2.X, vec1.Y + vec2.Y, vec1.Z + vec2.Z);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3i operator +(in Vector3i vec1, int right) => new Vector3i(vec1.X + right, vec1.Y + right, vec1.Z + right);
+        public static Vector3i operator +(in Vector3i vec, int right) => new Vector3i(vec.X + right, vec.Y + right, vec.Z + right);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3i operator +(int left, in Vector3i vec) => new Vector3i(left + vec.X, left + vec.Y, left + vec.Z);
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3i operator -(in Vector3i vec1, in Vector3i vec2) => new Vector3i(vec1.X - vec2.X, vec1.Y - vec2.Y, vec1.Z - vec2.Z);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3i operator -(in Vector3i vec1, int right) => new Vector3i(vec1.X - right, vec1.Y - right, vec1.Z - right);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3i operator *(in Vector3i vec1, int right) => new Vector3i(vec1.X * right, vec1.Y * right, vec1.Z * right);
+        public static Vector3i operator -(int left, in Vector3i vec) => new Vector3i(left - vec.X, left - vec.Y, left - vec.Z);
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3i operator *(int right, in Vector3i vec1) => new Vector3i(vec1.X * right, vec1.Y * right, vec1.Z * right);
+        public static Vector3i operator *(in Vector3i vec1, in Vector3i vec2) => new Vector3i(vec1.X * vec2.X, vec1.Y * vec2.Y, vec1.Z * vec2.Z);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3i operator *(in Vector3i vec, int right) => new Vector3i(vec.X * right, vec.Y * right, vec.Z * right);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3i operator *(int left, in Vector3i vec) => new Vector3i(left * vec.X, left * vec.Y, left * vec.Z);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3i operator /(in Vector3i vec1, in Vector3i vec2) => new Vector3i(vec1.X / vec2.X, vec1.Y / vec2.Y, vec1.Z / vec2.Z);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3i operator /(in Vector3i vec1, int right) => new Vector3i(vec1.X / right, vec1.Y / right, vec1.Z / right);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3i operator /(int right, in Vector3i vec1) => new Vector3i(vec1.X / right, vec1.Y / right, vec1.Z / right);
+        public static Vector3i operator /(int left, in Vector3i vec1) => new Vector3i(left / vec1.X, left / vec1.Y, left / vec1.Z);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator Vector3i(in Vector3 vec) => new Vector3i((int)vec.X, (int)vec.Y, (int)vec.Z);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator Vector3(in Vector3i vec) => new Vector3(vec.X, vec.Y, vec.Z);
     }
 }

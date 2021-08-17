@@ -55,25 +55,34 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2i operator +(in Vector2i vec1, in Vector2i vec2) => new Vector2i(vec1.X + vec2.X, vec1.Y + vec2.Y);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2i operator +(in Vector2i vec1, int right) => new Vector2i(vec1.X + right, vec1.Y + right);
+        public static Vector2i operator +(in Vector2i vec, int right) => new Vector2i(vec.X + right, vec.Y + right);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2i operator +(int left, in Vector2i vec) => new Vector2i(left + vec.X, left + vec.Y);
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2i operator -(in Vector2i vec1, in Vector2i vec2) => new Vector2i(vec1.X - vec2.X, vec1.Y - vec2.Y);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2i operator -(in Vector2i vec1, int right) => new Vector2i(vec1.X - right, vec1.Y - right);
+        public static Vector2i operator -(in Vector2i vec, int right) => new Vector2i(vec.X - right, vec.Y - right);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2i operator *(in Vector2i vec1, int right) => new Vector2i(vec1.X * right, vec1.Y * right);
+        public static Vector2i operator -(int left, in Vector2i vec) => new Vector2i(left - vec.X, left - vec.Y);
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2i operator *(int right, in Vector2i vec1) => new Vector2i(vec1.X * right, vec1.Y * right);
+        public static Vector2i operator *(in Vector2i vec1, in Vector2i vec2) => new Vector2i(vec1.X * vec2.X, vec1.Y * vec2.Y);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2i operator /(in Vector2i vec1, int right) => new Vector2i(vec1.X / right, vec1.Y / right);
+        public static Vector2i operator *(in Vector2i vec, int right) => new Vector2i(vec.X * right, vec.Y * right);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2 operator /(in Vector2i vec1, in Vector2 vec2) => new Vector2(vec1.X / vec2.X, vec1.Y / vec2.Y);
+        public static Vector2i operator *(int left, in Vector2i vec) => new Vector2i(left * vec.X, left * vec.Y);
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2i operator /(in Vector2i vec1, in Vector2i vec2) => new Vector2i(vec1.X / vec2.X, vec1.Y / vec2.Y);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2i operator /(in Vector2i vec, int right) => new Vector2i(vec.X / right, vec.Y / right);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2 operator /(int left, in Vector2i vec) => new Vector2(left / vec.X, left / vec.Y);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator Vector2i(in Vector2 vec) => new Vector2i((int)vec.X, (int)vec.Y);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Vector2(in Vector2i vec) => new Vector2(vec.X, vec.Y);
+        public static explicit operator Vector2(in Vector2i vec) => new Vector2(vec.X, vec.Y);
     }
 }
