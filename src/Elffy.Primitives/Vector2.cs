@@ -19,11 +19,11 @@ namespace Elffy
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private readonly string DebuggerDisplay => $"({X}, {Y})";
 
-        public static readonly Vector2 UnitX = new Vector2(1, 0);
-        public static readonly Vector2 UnitY = new Vector2(0, 1);
-        public static readonly Vector2 Zero = new Vector2(0, 0);
-        public static readonly Vector2 One = new Vector2(1, 1);
-        public static unsafe readonly int SizeInBytes = sizeof(Vector2);
+        public static Vector2 UnitX => new Vector2(1, 0);
+        public static Vector2 UnitY => new Vector2(0, 1);
+        public static Vector2 Zero => new Vector2(0, 0);
+        public static Vector2 One => new Vector2(1, 1);
+        public static unsafe int SizeInBytes => sizeof(Vector2);
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         public readonly Vector2 Yx => new Vector2(Y, X);

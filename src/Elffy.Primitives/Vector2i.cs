@@ -16,7 +16,11 @@ namespace Elffy
         [FieldOffset(4)]
         public int Y;
 
-        public static readonly Vector2i Zero = new Vector2i(0, 0);
+        public static Vector2i UnitX => new Vector2i(1, 0);
+        public static Vector2i UnitY => new Vector2i(0, 1);
+        public static Vector2i Zero => new Vector2i(0, 0);
+        public static Vector2i One => new Vector2i(1, 1);
+        public static unsafe int SizeInBytes => sizeof(Vector2i);
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private readonly string DebuggerDisplay => $"({X}, {Y})";

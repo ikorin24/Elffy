@@ -22,12 +22,12 @@ namespace Elffy
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private readonly string DebuggerDisplay => $"({X}, {Y}, {Z})";
 
-        public static readonly Vector3 UnitX = new Vector3(1, 0, 0);
-        public static readonly Vector3 UnitY = new Vector3(0, 1, 0);
-        public static readonly Vector3 UnitZ = new Vector3(0, 0, 1);
-        public static readonly Vector3 Zero = new Vector3(0, 0, 0);
-        public static readonly Vector3 One = new Vector3(1, 1, 1);
-        public static unsafe readonly int SizeInBytes = sizeof(Vector3);
+        public static Vector3 UnitX => new Vector3(1, 0, 0);
+        public static Vector3 UnitY => new Vector3(0, 1, 0);
+        public static Vector3 UnitZ => new Vector3(0, 0, 1);
+        public static Vector3 Zero => new Vector3(0, 0, 0);
+        public static Vector3 One => new Vector3(1, 1, 1);
+        public static unsafe int SizeInBytes => sizeof(Vector3);
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         public readonly Vector2 Xy => new Vector2(X, Y);
