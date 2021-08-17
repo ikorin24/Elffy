@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using NVec4 = System.Numerics.Vector4;
 
 namespace Elffy
 {
@@ -154,7 +155,7 @@ namespace Elffy
         public readonly float LengthSquared
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => (X * X) + (Y * Y) + (Z * Z) + (W * W);
+            get => AsNVec4(this).LengthSquared();
         }
 
         public readonly float Length
@@ -165,16 +166,10 @@ namespace Elffy
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector4(float x, float y, float z, float w) => (X, Y, Z, W) = (x, y, z, w);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Vector4(in Vector4 v) => this = v;
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Vector4(in Vector3 v) => (X, Y, Z, W) = (v.X, v.Y, v.Z, 0);
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector4(in Vector3 v, float w) => (X, Y, Z, W) = (v.X, v.Y, v.Z, w);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Vector4(in Vector2 v) => (X, Y, Z, W) = (v.X, v.Y, 0, 0);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Vector4(in Vector2 v, float z, float w) => (X, Y, Z, W) = (v.X, v.Y, z, w);
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector4(float value) => (X, Y, Z, W) = (value, value, value, value);
 
@@ -184,27 +179,35 @@ namespace Elffy
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly float SumElement() => X + Y + Z + W;
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly float Dot(in Vector4 vec) => Mult(this, vec).SumElement();
+        public readonly float Dot(in Vector4 vec)
+        {
+            return NVec4.Dot(AsNVec4(this), AsNVec4(vec));
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float Dot(in Vector4 vec1, in Vector4 vec2) => vec1.Dot(vec2);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly Vector4 Mult(in Vector4 vec) => new Vector4(X * vec.X, Y * vec.Y, Z * vec.Z, W * vec.W);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 Mult(in Vector4 vec1, in Vector4 vec2) => vec1.Mult(vec2);
+        public static float Dot(in Vector4 vec1, in Vector4 vec2)
+        {
+            return NVec4.Dot(AsNVec4(vec1), AsNVec4(vec2));
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly Vector4 Normalized()
         {
-            var len = Length;
-            return new Vector4(X / len, Y / len, Z / len, W / len);
+            return AsVector4(AsNVec4(this) / Length);
         }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Normalize()
+        {
+            this = Normalized();
+        }
+
         public readonly override bool Equals(object? obj) => obj is Vector4 vector && Equals(vector);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly bool Equals(Vector4 other) => X == other.X && Y == other.Y && Z == other.Z && W == other.W;
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly override int GetHashCode() => HashCode.Combine(X, Y, Z, W);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly override string ToString() => DebuggerDisplay;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -213,21 +216,84 @@ namespace Elffy
         public static bool operator ==(in Vector4 left, in Vector4 right) => left.Equals(right);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(in Vector4 left, in Vector4 right) => !(left == right);
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 operator +(in Vector4 vec1, in Vector4 vec2) => new Vector4(vec1.X + vec2.X, vec1.Y + vec2.Y, vec1.Z + vec2.Z, vec1.W + vec2.W);
+        public static Vector4 operator +(in Vector4 vec1, in Vector4 vec2)
+        {
+            return AsVector4(AsNVec4(vec1) + AsNVec4(vec2));
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 operator +(in Vector4 vec1, float right) => new Vector4(vec1.X + right, vec1.Y + right, vec1.Z + right, vec1.W + right);
+        public static Vector4 operator +(in Vector4 vec, float right)
+        {
+            return AsVector4(AsNVec4(vec) + new NVec4(right));
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 operator -(in Vector4 vec1, in Vector4 vec2) => new Vector4(vec1.X - vec2.X, vec1.Y - vec2.Y, vec1.Z - vec2.Z, vec1.W - vec2.W);
+        public static Vector4 operator +(float left, in Vector4 vec)
+        {
+            return AsVector4(new NVec4(left) + AsNVec4(vec));
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 operator -(in Vector4 vec1, float right) => new Vector4(vec1.X - right, vec1.Y - right, vec1.Z - right, vec1.W - right);
+        public static Vector4 operator -(in Vector4 vec1, in Vector4 vec2)
+        {
+            return AsVector4(AsNVec4(vec1) - AsNVec4(vec2));
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 operator *(in Vector4 vec1, float right) => new Vector4(vec1.X * right, vec1.Y * right, vec1.Z * right, vec1.W * right);
+        public static Vector4 operator -(in Vector4 vec, float right)
+        {
+            return AsVector4(AsNVec4(vec) - new NVec4(right));
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 operator *(float right, in Vector4 vec1) => new Vector4(vec1.X * right, vec1.Y * right, vec1.Z * right, vec1.W * right);
+        public static Vector4 operator -(float left, in Vector4 vec)
+        {
+            return AsVector4(new NVec4(left) - AsNVec4(vec));
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 operator /(in Vector4 vec1, float right) => new Vector4(vec1.X / right, vec1.Y / right, vec1.Z / right, vec1.W / right);
+        public static Vector4 operator *(in Vector4 vec1, in Vector4 vec2)
+        {
+            return AsVector4(AsNVec4(vec1) * AsNVec4(vec2));
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector4 operator /(float right, in Vector4 vec1) => new Vector4(vec1.X / right, vec1.Y / right, vec1.Z / right, vec1.W / right);
+        public static Vector4 operator *(in Vector4 vec, float right)
+        {
+            return AsVector4(AsNVec4(vec) * new NVec4(right));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector4 operator *(float left, in Vector4 vec)
+        {
+            return AsVector4(new NVec4(left) * AsNVec4(vec));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector4 operator /(in Vector4 vec1, in Vector4 vec2)
+        {
+            return AsVector4(AsNVec4(vec1) / AsNVec4(vec2));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector4 operator /(in Vector4 vec, float right)
+        {
+            return AsVector4(AsNVec4(vec) / new NVec4(right));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector4 operator /(float left, in Vector4 vec)
+        {
+            return AsVector4(new NVec4(left) / AsNVec4(vec));
+        }
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static ref readonly NVec4 AsNVec4(in Vector4 vec) => ref Unsafe.As<Vector4, NVec4>(ref Unsafe.AsRef(vec));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static ref readonly Vector4 AsVector4(in NVec4 vec) => ref Unsafe.As<NVec4, Vector4>(ref Unsafe.AsRef(vec));
     }
 }

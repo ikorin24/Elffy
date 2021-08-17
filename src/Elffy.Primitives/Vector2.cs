@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using NVec2 = System.Numerics.Vector2;
 
 namespace Elffy
 {
@@ -31,7 +32,7 @@ namespace Elffy
         public readonly float LengthSquared
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => (X * X) + (Y * Y);
+            get => AsNVec2(this).LengthSquared();
         }
         public readonly float Length
         {
@@ -50,27 +51,35 @@ namespace Elffy
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly float SumElement() => X + Y;
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly float Dot(in Vector2 vec) => Mult(this, vec).SumElement();
+        public readonly float Dot(in Vector2 vec)
+        {
+            return NVec2.Dot(AsNVec2(this), AsNVec2(vec));
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float Dot(in Vector2 vec1, in Vector2 vec2) => vec1.Dot(vec2);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly Vector2 Mult(in Vector2 vec) => new Vector2(X * vec.X, Y * vec.Y);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2 Mult(in Vector2 vec1, in Vector2 vec2) => vec1.Mult(vec2);
+        public static float Dot(in Vector2 vec1, in Vector2 vec2)
+        {
+            return NVec2.Dot(AsNVec2(vec1), AsNVec2(vec2));
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly Vector2 Normalized()
         {
-            var len = Length;
-            return new Vector2(X / len, Y / len);
+            return AsVector2(AsNVec2(this) / AsNVec2(this).Length());
         }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Normalize()
+        {
+            this = Normalized();
+        }
+
         public readonly override bool Equals(object? obj) => obj is Vector2 vector && Equals(vector);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly bool Equals(Vector2 other) => X == other.X && Y == other.Y;
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly override int GetHashCode() => HashCode.Combine(X, Y);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly override string ToString() => DebuggerDisplay;
 
 
@@ -80,26 +89,84 @@ namespace Elffy
         public static bool operator ==(in Vector2 left, in Vector2 right) => left.Equals(right);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(in Vector2 left, in Vector2 right) => !(left == right);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2 operator +(in Vector2 vec1, in Vector2 vec2) => new Vector2(vec1.X + vec2.X, vec1.Y + vec2.Y);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2 operator +(in Vector2 vec1, float right) => new Vector2(vec1.X + right, vec1.Y + right);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2 operator -(in Vector2 vec1, in Vector2 vec2) => new Vector2(vec1.X - vec2.X, vec1.Y - vec2.Y);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2 operator -(in Vector2 vec1, float right) => new Vector2(vec1.X - right, vec1.Y - right);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2 operator *(in Vector2 vec1, float right) => new Vector2(vec1.X * right, vec1.Y * right);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2 operator *(float right, in Vector2 vec1) => new Vector2(vec1.X * right, vec1.Y * right);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2 operator /(in Vector2 vec1, float right) => new Vector2(vec1.X / right, vec1.Y / right);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2 operator /(in Vector2 vec1, in Vector2 vec2) => new Vector2(vec1.X / vec2.X, vec1.Y / vec2.Y);
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2 operator /(in Vector2 vec1, in Vector2i vec2) => new Vector2(vec1.X / vec2.X, vec1.Y / vec2.Y);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2 operator /(float right, in Vector2 vec1) => new Vector2(vec1.X / right, vec1.Y / right);
+        public static Vector2 operator +(in Vector2 vec1, in Vector2 vec2)
+        {
+            return AsVector2(AsNVec2(vec1) + AsNVec2(vec2));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2 operator +(in Vector2 vec, float right)
+        {
+            return AsVector2(AsNVec2(vec) + new NVec2(right));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2 operator +(float left, in Vector2 vec)
+        {
+            return AsVector2(new NVec2(left) + AsNVec2(vec));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2 operator -(in Vector2 vec1, in Vector2 vec2)
+        {
+            return AsVector2(AsNVec2(vec1) - AsNVec2(vec2));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2 operator -(in Vector2 vec, float right)
+        {
+            return AsVector2(AsNVec2(vec) - new NVec2(right));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2 operator -(float left, in Vector2 vec)
+        {
+            return AsVector2(new NVec2(left) - AsNVec2(vec));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2 operator *(in Vector2 vec1, in Vector2 vec2)
+        {
+            return AsVector2(AsNVec2(vec1) * AsNVec2(vec2));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2 operator *(in Vector2 vec, float right)
+        {
+            return AsVector2(AsNVec2(vec) * right);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2 operator *(float left, in Vector2 vec)
+        {
+            return AsVector2(left * AsNVec2(vec));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2 operator /(in Vector2 vec1, in Vector2 vec2)
+        {
+            return AsVector2(AsNVec2(vec1) / AsNVec2(vec2));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2 operator /(in Vector2 vec, float right)
+        {
+            return AsVector2(AsNVec2(vec) / right);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2 operator /(float left, in Vector2 vec)
+        {
+            return AsVector2(new NVec2(left) / AsNVec2(vec));
+        }
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static ref readonly NVec2 AsNVec2(in Vector2 vec) => ref Unsafe.As<Vector2, NVec2>(ref Unsafe.AsRef(vec));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static ref readonly Vector2 AsVector2(in NVec2 vec) => ref Unsafe.As<NVec2, Vector2>(ref Unsafe.AsRef(vec));
     }
 }
