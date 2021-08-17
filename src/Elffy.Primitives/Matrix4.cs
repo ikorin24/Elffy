@@ -3,8 +3,8 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Elffy.Mathematics;
-using NumericsVector3 = System.Numerics.Vector3;
-using NumericsMatrix4x4 = System.Numerics.Matrix4x4;
+using NVec3 = System.Numerics.Vector3;
+using NMat4 = System.Numerics.Matrix4x4;
 
 namespace Elffy
 {
@@ -152,8 +152,7 @@ namespace Elffy
 #else
             result = default;
 #endif
-            return NumericsMatrix4x4.Invert(UnsafeAs<Matrix4, NumericsMatrix4x4>(in this),
-                                            out Unsafe.As<Matrix4, NumericsMatrix4x4>(ref result));
+            return NMat4.Invert(AsNMat4(this), out Unsafe.As<Matrix4, NMat4>(ref result));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -216,10 +215,9 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Matrix4 operator *(in Matrix4 m1, in Matrix4 m2)
         {
-            return UnsafeAs<NumericsMatrix4x4, Matrix4>(
-                NumericsMatrix4x4.Multiply(UnsafeAs<Matrix4, NumericsMatrix4x4>(m2),
-                                           UnsafeAs<Matrix4, NumericsMatrix4x4>(m1))
-                );
+            return AsMatrix4(
+                NMat4.Multiply(AsNMat4(m2), AsNMat4(m1))
+            );
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -291,9 +289,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void FromAxisAngle(in Vector3 axis, float angle, out Matrix4 result)
         {
-            result = UnsafeAs<NumericsMatrix4x4, Matrix4>(
-                NumericsMatrix4x4.CreateFromAxisAngle(UnsafeAs<Vector3, NumericsVector3>(axis), angle)
-            );
+            result = AsMatrix4(NMat4.CreateFromAxisAngle(AsNVec3(axis), angle));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -314,9 +310,12 @@ namespace Elffy
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static ref readonly TTo UnsafeAs<TFrom, TTo>(in TFrom source)
-        {
-            return ref Unsafe.As<TFrom, TTo>(ref Unsafe.AsRef(source));
-        }
+        private static ref readonly NMat4 AsNMat4(in Matrix4 m) => ref Unsafe.As<Matrix4, NMat4>(ref Unsafe.AsRef(m));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static ref readonly Matrix4 AsMatrix4(in NMat4 m) => ref Unsafe.As<NMat4, Matrix4>(ref Unsafe.AsRef(m));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static ref readonly NVec3 AsNVec3(in Vector3 vec) => ref Unsafe.As<Vector3, NVec3>(ref Unsafe.AsRef(vec));
     }
 }
