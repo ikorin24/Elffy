@@ -1,7 +1,13 @@
 ﻿#nullable enable
+
+#if NET5_0_OR_GREATER
+#define CAN_SKIP_INIT
+#endif
+
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using NVec3 = System.Numerics.Vector3;
 
 namespace Elffy
 {
@@ -95,6 +101,20 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Matrix3(in Matrix4 matrix4)
+        {
+            M00 = matrix4.M00;
+            M10 = matrix4.M10;
+            M20 = matrix4.M20;
+            M01 = matrix4.M01;
+            M11 = matrix4.M11;
+            M21 = matrix4.M21;
+            M02 = matrix4.M02;
+            M12 = matrix4.M12;
+            M22 = matrix4.M22;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Matrix3(ReadOnlySpan<float> matrix)
         {
             if(matrix.Length < 9) { throw new ArgumentException("Length >= 9 is needed."); }
@@ -107,6 +127,47 @@ namespace Elffy
             M02 = matrix[6];
             M12 = matrix[7];
             M22 = matrix[8];
+        }
+
+        public readonly bool Inverted(out Matrix3 result)
+        {
+            var u = new NVec3(M00, M01, M02) * new NVec3(M11, M12, M10) * new NVec3(M22, M20, M21);
+            var v = new NVec3(M02, M01, M00) * new NVec3(M11, M10, M12) * new NVec3(M20, M22, M21);
+            var det = 1f / (u.X + u.Y + u.Z - v.X - v.Y - v.Z);
+            if(float.IsNaN(det)) {
+                result = default;
+                return false;
+            }
+
+            var x1 = new NVec3(M11, M12, M10);
+            var x2 = new NVec3(M22, M20, M21);
+            var x3 = new NVec3(M12, M10, M11);
+            var x4 = new NVec3(M21, M22, M20);
+
+            var y1 = new NVec3(M02, M00, M01);
+            var y2 = new NVec3(M21, M22, M20);
+            var y3 = new NVec3(M01, M02, M00);
+            var y4 = new NVec3(M22, M20, M21);
+
+            var z1 = new NVec3(M01, M02, M00);
+            var z2 = new NVec3(M12, M10, M11);
+            var z3 = new NVec3(M02, M00, M01);
+            var z4 = new NVec3(M11, M12, M10);
+
+#if CAN_SKIP_INIT
+            Unsafe.SkipInit(out result);
+            Unsafe.As<float, NVec3>(ref result.M00) = ((x1 * x2) - (x3 * x4)) * det;
+            Unsafe.As<float, NVec3>(ref result.M01) = ((y1 * y2) - (y3 * y4)) * det;
+            Unsafe.As<float, NVec3>(ref result.M02) = ((z1 * z2) - (z3 * z4)) * det;
+#else
+            var p = ((x1 * x2) - (x3 * x4)) * det;
+            var q = ((y1 * y2) - (y3 * y4)) * det;
+            var r = ((z1 * z2) - (z3 * z4)) * det;
+            result = new Matrix3(p.X, q.X, r.X,
+                                 p.Y, q.Y, r.Y,
+                                 p.Z, q.Z, r.Z);
+#endif
+            return true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -167,9 +228,7 @@ namespace Elffy
         public static Matrix3 operator *(in Matrix3 m1, in Matrix3 m2)
         {
             return new Matrix3(m1.M00 * m2.M00 + m1.M01 * m2.M10 + m1.M02 * m2.M20,   m1.M00 * m2.M01 + m1.M01 * m2.M11 + m1.M02 * m2.M21,   m1.M00 * m2.M02 + m1.M01 * m2.M12 + m1.M02 * m2.M22,
-                                                                                                                                            
                                m1.M10 * m2.M00 + m1.M11 * m2.M10 + m1.M12 * m2.M20,   m1.M10 * m2.M01 + m1.M11 * m2.M11 + m1.M12 * m2.M21,   m1.M10 * m2.M02 + m1.M11 * m2.M12 + m1.M12 * m2.M22,
-                                                                                                                                            
                                m1.M20 * m2.M00 + m1.M21 * m2.M10 + m1.M22 * m2.M20,   m1.M20 * m2.M01 + m1.M21 * m2.M11 + m1.M22 * m2.M21,   m1.M20 * m2.M02 + m1.M21 * m2.M12 + m1.M22 * m2.M22);
         }
 
