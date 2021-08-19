@@ -18,6 +18,7 @@ namespace Elffy.Core
         private bool _disposed;
         private Matrix4 _uiProjection;
         private Vector2i _frameBufferSize;
+        private Color4 _clearColor;
         private readonly CancellationTokenSource _runningTokenSource;
 
         [ThreadStatic]
@@ -42,8 +43,19 @@ namespace Elffy.Core
 
         public ScreenCurrentTiming CurrentTiming => _currentTiming;
 
+        public Color4 ClearColor
+        {
+            get => _clearColor;
+            set
+            {
+                _clearColor = value;
+                GL.ClearColor(value.R, value.G, value.B, value.A);
+            }
+        }
+
         internal RenderingArea(IHostScreen screen)
         {
+            _clearColor = Color4.Gray;
             OwnerScreen = screen;
             AsyncBack = new AsyncBackEndPoint(screen);
             Layers = new LayerCollection(this);
@@ -52,8 +64,8 @@ namespace Elffy.Core
 
         public void Initialize()
         {
-            var clearColor = Color4.Gray;
-            GL.ClearColor(clearColor.R, clearColor.G, clearColor.B, clearColor.A);
+            var clearColor = _clearColor;
+            GL.ClearColor(clearColor.R, _clearColor.G, _clearColor.B, _clearColor.A);
             GL.Enable(EnableCap.DepthTest);
 
             // Enable alpha blending.
