@@ -52,26 +52,6 @@ namespace Elffy.Components
             Size = new(image.Width, image.Height);
         }
 
-        [Obsolete("obsolete", true)]
-        [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
-        public unsafe void Load(in Vector2i size, ReadOnlySpan<Color4> pixels)
-        {
-            if(!Texture.IsEmpty) {
-                ThrowAlreadyLoaded();
-            }
-            if(size.X <= 0 || size.Y <= 0) {
-                ThrowInvalidSize();
-                [DoesNotReturn] static void ThrowInvalidSize() => throw new ArgumentOutOfRangeException($"{nameof(size)} is invalid");
-            }
-            if(pixels.Length < size.X * size.Y) {
-                ThrowPixelsTooShort();
-                [DoesNotReturn] static void ThrowPixelsTooShort() => throw new ArgumentException($"{nameof(pixels)} is too short");
-            }
-            fixed(Color4* ptr = pixels) {
-                LoadCore(size, ptr);
-            }
-        }
-
         public unsafe void Load(in Vector2i size, in ColorByte fill)
         {
             using var pixels = new UnsafeRawArray<ColorByte>(size.X * size.Y, false);
