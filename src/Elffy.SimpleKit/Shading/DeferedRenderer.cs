@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using Cysharp.Threading.Tasks;
 using Elffy.OpenGL;
+using OpenTK.Graphics.OpenGL4;
 using System;
 
 namespace Elffy.Shading
@@ -21,7 +22,8 @@ namespace Elffy.Shading
 
             using var lightBuffer = InitLight();
             using var gBuffer = InitGBuffer(screen);
-            var postProcess = new DeferedRenderingPostProcess(gBuffer, lightBuffer);
+            //var postProcess = new DeferedRenderingPostProcess(gBuffer, lightBuffer);
+            var postProcess = new PBRDeferedRenderingPostProcess(gBuffer, lightBuffer);
             var fbo = gBuffer.FBO;
             using var program = postProcess.Compile(screen);
 
@@ -30,7 +32,7 @@ namespace Elffy.Shading
                 var currentFbo = FBO.CurrentDrawBinded;
                 FBO.Bind(fbo, FBO.Target.FrameBuffer);
                 ElffyGL.Clear(ClearMask.ColorBufferBit | ClearMask.DepthBufferBit);
-                postProcess.SetMatrices(camera.View, camera.Projection);
+                postProcess.SetMatrices(camera.View);
 
                 await endPoint.ToTiming(FrameLoopTiming.AfterRendering);
                 FBO.Bind(currentFbo, FBO.Target.FrameBuffer);
@@ -43,7 +45,7 @@ namespace Elffy.Shading
             const int LightCount = 4;
             Span<Vector4> pos = stackalloc Vector4[LightCount];
             Span<Color4> color = stackalloc Color4[LightCount];
-            pos[0] = new Vector4(1, 1, 0, 0);
+            pos[0] = new Vector4(0, 1000, 0, 1);
             pos[1] = new Vector4(0, 0, 0, 0);
             pos[2] = new Vector4(0, 0, 0, 0);
             pos[3] = new Vector4(0, 0, 0, 0);

@@ -14,20 +14,15 @@ namespace Elffy.Components
 
         public ref Color3 Albedo => ref _data.Albedo;
 
-        public ref Half Metallic => ref _data.Metallic;
+        public ref float Metallic => ref _data.Metallic;
 
-        public ref Half Roughness => ref _data.Roughness;
+        public ref float Roughness => ref _data.Roughness;
 
         public ref PBRMaterialData Data => ref _data;
 
-        public PBRMaterial(in Color3 albedo, float metallic, float roughness)
+        public PBRMaterial(in Color3 albedo, float metallic, float roughness, in Color3 emit)
         {
-            _data = new PBRMaterialData(albedo, metallic, roughness);
-        }
-
-        public PBRMaterial(in Color3 albedo, Half metallic, Half roughness)
-        {
-            _data = new PBRMaterialData(albedo, metallic, roughness);
+            _data = new PBRMaterialData(albedo, metallic, roughness, emit);
         }
 
         public PBRMaterial(in PBRMaterialData data)
@@ -54,21 +49,17 @@ namespace Elffy.Components
         [FieldOffset(0)]
         public Color3 Albedo;
         [FieldOffset(12)]
-        public Half Metallic;
-        [FieldOffset(14)]
-        public Half Roughness;
+        public float Metallic;
+        [FieldOffset(16)]
+        public Color3 Emit;
+        [FieldOffset(28)]
+        public float Roughness;
 
-        public PBRMaterialData(in Color3 albedo, float metallic, float roughness)
-        {
-            Albedo = albedo;
-            Metallic = (Half)metallic;
-            Roughness = (Half)roughness;
-        }
-
-        public PBRMaterialData(in Color3 albedo, Half metallic, Half roughness)
+        public PBRMaterialData(in Color3 albedo, float metallic, float roughness, in Color3 emit)
         {
             Albedo = albedo;
             Metallic = metallic;
+            Emit = emit;
             Roughness = roughness;
         }
 

@@ -27,20 +27,22 @@ namespace Elffy.Shading
 
         protected override void SendUniforms(Uniform uniform, in Vector2i screenSize)
         {
-            var gbufferData = _gBuffer.GetBufferData();
-            var lightData = _lightBuffer.GetBufferData();
+            throw new NotImplementedException();
 
-            uniform.Send("_projection", _projection);
-            uniform.Send("_view", _view);
-            uniform.SendTexture2D("_posSampler", gbufferData.Position, TextureUnitNumber.Unit0);
-            uniform.SendTexture2D("_normalSampler", gbufferData.Normal, TextureUnitNumber.Unit1);
-            uniform.SendTexture2D("_colorSampler", gbufferData.Color, TextureUnitNumber.Unit2);
-            uniform.SendTexture1D("_lightPosSampler", lightData.Positions, TextureUnitNumber.Unit3);
-            uniform.SendTexture1D("_lightColorSampler", lightData.Colors, TextureUnitNumber.Unit4);
-            uniform.Send("_ma", new Color3(0.8f));
-            uniform.Send("_md", new Color3(0.35f));
-            uniform.Send("_ms", new Color3(0.5f));
-            uniform.Send("_shininess", 10f);
+            //var gbufferData = _gBuffer.GetBufferData();
+            //var lightData = _lightBuffer.GetBufferData();
+
+            //uniform.Send("_projection", _projection);
+            //uniform.Send("_view", _view);
+            //uniform.SendTexture2D("_posSampler", gbufferData.Position, TextureUnitNumber.Unit0);
+            //uniform.SendTexture2D("_normalSampler", gbufferData.Normal, TextureUnitNumber.Unit1);
+            //uniform.SendTexture2D("_colorSampler", gbufferData.Color, TextureUnitNumber.Unit2);
+            //uniform.SendTexture1D("_lightPosSampler", lightData.Positions, TextureUnitNumber.Unit3);
+            //uniform.SendTexture1D("_lightColorSampler", lightData.Colors, TextureUnitNumber.Unit4);
+            //uniform.Send("_ma", new Color3(0.8f));
+            //uniform.Send("_md", new Color3(0.35f));
+            //uniform.Send("_ms", new Color3(0.5f));
+            //uniform.Send("_shininess", 10f);
         }
 
         private const string FragSource =

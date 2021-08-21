@@ -55,7 +55,7 @@ namespace Elffy.Core
 
         internal RenderingArea(IHostScreen screen)
         {
-            _clearColor = Color4.Gray;
+            _clearColor = Color4.Black;
             OwnerScreen = screen;
             AsyncBack = new AsyncBackEndPoint(screen);
             Layers = new LayerCollection(this);

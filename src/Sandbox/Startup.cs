@@ -17,14 +17,20 @@ namespace Sandbox
         {
             await new DeferedRenderer().Activate();
             var cube = Resources.Loader.CreateFbxModel("Dice.fbx");
-            cube.Shader = DeferedRenderingShaderSource.Instance;
+            cube.AddComponent(new PBRMaterial(new Color3(1, 0.8f, 0.2f), 0.9f, 0.2f, default));
+            cube.Shader = PBRDeferedRenderingShaderSource.Instance;
+            //cube.Scale = new Vector3(3, 1, 1);
+            cube.Rotation = Quaternion.FromAxisAngle(Vector3.UnitX, 70.ToRadian()) * Quaternion.FromAxisAngle(Vector3.UnitZ, 30.ToRadian());
+            //cube.Rotation = Quaternion.FromAxisAngle(Vector3.UnitZ, 30.ToRadian());
+
             await cube.Activate();
 
-            var sky = new SkySphere();
-            sky.Shader = DeferedRenderingShaderSource.Instance;
-            sky.Scale = new Vector3(500f);
-            await sky.Activate();
-            
+            //var sky = new SkySphere();
+            //sky.Shader = PBRDeferedRenderingShaderSource.Instance;
+            //sky.AddComponent(new PBRMaterial(new Color3(1, 0.8f, 0.2f), 0.9f, 0.2f, default));
+            //sky.Scale = new Vector3(500f);
+            //await sky.Activate();
+
             await CreateCameraMouse();
             return;
         }
