@@ -3,9 +3,11 @@ using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Diagnostics.CodeAnalysis;
+using Elffy.Threading;
 using Elffy.Core;
 using Cysharp.Threading.Tasks;
 using System.Threading;
+using Elffy.UI;
 
 namespace Elffy
 {
@@ -149,6 +151,7 @@ namespace Elffy
             if(_state != LifeState.New) { return; }
             Debug.Assert(layer is Layer == false, $"'{typeof(Layer)}' type can't pass here. Where are you from ?");
             Debug.Assert(layer.OwnerCollection is null == false);
+            Debug.Assert(GetType() == typeof(UIRenderable));
 
             var screen = GetHostScreen(layer);
             Debug.Assert(screen is not null);
@@ -158,8 +161,8 @@ namespace Elffy
             _state = LifeState.Activating;
             _layer = layer;
 
-            var activatingTask = OnActivating(cancellationToken: default);  // TODO: UIRenderable は同期的に読み込まれるが、必ずそうなるような別メソッド用意すべき
-            Debug.Assert(activatingTask.Status == UniTaskStatus.Succeeded);
+            // [NOTE] UIRenderable must complete OnActivating synchronously. (See the implementation of UIRenderable)
+            OnActivating(default).SyncGetResult();
 
             _state = LifeState.Activated;
             layer.AddFrameObject(this);

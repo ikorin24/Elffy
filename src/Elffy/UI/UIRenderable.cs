@@ -30,7 +30,7 @@ namespace Elffy.UI
         internal void DoUIEvent() => _control.DoUIEvent();
 
         [SkipLocalsInit]
-        protected override UniTask<AsyncUnit> OnActivating(CancellationToken cancellationToken)
+        protected sealed override UniTask<AsyncUnit> OnActivating(CancellationToken cancellationToken)
         {
             Debug.Assert(InternalLayer is UILayer);
 
@@ -62,6 +62,8 @@ namespace Elffy.UI
             };
             ReadOnlySpan<int> indices = stackalloc int[6] { 0, 2, 1, 2, 0, 3 };
             LoadMesh(vertices, indices);
+
+            // [NOTE] UIRenderable must complete OnActivating synchronously. (See the implementation of FrameObject)
             return AsyncUnit.Default.AsCompletedTask();
         }
 
