@@ -33,6 +33,7 @@ namespace Elffy
 
     public static class FrameLoopTimingExtension
     {
+        private const string DefaultMessage_TimingNotSpecified = "The timing must be specified.";
         private const byte MaxValue = 5;    // max value of FrameLoopTiming
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -48,7 +49,7 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void ThrowArgExceptionIfNotSpecified(this FrameLoopTiming source, string msg)
+        internal static void ThrowArgExceptionIfNotSpecified(this FrameLoopTiming source, string msg = DefaultMessage_TimingNotSpecified)
         {
             if(!source.IsSpecified()) {
                 Throw(msg);
