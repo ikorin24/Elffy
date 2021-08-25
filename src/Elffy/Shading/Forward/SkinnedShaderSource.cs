@@ -4,7 +4,7 @@ using Elffy.Core;
 using Elffy.OpenGL;
 using System;
 
-namespace Elffy.Shading
+namespace Elffy.Shading.Forward
 {
     public sealed class SkinnedShaderSource : ShaderSource
     {

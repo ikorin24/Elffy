@@ -10,7 +10,7 @@ using Elffy.Imaging;
 using Elffy.Effective.Unsafes;
 using Elffy.Components;
 using Elffy.OpenGL;
-using Elffy.Shading;
+using Elffy.Shading.Forward;
 using Elffy.Core;
 using Cysharp.Threading.Tasks;
 using MMDTools.Unmanaged;

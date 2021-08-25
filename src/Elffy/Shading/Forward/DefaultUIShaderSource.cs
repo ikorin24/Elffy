@@ -3,7 +3,7 @@ using Elffy.Core;
 using Elffy.OpenGL;
 using Elffy.UI;
 
-namespace Elffy.Shading
+namespace Elffy.Shading.Forward
 {
     internal sealed class DefaultUIShaderSource : UIShaderSource
     {

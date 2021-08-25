@@ -4,7 +4,7 @@ using Elffy.Components;
 using System;
 using System.Runtime.CompilerServices;
 
-namespace Elffy.Shading
+namespace Elffy.Shading.Forward
 {
     /// <summary>Shader source for physics based rendering</summary>
     public sealed class PBRShaderSource : ShaderSource
