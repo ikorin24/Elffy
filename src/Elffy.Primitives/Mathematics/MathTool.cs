@@ -8,7 +8,7 @@ namespace Elffy.Mathematics
     public static class MathTool
     {
         /// <summary>Pi / 180</summary>
-        private const float PiOver180 = Pi / 180f;
+        public const float PiOver180 = Pi / 180f;
 
         /// <summary>Pi</summary>
         public const float Pi = 3.14159274F;
