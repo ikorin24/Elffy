@@ -3,10 +3,10 @@
 namespace Elffy.InputSystem
 {
     /// <summary>Mouse button type</summary>
-    public enum MouseButton
+    public enum MouseButton : byte
     {
         /// <summary>left button</summary>
-        Left,
+        Left = 0,
         /// <summary>right button</summary>
         Right,
         /// <summary>middle button</summary>
