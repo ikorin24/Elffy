@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Elffy.Threading
 {
-    /// <summary>Provides the </summary>
+    /// <summary>Provides extensions of the task-like type</summary>
     public static class TaskExtension
     {
         /// <summary>Complete the task synchronously. If it cannot, it will throw an <see cref="InvalidOperationException"/>.</summary>
