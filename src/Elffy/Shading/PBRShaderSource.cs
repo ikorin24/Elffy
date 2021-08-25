@@ -1,10 +1,10 @@
 ﻿#nullable enable
 using Elffy.Core;
-using Elffy.Shading;
+using Elffy.Components;
 using System;
 using System.Runtime.CompilerServices;
 
-namespace Elffy.Components
+namespace Elffy.Shading
 {
     /// <summary>Shader source for physics based rendering</summary>
     public sealed class PBRShaderSource : ShaderSource

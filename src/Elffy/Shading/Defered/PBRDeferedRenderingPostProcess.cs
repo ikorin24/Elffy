@@ -1,7 +1,7 @@
 ﻿#nullable enable
 using Elffy.OpenGL;
 
-namespace Elffy.Shading
+namespace Elffy.Shading.Defered
 {
     internal sealed class PBRDeferedRenderingPostProcess : PostProcess
     {

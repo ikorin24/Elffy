@@ -4,7 +4,7 @@ using Elffy.Components;
 using Elffy.Core;
 using Elffy.OpenGL;
 
-namespace Elffy.Shading
+namespace Elffy.Shading.Defered
 {
     public sealed class DeferedRenderingShaderSource : ShaderSource
     {

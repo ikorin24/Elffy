@@ -2,7 +2,7 @@
 using System;
 using Elffy.OpenGL;
 
-namespace Elffy.Shading
+namespace Elffy.Shading.Defered
 {
     internal sealed class DeferedRenderingPostProcess : PostProcess
     {

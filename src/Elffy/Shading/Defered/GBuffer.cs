@@ -9,7 +9,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using OpenTK.Graphics.OpenGL4;
 
-namespace Elffy.Shading
+namespace Elffy.Shading.Defered
 {
     internal sealed class GBuffer : IGBuffer, IDisposable
     {

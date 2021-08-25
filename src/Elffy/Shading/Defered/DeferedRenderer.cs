@@ -3,7 +3,7 @@ using Cysharp.Threading.Tasks;
 using Elffy.OpenGL;
 using System;
 
-namespace Elffy.Shading
+namespace Elffy.Shading.Defered
 {
     public sealed class DeferedRenderer
     {

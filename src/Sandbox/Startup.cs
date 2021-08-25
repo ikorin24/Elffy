@@ -5,6 +5,7 @@ using Elffy;
 using Elffy.Mathematics;
 using Elffy.Shapes;
 using Elffy.Shading;
+using Elffy.Shading.Defered;
 using Elffy.Components;
 
 namespace Sandbox
