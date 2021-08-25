@@ -82,7 +82,7 @@ namespace Elffy
         public readonly Matrix2 Transposed() => new Matrix2(M00, M10, M01, M11);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Matrix2 GetRotateMatrix(float theta)
+        public static Matrix2 GetRotation(float theta)
         {
             var cos = MathF.Cos(theta);
             var sin = MathF.Sin(theta);

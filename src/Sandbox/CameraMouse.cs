@@ -1,83 +1,82 @@
 ﻿#nullable enable
 using System;
+using Cysharp.Threading.Tasks;
 using Elffy;
 using Elffy.InputSystem;
 using Elffy.Mathematics;
 
 namespace Sandbox
 {
-    public class CameraMouse : FrameObject
+    public static class CameraMouse
     {
-        private Camera _camera;
-        private Mouse _mouse;
-        private Vector2 _mousePos;
-        private bool _isMousePressed;
-        private float _sensitivity = 0.01f;
+        private const FrameLoopTiming LoopTiming = FrameLoopTiming.EarlyUpdate;
 
-        public Vector3 Target { get; set; }
-
-        public CameraMouse(Camera camera, Mouse mouse, in Vector3 target)
+        private sealed class CameraMouseObject : FrameObject
         {
-            _camera = camera ?? throw new ArgumentNullException(nameof(camera));
-            _mouse = mouse ?? throw new ArgumentNullException(nameof(mouse));
-            Target = target;
         }
 
-        protected override void OnEarlyUpdate()
+        public static async UniTask<FrameObject> Activate(Vector3 target, Vector3 initialCameraPos)
         {
-            base.OnEarlyUpdate();
-            var wheel = _mouse.Wheel();
-            ZoomCamera(wheel);
+            var obj = new CameraMouseObject();
+            await obj.Activate();
+            Coroutine.Create(obj, (target, initialCameraPos), MoveCameraCoroutine, LoopTiming);
+            return obj;
+        }
 
-            if(_mouse.IsDown(MouseButton.Left)) {
-                _mousePos = _mouse.Position;
-                _isMousePressed = true;
+        public static void Attach(FrameObject parent, in Vector3 target, in Vector3 initialCameraPos)
+        {
+            Coroutine.Create(parent, (target, initialCameraPos), MoveCameraCoroutine, LoopTiming);
+        }
+
+        public static void Attach(IHostScreen parent, in Vector3 target, in Vector3 initialCameraPos)
+        {
+            Coroutine.Create(parent, (target, initialCameraPos), MoveCameraCoroutine, LoopTiming);
+        }
+
+        private static async UniTask MoveCameraCoroutine(CoroutineState coroutine, (Vector3 Target, Vector3 InitialPos) args)
+        {
+            var (target, initialPos) = args;
+            var screen = coroutine.Screen;
+            var mouse = screen.Mouse;
+            var camera = screen.Camera;
+
+            camera.LookAt(target, initialPos);
+            while(coroutine.CanRun) {
+                var cameraPos = camera.Position;
+                var posChanged = false;
+                if(mouse.IsLeftPressed()) {
+                    var vec = mouse.PositionDelta * (MathTool.PiOver180 * 0.5f);
+                    cameraPos = CalcCameraPosition(cameraPos, target, vec.X, vec.Y);
+                    posChanged = true;
+                }
+
+                var wheelDelta = mouse.WheelDelta;
+                if(wheelDelta != 0) {
+                    cameraPos += (cameraPos - target) * wheelDelta * -0.1f;
+                    posChanged = true;
+                }
+
+                if(posChanged) {
+                    camera.LookAt(target, cameraPos);
+                }
+                await coroutine.ToTiming(LoopTiming);
             }
-            if(_mouse.IsUp(MouseButton.Left)) {
-                _mousePos = default;
-                _isMousePressed = false;
-            }
-            if(!_isMousePressed) { return; }
-
-            var vec = (_mouse.Position - _mousePos) * _sensitivity;  // マウス移動差分
-            MoveCamera(-vec.X, vec.Y);
-            _mousePos = _mouse.Position;
         }
 
-        /// <summary><see cref="Target"/>を中心にカメラを回転させます</summary>
-        /// <param name="thetaRad">水平方向(経度)回転角[rad]</param>
-        /// <param name="phiRad">垂直方向(緯度)回転角[rad]</param>
-        private void MoveCamera(float thetaRad, float phiRad)
+        private static Vector3 CalcCameraPosition(in Vector3 cameraPos, in Vector3 center, float horizontalAngle, float verticalAngle)
         {
-            var target = Target;
+            const float MaxVertical = 89.99f * MathTool.PiOver180;
+            const float MinVertical = -MaxVertical;
+            var vec = cameraPos - center;
+            var radius = vec.Length;
+            var xzLength = vec.Xz.Length;
+            var beta = MathF.Atan2(vec.Y, xzLength) + verticalAngle;
+            beta = MathF.Max(MathF.Min(beta, MaxVertical), MinVertical);
 
-            // target を原点とする座標系
-            var v = _camera.Position - target;
-            var alpha = -MathF.Atan2(v.Z, v.X);         // x軸正方向を0度とした時の現在の経度
-            var beta = MathF.Atan2(v.Y, v.Xz.Length);   // 現在の緯度
-
-            var maxBeta = 80.ToRadian();
-            var minBeta = -maxBeta;
-
-            // 緯度方向の回転角
-            phiRad = MathF.Max(MathF.Min(phiRad, maxBeta - beta), minBeta - beta);
-
-            // 経度を0に戻す → 緯度方向回転 → 元の経度+緯度回転
-            var q1 = Quaternion.FromAxisAngle(Vector3.UnitY, -alpha);
-            var q2 = Quaternion.FromAxisAngle(Vector3.UnitZ, phiRad);
-            var q3 = Quaternion.FromAxisAngle(Vector3.UnitY, alpha + thetaRad);
-
-            _camera.Position = q3 * q2 * q1 * v + target;
-            _camera.LookAt(target);
-        }
-
-        private void ZoomCamera(float delta)
-        {
-            if(delta == 0) { return; }
-            var ratio = 1 + delta;
-            var vec = _camera.Position - Target;
-            _camera.Position = _camera.Position + vec * delta * -0.1f;
-            _camera.LookAt(Target);
+            Vector3 result;
+            (result.X, result.Z) = Matrix2.GetRotation(horizontalAngle) * vec.Xz * (radius * MathF.Cos(beta) / xzLength);
+            result.Y = radius * MathF.Sin(beta);
+            return result + center;
         }
     }
 }

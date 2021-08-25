@@ -1,41 +1,42 @@
 ﻿#nullable enable
 using Cysharp.Threading.Tasks;
 using Elffy.OpenGL;
-using OpenTK.Graphics.OpenGL4;
 using System;
 
 namespace Elffy.Shading
 {
-    public sealed class DeferedRenderer : FrameObject
+    public sealed class DeferedRenderer
     {
-        protected override void OnActivated()
+        private DeferedRenderer()
         {
-            base.OnActivated();
-            if(TryGetHostScreen(out var screen) == false) { return; }
-            Loop(screen).Forget();
         }
 
-        private async UniTaskVoid Loop(IHostScreen screen)
+        public static DeferedRenderer Attach(IHostScreen screen)
         {
-            var camera = screen.Camera;
-            var endPoint = screen.AsyncBack;
+            var renderer = new DeferedRenderer();
+            Coroutine.Create(screen, renderer, DeferedRenderingPipeline);
+            return renderer;
+        }
 
+        private static async UniTask DeferedRenderingPipeline(CoroutineState coroutine, DeferedRenderer renderer)
+        {
+            var screen = coroutine.Screen;
+            var camera = screen.Camera;
             using var lightBuffer = InitLight();
             using var gBuffer = InitGBuffer(screen);
-            //var postProcess = new DeferedRenderingPostProcess(gBuffer, lightBuffer);
             var postProcess = new PBRDeferedRenderingPostProcess(gBuffer, lightBuffer);
-            var fbo = gBuffer.FBO;
+            var gBufferFBO = gBuffer.FBO;
             using var program = postProcess.Compile(screen);
 
-            while(screen.IsRunning && LifeState.IsBefore(LifeState.Dead)) {
-                await endPoint.ToTiming(FrameLoopTiming.BeforeRendering);
-                var currentFbo = FBO.CurrentDrawBinded;
-                FBO.Bind(fbo, FBO.Target.FrameBuffer);
+            while(coroutine.CanRun) {
+                await coroutine.ToBeforeRendering();
+                var resultFBO = FBO.CurrentDrawBinded;
+                FBO.Bind(gBufferFBO, FBO.Target.FrameBuffer);
                 ElffyGL.Clear(ClearMask.ColorBufferBit | ClearMask.DepthBufferBit);
-                postProcess.SetMatrices(camera.View);
 
-                await endPoint.ToTiming(FrameLoopTiming.AfterRendering);
-                FBO.Bind(currentFbo, FBO.Target.FrameBuffer);
+                await coroutine.ToAfterRendering();
+                FBO.Bind(resultFBO, FBO.Target.FrameBuffer);
+                postProcess.SetMatrices(camera.View);
                 program.Render(screen.FrameBufferSize);
             }
         }
@@ -45,7 +46,7 @@ namespace Elffy.Shading
             const int LightCount = 4;
             Span<Vector4> pos = stackalloc Vector4[LightCount];
             Span<Color4> color = stackalloc Color4[LightCount];
-            pos[0] = new Vector4(0, 1000, 0, 1);
+            pos[0] = new Vector4(500, 100, 400, 1);
             pos[1] = new Vector4(0, 0, 0, 0);
             pos[2] = new Vector4(0, 0, 0, 0);
             pos[3] = new Vector4(0, 0, 0, 0);

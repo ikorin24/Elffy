@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using System;
-using System.Runtime.CompilerServices;
 using Elffy.Components;
 using Elffy.Core;
 using Elffy.OpenGL;
@@ -35,16 +34,9 @@ namespace Elffy.Shading
             uniform.Send("_view", view);
             uniform.Send("_mvp", projection * view * model);
 
-            ref readonly var material = ref Unsafe.NullRef<PBRMaterialData>();
-            if(target.TryGetComponent<PBRMaterial>(out var m)) {
-                material = ref m.Data;
-            }
-            else {
-                material = ref _fallback;
-            }
+            ref readonly var material = ref target.TryGetComponent<PBRMaterial>(out var m) ? ref m.Data : ref _fallback;
 
-            var albedoMetallic = new Color4(material.Albedo, material.Metallic);
-            uniform.Send("_albedoMetallic", albedoMetallic);
+            uniform.Send("_albedoMetallic", new Color4(material.Albedo, material.Metallic));
             uniform.Send("_emitRoughness", new Color4(material.Emit, material.Roughness));
 
             var hasTexture = target.TryGetComponent<Texture>(out var texture);
@@ -73,7 +65,6 @@ void main()
 
         private const string FragSource =
 @"#version 410
-precision highp float;
 in vec3 _pos;
 in vec3 _normal;
 in vec2 _uv;

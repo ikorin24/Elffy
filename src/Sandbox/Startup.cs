@@ -1,11 +1,10 @@
 ﻿#nullable enable
 using System;
+using Cysharp.Threading.Tasks;
 using Elffy;
 using Elffy.Mathematics;
 using Elffy.Shapes;
 using Elffy.Shading;
-using Cysharp.Threading.Tasks;
-using System.Diagnostics;
 using Elffy.Components;
 
 namespace Sandbox
@@ -15,24 +14,20 @@ namespace Sandbox
         [GameEntryPoint]
         public static async UniTask Start2()
         {
-            await new DeferedRenderer().Activate();
+            var deferedRenderer = DeferedRenderer.Attach(Game.Screen);
+
             var cube = Resources.Loader.CreateFbxModel("Dice.fbx");
-            cube.AddComponent(new PBRMaterial(new Color3(1, 0.8f, 0.2f), 0.9f, 0.2f, default));
+            var material = new PBRMaterial(new PBRMaterialData(new Color3(1, 0.8f, 0.2f), 0.9f, 0.01f, default));
+            cube.AddComponent(material);
             cube.Shader = PBRDeferedRenderingShaderSource.Instance;
-            //cube.Scale = new Vector3(3, 1, 1);
-            cube.Rotation = Quaternion.FromAxisAngle(Vector3.UnitX, 70.ToRadian()) * Quaternion.FromAxisAngle(Vector3.UnitZ, 30.ToRadian());
-            //cube.Rotation = Quaternion.FromAxisAngle(Vector3.UnitZ, 30.ToRadian());
+            await UniTask.WhenAll(cube.Activate(), CreateCameraMouse(cube.Position));
 
-            await cube.Activate();
-
-            //var sky = new SkySphere();
-            //sky.Shader = PBRDeferedRenderingShaderSource.Instance;
-            //sky.AddComponent(new PBRMaterial(new Color3(1, 0.8f, 0.2f), 0.9f, 0.2f, default));
-            //sky.Scale = new Vector3(500f);
-            //await sky.Activate();
-
-            await CreateCameraMouse();
-            return;
+            Coroutine.Create(cube, material, static async (coroutine, material) =>
+            {
+                await foreach(var frame in coroutine.Frames()) {
+                    material.Roughness = MathF.Sin(frame.FrameNum * MathTool.PiOver180 / 3);
+                }
+            });
         }
 
         //[GameEntryPoint]
@@ -44,9 +39,9 @@ namespace Sandbox
                     CreateModel1(),
                     CreateModel2(),
                     CreateBox(),
-                    CreateCameraMouse(),
                     CreateFloor(),
                     CreateSky(),
+                    CreateCameraMouse(new Vector3(0, 3, 0)),
                     Timing.DelayTime(800));
 
                 await Timing.Ensure(FrameLoopTiming.Update);
@@ -107,24 +102,20 @@ namespace Sandbox
             cube.Shader = PhongShaderSource.Instance;
             cube.AddComponent(await Resources.Loader.LoadTextureAsync("box.png"));
             await cube.Activate();
-            StartMotion(cube).Forget();
-            return cube;
-
-            static async UniTaskVoid StartMotion(Cube cube)
+            Coroutine.Create(cube, cube, static async (coroutine, cube) =>
             {
-                while(Game.IsRunning) {
+                while(coroutine.CanRun) {
+                    await coroutine.ToUpdate();
                     cube.Rotate(Vector3.UnitY, 1f.ToRadian());
-                    await Timing.ToUpdate();
                 }
-            }
+            });
+            return cube;
         }
 
-        private static UniTask<CameraMouse> CreateCameraMouse()
+        private static UniTask<FrameObject> CreateCameraMouse(Vector3 target)
         {
-            var cameraTarget = new Vector3(0, 3, 0);
-            Game.Camera.LookAt(cameraTarget, new Vector3(0, 4.5f, 20));
-            var cameraMouse = new CameraMouse(Game.Camera, Game.Mouse, cameraTarget);
-            return cameraMouse.Activate();
+            var initialCameraPos = target + new Vector3(0, 1.5f, 20);
+            return CameraMouse.Activate(target, initialCameraPos);
         }
     }
 }
