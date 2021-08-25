@@ -9,9 +9,9 @@ using Elffy.Core;
 using OpenTK.Graphics.OpenGL4;
 using TKPixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
-namespace Elffy.Components
+namespace Elffy.Components.Implementation
 {
-    internal struct TextureCore : IDisposable
+    public struct TextureCore : IDisposable
     {
         private TextureConfig _config;
         public TextureObject Texture;

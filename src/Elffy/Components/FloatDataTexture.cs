@@ -3,6 +3,7 @@ using Elffy.Core;
 using Elffy.OpenGL;
 using Elffy.Effective;
 using System;
+using Elffy.Components.Implementation;
 
 namespace Elffy.Components
 {
@@ -10,7 +11,7 @@ namespace Elffy.Components
     public class FloatDataTexture : ISingleOwnerComponent
     {
         private SingleOwnerComponentCore _core; // Mutable object, Don't change into readonly
-        private FloatDataTextureImpl _impl;     // Mutable object, Don't change into readonly
+        private FloatDataTextureCore _impl;     // Mutable object, Don't change into readonly
 
         /// <inheritdoc/>
         public ComponentOwner? Owner => _core.Owner;

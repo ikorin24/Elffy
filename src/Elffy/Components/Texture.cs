@@ -3,6 +3,7 @@ using System;
 using Elffy.Core;
 using Elffy.OpenGL;
 using Elffy.Imaging;
+using Elffy.Components.Implementation;
 
 namespace Elffy.Components
 {

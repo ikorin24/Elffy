@@ -5,7 +5,7 @@ using System.Threading;
 using System.Runtime.CompilerServices;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Elffy.Components
+namespace Elffy.Components.Implementation
 {
     // A structure that implements the actual logic part of ISingleOwnerComponent.
     // Something like ManualResetValueTaskSourceCore for IValueTaskSource.

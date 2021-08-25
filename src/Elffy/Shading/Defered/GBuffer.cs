@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using OpenTK.Graphics.OpenGL4;
+using Elffy.Components.Implementation;
 
 namespace Elffy.Shading.Defered
 {
@@ -156,7 +157,7 @@ namespace Elffy.Shading.Defered
         }
 
         private unsafe static void CreateLightsBuffer(ReadOnlySpan<Vector4> positions, ReadOnlySpan<Color4> colors,
-                                                      out FloatDataTextureImpl lightColorsTexture, out FloatDataTextureImpl lightPositionsTexture)
+                                                      out FloatDataTextureCore lightColorsTexture, out FloatDataTextureCore lightPositionsTexture)
         {
             Debug.Assert(positions.Length == colors.Length);
             lightColorsTexture = new();

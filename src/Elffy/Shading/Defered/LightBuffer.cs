@@ -2,7 +2,7 @@
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using Elffy.Components;
+using Elffy.Components.Implementation;
 using Elffy.Effective;
 using Elffy.OpenGL;
 
@@ -10,8 +10,8 @@ namespace Elffy.Shading.Defered
 {
     internal sealed class LightBuffer : ILightBuffer, IDisposable
     {
-        private FloatDataTextureImpl _lights;
-        private FloatDataTextureImpl _lightPositions;
+        private FloatDataTextureCore _lights;
+        private FloatDataTextureCore _lightPositions;
         private int _lightCount;
         private bool _initialized;
 
@@ -70,7 +70,7 @@ namespace Elffy.Shading.Defered
         }
 
         private unsafe static void CreateLightsBuffer(ReadOnlySpan<Vector4> positions, ReadOnlySpan<Color4> colors,
-                                                      out FloatDataTextureImpl lightColorsTexture, out FloatDataTextureImpl lightPositionsTexture)
+                                                      out FloatDataTextureCore lightColorsTexture, out FloatDataTextureCore lightPositionsTexture)
         {
             Debug.Assert(positions.Length == colors.Length);
             lightColorsTexture = new();

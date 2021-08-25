@@ -4,10 +4,10 @@ using Elffy.OpenGL;
 using System;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Elffy.Components
+namespace Elffy.Components.Implementation
 {
     /// <summary>Float data texture implementation struct</summary>
-    public struct FloatDataTextureImpl : IDisposable
+    public struct FloatDataTextureCore : IDisposable
     {
         private TextureObject _to;
         private int _length;

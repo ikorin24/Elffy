@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using Cysharp.Threading.Tasks;
+using Elffy.Components.Implementation;
 using Elffy.Core;
 using Elffy.Effective;
 using Elffy.Effective.Unsafes;
@@ -16,7 +17,7 @@ namespace Elffy.Components
     public class Skeleton : ISingleOwnerComponent
     {
         private SingleOwnerComponentCore _core;             // Mutable object, Don't change into readonly
-        private FloatDataTextureImpl _boneTranslationData;  // Mutable object, Don't change into readonly
+        private FloatDataTextureCore _boneTranslationData;  // Mutable object, Don't change into readonly
 
         private UnsafeRawArray<Matrix4> _posMatrices;      // Position matrix of each model in model local coordinate (It's read-only after loaded once.)
         private UnsafeRawArray<Matrix4> _posInvMatrices;   // Inverse of _posMatrices (It's read-only after loaded once.)
