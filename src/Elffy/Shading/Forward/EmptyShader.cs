@@ -4,18 +4,18 @@ using System;
 
 namespace Elffy.Shading.Forward
 {
-    internal sealed class EmptyShaderSource : ShaderSource
+    internal sealed class EmptyShader : ShaderSource
     {
-        private static EmptyShaderSource? _instance;
+        private static EmptyShader? _instance;
 
         /// <summary>Get singleton instance</summary>
-        public static EmptyShaderSource Instance => _instance ??= new();
+        public static EmptyShader Instance => _instance ??= new();
 
         public override string VertexShaderSource => VertSource;
 
         public override string FragmentShaderSource => FragSource;
 
-        private EmptyShaderSource()
+        private EmptyShader()
         {
         }
 

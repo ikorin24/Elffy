@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 namespace Elffy.Shading.Forward
 {
     /// <summary>Shader source for physics based rendering</summary>
-    public sealed class PBRShaderSource : ShaderSource
+    public sealed class PBRShader : ShaderSource
     {
         public override string VertexShaderSource => VertSource;
 

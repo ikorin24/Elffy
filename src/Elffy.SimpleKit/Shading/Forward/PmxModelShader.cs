@@ -6,16 +6,16 @@ using System;
 
 namespace Elffy.Shading.Forward
 {
-    public sealed class SkinnedShaderSource : ShaderSource
+    public sealed class PmxModelShader : ShaderSource
     {
-        private static SkinnedShaderSource? _instance;
-        public static SkinnedShaderSource Instance => _instance ??= new();
+        private static PmxModelShader? _instance;
+        public static PmxModelShader Instance => _instance ??= new();
 
         public override string VertexShaderSource => VertSource;
 
         public override string FragmentShaderSource => FragSource;
 
-        private SkinnedShaderSource() { }
+        private PmxModelShader() { }
 
         protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
         {
@@ -44,9 +44,9 @@ namespace Elffy.Shading.Forward
 
             var skeleton = target.GetComponent<HumanoidSkeleton>();
             uniform.SendTexture1D("_boneTrans", skeleton.TranslationData, TextureUnitNumber.Unit0);
-            //var parts = target.GetComponent<PmxModelParts>();
-            //ref readonly var texture = ref parts.Textures[parts.TextureIndexArray[parts.Current]];
-            //uniform.SendTexture2D("tex_sampler", texture, TextureUnitNumber.Unit1);
+            var parts = target.GetComponent<PmxModelParts>();
+            ref readonly var texture = ref parts.Textures[parts.TextureIndexArray[parts.Current]];
+            uniform.SendTexture2D("tex_sampler", texture, TextureUnitNumber.Unit1);
         }
 
         private const string VertSource =
@@ -81,18 +81,16 @@ void main()
                     weight.z * GetMat(bone.z) +
                     weight.w * GetMat(bone.w);
     Pos = projection * view * model * skinning * vec4(vPos, 1.0);
-    Pos = projection * view * model * vec4(vPos, 1.0);
     gl_Position = Pos;
     Normal = transpose(inverse(mat3(skinning))) * vNormal;
-    //Normal = vNormal;
-    //UV = vUV;
+    UV = vUV;
 }
 ";
 
         private const string FragSource =
 @"#version 410
 
-//in vec2 UV;
+in vec2 UV;
 in vec4 Pos;
 in vec3 Normal;
 out vec4 fragColor;
@@ -109,7 +107,7 @@ uniform vec3 md;
 uniform vec3 ms;
 uniform float shininess;
 
-//uniform sampler2D tex_sampler;
+uniform sampler2D tex_sampler;
 
 void main()
 {
@@ -123,8 +121,7 @@ void main()
     vec3 V = normalize(-posView);
     vec3 color = (la * ma) + (ld * md * dot(N, L)) + (ls * ms * max(pow(max(0.0, dot(R, V)), shininess), 0.0));
 
-    //fragColor = vec4(color, 1.0) * texture(tex_sampler, UV);
-    fragColor = vec4(color, 1.0);
+    fragColor = vec4(color, 1.0) * texture(tex_sampler, UV);
 }
 ";
     }

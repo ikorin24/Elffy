@@ -149,14 +149,14 @@ namespace Elffy.Core
             if(_shader is null) {
                 if(isUIRenderable) {
                     Debug.Assert(typeof(TVertex) == typeof(VertexSlim));
-                    _shader = DefaultUIShaderSource.Instance;
+                    _shader = DefaultUIShader.Instance;
                 }
                 else {
                     if(VertexMarshalHelper.HasSpecialField(typeof(TVertex), VertexSpecialField.Normal)) {
-                        _shader = PhongShaderSource.Instance;
+                        _shader = PhongShader.Instance;
                     }
                     else {
-                        _shader = EmptyShaderSource.Instance;
+                        _shader = EmptyShader.Instance;
                     }
                 }
             }

@@ -7,18 +7,18 @@ using System;
 namespace Elffy.Shading.Forward
 {
     /// <summary>Simple shader which displays texture.</summary>
-    public sealed class TextureShaderSource : ShaderSource
+    public sealed class ColorTextureShader : ShaderSource
     {
-        private static TextureShaderSource? _instance;
+        private static ColorTextureShader? _instance;
 
         /// <summary>Get singleton instance</summary>
-        public static TextureShaderSource Instance => _instance ??= new();
+        public static ColorTextureShader Instance => _instance ??= new();
 
         public override string VertexShaderSource => VertSource;
 
         public override string FragmentShaderSource => FragSource;
 
-        private TextureShaderSource() { }
+        private ColorTextureShader() { }
 
         protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
         {

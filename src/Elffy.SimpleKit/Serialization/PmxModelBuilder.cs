@@ -227,7 +227,7 @@ namespace Elffy.Serialization
                 model.AddComponent(partsComponent);
 
                 // set shader
-                model.Shader = PmxModelShaderSource.Instance;
+                model.Shader = PmxModelShader.Instance;
 
                 // load vertices and indices
                 load.Invoke(vertices.AsSpan().AsReadOnly(), pmx.SurfaceList.AsSpan().MarshalCast<Surface, int>());

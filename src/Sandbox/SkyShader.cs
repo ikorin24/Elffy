@@ -6,15 +6,15 @@ using System;
 
 namespace Sandbox
 {
-    public class SkyShaderSource : ShaderSource
+    public class SkyShader : ShaderSource
     {
-        public static readonly SkyShaderSource Instance = new SkyShaderSource();
+        public static readonly SkyShader Instance = new SkyShader();
 
         public override string VertexShaderSource => VertSource;
 
         public override string FragmentShaderSource => FragSource;
 
-        private SkyShaderSource()
+        private SkyShader()
         {
         }
 

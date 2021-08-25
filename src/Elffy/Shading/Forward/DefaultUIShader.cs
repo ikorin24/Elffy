@@ -5,15 +5,15 @@ using Elffy.UI;
 
 namespace Elffy.Shading.Forward
 {
-    internal sealed class DefaultUIShaderSource : UIShaderSource
+    internal sealed class DefaultUIShader : UIShaderSource
     {
         public override string VertexShaderSource => VertSource;
 
         public override string FragmentShaderSource => FragSource;
 
-        public static readonly DefaultUIShaderSource Instance = new DefaultUIShaderSource();
+        public static readonly DefaultUIShader Instance = new DefaultUIShader();
 
-        private DefaultUIShaderSource()
+        private DefaultUIShader()
         {
         }
 

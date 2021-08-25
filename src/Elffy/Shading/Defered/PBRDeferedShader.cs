@@ -6,18 +6,18 @@ using Elffy.OpenGL;
 
 namespace Elffy.Shading.Defered
 {
-    public sealed class PBRDeferedRenderingShaderSource : ShaderSource
+    public sealed class PBRDeferedShader : ShaderSource
     {
         private static readonly PBRMaterialData _fallback = new PBRMaterialData();
 
-        private static PBRDeferedRenderingShaderSource? _instance;
-        public static PBRDeferedRenderingShaderSource Instance => _instance ??= new PBRDeferedRenderingShaderSource();
+        private static PBRDeferedShader? _instance;
+        public static PBRDeferedShader Instance => _instance ??= new PBRDeferedShader();
 
         public override string VertexShaderSource => VertSource;
 
         public override string FragmentShaderSource => FragSource;
 
-        private PBRDeferedRenderingShaderSource()
+        private PBRDeferedShader()
         {
         }
 

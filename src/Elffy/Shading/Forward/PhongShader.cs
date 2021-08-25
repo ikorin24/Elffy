@@ -6,16 +6,16 @@ using System;
 
 namespace Elffy.Shading.Forward
 {
-    public sealed class PhongShaderSource : ShaderSource
+    public sealed class PhongShader : ShaderSource
     {
-        private static PhongShaderSource? _instance;
-        public static PhongShaderSource Instance => _instance ??= new();
+        private static PhongShader? _instance;
+        public static PhongShader Instance => _instance ??= new();
 
         public override string VertexShaderSource => VertSource;
 
         public override string FragmentShaderSource => FragSource;
 
-        private PhongShaderSource() { }
+        private PhongShader() { }
 
         protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
         {

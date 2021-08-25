@@ -20,7 +20,7 @@ namespace Sandbox
             var cube = Resources.Loader.CreateFbxModel("Dice.fbx");
             var material = new PBRMaterial(new PBRMaterialData(new Color3(1, 0.8f, 0.2f), 0.9f, 0.01f, default));
             cube.AddComponent(material);
-            cube.Shader = PBRDeferedRenderingShaderSource.Instance;
+            cube.Shader = PBRDeferedShader.Instance;
             await UniTask.WhenAll(cube.Activate(), CreateCameraMouse(cube.Position));
 
             Coroutine.Create(cube, material, static async (coroutine, material) =>
@@ -78,7 +78,7 @@ namespace Sandbox
         private static UniTask<SkySphere> CreateSky()
         {
             var sky = new SkySphere();
-            sky.Shader = SkyShaderSource.Instance;
+            sky.Shader = SkyShader.Instance;
             sky.Scale = new Vector3(500f);
             return sky.Activate();
         }
@@ -87,7 +87,7 @@ namespace Sandbox
         {
             var plain = new Plain();
             plain.Scale = new Vector3(10f);
-            plain.Shader = PhongShaderSource.Instance;
+            plain.Shader = PhongShader.Instance;
             var config = new TextureConfig(TextureExpansionMode.NearestNeighbor, TextureShrinkMode.NearestNeighbor,
                                            TextureMipmapMode.None, TextureWrapMode.ClampToEdge, TextureWrapMode.ClampToEdge);
             var texture = await Resources.Loader.LoadTextureAsync("floor.png", config);
@@ -100,7 +100,7 @@ namespace Sandbox
         {
             var cube = new Cube();
             cube.Position = new(-3, 0.5f, 0);
-            cube.Shader = PhongShaderSource.Instance;
+            cube.Shader = PhongShader.Instance;
             cube.AddComponent(await Resources.Loader.LoadTextureAsync("box.png"));
             await cube.Activate();
             Coroutine.Create(cube, cube, static async (coroutine, cube) =>
