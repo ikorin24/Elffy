@@ -1,29 +1,94 @@
 ﻿#nullable enable
 using Cysharp.Threading.Tasks;
+using Elffy.Effective;
 using Elffy.OpenGL;
 using System;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Shading.Defered
 {
     public sealed class DeferedRenderer
     {
-        private DeferedRenderer()
+        private const int MaxLightCount = 1024 * 1024;
+        private static readonly Vector4 DefaultLightPosition = new Vector4(0, 500, 0, 1);
+        private static readonly Color4 DefaultLightColor = Color4.White;
+
+        private LightBuffer? _lightBuffer;
+
+        public int LightCount => _lightBuffer?.LightCount ?? 0;
+
+        private DeferedRenderer(LightBuffer lightBuffer)
         {
+            _lightBuffer = lightBuffer;
         }
 
-        public static DeferedRenderer Attach(IHostScreen screen)
+        public void UpdateLights(LightUpdateAction action)
         {
-            var renderer = new DeferedRenderer();
+            if(action is null) {
+                ThrowNullArg(nameof(action));
+            }
+
+            // TODO: UpdateLights
+            throw new NotImplementedException();
+        }
+
+        public static DeferedRenderer Attach(IHostScreen screen, int lightCount, LightUpdateAction initializeLight)
+        {
+            var lightBuffer = InitLights(lightCount, initializeLight);
+            var renderer = new DeferedRenderer(lightBuffer);
             Coroutine.Create(screen, renderer, DeferedRenderingPipeline);
             return renderer;
+        }
+
+        private static unsafe LightBuffer InitLights(int lightCount, LightUpdateAction action)
+        {
+            const int Threshold = 16;
+
+            if((uint)lightCount >= (uint)MaxLightCount) {
+                ThrowTooManyLightCount();
+            }
+            if(action is null) {
+                ThrowNullArg(nameof(action));
+            }
+
+            if(lightCount <= Threshold) {
+                Vector4* positionsPtr = stackalloc Vector4[Threshold];
+                Color4* colorsPtr = stackalloc Color4[Threshold];
+                var positions = new Span<Vector4>(positionsPtr, lightCount);
+                var colors = new Span<Color4>(colorsPtr, lightCount);
+                positions.Fill(DefaultLightPosition);
+                colors.Fill(DefaultLightColor);
+                action(new LightUpdateContext(positions, colors));
+
+                var lightBuffer = new LightBuffer();
+                lightBuffer.Initialize(positions, colors);
+                return lightBuffer;
+            }
+            else {
+                using var positionsBuf = new ValueTypeRentMemory<Vector4>(lightCount);
+                using var colorsBuf = new ValueTypeRentMemory<Color4>(lightCount);
+                var positions = positionsBuf.AsSpan();
+                var colors = colorsBuf.AsSpan();
+                positions.Fill(DefaultLightPosition);
+                colors.Fill(DefaultLightColor);
+                action(new LightUpdateContext(positions, colors));
+
+                var lightBuffer = new LightBuffer();
+                lightBuffer.Initialize(positions, colors);
+                return lightBuffer;
+            }
         }
 
         private static async UniTask DeferedRenderingPipeline(CoroutineState coroutine, DeferedRenderer renderer)
         {
             var screen = coroutine.Screen;
             var camera = screen.Camera;
-            using var lightBuffer = InitLight();
-            using var gBuffer = InitGBuffer(screen);
+            Debug.Assert(renderer._lightBuffer is not null);
+            using var lightBuffer = renderer._lightBuffer;
+            using var gBuffer = new GBuffer();
+            gBuffer.Initialize(screen);
+
             var postProcess = new PBRDeferedRenderingPostProcess(gBuffer, lightBuffer);
             var gBufferFBO = gBuffer.FBO;
             using var program = postProcess.Compile(screen);
@@ -41,36 +106,10 @@ namespace Elffy.Shading.Defered
             }
         }
 
-        private static LightBuffer InitLight()
-        {
-            const int LightCount = 4;
-            Span<Vector4> pos = stackalloc Vector4[LightCount];
-            Span<Color4> color = stackalloc Color4[LightCount];
-            pos[0] = new Vector4(500, 100, 400, 1);
-            pos[1] = new Vector4(0, 0, 0, 0);
-            pos[2] = new Vector4(0, 0, 0, 0);
-            pos[3] = new Vector4(0, 0, 0, 0);
-            color[0] = new Color4(1, 1, 1, 1);
-            color[1] = new Color4(1, 1, 1, 1);
-            color[2] = new Color4(1, 1, 1, 1);
-            color[3] = new Color4(1, 1, 1, 1);
+        [DoesNotReturn]
+        private static void ThrowTooManyLightCount() => throw new ArgumentOutOfRangeException($"Light count is too many. (Max Count: {MaxLightCount})");
 
-            var lightBuffer = new LightBuffer();
-            try {
-                lightBuffer.Initialize(pos, color);
-                return lightBuffer;
-            }
-            catch {
-                lightBuffer.Dispose();
-                throw;
-            }
-        }
-
-        private static GBuffer InitGBuffer(IHostScreen screen)
-        {
-            var gBuffer = new GBuffer();
-            gBuffer.Initialize(screen);
-            return gBuffer;
-        }
+        [DoesNotReturn]
+        private static void ThrowNullArg(string message) => throw new ArgumentNullException(message);
     }
 }

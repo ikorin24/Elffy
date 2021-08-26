@@ -15,6 +15,8 @@ namespace Elffy.Shading.Defered
         private int _lightCount;
         private bool _initialized;
 
+        public int LightCount => _lightCount;
+
         public LightBuffer()
         {
         }

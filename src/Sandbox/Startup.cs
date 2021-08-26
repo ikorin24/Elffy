@@ -15,7 +15,10 @@ namespace Sandbox
         [GameEntryPoint]
         public static async UniTask Start2()
         {
-            var deferedRenderer = DeferedRenderer.Attach(Game.Screen);
+            var deferedRenderer = DeferedRenderer.Attach(Game.Screen, 1, context =>
+            {
+                context.SetPointLight(0, new Vector3(0, 100, 50), Color4.White);
+            });
 
             var cube = Resources.Loader.CreateFbxModel("Dice.fbx");
             var material = new PBRMaterial(new PBRMaterialData(new Color3(1, 0.8f, 0.2f), 0.9f, 0.01f, default));
