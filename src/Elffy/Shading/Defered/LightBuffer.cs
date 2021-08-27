@@ -2,6 +2,7 @@
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using Elffy.Components.Implementation;
 using Elffy.Effective;
 using Elffy.OpenGL;
@@ -10,14 +11,19 @@ namespace Elffy.Shading.Defered
 {
     internal sealed class LightBuffer : ILightBuffer, IDisposable
     {
-        private FloatDataTextureCore _lights;
+        private FloatDataTextureCore _lightColors;
         private FloatDataTextureCore _lightPositions;
         private int _lightCount;
         private bool _initialized;
+        private bool _disposed;
 
         public int LightCount => _lightCount;
 
-        public LightBuffer()
+        public bool IsInitialized => _initialized;
+
+        public bool IsDisposed => _disposed;
+
+        internal LightBuffer()
         {
         }
 
@@ -25,7 +31,7 @@ namespace Elffy.Shading.Defered
 
         public LightBufferData GetBufferData()
         {
-            return new LightBufferData(_lights.TextureObject, _lightPositions.TextureObject, _lightCount);
+            return new LightBufferData(_lightColors.TextureObject, _lightPositions.TextureObject, _lightCount);
         }
 
         public void Initialize(ReadOnlySpan<Vector4> positions, ReadOnlySpan<Color4> colors)
@@ -35,28 +41,26 @@ namespace Elffy.Shading.Defered
                 [DoesNotReturn] static void ThrowInvalidLength() => throw new ArgumentException($"{nameof(positions)} and {nameof(colors)} must have same length.");
             }
             if(_initialized) {
-                ThrowNotInitialized();
+                ThrowAlreadyInitialized();
             }
-            CreateLightsBuffer(positions, colors, out _lights, out _lightPositions);
+            CreateLightsBuffer(positions, colors, out _lightColors, out _lightPositions);
             _lightCount = positions.Length;
             _initialized = true;
         }
 
-        //public void UpdateLightPositions(ReadOnlySpan<Vector4> positions, int offset)
-        //{
-        //    if(_initialized) {
-        //        ThrowNotInitialized();
-        //    }
-        //    _lightPositions.Update(positions.MarshalCast<Vector4, Color4>(), offset);
-        //}
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void UpdatePositions(ReadOnlySpan<Vector4> positions, int offset)
+        {
+            if(_initialized == false) { ThrowNotInitialized(); }
+            _lightPositions.Update(positions.MarshalCast<Vector4, Color4>(), offset);
+        }
 
-        //public void UpdateLightColors(ReadOnlySpan<Color4> colors, int offset)
-        //{
-        //    if(_initialized) {
-        //        ThrowNotInitialized();
-        //    }
-        //    _lights.Update(colors, offset);
-        //}
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void UpdateColors(ReadOnlySpan<Color4> positions, int offset)
+        {
+            if(_initialized == false) { ThrowNotInitialized(); }
+            _lightColors.Update(positions, offset);
+        }
 
         public void Dispose()
         {
@@ -66,9 +70,10 @@ namespace Elffy.Shading.Defered
 
         private void Dispose(bool disposing)
         {
-            _lights.Dispose();
+            _lightColors.Dispose();
             _lightPositions.Dispose();
             _lightCount = 0;
+            _disposed = true;
         }
 
         private unsafe static void CreateLightsBuffer(ReadOnlySpan<Vector4> positions, ReadOnlySpan<Color4> colors,
@@ -89,7 +94,10 @@ namespace Elffy.Shading.Defered
         }
 
         [DoesNotReturn]
-        private static void ThrowNotInitialized() => throw new InvalidOperationException($"{nameof(GBuffer)} is not initialized.");
+        private static void ThrowAlreadyInitialized() => throw new InvalidOperationException($"{nameof(LightBuffer)} is already initialized.");
+
+        [DoesNotReturn]
+        private static void ThrowNotInitialized() => throw new InvalidOperationException($"{nameof(LightBuffer)} is not initialized.");
     }
 
     internal interface ILightBuffer

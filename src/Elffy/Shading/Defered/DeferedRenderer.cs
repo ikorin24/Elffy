@@ -5,6 +5,7 @@ using Elffy.OpenGL;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace Elffy.Shading.Defered
 {
@@ -14,7 +15,9 @@ namespace Elffy.Shading.Defered
         private static readonly Vector4 DefaultLightPosition = new Vector4(0, 500, 0, 1);
         private static readonly Color4 DefaultLightColor = Color4.White;
 
-        private LightBuffer? _lightBuffer;
+        private readonly LightBuffer _lightBuffer;
+
+        private bool IsDisposed => _lightBuffer.IsDisposed;
 
         public int LightCount => _lightBuffer?.LightCount ?? 0;
 
@@ -23,14 +26,30 @@ namespace Elffy.Shading.Defered
             _lightBuffer = lightBuffer;
         }
 
-        public void UpdateLights(LightUpdateAction action)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void UpdateLightPositions(ReadOnlySpan<Vector4> positions)
         {
-            if(action is null) {
-                ThrowNullArg(nameof(action));
-            }
+            UpdateLightPositions(positions, 0);
+        }
 
-            // TODO: UpdateLights
-            throw new NotImplementedException();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void UpdateLightPositions(ReadOnlySpan<Vector4> positions, int offset)
+        {
+            if(IsDisposed) { return; }
+            _lightBuffer.UpdatePositions(positions, offset);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void UpdateLightColors(ReadOnlySpan<Color4> colors)
+        {
+            UpdateLightColors(colors, 0);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void UpdateLightColors(ReadOnlySpan<Color4> colors, int offset)
+        {
+            if(IsDisposed) { return; }
+            _lightBuffer.UpdateColors(colors, offset);
         }
 
         public static DeferedRenderer Attach(IHostScreen screen, int lightCount, LightUpdateAction initializeLight)

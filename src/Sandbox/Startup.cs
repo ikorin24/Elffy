@@ -7,6 +7,7 @@ using Elffy.Shapes;
 using Elffy.Shading.Defered;
 using Elffy.Shading.Forward;
 using Elffy.Components;
+using Elffy.Effective;
 
 namespace Sandbox
 {
@@ -30,6 +31,26 @@ namespace Sandbox
             {
                 await foreach(var frame in coroutine.Frames()) {
                     material.Roughness = MathF.Sin(frame.FrameNum * MathTool.PiOver180 / 3);
+                }
+            });
+
+            Coroutine.Create(Game.Screen, deferedRenderer, async (coroutine, renderer) =>
+            {
+                using var pos = new ValueTypeRentMemory<Vector4>(renderer.LightCount);
+                using var color = new ValueTypeRentMemory<Color4>(renderer.LightCount);
+                long i = 0;
+                while(coroutine.CanRun) {
+                    await Timing.DelayTime(1000);
+                    color[0] = Rand.Color4();
+                    if(i % 2 == 0) {
+                        pos[0] = new Vector4(0, 100, -50, 1f);
+                    }
+                    else {
+                        pos[0] = new Vector4(0, 100, 50, 1f);
+                    }
+                    renderer.UpdateLightPositions(pos.AsSpan());
+                    renderer.UpdateLightColors(color.AsSpan());
+                    i++;
                 }
             });
         }
