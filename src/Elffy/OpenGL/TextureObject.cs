@@ -290,13 +290,6 @@ namespace Elffy.OpenGL
             GL.TexParameter(TextureTarget.Texture1D, TextureParameterName.TextureWrapS, GetWrapMode(wrapMode));
         }
 
-        /// <summary>Call glTexparameter with texture1D and texture wrap t</summary>
-        /// <param name="wrapMode">texture wrap mode</param>
-        public static void Parameter1DWrapT(TextureWrapMode wrapMode)
-        {
-            GL.TexParameter(TextureTarget.Texture1D, TextureParameterName.TextureWrapT, GetWrapMode(wrapMode));
-        }
-
         /// <summary>Call glGenerateMipmap with texture1D</summary>
         public static void GenerateMipmap1D()
         {
