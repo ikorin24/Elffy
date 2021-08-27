@@ -16,23 +16,28 @@ namespace Sandbox
         [GameEntryPoint]
         public static async UniTask Start2()
         {
-            var deferedRenderer = DeferedRenderer.Attach(Game.Screen, 1, context =>
+            var deferedRenderer = DeferedRenderer.Attach(Game.Screen, 10, context =>
             {
-                context.SetPointLight(0, new Vector3(0, 100, 50), Color4.White);
+                var interval = 100;
+                for(int i = 0; i < context.LightCount; i++) {
+                    var x = i * interval - context.LightCount * interval / 2;
+                    var pos = new Vector3(x, 10, 0);
+                    context.SetPointLight(i, pos, Color4.White);
+                }
             });
 
             var cube = Resources.Loader.CreateFbxModel("Dice.fbx");
-            var material = new PBRMaterial(new PBRMaterialData(new Color3(1, 0.8f, 0.2f), 0.9f, 0.01f, default));
+            var material = new PBRMaterial(new PBRMaterialData(new Color3(1, 0.8f, 0.2f), 0.99f, 0.1f, default));
             cube.AddComponent(material);
             cube.Shader = PBRDeferedShader.Instance;
             await UniTask.WhenAll(cube.Activate(), CreateCameraMouse(cube.Position));
 
-            Coroutine.Create(cube, material, static async (coroutine, material) =>
-            {
-                await foreach(var frame in coroutine.Frames()) {
-                    material.Roughness = MathF.Sin(frame.FrameNum * MathTool.PiOver180 / 3);
-                }
-            });
+            //Coroutine.Create(cube, material, static async (coroutine, material) =>
+            //{
+            //    await foreach(var frame in coroutine.Frames()) {
+            //        material.Roughness = MathF.Sin(frame.FrameNum * MathTool.PiOver180 / 3);
+            //    }
+            //});
 
             Coroutine.Create(Game.Screen, deferedRenderer, async (coroutine, renderer) =>
             {
@@ -48,8 +53,8 @@ namespace Sandbox
                     else {
                         pos[0] = new Vector4(0, 100, 50, 1f);
                     }
-                    renderer.UpdateLightPositions(pos.AsSpan());
-                    renderer.UpdateLightColors(color.AsSpan());
+                    //renderer.UpdateLightPositions(pos.AsSpan());
+                    //renderer.UpdateLightColors(color.AsSpan());
                     i++;
                 }
             });
