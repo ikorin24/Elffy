@@ -9,7 +9,7 @@ using Elffy.OpenGL;
 
 namespace Elffy.Shading.Defered
 {
-    internal sealed class LightBuffer : ILightBuffer, IDisposable
+    internal sealed class LightBuffer : IDisposable
     {
         private FloatDataTextureCore _lightColors;
         private FloatDataTextureCore _lightPositions;
@@ -98,11 +98,6 @@ namespace Elffy.Shading.Defered
 
         [DoesNotReturn]
         private static void ThrowNotInitialized() => throw new InvalidOperationException($"{nameof(LightBuffer)} is not initialized.");
-    }
-
-    internal interface ILightBuffer
-    {
-        LightBufferData GetBufferData();
     }
 
     internal readonly ref struct LightBufferData

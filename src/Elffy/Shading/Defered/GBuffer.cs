@@ -12,7 +12,7 @@ using Elffy.Components.Implementation;
 
 namespace Elffy.Shading.Defered
 {
-    internal sealed class GBuffer : IGBuffer, IDisposable
+    internal sealed class GBuffer : IDisposable
     {
         private FBO _fbo;
         private TextureObject _position;            // Texture2D, Rgba16f, (x, y, z, 1)
@@ -175,11 +175,6 @@ namespace Elffy.Shading.Defered
 
         [DoesNotReturn]
         private static void ThrowNotInitialized() => throw new InvalidOperationException($"{nameof(GBuffer)} is not initialized.");
-    }
-
-    internal interface IGBuffer
-    {
-        GBufferData GetBufferData();
     }
 
     internal readonly ref struct GBufferData

@@ -4,16 +4,17 @@ using Elffy.OpenGL;
 
 namespace Elffy.Shading.Defered
 {
+    [Obsolete("Obsolete", true)]
     internal sealed class DeferedRenderingPostProcess : PostProcess
     {
-        private readonly IGBuffer _gBuffer;
-        private readonly ILightBuffer _lightBuffer;
+        private readonly GBuffer _gBuffer;
+        private readonly LightBuffer _lightBuffer;
         private Matrix4 _view;
         private Matrix4 _projection;
 
         public override string FragShaderSource => FragSource;
 
-        internal DeferedRenderingPostProcess(IGBuffer gBuffer, ILightBuffer lightBuffer)
+        internal DeferedRenderingPostProcess(GBuffer gBuffer, LightBuffer lightBuffer)
         {
             _gBuffer = gBuffer;
             _lightBuffer = lightBuffer;
