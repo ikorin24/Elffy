@@ -17,7 +17,7 @@ namespace UnitTest
             const int ParallelCount = 30;
             var counter = 0;
 
-            await ParallelOperation.For(ParallelCount, () =>
+            await ParallelSchedule.For(ParallelCount, () =>
             {
                 Interlocked.Increment(ref counter);
             });
@@ -39,6 +39,21 @@ namespace UnitTest
             await ExecuteParallel(1000);
         }
 
+        [Fact]
+        public async Task ForWithArg()
+        {
+            const int ParallelCount = 30;
+            var counter = 0;
+
+            await ParallelSchedule.For(ParallelCount, "aaa", arg =>
+            {
+                Interlocked.Increment(ref counter);
+                Assert.Equal("aaa", arg);
+            });
+
+            Assert.True(counter == ParallelCount);
+        }
+
         private static async UniTask ExecuteParallel(int parallelCount)
         {
             var callerThreadId = Environment.CurrentManagedThreadId;
@@ -50,7 +65,7 @@ namespace UnitTest
                 flags[i] = true;
             }).ToArray();
 
-            await ParallelOperation.Parallel(actions);
+            await ParallelSchedule.Parallel(actions);
             Assert.True(flags.All(f => f));
         }
     }
