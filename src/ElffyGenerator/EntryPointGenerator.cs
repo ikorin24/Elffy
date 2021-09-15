@@ -41,7 +41,7 @@ namespace Elffy
         [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = false, Inherited = false)]
         public sealed class ScreenIconAttribute : Attribute
         {
-            public ScreenIconAttribute(string resourceName) { }
+            public ScreenIconAttribute(string resourceFileName, string resourceName) { }
         }
 
         [Conditional(""COMPILE_TIME_ONLY"")]
@@ -61,13 +61,6 @@ namespace Elffy
         [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = false, Inherited = false)]
         public sealed class DoNotNeedSynchronizationContextAttribute : Attribute
         {
-        }
-
-        [Conditional(""COMPILE_TIME_ONLY"")]
-        [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = false, Inherited = false)]
-        public sealed class ResourceLoaderAttribute : Attribute
-        {
-            public ResourceLoaderAttribute(Type resourceLoaderType, string arg) { }
         }
 
         [Conditional(""COMPILE_TIME_ONLY"")]
@@ -119,7 +112,6 @@ namespace Elffy
             private readonly Regex _windowStyleRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.WindowStyle(Attribute)?$");
             private readonly Regex _allowMultiRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.AllowMultiLaunch(Attribute)?$");
             private readonly Regex _doNotNeedSyncContextRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.DoNotNeedSynchronizationContext(Attribute)?$");
-            private readonly Regex _resourceLoaderRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.ResourceLoader(Attribute)?$");
             private readonly Regex _launchDevEnvRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.LaunchDevEnv(Attribute)?$");
             private readonly Regex _autoGenerateMainRegex = new Regex(@"^(global::)?(Elffy\.)?GameLaunchSetting\.GenerateMainMethod(Attribute)?$");
 
@@ -130,7 +122,6 @@ namespace Elffy
             private AttributeSyntax? _windowStyle;
             private AttributeSyntax? _allowMulti;
             private AttributeSyntax? _doNotNeedSyncContext;
-            private AttributeSyntax? _resourceLoader;
             private AttributeSyntax? _launchDevEnv;
             private AttributeSyntax? _generateMainMethod;
 
@@ -181,9 +172,6 @@ namespace Elffy
                 else if(_doNotNeedSyncContextRegex.IsMatch(attrName)) {
                     _doNotNeedSyncContext = attr;
                 }
-                else if(_resourceLoaderRegex.IsMatch(attrName)) {
-                    _resourceLoader = attr;
-                }
                 else if(_launchDevEnvRegex.IsMatch(attrName)) {
                     _launchDevEnv = attr;
                 }
@@ -191,20 +179,14 @@ namespace Elffy
 
             private void AppendLaunch(StringBuilder sb, Compilation compilation)
             {
-                var useResource = _resourceLoader is not null;
-                var resourceLoaderTypeName = useResource ? GeneratorUtil.GetAttrArgTypeName(_resourceLoader!, 0, compilation) : "";
-                var resourceLoaderArg = useResource ? GeneratorUtil.GetAttrArgString(_resourceLoader!, 1, compilation) : "";
-
                 var useDevEnv = _launchDevEnv is not null;
-
                 var useSyncContext = _doNotNeedSyncContext is null;
                 sb.Append(@"
         private static void Launch()
         {
             try {").AppendIf(useDevEnv, @"
                 Elffy.Diagnostics.DevEnv.Run();").Append(@"
-                Engine.Run();").AppendIf(useResource, $@"
-                Resources.Inject(new {resourceLoaderTypeName}(""{resourceLoaderArg}""));").Append(@"
+                Engine.Run();
                 var screen = CreateScreen();
                 screen.Initialized += OnScreenInitialized;").AppendIf(useSyncContext, @"
                 CustomSynchronizationContext.CreateIfNeeded(out _, out var syncContextReciever);").Append(@"
@@ -213,8 +195,7 @@ namespace Elffy
                     syncContextReciever?.DoAll();").Append(@"
                 }
             }
-            finally {").AppendIf(useResource, @"
-                Resources.Close();").AppendIf(useSyncContext, @"
+            finally {").AppendIf(useSyncContext, @"
                 CustomSynchronizationContext.Restore();").Append(@"
                 Engine.Stop();").AppendIf(useDevEnv, @"
                 Elffy.Diagnostics.DevEnv.Stop();").Append(@"
@@ -247,7 +228,8 @@ namespace Elffy
                 var height = _screenSize is not null ? GeneratorUtil.GetAttrArgInt(_screenSize, 1, compilation) : DefaultHeight;
                 var title = _screenTitle is not null ? GeneratorUtil.GetAttrArgString(_screenTitle, 0, compilation) : DefaultTitle;
                 var windowStyle = _windowStyle is not null ? GeneratorUtil.GetAttrArgEnumNum(_windowStyle, 0, compilation) : DefaultWindowStyle;
-                var iconName = _screenIcon is not null ? GeneratorUtil.GetAttrArgString(_screenIcon, 0, compilation) : null;
+                var iconResName = _screenIcon is not null ? GeneratorUtil.GetAttrArgString(_screenIcon, 0, compilation) : null;
+                var iconName = _screenIcon is not null ? GeneratorUtil.GetAttrArgString(_screenIcon, 1, compilation) : null;
 
                 sb.Append(@"
         private static IHostScreen CreateScreen()
@@ -261,7 +243,7 @@ namespace Elffy
                 case PlatformType.MacOSX:
                 case PlatformType.Linux: {").AppendChoose(iconName is null, @"
                     var icon = Icon.Empty;", $@"
-                    using var iconStream = Resources.Loader.GetStream(""{iconName}"");
+                    using var iconStream = Resources.{iconResName}.GetStream(""{iconName}"");
                     var icon = IcoParser.Parse(iconStream);").Append(@"
                     return new Window(width, height, title, style, ref icon);
                 }
