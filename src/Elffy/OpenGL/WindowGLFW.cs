@@ -94,7 +94,7 @@ namespace Elffy.OpenGL
             }
         }
 
-        public WindowGLFW(IHostScreen screen, int width, int height, string title, WindowStyle style, out Icon icon)
+        public WindowGLFW(IHostScreen screen, int width, int height, string title, WindowStyle style, ref Icon icon)
         {
             _initArgs = (screen, width, height, title ?? "", style, icon);
             icon = default;

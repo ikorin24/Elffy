@@ -137,7 +137,7 @@ namespace Elffy
             if(height <= 0) { throw new ArgumentOutOfRangeException(nameof(height)); }
 
             renderingArea = new RenderingArea(this);
-            windowImpl = new WindowGLFW(this, width, height, title, windowStyle, out icon);
+            windowImpl = new WindowGLFW(this, width, height, title, windowStyle, ref icon);
 
             _frameDelta = TimeSpan.FromSeconds(1.0 / 60.0); // TODO: とりあえず固定で
             _windowImpl.UpdateFrame += (_, e) => UpdateFrame();
