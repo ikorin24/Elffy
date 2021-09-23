@@ -242,10 +242,10 @@ namespace Elffy
                 case PlatformType.Windows:
                 case PlatformType.MacOSX:
                 case PlatformType.Linux: {").AppendChoose(iconName is null, @"
-                    var icon = Icon.Empty;", $@"
+                    using var icon = Icon.None;", $@"
                     using var iconStream = Resources.{iconResName}.GetStream(""{iconName}"");
-                    var icon = IcoParser.Parse(iconStream);").Append(@"
-                    return new Window(width, height, title, style, ref icon);
+                    using var icon = IcoParser.Parse(iconStream);").Append(@"
+                    return new Window(width, height, title, style, icon);
                 }
                 case PlatformType.Android:
                 case PlatformType.Other:

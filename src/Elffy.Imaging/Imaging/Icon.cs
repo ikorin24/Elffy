@@ -16,12 +16,32 @@ namespace Elffy.Imaging
 
         public int ImageCount => _images?.Length ?? 0;
 
-        public static Icon Empty => default;
+        public static Icon None => default;
 
-        public Icon(Span<Image> images)
+        public Icon(ReadOnlySpan<Image> images) : this(images, MemoryCopyMode.DeepCopy)
         {
-            _images = new Image[images.Length];  // TODO: instance pooling ?
-            images.CopyTo(_images.AsSpanUnsafe());
+        }
+
+        public Icon(ReadOnlySpan<Image> images, MemoryCopyMode copyMode)
+        {
+            if(images.Length == 0) {
+                _images = null;
+                return;
+            }
+
+            var iconImages = new Image[images.Length];  // TODO: instance pooling ?
+            if(copyMode == MemoryCopyMode.ArrayOnly) {
+                images.CopyTo(iconImages.AsSpanUnsafe());
+            }
+            else if(copyMode == MemoryCopyMode.DeepCopy) {
+                for(int i = 0; i < images.Length; i++) {
+                    iconImages[i] = images[i].ToImage();
+                }
+            }
+            else {
+                ThrowHelper.ThrowArgException(nameof(copyMode));
+            }
+            _images = iconImages;
         }
 
         internal Icon(int count)
@@ -46,6 +66,13 @@ namespace Elffy.Imaging
             for(int i = 0; i < images.Length; i++) {
                 images[i].Dispose();
             }
+        }
+
+        public Icon Clone() => Clone(MemoryCopyMode.DeepCopy);
+
+        public Icon Clone(MemoryCopyMode copyMode)
+        {
+            return new Icon(_images, copyMode);
         }
 
         public override bool Equals(object? obj) => obj is Icon icon && Equals(icon);

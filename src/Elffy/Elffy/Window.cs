@@ -18,6 +18,8 @@ namespace Elffy
     public class Window : IHostScreen
     {
         private const string DefaultTitle = "Window";
+        private const int DefaultWidth = 800;
+        private const int DefaultHeight = 450;
 
         private bool _isActivated;
         private readonly WindowGLFW _windowImpl;
@@ -31,7 +33,7 @@ namespace Elffy
 
         /// <inheritdoc/>
         public Mouse Mouse => _renderingArea.Mouse;
-        
+
         /// <inheritdoc/>
         public Keyboard Keyboard => _renderingArea.Keyboard;
 
@@ -88,14 +90,34 @@ namespace Elffy
         }
 
         /// <summary>Create new <see cref="Window"/></summary>
-        public Window() : this(WindowStyle.Default) { }
+        public Window() : this(DefaultWidth, DefaultHeight, DefaultTitle, WindowStyle.Default, Icon.None) { }
+
+        /// <summary>Create new <see cref="Window"/></summary>
+        /// <param name="width">window width</param>
+        /// <param name="height">window height</param>
+        public Window(int width, int height) : this(width, height, DefaultTitle, WindowStyle.Default, Icon.None) { }
+
+        /// <summary>Create new <see cref="Window"/></summary>
+        /// <param name="width">window width</param>
+        /// <param name="height">window height</param>
+        /// <param name="title">window title</param>
+        public Window(int width, int height, string title) : this(width, height, title, WindowStyle.Default, Icon.None) { }
 
         /// <summary>Create new <see cref="Window"/></summary>
         /// <param name="windowStyle">window style</param>
         public Window(WindowStyle windowStyle)
+            : this(DefaultWidth, DefaultHeight, DefaultTitle, windowStyle, Icon.None)
         {
-            var icon = Icon.Empty;
-            Ctor(out _renderingArea, out _windowImpl, 800, 450, DefaultTitle, windowStyle, ref icon);
+        }
+
+        /// <summary>Create new <see cref="Window"/></summary>
+        /// <param name="width">window width</param>
+        /// <param name="height">window height</param>
+        /// <param name="title">window title</param>
+        /// <param name="windowStyle">window style</param>
+        public Window(int width, int height, string title, WindowStyle windowStyle)
+            : this(width, height, title, windowStyle, Icon.None)
+        {
         }
 
         /// <summary>Create new <see cref="Window"/></summary>
@@ -103,16 +125,19 @@ namespace Elffy
         /// <param name="height">height of the window</param>
         /// <param name="title">title of the window</param>
         /// <param name="windowStyle">window style</param>
-        /// <param name="icon">window icon</param>
-        public Window(int width, int height, string title, WindowStyle windowStyle, ref Icon icon)
+        /// <param name="icon">window icon (The instance is copied, so you can dispose it after call the constructor.)</param>
+        public Window(int width, int height, string title, WindowStyle windowStyle, Icon icon)
         {
-            Ctor(out _renderingArea, out _windowImpl, width, height, title, windowStyle, ref icon);
+            Ctor(out _renderingArea, out _windowImpl, width, height, title, windowStyle, icon.Clone());
         }
 
-        private void Ctor(out RenderingArea renderingArea, out WindowGLFW windowImpl, int width, int height, string title, WindowStyle windowStyle, ref Icon icon)
+        private void Ctor(out RenderingArea renderingArea, out WindowGLFW windowImpl, int width, int height, string title, WindowStyle windowStyle, Icon icon)
         {
+            if(width <= 0) { throw new ArgumentOutOfRangeException(nameof(width)); }
+            if(height <= 0) { throw new ArgumentOutOfRangeException(nameof(height)); }
+
             renderingArea = new RenderingArea(this);
-            windowImpl = new WindowGLFW(this, width, height, title, windowStyle, ref icon);
+            windowImpl = new WindowGLFW(this, width, height, title, windowStyle, out icon);
 
             _frameDelta = TimeSpan.FromSeconds(1.0 / 60.0); // TODO: とりあえず固定で
             _windowImpl.UpdateFrame += (_, e) => UpdateFrame();
