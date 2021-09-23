@@ -24,5 +24,23 @@ namespace Elffy
         {
             return source.LoadTextureAsync(name, config, Timing.EndPoint, timing, cancellationToken);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static UniTask<Icon> LoadIconAsync(this IResourceLoader loader,
+                                                  string name,
+                                                  [AllowNotSpecifiedTiming] FrameLoopTiming timing = FrameLoopTiming.Update,
+                                                  CancellationToken cancellationToken = default)
+        {
+            return loader.LoadIconAsync(name, Timing.EndPoint, timing, cancellationToken);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static UniTask<Image> LoadImageAsync(this IResourceLoader loader,
+                                                    string name,
+                                                    [AllowNotSpecifiedTiming] FrameLoopTiming timing = FrameLoopTiming.Update,
+                                                    CancellationToken cancellationToken = default)
+        {
+            return loader.LoadImageAsync(name, Timing.EndPoint, timing, cancellationToken);
+        }
     }
 }

@@ -31,9 +31,16 @@ namespace Elffy
         FrameFinalizing = byte.MaxValue - 1,
     }
 
+    [AttributeUsage(AttributeTargets.Parameter)]
+    public sealed class AllowNotSpecifiedTimingAttribute : Attribute
+    {
+        // TODO: analyzer
+    }
+
     public static class FrameLoopTimingExtension
     {
         private const string DefaultMessage_TimingNotSpecified = "The timing must be specified.";
+        private const string DefaultMessage_InvalidTiming = "The timing is invalid.";
         private const byte MaxValue = 5;    // max value of FrameLoopTiming
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -52,6 +59,15 @@ namespace Elffy
         internal static void ThrowArgExceptionIfNotSpecified(this FrameLoopTiming source, string msg = DefaultMessage_TimingNotSpecified)
         {
             if(!source.IsSpecified()) {
+                Throw(msg);
+                [DoesNotReturn] static void Throw(string msg) => throw new ArgumentException(msg);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void ThrowArgExceptionIfInvalid(this FrameLoopTiming source, string msg = DefaultMessage_InvalidTiming)
+        {
+            if(!source.IsValid()) {
                 Throw(msg);
                 [DoesNotReturn] static void Throw(string msg) => throw new ArgumentException(msg);
             }
