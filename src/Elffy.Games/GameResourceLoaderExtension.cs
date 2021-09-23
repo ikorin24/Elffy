@@ -42,5 +42,14 @@ namespace Elffy
         {
             return loader.LoadImageAsync(name, Timing.EndPoint, timing, cancellationToken);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static UniTask<Typeface> LoadTypefaceAsync(this IResourceLoader loader,
+                                                          string name,
+                                                          [AllowNotSpecifiedTiming] FrameLoopTiming timing = FrameLoopTiming.Update,
+                                                          CancellationToken cancellationToken = default)
+        {
+            return loader.LoadTypefaceAsync(name, Timing.EndPoint, timing, cancellationToken);
+        }
     }
 }
