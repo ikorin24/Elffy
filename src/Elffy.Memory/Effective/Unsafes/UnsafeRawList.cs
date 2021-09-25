@@ -208,6 +208,14 @@ namespace Elffy.Effective.Unsafes
             CountRef() = 0;
         }
 
+        /// <summary>Extend the list by the specified count.</summary>
+        /// <remarks>
+        /// <see cref="Count"/> will be increased by by the specified amount.
+        /// <see cref="Capacity"/> will be increased to a sufficiently large size.
+        /// </remarks>
+        /// <param name="count"></param>
+        /// <param name="zeroFill"></param>
+        /// <returns></returns>
         public Span<T> Extend(int count, bool zeroFill = false)
         {
             // Get array reference at first. NullReferenceException is thrown if 'this' is null.
@@ -218,8 +226,11 @@ namespace Elffy.Effective.Unsafes
             ref var itemCount = ref CountRef();
 
             var margin = array.Length - itemCount;
-            if(margin < count) {
-                Capacity += count - margin;
+            var needMore = count - margin;
+            if(needMore > 0) {
+                var currentCapacity = Capacity;
+                // Allocate the large capacity.
+                Capacity = Math.Max(4, Math.Max(currentCapacity * 2, currentCapacity + needMore));
             }
             var newSpan = array.AsSpan(itemCount, count);
             itemCount += count;

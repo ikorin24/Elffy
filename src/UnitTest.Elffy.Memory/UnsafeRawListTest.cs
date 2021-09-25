@@ -131,5 +131,49 @@ namespace UnitTest
                 Assert.True(Unsafe.AreSame(ref list.GetReference(), ref list[0]));
             }
         }
+
+        [Fact]
+        public void Extend()
+        {
+            using(var list = UnsafeRawList<int>.New(capacity: 0)) {
+                Assert.True(list.Count == 0);
+                Assert.True(list.Capacity == 0);
+                var extended = list.Extend(0, true);
+                Assert.True(list.Count == 0);
+                Assert.True(list.Capacity == 0);
+                Assert.True(extended.IsEmpty);
+            }
+
+            using(var list = UnsafeRawList<int>.New(capacity: 0)) {
+                Assert.True(list.Count == 0);
+                Assert.True(list.Capacity == 0);
+                var extended = list.Extend(3, true);
+                Assert.True(list.Count == 3);
+
+                // When extended, the minimum capacity is 4.
+                Assert.True(list.Capacity == 4);
+                Assert.True(extended.Length == 3);
+            }
+
+            using(var list = UnsafeRawList<int>.New(capacity: 40)) {
+                Assert.True(list.Count == 0);
+                Assert.True(list.Capacity == 40);
+                var extended1 = list.Extend(10, true);
+                Assert.True(list.Count == 10);
+
+                // The capacity does not changed because it is large enough,.
+                Assert.True(list.Capacity == 40);
+                Assert.True(extended1.Length == 10);
+
+                // -----------------------------
+                var extended2 = list.Extend(50, true);
+                Assert.True(list.Count == 60);
+
+                // 'Extend' does not allocate memory of the exact size, but allocates a large enough size.
+                // It is twice the size of the current one.
+                Assert.True(list.Capacity == 80);
+                Assert.True(extended2.Length == 50);
+            }
+        }
     }
 }
