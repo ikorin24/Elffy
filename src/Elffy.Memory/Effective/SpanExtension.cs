@@ -8,7 +8,7 @@ using Elffy.Effective.Unsafes;
 
 namespace Elffy.Effective
 {
-    public static class SpanExtension
+    public static partial class SpanExtension
     {
         /// <summary>Get reference to 0th element of span</summary>
         /// <remarks>Don't call if empty span</remarks>
@@ -25,7 +25,7 @@ namespace Elffy.Effective
         /// <returns>reference to 0th element</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ref readonly T GetReference<T>(this ReadOnlySpan<T> source) => ref MemoryMarshal.GetReference(source);
-        
+
         /// <summary>Get reference to 0th element. Returns reference to null if source span is empty.</summary>
         /// <typeparam name="T">element type</typeparam>
         /// <param name="source">source span</param>
@@ -342,9 +342,9 @@ namespace Elffy.Effective
                                                                        Func<TAccumulate, TResult> resultSelector)
             => Aggregate((ReadOnlySpan<TSource>)source, seed, func, resultSelector);
 
-        public static TResult Aggregate<TSource, TAccumulate, TResult>(this ReadOnlySpan<TSource> source, 
-                                                                       TAccumulate seed, 
-                                                                       Func<TAccumulate, TSource, TAccumulate> func, 
+        public static TResult Aggregate<TSource, TAccumulate, TResult>(this ReadOnlySpan<TSource> source,
+                                                                       TAccumulate seed,
+                                                                       Func<TAccumulate, TSource, TAccumulate> func,
                                                                        Func<TAccumulate, TResult> resultSelector)
         {
             if(func is null) {
