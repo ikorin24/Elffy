@@ -5,7 +5,7 @@ using System.Threading;
 
 namespace Elffy
 {
-    public static class FbxResourceLoaderExtension
+    public static class ModelResourceLoaderExtension
     {
         public static Model3D CreateFbxModel(this IResourceLoader source, string name, CancellationToken cancellationToken = default)
         {
