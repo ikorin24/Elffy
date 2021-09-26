@@ -2,7 +2,7 @@
 using System.IO;
 using System.Linq;
 using Elffy;
-using Elffy.Serialization;
+using Elffy.Serialization.Fbx;
 using Xunit;
 
 namespace UnitTest
@@ -15,7 +15,7 @@ namespace UnitTest
             var loader = new LocalFileResourceLoader(TestValues.FileDirectory);
             var files = Directory.GetFiles(TestValues.FileDirectory, "*.fbx")
                                  .Select(path => Path.GetFileName(path));
-            
+
             foreach(var file in files) {
                 var model = FbxModelBuilder.CreateLazyLoadingFbx(loader, file);
                 Assert.True(model is not null);

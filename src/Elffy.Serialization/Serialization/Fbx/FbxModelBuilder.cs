@@ -7,11 +7,10 @@ using Cysharp.Threading.Tasks;
 using Elffy.Shapes;
 using Elffy.Core;
 using Elffy.Components;
-using Elffy.Serialization.Fbx;
 using Elffy.Serialization.Fbx.Internal;
 using Elffy.Effective;
 
-namespace Elffy.Serialization
+namespace Elffy.Serialization.Fbx
 {
     /// <summary>Provides methods for creating <see cref="Model3D"/> from <see cref="IResourceLoader"/>.</summary>
     public static class FbxModelBuilder
