@@ -19,18 +19,18 @@ namespace Sandbox
         {
             var obj = new CameraMouseObject();
             await obj.Activate();
-            Coroutine.Create(obj, (target, initialCameraPos), MoveCameraCoroutine, LoopTiming);
+            obj.StartCoroutine((target, initialCameraPos), MoveCameraCoroutine, LoopTiming).Forget();
             return obj;
         }
 
         public static void Attach(FrameObject parent, in Vector3 target, in Vector3 initialCameraPos)
         {
-            Coroutine.Create(parent, (target, initialCameraPos), MoveCameraCoroutine, LoopTiming);
+            parent.StartCoroutine((target, initialCameraPos), MoveCameraCoroutine, LoopTiming).Forget();
         }
 
         public static void Attach(IHostScreen parent, in Vector3 target, in Vector3 initialCameraPos)
         {
-            Coroutine.Create(parent, (target, initialCameraPos), MoveCameraCoroutine, LoopTiming);
+            parent.StartCoroutine((target, initialCameraPos), MoveCameraCoroutine, LoopTiming).Forget();
         }
 
         private static async UniTask MoveCameraCoroutine(CoroutineState coroutine, (Vector3 Target, Vector3 InitialPos) args)

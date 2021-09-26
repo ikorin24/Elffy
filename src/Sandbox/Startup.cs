@@ -16,7 +16,7 @@ namespace Sandbox
         [GameEntryPoint]
         public static async UniTask Start2()
         {
-            var deferedRenderer = DeferedRenderer.Attach(Game.Screen, 10, context =>
+            var deferedRenderer = DeferedRenderer.Attach(Game.Screen, 1, context =>
             {
                 var interval = 100;
                 for(int i = 0; i < context.LightCount; i++) {
@@ -32,32 +32,25 @@ namespace Sandbox
             cube.Shader = PBRDeferedShader.Instance;
             await UniTask.WhenAll(cube.Activate(), CreateCameraMouse(cube.Position));
 
-            //Coroutine.Create(cube, material, static async (coroutine, material) =>
+            //Game.Screen.StartCoroutine(deferedRenderer, static async (coroutine, deferedRenderer) =>
             //{
-            //    await foreach(var frame in coroutine.Frames()) {
-            //        material.Roughness = MathF.Sin(frame.FrameNum * MathTool.PiOver180 / 3);
+            //    using var pos = new ValueTypeRentMemory<Vector4>(deferedRenderer.LightCount);
+            //    using var color = new ValueTypeRentMemory<Color4>(deferedRenderer.LightCount);
+            //    long i = 0;
+            //    while(coroutine.CanRun) {
+            //        await Timing.DelayTime(1000);
+            //        color[0] = Rand.Color4();
+            //        if(i % 2 == 0) {
+            //            pos[0] = new Vector4(0, 100, -50, 1f);
+            //        }
+            //        else {
+            //            pos[0] = new Vector4(0, 100, 50, 1f);
+            //        }
+            //        deferedRenderer.UpdateLightPositions(pos.AsSpan());
+            //        deferedRenderer.UpdateLightColors(color.AsSpan());
+            //        i++;
             //    }
-            //});
-
-            Coroutine.Create(Game.Screen, deferedRenderer, async (coroutine, renderer) =>
-            {
-                using var pos = new ValueTypeRentMemory<Vector4>(renderer.LightCount);
-                using var color = new ValueTypeRentMemory<Color4>(renderer.LightCount);
-                long i = 0;
-                while(coroutine.CanRun) {
-                    await Timing.DelayTime(1000);
-                    color[0] = Rand.Color4();
-                    if(i % 2 == 0) {
-                        pos[0] = new Vector4(0, 100, -50, 1f);
-                    }
-                    else {
-                        pos[0] = new Vector4(0, 100, 50, 1f);
-                    }
-                    //renderer.UpdateLightPositions(pos.AsSpan());
-                    //renderer.UpdateLightColors(color.AsSpan());
-                    i++;
-                }
-            });
+            //}).Forget();
         }
 
         //[GameEntryPoint]
@@ -132,7 +125,7 @@ namespace Sandbox
             cube.Shader = PhongShader.Instance;
             cube.AddComponent(await Resources.Sandbox.LoadTextureAsync("box.png"));
             await cube.Activate();
-            Coroutine.Create(cube, cube, static async (coroutine, cube) =>
+            cube.StartOrReserveCoroutine(static async (coroutine, cube) =>
             {
                 while(coroutine.CanRun) {
                     await coroutine.ToUpdate();

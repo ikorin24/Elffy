@@ -10,148 +10,228 @@ namespace Elffy
     // [NOTE]
     // 1. A coroutine is started when the parent object becomes active. (The parent is FrameObject or IHostScreen)
     // 2. Coroutines can be executed only while the parent object is alive.
-    // 3. It is not possible to wait for a coroutine to finish.
-    // 4. Not thread-safe (Don't call 'Coroutine.CreateXXX' and 'FrameObject.Activate' at the same time in parallel.)
+    // 3. Not thread-safe (Don't call 'Coroutine.StartXXX' and 'FrameObject.Activate' at the same time in parallel.)
 
     /// <summary>Privides a coroutine attached to a parent object.</summary>
     public static class Coroutine
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static UniTask Start(FrameObject parent, Func<CoroutineState, UniTask> coroutine, FrameLoopTiming timing = FrameLoopTiming.Update)
+        {
+            CheckArgs(parent, coroutine, timing);
+            return StartPrivate(parent, DummyState.Null, coroutine, timing);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static UniTask Start(IHostScreen parent, Func<CoroutineState, UniTask> coroutine, FrameLoopTiming timing = FrameLoopTiming.Update)
+        {
+            CheckArgs(parent, coroutine, timing);
+            return StartPrivate(parent, DummyState.Null, coroutine, timing);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static UniTask Start<TState>(FrameObject parent, TState state, Func<CoroutineState, TState, UniTask> coroutine, FrameLoopTiming timing = FrameLoopTiming.Update)
+        {
+            CheckArgs(parent, coroutine, timing);
+            return StartPrivate(parent, state, coroutine, timing);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static UniTask Start<TState>(IHostScreen parent, TState state, Func<CoroutineState, TState, UniTask> coroutine, FrameLoopTiming timing = FrameLoopTiming.Update)
+        {
+            CheckArgs(parent, coroutine, timing);
+            return StartPrivate(parent, state, coroutine, timing);
+        }
+
         /// <summary>Create a coroutine of the specified <see cref="FrameObject"/></summary>
         /// <param name="parent">the parent of the coroutine</param>
         /// <param name="coroutine">the coroutine function</param>
         /// <param name="timing">the timing when the coroutine starts</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Create(FrameObject parent, Func<CoroutineState, UniTask> coroutine, FrameLoopTiming timing = FrameLoopTiming.Update)
+        public static void StartOrReserve(FrameObject parent, Func<CoroutineState, UniTask> coroutine, FrameLoopTiming timing = FrameLoopTiming.Update)
         {
-            if(parent is null) { ThrowNullArg(nameof(parent)); }
-            if(coroutine is null) { ThrowNullArg(nameof(coroutine)); }
-            timing.ThrowArgExceptionIfNotSpecified();
-
-            if(parent.LifeState.IsBefore(LifeState.Activated)) {
-                LazyStart(parent, DummyState.Null, coroutine, null, timing);
-            }
-            else {
-                StartCoroutine(new CoroutineState(parent), DummyState.Null, coroutine, null, timing);
-            }
+            CheckArgs(parent, coroutine, timing);
+            StartOrReservePrivate(parent, DummyState.Null, coroutine, null, timing);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Create(IHostScreen parent, Func<CoroutineState, UniTask> coroutine, FrameLoopTiming timing = FrameLoopTiming.Update)
+        public static void StartOrReserve(IHostScreen parent, Func<CoroutineState, UniTask> coroutine, FrameLoopTiming timing = FrameLoopTiming.Update)
         {
-            if(parent is null) { ThrowNullArg(nameof(parent)); }
-            if(coroutine is null) { ThrowNullArg(nameof(coroutine)); }
-            timing.ThrowArgExceptionIfNotSpecified();
-            // TODO: if screen is not managed by the engine ...
-            StartCoroutine(new CoroutineState(parent), DummyState.Null, coroutine, null, timing);
+            CheckArgs(parent, coroutine, timing);
+            StartOrReservePrivate(parent, DummyState.Null, coroutine, null, timing);
         }
 
         /// <summary>Create a coroutine of the specified <see cref="FrameObject"/> with a state</summary>
-        /// <typeparam name="T">type of <paramref name="state"/></typeparam>
+        /// <typeparam name="TState">type of <paramref name="state"/></typeparam>
         /// <param name="parent">the parent of the coroutine</param>
         /// <param name="state">state of the coroutine</param>
         /// <param name="coroutine">the coroutine function</param>
         /// <param name="timing">the timing when the coroutine starts</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Create<T>(FrameObject parent, T state, Func<CoroutineState, T, UniTask> coroutine, FrameLoopTiming timing = FrameLoopTiming.Update)
+        public static void StartOrReserve<TState>(FrameObject parent, TState state, Func<CoroutineState, TState, UniTask> coroutine, FrameLoopTiming timing = FrameLoopTiming.Update)
         {
-            if(parent is null) { ThrowNullArg(nameof(parent)); }
-            if(coroutine is null) { ThrowNullArg(nameof(coroutine)); }
-            timing.ThrowArgExceptionIfNotSpecified();
-
-            if(parent.LifeState.IsBefore(LifeState.Activated)) {
-                LazyStart(parent, state, coroutine, null, timing);
-            }
-            else {
-                StartCoroutine(new CoroutineState(parent), state, coroutine, null, timing);
-            }
+            CheckArgs(parent, coroutine, timing);
+            StartOrReservePrivate(parent, state, coroutine, null, timing);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Create<T>(IHostScreen parent, T state, Func<CoroutineState, T, UniTask> coroutine, FrameLoopTiming timing = FrameLoopTiming.Update)
+        public static void StartOrReserve<TState>(IHostScreen parent, TState state, Func<CoroutineState, TState, UniTask> coroutine, FrameLoopTiming timing = FrameLoopTiming.Update)
         {
-            if(parent is null) { ThrowNullArg(nameof(parent)); }
-            if(coroutine is null) { ThrowNullArg(nameof(coroutine)); }
-            timing.ThrowArgExceptionIfNotSpecified();
-            // TODO: if screen is not managed by the engine ...
-            StartCoroutine(new CoroutineState(parent), state, coroutine, null, timing);
+            CheckArgs(parent, coroutine, timing);
+            StartOrReservePrivate(parent, state, coroutine, null, timing);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void CreateWithCatch(FrameObject parent, Func<CoroutineState, UniTask> coroutine, Action<Exception> onCatch, FrameLoopTiming timing = FrameLoopTiming.Update)
+        public static void StartOrReserveWithCatch(FrameObject parent, Func<CoroutineState, UniTask> coroutine, Action<Exception> onCatch, FrameLoopTiming timing = FrameLoopTiming.Update)
         {
-            if(parent is null) { ThrowNullArg(nameof(parent)); }
-            if(coroutine is null) { ThrowNullArg(nameof(coroutine)); }
-            timing.ThrowArgExceptionIfNotSpecified();
-
-            if(parent.LifeState.IsBefore(LifeState.Activated)) {
-                LazyStart(parent, DummyState.Null, coroutine, onCatch, timing);
-            }
-            else {
-                StartCoroutine(new CoroutineState(parent), DummyState.Null, coroutine, onCatch, timing);
-            }
+            CheckArgs(parent, coroutine, timing);
+            StartOrReservePrivate(parent, DummyState.Null, coroutine, onCatch, timing);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void CreateWithCatch(IHostScreen parent, Func<CoroutineState, UniTask> coroutine, Action<Exception> onCatch, FrameLoopTiming timing = FrameLoopTiming.Update)
+        public static void StartOrReserveWithCatch(IHostScreen parent, Func<CoroutineState, UniTask> coroutine, Action<Exception> onCatch, FrameLoopTiming timing = FrameLoopTiming.Update)
         {
-            if(parent is null) { ThrowNullArg(nameof(parent)); }
-            if(coroutine is null) { ThrowNullArg(nameof(coroutine)); }
-            timing.ThrowArgExceptionIfNotSpecified();
-            // TODO: if screen is not managed by the engine ...
-            StartCoroutine(new CoroutineState(parent), DummyState.Null, coroutine, onCatch, timing);
+            CheckArgs(parent, coroutine, timing);
+            StartOrReservePrivate(parent, DummyState.Null, coroutine, onCatch, timing);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void CreateWithCatch<T>(FrameObject parent, T state, Func<CoroutineState, T, UniTask> coroutine, Action<Exception> onCatch, FrameLoopTiming timing = FrameLoopTiming.Update)
+        public static void StartOrReserveWithCatch<TState>(FrameObject parent, TState state, Func<CoroutineState, TState, UniTask> coroutine, Action<Exception> onCatch, FrameLoopTiming timing = FrameLoopTiming.Update)
         {
-            if(parent is null) { ThrowNullArg(nameof(parent)); }
-            if(coroutine is null) { ThrowNullArg(nameof(coroutine)); }
-            timing.ThrowArgExceptionIfNotSpecified();
-
-            if(parent.LifeState.IsBefore(LifeState.Activated)) {
-                LazyStart(parent, state, coroutine, onCatch, timing);
-            }
-            else {
-                StartCoroutine(new CoroutineState(parent), state, coroutine, onCatch, timing);
-            }
+            CheckArgs(parent, coroutine, timing);
+            StartOrReservePrivate(parent, state, coroutine, onCatch, timing);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void CreateWithCatch<T>(IHostScreen parent, T state, Func<CoroutineState, T, UniTask> coroutine, Action<Exception> onCatch, FrameLoopTiming timing = FrameLoopTiming.Update)
+        public static void StartOrReserveWithCatch<TState>(IHostScreen parent, TState state, Func<CoroutineState, TState, UniTask> coroutine, Action<Exception> onCatch, FrameLoopTiming timing = FrameLoopTiming.Update)
         {
+            CheckArgs(parent, coroutine, timing);
+            StartOrReservePrivate(parent, state, coroutine, onCatch, timing);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void CheckArgs(object parent, Delegate coroutine, FrameLoopTiming timing)
+        {
+            Debug.Assert(parent is FrameObject || parent is IHostScreen || parent is null);
             if(parent is null) { ThrowNullArg(nameof(parent)); }
             if(coroutine is null) { ThrowNullArg(nameof(coroutine)); }
             timing.ThrowArgExceptionIfNotSpecified();
-            // TODO: if screen is not managed by the engine ...
-            StartCoroutine(new CoroutineState(parent), state, coroutine, onCatch, timing);
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private static void LazyStart<T>(FrameObject parent, T state, Delegate coroutine, Action<Exception>? onCatch, FrameLoopTiming timing)
+        private static void StartOrReservePrivate<TParent, TState>(TParent parent, TState state, Delegate coroutine, Action<Exception>? onCatch, FrameLoopTiming timing) where TParent : class
         {
-            if(typeof(T) == typeof(DummyState)) {
-                if(onCatch is null) {
-                    // [capture] coroutine, timing
-                    parent.Activated += f => StartCoroutine(new CoroutineState(f), DummyState.Null, coroutine, null, timing);
+            if(typeof(TParent) == typeof(IHostScreen)) {
+                var parentScreen = SafeCast.As<IHostScreen>(parent);
+                if(parentScreen.IsRunning == false) {
+                    ReserveCoroutine(parentScreen, state, coroutine, onCatch, timing);
                 }
                 else {
-                    // [capture] coroutine, onCatch, timing
-                    parent.Activated += f => StartCoroutine(new CoroutineState(f), DummyState.Null, coroutine, onCatch, timing);
+                    StartCoroutine(new CoroutineState(parentScreen), state, coroutine, onCatch, timing).Forget();
+                }
+            }
+            else if(typeof(TParent) == typeof(FrameObject)) {
+                var parentFrameObject = SafeCast.As<FrameObject>(parent);
+                if(parentFrameObject.LifeState.IsBefore(LifeState.Activated)) {
+                    ReserveCoroutine(parentFrameObject, state, coroutine, null, timing);
+                }
+                else {
+                    StartCoroutine(new CoroutineState(parentFrameObject), state, coroutine, null, timing).Forget();
                 }
             }
             else {
-                if(onCatch is null) {
-                    // [capture] state, coroutine, timing
-                    parent.Activated += f => StartCoroutine(new CoroutineState(f), state, coroutine, null, timing);
-                }
-                else {
-                    // [capture] state, coroutine, onCatch, timing
-                    parent.Activated += f => StartCoroutine(new CoroutineState(f), state, coroutine, onCatch, timing);
-                }
+                Debug.Fail("Something wrong");
             }
         }
 
-        private static async void StartCoroutine<T>(CoroutineState coroutineState, T state, Delegate coroutine, Action<Exception>? onCatch, FrameLoopTiming timing)
+        private static UniTask StartPrivate<TParent, TState>(TParent parent, TState state, Delegate coroutine, FrameLoopTiming timing) where TParent : class
+        {
+            if(typeof(TParent) == typeof(IHostScreen)) {
+                var parentScreen = SafeCast.As<IHostScreen>(parent);
+                if(parentScreen.IsRunning == false) {
+                    ThrowParentNotActivated();
+                    return UniTask.CompletedTask;
+                }
+                else {
+                    return StartCoroutine(new CoroutineState(parentScreen), state, coroutine, null, timing);
+                }
+
+            }
+            else if(typeof(TParent) == typeof(FrameObject)) {
+                var parentFrameObject = SafeCast.As<FrameObject>(parent);
+                if(parentFrameObject.LifeState.IsBefore(LifeState.Activated)) {
+                    ThrowParentNotActivated();
+                    return UniTask.CompletedTask;
+                }
+                else {
+                    return StartCoroutine(new CoroutineState(parentFrameObject), state, coroutine, null, timing);
+                }
+            }
+            else {
+                Debug.Fail("Something wrong");
+                return UniTask.CompletedTask;
+            }
+        }
+
+        private static void ReserveCoroutine<TParent, TState>(TParent parent, TState state, Delegate coroutine, Action<Exception>? onCatch, FrameLoopTiming timing)
+            where TParent : class
+        {
+            if(typeof(TParent) == typeof(IHostScreen)) {
+                var parentScreen = SafeCast.As<IHostScreen>(parent);
+                if(typeof(TState) == typeof(DummyState)) {
+                    if(onCatch is null) {
+                        // [capture] coroutine, timing
+                        parentScreen.Initialized += p => StartCoroutine(new CoroutineState(p), DummyState.Null, coroutine, null, timing).Forget();
+                    }
+                    else {
+                        // [capture] coroutine, onCatch, timing
+                        parentScreen.Initialized += p => StartCoroutine(new CoroutineState(p), DummyState.Null, coroutine, onCatch, timing).Forget();
+                    }
+                    return;
+                }
+                else {
+                    if(onCatch is null) {
+                        // [capture] state, coroutine, timing
+                        parentScreen.Initialized += p => StartCoroutine(new CoroutineState(p), state, coroutine, null, timing).Forget();
+                    }
+                    else {
+                        // [capture] state, coroutine, onCatch, timing
+                        parentScreen.Initialized += p => StartCoroutine(new CoroutineState(p), state, coroutine, onCatch, timing).Forget();
+                    }
+                    return;
+                }
+            }
+            else if(typeof(TParent) == typeof(FrameObject)) {
+                var parentFrameObject = SafeCast.As<FrameObject>(parent);
+                if(typeof(TState) == typeof(DummyState)) {
+                    if(onCatch is null) {
+                        // [capture] coroutine, timing
+                        parentFrameObject.Activated += f => StartCoroutine(new CoroutineState(f), DummyState.Null, coroutine, null, timing).Forget();
+                    }
+                    else {
+                        // [capture] coroutine, onCatch, timing
+                        parentFrameObject.Activated += f => StartCoroutine(new CoroutineState(f), DummyState.Null, coroutine, onCatch, timing).Forget();
+                    }
+                    return;
+                }
+                else {
+                    if(onCatch is null) {
+                        // [capture] state, coroutine, timing
+                        parentFrameObject.Activated += f => StartCoroutine(new CoroutineState(f), state, coroutine, null, timing).Forget();
+                    }
+                    else {
+                        // [capture] state, coroutine, onCatch, timing
+                        parentFrameObject.Activated += f => StartCoroutine(new CoroutineState(f), state, coroutine, onCatch, timing).Forget();
+                    }
+                    return;
+                }
+            }
+            else {
+                Debug.Fail("Something wrong");
+                return;
+            }
+        }
+
+        private static async UniTask StartCoroutine<TState>(CoroutineState coroutineState, TState state, Delegate coroutine, Action<Exception>? onCatch, FrameLoopTiming timing)
         {
             var fo = coroutineState.FrameObject;
             if(fo is null) {
@@ -163,12 +243,12 @@ namespace Elffy
             }
             try {
                 await coroutineState.Screen.AsyncBack.ToTiming(timing);
-                if(typeof(T) == typeof(DummyState)) {
+                if(typeof(TState) == typeof(DummyState)) {
                     var noStateCoroutine = SafeCast.As<Func<CoroutineState, UniTask>>(coroutine);
                     await noStateCoroutine(coroutineState);
                 }
                 else {
-                    var statefulCoroutine = SafeCast.As<Func<CoroutineState, T, UniTask>>(coroutine);
+                    var statefulCoroutine = SafeCast.As<Func<CoroutineState, TState, UniTask>>(coroutine);
                     await statefulCoroutine(coroutineState, state);
                 }
             }
@@ -184,5 +264,8 @@ namespace Elffy
 
         [DoesNotReturn]
         private static void ThrowNullArg(string message) => throw new ArgumentNullException(message);
+
+        [DoesNotReturn]
+        public static void ThrowParentNotActivated() => throw new ArgumentException("The parent of the coroutine is not activated yet.");
     }
 }

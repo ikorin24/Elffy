@@ -56,7 +56,7 @@ namespace Elffy.Shading.Defered
         {
             var lightBuffer = InitLights(lightCount, initializeLight);
             var renderer = new DeferedRenderer(lightBuffer);
-            Coroutine.Create(screen, renderer, DeferedRenderingPipeline);
+            screen.StartOrReserveCoroutine(renderer, DeferedRenderingPipeline, FrameLoopTiming.EarlyUpdate);
             return renderer;
         }
 
