@@ -8,15 +8,17 @@ namespace Elffy
 {
     internal sealed class LocalResourceLoader : IResourceLoader
     {
-        private readonly string _resourcesFilePath;
+        private readonly string _resourcePackageFilePath;
         private readonly Dictionary<string, ResourceObject> _resources;
+
+        internal string ResourcePackageFilePath => _resourcePackageFilePath;
 
         public LocalResourceLoader(string resourcePackageFilePath)
         {
             if(resourcePackageFilePath is null) { throw new ArgumentNullException(nameof(resourcePackageFilePath)); }
 
-            _resourcesFilePath = Path.Combine(AppContext.BaseDirectory, resourcePackageFilePath);
-            _resources = LocalResourceInitializer.CreateDictionary(_resourcesFilePath);
+            _resourcePackageFilePath = Path.Combine(AppContext.BaseDirectory, resourcePackageFilePath);
+            _resources = LocalResourceInitializer.CreateDictionary(_resourcePackageFilePath);
         }
 
         public Stream GetStream(string name)
@@ -24,7 +26,7 @@ namespace Elffy
             if(_resources!.TryGetValue(name, out var resource) == false) {
                 ResourceNotFoundException.Throw(new ResourceFile(this, name));
             }
-            return new LocalResourceStream(_resourcesFilePath, resource);
+            return new LocalResourceStream(_resourcePackageFilePath, resource);
         }
 
         public long GetSize(string name)
