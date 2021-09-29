@@ -53,8 +53,6 @@ namespace Elffy
     {
         private static readonly EmptyResourceLoader _instance = new EmptyResourceLoader();
         public static EmptyResourceLoader Null => _instance;
-
-        public ResourceFile this[string name] => new ResourceFile(this, name);
         public long GetSize(string name) => 0L;
 
         public Stream GetStream(string name) => Stream.Null;
