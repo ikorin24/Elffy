@@ -36,6 +36,9 @@ namespace Elffy
 
         private static string CreateMessage(ResourceFile file)
         {
+            if(string.IsNullOrEmpty(file.Name)) {
+                return "Invalid resource file ! The name is empty.";
+            }
             if(file.ResourceLoader is LocalResourceLoader localResourceLoader) {
                 return $"\"{file.Name}\" (in {localResourceLoader.ResourcePackageFilePath})";
             }
