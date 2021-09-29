@@ -8,4 +8,4 @@ using Elffy;
 [assembly: GameLaunchSetting.WindowStyle(WindowStyle.Default)]
 [assembly: GameLaunchSetting.LaunchDevEnv]
 [assembly: GenerateLocalResource("Resources", "Sandbox.dat")]
-[assembly: DefineResource("Sandbox", "Sandbox.dat")]
+[assembly: DefineLocalResource("Sandbox", "Sandbox.dat")]

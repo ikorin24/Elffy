@@ -1,5 +1,7 @@
 ﻿#nullable enable
 using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace Elffy
 {
@@ -8,9 +10,20 @@ namespace Elffy
         /// <summary>Target resource name.</summary>
         public string ResourceName { get; private set; }
 
-        public ResourceNotFoundException(string resourceName) : base($"Resource not found : '{resourceName}'")
+        public ResourceNotFoundException(ResourceFile file)
         {
-            ResourceName = resourceName;
+            ResourceName = file.Name;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void ThrowIfNotFound(ResourceFile file)
+        {
+            if(file.Exists() == false) {
+                Throw(file);
+            }
+        }
+
+        [DoesNotReturn]
+        public static void Throw(ResourceFile file) => throw new ResourceNotFoundException(file);
     }
 }

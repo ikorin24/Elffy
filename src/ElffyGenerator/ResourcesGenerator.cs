@@ -14,24 +14,7 @@ namespace ElffyGenerator
     [Generator]
     public sealed class ResourcesGenerator : ISourceGenerator
     {
-        private const string AttributesDef =
-@"#nullable enable
-using System;
-using System.Diagnostics;
-
-namespace Elffy
-{
-    [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true, Inherited = false)]
-    internal sealed class DefineResourceAttribute : Attribute
-    {
-        public DefineResourceAttribute(string name, string outputName)
-        {
-        }
-    }
-}
-";
-
-        private static void AppendResourcesClassDef(StringBuilder sb, IEnumerable<(string Name, string FilePath)> resources)
+        private static void AppendResourcesClassDef(StringBuilder sb, IEnumerable<(string ImportedName, string PackageFilePath)> localResources)
         {
             sb.Append(
 @"#nullable enable
@@ -44,10 +27,10 @@ namespace Elffy
     {
 ");
 
-            foreach(var (name, filePath) in resources) {
+            foreach(var (importedName, packageFilePath) in localResources) {
                 sb.AppendLine(
-$@"        /// <summary>Get {name} resource loader instance</summary>
-        public static IResourceLoader {name} {{ get; }} = new LocalResourceLoader(""{filePath}"");");
+$@"        /// <summary>Get {importedName} resource loader instance</summary>
+        public static IResourceLoader {importedName} {{ get; }} = ResourceProvider.LocalResource(""{packageFilePath}"");");
             }
 
             sb.Append(@"
@@ -59,14 +42,8 @@ $@"        /// <summary>Get {name} resource loader instance</summary>
         public void Execute(GeneratorExecutionContext context)
         {
             var sb = new StringBuilder();
-
-            sb.Append(GeneratorUtil.GetGeneratorSigniture(typeof(ResourcesGenerator)));
-            sb.Append(AttributesDef);
-            context.AddSource("DefineResourceAttribute", SourceText.From(sb.ToString(), Encoding.UTF8));
             try {
                 if(context.SyntaxReceiver is not SyntaxReceiver receiver) { throw new Exception("Why is the receiver null ??"); }
-
-                sb.Clear();
                 sb.Append(GeneratorUtil.GetGeneratorSigniture(typeof(ResourcesGenerator)));
                 receiver.DumpSource(sb, context);
                 context.AddSource("Resources", SourceText.From(sb.ToString(), Encoding.UTF8));
@@ -82,7 +59,7 @@ $@"        /// <summary>Get {name} resource loader instance</summary>
 
         private class SyntaxReceiver : ISyntaxReceiver
         {
-            private static readonly Regex _defineResourceRegex = new Regex(@"^(global::)?(Elffy\.)?DefineResource(Attribute)?$");
+            private static readonly Regex _defineLocalResourceRegex = new Regex(@"^(global::)?(Elffy\.)?DefineLocalResource(Attribute)?$");
 
             private readonly List<AttributeSyntax> _defineResourceAttributeList = new List<AttributeSyntax>();
 
@@ -92,7 +69,7 @@ $@"        /// <summary>Get {name} resource loader instance</summary>
                 if(syntaxNode is not AttributeSyntax attr) { return; }
                 var attrName = attr.Name.ToString();
 
-                if(_defineResourceRegex.IsMatch(attrName)) {
+                if(_defineLocalResourceRegex.IsMatch(attrName)) {
                     _defineResourceAttributeList.Add(attr);
                 }
             }
@@ -102,8 +79,8 @@ $@"        /// <summary>Get {name} resource loader instance</summary>
                 var compilation = context.Compilation;
                 var resources = _defineResourceAttributeList.Select(attr =>
                     (
-                        Name: GeneratorUtil.GetAttrArgString(attr, 0, compilation),
-                        FilePath: GeneratorUtil.GetAttrArgString(attr, 1, compilation)
+                        ImportedName: GeneratorUtil.GetAttrArgString(attr, 0, compilation),
+                        PackageFilePath: GeneratorUtil.GetAttrArgString(attr, 1, compilation)
                     ));
 
                 AppendResourcesClassDef(sb, resources);

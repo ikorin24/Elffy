@@ -15,32 +15,20 @@ namespace Elffy.Serialization.Fbx
     /// <summary>Provides methods for creating <see cref="Model3D"/> from <see cref="IResourceLoader"/>.</summary>
     public static class FbxModelBuilder
     {
-        private sealed record StateObject(IResourceLoader ResourceLoader, string Name, CancellationToken CancellationToken);
+        private sealed record StateObject(ResourceFile File, CancellationToken CancellationToken);
 
-        /// <summary>Create <see cref="Model3D"/> instance from resource with lazy loading.</summary>
-        /// <param name="resourceLoader">resource loader</param>
-        /// <param name="name">resource name</param>
-        /// <param name="cancellationToken">cancellation token</param>
-        /// <returns>new <see cref="Model3D"/> instance</returns>
-        public static Model3D CreateLazyLoadingFbx(IResourceLoader resourceLoader, string name, CancellationToken cancellationToken = default)
+        public static Model3D CreateLazyLoadingFbx(ResourceFile file, CancellationToken cancellationToken = default)
         {
-            if(resourceLoader is null) {
-                ThrowNullArg();
-                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(resourceLoader));
-            }
-            if(resourceLoader.HasResource(name) == false) {
-                ThrowNotFound(name);
-                [DoesNotReturn] static void ThrowNotFound(string name) => throw new ResourceNotFoundException(name);
-            }
-
-            var obj = new StateObject(resourceLoader, name, cancellationToken);
+            ResourceNotFoundException.ThrowIfNotFound(file);
+            var obj = new StateObject(file, cancellationToken);
 
             return Model3D.Create(obj, Build);
         }
 
         private static async UniTask Build(StateObject obj, Model3D model, Model3DLoadMeshDelegate load)
         {
-            var (resourceLoader, name, token) = obj;
+            //var (resourceLoader, name, token) = obj;
+            var (file, token) = obj;
             model.TryGetHostScreen(out var screen);
             Debug.Assert(screen is not null);
             var endPoint = screen.AsyncBack;
@@ -56,10 +44,10 @@ namespace Elffy.Serialization.Fbx
 
 
             // Parse fbx file
-            using var fbx = FbxSemanticParser<SkinnedVertex>.ParseUnsafe(resourceLoader.GetStream(name), false, token);
+            using var fbx = FbxSemanticParser<SkinnedVertex>.ParseUnsafe(file.GetStream(), false, token);
             await endPoint.ToTiming(FrameLoopTiming.Update, token);                     // ↓ main thread --------------------------------------
 
-            await CreateTexture(resourceLoader, fbx, model);
+            await CreateTexture(file, fbx, model);
 
             // Create a skeleton component
             if(fbx.Skeletons.IsEmpty == false) {
@@ -79,7 +67,7 @@ namespace Elffy.Serialization.Fbx
             // but I don't care about that.
         }
 
-        private static async UniTask CreateTexture(IResourceLoader resourceLoader, FbxSemanticsUnsafe<SkinnedVertex> fbx, Model3D model)
+        private static async UniTask CreateTexture(ResourceFile file, FbxSemanticsUnsafe<SkinnedVertex> fbx, Model3D model)
         {
             // ↓ main thread --------------------------------------
             var contextExist = model.TryGetHostScreen(out var screen);
@@ -94,9 +82,9 @@ namespace Elffy.Serialization.Fbx
                     continue;
 
                     // TODO: パスの解決
-                    var name = path;
-                    using var image = await resourceLoader.LoadImageAsync(name, screen.AsyncBack, FrameLoopTiming.Update);
-                    textureLoader.Load(i, image);
+                    //var name = path;
+                    //using var image = await file.ResourceLoader.LoadImageAsync(name, screen.AsyncBack, FrameLoopTiming.Update);
+                    //textureLoader.Load(i, image);
                 }
             }
             catch {

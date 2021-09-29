@@ -8,15 +8,15 @@ namespace Elffy
 {
     public static class ModelResourceLoaderExtension
     {
-        public static Model3D CreateFbxModel(this IResourceLoader source, string name, CancellationToken cancellationToken = default)
+        public static Model3D CreateFbxModel(this ResourceFile file, CancellationToken cancellationToken = default)
         {
-            return FbxModelBuilder.CreateLazyLoadingFbx(source, name, cancellationToken);
+            return FbxModelBuilder.CreateLazyLoadingFbx(file, cancellationToken);
         }
 
         [System.Obsolete("Not implemented yet", true)]
-        public static Model3D CreateObjModel(this IResourceLoader source, string name, CancellationToken cancellationToken = default)
+        public static Model3D CreateObjModel(this ResourceFile file, CancellationToken cancellationToken = default)
         {
-            return ObjModelBuilder.CreateLazyLoadingObj(source, name, cancellationToken);
+            return ObjModelBuilder.CreateLazyLoadingObj(file, cancellationToken);
         }
     }
 }

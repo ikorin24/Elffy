@@ -1,7 +1,8 @@
-﻿using System;
+﻿#nullable enable
 using System.IO;
 using System.Linq;
 using Elffy;
+using Elffy.Core;
 using Elffy.Serialization.Fbx;
 using Xunit;
 
@@ -10,15 +11,38 @@ namespace UnitTest
     public class FbxUnitTest
     {
         [Fact]
-        public void FbxModelBuildTest()
+        public void CreateFbxModelTest()
         {
             var loader = new LocalFileResourceLoader(TestValues.FileDirectory);
             var files = Directory.GetFiles(TestValues.FileDirectory, "*.fbx")
-                                 .Select(path => Path.GetFileName(path));
+                                 .Select(path => new ResourceFile(loader, Path.GetFileName(path)));
 
             foreach(var file in files) {
-                var model = FbxModelBuilder.CreateLazyLoadingFbx(loader, file);
+                var model = FbxModelBuilder.CreateLazyLoadingFbx(file);
                 Assert.True(model is not null);
+            }
+        }
+
+        [Fact]
+        public void LoadFbxModelTest()
+        {
+            var loader = new LocalFileResourceLoader(TestValues.FileDirectory);
+            var files = Directory.GetFiles(TestValues.FileDirectory, "*.fbx")
+                                 .Select(path => new ResourceFile(loader, Path.GetFileName(path)));
+
+            foreach(var file in files) {
+                using var stream = file.GetStream();
+                using var fbx = FbxSemanticParser<SkinnedVertex>.Parse(stream);
+                Assert.True(fbx is not null);
+                Assert.True(fbx.Vertices.IsEmpty == false);
+                Assert.True(fbx.Indices.IsEmpty == false);
+            }
+
+            foreach(var file in files) {
+                using var stream = file.GetStream();
+                using var fbx = FbxSemanticParser<SkinnedVertex>.ParseUnsafe(stream);
+                Assert.True(fbx.Vertices.IsEmpty == false);
+                Assert.True(fbx.Indices.IsEmpty == false);
             }
         }
     }
@@ -26,6 +50,8 @@ namespace UnitTest
     internal sealed class LocalFileResourceLoader : IResourceLoader
     {
         public string CurrentDirectory { get; }
+
+        public ResourceFile this[string name] => new ResourceFile(this, name);
 
         public LocalFileResourceLoader(string currentDir)
         {

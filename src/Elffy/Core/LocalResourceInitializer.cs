@@ -83,7 +83,7 @@ namespace Elffy.Core
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public string ReadString(int byteLen ,Encoding encoding)
+            public string ReadString(int byteLen, Encoding encoding)
             {
                 return encoding.GetString(Read(byteLen));
             }

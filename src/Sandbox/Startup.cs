@@ -26,7 +26,7 @@ namespace Sandbox
                 }
             });
 
-            var cube = Resources.Sandbox.CreateFbxModel("Dice.fbx");
+            var cube = Resources.Sandbox["Dice.fbx"].CreateFbxModel();
             var material = new PBRMaterial(new PBRMaterialData(new Color3(1, 0.8f, 0.2f), 0.99f, 0.1f, default));
             cube.AddComponent(material);
             cube.Shader = PBRDeferedShader.Instance;
@@ -84,7 +84,7 @@ namespace Sandbox
 
         private static UniTask<Model3D> CreateModel1()
         {
-            var dice = Resources.Sandbox.CreateFbxModel("Dice.fbx");
+            var dice = Resources.Sandbox["Dice.fbx"].CreateFbxModel();
             dice.Position.X = 3f;
             dice.Position.Y = 1.5f;
             return dice.Activate();
@@ -92,7 +92,7 @@ namespace Sandbox
 
         private static UniTask<Model3D> CreateModel2()
         {
-            var model = Resources.Sandbox.CreatePmxModel("Alicia/Alicia_solid.pmx");
+            var model = Resources.Sandbox["Alicia/Alicia_solid.pmx"].CreatePmxModel();
             model.Scale = new Vector3(0.3f);
             return model.Activate();
         }
@@ -112,7 +112,7 @@ namespace Sandbox
             plain.Shader = PhongShader.Instance;
             var config = new TextureConfig(TextureExpansionMode.NearestNeighbor, TextureShrinkMode.NearestNeighbor,
                                            TextureMipmapMode.None, TextureWrapMode.ClampToEdge, TextureWrapMode.ClampToEdge);
-            var texture = await Resources.Sandbox.LoadTextureAsync("floor.png", config);
+            var texture = await Resources.Sandbox["floor.png"].LoadTextureAsync(config);
             plain.AddComponent(texture);
             plain.Rotation = Quaternion.FromAxisAngle(Vector3.UnitX, -90.ToRadian());
             return await plain.Activate();
@@ -123,7 +123,7 @@ namespace Sandbox
             var cube = new Cube();
             cube.Position = new(-3, 0.5f, 0);
             cube.Shader = PhongShader.Instance;
-            cube.AddComponent(await Resources.Sandbox.LoadTextureAsync("box.png"));
+            cube.AddComponent(await Resources.Sandbox["box.png"].LoadTextureAsync());
             await cube.Activate();
             cube.StartOrReserveCoroutine(static async (coroutine, cube) =>
             {

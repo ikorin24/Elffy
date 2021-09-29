@@ -12,26 +12,18 @@ namespace Elffy.Serialization.Wavefront
     [Obsolete("Not implemented yet", true)]
     public static class ObjModelBuilder
     {
-        private sealed record StateObject(IResourceLoader ResourceLoader, string Name, CancellationToken CancellationToken);
+        private sealed record StateObject(ResourceFile File, CancellationToken CancellationToken);
 
-        public static Model3D CreateLazyLoadingObj(IResourceLoader resourceLoader, string name, CancellationToken cancellationToken = default)
+        public static Model3D CreateLazyLoadingObj(ResourceFile file, CancellationToken cancellationToken = default)
         {
-            if(resourceLoader is null) {
-                ThrowNullArg();
-                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(resourceLoader));
-            }
-            if(resourceLoader.HasResource(name) == false) {
-                ThrowNotFound(name);
-                [DoesNotReturn] static void ThrowNotFound(string name) => throw new ResourceNotFoundException(name);
-            }
-
-            var obj = new StateObject(resourceLoader, name, cancellationToken);
+            file.ThrowIfNotFound();
+            var obj = new StateObject(file, cancellationToken);
             return Model3D.Create(obj, Build);
         }
 
         private static async UniTask Build(StateObject state, Model3D model, Model3DLoadMeshDelegate load)
         {
-            var (resourceLoader, name, token) = state;
+            var (file, token) = state;
             model.TryGetHostScreen(out var screen);
             Debug.Assert(screen is not null);
             token.ThrowIfCancellationRequested();
@@ -41,7 +33,7 @@ namespace Elffy.Serialization.Wavefront
 
             ObjSemantics<Vertex>? objSemantics = null;
             try {
-                using(var stream = resourceLoader.GetStream(name))
+                using(var stream = file.GetStream())
                 using(var obj = ObjParser.Parse(stream)) {
                     objSemantics = LoadMesh(obj);
                 }

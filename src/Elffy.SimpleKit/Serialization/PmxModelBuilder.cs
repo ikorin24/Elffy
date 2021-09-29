@@ -19,21 +19,13 @@ namespace Elffy.Serialization
 {
     public static class PmxModelBuilder
     {
-        private sealed record ModelState(IResourceLoader ResourceLoader, string Name, CancellationToken CancellationToken);
+        //private sealed record ModelState(IResourceLoader ResourceLoader, string Name, CancellationToken CancellationToken);
+        private sealed record ModelState(ResourceFile File, CancellationToken CancellationToken);
 
-        public static Model3D CreateLazyLoadingPmx(IResourceLoader resourceLoader, string name, CancellationToken cancellationToken = default)
+        public static Model3D CreateLazyLoadingPmx(ResourceFile file, CancellationToken cancellationToken = default)
         {
-            if(resourceLoader is null) {
-                ThrowNullArg();
-                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(resourceLoader));
-            }
-            if(resourceLoader.HasResource(name) == false) {
-                ThrowNotFound(name);
-                [DoesNotReturn] static void ThrowNotFound(string name) => throw new ResourceNotFoundException(name);
-            }
-
-            var obj = new ModelState(resourceLoader, name, cancellationToken);
-
+            file.ThrowIfNotFound();
+            var obj = new ModelState(file, cancellationToken);
             return Model3D.Create(obj, Build, RenderModel);
         }
 
@@ -72,7 +64,7 @@ namespace Elffy.Serialization
             obj.CancellationToken.ThrowIfCancellationRequested();
 
             // Parse pmx file
-            var pmx = PMXParser.Parse(obj.ResourceLoader.GetStream(obj.Name));
+            var pmx = PMXParser.Parse(obj.File.GetStream());
             await BuildCore(pmx, model, load, obj);
         }
 
@@ -81,9 +73,10 @@ namespace Elffy.Serialization
             // ------------------------------
             //      ↓ thread pool
             Debug.Assert(Engine.IsThreadMain == false);
+            var file = obj.File;
 
             var textureNames = pmx.TextureList.AsSpan();
-            var dir = ResourcePath.GetDirectoryName(obj.Name);
+            var dir = ResourcePath.GetDirectoryName(file.Name);
             var images = new Image[textureNames.Length];
 
             for(int i = 0; i < images.Length; i++) {
@@ -92,14 +85,14 @@ namespace Elffy.Serialization
 
                 // Some pmx have the texture paths that don't exist. (Nobody references them.)
                 // So skip them.
-                if(obj.ResourceLoader.HasResource(path)) {
-                    using var stream = obj.ResourceLoader.GetStream(path);
+                if(file.ResourceLoader.HasResource(path)) {
+                    using var stream = file.ResourceLoader.GetStream(path);
                     images[i] = Image.FromStream(stream, Image.GetTypeFromExt(ext));
                 }
             }
 
             // [NOTE] Though pmx is read only, overwrite pmx data.
-            PmxModelLoadHelper.ReverseTrianglePolygon(pmx!.SurfaceList.AsSpan().AsWritable());
+            PmxModelLoadHelper.ReverseTrianglePolygon(pmx.SurfaceList.AsSpan().AsWritable());
 
             return LoadToModel(pmx, model, load, obj, images);
         }

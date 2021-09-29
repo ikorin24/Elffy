@@ -9,92 +9,82 @@ namespace Elffy
 {
     public static class ResourceLoaderExtension
     {
-        public static Icon LoadIcon(this IResourceLoader resourceLoader, string name)
+        public static Icon LoadIcon(this ResourceFile file)
         {
-            using var stream = resourceLoader.GetStream(name);
+            using var stream = file.GetStream();
             return IcoParser.Parse(stream);
         }
 
-        public static UniTask<Icon> LoadIconAsync(this IResourceLoader resourceLoader,
-                                                  string name,
+        public static UniTask<Icon> LoadIconAsync(this ResourceFile file,
                                                   AsyncBackEndPoint endPoint,
                                                   [AllowNotSpecifiedTiming] FrameLoopTiming timing = FrameLoopTiming.Update,
                                                   CancellationToken cancellationToken = default)
         {
-            var state = (Loader: resourceLoader, Name: name);
-            return AsyncLoadCore(static state => LoadIcon(state.Loader, state.Name), state,
+            return AsyncLoadCore(static file => LoadIcon(file), file,
                                  static icon => icon.Dispose(),
                                  endPoint, true, timing, cancellationToken);
         }
 
-        public static Image LoadImage(this IResourceLoader resourceLoader, string name)
+        public static Image LoadImage(this ResourceFile file)
         {
-            using var stream = resourceLoader.GetStream(name);
-            return Image.FromStream(stream, Image.GetTypeFromExt(ResourcePath.GetExtension(name)));
+            using var stream = file.GetStream();
+            return Image.FromStream(stream, Image.GetTypeFromExt(file.FileExtension));
         }
 
-        public static UniTask<Image> LoadImageAsync(this IResourceLoader resourceLoader, string name,
+        public static UniTask<Image> LoadImageAsync(this ResourceFile file,
                                                     AsyncBackEndPoint endPoint,
                                                     [AllowNotSpecifiedTiming] FrameLoopTiming timing = FrameLoopTiming.Update,
                                                     CancellationToken cancellationToken = default)
         {
-            var state = (Loader: resourceLoader, Name: name);
-            return AsyncLoadCore(static state => LoadImage(state.Loader, state.Name), state,
+            return AsyncLoadCore(static file => LoadImage(file), file,
                                  static image => image.Dispose(),
                                  endPoint, true, timing, cancellationToken);
         }
 
-        public static Texture LoadTexture(this IResourceLoader resourceLoader, string name)
+        public static Texture LoadTexture(this ResourceFile file)
         {
-            return LoadTexture(resourceLoader, name, TextureConfig.Default);
+            return LoadTexture(file, TextureConfig.Default);
         }
 
-
-        /// <summary>Create <see cref="Texture"/> from resource</summary>
-        /// <param name="source"></param>
-        /// <param name="name"></param>
-        /// <param name="config"></param>
-        /// <returns></returns>
-        public static Texture LoadTexture(this IResourceLoader source, string name, in TextureConfig config)
+        public static Texture LoadTexture(this ResourceFile file, in TextureConfig config)
         {
-            using var image = LoadImage(source, name);
+            using var image = LoadImage(file);
             var texture = new Texture(config);
             texture.Load(image);
             return texture;
         }
 
-        public static UniTask<Texture> LoadTextureAsync(this IResourceLoader source, string name,
+        public static UniTask<Texture> LoadTextureAsync(ResourceFile file,
                                                         AsyncBackEndPoint endPoint,
                                                         FrameLoopTiming timing = FrameLoopTiming.Update,
                                                         CancellationToken cancellationToken = default)
         {
-            return LoadTextureAsync(source, name, TextureConfig.Default, endPoint, timing, cancellationToken);
+            return LoadTextureAsync(file, TextureConfig.Default, endPoint, timing, cancellationToken);
         }
 
-        public static async UniTask<Texture> LoadTextureAsync(this IResourceLoader source, string name, TextureConfig config,
+        public static async UniTask<Texture> LoadTextureAsync(this ResourceFile file, TextureConfig config,
                                                               AsyncBackEndPoint endPoint,
                                                               FrameLoopTiming timing = FrameLoopTiming.Update,
                                                               CancellationToken cancellationToken = default)
         {
-            using var image = await LoadImageAsync(source, name, endPoint, timing, cancellationToken);
+            using var image = await LoadImageAsync(file, endPoint, timing, cancellationToken);
             var texture = new Texture(config);
             texture.Load(image);
             return texture;
         }
 
-        public static Typeface LoadTypeface(this IResourceLoader source, string name)
+        public static Typeface LoadTypeface(this ResourceFile file)
         {
-            using var stream = source.GetStream(name);
+            using var stream = file.GetStream();
             return new Typeface(stream);
         }
 
-        public static UniTask<Typeface> LoadTypefaceAsync(this IResourceLoader source, string name,
+        public static UniTask<Typeface> LoadTypefaceAsync(this ResourceFile file,
                                                           AsyncBackEndPoint endPoint,
                                                           [AllowNotSpecifiedTiming] FrameLoopTiming timing = FrameLoopTiming.Update,
                                                           CancellationToken cancellationToken = default)
         {
-            var state = (Loader: source, Name: name);
-            return AsyncLoadCore(static state => LoadTypeface(state.Loader, state.Name), state,
+            return AsyncLoadCore(static file => LoadTypeface(file), file,
                                  static typeface => typeface.Dispose(),
                                  endPoint, true, timing, cancellationToken);
         }
