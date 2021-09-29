@@ -13,6 +13,7 @@
     <RootNamespace>Elffy</RootNamespace>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>1591;</NoWarn>
+    <RootNamespace>Elffy.Imaging</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
