@@ -4,8 +4,9 @@ using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
+using Elffy.Core;
 
-namespace Elffy.Core
+namespace Elffy
 {
     [DebuggerDisplay("{Position}")]
     [VertexLike]

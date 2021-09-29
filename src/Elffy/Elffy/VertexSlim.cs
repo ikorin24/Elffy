@@ -3,8 +3,9 @@ using Elffy.Diagnostics;
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using Elffy.Core;
 
-namespace Elffy.Core
+namespace Elffy
 {
     /// <summary>Slim vertex struct, which has position and uv.</summary>
     /// <remarks>If you need "Normal", use <see cref="Vertex"/> instead.</remarks>
