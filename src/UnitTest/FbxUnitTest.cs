@@ -13,7 +13,7 @@ namespace UnitTest
         [Fact]
         public void CreateFbxModelTest()
         {
-            var loader = new LocalFileResourceLoader(TestValues.FileDirectory);
+            var loader = new TestFileResourceLoader(TestValues.FileDirectory);
             var files = Directory.GetFiles(TestValues.FileDirectory, "*.fbx")
                                  .Select(path => new ResourceFile(loader, Path.GetFileName(path)));
 
@@ -26,7 +26,7 @@ namespace UnitTest
         [Fact]
         public void LoadFbxModelTest()
         {
-            var loader = new LocalFileResourceLoader(TestValues.FileDirectory);
+            var loader = new TestFileResourceLoader(TestValues.FileDirectory);
             var files = Directory.GetFiles(TestValues.FileDirectory, "*.fbx")
                                  .Select(path => new ResourceFile(loader, Path.GetFileName(path)));
 
@@ -34,7 +34,7 @@ namespace UnitTest
                 using var stream = file.GetStream();
                 using var fbx = FbxSemanticParser<SkinnedVertex>.Parse(stream);
                 Assert.True(fbx is not null);
-                Assert.True(fbx.Vertices.IsEmpty == false);
+                Assert.True(fbx!.Vertices.IsEmpty == false);
                 Assert.True(fbx.Indices.IsEmpty == false);
             }
 
@@ -47,13 +47,11 @@ namespace UnitTest
         }
     }
 
-    internal sealed class LocalFileResourceLoader : IResourceLoader
+    internal sealed class TestFileResourceLoader : IResourceLoader
     {
         public string CurrentDirectory { get; }
 
-        public ResourceFile this[string name] => new ResourceFile(this, name);
-
-        public LocalFileResourceLoader(string currentDir)
+        public TestFileResourceLoader(string currentDir)
         {
             CurrentDirectory = currentDir;
         }
