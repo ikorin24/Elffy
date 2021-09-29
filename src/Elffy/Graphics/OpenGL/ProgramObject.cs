@@ -4,7 +4,7 @@ using OpenTK.Graphics.OpenGL4;
 using System;
 using System.Diagnostics;
 
-namespace Elffy.OpenGL
+namespace Elffy.Graphics.OpenGL
 {
     [DebuggerDisplay("Program={_program}")]
     public readonly struct ProgramObject : IEquatable<ProgramObject>

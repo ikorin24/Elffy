@@ -2,7 +2,7 @@
 using System;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-namespace Elffy.OpenGL.Windowing
+namespace Elffy.Graphics.OpenGL.Windowing
 {
     internal readonly ref struct WindowIconRaw
     {

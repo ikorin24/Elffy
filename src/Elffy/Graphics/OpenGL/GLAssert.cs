@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-namespace Elffy.OpenGL
+namespace Elffy.Graphics.OpenGL
 {
     internal static class GLAssert
     {

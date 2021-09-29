@@ -9,7 +9,7 @@ using TKPixelType = OpenTK.Graphics.OpenGL4.PixelType;
 using TKPixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 using GLTextureWrapMode = OpenTK.Graphics.OpenGL4.TextureWrapMode;
 
-namespace Elffy.OpenGL
+namespace Elffy.Graphics.OpenGL
 {
     [DebuggerDisplay("Texture={_texture}")]
     public readonly struct TextureObject : IEquatable<TextureObject>

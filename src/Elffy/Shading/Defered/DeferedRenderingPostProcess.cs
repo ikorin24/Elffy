@@ -1,6 +1,6 @@
 ﻿#nullable enable
 using System;
-using Elffy.OpenGL;
+using Elffy.Graphics.OpenGL;
 
 namespace Elffy.Shading.Defered
 {

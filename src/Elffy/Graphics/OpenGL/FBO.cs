@@ -7,7 +7,7 @@ using Elffy.Core;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-namespace Elffy.OpenGL
+namespace Elffy.Graphics.OpenGL
 {
     /// <summary>Frame Buffer Object of OpenGL</summary>
     [DebuggerDisplay("FBO={_fbo}")]

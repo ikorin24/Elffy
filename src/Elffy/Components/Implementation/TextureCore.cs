@@ -3,7 +3,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Elffy.Effective.Unsafes;
-using Elffy.OpenGL;
+using Elffy.Graphics.OpenGL;
 using Elffy.Imaging;
 using Elffy.Core;
 using OpenTK.Graphics.OpenGL4;

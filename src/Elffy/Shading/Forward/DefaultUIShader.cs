@@ -1,6 +1,6 @@
 ﻿#nullable enable
 using Elffy.Core;
-using Elffy.OpenGL;
+using Elffy.Graphics.OpenGL;
 using Elffy.UI;
 
 namespace Elffy.Shading.Forward

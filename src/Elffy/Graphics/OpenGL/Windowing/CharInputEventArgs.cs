@@ -1,7 +1,7 @@
 ﻿#nullable enable
 using System.Text;
 
-namespace Elffy.OpenGL.Windowing
+namespace Elffy.Graphics.OpenGL.Windowing
 {
     internal readonly struct CharInputEventArgs
     {

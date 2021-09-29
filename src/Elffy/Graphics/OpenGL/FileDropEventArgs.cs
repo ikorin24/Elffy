@@ -2,7 +2,7 @@
 using System;
 using System.Text;
 
-namespace Elffy.OpenGL
+namespace Elffy.Graphics.OpenGL
 {
     public unsafe readonly ref struct FileDropEventArgs
     {

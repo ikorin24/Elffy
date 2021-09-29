@@ -2,7 +2,7 @@
 using Elffy.Components.Implementation;
 using Elffy.Core;
 using Elffy.Effective;
-using Elffy.OpenGL;
+using Elffy.Graphics.OpenGL;
 using System;
 using System.Diagnostics;
 

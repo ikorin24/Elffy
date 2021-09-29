@@ -4,7 +4,7 @@ using System.Diagnostics;
 using OpenTK.Graphics.OpenGL4;
 using Elffy.Core;
 
-namespace Elffy.OpenGL
+namespace Elffy.Graphics.OpenGL
 {
     /// <summary>Vertex array object of OpenGL</summary>
     [DebuggerDisplay("VAO={_vao}")]

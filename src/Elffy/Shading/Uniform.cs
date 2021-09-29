@@ -1,7 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.Runtime.CompilerServices;
-using Elffy.OpenGL;
+using Elffy.Graphics.OpenGL;
 using Elffy.Effective;
 using OpenTK.Graphics.OpenGL4;
 

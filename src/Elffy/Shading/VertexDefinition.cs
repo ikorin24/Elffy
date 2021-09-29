@@ -5,7 +5,7 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using OpenTK.Graphics.OpenGL4;
 using Elffy.Core;
-using Elffy.OpenGL;
+using Elffy.Graphics.OpenGL;
 using Elffy.Diagnostics;
 
 namespace Elffy.Shading

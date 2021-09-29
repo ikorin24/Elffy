@@ -2,7 +2,7 @@
 using System;
 using Monitor = OpenTK.Windowing.GraphicsLibraryFramework.Monitor;
 
-namespace Elffy.OpenGL.Windowing
+namespace Elffy.Graphics.OpenGL.Windowing
 {
     internal readonly unsafe struct MonitorConnectionEventArgs
     {

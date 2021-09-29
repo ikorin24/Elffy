@@ -5,7 +5,7 @@ using System.Diagnostics;
 using OpenTK.Graphics.OpenGL4;
 using Elffy.Core;
 
-namespace Elffy.OpenGL
+namespace Elffy.Graphics.OpenGL
 {
     /// <summary>Vetex buffer object of OpenGL</summary>
     [DebuggerDisplay("VBO={_vbo}, Length={_length}, ElementSize={_elementSize}")]

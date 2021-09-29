@@ -5,7 +5,7 @@ using System.Diagnostics;
 using OpenTK.Graphics.OpenGL4;
 using Elffy.Core;
 
-namespace Elffy.OpenGL
+namespace Elffy.Graphics.OpenGL
 {
     /// <summary>Index buffer object of OpenGL. (Sometimes it is called element buffer object.)</summary>
     [DebuggerDisplay("IBO={_ibo}, Length={_length}")]

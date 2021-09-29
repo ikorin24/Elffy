@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Elffy.Core;
-using Elffy.OpenGL;
+using Elffy.Graphics.OpenGL;
 
 namespace Elffy.UI
 {

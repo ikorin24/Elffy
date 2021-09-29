@@ -1,7 +1,7 @@
 ﻿#nullable enable
 using Elffy.Core;
 using Elffy.Components;
-using Elffy.OpenGL;
+using Elffy.Graphics.OpenGL;
 using System;
 
 namespace Elffy.Shading.Forward

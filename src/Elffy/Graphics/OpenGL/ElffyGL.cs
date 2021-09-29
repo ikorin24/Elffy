@@ -2,7 +2,7 @@
 using System;
 using OpenTK.Graphics.OpenGL4;
 
-namespace Elffy.OpenGL
+namespace Elffy.Graphics.OpenGL
 {
     public static class ElffyGL
     {

@@ -1,6 +1,6 @@
 ﻿#nullable enable
 using Elffy.Mathematics;
-using Elffy.OpenGL;
+using Elffy.Graphics.OpenGL;
 using System;
 using System.Diagnostics.CodeAnalysis;
 

@@ -4,7 +4,7 @@ using System.Diagnostics;
 using Elffy.Core;
 using OpenTK.Graphics.OpenGL4;
 
-namespace Elffy.OpenGL
+namespace Elffy.Graphics.OpenGL
 {
     /// <summary>Render Buffer Object of OpenGL</summary>
     [DebuggerDisplay("RBO={_rbo}")]

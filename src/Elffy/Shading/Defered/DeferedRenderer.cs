@@ -1,7 +1,7 @@
 ﻿#nullable enable
 using Cysharp.Threading.Tasks;
 using Elffy.Effective;
-using Elffy.OpenGL;
+using Elffy.Graphics.OpenGL;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;

@@ -1,6 +1,6 @@
 ﻿#nullable enable
 
-namespace Elffy.OpenGL
+namespace Elffy.Graphics.OpenGL
 {
     public enum TextureUnitNumber
     {

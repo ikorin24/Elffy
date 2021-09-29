@@ -2,16 +2,16 @@
 using System;
 using System.Runtime.InteropServices;
 using OpenTK.Windowing.Common;
-using Elffy.OpenGL.Windowing;
+using Elffy.Graphics.OpenGL.Windowing;
 using Elffy.Core;
 using GlfwInputAction = OpenTK.Windowing.GraphicsLibraryFramework.InputAction;
 using GlfwConnectedState = OpenTK.Windowing.GraphicsLibraryFramework.ConnectedState;
 using GLFWCallbacks = OpenTK.Windowing.GraphicsLibraryFramework.GLFWCallbacks;
 using GLFW = OpenTK.Windowing.GraphicsLibraryFramework.GLFW;
 
-using MouseMoveEventArgs = Elffy.OpenGL.Windowing.MouseMoveEventArgs;
+using MouseMoveEventArgs = Elffy.Graphics.OpenGL.Windowing.MouseMoveEventArgs;
 
-namespace Elffy.OpenGL
+namespace Elffy.Graphics.OpenGL
 {
     internal unsafe partial class WindowGLFW
     {

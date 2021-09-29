@@ -1,6 +1,6 @@
 ﻿#nullable enable
 
-namespace Elffy.OpenGL.Windowing
+namespace Elffy.Graphics.OpenGL.Windowing
 {
     internal readonly struct MouseMoveEventArgs
     {

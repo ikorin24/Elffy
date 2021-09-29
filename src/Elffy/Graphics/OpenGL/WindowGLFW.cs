@@ -13,7 +13,7 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 using Wnd = OpenTK.Windowing.GraphicsLibraryFramework.Window;
 using GLFWImage = OpenTK.Windowing.GraphicsLibraryFramework.Image;
 
-namespace Elffy.OpenGL
+namespace Elffy.Graphics.OpenGL
 {
     /// <summary>Raw window class of GLFW</summary>
     internal unsafe sealed partial class WindowGLFW : IDisposable

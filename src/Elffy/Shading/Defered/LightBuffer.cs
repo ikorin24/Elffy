@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Elffy.Components.Implementation;
 using Elffy.Effective;
-using Elffy.OpenGL;
+using Elffy.Graphics.OpenGL;
 
 namespace Elffy.Shading.Defered
 {

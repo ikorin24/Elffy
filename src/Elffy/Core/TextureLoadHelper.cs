@@ -1,6 +1,6 @@
 ﻿#nullable enable
 using Elffy.Imaging;
-using Elffy.OpenGL;
+using Elffy.Graphics.OpenGL;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using OpenTK.Graphics.OpenGL4;

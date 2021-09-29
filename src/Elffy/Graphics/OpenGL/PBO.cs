@@ -5,7 +5,7 @@ using System.Diagnostics;
 using OpenTK.Graphics.OpenGL4;
 using Elffy.Core;
 
-namespace Elffy.OpenGL
+namespace Elffy.Graphics.OpenGL
 {
     [DebuggerDisplay("PBO={_pbo}")]
     public readonly struct PBO : IEquatable<PBO>

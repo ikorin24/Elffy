@@ -2,7 +2,7 @@
 using System;
 using Elffy.Components;
 using Elffy.Core;
-using Elffy.OpenGL;
+using Elffy.Graphics.OpenGL;
 
 namespace Elffy.Shading.Defered
 {

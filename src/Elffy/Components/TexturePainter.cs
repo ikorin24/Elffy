@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Diagnostics.CodeAnalysis;
 using Elffy.Effective;
 using Elffy.Imaging;
-using Elffy.OpenGL;
+using Elffy.Graphics.OpenGL;
 using SkiaSharp;
 using Elffy.Components.Implementation;
 

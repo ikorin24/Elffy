@@ -2,7 +2,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using OpenTK.Graphics.OpenGL4;
-using Elffy.OpenGL;
+using Elffy.Graphics.OpenGL;
 using Elffy.Core;
 
 namespace Elffy.Shading

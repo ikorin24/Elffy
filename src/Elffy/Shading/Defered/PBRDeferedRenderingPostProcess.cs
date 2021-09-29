@@ -1,5 +1,5 @@
 ﻿#nullable enable
-using Elffy.OpenGL;
+using Elffy.Graphics.OpenGL;
 
 namespace Elffy.Shading.Defered
 {

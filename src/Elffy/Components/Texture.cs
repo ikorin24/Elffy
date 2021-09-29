@@ -1,7 +1,7 @@
 ﻿#nullable enable
 using System;
 using Elffy.Core;
-using Elffy.OpenGL;
+using Elffy.Graphics.OpenGL;
 using Elffy.Imaging;
 using Elffy.Components.Implementation;
 

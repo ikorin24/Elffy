@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using OpenTK.Graphics.OpenGL4;
 using Elffy.Shading;
 using Elffy.Shading.Forward;
-using Elffy.OpenGL;
+using Elffy.Graphics.OpenGL;
 using Elffy.UI;
 using System.Diagnostics;
 

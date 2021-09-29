@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Elffy.OpenGL.Windowing
+namespace Elffy.Graphics.OpenGL.Windowing
 {
     internal readonly struct JoystickConnectionEventArgs
     {
