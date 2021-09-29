@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using System;
-using Elffy.Core;
 
 namespace Elffy
 {
@@ -9,14 +8,6 @@ namespace Elffy
     {
         public DefineLocalResourceAttribute(string importedName, string packageFilePath)
         {
-        }
-    }
-
-    public static class ResourceProvider
-    {
-        public static IResourceLoader LocalResource(string resourcePackageFilePath)
-        {
-            return new LocalResourceLoader(resourcePackageFilePath);
         }
     }
 }

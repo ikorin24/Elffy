@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 
-namespace Elffy.Core
+namespace Elffy
 {
     /// <summary>Stream class used by <see cref="LocalResourceLoader"/></summary>
     internal sealed class LocalResourceStream : Stream

@@ -9,7 +9,7 @@ using System.Text;
 using System.Diagnostics.CodeAnalysis;
 using StringLiteral;
 
-namespace Elffy.Core
+namespace Elffy
 {
     internal static partial class LocalResourceInitializer
     {

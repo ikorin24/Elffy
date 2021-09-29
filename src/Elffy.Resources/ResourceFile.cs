@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using System;
 using System.IO;
-using Elffy.Core;
 
 namespace Elffy
 {

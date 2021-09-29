@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace Elffy.Core
+namespace Elffy
 {
     internal sealed class LocalResourceLoader : IResourceLoader
     {
