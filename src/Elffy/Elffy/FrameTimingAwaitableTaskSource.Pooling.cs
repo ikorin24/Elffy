@@ -16,7 +16,7 @@ namespace Elffy
         private static FrameTimingAwaitableTaskSource? _root;
         private static int _pooledCount;
 
-        internal static UniTask<AsyncUnit> CreateTask(AsyncBackEndPoint endPoint, FrameTiming timing, CancellationToken cancellationToken)
+        internal static UniTask<AsyncUnit> CreateTask(FrameTimingPoint? timingPoint, CancellationToken cancellationToken)
         {
             short token;
             FrameTimingAwaitableTaskSource? instance;
@@ -38,9 +38,9 @@ namespace Elffy
 
             if(instance is null) {
                 Debug.Assert(_pooledCount == 0);
-                return new UniTask<AsyncUnit>(new FrameTimingAwaitableTaskSource(endPoint, timing, token, cancellationToken), token);
+                return new UniTask<AsyncUnit>(new FrameTimingAwaitableTaskSource(timingPoint, token, cancellationToken), token);
             }
-            instance.InitFields(endPoint, timing, token, cancellationToken);
+            instance.InitFields(timingPoint, token, cancellationToken);
             Debug.Assert(instance._next is null);
             return new UniTask<AsyncUnit>(instance, token);
         }
@@ -49,7 +49,7 @@ namespace Elffy
         {
             // Clear the fields which is reference or contain reference type.
             Debug.Assert(source._next is null);
-            Debug.Assert(source._endPoint is null);
+            Debug.Assert(source._timingPoint is null);
             source._cancellationToken = default;
 
             // Add the instance to the pool.
@@ -73,24 +73,18 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private FrameTimingAwaitableTaskSource(AsyncBackEndPoint endPoint, FrameTiming timing, short token, CancellationToken cancellationToken)
+        private FrameTimingAwaitableTaskSource(FrameTimingPoint? timingPoint, short token, CancellationToken cancellationToken)
         {
-            InitFields(endPoint, timing, token, cancellationToken);
+            InitFields(timingPoint, token, cancellationToken);
             Debug.Assert(_next is null);
         }
 
-        [MemberNotNull(nameof(_endPoint))]
+        [MemberNotNull(nameof(_timingPoint))]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void InitFields(AsyncBackEndPoint endPoint, FrameTiming timing, short token, CancellationToken cancellationToken)
+        private void InitFields(FrameTimingPoint? timingPoint, short token, CancellationToken cancellationToken)
         {
             // All fields must be set except '_next'
-            if(timing == FrameTiming.NotSpecified) {
-                _endPoint = _completedEndPoint;
-            }
-            else {
-                _endPoint = endPoint;
-            }
-            _timing = timing;
+            _timingPoint = timingPoint ?? _completedTimingPoint;
             _token = token;
             _cancellationToken = cancellationToken;
         }

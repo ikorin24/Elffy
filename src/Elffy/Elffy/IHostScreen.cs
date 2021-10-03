@@ -25,8 +25,8 @@ namespace Elffy
         /// <summary>Get UI root</summary>
         RootPanel UIRoot { get; }
 
-        /// <summary>Get asynchronous end point</summary>
-        public AsyncBackEndPoint AsyncBack { get; }
+        /// <summary>Get asynchronous timing points</summary>
+        public FrameTimingPointList TimingPoints { get; }
 
         /// <summary>Get pixel size of rendering area.</summary>
         Vector2i ClientSize { get; set; }

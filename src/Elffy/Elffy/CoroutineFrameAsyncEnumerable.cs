@@ -53,7 +53,7 @@ namespace Elffy
                 _frameObject = coroutineState.FrameObject;
                 _startTime = screen.Time + screen.FrameDelta;
                 _startFrame = screen.FrameNum + 1;
-                _timingPoint = screen.AsyncBack.TimingOf(timing);
+                _timingPoint = screen.TimingPoints.TimingOf(timing);
             }
 
             public UniTask DisposeAsync() => UniTask.CompletedTask;

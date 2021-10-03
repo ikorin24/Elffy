@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 
 namespace Elffy
 {
-    public sealed class AsyncBackEndPoint
+    public sealed class FrameTimingPointList
     {
         private readonly IHostScreen _screen;
         private readonly FrameTimingPoint _earlyUpdatePoint;
@@ -23,14 +23,14 @@ namespace Elffy
         public FrameTimingPoint BeforeRendering => _beforeRenderingPoint;
         public FrameTimingPoint AfterRendering => _afterRenderingPoint;
 
-        internal AsyncBackEndPoint(IHostScreen screen)
+        internal FrameTimingPointList(IHostScreen screen)
         {
             _screen = screen;
-            _earlyUpdatePoint = new FrameTimingPoint(this, FrameTiming.EarlyUpdate);
-            _updatePoint = new FrameTimingPoint(this, FrameTiming.Update);
-            _lateUpdatePoint = new FrameTimingPoint(this, FrameTiming.LateUpdate);
-            _beforeRenderingPoint = new FrameTimingPoint(this, FrameTiming.BeforeRendering);
-            _afterRenderingPoint = new FrameTimingPoint(this, FrameTiming.AfterRendering);
+            _earlyUpdatePoint = new FrameTimingPoint(_screen, FrameTiming.EarlyUpdate);
+            _updatePoint = new FrameTimingPoint(_screen, FrameTiming.Update);
+            _lateUpdatePoint = new FrameTimingPoint(_screen, FrameTiming.LateUpdate);
+            _beforeRenderingPoint = new FrameTimingPoint(_screen, FrameTiming.BeforeRendering);
+            _afterRenderingPoint = new FrameTimingPoint(_screen, FrameTiming.AfterRendering);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -73,7 +73,7 @@ namespace Elffy
         }
 
         /// <summary>Abort all suspended tasks by clearing the queue.</summary>
-        internal void AbortAll()
+        internal void AbortAllEvents()
         {
             _earlyUpdatePoint.AbortAllEvents();
             _updatePoint.AbortAllEvents();

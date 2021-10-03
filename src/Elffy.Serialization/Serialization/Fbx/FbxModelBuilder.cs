@@ -31,7 +31,7 @@ namespace Elffy.Serialization.Fbx
             var (file, token) = obj;
             model.TryGetHostScreen(out var screen);
             Debug.Assert(screen is not null);
-            var endPoint = screen.AsyncBack;
+            var timingPoints = screen.TimingPoints;
             token.ThrowIfCancellationRequested();
 
             await UniTask.SwitchToThreadPool();                                         // ↓ thread pool -------------------------------------- 
@@ -45,7 +45,7 @@ namespace Elffy.Serialization.Fbx
 
             // Parse fbx file
             using var fbx = FbxSemanticParser<SkinnedVertex>.ParseUnsafe(file.GetStream(), false, token);
-            await endPoint.Update.Switch(token);        // ↓ main thread --------------------------------------
+            await timingPoints.Update.Switch(token);        // ↓ main thread --------------------------------------
 
             await CreateTexture(file, fbx, model);
 
@@ -56,7 +56,7 @@ namespace Elffy.Serialization.Fbx
                 model.AddComponent(skeleton);
                 using var bones = new ValueTypeRentMemory<Bone>(fbx.Skeletons[skeletonIndex].BoneCount);
                 fbx.Skeletons[skeletonIndex].CreateBones(bones.Span);
-                await skeleton.LoadAsync(bones, endPoint, cancellationToken: token);
+                await skeleton.LoadAsync(bones, timingPoints, cancellationToken: token);
             }
 
             load.Invoke(fbx.Vertices, fbx.Indices);

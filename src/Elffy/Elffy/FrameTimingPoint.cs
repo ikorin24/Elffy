@@ -11,7 +11,6 @@ namespace Elffy
     public sealed class FrameTimingPoint
     {
         private readonly IHostScreen _screen;
-        private readonly AsyncBackEndPoint _endPoints;
         private readonly ConcurrentQueue<WorkItem> _queue;
         private readonly FrameTiming _timing;
 
@@ -20,11 +19,10 @@ namespace Elffy
         public IHostScreen Screen => _screen;
         public FrameTiming TargetTiming => _timing;
 
-        internal FrameTimingPoint(AsyncBackEndPoint endPoints, FrameTiming timing)
+        internal FrameTimingPoint(IHostScreen screen, FrameTiming timing)
         {
             Debug.Assert(timing.IsSpecified());
-            _screen = endPoints.Screen;
-            _endPoints = endPoints;
+            _screen = screen;
             _queue = new ConcurrentQueue<WorkItem>();
             _timing = timing;
         }
@@ -38,7 +36,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public UniTask<AsyncUnit> Switch(CancellationToken cancellationToken = default)
         {
-            return FrameTimingAwaitableTaskSource.CreateTask(_endPoints, _timing, cancellationToken);
+            return FrameTimingAwaitableTaskSource.CreateTask(this, cancellationToken);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -171,11 +169,6 @@ namespace Elffy
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public WorkItem(Action action)
             {
-                //_action = state =>
-                //{
-                //    Debug.Assert(state is not null);
-                //    SafeCast.As<Action>(state).Invoke();
-                //};
                 _action = Lambda.Instance.Action;
                 _state = action;
             }

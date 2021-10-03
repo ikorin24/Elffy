@@ -15,20 +15,23 @@ namespace Elffy
             return IcoParser.Parse(stream);
         }
 
-        public static UniTask<Icon> LoadIconAsync(this ResourceFile file, AsyncBackEndPoint endPoint,
+        public static UniTask<Icon> LoadIconAsync(this ResourceFile file, FrameTimingPointList timingPoints,
                                                   CancellationToken cancellationToken = default)
         {
-            return LoadIconAsync(file, endPoint, FrameTiming.Update, cancellationToken);
+            return LoadIconAsync(file, timingPoints, FrameTiming.Update, cancellationToken);
         }
 
         public static UniTask<Icon> LoadIconAsync(this ResourceFile file,
-                                                  AsyncBackEndPoint endPoint,
+                                                  FrameTimingPointList timingPoints,
                                                   [AllowNotSpecifiedTiming] FrameTiming timing,
                                                   CancellationToken cancellationToken = default)
         {
+            if(timingPoints.TryGetTimingOf(timing, out var timingPoint) == false) {
+                timingPoint = null;
+            }
             return AsyncLoadCore(static file => LoadIcon(file), file,
                                  static icon => icon.Dispose(),
-                                 endPoint, true, timing, cancellationToken);
+                                 timingPoint, cancellationToken);
         }
 
         public static Image LoadImage(this ResourceFile file)
@@ -38,20 +41,23 @@ namespace Elffy
         }
 
         public static UniTask<Image> LoadImageAsync(this ResourceFile file,
-                                                    AsyncBackEndPoint endPoint,
+                                                    FrameTimingPointList timingPoints,
                                                     CancellationToken cancellationToken = default)
         {
-            return LoadImageAsync(file, endPoint, FrameTiming.Update, cancellationToken);
+            return LoadImageAsync(file, timingPoints, FrameTiming.Update, cancellationToken);
         }
 
         public static UniTask<Image> LoadImageAsync(this ResourceFile file,
-                                                    AsyncBackEndPoint endPoint,
+                                                    FrameTimingPointList timingPoints,
                                                     [AllowNotSpecifiedTiming] FrameTiming timing,
                                                     CancellationToken cancellationToken = default)
         {
+            if(timingPoints.TryGetTimingOf(timing, out var timingPoint) == false) {
+                timingPoint = null;
+            }
             return AsyncLoadCore(static file => LoadImage(file), file,
                                  static image => image.Dispose(),
-                                 endPoint, true, timing, cancellationToken);
+                                 timingPoint, cancellationToken);
         }
 
         public static Texture LoadTexture(this ResourceFile file)
@@ -68,33 +74,33 @@ namespace Elffy
         }
 
         public static UniTask<Texture> LoadTextureAsync(ResourceFile file,
-                                                        AsyncBackEndPoint endPoint,
+                                                        FrameTimingPointList timingPoints,
                                                         CancellationToken cancellationToken = default)
         {
-            return LoadTextureAsync(file, TextureConfig.Default, endPoint, FrameTiming.Update, cancellationToken);
+            return LoadTextureAsync(file, TextureConfig.Default, timingPoints, FrameTiming.Update, cancellationToken);
         }
 
         public static UniTask<Texture> LoadTextureAsync(ResourceFile file,
-                                                        AsyncBackEndPoint endPoint,
+                                                        FrameTimingPointList timingPoints,
                                                         FrameTiming timing,
                                                         CancellationToken cancellationToken = default)
         {
-            return LoadTextureAsync(file, TextureConfig.Default, endPoint, timing, cancellationToken);
+            return LoadTextureAsync(file, TextureConfig.Default, timingPoints, timing, cancellationToken);
         }
 
         public static UniTask<Texture> LoadTextureAsync(this ResourceFile file, TextureConfig config,
-                                                              AsyncBackEndPoint endPoint,
+                                                              FrameTimingPointList timingPoints,
                                                               CancellationToken cancellationToken = default)
         {
-            return LoadTextureAsync(file, config, endPoint, FrameTiming.Update, cancellationToken);
+            return LoadTextureAsync(file, config, timingPoints, FrameTiming.Update, cancellationToken);
         }
 
         public static async UniTask<Texture> LoadTextureAsync(this ResourceFile file, TextureConfig config,
-                                                              AsyncBackEndPoint endPoint,
+                                                              FrameTimingPointList timingPoints,
                                                               FrameTiming timing,
                                                               CancellationToken cancellationToken = default)
         {
-            using var image = await LoadImageAsync(file, endPoint, timing, cancellationToken);
+            using var image = await LoadImageAsync(file, timingPoints, timing, cancellationToken);
             var texture = new Texture(config);
             texture.Load(image);
             return texture;
@@ -107,51 +113,43 @@ namespace Elffy
         }
 
         public static UniTask<Typeface> LoadTypefaceAsync(this ResourceFile file,
-                                                          AsyncBackEndPoint endPoint,
+                                                          FrameTimingPointList timingPoints,
                                                           CancellationToken cancellationToken = default)
         {
-            return LoadTypefaceAsync(file, endPoint, FrameTiming.Update, cancellationToken);
+            return LoadTypefaceAsync(file, timingPoints, FrameTiming.Update, cancellationToken);
         }
 
         public static UniTask<Typeface> LoadTypefaceAsync(this ResourceFile file,
-                                                          AsyncBackEndPoint endPoint,
+                                                          FrameTimingPointList timingPoints,
                                                           [AllowNotSpecifiedTiming] FrameTiming timing,
                                                           CancellationToken cancellationToken = default)
         {
+            if(timingPoints.TryGetTimingOf(timing, out var timingPoint) == false) {
+                timingPoint = null;
+            }
             return AsyncLoadCore(static file => LoadTypeface(file), file,
                                  static typeface => typeface.Dispose(),
-                                 endPoint, true, timing, cancellationToken);
+                                 timingPoint, cancellationToken);
         }
 
-
-        private static async UniTask<T> AsyncLoadCore<T, TState>(Func<TState, T> onTreadPool, TState state,
-                                                                 Action<T>? onCatch,
-                                                                 AsyncBackEndPoint endPoint,
-                                                                 bool allowNotSpecifiedTiming,
-                                                                 FrameTiming timing,
-                                                                 CancellationToken cancellationToken)
+        private static async UniTask<T> AsyncLoadCore<T, TState>(Func<TState, T> onTreadPool, TState state, Action<T>? onCatch,
+                                                                 FrameTimingPoint? timingPoint, CancellationToken cancellationToken)
         {
-            if(endPoint is null) {
-                throw new ArgumentNullException(nameof(endPoint));
-            }
-            if(allowNotSpecifiedTiming == false) {
-                timing.ThrowArgExceptionIfNotSpecified();
-            }
             cancellationToken.ThrowIfCancellationRequested();
             await UniTask.SwitchToThreadPool();
             cancellationToken.ThrowIfCancellationRequested();
 
-            var obj = onTreadPool(state);
-            if(timing.IsSpecified()) {
+            var result = onTreadPool(state);
+            if(timingPoint is not null) {
                 try {
-                    await endPoint.TimingOf(timing).Switch(cancellationToken);
+                    await timingPoint.Switch(cancellationToken);
                 }
                 catch {
-                    onCatch?.Invoke(obj);
+                    onCatch?.Invoke(result);
                     throw;
                 }
             }
-            return obj;
+            return result;
         }
     }
 }

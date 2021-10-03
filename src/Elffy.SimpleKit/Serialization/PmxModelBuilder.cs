@@ -191,11 +191,11 @@ namespace Elffy.Serialization
                 Debug.Assert(screen is not null);
                 var skeleton = new HumanoidSkeleton();
                 model.AddComponent(skeleton);
-                await skeleton.LoadAsync(bones.AsSpanLike(), screen.AsyncBack);
+                await skeleton.LoadAsync(bones.AsSpanLike(), screen.TimingPoints);
 
                 //      ↑ thread pool
                 // ------------------------------
-                await screen.AsyncBack.Update.Ensure(obj.CancellationToken);
+                await screen.TimingPoints.Update.Ensure(obj.CancellationToken);
                 // ------------------------------
                 //      ↓ main thread
                 Debug.Assert(Engine.CurrentContext == screen);
@@ -214,7 +214,7 @@ namespace Elffy.Serialization
                                             TextureMipmapMode.Bilinear, TextureWrapMode.Repeat, TextureWrapMode.Repeat);
                     }
                     // Scadule the loading of textures to each frame.
-                    await screen.AsyncBack.Update.Switch(obj.CancellationToken);
+                    await screen.TimingPoints.Update.Switch(obj.CancellationToken);
                 }
                 var partsComponent = new PmxModelParts(ref vertexCountArray, ref textureIndexArray, ref textures);
                 model.AddComponent(partsComponent);

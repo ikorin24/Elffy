@@ -10,20 +10,19 @@ namespace Elffy
 {
     internal sealed partial class FrameTimingAwaitableTaskSource : IUniTaskSource<AsyncUnit>
     {
-        private static readonly object _completedEndPoint = new object();
+        private static readonly object _completedTimingPoint = new object();
 
-        private object? _endPoint;      // AsyncBackEndPoint instance (pending) || '_completedEndPoint' (completed) || null (after completed)
+        private object? _timingPoint;       // FrameTimingPoint instance (pending) || '_completedTimingPoint' (completed) || null (after completed)
         private FrameTimingAwaitableTaskSource? _next;
         private CancellationToken _cancellationToken;
         private short _token;
-        private FrameTiming _timing;
 
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public AsyncUnit GetResult(short token)
         {
             ValidateToken(token);
-            if(Interlocked.CompareExchange(ref _endPoint, null, _completedEndPoint) == _completedEndPoint) {
+            if(Interlocked.CompareExchange(ref _timingPoint, null, _completedTimingPoint) == _completedTimingPoint) {
                 Return(this);
                 return AsyncUnit.Default;   // It means success
             }
@@ -63,14 +62,14 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void OnCompleted(Action<object?> continuation, object? state, short token)
         {
-            var endPoint = Interlocked.Exchange(ref _endPoint, _completedEndPoint);
-            if(ReferenceEquals(endPoint, _completedEndPoint) || endPoint is null) {
-                _endPoint = null;
+            var timingPoint = Interlocked.Exchange(ref _timingPoint, _completedTimingPoint);
+            if(ReferenceEquals(timingPoint, _completedTimingPoint) || timingPoint is null) {
+                _timingPoint = null;
                 ThrowForAwaitTwice();
             }
             else {
-                Debug.Assert(endPoint is AsyncBackEndPoint);
-                Unsafe.As<AsyncBackEndPoint>(endPoint).TimingOf(_timing).Post(continuation, state);
+                Debug.Assert(timingPoint is FrameTimingPoint);
+                Unsafe.As<FrameTimingPoint>(timingPoint).Post(continuation, state);
             }
         }
 
@@ -78,7 +77,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public UniTaskStatus UnsafeGetStatus()
         {
-            if(ReferenceEquals(_endPoint, _completedEndPoint)) {
+            if(ReferenceEquals(_timingPoint, _completedTimingPoint)) {
                 return UniTaskStatus.Succeeded;
             }
             else if(_cancellationToken.IsCancellationRequested) {

@@ -39,7 +39,7 @@ namespace Elffy.Core
         public Mouse Mouse { get; } = new Mouse();
         public Keyboard Keyboard { get; } = new Keyboard();
 
-        public AsyncBackEndPoint AsyncBack { get; }
+        public FrameTimingPointList TimingPoints { get; }
 
         public CurrentFrameTiming CurrentTiming => _currentTiming;
 
@@ -57,7 +57,7 @@ namespace Elffy.Core
         {
             _clearColor = Color4.Black;
             OwnerScreen = screen;
-            AsyncBack = new AsyncBackEndPoint(screen);
+            TimingPoints = new FrameTimingPointList(screen);
             Layers = new LayerCollection(this);
             _runningTokenSource = new CancellationTokenSource();
         }
@@ -100,7 +100,7 @@ namespace Elffy.Core
         /// <summary>Update and render the next frame</summary>
         public void RenderFrame()
         {
-            var timingPoints = AsyncBack;
+            var timingPoints = TimingPoints;
 
             // ------------------------------------------------------------
             // Out of frame loop
@@ -227,7 +227,7 @@ namespace Elffy.Core
             }
             layers.Clear();
 
-            AsyncBack.AbortAll();
+            TimingPoints.AbortAllEvents();
             ContextAssociatedMemorySafety.EnsureCollect(OwnerScreen);   // Must be called before the opengl context is deleted.
             Disposed?.Invoke();
         }

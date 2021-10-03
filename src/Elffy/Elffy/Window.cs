@@ -38,7 +38,7 @@ namespace Elffy
         public Keyboard Keyboard => _renderingArea.Keyboard;
 
         /// <inheritdoc/>
-        public AsyncBackEndPoint AsyncBack => _renderingArea.AsyncBack;
+        public FrameTimingPointList TimingPoints => _renderingArea.TimingPoints;
 
         /// <inheritdoc/>
         public LayerCollection Layers => _renderingArea.Layers;
@@ -180,7 +180,7 @@ namespace Elffy
 
         public FrameAsyncEnumerable Frames(FrameTiming timing, CancellationToken cancellationToken = default)
         {
-            return new FrameAsyncEnumerable(AsyncBack, timing, cancellationToken);
+            return new FrameAsyncEnumerable(TimingPoints, timing, cancellationToken);
         }
 
         public void Maximize()

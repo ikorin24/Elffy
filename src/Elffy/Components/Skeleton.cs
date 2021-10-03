@@ -60,16 +60,16 @@ namespace Elffy.Components
             ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
         }
 
-        public UniTask LoadAsync<TBoneSpan>(TBoneSpan bones, AsyncBackEndPoint endPoint, CancellationToken cancellationToken = default) where TBoneSpan : IReadOnlySpan<Bone>
+        public UniTask LoadAsync<TBoneSpan>(TBoneSpan bones, FrameTimingPointList timingPoints, CancellationToken cancellationToken = default) where TBoneSpan : IReadOnlySpan<Bone>
         {
-            return LoadAsync(bones, endPoint, FrameTiming.Update, cancellationToken);
+            return LoadAsync(bones, timingPoints, FrameTiming.Update, cancellationToken);
         }
 
-        public async UniTask LoadAsync<TBoneSpan>(TBoneSpan bones, AsyncBackEndPoint endPoint, FrameTiming timing,
+        public async UniTask LoadAsync<TBoneSpan>(TBoneSpan bones, FrameTimingPointList timingPoints, FrameTiming timing,
                                                   CancellationToken cancellationToken = default) where TBoneSpan : IReadOnlySpan<Bone>
         {
             if(IsBoneLoaded) { throw new InvalidOperationException("Already loaded"); }
-            if(endPoint is null) { throw new ArgumentNullException(nameof(endPoint)); }
+            if(timingPoints is null) { throw new ArgumentNullException(nameof(timingPoints)); }
             timing.ThrowArgExceptionIfNotSpecified(nameof(timing));
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -77,7 +77,7 @@ namespace Elffy.Components
             cancellationToken.ThrowIfCancellationRequested();
             try {
                 InitializeSkeletonData(this, bones.AsReadOnlySpan());
-                await endPoint.TimingOf(timing).Switch(cancellationToken);
+                await timingPoints.TimingOf(timing).Switch(cancellationToken);
                 if(IsBoneLoaded) { throw new InvalidOperationException("Already loaded"); }
                 _boneTranslationData.Load(_matrices!.AsSpan().MarshalCast<Matrix4, Color4>());
             }

@@ -9,28 +9,28 @@ namespace Elffy
 {
     public readonly struct FrameAsyncEnumerable : IUniTaskAsyncEnumerable<FrameInfo>
     {
-        private readonly AsyncBackEndPoint _endPoint;
+        private readonly FrameTimingPointList _timingPoints;
         private readonly FrameTiming _timing;
         private readonly CancellationToken _cancellationToken;
 
-        internal FrameAsyncEnumerable(AsyncBackEndPoint endPoint, FrameTiming timing, CancellationToken cancellation)
+        internal FrameAsyncEnumerable(FrameTimingPointList timingPoints, FrameTiming timing, CancellationToken cancellation)
         {
             Debug.Assert(timing.IsSpecified());
-            _endPoint = endPoint;
+            _timingPoints = timingPoints;
             _timing = timing;
             _cancellationToken = cancellation;
         }
 
         private FrameAsyncEnumerable(in FrameAsyncEnumerable old, CancellationToken cancellationToken)
         {
-            _endPoint = old._endPoint;
+            _timingPoints = old._timingPoints;
             _timing = old._timing;
             _cancellationToken = cancellationToken;
         }
 
         public FrameAsyncEnumerator GetAsyncEnumerator(CancellationToken cancellationToken = default)
         {
-            return new FrameAsyncEnumerator(_endPoint.Screen, _timing, CancellationTokenHelper.Combine(_cancellationToken, cancellationToken));
+            return new FrameAsyncEnumerator(_timingPoints.Screen, _timing, CancellationTokenHelper.Combine(_cancellationToken, cancellationToken));
         }
 
         IUniTaskAsyncEnumerator<FrameInfo> IUniTaskAsyncEnumerable<FrameInfo>.GetAsyncEnumerator(CancellationToken cancellationToken)
@@ -63,7 +63,7 @@ namespace Elffy
         internal FrameAsyncEnumerator(IHostScreen screen, FrameTiming timing, CancellationToken cancellationToken)
         {
             Debug.Assert(timing.IsSpecified());
-            _timingPoint = screen.AsyncBack.TimingOf(timing);
+            _timingPoint = screen.TimingPoints.TimingOf(timing);
             _cancellationToken = cancellationToken;
             _startTime = screen.Time + screen.FrameDelta;
             _startFrame = screen.FrameNum + 1;
