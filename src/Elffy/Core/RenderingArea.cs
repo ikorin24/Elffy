@@ -82,7 +82,8 @@ namespace Elffy.Core
             // Initialize viewport and so on.
             SetFrameBufferSize(OwnerScreen.FrameBufferSize);
 
-            Layers.UILayer.Initialize();
+            var layerCollection = Layers;
+            layerCollection.UILayer.Initialize();
             try {
                 Initialized?.Invoke(OwnerScreen);
             }
@@ -90,15 +91,17 @@ namespace Elffy.Core
                 // Don't throw. (Ignore exceptions in user code)
             }
 
-            foreach(var layer in Layers.AsReadOnlySpan()) {
+            foreach(var layer in layerCollection.AsReadOnlySpan()) {
                 layer.ApplyAdd();
             }
-            Layers.UILayer.ApplyAdd();
+            layerCollection.UILayer.ApplyAdd();
         }
 
         /// <summary>Update and render the next frame</summary>
         public void RenderFrame()
         {
+            var timingPoints = AsyncBack;
+
             // ------------------------------------------------------------
             // Out of frame loop
             Debug.Assert(_currentTiming == ScreenCurrentTiming.OutOfFrameLoop);
@@ -129,7 +132,7 @@ namespace Elffy.Core
             // Early update
             _currentTiming = ScreenCurrentTiming.EarlyUpdate;
             uiLayer.UIEvent();
-            AsyncBack.DoQueuedEvents(FrameLoopTiming.EarlyUpdate);
+            timingPoints.EarlyUpdate.DoQueuedEvents();
             foreach(var layer in layers) {
                 layer.EarlyUpdate();
             }
@@ -138,7 +141,7 @@ namespace Elffy.Core
             // ------------------------------------------------------------
             // Update
             _currentTiming = ScreenCurrentTiming.Update;
-            AsyncBack.DoQueuedEvents(FrameLoopTiming.Update);
+            timingPoints.Update.DoQueuedEvents();
             foreach(var layer in layers) {
                 layer.Update();
             }
@@ -147,7 +150,7 @@ namespace Elffy.Core
             // ------------------------------------------------------------
             // Late update
             _currentTiming = ScreenCurrentTiming.LateUpdate;
-            AsyncBack.DoQueuedEvents(FrameLoopTiming.LateUpdate);
+            timingPoints.LateUpdate.DoQueuedEvents();
             foreach(var layer in layers) {
                 layer.LateUpdate();
             }
@@ -158,7 +161,7 @@ namespace Elffy.Core
             _currentTiming = ScreenCurrentTiming.BeforeRendering;
             FBO.Bind(FBO.Empty, FBO.Target.FrameBuffer);
             ElffyGL.Clear(ClearMask.ColorBufferBit | ClearMask.DepthBufferBit);
-            AsyncBack.DoQueuedEvents(FrameLoopTiming.BeforeRendering);
+            timingPoints.BeforeRendering.DoQueuedEvents();
             foreach(var layer in layers) {
                 if(layer.IsVisible) {
                     layer.Render(Camera.View, Camera.Projection);
@@ -173,7 +176,7 @@ namespace Elffy.Core
             // ------------------------------------------------------------
             // After rendering
             _currentTiming = ScreenCurrentTiming.AfterRendering;
-            AsyncBack.DoQueuedEvents(FrameLoopTiming.AfterRendering);
+            timingPoints.AfterRendering.DoQueuedEvents();
 
             // ------------------------------------------------------------
             // Frame finalizing

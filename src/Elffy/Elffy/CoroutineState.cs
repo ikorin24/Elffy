@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using Cysharp.Threading.Tasks;
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -23,6 +22,12 @@ namespace Elffy
         internal FrameObject? FrameObject => _frameObject;
         public IHostScreen Screen => _screen;
         public AsyncBackEndPoint AsyncEndPoint => _endPoint;
+
+        public FrameTimingPoint EarlyUpdate => _endPoint.EarlyUpdate;
+        public FrameTimingPoint Update => _endPoint.Update;
+        public FrameTimingPoint LateUpdate => _endPoint.LateUpdate;
+        public FrameTimingPoint BeforeRendering => _endPoint.BeforeRendering;
+        public FrameTimingPoint AfterRendering => _endPoint.AfterRendering;
 
         internal CoroutineState(IHostScreen screen)
         {
@@ -55,15 +60,10 @@ namespace Elffy
             }
         }
 
-        public UniTask<AsyncUnit> ToTiming(FrameLoopTiming timing) => _endPoint.ToTiming(timing);
-        public UniTask<AsyncUnit> ToEarlyUpdate() => _endPoint.ToTiming(FrameLoopTiming.EarlyUpdate);
-        public UniTask<AsyncUnit> ToUpdate() => _endPoint.ToTiming(FrameLoopTiming.Update);
-        public UniTask<AsyncUnit> ToLateUpdate() => _endPoint.ToTiming(FrameLoopTiming.LateUpdate);
-        public UniTask<AsyncUnit> ToBeforeRendering() => _endPoint.ToTiming(FrameLoopTiming.BeforeRendering);
-        public UniTask<AsyncUnit> ToAfterRendering() => _endPoint.ToTiming(FrameLoopTiming.AfterRendering);
+        public FrameTimingPoint TimingOf(FrameTiming timing) => _endPoint.TimingOf(timing);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public CoroutineFrameAsyncEnumerable Frames(FrameLoopTiming timing = FrameLoopTiming.Update)
+        public CoroutineFrameAsyncEnumerable Frames(FrameTiming timing = FrameTiming.Update)
         {
             timing.ThrowArgExceptionIfNotSpecified(nameof(timing));
             return new CoroutineFrameAsyncEnumerable(this, timing);

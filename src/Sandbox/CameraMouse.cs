@@ -9,7 +9,7 @@ namespace Sandbox
 {
     public static class CameraMouse
     {
-        private const FrameLoopTiming LoopTiming = FrameLoopTiming.EarlyUpdate;
+        private const FrameTiming LoopTiming = FrameTiming.EarlyUpdate;
 
         private sealed class CameraMouseObject : FrameObject
         {
@@ -39,6 +39,7 @@ namespace Sandbox
             var screen = coroutine.Screen;
             var mouse = screen.Mouse;
             var camera = screen.Camera;
+            var timingPoint = coroutine.TimingOf(LoopTiming);
 
             camera.LookAt(target, initialPos);
             while(coroutine.CanRun) {
@@ -59,7 +60,7 @@ namespace Sandbox
                 if(posChanged) {
                     camera.LookAt(target, cameraPos);
                 }
-                await coroutine.ToTiming(LoopTiming);
+                await timingPoint.Switch();
             }
         }
 

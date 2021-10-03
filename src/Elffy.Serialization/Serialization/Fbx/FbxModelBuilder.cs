@@ -45,7 +45,7 @@ namespace Elffy.Serialization.Fbx
 
             // Parse fbx file
             using var fbx = FbxSemanticParser<SkinnedVertex>.ParseUnsafe(file.GetStream(), false, token);
-            await endPoint.ToTiming(FrameLoopTiming.Update, token);                     // ↓ main thread --------------------------------------
+            await endPoint.Update.Switch(token);        // ↓ main thread --------------------------------------
 
             await CreateTexture(file, fbx, model);
 
@@ -83,7 +83,7 @@ namespace Elffy.Serialization.Fbx
 
                     // TODO: パスの解決
                     //var name = path;
-                    //using var image = await file.ResourceLoader.LoadImageAsync(name, screen.AsyncBack, FrameLoopTiming.Update);
+                    //using var image = await file.ResourceLoader.LoadImageAsync(name, screen.AsyncBack, FrameTiming.Update);
                     //textureLoader.Load(i, image);
                 }
             }

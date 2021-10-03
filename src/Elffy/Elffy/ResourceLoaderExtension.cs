@@ -17,7 +17,7 @@ namespace Elffy
 
         public static UniTask<Icon> LoadIconAsync(this ResourceFile file,
                                                   AsyncBackEndPoint endPoint,
-                                                  [AllowNotSpecifiedTiming] FrameLoopTiming timing = FrameLoopTiming.Update,
+                                                  [AllowNotSpecifiedTiming] FrameTiming timing = FrameTiming.Update,
                                                   CancellationToken cancellationToken = default)
         {
             return AsyncLoadCore(static file => LoadIcon(file), file,
@@ -33,7 +33,7 @@ namespace Elffy
 
         public static UniTask<Image> LoadImageAsync(this ResourceFile file,
                                                     AsyncBackEndPoint endPoint,
-                                                    [AllowNotSpecifiedTiming] FrameLoopTiming timing = FrameLoopTiming.Update,
+                                                    [AllowNotSpecifiedTiming] FrameTiming timing = FrameTiming.Update,
                                                     CancellationToken cancellationToken = default)
         {
             return AsyncLoadCore(static file => LoadImage(file), file,
@@ -56,7 +56,7 @@ namespace Elffy
 
         public static UniTask<Texture> LoadTextureAsync(ResourceFile file,
                                                         AsyncBackEndPoint endPoint,
-                                                        FrameLoopTiming timing = FrameLoopTiming.Update,
+                                                        FrameTiming timing = FrameTiming.Update,
                                                         CancellationToken cancellationToken = default)
         {
             return LoadTextureAsync(file, TextureConfig.Default, endPoint, timing, cancellationToken);
@@ -64,7 +64,7 @@ namespace Elffy
 
         public static async UniTask<Texture> LoadTextureAsync(this ResourceFile file, TextureConfig config,
                                                               AsyncBackEndPoint endPoint,
-                                                              FrameLoopTiming timing = FrameLoopTiming.Update,
+                                                              FrameTiming timing = FrameTiming.Update,
                                                               CancellationToken cancellationToken = default)
         {
             using var image = await LoadImageAsync(file, endPoint, timing, cancellationToken);
@@ -81,7 +81,7 @@ namespace Elffy
 
         public static UniTask<Typeface> LoadTypefaceAsync(this ResourceFile file,
                                                           AsyncBackEndPoint endPoint,
-                                                          [AllowNotSpecifiedTiming] FrameLoopTiming timing = FrameLoopTiming.Update,
+                                                          [AllowNotSpecifiedTiming] FrameTiming timing = FrameTiming.Update,
                                                           CancellationToken cancellationToken = default)
         {
             return AsyncLoadCore(static file => LoadTypeface(file), file,
@@ -94,7 +94,7 @@ namespace Elffy
                                                                  Action<T>? onCatch,
                                                                  AsyncBackEndPoint endPoint,
                                                                  bool allowNotSpecifiedTiming,
-                                                                 FrameLoopTiming timing,
+                                                                 FrameTiming timing,
                                                                  CancellationToken cancellationToken)
         {
             if(endPoint is null) {
@@ -113,7 +113,7 @@ namespace Elffy
             var obj = onTreadPool(state);
             if(timing.IsSpecified()) {
                 try {
-                    await endPoint.ToTiming(timing, cancellationToken);
+                    await endPoint.TimingOf(timing).Switch(cancellationToken);
                 }
                 catch {
                     onCatch?.Invoke(obj);

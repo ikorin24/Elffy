@@ -10,10 +10,10 @@ namespace Elffy
     public readonly struct CoroutineFrameAsyncEnumerable : IUniTaskAsyncEnumerable<FrameInfo>
     {
         private readonly CoroutineState _coroutineState;
-        private readonly FrameLoopTiming _timing;
+        private readonly FrameTiming _timing;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal CoroutineFrameAsyncEnumerable(CoroutineState coroutineState, FrameLoopTiming timing)
+        internal CoroutineFrameAsyncEnumerable(CoroutineState coroutineState, FrameTiming timing)
         {
             Debug.Assert(timing.IsSpecified());
             _coroutineState = coroutineState;
@@ -31,33 +31,39 @@ namespace Elffy
 
         public readonly struct Enumerator : IUniTaskAsyncEnumerator<FrameInfo>
         {
-            private readonly IHostScreen _screen;
             private readonly FrameObject? _frameObject;
+            private readonly FrameTimingPoint _timingPoint;
             private readonly TimeSpan _startTime;
             private readonly long _startFrame;
-            private readonly FrameLoopTiming _timing;
 
-            public FrameInfo Current => new FrameInfo(_screen.FrameNum - _startFrame, _screen.Time - _startTime);
+            public FrameInfo Current
+            {
+                get
+                {
+                    var screen = _timingPoint.Screen;
+                    return new FrameInfo(screen.FrameNum - _startFrame, screen.Time - _startTime);
+                }
+            }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            internal Enumerator(CoroutineState coroutineState, FrameLoopTiming timing)
+            internal Enumerator(CoroutineState coroutineState, FrameTiming timing)
             {
                 Debug.Assert(timing.IsSpecified());
-                _screen = coroutineState.Screen;
+                var screen = coroutineState.Screen;
                 _frameObject = coroutineState.FrameObject;
-                _startTime = _screen.Time + _screen.FrameDelta;
-                _startFrame = _screen.FrameNum + 1;
-                _timing = timing;
+                _startTime = screen.Time + screen.FrameDelta;
+                _startFrame = screen.FrameNum + 1;
+                _timingPoint = screen.AsyncBack.TimingOf(timing);
             }
 
             public UniTask DisposeAsync() => UniTask.CompletedTask;
 
             public async UniTask<bool> MoveNextAsync()
             {
-                if(CoroutineState.CoroutineCanRun(_screen, _frameObject) == false) {
+                if(CoroutineState.CoroutineCanRun(_timingPoint.Screen, _frameObject) == false) {
                     return false;
                 }
-                await _screen.AsyncBack.ToTiming(_timing);
+                await _timingPoint.Switch();
                 return true;
             }
         }

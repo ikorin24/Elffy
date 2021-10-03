@@ -16,28 +16,28 @@ namespace Elffy
     public static class Coroutine
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static UniTask Start(FrameObject parent, Func<CoroutineState, UniTask> coroutine, FrameLoopTiming timing = FrameLoopTiming.Update)
+        public static UniTask Start(FrameObject parent, Func<CoroutineState, UniTask> coroutine, FrameTiming timing = FrameTiming.Update)
         {
             CheckArgs(parent, coroutine, timing);
             return StartPrivate(parent, DummyState.Null, coroutine, timing);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static UniTask Start(IHostScreen parent, Func<CoroutineState, UniTask> coroutine, FrameLoopTiming timing = FrameLoopTiming.Update)
+        public static UniTask Start(IHostScreen parent, Func<CoroutineState, UniTask> coroutine, FrameTiming timing = FrameTiming.Update)
         {
             CheckArgs(parent, coroutine, timing);
             return StartPrivate(parent, DummyState.Null, coroutine, timing);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static UniTask Start<TState>(FrameObject parent, TState state, Func<CoroutineState, TState, UniTask> coroutine, FrameLoopTiming timing = FrameLoopTiming.Update)
+        public static UniTask Start<TState>(FrameObject parent, TState state, Func<CoroutineState, TState, UniTask> coroutine, FrameTiming timing = FrameTiming.Update)
         {
             CheckArgs(parent, coroutine, timing);
             return StartPrivate(parent, state, coroutine, timing);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static UniTask Start<TState>(IHostScreen parent, TState state, Func<CoroutineState, TState, UniTask> coroutine, FrameLoopTiming timing = FrameLoopTiming.Update)
+        public static UniTask Start<TState>(IHostScreen parent, TState state, Func<CoroutineState, TState, UniTask> coroutine, FrameTiming timing = FrameTiming.Update)
         {
             CheckArgs(parent, coroutine, timing);
             return StartPrivate(parent, state, coroutine, timing);
@@ -48,14 +48,14 @@ namespace Elffy
         /// <param name="coroutine">the coroutine function</param>
         /// <param name="timing">the timing when the coroutine starts</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void StartOrReserve(FrameObject parent, Func<CoroutineState, UniTask> coroutine, FrameLoopTiming timing = FrameLoopTiming.Update)
+        public static void StartOrReserve(FrameObject parent, Func<CoroutineState, UniTask> coroutine, FrameTiming timing = FrameTiming.Update)
         {
             CheckArgs(parent, coroutine, timing);
             StartOrReservePrivate(parent, DummyState.Null, coroutine, null, timing);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void StartOrReserve(IHostScreen parent, Func<CoroutineState, UniTask> coroutine, FrameLoopTiming timing = FrameLoopTiming.Update)
+        public static void StartOrReserve(IHostScreen parent, Func<CoroutineState, UniTask> coroutine, FrameTiming timing = FrameTiming.Update)
         {
             CheckArgs(parent, coroutine, timing);
             StartOrReservePrivate(parent, DummyState.Null, coroutine, null, timing);
@@ -68,49 +68,49 @@ namespace Elffy
         /// <param name="coroutine">the coroutine function</param>
         /// <param name="timing">the timing when the coroutine starts</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void StartOrReserve<TState>(FrameObject parent, TState state, Func<CoroutineState, TState, UniTask> coroutine, FrameLoopTiming timing = FrameLoopTiming.Update)
+        public static void StartOrReserve<TState>(FrameObject parent, TState state, Func<CoroutineState, TState, UniTask> coroutine, FrameTiming timing = FrameTiming.Update)
         {
             CheckArgs(parent, coroutine, timing);
             StartOrReservePrivate(parent, state, coroutine, null, timing);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void StartOrReserve<TState>(IHostScreen parent, TState state, Func<CoroutineState, TState, UniTask> coroutine, FrameLoopTiming timing = FrameLoopTiming.Update)
+        public static void StartOrReserve<TState>(IHostScreen parent, TState state, Func<CoroutineState, TState, UniTask> coroutine, FrameTiming timing = FrameTiming.Update)
         {
             CheckArgs(parent, coroutine, timing);
             StartOrReservePrivate(parent, state, coroutine, null, timing);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void StartOrReserveWithCatch(FrameObject parent, Func<CoroutineState, UniTask> coroutine, Action<Exception> onCatch, FrameLoopTiming timing = FrameLoopTiming.Update)
+        public static void StartOrReserveWithCatch(FrameObject parent, Func<CoroutineState, UniTask> coroutine, Action<Exception> onCatch, FrameTiming timing = FrameTiming.Update)
         {
             CheckArgs(parent, coroutine, timing);
             StartOrReservePrivate(parent, DummyState.Null, coroutine, onCatch, timing);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void StartOrReserveWithCatch(IHostScreen parent, Func<CoroutineState, UniTask> coroutine, Action<Exception> onCatch, FrameLoopTiming timing = FrameLoopTiming.Update)
+        public static void StartOrReserveWithCatch(IHostScreen parent, Func<CoroutineState, UniTask> coroutine, Action<Exception> onCatch, FrameTiming timing = FrameTiming.Update)
         {
             CheckArgs(parent, coroutine, timing);
             StartOrReservePrivate(parent, DummyState.Null, coroutine, onCatch, timing);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void StartOrReserveWithCatch<TState>(FrameObject parent, TState state, Func<CoroutineState, TState, UniTask> coroutine, Action<Exception> onCatch, FrameLoopTiming timing = FrameLoopTiming.Update)
+        public static void StartOrReserveWithCatch<TState>(FrameObject parent, TState state, Func<CoroutineState, TState, UniTask> coroutine, Action<Exception> onCatch, FrameTiming timing = FrameTiming.Update)
         {
             CheckArgs(parent, coroutine, timing);
             StartOrReservePrivate(parent, state, coroutine, onCatch, timing);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void StartOrReserveWithCatch<TState>(IHostScreen parent, TState state, Func<CoroutineState, TState, UniTask> coroutine, Action<Exception> onCatch, FrameLoopTiming timing = FrameLoopTiming.Update)
+        public static void StartOrReserveWithCatch<TState>(IHostScreen parent, TState state, Func<CoroutineState, TState, UniTask> coroutine, Action<Exception> onCatch, FrameTiming timing = FrameTiming.Update)
         {
             CheckArgs(parent, coroutine, timing);
             StartOrReservePrivate(parent, state, coroutine, onCatch, timing);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void CheckArgs(object parent, Delegate coroutine, FrameLoopTiming timing)
+        private static void CheckArgs(object parent, Delegate coroutine, FrameTiming timing)
         {
             Debug.Assert(parent is FrameObject || parent is IHostScreen || parent is null);
             if(parent is null) { ThrowNullArg(nameof(parent)); }
@@ -118,7 +118,7 @@ namespace Elffy
             timing.ThrowArgExceptionIfNotSpecified();
         }
 
-        private static void StartOrReservePrivate<TParent, TState>(TParent parent, TState state, Delegate coroutine, Action<Exception>? onCatch, FrameLoopTiming timing) where TParent : class
+        private static void StartOrReservePrivate<TParent, TState>(TParent parent, TState state, Delegate coroutine, Action<Exception>? onCatch, FrameTiming timing) where TParent : class
         {
             if(typeof(TParent) == typeof(IHostScreen)) {
                 var parentScreen = SafeCast.As<IHostScreen>(parent);
@@ -143,7 +143,7 @@ namespace Elffy
             }
         }
 
-        private static UniTask StartPrivate<TParent, TState>(TParent parent, TState state, Delegate coroutine, FrameLoopTiming timing) where TParent : class
+        private static UniTask StartPrivate<TParent, TState>(TParent parent, TState state, Delegate coroutine, FrameTiming timing) where TParent : class
         {
             if(typeof(TParent) == typeof(IHostScreen)) {
                 var parentScreen = SafeCast.As<IHostScreen>(parent);
@@ -172,7 +172,7 @@ namespace Elffy
             }
         }
 
-        private static void ReserveCoroutine<TParent, TState>(TParent parent, TState state, Delegate coroutine, Action<Exception>? onCatch, FrameLoopTiming timing)
+        private static void ReserveCoroutine<TParent, TState>(TParent parent, TState state, Delegate coroutine, Action<Exception>? onCatch, FrameTiming timing)
             where TParent : class
         {
             if(typeof(TParent) == typeof(IHostScreen)) {
@@ -231,7 +231,7 @@ namespace Elffy
             }
         }
 
-        private static async UniTask StartCoroutine<TState>(CoroutineState coroutineState, TState state, Delegate coroutine, Action<Exception>? onCatch, FrameLoopTiming timing)
+        private static async UniTask StartCoroutine<TState>(CoroutineState coroutineState, TState state, Delegate coroutine, Action<Exception>? onCatch, FrameTiming timing)
         {
             var fo = coroutineState.FrameObject;
             if(fo is null) {
@@ -242,7 +242,7 @@ namespace Elffy
                 if(fo.LifeState == LifeState.Dead) { return; }
             }
             try {
-                await coroutineState.Screen.AsyncBack.ToTiming(timing);
+                await coroutineState.TimingOf(timing).Switch();
                 if(typeof(TState) == typeof(DummyState)) {
                     var noStateCoroutine = SafeCast.As<Func<CoroutineState, UniTask>>(coroutine);
                     await noStateCoroutine(coroutineState);

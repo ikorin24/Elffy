@@ -10,10 +10,10 @@ namespace Elffy
     public readonly struct FrameAsyncEnumerable : IUniTaskAsyncEnumerable<FrameInfo>
     {
         private readonly AsyncBackEndPoint _endPoint;
-        private readonly FrameLoopTiming _timing;
+        private readonly FrameTiming _timing;
         private readonly CancellationToken _cancellationToken;
 
-        internal FrameAsyncEnumerable(AsyncBackEndPoint endPoint, FrameLoopTiming timing, CancellationToken cancellation)
+        internal FrameAsyncEnumerable(AsyncBackEndPoint endPoint, FrameTiming timing, CancellationToken cancellation)
         {
             Debug.Assert(timing.IsSpecified());
             _endPoint = endPoint;
@@ -46,22 +46,27 @@ namespace Elffy
 
     public readonly struct FrameAsyncEnumerator : IUniTaskAsyncEnumerator<FrameInfo>
     {
-        private readonly IHostScreen _screen;
+        private readonly FrameTimingPoint _timingPoint;
         private readonly CancellationToken _cancellationToken;
         private readonly TimeSpan _startTime;
         private readonly long _startFrame;
-        private readonly FrameLoopTiming _timing;
 
-        public FrameInfo Current => new FrameInfo(_screen.FrameNum - _startFrame, _screen.Time - _startTime);
+        public FrameInfo Current
+        {
+            get
+            {
+                var screen = _timingPoint.Screen;
+                return new FrameInfo(screen.FrameNum - _startFrame, screen.Time - _startTime);
+            }
+        }
 
-        internal FrameAsyncEnumerator(IHostScreen screen, FrameLoopTiming timing, CancellationToken cancellationToken)
+        internal FrameAsyncEnumerator(IHostScreen screen, FrameTiming timing, CancellationToken cancellationToken)
         {
             Debug.Assert(timing.IsSpecified());
-            _screen = screen;
+            _timingPoint = screen.AsyncBack.TimingOf(timing);
             _cancellationToken = cancellationToken;
             _startTime = screen.Time + screen.FrameDelta;
             _startFrame = screen.FrameNum + 1;
-            _timing = timing;
         }
 
         public UniTask DisposeAsync() => UniTask.CompletedTask;
@@ -71,7 +76,7 @@ namespace Elffy
             if(_cancellationToken.IsCancellationRequested) {
                 return false;
             }
-            await _screen.AsyncBack.ToTiming(_timing);
+            await _timingPoint.Switch();
             return true;
         }
     }

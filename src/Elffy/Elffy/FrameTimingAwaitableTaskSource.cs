@@ -8,15 +8,15 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy
 {
-    internal sealed partial class FrameLoopAwaitableTaskSource : IUniTaskSource<AsyncUnit>
+    internal sealed partial class FrameTimingAwaitableTaskSource : IUniTaskSource<AsyncUnit>
     {
         private static readonly object _completedEndPoint = new object();
 
         private object? _endPoint;      // AsyncBackEndPoint instance (pending) || '_completedEndPoint' (completed) || null (after completed)
-        private FrameLoopAwaitableTaskSource? _next;
+        private FrameTimingAwaitableTaskSource? _next;
         private CancellationToken _cancellationToken;
         private short _token;
-        private FrameLoopTiming _timing;
+        private FrameTiming _timing;
 
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -70,7 +70,7 @@ namespace Elffy
             }
             else {
                 Debug.Assert(endPoint is AsyncBackEndPoint);
-                Unsafe.As<AsyncBackEndPoint>(endPoint).Post(_timing, continuation, state);
+                Unsafe.As<AsyncBackEndPoint>(endPoint).TimingOf(_timing).Post(continuation, state);
             }
         }
 

@@ -1,131 +1,88 @@
 ﻿#nullable enable
 using System;
-using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using System.Threading;
-using Cysharp.Threading.Tasks;
 
 namespace Elffy
 {
     public sealed class AsyncBackEndPoint
     {
         private readonly IHostScreen _screen;
-        private readonly ConcurrentDictionary<FrameLoopTiming, ConcurrentQueue<WorkItem>> _queues;
+        private readonly FrameTimingPoint _earlyUpdatePoint;
+        private readonly FrameTimingPoint _updatePoint;
+        private readonly FrameTimingPoint _lateUpdatePoint;
+        private readonly FrameTimingPoint _beforeRenderingPoint;
+        private readonly FrameTimingPoint _afterRenderingPoint;
 
         internal IHostScreen Screen => _screen;
 
-        /// <summary>Get current screen frame loop timing.</summary>
-        /// <remarks>If not main thread of <see cref="IHostScreen"/>, always returns <see cref="ScreenCurrentTiming.OutOfFrameLoop"/></remarks>
-        public ScreenCurrentTiming CurrentTiming => _screen.CurrentTiming;
+        public FrameTimingPoint EarlyUpdate => _earlyUpdatePoint;
+        public FrameTimingPoint Update => _updatePoint;
+        public FrameTimingPoint LateUpdate => _lateUpdatePoint;
+        public FrameTimingPoint BeforeRendering => _beforeRenderingPoint;
+        public FrameTimingPoint AfterRendering => _afterRenderingPoint;
 
         internal AsyncBackEndPoint(IHostScreen screen)
         {
             _screen = screen;
-            _queues = new();
+            _earlyUpdatePoint = new FrameTimingPoint(this, FrameTiming.EarlyUpdate);
+            _updatePoint = new FrameTimingPoint(this, FrameTiming.Update);
+            _lateUpdatePoint = new FrameTimingPoint(this, FrameTiming.LateUpdate);
+            _beforeRenderingPoint = new FrameTimingPoint(this, FrameTiming.BeforeRendering);
+            _afterRenderingPoint = new FrameTimingPoint(this, FrameTiming.AfterRendering);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public UniTask<AsyncUnit> ToTiming(FrameLoopTiming timing, CancellationToken cancellationToken = default)
+        public FrameTimingPoint TimingOf(FrameTiming timing)
         {
-            timing.ThrowArgExceptionIfNotSpecified(nameof(timing));
-            return FrameLoopAwaitableTaskSource.CreateTask(this, timing, cancellationToken);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public UniTask<AsyncUnit> Ensure(FrameLoopTiming timing, CancellationToken cancellation = default)
-        {
-            if(CurrentTiming.TimingEquals(timing)) {
-                return new UniTask<AsyncUnit>(AsyncUnit.Default);
+            if(TryGetTimingOf(timing, out var timingPoint) == false) {
+                ThrowTimingNotSpecified();
             }
-            return ToTiming(timing, cancellation);
+            return timingPoint;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetTimingOf(FrameTiming timing, [MaybeNullWhen(false)] out FrameTimingPoint timingPoint)
+        {
+            if(timing == FrameTiming.EarlyUpdate) {
+                timingPoint = _earlyUpdatePoint;
+                return true;
+            }
+            else if(timing == FrameTiming.Update) {
+                timingPoint = _updatePoint;
+                return true;
+            }
+            else if(timing == FrameTiming.LateUpdate) {
+                timingPoint = _lateUpdatePoint;
+                return true;
+            }
+            else if(timing == FrameTiming.BeforeRendering) {
+                timingPoint = _beforeRenderingPoint;
+                return true;
+            }
+            else if(timing == FrameTiming.AfterRendering) {
+                timingPoint = _afterRenderingPoint;
+                return true;
+            }
+            else {
+                Debug.Assert(timing.IsSpecified() == false);
+                timingPoint = null;
+                return false;
+            }
         }
 
         /// <summary>Abort all suspended tasks by clearing the queue.</summary>
         internal void AbortAll()
         {
-            _queues.Clear();
+            _earlyUpdatePoint.AbortAllEvents();
+            _updatePoint.AbortAllEvents();
+            _lateUpdatePoint.AbortAllEvents();
+            _beforeRenderingPoint.AbortAllEvents();
+            _afterRenderingPoint.AbortAllEvents();
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void Post(FrameLoopTiming timing, Action continuation)
-        {
-            Debug.Assert(timing.IsSpecified());
-            if(continuation is null) { return; }
-            if(!_queues.TryGetValue(timing, out var queue)) {
-                queue = InitQueue(timing);
-            }
-            queue.Enqueue(new WorkItem(continuation));
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void Post(FrameLoopTiming timing, Action<object?> continuation, object? state)
-        {
-            Debug.Assert(timing.IsSpecified());
-            if(continuation is null) { return; }
-            if(!_queues.TryGetValue(timing, out var queue)) {
-                queue = InitQueue(timing);
-            }
-            queue.Enqueue(new WorkItem(continuation, state));
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void DoQueuedEvents(FrameLoopTiming timing)
-        {
-            Debug.Assert(timing.IsSpecified());
-            int count;
-            if(_queues.TryGetValue(timing, out var queue) && (count = queue.Count) > 0) {
-                Do(queue, count);
-
-                [MethodImpl(MethodImplOptions.NoInlining)]
-                static void Do(ConcurrentQueue<WorkItem> queue, int count)
-                {
-                    for(int i = 0; i < count; i++) {
-                        var exists = queue.TryDequeue(out var action);
-                        Debug.Assert(exists);
-                        try {
-                            action.Invoke();
-                        }
-                        catch {
-                            // Don't throw
-                        }
-                    }
-                }
-            }
-            return;
-        }
-
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private ConcurrentQueue<WorkItem> InitQueue(FrameLoopTiming eventType)
-        {
-            return _queues.GetOrAdd(eventType, _ => new());
-        }
-
-        private readonly struct WorkItem
-        {
-            private readonly Action<object?> _action;
-            private readonly object? _state;
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public WorkItem(Action<object?> action, object? state)
-            {
-                _action = action;
-                _state = state;
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public WorkItem(Action action)
-            {
-                _action = state => SafeCast.As<Action>(state!).Invoke();
-                _state = action;
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Invoke()
-            {
-                _action.Invoke(_state);
-            }
-        }
+        [DoesNotReturn]
+        private static void ThrowTimingNotSpecified() => throw new ArgumentException("The timing must be specified.");
     }
 }

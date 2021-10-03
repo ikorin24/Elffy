@@ -178,7 +178,7 @@ namespace Elffy
             };
         }
 
-        public FrameAsyncEnumerable Frames(FrameLoopTiming timing = FrameLoopTiming.Update, CancellationToken cancellationToken = default)
+        public FrameAsyncEnumerable Frames(FrameTiming timing = FrameTiming.Update, CancellationToken cancellationToken = default)
         {
             return new FrameAsyncEnumerable(AsyncBack, timing, cancellationToken);
         }

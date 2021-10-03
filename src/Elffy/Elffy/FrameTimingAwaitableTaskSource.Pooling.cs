@@ -8,18 +8,18 @@ using System.Threading;
 
 namespace Elffy
 {
-    partial class FrameLoopAwaitableTaskSource
+    partial class FrameTimingAwaitableTaskSource
     {
         private const int MaxPoolingCount = 1024;
         private static short _tokenFactory;
         private static FastSpinLock _lock;
-        private static FrameLoopAwaitableTaskSource? _root;
+        private static FrameTimingAwaitableTaskSource? _root;
         private static int _pooledCount;
 
-        internal static UniTask<AsyncUnit> CreateTask(AsyncBackEndPoint endPoint, FrameLoopTiming timing, CancellationToken cancellationToken)
+        internal static UniTask<AsyncUnit> CreateTask(AsyncBackEndPoint endPoint, FrameTiming timing, CancellationToken cancellationToken)
         {
             short token;
-            FrameLoopAwaitableTaskSource? instance;
+            FrameTimingAwaitableTaskSource? instance;
             try {
                 _lock.Enter();
                 token = _tokenFactory;
@@ -38,14 +38,14 @@ namespace Elffy
 
             if(instance is null) {
                 Debug.Assert(_pooledCount == 0);
-                return new UniTask<AsyncUnit>(new FrameLoopAwaitableTaskSource(endPoint, timing, token, cancellationToken), token);
+                return new UniTask<AsyncUnit>(new FrameTimingAwaitableTaskSource(endPoint, timing, token, cancellationToken), token);
             }
             instance.InitFields(endPoint, timing, token, cancellationToken);
             Debug.Assert(instance._next is null);
             return new UniTask<AsyncUnit>(instance, token);
         }
 
-        private static void Return(FrameLoopAwaitableTaskSource source)
+        private static void Return(FrameTimingAwaitableTaskSource source)
         {
             // Clear the fields which is reference or contain reference type.
             Debug.Assert(source._next is null);
@@ -73,7 +73,7 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private FrameLoopAwaitableTaskSource(AsyncBackEndPoint endPoint, FrameLoopTiming timing, short token, CancellationToken cancellationToken)
+        private FrameTimingAwaitableTaskSource(AsyncBackEndPoint endPoint, FrameTiming timing, short token, CancellationToken cancellationToken)
         {
             InitFields(endPoint, timing, token, cancellationToken);
             Debug.Assert(_next is null);
@@ -81,7 +81,7 @@ namespace Elffy
 
         [MemberNotNull(nameof(_endPoint))]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void InitFields(AsyncBackEndPoint endPoint, FrameLoopTiming timing, short token, CancellationToken cancellationToken)
+        private void InitFields(AsyncBackEndPoint endPoint, FrameTiming timing, short token, CancellationToken cancellationToken)
         {
             // All fields must be set except '_next'
             if(timing == 0) {

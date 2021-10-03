@@ -65,12 +65,12 @@ namespace Sandbox
                     CreateFloor(),
                     CreateSky(),
                     CreateCameraMouse(new Vector3(0, 3, 0)),
-                    Timing.DelayTime(800));
+                    Timing.Update.DelayTime(800));
 
-                await Timing.Ensure(FrameLoopTiming.Update);
+                await Timing.Update.Ensure();
 
                 var time = TimeSpan.FromMilliseconds(200);
-                await foreach(var frame in Timing.Frames()) {
+                await foreach(var frame in Timing.Update.Frames()) {
                     if(frame.Time >= time) {
                         break;
                     }
@@ -125,13 +125,13 @@ namespace Sandbox
             cube.Shader = PhongShader.Instance;
             cube.AddComponent(await Resources.Sandbox["box.png"].LoadTextureAsync());
             await cube.Activate();
-            cube.StartOrReserveCoroutine(static async (coroutine, cube) =>
+            cube.StartCoroutine(static async (coroutine, cube) =>
             {
                 while(coroutine.CanRun) {
-                    await coroutine.ToUpdate();
+                    await coroutine.Update.Switch();
                     cube.Rotate(Vector3.UnitY, 1f.ToRadian());
                 }
-            });
+            }).Forget();
             return cube;
         }
 

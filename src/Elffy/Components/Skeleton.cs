@@ -61,7 +61,7 @@ namespace Elffy.Components
         }
 
         public async UniTask LoadAsync<TBoneSpan>(TBoneSpan bones, AsyncBackEndPoint endPoint,
-                                                  FrameLoopTiming timing = FrameLoopTiming.Update,
+                                                  FrameTiming timing = FrameTiming.Update,
                                                   CancellationToken cancellationToken = default) where TBoneSpan : IReadOnlySpan<Bone>
         {
             if(IsBoneLoaded) { throw new InvalidOperationException("Already loaded"); }
@@ -73,7 +73,7 @@ namespace Elffy.Components
             cancellationToken.ThrowIfCancellationRequested();
             try {
                 InitializeSkeletonData(this, bones.AsReadOnlySpan());
-                await endPoint.ToTiming(timing, cancellationToken);
+                await endPoint.TimingOf(timing).Switch(cancellationToken);
                 if(IsBoneLoaded) { throw new InvalidOperationException("Already loaded"); }
                 _boneTranslationData.Load(_matrices!.AsSpan().MarshalCast<Matrix4, Color4>());
             }
