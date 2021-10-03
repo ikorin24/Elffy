@@ -9,12 +9,22 @@ namespace Elffy
     {
         /// <summary>Activate <see cref="FrameObject"/> in world layer.</summary>
         /// <param name="source">source object to activate</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static UniTask<T> Activate<T>(this T source, CancellationToken cancellationToken = default)
+            where T : FrameObject
+        {
+            return Activate(source, FrameTiming.Update, cancellationToken);
+        }
+
+        /// <summary>Activate <see cref="FrameObject"/> in world layer.</summary>
+        /// <param name="source">source object to activate</param>
         /// <param name="timing"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static async UniTask<T> Activate<T>(this T source, FrameTiming timing = FrameTiming.Update, CancellationToken cancellationToken = default)
-            where T : FrameObject
+        public static async UniTask<T> Activate<T>(this T source, FrameTiming timing, CancellationToken cancellationToken = default) where T : FrameObject
         {
             await source.Activate(Game.Layers.WorldLayer, timing, cancellationToken);
             return source;

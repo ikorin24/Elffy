@@ -84,7 +84,7 @@ namespace Elffy
         private void InitFields(AsyncBackEndPoint endPoint, FrameTiming timing, short token, CancellationToken cancellationToken)
         {
             // All fields must be set except '_next'
-            if(timing == 0) {
+            if(timing == FrameTiming.NotSpecified) {
                 _endPoint = _completedEndPoint;
             }
             else {

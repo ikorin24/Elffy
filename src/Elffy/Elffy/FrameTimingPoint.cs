@@ -44,7 +44,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public UniTask<AsyncUnit> Ensure(CancellationToken cancellationToken = default)
         {
-            if(CurrentTiming.TimingEquals(_timing)) {
+            if(CurrentTiming == _timing) {
                 return new UniTask<AsyncUnit>(AsyncUnit.Default);
             }
             return Switch(cancellationToken);

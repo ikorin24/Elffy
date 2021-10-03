@@ -9,7 +9,7 @@ namespace Sandbox
 {
     public static class CameraMouse
     {
-        private const FrameTiming LoopTiming = FrameTiming.EarlyUpdate;
+        private static readonly FrameTiming LoopTiming = FrameTiming.EarlyUpdate;
 
         private sealed class CameraMouseObject : FrameObject
         {

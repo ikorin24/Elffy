@@ -60,8 +60,12 @@ namespace Elffy.Components
             ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
         }
 
-        public async UniTask LoadAsync<TBoneSpan>(TBoneSpan bones, AsyncBackEndPoint endPoint,
-                                                  FrameTiming timing = FrameTiming.Update,
+        public UniTask LoadAsync<TBoneSpan>(TBoneSpan bones, AsyncBackEndPoint endPoint, CancellationToken cancellationToken = default) where TBoneSpan : IReadOnlySpan<Bone>
+        {
+            return LoadAsync(bones, endPoint, FrameTiming.Update, cancellationToken);
+        }
+
+        public async UniTask LoadAsync<TBoneSpan>(TBoneSpan bones, AsyncBackEndPoint endPoint, FrameTiming timing,
                                                   CancellationToken cancellationToken = default) where TBoneSpan : IReadOnlySpan<Bone>
         {
             if(IsBoneLoaded) { throw new InvalidOperationException("Already loaded"); }

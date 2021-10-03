@@ -15,9 +15,15 @@ namespace Elffy
             return IcoParser.Parse(stream);
         }
 
+        public static UniTask<Icon> LoadIconAsync(this ResourceFile file, AsyncBackEndPoint endPoint,
+                                                  CancellationToken cancellationToken = default)
+        {
+            return LoadIconAsync(file, endPoint, FrameTiming.Update, cancellationToken);
+        }
+
         public static UniTask<Icon> LoadIconAsync(this ResourceFile file,
                                                   AsyncBackEndPoint endPoint,
-                                                  [AllowNotSpecifiedTiming] FrameTiming timing = FrameTiming.Update,
+                                                  [AllowNotSpecifiedTiming] FrameTiming timing,
                                                   CancellationToken cancellationToken = default)
         {
             return AsyncLoadCore(static file => LoadIcon(file), file,
@@ -33,7 +39,14 @@ namespace Elffy
 
         public static UniTask<Image> LoadImageAsync(this ResourceFile file,
                                                     AsyncBackEndPoint endPoint,
-                                                    [AllowNotSpecifiedTiming] FrameTiming timing = FrameTiming.Update,
+                                                    CancellationToken cancellationToken = default)
+        {
+            return LoadImageAsync(file, endPoint, FrameTiming.Update, cancellationToken);
+        }
+
+        public static UniTask<Image> LoadImageAsync(this ResourceFile file,
+                                                    AsyncBackEndPoint endPoint,
+                                                    [AllowNotSpecifiedTiming] FrameTiming timing,
                                                     CancellationToken cancellationToken = default)
         {
             return AsyncLoadCore(static file => LoadImage(file), file,
@@ -56,15 +69,29 @@ namespace Elffy
 
         public static UniTask<Texture> LoadTextureAsync(ResourceFile file,
                                                         AsyncBackEndPoint endPoint,
-                                                        FrameTiming timing = FrameTiming.Update,
+                                                        CancellationToken cancellationToken = default)
+        {
+            return LoadTextureAsync(file, TextureConfig.Default, endPoint, FrameTiming.Update, cancellationToken);
+        }
+
+        public static UniTask<Texture> LoadTextureAsync(ResourceFile file,
+                                                        AsyncBackEndPoint endPoint,
+                                                        FrameTiming timing,
                                                         CancellationToken cancellationToken = default)
         {
             return LoadTextureAsync(file, TextureConfig.Default, endPoint, timing, cancellationToken);
         }
 
+        public static UniTask<Texture> LoadTextureAsync(this ResourceFile file, TextureConfig config,
+                                                              AsyncBackEndPoint endPoint,
+                                                              CancellationToken cancellationToken = default)
+        {
+            return LoadTextureAsync(file, config, endPoint, FrameTiming.Update, cancellationToken);
+        }
+
         public static async UniTask<Texture> LoadTextureAsync(this ResourceFile file, TextureConfig config,
                                                               AsyncBackEndPoint endPoint,
-                                                              FrameTiming timing = FrameTiming.Update,
+                                                              FrameTiming timing,
                                                               CancellationToken cancellationToken = default)
         {
             using var image = await LoadImageAsync(file, endPoint, timing, cancellationToken);
@@ -81,7 +108,14 @@ namespace Elffy
 
         public static UniTask<Typeface> LoadTypefaceAsync(this ResourceFile file,
                                                           AsyncBackEndPoint endPoint,
-                                                          [AllowNotSpecifiedTiming] FrameTiming timing = FrameTiming.Update,
+                                                          CancellationToken cancellationToken = default)
+        {
+            return LoadTypefaceAsync(file, endPoint, FrameTiming.Update, cancellationToken);
+        }
+
+        public static UniTask<Typeface> LoadTypefaceAsync(this ResourceFile file,
+                                                          AsyncBackEndPoint endPoint,
+                                                          [AllowNotSpecifiedTiming] FrameTiming timing,
                                                           CancellationToken cancellationToken = default)
         {
             return AsyncLoadCore(static file => LoadTypeface(file), file,
@@ -100,10 +134,7 @@ namespace Elffy
             if(endPoint is null) {
                 throw new ArgumentNullException(nameof(endPoint));
             }
-            if(allowNotSpecifiedTiming) {
-                timing.ThrowArgExceptionIfInvalid();
-            }
-            else {
+            if(allowNotSpecifiedTiming == false) {
                 timing.ThrowArgExceptionIfNotSpecified();
             }
             cancellationToken.ThrowIfCancellationRequested();

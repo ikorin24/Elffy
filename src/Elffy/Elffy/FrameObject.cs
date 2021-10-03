@@ -87,10 +87,19 @@ namespace Elffy
 
         /// <summary>Activate the object in the specified layer.</summary>
         /// <param name="layer">layer where the object is activated</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public UniTask<FrameObject> Activate(Layer layer, CancellationToken cancellationToken = default)
+        {
+            return Activate(layer, FrameTiming.Update, cancellationToken);
+        }
+
+        /// <summary>Activate the object in the specified layer.</summary>
+        /// <param name="layer">layer where the object is activated</param>
         /// <param name="timing"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async UniTask<FrameObject> Activate(Layer layer, FrameTiming timing = FrameTiming.Update, CancellationToken cancellationToken = default)
+        public async UniTask<FrameObject> Activate(Layer layer, FrameTiming timing, CancellationToken cancellationToken = default)
         {
             if(layer is null) { ThrowNullArg(); }
             var screen = GetHostScreen(layer);

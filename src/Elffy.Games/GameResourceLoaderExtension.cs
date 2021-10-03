@@ -10,15 +10,26 @@ namespace Elffy
     public static class GameResourceLoaderExtension
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static UniTask<Texture> LoadTextureAsync(this ResourceFile file, FrameTiming timing = FrameTiming.Update,
-                                                        CancellationToken cancellationToken = default)
+        public static UniTask<Texture> LoadTextureAsync(this ResourceFile file, CancellationToken cancellationToken = default)
+        {
+            return file.LoadTextureAsync(TextureConfig.Default, Timing.EndPoint, FrameTiming.Update, cancellationToken);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static UniTask<Texture> LoadTextureAsync(this ResourceFile file, FrameTiming timing, CancellationToken cancellationToken = default)
         {
             return file.LoadTextureAsync(TextureConfig.Default, Timing.EndPoint, timing, cancellationToken);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static UniTask<Texture> LoadTextureAsync(this ResourceFile file, in TextureConfig config,
-                                                        FrameTiming timing = FrameTiming.Update,
+                                                        CancellationToken cancellationToken = default)
+        {
+            return file.LoadTextureAsync(config, Timing.EndPoint, FrameTiming.Update, cancellationToken);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static UniTask<Texture> LoadTextureAsync(this ResourceFile file, in TextureConfig config, FrameTiming timing,
                                                         CancellationToken cancellationToken = default)
         {
             return file.LoadTextureAsync(config, Timing.EndPoint, timing, cancellationToken);
@@ -26,15 +37,28 @@ namespace Elffy
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static UniTask<Image> LoadImageAsync(this ResourceFile file,
-                                                    [AllowNotSpecifiedTiming] FrameTiming timing = FrameTiming.Update,
+                                                    CancellationToken cancellationToken = default)
+        {
+            return file.LoadImageAsync(Timing.EndPoint, FrameTiming.Update, cancellationToken);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static UniTask<Image> LoadImageAsync(this ResourceFile file,
+                                                    [AllowNotSpecifiedTiming] FrameTiming timing,
                                                     CancellationToken cancellationToken = default)
         {
             return file.LoadImageAsync(Timing.EndPoint, timing, cancellationToken);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static UniTask<Typeface> LoadTypefaceAsync(this ResourceFile file, CancellationToken cancellationToken = default)
+        {
+            return file.LoadTypefaceAsync(Timing.EndPoint, FrameTiming.Update, cancellationToken);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static UniTask<Typeface> LoadTypefaceAsync(this ResourceFile file,
-                                                          [AllowNotSpecifiedTiming] FrameTiming timing = FrameTiming.Update,
+                                                          [AllowNotSpecifiedTiming] FrameTiming timing,
                                                           CancellationToken cancellationToken = default)
         {
             return file.LoadTypefaceAsync(Timing.EndPoint, timing, cancellationToken);

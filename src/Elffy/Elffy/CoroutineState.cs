@@ -63,7 +63,7 @@ namespace Elffy
         public FrameTimingPoint TimingOf(FrameTiming timing) => _endPoint.TimingOf(timing);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public CoroutineFrameAsyncEnumerable Frames(FrameTiming timing = FrameTiming.Update)
+        public CoroutineFrameAsyncEnumerable Frames(FrameTiming timing)
         {
             timing.ThrowArgExceptionIfNotSpecified(nameof(timing));
             return new CoroutineFrameAsyncEnumerable(this, timing);

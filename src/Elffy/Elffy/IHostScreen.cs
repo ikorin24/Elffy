@@ -65,7 +65,7 @@ namespace Elffy
         /// <summary>Event which fires on closing</summary>
         event ClosingEventHandler<IHostScreen> Closing;
 
-        FrameAsyncEnumerable Frames(FrameTiming timing = FrameTiming.Update, CancellationToken cancellationToken = default);
+        FrameAsyncEnumerable Frames(FrameTiming timing, CancellationToken cancellationToken = default);
 
         /// <summary>Acticate screen</summary>
         void Activate();
