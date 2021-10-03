@@ -11,26 +11,26 @@ namespace UnitTest
         public unsafe void CastTest()
         {
             {
-                var sameTimingPairs = new (FrameTiming FrameTiming, ScreenCurrentTiming CurrentTiming)[]
+                var sameTimingPairs = new (FrameTiming FrameTiming, CurrentFrameTiming CurrentTiming)[]
                 {
-                    (FrameTiming.NotSpecified, ScreenCurrentTiming.OutOfFrameLoop),
-                    (FrameTiming.EarlyUpdate, ScreenCurrentTiming.EarlyUpdate),
-                    (FrameTiming.Update, ScreenCurrentTiming.Update),
-                    (FrameTiming.LateUpdate, ScreenCurrentTiming.LateUpdate),
-                    (FrameTiming.BeforeRendering, ScreenCurrentTiming.BeforeRendering),
-                    (FrameTiming.AfterRendering, ScreenCurrentTiming.AfterRendering),
+                    (FrameTiming.NotSpecified, CurrentFrameTiming.OutOfFrameLoop),
+                    (FrameTiming.EarlyUpdate, CurrentFrameTiming.EarlyUpdate),
+                    (FrameTiming.Update, CurrentFrameTiming.Update),
+                    (FrameTiming.LateUpdate, CurrentFrameTiming.LateUpdate),
+                    (FrameTiming.BeforeRendering, CurrentFrameTiming.BeforeRendering),
+                    (FrameTiming.AfterRendering, CurrentFrameTiming.AfterRendering),
                 };
                 Assert.True(sameTimingPairs.All(pair => pair.FrameTiming == pair.CurrentTiming));
             }
 
             {
-                var sameNamePairs = new (FrameTiming FrameTiming, ScreenCurrentTiming CurrentTiming)[]
+                var sameNamePairs = new (FrameTiming FrameTiming, CurrentFrameTiming CurrentTiming)[]
                 {
-                    (FrameTiming.EarlyUpdate, ScreenCurrentTiming.EarlyUpdate),
-                    (FrameTiming.Update, ScreenCurrentTiming.Update),
-                    (FrameTiming.LateUpdate, ScreenCurrentTiming.LateUpdate),
-                    (FrameTiming.BeforeRendering, ScreenCurrentTiming.BeforeRendering),
-                    (FrameTiming.AfterRendering, ScreenCurrentTiming.AfterRendering),
+                    (FrameTiming.EarlyUpdate, CurrentFrameTiming.EarlyUpdate),
+                    (FrameTiming.Update, CurrentFrameTiming.Update),
+                    (FrameTiming.LateUpdate, CurrentFrameTiming.LateUpdate),
+                    (FrameTiming.BeforeRendering, CurrentFrameTiming.BeforeRendering),
+                    (FrameTiming.AfterRendering, CurrentFrameTiming.AfterRendering),
                 };
                 Assert.True(sameNamePairs.All(pair => pair.FrameTiming.ToString() == pair.CurrentTiming.ToString()));
             }

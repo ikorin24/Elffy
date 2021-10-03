@@ -56,8 +56,8 @@ namespace Elffy
         bool IsRunning { get; }
 
         /// <summary>Get current screen frame loop timing.</summary>
-        /// <remarks>If not main thread of <see cref="IHostScreen"/>, always returns <see cref="ScreenCurrentTiming.OutOfFrameLoop"/></remarks>
-        ScreenCurrentTiming CurrentTiming { get; }
+        /// <remarks>If not main thread of <see cref="IHostScreen"/>, always returns <see cref="CurrentFrameTiming.OutOfFrameLoop"/></remarks>
+        CurrentFrameTiming CurrentTiming { get; }
 
         /// <summary>Event which fires on initialized</summary>
         event Action<IHostScreen> Initialized;

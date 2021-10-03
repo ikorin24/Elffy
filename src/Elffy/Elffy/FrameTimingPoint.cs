@@ -15,7 +15,7 @@ namespace Elffy
         private readonly ConcurrentQueue<WorkItem> _queue;
         private readonly FrameTiming _timing;
 
-        private ScreenCurrentTiming CurrentTiming => _screen.CurrentTiming;
+        private CurrentFrameTiming CurrentTiming => _screen.CurrentTiming;
 
         public IHostScreen Screen => _screen;
         public FrameTiming TargetTiming => _timing;

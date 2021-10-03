@@ -22,7 +22,7 @@ namespace Elffy.Core
         private readonly CancellationTokenSource _runningTokenSource;
 
         [ThreadStatic]
-        private ScreenCurrentTiming _currentTiming; // default value is 'OutOfFrameLoop'
+        private CurrentFrameTiming _currentTiming; // default value is 'OutOfFrameLoop'
 
         public event Action<IHostScreen>? Initialized;
 
@@ -41,7 +41,7 @@ namespace Elffy.Core
 
         public AsyncBackEndPoint AsyncBack { get; }
 
-        public ScreenCurrentTiming CurrentTiming => _currentTiming;
+        public CurrentFrameTiming CurrentTiming => _currentTiming;
 
         public Color4 ClearColor
         {
@@ -104,7 +104,7 @@ namespace Elffy.Core
 
             // ------------------------------------------------------------
             // Out of frame loop
-            Debug.Assert(_currentTiming == ScreenCurrentTiming.OutOfFrameLoop);
+            Debug.Assert(_currentTiming == CurrentFrameTiming.OutOfFrameLoop);
             var isLastFrame = _isCloseRequested;
             if(isLastFrame) {
                 _runningTokenSource.Cancel();
@@ -112,7 +112,7 @@ namespace Elffy.Core
 
             // ------------------------------------------------------------
             // Frame initializing
-            _currentTiming = ScreenCurrentTiming.FrameInitializing;
+            _currentTiming = CurrentFrameTiming.FrameInitializing;
             var uiLayer = Layers.UILayer;
             var layers = Layers.AsReadOnlySpan();
 
@@ -130,7 +130,7 @@ namespace Elffy.Core
 
             // ------------------------------------------------------------
             // Early update
-            _currentTiming = ScreenCurrentTiming.EarlyUpdate;
+            _currentTiming = CurrentFrameTiming.EarlyUpdate;
             uiLayer.UIEvent();
             timingPoints.EarlyUpdate.DoQueuedEvents();
             foreach(var layer in layers) {
@@ -140,7 +140,7 @@ namespace Elffy.Core
 
             // ------------------------------------------------------------
             // Update
-            _currentTiming = ScreenCurrentTiming.Update;
+            _currentTiming = CurrentFrameTiming.Update;
             timingPoints.Update.DoQueuedEvents();
             foreach(var layer in layers) {
                 layer.Update();
@@ -149,7 +149,7 @@ namespace Elffy.Core
 
             // ------------------------------------------------------------
             // Late update
-            _currentTiming = ScreenCurrentTiming.LateUpdate;
+            _currentTiming = CurrentFrameTiming.LateUpdate;
             timingPoints.LateUpdate.DoQueuedEvents();
             foreach(var layer in layers) {
                 layer.LateUpdate();
@@ -158,7 +158,7 @@ namespace Elffy.Core
 
             // ------------------------------------------------------------
             // Before rendering
-            _currentTiming = ScreenCurrentTiming.BeforeRendering;
+            _currentTiming = CurrentFrameTiming.BeforeRendering;
             FBO.Bind(FBO.Empty, FBO.Target.FrameBuffer);
             ElffyGL.Clear(ClearMask.ColorBufferBit | ClearMask.DepthBufferBit);
             timingPoints.BeforeRendering.DoQueuedEvents();
@@ -175,12 +175,12 @@ namespace Elffy.Core
 
             // ------------------------------------------------------------
             // After rendering
-            _currentTiming = ScreenCurrentTiming.AfterRendering;
+            _currentTiming = CurrentFrameTiming.AfterRendering;
             timingPoints.AfterRendering.DoQueuedEvents();
 
             // ------------------------------------------------------------
             // Frame finalizing
-            _currentTiming = ScreenCurrentTiming.FrameFinalizing;
+            _currentTiming = CurrentFrameTiming.FrameFinalizing;
 
             // Apply FrameObject removed at previous frame.
             foreach(var layer in layers) {
@@ -190,7 +190,7 @@ namespace Elffy.Core
 
             // ------------------------------------------------------------
             // Out of frame loop
-            _currentTiming = ScreenCurrentTiming.OutOfFrameLoop;
+            _currentTiming = CurrentFrameTiming.OutOfFrameLoop;
             ContextAssociatedMemorySafety.CollectIfExist(OwnerScreen);
             if(isLastFrame) {
                 Dispose();
@@ -218,7 +218,7 @@ namespace Elffy.Core
             if(_disposed) { return; }
             _disposed = true;
 
-            _currentTiming = ScreenCurrentTiming.OutOfFrameLoop;
+            _currentTiming = CurrentFrameTiming.OutOfFrameLoop;
 
             // Clear objects in all layers
             var layers = Layers;

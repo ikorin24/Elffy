@@ -43,7 +43,7 @@ namespace Elffy
         private FrameTiming(byte value) => _value = value;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static bool TryCreateFrom(ScreenCurrentTiming currentTiming, out FrameTiming frameTiming)
+        internal static bool TryCreateFrom(CurrentFrameTiming currentTiming, out FrameTiming frameTiming)
         {
             var value = currentTiming.GetInnerValue();
             if(TryCreateInstance(value, out frameTiming)) {
@@ -140,13 +140,13 @@ namespace Elffy
 
         public static bool operator !=(FrameTiming left, FrameTiming right) => !(left == right);
 
-        public static bool operator ==(ScreenCurrentTiming left, FrameTiming right) => TryCreateFrom(left, out var t) && t == right;
+        public static bool operator ==(CurrentFrameTiming left, FrameTiming right) => TryCreateFrom(left, out var t) && t == right;
 
-        public static bool operator !=(ScreenCurrentTiming left, FrameTiming right) => !(left == right);
+        public static bool operator !=(CurrentFrameTiming left, FrameTiming right) => !(left == right);
 
-        public static bool operator ==(FrameTiming left, ScreenCurrentTiming right) => TryCreateFrom(right, out var t) && left == t;
+        public static bool operator ==(FrameTiming left, CurrentFrameTiming right) => TryCreateFrom(right, out var t) && left == t;
 
-        public static bool operator !=(FrameTiming left, ScreenCurrentTiming right) => !(left == right);
+        public static bool operator !=(FrameTiming left, CurrentFrameTiming right) => !(left == right);
     }
 
     [AttributeUsage(AttributeTargets.Parameter)]

@@ -73,7 +73,7 @@ namespace Elffy
         public bool IsRunning => _windowImpl.IsRunning && !_renderingArea.RunningToken.IsCancellationRequested;
 
         /// <inheritdoc/>
-        public ScreenCurrentTiming CurrentTiming => _renderingArea.CurrentTiming;
+        public CurrentFrameTiming CurrentTiming => _renderingArea.CurrentTiming;
 
         /// <inheritdoc/>
         public event Action<IHostScreen>? Initialized
