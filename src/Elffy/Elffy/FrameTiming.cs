@@ -22,6 +22,7 @@ namespace Elffy
         public static FrameTiming BeforeRendering => new(4);
         public static FrameTiming AfterRendering => new(5);
 
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private static readonly FrameTiming[] _allValues = new FrameTiming[]
         {
             NotSpecified,

@@ -20,6 +20,7 @@ namespace Elffy
         public static CurrentFrameTiming FrameInitializing => new(100);
         public static CurrentFrameTiming FrameFinalizing => new(101);
 
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private static readonly CurrentFrameTiming[] _allValues = new CurrentFrameTiming[]
         {
             OutOfFrameLoop,
