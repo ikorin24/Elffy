@@ -148,10 +148,4 @@ namespace Elffy
 
         public static bool operator !=(FrameTiming left, CurrentFrameTiming right) => !(left == right);
     }
-
-    [AttributeUsage(AttributeTargets.Parameter)]
-    public sealed class AllowNotSpecifiedTimingAttribute : Attribute
-    {
-        // TODO: analyzer
-    }
 }
