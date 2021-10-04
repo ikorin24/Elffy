@@ -2,6 +2,7 @@
 using System;
 using Elffy.Core;
 using System.Runtime.CompilerServices;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Serialization.Fbx.Internal
 {
@@ -35,7 +36,9 @@ namespace Elffy.Serialization.Fbx.Internal
         public static SkinnedVertexCreator<TVertex> Build()
         {
             RuntimeHelpers.RunClassConstructor(typeof(TVertex).TypeHandle);
-            var typeData = VertexMarshalHelper.GetVertexTypeData(typeof(TVertex));
+            if(VertexMarshalHelper.TryGetVertexTypeData(typeof(TVertex), out var typeData) == false) {
+                ThrowInvalidVertexType(typeof(TVertex));
+            }
 
             return new SkinnedVertexCreator<TVertex>()
             {
@@ -51,7 +54,7 @@ namespace Elffy.Serialization.Fbx.Internal
             {
                 var name = typeData.SpecialFieldMap.Invoke(specialField);
                 if(string.IsNullOrEmpty(name)) {
-                    throw new InvalidOperationException($"{typeof(TVertex).FullName} does not have {specialField}.");
+                    ThrowSpecialFieldNotFound(typeof(TVertex), specialField);
                 }
                 return typeData.Layouter.Invoke(name).offset;
             }
@@ -64,5 +67,11 @@ namespace Elffy.Serialization.Fbx.Internal
                         ref Unsafe.Add(
                             ref Unsafe.As<TVertex, byte>(ref v), offset));
         }
+
+        [DoesNotReturn]
+        private static void ThrowSpecialFieldNotFound(Type type, VertexSpecialField specialField) => throw new InvalidOperationException($"{typeof(TVertex).FullName} does not have {specialField}.");
+
+        [DoesNotReturn]
+        private static void ThrowInvalidVertexType(Type type) => throw new InvalidOperationException($"The type is not supported vertex type. (Type = {type.FullName})");
     }
 }

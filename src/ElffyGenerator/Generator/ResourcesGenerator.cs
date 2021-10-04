@@ -9,7 +9,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 
-namespace ElffyGenerator
+namespace Elffy.Generator
 {
     [Generator]
     public sealed class ResourcesGenerator : ISourceGenerator

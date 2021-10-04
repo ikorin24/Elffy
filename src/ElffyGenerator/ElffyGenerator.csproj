@@ -12,6 +12,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <NoWarn>$(NoWarn);NU5128;1591</NoWarn>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <RootNamespace>Elffy.Generator</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,9 +20,9 @@
     <Compile Include="..\ElffyResourceCompiler\Compiler.cs" Link="ElffyResourceCompiler\Compiler.cs" />
     <Compile Include="..\ElffyResourceCompiler\LightBinaryReader.cs" Link="ElffyResourceCompiler\LightBinaryReader.cs" />
     <Compile Include="..\ElffyResourceCompiler\LightBinaryWriter.cs" Link="ElffyResourceCompiler\LightBinaryWriter.cs" />
-    <Compile Include="..\Elffy\Core\VertexFieldMarshalType.cs" Link="Elffy\Core\VertexFieldMarshalType.cs" />
-    <Compile Include="..\Elffy\Core\VertexSpecialField.cs" Link="Elffy\Core\VertexSpecialField.cs" />
-    <Compile Include="..\Elffy\Diagnostics\VertexLikeAttribute.cs" Link="Elffy\Diagnostics\VertexLikeAttribute.cs" />
+    <Compile Include="..\Elffy.Primitives\VertexFieldMarshalType.cs" Link="VertexFieldMarshalType.cs" />
+    <Compile Include="..\Elffy.Primitives\VertexSpecialField.cs" Link="VertexSpecialField.cs" />
+    <Compile Include="..\Elffy.Primitives\VertexLikeAttribute.cs" Link="VertexLikeAttribute.cs" />
   </ItemGroup>
 
   <ItemGroup>

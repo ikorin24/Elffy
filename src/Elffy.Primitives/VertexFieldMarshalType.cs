@@ -1,6 +1,6 @@
 ﻿#nullable enable
 
-namespace Elffy.Core
+namespace Elffy
 {
     // This file is referenced from source generator.
 

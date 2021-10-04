@@ -1,7 +1,7 @@
 ﻿#nullable enable
 using System;
 
-namespace Elffy.Diagnostics
+namespace Elffy
 {
     [AttributeUsage(AttributeTargets.Struct, AllowMultiple = false)]
     public sealed class VertexLikeAttribute : Attribute

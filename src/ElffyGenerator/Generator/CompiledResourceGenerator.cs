@@ -10,7 +10,7 @@ using System.Text.RegularExpressions;
 using System.IO;
 using ElffyResourceCompiler;
 
-namespace ElffyGenerator
+namespace Elffy.Generator
 {
     [Generator]
     public class CompiledResourceGenerator : ISourceGenerator

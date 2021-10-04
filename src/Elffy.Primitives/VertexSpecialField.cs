@@ -1,6 +1,6 @@
 ﻿#nullable enable
 
-namespace Elffy.Core
+namespace Elffy
 {
     public enum VertexSpecialField : byte
     {

@@ -8,10 +8,9 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Globalization;
-using Elffy.Core;
-using Elffy.Diagnostics;
+using Elffy;
 
-namespace ElffyGenerator
+namespace Elffy.Generator
 {
     [Generator]
     public class CustomVertexGenerator : ISourceGenerator
@@ -174,8 +173,7 @@ namespace Elffy
             var sb = new StringBuilder();
             sb.Append(GeneratorUtil.GetGeneratorSigniture(typeof(CustomVertexGenerator)));
             sb.Append(
-@$"using {nameof(Elffy)}.{nameof(Elffy.Diagnostics)};
-using {nameof(Elffy)}.{nameof(Elffy.Core)};
+@$"using {nameof(Elffy)};
 using System;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;

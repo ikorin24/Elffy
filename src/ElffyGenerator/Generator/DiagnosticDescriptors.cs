@@ -1,7 +1,7 @@
 ﻿#nullable enable
 using Microsoft.CodeAnalysis;
 
-namespace ElffyGenerator
+namespace Elffy.Generator
 {
     internal static class DiagnosticDescriptors
     {
