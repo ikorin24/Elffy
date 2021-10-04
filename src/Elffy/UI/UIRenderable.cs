@@ -63,7 +63,7 @@ namespace Elffy.UI
             LoadMesh(vertices, indices);
 
             // [NOTE] UIRenderable must complete OnActivating synchronously. (See the implementation of FrameObject)
-            return AsyncUnit.Default.AsCompletedTask();
+            return new UniTask<AsyncUnit>(AsyncUnit.Default);
         }
 
         protected override void OnRendering(in Matrix4 model, in Matrix4 view, in Matrix4 projection)

@@ -54,7 +54,7 @@ namespace Elffy.Shapes
                 0, 1, 2, 0, 2, 3,
             };
             LoadMesh(vertice, indices);
-            return AsyncUnit.Default.AsCompletedTask();
+            return new UniTask<AsyncUnit>(AsyncUnit.Default);
         }
     }
 }

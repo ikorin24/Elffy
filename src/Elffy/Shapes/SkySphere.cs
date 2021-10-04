@@ -58,7 +58,7 @@ namespace Elffy.Shapes
             using(indices) {
                 LoadMesh<Vertex>(vertices.AsSpan(), indices.AsSpan());
             }
-            return AsyncUnit.Default.AsCompletedTask();
+            return new UniTask<AsyncUnit>(AsyncUnit.Default);
         }
     }
 }
