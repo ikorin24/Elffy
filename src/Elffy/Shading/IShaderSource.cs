@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using Elffy.Core;
 
 namespace Elffy.Shading
 {

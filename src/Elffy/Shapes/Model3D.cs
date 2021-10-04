@@ -3,10 +3,9 @@ using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Diagnostics.CodeAnalysis;
-using Cysharp.Threading.Tasks;
-using Elffy.Core;
-using Elffy.Effective;
 using System.Threading;
+using Cysharp.Threading.Tasks;
+using Elffy.Effective;
 
 namespace Elffy.Shapes
 {

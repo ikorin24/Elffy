@@ -1,11 +1,11 @@
 ﻿#nullable enable
 using Elffy.Components.Implementation;
-using Elffy.Core;
 using Elffy.Effective;
 using Elffy.Imaging;
 using Elffy.Graphics.OpenGL;
 using System;
 using System.Runtime.CompilerServices;
+using Elffy.Features;
 
 namespace Elffy.Components
 {

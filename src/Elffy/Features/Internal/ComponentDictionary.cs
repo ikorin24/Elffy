@@ -8,7 +8,7 @@ using System.Runtime.CompilerServices;
 using Elffy.Components;
 using Elffy.Effective;
 
-namespace Elffy.Core
+namespace Elffy.Features.Internal
 {
     [DebuggerTypeProxy(typeof(ComponentDictionaryTypeProxy))]
     [DebuggerDisplay("Count = {Count}")]

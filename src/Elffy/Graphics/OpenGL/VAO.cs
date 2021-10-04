@@ -2,7 +2,6 @@
 using System;
 using System.Diagnostics;
 using OpenTK.Graphics.OpenGL4;
-using Elffy.Core;
 
 namespace Elffy.Graphics.OpenGL
 {

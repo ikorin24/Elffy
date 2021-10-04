@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using Elffy.Components;
-using Elffy.Core;
 using Elffy.Graphics.OpenGL;
 using System;
 

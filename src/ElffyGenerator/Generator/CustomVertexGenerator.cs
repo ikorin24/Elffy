@@ -20,7 +20,6 @@ namespace Elffy.Generator
         private const string AttributeSource =
 @"using System;
 using System.Diagnostics;
-using Elffy.Core;
 
 namespace Elffy
 {

@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using Cysharp.Threading.Tasks;
-using Elffy.Core;
 using Elffy.Shapes;
 using System;
 using System.Diagnostics;

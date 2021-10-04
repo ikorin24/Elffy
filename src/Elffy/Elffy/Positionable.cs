@@ -3,8 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
+using Elffy.Features.Internal;
 
-namespace Elffy.Core
+namespace Elffy
 {
     /// <summary>Base class which exists in space. That provides position, size and rotation.</summary>
     public abstract class Positionable : ComponentOwner

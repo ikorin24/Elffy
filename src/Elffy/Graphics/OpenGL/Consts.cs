@@ -1,6 +1,6 @@
 ﻿#nullable enable
 
-namespace Elffy.Core
+namespace Elffy.Graphics.OpenGL
 {
     internal static class Consts
     {

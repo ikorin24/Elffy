@@ -2,7 +2,6 @@
 using System.IO;
 using System.Linq;
 using Elffy;
-using Elffy.Core;
 using Elffy.Serialization.Fbx;
 using Xunit;
 

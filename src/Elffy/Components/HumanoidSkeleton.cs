@@ -1,7 +1,5 @@
 ﻿#nullable enable
 
-using Elffy.Core;
-
 namespace Elffy.Components
 {
     public class HumanoidSkeleton : Skeleton

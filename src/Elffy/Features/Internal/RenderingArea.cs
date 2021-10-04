@@ -6,7 +6,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 
-namespace Elffy.Core
+namespace Elffy.Features.Internal
 {
     /// <summary>Implementation of <see cref="IHostScreen"/>, which provides operations of rendering.</summary>
     internal sealed class RenderingArea : IDisposable

@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Cysharp.Threading.Tasks;
 using Elffy.Shapes;
-using Elffy.Core;
 using Elffy.Components;
 using Elffy.Serialization.Fbx.Internal;
 using Elffy.Effective;

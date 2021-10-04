@@ -5,8 +5,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics;
 using Elffy.Components;
 using Elffy.Effective;
+using Elffy.Features.Internal;
 
-namespace Elffy.Core
+namespace Elffy
 {
     /// <summary>Base class that has components.</summary>
     public abstract class ComponentOwner : FrameObject

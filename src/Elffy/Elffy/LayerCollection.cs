@@ -3,9 +3,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using Elffy.Core;
-using Elffy.Effective;
 using System.Runtime.CompilerServices;
+using Elffy.Effective;
+using Elffy.Features.Internal;
+using Elffy.UI;
 
 namespace Elffy
 {
@@ -104,7 +105,7 @@ namespace Elffy
         internal class LayerCollectionDebuggerTypeProxy
         {
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-            private LayerCollection _entity;
+            private readonly LayerCollection _entity;
 
             [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
             public Layer[] Layers

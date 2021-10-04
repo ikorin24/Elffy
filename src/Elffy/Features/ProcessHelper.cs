@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Threading;
 
-namespace Elffy.Core
+namespace Elffy.Features
 {
     /// <summary>Provides utilities of the process</summary>
     public static class ProcessHelper

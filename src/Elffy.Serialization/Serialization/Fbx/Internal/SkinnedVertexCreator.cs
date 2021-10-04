@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using System;
-using Elffy.Core;
 using System.Runtime.CompilerServices;
 using System.Diagnostics.CodeAnalysis;
 

@@ -4,10 +4,10 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Diagnostics.CodeAnalysis;
 using Elffy.Threading;
-using Elffy.Core;
 using Cysharp.Threading.Tasks;
 using System.Threading;
 using Elffy.UI;
+using Elffy.Features.Internal;
 
 namespace Elffy
 {

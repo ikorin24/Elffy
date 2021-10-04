@@ -280,7 +280,7 @@ namespace Elffy
 
                 sb.Append(
 @"#nullable enable
-using Elffy.Core;
+using Elffy.Features;
 using Elffy.Imaging;
 using Elffy.Platforms;
 using Elffy.Threading;

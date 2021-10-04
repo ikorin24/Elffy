@@ -1,6 +1,6 @@
 ﻿#nullable enable
 using System;
-using Elffy.Core;
+using Elffy;
 using Elffy.Components;
 using Xunit;
 

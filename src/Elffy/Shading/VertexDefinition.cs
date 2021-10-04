@@ -4,7 +4,6 @@ using System.Runtime.CompilerServices;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using OpenTK.Graphics.OpenGL4;
-using Elffy.Core;
 using Elffy.Graphics.OpenGL;
 using Elffy.Diagnostics;
 

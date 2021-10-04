@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-namespace Elffy.Core
+namespace Elffy.Features.Internal
 {
     internal readonly struct FrameObjectStore
     {

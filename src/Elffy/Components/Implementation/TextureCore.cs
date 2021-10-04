@@ -5,9 +5,9 @@ using System.Runtime.CompilerServices;
 using Elffy.Effective.Unsafes;
 using Elffy.Graphics.OpenGL;
 using Elffy.Imaging;
-using Elffy.Core;
 using OpenTK.Graphics.OpenGL4;
 using TKPixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
+using Elffy.Features;
 
 namespace Elffy.Components.Implementation
 {

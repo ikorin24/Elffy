@@ -1,7 +1,7 @@
 ﻿#nullable enable
 using System.Runtime.CompilerServices;
 using Elffy.Mathematics;
-using Elffy.Core;
+using Elffy.Features.Internal;
 using Xunit;
 
 namespace UnitTest

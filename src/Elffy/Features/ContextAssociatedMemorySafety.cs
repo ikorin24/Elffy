@@ -6,7 +6,7 @@ using System.Diagnostics;
 using Elffy.Effective;
 using Elffy.Diagnostics;
 
-namespace Elffy.Core
+namespace Elffy.Features
 {
     /// <summary>Safety class for leaks of OpenGL-context-associated memory</summary>
     public static class ContextAssociatedMemorySafety

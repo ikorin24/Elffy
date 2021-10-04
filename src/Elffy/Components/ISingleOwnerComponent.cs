@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using System;
-using Elffy.Core;
 
 namespace Elffy.Components
 {

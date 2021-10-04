@@ -1,10 +1,11 @@
 ﻿#nullable enable
+using Elffy.Features;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
-namespace Elffy.Core
+namespace Elffy
 {
     [DebuggerTypeProxy(typeof(PositionableCollectionDebuggerTypeProxy))]
     [DebuggerDisplay("{DebugDisplay}")]

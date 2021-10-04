@@ -2,7 +2,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Elffy.Core
+namespace Elffy
 {
     public static class EngineSetting
     {

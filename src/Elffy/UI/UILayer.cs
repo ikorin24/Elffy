@@ -1,9 +1,9 @@
 ﻿#nullable enable
+using Elffy.Features.Internal;
 using Elffy.InputSystem;
-using Elffy.UI;
 using System.Diagnostics;
 
-namespace Elffy.Core
+namespace Elffy.UI
 {
     internal sealed class UILayer : ILayer
     {

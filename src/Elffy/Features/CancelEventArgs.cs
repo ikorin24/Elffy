@@ -1,7 +1,7 @@
 ﻿#nullable enable
 using System;
 
-namespace Elffy.Core
+namespace Elffy.Features
 {
     /// <summary>Event argument struct for events which can get canceled.</summary>
     public readonly ref struct CancelEventArgs

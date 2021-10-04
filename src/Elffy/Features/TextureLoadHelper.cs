@@ -5,7 +5,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using OpenTK.Graphics.OpenGL4;
 
-namespace Elffy.Core
+namespace Elffy.Features
 {
     public static class TextureLoadHelper
     {

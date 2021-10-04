@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using Elffy.Core;
 using OpenTK.Graphics.OpenGL4;
 using System;
 using System.Diagnostics;

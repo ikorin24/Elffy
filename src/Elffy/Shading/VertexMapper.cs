@@ -2,7 +2,6 @@
 using System;
 using System.Runtime.CompilerServices;
 using OpenTK.Graphics.OpenGL4;
-using Elffy.Core;
 
 namespace Elffy.Shading
 {

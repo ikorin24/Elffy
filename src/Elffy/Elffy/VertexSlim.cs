@@ -3,7 +3,6 @@ using Elffy.Diagnostics;
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using Elffy.Core;
 
 namespace Elffy
 {

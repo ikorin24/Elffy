@@ -3,7 +3,6 @@ using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using OpenTK.Graphics.OpenGL4;
-using Elffy.Core;
 using Elffy.Imaging;
 using TKPixelType = OpenTK.Graphics.OpenGL4.PixelType;
 using TKPixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;

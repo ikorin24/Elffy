@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -11,9 +10,9 @@ using Elffy.Effective.Unsafes;
 using Elffy.Components;
 using Elffy.Graphics.OpenGL;
 using Elffy.Shading.Forward;
-using Elffy.Core;
 using Cysharp.Threading.Tasks;
 using MMDTools.Unmanaged;
+using Elffy.Features;
 
 namespace Elffy.Serialization
 {

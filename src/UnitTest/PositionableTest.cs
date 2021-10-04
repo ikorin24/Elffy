@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using System;
 using System.Linq;
-using Elffy.Core;
 using Elffy;
 using Xunit;
 

@@ -1,14 +1,14 @@
 ﻿#nullable enable
 using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using OpenTK.Graphics.OpenGL4;
 using Elffy.Shading;
 using Elffy.Shading.Forward;
 using Elffy.Graphics.OpenGL;
 using Elffy.UI;
-using System.Diagnostics;
 
-namespace Elffy.Core
+namespace Elffy
 {
     /// <summary>Base class that is rendered on the screen.</summary>
     public abstract class Renderable : Positionable

@@ -1,9 +1,9 @@
 ﻿#nullable enable
 using System;
-using Elffy.Core;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics;
 using System.Threading;
+using Elffy.Features.Internal;
 
 namespace Elffy
 {

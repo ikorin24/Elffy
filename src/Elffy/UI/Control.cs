@@ -2,12 +2,12 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Elffy.InputSystem;
 using Elffy.Components;
-using Elffy.Core;
 using Elffy.Shading;
-using System.Diagnostics;
 using Elffy.Components.Implementation;
+using Elffy.Features.Internal;
 
 namespace Elffy.UI
 {

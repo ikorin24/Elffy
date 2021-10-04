@@ -2,7 +2,7 @@
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using Elffy.Core;
+using Elffy.Features.Internal;
 
 namespace Elffy
 {

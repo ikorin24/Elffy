@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using System;
 using System.Runtime.CompilerServices;
-using Elffy.Core;
 using Elffy.Graphics.OpenGL;
 using Elffy.UI;
 using System.Diagnostics;

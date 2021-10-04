@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using Elffy.Core;
 using System;
 using System.Threading;
 using System.Runtime.CompilerServices;

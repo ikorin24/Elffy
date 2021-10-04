@@ -3,7 +3,6 @@ using System;
 using System.Runtime.CompilerServices;
 using Elffy.UI;
 using Elffy.Graphics.OpenGL;
-using Elffy.Core;
 
 namespace Elffy.Shading
 {

@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using System.Diagnostics;
 using Elffy;
-using Elffy.Core;
 
 // Auto generate vertex type by a source generator
 [assembly: GenerateCustomVertex(nameof(Elffy) + "." + nameof(RigVertex),

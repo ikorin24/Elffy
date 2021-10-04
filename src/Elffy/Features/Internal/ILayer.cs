@@ -1,6 +1,6 @@
 ﻿#nullable enable
 
-namespace Elffy.Core
+namespace Elffy.Features.Internal
 {
     internal interface ILayer
     {

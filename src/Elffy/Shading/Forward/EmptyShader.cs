@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using Elffy.Core;
 using System;
 
 namespace Elffy.Shading.Forward

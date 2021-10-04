@@ -1,7 +1,7 @@
 ﻿#nullable enable
 using System;
 using Elffy.Graphics.OpenGL;
-using Elffy.Core;
+using Elffy.Features;
 using OpenTK.Graphics.OpenGL4;
 
 namespace Elffy.Shading

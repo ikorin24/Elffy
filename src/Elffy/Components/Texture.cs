@@ -1,9 +1,9 @@
 ﻿#nullable enable
 using System;
-using Elffy.Core;
 using Elffy.Graphics.OpenGL;
 using Elffy.Imaging;
 using Elffy.Components.Implementation;
+using Elffy.Features;
 
 namespace Elffy.Components
 {

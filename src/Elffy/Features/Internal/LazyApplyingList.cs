@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace Elffy.Core
+namespace Elffy.Features.Internal
 {
     internal readonly struct LazyApplyingList<T>
     {

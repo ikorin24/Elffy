@@ -18,7 +18,6 @@ namespace Elffy.Generator
         {
             sb.Append(
 @"#nullable enable
-using Elffy.Core;
 
 namespace Elffy
 {
