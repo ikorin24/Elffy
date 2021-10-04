@@ -17,7 +17,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Elffy\Elffy.csproj" />
+    <ProjectReference Include="..\Elffy.Engine\Elffy.Engine.csproj" />
     <ProjectReference Include="..\ElffyGenerator\ElffyGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
   
