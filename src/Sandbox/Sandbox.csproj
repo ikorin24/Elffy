@@ -19,9 +19,9 @@
     <ProjectReference Include="..\Elffy.Games\Elffy.Games.csproj" />
     <ProjectReference Include="..\Elffy.Serialization\Elffy.Serialization.csproj" />
     <ProjectReference Include="..\Elffy.SimpleKit\Elffy.SimpleKit.csproj" />
-    <ProjectReference Include="..\ElffyGenerator\ElffyGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Elffy.Generator\Elffy.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
-  <Import Project="..\ElffyGenerator\ElffyGenerator.props"/>
+  <Import Project="..\Elffy.Generator\Elffy.Generator.props" />
 
 </Project>

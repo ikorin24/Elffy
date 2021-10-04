@@ -34,7 +34,7 @@
     <!-- Package the generator in the analyzer directory of the nuget package -->
     <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <!-- Package the props file -->
-    <None Include="ElffyGenerator.props" Pack="true" PackagePath="build" Visible="false" />
+    <None Include="Elffy.Generator.props" Pack="true" PackagePath="build" Visible="false" />
   </ItemGroup>
 
 </Project>
