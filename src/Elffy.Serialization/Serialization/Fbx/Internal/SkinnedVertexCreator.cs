@@ -35,7 +35,7 @@ namespace Elffy.Serialization.Fbx.Internal
         public static SkinnedVertexCreator<TVertex> Build()
         {
             if(VertexMarshalHelper.TryGetVertexTypeData(typeof(TVertex), out var typeData) == false) {
-                ThrowInvalidVertexType(typeof(TVertex));
+                ThrowInvalidVertexType();
             }
 
             return new SkinnedVertexCreator<TVertex>()
@@ -52,7 +52,7 @@ namespace Elffy.Serialization.Fbx.Internal
             {
                 var name = typeData.SpecialFieldMap.Invoke(specialField);
                 if(string.IsNullOrEmpty(name)) {
-                    ThrowSpecialFieldNotFound(typeof(TVertex), specialField);
+                    ThrowSpecialFieldNotFound(specialField);
                 }
                 return typeData.Layouter.Invoke(name).offset;
             }
@@ -67,9 +67,9 @@ namespace Elffy.Serialization.Fbx.Internal
         }
 
         [DoesNotReturn]
-        private static void ThrowSpecialFieldNotFound(Type type, VertexSpecialField specialField) => throw new InvalidOperationException($"{typeof(TVertex).FullName} does not have {specialField}.");
+        private static void ThrowSpecialFieldNotFound(VertexSpecialField specialField) => throw new InvalidOperationException($"{typeof(TVertex).FullName} does not have {specialField}.");
 
         [DoesNotReturn]
-        private static void ThrowInvalidVertexType(Type type) => throw new InvalidOperationException($"The type is not supported vertex type. (Type = {type.FullName})");
+        private static void ThrowInvalidVertexType() => throw new InvalidOperationException($"The type is not supported vertex type. (Type = {typeof(TVertex).FullName})");
     }
 }
