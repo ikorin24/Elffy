@@ -29,15 +29,12 @@ namespace Elffy.Shading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void Map<TVertex>(int index, VertexSpecialField specialField) where TVertex : unmanaged
         {
-            var vertexType = typeof(TVertex);
             Map(typeof(TVertex), index, specialField);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void Map(Type vertexType, int index, VertexSpecialField specialField)
         {
-            // Call static constructor of TVertex to Register layout. (It is called only once)
-            RuntimeHelpers.RunClassConstructor(vertexType.TypeHandle);
             var (offset, type, elementCount, vertexSize) = VertexMarshalHelper.GetLayout(vertexType, specialField);
             MapPrivate(index, offset, type, elementCount, vertexSize);
         }
@@ -52,9 +49,6 @@ namespace Elffy.Shading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void Map(Type vertexType, int index, string vertexFieldName)
         {
-            // Call static constructor of TVertex to Register layout. (It is called only once)
-            RuntimeHelpers.RunClassConstructor(vertexType.TypeHandle);
-
             var (offset, type, elementCount, vertexSize) = VertexMarshalHelper.GetLayout(vertexType, vertexFieldName);
             MapPrivate(index, offset, type, elementCount, vertexSize);
         }

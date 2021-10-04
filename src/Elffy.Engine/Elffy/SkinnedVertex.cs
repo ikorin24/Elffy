@@ -1,9 +1,9 @@
 ﻿#nullable enable
-using Elffy.Diagnostics;
 using System;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
+using System.ComponentModel;
 
 namespace Elffy
 {
@@ -25,7 +25,9 @@ namespace Elffy
         [FieldOffset(64)]
         public int TextureIndex;
 
-        static SkinnedVertex()
+        [ModuleInitializer]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        internal static void RegisterVertexTypeDataOnModuleInitialized()
         {
             VertexMarshalHelper.Register<SkinnedVertex>(
                 fieldName => fieldName switch
@@ -47,7 +49,7 @@ namespace Elffy
                     VertexSpecialField.Bone => nameof(Bone),
                     VertexSpecialField.Weight => nameof(Weight),
                     _ => "",
-                });
+                }).ThrowIfError();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

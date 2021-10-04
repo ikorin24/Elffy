@@ -1,7 +1,8 @@
 ﻿#nullable enable
-using Elffy.Diagnostics;
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Elffy
@@ -18,22 +19,24 @@ namespace Elffy
         [FieldOffset(12)]
         public Vector2 UV;
 
-        static VertexSlim()
+        [ModuleInitializer]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        internal static void RegisterVertexTypeDataOnModuleInitialized()
         {
             // Register struct layout cache
             VertexMarshalHelper.Register<VertexSlim>(
                 fieldName => fieldName switch
-            {
-                nameof(Position) => (0, VertexFieldMarshalType.Float, 3),
-                nameof(UV) => (12, VertexFieldMarshalType.Float, 2),
-                _ => throw new ArgumentException(),
-            },
-                specialField => specialField switch
-            {
-                VertexSpecialField.Position => nameof(Position),
-                VertexSpecialField.UV => nameof(UV),
-                _ => "",
-            });
+                {
+                    nameof(Position) => (0, VertexFieldMarshalType.Float, 3),
+                    nameof(UV) => (12, VertexFieldMarshalType.Float, 2),
+                    _ => throw new ArgumentException(),
+                },
+                    specialField => specialField switch
+                {
+                    VertexSpecialField.Position => nameof(Position),
+                    VertexSpecialField.UV => nameof(UV),
+                    _ => "",
+                }).ThrowIfError();
         }
 
         public VertexSlim(in Vector3 position, in Vector2 uv)

@@ -8,7 +8,6 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Globalization;
-using Elffy;
 
 namespace Elffy.Generator
 {
@@ -174,6 +173,7 @@ namespace Elffy
             sb.Append(
 @$"using {nameof(Elffy)};
 using System;
+using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 
@@ -195,7 +195,9 @@ namespace {ns}
 
             sb.Append(
 @$"
-        static {typeName}()
+        [ModuleInitializer]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        internal static void RegisterVertexTypeDataOnModuleInitialized()
         {{
             VertexMarshalHelper.Register<{typeName}>(
                 fieldName => fieldName switch
@@ -226,9 +228,8 @@ namespace {ns}
             }
 
             sb.Append(
-@$"
-                _ => """",
-            }});
+@$"                _ => """",
+            }}).ThrowIfError();
         }}
 ");
 

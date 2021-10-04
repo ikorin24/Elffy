@@ -34,7 +34,6 @@ namespace Elffy.Serialization.Fbx.Internal
 
         public static SkinnedVertexCreator<TVertex> Build()
         {
-            RuntimeHelpers.RunClassConstructor(typeof(TVertex).TypeHandle);
             if(VertexMarshalHelper.TryGetVertexTypeData(typeof(TVertex), out var typeData) == false) {
                 ThrowInvalidVertexType(typeof(TVertex));
             }

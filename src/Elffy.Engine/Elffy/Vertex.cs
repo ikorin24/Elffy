@@ -1,9 +1,9 @@
 ﻿#nullable enable
-using Elffy.Diagnostics;
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
+using System.ComponentModel;
 
 namespace Elffy
 {
@@ -19,23 +19,25 @@ namespace Elffy
         [FieldOffset(24)]
         public Vector2 UV;
 
-        static Vertex()
+        [ModuleInitializer]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        internal static void RegisterVertexTypeDataOnModuleInitialized()
         {
             VertexMarshalHelper.Register<Vertex>(
                 fieldName => fieldName switch
-            {
-                nameof(Position) => (0, VertexFieldMarshalType.Float, 3),
-                nameof(Normal) => (12, VertexFieldMarshalType.Float, 3),
-                nameof(UV) => (24, VertexFieldMarshalType.Float, 2),
-                _ => throw new ArgumentException(),
-            },
+                {
+                    nameof(Position) => (0, VertexFieldMarshalType.Float, 3),
+                    nameof(Normal) => (12, VertexFieldMarshalType.Float, 3),
+                    nameof(UV) => (24, VertexFieldMarshalType.Float, 2),
+                    _ => throw new ArgumentException(),
+                },
                 specialField => specialField switch
-            {
-                VertexSpecialField.Position => nameof(Position),
-                VertexSpecialField.Normal => nameof(Normal),
-                VertexSpecialField.UV => nameof(UV),
-                _ => "",
-            });
+                {
+                    VertexSpecialField.Position => nameof(Position),
+                    VertexSpecialField.Normal => nameof(Normal),
+                    VertexSpecialField.UV => nameof(UV),
+                    _ => "",
+                }).ThrowIfError();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -64,7 +64,6 @@ namespace Elffy
 
         public static bool HasSpecialField(Type vertexType, VertexSpecialField specialField)
         {
-            RuntimeHelpers.RunClassConstructor(vertexType.TypeHandle);
             if(TryGetVertexTypeData(vertexType, out var data) == false) {
                 ThrowTypeNotRegistered(vertexType);
             }
