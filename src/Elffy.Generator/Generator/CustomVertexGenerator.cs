@@ -130,35 +130,22 @@ namespace Elffy
 
         private static VertexFieldInfo[] ParseArgs(AttributeSyntax attr, SemanticModel attrSemantic, out string vertexTypeName)
         {
-            if(attr.ArgumentList is null) {
-                throw new Exception("Can not be null argument list.");
-            }
-            var args = attr.ArgumentList.Arguments;
-            vertexTypeName = attrSemantic.GetConstantValue(args[0].Expression).ToString();
+            if(attr.ArgumentList is null) { throw new Exception("Can not be null argument list."); }
+            vertexTypeName = GeneratorUtil.GetAttrArgString(attr, 0, attrSemantic);
             const int N = 6;
-
-            var fieldCount = (args.Count - 1) / N;
+            var fieldCount = (attr.ArgumentList.Arguments.Count - 1) / N;
             var fields = new VertexFieldInfo[fieldCount];
             for(int i = 0; i < fields.Length; i++) {
-                var name = attrSemantic.GetConstantValue(args[i * N + 1].Expression).Value?.ToString() ?? throw new Exception();
-                var typeFullName = (args[i * N + 2].Expression is TypeOfExpressionSyntax syntax) ?
-                                   attrSemantic.GetSymbolInfo(syntax.Type).Symbol?.ToString() ?? throw new Exception()
-                                   : throw new Exception();
-                var specialField = (VertexSpecialField)attrSemantic.GetConstantValue(args[i * N + 3].Expression).Value!;
-                if(!uint.TryParse(attrSemantic.GetConstantValue(args[i * N + 4].Expression).Value!.ToString(), out var offset)) {
-                    throw new Exception();
-                }
-                
-                var marshal = (VertexFieldMarshalType)attrSemantic.GetConstantValue(args[i * N + 5].Expression).Value!;
-
-                if(!uint.TryParse(attrSemantic.GetConstantValue(args[i * N + 6].Expression).Value!.ToString(), out var marshalCount)) {
-                    throw new Exception();
-                }
-
+                var name = GeneratorUtil.GetAttrArgString(attr, i * N + 1, attrSemantic);
+                var typeFullName = GeneratorUtil.GetAttrArgTypeFullName(attr, i * N + 2, attrSemantic);
+                var specialField = GeneratorUtil.GetAttrArgEnum<VertexSpecialField>(attr, i * N + 3, attrSemantic);
+                var byteOffset = GeneratorUtil.GetAttrArgUInt(attr, i * N + 4, attrSemantic);
+                var marshal = GeneratorUtil.GetAttrArgEnum<VertexFieldMarshalType>(attr, i * N + 5, attrSemantic);
+                var marshalCount = GeneratorUtil.GetAttrArgUInt(attr, i * N + 6, attrSemantic);
                 if(marshalCount <= 0 || marshalCount > 4) {
                     throw new Exception("Marshal count must be 1, 2, 3 or 4.");
                 }
-                fields[i] = new(name, specialField, typeFullName, offset, marshal, marshalCount);
+                fields[i] = new VertexFieldInfo(name, typeFullName, specialField, byteOffset, marshal, marshalCount);
             }
             return fields;
         }
@@ -247,7 +234,7 @@ namespace {ns}
             sb.Append(
 @"        }
 ");
-            
+
             sb.Append(
 @$"
         public readonly override bool Equals(object? obj) => obj is {typeName} vertex && Equals(vertex);
@@ -269,8 +256,8 @@ namespace {ns}
     internal class VertexFieldInfo
     {
         public string Name { get; }
-        public VertexSpecialField SpecialField { get; }
         public string TypeFullName { get; }
+        public VertexSpecialField SpecialField { get; }
         public uint ByteOffset { get; }
         public VertexFieldMarshalType Marshal { get; }
         public uint MarshalCount { get; }
@@ -290,11 +277,11 @@ namespace {ns}
             }
         }
 
-        public VertexFieldInfo(string name, VertexSpecialField specialField, string typeFullName, uint byteOffset, VertexFieldMarshalType marshal, uint marshalCount)
+        public VertexFieldInfo(string name, string typeFullName, VertexSpecialField specialField, uint byteOffset, VertexFieldMarshalType marshal, uint marshalCount)
         {
             Name = name;
-            SpecialField = specialField;
             TypeFullName = typeFullName;
+            SpecialField = specialField;
             ByteOffset = byteOffset;
             Marshal = marshal;
             MarshalCount = marshalCount;

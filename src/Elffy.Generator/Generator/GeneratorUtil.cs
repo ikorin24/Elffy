@@ -19,33 +19,65 @@ namespace Elffy.Generator
 
 ";
         }
+        public static string GetAttrArgTypeFullName(AttributeSyntax attr, int argNum, Compilation compilation)
+        {
+            return GetAttrArgTypeFullName(attr, argNum, compilation.GetSemanticModel(attr.SyntaxTree));
+        }
 
-        public static string GetAttrArgTypeName(AttributeSyntax attr, int argNum, Compilation compilation)
+        public static string GetAttrArgTypeFullName(AttributeSyntax attr, int argNum, SemanticModel semanticModel)
         {
             var expr = (TypeOfExpressionSyntax)attr.ArgumentList!.Arguments[argNum].Expression;
-
-            return compilation.GetSemanticModel(attr.SyntaxTree)
-                              .GetSymbolInfo(expr.Type)
-                              .Symbol!.ToString();      // fullname
+            return semanticModel.GetSymbolInfo(expr.Type).Symbol!.ToString();      // fullname
         }
 
         public static string GetAttrArgString(AttributeSyntax attr, int argNum, Compilation compilation)
         {
-            return compilation.GetSemanticModel(attr.SyntaxTree)
-                              .GetConstantValue(attr.ArgumentList!.Arguments[argNum].Expression).Value!.ToString();
+            return GetAttrArgString(attr, argNum, compilation.GetSemanticModel(attr.SyntaxTree));
+        }
+
+        public static string GetAttrArgString(AttributeSyntax attr, int argNum, SemanticModel semanticModel)
+        {
+            return semanticModel.GetConstantValue(attr.ArgumentList!.Arguments[argNum].Expression).Value!.ToString();
+        }
+
+        public static T GetAttrArgEnum<T>(AttributeSyntax attr, int argNum, Compilation compilation) where T : struct, Enum
+        {
+            return GetAttrArgEnum<T>(attr, argNum, compilation.GetSemanticModel(attr.SyntaxTree));
+        }
+
+        public static T GetAttrArgEnum<T>(AttributeSyntax attr, int argNum, SemanticModel semanticModel) where T : struct, Enum
+        {
+            return (T)semanticModel.GetConstantValue(attr.ArgumentList!.Arguments[argNum].Expression).Value!;
         }
 
         public static int GetAttrArgInt(AttributeSyntax attr, int argNum, Compilation compilation)
         {
-            var value = compilation.GetSemanticModel(attr.SyntaxTree)
-                                   .GetConstantValue(attr.ArgumentList!.Arguments[argNum].Expression).Value;
-            return (int)value!;
+            return GetAttrArgInt(attr, argNum, compilation.GetSemanticModel(attr.SyntaxTree));
+        }
+
+        public static int GetAttrArgInt(AttributeSyntax attr, int argNum, SemanticModel semanticModel)
+        {
+            return int.Parse(semanticModel.GetConstantValue(attr.ArgumentList!.Arguments[argNum].Expression).Value!.ToString());
+        }
+
+        public static uint GetAttrArgUInt(AttributeSyntax attr, int argNum, Compilation compilation)
+        {
+            return GetAttrArgUInt(attr, argNum, compilation.GetSemanticModel(attr.SyntaxTree));
+        }
+
+        public static uint GetAttrArgUInt(AttributeSyntax attr, int argNum, SemanticModel semanticModel)
+        {
+            return uint.Parse(semanticModel.GetConstantValue(attr.ArgumentList!.Arguments[argNum].Expression).Value!.ToString());
         }
 
         public static bool GetAttrArgBool(AttributeSyntax attr, int argNum, Compilation compilation)
         {
-            return (bool)compilation.GetSemanticModel(attr.SyntaxTree)
-                                    .GetConstantValue(attr.ArgumentList!.Arguments[argNum].Expression).Value!;
+            return GetAttrArgBool(attr, argNum, compilation.GetSemanticModel(attr.SyntaxTree));
+        }
+
+        public static bool GetAttrArgBool(AttributeSyntax attr, int argNum, SemanticModel semanticModel)
+        {
+            return (bool)semanticModel.GetConstantValue(attr.ArgumentList!.Arguments[argNum].Expression).Value!;
         }
 
         public static string GetAttrArgEnumNum(AttributeSyntax attr, int argNum, Compilation compilation)
