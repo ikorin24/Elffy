@@ -17,6 +17,8 @@ namespace Elffy.Components
 
         public ref float Roughness => ref _data.Roughness;
 
+        public ref Color3 Emit => ref _data.Emit;
+
         public ref PBRMaterialData Data => ref _data;
 
         public PBRMaterial(in Color3 albedo, float metallic, float roughness, in Color3 emit)
@@ -38,7 +40,7 @@ namespace Elffy.Components
         }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
-        internal string DebugView => $"{nameof(PBRMaterial)} [{_data.DebugView}]";
+        internal string DebugView => _data.DebugView;
     }
 
     [DebuggerDisplay("{DebugView,nq}")]
@@ -62,17 +64,19 @@ namespace Elffy.Components
             Roughness = roughness;
         }
 
+        public PBRMaterial ToMaterial() => new PBRMaterial(this);
+
         public override bool Equals(object? obj) => obj is PBRMaterialData data && Equals(data);
 
-        public bool Equals(PBRMaterialData other) => Albedo.Equals(other.Albedo) && Metallic == other.Metallic && Roughness == other.Roughness;
+        public bool Equals(PBRMaterialData other) => Albedo.Equals(other.Albedo) && Metallic == other.Metallic && Emit.Equals(other.Emit) && Roughness == other.Roughness;
 
-        public override int GetHashCode() => HashCode.Combine(Albedo, Metallic, Roughness);
+        public override int GetHashCode() => HashCode.Combine(Albedo, Metallic, Emit, Roughness);
 
         public static bool operator ==(PBRMaterialData left, PBRMaterialData right) => left.Equals(right);
 
         public static bool operator !=(PBRMaterialData left, PBRMaterialData right) => !(left == right);
 
         [EditorBrowsable(EditorBrowsableState.Never)]
-        internal string DebugView => $"(R={Albedo.R:N3}, G={Albedo.G:N3}, B={Albedo.B:N3}), Metallic={Metallic:N3}, Roughness={Roughness:N3}";
+        internal string DebugView => $"(R:{Albedo.R:N3}, G:{Albedo.G:N3}, B:{Albedo.B:N3}), Metallic={Metallic:N3}, Roughness={Roughness:N3}, Emit=(R:{Emit.R:N3}, G:{Emit.G:N3}, B:{Emit.B:N3})";
     }
 }
