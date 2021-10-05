@@ -40,22 +40,13 @@ namespace Elffy.Serialization.Fbx.Internal
 
             return new SkinnedVertexCreator<TVertex>()
             {
-                OffsetPos = GetOffset(VertexSpecialField.Position, typeData),
-                OffsetNormal = GetOffset(VertexSpecialField.Normal, typeData),
-                OffsetUV = GetOffset(VertexSpecialField.UV, typeData),
-                OffsetTextureIndex = GetOffset(VertexSpecialField.TextureIndex, typeData),
-                OffsetBone = GetOffset(VertexSpecialField.Bone, typeData),
-                OffsetWeight = GetOffset(VertexSpecialField.Weight, typeData),
+                OffsetPos = typeData.GetField(VertexSpecialField.Position).ByteOffset,
+                OffsetNormal = typeData.GetField(VertexSpecialField.Normal).ByteOffset,
+                OffsetUV = typeData.GetField(VertexSpecialField.UV).ByteOffset,
+                OffsetTextureIndex = typeData.GetField(VertexSpecialField.TextureIndex).ByteOffset,
+                OffsetBone = typeData.GetField(VertexSpecialField.Bone).ByteOffset,
+                OffsetWeight = typeData.GetField(VertexSpecialField.Weight).ByteOffset,
             };
-
-            static int GetOffset(VertexSpecialField specialField, VertexTypeData typeData)
-            {
-                var name = typeData.SpecialFieldMap.Invoke(specialField);
-                if(string.IsNullOrEmpty(name)) {
-                    ThrowSpecialFieldNotFound(specialField);
-                }
-                return typeData.Layouter.Invoke(name).offset;
-            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -65,9 +56,6 @@ namespace Elffy.Serialization.Fbx.Internal
                         ref Unsafe.Add(
                             ref Unsafe.As<TVertex, byte>(ref v), offset));
         }
-
-        [DoesNotReturn]
-        private static void ThrowSpecialFieldNotFound(VertexSpecialField specialField) => throw new InvalidOperationException($"{typeof(TVertex).FullName} does not have {specialField}.");
 
         [DoesNotReturn]
         private static void ThrowInvalidVertexType() => throw new InvalidOperationException($"The type is not supported vertex type. (Type = {typeof(TVertex).FullName})");

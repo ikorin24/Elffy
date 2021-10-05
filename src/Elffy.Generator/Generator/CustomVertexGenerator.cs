@@ -23,41 +23,35 @@ using System.Diagnostics;
 namespace Elffy
 {
     [Conditional(""COMPILE_TIME_ONLY"")]
-    [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true, Inherited = false)]
+    [AttributeUsage(AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
     internal sealed class GenerateCustomVertexAttribute : Attribute
     {
-        public GenerateCustomVertexAttribute(string typeFullName,
-                                             string name1, Type type1, VertexSpecialField specialField1, uint byteOffset1, VertexFieldMarshalType marshal1, uint marshalCount1)
+        public GenerateCustomVertexAttribute(string name1, Type type1, VertexSpecialField specialField1, uint byteOffset1, VertexFieldMarshalType marshal1, uint marshalCount1)
         { }
 
-        public GenerateCustomVertexAttribute(string typeFullName,
-                                             string name1, Type type1, VertexSpecialField specialField1, uint byteOffset1, VertexFieldMarshalType marshal1, uint marshalCount1,
+        public GenerateCustomVertexAttribute(string name1, Type type1, VertexSpecialField specialField1, uint byteOffset1, VertexFieldMarshalType marshal1, uint marshalCount1,
                                              string name2, Type type2, VertexSpecialField specialField2, uint byteOffset2, VertexFieldMarshalType marshal2, uint marshalCount2)
         { }
 
-        public GenerateCustomVertexAttribute(string typeFullName,
-                                             string name1, Type type1, VertexSpecialField specialField1, uint byteOffset1, VertexFieldMarshalType marshal1, uint marshalCount1,
+        public GenerateCustomVertexAttribute(string name1, Type type1, VertexSpecialField specialField1, uint byteOffset1, VertexFieldMarshalType marshal1, uint marshalCount1,
                                              string name2, Type type2, VertexSpecialField specialField2, uint byteOffset2, VertexFieldMarshalType marshal2, uint marshalCount2,
                                              string name3, Type type3, VertexSpecialField specialField3, uint byteOffset3, VertexFieldMarshalType marshal3, uint marshalCount3)
         { }
 
-        public GenerateCustomVertexAttribute(string typeFullName,
-                                             string name1, Type type1, VertexSpecialField specialField1, uint byteOffset1, VertexFieldMarshalType marshal1, uint marshalCount1,
+        public GenerateCustomVertexAttribute(string name1, Type type1, VertexSpecialField specialField1, uint byteOffset1, VertexFieldMarshalType marshal1, uint marshalCount1,
                                              string name2, Type type2, VertexSpecialField specialField2, uint byteOffset2, VertexFieldMarshalType marshal2, uint marshalCount2,
                                              string name3, Type type3, VertexSpecialField specialField3, uint byteOffset3, VertexFieldMarshalType marshal3, uint marshalCount3,
                                              string name4, Type type4, VertexSpecialField specialField4, uint byteOffset4, VertexFieldMarshalType marshal4, uint marshalCount4)
         { }
 
-        public GenerateCustomVertexAttribute(string typeFullName,
-                                             string name1, Type type1, VertexSpecialField specialField1, uint byteOffset1, VertexFieldMarshalType marshal1, uint marshalCount1,
+        public GenerateCustomVertexAttribute(string name1, Type type1, VertexSpecialField specialField1, uint byteOffset1, VertexFieldMarshalType marshal1, uint marshalCount1,
                                              string name2, Type type2, VertexSpecialField specialField2, uint byteOffset2, VertexFieldMarshalType marshal2, uint marshalCount2,
                                              string name3, Type type3, VertexSpecialField specialField3, uint byteOffset3, VertexFieldMarshalType marshal3, uint marshalCount3,
                                              string name4, Type type4, VertexSpecialField specialField4, uint byteOffset4, VertexFieldMarshalType marshal4, uint marshalCount4,
                                              string name5, Type type5, VertexSpecialField specialField5, uint byteOffset5, VertexFieldMarshalType marshal5, uint marshalCount5)
         { }
 
-        public GenerateCustomVertexAttribute(string typeFullName,
-                                             string name1, Type type1, VertexSpecialField specialField1, uint byteOffset1, VertexFieldMarshalType marshal1, uint marshalCount1,
+        public GenerateCustomVertexAttribute(string name1, Type type1, VertexSpecialField specialField1, uint byteOffset1, VertexFieldMarshalType marshal1, uint marshalCount1,
                                              string name2, Type type2, VertexSpecialField specialField2, uint byteOffset2, VertexFieldMarshalType marshal2, uint marshalCount2,
                                              string name3, Type type3, VertexSpecialField specialField3, uint byteOffset3, VertexFieldMarshalType marshal3, uint marshalCount3,
                                              string name4, Type type4, VertexSpecialField specialField4, uint byteOffset4, VertexFieldMarshalType marshal4, uint marshalCount4,
@@ -65,8 +59,7 @@ namespace Elffy
                                              string name6, Type type6, VertexSpecialField specialField6, uint byteOffset6, VertexFieldMarshalType marshal6, uint marshalCount6)
         { }
 
-        public GenerateCustomVertexAttribute(string typeFullName,
-                                             string name1, Type type1, VertexSpecialField specialField1, uint byteOffset1, VertexFieldMarshalType marshal1, uint marshalCount1,
+        public GenerateCustomVertexAttribute(string name1, Type type1, VertexSpecialField specialField1, uint byteOffset1, VertexFieldMarshalType marshal1, uint marshalCount1,
                                              string name2, Type type2, VertexSpecialField specialField2, uint byteOffset2, VertexFieldMarshalType marshal2, uint marshalCount2,
                                              string name3, Type type3, VertexSpecialField specialField3, uint byteOffset3, VertexFieldMarshalType marshal3, uint marshalCount3,
                                              string name4, Type type4, VertexSpecialField specialField4, uint byteOffset4, VertexFieldMarshalType marshal4, uint marshalCount4,
@@ -75,8 +68,7 @@ namespace Elffy
                                              string name7, Type type7, VertexSpecialField specialField7, uint byteOffset7, VertexFieldMarshalType marshal7, uint marshalCount7)
         { }
 
-        public GenerateCustomVertexAttribute(string typeFullName,
-                                             string name1, Type type1, VertexSpecialField specialField1, uint byteOffset1, VertexFieldMarshalType marshal1, uint marshalCount1,
+        public GenerateCustomVertexAttribute(string name1, Type type1, VertexSpecialField specialField1, uint byteOffset1, VertexFieldMarshalType marshal1, uint marshalCount1,
                                              string name2, Type type2, VertexSpecialField specialField2, uint byteOffset2, VertexFieldMarshalType marshal2, uint marshalCount2,
                                              string name3, Type type3, VertexSpecialField specialField3, uint byteOffset3, VertexFieldMarshalType marshal3, uint marshalCount3,
                                              string name4, Type type4, VertexSpecialField specialField4, uint byteOffset4, VertexFieldMarshalType marshal4, uint marshalCount4,
@@ -111,11 +103,10 @@ namespace Elffy
                 }
                 foreach(var attr in attrs) {
                     if(attr.ArgumentList is null) { throw new Exception("Can't be null here."); }
-                    var fields = ParseArgs(attr,
-                                           compilation.GetSemanticModel(attr.SyntaxTree),
-                                           out var vertexTypeName);
-                    var source = CreateSource(vertexTypeName, fields);
-                    context.AddSource(vertexTypeName, SourceText.From(source, Encoding.UTF8));
+                    var semanticModel = compilation.GetSemanticModel(attr.SyntaxTree);
+                    var fields = ParseArgs(attr, semanticModel, out var vertexNamespace, out var vertexName);
+                    var source = CreateSource(vertexNamespace, vertexName, fields);
+                    context.AddSource(vertexName, SourceText.From(source, Encoding.UTF8));
                 }
             }
             catch {
@@ -128,20 +119,37 @@ namespace Elffy
             // nop
         }
 
-        private static VertexFieldInfo[] ParseArgs(AttributeSyntax attr, SemanticModel attrSemantic, out string vertexTypeName)
+        private static (string structNamespace, string structName) GetAttrTargetStructName(AttributeSyntax attr, SemanticModel attrSemantic)
+        {
+            var parent = attr.Parent;
+            while(true) {
+                if(parent == null) {
+                    throw new Exception();
+                }
+                if(parent.Kind() == SyntaxKind.StructDeclaration) {
+                    var structDeclaration = attrSemantic.GetDeclaredSymbol(parent) ?? throw new Exception();
+                    var structNamespace = structDeclaration.ContainingNamespace.ToString();
+                    var structName = structDeclaration.Name;
+                    return (structNamespace, structName);
+                }
+                parent = parent.Parent;
+            }
+        }
+
+        private static VertexFieldInfo[] ParseArgs(AttributeSyntax attr, SemanticModel attrSemantic, out string vertexNamespace, out string vertexName)
         {
             if(attr.ArgumentList is null) { throw new Exception("Can not be null argument list."); }
-            vertexTypeName = GeneratorUtil.GetAttrArgString(attr, 0, attrSemantic);
             const int N = 6;
-            var fieldCount = (attr.ArgumentList.Arguments.Count - 1) / N;
+            (vertexNamespace, vertexName) = GetAttrTargetStructName(attr, attrSemantic);
+            var fieldCount = attr.ArgumentList.Arguments.Count / N;
             var fields = new VertexFieldInfo[fieldCount];
             for(int i = 0; i < fields.Length; i++) {
-                var name = GeneratorUtil.GetAttrArgString(attr, i * N + 1, attrSemantic);
-                var typeFullName = GeneratorUtil.GetAttrArgTypeFullName(attr, i * N + 2, attrSemantic);
-                var specialField = GeneratorUtil.GetAttrArgEnum<VertexSpecialField>(attr, i * N + 3, attrSemantic);
-                var byteOffset = GeneratorUtil.GetAttrArgUInt(attr, i * N + 4, attrSemantic);
-                var marshal = GeneratorUtil.GetAttrArgEnum<VertexFieldMarshalType>(attr, i * N + 5, attrSemantic);
-                var marshalCount = GeneratorUtil.GetAttrArgUInt(attr, i * N + 6, attrSemantic);
+                var name = GeneratorUtil.GetAttrArgString(attr, i * N, attrSemantic);
+                var typeFullName = GeneratorUtil.GetAttrArgTypeFullName(attr, i * N + 1, attrSemantic);
+                var specialField = GeneratorUtil.GetAttrArgEnum<VertexSpecialField>(attr, i * N + 2, attrSemantic);
+                var byteOffset = GeneratorUtil.GetAttrArgUInt(attr, i * N + 3, attrSemantic);
+                var marshal = GeneratorUtil.GetAttrArgEnum<VertexFieldMarshalType>(attr, i * N + 4, attrSemantic);
+                var marshalCount = GeneratorUtil.GetAttrArgUInt(attr, i * N + 5, attrSemantic);
                 if(marshalCount <= 0 || marshalCount > 4) {
                     throw new Exception("Marshal count must be 1, 2, 3 or 4.");
                 }
@@ -150,102 +158,54 @@ namespace Elffy
             return fields;
         }
 
-        private string CreateSource(string vertexTypeName, VertexFieldInfo[] fields)
+        private string CreateSource(string vertexNamespace, string vertexName, VertexFieldInfo[] fields)
         {
-            var ns = vertexTypeName.Substring(0, vertexTypeName.LastIndexOf('.'));
-            var typeName = vertexTypeName.Substring(ns.Length + 1);
-
             var sb = new StringBuilder();
-            sb.Append(GeneratorUtil.GetGeneratorSigniture(typeof(CustomVertexGenerator)));
-            sb.Append(
+            sb.Append(GeneratorUtil.GetGeneratorSigniture(typeof(CustomVertexGenerator))).Append(
 @$"using {nameof(Elffy)};
 using System;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 
-namespace {ns}
+namespace {vertexNamespace}
 {{
-");
-            sb.Append(
-@$"    [{nameof(VertexLikeAttribute)}]
+    [{nameof(VertexLikeAttribute)}]
     [StructLayout(LayoutKind.Explicit)]
-    public partial struct {typeName} : IEquatable<{typeName}>
-    {{
-");
-            foreach(var field in fields) {
-                sb.Append(
-@$"        [FieldOffset({field.ByteOffset})]
-        public {field.TypeFullName} {field.Name};
-");
-            }
-
-            sb.Append(
+    partial struct {vertexName} : IEquatable<{vertexName}>
+    {{").AppendForeach(fields, f =>
+@$"
+        [FieldOffset({f.ByteOffset})]
+        public {f.TypeFullName} {f.Name};
+").Append(
 @$"
         [ModuleInitializer]
         [EditorBrowsable(EditorBrowsableState.Never)]
         internal static void RegisterVertexTypeDataOnModuleInitialized()
         {{
-            VertexMarshalHelper.Register<{typeName}>(
-                fieldName => fieldName switch
+            VertexMarshalHelper.Register<{vertexName}>(new[]
             {{
-");
-
-            foreach(var field in fields) {
-                sb.Append(
-@$"                nameof({field.Name}) => ({field.ByteOffset}, {nameof(VertexFieldMarshalType)}.{field.Marshal}, {field.MarshalCount}),
-");
-            }
-
-            sb.Append(
-@"                _ => throw new ArgumentException(),
-            },
-                specialField => specialField switch
-            {
-");
-            var specials = fields.Where(f => f.SpecialField != VertexSpecialField.NotSpecified)
-                                 .OrderBy(f => f.SpecialField)
-                                 .ToDictionary(f => f.SpecialField, f => f.Name);
-            foreach(var keyValue in specials) {
-                var s = keyValue.Key;
-                var n = keyValue.Value;
-                sb.Append(
-@$"                {nameof(VertexSpecialField)}.{s} => nameof({n}),
-");
-            }
-
-            sb.Append(
-@$"                _ => """",
-            }}).ThrowIfError();
+").AppendForeach(fields, f =>
+$@"                new VertexFieldData(nameof({f.Name}), typeof({f.TypeFullName}), {nameof(VertexSpecialField)}.{f.SpecialField}, {f.ByteOffset}, {nameof(VertexFieldMarshalType)}.{f.Marshal}, {f.MarshalCount}),
+").Append(
+$@"            }}).ThrowIfError();
         }}
-");
 
-            sb.Append(
-@$"
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public {typeName}({string.Join(", ", fields.Select(f => $"in {f.TypeFullName} {f.NameLowerCamelCase}"))})
-        {{
-");
-            foreach(var field in fields) {
-                sb.Append(
-@$"            {field.Name} = {field.NameLowerCamelCase};
-");
-            }
-            sb.Append(
-@"        }
-");
+        public {vertexName}(").AppendForeach(fields, f => $"in {f.TypeFullName} {f.NameLowerCamelCase}", ", ").Append(@$")
+        {{").AppendForeach(fields, f => @$"
+            {f.Name} = {f.NameLowerCamelCase};").Append($@"
+        }}
 
-            sb.Append(
-@$"
-        public readonly override bool Equals(object? obj) => obj is {typeName} vertex && Equals(vertex);
+        public readonly override bool Equals(object? obj) => obj is {vertexName} vertex && Equals(vertex);
 
-        public readonly bool Equals({typeName} other) => {string.Join(" && ", fields.Select(f => $"{f.Name}.Equals(other.{f.Name})"))};
+        public readonly bool Equals({vertexName} other) => ").AppendForeach(fields, f => $"{f.Name}.Equals(other.{f.Name})", " && ").Append(@$";
 
-        public readonly override int GetHashCode() => HashCode.Combine({string.Join(", ", fields.Select(f => f.Name))});
+        public readonly override int GetHashCode() => HashCode.Combine(").AppendForeach(fields, f => f.Name, ", ").Append(@$");
 
-        public static bool operator ==(in {typeName} left, in {typeName} right) => left.Equals(right);
+        public static bool operator ==(in {vertexName} left, in {vertexName} right) => left.Equals(right);
 
-        public static bool operator !=(in {typeName} left, in {typeName} right) => !(left == right);
+        public static bool operator !=(in {vertexName} left, in {vertexName} right) => !(left == right);
     }}
 }}
 ");

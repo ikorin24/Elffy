@@ -12,7 +12,7 @@ namespace Elffy
     [DebuggerDisplay("{Position}")]
     [StructLayout(LayoutKind.Explicit)]
     [VertexLike]
-    public unsafe struct VertexSlim : IEquatable<VertexSlim>
+    public struct VertexSlim : IEquatable<VertexSlim>
     {
         [FieldOffset(0)]
         public Vector3 Position;
@@ -23,20 +23,12 @@ namespace Elffy
         [EditorBrowsable(EditorBrowsableState.Never)]
         internal static void RegisterVertexTypeDataOnModuleInitialized()
         {
-            // Register struct layout cache
-            VertexMarshalHelper.Register<VertexSlim>(
-                fieldName => fieldName switch
-                {
-                    nameof(Position) => (0, VertexFieldMarshalType.Float, 3),
-                    nameof(UV) => (12, VertexFieldMarshalType.Float, 2),
-                    _ => throw new ArgumentException(),
-                },
-                    specialField => specialField switch
-                {
-                    VertexSpecialField.Position => nameof(Position),
-                    VertexSpecialField.UV => nameof(UV),
-                    _ => "",
-                }).ThrowIfError();
+            VertexMarshalHelper.Register<VertexSlim>(new[]
+            {
+                new VertexFieldData(nameof(Position), typeof(Vector3), VertexSpecialField.Position, 0, VertexFieldMarshalType.Float, 3),
+                new VertexFieldData(nameof(UV), typeof(Vector2), VertexSpecialField.UV, 12, VertexFieldMarshalType.Float, 2),
+
+            }).ThrowIfError();
         }
 
         public VertexSlim(in Vector3 position, in Vector2 uv)

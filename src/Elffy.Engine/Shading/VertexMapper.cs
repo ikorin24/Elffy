@@ -35,35 +35,37 @@ namespace Elffy.Shading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void Map(Type vertexType, int index, VertexSpecialField specialField)
         {
-            var (offset, type, elementCount, vertexSize) = VertexMarshalHelper.GetLayout(vertexType, specialField);
-            MapPrivate(index, offset, type, elementCount, vertexSize);
+            var typeData = VertexMarshalHelper.GetVertexTypeData(vertexType);
+            var field = typeData.GetField(specialField);
+            MapPrivate(index, field, typeData.VertexSize);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void Map<TVertex>(int index, string vertexFieldName) where TVertex : unmanaged
         {
-            var vertexType = typeof(TVertex);
             Map(typeof(TVertex), index, vertexFieldName);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void Map(Type vertexType, int index, string vertexFieldName)
         {
-            var (offset, type, elementCount, vertexSize) = VertexMarshalHelper.GetLayout(vertexType, vertexFieldName);
-            MapPrivate(index, offset, type, elementCount, vertexSize);
+            var typeData = VertexMarshalHelper.GetVertexTypeData(vertexType);
+            var field = typeData.GetField(vertexFieldName);
+            MapPrivate(index, field, typeData.VertexSize);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void MapPrivate(int index, int offset, VertexFieldMarshalType type, int elementCount, int vertexSize)
+        private static void MapPrivate(int index, VertexFieldData field, int vertexSize)
         {
             GL.EnableVertexAttribArray(index);
 
-            if(type <= VertexFieldMarshalType.HalfFloat) {
+            var marshalType = field.MarshalType;
+            if(marshalType <= VertexFieldMarshalType.HalfFloat) {
                 // float or half
-                GL.VertexAttribPointer(index, elementCount, (VertexAttribPointerType)_attribTypes[(int)type], false, vertexSize, offset);
+                GL.VertexAttribPointer(index, field.MarshalCount, (VertexAttribPointerType)_attribTypes[(int)marshalType], false, vertexSize, field.ByteOffset);
             }
             else {
-                GL.VertexAttribIPointer(index, elementCount, (VertexAttribIntegerType)_attribTypes[(int)type], vertexSize, (IntPtr)offset);
+                GL.VertexAttribIPointer(index, field.MarshalCount, (VertexAttribIntegerType)_attribTypes[(int)marshalType], vertexSize, (IntPtr)field.ByteOffset);
             }
         }
     }

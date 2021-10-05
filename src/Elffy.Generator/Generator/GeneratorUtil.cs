@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Text;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace Elffy.Generator
 {
@@ -140,6 +141,26 @@ namespace Elffy.Generator
         public static StringBuilder AppendChoose(this StringBuilder sb, bool condition, string trueValue, string falseValue)
         {
             return condition ? sb.Append(trueValue) : sb.Append(falseValue);
+        }
+
+        public static StringBuilder AppendForeach<T>(this StringBuilder sb, IEnumerable<T> list, Func<T, string> func)
+        {
+            foreach(var item in list) {
+                sb.Append(func(item));
+            }
+            return sb;
+        }
+
+        public static StringBuilder AppendForeach<T>(this StringBuilder sb, IEnumerable<T> list, Func<T, string> func, string separator)
+        {
+            using var e = list.GetEnumerator();
+            if(e.MoveNext() == false) { return sb; }
+            while(true) {
+                sb.Append(func(e.Current));
+                if(e.MoveNext() == false) { break; }
+                sb.Append(separator);
+            }
+            return sb;
         }
     }
 }

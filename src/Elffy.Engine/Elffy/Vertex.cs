@@ -23,21 +23,13 @@ namespace Elffy
         [EditorBrowsable(EditorBrowsableState.Never)]
         internal static void RegisterVertexTypeDataOnModuleInitialized()
         {
-            VertexMarshalHelper.Register<Vertex>(
-                fieldName => fieldName switch
-                {
-                    nameof(Position) => (0, VertexFieldMarshalType.Float, 3),
-                    nameof(Normal) => (12, VertexFieldMarshalType.Float, 3),
-                    nameof(UV) => (24, VertexFieldMarshalType.Float, 2),
-                    _ => throw new ArgumentException(),
-                },
-                specialField => specialField switch
-                {
-                    VertexSpecialField.Position => nameof(Position),
-                    VertexSpecialField.Normal => nameof(Normal),
-                    VertexSpecialField.UV => nameof(UV),
-                    _ => "",
-                }).ThrowIfError();
+            VertexMarshalHelper.Register<Vertex>(new[]
+            {
+                new VertexFieldData(nameof(Position), typeof(Vector3), VertexSpecialField.Position, 0, VertexFieldMarshalType.Float, 3),
+                new VertexFieldData(nameof(Normal), typeof(Vector3), VertexSpecialField.Normal, 12, VertexFieldMarshalType.Float, 3),
+                new VertexFieldData(nameof(UV), typeof(Vector2), VertexSpecialField.UV, 24, VertexFieldMarshalType.Float, 2),
+
+            }).ThrowIfError();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

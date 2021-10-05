@@ -10,70 +10,39 @@ namespace Elffy
     public static class VertexMarshalHelper
     {
         private static readonly object _lockObj = new object();
-        private static readonly Hashtable _dic = new Hashtable();
+        private static readonly Hashtable _typeDic = new Hashtable();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static VertexMarshalRegisterResult Register<TVertex>(VertexLayoutDelegate layout, VertexSpecialFieldMapDelegate? specialFieldMap = null) where TVertex : unmanaged
+        public static VertexMarshalRegisterResult Register<TVertex>(VertexFieldData[] fields) where TVertex : unmanaged
         {
             var type = typeof(TVertex);
             var ex = CheckVertexLikeType(type);
             if(ex is not null) {
                 return VertexMarshalRegisterResult.Error(ex);
             }
-            if(layout is null) { ThrowNullArg(nameof(layout)); }
+            if(fields is null) { ThrowNullArg(nameof(fields)); }
             var vertexSize = Unsafe.SizeOf<TVertex>();
-            specialFieldMap ??= _ => "";
+            var typeData = new VertexTypeData(fields, vertexSize);
             lock(_lockObj) {
-                var data = new VertexTypeData(vertexSize, layout, specialFieldMap);
-                _dic.Add(type, data);
+                _typeDic.Add(type, typeData);
             }
             return VertexMarshalRegisterResult.Success;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryGetVertexTypeData(Type type, [MaybeNullWhen(false)] out VertexTypeData typeData)
+        public static bool TryGetVertexTypeData(Type vertexType, [MaybeNullWhen(false)] out VertexTypeData typeData)
         {
-            var data = _dic[type];
+            var data = _typeDic[vertexType];
             Debug.Assert(data is null or VertexTypeData);
             typeData = Unsafe.As<VertexTypeData>(data);
             return typeData != null;
         }
 
-        public static (int offset, VertexFieldMarshalType type, int elementCount, int vertexSize) GetLayout(Type vertexType, VertexSpecialField specialField)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static VertexTypeData GetVertexTypeData(Type vertexType)
         {
-            if(TryGetVertexTypeData(vertexType, out var data) == false) {
-                ThrowTypeNotRegistered(vertexType);
-            }
-            var specialFieldMap = data.SpecialFieldMap;
-            if(specialFieldMap is null) {
-                ThrowSpecialFieldsNotRegistered();
-            }
-            var fieldName = specialFieldMap.Invoke(specialField);
-            var (offset, fieldType, elementCount) = data.Layouter.Invoke(fieldName);
-            return (offset, fieldType, elementCount, data.VertexSize);
-        }
-
-        public static (int offset, VertexFieldMarshalType type, int elementCount, int vertexSize) GetLayout(Type vertexType, string fieldName)
-        {
-            if(TryGetVertexTypeData(vertexType, out var data) == false) {
-                ThrowTypeNotRegistered(vertexType);
-            }
-            var (offset, fieldType, elementCount) = data.Layouter.Invoke(fieldName);
-            return (offset, fieldType, elementCount, data.VertexSize);
-        }
-
-        public static bool HasSpecialField(Type vertexType, VertexSpecialField specialField)
-        {
-            if(TryGetVertexTypeData(vertexType, out var data) == false) {
-                ThrowTypeNotRegistered(vertexType);
-            }
-            try {
-                var fieldName = data.SpecialFieldMap.Invoke(specialField);
-                return !string.IsNullOrEmpty(fieldName);
-            }
-            catch {
-                return false;
-            }
+            if(TryGetVertexTypeData(vertexType, out var typeData) == false) { ThrowTypeNotRegistered(vertexType); }
+            return typeData;
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -92,10 +61,7 @@ namespace Elffy
         private static void ThrowNullArg(string message) => throw new ArgumentNullException(message);
 
         [DoesNotReturn]
-        private static void ThrowSpecialFieldsNotRegistered() => throw new InvalidOperationException("Special fields are not registerd.");
-
-        [DoesNotReturn]
-        private static void ThrowTypeNotRegistered(Type type) => throw new ArgumentException($"The type is not registered. (Type = {type.FullName})");
+        private static void ThrowTypeNotRegistered(Type vertexType) => throw new ArgumentException($"The type is not registered. (Type = {vertexType.FullName})");
     }
 
     public readonly struct VertexMarshalRegisterResult : IEquatable<VertexMarshalRegisterResult>
@@ -120,21 +86,4 @@ namespace Elffy
 
         public override int GetHashCode() => _exception?.GetHashCode() ?? 0;
     }
-
-    public sealed class VertexTypeData
-    {
-        public VertexLayoutDelegate Layouter { get; }
-        public VertexSpecialFieldMapDelegate SpecialFieldMap { get; }
-        public int VertexSize { get; }
-        public VertexTypeData(int vertexSize, VertexLayoutDelegate layouter, VertexSpecialFieldMapDelegate specialFieldMap)
-        {
-            VertexSize = vertexSize;
-            Layouter = layouter;
-            SpecialFieldMap = specialFieldMap;
-        }
-    }
-
-    public delegate (int offset, VertexFieldMarshalType type, int elementCount) VertexLayoutDelegate(string fieldName);
-
-    public delegate string VertexSpecialFieldMapDelegate(VertexSpecialField specialField);
 }
