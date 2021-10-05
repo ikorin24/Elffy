@@ -5,21 +5,20 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>9.0</LangVersion>
     <IncludeBuildOutput>false</IncludeBuildOutput>
-    <Configurations>Debug;Release</Configurations>
     <Version>0.0.0</Version>
     <Authors>ikorin24</Authors>
     <Description />
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <NoWarn>$(NoWarn);NU5128;1591</NoWarn>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <RootNamespace>Elffy.Generator</RootNamespace>
+    <RootNamespace>Elffy</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\ElffyResourceCompiler\CommandLineArgParser.cs" Link="ElffyResourceCompiler\CommandLineArgParser.cs" />
-    <Compile Include="..\ElffyResourceCompiler\Compiler.cs" Link="ElffyResourceCompiler\Compiler.cs" />
-    <Compile Include="..\ElffyResourceCompiler\LightBinaryReader.cs" Link="ElffyResourceCompiler\LightBinaryReader.cs" />
-    <Compile Include="..\ElffyResourceCompiler\LightBinaryWriter.cs" Link="ElffyResourceCompiler\LightBinaryWriter.cs" />
+    <Compile Include="..\Elffy.Generator\Generator\GeneratorUtil.cs" Link="Generator\GeneratorUtil.cs" />
+    <Compile Include="..\Elffy.Primitives\VertexFieldMarshalType.cs" Link="VertexFieldMarshalType.cs" />
+    <Compile Include="..\Elffy.Primitives\VertexSpecialField.cs" Link="VertexSpecialField.cs" />
+    <Compile Include="..\Elffy.Primitives\VertexLikeAttribute.cs" Link="VertexLikeAttribute.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -30,8 +29,6 @@
   <ItemGroup>
     <!-- Package the generator in the analyzer directory of the nuget package -->
     <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
-    <!-- Package the props file -->
-    <None Include="Elffy.Generator.props" Pack="true" PackagePath="build" Visible="false" />
   </ItemGroup>
 
 </Project>

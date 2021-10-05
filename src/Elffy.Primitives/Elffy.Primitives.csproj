@@ -20,4 +20,8 @@
     <DefineConstants>DEBUG</DefineConstants>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Elffy.Generator.Vertex\Elffy.Generator.Vertex.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
 </Project>

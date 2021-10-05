@@ -27,6 +27,7 @@
     <ProjectReference Include="..\Elffy.Imaging\Elffy.Imaging.csproj" />
     <ProjectReference Include="..\Elffy.Primitives\Elffy.Primitives.csproj" />
     <ProjectReference Include="..\Elffy.Resources\Elffy.Resources.csproj" />
+    <ProjectReference Include="..\Elffy.Generator.Vertex\Elffy.Generator.Vertex.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

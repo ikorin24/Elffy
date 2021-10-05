@@ -19,6 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Elffy.Engine\Elffy.Engine.csproj" />
     <ProjectReference Include="..\Elffy.Generator\Elffy.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Elffy.Generator.Vertex\Elffy.Generator.Vertex.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
   
   <Import Project="..\Elffy.Generator\Elffy.Generator.props" />
