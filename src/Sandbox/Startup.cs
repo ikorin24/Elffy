@@ -67,7 +67,7 @@ namespace Sandbox
                     CreateCameraMouse(new Vector3(0, 3, 0)),
                     Timing.Update.DelayTime(800));
 
-                await Timing.Update.Ensure();
+                await Timing.Update.NextOrNow();
 
                 var time = TimeSpan.FromMilliseconds(200);
                 await foreach(var frame in Timing.Update.Frames()) {
@@ -128,7 +128,7 @@ namespace Sandbox
             cube.StartCoroutine(static async (coroutine, cube) =>
             {
                 while(coroutine.CanRun) {
-                    await coroutine.Update.Switch();
+                    await coroutine.Update.Next();
                     cube.Rotate(Vector3.UnitY, 1f.ToRadian());
                 }
             }).Forget();

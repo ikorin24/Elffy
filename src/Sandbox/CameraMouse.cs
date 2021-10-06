@@ -60,7 +60,7 @@ namespace Sandbox
                 if(posChanged) {
                     camera.LookAt(target, cameraPos);
                 }
-                await timingPoint.Switch();
+                await timingPoint.Next();
             }
         }
 

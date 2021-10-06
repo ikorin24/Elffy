@@ -63,7 +63,7 @@ namespace Elffy
                 if(CoroutineState.CoroutineCanRun(_timingPoint.Screen, _frameObject) == false) {
                     return false;
                 }
-                await _timingPoint.Switch();
+                await _timingPoint.Next();
                 return true;
             }
         }

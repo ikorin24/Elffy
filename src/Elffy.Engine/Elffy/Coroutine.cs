@@ -314,7 +314,7 @@ namespace Elffy
                 if(fo.LifeState == LifeState.Dead) { return; }
             }
             try {
-                await coroutineState.TimingOf(timing).Switch();
+                await coroutineState.TimingOf(timing).Next();
                 if(typeof(TState) == typeof(DummyState)) {
                     var noStateCoroutine = SafeCast.As<Func<CoroutineState, UniTask>>(coroutine);
                     await noStateCoroutine(coroutineState);

@@ -76,7 +76,7 @@ namespace Elffy
             if(_cancellationToken.IsCancellationRequested) {
                 return false;
             }
-            await _timingPoint.Switch();
+            await _timingPoint.Next();
             return true;
         }
     }

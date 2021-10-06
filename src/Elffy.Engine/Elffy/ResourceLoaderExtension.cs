@@ -94,7 +94,7 @@ namespace Elffy
             var result = onTreadPool(state);
             if(timingPoint is not null) {
                 try {
-                    await timingPoint.Switch(cancellationToken);
+                    await timingPoint.Next(cancellationToken);
                 }
                 catch {
                     onCatch?.Invoke(result);

@@ -36,7 +36,7 @@ namespace Elffy.Serialization.Wavefront
                 using(var obj = ObjParser.Parse(stream)) {
                     objSemantics = LoadMesh(obj);
                 }
-                await screen.TimingPoints.Update.Switch(token);
+                await screen.TimingPoints.Update.Next(token);
                 load.Invoke(objSemantics.Vertices, objSemantics.Indices);
             }
             finally {

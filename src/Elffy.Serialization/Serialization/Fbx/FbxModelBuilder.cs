@@ -44,7 +44,7 @@ namespace Elffy.Serialization.Fbx
 
             // Parse fbx file
             using var fbx = FbxSemanticParser<SkinnedVertex>.ParseUnsafe(file.GetStream(), false, token);
-            await timingPoints.Update.Switch(token);        // ↓ main thread --------------------------------------
+            await timingPoints.Update.Next(token);        // ↓ main thread --------------------------------------
 
             await CreateTexture(file, fbx, model);
 

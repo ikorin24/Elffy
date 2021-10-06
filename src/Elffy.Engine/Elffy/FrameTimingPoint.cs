@@ -34,18 +34,18 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public UniTask<AsyncUnit> Switch(CancellationToken cancellationToken = default)
+        public UniTask<AsyncUnit> Next(CancellationToken cancellationToken = default)
         {
             return FrameTimingAwaitableTaskSource.CreateTask(this, cancellationToken);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public UniTask<AsyncUnit> Ensure(CancellationToken cancellationToken = default)
+        public UniTask<AsyncUnit> NextOrNow(CancellationToken cancellationToken = default)
         {
             if(CurrentTiming == _timing) {
                 return new UniTask<AsyncUnit>(AsyncUnit.Default);
             }
-            return Switch(cancellationToken);
+            return Next(cancellationToken);
         }
 
         /// <summary>Wait for the specified number of frames.</summary>
@@ -59,7 +59,7 @@ namespace Elffy
                 static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(frameCount));
             }
             for(int i = 0; i < frameCount; i++) {
-                await Switch(cancellationToken);
+                await Next(cancellationToken);
             }
             return AsyncUnit.Default;
         }
@@ -72,7 +72,7 @@ namespace Elffy
         {
             var start = _screen.Time;
             while(_screen.Time - start <= time) {
-                await Switch(cancellationToken);
+                await Next(cancellationToken);
             }
             return AsyncUnit.Default;
         }
@@ -95,7 +95,7 @@ namespace Elffy
         {
             var start = Engine.RunningRealTime;
             while(Engine.RunningRealTime - start <= time) {
-                await Switch(cancellationToken);
+                await Next(cancellationToken);
             }
             return AsyncUnit.Default;
         }
@@ -148,6 +148,7 @@ namespace Elffy
             _queue.Enqueue(new WorkItem(continuation));
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Post(Action<object?> continuation, object? state)
         {
             if(continuation is null) { return; }

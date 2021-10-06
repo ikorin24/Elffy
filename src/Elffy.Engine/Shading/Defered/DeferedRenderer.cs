@@ -113,12 +113,12 @@ namespace Elffy.Shading.Defered
             using var program = postProcess.Compile(screen);
 
             while(coroutine.CanRun) {
-                await coroutine.BeforeRendering.Switch();
+                await coroutine.BeforeRendering.Next();
                 var resultFBO = FBO.CurrentDrawBinded;
                 FBO.Bind(gBufferFBO, FBO.Target.FrameBuffer);
                 ElffyGL.Clear(ClearMask.ColorBufferBit | ClearMask.DepthBufferBit);
 
-                await coroutine.AfterRendering.Switch();
+                await coroutine.AfterRendering.Next();
                 FBO.Bind(resultFBO, FBO.Target.FrameBuffer);
                 postProcess.SetMatrices(camera.View);
                 program.Render(screen.FrameBufferSize);

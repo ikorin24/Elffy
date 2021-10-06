@@ -194,7 +194,7 @@ namespace Elffy.Serialization
 
                 //      ↑ thread pool
                 // ------------------------------
-                await screen.TimingPoints.Update.Ensure(obj.CancellationToken);
+                await screen.TimingPoints.Update.NextOrNow(obj.CancellationToken);
                 // ------------------------------
                 //      ↓ main thread
                 Debug.Assert(Engine.CurrentContext == screen);
@@ -213,7 +213,7 @@ namespace Elffy.Serialization
                                             TextureMipmapMode.Bilinear, TextureWrapMode.Repeat, TextureWrapMode.Repeat);
                     }
                     // Scadule the loading of textures to each frame.
-                    await screen.TimingPoints.Update.Switch(obj.CancellationToken);
+                    await screen.TimingPoints.Update.Next(obj.CancellationToken);
                 }
                 var partsComponent = new PmxModelParts(ref vertexCountArray, ref textureIndexArray, ref textures);
                 model.AddComponent(partsComponent);

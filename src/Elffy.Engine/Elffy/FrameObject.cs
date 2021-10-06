@@ -117,7 +117,7 @@ namespace Elffy
                 if(_state == LifeState.Activating) {
                     throw new InvalidOperationException($"Cannot call {nameof(Activate)} method when the life state is {LifeState.Activating}.");
                 }
-                await screen.TimingPoints.TimingOf(timing).Ensure();
+                await screen.TimingPoints.TimingOf(timing).NextOrNow();
                 return this;
             }
 
@@ -132,7 +132,7 @@ namespace Elffy
                 // If exceptions throw on activating, terminate the object if possible.
 
                 if(screen.RunningToken.IsCancellationRequested == false) {
-                    await screen.TimingPoints.Update.Ensure(CancellationToken.None);
+                    await screen.TimingPoints.Update.NextOrNow(CancellationToken.None);
                     try {
                         Terminate();
                     }
@@ -143,7 +143,7 @@ namespace Elffy
 
                 throw;  // Throw exceptions of activating.
             }
-            await screen.TimingPoints.TimingOf(timing).Ensure(cancellationToken);
+            await screen.TimingPoints.TimingOf(timing).NextOrNow(cancellationToken);
             _state = LifeState.Activated;
             layer.AddFrameObject(this);
             OnActivated();
