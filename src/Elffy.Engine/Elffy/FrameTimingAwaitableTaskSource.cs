@@ -2,13 +2,14 @@
 using System;
 using System.Threading;
 using System.Runtime.CompilerServices;
-using Cysharp.Threading.Tasks;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using Cysharp.Threading.Tasks;
+using Elffy.Features.Internal;
 
 namespace Elffy
 {
-    internal sealed partial class FrameTimingAwaitableTaskSource : IUniTaskSource<AsyncUnit>
+    internal sealed class FrameTimingAwaitableTaskSource : IUniTaskSource<AsyncUnit>, IChainInstancePooled<FrameTimingAwaitableTaskSource>
     {
         private static readonly object _completedTimingPoint = new object();
 
@@ -16,6 +17,15 @@ namespace Elffy
         private FrameTimingAwaitableTaskSource? _next;
         private CancellationToken _cancellationToken;
         private short _token;
+
+        public ref FrameTimingAwaitableTaskSource? NextPooling => ref _next;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private FrameTimingAwaitableTaskSource(FrameTimingPoint? timingPoint, short token, CancellationToken cancellationToken)
+        {
+            InitFields(timingPoint, token, cancellationToken);
+            Debug.Assert(_next is null);
+        }
 
         [DebuggerHidden]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -92,13 +102,45 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ValidateToken(short token)
         {
-            if(token != _token) {
-                throw new InvalidOperationException("Token version is not matched, can not await twice or get Status after await.");
-            }
+            if(token != _token) { ThrowInvalidToken(); }
         }
 
         [DebuggerHidden]
         [DoesNotReturn]
+        private static void ThrowInvalidToken() => throw new InvalidOperationException("Token version is not matched, can not await twice or get Status after await.");
+
+        [DebuggerHidden]
+        [DoesNotReturn]
         private static void ThrowForAwaitTwice() => throw new InvalidOperationException("Can not await twice");
+
+        internal static UniTask<AsyncUnit> CreateTask(FrameTimingPoint? timingPoint, CancellationToken cancellationToken)
+        {
+            if(ChainInstancePool<FrameTimingAwaitableTaskSource>.TryGetInstance(out var instance, out var token)) {
+                instance.InitFields(timingPoint, token, cancellationToken);
+                return new UniTask<AsyncUnit>(instance, token);
+            }
+            else {
+                return new UniTask<AsyncUnit>(new FrameTimingAwaitableTaskSource(timingPoint, token, cancellationToken), token);
+            }
+        }
+
+        private static void Return(FrameTimingAwaitableTaskSource source)
+        {
+            // Clear the fields which is reference or contain reference type.
+            Debug.Assert(source._next is null);
+            Debug.Assert(source._timingPoint is null);
+            source._cancellationToken = default;
+            ChainInstancePool<FrameTimingAwaitableTaskSource>.ReturnInstance(source);
+        }
+
+        [MemberNotNull(nameof(_timingPoint))]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void InitFields(FrameTimingPoint? timingPoint, short token, CancellationToken cancellationToken)
+        {
+            // All fields must be set except '_next'
+            _timingPoint = timingPoint ?? _completedTimingPoint;
+            _token = token;
+            _cancellationToken = cancellationToken;
+        }
     }
 }
