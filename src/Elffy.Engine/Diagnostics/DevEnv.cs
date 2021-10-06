@@ -1,82 +1,58 @@
 ﻿#nullable enable
-using Elffy.AssemblyServices;
-using System;
 using System.Diagnostics;
-using System.Reflection;
-using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Elffy.Diagnostics
 {
     public static class DevEnv
     {
         private const string NewLine = "\n";
-        private const string DebugSymbol = "DEBUG";
 
-        public static bool IsEnabled { get; private set; }
+        private static int _isEnabled;
+        public static bool IsEnabled => _isEnabled == 1;
 
-        [Conditional(DebugSymbol)]
         public static void Run()
         {
-            if(IsEnabled) { return; }
-            IsEnabled = true;
+            if(Interlocked.CompareExchange(ref _isEnabled, 1, 0) == 1) {
+                return;
+            }
 
             // Enable diagnostics
             GCTracker.Init();
         }
 
-        [Conditional(DebugSymbol)]
         public static void Stop()
         {
-            IsEnabled = false;
+            if(Interlocked.CompareExchange(ref _isEnabled, 0, 1) == 0) {
+                return;
+            }
 
             // Disable diagnostics
             GCTracker.End();
         }
 
-        [Conditional(DebugSymbol)]
         public static void WriteLine(object? value)
         {
+            if(IsEnabled == false) { return; }
             var msg = value?.ToString() + NewLine;
             WritePrivate(msg);
         }
 
-        [Conditional(DebugSymbol)]
         public static void WriteLine(string? value)
         {
+            if(IsEnabled == false) { return; }
             var msg = value + NewLine;
             WritePrivate(msg);
         }
 
-        [Conditional(DebugSymbol)]
-        public static void WriteLine(object? value, string? category)
-        {
-            WritePrivate(value?.ToString() + NewLine, category);
-        }
-
-        [Conditional(DebugSymbol)]
-        public static void WriteLine(string format, params object[] args)
-        {
-            var msg = string.Format(null, format, args) + NewLine;
-            WritePrivate(msg);
-        }
-
-        [Conditional(DebugSymbol)]
-        public static void WriteLine(string? value, string? category)
-        {
-            WritePrivate(value + NewLine, category);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void ForceWriteLine(string? value, string? category = null)
         {
-            if(IsEnabled) {
-                WritePrivate(value + NewLine);
-            }
+            WritePrivate(value + NewLine);
         }
 
-        private static void WritePrivate(string message, string? category = null)
+        private static void WritePrivate(string message)
         {
-            Debugger.Log(0, category, message);
+            Debugger.Log(0, null, message);
         }
     }
 }

@@ -27,7 +27,7 @@ namespace Sandbox
             });
 
             var cube = Resources.Sandbox["Dice.fbx"].CreateFbxModel();
-            var material = new PBRMaterial(new PBRMaterialData(new Color3(1, 0.8f, 0.2f), 0.99f, 0.1f, default));
+            var material = new PBRMaterialData(new Color3(1, 0.8f, 0.2f), 0.99f, 0.1f, default).ToMaterial();
             cube.AddComponent(material);
             cube.Shader = PBRDeferedShader.Instance;
             await UniTask.WhenAll(cube.Activate(), CreateCameraMouse(cube.Position));
