@@ -43,7 +43,7 @@ namespace Elffy
     [AttributeUsage(AttributeTargets.Struct, AllowMultiple = true, Inherited = false)]
     internal sealed class EnumLikeValueAttribute : Attribute
     {
-        public EnumLikeValueAttribute(string name, int value)
+        public EnumLikeValueAttribute(string name, int value, string description = """")
         {
         }
     }
@@ -88,7 +88,8 @@ namespace Elffy
                 .SelectMany(l => l.Attributes)
                 .Where(a => _regexELVA.IsMatch(a.Name.ToString()))
                 .Select(a => (Name: GeneratorUtil.GetAttrArgString(a, 0, semantic),
-                              Value: GeneratorUtil.GetAttrArgEnumNum(a, 1, semantic)));
+                              Value: GeneratorUtil.GetAttrArgEnumNum(a, 1, semantic),
+                              Description: a.ArgumentList!.Arguments.Count >= 3 ? GeneratorUtil.GetAttrArgEnumNum(a, 2, semantic) : ""));
 
             var sb = new StringBuilder();
             sb.Append(GeneratorSigniture).Append(
@@ -131,7 +132,8 @@ $@"        }};
 $@"        }};
 
 ").AppendForeach(nameValuePairs, nv =>
-$@"        public static {structName} {nv.Name} => new {structName}(({underlyingType}){nv.Value});
+$@"        /// <summary>{nv.Description}</summary>
+        public static {structName} {nv.Name} => new {structName}(({underlyingType}){nv.Value});
 ").Append($@"
 
         private {structName}({underlyingType} value) => _value = value;

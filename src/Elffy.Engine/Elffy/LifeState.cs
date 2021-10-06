@@ -1,17 +1,16 @@
 ﻿#nullable enable
-
 using System.Runtime.CompilerServices;
 
 namespace Elffy
 {
     /// <summary>Life states of <see cref="FrameObject"/></summary>
     [GenerateEnumLikeStruct(typeof(byte))]
-    [EnumLikeValue("New", 0)]
+    [EnumLikeValue("New", 0, "Initial state of <see cref=\"" + nameof(FrameObject) + "\"/>. Not managed by the engine.")]
     [EnumLikeValue("Activating", 1)]
-    [EnumLikeValue("Activated", 2)]
-    [EnumLikeValue("Alive", 3)]
-    [EnumLikeValue("Terminated", 4)]
-    [EnumLikeValue("Dead", 5)]
+    [EnumLikeValue("Activated", 2, "State that <see cref=\"" + nameof(FrameObject) + "\"/> is in the activation queue. (It is not running yet, it gets alive in the next frame.)")]
+    [EnumLikeValue("Alive", 3, "State that <see cref=\"" + nameof(FrameObject) + "\"/> is running.")]
+    [EnumLikeValue("Terminated", 4, "State that <see cref=\"" + nameof(FrameObject) + "\"/> is in the termination queue. (It is still running, it gets dead in the next frame.)")]
+    [EnumLikeValue("Dead", 5, "State that <see cref=\"" + nameof(FrameObject) + "\"/> is dead. Not managed by the engine.")]
     public partial struct LifeState
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
