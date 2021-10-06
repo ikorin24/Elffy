@@ -2,6 +2,7 @@
 using System.Linq;
 using Xunit;
 using Elffy;
+using System;
 
 namespace UnitTest
 {
@@ -39,7 +40,9 @@ namespace UnitTest
                 var specifiedTimings = allTimings.Where(t => t != FrameTiming.NotSpecified).ToArray();
                 Assert.True(specifiedTimings.All(t => t.IsSpecified()));
                 Assert.True(FrameTiming.NotSpecified.IsSpecified() == false);
-                Assert.True(allTimings.All(t => t.IsValid()));
+
+                Assert.True(FrameTiming.AllValuesSpan().Contains(default));
+                Assert.True(CurrentFrameTiming.AllValuesSpan().Contains(default));
             }
         }
     }
