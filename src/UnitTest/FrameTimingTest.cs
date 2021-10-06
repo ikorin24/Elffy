@@ -13,7 +13,6 @@ namespace UnitTest
             {
                 var sameTimingPairs = new (FrameTiming FrameTiming, CurrentFrameTiming CurrentTiming)[]
                 {
-                    (FrameTiming.NotSpecified, CurrentFrameTiming.OutOfFrameLoop),
                     (FrameTiming.EarlyUpdate, CurrentFrameTiming.EarlyUpdate),
                     (FrameTiming.Update, CurrentFrameTiming.Update),
                     (FrameTiming.LateUpdate, CurrentFrameTiming.LateUpdate),
@@ -36,7 +35,7 @@ namespace UnitTest
             }
 
             {
-                var allTimings = FrameTiming.AllValuesEnumerable();
+                var allTimings = FrameTiming.AllValues();
                 var specifiedTimings = allTimings.Where(t => t != FrameTiming.NotSpecified).ToArray();
                 Assert.True(specifiedTimings.All(t => t.IsSpecified()));
                 Assert.True(FrameTiming.NotSpecified.IsSpecified() == false);

@@ -119,28 +119,11 @@ namespace Elffy
             // nop
         }
 
-        private static (string structNamespace, string structName) GetAttrTargetStructName(AttributeSyntax attr, SemanticModel attrSemantic)
-        {
-            var parent = attr.Parent;
-            while(true) {
-                if(parent == null) {
-                    throw new Exception();
-                }
-                if(parent.Kind() == SyntaxKind.StructDeclaration) {
-                    var structDeclaration = attrSemantic.GetDeclaredSymbol(parent) ?? throw new Exception();
-                    var structNamespace = structDeclaration.ContainingNamespace.ToString();
-                    var structName = structDeclaration.Name;
-                    return (structNamespace, structName);
-                }
-                parent = parent.Parent;
-            }
-        }
-
         private static VertexFieldInfo[] ParseArgs(AttributeSyntax attr, SemanticModel attrSemantic, out string vertexNamespace, out string vertexName)
         {
             if(attr.ArgumentList is null) { throw new Exception("Can not be null argument list."); }
             const int N = 6;
-            (vertexNamespace, vertexName) = GetAttrTargetStructName(attr, attrSemantic);
+            (vertexNamespace, vertexName) = GeneratorUtil.GetAttrTargetStructName(attr, attrSemantic);
             var fieldCount = attr.ArgumentList.Arguments.Count / N;
             var fields = new VertexFieldInfo[fieldCount];
             for(int i = 0; i < fields.Length; i++) {

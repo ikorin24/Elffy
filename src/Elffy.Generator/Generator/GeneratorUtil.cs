@@ -5,6 +5,7 @@ using System;
 using System.Text;
 using System.Linq;
 using System.Collections.Generic;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace Elffy.Generator
 {
@@ -20,6 +21,30 @@ namespace Elffy.Generator
 
 ";
         }
+
+        public static StructDeclarationSyntax GetAttrTargetStructSyntax(AttributeSyntax attr)
+        {
+            var parent = attr.Parent;
+            while(true) {
+                if(parent == null) {
+                    throw new Exception();
+                }
+                if(parent.Kind() == SyntaxKind.StructDeclaration && parent is StructDeclarationSyntax ret) {
+                    return ret;
+                }
+                parent = parent.Parent;
+            }
+        }
+
+        public static (string structNamespace, string structName) GetAttrTargetStructName(AttributeSyntax attr, SemanticModel attrSemantic)
+        {
+            var s = GetAttrTargetStructSyntax(attr);
+            var structDeclaration = attrSemantic.GetDeclaredSymbol(s) ?? throw new Exception();
+            var structNamespace = structDeclaration.ContainingNamespace.ToString();
+            var structName = structDeclaration.Name;
+            return (structNamespace, structName);
+        }
+
         public static string GetAttrArgTypeFullName(AttributeSyntax attr, int argNum, Compilation compilation)
         {
             return GetAttrArgTypeFullName(attr, argNum, compilation.GetSemanticModel(attr.SyntaxTree));
@@ -83,8 +108,12 @@ namespace Elffy.Generator
 
         public static string GetAttrArgEnumNum(AttributeSyntax attr, int argNum, Compilation compilation)
         {
-            return compilation.GetSemanticModel(attr.SyntaxTree)
-                              .GetConstantValue(attr.ArgumentList!.Arguments[argNum].Expression).Value!.ToString();
+            return GetAttrArgEnumNum(attr, argNum, compilation.GetSemanticModel(attr.SyntaxTree));
+        }
+
+        public static string GetAttrArgEnumNum(AttributeSyntax attr, int argNum, SemanticModel semanticModel)
+        {
+            return semanticModel.GetConstantValue(attr.ArgumentList!.Arguments[argNum].Expression).Value!.ToString();
         }
 
         public static bool IsAwaitableMethod(MethodDeclarationSyntax method, Compilation compilation)
