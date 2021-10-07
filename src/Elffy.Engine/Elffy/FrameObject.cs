@@ -87,19 +87,10 @@ namespace Elffy
 
         /// <summary>Activate the object in the specified layer.</summary>
         /// <param name="layer">layer where the object is activated</param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        public UniTask<FrameObject> Activate(Layer layer, CancellationToken cancellationToken = default)
-        {
-            return Activate(layer, FrameTiming.Update, cancellationToken);
-        }
-
-        /// <summary>Activate the object in the specified layer.</summary>
-        /// <param name="layer">layer where the object is activated</param>
         /// <param name="timing"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async UniTask<FrameObject> Activate(Layer layer, FrameTiming timing, CancellationToken cancellationToken = default)
+        internal async UniTask<FrameObject> ActivateFrameObject(Layer layer, FrameTiming timing, CancellationToken cancellationToken = default)
         {
             if(layer is null) { ThrowNullArg(); }
             var screen = GetHostScreen(layer);
@@ -115,9 +106,9 @@ namespace Elffy
 
             if(_state.IsAfter(LifeState.New)) {
                 if(_state == LifeState.Activating) {
-                    throw new InvalidOperationException($"Cannot call {nameof(Activate)} method when the life state is {LifeState.Activating}.");
+                    throw new InvalidOperationException($"Cannot call Activate method when the life state is {LifeState.Activating}.");
                 }
-                await screen.TimingPoints.TimingOf(timing).NextOrNow();
+                await screen.TimingPoints.TimingOf(timing).NextOrNow(cancellationToken);
                 return this;
             }
 
@@ -239,6 +230,25 @@ namespace Elffy
         private static IHostScreen? GetHostScreen(ILayer? layer)
         {
             return layer?.OwnerCollection?.OwnerRenderingArea.OwnerScreen;
+        }
+    }
+
+    public static class FrameObjectActivationExtension
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static async UniTask<T> Activate<T>(this T source, Layer layer, CancellationToken cancellationToken = default)
+            where T : FrameObject
+        {
+            await source.ActivateFrameObject(layer, FrameTiming.Update, cancellationToken);
+            return source;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static async UniTask<T> Activate<T>(this T source, Layer layer, FrameTiming timing, CancellationToken cancellationToken = default)
+            where T : FrameObject
+        {
+            await source.ActivateFrameObject(layer, timing, cancellationToken);
+            return source;
         }
     }
 }
