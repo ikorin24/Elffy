@@ -2,33 +2,44 @@
 using Elffy.Features.Internal;
 using Elffy.InputSystem;
 using System.Diagnostics;
+using OpenTK.Graphics.OpenGL4;
 
 namespace Elffy.UI
 {
     internal sealed class UILayer : ILayer
     {
         private readonly FrameObjectStore _store;
+        private readonly LayerTimingPointList _timingPoints;
+        private readonly LayerCollection _owner;
+        private readonly RootPanel _uiRoot;
+        private bool _isVisible;
+        private bool _isHitTestEnabled;
 
         /// <inheritdoc/>
         public int ObjectCount => _store.ObjectCount;
 
         /// <inheritdoc/>
-        public bool IsVisible { get; set; } = true;
+        public bool IsVisible { get => _isVisible; set => _isVisible = value; }
 
         /// <inheritdoc/>
-        public LayerCollection OwnerCollection { get; }
+        public LayerCollection OwnerCollection => _owner;
 
         /// <summary>Get root panel of UI</summary>
-        public RootPanel UIRoot { get; }
+        public RootPanel UIRoot => _uiRoot;
+
+        public LayerTimingPointList TimingPoints => _timingPoints;
 
         /// <summary>Get or set whether hit test is enabled.</summary>
-        public bool IsHitTestEnabled { get; set; } = true;
+        public bool IsHitTestEnabled { get => _isHitTestEnabled; set => _isHitTestEnabled = value; }
 
         public UILayer(LayerCollection owner)
         {
+            _isVisible = true;
+            _isHitTestEnabled = true;
             _store = FrameObjectStore.New(64);
-            OwnerCollection = owner;
-            UIRoot = new RootPanel(this);
+            _timingPoints = new LayerTimingPointList(this);
+            _owner = owner;
+            _uiRoot = new RootPanel(this);
         }
 
         /// <inheritdoc/>
@@ -61,19 +72,22 @@ namespace Elffy.UI
 
         public void LateUpdate() => _store.LateUpdate();
 
-        /// <summary>Render objects with specified projection matrix</summary>
-        /// <param name="projection">projection matrix</param>
-        public unsafe void Render(in Matrix4 projection)
+        public void Render(in LayerRenderInfo renderInfo)
         {
             var view = new Matrix4(1, 0, 0, 0,
                                    0, -1, 0, UIRoot.Height,
                                    0, 0, 1, 0,
                                    0, 0, 0, 1);
             var identity = Matrix4.Identity;
+            var timingPoints = _timingPoints;
+            GL.Disable(EnableCap.DepthTest);
+            timingPoints.BeforeRendering.DoQueuedEvents();
             foreach(var renderable in _store.Renderables) {
                 if(renderable.IsRoot == false) { continue; }
-                renderable.Render(identity, view, projection);
+                renderable.Render(identity, view, renderInfo.UIProjection);
             }
+            GL.Enable(EnableCap.DepthTest);
+            timingPoints.AfterRendering.DoQueuedEvents();
         }
 
         /// <summary>Do hit test</summary>
@@ -105,6 +119,7 @@ namespace Elffy.UI
 
             static void RecursiveNotifyHitTestResult(Control control, Control? hitControl)
             {
+                // [NOTE]
                 // Span で回しているので途中でコントロールを add/remove してはいけない。
                 // そのため、途中でイベントの実行等のユーザーコードを差し込める実装にしてはいけない。
                 control.NotifyHitTestResult(ReferenceEquals(control, hitControl));
@@ -115,6 +130,7 @@ namespace Elffy.UI
 
             static void RecursiveNotifyHitTestFalse(Control control)
             {
+                // [NOTE]
                 // Span で回しているので途中でコントロールを add/remove してはいけない。
                 // そのため、途中でイベントの実行等のユーザーコードを差し込める実装にしてはいけない。
                 control.NotifyHitTestResult(false);

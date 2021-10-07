@@ -14,16 +14,16 @@ namespace Elffy.Features.Internal
 
         public int Count => _list.Count;
 
-        private LazyApplyingList(int dummyArg)
+        private LazyApplyingList(List<T> list, List<T> addedList, List<T> removedList)
         {
-            _list = new List<T>();
-            _addedList = new List<T>();
-            _removedList = new List<T>();
+            _list = list;
+            _addedList = addedList;
+            _removedList = removedList;
         }
 
         public static LazyApplyingList<T> New()
         {
-            return new LazyApplyingList<T>(0);
+            return new LazyApplyingList<T>(new List<T>(), new List<T>(), new List<T>());
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -39,6 +39,14 @@ namespace Elffy.Features.Internal
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Clear()
+        {
+            _list.Clear();
+            _addedList.Clear();
+            _removedList.Clear();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ApplyAdd()
         {
             if(_addedList.Count == 0) { return; }
@@ -49,6 +57,24 @@ namespace Elffy.Features.Internal
             {
                 self._list.AddRange(self._addedList);
                 self._addedList.Clear();
+            }
+        }
+
+        public void ApplyRemove(Action<T> onRemoved)
+        {
+            if(_removedList.Count == 0) { return; }
+
+            Apply(this, onRemoved);
+
+            // uncommon path
+            static void Apply(in LazyApplyingList<T> self, Action<T> onRemoved)
+            {
+                foreach(var item in self._removedList.AsSpan()) {
+                    if(self._list.Remove(item)) {
+                        onRemoved.Invoke(item);
+                    }
+                }
+                self._removedList.Clear();
             }
         }
 

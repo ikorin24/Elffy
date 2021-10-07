@@ -6,6 +6,8 @@ namespace Elffy.Features.Internal
     {
         LayerCollection? OwnerCollection { get; }
 
+        LayerTimingPointList TimingPoints { get; }
+
         /// <summary>Get or set visiblity of the layer</summary>
         bool IsVisible { get; set; }
 
@@ -22,5 +24,31 @@ namespace Elffy.Features.Internal
 
         /// <summary>Clear all <see cref="FrameObject"/>s in the lists</summary>
         void ClearFrameObject();
+
+        void ApplyAdd();
+
+        void ApplyRemove();
+
+        void EarlyUpdate();
+
+        void Update();
+
+        void LateUpdate();
+
+        void Render(in LayerRenderInfo renderInfo);
+    }
+
+    internal readonly struct LayerRenderInfo
+    {
+        public readonly Matrix4 View;
+        public readonly Matrix4 Projection;
+        public readonly Matrix4 UIProjection;
+
+        public LayerRenderInfo(in Matrix4 view, in Matrix4 projection, in Matrix4 uiProjection)
+        {
+            View = view;
+            Projection = projection;
+            UIProjection = uiProjection;
+        }
     }
 }

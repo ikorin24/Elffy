@@ -82,8 +82,8 @@ namespace Elffy.Features.Internal
             // Initialize viewport and so on.
             SetFrameBufferSize(OwnerScreen.FrameBufferSize);
 
-            var layerCollection = Layers;
-            layerCollection.UILayer.Initialize();
+            var layers = Layers;
+            layers.UILayer.Initialize();
             try {
                 Initialized?.Invoke(OwnerScreen);
             }
@@ -91,10 +91,7 @@ namespace Elffy.Features.Internal
                 // Don't throw. (Ignore exceptions in user code)
             }
 
-            foreach(var layer in layerCollection.AsReadOnlySpan()) {
-                layer.ApplyAdd();
-            }
-            layerCollection.UILayer.ApplyAdd();
+            layers.ApplyAdd();
         }
 
         /// <summary>Update and render the next frame</summary>
@@ -113,17 +110,14 @@ namespace Elffy.Features.Internal
             // ------------------------------------------------------------
             // Frame initializing
             _currentTiming = CurrentFrameTiming.FrameInitializing;
-            var uiLayer = Layers.UILayer;
-            var layers = Layers.AsReadOnlySpan();
+            var layers = Layers;
+            var uiLayer = layers.UILayer;
 
             Mouse.InitFrame();
             Keyboard.InitFrame();
 
-            // Apply FrameObject added at previous frame.
-            foreach(var layer in layers) {
-                layer.ApplyAdd();
-            }
-            uiLayer.ApplyAdd();
+            // Apply layers and FrameObjects added at previous frame.
+            layers.ApplyAdd();
 
             // UI hit test
             uiLayer.HitTest(Mouse);
@@ -131,30 +125,27 @@ namespace Elffy.Features.Internal
             // ------------------------------------------------------------
             // Early update
             _currentTiming = CurrentFrameTiming.EarlyUpdate;
-            uiLayer.UIEvent();
+            uiLayer.UIEvent();      // TODO: add UIEvent timing
             timingPoints.EarlyUpdate.DoQueuedEvents();
-            foreach(var layer in layers) {
+            foreach(var layer in layers.AsSpan()) {
                 layer.EarlyUpdate();
             }
-            uiLayer.EarlyUpdate();
 
             // ------------------------------------------------------------
             // Update
             _currentTiming = CurrentFrameTiming.Update;
             timingPoints.Update.DoQueuedEvents();
-            foreach(var layer in layers) {
+            foreach(var layer in layers.AsSpan()) {
                 layer.Update();
             }
-            uiLayer.Update();
 
             // ------------------------------------------------------------
             // Late update
             _currentTiming = CurrentFrameTiming.LateUpdate;
             timingPoints.LateUpdate.DoQueuedEvents();
-            foreach(var layer in layers) {
+            foreach(var layer in layers.AsSpan()) {
                 layer.LateUpdate();
             }
-            uiLayer.LateUpdate();
 
             // ------------------------------------------------------------
             // Before rendering
@@ -166,19 +157,12 @@ namespace Elffy.Features.Internal
             // ------------------------------------------------------------
             // Rendering
             _currentTiming = CurrentFrameTiming.Rendering;
-            foreach(var layer in layers) {
+            var renderInfo = new LayerRenderInfo(Camera.View, Camera.Projection, _uiProjection);
+            foreach(var layer in layers.AsSpan()) {
                 if(layer.IsVisible) {
-                    var layerTimingPoints = layer.TimingPoints;
-                    layerTimingPoints.BeforeRendering.DoQueuedEvents();
-                    layer.Render(Camera.View, Camera.Projection);
-                    layerTimingPoints.AfterRendering.DoQueuedEvents();
+                    layer.Render(renderInfo);
                 }
             }
-            GL.Disable(EnableCap.DepthTest);
-            if(uiLayer.IsVisible) {
-                uiLayer.Render(_uiProjection);
-            }
-            GL.Enable(EnableCap.DepthTest);
 
             // ------------------------------------------------------------
             // After rendering
@@ -189,11 +173,8 @@ namespace Elffy.Features.Internal
             // Frame finalizing
             _currentTiming = CurrentFrameTiming.FrameFinalizing;
 
-            // Apply FrameObject removed at previous frame.
-            foreach(var layer in layers) {
-                layer.ApplyRemove();
-            }
-            uiLayer.ApplyRemove();
+            // Apply layers and FrameObjects removed at previous frame.
+            layers.ApplyRemove();
 
             // ------------------------------------------------------------
             // Out of frame loop
@@ -229,7 +210,7 @@ namespace Elffy.Features.Internal
 
             // Clear objects in all layers
             var layers = Layers;
-            foreach(var layer in layers.AsReadOnlySpan()) {
+            foreach(var layer in layers.AsSpan()) {
                 layer.ClearFrameObject();
             }
             layers.Clear();

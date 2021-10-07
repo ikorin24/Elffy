@@ -16,8 +16,6 @@ namespace Elffy
         private LayerCollection? _owner;
         private bool _isVisible;
 
-        // I must set the owner when the layer is added to the LayerCollection. Set null when removed.
-
         /// <summary>The owner of the layer</summary>
         internal LayerCollection? Owner => _owner;
         LayerCollection? ILayer.OwnerCollection => _owner;
@@ -54,41 +52,34 @@ namespace Elffy
             _owner = owner;
             var layerRemoved = currentOwner is not null && owner is null;
             if(layerRemoved) {
-                LayerRemoved();
+                _timingPoints.AbortAllEvents();
             }
         }
 
         internal void AddFrameObject(FrameObject frameObject) => _store.AddFrameObject(frameObject);
+        internal void RemoveFrameObject(FrameObject frameObject) => _store.RemoveFrameObject(frameObject);
+        internal void ApplyAdd() => _store.ApplyAdd();
+        internal void ApplyRemove() => _store.ApplyRemove();
+        internal void EarlyUpdate() => _store.EarlyUpdate();
+        internal void Update() => _store.Update();
+        internal void LateUpdate() => _store.LateUpdate();
+        internal void ClearFrameObject() => _store.ClearFrameObject();
+        internal void Render(in LayerRenderInfo renderInfo)
+        {
+            var timingPoints = _timingPoints;
+            timingPoints.BeforeRendering.DoQueuedEvents();
+            _store.Render(renderInfo.View, renderInfo.Projection);
+            timingPoints.AfterRendering.DoQueuedEvents();
+        }
 
         void ILayer.AddFrameObject(FrameObject frameObject) => AddFrameObject(frameObject);
-
-        internal void RemoveFrameObject(FrameObject frameObject) => _store.RemoveFrameObject(frameObject);
-
         void ILayer.RemoveFrameObject(FrameObject frameObject) => RemoveFrameObject(frameObject);
-
-        internal void ApplyRemove() => _store.ApplyRemove();
-
-        internal void ApplyAdd() => _store.ApplyAdd();
-
-        internal void EarlyUpdate() => _store.EarlyUpdate();
-
-        internal void Update() => _store.Update();
-
-        internal void LateUpdate() => _store.LateUpdate();
-
-        internal void ClearFrameObject() => _store.ClearFrameObject();
+        void ILayer.ApplyAdd() => ApplyAdd();
+        void ILayer.ApplyRemove() => ApplyRemove();
+        void ILayer.EarlyUpdate() => EarlyUpdate();
+        void ILayer.Update() => Update();
+        void ILayer.LateUpdate() => LateUpdate();
         void ILayer.ClearFrameObject() => ClearFrameObject();
-
-        internal void Render(in Matrix4 view, in Matrix4 projection)
-        {
-            _timingPoints.BeforeRendering.DoQueuedEvents();
-            _store.Render(view, projection);
-            _timingPoints.AfterRendering.DoQueuedEvents();
-        }
-
-        private void LayerRemoved()
-        {
-            _timingPoints.AbortAllEvents();
-        }
+        void ILayer.Render(in LayerRenderInfo renderInfo) => Render(renderInfo);
     }
 }

@@ -1,11 +1,8 @@
 ﻿#nullable enable
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using Elffy.Effective;
 using Elffy.Features.Internal;
 using Elffy.UI;
 
@@ -14,33 +11,33 @@ namespace Elffy
     /// <summary>List class of <see cref="Layer"/></summary>
     [DebuggerTypeProxy(typeof(LayerCollectionDebuggerTypeProxy))]
     [DebuggerDisplay("LayerCollection (Count = {Count})")]
-    public sealed class LayerCollection : IReadOnlyList<Layer>, IReadOnlyCollection<Layer>
+    public sealed class LayerCollection
     {
-        private const string WorldLayerName = "World";
-        private readonly List<Layer> _list = new List<Layer>();
+        private const string DefaultLayerName = "Default";
 
-        internal RenderingArea OwnerRenderingArea { get; }
+        private readonly LazyApplyingList<ILayer> _list;
+        private readonly RenderingArea _owner;
+        private readonly UILayer _uiLayer;
+        private readonly Layer _defaultLayer;
+
+        internal RenderingArea OwnerRenderingArea => _owner;
 
         /// <summary>Get UI layer instance.</summary>
         /// <remarks>DO NOT make it public. This is not in the list, don't share the instance as public.</remarks>
-        internal UILayer UILayer { get; }
+        internal UILayer UILayer => _uiLayer;
 
         /// <summary>Get world layer instance. (This instance is in the list.)</summary>
-        public Layer WorldLayer { get; }
+        public Layer DefaultLayer => _defaultLayer;
 
         /// <summary>Get layer count</summary>
         public int Count => _list.Count;
 
-        /// <summary>Get <see cref="Layer"/> of specified index</summary>
-        /// <param name="index">index to get a layer</param>
-        /// <returns><see cref="Layer"/> instance</returns>
-        public Layer this[int index] => _list[index];   // no index bounds checking (List<T> checks it.)
-
         internal LayerCollection(RenderingArea owner)
         {
-            OwnerRenderingArea = owner;
-            UILayer = new UILayer(this);
-            WorldLayer = new Layer(WorldLayerName);
+            _list = LazyApplyingList<ILayer>.New();
+            _owner = owner;
+            _uiLayer = new UILayer(this);
+            _defaultLayer = new Layer(DefaultLayerName);
             AddDefaltLayers();
         }
 
@@ -49,23 +46,17 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(Layer layer)
         {
-            if(layer is null) {
-                ThrowNullArg();
-                static void ThrowNullArg() => throw new ArgumentNullException(nameof(layer));
-            }
-            if(layer!.Owner is null == false) {
-                ThrowAlreadyOwned();
-                static void ThrowAlreadyOwned() => throw new InvalidOperationException($"Layer is already owned by {nameof(LayerCollection)}.");
-            }
+            if(layer is null) { ThrowNullArg(nameof(layer)); }
+            if(layer.Owner is null == false) { ThrowAlreadyOwned($"Layer is already owned by {nameof(LayerCollection)}."); }
             layer.OnOwnerChangedCallback(this);
             _list.Add(layer);
         }
 
         /// <summary>Clear all layers. (Default layer is not cleared.)</summary>
-        public void Clear()
+        internal void Clear()
         {
             foreach(var layer in _list.AsSpan()) {
-                layer.OnOwnerChangedCallback(null);
+                (layer as Layer)?.OnOwnerChangedCallback(null);
             }
             _list.Clear();
             AddDefaltLayers();
@@ -74,53 +65,54 @@ namespace Elffy
         /// <summary>Remove <see cref="Layer"/></summary>
         /// <param name="layer">layer</param>
         /// <returns>true if success, false when not contains</returns>
-        public bool Remove(Layer layer)
+        public void Remove(Layer layer)
         {
-            if(layer is null) {
-                ThrowNullArg();
-                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(layer));
-            }
-            var removed = _list.Remove(layer);
-            if(removed) {
-                layer.OnOwnerChangedCallback(null);
-            }
-            return removed;
+            if(layer is null) { ThrowNullArg(nameof(layer)); }
+            _list.Remove(layer);
         }
 
-        internal ReadOnlySpan<Layer> AsReadOnlySpan() => _list.AsReadOnlySpan();
+        internal void ApplyAdd()
+        {
+            _list.ApplyAdd();
 
-        public List<Layer>.Enumerator GetEnumerator() => _list.GetEnumerator();
+            // TODO: Sort layers
 
-        IEnumerator<Layer> IEnumerable<Layer>.GetEnumerator() => _list.GetEnumerator();
+            foreach(var layer in AsSpan()) {
+                layer.ApplyAdd();
+            }
+        }
 
-        IEnumerator IEnumerable.GetEnumerator() => _list.GetEnumerator();
+        internal void ApplyRemove()
+        {
+            foreach(var layer in AsSpan()) {
+                layer.ApplyRemove();
+            }
+            _list.ApplyRemove(removedLayer => (removedLayer as Layer)?.OnOwnerChangedCallback(null));
+        }
 
+        internal ReadOnlySpan<ILayer> AsSpan() => _list.AsSpan();
 
         private void AddDefaltLayers()
         {
-            Add(WorldLayer);
+            Add(_defaultLayer);
+            _list.Add(_uiLayer);
         }
 
+        [DoesNotReturn]
+        private static void ThrowNullArg(string message) => throw new ArgumentNullException(message);
 
-        #region class LayerCollectionDebuggerTypeProxy
+        [DoesNotReturn]
+        private static void ThrowAlreadyOwned(string message) => throw new InvalidOperationException(message);
+
         internal class LayerCollectionDebuggerTypeProxy
         {
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
             private readonly LayerCollection _entity;
 
             [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-            public Layer[] Layers
-            {
-                get
-                {
-                    var layers = new Layer[_entity.Count];
-                    _entity._list.CopyTo(layers, 0);
-                    return layers;
-                }
-            }
+            public ILayer[] Layers => _entity._list.AsSpan().ToArray();
 
             public LayerCollectionDebuggerTypeProxy(LayerCollection entity) => _entity = entity;
         }
-        #endregion class LayerCollectionDebuggerTypeProxy<T>
     }
 }
