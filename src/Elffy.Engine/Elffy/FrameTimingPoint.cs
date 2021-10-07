@@ -5,13 +5,14 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using Elffy.Features.Internal;
 
 namespace Elffy
 {
-    public sealed class FrameTimingPoint
+    public sealed class FrameTimingPoint : ITimingPoint
     {
         private readonly IHostScreen _screen;
-        private readonly ConcurrentQueue<WorkItem> _queue;
+        private readonly AsyncEventQueueCore _eventQueue;
         private readonly FrameTiming _timing;
 
         private CurrentFrameTiming CurrentTiming => _screen.CurrentTiming;
@@ -23,7 +24,7 @@ namespace Elffy
         {
             Debug.Assert(timing.IsSpecified());
             _screen = screen;
-            _queue = new ConcurrentQueue<WorkItem>();
+            _eventQueue = AsyncEventQueueCore.New();
             _timing = timing;
         }
 
@@ -110,87 +111,16 @@ namespace Elffy
             return DelayRealTime(TimeSpan.FromMilliseconds(millisecond), cancellationToken);
         }
 
-        internal void AbortAllEvents()
-        {
-            _queue.Clear();
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void AbortAllEvents() => _eventQueue.AbortAllEvents();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void DoQueuedEvents()
-        {
-            var queue = _queue;
-            var count = queue.Count;
-            if(count > 0) {
-                Do(queue, count);
-
-                [DebuggerHidden]
-                static void Do(ConcurrentQueue<WorkItem> queue, int count)
-                {
-                    for(int i = 0; i < count; i++) {
-                        var exists = queue.TryDequeue(out var action);
-                        Debug.Assert(exists);
-                        try {
-                            action.Invoke();
-                        }
-                        catch {
-                            // Don't throw
-                        }
-                    }
-                }
-            }
-            return;
-        }
+        internal void DoQueuedEvents() => _eventQueue.DoQueuedEvents();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Post(Action continuation)
-        {
-            if(continuation is null) { return; }
-            _queue.Enqueue(new WorkItem(continuation));
-        }
+        public void Post(Action continuation) => _eventQueue.Post(continuation);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Post(Action<object?> continuation, object? state)
-        {
-            if(continuation is null) { return; }
-            _queue.Enqueue(new WorkItem(continuation, state));
-        }
-
-        private readonly struct WorkItem
-        {
-            private readonly Action<object?> _action;
-            private readonly object? _state;
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public WorkItem(Action<object?> action, object? state)
-            {
-                _action = action;
-                _state = state;
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public WorkItem(Action action)
-            {
-                _action = Lambda.Instance.Action;
-                _state = action;
-            }
-
-            [DebuggerHidden]
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Invoke() => _action.Invoke(_state);
-
-            private sealed class Lambda
-            {
-                public static readonly Lambda Instance = new Lambda();
-                public readonly Action<object?> Action;
-                private Lambda() => Action = new Action<object?>(M);
-
-                [DebuggerHidden]
-                private void M(object? state)
-                {
-                    Debug.Assert(state is not null);
-                    SafeCast.As<Action>(state).Invoke();
-                }
-            }
-        }
+        public void Post(Action<object?> continuation, object? state) => _eventQueue.Post(continuation, state);
     }
 }

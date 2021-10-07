@@ -11,15 +11,16 @@ namespace Elffy
     public class Layer : ILayer
     {
         private readonly FrameObjectStore _store;
-        private LayerCollection? _owner;
+        private readonly LayerTimingPointList _timingPoints;
         private readonly string _name;
+        private LayerCollection? _owner;
         private bool _isVisible;
 
         // I must set the owner when the layer is added to the LayerCollection. Set null when removed.
 
         /// <summary>The owner of the layer</summary>
-        internal LayerCollection? Owner { get => _owner; set => _owner = value; }
-        LayerCollection? ILayer.OwnerCollection => Owner;
+        internal LayerCollection? Owner => _owner;
+        LayerCollection? ILayer.OwnerCollection => _owner;
 
         /// <summary>Get name of the layer</summary>
         public string Name => _name;
@@ -27,29 +28,35 @@ namespace Elffy
         /// <inheritdoc/>
         public bool IsVisible { get => _isVisible; set => _isVisible = value; }
 
-        /// <summary>Create new <see cref="Layer"/> with specified name.</summary>
-        /// <param name="name">name of the layer</param>
-        public Layer(string name) : this(name, 32)
-        {
-        }
+        public LayerTimingPointList TimingPoints => _timingPoints;
 
         /// <summary>Create new <see cref="Layer"/> with specified name.</summary>
         /// <param name="name">name of the layer</param>
-        /// <param name="capacityHint">capacity hint</param>
-        public Layer(string name, int capacityHint)
+        public Layer(string name)
         {
             if(name is null) {
                 ThrowNullArg();
                 [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(name));
             }
-            capacityHint = Math.Max(0, capacityHint);
+            const int Capacity = 32;
             _name = name;
             _isVisible = true;
-            _store = FrameObjectStore.New(capacityHint);
+            _timingPoints = new LayerTimingPointList(this);
+            _store = FrameObjectStore.New(Capacity);
         }
 
         /// <summary>Get count of alive objects in the current frame.</summary>
         public int ObjectCount => _store.ObjectCount;
+
+        internal void OnOwnerChangedCallback(LayerCollection? owner)
+        {
+            var currentOwner = _owner;
+            _owner = owner;
+            var layerRemoved = currentOwner is not null && owner is null;
+            if(layerRemoved) {
+                LayerRemoved();
+            }
+        }
 
         internal void AddFrameObject(FrameObject frameObject) => _store.AddFrameObject(frameObject);
 
@@ -72,6 +79,16 @@ namespace Elffy
         internal void ClearFrameObject() => _store.ClearFrameObject();
         void ILayer.ClearFrameObject() => ClearFrameObject();
 
-        internal void Render(in Matrix4 view, in Matrix4 projection) => _store.Render(view, projection);
+        internal void Render(in Matrix4 view, in Matrix4 projection)
+        {
+            _timingPoints.BeforeRendering.DoQueuedEvents();
+            _store.Render(view, projection);
+            _timingPoints.AfterRendering.DoQueuedEvents();
+        }
+
+        private void LayerRemoved()
+        {
+            _timingPoints.AbortAllEvents();
+        }
     }
 }

@@ -162,9 +162,16 @@ namespace Elffy.Features.Internal
             FBO.Bind(FBO.Empty, FBO.Target.FrameBuffer);
             ElffyGL.Clear(ClearMask.ColorBufferBit | ClearMask.DepthBufferBit);
             timingPoints.BeforeRendering.DoQueuedEvents();
+
+            // ------------------------------------------------------------
+            // Rendering
+            _currentTiming = CurrentFrameTiming.Rendering;
             foreach(var layer in layers) {
                 if(layer.IsVisible) {
+                    var layerTimingPoints = layer.TimingPoints;
+                    layerTimingPoints.BeforeRendering.DoQueuedEvents();
                     layer.Render(Camera.View, Camera.Projection);
+                    layerTimingPoints.AfterRendering.DoQueuedEvents();
                 }
             }
             GL.Disable(EnableCap.DepthTest);

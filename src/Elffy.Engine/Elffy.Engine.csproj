@@ -14,6 +14,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>1591;</NoWarn>
+    <RootNamespace>Elffy</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Elffy.Effective;
 using Elffy.Features.Internal;
@@ -39,7 +40,7 @@ namespace Elffy
         {
             OwnerRenderingArea = owner;
             UILayer = new UILayer(this);
-            WorldLayer = new Layer(WorldLayerName, 256);
+            WorldLayer = new Layer(WorldLayerName);
             AddDefaltLayers();
         }
 
@@ -56,7 +57,7 @@ namespace Elffy
                 ThrowAlreadyOwned();
                 static void ThrowAlreadyOwned() => throw new InvalidOperationException($"Layer is already owned by {nameof(LayerCollection)}.");
             }
-            layer.Owner = this;
+            layer.OnOwnerChangedCallback(this);
             _list.Add(layer);
         }
 
@@ -64,7 +65,7 @@ namespace Elffy
         public void Clear()
         {
             foreach(var layer in _list.AsSpan()) {
-                layer.Owner = null;
+                layer.OnOwnerChangedCallback(null);
             }
             _list.Clear();
             AddDefaltLayers();
@@ -77,11 +78,11 @@ namespace Elffy
         {
             if(layer is null) {
                 ThrowNullArg();
-                static void ThrowNullArg() => throw new ArgumentNullException(nameof(layer));
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(layer));
             }
-            var removed = _list.Remove(layer!);
+            var removed = _list.Remove(layer);
             if(removed) {
-                layer!.Owner = null;
+                layer.OnOwnerChangedCallback(null);
             }
             return removed;
         }

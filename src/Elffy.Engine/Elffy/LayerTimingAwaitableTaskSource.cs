@@ -8,15 +8,14 @@ using Elffy.Features.Internal;
 
 namespace Elffy
 {
-    internal sealed class FrameTimingAwaitableTaskSource : IUniTaskSource<AsyncUnit>, IChainInstancePooled<FrameTimingAwaitableTaskSource>
+    internal sealed class LayerTimingAwaitableTaskSource : IUniTaskSource<AsyncUnit>, IChainInstancePooled<LayerTimingAwaitableTaskSource>
     {
-        private FrameTimingAwaitableTaskSource? _next;
-        private TimingAwaitableCore<FrameTimingPoint> _awaitableCore;
+        private LayerTimingAwaitableTaskSource? _next;
+        private TimingAwaitableCore<LayerTimingPoint> _awaitableCore;
 
-        public ref FrameTimingAwaitableTaskSource? NextPooling => ref _next;
+        public ref LayerTimingAwaitableTaskSource? NextPooling => ref _next;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private FrameTimingAwaitableTaskSource(FrameTimingPoint? timingPoint, short token, CancellationToken cancellationToken)
+        private LayerTimingAwaitableTaskSource(LayerTimingPoint? timingPoint, short token, CancellationToken cancellationToken)
         {
             _awaitableCore = new(timingPoint, token, cancellationToken);
         }
@@ -45,21 +44,21 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public UniTaskStatus UnsafeGetStatus() => _awaitableCore.UnsafeGetStatus();
 
-        internal static UniTask<AsyncUnit> CreateTask(FrameTimingPoint? timingPoint, CancellationToken cancellationToken)
+        internal static UniTask<AsyncUnit> CreateTask(LayerTimingPoint timingPoint, CancellationToken cancellationToken)
         {
-            if(ChainInstancePool<FrameTimingAwaitableTaskSource>.TryGetInstance(out var taskSource, out var token)) {
+            if(ChainInstancePool<LayerTimingAwaitableTaskSource>.TryGetInstance(out var taskSource, out var token)) {
                 taskSource._awaitableCore = new(timingPoint, token, cancellationToken);
             }
             else {
-                taskSource = new FrameTimingAwaitableTaskSource(timingPoint, token, cancellationToken);
+                taskSource = new LayerTimingAwaitableTaskSource(timingPoint, token, cancellationToken);
             }
             return new UniTask<AsyncUnit>(taskSource, token);
         }
 
-        private static void Return(FrameTimingAwaitableTaskSource source)
+        private static void Return(LayerTimingAwaitableTaskSource source)
         {
             source._awaitableCore = default;
-            ChainInstancePool<FrameTimingAwaitableTaskSource>.ReturnInstance(source);
+            ChainInstancePool<LayerTimingAwaitableTaskSource>.ReturnInstance(source);
         }
     }
 }
