@@ -1,9 +1,11 @@
 ﻿#nullable enable
+using Cysharp.Threading.Tasks;
 using Elffy.Features;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Elffy.UI
 {
@@ -27,7 +29,7 @@ namespace Elffy.UI
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(Control item)
+        public void Add(Control item, CancellationToken cancellationToken = default)
         {
             if(item is null) {
                 ThrowNullArg();
@@ -35,7 +37,7 @@ namespace Elffy.UI
             }
             if(item.LifeState != LifeState.New) { ThrowNotNewControl(); }
             _owner.ChildrenCore.Add(item);
-            item.AddedToListCallback(_owner);
+            item.AddedToListCallback(_owner, cancellationToken);
         }
 
         public unsafe void Clear()

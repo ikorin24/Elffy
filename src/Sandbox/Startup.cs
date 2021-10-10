@@ -8,6 +8,7 @@ using Elffy.Shading.Defered;
 using Elffy.Shading.Forward;
 using Elffy.Components;
 using Elffy.Effective;
+using Elffy.UI;
 
 namespace Sandbox
 {
@@ -16,7 +17,12 @@ namespace Sandbox
         [GameEntryPoint]
         public static async UniTask Start2()
         {
-            var deferedRenderer = DeferedRenderer.Attach(Game.Screen, 1, context =>
+            var screen = Game.Screen;
+            var layer = new Layer("Default").Activate(screen);
+            var timings = screen.TimingPoints;
+            await timings.FrameInitializing.Next();
+
+            var deferedRenderer = DeferedRenderer.Attach(screen, 1, context =>
             {
                 var interval = 100;
                 for(int i = 0; i < context.LightCount; i++) {
@@ -30,7 +36,7 @@ namespace Sandbox
             var material = new PBRMaterialData(new Color3(1, 0.8f, 0.2f), 0.99f, 0.1f, default).ToMaterial();
             cube.AddComponent(material);
             cube.Shader = PBRDeferedShader.Instance;
-            await UniTask.WhenAll(cube.Activate(), CreateCameraMouse(cube.Position));
+            await UniTask.WhenAll(cube.Activate(layer), CreateCameraMouse(layer, cube.Position));
 
             //Game.Screen.StartCoroutine(deferedRenderer, static async (coroutine, deferedRenderer) =>
             //{
@@ -56,56 +62,62 @@ namespace Sandbox
         //[GameEntryPoint]
         public static async UniTask Start()
         {
-            GameUI.Root.Background = Color4.Black;
+            var screen = Game.Screen;
+            var timings = screen.TimingPoints;
+            var layer = new Layer("Default").Activate(screen);
+            var uiLayer = new UILayer("UI").Activate(screen);
+            await timings.FrameInitializing.Next();
+            var uiRoot = uiLayer.UIRoot;
+            uiRoot.Background = Color4.Black;
             try {
                 await UniTask.WhenAll(
-                    CreateModel1(),
-                    CreateModel2(),
-                    CreateBox(),
-                    CreateFloor(),
-                    CreateSky(),
-                    CreateCameraMouse(new Vector3(0, 3, 0)),
-                    Timing.Update.DelayTime(800));
+                    CreateModel1(layer),
+                    CreateModel2(layer),
+                    CreateBox(layer),
+                    CreateFloor(layer),
+                    CreateSky(layer),
+                    CreateCameraMouse(layer, new Vector3(0, 3, 0)),
+                    timings.Update.DelayTime(800));
 
-                await Timing.Update.NextOrNow();
+                await timings.Update.NextOrNow();
 
                 var time = TimeSpan.FromMilliseconds(200);
-                await foreach(var frame in Timing.Update.Frames()) {
+                await foreach(var frame in timings.Update.Frames()) {
                     if(frame.Time >= time) {
                         break;
                     }
-                    GameUI.Root.Background.A = 1f - (float)frame.Time.Ticks / time.Ticks;
+                    uiRoot.Background.A = 1f - (float)frame.Time.Ticks / time.Ticks;
                 }
             }
             finally {
-                GameUI.Root.Background = Color4.Transparent;
+                uiRoot.Background = Color4.Transparent;
             }
         }
 
-        private static UniTask<Model3D> CreateModel1()
+        private static UniTask<Model3D> CreateModel1(Layer layer)
         {
             var dice = Resources.Sandbox["Dice.fbx"].CreateFbxModel();
             dice.Position.X = 3f;
             dice.Position.Y = 1.5f;
-            return dice.Activate();
+            return dice.Activate(layer);
         }
 
-        private static UniTask<Model3D> CreateModel2()
+        private static UniTask<Model3D> CreateModel2(Layer layer)
         {
             var model = Resources.Sandbox["Alicia/Alicia_solid.pmx"].CreatePmxModel();
             model.Scale = new Vector3(0.3f);
-            return model.Activate();
+            return model.Activate(layer);
         }
 
-        private static UniTask<SkySphere> CreateSky()
+        private static UniTask<SkySphere> CreateSky(Layer layer)
         {
             var sky = new SkySphere();
             sky.Shader = SkyShader.Instance;
             sky.Scale = new Vector3(500f);
-            return sky.Activate();
+            return sky.Activate(layer);
         }
 
-        private static async UniTask<Plain> CreateFloor()
+        private static async UniTask<Plain> CreateFloor(Layer layer)
         {
             var plain = new Plain();
             plain.Scale = new Vector3(10f);
@@ -115,16 +127,16 @@ namespace Sandbox
             var texture = await Resources.Sandbox["floor.png"].LoadTextureAsync(config);
             plain.AddComponent(texture);
             plain.Rotation = Quaternion.FromAxisAngle(Vector3.UnitX, -90.ToRadian());
-            return await plain.Activate();
+            return await plain.Activate(layer);
         }
 
-        private static async UniTask<Cube> CreateBox()
+        private static async UniTask<Cube> CreateBox(Layer layer)
         {
             var cube = new Cube();
             cube.Position = new(-3, 0.5f, 0);
             cube.Shader = PhongShader.Instance;
             cube.AddComponent(await Resources.Sandbox["box.png"].LoadTextureAsync());
-            await cube.Activate();
+            await cube.Activate(layer);
             cube.StartCoroutine(static async (coroutine, cube) =>
             {
                 while(coroutine.CanRun) {
@@ -135,10 +147,10 @@ namespace Sandbox
             return cube;
         }
 
-        private static UniTask<FrameObject> CreateCameraMouse(Vector3 target)
+        private static UniTask<FrameObject> CreateCameraMouse(Layer layer, Vector3 target)
         {
             var initialCameraPos = target + new Vector3(0, 1.5f, 20);
-            return CameraMouse.Activate(target, initialCameraPos);
+            return CameraMouse.Activate(layer, target, initialCameraPos);
         }
     }
 }

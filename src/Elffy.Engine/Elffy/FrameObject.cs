@@ -15,7 +15,7 @@ namespace Elffy
     public abstract class FrameObject
     {
         private IHostScreen? _hostScreen;
-        private ILayer? _layer;
+        private Layer? _layer;
         private LifeState _state = LifeState.New;
         private bool _isFrozen;
 
@@ -46,17 +46,13 @@ namespace Elffy
         /// <summary>Get or set whether the <see cref="FrameObject"/> skips early updating, updating, and late updating. (Skips if true)</summary>
         public bool IsFrozen { get => _isFrozen; set => _isFrozen = value; }
 
-        /// <summary>Get the layer where the <see cref="FrameObject"/> is.</summary>
-        private protected ILayer? InternalLayer => _layer;
+        ///// <summary>Get the layer where the <see cref="FrameObject"/> is.</summary>
+        //private protected ILayer? InternalLayer => _layer;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetLayer([MaybeNullWhen(false)] out Layer layer)
         {
-            // [NOTE]
-            // DON'T call this method if the object on the internal layer. (e.g. UIRenderable.)
-            // Use 'InternalLayer' property instead.
-
-            layer = SafeCast.As<Layer>(_layer);
+            layer = _layer;
             return layer is not null;
         }
 
@@ -93,8 +89,7 @@ namespace Elffy
         internal async UniTask<FrameObject> ActivateFrameObject(Layer layer, FrameTiming timing, CancellationToken cancellationToken = default)
         {
             if(layer is null) { ThrowNullArg(); }
-            var screen = GetHostScreen(layer);
-            if(screen is null) {
+            if(layer.TryGetHostScreen(out var screen) == false) {
                 ThrowInvalidLayer();
             }
             if(Engine.CurrentContext != screen) {
@@ -145,15 +140,15 @@ namespace Elffy
             [DoesNotReturn] static void ThrowContextMismatch() => throw new InvalidOperationException("Invalid current context.");
         }
 
-        internal void ActivateOnInternalLayer(ILayer layer)
+        internal void ActivateOnInternalLayer(UILayer layer)
         {
-            if(layer is null) { ThrowNullArg(); }
             if(_state != LifeState.New) { return; }
-            Debug.Assert(layer is Layer == false, $"'{typeof(Layer)}' type can't pass here. Where are you from ?");
-            Debug.Assert(layer.OwnerCollection is null == false);
+            Debug.Assert(layer is not null);
+            Debug.Assert(layer.Owner is not null);
             Debug.Assert(GetType() == typeof(UIRenderable));
 
-            var screen = GetHostScreen(layer);
+            layer.TryGetHostScreen(out var screen);
+
             Debug.Assert(screen is not null);
             Debug.Assert(Engine.CurrentContext == screen);
 
@@ -168,8 +163,6 @@ namespace Elffy
             layer.AddFrameObject(this);
 
             OnActivated();
-
-            [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(layer));
         }
 
         /// <summary>Terminate the object and remove it from the engine.</summary>
@@ -224,12 +217,6 @@ namespace Elffy
             _layer = null;
             _hostScreen = null;
             OnDead();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static IHostScreen? GetHostScreen(ILayer? layer)
-        {
-            return layer?.OwnerCollection?.OwnerRenderingArea.OwnerScreen;
         }
     }
 

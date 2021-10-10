@@ -8,6 +8,8 @@ using Elffy.Components;
 using Elffy.Shading;
 using Elffy.Components.Implementation;
 using Elffy.Features.Internal;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 
 namespace Elffy.UI
 {
@@ -232,14 +234,15 @@ namespace Elffy.UI
             _isMouseOver = isHit;
         }
 
-        internal void AddedToListCallback(Control parent)
+        internal void AddedToListCallback(Control parent, CancellationToken cancellationToken)
         {
             Debug.Assert(parent is not null);
             Debug.Assert(parent.Root is not null);
             Debug.Assert(LifeState == LifeState.New);
             _parent = parent;
-            _root = parent.Root;
-            Renderable.ActivateOnInternalLayer(_root.UILayer);
+            var root = parent.Root;
+            _root = root;
+            Renderable.ActivateOnInternalLayer(root.UILayer);
         }
 
         internal void RemovedFromListCallback()

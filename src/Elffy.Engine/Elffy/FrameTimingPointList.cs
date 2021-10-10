@@ -9,6 +9,7 @@ namespace Elffy
     public sealed class FrameTimingPointList
     {
         private readonly IHostScreen _screen;
+        private readonly FrameTimingPoint _frameInitializingPoint;
         private readonly FrameTimingPoint _earlyUpdatePoint;
         private readonly FrameTimingPoint _updatePoint;
         private readonly FrameTimingPoint _lateUpdatePoint;
@@ -17,6 +18,7 @@ namespace Elffy
 
         internal IHostScreen Screen => _screen;
 
+        public FrameTimingPoint FrameInitializing => _frameInitializingPoint;
         public FrameTimingPoint EarlyUpdate => _earlyUpdatePoint;
         public FrameTimingPoint Update => _updatePoint;
         public FrameTimingPoint LateUpdate => _lateUpdatePoint;
@@ -26,11 +28,12 @@ namespace Elffy
         internal FrameTimingPointList(IHostScreen screen)
         {
             _screen = screen;
-            _earlyUpdatePoint = new FrameTimingPoint(_screen, FrameTiming.EarlyUpdate);
-            _updatePoint = new FrameTimingPoint(_screen, FrameTiming.Update);
-            _lateUpdatePoint = new FrameTimingPoint(_screen, FrameTiming.LateUpdate);
-            _beforeRenderingPoint = new FrameTimingPoint(_screen, FrameTiming.BeforeRendering);
-            _afterRenderingPoint = new FrameTimingPoint(_screen, FrameTiming.AfterRendering);
+            _frameInitializingPoint = new FrameTimingPoint(screen, FrameTiming.FrameInitializing);
+            _earlyUpdatePoint = new FrameTimingPoint(screen, FrameTiming.EarlyUpdate);
+            _updatePoint = new FrameTimingPoint(screen, FrameTiming.Update);
+            _lateUpdatePoint = new FrameTimingPoint(screen, FrameTiming.LateUpdate);
+            _beforeRenderingPoint = new FrameTimingPoint(screen, FrameTiming.BeforeRendering);
+            _afterRenderingPoint = new FrameTimingPoint(screen, FrameTiming.AfterRendering);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -45,7 +48,11 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetTimingOf(FrameTiming timing, [MaybeNullWhen(false)] out FrameTimingPoint timingPoint)
         {
-            if(timing == FrameTiming.EarlyUpdate) {
+            if(timing == FrameTiming.FrameInitializing) {
+                timingPoint = _frameInitializingPoint;
+                return true;
+            }
+            else if(timing == FrameTiming.EarlyUpdate) {
                 timingPoint = _earlyUpdatePoint;
                 return true;
             }
@@ -75,6 +82,7 @@ namespace Elffy
         /// <summary>Abort all suspended tasks by clearing the queue.</summary>
         internal void AbortAllEvents()
         {
+            _frameInitializingPoint.AbortAllEvents();
             _earlyUpdatePoint.AbortAllEvents();
             _updatePoint.AbortAllEvents();
             _lateUpdatePoint.AbortAllEvents();

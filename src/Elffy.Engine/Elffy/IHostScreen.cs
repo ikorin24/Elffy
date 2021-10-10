@@ -22,9 +22,6 @@ namespace Elffy
         /// <summary>Get camera</summary>
         Camera Camera { get; }
 
-        /// <summary>Get UI root</summary>
-        RootPanel UIRoot { get; }
-
         /// <summary>Get asynchronous timing points</summary>
         public FrameTimingPointList TimingPoints { get; }
 

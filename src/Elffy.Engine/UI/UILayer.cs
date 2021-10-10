@@ -1,98 +1,88 @@
 ﻿#nullable enable
+using Cysharp.Threading.Tasks;
 using Elffy.Features.Internal;
 using Elffy.InputSystem;
-using System.Diagnostics;
 using OpenTK.Graphics.OpenGL4;
+using System;
 
 namespace Elffy.UI
 {
-    internal sealed class UILayer : ILayer
+    public sealed class UILayer : Layer
     {
-        private readonly FrameObjectStore _store;
-        private readonly LayerTimingPointList _timingPoints;
-        private readonly LayerCollection _owner;
+        const float UI_FAR = 1f;
+        const float UI_NEAR = -1f;
+        private static readonly Func<CoroutineState, (IHostScreen, UILayer), UniTask> UIEventCoroutineFunc = UIEventCoroutine;
+
         private readonly RootPanel _uiRoot;
-        private bool _isVisible;
+        private Matrix4 _uiProjection;
         private bool _isHitTestEnabled;
-
-        /// <inheritdoc/>
-        public int ObjectCount => _store.ObjectCount;
-
-        /// <inheritdoc/>
-        public bool IsVisible { get => _isVisible; set => _isVisible = value; }
-
-        /// <inheritdoc/>
-        public LayerCollection OwnerCollection => _owner;
 
         /// <summary>Get root panel of UI</summary>
         public RootPanel UIRoot => _uiRoot;
 
-        public LayerTimingPointList TimingPoints => _timingPoints;
-
         /// <summary>Get or set whether hit test is enabled.</summary>
         public bool IsHitTestEnabled { get => _isHitTestEnabled; set => _isHitTestEnabled = value; }
 
-        public UILayer(LayerCollection owner)
+        public UILayer(string name, int sortNumber = 100) : base(name, sortNumber)
         {
-            _isVisible = true;
             _isHitTestEnabled = true;
-            _store = FrameObjectStore.New(64);
-            _timingPoints = new LayerTimingPointList(this);
-            _owner = owner;
             _uiRoot = new RootPanel(this);
         }
 
-        /// <inheritdoc/>
-        public void AddFrameObject(FrameObject frameObject)
+        protected override void OnLayerActivated()
         {
-            Debug.Assert(frameObject is UIRenderable);
-            _store.AddFrameObject(frameObject);
+            base.OnLayerActivated();
+            var uiRoot = _uiRoot;
+            uiRoot.Initialize();
+
+            if(uiRoot.TryGetHostScreen(out var screen) == false) {
+                throw new InvalidOperationException();
+            }
+            Coroutine.StartOrReserve(screen, (screen, this), UIEventCoroutineFunc, FrameTiming.FrameInitializing);
         }
 
-        /// <inheritdoc/>
-        public void RemoveFrameObject(FrameObject frameObject) => _store.RemoveFrameObject(frameObject);
-
-        /// <inheritdoc/>
-        public void ClearFrameObject() => _store.ClearFrameObject();
-
-        public void ApplyRemove() => _store.ApplyRemove();
-
-        public void ApplyAdd() => _store.ApplyAdd();
-
-        public void UIEvent()
+        private static async UniTask UIEventCoroutine(CoroutineState coroutine, (IHostScreen screen, UILayer layer) state)
         {
-            foreach(var frameObject in _store.List) {
+            var (screen, layer) = state;
+            while(coroutine.CanRun && layer.Owner is not null) {
+                layer.HitTest(screen.Mouse);
+                layer.UIEvent();
+                await screen.TimingPoints.FrameInitializing.Next();
+            }
+        }
+
+        protected override void SelectMatrix(IHostScreen screen, out Matrix4 view, out Matrix4 projection)
+        {
+            view = new Matrix4(1, 0, 0, 0,
+                               0, -1, 0, UIRoot.Height,
+                               0, 0, 1, 0,
+                               0, 0, 0, 1);
+            projection = _uiProjection;
+        }
+
+        protected override void RenderOverride(IHostScreen screen)
+        {
+            GL.Disable(EnableCap.DepthTest);
+            base.RenderOverride(screen);
+            GL.Enable(EnableCap.DepthTest);
+        }
+
+        protected override void OnSizeChanged(IHostScreen screen)
+        {
+            base.OnSizeChanged(screen);
+            var frameBufferSize = screen.FrameBufferSize;
+            Matrix4.OrthographicProjection(0, frameBufferSize.X, 0, frameBufferSize.Y, UI_NEAR, UI_FAR, out _uiProjection);
+            _uiRoot.SetSize((Vector2)frameBufferSize);
+        }
+
+        private void UIEvent()
+        {
+            foreach(var frameObject in Objects) {
                 SafeCast.As<UIRenderable>(frameObject).DoUIEvent();
             }
         }
 
-        public void EarlyUpdate() => _store.EarlyUpdate();
-
-        public void Update() => _store.Update();
-
-        public void LateUpdate() => _store.LateUpdate();
-
-        public void Render(in LayerRenderInfo renderInfo)
-        {
-            var view = new Matrix4(1, 0, 0, 0,
-                                   0, -1, 0, UIRoot.Height,
-                                   0, 0, 1, 0,
-                                   0, 0, 0, 1);
-            var identity = Matrix4.Identity;
-            var timingPoints = _timingPoints;
-            GL.Disable(EnableCap.DepthTest);
-            timingPoints.BeforeRendering.DoQueuedEvents();
-            foreach(var renderable in _store.Renderables) {
-                if(renderable.IsRoot == false) { continue; }
-                renderable.Render(identity, view, renderInfo.UIProjection);
-            }
-            GL.Enable(EnableCap.DepthTest);
-            timingPoints.AfterRendering.DoQueuedEvents();
-        }
-
-        /// <summary>Do hit test</summary>
-        /// <param name="mouse">mouse object</param>
-        public void HitTest(Mouse mouse)
+        private void HitTest(Mouse mouse)
         {
             if(IsHitTestEnabled == false) { return; }
             var uiRoot = UIRoot;
@@ -138,11 +128,6 @@ namespace Elffy.UI
                     RecursiveNotifyHitTestFalse(child);
                 }
             }
-        }
-
-        public void Initialize()
-        {
-            UIRoot.Initialize();
         }
     }
 }

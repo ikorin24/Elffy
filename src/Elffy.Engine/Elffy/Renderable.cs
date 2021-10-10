@@ -125,6 +125,11 @@ namespace Elffy
             }
         }
 
+        protected unsafe void LoadMesh<TVertex>(TVertex* vertices, int vertexCount, int* indices, int indexCount) where TVertex : unmanaged
+        {
+            LoadMesh(new ReadOnlySpan<TVertex>(vertices, vertexCount), new ReadOnlySpan<int>(indices, indexCount));
+        }
+
         /// <summary>Load mesh data</summary>
         /// <typeparam name="TVertex">type of vertex</typeparam>
         /// <param name="vertices">vertex data to load</param>

@@ -9,12 +9,12 @@ namespace Elffy
 {
     public sealed class LayerTimingPoint : ITimingPoint
     {
-        private readonly ILayer _layer;
+        private readonly Layer _layer;
         private readonly AsyncEventQueueCore _eventQueue;
 
-        internal ILayer Layer => _layer;
+        internal Layer Layer => _layer;
 
-        internal LayerTimingPoint(ILayer layer)
+        internal LayerTimingPoint(Layer layer)
         {
             _layer = layer;
             _eventQueue = AsyncEventQueueCore.New();

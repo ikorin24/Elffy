@@ -31,7 +31,7 @@ namespace Elffy
         public static int ScreenCount => _screens.Count;
 
         /// <summary>Get <see cref="IHostScreen"/> running on the engine.</summary>
-        public static ReadOnlySpan<IHostScreen> Screens => _screens.AsSpan();
+        public static ReadOnlySpan<IHostScreen> Screens => _screens.AsReadOnlySpan();
 
         /// <summary>Get current context screen. It may be null even if in the main thread.</summary>
         /// <remarks>Always returns null if not main thread.</remarks>
@@ -86,7 +86,7 @@ namespace Elffy
             _isHandling = true;
             try {
                 _screens.ApplyAdd();
-                foreach(var s in _screens.AsSpan()) {
+                foreach(var s in _screens.AsReadOnlySpan()) {
                     s.HandleOnce();
                 }
                 _screens.ApplyRemove();

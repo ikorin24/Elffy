@@ -2,6 +2,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.ComponentModel;
+using System.Diagnostics;
 
 namespace Elffy.UI
 {
@@ -27,10 +28,7 @@ namespace Elffy.UI
 
         internal RootPanel(UILayer uiLayer)
         {
-            if(uiLayer is null) {
-                ThrowNullArg();
-                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(uiLayer));
-            }
+            Debug.Assert(uiLayer is not null);
             _uiLayer = uiLayer;
         }
 

@@ -212,7 +212,6 @@ namespace Elffy
         {
             Timing.Initialize(screen);
             Game.Initialize(screen);
-            GameUI.Initialize(screen.UIRoot);
             try {
                 ").AppendIf(awaiting, "await ").Append(entryMethodStr).Append(@";
             }

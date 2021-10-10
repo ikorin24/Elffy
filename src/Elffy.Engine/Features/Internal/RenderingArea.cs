@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using Elffy.InputSystem;
 using Elffy.Graphics.OpenGL;
+using Elffy.Threading;
 using OpenTK.Graphics.OpenGL4;
 using System;
 using System.Diagnostics;
@@ -11,18 +12,13 @@ namespace Elffy.Features.Internal
     /// <summary>Implementation of <see cref="IHostScreen"/>, which provides operations of rendering.</summary>
     internal sealed class RenderingArea : IDisposable
     {
-        const float UI_FAR = 1f;
-        const float UI_NEAR = -1f;
-
+        private readonly CancellationTokenSource _runningTokenSource;
         private bool _isCloseRequested;
         private bool _disposed;
-        private Matrix4 _uiProjection;
+        private int _runningThreadId;
         private Vector2i _frameBufferSize;
         private Color4 _clearColor;
-        private readonly CancellationTokenSource _runningTokenSource;
-
-        [ThreadStatic]
-        private CurrentFrameTiming _currentTiming; // default value is 'OutOfFrameLoop'
+        private CurrentFrameTiming _currentTiming;
 
         public event Action<IHostScreen>? Initialized;
 
@@ -41,7 +37,7 @@ namespace Elffy.Features.Internal
 
         public FrameTimingPointList TimingPoints { get; }
 
-        public CurrentFrameTiming CurrentTiming => _currentTiming;
+        public CurrentFrameTiming CurrentTiming => (_runningThreadId == ThreadHelper.CurrentThreadId) ? _currentTiming : CurrentFrameTiming.OutOfFrameLoop;
 
         public Color4 ClearColor
         {
@@ -64,6 +60,7 @@ namespace Elffy.Features.Internal
 
         public void Initialize()
         {
+            _runningThreadId = ThreadHelper.CurrentThreadId;
             var clearColor = _clearColor;
             GL.ClearColor(clearColor.R, _clearColor.G, _clearColor.B, _clearColor.A);
             GL.Enable(EnableCap.DepthTest);
@@ -82,23 +79,19 @@ namespace Elffy.Features.Internal
             // Initialize viewport and so on.
             SetFrameBufferSize(OwnerScreen.FrameBufferSize);
 
-            var layers = Layers;
-            layers.UILayer.Initialize();
             try {
                 Initialized?.Invoke(OwnerScreen);
             }
             catch {
                 // Don't throw. (Ignore exceptions in user code)
             }
-
+            var layers = Layers;
             layers.ApplyAdd();
         }
 
         /// <summary>Update and render the next frame</summary>
         public void RenderFrame()
         {
-            var timingPoints = TimingPoints;
-
             // ------------------------------------------------------------
             // Out of frame loop
             Debug.Assert(_currentTiming == CurrentFrameTiming.OutOfFrameLoop);
@@ -110,70 +103,51 @@ namespace Elffy.Features.Internal
             // ------------------------------------------------------------
             // Frame initializing
             _currentTiming = CurrentFrameTiming.FrameInitializing;
+            var frameTimingPoints = TimingPoints;
             var layers = Layers;
-            var uiLayer = layers.UILayer;
-
             Mouse.InitFrame();
             Keyboard.InitFrame();
-
-            // Apply layers and FrameObjects added at previous frame.
             layers.ApplyAdd();
-
-            // UI hit test
-            uiLayer.HitTest(Mouse);
+            frameTimingPoints.FrameInitializing.DoQueuedEvents();
 
             // ------------------------------------------------------------
             // Early update
             _currentTiming = CurrentFrameTiming.EarlyUpdate;
-            uiLayer.UIEvent();      // TODO: add UIEvent timing
-            timingPoints.EarlyUpdate.DoQueuedEvents();
-            foreach(var layer in layers.AsSpan()) {
-                layer.EarlyUpdate();
-            }
+            frameTimingPoints.EarlyUpdate.DoQueuedEvents();
+            layers.EarlyUpdate();
 
             // ------------------------------------------------------------
             // Update
             _currentTiming = CurrentFrameTiming.Update;
-            timingPoints.Update.DoQueuedEvents();
-            foreach(var layer in layers.AsSpan()) {
-                layer.Update();
-            }
+            frameTimingPoints.Update.DoQueuedEvents();
+            layers.Update();
 
             // ------------------------------------------------------------
             // Late update
             _currentTiming = CurrentFrameTiming.LateUpdate;
-            timingPoints.LateUpdate.DoQueuedEvents();
-            foreach(var layer in layers.AsSpan()) {
-                layer.LateUpdate();
-            }
+            frameTimingPoints.LateUpdate.DoQueuedEvents();
+            layers.LateUpdate();
 
             // ------------------------------------------------------------
             // Before rendering
             _currentTiming = CurrentFrameTiming.BeforeRendering;
             FBO.Bind(FBO.Empty, FBO.Target.FrameBuffer);
             ElffyGL.Clear(ClearMask.ColorBufferBit | ClearMask.DepthBufferBit);
-            timingPoints.BeforeRendering.DoQueuedEvents();
+            frameTimingPoints.BeforeRendering.DoQueuedEvents();
 
             // ------------------------------------------------------------
             // Rendering
             _currentTiming = CurrentFrameTiming.Rendering;
-            var renderInfo = new LayerRenderInfo(Camera.View, Camera.Projection, _uiProjection);
-            foreach(var layer in layers.AsSpan()) {
-                if(layer.IsVisible) {
-                    layer.Render(renderInfo);
-                }
-            }
+            layers.Render();
 
             // ------------------------------------------------------------
             // After rendering
             _currentTiming = CurrentFrameTiming.AfterRendering;
-            timingPoints.AfterRendering.DoQueuedEvents();
+            frameTimingPoints.AfterRendering.DoQueuedEvents();
 
             // ------------------------------------------------------------
             // Frame finalizing
             _currentTiming = CurrentFrameTiming.FrameFinalizing;
-
-            // Apply layers and FrameObjects removed at previous frame.
             layers.ApplyRemove();
 
             // ------------------------------------------------------------
@@ -208,12 +182,8 @@ namespace Elffy.Features.Internal
 
             _currentTiming = CurrentFrameTiming.OutOfFrameLoop;
 
-            // Clear objects in all layers
             var layers = Layers;
-            foreach(var layer in layers.AsSpan()) {
-                layer.ClearFrameObject();
-            }
-            layers.Clear();
+            layers.TerminateAllImmediately();
 
             TimingPoints.AbortAllEvents();
             ContextAssociatedMemorySafety.EnsureCollect(OwnerScreen);   // Must be called before the opengl context is deleted.
@@ -231,11 +201,11 @@ namespace Elffy.Features.Internal
         {
             var size = _frameBufferSize;
             Camera.ChangeScreenSize(size.X, size.Y);
-
             GL.Viewport(0, 0, size.X, size.Y);
-            Matrix4.OrthographicProjection(0, size.X, 0, size.Y, UI_NEAR, UI_FAR, out _uiProjection);
-            Layers.UILayer.UIRoot.SetSize((Vector2)size);
             Debug.WriteLine($"Size changed ({size.X}, {size.Y})");
+
+            var layers = Layers;
+            layers.NotifySizeChanged();
         }
     }
 }

@@ -10,27 +10,28 @@ namespace Sandbox
     public static class CameraMouse
     {
         private static readonly FrameTiming LoopTiming = FrameTiming.EarlyUpdate;
+        private static readonly Func<CoroutineState, (Vector3, Vector3), UniTask> MoveCameraCoroutineFunc = MoveCameraCoroutine;
 
         private sealed class CameraMouseObject : FrameObject
         {
         }
 
-        public static async UniTask<FrameObject> Activate(Vector3 target, Vector3 initialCameraPos)
+        public static async UniTask<FrameObject> Activate(Layer layer, Vector3 target, Vector3 initialCameraPos)
         {
             var obj = new CameraMouseObject();
-            await obj.Activate();
-            obj.StartCoroutine((target, initialCameraPos), MoveCameraCoroutine, LoopTiming).Forget();
+            await obj.Activate(layer);
+            obj.StartCoroutine((target, initialCameraPos), MoveCameraCoroutineFunc, LoopTiming).Forget();
             return obj;
         }
 
         public static void Attach(FrameObject parent, in Vector3 target, in Vector3 initialCameraPos)
         {
-            parent.StartCoroutine((target, initialCameraPos), MoveCameraCoroutine, LoopTiming).Forget();
+            parent.StartCoroutine((target, initialCameraPos), MoveCameraCoroutineFunc, LoopTiming).Forget();
         }
 
         public static void Attach(IHostScreen parent, in Vector3 target, in Vector3 initialCameraPos)
         {
-            parent.StartCoroutine((target, initialCameraPos), MoveCameraCoroutine, LoopTiming).Forget();
+            parent.StartCoroutine((target, initialCameraPos), MoveCameraCoroutineFunc, LoopTiming).Forget();
         }
 
         private static async UniTask MoveCameraCoroutine(CoroutineState coroutine, (Vector3 Target, Vector3 InitialPos) args)

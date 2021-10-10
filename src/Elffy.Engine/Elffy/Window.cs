@@ -3,7 +3,6 @@ using System;
 using System.Threading;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using Elffy.UI;
 using Elffy.InputSystem;
 using Elffy.Graphics.OpenGL;
 using Elffy.Imaging;
@@ -29,8 +28,8 @@ namespace Elffy
         private TimeSpan _time;
         private long _frameNum;
 
-        /// <inheritdoc/>
-        public RootPanel UIRoot => _renderingArea.Layers.UILayer.UIRoot;
+        ///// <inheritdoc/>
+        //public RootPanel UIRoot => _renderingArea.Layers.UILayer.UIRoot;
 
         /// <inheritdoc/>
         public Mouse Mouse => _renderingArea.Mouse;

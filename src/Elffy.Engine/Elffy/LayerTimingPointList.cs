@@ -5,16 +5,16 @@ namespace Elffy
 {
     public sealed class LayerTimingPointList
     {
-        private readonly ILayer _layer;
+        private readonly Layer _layer;
         private readonly LayerTimingPoint _beforeRenderingPoint;
         private readonly LayerTimingPoint _afterRenderingPoint;
 
-        internal ILayer Layer => _layer;
+        internal Layer Layer => _layer;
 
         public LayerTimingPoint BeforeRendering => _beforeRenderingPoint;
         public LayerTimingPoint AfterRendering => _afterRenderingPoint;
 
-        internal LayerTimingPointList(ILayer layer)
+        internal LayerTimingPointList(Layer layer)
         {
             _layer = layer;
             _beforeRenderingPoint = new LayerTimingPoint(layer);

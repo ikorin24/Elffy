@@ -53,10 +53,31 @@ namespace Elffy.Features.Internal
             Apply(this);
 
             // uncommon path
+            [MethodImpl(MethodImplOptions.NoInlining)]
             static void Apply(in LazyApplyingList<T> self)
             {
                 self._list.AddRange(self._addedList);
                 self._addedList.Clear();
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ApplyAdd(Action<T> onAdded)
+        {
+            if(_addedList.Count == 0) { return; }
+            Apply(this, onAdded);
+
+            // uncommon path
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            static void Apply(in LazyApplyingList<T> self, Action<T> onAdded)
+            {
+                var addedList = self._addedList;
+                var list = self._list;
+                foreach(var item in addedList.AsSpan()) {
+                    list.Add(item);
+                    onAdded(item);
+                }
+                addedList.Clear();
             }
         }
 
@@ -67,6 +88,7 @@ namespace Elffy.Features.Internal
             Apply(this, onRemoved);
 
             // uncommon path
+            [MethodImpl(MethodImplOptions.NoInlining)]
             static void Apply(in LazyApplyingList<T> self, Action<T> onRemoved)
             {
                 foreach(var item in self._removedList.AsSpan()) {
@@ -94,6 +116,7 @@ namespace Elffy.Features.Internal
             }
         }
 
-        public ReadOnlySpan<T> AsSpan() => _list.AsSpan();
+        public Span<T> AsSpan() => _list.AsSpan();
+        public ReadOnlySpan<T> AsReadOnlySpan() => _list.AsSpan();
     }
 }

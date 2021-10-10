@@ -18,6 +18,7 @@ namespace Elffy
 
         internal static FrameTimingPointList TimingPoints => _timingPoints!;
 
+        public static FrameTimingPoint FrameInitializing => TimingPoints.FrameInitializing;
         public static FrameTimingPoint EarlyUpdate => TimingPoints.EarlyUpdate;
         public static FrameTimingPoint Update => TimingPoints.Update;
         public static FrameTimingPoint LateUpdate => TimingPoints.LateUpdate;

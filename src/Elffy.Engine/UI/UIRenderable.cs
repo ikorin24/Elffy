@@ -29,10 +29,8 @@ namespace Elffy.UI
         internal void DoUIEvent() => _control.DoUIEvent();
 
         [SkipLocalsInit]
-        protected sealed override UniTask<AsyncUnit> OnActivating(CancellationToken cancellationToken)
+        protected unsafe sealed override UniTask<AsyncUnit> OnActivating(CancellationToken cancellationToken)
         {
-            Debug.Assert(InternalLayer is UILayer);
-
             //     Position                    UI
             //                          
             //     p3(0,1,0) -- p2(1,1,0)     (0,1) --- (1,1)
@@ -52,17 +50,17 @@ namespace Elffy.UI
             // Y axis is inversed on rendered.
 
             // Build polygons and load them
-            ReadOnlySpan<VertexSlim> vertices = stackalloc VertexSlim[4]
+            const int VertexCount = 4;
+            const int IndexCount = 6;
+            var vertices = stackalloc VertexSlim[VertexCount]
             {
                 new(new(0, 0, 0), new(0, 0)),
                 new(new(1, 0, 0), new(1, 0)),
                 new(new(1, 1, 0), new(1, 1)),
                 new(new(0, 1, 0), new(0, 1)),
             };
-            ReadOnlySpan<int> indices = stackalloc int[6] { 0, 2, 1, 2, 0, 3 };
-            LoadMesh(vertices, indices);
-
-            // [NOTE] UIRenderable must complete OnActivating synchronously. (See the implementation of FrameObject)
+            var indices = stackalloc int[IndexCount] { 0, 2, 1, 2, 0, 3 };
+            LoadMesh(vertices, VertexCount, indices, IndexCount);
             return new UniTask<AsyncUnit>(AsyncUnit.Default);
         }
 
