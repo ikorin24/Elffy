@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using Cysharp.Threading.Tasks;
-using Elffy.Features.Internal;
 using Elffy.InputSystem;
 using OpenTK.Graphics.OpenGL4;
 using System;

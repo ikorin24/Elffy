@@ -44,7 +44,9 @@ namespace Elffy.Features.Internal
             if(count > 0) {
                 Do(queue, count);
 
+#if !DEBUG
                 [DebuggerHidden]
+#endif
                 static void Do(ConcurrentQueue<WorkItem> queue, int count)
                 {
                     for(int i = 0; i < count; i++) {
@@ -81,7 +83,9 @@ namespace Elffy.Features.Internal
                 _state = action;
             }
 
+#if !DEBUG
             [DebuggerHidden]
+#endif
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Invoke() => _action.Invoke(_state);
 
@@ -91,7 +95,9 @@ namespace Elffy.Features.Internal
                 public readonly Action<object?> Action;
                 private Lambda() => Action = new Action<object?>(M);
 
+#if !DEBUG
                 [DebuggerHidden]
+#endif
                 private void M(object? state)
                 {
                     Debug.Assert(state is not null);

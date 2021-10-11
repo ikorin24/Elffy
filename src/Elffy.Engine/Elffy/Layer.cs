@@ -8,7 +8,7 @@ using Elffy.Features.Internal;
 namespace Elffy
 {
     /// <summary>Layer class which has the list of <see cref="FrameObject"/></summary>
-    [DebuggerDisplay("Layer: {Name} (ObjectCount = {ObjectCount})")]
+    [DebuggerDisplay("{GetType().Name,nq}: {Name} (ObjectCount = {ObjectCount}, IsVisible = {IsVisible})")]
     public class Layer
     {
         private readonly FrameObjectStore _store;
