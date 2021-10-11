@@ -1,16 +1,17 @@
 ﻿#nullable enable
 using System.Runtime.CompilerServices;
+using LSV = Elffy.LifeStateValue;
 
 namespace Elffy
 {
     /// <summary>Life states of <see cref="FrameObject"/></summary>
     [GenerateEnumLikeStruct(typeof(byte))]
-    [EnumLikeValue("New", 0, "Initial state of <see cref=\"" + nameof(FrameObject) + "\"/>. Not managed by the engine.")]
-    [EnumLikeValue("Activating", 1)]
-    [EnumLikeValue("Activated", 2, "State that <see cref=\"" + nameof(FrameObject) + "\"/> is in the activation queue. (It is not running yet, it gets alive in the next frame.)")]
-    [EnumLikeValue("Alive", 3, "State that <see cref=\"" + nameof(FrameObject) + "\"/> is running.")]
-    [EnumLikeValue("Terminated", 4, "State that <see cref=\"" + nameof(FrameObject) + "\"/> is in the termination queue. (It is still running, it gets dead in the next frame.)")]
-    [EnumLikeValue("Dead", 5, "State that <see cref=\"" + nameof(FrameObject) + "\"/> is dead. Not managed by the engine.")]
+    [EnumLikeValue(nameof(LSV.New), LSV.New, "Initial state of <see cref=\"" + nameof(FrameObject) + "\"/>. Not managed by the engine.")]
+    [EnumLikeValue(nameof(LSV.Activating), LSV.Activating)]
+    [EnumLikeValue(nameof(LSV.Activated), LSV.Activated, "State that <see cref=\"" + nameof(FrameObject) + "\"/> is in the activation queue. (It is not running yet, it gets alive in the next frame.)")]
+    [EnumLikeValue(nameof(LSV.Alive), LSV.Alive, "State that <see cref=\"" + nameof(FrameObject) + "\"/> is running.")]
+    [EnumLikeValue(nameof(LSV.Terminated), LSV.Terminated, "State that <see cref=\"" + nameof(FrameObject) + "\"/> is in the termination queue. (It is still running, it gets dead in the next frame.)")]
+    [EnumLikeValue(nameof(LSV.Dead), LSV.Dead, "State that <see cref=\"" + nameof(FrameObject) + "\"/> is dead. Not managed by the engine.")]
     public partial struct LifeState
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -30,5 +31,15 @@ namespace Elffy
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsRunning() => this == Alive || this == Terminated;
+    }
+
+    internal static class LifeStateValue
+    {
+        public const byte New = 0;
+        public const byte Activating = 1;
+        public const byte Activated = 2;
+        public const byte Alive = 3;
+        public const byte Terminated = 4;
+        public const byte Dead = 5;
     }
 }

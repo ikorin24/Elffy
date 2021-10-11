@@ -3,14 +3,17 @@ using Cysharp.Threading.Tasks;
 using Elffy.InputSystem;
 using OpenTK.Graphics.OpenGL4;
 using System;
+using System.Threading;
 
 namespace Elffy.UI
 {
     public sealed class UILayer : Layer
     {
-        const float UI_FAR = 1f;
-        const float UI_NEAR = -1f;
-        private static readonly Func<CoroutineState, (IHostScreen, UILayer), UniTask> UIEventCoroutineFunc = UIEventCoroutine;
+        private const float UI_FAR = 1f;
+        private const float UI_NEAR = -1f;
+        public const int DefaultSortNumber = 100;
+
+        private static readonly Func<CoroutineState, (IHostScreen, UILayer), UniTask> UIEventPipelineFunc = UIEventPipeline;
 
         private readonly RootPanel _uiRoot;
         private Matrix4 _uiProjection;
@@ -22,38 +25,28 @@ namespace Elffy.UI
         /// <summary>Get or set whether hit test is enabled.</summary>
         public bool IsHitTestEnabled { get => _isHitTestEnabled; set => _isHitTestEnabled = value; }
 
-        public UILayer(string name, int sortNumber = 100) : base(name, sortNumber)
+        public UILayer(string name, int sortNumber = DefaultSortNumber) : base(name, sortNumber)
         {
             _isHitTestEnabled = true;
             _uiRoot = new RootPanel(this);
         }
 
-        protected override void OnLayerActivated()
+        public static UniTask<UILayer> NewActivate(IHostScreen screen, string name, int sortNumber = DefaultSortNumber, CancellationToken cancellationToken = default)
         {
-            base.OnLayerActivated();
-            var uiRoot = _uiRoot;
-            uiRoot.Initialize();
-
-            if(uiRoot.TryGetHostScreen(out var screen) == false) {
-                throw new InvalidOperationException();
-            }
-            Coroutine.StartOrReserve(screen, (screen, this), UIEventCoroutineFunc, FrameTiming.FrameInitializing);
+            return new UILayer(name, sortNumber).Activate(screen, cancellationToken);
         }
 
-        private static async UniTask UIEventCoroutine(CoroutineState coroutine, (IHostScreen screen, UILayer layer) state)
+        protected override void OnAlive(IHostScreen screen)
         {
-            var (screen, layer) = state;
-            while(coroutine.CanRun && layer.Owner is not null) {
-                layer.HitTest(screen.Mouse);
-                layer.UIEvent();
-                await screen.TimingPoints.FrameInitializing.Next();
-            }
+            var uiRoot = _uiRoot;
+            uiRoot.Initialize();
+            Coroutine.StartOrReserve(screen, (screen, this), UIEventPipelineFunc, FrameTiming.FrameInitializing);
         }
 
         protected override void SelectMatrix(IHostScreen screen, out Matrix4 view, out Matrix4 projection)
         {
             view = new Matrix4(1, 0, 0, 0,
-                               0, -1, 0, UIRoot.Height,
+                               0, -1, 0, _uiRoot.Height,
                                0, 0, 1, 0,
                                0, 0, 0, 1);
             projection = _uiProjection;
@@ -68,10 +61,24 @@ namespace Elffy.UI
 
         protected override void OnSizeChanged(IHostScreen screen)
         {
-            base.OnSizeChanged(screen);
             var frameBufferSize = screen.FrameBufferSize;
             Matrix4.OrthographicProjection(0, frameBufferSize.X, 0, frameBufferSize.Y, UI_NEAR, UI_FAR, out _uiProjection);
             _uiRoot.SetSize((Vector2)frameBufferSize);
+        }
+
+        protected override void OnLayerTerminated()
+        {
+            // nop
+        }
+
+        private static async UniTask UIEventPipeline(CoroutineState coroutine, (IHostScreen Screen, UILayer Layer) state)
+        {
+            var (screen, layer) = state;
+            while(coroutine.CanRun && layer.Owner is not null) {
+                layer.HitTest(screen.Mouse);
+                layer.UIEvent();
+                await screen.TimingPoints.FrameInitializing.Next();
+            }
         }
 
         private void UIEvent()

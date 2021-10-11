@@ -28,8 +28,9 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void Add(Layer layer)
         {
-            if(layer is null) { ThrowNullArg(nameof(layer)); }
-            if(layer.Owner is null == false) { ThrowAlreadyOwned($"Layer is already owned by {nameof(LayerCollection)}."); }
+            Debug.Assert(layer is not null);
+            Debug.Assert(layer.Owner == this);
+            Debug.Assert(layer.LifeState == LayerLifeState.Activated);
             _list.Add(layer);
         }
 
@@ -64,7 +65,7 @@ namespace Elffy
         internal void ApplyAdd()
         {
             var screen = Screen;
-            _list.ApplyAdd(addedLayer => addedLayer.OnLayerActivatedCallback(this));
+            _list.ApplyAdd(addedLayer => addedLayer.OnAddedToListCallback(this));
             _list.AsSpan().Sort(static (l1, l2) => l1.SortNumber - l2.SortNumber);
             foreach(var layer in AsSpan()) {
                 layer.ApplyAdd();

@@ -15,6 +15,7 @@ namespace Elffy
         /// <returns>casted object</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [return: NotNullIfNotNull("value")]
+        [DebuggerHidden]
         public static T? As<T>(object? value) where T : class
         {
             Debug.Assert(value is null || value is T);

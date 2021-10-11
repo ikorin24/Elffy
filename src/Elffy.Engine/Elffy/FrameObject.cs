@@ -3,11 +3,10 @@ using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Diagnostics.CodeAnalysis;
-using Elffy.Threading;
-using Cysharp.Threading.Tasks;
 using System.Threading;
+using Cysharp.Threading.Tasks;
 using Elffy.UI;
-using Elffy.Features.Internal;
+using Elffy.Threading;
 
 namespace Elffy
 {
@@ -86,7 +85,7 @@ namespace Elffy
         /// <param name="timing"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        internal async UniTask<FrameObject> ActivateFrameObject(Layer layer, FrameTiming timing, CancellationToken cancellationToken = default)
+        internal async UniTask<FrameObject> ActivateOnWorldLayer(WorldLayer layer, FrameTiming timing, CancellationToken cancellationToken)
         {
             if(layer is null) { ThrowNullArg(); }
             if(layer.TryGetHostScreen(out var screen) == false) {
@@ -140,7 +139,7 @@ namespace Elffy
             [DoesNotReturn] static void ThrowContextMismatch() => throw new InvalidOperationException("Invalid current context.");
         }
 
-        internal void ActivateOnInternalLayer(UILayer layer)
+        internal void ActivateOnUILayer(UILayer layer)
         {
             if(_state != LifeState.New) { return; }
             Debug.Assert(layer is not null);
@@ -223,18 +222,18 @@ namespace Elffy
     public static class FrameObjectActivationExtension
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static async UniTask<T> Activate<T>(this T source, Layer layer, CancellationToken cancellationToken = default)
+        public static async UniTask<T> Activate<T>(this T source, WorldLayer layer, CancellationToken cancellationToken = default)
             where T : FrameObject
         {
-            await source.ActivateFrameObject(layer, FrameTiming.Update, cancellationToken);
+            await source.ActivateOnWorldLayer(layer, FrameTiming.Update, cancellationToken);
             return source;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static async UniTask<T> Activate<T>(this T source, Layer layer, FrameTiming timing, CancellationToken cancellationToken = default)
+        public static async UniTask<T> Activate<T>(this T source, WorldLayer layer, FrameTiming timing, CancellationToken cancellationToken = default)
             where T : FrameObject
         {
-            await source.ActivateFrameObject(layer, timing, cancellationToken);
+            await source.ActivateOnWorldLayer(layer, timing, cancellationToken);
             return source;
         }
     }

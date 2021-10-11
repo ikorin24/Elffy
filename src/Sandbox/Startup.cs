@@ -18,9 +18,7 @@ namespace Sandbox
         public static async UniTask Start2()
         {
             var screen = Game.Screen;
-            var layer = new Layer("Default").Activate(screen);
-            var timings = screen.TimingPoints;
-            await timings.FrameInitializing.Next();
+            var layer = await WorldLayer.NewActivate(screen, "Default");
 
             var deferedRenderer = DeferedRenderer.Attach(screen, 1, context =>
             {
@@ -64,9 +62,10 @@ namespace Sandbox
         {
             var screen = Game.Screen;
             var timings = screen.TimingPoints;
-            var layer = new Layer("Default").Activate(screen);
-            var uiLayer = new UILayer("UI").Activate(screen);
-            await timings.FrameInitializing.Next();
+
+            var (layer, uiLayer) = await UniTask.WhenAll(
+                WorldLayer.NewActivate(screen, "Default"),
+                UILayer.NewActivate(screen, "UI"));
             var uiRoot = uiLayer.UIRoot;
             uiRoot.Background = Color4.Black;
             try {
@@ -78,9 +77,6 @@ namespace Sandbox
                     CreateSky(layer),
                     CreateCameraMouse(layer, new Vector3(0, 3, 0)),
                     timings.Update.DelayTime(800));
-
-                await timings.Update.NextOrNow();
-
                 var time = TimeSpan.FromMilliseconds(200);
                 await foreach(var frame in timings.Update.Frames()) {
                     if(frame.Time >= time) {
@@ -94,7 +90,7 @@ namespace Sandbox
             }
         }
 
-        private static UniTask<Model3D> CreateModel1(Layer layer)
+        private static UniTask<Model3D> CreateModel1(WorldLayer layer)
         {
             var dice = Resources.Sandbox["Dice.fbx"].CreateFbxModel();
             dice.Position.X = 3f;
@@ -102,14 +98,14 @@ namespace Sandbox
             return dice.Activate(layer);
         }
 
-        private static UniTask<Model3D> CreateModel2(Layer layer)
+        private static UniTask<Model3D> CreateModel2(WorldLayer layer)
         {
             var model = Resources.Sandbox["Alicia/Alicia_solid.pmx"].CreatePmxModel();
             model.Scale = new Vector3(0.3f);
             return model.Activate(layer);
         }
 
-        private static UniTask<SkySphere> CreateSky(Layer layer)
+        private static UniTask<SkySphere> CreateSky(WorldLayer layer)
         {
             var sky = new SkySphere();
             sky.Shader = SkyShader.Instance;
@@ -117,7 +113,7 @@ namespace Sandbox
             return sky.Activate(layer);
         }
 
-        private static async UniTask<Plain> CreateFloor(Layer layer)
+        private static async UniTask<Plain> CreateFloor(WorldLayer layer)
         {
             var plain = new Plain();
             plain.Scale = new Vector3(10f);
@@ -130,7 +126,7 @@ namespace Sandbox
             return await plain.Activate(layer);
         }
 
-        private static async UniTask<Cube> CreateBox(Layer layer)
+        private static async UniTask<Cube> CreateBox(WorldLayer layer)
         {
             var cube = new Cube();
             cube.Position = new(-3, 0.5f, 0);
@@ -147,7 +143,7 @@ namespace Sandbox
             return cube;
         }
 
-        private static UniTask<FrameObject> CreateCameraMouse(Layer layer, Vector3 target)
+        private static UniTask<FrameObject> CreateCameraMouse(WorldLayer layer, Vector3 target)
         {
             var initialCameraPos = target + new Vector3(0, 1.5f, 20);
             return CameraMouse.Activate(layer, target, initialCameraPos);

@@ -242,7 +242,7 @@ namespace Elffy.UI
             _parent = parent;
             var root = parent.Root;
             _root = root;
-            Renderable.ActivateOnInternalLayer(root.UILayer);
+            Renderable.ActivateOnUILayer(root.UILayer);
         }
 
         internal void RemovedFromListCallback()

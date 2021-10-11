@@ -3,13 +3,15 @@ using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using Elffy.Features.Internal;
 
 namespace Elffy
 {
     /// <summary>Layer class which has the list of <see cref="FrameObject"/></summary>
     [DebuggerDisplay("{GetType().Name,nq}: {Name} (ObjectCount = {ObjectCount}, IsVisible = {IsVisible})")]
-    public class Layer
+    public abstract class Layer
     {
         private readonly FrameObjectStore _store;
         private readonly LayerTimingPointList _timingPoints;
@@ -17,6 +19,7 @@ namespace Elffy
         private LayerCollection? _owner;
         private int _sortNumber;
         private bool _isVisible;
+        private LayerLifeState _state;
 
         /// <summary>The owner of the layer</summary>
         internal LayerCollection? Owner => _owner;
@@ -34,6 +37,8 @@ namespace Elffy
         /// <summary>Get count of alive objects in the current frame.</summary>
         public int ObjectCount => _store.ObjectCount;
 
+        public LayerLifeState LifeState => _state;
+
         protected ReadOnlySpan<FrameObject> Objects => _store.List;
         protected ReadOnlySpan<FrameObject> AddedObjects => _store.Added;
         protected ReadOnlySpan<FrameObject> RemovedObjects => _store.Removed;
@@ -42,7 +47,7 @@ namespace Elffy
         /// <summary>Create new <see cref="Layer"/> with specified name.</summary>
         /// <param name="name">name of the layer</param>
         /// <param name="sortNumber">number for layer sorting</param>
-        public Layer(string name, int sortNumber = 0)
+        public Layer(string name, int sortNumber)
         {
             if(name is null) {
                 ThrowNullArg();
@@ -54,6 +59,7 @@ namespace Elffy
             _sortNumber = sortNumber;
             _timingPoints = new LayerTimingPointList(this);
             _store = FrameObjectStore.New(Capacity);
+            _state = LayerLifeState.New;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -63,12 +69,37 @@ namespace Elffy
             return screen is not null;
         }
 
-        internal void OnLayerActivatedCallback(LayerCollection owner)
+        internal async UniTask<Layer> ActivateOnScreen(IHostScreen screen, FrameTimingPoint timingPoint, CancellationToken cancellationToken)
         {
-            Debug.Assert(owner is not null);
+            if(screen is null) { ThrowNullArg(); }
+            if(Engine.CurrentContext != screen) { ThrowContextMismatch(); }
+            cancellationToken.ThrowIfCancellationRequested();
+            if(_state == LayerLifeState.Activated) { ThrowCalledWhenActivated(); }
+            if(_state.IsAfter(LayerLifeState.New)) {
+                await timingPoint.NextOrNow(cancellationToken);
+                return this;
+            }
+
+            Debug.Assert(_state == LayerLifeState.New);
             Debug.Assert(_owner is null);
-            _owner = owner;
-            OnLayerActivated();
+            _state = LayerLifeState.Activated;
+            _owner = screen.Layers;
+            screen.Layers.Add(this);
+            await timingPoint.Next(cancellationToken);
+
+            Debug.Assert(_state.IsSameOrAfter(LayerLifeState.Alive));
+            return this;
+
+            [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(screen));
+            [DoesNotReturn] static void ThrowContextMismatch() => throw new InvalidOperationException("Invalid current context.");
+            [DoesNotReturn] static void ThrowCalledWhenActivated() => throw new InvalidOperationException($"Cannot call Activate method when the life state is {LayerLifeState.Activated}.");
+        }
+
+        internal void OnAddedToListCallback(LayerCollection owner)
+        {
+            Debug.Assert(_state == LayerLifeState.Activated);
+            _state = LayerLifeState.Alive;
+            OnAlive(owner.Screen);
         }
 
         internal void OnLayerTerminatedCallback()
@@ -112,27 +143,26 @@ namespace Elffy
             projection = camera.Projection;
         }
 
-        protected virtual void OnLayerActivated()
-        {
-            // nop
-        }
+        protected abstract void OnAlive(IHostScreen screen);
 
-        protected virtual void OnLayerTerminated()
-        {
-            // nop
-        }
+        protected abstract void OnLayerTerminated();
 
-        protected virtual void OnSizeChanged(IHostScreen screen)
-        {
-            // nop
-        }
+        protected abstract void OnSizeChanged(IHostScreen screen);
     }
 
     public static class LayerExtension
     {
-        public static TLayer Activate<TLayer>(this TLayer layer, IHostScreen screen) where TLayer : Layer
+        public static async UniTask<TLayer> Activate<TLayer>(this TLayer layer, IHostScreen screen, CancellationToken cancellationToken = default) where TLayer : Layer
         {
-            screen.Layers.Add(layer);
+            await layer.ActivateOnScreen(screen, screen.TimingPoints.Update, cancellationToken);
+            Debug.Assert(layer.LifeState.IsSameOrAfter(LayerLifeState.Alive));
+            return layer;
+        }
+
+        public static async UniTask<TLayer> Activate<TLayer>(this TLayer layer, IHostScreen screen, FrameTimingPoint timingPoint, CancellationToken cancellationToken = default) where TLayer : Layer
+        {
+            await layer.ActivateOnScreen(screen, timingPoint, cancellationToken);
+            Debug.Assert(layer.LifeState.IsSameOrAfter(LayerLifeState.Alive));
             return layer;
         }
 
