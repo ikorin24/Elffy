@@ -77,12 +77,12 @@ namespace Sandbox
                     CreateSky(layer),
                     CreateCameraMouse(layer, new Vector3(0, 3, 0)),
                     timings.Update.DelayTime(800));
-                var time = TimeSpan.FromMilliseconds(200);
+                var time = TimeSpanF.FromMilliseconds(200);
                 await foreach(var frame in timings.Update.Frames()) {
                     if(frame.Time >= time) {
                         break;
                     }
-                    uiRoot.Background.A = 1f - (float)frame.Time.Ticks / time.Ticks;
+                    uiRoot.Background.A = 1f - frame.Time / time;
                 }
             }
             finally {

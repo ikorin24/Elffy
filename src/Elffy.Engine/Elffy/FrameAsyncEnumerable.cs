@@ -48,7 +48,7 @@ namespace Elffy
     {
         private readonly FrameTimingPoint _timingPoint;
         private readonly CancellationToken _cancellationToken;
-        private readonly TimeSpan _startTime;
+        private readonly TimeSpanF _startTime;
         private readonly long _startFrame;
 
         public FrameInfo Current
@@ -85,12 +85,12 @@ namespace Elffy
     public readonly struct FrameInfo : IEquatable<FrameInfo>
     {
         public readonly long FrameNum;
-        public readonly TimeSpan Time;
+        public readonly TimeSpanF Time;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private string DebugDisplay => $"{nameof(FrameNum)}: {FrameNum}, {nameof(Time)}: {Time}";
 
-        internal FrameInfo(in long frameNum, in TimeSpan time)
+        internal FrameInfo(in long frameNum, in TimeSpanF time)
         {
             FrameNum = frameNum;
             Time = time;

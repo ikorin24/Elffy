@@ -4,6 +4,9 @@ using System.Runtime.CompilerServices;
 
 namespace Elffy
 {
+    /// <summary>
+    /// Represents a time interval. It is compatible with <see cref="TimeSpan"/>.
+    /// </summary>
     [Serializable]
     public readonly partial struct TimeSpanF : IEquatable<TimeSpanF>, IComparable<TimeSpanF>, IComparable, IFormattable
     {

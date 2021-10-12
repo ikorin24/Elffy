@@ -38,10 +38,10 @@ namespace Elffy
         LayerCollection Layers { get; }
 
         /// <summary>Get time of current frame. (This is NOT real time.)</summary>
-        TimeSpan Time { get; }
+        TimeSpanF Time { get; }
 
         /// <summary>Get time span between frames</summary>
-        TimeSpan FrameDelta { get; }
+        TimeSpanF FrameDelta { get; }
 
         /// <summary>Get number of current frame.</summary>
         long FrameNum { get; }

@@ -24,8 +24,8 @@ namespace Elffy
         private bool _isActivated;
         private readonly WindowGLFW _windowImpl;
         private readonly RenderingArea _renderingArea;
-        private TimeSpan _frameDelta;
-        private TimeSpan _time;
+        private TimeSpanF _frameDelta;
+        private TimeSpanF _time;
         private long _frameNum;
 
         ///// <inheritdoc/>
@@ -59,9 +59,9 @@ namespace Elffy
         public string Title { get => _windowImpl.Title; set => _windowImpl.Title = value; }
 
         /// <inheritdoc/>
-        public TimeSpan Time => _time;
+        public TimeSpanF Time => _time;
 
-        public TimeSpan FrameDelta => _frameDelta;
+        public TimeSpanF FrameDelta => _frameDelta;
 
         /// <inheritdoc/>
         public long FrameNum => _frameNum;
@@ -139,7 +139,7 @@ namespace Elffy
             renderingArea = new RenderingArea(this);
             windowImpl = new WindowGLFW(this, width, height, title, windowStyle, ref icon);
 
-            _frameDelta = TimeSpan.FromSeconds(1.0 / 60.0); // TODO: とりあえず固定で
+            _frameDelta = TimeSpanF.FromSeconds(1.0 / 60.0); // TODO: とりあえず固定で
             _windowImpl.UpdateFrame += (_, e) => UpdateFrame();
             _windowImpl.Refresh += _ => UpdateFrame();
             _windowImpl.Load += _ => _renderingArea.Initialize();

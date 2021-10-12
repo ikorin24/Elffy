@@ -38,7 +38,7 @@ namespace Elffy
         public static IHostScreen? CurrentContext => _currentContext;
 
         /// <summary>Get real time since the engine started.</summary>
-        public static TimeSpan RunningRealTime => _watch.Elapsed;
+        public static TimeSpanF RunningRealTime => _watch.Elapsed;
 
         internal static void AddScreen(IHostScreen screen)
         {

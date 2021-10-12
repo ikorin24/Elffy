@@ -33,7 +33,7 @@ namespace Elffy
         {
             private readonly FrameObject? _frameObject;
             private readonly FrameTimingPoint _timingPoint;
-            private readonly TimeSpan _startTime;
+            private readonly TimeSpanF _startTime;
             private readonly long _startFrame;
 
             public FrameInfo Current

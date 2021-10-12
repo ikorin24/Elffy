@@ -23,10 +23,10 @@ namespace Elffy
         public static bool IsRunning => _screen!.IsRunning;
 
         /// <summary>Get time of current frame. (This is NOT real time.)</summary>
-        public static TimeSpan Time => _screen!.Time;
+        public static TimeSpanF Time => _screen!.Time;
 
         /// <summary>Get time span between frames</summary>
-        public static TimeSpan FrameDelta => _screen!.FrameDelta;
+        public static TimeSpanF FrameDelta => _screen!.FrameDelta;
 
         /// <summary>Get number of current frame.</summary>
         public static long FrameNum => _screen!.FrameNum;

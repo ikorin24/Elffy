@@ -68,7 +68,7 @@ namespace Elffy
         /// <param name="time">time span for waiting</param>
         /// <param name="cancellationToken">cancellation token</param>
         /// <returns>awaitable object</returns>
-        public async UniTask<AsyncUnit> DelayTime(TimeSpan time, CancellationToken cancellationToken = default)
+        public async UniTask<AsyncUnit> DelayTime(TimeSpanF time, CancellationToken cancellationToken = default)
         {
             var start = _screen.Time;
             while(_screen.Time - start <= time) {
@@ -84,14 +84,14 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public UniTask<AsyncUnit> DelayTime(int millisecond, CancellationToken cancellationToken = default)
         {
-            return DelayTime(TimeSpan.FromMilliseconds(millisecond), cancellationToken);
+            return DelayTime(TimeSpanF.FromMilliseconds(millisecond), cancellationToken);
         }
 
         /// <summary>Wait for the specified real time.</summary>
         /// <param name="time">time span for waiting</param>
         /// <param name="cancellationToken">cancellation token</param>
         /// <returns>awaitable object</returns>
-        public async UniTask<AsyncUnit> DelayRealTime(TimeSpan time, CancellationToken cancellationToken = default)
+        public async UniTask<AsyncUnit> DelayRealTime(TimeSpanF time, CancellationToken cancellationToken = default)
         {
             var start = Engine.RunningRealTime;
             while(Engine.RunningRealTime - start <= time) {
@@ -107,7 +107,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public UniTask<AsyncUnit> DelayRealTime(int millisecond, CancellationToken cancellationToken = default)
         {
-            return DelayRealTime(TimeSpan.FromMilliseconds(millisecond), cancellationToken);
+            return DelayRealTime(TimeSpanF.FromMilliseconds(millisecond), cancellationToken);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
