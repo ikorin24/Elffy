@@ -18,14 +18,16 @@ namespace Elffy.Serialization
 {
     public static class PmxModelBuilder
     {
-        //private sealed record ModelState(IResourceLoader ResourceLoader, string Name, CancellationToken CancellationToken);
         private sealed record ModelState(ResourceFile File, CancellationToken CancellationToken);
+
+        private static readonly Model3DBuilderDelegate<ModelState> _build = Build;
+        private static readonly Model3DRenderingDelegate _render = RenderModel;
 
         public static Model3D CreateLazyLoadingPmx(ResourceFile file, CancellationToken cancellationToken = default)
         {
             file.ThrowIfNotFound();
             var obj = new ModelState(file, cancellationToken);
-            return Model3D.Create(obj, Build, RenderModel);
+            return Model3D.Create(obj, _build, _render);
         }
 
         private static void RenderModel(Model3D model3D, in Matrix4 model, in Matrix4 view, in Matrix4 projection, Model3DDrawElementsDelegate drawElements)

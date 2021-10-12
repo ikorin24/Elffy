@@ -16,12 +16,14 @@ namespace Elffy.Serialization.Fbx
     {
         private sealed record StateObject(ResourceFile File, CancellationToken CancellationToken);
 
+        private static readonly Model3DBuilderDelegate<StateObject> _build = Build;
+
         public static Model3D CreateLazyLoadingFbx(ResourceFile file, CancellationToken cancellationToken = default)
         {
             ResourceNotFoundException.ThrowIfNotFound(file);
             var obj = new StateObject(file, cancellationToken);
 
-            return Model3D.Create(obj, Build);
+            return Model3D.Create(obj, _build);
         }
 
         private static async UniTask Build(StateObject obj, Model3D model, Model3DLoadMeshDelegate load)

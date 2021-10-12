@@ -13,11 +13,13 @@ namespace Elffy.Serialization.Wavefront
     {
         private sealed record StateObject(ResourceFile File, CancellationToken CancellationToken);
 
+        private static readonly Model3DBuilderDelegate<StateObject> _build = Build;
+
         public static Model3D CreateLazyLoadingObj(ResourceFile file, CancellationToken cancellationToken = default)
         {
             file.ThrowIfNotFound();
             var obj = new StateObject(file, cancellationToken);
-            return Model3D.Create(obj, Build);
+            return Model3D.Create(obj, _build);
         }
 
         private static async UniTask Build(StateObject state, Model3D model, Model3DLoadMeshDelegate load)
