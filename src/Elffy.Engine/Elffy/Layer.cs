@@ -21,7 +21,6 @@ namespace Elffy
         private bool _isVisible;
         private LayerLifeState _state;
 
-        /// <summary>The owner of the layer</summary>
         internal LayerCollection? Owner => _owner;
 
         /// <summary>Get name of the layer</summary>
@@ -33,6 +32,8 @@ namespace Elffy
         public int SortNumber => _sortNumber;
 
         public LayerTimingPointList TimingPoints => _timingPoints;
+
+        public IHostScreen? Screen => _owner?.Screen;
 
         /// <summary>Get count of alive objects in the current frame.</summary>
         public int ObjectCount => _store.ObjectCount;
@@ -74,7 +75,7 @@ namespace Elffy
             if(screen is null) { ThrowNullArg(); }
             if(Engine.CurrentContext != screen) { ThrowContextMismatch(); }
             cancellationToken.ThrowIfCancellationRequested();
-            if(_state == LayerLifeState.Activated) { ThrowCalledWhenActivated(); }
+            if(_state == LayerLifeState.Activating) { ThrowNowActivating(); }
             if(_state.IsAfter(LayerLifeState.New)) {
                 await timingPoint.NextOrNow(cancellationToken);
                 return this;
@@ -82,22 +83,28 @@ namespace Elffy
 
             Debug.Assert(_state == LayerLifeState.New);
             Debug.Assert(_owner is null);
-            _state = LayerLifeState.Activated;
+            _state = LayerLifeState.Activating;
             _owner = screen.Layers;
             screen.Layers.Add(this);
-            await timingPoint.Next(cancellationToken);
+            await WaitForNextFrame(screen, timingPoint, cancellationToken);
 
             Debug.Assert(_state.IsSameOrAfter(LayerLifeState.Alive));
             return this;
 
             [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(screen));
             [DoesNotReturn] static void ThrowContextMismatch() => throw new InvalidOperationException("Invalid current context.");
-            [DoesNotReturn] static void ThrowCalledWhenActivated() => throw new InvalidOperationException($"Cannot call Activate method when the life state is {LayerLifeState.Activated}.");
+            [DoesNotReturn] static void ThrowNowActivating() => throw new InvalidOperationException($"Cannot call Activate method when the life state is {LayerLifeState.Activating}.");
+        }
+
+        private static async UniTask WaitForNextFrame(IHostScreen screen, FrameTimingPoint timingPoint, CancellationToken cancellationToken)
+        {
+            await screen.TimingPoints.FrameInitializing.Next(cancellationToken);
+            await timingPoint.NextOrNow(cancellationToken);
         }
 
         internal void OnAddedToListCallback(LayerCollection owner)
         {
-            Debug.Assert(_state == LayerLifeState.Activated);
+            Debug.Assert(_state == LayerLifeState.Activating);
             _state = LayerLifeState.Alive;
             OnAlive(owner.Screen);
         }
@@ -109,8 +116,17 @@ namespace Elffy
             OnLayerTerminated();
         }
 
-        internal void AddFrameObject(FrameObject frameObject) => _store.AddFrameObject(frameObject);
-        internal void RemoveFrameObject(FrameObject frameObject) => _store.RemoveFrameObject(frameObject);
+        internal void AddFrameObject(FrameObject frameObject)
+        {
+            Debug.Assert(TryGetHostScreen(out var screen) && screen.CurrentTiming.IsOutOfFrameLoop() == false);
+            _store.AddFrameObject(frameObject);
+        }
+
+        internal void RemoveFrameObject(FrameObject frameObject)
+        {
+            _store.RemoveFrameObject(frameObject);
+        }
+
         internal void ApplyAdd() => _store.ApplyAdd();
         internal void ApplyRemove() => _store.ApplyRemove();
         internal void EarlyUpdate() => _store.EarlyUpdate();

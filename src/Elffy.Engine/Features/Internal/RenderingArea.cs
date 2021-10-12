@@ -15,6 +15,7 @@ namespace Elffy.Features.Internal
         private readonly CancellationTokenSource _runningTokenSource;
         private bool _isCloseRequested;
         private bool _disposed;
+        private bool _initializedEventCalled;
         private int _runningThreadId;
         private Vector2i _frameBufferSize;
         private Color4 _clearColor;
@@ -61,6 +62,14 @@ namespace Elffy.Features.Internal
         public void Initialize()
         {
             _runningThreadId = ThreadHelper.CurrentThreadId;
+            InitializeGL();
+
+            // Initialize viewport and so on.
+            SetFrameBufferSize(OwnerScreen.FrameBufferSize);
+        }
+
+        private void InitializeGL()
+        {
             var clearColor = _clearColor;
             GL.ClearColor(clearColor.R, _clearColor.G, _clearColor.B, _clearColor.A);
             GL.Enable(EnableCap.DepthTest);
@@ -75,18 +84,16 @@ namespace Elffy.Features.Internal
             GL.FrontFace(FrontFaceDirection.Ccw);
 
             GL.Disable(EnableCap.Multisample);  // I don't care about MSAA
+        }
 
-            // Initialize viewport and so on.
-            SetFrameBufferSize(OwnerScreen.FrameBufferSize);
-
+        private void InvokeInitializedEvent()
+        {
             try {
                 Initialized?.Invoke(OwnerScreen);
             }
             catch {
                 // Don't throw. (Ignore exceptions in user code)
             }
-            var layers = Layers;
-            layers.ApplyAdd();
         }
 
         /// <summary>Update and render the next frame</summary>
@@ -100,13 +107,22 @@ namespace Elffy.Features.Internal
                 _runningTokenSource.Cancel();
             }
 
-            // ------------------------------------------------------------
-            // Frame initializing
-            _currentTiming = CurrentFrameTiming.FrameInitializing;
             var frameTimingPoints = TimingPoints;
             var layers = Layers;
             Mouse.InitFrame();
             Keyboard.InitFrame();
+
+            // ------------------------------------------------------------
+            // First Frame initializing
+            if(_initializedEventCalled == false) {
+                _initializedEventCalled = true;
+                _currentTiming = CurrentFrameTiming.FirstFrameInitializing;
+                InvokeInitializedEvent();
+            }
+
+            // ------------------------------------------------------------
+            // Frame initializing
+            _currentTiming = CurrentFrameTiming.FrameInitializing;
             layers.ApplyAdd();
             frameTimingPoints.FrameInitializing.DoQueuedEvents();
 

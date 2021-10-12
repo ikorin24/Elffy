@@ -8,7 +8,6 @@ namespace Elffy
     [GenerateEnumLikeStruct(typeof(byte))]
     [EnumLikeValue(nameof(LSV.New), LSV.New, "Initial state of <see cref=\"" + nameof(FrameObject) + "\"/>. Not managed by the engine.")]
     [EnumLikeValue(nameof(LSV.Activating), LSV.Activating)]
-    [EnumLikeValue(nameof(LSV.Activated), LSV.Activated, "State that <see cref=\"" + nameof(FrameObject) + "\"/> is in the activation queue. (It is not running yet, it gets alive in the next frame.)")]
     [EnumLikeValue(nameof(LSV.Alive), LSV.Alive, "State that <see cref=\"" + nameof(FrameObject) + "\"/> is running.")]
     [EnumLikeValue(nameof(LSV.Terminated), LSV.Terminated, "State that <see cref=\"" + nameof(FrameObject) + "\"/> is in the termination queue. (It is still running, it gets dead in the next frame.)")]
     [EnumLikeValue(nameof(LSV.Dead), LSV.Dead, "State that <see cref=\"" + nameof(FrameObject) + "\"/> is dead. Not managed by the engine.")]
@@ -37,9 +36,8 @@ namespace Elffy
     {
         public const byte New = 0;
         public const byte Activating = 1;
-        public const byte Activated = 2;
-        public const byte Alive = 3;
-        public const byte Terminated = 4;
-        public const byte Dead = 5;
+        public const byte Alive = 2;
+        public const byte Terminated = 3;
+        public const byte Dead = 4;
     }
 }

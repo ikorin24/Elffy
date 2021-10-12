@@ -6,8 +6,7 @@ namespace Elffy
 {
     [GenerateEnumLikeStruct(typeof(byte))]
     [EnumLikeValue(nameof(LSV.New), LSV.New)]
-    //[EnumLikeValue(nameof(LSV.Activating), LSV.Activating)]
-    [EnumLikeValue(nameof(LSV.Activated), LSV.Activated)]
+    [EnumLikeValue(nameof(LSV.Activating), LSV.Activating)]
     [EnumLikeValue(nameof(LSV.Alive), LSV.Alive)]
     [EnumLikeValue(nameof(LSV.Terminated), LSV.Terminated)]
     [EnumLikeValue(nameof(LSV.Dead), LSV.Dead)]

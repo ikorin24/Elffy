@@ -184,7 +184,7 @@ namespace Elffy.Features.Internal
         {
             _list.AddRange(_addedBuf);
             foreach(var item in _addedBuf.AsSpan()) {
-                Debug.Assert(item.LifeState == LifeState.Activated);
+                Debug.Assert(item.LifeState == LifeState.Activating);
                 if(item is Renderable renderable) {
                     _renderables.Add(renderable);
                 }

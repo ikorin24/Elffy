@@ -54,15 +54,16 @@ namespace Elffy
     {
         internal const byte OutOfFrameLoop = 0;
         internal const byte NotSpecified = 0;
-        internal const byte FrameInitializing = 1;
-        internal const byte EarlyUpdate = 2;
-        internal const byte Update = 3;
-        internal const byte LateUpdate = 4;
-        internal const byte BeforeRendering = 5;
+        internal const byte FirstFrameInitializing = 1;
+        internal const byte FrameInitializing = 2;
+        internal const byte EarlyUpdate = 3;
+        internal const byte Update = 4;
+        internal const byte LateUpdate = 5;
+        internal const byte BeforeRendering = 6;
         internal const byte Rendering = 100;
-        internal const byte AfterRendering = 6;
+        internal const byte AfterRendering = 7;
         internal const byte FrameFinalizing = 101;
 
-        internal const byte __FrameTimingValidMax = 6;
+        internal const byte __FrameTimingValidMax = 7;
     }
 }

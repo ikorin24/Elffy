@@ -18,6 +18,11 @@ namespace Elffy
             return new WorldLayer(name, sortNumber).Activate(screen, cancellationToken);
         }
 
+        public static UniTask<WorldLayer> NewActivate(IHostScreen screen, string name, FrameTimingPoint timingPoint, int sortNumber = DefaultSortNumber, CancellationToken cancellationToken = default)
+        {
+            return new WorldLayer(name, sortNumber).Activate(screen, timingPoint, cancellationToken);
+        }
+
         protected override void OnAlive(IHostScreen screen)
         {
             // nop

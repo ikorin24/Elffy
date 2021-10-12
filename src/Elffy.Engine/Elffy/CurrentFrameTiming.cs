@@ -5,6 +5,7 @@ namespace Elffy
 {
     [GenerateEnumLikeStruct(typeof(byte))]
     [EnumLikeValue(nameof(FTV.OutOfFrameLoop), FTV.OutOfFrameLoop)]
+    [EnumLikeValue(nameof(FTV.FirstFrameInitializing), FTV.FirstFrameInitializing)]
     [EnumLikeValue(nameof(FTV.FrameInitializing), FTV.FrameInitializing)]
     [EnumLikeValue(nameof(FTV.EarlyUpdate), FTV.EarlyUpdate)]
     [EnumLikeValue(nameof(FTV.Update), FTV.Update)]
@@ -15,5 +16,6 @@ namespace Elffy
     [EnumLikeValue(nameof(FTV.FrameFinalizing), FTV.FrameFinalizing)]
     public partial struct CurrentFrameTiming
     {
+        public bool IsOutOfFrameLoop() => this == OutOfFrameLoop;
     }
 }

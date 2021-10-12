@@ -252,14 +252,7 @@ namespace Elffy.UI
             Renderable.Terminate();
         }
 
-        protected virtual void OnActivated() => Activated?.Invoke(this);
-
         protected virtual void OnDead() => Dead?.Invoke(this);
-
-        internal void OnRenderableActivated()
-        {
-            OnActivated();
-        }
 
         internal void OnRenderableDead()
         {

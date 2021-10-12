@@ -74,7 +74,7 @@ namespace Elffy.UI
         private static async UniTask UIEventPipeline(CoroutineState coroutine, (IHostScreen Screen, UILayer Layer) state)
         {
             var (screen, layer) = state;
-            while(coroutine.CanRun && layer.Owner is not null) {
+            while(coroutine.CanRun && layer.LifeState.IsRunning()) {
                 layer.HitTest(screen.Mouse);
                 layer.UIEvent();
                 await screen.TimingPoints.FrameInitializing.Next();

@@ -40,7 +40,7 @@ namespace Elffy
         internal CoroutineState(FrameObject frameObject)
         {
             Debug.Assert(frameObject is not null);
-            Debug.Assert(frameObject.LifeState.IsSameOrAfter(LifeState.Activated));
+            Debug.Assert(frameObject.LifeState.IsSameOrAfter(LifeState.Alive));
             var hasScreen = frameObject.TryGetHostScreen(out var screen);
             Debug.Assert(hasScreen);
             Debug.Assert(screen is not null);

@@ -18,9 +18,6 @@ namespace Elffy
         private LifeState _state = LifeState.New;
         private bool _isFrozen;
 
-        /// <summary>Event of activated</summary>
-        public event Action<FrameObject>? Activated;
-
         /// <summary>Event of terminated, which fires when <see cref="Terminate"/> is called.</summary>
         public event Action<FrameObject>? Terminated;
 
@@ -45,8 +42,8 @@ namespace Elffy
         /// <summary>Get or set whether the <see cref="FrameObject"/> skips early updating, updating, and late updating. (Skips if true)</summary>
         public bool IsFrozen { get => _isFrozen; set => _isFrozen = value; }
 
-        ///// <summary>Get the layer where the <see cref="FrameObject"/> is.</summary>
-        //private protected ILayer? InternalLayer => _layer;
+        public IHostScreen? Screen => _hostScreen;
+        public Layer? Layer => _layer;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetLayer([MaybeNullWhen(false)] out Layer layer)
@@ -80,29 +77,19 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void LateUpdate() => OnLateUpdte();
 
-        /// <summary>Activate the object in the specified layer.</summary>
-        /// <param name="layer">layer where the object is activated</param>
-        /// <param name="timing"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        internal async UniTask<FrameObject> ActivateOnWorldLayer(WorldLayer layer, FrameTiming timing, CancellationToken cancellationToken)
+        internal async UniTask<FrameObject> ActivateOnWorldLayer(WorldLayer layer, FrameTimingPoint timingPoint, CancellationToken cancellationToken)
         {
             if(layer is null) { ThrowNullArg(); }
-            if(layer.TryGetHostScreen(out var screen) == false) {
-                ThrowInvalidLayer();
-            }
-            if(Engine.CurrentContext != screen) {
-                ThrowContextMismatch();
-            }
-
-            timing.ThrowArgExceptionIfNotSpecified(nameof(timing));
+            if(timingPoint is null) { ThrowNullArg(); }
+            if(layer.TryGetHostScreen(out var screen) == false) { ThrowInvalidLayer(); }
+            if(Engine.CurrentContext != screen) { ThrowContextMismatch(); }
             cancellationToken.ThrowIfCancellationRequested();
 
+            if(_state == LifeState.Activating) {
+                ThrowNowActivating();
+            }
             if(_state.IsAfter(LifeState.New)) {
-                if(_state == LifeState.Activating) {
-                    throw new InvalidOperationException($"Cannot call Activate method when the life state is {LifeState.Activating}.");
-                }
-                await screen.TimingPoints.TimingOf(timing).NextOrNow(cancellationToken);
+                await timingPoint.NextOrNow(cancellationToken);
                 return this;
             }
 
@@ -128,26 +115,34 @@ namespace Elffy
 
                 throw;  // Throw exceptions of activating.
             }
-            await screen.TimingPoints.TimingOf(timing).NextOrNow(cancellationToken);
-            _state = LifeState.Activated;
+            if(screen.CurrentTiming.IsOutOfFrameLoop()) {
+                await screen.TimingPoints.FrameInitializing.Next(cancellationToken);
+            }
             layer.AddFrameObject(this);
-            OnActivated();
+            await WaitForNextFrame(screen, timingPoint, cancellationToken);
+            Debug.Assert(_state.IsSameOrAfter(LifeState.Alive));
             return this;
 
             [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(layer));
             [DoesNotReturn] static void ThrowInvalidLayer() => throw new ArgumentException($"{nameof(layer)} is not associated with {nameof(IHostScreen)}");
             [DoesNotReturn] static void ThrowContextMismatch() => throw new InvalidOperationException("Invalid current context.");
+            [DoesNotReturn] static void ThrowNowActivating() => throw new InvalidOperationException($"Cannot call Activate method when the life state is {LifeState.Activating}.");
+        }
+
+        private static async UniTask WaitForNextFrame(IHostScreen screen, FrameTimingPoint timingPoint, CancellationToken cancellationToken)
+        {
+            await screen.TimingPoints.FrameInitializing.Next(cancellationToken);
+            await timingPoint.NextOrNow(cancellationToken);
         }
 
         internal void ActivateOnUILayer(UILayer layer)
         {
             if(_state != LifeState.New) { return; }
             Debug.Assert(layer is not null);
-            Debug.Assert(layer.Owner is not null);
+            Debug.Assert(layer.LifeState == LayerLifeState.Alive);
             Debug.Assert(GetType() == typeof(UIRenderable));
 
-            layer.TryGetHostScreen(out var screen);
-
+            var screen = layer.Screen;
             Debug.Assert(screen is not null);
             Debug.Assert(Engine.CurrentContext == screen);
 
@@ -158,10 +153,10 @@ namespace Elffy
             // [NOTE] UIRenderable must complete OnActivating synchronously. (See the implementation of UIRenderable)
             OnActivating(default).SyncGetResult();
 
-            _state = LifeState.Activated;
             layer.AddFrameObject(this);
-
-            OnActivated();
+            //await WaitForNextFrame(screen, timingPoint, cancellationToken);   // TODO: Lazy applying control list, Wait for alive
+            //Debug.Assert(_state.IsSameOrAfter(LifeState.Alive));  // TODO:
+            return;
         }
 
         /// <summary>Terminate the object and remove it from the engine.</summary>
@@ -192,8 +187,6 @@ namespace Elffy
 
         protected virtual UniTask<AsyncUnit> OnActivating(CancellationToken cancellationToken) => UniTask.FromResult(AsyncUnit.Default);
 
-        protected virtual void OnActivated() => Activated?.Invoke(this);
-
         protected virtual void OnTerminated() => Terminated?.Invoke(this);
 
         protected virtual void OnAlive() => Alive?.Invoke(this);
@@ -202,7 +195,7 @@ namespace Elffy
 
         internal void AddToObjectStoreCallback()
         {
-            Debug.Assert(_state == LifeState.Activated);
+            Debug.Assert(_state == LifeState.Activating);
             _state = LifeState.Alive;
             OnAlive();
         }
@@ -225,16 +218,22 @@ namespace Elffy
         public static async UniTask<T> Activate<T>(this T source, WorldLayer layer, CancellationToken cancellationToken = default)
             where T : FrameObject
         {
-            await source.ActivateOnWorldLayer(layer, FrameTiming.Update, cancellationToken);
+            if(layer.TryGetHostScreen(out var screen) == false) {
+                ThrowInvalidLayer();
+            }
+            await source.ActivateOnWorldLayer(layer, screen.TimingPoints.Update, cancellationToken);
             return source;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static async UniTask<T> Activate<T>(this T source, WorldLayer layer, FrameTiming timing, CancellationToken cancellationToken = default)
+        public static async UniTask<T> Activate<T>(this T source, WorldLayer layer, FrameTimingPoint timingPoint, CancellationToken cancellationToken = default)
             where T : FrameObject
         {
-            await source.ActivateOnWorldLayer(layer, timing, cancellationToken);
+            await source.ActivateOnWorldLayer(layer, timingPoint, cancellationToken);
             return source;
         }
+
+        [DoesNotReturn]
+        private static void ThrowInvalidLayer() => throw new ArgumentException($"The layer is not associated with {nameof(IHostScreen)}");
     }
 }

@@ -15,6 +15,7 @@ namespace Elffy.UI
     {
         private readonly Control _owner;
 
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private string DebugDisplay => $"{nameof(ControlCollection)} (Count = {Count})";
 
         public Control this[int index] => _owner.ChildrenCore[index];

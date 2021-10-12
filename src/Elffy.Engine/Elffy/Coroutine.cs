@@ -8,7 +8,7 @@ using System.Runtime.CompilerServices;
 namespace Elffy
 {
     // [NOTE]
-    // 1. A coroutine is started when the parent object becomes active. (The parent is FrameObject or IHostScreen)
+    // 1. A coroutine is started when the parent object becomes alive. (The parent is FrameObject or IHostScreen)
     // 2. Coroutines can be executed only while the parent object is alive.
     // 3. Not thread-safe (Don't call 'Coroutine.StartXXX' and 'FrameObject.Activate' at the same time in parallel.)
 
@@ -203,7 +203,7 @@ namespace Elffy
             }
             else if(typeof(TParent) == typeof(FrameObject)) {
                 var parentFrameObject = SafeCast.As<FrameObject>(parent);
-                if(parentFrameObject.LifeState.IsBefore(LifeState.Activated)) {
+                if(parentFrameObject.LifeState.IsBefore(LifeState.Alive)) {
                     ReserveCoroutine(parentFrameObject, state, coroutine, null, timing);
                 }
                 else {
@@ -220,7 +220,7 @@ namespace Elffy
             if(typeof(TParent) == typeof(IHostScreen)) {
                 var parentScreen = SafeCast.As<IHostScreen>(parent);
                 if(parentScreen.IsRunning == false) {
-                    ThrowParentNotActivated();
+                    ThrowParentNotAlive();
                     return UniTask.CompletedTask;
                 }
                 else {
@@ -230,8 +230,8 @@ namespace Elffy
             }
             else if(typeof(TParent) == typeof(FrameObject)) {
                 var parentFrameObject = SafeCast.As<FrameObject>(parent);
-                if(parentFrameObject.LifeState.IsBefore(LifeState.Activated)) {
-                    ThrowParentNotActivated();
+                if(parentFrameObject.LifeState.IsBefore(LifeState.Alive)) {
+                    ThrowParentNotAlive();
                     return UniTask.CompletedTask;
                 }
                 else {
@@ -277,22 +277,22 @@ namespace Elffy
                 if(typeof(TState) == typeof(DummyState)) {
                     if(onCatch is null) {
                         // [capture] coroutine, timing
-                        parentFrameObject.Activated += f => StartCoroutine(new CoroutineState(f), DummyState.Null, coroutine, null, timing).Forget();
+                        parentFrameObject.Alive += f => StartCoroutine(new CoroutineState(f), DummyState.Null, coroutine, null, timing).Forget();
                     }
                     else {
                         // [capture] coroutine, onCatch, timing
-                        parentFrameObject.Activated += f => StartCoroutine(new CoroutineState(f), DummyState.Null, coroutine, onCatch, timing).Forget();
+                        parentFrameObject.Alive += f => StartCoroutine(new CoroutineState(f), DummyState.Null, coroutine, onCatch, timing).Forget();
                     }
                     return;
                 }
                 else {
                     if(onCatch is null) {
                         // [capture] state, coroutine, timing
-                        parentFrameObject.Activated += f => StartCoroutine(new CoroutineState(f), state, coroutine, null, timing).Forget();
+                        parentFrameObject.Alive += f => StartCoroutine(new CoroutineState(f), state, coroutine, null, timing).Forget();
                     }
                     else {
                         // [capture] state, coroutine, onCatch, timing
-                        parentFrameObject.Activated += f => StartCoroutine(new CoroutineState(f), state, coroutine, onCatch, timing).Forget();
+                        parentFrameObject.Alive += f => StartCoroutine(new CoroutineState(f), state, coroutine, onCatch, timing).Forget();
                     }
                     return;
                 }
@@ -310,7 +310,7 @@ namespace Elffy
                 if(coroutineState.Screen.IsRunning == false) { return; }
             }
             else {
-                Debug.Assert(fo.LifeState.IsSameOrAfter(LifeState.Activated));
+                Debug.Assert(fo.LifeState.IsSameOrAfter(LifeState.Alive));
                 if(fo.LifeState == LifeState.Dead) { return; }
             }
             try {
@@ -338,6 +338,6 @@ namespace Elffy
         private static void ThrowNullArg(string message) => throw new ArgumentNullException(message);
 
         [DoesNotReturn]
-        public static void ThrowParentNotActivated() => throw new ArgumentException("The parent of the coroutine is not activated yet.");
+        public static void ThrowParentNotAlive() => throw new ArgumentException("The parent of the coroutine is not alive yet.");
     }
 }
