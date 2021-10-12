@@ -10,6 +10,8 @@ namespace Elffy
     [Serializable]
     public readonly partial struct TimeSpanF : IEquatable<TimeSpanF>, IComparable<TimeSpanF>, IComparable, IFormattable
     {
+        // TODO: Generic math implementation for .NET6
+
         private readonly TimeSpan _ts;
 
         public const long TicksPerDay = TimeSpan.TicksPerDay;
