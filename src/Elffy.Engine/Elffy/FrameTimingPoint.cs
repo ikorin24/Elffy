@@ -8,10 +8,11 @@ using Elffy.Features.Internal;
 
 namespace Elffy
 {
+    [DebuggerDisplay("{DebuggerView,nq}")]
     public sealed class FrameTimingPoint : ITimingPoint
     {
         private readonly IHostScreen _screen;
-        private readonly AsyncEventQueueCore _eventQueue;
+        private AsyncEventQueueCore _eventQueue;
         private readonly FrameTiming _timing;
 
         private CurrentFrameTiming CurrentTiming => _screen.CurrentTiming;
@@ -19,11 +20,14 @@ namespace Elffy
         public IHostScreen Screen => _screen;
         public FrameTiming TargetTiming => _timing;
 
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private string DebuggerView => $"{_timing} ({_screen.GetType().Name} \"{_screen.Title}\")";
+
         internal FrameTimingPoint(IHostScreen screen, FrameTiming timing)
         {
             Debug.Assert(timing.IsSpecified());
             _screen = screen;
-            _eventQueue = AsyncEventQueueCore.New();
+            _eventQueue = new AsyncEventQueueCore();
             _timing = timing;
         }
 

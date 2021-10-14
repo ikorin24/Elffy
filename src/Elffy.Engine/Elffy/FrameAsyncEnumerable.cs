@@ -9,28 +9,25 @@ namespace Elffy
 {
     public readonly struct FrameAsyncEnumerable : IUniTaskAsyncEnumerable<FrameInfo>
     {
-        private readonly FrameTimingPointList _timingPoints;
-        private readonly FrameTiming _timing;
+        private readonly FrameTimingPoint _timingPoint;
         private readonly CancellationToken _cancellationToken;
 
-        internal FrameAsyncEnumerable(FrameTimingPointList timingPoints, FrameTiming timing, CancellationToken cancellation)
+        internal FrameAsyncEnumerable(FrameTimingPoint timingPoint, CancellationToken cancellationToken)
         {
-            Debug.Assert(timing.IsSpecified());
-            _timingPoints = timingPoints;
-            _timing = timing;
-            _cancellationToken = cancellation;
+            Debug.Assert(timingPoint is not null);
+            _timingPoint = timingPoint;
+            _cancellationToken = cancellationToken;
         }
 
         private FrameAsyncEnumerable(in FrameAsyncEnumerable old, CancellationToken cancellationToken)
         {
-            _timingPoints = old._timingPoints;
-            _timing = old._timing;
+            _timingPoint = old._timingPoint;
             _cancellationToken = cancellationToken;
         }
 
-        public FrameAsyncEnumerator GetAsyncEnumerator(CancellationToken cancellationToken = default)
+        public Enumerator GetAsyncEnumerator(CancellationToken cancellationToken = default)
         {
-            return new FrameAsyncEnumerator(_timingPoints.Screen, _timing, CancellationTokenHelper.Combine(_cancellationToken, cancellationToken));
+            return new Enumerator(_timingPoint, CancellationTokenHelper.Combine(_cancellationToken, cancellationToken));
         }
 
         IUniTaskAsyncEnumerator<FrameInfo> IUniTaskAsyncEnumerable<FrameInfo>.GetAsyncEnumerator(CancellationToken cancellationToken)
@@ -42,42 +39,43 @@ namespace Elffy
         {
             return new FrameAsyncEnumerable(this, CancellationTokenHelper.Combine(_cancellationToken, cancellationToken));
         }
-    }
 
-    public readonly struct FrameAsyncEnumerator : IUniTaskAsyncEnumerator<FrameInfo>
-    {
-        private readonly FrameTimingPoint _timingPoint;
-        private readonly CancellationToken _cancellationToken;
-        private readonly TimeSpanF _startTime;
-        private readonly long _startFrame;
-
-        public FrameInfo Current
+        public readonly struct Enumerator : IUniTaskAsyncEnumerator<FrameInfo>
         {
-            get
+            private readonly FrameTimingPoint _timingPoint;
+            private readonly CancellationToken _cancellationToken;
+            private readonly TimeSpanF _startTime;
+            private readonly long _startFrame;
+
+            public FrameInfo Current
             {
-                var screen = _timingPoint.Screen;
-                return new FrameInfo(screen.FrameNum - _startFrame, screen.Time - _startTime);
+                get
+                {
+                    var screen = _timingPoint.Screen;
+                    return new FrameInfo(screen.FrameNum - _startFrame, screen.Time - _startTime);
+                }
             }
-        }
 
-        internal FrameAsyncEnumerator(IHostScreen screen, FrameTiming timing, CancellationToken cancellationToken)
-        {
-            Debug.Assert(timing.IsSpecified());
-            _timingPoint = screen.TimingPoints.TimingOf(timing);
-            _cancellationToken = cancellationToken;
-            _startTime = screen.Time + screen.FrameDelta;
-            _startFrame = screen.FrameNum + 1;
-        }
-
-        public UniTask DisposeAsync() => UniTask.CompletedTask;
-
-        public async UniTask<bool> MoveNextAsync()
-        {
-            if(_cancellationToken.IsCancellationRequested) {
-                return false;
+            internal Enumerator(FrameTimingPoint timingPoint, CancellationToken cancellationToken)
+            {
+                Debug.Assert(timingPoint is not null);
+                _timingPoint = timingPoint;
+                _cancellationToken = cancellationToken;
+                var screen = timingPoint.Screen;
+                _startTime = screen.Time + screen.FrameDelta;
+                _startFrame = screen.FrameNum + 1;
             }
-            await _timingPoint.Next();
-            return true;
+
+            public UniTask DisposeAsync() => UniTask.CompletedTask;
+
+            public async UniTask<bool> MoveNextAsync()
+            {
+                if(_cancellationToken.IsCancellationRequested) {
+                    return false;
+                }
+                await _timingPoint.Next();
+                return true;
+            }
         }
     }
 

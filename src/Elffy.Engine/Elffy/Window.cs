@@ -14,7 +14,7 @@ using TKMouseButtonEventArgs = OpenTK.Windowing.Common.MouseButtonEventArgs;
 namespace Elffy
 {
     /// <summary>Cross platform window</summary>
-    [DebuggerDisplay("Window ({Title})")]
+    [DebuggerDisplay("{GetType().Name,nq} {Title}")]
     public class Window : IHostScreen
     {
         private const string DefaultTitle = "Window";
@@ -180,7 +180,8 @@ namespace Elffy
 
         public FrameAsyncEnumerable Frames(FrameTiming timing, CancellationToken cancellationToken = default)
         {
-            return new FrameAsyncEnumerable(TimingPoints, timing, cancellationToken);
+            var timingPoint = TimingPoints.TimingOf(timing);
+            return new FrameAsyncEnumerable(timingPoint, cancellationToken);
         }
 
         public void Maximize()
