@@ -18,9 +18,6 @@ namespace Elffy
         private LifeState _state = LifeState.New;
         private bool _isFrozen;
 
-        /// <summary>Event of terminated, which fires when <see cref="Terminate"/> is called.</summary>
-        public event Action<FrameObject>? Terminated;
-
         /// <summary>Event of alive, which fires in the first frame where <see cref="LifeState"/> get <see cref="LifeState.Alive"/>.</summary>
         public event Action<FrameObject>? Alive;
 
@@ -77,7 +74,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void LateUpdate() => OnLateUpdte();
 
-        internal async UniTask<FrameObject> ActivateOnWorldLayer(WorldLayer layer, FrameTimingPoint timingPoint, CancellationToken cancellationToken)
+        internal async UniTask ActivateOnWorldLayer(WorldLayer layer, FrameTimingPoint timingPoint, CancellationToken cancellationToken)
         {
             if(layer is null) { ThrowNullArg(); }
             if(timingPoint is null) { ThrowNullArg(); }
@@ -90,7 +87,7 @@ namespace Elffy
             }
             if(_state.IsAfter(LifeState.New)) {
                 await timingPoint.NextOrNow(cancellationToken);
-                return this;
+                return;
             }
 
             Debug.Assert(_state == LifeState.New);
@@ -106,7 +103,7 @@ namespace Elffy
                 if(screen.RunningToken.IsCancellationRequested == false) {
                     await screen.TimingPoints.Update.NextOrNow(CancellationToken.None);
                     try {
-                        Terminate();
+                        await TerminateFromLayer(timingPoint);
                     }
                     catch {
                         // Ignore exceptions in Terminate()
@@ -121,7 +118,7 @@ namespace Elffy
             layer.AddFrameObject(this);
             await WaitForNextFrame(screen, timingPoint, cancellationToken);
             Debug.Assert(_state.IsSameOrAfter(LifeState.Alive));
-            return this;
+            return;
 
             [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(layer));
             [DoesNotReturn] static void ThrowInvalidLayer() => throw new ArgumentException($"{nameof(layer)} is not associated with {nameof(IHostScreen)}");
@@ -159,24 +156,32 @@ namespace Elffy
             return;
         }
 
-        /// <summary>Terminate the object and remove it from the engine.</summary>
-        public void Terminate()
+        internal async UniTask TerminateFromLayer(FrameTimingPoint? timingPoint)
         {
             var context = Engine.CurrentContext;
-            if(context is null || context != _hostScreen) {
-                ThrowContextMismatch();
-            }
-            if(_state == LifeState.New || _state.IsSameOrAfter(LifeState.Terminated)) {
-                return;
-            }
+            if(context is null || context != _hostScreen) { ThrowContextMismatch(); }
 
+            Debug.Assert(timingPoint is not null || _state == LifeState.New || _state.IsSameOrAfter(LifeState.Terminated));
+
+            if(_state == LifeState.New) { ThrowNotActivated(); }
+            if(_state.IsSameOrAfter(LifeState.Terminated)) { ThrowTerminateTwice(); }
+
+            await OnTerminating();
+
+            Debug.Assert(_state == LifeState.Activating || _state == LifeState.Alive);
             Debug.Assert(_layer is not null);
-
             _state = LifeState.Terminated;
             _layer.RemoveFrameObject(this);
-            OnTerminated();
+            var screen = _hostScreen;
+            Debug.Assert(screen is not null);
+            timingPoint ??= screen.TimingPoints.Update;
+            await WaitForNextFrame(screen, timingPoint, CancellationToken.None);
+            Debug.Assert(_state == LifeState.Dead);
+            return;
 
             [DoesNotReturn] static void ThrowContextMismatch() => throw new InvalidOperationException("Invalid current context.");
+            [DoesNotReturn] static void ThrowNotActivated() => throw new InvalidOperationException($"Cannot terminate {nameof(FrameObject)} because it is not activated.");
+            [DoesNotReturn] static void ThrowTerminateTwice() => throw new InvalidOperationException($"Cannot terminate {nameof(FrameObject)} twice.");
         }
 
         protected virtual void OnEarlyUpdate() => EarlyUpdated?.Invoke(this);
@@ -187,7 +192,7 @@ namespace Elffy
 
         protected virtual UniTask<AsyncUnit> OnActivating(CancellationToken cancellationToken) => UniTask.FromResult(AsyncUnit.Default);
 
-        protected virtual void OnTerminated() => Terminated?.Invoke(this);
+        protected virtual UniTask OnTerminating() => UniTask.CompletedTask;
 
         protected virtual void OnAlive() => Alive?.Invoke(this);
 
@@ -226,14 +231,52 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static async UniTask<T> Activate<T>(this T source, WorldLayer layer, FrameTimingPoint timingPoint, CancellationToken cancellationToken = default)
+        public static async UniTask<T> Activate<T>(this T frameObject, WorldLayer layer, FrameTimingPoint timingPoint, CancellationToken cancellationToken = default)
             where T : FrameObject
         {
-            await source.ActivateOnWorldLayer(layer, timingPoint, cancellationToken);
-            return source;
+            await frameObject.ActivateOnWorldLayer(layer, timingPoint, cancellationToken);
+            return frameObject;
+        }
+
+        public static async UniTask<T> Activate<T>(this T frameObject, WorldLayer layer, FrameTiming timing, CancellationToken cancellationToken = default)
+            where T : FrameObject
+        {
+            if(layer.TryGetHostScreen(out var screen) == false) {
+                ThrowInvalidLayer();
+            }
+            var timingPoint = screen.TimingPoints.TimingOf(timing);
+            await frameObject.ActivateOnWorldLayer(layer, timingPoint, cancellationToken);
+            return frameObject;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static UniTask<T> Terminate<T>(this T frameObject) where T : FrameObject
+        {
+            return frameObject.Terminate(FrameTiming.Update);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static async UniTask<T> Terminate<T>(this T frameObject, FrameTimingPoint timingPoint) where T : FrameObject
+        {
+            if(timingPoint is null) {
+                ThrowNullArg(nameof(timingPoint));
+            }
+            await frameObject.TerminateFromLayer(timingPoint);
+            return frameObject;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static async UniTask<T> Terminate<T>(this T frameObject, FrameTiming timing) where T : FrameObject
+        {
+            var timingPoint = frameObject.TryGetHostScreen(out var screen) ? screen.TimingPoints.TimingOf(timing) : null;
+            await frameObject.TerminateFromLayer(timingPoint);
+            return frameObject;
         }
 
         [DoesNotReturn]
         private static void ThrowInvalidLayer() => throw new ArgumentException($"The layer is not associated with {nameof(IHostScreen)}");
+
+        [DoesNotReturn]
+        private static void ThrowNullArg(string message) => throw new ArgumentNullException(message);
     }
 }
