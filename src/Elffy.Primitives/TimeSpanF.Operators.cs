@@ -54,14 +54,14 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static TimeSpanF operator *(double factor, TimeSpanF timeSpan) => factor * timeSpan._ts;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static TimeSpanF operator *(TimeSpanF timeSpan, float factor) => timeSpan * factor;
+        public static TimeSpanF operator *(TimeSpanF timeSpan, float factor) => timeSpan._ts * factor;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static TimeSpanF operator *(TimeSpanF timeSpan, double factor) => timeSpan * factor;
+        public static TimeSpanF operator *(TimeSpanF timeSpan, double factor) => timeSpan._ts * factor;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static TimeSpanF operator /(TimeSpanF timeSpan, float divisor) => timeSpan * divisor;
+        public static TimeSpanF operator /(TimeSpanF timeSpan, float divisor) => timeSpan._ts / divisor;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static TimeSpanF operator /(TimeSpanF timeSpan, double divisor) => timeSpan * divisor;
+        public static TimeSpanF operator /(TimeSpanF timeSpan, double divisor) => timeSpan._ts / divisor;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float operator /(TimeSpanF t1, TimeSpanF t2) => (float)(t1._ts / t2._ts);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
