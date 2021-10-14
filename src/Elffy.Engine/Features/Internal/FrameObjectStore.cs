@@ -162,7 +162,7 @@ namespace Elffy.Features.Internal
             var renderables = _renderables;
 
             foreach(var item in _removedBuf.AsSpan()) {
-                Debug.Assert(item.LifeState == LifeState.Terminated);
+                Debug.Assert(item.LifeState == LifeState.Terminating);
 
                 // The FrameObject is not in the list if it failed to activate.
                 list.Remove(item);

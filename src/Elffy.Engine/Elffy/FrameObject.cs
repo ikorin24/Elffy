@@ -161,16 +161,16 @@ namespace Elffy
             var context = Engine.CurrentContext;
             if(context is null || context != _hostScreen) { ThrowContextMismatch(); }
 
-            Debug.Assert(timingPoint is not null || _state == LifeState.New || _state.IsSameOrAfter(LifeState.Terminated));
+            Debug.Assert(timingPoint is not null || _state == LifeState.New || _state.IsSameOrAfter(LifeState.Terminating));
 
             if(_state == LifeState.New) { ThrowNotActivated(); }
-            if(_state.IsSameOrAfter(LifeState.Terminated)) { ThrowTerminateTwice(); }
+            if(_state.IsSameOrAfter(LifeState.Terminating)) { ThrowTerminateTwice(); }
 
             await OnTerminating();
 
             Debug.Assert(_state == LifeState.Activating || _state == LifeState.Alive);
             Debug.Assert(_layer is not null);
-            _state = LifeState.Terminated;
+            _state = LifeState.Terminating;
             _layer.RemoveFrameObject(this);
             var screen = _hostScreen;
             Debug.Assert(screen is not null);
@@ -209,7 +209,7 @@ namespace Elffy
         {
             Debug.Assert(_hostScreen is not null);
             Debug.Assert(Engine.CurrentContext == _hostScreen);
-            Debug.Assert(_state == LifeState.Terminated);
+            Debug.Assert(_state == LifeState.Terminating);
             _state = LifeState.Dead;
             _layer = null;
             _hostScreen = null;

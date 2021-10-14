@@ -145,7 +145,7 @@ namespace Elffy
             if(IsLoaded) { ThrowAlreadyLoaded(); }
 
             var lifeState = LifeState;
-            if(lifeState.Is(LifeState.New) || lifeState.IsSameOrAfter(LifeState.Terminated)) {
+            if(lifeState.Is(LifeState.New) || lifeState.IsSameOrAfter(LifeState.Terminating)) {
                 return;
             }
 

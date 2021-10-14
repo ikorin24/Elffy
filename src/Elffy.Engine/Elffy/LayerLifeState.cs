@@ -8,7 +8,7 @@ namespace Elffy
     [EnumLikeValue(nameof(LSV.New), LSV.New)]
     [EnumLikeValue(nameof(LSV.Activating), LSV.Activating)]
     [EnumLikeValue(nameof(LSV.Alive), LSV.Alive)]
-    [EnumLikeValue(nameof(LSV.Terminated), LSV.Terminated)]
+    [EnumLikeValue(nameof(LSV.Terminating), LSV.Terminating)]
     [EnumLikeValue(nameof(LSV.Dead), LSV.Dead)]
     public partial struct LayerLifeState
     {
@@ -28,6 +28,6 @@ namespace Elffy
         public bool IsSameOrAfter(LayerLifeState state) => _value >= state._value;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsRunning() => this == Alive || this == Terminated;
+        public bool IsRunning() => _value == Alive._value || _value == Terminating._value;
     }
 }
