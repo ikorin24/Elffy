@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using Cysharp.Threading.Tasks;
 using Elffy.Effective;
 using System;
 using System.Collections.Generic;
@@ -139,7 +140,7 @@ namespace Elffy.Features.Internal
             // Terminate all living object. (Terminated objects go to removed buffer.)
             foreach(var item in _list.AsSpan()) {
                 try {
-                    item.Terminate();
+                    item.Terminate().Forget();  // TODO: await
                 }
                 catch {
                     // Don't throw. (Ignore exceptions in user code)
