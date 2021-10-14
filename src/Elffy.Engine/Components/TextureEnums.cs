@@ -1,6 +1,6 @@
 ﻿#nullable enable
 
-namespace Elffy
+namespace Elffy.Components
 {
     /// <summary>Texture expansion mode</summary>
     public enum TextureExpansionMode

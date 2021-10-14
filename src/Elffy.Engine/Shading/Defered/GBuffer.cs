@@ -8,6 +8,8 @@ using Elffy.Effective;
 using Elffy.Graphics.OpenGL;
 using Elffy.Features;
 using Elffy.Components.Implementation;
+using Elffy.Components;
+using TextureWrapMode = Elffy.Components.TextureWrapMode;
 
 namespace Elffy.Shading.Defered
 {

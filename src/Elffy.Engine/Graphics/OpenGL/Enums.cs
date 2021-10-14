@@ -42,6 +42,16 @@ namespace Elffy.Graphics.OpenGL
         PixelUnpackBuffer = BufferTarget.PixelUnpackBuffer,
     }
 
+    public enum BufferAccessMode
+    {
+        /// <summary>GL_READ_ONLY</summary>
+        ReadOnly = BufferAccess.ReadOnly,
+        /// <summary>GL_WRITE_ONLY</summary>
+        WriteOnly = BufferAccess.WriteOnly,
+        /// <summary>GL_READ_WRITE</summary>
+        ReadWrite = BufferAccess.ReadWrite,
+    }
+
     public enum BufferUsage
     {
         /// <summary>Every frame, application -> GL</summary>

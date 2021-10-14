@@ -57,10 +57,10 @@ namespace Elffy.Graphics.OpenGL
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe T* MapBuffer<T>(BufferPackTarget target, BufferAccess access) where T : unmanaged
+        public static unsafe T* MapBuffer<T>(BufferPackTarget target, BufferAccessMode access) where T : unmanaged
         {
             GLAssert.EnsureContext();
-            return (T*)GL.MapBuffer(target.Compat(), access);
+            return (T*)GL.MapBuffer(target.Compat(), (BufferAccess)access);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

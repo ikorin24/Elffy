@@ -3,14 +3,14 @@ using Elffy.Imaging;
 using Elffy.Graphics.OpenGL;
 using System;
 using System.Diagnostics.CodeAnalysis;
-using OpenTK.Graphics.OpenGL4;
+using Elffy.Components;
 
 namespace Elffy.Features
 {
     public static class TextureLoadHelper
     {
         public static unsafe TextureObject LoadByDMA(in ReadOnlyImageRef image, TextureExpansionMode expansionMode,
-                                                     TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode, 
+                                                     TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode,
                                                      TextureWrapMode wrapModeX, TextureWrapMode wrapModeY)
         {
             fixed(ColorByte* ptr = image) {
@@ -40,7 +40,7 @@ namespace Elffy.Features
             PBO.Bind(pbo, BufferPackTarget.PixelUnpackBuffer);
             try {
                 PBO.BufferData(BufferPackTarget.PixelUnpackBuffer, size.X * size.Y * sizeof(ColorByte), IntPtr.Zero, BufferUsage.StaticDraw);
-                var pixels = PBO.MapBuffer<ColorByte>(BufferPackTarget.PixelUnpackBuffer, BufferAccess.WriteOnly);
+                var pixels = PBO.MapBuffer<ColorByte>(BufferPackTarget.PixelUnpackBuffer, BufferAccessMode.WriteOnly);
                 try {
                     var dest = new ImageRef(pixels, size.X, size.Y);
                     imageBuilder.Invoke(state, dest);
