@@ -21,6 +21,7 @@ namespace Elffy
         private int _instancingCount;
         private bool _isLoaded;
         private RenderVisibility _visibility;
+        private Type? _vertexType;
 
         /// <summary>Before-rendering event</summary>
         public event RenderingEventHandler? BeforeRendering;
@@ -183,6 +184,7 @@ namespace Elffy
             else {
                 _shaderProgram.Initialize(vertexType);
             }
+            _vertexType = vertexType;
             _isLoaded = true;
         }
 

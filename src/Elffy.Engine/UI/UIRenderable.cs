@@ -72,13 +72,13 @@ namespace Elffy.UI
             VAO.Bind(VAO);
             IBO.Bind(IBO);
             if(rt.IsIdentity) {
-                ShaderProgram!.ApplyForUI(in model, in view, in projection);
+                ShaderProgram.ApplyForUI(in model, in view, in projection);
             }
             else {
                 // TODO: 実装
                 var modelTransformed = model;
                 //ref var rto = ref control.RenderTransformOrigin;
-                ShaderProgram!.ApplyForUI(in modelTransformed, in view, in projection);
+                ShaderProgram.ApplyForUI(in modelTransformed, in view, in projection);
             }
             DrawElements(0, IBO.Length);
             VAO.Unbind();

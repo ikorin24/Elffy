@@ -12,7 +12,7 @@ using TextureWrapMode = Elffy.Components.TextureWrapMode;
 
 namespace Elffy.Graphics.OpenGL
 {
-    [DebuggerDisplay("Texture={_texture}")]
+    [DebuggerDisplay("{DebuggerView,nq}")]
     public readonly struct TextureObject : IEquatable<TextureObject>
     {
         private readonly int _texture;
@@ -20,6 +20,9 @@ namespace Elffy.Graphics.OpenGL
         internal int Value => _texture;
 
         public bool IsEmpty => _texture == Consts.NULL;
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private string DebuggerView => IsEmpty ? "Texture (null)" : $"Texture={_texture}";
 
         /// <summary>Get empty <see cref="TextureObject"/></summary>
         public static TextureObject Empty => new TextureObject();
