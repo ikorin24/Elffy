@@ -4,12 +4,12 @@ using System;
 namespace Elffy
 {
     [AttributeUsage(AttributeTargets.Struct, AllowMultiple = false)]
-    public sealed class VertexLikeAttribute : Attribute
+    public sealed class VertexAttribute : Attribute
     {
-        public static bool IsVertexLike(Type type)
+        public static bool IsVertexType(Type type)
         {
             if(type is null) { throw new ArgumentNullException(nameof(type)); }
-            return Attribute.GetCustomAttribute(type, typeof(VertexLikeAttribute)) is null == false;
+            return GetCustomAttribute(type, typeof(VertexAttribute)) is not null;
         }
     }
 }

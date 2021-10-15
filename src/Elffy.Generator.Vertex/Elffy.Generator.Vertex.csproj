@@ -18,7 +18,7 @@
     <Compile Include="..\Elffy.Generator\Generator\GeneratorUtil.cs" Link="Generator\GeneratorUtil.cs" />
     <Compile Include="..\Elffy.Primitives\VertexFieldMarshalType.cs" Link="VertexFieldMarshalType.cs" />
     <Compile Include="..\Elffy.Primitives\VertexSpecialField.cs" Link="VertexSpecialField.cs" />
-    <Compile Include="..\Elffy.Primitives\VertexLikeAttribute.cs" Link="VertexLikeAttribute.cs" />
+    <Compile Include="..\Elffy.Primitives\VertexAttribute.cs" Link="VertexAttribute.cs" />
   </ItemGroup>
 
   <ItemGroup>

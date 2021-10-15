@@ -96,6 +96,16 @@ namespace Elffy.Generator
             return uint.Parse(semanticModel.GetConstantValue(attr.ArgumentList!.Arguments[argNum].Expression).Value!.ToString());
         }
 
+        public static byte GetAttrArgByte(AttributeSyntax attr, int argNum, Compilation compilation)
+        {
+            return GetAttrArgByte(attr, argNum, compilation.GetSemanticModel(attr.SyntaxTree));
+        }
+
+        public static byte GetAttrArgByte(AttributeSyntax attr, int argNum, SemanticModel semanticModel)
+        {
+            return byte.Parse(semanticModel.GetConstantValue(attr.ArgumentList!.Arguments[argNum].Expression).Value!.ToString());
+        }
+
         public static bool GetAttrArgBool(AttributeSyntax attr, int argNum, Compilation compilation)
         {
             return GetAttrArgBool(attr, argNum, compilation.GetSemanticModel(attr.SyntaxTree));

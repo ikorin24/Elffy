@@ -51,8 +51,8 @@ namespace Elffy
             if(vertexType.IsValueType == false) {
                 return new ArgumentException($"Vertex type must be struct. (Type = {vertexType.FullName})");
             }
-            if(Attribute.GetCustomAttribute(vertexType, typeof(VertexLikeAttribute)) is null) {
-                return new ArgumentException($"Invalid type of vertex, which has no {nameof(VertexLikeAttribute)} (Type = {vertexType.FullName})");
+            if(VertexAttribute.IsVertexType(vertexType) == false) {
+                return new ArgumentException($"Invalid type of vertex, which has no {nameof(VertexAttribute)} (Type = {vertexType.FullName})");
             }
             return null;
         }
@@ -75,6 +75,7 @@ namespace Elffy
 
         internal static VertexMarshalRegisterResult Error(Exception exception) => new VertexMarshalRegisterResult(exception);
 
+        [DebuggerHidden]
         public void ThrowIfError()
         {
             if(_exception is not null) { throw _exception; }
