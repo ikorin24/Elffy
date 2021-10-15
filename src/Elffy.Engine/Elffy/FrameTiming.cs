@@ -64,7 +64,7 @@ namespace Elffy
     [EnumLikeValue(nameof(FTV.FrameFinalizing), FTV.FrameFinalizing)]
     public partial struct CurrentFrameTiming
     {
-        public bool IsOutOfFrameLoop() => this == OutOfFrameLoop;
+        public bool IsOutOfFrameLoop() => _value == OutOfFrameLoop._value;
     }
 
     internal static class FrameTimingValues
