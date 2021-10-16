@@ -9,7 +9,6 @@ using Elffy.Shading;
 using Elffy.Components.Implementation;
 using Elffy.Features.Internal;
 using System.Threading;
-using Cysharp.Threading.Tasks;
 
 namespace Elffy.UI
 {
@@ -33,10 +32,10 @@ namespace Elffy.UI
     // Don't put the instance public even if as Renderable or FrameObject.
 
     /// <summary>Base class of UI element, which forms a UI tree and provides hit test.</summary>
-    public abstract class Control
+    public abstract partial class Control
     {
         private readonly UIRenderable _renderable;
-        private ControlLayouterInternal? _layouter;
+        private ControlLayoutInfoInternal? _layoutInfo;
         private Control? _parent;
         private RootPanel? _root;
         private ArrayPooledListCore<Control> _childrenCore;
@@ -46,7 +45,12 @@ namespace Elffy.UI
         private bool _isMouseOver;
         private bool _isMouseOverPrevious;
 
-        private ControlLayouterInternal LayouterPrivate => _layouter ?? ControlLayouterInternal.ThrowCannotGetInstance();
+        /// <summary>Mouse enter event</summary>
+        public event Action<Control>? MouseEnter;
+        /// <summary>Mouse leave event</summary>
+        public event Action<Control>? MouseLeave;
+
+        public event Action<Control>? Dead;
 
         internal ref ArrayPooledListCore<Control> ChildrenCore => ref _childrenCore;
 
@@ -72,16 +76,38 @@ namespace Elffy.UI
         public ref Color4 Background => ref _background;
 
         /// <summary>Get absolute position of the control.</summary>
-        public Vector2i Position => (Vector2i)Renderable.Position.Xy;
+        public Vector2i ActualPosition => (Vector2i)Renderable.Position.Xy;
 
-        /// <summary>Get width of <see cref="Control"/></summary>
-        public int Width => (int)Renderable.Scale.X;
+        /// <summary>Get actual width of <see cref="Control"/></summary>
+        public int ActualWidth => (int)Renderable.Scale.X;
 
-        /// <summary>Get height of <see cref="Control"/></summary>
-        public int Height => (int)Renderable.Scale.Y;
+        /// <summary>Get actual height of <see cref="Control"/></summary>
+        public int ActualHeight => (int)Renderable.Scale.Y;
 
-        /// <summary>Get size of <see cref="Control"/></summary>
-        public Vector2i Size => (Vector2i)Renderable.Scale.Xy;      // To set size, use the internal method 'SetSize'
+        /// <summary>Get actual size of <see cref="Control"/></summary>
+        public Vector2i ActualSize => (Vector2i)Renderable.Scale.Xy;
+
+        internal Vector2 ActualPositionInternal
+        {
+            get => Renderable.Position.Xy;
+            set
+            {
+                ref var pos = ref Renderable.Position;
+                pos.X = value.X;
+                pos.Y = value.Y;
+            }
+        }
+
+        internal Vector2 ActualSizeInternal
+        {
+            get => Renderable.Scale.Xy;
+            set
+            {
+                ref var scale = ref Renderable.Scale;
+                scale.X = value.X;
+                scale.Y = value.Y;
+            }
+        }
 
         /// <summary>get or set whether this <see cref="Control"/> is enabled in HitTest</summary>
         public bool IsHitTestVisible
@@ -105,30 +131,11 @@ namespace Elffy.UI
 
         internal ref readonly TextureCore Texture => ref _texture;
 
-        public ControlLayouter Layouter => new ControlLayouter(LayouterPrivate);
-        public ref LayoutLength LayoutWidth => ref LayouterPrivate.Width;
-        public ref LayoutLength LayoutHeight => ref LayouterPrivate.Height;
-        public ref TransformOrigin TransformOrigin => ref LayouterPrivate.TransformOrigin;
-        public ref HorizontalAlignment HorizontalAlignment => ref LayouterPrivate.HorizontalAlignment;
-        public ref VerticalAlignment VerticalAlignment => ref LayouterPrivate.VerticalAlignment;
-        public ref LayoutThickness Margin => ref LayouterPrivate.Margin;
-        public ref LayoutThickness Padding => ref LayouterPrivate.Padding;
-        public ref Matrix3 RenderTransform => ref LayouterPrivate.RenderTransform;
-        public ref Vector2 RenderTransformOrigin => ref LayouterPrivate.RenderTransformOrigin;
-
-        /// <summary>Mouse enter event</summary>
-        public event Action<Control>? MouseEnter;
-        /// <summary>Mouse leave event</summary>
-        public event Action<Control>? MouseLeave;
-
-        public event Action<Control>? Activated;
-        public event Action<Control>? Dead;
-
         /// <summary>constructor of <see cref="Control"/></summary>
         public Control()
         {
             _isHitTestVisible = true;
-            _layouter = ControlLayouterInternal.Create();
+            _layoutInfo = ControlLayoutInfoInternal.Create();
             _renderable = new UIRenderable(this);
             var textureConfig = new TextureConfig(TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear, TextureMipmapMode.None, TextureWrapMode.ClampToEdge, TextureWrapMode.ClampToEdge);
             _texture = new TextureCore(textureConfig);
@@ -137,13 +144,6 @@ namespace Elffy.UI
         public bool TryGetHostScreen([MaybeNullWhen(false)] out IHostScreen screen)
         {
             return Renderable.TryGetHostScreen(out screen);
-        }
-
-        internal void SetSize(in Vector2 size)
-        {
-            ref var scale = ref Renderable.Scale;
-            scale.X = size.X;
-            scale.Y = size.Y;
         }
 
         internal void DoUIEvent() => OnUIEvent();
@@ -173,7 +173,7 @@ namespace Elffy.UI
         public TexturePainter GetPainter(bool copyFromOriginal = true)
         {
             if(_texture.IsEmpty) {
-                _texture.LoadUndefined(new Vector2i(Width, Height));
+                _texture.LoadUndefined(new Vector2i(ActualWidth, ActualHeight));
                 var p = _texture.GetPainter(false);
                 if(copyFromOriginal) {
                     p.Fill(ColorByte.White);        // TODO: デフォルトが白じゃない場合は？
@@ -188,7 +188,7 @@ namespace Elffy.UI
         public TexturePainter GetPainter(in RectI rect, bool copyFromOriginal = true)
         {
             if(_texture.IsEmpty) {
-                _texture.LoadUndefined(new Vector2i(Width, Height));
+                _texture.LoadUndefined(new Vector2i(ActualWidth, ActualHeight));
                 var p = _texture.GetPainter(rect, copyFromOriginal);
                 p.Fill(ColorByte.White);            // TODO: デフォルトが白じゃない場合は？
                 return p;
@@ -200,6 +200,8 @@ namespace Elffy.UI
 
         /// <summary>このオブジェクトの <see cref="Children"/> 以下に存在する全ての子孫を取得します。列挙順は深さ優先探索 (DFS; depth-first search) です。</summary>
         /// <returns>全ての子孫オブジェクト</returns>
+        [Obsolete("", true)]
+        [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         public IEnumerable<Control> GetOffspring()
         {
             foreach(var child in Children) {
@@ -219,11 +221,11 @@ namespace Elffy.UI
                 return false;
             }
             var mousePos = (Vector2i)mouse.Position;
-            var pos = Position;
+            var pos = ActualPosition;
             return pos.X <= mousePos.X &&
-                   mousePos.X < pos.X + Width &&
+                   mousePos.X < pos.X + ActualWidth &&
                    pos.Y <= mousePos.Y &&
-                   mousePos.Y < pos.Y + Height;
+                   mousePos.Y < pos.Y + ActualHeight;
         }
 
         /// <summary>Notify the result of the hit test</summary>
@@ -260,131 +262,9 @@ namespace Elffy.UI
                 OnDead();
             }
             finally {
-                Debug.Assert(_layouter is not null);
-                ControlLayouterInternal.Return(ref _layouter);
+                Debug.Assert(_layoutInfo is not null);
+                ControlLayoutInfoInternal.Return(ref _layoutInfo);
             }
-        }
-
-        /// <summary>Layout itself and update <see cref="Size"/> and <see cref="Position"/>.</summary>
-        public void LayoutSelf()
-        {
-            if(IsRoot) { return; }
-            Debug.Assert(this is not RootPanel);
-            Debug.Assert(_parent is not null);
-            var parentSize = _parent.Size;
-            ref readonly var parentPadding = ref _parent.Padding;
-            Debug.Assert(parentSize.X >= 0f && parentSize.Y >= 0f);
-            var (size, relativePos) = DefaultLayoutingMethod((Vector2)_parent.Size, _parent.Padding, Layouter);
-
-            // Change size, position and absolutePosition
-            SetSize(size);
-
-            ref var parentPos = ref _parent.Renderable.Position;
-            ref var position = ref Renderable.Position;
-            position.X = relativePos.X + parentPos.X;
-            position.Y = relativePos.Y + parentPos.Y;
-        }
-
-        public void LayoutSelf<T>(ControlLayoutResolver<T> resolver, T state)
-        {
-            if(resolver is null) {
-                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(resolver));
-                ThrowNullArg();
-            }
-            if(IsRoot) { return; }
-            Debug.Assert(this is not RootPanel);
-            Debug.Assert(_parent is not null);
-
-            var (size, pos) = resolver.Invoke(this, state);
-            // Change size, position and absolutePosition
-            SetSize(size);
-
-            ref var parentPos = ref _parent.Renderable.Position;
-            ref var position = ref Renderable.Position;
-            position.X = pos.X + parentPos.X;
-            position.Y = pos.Y + parentPos.Y;
-        }
-
-        /// <summary>Layout children recursively.</summary>
-        public virtual void LayoutChildren()
-        {
-            foreach(var child in _childrenCore.AsSpan()) {
-                child.LayoutSelf();
-                child.LayoutChildren();
-            }
-        }
-
-        /// <summary>Layout size and relative position to the parent</summary>
-        /// <param name="areaSize">Size of the area to locate the control. </param>
-        /// <param name="areaPadding">Padding in the area specified by the parent control.</param>
-        /// <param name="layouter">layouter of the control</param>
-        /// <returns>'size' is control size. 'position' is relative position to the parent.</returns>
-        protected static (Vector2 size, Vector2 position) DefaultLayoutingMethod(
-            Vector2 areaSize, in LayoutThickness areaPadding, in ControlLayouter layouter)
-        {
-            areaSize.X = MathF.Max(0, areaSize.X);
-            areaSize.Y = MathF.Max(0, areaSize.Y);
-            ref var margin = ref layouter.Margin;
-            ref var layoutWidth = ref layouter.Width;
-            ref var layoutHeight = ref layouter.Height;
-            ref var horizontalAlignment = ref layouter.HorizontalAlignment;
-            ref var verticalAlignment = ref layouter.VerticalAlignment;
-            var availableSize = new Vector2(MathF.Max(0, areaSize.X - areaPadding.Left - areaPadding.Right),
-                                            MathF.Max(0, areaSize.Y - areaPadding.Top - areaPadding.Bottom));
-            var maxSize = new Vector2(MathF.Max(0, availableSize.X - margin.Left - margin.Right),
-                                      MathF.Max(0, availableSize.Y - margin.Top - margin.Bottom));
-
-            // Calc size
-            Vector2 size;
-            switch(layoutWidth.Type) {
-                case LayoutLengthType.Length:
-                default:
-                    size.X = MathF.Max(0, MathF.Min(maxSize.X, layoutWidth.Value));
-                    break;
-                case LayoutLengthType.Proportion:
-                    size.X = MathF.Max(0, MathF.Min(maxSize.X, layoutWidth.Value * areaSize.X));
-                    break;
-            }
-            switch(layoutHeight.Type) {
-                case LayoutLengthType.Length:
-                default:
-                    size.Y = MathF.Max(0, MathF.Min(maxSize.Y, layoutHeight.Value));
-                    break;
-                case LayoutLengthType.Proportion:
-                    size.Y = MathF.Max(0, MathF.Min(maxSize.Y, layoutHeight.Value * areaSize.Y));
-                    break;
-            }
-
-            // Calc position
-            Vector2 pos;
-            switch(horizontalAlignment) {
-                case HorizontalAlignment.Center:
-                default:
-                    pos.X = areaPadding.Left + margin.Left + (maxSize.X - size.X) / 2;
-                    break;
-                case HorizontalAlignment.Left:
-                    pos.X = areaPadding.Left + margin.Left;
-                    break;
-                case HorizontalAlignment.Right:
-                    pos.X = areaSize.X - areaPadding.Right - margin.Right - size.X;
-                    break;
-            }
-            switch(verticalAlignment) {
-                case VerticalAlignment.Center:
-                default:
-                    pos.Y = areaPadding.Top + margin.Top + (maxSize.Y - size.Y) / 2;
-                    break;
-                case VerticalAlignment.Top:
-                    pos.Y = areaPadding.Top + margin.Top;
-                    break;
-                case VerticalAlignment.Bottom:
-                    pos.Y = areaSize.Y - areaPadding.Bottom - margin.Bottom - size.Y;
-                    break;
-            }
-
-            return (size, pos);
         }
     }
-
-    public delegate (Vector2 size, Vector2 position) ControlLayoutResolver<T>(Control self, T state);
 }

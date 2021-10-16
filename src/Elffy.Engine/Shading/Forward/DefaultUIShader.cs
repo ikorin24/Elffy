@@ -31,7 +31,7 @@ namespace Elffy.Shading.Forward
             uniform.SendTexture2D("tex_sampler", texture.Texture, TextureUnitNumber.Unit0);
             uniform.Send("hasTexture", texture.IsEmpty == false);
 
-            var uvScale = (Vector2)target.Size / (Vector2)texture.Size;
+            var uvScale = target.ActualSizeInternal / (Vector2)texture.Size;
             uniform.Send("uvScale", uvScale);
             uniform.Send("back", target.Background);
         }

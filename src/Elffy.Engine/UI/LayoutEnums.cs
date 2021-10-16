@@ -6,7 +6,7 @@ namespace Elffy.UI
     public enum HorizontalAlignment : byte
     {
         /// <summary>center alignment</summary>
-        Center,
+        Center = 0,
         /// <summary>left alignment</summary>
         Left,
         /// <summary>right alignment</summary>
@@ -17,7 +17,7 @@ namespace Elffy.UI
     public enum VerticalAlignment : byte
     {
         /// <summary>center alignment</summary>
-        Center,
+        Center = 0,
         /// <summary>top alignment</summary>
         Top,
         /// <summary>bottom alignment</summary>

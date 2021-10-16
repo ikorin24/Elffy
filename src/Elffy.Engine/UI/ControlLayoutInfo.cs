@@ -5,9 +5,9 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.UI
 {
-    public readonly ref struct ControlLayouter      // `ref struct` to ensure valid access. It is invalid to access pooled instance.
+    public readonly ref struct ControlLayoutInfo    // `ref struct` to ensure valid access. It is invalid to access pooled instance.
     {
-        private readonly ControlLayouterInternal _l;
+        private readonly ControlLayoutInfoInternal _l;
 
         public ref LayoutLength Width => ref _l.Width;
         public ref LayoutLength Height => ref _l.Height;
@@ -19,7 +19,7 @@ namespace Elffy.UI
         public ref Matrix3 RenderTransform => ref _l.RenderTransform;
         public ref Vector2 RenderTransformOrigin => ref _l.RenderTransformOrigin;
 
-        internal ControlLayouter(ControlLayouterInternal l)
+        internal ControlLayoutInfo(ControlLayoutInfoInternal l)
         {
             _l = l;
         }
@@ -29,15 +29,15 @@ namespace Elffy.UI
         public override int GetHashCode() => _l.GetHashCode();
     }
 
-    internal sealed class ControlLayouterInternal
+    internal sealed class ControlLayoutInfoInternal
     {
         private const uint MaxPooledPerThread = 1024;
         [ThreadStatic]
-        private static ControlLayouterInternal? _pooled;
+        private static ControlLayoutInfoInternal? _pooled;
         [ThreadStatic]
         private static uint _pooledCount;
 
-        private ControlLayouterInternal? _nextPooled;
+        private ControlLayoutInfoInternal? _nextPooled;
 
         private LayoutLength _width;
         private LayoutLength _height;
@@ -59,36 +59,36 @@ namespace Elffy.UI
         public ref Matrix3 RenderTransform => ref _renderTransform;
         public ref Vector2 RenderTransformOrigin => ref _renderTransformOrigin;
 
-        private ControlLayouterInternal()
+        private ControlLayoutInfoInternal()
         {
             Init(this);
         }
 
-        private static void Init(ControlLayouterInternal instance)
+        private static void Init(ControlLayoutInfoInternal instance)
         {
             // All fields must be initialized. (except _nextPooled)
 
             instance._width = new LayoutLength(1f, LayoutLengthType.Proportion);
             instance._height = new LayoutLength(1f, LayoutLengthType.Proportion);
             instance._transformOrigin = TransformOrigin.LeftTop;
-            instance._horizontalAlignment = HorizontalAlignment.Left;
-            instance._verticalAlignment = VerticalAlignment.Top;
+            instance._horizontalAlignment = HorizontalAlignment.Center;
+            instance._verticalAlignment = VerticalAlignment.Center;
             instance._margin = default;
             instance._padding = default;
             instance._renderTransform = Matrix3.Identity;
             instance._renderTransformOrigin = default;
         }
 
-        public static implicit operator ControlLayouter(ControlLayouterInternal l) => new(l);
+        public static implicit operator ControlLayoutInfo(ControlLayoutInfoInternal l) => new(l);
 
         [DoesNotReturn]
-        public static ControlLayouterInternal ThrowCannotGetInstance() => throw new InvalidOperationException($"Cannnot get a {nameof(ControlLayouterInternal)} instance.");
+        public static ControlLayoutInfoInternal ThrowCannotGetInstance() => throw new InvalidOperationException($"Cannnot get a {nameof(ControlLayoutInfoInternal)} instance.");
 
-        internal static ControlLayouterInternal Create()
+        internal static ControlLayoutInfoInternal Create()
         {
             if(_pooled is null) {
                 Debug.Assert(_pooledCount == 0);
-                return new ControlLayouterInternal();
+                return new ControlLayoutInfoInternal();
             }
             else {
                 Debug.Assert(_pooledCount > 0);
@@ -101,7 +101,7 @@ namespace Elffy.UI
             }
         }
 
-        internal static void Return([MaybeNull] ref ControlLayouterInternal instance)
+        internal static void Return([MaybeNull] ref ControlLayoutInfoInternal instance)
         {
             Debug.Assert(instance is not null);
             Debug.Assert(instance._nextPooled is null);

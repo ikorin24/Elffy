@@ -13,6 +13,16 @@ namespace Elffy.UI
         private GridSplitDefinition _colDef;
         private GridSplitDefinition _rowDef;
 
+        private static readonly ControlContentAreaResolver<Grid> _contentAreaResolver = static (child, grid) =>
+        {
+            var padding = grid.Padding;
+            var gridContentsSize = grid.ActualSizeInternal - new Vector2(padding.Left + padding.Right, padding.Top + padding.Bottom);
+            var col = child.GetGridColumn(grid);
+            var row = child.GetGridRow(grid);
+            var (cellSize, cellPos) = grid.GetCellSizePos(gridContentsSize, col, row);
+            return (cellSize, cellPos, LayoutThickness.Zero);
+        };
+
         private GridIndexDic GridCol => _gridCol ??= GridIndexDic.Create();
         private GridIndexDic GridRow => _gridRow ??= GridIndexDic.Create();
 
@@ -54,25 +64,11 @@ namespace Elffy.UI
                    _gridRow.TryGetValue(control, out var row) ? row : 0;
         }
 
-        public override void LayoutChildren()
+        protected override void OnLayoutChildreRecursively()
         {
-            foreach(var child in ChildrenCore.AsSpan()) {
-                child.LayoutSelf(static (child, grid) =>
-                {
-                    ref readonly var pad = ref grid.Padding;
-                    var contentSize = (Vector2)grid.Size - new Vector2(pad.Left + pad.Right, pad.Top + pad.Bottom);
-                    var col = child.GetGridColumn(grid);
-                    var row = child.GetGridRow(grid);
-                    var splitSize = new Vector2(grid._colDef.EvalSize(contentSize.X, col),
-                                                grid._rowDef.EvalSize(contentSize.Y, row));
-                    var offset1 = new Vector2(grid._colDef.EvalPosition(contentSize.X, col),
-                                              grid._rowDef.EvalPosition(contentSize.Y, row));
-                    var (childSize, offset2) = DefaultLayoutingMethod(splitSize, default, child.Layouter);
-                    var pos = new Vector2(pad.Left, pad.Top) + offset1 + offset2;
-                    return (childSize, pos);
-                }, this);
-
-                child.LayoutChildren();
+            foreach(var child in Children.AsSpan()) {
+                ControlLayoutHelper.LayoutSelf(child, _contentAreaResolver, this);
+                ControlLayoutHelper.LayoutChildrenRecursively(child);
             }
         }
 
@@ -87,6 +83,16 @@ namespace Elffy.UI
             }
             _colDef.Dispose();
             _rowDef.Dispose();
+        }
+
+        private (Vector2 CellSize, Vector2 CellPosOffset) GetCellSizePos(Vector2 parentSize, int col, int row)
+        {
+            var cellSize = new Vector2(_colDef.EvalSize(parentSize.X, col),
+                                       _rowDef.EvalSize(parentSize.Y, row));
+            var cellOffsetPos = new Vector2(_colDef.EvalPosition(parentSize.X, col),
+                                            _rowDef.EvalPosition(parentSize.Y, row));
+
+            return (cellSize, cellOffsetPos);
         }
 
         [DoesNotReturn]

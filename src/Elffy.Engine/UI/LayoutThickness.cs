@@ -18,6 +18,8 @@ namespace Elffy.UI
         [FieldOffset(12)]
         public float Bottom;
 
+        public static LayoutThickness Zero => default;
+
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private string DebugDisplay => $"({Left}, {Top}, {Right}, {Bottom})";
 

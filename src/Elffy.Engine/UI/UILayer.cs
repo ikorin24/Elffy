@@ -46,7 +46,7 @@ namespace Elffy.UI
         protected override void SelectMatrix(IHostScreen screen, out Matrix4 view, out Matrix4 projection)
         {
             view = new Matrix4(1, 0, 0, 0,
-                               0, -1, 0, _uiRoot.Height,
+                               0, -1, 0, _uiRoot.ActualSizeInternal.Y,
                                0, 0, 1, 0,
                                0, 0, 0, 1);
             projection = _uiProjection;
@@ -63,7 +63,7 @@ namespace Elffy.UI
         {
             var frameBufferSize = screen.FrameBufferSize;
             Matrix4.OrthographicProjection(0, frameBufferSize.X, 0, frameBufferSize.Y, UI_NEAR, UI_FAR, out _uiProjection);
-            _uiRoot.SetSize((Vector2)frameBufferSize);
+            _uiRoot.ActualSizeInternal = (Vector2)frameBufferSize;
         }
 
         protected override void OnLayerTerminated()

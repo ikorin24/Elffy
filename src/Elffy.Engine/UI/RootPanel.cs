@@ -1,8 +1,8 @@
 ﻿#nullable enable
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Elffy.UI
 {
@@ -10,7 +10,9 @@ namespace Elffy.UI
     public sealed class RootPanel : Panel
     {
         private readonly UILayer _uiLayer;
+        private Control? _relayoutRoot;
         private LayoutExecutionType _layoutExecutionType;
+        private bool _relayoutRequested;
 
         internal UILayer UILayer => _uiLayer;
 
@@ -30,6 +32,7 @@ namespace Elffy.UI
         {
             Debug.Assert(uiLayer is not null);
             _uiLayer = uiLayer;
+            _relayoutRequested = true;
         }
 
         internal void Initialize()
@@ -41,25 +44,27 @@ namespace Elffy.UI
 
         private void ExecuteRelayout(Renderable sender, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
-            switch(_layoutExecutionType) {
-                case LayoutExecutionType.Explicit:
-                    return;
-                case LayoutExecutionType.EveryFrame:
-                    LayoutChildren();
-                    break;
-                default:
-                    throw new NotImplementedException();
+            var type = _layoutExecutionType;
+            if(type == LayoutExecutionType.Adaptive) {
+                Relayout(false);
+            }
+            else if(type == LayoutExecutionType.EveryFrame) {
+                Relayout(true);
             }
         }
 
-        /// <summary><see cref="RootPanel"/> doesn't support it. It throws <see cref="InvalidOperationException"/>.</summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [Obsolete("RootPanel does not support 'LayoutSelf'.", true)]
-        public new void LayoutSelf() => throw new InvalidOperationException($"{nameof(RootPanel)} does not support '{nameof(LayoutSelf)}'.");
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Relayout(bool forceToRelayout = false)
+        {
+            if(_relayoutRequested || forceToRelayout) {
+                _relayoutRequested = false;
+                ControlLayoutHelper.LayoutChildrenRecursively(this);
+            }
+        }
 
-        /// <summary><see cref="RootPanel"/> doesn't support it. It throws <see cref="InvalidOperationException"/>.</summary>
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [Obsolete("RootPanel does not support 'LayoutSelf'.", true)]
-        public new void LayoutSelf<T>(ControlLayoutResolver<T> resolver, T state) => throw new InvalidOperationException($"{nameof(RootPanel)} does not support '{nameof(LayoutSelf)}'.");
+        public void RequestRelayout()
+        {
+            _relayoutRequested = true;
+        }
     }
 }

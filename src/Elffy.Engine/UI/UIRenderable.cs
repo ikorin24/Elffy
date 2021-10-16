@@ -67,7 +67,7 @@ namespace Elffy.UI
         protected override void OnRendering(in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             var control = Control;
-            ref var rt = ref control.RenderTransform;
+            var rt = control.RenderTransform;
 
             VAO.Bind(VAO);
             IBO.Bind(IBO);
