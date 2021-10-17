@@ -69,7 +69,6 @@ namespace Sandbox
                 WorldLayer.NewActivate(screen, "Default"),
                 UILayer.NewActivate(screen, "UI"));
             var uiRoot = uiLayer.UIRoot;
-            //uiRoot.LayoutExecutionType = LayoutExecutionType.EveryFrame;
 
             const int ColumnCount = 6;
             var gridLength = LayoutLength.Proportion(1f / ColumnCount);

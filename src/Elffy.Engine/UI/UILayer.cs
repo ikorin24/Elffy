@@ -64,6 +64,7 @@ namespace Elffy.UI
             var frameBufferSize = screen.FrameBufferSize;
             Matrix4.OrthographicProjection(0, frameBufferSize.X, 0, frameBufferSize.Y, UI_NEAR, UI_FAR, out _uiProjection);
             _uiRoot.ActualSize = (Vector2)frameBufferSize;
+            _uiRoot.RequestRelayout();
         }
 
         protected override void OnLayerTerminated()
