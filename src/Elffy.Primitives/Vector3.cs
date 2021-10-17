@@ -277,4 +277,19 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static ref readonly Vector3 AsVector3(in NVec3 vec) => ref Unsafe.As<NVec3, Vector3>(ref Unsafe.AsRef(vec));
     }
+
+    internal static class VectorExtension
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref Vector2 RefXy(ref this Vector3 vec)
+        {
+            return ref Unsafe.As<Vector3, Vector2>(ref vec);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref Vector2 RefYz(ref this Vector3 vec)
+        {
+            return ref Unsafe.As<float, Vector2>(ref vec.Y);
+        }
+    }
 }

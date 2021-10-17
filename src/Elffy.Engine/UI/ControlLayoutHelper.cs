@@ -76,8 +76,8 @@ namespace Elffy.UI
         {
             var (areaSize, offsetPos, areaPadding) = contentAreaResolver.Invoke(parent, state1);
             var (size, relativePosInParent) = childLayoutResolver.Invoke(control, areaSize, offsetPos, areaPadding, state2);
-            control.ActualSizeInternal = size;
-            control.ActualPositionInternal = relativePosInParent + parent.ActualPositionInternal;
+            control.ActualSize = size;
+            control.ActualPosition = relativePosInParent + parent.ActualPosition;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -102,7 +102,7 @@ namespace Elffy.UI
 
             private (Vector2 ContentSize, Vector2 ContentPosInParent, LayoutThickness ContentPadding) DefaultContentAreaResolver(Control parent, object? _)
             {
-                return (parent.ActualSizeInternal, Vector2.Zero, parent.Padding);
+                return (parent.ActualSize, Vector2.Zero, parent.Padding);
             }
 
             private (Vector2 Size, Vector2 Position) DefaultChildLayoutResolver(Control control, Vector2 contentAreaSize, Vector2 contentPosInParent, LayoutThickness contentPadding, object? _)

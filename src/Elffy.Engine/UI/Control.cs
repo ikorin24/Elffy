@@ -76,37 +76,23 @@ namespace Elffy.UI
         public ref Color4 Background => ref _background;
 
         /// <summary>Get absolute position of the control.</summary>
-        public Vector2i ActualPosition => (Vector2i)Renderable.Position.Xy;
-
-        /// <summary>Get actual width of <see cref="Control"/></summary>
-        public int ActualWidth => (int)Renderable.Scale.X;
-
-        /// <summary>Get actual height of <see cref="Control"/></summary>
-        public int ActualHeight => (int)Renderable.Scale.Y;
-
-        /// <summary>Get actual size of <see cref="Control"/></summary>
-        public Vector2i ActualSize => (Vector2i)Renderable.Scale.Xy;
-
-        internal Vector2 ActualPositionInternal
+        public Vector2 ActualPosition
         {
             get => Renderable.Position.Xy;
-            set
-            {
-                ref var pos = ref Renderable.Position;
-                pos.X = value.X;
-                pos.Y = value.Y;
-            }
+            internal set => Renderable.Position.RefXy() = value;
         }
 
-        internal Vector2 ActualSizeInternal
+        /// <summary>Get actual width of <see cref="Control"/></summary>
+        public float ActualWidth => Renderable.Scale.X;
+
+        /// <summary>Get actual height of <see cref="Control"/></summary>
+        public float ActualHeight => Renderable.Scale.Y;
+
+        /// <summary>Get actual size of <see cref="Control"/></summary>
+        public Vector2 ActualSize
         {
             get => Renderable.Scale.Xy;
-            set
-            {
-                ref var scale = ref Renderable.Scale;
-                scale.X = value.X;
-                scale.Y = value.Y;
-            }
+            internal set => Renderable.Scale.RefXy() = value;
         }
 
         /// <summary>get or set whether this <see cref="Control"/> is enabled in HitTest</summary>
@@ -173,7 +159,7 @@ namespace Elffy.UI
         public TexturePainter GetPainter(bool copyFromOriginal = true)
         {
             if(_texture.IsEmpty) {
-                _texture.LoadUndefined(new Vector2i(ActualWidth, ActualHeight));
+                _texture.LoadUndefined((Vector2i)ActualSize);
                 var p = _texture.GetPainter(false);
                 if(copyFromOriginal) {
                     p.Fill(ColorByte.White);        // TODO: デフォルトが白じゃない場合は？
@@ -188,7 +174,7 @@ namespace Elffy.UI
         public TexturePainter GetPainter(in RectI rect, bool copyFromOriginal = true)
         {
             if(_texture.IsEmpty) {
-                _texture.LoadUndefined(new Vector2i(ActualWidth, ActualHeight));
+                _texture.LoadUndefined((Vector2i)ActualSize);
                 var p = _texture.GetPainter(rect, copyFromOriginal);
                 p.Fill(ColorByte.White);            // TODO: デフォルトが白じゃない場合は？
                 return p;

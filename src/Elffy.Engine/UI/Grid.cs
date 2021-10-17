@@ -16,7 +16,7 @@ namespace Elffy.UI
         private static readonly ControlContentAreaResolver<Grid> _contentAreaResolver = static (child, grid) =>
         {
             var padding = grid.Padding;
-            var gridContentsSize = grid.ActualSizeInternal - new Vector2(padding.Left + padding.Right, padding.Top + padding.Bottom);
+            var gridContentsSize = grid.ActualSize - new Vector2(padding.Left + padding.Right, padding.Top + padding.Bottom);
             var col = child.GetGridColumn(grid);
             var row = child.GetGridRow(grid);
             var (cellSize, cellPos) = grid.GetCellSizePos(gridContentsSize, col, row);
