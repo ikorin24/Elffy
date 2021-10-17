@@ -13,55 +13,55 @@ namespace Elffy.UI
         public LayoutLength Width
         {
             get => LayoutInfoPrivate.Width;
-            set => ChangeLayout(ref LayoutInfoPrivate.Width, value);
+            set => ChangeLayoutInfoField(ref LayoutInfoPrivate.Width, value);
         }
 
         public LayoutLength Height
         {
             get => LayoutInfoPrivate.Height;
-            set => ChangeLayout(ref LayoutInfoPrivate.Height, value);
+            set => ChangeLayoutInfoField(ref LayoutInfoPrivate.Height, value);
         }
 
         public TransformOrigin TransformOrigin
         {
             get => LayoutInfoPrivate.TransformOrigin;
-            set => ChangeLayout(ref LayoutInfoPrivate.TransformOrigin, value);
+            set => ChangeLayoutInfoField(ref LayoutInfoPrivate.TransformOrigin, value);
         }
 
         public HorizontalAlignment HorizontalAlignment
         {
             get => LayoutInfoPrivate.HorizontalAlignment;
-            set => ChangeLayout(ref LayoutInfoPrivate.HorizontalAlignment, value);
+            set => ChangeLayoutInfoField(ref LayoutInfoPrivate.HorizontalAlignment, value);
         }
 
         public VerticalAlignment VerticalAlignment
         {
             get => LayoutInfoPrivate.VerticalAlignment;
-            set => ChangeLayout(ref LayoutInfoPrivate.VerticalAlignment, value);
+            set => ChangeLayoutInfoField(ref LayoutInfoPrivate.VerticalAlignment, value);
         }
 
         public LayoutThickness Margin
         {
             get => LayoutInfoPrivate.Margin;
-            set => ChangeLayout(ref LayoutInfoPrivate.Margin, value);
+            set => ChangeLayoutInfoField(ref LayoutInfoPrivate.Margin, value);
         }
 
         public LayoutThickness Padding
         {
             get => LayoutInfoPrivate.Padding;
-            set => ChangeLayout(ref LayoutInfoPrivate.Padding, value);
+            set => ChangeLayoutInfoField(ref LayoutInfoPrivate.Padding, value);
         }
 
         public Matrix3 RenderTransform
         {
             get => LayoutInfoPrivate.RenderTransform;
-            set => ChangeLayout(ref LayoutInfoPrivate.RenderTransform, value);
+            set => ChangeLayoutInfoField(ref LayoutInfoPrivate.RenderTransform, value);
         }
 
         public Vector2 RenderTransformOrigin
         {
             get => LayoutInfoPrivate.RenderTransformOrigin;
-            set => ChangeLayout(ref LayoutInfoPrivate.RenderTransformOrigin, value);
+            set => ChangeLayoutInfoField(ref LayoutInfoPrivate.RenderTransformOrigin, value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -75,7 +75,7 @@ namespace Elffy.UI
             }
         }
 
-        private void ChangeLayout<T>(ref T field, T value)
+        private void ChangeLayoutInfoField<T>(ref T field, T value)
         {
             if(EqualityComparer<T>.Default.Equals(field, value)) {
                 return;

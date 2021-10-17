@@ -22,9 +22,9 @@ namespace Elffy.UI
             [DoesNotReturn] static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(value));
         }
 
-        public static LayoutLength CreateLength(float length) => new LayoutLength(length, LayoutLengthType.Length);
+        public static LayoutLength Length(float length) => new LayoutLength(length, LayoutLengthType.Length);
 
-        public static LayoutLength CreateProportion(float proportion) => new LayoutLength(proportion, LayoutLengthType.Proportion);
+        public static LayoutLength Proportion(float proportion) => new LayoutLength(proportion, LayoutLengthType.Proportion);
 
         public override bool Equals(object? obj) => obj is LayoutLength length && Equals(length);
 

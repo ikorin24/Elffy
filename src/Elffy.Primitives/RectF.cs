@@ -18,6 +18,9 @@ namespace Elffy
         [FieldOffset(12)]
         public float Height;
 
+        public Vector2 Position => new Vector2(X, Y);
+        public Vector2 Size => new Vector2(Width, Height);
+
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private string DebugDisplay => $"({X}, {Y}, {Width}, {Height})";
 

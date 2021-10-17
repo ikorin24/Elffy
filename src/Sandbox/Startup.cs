@@ -9,12 +9,14 @@ using Elffy.Shading.Forward;
 using Elffy.Components;
 using Elffy.Effective;
 using Elffy.UI;
+using System.Diagnostics;
+using System.Linq;
 
 namespace Sandbox
 {
     public static class Startup
     {
-        [GameEntryPoint]
+        //[GameEntryPoint]
         public static async UniTask Start2()
         {
             var screen = Game.Screen;
@@ -57,7 +59,7 @@ namespace Sandbox
             //}).Forget();
         }
 
-        //[GameEntryPoint]
+        [GameEntryPoint]
         public static async UniTask Start()
         {
             var screen = Game.Screen;
@@ -67,6 +69,24 @@ namespace Sandbox
                 WorldLayer.NewActivate(screen, "Default"),
                 UILayer.NewActivate(screen, "UI"));
             var uiRoot = uiLayer.UIRoot;
+            //uiRoot.LayoutExecutionType = LayoutExecutionType.EveryFrame;
+
+            const int ColumnCount = 6;
+            var gridLength = LayoutLength.Proportion(1f / ColumnCount);
+            var grid = new Grid();
+            grid.ColumnDefinition(Enumerable.Repeat(gridLength, ColumnCount).ToArray());
+            uiRoot.Children.Add(grid);
+
+            for(int i = 0; i < ColumnCount; i++) {
+                var button = new Button();
+                button.SetGridColumn(grid, i);
+                button.Width = 100;
+                button.Height = 100;
+                button.Background = Color4.Red;
+                button.KeyUp += _ => Debug.WriteLine($"Clicked");
+                grid.Children.Add(button);
+            }
+
             uiRoot.Background = Color4.Black;
             try {
                 await UniTask.WhenAll(

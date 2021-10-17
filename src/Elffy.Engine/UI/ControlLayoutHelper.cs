@@ -12,72 +12,20 @@ namespace Elffy.UI
         /// <param name="control"></param>
         public static void LayoutSelf(Control control)
         {
-            if(control is null) { ThrowNullArg(nameof(control)); }
-            if(control.IsRoot) { return; }
-            Debug.Assert(control is not RootPanel);
-            var parent = control.Parent;
-            Debug.Assert(parent is not null);
-            Debug.Assert(parent.ActualSize.X >= 0f && parent.ActualSize.Y >= 0f);
-
-            LayoutSelfPrivate(control, parent, DefaultResolver.ContentAreaResolver, null, DefaultResolver.ChildLayoutResolver, null);
+            LayoutSelf(control, ControlLayouter.Default);
         }
 
-        public static void LayoutSelf<T>(Control control, ControlContentAreaResolver<T> contentAreaResolver, T state)
+        public static void LayoutSelf(Control control, ControlLayouter layouter)
         {
             if(control is null) { ThrowNullArg(nameof(control)); }
+            if(layouter is null) {
+                ThrowArg($"Control layouter is null. ({control.GetType().FullName})");
+            }
             if(control.IsRoot) { return; }
-            if(contentAreaResolver is null) { ThrowNullArg(nameof(contentAreaResolver)); }
-            Debug.Assert(control is not RootPanel);
-            var parent = control.Parent;
-            Debug.Assert(parent is not null);
-            Debug.Assert(parent.ActualSize.X >= 0f && parent.ActualSize.Y >= 0f);
 
-            LayoutSelfPrivate(control, parent, contentAreaResolver, state, DefaultResolver.ChildLayoutResolver, null);
-        }
-
-        public static void LayoutSelf<T>(Control control, ControlChildLayoutResolver<T> childLayoutResolver, T state)
-        {
-            if(control is null) { ThrowNullArg(nameof(control)); }
-            if(control.IsRoot) { return; }
-            if(childLayoutResolver is null) { ThrowNullArg(nameof(childLayoutResolver)); }
-            Debug.Assert(control is not RootPanel);
-            var parent = control.Parent;
-            Debug.Assert(parent is not null);
-            Debug.Assert(parent.ActualSize.X >= 0f && parent.ActualSize.Y >= 0f);
-
-            LayoutSelfPrivate(control, parent, DefaultResolver.ContentAreaResolver, null, childLayoutResolver, state);
-        }
-
-        public static void LayoutSelf<T1, T2>(Control control,
-                                              ControlContentAreaResolver<T1> contentAreaResolver, T1 state1,
-                                              ControlChildLayoutResolver<T2> childLayoutResolver, T2 state2)
-        {
-            if(control is null) {
-                ThrowNullArg(nameof(control));
-            }
-            if(contentAreaResolver is null) {
-                ThrowNullArg(nameof(contentAreaResolver));
-            }
-            if(childLayoutResolver is null) {
-                ThrowNullArg(nameof(childLayoutResolver));
-            }
-            if(control.IsRoot) {
-                return;
-            }
-            Debug.Assert(control is not RootPanel);
-            var parent = control.Parent;
-            Debug.Assert(parent is not null);
-            LayoutSelfPrivate(control, parent, contentAreaResolver, state1, childLayoutResolver, state2);
-        }
-
-        private static void LayoutSelfPrivate<T1, T2>(Control control, Control parent,
-            ControlContentAreaResolver<T1> contentAreaResolver, T1 state1,
-            ControlChildLayoutResolver<T2> childLayoutResolver, T2 state2)
-        {
-            var (areaSize, offsetPos, areaPadding) = contentAreaResolver.Invoke(parent, state1);
-            var (size, relativePosInParent) = childLayoutResolver.Invoke(control, areaSize, offsetPos, areaPadding, state2);
-            control.ActualSize = size;
-            control.ActualPosition = relativePosInParent + parent.ActualPosition;
+            var rect = layouter.MesureAbsoluteRect(control);
+            control.ActualSize = rect.Size;
+            control.ActualPosition = rect.Position;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -92,89 +40,117 @@ namespace Elffy.UI
         [DoesNotReturn]
         private static void ThrowNullArg(string message) => throw new ArgumentNullException(message);
 
-        private sealed class DefaultResolver
+        [DoesNotReturn]
+        private static void ThrowArg(string message) => throw new ArgumentException(message);
+    }
+
+    public class ControlLayouter
+    {
+        private static ControlLayouter _default = new ControlLayouter();
+
+        public static ControlLayouter Default => _default;
+
+        internal RectF MesureAbsoluteRect(Control target)
         {
-            private static readonly DefaultResolver _instance = new DefaultResolver();
+            Debug.Assert(target is not RootPanel);
+            var parent = target.Parent;
+            Debug.Assert(parent is not null);
+            Debug.Assert(parent.ActualSize.X >= 0f && parent.ActualSize.Y >= 0f);
 
-            public static readonly ControlContentAreaResolver<object?> ContentAreaResolver = _instance.DefaultContentAreaResolver;
-            public static readonly ControlChildLayoutResolver<object?> ChildLayoutResolver = _instance.DefaultChildLayoutResolver;
+            var contentArea = MesureContentArea(parent, target);
+            var rect = DecideRect(target, contentArea);
+            return new RectF(rect.Position + parent.ActualPosition, rect.Size);
+        }
 
+        protected virtual ContentAreaInfo MesureContentArea(Control parent, Control target)
+        {
+            return new ContentAreaInfo(Vector2.Zero, parent.ActualSize, parent.Padding);
+        }
 
-            private (Vector2 ContentSize, Vector2 ContentPosInParent, LayoutThickness ContentPadding) DefaultContentAreaResolver(Control parent, object? _)
-            {
-                return (parent.ActualSize, Vector2.Zero, parent.Padding);
+        protected virtual RectF DecideRect(Control target, in ContentAreaInfo contentAreaInfo)
+        {
+            var layoutInfo = target.LayoutInfo;
+
+            var contentAreaSize = new Vector2(MathF.Max(0, contentAreaInfo.ContentArea.Width), MathF.Max(0, contentAreaInfo.ContentArea.Height));
+
+            ref readonly var contentPadding = ref contentAreaInfo.ContentPadding;
+            ref var margin = ref layoutInfo.Margin;
+            ref var layoutWidth = ref layoutInfo.Width;
+            ref var layoutHeight = ref layoutInfo.Height;
+            ref var horizontalAlignment = ref layoutInfo.HorizontalAlignment;
+            ref var verticalAlignment = ref layoutInfo.VerticalAlignment;
+            var availableSize = new Vector2(MathF.Max(0, contentAreaSize.X - contentPadding.Left - contentPadding.Right),
+                                            MathF.Max(0, contentAreaSize.Y - contentPadding.Top - contentPadding.Bottom));
+            var maxSize = new Vector2(MathF.Max(0, availableSize.X - margin.Left - margin.Right),
+                                      MathF.Max(0, availableSize.Y - margin.Top - margin.Bottom));
+
+            // Calc size
+            Vector2 size;
+            switch(layoutWidth.Type) {
+                case LayoutLengthType.Length:
+                default:
+                    size.X = MathF.Max(0, MathF.Min(maxSize.X, layoutWidth.Value));
+                    break;
+                case LayoutLengthType.Proportion:
+                    size.X = MathF.Max(0, MathF.Min(maxSize.X, layoutWidth.Value * contentAreaSize.X));
+                    break;
+            }
+            switch(layoutHeight.Type) {
+                case LayoutLengthType.Length:
+                default:
+                    size.Y = MathF.Max(0, MathF.Min(maxSize.Y, layoutHeight.Value));
+                    break;
+                case LayoutLengthType.Proportion:
+                    size.Y = MathF.Max(0, MathF.Min(maxSize.Y, layoutHeight.Value * contentAreaSize.Y));
+                    break;
             }
 
-            private (Vector2 Size, Vector2 Position) DefaultChildLayoutResolver(Control control, Vector2 contentAreaSize, Vector2 contentPosInParent, LayoutThickness contentPadding, object? _)
-            {
-                var layoutInfo = control.LayoutInfo;
-
-                contentAreaSize.X = MathF.Max(0, contentAreaSize.X);
-                contentAreaSize.Y = MathF.Max(0, contentAreaSize.Y);
-                ref var margin = ref layoutInfo.Margin;
-                ref var layoutWidth = ref layoutInfo.Width;
-                ref var layoutHeight = ref layoutInfo.Height;
-                ref var horizontalAlignment = ref layoutInfo.HorizontalAlignment;
-                ref var verticalAlignment = ref layoutInfo.VerticalAlignment;
-                var availableSize = new Vector2(MathF.Max(0, contentAreaSize.X - contentPadding.Left - contentPadding.Right),
-                                                MathF.Max(0, contentAreaSize.Y - contentPadding.Top - contentPadding.Bottom));
-                var maxSize = new Vector2(MathF.Max(0, availableSize.X - margin.Left - margin.Right),
-                                          MathF.Max(0, availableSize.Y - margin.Top - margin.Bottom));
-
-                // Calc size
-                Vector2 size;
-                switch(layoutWidth.Type) {
-                    case LayoutLengthType.Length:
-                    default:
-                        size.X = MathF.Max(0, MathF.Min(maxSize.X, layoutWidth.Value));
-                        break;
-                    case LayoutLengthType.Proportion:
-                        size.X = MathF.Max(0, MathF.Min(maxSize.X, layoutWidth.Value * contentAreaSize.X));
-                        break;
-                }
-                switch(layoutHeight.Type) {
-                    case LayoutLengthType.Length:
-                    default:
-                        size.Y = MathF.Max(0, MathF.Min(maxSize.Y, layoutHeight.Value));
-                        break;
-                    case LayoutLengthType.Proportion:
-                        size.Y = MathF.Max(0, MathF.Min(maxSize.Y, layoutHeight.Value * contentAreaSize.Y));
-                        break;
-                }
-
-                // Calc position
-                Vector2 pos;
-                switch(horizontalAlignment) {
-                    case HorizontalAlignment.Center:
-                    default:
-                        pos.X = contentPadding.Left + margin.Left + (maxSize.X - size.X) / 2;
-                        break;
-                    case HorizontalAlignment.Left:
-                        pos.X = contentPadding.Left + margin.Left;
-                        break;
-                    case HorizontalAlignment.Right:
-                        pos.X = contentAreaSize.X - contentPadding.Right - margin.Right - size.X;
-                        break;
-                }
-                switch(verticalAlignment) {
-                    case VerticalAlignment.Center:
-                    default:
-                        pos.Y = contentPadding.Top + margin.Top + (maxSize.Y - size.Y) / 2;
-                        break;
-                    case VerticalAlignment.Top:
-                        pos.Y = contentPadding.Top + margin.Top;
-                        break;
-                    case VerticalAlignment.Bottom:
-                        pos.Y = contentAreaSize.Y - contentPadding.Bottom - margin.Bottom - size.Y;
-                        break;
-                }
-                pos += contentPosInParent;
-
-                return (size, pos);
+            // Calc position
+            Vector2 pos;
+            switch(horizontalAlignment) {
+                case HorizontalAlignment.Center:
+                default:
+                    pos.X = contentPadding.Left + margin.Left + (maxSize.X - size.X) / 2;
+                    break;
+                case HorizontalAlignment.Left:
+                    pos.X = contentPadding.Left + margin.Left;
+                    break;
+                case HorizontalAlignment.Right:
+                    pos.X = contentAreaSize.X - contentPadding.Right - margin.Right - size.X;
+                    break;
             }
+            switch(verticalAlignment) {
+                case VerticalAlignment.Center:
+                default:
+                    pos.Y = contentPadding.Top + margin.Top + (maxSize.Y - size.Y) / 2;
+                    break;
+                case VerticalAlignment.Top:
+                    pos.Y = contentPadding.Top + margin.Top;
+                    break;
+                case VerticalAlignment.Bottom:
+                    pos.Y = contentAreaSize.Y - contentPadding.Bottom - margin.Bottom - size.Y;
+                    break;
+            }
+            pos += contentAreaInfo.ContentArea.Position;
+            return new RectF(pos, size);
         }
     }
 
-    public delegate (Vector2 ContentSize, Vector2 ContentPosInParent, LayoutThickness ContentPadding) ControlContentAreaResolver<T>(Control parent, T state);
-    public delegate (Vector2 Size, Vector2 Position) ControlChildLayoutResolver<T>(Control control, Vector2 contentAreaSize, Vector2 contentPosInParent, LayoutThickness contentPadding, T state);
+    public readonly struct ContentAreaInfo
+    {
+        public readonly RectF ContentArea;
+        public readonly LayoutThickness ContentPadding;
+
+        public ContentAreaInfo(in Vector2 contentPos, in Vector2 contentSize, in LayoutThickness contentPadding)
+        {
+            ContentArea = new RectF(contentPos, contentSize);
+            ContentPadding = contentPadding;
+        }
+
+        public ContentAreaInfo(in RectF contentArea, in LayoutThickness contentPadding)
+        {
+            ContentArea = contentArea;
+            ContentPadding = contentPadding;
+        }
+    }
 }

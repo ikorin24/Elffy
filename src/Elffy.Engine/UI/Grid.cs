@@ -8,20 +8,12 @@ namespace Elffy.UI
 {
     public class Grid : Panel
     {
+        private static readonly GridChildLayouter _childLayouter = new GridChildLayouter();
+
         private GridIndexDic? _gridCol;
         private GridIndexDic? _gridRow;
         private GridSplitDefinition _colDef;
         private GridSplitDefinition _rowDef;
-
-        private static readonly ControlContentAreaResolver<Grid> _contentAreaResolver = static (child, grid) =>
-        {
-            var padding = grid.Padding;
-            var gridContentsSize = grid.ActualSize - new Vector2(padding.Left + padding.Right, padding.Top + padding.Bottom);
-            var col = child.GetGridColumn(grid);
-            var row = child.GetGridRow(grid);
-            var (cellSize, cellPos) = grid.GetCellSizePos(gridContentsSize, col, row);
-            return (cellSize, cellPos, LayoutThickness.Zero);
-        };
 
         private GridIndexDic GridCol => _gridCol ??= GridIndexDic.Create();
         private GridIndexDic GridRow => _gridRow ??= GridIndexDic.Create();
@@ -67,7 +59,7 @@ namespace Elffy.UI
         protected override void OnLayoutChildreRecursively()
         {
             foreach(var child in Children.AsSpan()) {
-                ControlLayoutHelper.LayoutSelf(child, _contentAreaResolver, this);
+                ControlLayoutHelper.LayoutSelf(child, _childLayouter);
                 ControlLayoutHelper.LayoutChildrenRecursively(child);
             }
         }
@@ -141,6 +133,21 @@ namespace Elffy.UI
                 _pooled = dic;
                 dic = null;
                 _pooledCount++;
+            }
+        }
+
+        private sealed class GridChildLayouter : ControlLayouter
+        {
+            protected override ContentAreaInfo MesureContentArea(Control parent, Control target)
+            {
+                var grid = (Grid)parent;
+
+                var padding = grid.Padding;
+                var gridContentsSize = grid.ActualSize - new Vector2(padding.Left + padding.Right, padding.Top + padding.Bottom);
+                var col = target.GetGridColumn(grid);
+                var row = target.GetGridRow(grid);
+                var (cellSize, cellPos) = grid.GetCellSizePos(gridContentsSize, col, row);
+                return new ContentAreaInfo(cellPos, cellSize, LayoutThickness.Zero);
             }
         }
     }
