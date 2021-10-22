@@ -5,15 +5,18 @@ using System.Runtime.CompilerServices;
 using System.Diagnostics;
 using Cysharp.Threading.Tasks;
 using Elffy.Features.Internal;
+using Elffy.Effective;
 
 namespace Elffy
 {
     internal sealed class FrameTimingAwaitableTaskSource : IUniTaskSource<AsyncUnit>, IChainInstancePooled<FrameTimingAwaitableTaskSource>
     {
+        private static Int16TokenFactory _tokenFactory;
+
         private FrameTimingAwaitableTaskSource? _next;
         private TimingAwaitableCore<FrameTimingPoint> _awaitableCore;
 
-        public ref FrameTimingAwaitableTaskSource? NextPooling => ref _next;
+        public ref FrameTimingAwaitableTaskSource? NextPooled => ref _next;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private FrameTimingAwaitableTaskSource(FrameTimingPoint? timingPoint, short token, CancellationToken cancellationToken)
@@ -47,7 +50,8 @@ namespace Elffy
 
         internal static UniTask<AsyncUnit> CreateTask(FrameTimingPoint? timingPoint, CancellationToken cancellationToken)
         {
-            if(ChainInstancePool<FrameTimingAwaitableTaskSource>.TryGetInstance(out var taskSource, out var token)) {
+            var token = _tokenFactory.CreateToken();
+            if(ChainInstancePool<FrameTimingAwaitableTaskSource>.TryGetInstance(out var taskSource)) {
                 taskSource._awaitableCore = new(timingPoint, token, cancellationToken);
             }
             else {

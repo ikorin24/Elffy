@@ -5,15 +5,18 @@ using System.Runtime.CompilerServices;
 using System.Diagnostics;
 using Cysharp.Threading.Tasks;
 using Elffy.Features.Internal;
+using Elffy.Effective;
 
 namespace Elffy
 {
     internal sealed class LayerTimingAwaitableTaskSource : IUniTaskSource<AsyncUnit>, IChainInstancePooled<LayerTimingAwaitableTaskSource>
     {
+        private static Int16TokenFactory _tokenFactory;
+
         private LayerTimingAwaitableTaskSource? _next;
         private TimingAwaitableCore<LayerTimingPoint> _awaitableCore;
 
-        public ref LayerTimingAwaitableTaskSource? NextPooling => ref _next;
+        public ref LayerTimingAwaitableTaskSource? NextPooled => ref _next;
 
         private LayerTimingAwaitableTaskSource(LayerTimingPoint? timingPoint, short token, CancellationToken cancellationToken)
         {
@@ -46,7 +49,8 @@ namespace Elffy
 
         internal static UniTask<AsyncUnit> CreateTask(LayerTimingPoint timingPoint, CancellationToken cancellationToken)
         {
-            if(ChainInstancePool<LayerTimingAwaitableTaskSource>.TryGetInstance(out var taskSource, out var token)) {
+            var token = _tokenFactory.CreateToken();
+            if(ChainInstancePool<LayerTimingAwaitableTaskSource>.TryGetInstance(out var taskSource)) {
                 taskSource._awaitableCore = new(timingPoint, token, cancellationToken);
             }
             else {

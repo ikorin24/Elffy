@@ -21,6 +21,12 @@ namespace Elffy.Effective
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryEnter()
+        {
+            return Interlocked.CompareExchange(ref _syncFlag, SYNC_ENTER, SYNC_EXIT) == SYNC_EXIT;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Exit()
         {
             Volatile.Write(ref _syncFlag, SYNC_EXIT);

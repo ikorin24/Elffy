@@ -64,6 +64,7 @@ namespace Elffy.Features.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void OnCompleted(Action<object?> continuation, object? state, short token)
         {
+            ValidateToken(token);
             var timingPoint = Interlocked.Exchange(ref _timingPoint, _completedTimingPoint);
             if(timingPoint == _completedTimingPoint || timingPoint is null) {
                 _timingPoint = null;
