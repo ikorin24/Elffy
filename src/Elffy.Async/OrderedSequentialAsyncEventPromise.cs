@@ -7,45 +7,56 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using Elffy.Effective;
 
+#pragma warning disable CA1068 // CancellationToken parameters must come last
+
 namespace Elffy
 {
-    internal sealed class OrderedSequentialAsyncEventPromise : IUniTaskSource, IChainInstancePooled<OrderedSequentialAsyncEventPromise>
+    internal sealed class OrderedSequentialAsyncEventPromise<T> : IUniTaskSource, IChainInstancePooled<OrderedSequentialAsyncEventPromise<T>>
     {
         private static readonly Action<object> _continuationSentinel = ContinuationSentinel;
         private static Int16TokenFactory _tokenFactory;
 
-        private OrderedSequentialAsyncEventPromise? _nextPooled;
-        private Func<CancellationToken, UniTask>[] _funcs;
+        private OrderedSequentialAsyncEventPromise<T>? _nextPooled;
+        private Func<T, CancellationToken, UniTask>[] _funcs;
         private Action<object>? _continuation;
         private object? _continuationState;
+        private T _arg;     // It may be null if T is class. Be careful !
         private CancellationToken _cancellationToken;
         private object? _error;
         private int _completedCount;
         private short _version;
 
-        public ref OrderedSequentialAsyncEventPromise? NextPooled => ref _nextPooled;
+        public ref OrderedSequentialAsyncEventPromise<T>? NextPooled => ref _nextPooled;
 
-        private OrderedSequentialAsyncEventPromise(ReadOnlySpan<Func<CancellationToken, UniTask>> funcs, CancellationToken ct, short version)
+
+        // [NOTE]
+        // The warning CS8618 says that '_arg' should be T as nullable reference type,
+        // but 'T?' means 'Nullable<T>' when T is value type.
+        // I don't know how to deal it.
+#pragma warning disable CS8618
+        private OrderedSequentialAsyncEventPromise(ReadOnlySpan<Func<T, CancellationToken, UniTask>> funcs, T arg, CancellationToken ct, short version)
+#pragma warning restore CS8618
         {
-            Ctor(funcs, ct, version);
+            Ctor(funcs, arg, ct, version);
         }
 
         [MemberNotNull(nameof(_funcs))]
-        private void Ctor(ReadOnlySpan<Func<CancellationToken, UniTask>> funcs, CancellationToken ct, short version)
+        private void Ctor(ReadOnlySpan<Func<T, CancellationToken, UniTask>> funcs, T arg, CancellationToken ct, short version)
         {
             _funcs = funcs.ToArray();   // TODO: instance pooling
+            _arg = arg;
             _cancellationToken = ct;
             _version = version;
         }
 
-        public static UniTask CreateTask(ReadOnlySpan<Func<CancellationToken, UniTask>> funcs, CancellationToken ct)
+        public static UniTask CreateTask(ReadOnlySpan<Func<T, CancellationToken, UniTask>> funcs, T arg, CancellationToken ct)
         {
             var token = _tokenFactory.CreateToken();
-            if(ChainInstancePool<OrderedSequentialAsyncEventPromise>.TryGetInstanceFast(out var promise)) {
-                promise.Ctor(funcs, ct, token);
+            if(ChainInstancePool<OrderedSequentialAsyncEventPromise<T>>.TryGetInstanceFast(out var promise)) {
+                promise.Ctor(funcs, arg, ct, token);
             }
             else {
-                promise = new OrderedSequentialAsyncEventPromise(funcs, ct, token);
+                promise = new OrderedSequentialAsyncEventPromise<T>(funcs, arg, ct, token);
             }
             return new UniTask(promise, token);
         }
@@ -53,13 +64,16 @@ namespace Elffy
         private void ResetAndPoolInstance()
         {
             _version = 0;
-            _funcs = Array.Empty<Func<CancellationToken, UniTask>>();
+            _funcs = Array.Empty<Func<T, CancellationToken, UniTask>>();
             _continuation = null;
             _continuationState = null;
+            if(RuntimeHelpers.IsReferenceOrContainsReferences<T>()) {
+                _arg = default!;
+            }
             _cancellationToken = default;
             _error = null;
             _completedCount = 0;
-            ChainInstancePool<OrderedSequentialAsyncEventPromise>.ReturnInstanceFast(this);
+            ChainInstancePool<OrderedSequentialAsyncEventPromise<T>>.ReturnInstanceFast(this);
         }
 
 #if !DEBUG
@@ -95,7 +109,7 @@ namespace Elffy
                 holder.Throw();
             }
             else {
-                throw new InvalidOperationException($"Critical: {nameof(OrderedSequentialAsyncEventPromise)} captured invalid type exception !!!");
+                throw new InvalidOperationException($"Critical: {nameof(OrderedSequentialAsyncEventPromise<T>)} captured invalid type exception !!!");
             }
         }
 
@@ -179,7 +193,7 @@ namespace Elffy
             UniTask task;
             UniTask.Awaiter awaiter;
             try {
-                task = funcs[index].Invoke(ct);
+                task = funcs[index].Invoke(_arg, ct);
                 awaiter = task.GetAwaiter();
             }
             catch(Exception ex) {
@@ -204,7 +218,7 @@ namespace Elffy
 #if !DEBUG
             [DebuggerHidden]
 #endif
-            static void InvokeInnerTaskCompleted(OrderedSequentialAsyncEventPromise self, in UniTask.Awaiter awaiter)
+            static void InvokeInnerTaskCompleted(OrderedSequentialAsyncEventPromise<T> self, in UniTask.Awaiter awaiter)
             {
                 try {
                     awaiter.GetResult();
@@ -220,7 +234,7 @@ namespace Elffy
 #if !DEBUG
             [DebuggerHidden]
 #endif
-            static void InvokeContinuation(OrderedSequentialAsyncEventPromise self)
+            static void InvokeContinuation(OrderedSequentialAsyncEventPromise<T> self)
             {
                 var continuation = Interlocked.Exchange(ref self._continuation, _continuationSentinel);
                 Debug.Assert(continuation is not null);
@@ -263,24 +277,24 @@ namespace Elffy
 #endif
         private static void ContinuationSentinel(object state)
         {
-            throw new InvalidOperationException($"Critical: Can not invoke continuation twice !!! Implementation of {nameof(OrderedSequentialAsyncEventPromise)} is something wrong.");
+            throw new InvalidOperationException($"Critical: Can not invoke continuation twice !!! Implementation of {nameof(OrderedSequentialAsyncEventPromise<T>)} is something wrong.");
         }
 
         private sealed class InnerTaskState : IChainInstancePooled<InnerTaskState>
         {
-            private OrderedSequentialAsyncEventPromise? _promise;
+            private OrderedSequentialAsyncEventPromise<T>? _promise;
             private UniTask.Awaiter _awaiter;
             private InnerTaskState? _next;
 
             public ref InnerTaskState? NextPooled => ref _next;
 
-            private InnerTaskState(OrderedSequentialAsyncEventPromise promise, in UniTask.Awaiter awaiter)
+            private InnerTaskState(OrderedSequentialAsyncEventPromise<T> promise, in UniTask.Awaiter awaiter)
             {
                 _promise = promise;
                 _awaiter = awaiter;
             }
 
-            public static InnerTaskState Create(OrderedSequentialAsyncEventPromise promise, in UniTask.Awaiter awaiter)
+            public static InnerTaskState Create(OrderedSequentialAsyncEventPromise<T> promise, in UniTask.Awaiter awaiter)
             {
                 if(ChainInstancePool<InnerTaskState>.TryGetInstanceFast(out var instance)) {
                     instance._promise = promise;
@@ -292,7 +306,7 @@ namespace Elffy
                 return instance;
             }
 
-            public static (OrderedSequentialAsyncEventPromise Promise, UniTask.Awaiter Awaiter) Extract(object obj)
+            public static (OrderedSequentialAsyncEventPromise<T> Promise, UniTask.Awaiter Awaiter) Extract(object obj)
             {
                 Debug.Assert(obj is InnerTaskState);
                 var s = Unsafe.As<InnerTaskState>(obj);

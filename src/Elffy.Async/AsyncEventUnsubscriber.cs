@@ -6,15 +6,15 @@ using System.Threading;
 
 namespace Elffy
 {
-    public readonly struct AsyncEventUnsubscriber : IDisposable, IEquatable<AsyncEventUnsubscriber>
+    public readonly struct AsyncEventUnsubscriber<T> : IDisposable, IEquatable<AsyncEventUnsubscriber<T>>
     {
-        private readonly AsyncEventRaiser? _raiser;
-        private readonly Func<CancellationToken, UniTask>? _func;
+        private readonly AsyncEventRaiser<T>? _raiser;
+        private readonly Func<T, CancellationToken, UniTask>? _func;
 
-        public static AsyncEventUnsubscriber None => default;
+        public static AsyncEventUnsubscriber<T> None => default;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal AsyncEventUnsubscriber(AsyncEventRaiser? raiser, Func<CancellationToken, UniTask>? func)
+        internal AsyncEventUnsubscriber(AsyncEventRaiser<T>? raiser, Func<T, CancellationToken, UniTask>? func)
         {
             _raiser = raiser;
             _func = func;
@@ -25,9 +25,9 @@ namespace Elffy
             _raiser?.Unsubscribe(_func);
         }
 
-        public override bool Equals(object? obj) => obj is AsyncEventUnsubscriber unsubscriber && Equals(unsubscriber);
+        public override bool Equals(object? obj) => obj is AsyncEventUnsubscriber<T> unsubscriber && Equals(unsubscriber);
 
-        public bool Equals(AsyncEventUnsubscriber other) => _raiser == other._raiser && _func == other._func;
+        public bool Equals(AsyncEventUnsubscriber<T> other) => _raiser == other._raiser && _func == other._func;
 
         public override int GetHashCode() => HashCode.Combine(_raiser, _func);
     }

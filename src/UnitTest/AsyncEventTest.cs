@@ -17,7 +17,7 @@ namespace UnitTest
             var value = 0;
             var foo = new Foo();
             Assert.Equal(0, foo.SubscibedCount);
-            var unsbscriber = foo.Test.Subscribe(ct =>
+            var unsbscriber = foo.Test.Subscribe((sender, ct) =>
             {
                 value++;
                 return UniTask.CompletedTask;
@@ -40,7 +40,7 @@ namespace UnitTest
             var value = 0;
             var foo = new Foo();
             Assert.Equal(0, foo.SubscibedCount);
-            var unsbscriber = foo.Test.Subscribe(async ct =>
+            var unsbscriber = foo.Test.Subscribe(async (sender, ct) =>
             {
                 value += 5;
                 await Task.Delay(10, ct);
@@ -66,14 +66,14 @@ namespace UnitTest
         public async Task MultiSubscribe(int delegateCount)
         {
             var array = new int[delegateCount];
-            var unsubscribers = new AsyncEventUnsubscriber[delegateCount];
+            var unsubscribers = new AsyncEventUnsubscriber<Foo>[delegateCount];
             var foo = new Foo();
             Assert.Equal(0, foo.SubscibedCount);
 
             for(int i = 0; i < delegateCount; i++) {
                 var num = i;
                 if(i % 2 == 0) {
-                    unsubscribers[i] = foo.Test.Subscribe(async ct =>
+                    unsubscribers[i] = foo.Test.Subscribe(async (sender, ct) =>
                     {
                         array[num] += 5;
                         await Task.Delay(10, ct);
@@ -81,7 +81,7 @@ namespace UnitTest
                     });
                 }
                 else {
-                    unsubscribers[i] = foo.Test.Subscribe(ct =>
+                    unsubscribers[i] = foo.Test.Subscribe((sender, ct) =>
                     {
                         array[num] += 5;
                         array[num]++;
@@ -107,7 +107,7 @@ namespace UnitTest
         {
             var foo = new Foo();
             Assert.Equal(0, foo.SubscibedCount);
-            var unsbscriber = foo.Test.Subscribe(ct =>
+            var unsbscriber = foo.Test.Subscribe((sender, ct) =>
             {
                 // No one should not come here.
                 Assert.True(false, "No one should not come here.");
@@ -140,7 +140,7 @@ namespace UnitTest
         {
             var foo = new Foo();
             Assert.Equal(0, foo.SubscibedCount);
-            var unsbscriber = foo.Test.Subscribe(async ct =>
+            var unsbscriber = foo.Test.Subscribe(async (sender, ct) =>
             {
                 // No one should not come here.
                 Assert.True(false, "No one should not come here.");
@@ -164,14 +164,14 @@ namespace UnitTest
         [InlineData(20)]
         public async Task AlreadyCanceled_MultiSubscribed(int delegateCount)
         {
-            var unsubscribers = new AsyncEventUnsubscriber[delegateCount];
+            var unsubscribers = new AsyncEventUnsubscriber<Foo>[delegateCount];
             var foo = new Foo();
             Assert.Equal(0, foo.SubscibedCount);
 
             for(int i = 0; i < delegateCount; i++) {
                 var num = i;
                 if(i % 2 == 0) {
-                    unsubscribers[num] = foo.Test.Subscribe(async ct =>
+                    unsubscribers[num] = foo.Test.Subscribe(async (sender, ct) =>
                     {
                         // No one should not come here.
                         Assert.True(false, "No one should not come here.");
@@ -179,7 +179,7 @@ namespace UnitTest
                     });
                 }
                 else {
-                    unsubscribers[num] = foo.Test.Subscribe(ct =>
+                    unsubscribers[num] = foo.Test.Subscribe((sender, ct) =>
                     {
                         // No one should not come here.
                         Assert.True(false, "No one should not come here.");
@@ -200,15 +200,15 @@ namespace UnitTest
 
         private sealed class Foo
         {
-            private AsyncEventRaiser? _test;
+            private AsyncEventRaiser<Foo>? _test;
 
-            public AsyncEvent Test => new AsyncEvent(ref _test);
+            public AsyncEvent<Foo> Test => new AsyncEvent<Foo>(ref _test);
 
             public int SubscibedCount => _test?.SubscibedCount ?? 0;
 
             public UniTask SequentiallyRaiseTest(CancellationToken ct)
             {
-                return _test.RaiseSequentiallyIfNotNull(ct);
+                return _test.RaiseSequentiallyIfNotNull(this, ct);
             }
         }
     }

@@ -8,20 +8,24 @@ using System.Threading;
 
 namespace Elffy
 {
-    public sealed class AsyncEventRaiser
+    public sealed class AsyncEventRaiser<T>
     {
         private const int DefaultBufferCapacity = 4;
 
         // [NOTE]
-        // _count == 0    || 1                                || n (n >= 2)
-        // _funcs == null || Func<CancellationToken, UniTask> || Func<CancellationToken, UniTask>[]
+        // _count == 0    || 1                                   || n (n >= 2)
+        // _funcs == null || Func<T, CancellationToken, UniTask> || Func<T, CancellationToken, UniTask>[]
         private object? _funcs;
         private int _count;
         private FastSpinLock _lock;
 
         public int SubscibedCount => _count;
 
-        public UniTask RaiseSequentially(CancellationToken cancellationToken = default)
+        public AsyncEventRaiser()
+        {
+        }
+
+        public UniTask RaiseSequentially(T arg, CancellationToken cancellationToken = default)
         {
             if(cancellationToken.IsCancellationRequested) {
                 return UniTask.FromCanceled(cancellationToken);
@@ -35,13 +39,13 @@ namespace Elffy
                 }
                 else if(count == 1) {
                     Debug.Assert(_funcs is not null);
-                    var func = Unsafe.As<Func<CancellationToken, UniTask>>(_funcs);
-                    task = func.Invoke(cancellationToken);
+                    var func = Unsafe.As<Func<T, CancellationToken, UniTask>>(_funcs);
+                    task = func.Invoke(arg, cancellationToken);
                 }
                 else {
-                    Debug.Assert(_funcs is Func<CancellationToken, UniTask>[]);
-                    var funcs = Unsafe.As<Func<CancellationToken, UniTask>[]>(_funcs).AsSpan(0, count);
-                    task = OrderedSequentialAsyncEventPromise.CreateTask(funcs, cancellationToken);
+                    Debug.Assert(_funcs is Func<T, CancellationToken, UniTask>[]);
+                    var funcs = Unsafe.As<Func<T, CancellationToken, UniTask>[]>(_funcs).AsSpan(0, count);
+                    task = OrderedSequentialAsyncEventPromise<T>.CreateTask(funcs, arg, cancellationToken);
                 }
             }
             finally {
@@ -50,9 +54,9 @@ namespace Elffy
             return task;
         }
 
-        public Func<CancellationToken, UniTask> ToSequentialDelegate()
+        public Func<T, CancellationToken, UniTask> ToSequentialDelegate()
         {
-            return new Func<CancellationToken, UniTask>(RaiseSequentially);
+            return new Func<T, CancellationToken, UniTask>(RaiseSequentially);
         }
 
         public void Clear()
@@ -63,7 +67,7 @@ namespace Elffy
             _lock.Exit();           // ---- exit
         }
 
-        internal void Subscribe(Func<CancellationToken, UniTask> func)
+        internal void Subscribe(Func<T, CancellationToken, UniTask> func)
         {
             Debug.Assert(func is not null);
 
@@ -75,18 +79,18 @@ namespace Elffy
                     _funcs = func;
                 }
                 else if(count == 1) {
-                    Debug.Assert(_funcs is Func<CancellationToken, UniTask>);
-                    var funcs = new Func<CancellationToken, UniTask>[DefaultBufferCapacity];
-                    funcs[0] = Unsafe.As<Func<CancellationToken, UniTask>>(_funcs);
+                    Debug.Assert(_funcs is Func<T, CancellationToken, UniTask>);
+                    var funcs = new Func<T, CancellationToken, UniTask>[DefaultBufferCapacity];
+                    funcs[0] = Unsafe.As<Func<T, CancellationToken, UniTask>>(_funcs);
                     funcs[1] = func;
                     _funcs = funcs;
                 }
                 else {
                     Debug.Assert(_funcs is not null);
-                    Debug.Assert(_funcs is Func<CancellationToken, UniTask>[]);
-                    var funcs = Unsafe.As<Func<CancellationToken, UniTask>[]>(_funcs);
+                    Debug.Assert(_funcs is Func<T, CancellationToken, UniTask>[]);
+                    var funcs = Unsafe.As<Func<T, CancellationToken, UniTask>[]>(_funcs);
                     if(funcs.Length == count) {
-                        var newFunc = new Func<CancellationToken, UniTask>[funcs.Length * 2];
+                        var newFunc = new Func<T, CancellationToken, UniTask>[funcs.Length * 2];
                         funcs.AsSpan().CopyTo(newFunc);
                         _funcs = newFunc;
                         funcs = newFunc;
@@ -101,7 +105,7 @@ namespace Elffy
             return;
         }
 
-        internal void Unsubscribe(Func<CancellationToken, UniTask>? func)
+        internal void Unsubscribe(Func<T, CancellationToken, UniTask>? func)
         {
             if(func is null) { return; }
 
@@ -123,8 +127,8 @@ namespace Elffy
                     return;
                 }
                 else {
-                    Debug.Assert(funcs is Func<CancellationToken, UniTask>[]);
-                    var funcSpan = Unsafe.As<Func<CancellationToken, UniTask>[]>(funcs).AsSpan(0, count);
+                    Debug.Assert(funcs is Func<T, CancellationToken, UniTask>[]);
+                    var funcSpan = Unsafe.As<Func<T, CancellationToken, UniTask>[]>(funcs).AsSpan(0, count);
                     for(int i = 0; i < funcSpan.Length; i++) {
                         if(funcSpan[i] == func) {
                             _count = count - 1;
@@ -150,10 +154,10 @@ namespace Elffy
 
     public static class EventRaiserExtension
     {
-        public static UniTask RaiseSequentiallyIfNotNull(this AsyncEventRaiser? raiser, CancellationToken cancellationToken = default)
+        public static UniTask RaiseSequentiallyIfNotNull<T>(this AsyncEventRaiser<T>? raiser, T arg, CancellationToken cancellationToken = default)
         {
             if(raiser is not null) {
-                return raiser.RaiseSequentially(cancellationToken);
+                return raiser.RaiseSequentially(arg, cancellationToken);
             }
             else {
                 if(cancellationToken.IsCancellationRequested) {
