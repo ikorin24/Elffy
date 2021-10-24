@@ -40,7 +40,6 @@ namespace Elffy
             Ctor(funcs, arg, ct, version);
         }
 
-        [MemberNotNull(nameof(_funcs))]
         private void Ctor(ArraySegment<Func<T, CancellationToken, UniTask>> funcs, T arg, CancellationToken ct, short version)
         {
             _funcs = funcs;
