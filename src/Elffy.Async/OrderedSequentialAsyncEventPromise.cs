@@ -17,7 +17,7 @@ namespace Elffy
         private static Int16TokenFactory _tokenFactory;
 
         private OrderedSequentialAsyncEventPromise<T>? _nextPooled;
-        private Func<T, CancellationToken, UniTask>[] _funcs;
+        private ArraySegment<Func<T, CancellationToken, UniTask>> _funcs;
         private Action<object>? _continuation;
         private object? _continuationState;
         private T _arg;     // It may be null if T is class. Be careful !
@@ -34,23 +34,26 @@ namespace Elffy
         // but 'T?' means 'Nullable<T>' when T is value type.
         // I don't know how to deal it.
 #pragma warning disable CS8618
-        private OrderedSequentialAsyncEventPromise(ReadOnlySpan<Func<T, CancellationToken, UniTask>> funcs, T arg, CancellationToken ct, short version)
+        private OrderedSequentialAsyncEventPromise(ArraySegment<Func<T, CancellationToken, UniTask>> funcs, T arg, CancellationToken ct, short version)
 #pragma warning restore CS8618
         {
             Ctor(funcs, arg, ct, version);
         }
 
         [MemberNotNull(nameof(_funcs))]
-        private void Ctor(ReadOnlySpan<Func<T, CancellationToken, UniTask>> funcs, T arg, CancellationToken ct, short version)
+        private void Ctor(ArraySegment<Func<T, CancellationToken, UniTask>> funcs, T arg, CancellationToken ct, short version)
         {
-            _funcs = funcs.ToArray();   // TODO: instance pooling
+            _funcs = funcs;
             _arg = arg;
             _cancellationToken = ct;
             _version = version;
         }
 
-        public static UniTask CreateTask(ReadOnlySpan<Func<T, CancellationToken, UniTask>> funcs, T arg, CancellationToken ct)
+        public static UniTask CreateTask(ArraySegment<Func<T, CancellationToken, UniTask>> funcs, T arg, CancellationToken ct)
         {
+            // [NOTE]
+            // I don't do defensive copy. 'funcs' must be copied before the method is called.
+
             var token = _tokenFactory.CreateToken();
             if(ChainInstancePool<OrderedSequentialAsyncEventPromise<T>>.TryGetInstanceFast(out var promise)) {
                 promise.Ctor(funcs, arg, ct, token);
@@ -64,7 +67,7 @@ namespace Elffy
         private void ResetAndPoolInstance()
         {
             _version = 0;
-            _funcs = Array.Empty<Func<T, CancellationToken, UniTask>>();
+            _funcs = default;
             _continuation = null;
             _continuationState = null;
             if(RuntimeHelpers.IsReferenceOrContainsReferences<T>()) {
@@ -84,7 +87,7 @@ namespace Elffy
         {
             ValidateToken(token);
             _version = 0;
-            if(_completedCount < _funcs.Length) {
+            if(_completedCount < _funcs.Count) {
                 ThrowNotCompleted();
             }
             var error = _error;
@@ -154,7 +157,7 @@ namespace Elffy
                     return UniTaskStatus.Faulted;
                 }
             }
-            if(_completedCount < _funcs.Length) {
+            if(_completedCount < _funcs.Count) {
                 return UniTaskStatus.Pending;
             }
             else {
@@ -186,7 +189,7 @@ namespace Elffy
 
         NEXT_TASK:
             var index = _completedCount;
-            if(index == _funcs.Length || _error != null) {
+            if(index == _funcs.Count || _error != null) {
                 InvokeContinuation(this);
                 return;
             }
@@ -225,7 +228,7 @@ namespace Elffy
                 }
                 catch(Exception ex) {
                     self.CaptureException(ex);
-                    self._completedCount = self._funcs.Length;
+                    self._completedCount = self._funcs.Count;
                     return;
                 }
                 self._completedCount += 1;

@@ -6,6 +6,8 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
+#pragma warning disable CA1068 // CancellationToken parameters must come last
+
 namespace Elffy
 {
     public sealed class AsyncEventRaiser<T>
@@ -25,38 +27,64 @@ namespace Elffy
         {
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public UniTask RaiseSequentially(T arg, CancellationToken cancellationToken = default)
+        {
+            return RaiseCore(arg, cancellationToken, EventRaiseMode.Sequential);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public UniTask RaiseParallel(T arg, CancellationToken cancellationToken = default)
+        {
+            return RaiseCore(arg, cancellationToken, EventRaiseMode.Parallel);
+        }
+
+        private UniTask RaiseCore(T arg, CancellationToken cancellationToken, EventRaiseMode mode)
         {
             if(cancellationToken.IsCancellationRequested) {
                 return UniTask.FromCanceled(cancellationToken);
             }
-            UniTask task;
             _lock.Enter();          // ---- enter
-            try {
-                var count = _count;
-                if(count == 0) {
-                    task = UniTask.CompletedTask;
+            var count = _count;
+            if(count == 0) {
+                _lock.Exit();       // ---- exit
+                return UniTask.CompletedTask;
+            }
+            else if(count == 1) {
+                Debug.Assert(_funcs is not null);
+                var func = Unsafe.As<Func<T, CancellationToken, UniTask>>(_funcs);
+                _lock.Exit();       // ---- exit
+                return func.Invoke(arg, cancellationToken);
+            }
+            else {
+                Debug.Assert(_funcs is Func<T, CancellationToken, UniTask>[]);
+                var funcs = Unsafe.As<Func<T, CancellationToken, UniTask>[]>(_funcs).AsSpan(0, count);
+                ArraySegment<Func<T, CancellationToken, UniTask>> copiedFuncs;
+                try {
+                    // TODO: array instance pooling
+                    copiedFuncs = funcs.ToArray();
                 }
-                else if(count == 1) {
-                    Debug.Assert(_funcs is not null);
-                    var func = Unsafe.As<Func<T, CancellationToken, UniTask>>(_funcs);
-                    task = func.Invoke(arg, cancellationToken);
+                finally {
+                    _lock.Exit();       // ---- exit
+                }
+                if(mode == EventRaiseMode.Parallel) {
+                    return OrderedParallelAsyncEventPromise<T>.CreateTask(copiedFuncs, arg, cancellationToken);
                 }
                 else {
-                    Debug.Assert(_funcs is Func<T, CancellationToken, UniTask>[]);
-                    var funcs = Unsafe.As<Func<T, CancellationToken, UniTask>[]>(_funcs).AsSpan(0, count);
-                    task = OrderedSequentialAsyncEventPromise<T>.CreateTask(funcs, arg, cancellationToken);
+                    Debug.Assert(mode == EventRaiseMode.Sequential);
+                    return OrderedSequentialAsyncEventPromise<T>.CreateTask(copiedFuncs, arg, cancellationToken);
                 }
             }
-            finally {
-                _lock.Exit();       // ---- exit
-            }
-            return task;
         }
 
         public Func<T, CancellationToken, UniTask> ToSequentialDelegate()
         {
             return new Func<T, CancellationToken, UniTask>(RaiseSequentially);
+        }
+
+        public Func<T, CancellationToken, UniTask> ToParallelDelegate()
+        {
+            return new Func<T, CancellationToken, UniTask>(RaiseParallel);
         }
 
         public void Clear()
@@ -150,6 +178,12 @@ namespace Elffy
                 _lock.Exit();       // ---- exit
             }
         }
+
+        private enum EventRaiseMode : byte
+        {
+            Parallel = 0,
+            Sequential = 1,
+        }
     }
 
     public static class EventRaiserExtension
@@ -158,6 +192,21 @@ namespace Elffy
         {
             if(raiser is not null) {
                 return raiser.RaiseSequentially(arg, cancellationToken);
+            }
+            else {
+                if(cancellationToken.IsCancellationRequested) {
+                    return UniTask.FromCanceled(cancellationToken);
+                }
+                else {
+                    return UniTask.CompletedTask;
+                }
+            }
+        }
+
+        public static UniTask RaiseParallelIfNotNull<T>(this AsyncEventRaiser<T>? raiser, T arg, CancellationToken cancellationToken = default)
+        {
+            if(raiser is not null) {
+                return raiser.RaiseParallel(arg, cancellationToken);
             }
             else {
                 if(cancellationToken.IsCancellationRequested) {
