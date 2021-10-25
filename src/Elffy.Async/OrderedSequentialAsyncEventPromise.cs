@@ -2,7 +2,6 @@
 using Cysharp.Threading.Tasks;
 using System;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Elffy.Effective;
@@ -13,7 +12,6 @@ namespace Elffy
 {
     internal sealed class OrderedSequentialAsyncEventPromise<T> : IUniTaskSource, IChainInstancePooled<OrderedSequentialAsyncEventPromise<T>>
     {
-        private static readonly Action<object> _continuationSentinel = ContinuationSentinel;
         private static Int16TokenFactory _tokenFactory;
 
         private OrderedSequentialAsyncEventPromise<T>? _nextPooled;
@@ -22,12 +20,11 @@ namespace Elffy
         private object? _continuationState;
         private T _arg;     // It may be null if T is class. Be careful !
         private CancellationToken _cancellationToken;
-        private object? _error;
+        private CapturedExceptionWrapper _exception;
         private int _completedCount;
         private short _version;
 
         public ref OrderedSequentialAsyncEventPromise<T>? NextPooled => ref _nextPooled;
-
 
         // [NOTE]
         // The warning CS8618 says that '_arg' should be T as nullable reference type,
@@ -73,7 +70,7 @@ namespace Elffy
                 _arg = default!;
             }
             _cancellationToken = default;
-            _error = null;
+            _exception = CapturedExceptionWrapper.None;
             _completedCount = 0;
             ChainInstancePool<OrderedSequentialAsyncEventPromise<T>>.ReturnInstanceFast(this);
         }
@@ -81,18 +78,14 @@ namespace Elffy
 #if !DEBUG
         [DebuggerHidden]
 #endif
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void GetResult(short token)
         {
             ValidateToken(token);
             _version = 0;
             if(_completedCount < _funcs.Count) {
-                ThrowNotCompleted();
+                UniTaskSourceHelper.ThrowNotCompleted();
             }
-            var error = _error;
-            if(error != null) {
-                ThrowCapturedException(error);
-            }
+            _exception.ThrowIfCaptured();
             ResetAndPoolInstance();
             return;
         }
@@ -100,25 +93,6 @@ namespace Elffy
 #if !DEBUG
         [DebuggerHidden]
 #endif
-        [DoesNotReturn]
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private static void ThrowCapturedException(object error)
-        {
-            if(error is OperationCanceledException oce) {
-                throw oce;
-            }
-            else if(error is ExceptionHolder holder) {
-                holder.Throw();
-            }
-            else {
-                throw new InvalidOperationException($"Critical: {nameof(OrderedSequentialAsyncEventPromise<T>)} captured invalid type exception !!!");
-            }
-        }
-
-#if !DEBUG
-        [DebuggerHidden]
-#endif
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public UniTaskStatus GetStatus(short token)
         {
             ValidateToken(token);
@@ -131,13 +105,12 @@ namespace Elffy
         public void OnCompleted(Action<object> continuation, object state, short token)
         {
             if(continuation is null) {
-                ThrowNullArg(nameof(continuation));
+                UniTaskSourceHelper.ThrowNullArg(nameof(continuation));
             }
             ValidateToken(token);
-
             _continuationState = state;
             if(Interlocked.CompareExchange(ref _continuation, continuation, null) != null) {
-                ThrowCannotAwaitTwice();
+                UniTaskSourceHelper.ThrowCannotAwaitTwice();
             }
             ExecuteNextTask();
         }
@@ -148,33 +121,23 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public UniTaskStatus UnsafeGetStatus()
         {
-            if(_error is not null) {
-                if(_error is OperationCanceledException) {
+            var exceptionStatus = _exception.Status;
+            if(exceptionStatus == UniTaskCapturedExceptionStatus.None) {
+                if(_completedCount < _funcs.Count) {
+                    return UniTaskStatus.Pending;
+                }
+                else {
+                    return UniTaskStatus.Succeeded;
+                }
+            }
+            else {
+                if(exceptionStatus == UniTaskCapturedExceptionStatus.Canceled) {
                     return UniTaskStatus.Canceled;
                 }
                 else {
+                    Debug.Assert(exceptionStatus == UniTaskCapturedExceptionStatus.Faulted);
                     return UniTaskStatus.Faulted;
                 }
-            }
-            if(_completedCount < _funcs.Count) {
-                return UniTaskStatus.Pending;
-            }
-            else {
-                return UniTaskStatus.Succeeded;
-            }
-        }
-
-#if !DEBUG
-        [DebuggerHidden]
-#endif
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private void CaptureException(Exception ex)
-        {
-            if(ex is OperationCanceledException) {
-                _error = ex;
-            }
-            else {
-                _error = ExceptionHolder.Capture(ex);
             }
         }
 
@@ -188,7 +151,7 @@ namespace Elffy
 
         NEXT_TASK:
             var index = _completedCount;
-            if(index == _funcs.Count || _error != null) {
+            if(index == _funcs.Count || _exception.Status != UniTaskCapturedExceptionStatus.None) {
                 InvokeContinuation(this);
                 return;
             }
@@ -199,7 +162,7 @@ namespace Elffy
                 awaiter = task.GetAwaiter();
             }
             catch(Exception ex) {
-                CaptureException(ex);
+                _exception = CapturedExceptionWrapper.Capture(ex);
                 goto NEXT_TASK;
             }
 
@@ -226,7 +189,7 @@ namespace Elffy
                     awaiter.GetResult();
                 }
                 catch(Exception ex) {
-                    self.CaptureException(ex);
+                    self._exception = CapturedExceptionWrapper.Capture(ex);
                     self._completedCount = self._funcs.Count;
                     return;
                 }
@@ -238,7 +201,7 @@ namespace Elffy
 #endif
             static void InvokeContinuation(OrderedSequentialAsyncEventPromise<T> self)
             {
-                var continuation = Interlocked.Exchange(ref self._continuation, _continuationSentinel);
+                var continuation = Interlocked.Exchange(ref self._continuation, UniTaskSourceHelper.ContinuationSentinel);
                 Debug.Assert(continuation is not null);
                 var state = self._continuationState!;
                 continuation(state);
@@ -254,32 +217,6 @@ namespace Elffy
             if(token != _version) {
                 throw new InvalidOperationException("Token version is not matched, can not await twice or get Status after await.");
             }
-        }
-
-#if !DEBUG
-        [DebuggerHidden]
-#endif
-        [DoesNotReturn]
-        private static void ThrowNullArg(string message) => throw new ArgumentNullException(message);
-
-#if !DEBUG
-        [DebuggerHidden]
-#endif
-        [DoesNotReturn]
-        private static void ThrowNotCompleted() => throw new InvalidOperationException("Not yet completed, UniTask only allow to use await.");
-
-#if !DEBUG
-        [DebuggerHidden]
-#endif
-        [DoesNotReturn]
-        private static void ThrowCannotAwaitTwice() => throw new InvalidOperationException("Cannnot await UniTask twice.");
-
-#if !DEBUG
-        [DebuggerHidden]
-#endif
-        private static void ContinuationSentinel(object state)
-        {
-            throw new InvalidOperationException($"Critical: Can not invoke continuation twice !!! Implementation of {nameof(OrderedSequentialAsyncEventPromise<T>)} is something wrong.");
         }
 
         private sealed class InnerTaskState : IChainInstancePooled<InnerTaskState>

@@ -1,0 +1,36 @@
+﻿#nullable enable
+using System;
+using System.Diagnostics.CodeAnalysis;
+
+namespace Elffy
+{
+    internal static class UniTaskSourceHelper
+    {
+        private static readonly Action<object> _continuationSentinel = ContinuationSentinelAction;
+        public static Action<object> ContinuationSentinel => _continuationSentinel;
+
+#if !DEBUG
+        [DebuggerHidden]
+#endif
+        [DoesNotReturn]
+        public static void ThrowNullArg(string message) => throw new ArgumentNullException(message);
+
+#if !DEBUG
+        [DebuggerHidden]
+#endif
+        [DoesNotReturn]
+        public static void ThrowCannotAwaitTwice() => throw new InvalidOperationException("Cannnot await UniTask twice.");
+
+#if !DEBUG
+        [DebuggerHidden]
+#endif
+        [DoesNotReturn]
+        public static void ThrowNotCompleted() => throw new InvalidOperationException("Not yet completed, UniTask only allow to use await.");
+
+
+#if !DEBUG
+        [DebuggerHidden]
+#endif
+        private static void ContinuationSentinelAction(object _) => throw new InvalidOperationException($"can not invoke continuation twice.");
+    }
+}
