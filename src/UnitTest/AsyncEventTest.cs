@@ -20,9 +20,21 @@ namespace UnitTest
 
         private static readonly Func<TestSample, CancellationToken, UniTask> Sync_ShouldNotBeCalled = (sender, ct) =>
         {
-            // No one should not come here.
             Assert.True(false, "No one should not come here.");
             return UniTask.CompletedTask;
+        };
+
+        private static readonly Func<TestSample, CancellationToken, UniTask> Async_ShouldNotBeCalled = async (sender, ct) =>
+        {
+            Assert.True(false, "No one should not come here.");
+            await UniTask.CompletedTask;
+        };
+
+        private static readonly Func<TestSample, CancellationToken, UniTask> Async_Add5_Add1 = async (sender, ct) =>
+        {
+            sender.Value += 5;
+            await Task.Delay(10, ct).ConfigureAwait(false);
+            sender.Value += 1;
         };
 
         [Fact]
@@ -41,25 +53,14 @@ namespace UnitTest
         [Fact]
         public async Task AsyncSubscribe()
         {
-            var value = 0;
-            var foo = new TestSample();
-            Assert.Equal(0, foo.SubscibedCount);
-            var unsbscriber = foo.Test.Subscribe(async (sender, ct) =>
+            var condition = new TestCondition()
             {
-                value += 5;
-                await Task.Delay(10, ct);
-                value++;
-            });
-            Assert.True(value == 0);
-            Assert.Equal(1, foo.SubscibedCount);
-            await foo.SequentiallyRaiseTest(CancellationToken.None);
-            Assert.True(value == 6);
-            Assert.Equal(1, foo.SubscibedCount);
-            unsbscriber.Dispose();
-            Assert.Equal(0, foo.SubscibedCount);
-            await foo.SequentiallyRaiseTest(CancellationToken.None);
-            Assert.True(value == 6);
-            Assert.Equal(0, foo.SubscibedCount);
+                Delegates = new[] { Async_Add5_Add1, },
+                CancellationToken = CancellationToken.None,
+                TaskStatus = null,
+                Assertion = target => Assert.Equal(6, target.Value),
+            };
+            await ExecuteTest(condition);
         }
 
         [Theory]
@@ -80,7 +81,7 @@ namespace UnitTest
                     unsubscribers[i] = foo.Test.Subscribe(async (sender, ct) =>
                     {
                         array[num] += 5;
-                        await Task.Delay(10, ct);
+                        await Task.Delay(10, ct).ConfigureAwait(false);
                         array[num]++;
                     });
                 }
@@ -126,6 +127,7 @@ namespace UnitTest
 
             var condition = new TestCondition()
             {
+                Delegates = null,
                 CancellationToken = new CancellationToken(true),
                 TaskStatus = UniTaskStatus.Canceled,
                 Assertion = target => Assert.Equal(0, target.Value),
@@ -136,23 +138,14 @@ namespace UnitTest
         [Fact]
         public async Task AlreadyCanceled_AsyncDelegate()
         {
-            var foo = new TestSample();
-            Assert.Equal(0, foo.SubscibedCount);
-            var unsbscriber = foo.Test.Subscribe(async (sender, ct) =>
+            var condition = new TestCondition()
             {
-                // No one should not come here.
-                Assert.True(false, "No one should not come here.");
-                await UniTask.CompletedTask;
-            });
-            Assert.Equal(1, foo.SubscibedCount);
-
-            var raiseEventTask = foo.SequentiallyRaiseTest(new CancellationToken(true));
-            Assert.Equal(UniTaskStatus.Canceled, raiseEventTask.Status);
-
-            await Assert.ThrowsAsync<OperationCanceledException>(async () => await raiseEventTask);
-            Assert.Equal(1, foo.SubscibedCount);
-            unsbscriber.Dispose();
-            Assert.Equal(0, foo.SubscibedCount);
+                Delegates = new[] { Async_ShouldNotBeCalled, },
+                CancellationToken = new CancellationToken(true),
+                TaskStatus = UniTaskStatus.Canceled,
+                Assertion = target => Assert.Equal(0, target.Value),
+            };
+            await ExecuteTest(condition);
         }
 
         [Theory]
@@ -162,45 +155,25 @@ namespace UnitTest
         [InlineData(20)]
         public async Task AlreadyCanceled_MultiSubscribed(int delegateCount)
         {
-            var unsubscribers = new AsyncEventUnsubscriber<TestSample>[delegateCount];
-            var foo = new TestSample();
-            Assert.Equal(0, foo.SubscibedCount);
-
-            for(int i = 0; i < delegateCount; i++) {
-                var num = i;
-                if(i % 2 == 0) {
-                    unsubscribers[num] = foo.Test.Subscribe(async (sender, ct) =>
-                    {
-                        // No one should not come here.
-                        Assert.True(false, "No one should not come here.");
-                        await UniTask.CompletedTask;
-                    });
-                }
-                else {
-                    unsubscribers[num] = foo.Test.Subscribe((sender, ct) =>
-                    {
-                        // No one should not come here.
-                        Assert.True(false, "No one should not come here.");
-                        return UniTask.CompletedTask;
-                    });
-                }
-            }
-            Assert.Equal(delegateCount, foo.SubscibedCount);
-            var raisedEventTask = foo.SequentiallyRaiseTest(new CancellationToken(true));
-            Assert.Equal(UniTaskStatus.Canceled, raisedEventTask.Status);
-            await Assert.ThrowsAsync<OperationCanceledException>(async () => await raisedEventTask);
-            Assert.Equal(delegateCount, foo.SubscibedCount);
-            foreach(var u in unsubscribers) {
-                u.Dispose();
-            }
-            Assert.Equal(0, foo.SubscibedCount);
+            var delegates = Enumerable
+                .Range(0, delegateCount)
+                .Select(i => (i % 2 == 0) ? Async_ShouldNotBeCalled : Sync_ShouldNotBeCalled)
+                .ToArray();
+            var condition = new TestCondition()
+            {
+                Delegates = delegates,
+                CancellationToken = new CancellationToken(true),
+                TaskStatus = UniTaskStatus.Canceled,
+                Assertion = target => Assert.Equal(0, target.Value),
+            };
+            await ExecuteTest(condition);
         }
 
         private static async UniTask ExecuteTest(TestCondition condition)
         {
             var target = new TestSample();
 
-            var delegates = condition.Delegates;
+            var delegates = condition.Delegates ?? new Func<TestSample, CancellationToken, UniTask>[0];
             var ct = condition.CancellationToken;
             var taskStatus = condition.TaskStatus;
             var assertion = condition.Assertion;
@@ -226,22 +199,21 @@ namespace UnitTest
                 await raisedEventTask;
             }
 
-
             Assert.Equal(delegates.Length, target.SubscibedCount);
-            assertion(target);
+            assertion?.Invoke(target);
 
             unsubscribers.ForEach(u => u.Dispose());
             unsubscribers.Clear();
             Assert.Equal(0, target.SubscibedCount);
-            assertion(target);
+            assertion?.Invoke(target);
         }
 
         private sealed class TestCondition
         {
-            public Func<TestSample, CancellationToken, UniTask>[] Delegates { get; init; } = Array.Empty<Func<TestSample, CancellationToken, UniTask>>();
+            public Func<TestSample, CancellationToken, UniTask>[]? Delegates { get; init; }
             public CancellationToken CancellationToken { get; init; }
             public UniTaskStatus? TaskStatus { get; init; }
-            public Action<TestSample> Assertion { get; init; } = _ => { };
+            public Action<TestSample>? Assertion { get; init; }
         }
 
         private sealed class TestSample
@@ -254,7 +226,6 @@ namespace UnitTest
 
 
             public int Value { get; set; }
-
 
             public UniTask SequentiallyRaiseTest(CancellationToken ct)
             {

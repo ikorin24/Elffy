@@ -50,7 +50,7 @@ namespace Elffy
         internal static UniTask<AsyncUnit> CreateTask(LayerTimingPoint timingPoint, CancellationToken cancellationToken)
         {
             var token = _tokenFactory.CreateToken();
-            if(ChainInstancePool<LayerTimingAwaitableTaskSource>.TryGetInstance(out var taskSource)) {
+            if(ChainInstancePool<LayerTimingAwaitableTaskSource>.TryGetInstanceFast(out var taskSource)) {
                 taskSource._awaitableCore = new(timingPoint, token, cancellationToken);
             }
             else {
@@ -62,7 +62,7 @@ namespace Elffy
         private static void Return(LayerTimingAwaitableTaskSource source)
         {
             source._awaitableCore = default;
-            ChainInstancePool<LayerTimingAwaitableTaskSource>.ReturnInstance(source);
+            ChainInstancePool<LayerTimingAwaitableTaskSource>.ReturnInstanceFast(source);
         }
     }
 }
