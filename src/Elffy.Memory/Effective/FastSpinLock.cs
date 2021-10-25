@@ -1,15 +1,20 @@
 ﻿#nullable enable
 using System.Threading;
 using System.Runtime.CompilerServices;
+using System.Diagnostics;
 
 namespace Elffy.Effective
 {
+    [DebuggerDisplay("{DebuggerView,nq}")]
     public struct FastSpinLock
     {
         private const int SYNC_ENTER = 1;
         private const int SYNC_EXIT = 0;
 
         private int _syncFlag;
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private string DebuggerView => _syncFlag == SYNC_EXIT ? "unlocked" : "locked";
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Enter()

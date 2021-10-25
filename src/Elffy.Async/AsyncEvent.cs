@@ -9,6 +9,7 @@ using System.Diagnostics;
 
 namespace Elffy
 {
+    [DebuggerDisplay("{DebuggerView,nq}")]
     public readonly ref struct AsyncEvent<T>
     {
         // [NOTE]
@@ -16,6 +17,9 @@ namespace Elffy
         // For now, ByReference<T> is not yet available in the user library.
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private readonly Span<AsyncEventRaiser<T>?> _raiserRef;
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private string DebuggerView => $"{nameof(AsyncEvent<T>)}<{nameof(T)}> (Subscibed = {Raiser?.SubscibedCount ?? 0})";
 
         private readonly ref AsyncEventRaiser<T>? Raiser
         {

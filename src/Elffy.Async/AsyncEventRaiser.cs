@@ -188,6 +188,7 @@ namespace Elffy
 
     public static class EventRaiserExtension
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static UniTask RaiseSequentiallyIfNotNull<T>(this AsyncEventRaiser<T>? raiser, T arg, CancellationToken cancellationToken = default)
         {
             if(raiser is not null) {
@@ -203,6 +204,7 @@ namespace Elffy
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static UniTask RaiseParallelIfNotNull<T>(this AsyncEventRaiser<T>? raiser, T arg, CancellationToken cancellationToken = default)
         {
             if(raiser is not null) {
