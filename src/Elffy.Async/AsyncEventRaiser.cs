@@ -79,12 +79,12 @@ namespace Elffy
 
         public Func<T, CancellationToken, UniTask> ToSequentialDelegate()
         {
-            return new Func<T, CancellationToken, UniTask>(RaiseSequentially);
+            return RaiseSequentially;
         }
 
         public Func<T, CancellationToken, UniTask> ToParallelDelegate()
         {
-            return new Func<T, CancellationToken, UniTask>(RaiseParallel);
+            return RaiseParallel;
         }
 
         public void Clear()
