@@ -75,15 +75,18 @@ namespace Elffy
             var funcs = _core.Funcs;
             var ct = _core.CancellationToken;
 
+            var index = 0;
         NEXT_TASK:
-            var index = _core.CompletedCount;
-            if(index == funcs.Count || _core.Exception.Status != UniTaskCapturedExceptionStatus.None) {
+            if(_core.CompletedCount == funcs.Count || _core.Exception.Status != UniTaskCapturedExceptionStatus.None) {
                 _core.InvokeContinuation();
+                return;
+            }
+            if(index >= funcs.Count) {
                 return;
             }
             UniTask.Awaiter awaiter;
             try {
-                var task = funcs[index].Invoke(_core.Arg, ct);
+                var task = funcs[index++].Invoke(_core.Arg, ct);
                 awaiter = task.GetAwaiter();
             }
             catch(Exception ex) {
@@ -98,7 +101,12 @@ namespace Elffy
             awaiter.SourceOnCompleted(static s =>
             {
                 var (self, awaiter) = PromiseAndAwaiterPair.Extract<OrderedParallelAsyncEventPromise<T>>(s);
-                self._core.InvokeInnerTaskCompleted(awaiter);
+                ref var core = ref self._core;
+                core.InvokeInnerTaskCompleted(awaiter);
+                if(core.CompletedCount == core.Funcs.Count || core.Exception.Status != UniTaskCapturedExceptionStatus.None) {
+                    core.InvokeContinuation();
+                    return;
+                }
             }, PromiseAndAwaiterPair.Create(this, awaiter));
             goto NEXT_TASK;
         }
