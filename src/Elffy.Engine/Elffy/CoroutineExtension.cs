@@ -22,15 +22,15 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static UniTask StartCoroutine(this IHostScreen parent, Func<CoroutineState, IHostScreen, UniTask> coroutine)
+        public static UniTask StartCoroutine(this IHostScreen parent, Func<CoroutineState, UniTask> coroutine)
         {
-            return Coroutine.Start(parent, parent, coroutine);
+            return Coroutine.Start(parent, coroutine);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static UniTask StartCoroutine(this IHostScreen parent, Func<CoroutineState, IHostScreen, UniTask> coroutine, FrameTiming timing)
+        public static UniTask StartCoroutine(this IHostScreen parent, Func<CoroutineState, UniTask> coroutine, FrameTiming timing)
         {
-            return Coroutine.Start(parent, parent, coroutine, timing);
+            return Coroutine.Start(parent, coroutine, timing);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -74,15 +74,15 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void StartOrReserveCoroutine(this IHostScreen parent, Func<CoroutineState, IHostScreen, UniTask> coroutine)
+        public static void StartOrReserveCoroutine(this IHostScreen parent, Func<CoroutineState, UniTask> coroutine)
         {
-            Coroutine.StartOrReserve(parent, parent, coroutine);
+            Coroutine.StartOrReserve(parent, coroutine);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void StartOrReserveCoroutine(this IHostScreen parent, Func<CoroutineState, IHostScreen, UniTask> coroutine, FrameTiming timing)
+        public static void StartOrReserveCoroutine(this IHostScreen parent, Func<CoroutineState, UniTask> coroutine, FrameTiming timing)
         {
-            Coroutine.StartOrReserve(parent, parent, coroutine, timing);
+            Coroutine.StartOrReserve(parent, coroutine, timing);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

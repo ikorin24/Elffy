@@ -27,12 +27,12 @@ namespace Elffy.Shading.Forward
             uniform.Send("_lPos", new Vector4(0, 100, 0, 1));
             uniform.Send("_lColor", new Color3(1, 1, 1));
 
-            ref var material = ref Unsafe.NullRef<PBRMaterialData>();
-            if(target.TryGetComponent<PBRMaterial>(out var m)) {
+            ref var material = ref Unsafe.NullRef<PbrMaterialData>();
+            if(target.TryGetComponent<PbrMaterial>(out var m)) {
                 material = ref m.Data;
             }
             else {
-                material = new PBRMaterialData();
+                material = new PbrMaterialData();
             }
             uniform.Send("_metallic", (float)material.Metallic);
             uniform.Send("_albedo", material.Albedo);

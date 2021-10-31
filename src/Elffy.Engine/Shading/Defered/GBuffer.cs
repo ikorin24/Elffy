@@ -15,6 +15,7 @@ namespace Elffy.Shading.Defered
 {
     internal sealed class GBuffer : IDisposable
     {
+        private IHostScreen? _screen;
         private FBO _fbo;
         private TextureObject _position;            // Texture2D, Rgba16f, (x, y, z, 1)
         private TextureObject _normal;              // Texture2D, Rgba16f, (normal.x, normal.y, normal.z, 1)
@@ -24,6 +25,8 @@ namespace Elffy.Shading.Defered
         private RBO _depth;
         private bool _initialized;
 
+        public bool IsInitialized => _initialized;
+
         public ref readonly FBO FBO => ref _fbo;
 
         public GBuffer()
@@ -31,6 +34,12 @@ namespace Elffy.Shading.Defered
         }
 
         ~GBuffer() => Dispose(false);
+
+        public bool TryGetHostScreen([MaybeNullWhen(false)] out IHostScreen screen)
+        {
+            screen = _screen;
+            return _screen is not null;
+        }
 
         public GBufferData GetBufferData()
         {
@@ -54,6 +63,7 @@ namespace Elffy.Shading.Defered
             CreateGBuffer(screen.FrameBufferSize, out _fbo, out _position, out _normal,
                           out _albedo, out _emit, out _metallicRoughness, out _depth);
             ContextAssociatedMemorySafety.Register(this, screen);
+            _screen = screen;
             _initialized = true;
         }
 
@@ -68,6 +78,7 @@ namespace Elffy.Shading.Defered
             if(_fbo.IsEmpty) { return; }
 
             if(disposing) {
+                _screen = null;
                 FBO.Delete(ref _fbo);
                 TextureObject.Delete(ref _position);
                 TextureObject.Delete(ref _normal);

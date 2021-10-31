@@ -76,6 +76,9 @@ namespace Elffy.Features
                 if(_waitingDisposing.TryGetValue(targetScreen, out var list) && list.Count > 0) {
                     var items = list.ClearWithExtracting();
                     DevEnv.ForceWriteLine("Some resources are leaked! Dispose them for safety.", nameof(ContextAssociatedMemorySafety));
+#if DEBUG
+                    Debugger.Break();
+#endif
                     foreach(var item in items) {
                         item.Dispose();
                         if(DevEnv.IsEnabled) {

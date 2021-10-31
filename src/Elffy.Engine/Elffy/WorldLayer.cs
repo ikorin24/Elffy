@@ -1,13 +1,12 @@
 ﻿#nullable enable
-
 using Cysharp.Threading.Tasks;
 using System.Threading;
 
 namespace Elffy
 {
-    public sealed class WorldLayer : Layer
+    public class WorldLayer : Layer
     {
-        public const int DefaultSortNumber = 0;
+        private const int DefaultSortNumber = 0;
 
         public WorldLayer(string name, int sortNumber = DefaultSortNumber) : base(name, sortNumber)
         {
@@ -29,6 +28,16 @@ namespace Elffy
         }
 
         protected override void OnLayerTerminated()
+        {
+            // nop
+        }
+
+        protected override void OnRendered(IHostScreen screen)
+        {
+            // nop
+        }
+
+        protected override void OnRendering(IHostScreen screen)
         {
             // nop
         }

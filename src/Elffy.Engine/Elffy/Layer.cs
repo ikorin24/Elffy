@@ -17,9 +17,10 @@ namespace Elffy
         private readonly LayerTimingPointList _timingPoints;
         private readonly string _name;
         private LayerCollection? _owner;
-        private int _sortNumber;
+        private readonly int _sortNumber;
         private bool _isVisible;
         private LayerLifeState _state;
+        private AsyncEventRaiser<Layer>? _activating;
 
         internal LayerCollection? Owner => _owner;
 
@@ -40,6 +41,8 @@ namespace Elffy
 
         public LayerLifeState LifeState => _state;
 
+        public AsyncEvent<Layer> Activating => new(ref _activating);
+
         protected ReadOnlySpan<FrameObject> Objects => _store.List;
         protected ReadOnlySpan<FrameObject> AddedObjects => _store.Added;
         protected ReadOnlySpan<FrameObject> RemovedObjects => _store.Removed;
@@ -48,18 +51,21 @@ namespace Elffy
         /// <summary>Create new <see cref="Layer"/> with specified name.</summary>
         /// <param name="name">name of the layer</param>
         /// <param name="sortNumber">number for layer sorting</param>
-        public Layer(string name, int sortNumber)
+        protected Layer(string name, int sortNumber) : this(name, sortNumber, 32)
+        {
+        }
+
+        private protected Layer(string name, int sortNumber, int capacity)
         {
             if(name is null) {
                 ThrowNullArg();
                 [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(name));
             }
-            const int Capacity = 32;
             _name = name;
             _isVisible = true;
             _sortNumber = sortNumber;
             _timingPoints = new LayerTimingPointList(this);
-            _store = FrameObjectStore.New(Capacity);
+            _store = FrameObjectStore.New(capacity);
             _state = LayerLifeState.New;
         }
 
@@ -86,6 +92,9 @@ namespace Elffy
             _state = LayerLifeState.Activating;
             _owner = screen.Layers;
             screen.Layers.Add(this);
+
+            await _activating.RaiseParallelIfNotNull(this, cancellationToken);
+            _activating?.Clear();
             await WaitForNextFrame(screen, timingPoint, cancellationToken);
 
             Debug.Assert(_state.IsSameOrAfter(LayerLifeState.Alive));
@@ -138,18 +147,22 @@ namespace Elffy
             RenderOverride(screen);
         }
 
-        internal void OnSizeChangedCallback(IHostScreen screen)
-        {
-            OnSizeChanged(screen);
-        }
-
-        protected virtual void RenderOverride(IHostScreen screen)
+        private protected virtual void RenderOverride(IHostScreen screen)
         {
             var timingPoints = _timingPoints;
             timingPoints.BeforeRendering.DoQueuedEvents();
             SelectMatrix(screen, out var view, out var projection);
-            _store.Render(view, projection);
+            OnRendering(screen);
+            if(_isVisible) {
+                _store.Render(view, projection);
+            }
+            OnRendered(screen);
             timingPoints.AfterRendering.DoQueuedEvents();
+        }
+
+        internal void OnSizeChangedCallback(IHostScreen screen)
+        {
+            OnSizeChanged(screen);
         }
 
         protected virtual void SelectMatrix(IHostScreen screen, out Matrix4 view, out Matrix4 projection)
@@ -158,6 +171,10 @@ namespace Elffy
             view = camera.View;
             projection = camera.Projection;
         }
+
+        protected abstract void OnRendering(IHostScreen screen);
+
+        protected abstract void OnRendered(IHostScreen screen);
 
         protected abstract void OnAlive(IHostScreen screen);
 

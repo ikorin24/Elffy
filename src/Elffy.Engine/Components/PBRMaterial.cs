@@ -7,9 +7,9 @@ using System.Runtime.InteropServices;
 namespace Elffy.Components
 {
     [DebuggerDisplay("{DebugView,nq}")]
-    public sealed class PBRMaterial : IComponent
+    public sealed class PbrMaterial : IComponent
     {
-        private PBRMaterialData _data;
+        private PbrMaterialData _data;
 
         public ref Color3 Albedo => ref _data.Albedo;
 
@@ -19,14 +19,14 @@ namespace Elffy.Components
 
         public ref Color3 Emit => ref _data.Emit;
 
-        public ref PBRMaterialData Data => ref _data;
+        public ref PbrMaterialData Data => ref _data;
 
-        public PBRMaterial(in Color3 albedo, float metallic, float roughness, in Color3 emit)
+        public PbrMaterial(in Color3 albedo, float metallic, float roughness, in Color3 emit)
         {
-            _data = new PBRMaterialData(albedo, metallic, roughness, emit);
+            _data = new PbrMaterialData(albedo, metallic, roughness, emit);
         }
 
-        public PBRMaterial(in PBRMaterialData data)
+        public PbrMaterial(in PbrMaterialData data)
         {
             _data = data;
         }
@@ -45,7 +45,7 @@ namespace Elffy.Components
 
     [DebuggerDisplay("{DebugView,nq}")]
     [StructLayout(LayoutKind.Explicit)]
-    public struct PBRMaterialData : IEquatable<PBRMaterialData>
+    public struct PbrMaterialData : IEquatable<PbrMaterialData>
     {
         [FieldOffset(0)]
         public Color3 Albedo;
@@ -56,7 +56,7 @@ namespace Elffy.Components
         [FieldOffset(28)]
         public float Roughness;
 
-        public PBRMaterialData(in Color3 albedo, float metallic, float roughness, in Color3 emit)
+        public PbrMaterialData(in Color3 albedo, float metallic, float roughness, in Color3 emit)
         {
             Albedo = albedo;
             Metallic = metallic;
@@ -64,17 +64,17 @@ namespace Elffy.Components
             Roughness = roughness;
         }
 
-        public PBRMaterial ToMaterial() => new PBRMaterial(this);
+        public PbrMaterial ToMaterial() => new PbrMaterial(this);
 
-        public override bool Equals(object? obj) => obj is PBRMaterialData data && Equals(data);
+        public override bool Equals(object? obj) => obj is PbrMaterialData data && Equals(data);
 
-        public bool Equals(PBRMaterialData other) => Albedo.Equals(other.Albedo) && Metallic == other.Metallic && Emit.Equals(other.Emit) && Roughness == other.Roughness;
+        public bool Equals(PbrMaterialData other) => Albedo.Equals(other.Albedo) && Metallic == other.Metallic && Emit.Equals(other.Emit) && Roughness == other.Roughness;
 
         public override int GetHashCode() => HashCode.Combine(Albedo, Metallic, Emit, Roughness);
 
-        public static bool operator ==(PBRMaterialData left, PBRMaterialData right) => left.Equals(right);
+        public static bool operator ==(PbrMaterialData left, PbrMaterialData right) => left.Equals(right);
 
-        public static bool operator !=(PBRMaterialData left, PBRMaterialData right) => !(left == right);
+        public static bool operator !=(PbrMaterialData left, PbrMaterialData right) => !(left == right);
 
         [EditorBrowsable(EditorBrowsableState.Never)]
         internal string DebugView => $"(R:{Albedo.R:N3}, G:{Albedo.G:N3}, B:{Albedo.B:N3}), Metallic={Metallic:N3}, Roughness={Roughness:N3}, Emit=(R:{Emit.R:N3}, G:{Emit.G:N3}, B:{Emit.B:N3})";

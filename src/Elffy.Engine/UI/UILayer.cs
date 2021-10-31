@@ -11,9 +11,9 @@ namespace Elffy.UI
     {
         private const float UI_FAR = 1f;
         private const float UI_NEAR = -1f;
-        public const int DefaultSortNumber = 100;
+        public const int DefaultSort = 100;
 
-        private static readonly Func<CoroutineState, (IHostScreen, UILayer), UniTask> UIEventPipelineFunc = UIEventPipeline;
+        private static readonly Func<CoroutineState, UILayer, UniTask> UIEventPipelineFunc = UIEventPipeline;
 
         private readonly RootPanel _uiRoot;
         private Matrix4 _uiProjection;
@@ -25,13 +25,13 @@ namespace Elffy.UI
         /// <summary>Get or set whether hit test is enabled.</summary>
         public bool IsHitTestEnabled { get => _isHitTestEnabled; set => _isHitTestEnabled = value; }
 
-        public UILayer(string name, int sortNumber = DefaultSortNumber) : base(name, sortNumber)
+        public UILayer(string name, int sortNumber = DefaultSort) : base(name, sortNumber)
         {
             _isHitTestEnabled = true;
             _uiRoot = new RootPanel(this);
         }
 
-        public static UniTask<UILayer> NewActivate(IHostScreen screen, string name, int sortNumber = DefaultSortNumber, CancellationToken cancellationToken = default)
+        public static UniTask<UILayer> NewActivate(IHostScreen screen, string name, int sortNumber = DefaultSort, CancellationToken cancellationToken = default)
         {
             return new UILayer(name, sortNumber).Activate(screen, cancellationToken);
         }
@@ -40,7 +40,7 @@ namespace Elffy.UI
         {
             var uiRoot = _uiRoot;
             uiRoot.Initialize();
-            Coroutine.StartOrReserve(screen, (screen, this), UIEventPipelineFunc, FrameTiming.FrameInitializing);
+            Coroutine.StartOrReserve(screen, this, UIEventPipelineFunc, FrameTiming.FrameInitializing);
         }
 
         protected override void SelectMatrix(IHostScreen screen, out Matrix4 view, out Matrix4 projection)
@@ -52,10 +52,13 @@ namespace Elffy.UI
             projection = _uiProjection;
         }
 
-        protected override void RenderOverride(IHostScreen screen)
+        protected override void OnRendering(IHostScreen screen)
         {
             GL.Disable(EnableCap.DepthTest);
-            base.RenderOverride(screen);
+        }
+
+        protected override void OnRendered(IHostScreen screen)
+        {
             GL.Enable(EnableCap.DepthTest);
         }
 
@@ -72,13 +75,12 @@ namespace Elffy.UI
             // nop
         }
 
-        private static async UniTask UIEventPipeline(CoroutineState coroutine, (IHostScreen Screen, UILayer Layer) state)
+        private static async UniTask UIEventPipeline(CoroutineState coroutine, UILayer layer)
         {
-            var (screen, layer) = state;
             while(coroutine.CanRun && layer.LifeState.IsRunning()) {
-                layer.HitTest(screen.Mouse);
+                layer.HitTest(coroutine.Screen.Mouse);
                 layer.UIEvent();
-                await screen.TimingPoints.FrameInitializing.Next();
+                await coroutine.TimingPoints.FrameInitializing.Next();
             }
         }
 

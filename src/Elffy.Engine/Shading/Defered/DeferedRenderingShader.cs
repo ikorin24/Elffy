@@ -5,16 +5,16 @@ using Elffy.Graphics.OpenGL;
 
 namespace Elffy.Shading.Defered
 {
-    public sealed class DeferedRenderingShaderSource : ShaderSource
+    public sealed class DeferedRenderingShader : ShaderSource
     {
-        private static DeferedRenderingShaderSource? _instance;
-        public static DeferedRenderingShaderSource Instance => _instance ??= new DeferedRenderingShaderSource();
+        private static DeferedRenderingShader? _instance;
+        public static DeferedRenderingShader Instance => _instance ??= new DeferedRenderingShader();
 
         public override string VertexShaderSource => VertSource;
 
         public override string FragmentShaderSource => FragSource;
 
-        private DeferedRenderingShaderSource()
+        private DeferedRenderingShader()
         {
         }
 

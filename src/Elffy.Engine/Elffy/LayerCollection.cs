@@ -106,9 +106,7 @@ namespace Elffy
         {
             var screen = Screen;
             foreach(var layer in AsSpan()) {
-                if(layer.IsVisible) {
-                    layer.Render(screen);
-                }
+                layer.Render(screen);
             }
         }
 

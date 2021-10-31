@@ -1,32 +1,40 @@
 ﻿#nullable enable
 using Elffy.Graphics.OpenGL;
+using System.Diagnostics;
 
 namespace Elffy.Shading.Defered
 {
-    internal sealed class PBRDeferedRenderingPostProcess : PostProcess
+    internal sealed class PbrDeferedRenderingPostProcess : PostProcess
     {
+        internal delegate ref readonly Matrix4 MatrixProvider(IHostScreen screen);
+
         private readonly GBuffer _gBuffer;
         private readonly LightBuffer _lightBuffer;
-        private Matrix4 _view;
+        private readonly MatrixProvider _viewProvider;
+        private readonly IHostScreen _screen;
 
         public override string FragShaderSource => FragSource;
 
-        internal PBRDeferedRenderingPostProcess(GBuffer gBuffer, LightBuffer lightBuffer)
+        internal PbrDeferedRenderingPostProcess(GBuffer gBuffer, LightBuffer lightBuffer, MatrixProvider viewProvider)
         {
+            var hasScreen = gBuffer.TryGetHostScreen(out var screen);
+            Debug.Assert(hasScreen);
+            Debug.Assert(lightBuffer.TryGetHostScreen(out var s));
+            Debug.Assert(screen == s);
             _gBuffer = gBuffer;
             _lightBuffer = lightBuffer;
-        }
-
-        public void SetMatrices(in Matrix4 view)
-        {
-            _view = view;
+            _screen = screen;
+            _viewProvider = viewProvider;
         }
 
         protected override void SendUniforms(Uniform uniform, in Vector2i screenSize)
         {
+            Debug.Assert(_gBuffer.IsInitialized);
+            Debug.Assert(_lightBuffer.IsInitialized);
+
             var g = _gBuffer.GetBufferData();
             var lightData = _lightBuffer.GetBufferData();
-            uniform.Send("_view", _view);
+            uniform.Send("_view", _viewProvider(_screen));
             uniform.Send("_lightCount", _lightBuffer.LightCount);
             uniform.SendTexture2D("_posSampler", g.Position, TextureUnitNumber.Unit0);
             uniform.SendTexture2D("_normalSampler", g.Normal, TextureUnitNumber.Unit1);

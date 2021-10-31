@@ -5,18 +5,18 @@ using Elffy.Graphics.OpenGL;
 
 namespace Elffy.Shading.Defered
 {
-    public sealed class PBRDeferedShader : ShaderSource
+    public sealed class PbrDeferedShader : ShaderSource
     {
-        private static readonly PBRMaterialData _fallback = new PBRMaterialData();
+        private static readonly PbrMaterialData _fallback = new PbrMaterialData();
 
-        private static PBRDeferedShader? _instance;
-        public static PBRDeferedShader Instance => _instance ??= new PBRDeferedShader();
+        private static PbrDeferedShader? _instance;
+        public static PbrDeferedShader Instance => _instance ??= new PbrDeferedShader();
 
         public override string VertexShaderSource => VertSource;
 
         public override string FragmentShaderSource => FragSource;
 
-        private PBRDeferedShader()
+        private PbrDeferedShader()
         {
         }
 
@@ -33,7 +33,7 @@ namespace Elffy.Shading.Defered
             uniform.Send("_view", view);
             uniform.Send("_mvp", projection * view * model);
 
-            ref readonly var material = ref target.TryGetComponent<PBRMaterial>(out var m) ? ref m.Data : ref _fallback;
+            ref readonly var material = ref target.TryGetComponent<PbrMaterial>(out var m) ? ref m.Data : ref _fallback;
 
             uniform.Send("_albedoMetallic", new Color4(material.Albedo, material.Metallic));
             uniform.Send("_emitRoughness", new Color4(material.Emit, material.Roughness));

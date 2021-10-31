@@ -16,27 +16,39 @@ namespace Sandbox
 {
     public static class Startup
     {
-        //[GameEntryPoint]
+        [GameEntryPoint]
         public static async UniTask Start2()
         {
             var screen = Game.Screen;
-            var layer = await WorldLayer.NewActivate(screen, "Default");
+            //var (layer, drLayer) = await UniTask.WhenAll(
+            //    WorldLayer.NewActivate(screen, "World"),
+            //    DeferedRenderingLayer.NewActivate(screen, "Defered", 1)
+            //);
 
-            var deferedRenderer = DeferedRenderer.Attach(screen, 1, context =>
-            {
-                var interval = 100;
-                for(int i = 0; i < context.LightCount; i++) {
-                    var x = i * interval - context.LightCount * interval / 2;
-                    var pos = new Vector3(x, 10, 0);
-                    context.SetPointLight(i, pos, Color4.White);
+            var layer = await DeferedRenderingLayer.NewActivate(screen, "Defered", 1);
+
+
+            /*
+             context =>
+                {
+                    var interval = 100;
+                    for(int i = 0; i < context.LightCount; i++) {
+                        var x = i * interval - context.LightCount * interval / 2;
+                        var pos = new Vector3(x, 10, 0);
+                        context.SetPointLight(i, pos, Color4.White);
+                    }
                 }
-            });
+             
+             */
 
             var cube = Resources.Sandbox["Dice.fbx"].CreateFbxModel();
-            var material = new PBRMaterialData(new Color3(1, 0.8f, 0.2f), 0.99f, 0.1f, default).ToMaterial();
+            var material = new PbrMaterialData(new Color3(1, 0.8f, 0.2f), 0.99f, 0.1f, default).ToMaterial();
             cube.AddComponent(material);
-            cube.Shader = PBRDeferedShader.Instance;
-            await UniTask.WhenAll(cube.Activate(layer), CreateCameraMouse(layer, cube.Position));
+            cube.Shader = PbrDeferedShader.Instance;
+            await UniTask.WhenAll(
+                cube.Activate(layer),
+                CreateCameraMouse(layer, cube.Position)
+            );
 
             //Game.Screen.StartCoroutine(deferedRenderer, static async (coroutine, deferedRenderer) =>
             //{
@@ -59,7 +71,7 @@ namespace Sandbox
             //}).Forget();
         }
 
-        [GameEntryPoint]
+        //[GameEntryPoint]
         public static async UniTask Start()
         {
             var screen = Game.Screen;
