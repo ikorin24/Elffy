@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using Elffy;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -162,6 +163,55 @@ namespace UnitTest
             }
         }
 
+        [Fact]
+        public async Task OrderTest()
+        {
+            var called = new List<int>();
+            var awaitHelper = new AwaitHelper("0");
+
+            var sample = new Sample();
+            using(var unsbscribers = new Unsbscribers<Sample>()) {
+                sample.TestEvent.Subscribe(async (x, ct) =>
+                {
+                    await Task.Delay(30);
+                    called.Add(0);
+                    awaitHelper.ChangeState("1", out var before);
+                    Assert.Equal("0", before);
+                }).AddTo(unsbscribers);
+
+                sample.TestEvent.Subscribe(async (x, ct) =>
+                {
+                    await awaitHelper.WaitUntil("1");
+                    called.Add(1);
+                    awaitHelper.ChangeState("2", out var before);
+                    Assert.Equal("1", before);
+                }).AddTo(unsbscribers);
+
+                sample.TestEvent.Subscribe(async (x, ct) =>
+                {
+                    await awaitHelper.WaitUntil("2");
+                    called.Add(2);
+                    awaitHelper.ChangeState("3", out var before);
+                    Assert.Equal("2", before);
+                }).AddTo(unsbscribers);
+
+                sample.TestEvent.Subscribe(async (x, ct) =>
+                {
+                    await awaitHelper.WaitUntil("3");
+                    called.Add(3);
+                    awaitHelper.ChangeState("end", out var before);
+                    Assert.Equal("3", before);
+                }).AddTo(unsbscribers);
+
+                await sample.ParallelRaiseTest(CancellationToken.None);
+
+                Assert.Equal("end", awaitHelper.State);
+                Assert.True(called.SequenceEqual(new int[] { 0, 1, 2, 3, }));
+            }
+
+            Assert.Equal(0, sample.SubscibedCount);
+        }
+
         private sealed class Sample
         {
             private AsyncEventRaiser<Sample>? _testEvent;
@@ -174,6 +224,39 @@ namespace UnitTest
             public UniTask ParallelRaiseTest(CancellationToken ct)
             {
                 return _testEvent.RaiseParallelIfNotNull(this, ct);
+            }
+        }
+
+        private sealed class AwaitHelper
+        {
+            private string _state;
+
+            public string State => _state;
+
+            public AwaitHelper(string state)
+            {
+                _state = state;
+            }
+
+            public void ChangeState(string state, out string before)
+            {
+                (before, _state) = (_state, state);
+            }
+
+            public UniTask WaitUntil(string value)
+            {
+                if(_state == value) {
+                    return UniTask.CompletedTask;
+                }
+                return Loop(value);
+            }
+
+            private async UniTask Loop(string value)
+            {
+                while(true) {
+                    if(_state == value) { return; }
+                    await Task.Delay(1);
+                }
             }
         }
     }
