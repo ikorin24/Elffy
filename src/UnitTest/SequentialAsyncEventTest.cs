@@ -10,7 +10,7 @@ using Xunit;
 
 namespace UnitTest
 {
-    public class AsyncEventTest
+    public class SequentialAsyncEventTest
     {
         private static readonly Func<TestSample, CancellationToken, UniTask> Sync_IncrementValue = (sender, ct) =>
         {
