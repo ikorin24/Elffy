@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using System;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using Cysharp.Threading.Tasks;
 
 namespace Elffy.Shapes
@@ -12,10 +11,11 @@ namespace Elffy.Shapes
         /// <summary>Create new <see cref="SkyBox"/></summary>
         public SkyBox()
         {
+            Activating.Subscribe((f, ct) => SafeCast.As<SkyBox>(f).OnActivating());
         }
 
         [SkipLocalsInit]
-        protected override UniTask<AsyncUnit> OnActivating(CancellationToken cancellationToken)
+        private unsafe UniTask OnActivating()
         {
             // [indices]
             //             0 ------- 3
@@ -77,7 +77,10 @@ namespace Elffy.Shapes
             const float c1 = 1f/3f;
             const float c2 = 2f/3f;
             const float c3 = 1f;
-            ReadOnlySpan<VertexSlim> vertices = stackalloc VertexSlim[24]
+
+            const int VertexCount = 24;
+            const int IndexCount = 36;
+            VertexSlim* vertices = stackalloc VertexSlim[VertexCount]
             {
                 new(new(-a,  a,  a), new(b1, c0)), new(new(-a,  a, -a), new(b1, c1)), new(new( a,  a, -a), new(b2, c1)), new(new( a,  a,  a), new(b2, c0)),
                 new(new(-a,  a,  a), new(b0, c1)), new(new(-a, -a,  a), new(b0, c2)), new(new(-a, -a, -a), new(b1, c2)), new(new(-a,  a, -a), new(b1, c1)),
@@ -86,7 +89,7 @@ namespace Elffy.Shapes
                 new(new( a,  a,  a), new(b3, c1)), new(new( a, -a,  a), new(b3, c2)), new(new(-a, -a,  a), new(b4, c2)), new(new(-a,  a,  a), new(b4, c1)),
                 new(new(-a, -a, -a), new(b1, c2)), new(new(-a, -a,  a), new(b1, c3)), new(new( a, -a,  a), new(b2, c3)), new(new( a, -a, -a), new(b2, c2)),
             };
-            ReadOnlySpan<int> indices = stackalloc int[36]
+            int* indices = stackalloc int[IndexCount]
             {
                 0, 1, 2, 0, 2, 3,         // up
                 4, 5, 6, 4, 6, 7,         // left
@@ -95,7 +98,7 @@ namespace Elffy.Shapes
                 16, 17, 18, 16, 18, 19,   // back
                 20, 21, 22, 20, 22, 23,   // down
             };
-            LoadMesh(vertices, indices);
+            LoadMesh(vertices, VertexCount, indices, IndexCount);
             return new UniTask<AsyncUnit>(AsyncUnit.Default);
         }
     }

@@ -27,9 +27,10 @@ namespace Elffy.Shapes
             _callbackOnActivated = callbackOnAlive;
             _builder = builder;
             _onRendering = onRendering;
+            Activating.Subscribe((f, ct) => SafeCast.As<Model3D>(f).OnActivating(ct));
         }
 
-        protected override async UniTask<AsyncUnit> OnActivating(CancellationToken cancellationToken)
+        private async UniTask OnActivating(CancellationToken cancellationToken)
         {
             Debug.Assert(_builder is not null);
             unsafe {
@@ -37,11 +38,9 @@ namespace Elffy.Shapes
             }
 
             try {
-                await InvokeCallback(this, _obj, _builder);
+                await InvokeCallback(this);
                 cancellationToken.ThrowIfCancellationRequested();
-                return AsyncUnit.Default;
-
-                unsafe UniTask InvokeCallback(Model3D model, object? obj, Delegate builder) => _callbackOnActivated(model, obj, builder);
+                return;
             }
             finally {
                 _obj = null;
@@ -49,6 +48,12 @@ namespace Elffy.Shapes
                 unsafe {
                     _callbackOnActivated = null;
                 }
+            }
+
+            static unsafe UniTask InvokeCallback(Model3D model3D)
+            {
+                Debug.Assert(model3D._builder is not null);
+                return model3D._callbackOnActivated(model3D, model3D._obj, model3D._builder);
             }
         }
 

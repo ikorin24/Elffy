@@ -12,10 +12,5 @@ namespace Elffy.Shapes
         {
             throw new NotImplementedException();
         }
-
-        protected override UniTask<AsyncUnit> OnActivating(CancellationToken cancellationToken)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

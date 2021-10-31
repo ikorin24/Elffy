@@ -2,7 +2,6 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using Cysharp.Threading.Tasks;
 using Elffy.Graphics.OpenGL;
 
@@ -24,12 +23,13 @@ namespace Elffy.UI
             Debug.Assert(control is not null);
             _control = control;
             IsFrozen = true;        // disable calling update method per frame
+            Activating.Subscribe((f, ct) => SafeCast.As<UIRenderable>(f).OnActivating());
         }
 
         internal void DoUIEvent() => _control.DoUIEvent();
 
         [SkipLocalsInit]
-        protected unsafe sealed override UniTask<AsyncUnit> OnActivating(CancellationToken cancellationToken)
+        private unsafe UniTask OnActivating()
         {
             //     Position                    UI
             //                          

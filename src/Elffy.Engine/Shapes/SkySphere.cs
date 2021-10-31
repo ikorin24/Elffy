@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using Elffy.Effective.Unsafes;
 using Elffy.Mathematics;
 using System;
-using System.Threading;
 
 namespace Elffy.Shapes
 {
@@ -11,9 +10,10 @@ namespace Elffy.Shapes
     {
         public SkySphere()
         {
+            Activating.Subscribe((f, ct) => SafeCast.As<SkySphere>(f).OnActivating());
         }
 
-        private void GenerateMesh(out UnsafeRawArray<Vertex> vertices, out UnsafeRawArray<int> indices)
+        private static void GenerateMesh(out UnsafeRawArray<Vertex> vertices, out UnsafeRawArray<int> indices)
         {
             const float r = 1;
             const int a = 16;
@@ -51,7 +51,7 @@ namespace Elffy.Shapes
             }
         }
 
-        protected override UniTask<AsyncUnit> OnActivating(CancellationToken cancellationToken)
+        private UniTask OnActivating()
         {
             GenerateMesh(out var vertices, out var indices);
             using(vertices)

@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using System;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using Cysharp.Threading.Tasks;
 
 namespace Elffy.Shapes
@@ -10,11 +9,13 @@ namespace Elffy.Shapes
     {
         public Cube()
         {
+            Activating.Subscribe((f, ct) => SafeCast.As<Cube>(f).OnActivating());
         }
 
         [SkipLocalsInit]
-        protected override UniTask<AsyncUnit> OnActivating(CancellationToken cancellationToken)
+        private UniTask OnActivating()
         {
+            #region [NOTE]
             // [indices]
             //             0 ------- 3
             //             |         |
@@ -63,6 +64,7 @@ namespace Elffy.Shapes
             //   |  front  | +
             //   |         |/
             //   + ------- +
+            #endregion
 
             const float a = 0.5f;
             const float b0 = 0f;
@@ -93,7 +95,7 @@ namespace Elffy.Shapes
                 20, 21, 22, 20, 22, 23,   // down
             };
             LoadMesh(vertices, indices);
-            return new UniTask<AsyncUnit>(AsyncUnit.Default);
+            return UniTask.CompletedTask;
         }
     }
 }

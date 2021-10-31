@@ -15,8 +15,11 @@ namespace Elffy
     {
         private IHostScreen? _hostScreen;
         private Layer? _layer;
+        private AsyncEventRaiser<FrameObject>? _activating;
         private LifeState _state = LifeState.New;
         private bool _isFrozen;
+
+        public AsyncEvent<FrameObject> Activating => new(ref _activating);
 
         /// <summary>Event of alive, which fires in the first frame where <see cref="LifeState"/> get <see cref="LifeState.Alive"/>.</summary>
         public event Action<FrameObject>? Alive;
@@ -95,7 +98,8 @@ namespace Elffy
             _layer = layer;
             try {
                 _state = LifeState.Activating;
-                await OnActivating(cancellationToken);
+                await _activating.RaiseParallelIfNotNull(this, cancellationToken);
+                _activating?.Clear();
             }
             catch {
                 // If exceptions throw on activating, terminate the object if possible.
@@ -148,7 +152,8 @@ namespace Elffy
             _layer = layer;
 
             // [NOTE] UIRenderable must complete OnActivating synchronously. (See the implementation of UIRenderable)
-            OnActivating(default).SyncGetResult();
+            _activating.RaiseParallelIfNotNull(this, CancellationToken.None).SyncGetResult();
+            _activating?.Clear();
 
             layer.AddFrameObject(this);
             //await WaitForNextFrame(screen, timingPoint, cancellationToken);   // TODO: Lazy applying control list, Wait for alive
@@ -189,8 +194,6 @@ namespace Elffy
         protected virtual void OnUpdate() => Updated?.Invoke(this);
 
         protected virtual void OnLateUpdte() => LateUpdated?.Invoke(this);
-
-        protected virtual UniTask<AsyncUnit> OnActivating(CancellationToken cancellationToken) => UniTask.FromResult(AsyncUnit.Default);
 
         protected virtual UniTask OnTerminating() => UniTask.CompletedTask;
 

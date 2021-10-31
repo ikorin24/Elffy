@@ -1,8 +1,6 @@
 ﻿#nullable enable
 using Cysharp.Threading.Tasks;
-using System;
 using System.Runtime.CompilerServices;
-using System.Threading;
 
 namespace Elffy.Shapes
 {
@@ -12,10 +10,11 @@ namespace Elffy.Shapes
         /// <summary>Create new <see cref="Plain"/></summary>
         public Plain()
         {
+            Activating.Subscribe((f, ct) => SafeCast.As<Plain>(f).OnActivating());
         }
 
         [SkipLocalsInit]
-        protected override UniTask<AsyncUnit> OnActivating(CancellationToken cancellationToken)
+        private unsafe UniTask OnActivating()
         {
             // [indices]
             //
@@ -42,18 +41,20 @@ namespace Elffy.Shapes
             //    v
 
             const float a = 0.5f;
-            ReadOnlySpan<Vertex> vertice = stackalloc Vertex[4]
+            const int VertexCount = 4;
+            const int IndexCount = 6;
+            Vertex* vertice = stackalloc Vertex[VertexCount]
             {
-                new(new(-a,  a, 0), new(0, 0, 1), new(0, 0)),
-                new(new(-a, -a, 0), new(0, 0, 1), new(0, 1)),
-                new(new( a, -a, 0), new(0, 0, 1), new(1, 1)),
-                new(new( a,  a, 0), new(0, 0, 1), new(1, 0)),
+                new(new(-a,  a, 0f), new(0f, 0f, 1f), new(0f, 0f)),
+                new(new(-a, -a, 0f), new(0f, 0f, 1f), new(0f, 1f)),
+                new(new( a, -a, 0f), new(0f, 0f, 1f), new(1f, 1f)),
+                new(new( a,  a, 0f), new(0f, 0f, 1f), new(1f, 0f)),
             };
-            ReadOnlySpan<int> indices = stackalloc int[6]
+            int* indices = stackalloc int[IndexCount]
             {
                 0, 1, 2, 0, 2, 3,
             };
-            LoadMesh(vertice, indices);
+            LoadMesh(vertice, VertexCount, indices, IndexCount);
             return new UniTask<AsyncUnit>(AsyncUnit.Default);
         }
     }
