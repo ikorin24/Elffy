@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using Cysharp.Threading.Tasks;
 using Elffy;
 using System;
 using System.Collections.Generic;
@@ -7,6 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
+using UniTask = Cysharp.Threading.Tasks.UniTask;
 
 namespace UnitTest
 {

@@ -1,12 +1,6 @@
 ﻿#nullable enable
-using Cysharp.Threading.Tasks;
-using Elffy;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+using Elffy;
 using Xunit;
 
 namespace UnitTest
@@ -30,6 +24,13 @@ namespace UnitTest
 
         [Theory]
         [InlineData(0)]
+        [InlineData(1)]
+        [InlineData(2)]
+        [InlineData(3)]
+        [InlineData(4)]
+        [InlineData(5)]
+        [InlineData(10)]
+        [InlineData(20)]
         public void MultiSubscribe(int subscribeCount)
         {
             var sample = new Sample();
@@ -60,7 +61,6 @@ namespace UnitTest
             public Event<Sample> TestEvent => new(ref _testEvent);
 
             public int SubscibedCount => _testEvent?.SubscibedCount ?? 0;
-
 
             public void RaiseTest()
             {

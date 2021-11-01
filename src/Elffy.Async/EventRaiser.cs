@@ -38,14 +38,18 @@ namespace Elffy
                 return;
             }
             else {
-                var mem = new RefTypeRentMemory<Action<T>>(count);
+                using var mem = new RefTypeRentMemory<Action<T>>(count);
+                Span<Action<T>> memSpan;
                 try {
                     var actions = SafeCast.NotNullAs<Action<T>[]>(_actions).AsSpan(0, count);
-                    actions.CopyTo(mem.AsSpan());
+                    memSpan = mem.AsSpan();
+                    actions.CopyTo(memSpan);
                 }
                 finally {
-                    mem.Dispose();
                     _lock.Exit();   // ---- exit
+                }
+                foreach(var action in memSpan) {
+                    action.Invoke(arg);
                 }
                 return;
             }
