@@ -5,6 +5,7 @@
     <RootNamespace>Elffy</RootNamespace>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>Elffy</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

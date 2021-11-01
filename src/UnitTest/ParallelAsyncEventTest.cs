@@ -28,7 +28,7 @@ namespace UnitTest
         public async Task Sync_Completed_Raise(int delegateCount, bool alreadyCanceled)
         {
             var sample = new Sample();
-            using(var unsubscribers = new Unsbscribers<Sample>()) {
+            using(var unsubscribers = new UnsubscriberBag()) {
                 for(int i = 0; i < delegateCount; i++) {
                     sample.TestEvent.Subscribe((x, ct) => UniTask.CompletedTask).AddTo(unsubscribers);
                 }
@@ -62,7 +62,7 @@ namespace UnitTest
         public async Task Async_Completed_Raise(int delegateCount, bool alreadyCanceled)
         {
             var sample = new Sample();
-            using(var unsubscribers = new Unsbscribers<Sample>()) {
+            using(var unsubscribers = new UnsubscriberBag()) {
                 for(int i = 0; i < delegateCount; i++) {
                     sample.TestEvent.Subscribe(async (x, ct) => await UniTask.CompletedTask).AddTo(unsubscribers);
                 }
@@ -90,7 +90,7 @@ namespace UnitTest
         public async Task Sync_NeverCompleted_Raise(int delegateCount)
         {
             var sample = new Sample();
-            using(var unsubscribers = new Unsbscribers<Sample>()) {
+            using(var unsubscribers = new UnsubscriberBag()) {
                 for(int i = 0; i < delegateCount; i++) {
                     sample.TestEvent.Subscribe((x, ct) => UniTask.Never(ct)).AddTo(unsubscribers);
                 }
@@ -113,7 +113,7 @@ namespace UnitTest
         public async Task Async_NeverCompleted_Raise(int delegateCount)
         {
             var sample = new Sample();
-            using(var unsubscribers = new Unsbscribers<Sample>()) {
+            using(var unsubscribers = new UnsubscriberBag()) {
                 for(int i = 0; i < delegateCount; i++) {
                     sample.TestEvent.Subscribe(async (x, ct) => await UniTask.Never(ct)).AddTo(unsubscribers);
                 }
@@ -131,7 +131,7 @@ namespace UnitTest
         {
             var sample = new Sample();
             var cts = new CancellationTokenSource();
-            using(var unsubscribers = new Unsbscribers<Sample>()) {
+            using(var unsubscribers = new UnsubscriberBag()) {
 
                 sample.TestEvent.Subscribe(async (x, ct) => await RunUntilCanceled(ct)).AddTo(unsubscribers);
                 sample.TestEvent.Subscribe(async (x, ct) => await RunUntilCanceled(ct)).AddTo(unsubscribers);
@@ -170,10 +170,10 @@ namespace UnitTest
             var awaitHelper = new AwaitHelper("0");
 
             var sample = new Sample();
-            using(var unsbscribers = new Unsbscribers<Sample>()) {
+            using(var unsbscribers = new UnsubscriberBag()) {
                 sample.TestEvent.Subscribe(async (x, ct) =>
                 {
-                    await Task.Delay(30);
+                    await Task.Delay(30, CancellationToken.None);
                     called.Add(0);
                     awaitHelper.ChangeState("1", out var before);
                     Assert.Equal("0", before);
@@ -258,31 +258,6 @@ namespace UnitTest
                     await Task.Delay(1);
                 }
             }
-        }
-    }
-
-    internal sealed class Unsbscribers<T> : IDisposable
-    {
-        private readonly List<AsyncEventUnsubscriber<T>> _list = new List<AsyncEventUnsubscriber<T>>();
-        public void Add(AsyncEventUnsubscriber<T> unsubscriber)
-        {
-            _list.Add(unsubscriber);
-        }
-
-        public void Dispose()
-        {
-            foreach(var u in _list) {
-                u.Dispose();
-            }
-            _list.Clear();
-        }
-    }
-
-    internal static class AsyncEvnetUnsbscriberExtension
-    {
-        public static void AddTo<T>(this AsyncEventUnsubscriber<T> unsubscriber, Unsbscribers<T> unsbscribers)
-        {
-            unsbscribers.Add(unsubscriber);
         }
     }
 }

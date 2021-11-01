@@ -30,10 +30,8 @@ namespace Elffy
 
             static void OnDispose(object r, Delegate f)
             {
-                Debug.Assert(r is AsyncEventRaiser<T>);
-                Debug.Assert(f is Func<T, CancellationToken, UniTask>);
-                var raiser = Unsafe.As<AsyncEventRaiser<T>>(r);
-                var func = Unsafe.As<Func<T, CancellationToken, UniTask>>(f);
+                var raiser = SafeCast.As<EventRaiser<T>>(r);
+                var func = SafeCast.As<Action<T>>(f);
                 raiser.Unsubscribe(func);
             }
         }
@@ -53,10 +51,8 @@ namespace Elffy
 
             static void OnDispose(object r, Delegate f)
             {
-                Debug.Assert(r is AsyncEventRaiser<T>);
-                Debug.Assert(f is Func<T, CancellationToken, UniTask>);
-                var raiser = Unsafe.As<AsyncEventRaiser<T>>(r);
-                var func = Unsafe.As<Func<T, CancellationToken, UniTask>>(f);
+                var raiser = SafeCast.As<AsyncEventRaiser<T>>(r);
+                var func = SafeCast.As<Func<T, CancellationToken, UniTask>>(f);
                 raiser.Unsubscribe(func);
             }
         }

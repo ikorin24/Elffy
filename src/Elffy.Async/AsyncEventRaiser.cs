@@ -51,7 +51,7 @@ namespace Elffy
                 return UniTask.CompletedTask;
             }
             else if(count == 1) {
-                Debug.Assert(_funcs is not null);
+                Debug.Assert(_funcs is Func<T, CancellationToken, UniTask>);
                 var func = Unsafe.As<Func<T, CancellationToken, UniTask>>(_funcs);
                 _lock.Exit();       // ---- exit
                 return func.Invoke(arg, cancellationToken);
@@ -82,7 +82,7 @@ namespace Elffy
             return RaiseSequentially;
         }
 
-        public Func<T, CancellationToken, UniTask> ToParallelDelegate()
+        public Func<T, CancellationToken, UniTask> ToDelegate()
         {
             return Raise;
         }
@@ -98,7 +98,6 @@ namespace Elffy
         internal void Subscribe(Func<T, CancellationToken, UniTask> func)
         {
             Debug.Assert(func is not null);
-
             _lock.Enter();          // ---- enter
             try {
                 var count = _count;
@@ -114,14 +113,12 @@ namespace Elffy
                     _funcs = funcs;
                 }
                 else {
-                    Debug.Assert(_funcs is not null);
-                    Debug.Assert(_funcs is Func<T, CancellationToken, UniTask>[]);
-                    var funcs = Unsafe.As<Func<T, CancellationToken, UniTask>[]>(_funcs);
+                    var funcs = SafeCast.NotNullAs<Func<T, CancellationToken, UniTask>[]>(_funcs);
                     if(funcs.Length == count) {
-                        var newFunc = new Func<T, CancellationToken, UniTask>[funcs.Length * 2];
-                        funcs.AsSpan().CopyTo(newFunc);
-                        _funcs = newFunc;
-                        funcs = newFunc;
+                        var newFuncs = new Func<T, CancellationToken, UniTask>[funcs.Length * 2];
+                        funcs.AsSpan().CopyTo(newFuncs);
+                        _funcs = newFuncs;
+                        funcs = newFuncs;
                     }
                     funcs[count] = func;
                 }
@@ -136,7 +133,6 @@ namespace Elffy
         internal void Unsubscribe(Func<T, CancellationToken, UniTask>? func)
         {
             if(func is null) { return; }
-
             _lock.Enter();          // ---- enter
             try {
                 var funcs = _funcs;
@@ -145,13 +141,11 @@ namespace Elffy
                     Debug.Assert(_funcs == null);
                     return;
                 }
-                if(count == 1) {
+                else if(count == 1) {
                     if(ReferenceEquals(_funcs, func)) {
                         _count = 0;
                         _funcs = null;
                     }
-                    _count = 0;
-                    _funcs = null;
                     return;
                 }
                 else {

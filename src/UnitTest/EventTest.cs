@@ -1,0 +1,71 @@
+﻿#nullable enable
+using Cysharp.Threading.Tasks;
+using Elffy;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Xunit;
+
+namespace UnitTest
+{
+    public class EventTest
+    {
+        [Fact]
+        public void RaiseTest()
+        {
+            var sample = new Sample();
+            var flag = false;
+            Assert.Equal(0, sample.SubscibedCount);
+            using(var bag = new UnsubscriberBag()) {
+                sample.TestEvent.Subscribe(x => flag = true).AddTo(bag);
+                Assert.Equal(1, sample.SubscibedCount);
+                sample.RaiseTest();
+                Assert.True(flag);
+            }
+            Assert.Equal(0, sample.SubscibedCount);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        public void MultiSubscribe(int subscribeCount)
+        {
+            var sample = new Sample();
+            var state = 0;
+            var called = new bool[subscribeCount];
+            Assert.Equal(0, sample.SubscibedCount);
+            using(var bag = new UnsubscriberBag()) {
+                for(int i = 0; i < subscribeCount; i++) {
+                    var num = i;
+                    sample.TestEvent.Subscribe(x =>
+                    {
+                        called[num] = true;
+                        Assert.Equal(num, state);
+                        state++;
+                    }).AddTo(bag);
+                }
+                Assert.Equal(subscribeCount, sample.SubscibedCount);
+                sample.RaiseTest();
+                Assert.True(called.All(x => x));
+            }
+            Assert.Equal(0, sample.SubscibedCount);
+        }
+
+        private sealed class Sample
+        {
+            private EventRaiser<Sample>? _testEvent;
+
+            public Event<Sample> TestEvent => new(ref _testEvent);
+
+            public int SubscibedCount => _testEvent?.SubscibedCount ?? 0;
+
+
+            public void RaiseTest()
+            {
+                _testEvent?.Raise(this);
+            }
+        }
+    }
+}
