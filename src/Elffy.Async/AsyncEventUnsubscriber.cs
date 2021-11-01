@@ -25,6 +25,11 @@ namespace Elffy
             _raiser?.Unsubscribe(_func);
         }
 
+        internal (AsyncEventRaiser<T>? Raiser, Func<T, CancellationToken, UniTask>? Func) GetInnerValues()
+        {
+            return (_raiser, _func);
+        }
+
         public override bool Equals(object? obj) => obj is AsyncEventUnsubscriber<T> unsubscriber && Equals(unsubscriber);
 
         public bool Equals(AsyncEventUnsubscriber<T> other) => _raiser == other._raiser && _func == other._func;
