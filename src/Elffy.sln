@@ -38,7 +38,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elffy.Generator.Vertex", "E
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elffy.Generator.EnumLike", "Elffy.Generator.EnumLike\Elffy.Generator.EnumLike.csproj", "{FBCF51FE-6FF4-42D3-A6E6-215E82901AD1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Elffy.Async", "Elffy.Async\Elffy.Async.csproj", "{9FBBC1D1-F874-4587-B250-30900484D0EF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elffy.Events", "Elffy.Async\Elffy.Events.csproj", "{9FBBC1D1-F874-4587-B250-30900484D0EF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
