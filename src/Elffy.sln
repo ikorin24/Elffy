@@ -40,6 +40,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elffy.Generator.EnumLike", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elffy.Events", "Elffy.Async\Elffy.Events.csproj", "{9FBBC1D1-F874-4587-B250-30900484D0EF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmarks.Events", "Benchmarks\Benchmarks.Events.csproj", "{C05FD280-2CA7-4847-8B75-A0B576559A4B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -242,6 +244,18 @@ Global
 		{9FBBC1D1-F874-4587-B250-30900484D0EF}.Release|x64.Build.0 = Release|Any CPU
 		{9FBBC1D1-F874-4587-B250-30900484D0EF}.Release|x86.ActiveCfg = Release|Any CPU
 		{9FBBC1D1-F874-4587-B250-30900484D0EF}.Release|x86.Build.0 = Release|Any CPU
+		{C05FD280-2CA7-4847-8B75-A0B576559A4B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C05FD280-2CA7-4847-8B75-A0B576559A4B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C05FD280-2CA7-4847-8B75-A0B576559A4B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C05FD280-2CA7-4847-8B75-A0B576559A4B}.Debug|x64.Build.0 = Debug|Any CPU
+		{C05FD280-2CA7-4847-8B75-A0B576559A4B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C05FD280-2CA7-4847-8B75-A0B576559A4B}.Debug|x86.Build.0 = Debug|Any CPU
+		{C05FD280-2CA7-4847-8B75-A0B576559A4B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C05FD280-2CA7-4847-8B75-A0B576559A4B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C05FD280-2CA7-4847-8B75-A0B576559A4B}.Release|x64.ActiveCfg = Release|Any CPU
+		{C05FD280-2CA7-4847-8B75-A0B576559A4B}.Release|x64.Build.0 = Release|Any CPU
+		{C05FD280-2CA7-4847-8B75-A0B576559A4B}.Release|x86.ActiveCfg = Release|Any CPU
+		{C05FD280-2CA7-4847-8B75-A0B576559A4B}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
