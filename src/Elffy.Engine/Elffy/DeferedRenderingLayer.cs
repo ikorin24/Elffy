@@ -21,7 +21,7 @@ namespace Elffy
         private readonly LightBuffer _lightBuffer;
         private readonly int _lightCount;
 
-        public DeferedRenderingLayer(string name, int lightCount, int sortNumber = DRLayerDefaultSort, int postProcessSortNumber = PPLayerDefaultSort) : base(name, sortNumber)
+        public DeferedRenderingLayer(int lightCount, int sortNumber = DRLayerDefaultSort, int postProcessSortNumber = PPLayerDefaultSort) : base(sortNumber)
         {
             if(lightCount <= 0) { ThrowLightCountIsZeroOrNegative(); }
             if(lightCount > MaxLightCount) { ThrowTooManyLightCount(); }
@@ -30,18 +30,6 @@ namespace Elffy
             _gBuffer = new GBuffer();
             _lightBuffer = new LightBuffer();
             Activating.Subscribe((l, ct) => SafeCast.As<DeferedRenderingLayer>(l).OnActivating(ct));
-        }
-
-        public static async UniTask<DeferedRenderingLayer> NewActivate(
-            IHostScreen screen,
-            string name,
-            int lightCount,
-            int sortNumber = DRLayerDefaultSort,
-            int postProcessSortNumber = PPLayerDefaultSort,
-            CancellationToken cancellationToken = default)
-        {
-            var drlayer = new DeferedRenderingLayer(name, lightCount, sortNumber, postProcessSortNumber);
-            return await drlayer.Activate(screen, cancellationToken);
         }
 
         private async UniTask OnActivating(CancellationToken ct)
@@ -84,7 +72,7 @@ namespace Elffy
         private PbrDeferedRenderingPostProcess? _postProcess;
         private PostProcessProgram? _ppProgram;
 
-        internal DeferedRenderingPostProcessLayer(int sortNumber) : base("Defered Rendering Post Process", sortNumber)
+        internal DeferedRenderingPostProcessLayer(int sortNumber) : base(sortNumber)
         {
         }
 

@@ -6,7 +6,7 @@ namespace Elffy
 {
     public abstract class PostProcessLayer : Layer
     {
-        protected PostProcessLayer(string name, int sortNumber) : base(name, sortNumber, 0)
+        protected PostProcessLayer(int sortNumber) : base(sortNumber, 0)
         {
         }
 

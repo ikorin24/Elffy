@@ -15,7 +15,6 @@ namespace Elffy
     {
         private readonly FrameObjectStore _store;
         private readonly LayerTimingPointList _timingPoints;
-        private readonly string _name;
         private LayerCollection? _owner;
         private readonly int _sortNumber;
         private bool _isVisible;
@@ -23,9 +22,6 @@ namespace Elffy
         private AsyncEventRaiser<Layer>? _activating;
 
         internal LayerCollection? Owner => _owner;
-
-        /// <summary>Get name of the layer</summary>
-        public string Name => _name;
 
         /// <inheritdoc/>
         public bool IsVisible { get => _isVisible; set => _isVisible = value; }
@@ -48,20 +44,12 @@ namespace Elffy
         protected ReadOnlySpan<FrameObject> RemovedObjects => _store.Removed;
         protected ReadOnlySpan<Renderable> Renderables => _store.Renderables;
 
-        /// <summary>Create new <see cref="Layer"/> with specified name.</summary>
-        /// <param name="name">name of the layer</param>
-        /// <param name="sortNumber">number for layer sorting</param>
-        protected Layer(string name, int sortNumber) : this(name, sortNumber, 32)
+        protected Layer(int sortNumber) : this(sortNumber, 32)
         {
         }
 
-        private protected Layer(string name, int sortNumber, int capacity)
+        private protected Layer(int sortNumber, int capacity)
         {
-            if(name is null) {
-                ThrowNullArg();
-                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(name));
-            }
-            _name = name;
             _isVisible = true;
             _sortNumber = sortNumber;
             _timingPoints = new LayerTimingPointList(this);

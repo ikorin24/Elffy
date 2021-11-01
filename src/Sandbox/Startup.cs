@@ -25,7 +25,12 @@ namespace Sandbox
             //    DeferedRenderingLayer.NewActivate(screen, "Defered", 1)
             //);
 
-            var layer = await DeferedRenderingLayer.NewActivate(screen, "Defered", 1);
+            //var layer = await DeferedRenderingLayer.NewActivate(screen, "Defered", 1);
+            var (drLayer, wlayer) = await UniTask.WhenAll(
+                new DeferedRenderingLayer(1).Activate(screen),
+                new WorldLayer().Activate(screen)
+                );
+
 
 
             /*
@@ -46,8 +51,8 @@ namespace Sandbox
             cube.AddComponent(material);
             cube.Shader = PbrDeferedShader.Instance;
             await UniTask.WhenAll(
-                cube.Activate(layer),
-                CreateCameraMouse(layer, cube.Position)
+                cube.Activate(drLayer),
+                CreateCameraMouse(drLayer, cube.Position)
             );
 
             //Game.Screen.StartCoroutine(deferedRenderer, static async (coroutine, deferedRenderer) =>
@@ -78,8 +83,8 @@ namespace Sandbox
             var timings = screen.TimingPoints;
 
             var (layer, uiLayer) = await UniTask.WhenAll(
-                WorldLayer.NewActivate(screen, "Default"),
-                UILayer.NewActivate(screen, "UI"));
+                new WorldLayer().Activate(screen),
+                new UILayer().Activate(screen));
             var uiRoot = uiLayer.UIRoot;
 
             const int ColumnCount = 6;

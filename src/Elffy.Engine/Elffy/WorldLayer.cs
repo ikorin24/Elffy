@@ -1,6 +1,4 @@
 ﻿#nullable enable
-using Cysharp.Threading.Tasks;
-using System.Threading;
 
 namespace Elffy
 {
@@ -8,18 +6,8 @@ namespace Elffy
     {
         private const int DefaultSortNumber = 0;
 
-        public WorldLayer(string name, int sortNumber = DefaultSortNumber) : base(name, sortNumber)
+        public WorldLayer(int sortNumber = DefaultSortNumber) : base(sortNumber)
         {
-        }
-
-        public static UniTask<WorldLayer> NewActivate(IHostScreen screen, string name, int sortNumber = DefaultSortNumber, CancellationToken cancellationToken = default)
-        {
-            return new WorldLayer(name, sortNumber).Activate(screen, cancellationToken);
-        }
-
-        public static UniTask<WorldLayer> NewActivate(IHostScreen screen, string name, FrameTimingPoint timingPoint, int sortNumber = DefaultSortNumber, CancellationToken cancellationToken = default)
-        {
-            return new WorldLayer(name, sortNumber).Activate(screen, timingPoint, cancellationToken);
         }
 
         protected override void OnAlive(IHostScreen screen)

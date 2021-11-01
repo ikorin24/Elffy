@@ -25,15 +25,10 @@ namespace Elffy.UI
         /// <summary>Get or set whether hit test is enabled.</summary>
         public bool IsHitTestEnabled { get => _isHitTestEnabled; set => _isHitTestEnabled = value; }
 
-        public UILayer(string name, int sortNumber = DefaultSort) : base(name, sortNumber)
+        public UILayer(int sortNumber = DefaultSort) : base(sortNumber)
         {
             _isHitTestEnabled = true;
             _uiRoot = new RootPanel(this);
-        }
-
-        public static UniTask<UILayer> NewActivate(IHostScreen screen, string name, int sortNumber = DefaultSort, CancellationToken cancellationToken = default)
-        {
-            return new UILayer(name, sortNumber).Activate(screen, cancellationToken);
         }
 
         protected override void OnAlive(IHostScreen screen)
