@@ -2,17 +2,19 @@
 using Elffy.Effective;
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Elffy
 {
     public sealed class EventRaiser<T>
     {
-        private const int DefaultBufferCapacity = 4;
+        private const int DefaultBufferCapacity = ArrayPoolForEventRaiser.LengthOfPoolTargetArray;
 
         // [NOTE]
         // _count == 0      || 1         || n (n >= 2)
-        // _actions == null || Action<T> || Action<T>[]
+        // _actions == null || Action<T> || object?[]
         private object? _actions;
         private int _count;
         private FastSpinLock _lock;
@@ -38,10 +40,10 @@ namespace Elffy
                 return;
             }
             else {
-                using var mem = new RefTypeRentMemory<Action<T>>(count);
-                Span<Action<T>> memSpan;
+                using var mem = new RefTypeRentMemory<object?>(count);
+                Span<object?> memSpan;
                 try {
-                    var actions = SafeCast.NotNullAs<Action<T>[]>(_actions).AsSpan(0, count);
+                    var actions = SafeCast.NotNullAs<object?[]>(_actions).AsSpan(0, count);
                     memSpan = mem.AsSpan();
                     actions.CopyTo(memSpan);
                 }
@@ -49,7 +51,7 @@ namespace Elffy
                     _lock.Exit();   // ---- exit
                 }
                 foreach(var action in memSpan) {
-                    action.Invoke(arg);
+                    SafeCast.NotNullAs<Action<T>>(action).Invoke(arg);
                 }
                 return;
             }
@@ -80,16 +82,27 @@ namespace Elffy
                 }
                 else if(count == 1) {
                     Debug.Assert(_actions is Action<T>);
-                    var actions = new Action<T>[DefaultBufferCapacity];
-                    actions[0] = Unsafe.As<Action<T>>(_actions);
-                    actions[1] = action;
+
+                    if(ArrayPoolForEventRaiser.TryGetInstanceFast(out var actions) == false) {
+                        actions = new object[DefaultBufferCapacity];
+                    }
+                    Debug.Assert(actions.Length >= 2);
+                    MemoryMarshal.GetArrayDataReference(actions) = _actions;
+                    Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(actions), 1) = action;
                     _actions = actions;
                 }
                 else {
-                    var actions = SafeCast.NotNullAs<Action<T>[]>(_actions);
+                    var actions = SafeCast.NotNullAs<object?[]>(_actions);
                     if(actions.Length == count) {
-                        var newActions = new Action<T>[actions.Length * 2];
+                        var newActions = new object[actions.Length * 2];
                         actions.AsSpan().CopyTo(newActions);
+                        if(actions.Length == ArrayPoolForEventRaiser.LengthOfPoolTargetArray) {
+                            actions[0] = null;
+                            actions[1] = null;
+                            actions[2] = null;
+                            actions[3] = null;
+                            ArrayPoolForEventRaiser.ReturnInstanceFast(actions);
+                        }
                         _actions = newActions;
                         actions = newActions;
                     }
@@ -121,17 +134,26 @@ namespace Elffy
                     return;
                 }
                 else {
-                    var actionSpan = SafeCast.NotNullAs<Action<T>[]>(actions).AsSpan(0, count);
+                    var actionSpan = SafeCast.NotNullAs<object?[]>(actions).AsSpan(0, count);
                     for(int i = 0; i < actionSpan.Length; i++) {
-                        if(actionSpan[i] == action) {
+                        if(ReferenceEquals(actionSpan[i], action)) {
                             _count = count - 1;
                             if(i < _count) {
                                 var copyLen = _count - i;
                                 actionSpan.Slice(i + 1, copyLen).CopyTo(actionSpan.Slice(i));
                             }
-                            actionSpan[_count] = null!;
+                            actionSpan[_count] = null;
                             if(_count == 1) {
-                                _actions = actionSpan[0];
+                                var a = actionSpan[0];
+                                var actionsArray = SafeCast.NotNullAs<object?[]>(actions);
+                                if(actionsArray.Length == ArrayPoolForEventRaiser.LengthOfPoolTargetArray) {
+                                    actionsArray[0] = null;
+                                    actionsArray[1] = null;
+                                    actionsArray[2] = null;
+                                    actionsArray[3] = null;
+                                    ArrayPoolForEventRaiser.ReturnInstanceFast(actionsArray);
+                                }
+                                _actions = a;
                             }
                             return;
                         }
@@ -141,6 +163,63 @@ namespace Elffy
             }
             finally {
                 _lock.Exit();       // ---- exit
+            }
+        }
+    }
+
+    internal static class ArrayPoolForEventRaiser
+    {
+        internal const int LengthOfPoolTargetArray = 4; // Don't change
+
+        private const int MaxPoolingCount = 512;
+        private static FastSpinLock _lock;
+        private static object?[]? _root;
+        private static int _pooledCount;
+
+        public static bool TryGetInstanceFast([MaybeNullWhen(false)] out object?[] instance)
+        {
+            // If the exclusion control is successfully obtained, I try to get the instance from the pool.
+            if(_lock.TryEnter() == false) {
+                instance = null;
+                return false;
+            }
+            try {
+                instance = _root;
+                if(instance is not null) {
+                    Debug.Assert(_pooledCount > 0);
+                    Debug.Assert(instance.Length == LengthOfPoolTargetArray);
+                    _pooledCount--;
+                    _root = SafeCast.As<object?[]>(MemoryMarshal.GetArrayDataReference(instance));  // _root = (object?[])instance[0];
+                    MemoryMarshal.GetArrayDataReference(instance) = null;                           // instance[0] = null;
+                    return true;
+                }
+                return false;
+            }
+            finally {
+                _lock.Exit();
+            }
+        }
+
+        public static void ReturnInstanceFast(object?[] instance)
+        {
+            Debug.Assert(instance.Length == LengthOfPoolTargetArray);
+
+            // If the exclusion control is successfully obtained, add the instance to the pool.
+            if(_lock.TryEnter() == false) {
+                return;
+            }
+            try {
+                var pooledCount = _pooledCount;
+                if(pooledCount == MaxPoolingCount) { return; }
+                var root = _root;
+                _pooledCount = pooledCount + 1;
+                _root = instance;
+                if(root is not null) {
+                    MemoryMarshal.GetArrayDataReference(instance) = root;   // instance[0] = root;
+                }
+            }
+            finally {
+                _lock.Exit();
             }
         }
     }
