@@ -34,7 +34,7 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public UniTask RaiseParallel(T arg, CancellationToken cancellationToken = default)
+        public UniTask Raise(T arg, CancellationToken cancellationToken = default)
         {
             return RaiseCore(arg, cancellationToken, EventRaiseMode.Parallel);
         }
@@ -84,7 +84,7 @@ namespace Elffy
 
         public Func<T, CancellationToken, UniTask> ToParallelDelegate()
         {
-            return RaiseParallel;
+            return Raise;
         }
 
         public void Clear()
@@ -205,10 +205,10 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static UniTask RaiseParallelIfNotNull<T>(this AsyncEventRaiser<T>? raiser, T arg, CancellationToken cancellationToken = default)
+        public static UniTask RaiseIfNotNull<T>(this AsyncEventRaiser<T>? raiser, T arg, CancellationToken cancellationToken = default)
         {
             if(raiser is not null) {
-                return raiser.RaiseParallel(arg, cancellationToken);
+                return raiser.Raise(arg, cancellationToken);
             }
             else {
                 if(cancellationToken.IsCancellationRequested) {

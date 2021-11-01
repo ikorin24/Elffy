@@ -81,7 +81,7 @@ namespace Elffy
             _owner = screen.Layers;
             screen.Layers.Add(this);
 
-            await _activating.RaiseParallelIfNotNull(this, cancellationToken);
+            await _activating.RaiseIfNotNull(this, cancellationToken);
             _activating?.Clear();
             await WaitForNextFrame(screen, timingPoint, cancellationToken);
 

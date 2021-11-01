@@ -223,7 +223,7 @@ namespace UnitTest
 
             public UniTask ParallelRaiseTest(CancellationToken ct)
             {
-                return _testEvent.RaiseParallelIfNotNull(this, ct);
+                return _testEvent.RaiseIfNotNull(this, ct);
             }
         }
 

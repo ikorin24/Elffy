@@ -98,7 +98,7 @@ namespace Elffy
             _layer = layer;
             try {
                 _state = LifeState.Activating;
-                await _activating.RaiseParallelIfNotNull(this, cancellationToken);
+                await _activating.RaiseIfNotNull(this, cancellationToken);
                 _activating?.Clear();
             }
             catch {
@@ -152,7 +152,7 @@ namespace Elffy
             _layer = layer;
 
             // [NOTE] UIRenderable must complete OnActivating synchronously. (See the implementation of UIRenderable)
-            _activating.RaiseParallelIfNotNull(this, CancellationToken.None).SyncGetResult();
+            _activating.RaiseIfNotNull(this, CancellationToken.None).SyncGetResult();
             _activating?.Clear();
 
             layer.AddFrameObject(this);
