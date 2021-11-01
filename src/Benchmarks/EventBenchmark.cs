@@ -32,6 +32,22 @@ namespace Benchmarks.Events
         }
 
         [Benchmark(Description = "Dotnet Event")]
+        [BenchmarkCategory("zero")]
+        public Action<EventBenchmark>? DotnetEvent0()
+        {
+            Event1?.Invoke(this);
+            return Event1;
+        }
+
+        [Benchmark(Description = "Elffy Event")]
+        [BenchmarkCategory("zero")]
+        public EventRaiser<EventBenchmark>? ElffyEvent0()
+        {
+            _event2?.Raise(this);
+            return _event2;
+        }
+
+        [Benchmark(Description = "Dotnet Event")]
         [BenchmarkCategory("one")]
         public Action<EventBenchmark>? DotnetEvent1()
         {
@@ -93,6 +109,34 @@ namespace Benchmarks.Events
             using var u1 = Event2.Subscribe(_eventDelegate1);
             using var u2 = Event2.Subscribe(_eventDelegate2);
             using var u3 = Event2.Subscribe(_eventDelegate3);
+            _event2?.Raise(this);
+            return _event2;
+        }
+
+        [Benchmark(Description = "Dotnet Event")]
+        [BenchmarkCategory("four")]
+        public Action<EventBenchmark>? DotnetEvent4()
+        {
+            Event1 += _eventDelegate1;
+            Event1 += _eventDelegate2;
+            Event1 += _eventDelegate3;
+            Event1 += _eventDelegate4;
+            Event1?.Invoke(this);
+            Event1 -= _eventDelegate1;
+            Event1 -= _eventDelegate2;
+            Event1 -= _eventDelegate3;
+            Event1 -= _eventDelegate4;
+            return Event1;
+        }
+
+        [Benchmark(Description = "Elffy Event")]
+        [BenchmarkCategory("four")]
+        public EventRaiser<EventBenchmark>? ElffyEvent4()
+        {
+            using var u1 = Event2.Subscribe(_eventDelegate1);
+            using var u2 = Event2.Subscribe(_eventDelegate2);
+            using var u3 = Event2.Subscribe(_eventDelegate3);
+            using var u4 = Event2.Subscribe(_eventDelegate4);
             _event2?.Raise(this);
             return _event2;
         }
