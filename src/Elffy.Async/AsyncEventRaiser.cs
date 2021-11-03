@@ -44,21 +44,22 @@ namespace Elffy
             if(cancellationToken.IsCancellationRequested) {
                 return UniTask.FromCanceled(cancellationToken);
             }
+
+            // When _count == 0, there is no need to perform exclusive locking.
+            if(_count == 0) { return UniTask.CompletedTask; }
+
             _lock.Enter();          // ---- enter
+            // Get _count after exclusive locking.
             var count = _count;
-            if(count == 0) {
-                _lock.Exit();       // ---- exit
-                return UniTask.CompletedTask;
-            }
-            else if(count == 1) {
-                Debug.Assert(_funcs is Func<T, CancellationToken, UniTask>);
-                var func = Unsafe.As<Func<T, CancellationToken, UniTask>>(_funcs);
+            if(count == 1) {
+                var func = SafeCast.NotNullAs<Func<T, CancellationToken, UniTask>>(_funcs);
                 _lock.Exit();       // ---- exit
                 return func.Invoke(arg, cancellationToken);
             }
             else {
-                Debug.Assert(_funcs is Func<T, CancellationToken, UniTask>[]);
-                var funcs = Unsafe.As<Func<T, CancellationToken, UniTask>[]>(_funcs).AsSpan(0, count);
+
+                var funcArray = SafeCast.NotNullAs<Func<T, CancellationToken, UniTask>[]>(_funcs);
+                var funcs = funcArray.AsSpan(0, count);
                 ArraySegment<Func<T, CancellationToken, UniTask>> copiedFuncs;
                 try {
                     // TODO: array instance pooling

@@ -27,13 +27,13 @@ namespace Elffy
 
         public void Raise(T arg)
         {
+            // When _count == 0, there is no need to perform exclusive locking.
+            if(_count == 0) { return; }
+
             _lock.Enter();          // ---- enter
+            // Get _count after exclusive locking.
             var count = _count;
-            if(count == 0) {
-                _lock.Exit();       // ---- exit
-                return;
-            }
-            else if(count == 1) {
+            if(count == 1) {
                 var action = SafeCast.NotNullAs<Action<T>>(_actions);
                 _lock.Exit();       // ---- exit
                 action.Invoke(arg);
