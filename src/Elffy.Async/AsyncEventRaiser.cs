@@ -57,13 +57,12 @@ namespace Elffy
                 return func.Invoke(arg, cancellationToken);
             }
             else {
-
                 var funcArray = SafeCast.NotNullAs<Func<T, CancellationToken, UniTask>[]>(_funcs);
                 var funcs = funcArray.AsSpan(0, count);
-                ArraySegment<Func<T, CancellationToken, UniTask>> copiedFuncs;
+                PooledAsyncEventFuncs<Func<T, CancellationToken, UniTask>> copiedFuncs;
                 try {
-                    // TODO: array instance pooling
-                    copiedFuncs = funcs.ToArray();
+                    copiedFuncs = new PooledAsyncEventFuncs<Func<T, CancellationToken, UniTask>>(count);
+                    funcs.CopyTo(copiedFuncs.AsSpan());
                 }
                 finally {
                     _lock.Exit();       // ---- exit

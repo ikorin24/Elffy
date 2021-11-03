@@ -12,7 +12,7 @@ namespace Elffy
 {
     internal struct OrderedAsyncEventPromiseCore<T>
     {
-        private ArraySegment<Func<T, CancellationToken, UniTask>> _funcs;
+        private PooledAsyncEventFuncs<Func<T, CancellationToken, UniTask>> _funcs;
         private Action<object>? _continuation;
         private object? _continuationState;
         private T _arg;     // It may be null if T is class. Be careful !
@@ -21,14 +21,14 @@ namespace Elffy
         private int _completedCount;
         private short _version;
 
-        public ArraySegment<Func<T, CancellationToken, UniTask>> Funcs => _funcs;
+        public PooledAsyncEventFuncs<Func<T, CancellationToken, UniTask>> Funcs => _funcs;
         public CancellationToken CancellationToken => _cancellationToken;
         public int CompletedCount => _completedCount;
         public CapturedExceptionWrapper Exception => _exception;
         public T Arg => _arg;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public OrderedAsyncEventPromiseCore(ArraySegment<Func<T, CancellationToken, UniTask>> funcs, T arg, CancellationToken ct, short version)
+        public OrderedAsyncEventPromiseCore(in PooledAsyncEventFuncs<Func<T, CancellationToken, UniTask>> funcs, T arg, CancellationToken ct, short version)
         {
             _funcs = funcs;
             _arg = arg;
@@ -54,6 +54,7 @@ namespace Elffy
 
             // Reset instance
             _version = 0;
+            _funcs.Return();
             _funcs = default;
             _continuation = null;
             _continuationState = null;

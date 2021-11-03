@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -18,12 +19,12 @@ namespace Elffy
 
         public ref OrderedSequentialAsyncEventPromise<T>? NextPooled => ref _nextPooled;
 
-        private OrderedSequentialAsyncEventPromise(ArraySegment<Func<T, CancellationToken, UniTask>> funcs, T arg, CancellationToken ct, short version)
+        private OrderedSequentialAsyncEventPromise(in PooledAsyncEventFuncs<Func<T, CancellationToken, UniTask>> funcs, T arg, CancellationToken ct, short version)
         {
             _core = new OrderedAsyncEventPromiseCore<T>(funcs, arg, ct, version);
         }
 
-        public static UniTask CreateTask(ArraySegment<Func<T, CancellationToken, UniTask>> funcs, T arg, CancellationToken ct)
+        public static UniTask CreateTask(in PooledAsyncEventFuncs<Func<T, CancellationToken, UniTask>> funcs, T arg, CancellationToken ct)
         {
             // [NOTE]
             // I don't do defensive copy. 'funcs' must be copied before the method is called.
@@ -83,7 +84,9 @@ namespace Elffy
             }
             UniTask.Awaiter awaiter;
             try {
-                var task = funcs[index].Invoke(_core.Arg, ct);
+                var f = funcs[index];
+                Debug.Assert(f is not null);
+                var task = f.Invoke(_core.Arg, ct);
                 awaiter = task.GetAwaiter();
             }
             catch(Exception ex) {

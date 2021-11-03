@@ -2,7 +2,6 @@
 using Elffy.Effective;
 using System;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -83,7 +82,7 @@ namespace Elffy
                 else if(count == 1) {
                     Debug.Assert(_actions is Action<T>);
 
-                    if(ArrayPoolForEventRaiser.TryGetInstanceFast(out var actions) == false) {
+                    if(ArrayPoolForEventRaiser.TryGetArray4Fast(out var actions) == false) {
                         actions = new object[DefaultBufferCapacity];
                     }
                     Debug.Assert(actions.Length >= 2);
@@ -101,7 +100,7 @@ namespace Elffy
                             actions[1] = null;
                             actions[2] = null;
                             actions[3] = null;
-                            ArrayPoolForEventRaiser.ReturnInstanceFast(actions);
+                            ArrayPoolForEventRaiser.ReturnArray4Fast(actions);
                         }
                         _actions = newActions;
                         actions = newActions;
@@ -151,7 +150,7 @@ namespace Elffy
                                     actionsArray[1] = null;
                                     actionsArray[2] = null;
                                     actionsArray[3] = null;
-                                    ArrayPoolForEventRaiser.ReturnInstanceFast(actionsArray);
+                                    ArrayPoolForEventRaiser.ReturnArray4Fast(actionsArray);
                                 }
                                 _actions = a;
                             }
@@ -163,63 +162,6 @@ namespace Elffy
             }
             finally {
                 _lock.Exit();       // ---- exit
-            }
-        }
-    }
-
-    internal static class ArrayPoolForEventRaiser
-    {
-        internal const int LengthOfPoolTargetArray = 4; // Don't change
-
-        private const int MaxPoolingCount = 512;
-        private static FastSpinLock _lock;
-        private static object?[]? _root;
-        private static int _pooledCount;
-
-        public static bool TryGetInstanceFast([MaybeNullWhen(false)] out object?[] instance)
-        {
-            // If the exclusion control is successfully obtained, I try to get the instance from the pool.
-            if(_lock.TryEnter() == false) {
-                instance = null;
-                return false;
-            }
-            try {
-                instance = _root;
-                if(instance is not null) {
-                    Debug.Assert(_pooledCount > 0);
-                    Debug.Assert(instance.Length == LengthOfPoolTargetArray);
-                    _pooledCount--;
-                    _root = SafeCast.As<object?[]>(MemoryMarshal.GetArrayDataReference(instance));  // _root = (object?[])instance[0];
-                    MemoryMarshal.GetArrayDataReference(instance) = null;                           // instance[0] = null;
-                    return true;
-                }
-                return false;
-            }
-            finally {
-                _lock.Exit();
-            }
-        }
-
-        public static void ReturnInstanceFast(object?[] instance)
-        {
-            Debug.Assert(instance.Length == LengthOfPoolTargetArray);
-
-            // If the exclusion control is successfully obtained, add the instance to the pool.
-            if(_lock.TryEnter() == false) {
-                return;
-            }
-            try {
-                var pooledCount = _pooledCount;
-                if(pooledCount == MaxPoolingCount) { return; }
-                var root = _root;
-                _pooledCount = pooledCount + 1;
-                _root = instance;
-                if(root is not null) {
-                    MemoryMarshal.GetArrayDataReference(instance) = root;   // instance[0] = root;
-                }
-            }
-            finally {
-                _lock.Exit();
             }
         }
     }
