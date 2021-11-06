@@ -17,7 +17,7 @@ namespace Elffy.Effective
     public readonly struct ValueTypeRentMemory<T> : IEquatable<ValueTypeRentMemory<T>>, IDisposable, ISpan<T> where T : unmanaged
     {
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private readonly string DebugDisplay => $"{nameof(ValueTypeRentMemory<T>)}<{typeof(T).Name}>[{Span.Length}]";
+        private readonly string DebugDisplay => $"{nameof(ValueTypeRentMemory<T>)}<{typeof(T).Name}>[{_length}]";
 
         // [In the case of rent array]
         // _array : rent array
@@ -32,12 +32,6 @@ namespace Elffy.Effective
         private readonly byte[]? _array;
         private readonly IntPtr _start;
         private readonly int _length;
-
-        public Span<T> Span
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => MemoryMarshal.CreateSpan(ref GetReference(), _length);
-        }
 
         public int Length
         {
@@ -65,7 +59,7 @@ namespace Elffy.Effective
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe ValueTypeRentMemory(int length, bool zeroFill = false)
+        public unsafe ValueTypeRentMemory(int length, bool zeroFill)
         {
             if(length == 0) {
                 this = default;
@@ -99,14 +93,18 @@ namespace Elffy.Effective
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Span<T> AsSpan() => Span;
+        public Span<T> AsSpan() => MemoryMarshal.CreateSpan(ref GetReference(), _length);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Span<T> AsSpan(int start) => Span.Slice(start);
+        public Span<T> AsSpan(int start) => AsSpan().Slice(start);
 
-        public Span<T> AsSpan(int start, int length) => Span.Slice(start, length);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Span<T> AsSpan(int start, int length) => AsSpan().Slice(start, length);
 
-        public ReadOnlySpan<T> AsReadOnlySpan() => Span;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ReadOnlySpan<T> AsReadOnlySpan() => MemoryMarshal.CreateSpan(ref GetReference(), _length);
+
+        public T[] ToArray() => AsSpan().ToArray();
 
         /// <summary>Release the memory</summary>
         /// <remarks>*** Don't call this method twice. ***</remarks>
@@ -145,7 +143,7 @@ namespace Elffy.Effective
         private readonly ValueTypeRentMemory<T> _entity;
 
         [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-        public T[] Items => _entity.Span.ToArray();
+        public T[] Items => _entity.ToArray();
 
         internal ValueTypeRentMemoryDebuggerTypeProxy(ValueTypeRentMemory<T> entity)
         {

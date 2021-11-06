@@ -55,8 +55,8 @@ namespace Elffy.Serialization.Fbx
                 var skeletonIndex = 0;
                 var skeleton = new HumanoidSkeleton();
                 model.AddComponent(skeleton);
-                using var bones = new ValueTypeRentMemory<Bone>(fbx.Skeletons[skeletonIndex].BoneCount);
-                fbx.Skeletons[skeletonIndex].CreateBones(bones.Span);
+                using var bones = new ValueTypeRentMemory<Bone>(fbx.Skeletons[skeletonIndex].BoneCount, false);
+                fbx.Skeletons[skeletonIndex].CreateBones(bones.AsSpan());
                 await skeleton.LoadAsync(bones, timingPoints, cancellationToken: token);
             }
 

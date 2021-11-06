@@ -14,17 +14,11 @@ namespace Elffy.Effective
     public readonly struct RefTypeRentMemory<T> : IEquatable<RefTypeRentMemory<T>>, IDisposable where T : class?
     {
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private readonly string DebugDisplay => $"{nameof(RefTypeRentMemory<T>)}<{typeof(T).Name}>[{Span.Length}]";
+        private readonly string DebugDisplay => $"{nameof(RefTypeRentMemory<T>)}<{typeof(T).Name}>[{_length}]";
 
         private readonly object[]? _array;
         private readonly int _start;
         private readonly int _length;
-
-        public readonly Span<T> Span
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => MemoryMarshal.CreateSpan(ref GetReference(), _length);
-        }
 
         public int Length
         {
@@ -79,14 +73,15 @@ namespace Elffy.Effective
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Span<T> AsSpan() => Span;
+        public Span<T> AsSpan() => MemoryMarshal.CreateSpan(ref GetReference(), _length);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Span<T> AsSpan(int start) => Span.Slice(start);
+        public Span<T> AsSpan(int start) => AsSpan().Slice(start);
 
-        public Span<T> AsSpan(int start, int length) => Span.Slice(start, length);
+        public Span<T> AsSpan(int start, int length) => AsSpan().Slice(start, length);
 
-        /// <summary>複数回このメソッドを呼んだ場合の動作は未定義です</summary>
+        public T[] ToArray() => AsSpan().ToArray();
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {
@@ -121,7 +116,7 @@ namespace Elffy.Effective
         private readonly RefTypeRentMemory<T> _entity;
 
         [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-        public T[] Items => _entity.Span.ToArray();
+        public T[] Items => _entity.ToArray();
 
         internal RefTypeRentMemoryDebuggerTypeProxy(RefTypeRentMemory<T> entity)
         {

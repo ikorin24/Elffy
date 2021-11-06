@@ -14,7 +14,7 @@ namespace Elffy.Serialization.Fbx.Internal
         internal SkeletonDataList(in SemanticResolver resolver)
         {
             var nullModels = resolver.GetNullModels();
-            var skeletons = new ValueTypeRentMemory<SkeletonData>(nullModels.Count);
+            var skeletons = new ValueTypeRentMemory<SkeletonData>(nullModels.Count, false);
             try {
                 var i = 0;
                 foreach(var nullModel in nullModels) {
@@ -31,7 +31,7 @@ namespace Elffy.Serialization.Fbx.Internal
                 _skeletons = skeletons;
             }
             catch {
-                foreach(var skeleton in skeletons.Span) {
+                foreach(var skeleton in skeletons.AsSpan()) {
                     skeleton.DisposeInternal();
                 }
                 skeletons.Dispose();

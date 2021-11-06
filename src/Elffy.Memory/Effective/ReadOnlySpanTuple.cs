@@ -21,7 +21,6 @@ namespace Elffy.Effective
         {
             item1 = Item1;
             item2 = Item2;
-            ValueTuple<int, int> a;
         }
     }
 }

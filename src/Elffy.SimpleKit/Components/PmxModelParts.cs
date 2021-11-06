@@ -20,11 +20,11 @@ namespace Elffy.Components
 
         public bool AutoDisposeOnDetached => _core.AutoDisposeOnDetached;
 
-        public ReadOnlySpan<int> VertexCountArray => _vertexCountArray.Span;
+        public ReadOnlySpan<int> VertexCountArray => _vertexCountArray.AsSpan();
 
-        public ReadOnlySpan<int> TextureIndexArray => _textureIndexArray.Span;
+        public ReadOnlySpan<int> TextureIndexArray => _textureIndexArray.AsSpan();
 
-        public ReadOnlySpan<TextureObject> Textures => _textures.Span;
+        public ReadOnlySpan<TextureObject> Textures => _textures.AsSpan();
 
         public int Current { get; set; }
 
@@ -61,7 +61,7 @@ namespace Elffy.Components
                 _vertexCountArray.Dispose();
                 _textureIndexArray.Dispose();
 
-                var textures = _textures.Span;
+                var textures = _textures.AsSpan();
                 for(int i = 0; i < textures.Length; i++) {
                     TextureObject.Delete(ref textures[i]);
                 }

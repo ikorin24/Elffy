@@ -99,7 +99,9 @@ namespace Elffy.Text
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
+#if NET5_0_OR_GREATER
             Next:
+#endif
                 if(_str.IsEmpty) {
                     return false;
                 }

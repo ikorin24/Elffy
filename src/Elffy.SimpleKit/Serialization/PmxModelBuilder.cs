@@ -134,11 +134,11 @@ namespace Elffy.Serialization
                     {
                         Debug.Assert(pmx is PMXObject);
                         var materials = Unsafe.As<PMXObject>(pmx).MaterialList.AsSpan();
-                        var vertexCountArray = new ValueTypeRentMemory<int>(materials.Length);
-                        var textureIndexArray = new ValueTypeRentMemory<int>(materials.Length);
+                        var vertexCountArray = new ValueTypeRentMemory<int>(materials.Length, false);
+                        var textureIndexArray = new ValueTypeRentMemory<int>(materials.Length, false);
                         try {
-                            var vSpan = vertexCountArray.Span;
-                            var tSpan = textureIndexArray.Span;
+                            var vSpan = vertexCountArray.AsSpan();
+                            var tSpan = textureIndexArray.AsSpan();
                             for(int i = 0; i < materials.Length; i++) {
                                 vSpan[i] = materials[i].VertexCount;
                                 tSpan[i] = materials[i].Texture;
@@ -203,8 +203,8 @@ namespace Elffy.Serialization
                 Debug.Assert(model.LifeState == LifeState.Activating);
 
                 // create parts
-                textures = new ValueTypeRentMemory<TextureObject>(images.Length);
-                textures.Span.Clear();  // must be cleared
+                textures = new ValueTypeRentMemory<TextureObject>(images.Length, false);
+                textures.AsSpan().Clear();  // must be cleared
                 for(int i = 0; i < textures.Length; i++) {
                     var image = images[i];
                     if(image.IsEmpty) {
@@ -247,7 +247,7 @@ namespace Elffy.Serialization
 
             static void DisposeObjects(in ValueTypeRentMemory<TextureObject> textures, in ValueTypeRentMemory<int> vertexCountArray, in ValueTypeRentMemory<int> textureIndexArray)
             {
-                var texSpan = textures.Span;
+                var texSpan = textures.AsSpan();
                 for(int i = 0; i < texSpan.Length; i++) {
                     TextureObject.Delete(ref texSpan[i]);
                 }

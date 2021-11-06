@@ -118,8 +118,8 @@ namespace Elffy.Effective
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ValueTypeRentMemory<T> ToValueTypeRentMemory<T>(this ReadOnlySpan<T> source) where T : unmanaged
         {
-            var dest = new ValueTypeRentMemory<T>(source.Length);
-            source.CopyTo(dest.Span);
+            var dest = new ValueTypeRentMemory<T>(source.Length, false);
+            source.CopyTo(dest.AsSpan());
             return dest;
         }
 
@@ -133,7 +133,7 @@ namespace Elffy.Effective
         public static RefTypeRentMemory<T> ToRefTypeRentMemory<T>(this ReadOnlySpan<T> source) where T : class?
         {
             var dest = new RefTypeRentMemory<T>(source.Length);
-            source.CopyTo(dest.Span);
+            source.CopyTo(dest.AsSpan());
             return dest;
         }
 

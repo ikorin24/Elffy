@@ -55,8 +55,8 @@ namespace Elffy.Shading.Defered
                 FillAndInitialize(this, new Span<Vector4>(posPtr, lightCount), new Span<Color4>(colorsPtr, lightCount));
             }
             else {
-                using var positionsBuf = new ValueTypeRentMemory<Vector4>(lightCount);
-                using var colorsBuf = new ValueTypeRentMemory<Color4>(lightCount);
+                using var positionsBuf = new ValueTypeRentMemory<Vector4>(lightCount, false);
+                using var colorsBuf = new ValueTypeRentMemory<Color4>(lightCount, false);
                 FillAndInitialize(this, positionsBuf.AsSpan(), colorsBuf.AsSpan());
             }
 

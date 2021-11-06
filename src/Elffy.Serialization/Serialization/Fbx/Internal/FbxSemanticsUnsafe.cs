@@ -19,7 +19,7 @@ namespace Elffy.Serialization.Fbx.Internal
 
         public ReadOnlySpan<TVertex> Vertices => _vertices.AsSpan();
 
-        public ReadOnlySpan<RawString> Textures => _textures.Span;
+        public ReadOnlySpan<RawString> Textures => _textures.AsSpan();
 
         public ReadOnlySpan<SkeletonData> Skeletons => _skeletons.Span;
 

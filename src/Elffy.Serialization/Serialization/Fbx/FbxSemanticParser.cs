@@ -86,8 +86,8 @@ namespace Elffy.Serialization.Fbx
             var resolvedMeshes = ResolvedMeshList<TVertex>.New();
             try {
                 var objects = resolver.ObjectsNode;
-                using var _ = new ValueTypeRentMemory<int>(objects.Children.Count);
-                var buf = _.Span;
+                using var _ = new ValueTypeRentMemory<int>(objects.Children.Count, false);
+                var buf = _.AsSpan();
                 var geometryCount = objects.FindIndexAll(FbxConstStrings.Geometry(), buf);
                 foreach(var i in buf.Slice(0, geometryCount)) {
                     cancellationToken.ThrowIfCancellationRequested();
@@ -180,11 +180,11 @@ namespace Elffy.Serialization.Fbx
 
         private static ValueTypeRentMemory<RawString> ParseTexture(FbxNode objects, CancellationToken cancellationToken)
         {
-            using var buf = new ValueTypeRentMemory<int>(objects.Children.Count);
-            var bufSpan = buf.Span;
+            using var buf = new ValueTypeRentMemory<int>(objects.Children.Count, false);
+            var bufSpan = buf.AsSpan();
             var textureCount = objects.FindIndexAll(FbxConstStrings.Texture(), bufSpan);
-            var textureNames = new ValueTypeRentMemory<RawString>(textureCount);
-            var span = textureNames.Span;
+            var textureNames = new ValueTypeRentMemory<RawString>(textureCount, false);
+            var span = textureNames.AsSpan();
             try {
                 int i = 0;
                 foreach(var index in bufSpan.Slice(0, textureCount)) {
@@ -205,8 +205,8 @@ namespace Elffy.Serialization.Fbx
 
         private static void ParseMaterial(FbxNode objects)
         {
-            using var buf = new ValueTypeRentMemory<int>(objects.Children.Count);
-            var bufSpan = buf.Span;
+            using var buf = new ValueTypeRentMemory<int>(objects.Children.Count, false);
+            var bufSpan = buf.AsSpan();
             var count = objects.FindIndexAll(FbxConstStrings.Materials(), bufSpan);
             foreach(var index in bufSpan.Slice(0, count)) {
                 var material = objects.Children[index];
@@ -239,7 +239,7 @@ namespace Elffy.Serialization.Fbx
             ref readonly var skeleton = ref Unsafe.NullRef<SkeletonData>();
 
             using var boneCountsMem = new ValueTypeRentMemory<int>(vertices.Length, true);
-            var boneCounts = boneCountsMem.Span;
+            var boneCounts = boneCountsMem.AsSpan();
 
             foreach(var cluster in clusters) {
                 if(resolver.TryGetLimb(cluster, out var limb) == false) { throw new FormatException(); }

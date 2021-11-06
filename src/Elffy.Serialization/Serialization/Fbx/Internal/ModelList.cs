@@ -18,9 +18,9 @@ namespace Elffy.Serialization.Fbx.Internal
             var limbDic = new BufferPooledDictionary<long, LimbNode>();
             var nullDic = new BufferPooledDictionary<long, NullModel>();
             try {
-                using var indexBuf = new ValueTypeRentMemory<int>(objectsNode.Children.Count);
-                var modelCount = objectsNode.FindIndexAll(FbxConstStrings.Model(), indexBuf.Span);
-                foreach(var i in indexBuf.Span.Slice(0, modelCount)) {
+                using var indexBuf = new ValueTypeRentMemory<int>(objectsNode.Children.Count, false);
+                var modelCount = objectsNode.FindIndexAll(FbxConstStrings.Model(), indexBuf.AsSpan());
+                foreach(var i in indexBuf.AsSpan(0, modelCount)) {
                     var modelNode = objectsNode.Children[i];
                     var modelType = modelNode.Properties[2].AsString().ToModelType();
 

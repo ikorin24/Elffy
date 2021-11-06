@@ -69,7 +69,7 @@ namespace Elffy.Effective
                 Debug.Assert(_entries.Length >= source.Count);
                 Debug.Assert(_count == 0);
 
-                var oldEntries = source._entries.Span;
+                var oldEntries = source._entries.AsSpan();
                 CopyEntries(oldEntries, source._count);
                 return;
             }
@@ -120,12 +120,12 @@ namespace Elffy.Effective
                 Debug.Assert(!_buckets.IsEmpty, "_buckets should be non-empty");
                 Debug.Assert(!_entries.IsEmpty, "_entries should be non-empty");
 
-                _buckets.Span.Clear();
+                _buckets.AsSpan().Clear();
 
                 _count = 0;
                 _freeList = -1;
                 _freeCount = 0;
-                _entries.Span.Slice(0, count).Clear();
+                _entries.AsSpan(0, count).Clear();
             }
         }
 
@@ -133,7 +133,7 @@ namespace Elffy.Effective
 
         public bool ContainsValue(TValue value)
         {
-            var entries = _entries.Span;
+            var entries = _entries.AsSpan();
             // ValueType: Devirtualize with EqualityComparer<TValue>.Default intrinsic
             for(int i = 0; i < _count; i++) {
                 if(entries![i].next >= -1 && EqualityComparer<TValue>.Default.Equals(entries[i].value, value)) {
@@ -151,7 +151,7 @@ namespace Elffy.Effective
             if(array.Length - index < Count) { ThrowHelper.Arg(nameof(array) + " is too short"); }
 
             int count = _count;
-            var entries = _entries.Span;
+            var entries = _entries.AsSpan();
             for(int i = 0; i < count; i++) {
                 if(entries![i].next >= -1) {
                     array[index++] = new KeyValuePair<TKey, TValue>(entries[i].key, entries[i].value);
@@ -169,7 +169,7 @@ namespace Elffy.Effective
             if(_buckets.IsEmpty == false) {
                 uint hashCode = (uint)key.GetHashCode();
                 int i = GetBucket(hashCode);
-                var entries = _entries.Span;
+                var entries = _entries.AsSpan();
                 uint collisionCount = 0;
                 // ValueType: Devirtualize with EqualityComparer<TValue>.Default intrinsic
 
@@ -236,7 +236,7 @@ namespace Elffy.Effective
             }
             Debug.Assert(!_buckets.IsEmpty);
 
-            var entries = _entries.Span;
+            var entries = _entries.AsSpan();
             uint hashCode = (uint)key.GetHashCode();
 
             uint collisionCount = 0;
@@ -289,7 +289,7 @@ namespace Elffy.Effective
                 }
                 index = count;
                 _count = count + 1;
-                entries = _entries.Span;
+                entries = _entries.AsSpan();
             }
 
             ref Entry entry = ref entries[index];
@@ -313,8 +313,8 @@ namespace Elffy.Effective
             var entries = new ValueTypeRentMemory<Entry>(newSize, false);
 
             int count = _count;
-            _entries.Span.Slice(0, count).CopyTo(entries.Span);
-            entries.Span.Slice(count).Clear();
+            _entries.AsSpan(0, count).CopyTo(entries.AsSpan());
+            entries.AsSpan(count).Clear();
 
             // Assign member variables after both arrays allocated to guard against corruption from OOM if second fails
             var newBuckets = new ValueTypeRentMemory<int>(newSize, true);
@@ -346,7 +346,7 @@ namespace Elffy.Effective
                 uint collisionCount = 0;
                 uint hashCode = (uint)key.GetHashCode();
                 ref int bucket = ref GetBucket(hashCode);
-                var entries = _entries.Span;
+                var entries = _entries.AsSpan();
                 int last = -1;
                 int i = bucket - 1; // Value in buckets is 1-based
                 while(i >= 0) {
@@ -392,7 +392,7 @@ namespace Elffy.Effective
                 uint collisionCount = 0;
                 uint hashCode = (uint)key.GetHashCode();
                 ref int bucket = ref GetBucket(hashCode);
-                var entries = _entries.Span;
+                var entries = _entries.AsSpan();
                 int last = -1;
                 int i = bucket - 1; // Value in buckets is 1-based
                 while(i >= 0) {
@@ -501,7 +501,7 @@ namespace Elffy.Effective
             }
 
             int newSize = HashHelpers.GetPrime(capacity);
-            var oldEntries = _entries.Span;
+            var oldEntries = _entries.AsSpan();
             int currentCapacity = oldEntries.Length;
             if(newSize >= currentCapacity) {
                 return;
@@ -517,7 +517,7 @@ namespace Elffy.Effective
         {
             Debug.Assert(_entries.IsEmpty == false);
 
-            var newEntries = _entries.Span;
+            var newEntries = _entries.AsSpan();
             int newCount = 0;
             for(int i = 0; i < count; i++) {
                 uint hashCode = entries[i].hashCode;
@@ -603,7 +603,7 @@ namespace Elffy.Effective
                 // Use unsigned comparison since we set index to dictionary.count+1 when the enumeration ends.
                 // dictionary.count+1 could be negative if dictionary.count is int.MaxValue
 
-                var entries = _dictionary._entries.Span;
+                var entries = _dictionary._entries.AsSpan();
                 while((uint)_index < (uint)_dictionary._count) {
                     ref Entry entry = ref entries[_index++];
 
@@ -681,7 +681,7 @@ namespace Elffy.Effective
                 }
 
                 int count = _dictionary._count;
-                var entries = _dictionary._entries.Span;
+                var entries = _dictionary._entries.AsSpan();
                 for(int i = 0; i < count; i++) {
                     if(entries![i].next >= -1) array[index++] = entries[i].key;
                 }
@@ -726,7 +726,7 @@ namespace Elffy.Effective
                         ThrowHelper.InvalidOperation_ModifiedOnEnumerating();
                     }
 
-                    var entries = _dictionary._entries.Span;
+                    var entries = _dictionary._entries.AsSpan();
                     while((uint)_index < (uint)_dictionary._count) {
                         ref Entry entry = ref entries[_index++];
 
@@ -799,7 +799,7 @@ namespace Elffy.Effective
                 }
 
                 int count = _dictionary._count;
-                var entries = _dictionary._entries.Span;
+                var entries = _dictionary._entries.AsSpan();
                 for(int i = 0; i < count; i++) {
                     if(entries![i].next >= -1) array[index++] = entries[i].value;
                 }

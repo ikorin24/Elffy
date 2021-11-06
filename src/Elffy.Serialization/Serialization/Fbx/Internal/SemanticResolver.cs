@@ -122,7 +122,7 @@ namespace Elffy.Serialization.Fbx.Internal
         {
             var sourceIDList = GetSources(skin.ID);
             count = 0;
-            var clusters = new ValueTypeRentMemory<ClusterDeformer>(sourceIDList.Length);
+            var clusters = new ValueTypeRentMemory<ClusterDeformer>(sourceIDList.Length, false);
             try {
                 foreach(var id in sourceIDList) {
                     if(_deformerList.TryGetDeformer(id, out var deformerNode) == false) { continue; }

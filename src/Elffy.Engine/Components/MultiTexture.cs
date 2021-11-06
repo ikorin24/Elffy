@@ -47,7 +47,7 @@ namespace Elffy.Components
             if(images.IsEmpty) { return; }
 
             var texCores = new ValueTypeRentMemory<TextureCore>(images.Length, true);
-            var span = texCores.Span;
+            var span = texCores.AsSpan();
             try {
                 for(int i = 0; i < span.Length; i++) {
                     var core = new TextureCore();
@@ -97,7 +97,7 @@ namespace Elffy.Components
 
         private static void DisposeTextures(ref ValueTypeRentMemory<TextureCore> cores)
         {
-            foreach(var core in cores.Span) {
+            foreach(var core in cores.AsSpan()) {
                 core.Dispose();
             }
             cores.Dispose();
@@ -108,7 +108,7 @@ namespace Elffy.Components
             if(_isLoaded) {
                 throw new InvalidOperationException("Already loaded. Can not change the image");
             }
-            _textureCores = new ValueTypeRentMemory<TextureCore>(count);
+            _textureCores = new ValueTypeRentMemory<TextureCore>(count, true);
         }
 
         internal void LoadImage(int index, in ReadOnlyImageRef image, in TextureConfig config)
