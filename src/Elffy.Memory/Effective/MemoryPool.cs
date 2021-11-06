@@ -4,75 +4,118 @@ using System.Threading;
 using System.Collections;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using Elffy.Effective.Unsafes;
 
 namespace Elffy.Effective
 {
     internal static class MemoryPool
     {
-        private static readonly Lazy<ByteMemoryLender[]> _lenders = new Lazy<ByteMemoryLender[]>(() => new[]
+        private const int ByteLenderCount = 3;
+        private const int ObjLenderCount = 2;
+
+        private const int ByteLender0Size = 256;
+        private const int ByteLender1Size = 1024;
+        private const int ByteLender2Size = 8192;
+
+        private const int ObjLender0Size = 256;
+        private const int ObjLender1Size = 1024;
+
+        private static readonly Lazy<MemoryLender<byte>[]> _byteLenders = new(() => new MemoryLender<byte>[ByteLenderCount]
         {
-            new ByteMemoryLender(segmentSize: 256, segmentCount: 512),     // ~= 128 kB
-            new ByteMemoryLender(segmentSize: 1024, segmentCount: 128),    // ~= 128 kB
-            new ByteMemoryLender(segmentSize: 8192, segmentCount: 32),     // ~= 256 kB
+            new(ByteLender0Size, 512),      // ~= 128 kB
+            new(ByteLender1Size, 128),      // ~= 128 kB
+            new(ByteLender2Size, 32),       // ~= 256 kB
         }, LazyThreadSafetyMode.ExecutionAndPublication);
 
-        private static readonly Lazy<ObjectMemoryLender[]> _objLenders = new Lazy<ObjectMemoryLender[]>(() => new[]
+        private static readonly Lazy<MemoryLender<object>[]> _objLenders = new(() => new MemoryLender<object>[ObjLenderCount]
         {
-            new ObjectMemoryLender(segmentSize: 256, segmentCount: 256),     // ~= 512 kB (on 64bit)
-            new ObjectMemoryLender(segmentSize: 1024, segmentCount: 128),    // ~= 1024 kB (on 64bit)
+            new(ObjLender0Size, 256),       // ~= 512 kB (on 64bit)
+            new(ObjLender1Size, 128),       // ~= 1024 kB (on 64bit)
         }, LazyThreadSafetyMode.ExecutionAndPublication);
 
-        public static unsafe bool TryRentByteMemory<T>(int length, out byte[]? array, out int start, out int id, out int lenderNum) where T : unmanaged
+        public static unsafe bool TryRentValueTypeMemory<T>(int length, [MaybeNullWhen(false)] out byte[] array, out int start) where T : unmanaged
         {
             var byteLength = sizeof(T) * length;
-            var lenders = _lenders.Value;
-            for(int i = 0; i < lenders.Length; i++) {
-                if(byteLength <= lenders[i].SegmentSize && lenders[i].TryRent(out array, out start, out id)) {
-                    lenderNum = i;
-                    return true;
-                }
+            var lenders = _byteLenders.Value;
+            Debug.Assert(lenders.Length == 3);
+            var lender = lenders.At(0);
+            if(byteLength <= lender.SegmentSize && lender.TryRent(out array, out start)) {
+                return true;
+            }
+            lender = lenders.At(1);
+            if(byteLength <= lender.SegmentSize && lender.TryRent(out array, out start)) {
+                return true;
+            }
+            lender = lenders.At(2);
+            if(byteLength <= lender.SegmentSize && lender.TryRent(out array, out start)) {
+                return true;
             }
             array = null;
             start = 0;
-            lenderNum = -1;
-            id = -1;
             return false;
         }
 
-        public static bool TryRentObjectMemory(int length, out object[]? array, out int start, out int id, out int lenderNum)
+        public static bool TryRentRefTypeMemory(int length, [MaybeNullWhen(false)] out object[]? array, out int start)
         {
             var lenders = _objLenders.Value;
-            for(int i = 0; i < lenders.Length; i++) {
-                if(length <= lenders[i].SegmentSize && lenders[i].TryRent(out array, out start, out id)) {
-                    lenderNum = i;
-                    return true;
-                }
+            Debug.Assert(lenders.Length == 2);
+            var lender = lenders.At(0);
+            if(length <= lender.SegmentSize && lender.TryRent(out array, out start)) {
+                return true;
+            }
+            lender = lenders.At(1);
+            if(length <= lender.SegmentSize && lender.TryRent(out array, out start)) {
+                return true;
             }
             array = null;
             start = 0;
-            lenderNum = -1;
-            id = -1;
             return false;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void ReturnByteMemory(int lender, int id)
+        public static void ReturnValueTypeMemory(byte[] array, int start)
         {
-            if(lender < 0) { return; }
-            var lenders = _lenders.Value;
-            lenders[lender].Return(id);
+            if(array == null) { return; }
+            var lenders = _byteLenders.Value;
+            Debug.Assert(lenders.Length == 3);
+            var lender = lenders.At(0);
+            if(lender.IsValidArray(array)) {
+                lender.Return(start);
+                return;
+            }
+            lender = lenders.At(1);
+            if(lender.IsValidArray(array)) {
+                lender.Return(start);
+                return;
+            }
+            lender = lenders.At(2);
+            if(lender.IsValidArray(array)) {
+                lender.Return(start);
+                return;
+            }
+            return;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void ReturnObjectMemory(int lender, int id)
+        public static void ReturnRefTypeMemory(object[] array, int start)
         {
-            if(lender < 0) { return; }
+            if(array == null) { return; }
             var lenders = _objLenders.Value;
-            lenders[lender].Return(id);
+            Debug.Assert(lenders.Length == 2);
+
+            var lender = lenders.At(0);
+            if(lender.IsValidArray(array)) {
+                lender.Return(start);
+                return;
+            }
+            lender = lenders.At(1);
+            if(lender.IsValidArray(array)) {
+                lender.Return(start);
+                return;
+            }
+            return;
         }
 
-
-        abstract class MemoryLender<T>
+        private sealed class MemoryLender<T>
         {
             // [NOTE]
             // ex) SegmentSize = 3, MaxCount = 4
@@ -100,66 +143,56 @@ namespace Elffy.Effective
             // ---------------------------------------------------------------------
 
             private readonly T[] _array;
-            private readonly BitArray _segmentState;        // true は貸し出し中、false は貸出可能
+            private readonly BitArray _segmentState;        // True means the item is on loan.
             private readonly int[] _availableIDStack;
+            private readonly int _maxCount;
+            private readonly int _segmentSize;
             private int _availableHead;
-
             private FastSpinLock _sync;
 
-            public int SegmentSize { get; }
-            public int MaxCount => _availableIDStack.Length;
+            public int SegmentSize => _segmentSize;
+            public int MaxCount => _maxCount;
 
-            public int AvailableCount => _availableIDStack.Length - _availableHead;
+            public int AvailableCount => _maxCount - _availableHead;
 
-            public bool IsArrayPinned =>
-#if NET5_0_OR_GREATER
-                !RuntimeHelpers.IsReferenceOrContainsReferences<T>();
-#else
-                false;
-#endif
-
-            protected MemoryLender(int segmentSize, int segmentCount)
+            public MemoryLender(int segmentSize, int segmentCount)
             {
                 if(segmentSize <= 0) { throw new ArgumentOutOfRangeException(nameof(segmentSize)); }
                 if(segmentCount <= 0) { throw new ArgumentOutOfRangeException(nameof(segmentCount)); }
-                SegmentSize = segmentSize;
+                _segmentSize = segmentSize;
 
                 if(RuntimeHelpers.IsReferenceOrContainsReferences<T>()) {
                     _array = new T[segmentSize * segmentCount];
-                    Debug.Assert(IsArrayPinned == false);
                 }
                 else {
 #if NET5_0_OR_GREATER
                     _array = GC.AllocateUninitializedArray<T>(segmentSize * segmentCount, pinned: true);
-                    Debug.Assert(IsArrayPinned);
 #else
                     _array = new T[segmentSize * segmentCount];
-                    Debug.Assert(IsArrayPinned == false);
 #endif
                 }
                 _segmentState = new BitArray(segmentCount);
-
                 _availableHead = 0;
-                _availableIDStack = new int[segmentCount];
-                for(int i = 0; i < _availableIDStack.Length; i++) {
-                    _availableIDStack[i] = i;
+                _maxCount = segmentCount;
+                var availableIDStack = new int[segmentCount];
+                for(int i = 0; i < availableIDStack.Length; i++) {
+                    availableIDStack[i] = i;
                 }
+                _availableIDStack = availableIDStack;
             }
 
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public bool TryRent(out T[]? array, out int start, out int segID)
+            public bool TryRent([MaybeNullWhen(false)] out T[] array, out int start)
             {
                 _sync.Enter();          // --- begin sync
                 var head = _availableHead;
                 if(head >= _availableIDStack.Length) {
                     _sync.Exit();       // --- end sync
-
-                    segID = -1;
                     array = null;
                     start = 0;
                     return false;
                 }
                 else {
+                    int segID;
                     try {
                         segID = _availableIDStack[head];
                         _availableHead = head + 1;
@@ -170,14 +203,15 @@ namespace Elffy.Effective
                     }
 
                     array = _array;
-                    start = segID * SegmentSize;
+                    start = segID * _segmentSize;
                     return true;
                 }
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Return(int segID)
+            public void Return(int start)
             {
+                var segID = start / _segmentSize;
                 if((uint)segID >= (uint)MaxCount) { return; }
                 _sync.Enter();          // --- begin sync
                 try {
@@ -191,19 +225,11 @@ namespace Elffy.Effective
                     _sync.Exit();       // --- end sync
                 }
             }
-        }
 
-        class ByteMemoryLender : MemoryLender<byte>
-        {
-            public ByteMemoryLender(int segmentSize, int segmentCount) : base(segmentSize, segmentCount)
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool IsValidArray(T[] array)
             {
-            }
-        }
-
-        class ObjectMemoryLender : MemoryLender<object>
-        {
-            public ObjectMemoryLender(int segmentSize, int segmentCount) : base(segmentSize, segmentCount)
-            {
+                return ReferenceEquals(array, _array);
             }
         }
     }

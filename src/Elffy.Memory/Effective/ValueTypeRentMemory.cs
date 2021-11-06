@@ -7,14 +7,10 @@ using System.Runtime.InteropServices;
 
 namespace Elffy.Effective
 {
-    // 構造体をコピーして複数回 Dispose を実行した場合の動作は保証しない。
-
-    // var a = new ValueTypeRentMemory<int>(10);
-    // var b = a;
-    // a.Dispose();
-    // b.Dispose();     // ダメ
-
-    /// <summary>Shared memories from memory pool, that provides <see cref="Span{T}"/> like <see cref="Memory{T}"/>.</summary>
+    /// <summary>Shared memories from memory pool, that provides <see cref="Span{T}"/>.</summary>
+    /// <remarks>
+    /// Don't call <see cref="Dispose"/> twice.
+    /// </remarks>
     /// <typeparam name="T">element type</typeparam>
     [DebuggerDisplay("{DebugDisplay}")]
     [DebuggerTypeProxy(typeof(ValueTypeRentMemoryDebuggerTypeProxy<>))]
@@ -23,49 +19,39 @@ namespace Elffy.Effective
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private readonly string DebugDisplay => $"{nameof(ValueTypeRentMemory<T>)}<{typeof(T).Name}>[{Span.Length}]";
 
-        // IMemoryOwner<T> を継承するメリットが特になく、
-        // Memory<T> を公開する方法もないので
-        // IMemoryOwner<T> は継承しない。
-
-        // [メモリを借りてきたとき]
-        // _array : 借りた配列
-        // _start : 使用可能なメモリの開始位置が _array[(int)_start]
-        // _length : T の要素数
-        // _id     : 借りたメモリの識別用番号 (>= 0)
-        // _lender : メモリの貸し出し者  (>= 0)
+        // [In the case of rent array]
+        // _array : rent array
+        // _start : indicates the start position of available memory; _array[(int)_start]
+        // _length : number of T element
         //
-        // [unmanaged メモリを確保した時]
+        // [When allocate unmanaged memory]
         // _array : null
-        // _start : unmanaged メモリのポインタ
-        // _length : T の要素数
-        // _id     : -1
-        // _lender : -1
+        // _start : unmanaged pointer
+        // _length : number of T element
 
         private readonly byte[]? _array;
         private readonly IntPtr _start;
         private readonly int _length;
-        private readonly int _id;
-        private readonly int _lender;
 
-        public unsafe readonly Span<T> Span
+        public Span<T> Span
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => MemoryMarshal.CreateSpan(ref GetReference(), _length);
         }
 
-        public readonly int Length
+        public int Length
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _length;
         }
 
-        public readonly bool IsEmpty
+        public bool IsEmpty
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _length == 0;
         }
 
-        public readonly ref T this[int index]
+        public ref T this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
@@ -85,19 +71,19 @@ namespace Elffy.Effective
                 this = default;
                 return;
             }
-            if(MemoryPool.TryRentByteMemory<T>(length, out _array, out int start, out _id, out _lender)) {
-                Debug.Assert(_array is null == false);
+            if(MemoryPool.TryRentValueTypeMemory<T>(length, out _array, out int start)) {
+                Debug.Assert(_array is not null);
                 _start = new IntPtr(start);
             }
             else {
-                Debug.Assert(_lender < 0 && _id < 0);
-                Debug.Assert(_array is null && start == 0);
+                Debug.Assert(_array is null);
+                Debug.Assert(start == 0);
                 _start = Marshal.AllocHGlobal(sizeof(T) * length);
             }
             _length = length;
 
             if(zeroFill) {
-                Span.Clear();
+                AsSpan().Clear();
             }
         }
 
@@ -122,35 +108,32 @@ namespace Elffy.Effective
 
         public ReadOnlySpan<T> AsReadOnlySpan() => Span;
 
-        /// <summary>複数回このメソッドを呼んだ場合の動作は未定義です</summary>
+        /// <summary>Release the memory</summary>
+        /// <remarks>*** Don't call this method twice. ***</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly void Dispose()
+        public void Dispose()
         {
             if(_array is null) {
                 Marshal.FreeHGlobal(_start);
             }
-            else if(!IsEmpty) {
-                MemoryPool.ReturnByteMemory(_lender, _id);
-                Unsafe.AsRef(_array) = null!;
+            else if(_length != 0) {
+                MemoryPool.ReturnValueTypeMemory(_array, (int)_start);
+                Unsafe.AsRef<byte[]?>(_array) = null;
             }
-            Unsafe.AsRef(_lender) = 0;
-            Unsafe.AsRef(_id) = 0;
             Unsafe.AsRef(_start) = IntPtr.Zero;
             Unsafe.AsRef(_length) = 0;
         }
 
         public override bool Equals(object? obj) => obj is ValueTypeRentMemory<T> memory && Equals(memory);
 
-        public override int GetHashCode() => HashCode.Combine(_array, _start, _length, _id, _lender);
+        public override int GetHashCode() => HashCode.Combine(_array, _start, _length);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Equals(ValueTypeRentMemory<T> other)
         {
             return ReferenceEquals(_array, other._array) &&
-                   _start.Equals(other._start) &&
-                   _length == other._length &&
-                   _id == other._id &&
-                   _lender == other._lender;
+                   _start == other._start &&
+                   _length == other._length;
         }
 
         public override string ToString() => DebugDisplay;

@@ -7,14 +7,7 @@ using Elffy.Effective.Unsafes;
 
 namespace Elffy.Effective
 {
-    // 構造体をコピーして複数回 Dispose を実行した場合の動作は保証しない。
-
-    // var a = new ValueTypeRentMemory<int>(10);
-    // var b = a;
-    // a.Dispose();
-    // b.Dispose();     // ダメ
-
-    /// <summary>Shared memories from memory pool, that provides <see cref="Span{T}"/> like <see cref="Memory{T}"/>.</summary>
+    /// <summary>Shared memories from memory pool, that provides <see cref="Span{T}"/>.</summary>
     /// <typeparam name="T">element type</typeparam>
     [DebuggerDisplay("{DebugDisplay}")]
     [DebuggerTypeProxy(typeof(RefTypeRentMemoryDebuggerTypeProxy<>))]
@@ -23,15 +16,9 @@ namespace Elffy.Effective
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private readonly string DebugDisplay => $"{nameof(RefTypeRentMemory<T>)}<{typeof(T).Name}>[{Span.Length}]";
 
-        // IMemoryOwner<T> を継承するメリットが特になく、
-        // Memory<T> を公開する方法もないので
-        // IMemoryOwner<T> は継承しない。
-
         private readonly object[]? _array;
         private readonly int _start;
         private readonly int _length;
-        private readonly int _id;
-        private readonly int _lender;
 
         public readonly Span<T> Span
         {
@@ -39,19 +26,19 @@ namespace Elffy.Effective
             get => MemoryMarshal.CreateSpan(ref GetReference(), _length);
         }
 
-        public readonly int Length
+        public int Length
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _length;
         }
 
-        public readonly bool IsEmpty
+        public bool IsEmpty
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => _length == 0;
         }
 
-        public readonly ref T this[int index]
+        public ref T this[int index]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
@@ -65,14 +52,16 @@ namespace Elffy.Effective
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe RefTypeRentMemory(int length)
+        public RefTypeRentMemory(int length)
         {
             if(length == 0) {
                 this = default;
                 return;
             }
-            if(!MemoryPool.TryRentObjectMemory(length, out _array, out _start, out _id, out _lender)) {
-                Debug.Assert(_lender < 0 && _id < 0);
+
+            if(MemoryPool.TryRentRefTypeMemory(length, out _array, out _start) == false) {
+                Debug.Assert(_array is null);
+                _start = 0;
                 _array = new object[length];
             }
             _length = length;
@@ -99,16 +88,15 @@ namespace Elffy.Effective
 
         /// <summary>複数回このメソッドを呼んだ場合の動作は未定義です</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly void Dispose()
+        public void Dispose()
         {
-            if(!IsEmpty) {
-                Span.Clear();               // All elements MUST be cleared, or elements are not collected by GC.
-                MemoryPool.ReturnObjectMemory(_lender, _id);
-                Unsafe.AsRef(_array) = null;
+            if(_length != 0) {
+                Debug.Assert(_array is not null);
+                AsSpan().Clear();           // All elements MUST be cleared, or elements are not collected by GC.
+                MemoryPool.ReturnRefTypeMemory(_array, _start);
+                Unsafe.AsRef<object[]?>(_array) = null;
                 Unsafe.AsRef(_start) = 0;
                 Unsafe.AsRef(_length) = 0;
-                Unsafe.AsRef(_id) = 0;
-                Unsafe.AsRef(_lender) = 0;
             }
         }
 
@@ -119,12 +107,10 @@ namespace Elffy.Effective
         {
             return _array == other._array &&
                    _start == other._start &&
-                   _length == other._length &&
-                   _id == other._id &&
-                   _lender == other._lender;
+                   _length == other._length;
         }
 
-        public override int GetHashCode() => HashCode.Combine(_array, _start, _length, _id, _lender);
+        public override int GetHashCode() => HashCode.Combine(_array, _start, _length);
 
         public override string ToString() => DebugDisplay;
     }
