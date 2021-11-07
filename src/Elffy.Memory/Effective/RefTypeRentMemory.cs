@@ -53,7 +53,7 @@ namespace Elffy.Effective
                 return;
             }
 
-            if(MemoryPool.TryRentRefTypeMemory(length, out _array, out _start) == false) {
+            if(ArrayMemoryPool.TryRentRefTypeMemory(length, out _array, out _start) == false) {
                 Debug.Assert(_array is null);
                 _start = 0;
                 _array = new object[length];
@@ -88,7 +88,7 @@ namespace Elffy.Effective
             if(_length != 0) {
                 Debug.Assert(_array is not null);
                 AsSpan().Clear();           // All elements MUST be cleared, or elements are not collected by GC.
-                MemoryPool.ReturnRefTypeMemory(_array, _start);
+                ArrayMemoryPool.ReturnRefTypeMemory(_array, _start);
                 Unsafe.AsRef<object[]?>(_array) = null;
                 Unsafe.AsRef(_start) = 0;
                 Unsafe.AsRef(_length) = 0;

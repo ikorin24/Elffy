@@ -65,7 +65,7 @@ namespace Elffy.Effective
                 this = default;
                 return;
             }
-            if(MemoryPool.TryRentValueTypeMemory<T>(length, out _array, out int start)) {
+            if(ArrayMemoryPool.TryRentValueTypeMemory<T>(length, out _array, out int start)) {
                 Debug.Assert(_array is not null);
                 _start = new IntPtr(start);
             }
@@ -115,7 +115,7 @@ namespace Elffy.Effective
                 Marshal.FreeHGlobal(_start);
             }
             else if(_length != 0) {
-                MemoryPool.ReturnValueTypeMemory(_array, (int)_start);
+                ArrayMemoryPool.ReturnValueTypeMemory(_array, (int)_start);
                 Unsafe.AsRef<byte[]?>(_array) = null;
             }
             Unsafe.AsRef(_start) = IntPtr.Zero;

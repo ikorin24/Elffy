@@ -9,7 +9,7 @@ using Elffy.Effective.Unsafes;
 
 namespace Elffy.Effective
 {
-    internal static class MemoryPool
+    internal static class ArrayMemoryPool
     {
         private const int ByteLenderCount = 3;
         private const int ObjLenderCount = 2;
@@ -28,7 +28,7 @@ namespace Elffy.Effective
             new(ByteLender2Size, 32),       // ~= 256 kB
         }, LazyThreadSafetyMode.ExecutionAndPublication);
 
-        private static readonly Lazy<MemoryLender<object>[]> _objLenders = new(() => new MemoryLender<object>[ObjLenderCount]
+        private static readonly Lazy<MemoryLender<object?>[]> _objLenders = new(() => new MemoryLender<object?>[ObjLenderCount]
         {
             new(ObjLender0Size, 256),       // ~= 512 kB (on 64bit)
             new(ObjLender1Size, 128),       // ~= 1024 kB (on 64bit)
@@ -56,7 +56,7 @@ namespace Elffy.Effective
             return false;
         }
 
-        public static bool TryRentRefTypeMemory(int length, [MaybeNullWhen(false)] out object[]? array, out int start)
+        public static bool TryRentRefTypeMemory(int length, [MaybeNullWhen(false)] out object?[] array, out int start)
         {
             var lenders = _objLenders.Value;
             Debug.Assert(lenders.Length == 2);
@@ -96,7 +96,7 @@ namespace Elffy.Effective
             return;
         }
 
-        public static void ReturnRefTypeMemory(object[] array, int start)
+        public static void ReturnRefTypeMemory(object?[] array, int start)
         {
             if(array == null) { return; }
             var lenders = _objLenders.Value;
