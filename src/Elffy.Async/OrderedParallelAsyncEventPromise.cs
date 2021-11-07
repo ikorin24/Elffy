@@ -16,6 +16,7 @@ namespace Elffy
 
         private OrderedParallelAsyncEventPromise<T>? _nextPooled;
         private OrderedAsyncEventPromiseCore<T> _core;
+        private bool _isCompletedSuccessfully;
 
         public ref OrderedParallelAsyncEventPromise<T>? NextPooled => ref _nextPooled;
 
@@ -45,7 +46,13 @@ namespace Elffy
         public void GetResult(short token)
         {
             _core.GetResultAndReset(token);
-            ChainInstancePool<OrderedParallelAsyncEventPromise<T>>.ReturnInstanceFast(this);
+            if(_isCompletedSuccessfully) {
+                // [NOTE]
+                // If an exception interrupts an internal task, there is no way to ensure that all other tasks are interrupted.
+                // Therefore, I pool the instance only when all tasks have finished successfully.
+                _isCompletedSuccessfully = false;
+                ChainInstancePool<OrderedParallelAsyncEventPromise<T>>.ReturnInstanceFast(this);
+            }
         }
 
 #if !DEBUG
@@ -78,10 +85,10 @@ namespace Elffy
 
             var index = 0;
         NEXT_TASK:
-            if(_core.CompletedCount == funcs.Count || _core.Exception.Status != UniTaskCapturedExceptionStatus.None) {
-                _core.InvokeContinuation();
+            if(InvokeContinuationIfEnd(funcs.Count)) {
                 return;
             }
+
             if(index >= funcs.Count) {
                 return;
             }
@@ -106,12 +113,23 @@ namespace Elffy
                 var (self, awaiter) = PromiseAndAwaiterPair.Extract<OrderedParallelAsyncEventPromise<T>>(s);
                 ref var core = ref self._core;
                 core.InvokeInnerTaskCompleted(awaiter);
-                if(core.CompletedCount == core.Funcs.Count || core.Exception.Status != UniTaskCapturedExceptionStatus.None) {
-                    core.InvokeContinuation();
-                    return;
-                }
+                self.InvokeContinuationIfEnd(core.Funcs.Count);
             }, PromiseAndAwaiterPair.Create(this, awaiter));
             goto NEXT_TASK;
+        }
+
+        private bool InvokeContinuationIfEnd(int funcCount)
+        {
+            if(_core.CompletedCount == funcCount) {
+                _isCompletedSuccessfully = true;
+                _core.InvokeContinuation();
+                return true;
+            }
+            else if(_core.Exception.Status != UniTaskCapturedExceptionStatus.None) {
+                _core.InvokeContinuation();
+                return true;
+            }
+            return false;
         }
     }
 }
