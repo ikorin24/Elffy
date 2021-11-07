@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Elffy.Effective.Unsafes;
@@ -16,7 +17,7 @@ namespace Elffy.Effective
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private readonly string DebugDisplay => $"{nameof(RefTypeRentMemory<T>)}<{typeof(T).Name}>[{_length}]";
 
-        private readonly object[]? _array;
+        private readonly object?[]? _array;
         private readonly int _start;
         private readonly int _length;
 
@@ -52,7 +53,10 @@ namespace Elffy.Effective
                 this = default;
                 return;
             }
-
+            if(length < 0) {
+                ThrowArgOutOfRange();
+                [DoesNotReturn] static void ThrowArgOutOfRange() => throw new ArgumentOutOfRangeException(nameof(length));
+            }
             if(ArrayMemoryPool.TryRentRefTypeMemory(length, out _array, out _start) == false) {
                 Debug.Assert(_array is null);
                 _start = 0;
@@ -68,7 +72,7 @@ namespace Elffy.Effective
                 return ref Unsafe.AsRef<T>(null);
             }
             else {
-                return ref Unsafe.As<object, T>(ref _array.At(_start));
+                return ref Unsafe.As<object?, T>(ref _array.At(_start));
             }
         }
 
@@ -89,7 +93,7 @@ namespace Elffy.Effective
                 Debug.Assert(_array is not null);
                 AsSpan().Clear();           // All elements MUST be cleared, or elements are not collected by GC.
                 ArrayMemoryPool.ReturnRefTypeMemory(_array, _start);
-                Unsafe.AsRef<object[]?>(_array) = null;
+                Unsafe.AsRef<object?[]?>(_array) = null;
                 Unsafe.AsRef(_start) = 0;
                 Unsafe.AsRef(_length) = 0;
             }

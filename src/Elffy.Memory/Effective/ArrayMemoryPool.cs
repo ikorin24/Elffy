@@ -36,6 +36,12 @@ namespace Elffy.Effective
 
         public static unsafe bool TryRentValueTypeMemory<T>(int length, [MaybeNullWhen(false)] out byte[] array, out int start) where T : unmanaged
         {
+            if(length > ByteLender2Size / sizeof(T) || length < 0) {
+                array = null;
+                start = 0;
+                return false;
+            }
+
             var byteLength = sizeof(T) * length;
             var lenders = _byteLenders.Value;
             Debug.Assert(lenders.Length == 3);
@@ -58,6 +64,12 @@ namespace Elffy.Effective
 
         public static bool TryRentRefTypeMemory(int length, [MaybeNullWhen(false)] out object?[] array, out int start)
         {
+            if(length > ObjLender1Size || length < 0) {
+                array = null;
+                start = 0;
+                return false;
+            }
+
             var lenders = _objLenders.Value;
             Debug.Assert(lenders.Length == 2);
             var lender = lenders.At(0);

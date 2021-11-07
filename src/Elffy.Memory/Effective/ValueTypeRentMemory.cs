@@ -2,6 +2,7 @@
 using Elffy.Effective.Unsafes;
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -65,11 +66,18 @@ namespace Elffy.Effective
                 this = default;
                 return;
             }
+            if(length < 0) {
+                ThrowArgOutOfRange();
+                [DoesNotReturn] static void ThrowArgOutOfRange() => throw new ArgumentOutOfRangeException(nameof(length));
+            }
             if(ArrayMemoryPool.TryRentValueTypeMemory<T>(length, out _array, out int start)) {
                 Debug.Assert(_array is not null);
                 _start = new IntPtr(start);
             }
             else {
+                if(length > int.MaxValue / sizeof(T)) {
+                    ThrowTooLarge();
+                }
                 Debug.Assert(_array is null);
                 Debug.Assert(start == 0);
                 _start = Marshal.AllocHGlobal(sizeof(T) * length);
@@ -79,6 +87,8 @@ namespace Elffy.Effective
             if(zeroFill) {
                 AsSpan().Clear();
             }
+
+            [DoesNotReturn] static void ThrowTooLarge() => throw new ArgumentOutOfRangeException(nameof(length) + " is too large.");
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
