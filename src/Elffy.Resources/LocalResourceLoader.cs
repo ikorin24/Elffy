@@ -21,31 +21,35 @@ namespace Elffy
             _resources = LocalResourceInitializer.CreateDictionary(_resourcePackageFilePath);
         }
 
-        public Stream GetStream(string name)
-        {
-            if(_resources!.TryGetValue(name, out var resource) == false) {
-                ResourceNotFoundException.Throw(new ResourceFile(this, name));
-            }
-            return new LocalResourceStream(_resourcePackageFilePath, resource);
-        }
-
-        public long GetSize(string name)
-        {
-            if(_resources.TryGetValue(name, out var resource) == false) {
-                ResourceNotFoundException.Throw(new ResourceFile(this, name));
-            }
-            return resource.Length;
-        }
-
-        public bool HasResource(string name)
-        {
-            return _resources.ContainsKey(name);
-        }
-
         // This method is only for debug.
         internal string[] GetResourceNames()
         {
             return _resources.Keys.ToArray();
+        }
+
+        public bool TryGetStream(string? name, out Stream stream)
+        {
+            if(name is null || _resources.TryGetValue(name, out var resource) == false) {
+                stream = Stream.Null;
+                return false;
+            }
+            stream = new LocalResourceStream(_resourcePackageFilePath, resource);
+            return true;
+        }
+
+        public bool TryGetSize(string? name, out long size)
+        {
+            if(name is null || _resources.TryGetValue(name, out var resource) == false) {
+                size = 0;
+                return false;
+            }
+            size = resource.Length;
+            return true;
+        }
+
+        public bool Exists(string? name)
+        {
+            return name is not null && _resources.ContainsKey(name);
         }
     }
 
@@ -53,10 +57,19 @@ namespace Elffy
     {
         private static readonly EmptyResourceLoader _instance = new EmptyResourceLoader();
         public static EmptyResourceLoader Null => _instance;
-        public long GetSize(string name) => 0L;
 
-        public Stream GetStream(string name) => Stream.Null;
+        public bool Exists(string name) => false;
 
-        public bool HasResource(string name) => false;
+        public bool TryGetSize(string name, out long size)
+        {
+            size = 0;
+            return false;
+        }
+
+        public bool TryGetStream(string name, out Stream stream)
+        {
+            stream = Stream.Null;
+            return false;
+        }
     }
 }

@@ -21,15 +21,15 @@ namespace Elffy.Generator
 
 namespace Elffy
 {
-    /// <summary>Provides resource loaders</summary>
+    /// <summary>Provides resource packages</summary>
     internal static class Resources
     {
 ");
 
             foreach(var (importedName, packageFilePath) in localResources) {
                 sb.AppendLine(
-$@"        /// <summary>Get {importedName} resource loader instance</summary>
-        public static IResourceLoader {importedName} {{ get; }} = ResourceProvider.LocalResource(""{packageFilePath}"");");
+$@"        /// <summary>Get resource package ""{importedName}""</summary>
+        public static ResourcePackage {importedName} {{ get; }} = ResourcePackageProvider.CreateLocalResourcePackage(""{packageFilePath}"");");
             }
 
             sb.Append(@"

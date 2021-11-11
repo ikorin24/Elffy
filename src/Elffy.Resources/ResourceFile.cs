@@ -1,6 +1,9 @@
 ﻿#nullable enable
 using System;
+using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Runtime.CompilerServices;
 
 namespace Elffy
 {
@@ -13,21 +16,34 @@ namespace Elffy
 
         public ReadOnlySpan<char> FileExtension => ResourcePath.GetExtension(_name.AsSpan());
 
-        public long FileSize => ResourceLoader.GetSize(Name);
+        public static ResourceFile InvalidInstance => default;
+
+        public long FileSize => ResourceLoader.TryGetSize(_name, out var size) ? size : 0;
 
         public IResourceLoader ResourceLoader => _loader ?? EmptyResourceLoader.Null;
 
-        public ResourceFile(IResourceLoader loader, string name)
+        internal ResourceFile(IResourceLoader loader, string name)
         {
             _loader = loader;
             _name = name;
         }
 
-        public void ThrowIfNotFound() => ResourceNotFoundException.ThrowIfNotFound(this);
+        [Obsolete($"{nameof(ResourceFile)} does not support default constructor.", true)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public ResourceFile()
+        {
+            throw new NotSupportedException($"{nameof(ResourceFile)} does not support default constructor.");
+        }
 
-        public bool Exists() => ResourceLoader.HasResource(Name);
+        public static void ThrowArgumentExceptionIfInvalid(ResourceFile resource, [CallerArgumentExpression("resource")] string? paramName = null)
+        {
+            if(resource._loader is null) {
+                Throw(paramName);
+            }
+            [DoesNotReturn] static void Throw(string? paramName) => throw new ArgumentException(paramName);
+        }
 
-        public Stream GetStream() => ResourceLoader.GetStream(Name);
+        public Stream GetStream() => ResourceLoader.TryGetStream(_name, out var stream) ? stream : Stream.Null;
 
         public override bool Equals(object? obj) => obj is ResourceFile file && Equals(file);
 
@@ -39,36 +55,4 @@ namespace Elffy
 
         public static bool operator !=(ResourceFile left, ResourceFile right) => !(left == right);
     }
-
-    //public sealed class ResourcePackage
-    //{
-    //    private readonly IResourceLoader _resourceLoader;
-
-    //    private static readonly ResourcePackage _package = new ResourcePackage(EmptyResourceLoader.Null);
-    //    internal static ResourcePackage EmptyPackage => _package;
-
-    //    private ResourcePackage(IResourceLoader loader)
-    //    {
-    //        _resourceLoader = loader;
-    //    }
-
-    //    public static ResourcePackage CreateLocalResourcePackage(string resourcePackagePath)
-    //    {
-    //        if(resourcePackagePath is null) { throw new ArgumentNullException(nameof(resourcePackagePath)); }
-    //        var fullPath = Path.Combine(AppContext.BaseDirectory, resourcePackagePath);
-    //        var resourceLoader = new LocalResourceLoader(fullPath);
-    //        return new ResourcePackage(resourceLoader);
-    //    }
-
-    //    public ResourceFile GetFile(string name)
-    //    {
-    //        return new ResourceFile(_resourceLoader, name);
-    //    }
-    //}
-
-    //public readonly struct ResourceDirectory : IEquatable<ResourceFile>
-    //{
-    //    private readonly IResourceLoader? _loader;
-    //    private readonly string? _name;
-    //}
 }

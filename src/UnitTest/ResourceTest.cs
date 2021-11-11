@@ -132,13 +132,15 @@ namespace UnitTest
                                                       .ToList();
 
             // リソースと元ファイルのペアを作り、そのハッシュ値の一致を確認
-            var resources = new LocalResourceLoader("Resources.dat");
-            var pair = resources.GetResourceNames().Select(x => (Resource: x, Original: sourceNames.Find(y => x == y)))
+            var loader = new LocalResourceLoader("Resources.dat");
+            var pair = loader.GetResourceNames().Select(x => (Resource: x, Original: sourceNames.Find(y => x == y)))
                                 .ToArray();
             foreach(var (name, original) in pair) {
                 byte[] hash1;
                 byte[] hash2;
-                var stream1 = resources.GetStream(name);
+                if(loader.TryGetStream(name, out var stream1) == false) {
+                    throw new Exception();
+                }
                 var stream2 = File.OpenRead(Path.Combine(resource.FullName, original));
                 using(stream1) {
                     hash1 = hashfunc.ComputeHash(stream1);

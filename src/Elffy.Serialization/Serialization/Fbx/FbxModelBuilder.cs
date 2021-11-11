@@ -11,7 +11,7 @@ using Elffy.Effective;
 
 namespace Elffy.Serialization.Fbx
 {
-    /// <summary>Provides methods for creating <see cref="Model3D"/> from <see cref="IResourceLoader"/>.</summary>
+    /// <summary>Provides methods for creating <see cref="Model3D"/> from <see cref="ResourceFile"/>.</summary>
     public static class FbxModelBuilder
     {
         private sealed record StateObject(ResourceFile File, CancellationToken CancellationToken);
@@ -20,7 +20,7 @@ namespace Elffy.Serialization.Fbx
 
         public static Model3D CreateLazyLoadingFbx(ResourceFile file, CancellationToken cancellationToken = default)
         {
-            ResourceNotFoundException.ThrowIfNotFound(file);
+            ResourceFile.ThrowArgumentExceptionIfInvalid(file);
             var obj = new StateObject(file, cancellationToken);
 
             return Model3D.Create(obj, _build);

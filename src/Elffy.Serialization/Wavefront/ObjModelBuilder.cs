@@ -17,7 +17,7 @@ namespace Elffy.Serialization.Wavefront
 
         public static Model3D CreateLazyLoadingObj(ResourceFile file, CancellationToken cancellationToken = default)
         {
-            file.ThrowIfNotFound();
+            ResourceFile.ThrowArgumentExceptionIfInvalid(file);
             var obj = new StateObject(file, cancellationToken);
             return Model3D.Create(obj, _build);
         }

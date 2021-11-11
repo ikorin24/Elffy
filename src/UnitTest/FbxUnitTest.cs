@@ -55,16 +55,26 @@ namespace UnitTest
             CurrentDirectory = currentDir;
         }
 
-        public long GetSize(string name)
+        public bool TryGetStream(string? name, out Stream stream)
         {
-            return new FileInfo(Path.Combine(CurrentDirectory, name)).Length;
+            if(name is null) {
+                stream = Stream.Null;
+                return false;
+            }
+            stream = File.OpenRead(Path.Combine(CurrentDirectory, name));
+            return true;
         }
 
-        public Stream GetStream(string name)
+        public bool TryGetSize(string? name, out long size)
         {
-            return File.OpenRead(Path.Combine(CurrentDirectory, name));
+            if(name is null) {
+                size = 0;
+                return false;
+            }
+            size = new FileInfo(Path.Combine(CurrentDirectory, name)).Length;
+            return true;
         }
 
-        public bool HasResource(string name) => true;
+        public bool Exists(string? name) => true;
     }
 }

@@ -25,7 +25,7 @@ namespace Elffy.Serialization
 
         public static Model3D CreateLazyLoadingPmx(ResourceFile file, CancellationToken cancellationToken = default)
         {
-            file.ThrowIfNotFound();
+            ResourceFile.ThrowArgumentExceptionIfInvalid(file);
             var obj = new ModelState(file, cancellationToken);
             return Model3D.Create(obj, _build, _render);
         }
@@ -75,6 +75,7 @@ namespace Elffy.Serialization
             //      ↓ thread pool
             Debug.Assert(Engine.IsThreadMain == false);
             var file = obj.File;
+            var fileResourceLoader = file.ResourceLoader;
 
             var textureNames = pmx.TextureList.AsSpan();
             var dir = ResourcePath.GetDirectoryName(file.Name);
@@ -86,9 +87,10 @@ namespace Elffy.Serialization
 
                 // Some pmx have the texture paths that don't exist. (Nobody references them.)
                 // So skip them.
-                if(file.ResourceLoader.HasResource(path)) {
-                    using var stream = file.ResourceLoader.GetStream(path);
-                    images[i] = Image.FromStream(stream, Image.GetTypeFromExt(ext));
+                if(fileResourceLoader.TryGetStream(path, out var stream)) {
+                    using(stream) {
+                        images[i] = Image.FromStream(stream, Image.GetTypeFromExt(ext));
+                    }
                 }
             }
 
