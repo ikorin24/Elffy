@@ -23,13 +23,12 @@ namespace Elffy.Effective.Unsafes
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #if NETCOREAPP3_1
         [CriticalDotnetDependency("netcoreapp3.1")]
-#endif
-#if !(NET5_0 || NETCOREAPP3_1)
+#elif !NET5_0_OR_GREATER
         [Obsolete("This method can be used only netcoreapp3.1 or after net5.0 ", true)]
 #endif
         public static ref T At<T>(this T[] source, int index)
         {
-#if NET5_0 || NETCOREAPP3_1
+#if NETCOREAPP3_1_OR_GREATER
             return ref Unsafe.Add(ref GetReference(source), index);
 #else
             throw new NotSupportedException();
@@ -46,13 +45,12 @@ namespace Elffy.Effective.Unsafes
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #if NETCOREAPP3_1
         [CriticalDotnetDependency("netcoreapp3.1")]
-#endif
-#if !(NET5_0 || NETCOREAPP3_1)
+#elif !NET5_0_OR_GREATER
         [Obsolete("This method can be used only netcoreapp3.1 or after net5.0 ", true)]
 #endif
         public static ref T GetReference<T>(this T[] array)
         {
-#if NET5_0
+#if NET5_0_OR_GREATER
             return ref MemoryMarshal.GetArrayDataReference(array);
 #elif NETCOREAPP3_1
             return ref Unsafe.As<byte, T>(ref Unsafe.As<ArrayDummy>(array).Data);
@@ -68,8 +66,7 @@ namespace Elffy.Effective.Unsafes
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #if NETCOREAPP3_1
         [CriticalDotnetDependency("netcoreapp3.1")]
-#endif
-#if !(NET5_0 || NETCOREAPP3_1)
+#elif !NET5_0_OR_GREATER
         [Obsolete("This method can be used only netcoreapp3.1 or after net5.0 ", true)]
 #endif
         public static Span<T> AsSpanUnsafe<T>(this T[] array)
@@ -85,8 +82,7 @@ namespace Elffy.Effective.Unsafes
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #if NETCOREAPP3_1
         [CriticalDotnetDependency("netcoreapp3.1")]
-#endif
-#if !(NET5_0 || NETCOREAPP3_1)
+#elif !NET5_0_OR_GREATER
         [Obsolete("This method can be used only netcoreapp3.1 or after net5.0 ", true)]
 #endif
         public static Span<T> AsSpanUnsafe<T>(this T[] array, int start)
@@ -103,8 +99,7 @@ namespace Elffy.Effective.Unsafes
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #if NETCOREAPP3_1
         [CriticalDotnetDependency("netcoreapp3.1")]
-#endif
-#if !(NET5_0 || NETCOREAPP3_1)
+#elif !NET5_0_OR_GREATER
         [Obsolete("This method can be used only netcoreapp3.1 or after net5.0 ", true)]
 #endif
         public static Span<T> AsSpanUnsafe<T>(this T[] array, int start, int length)

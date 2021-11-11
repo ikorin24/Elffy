@@ -88,7 +88,7 @@ namespace Elffy.Serialization.Fbx
                 var objects = resolver.ObjectsNode;
                 using var _ = new ValueTypeRentMemory<int>(objects.Children.Count, false);
                 var buf = _.AsSpan();
-                var geometryCount = objects.FindIndexAll(FbxConstStrings.Geometry(), buf);
+                var geometryCount = objects.FindChildIndexAll(FbxConstStrings.Geometry(), buf);
                 foreach(var i in buf.Slice(0, geometryCount)) {
                     cancellationToken.ThrowIfCancellationRequested();
                     var geometryNode = objects.Children[i];
@@ -182,7 +182,7 @@ namespace Elffy.Serialization.Fbx
         {
             using var buf = new ValueTypeRentMemory<int>(objects.Children.Count, false);
             var bufSpan = buf.AsSpan();
-            var textureCount = objects.FindIndexAll(FbxConstStrings.Texture(), bufSpan);
+            var textureCount = objects.FindChildIndexAll(FbxConstStrings.Texture(), bufSpan);
             var textureNames = new ValueTypeRentMemory<RawString>(textureCount, false);
             var span = textureNames.AsSpan();
             try {
@@ -191,7 +191,7 @@ namespace Elffy.Serialization.Fbx
                     cancellationToken.ThrowIfCancellationRequested();
                     var textureNode = objects.Children[index];
                     //var id = textureNode.Properties[0].AsInt64();
-                    var fileName = textureNode.Find(FbxConstStrings.RelativeFilename()).Properties[0].AsString();
+                    var fileName = textureNode.FindChild(FbxConstStrings.RelativeFilename()).Properties[0].AsString();
                     span[i] = fileName;
                     i++;
                 }
@@ -207,11 +207,11 @@ namespace Elffy.Serialization.Fbx
         {
             using var buf = new ValueTypeRentMemory<int>(objects.Children.Count, false);
             var bufSpan = buf.AsSpan();
-            var count = objects.FindIndexAll(FbxConstStrings.Materials(), bufSpan);
+            var count = objects.FindChildIndexAll(FbxConstStrings.Materials(), bufSpan);
             foreach(var index in bufSpan.Slice(0, count)) {
                 var material = objects.Children[index];
                 var id = material.Properties[0].AsInt64();
-                var properties70 = material.Find(FbxConstStrings.Properties70());
+                var properties70 = material.FindChild(FbxConstStrings.Properties70());
 
                 foreach(var child in properties70.Children) {
                     var props = child.Properties;

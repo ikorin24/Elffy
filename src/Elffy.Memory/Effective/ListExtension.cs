@@ -4,7 +4,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Collections.Generic;
 using Elffy.AssemblyServices;
-#if NET5_0
+#if NET5_0_OR_GREATER
 using System.Runtime.InteropServices;
 #endif
 
@@ -47,7 +47,7 @@ namespace Elffy.Effective
         {
 #if NETCOREAPP3_1
             return (list is null) ? default : Unsafe.As<ListDummy<T>>(list)._items.AsSpan(0, list.Count);
-#elif NET5_0
+#elif NET5_0_OR_GREATER
             return CollectionsMarshal.AsSpan(list);
 #endif
         }

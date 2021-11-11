@@ -23,7 +23,7 @@ namespace Elffy.Serialization.Fbx.Semantic
             Node = node;
             ID = node.Properties[0].AsInt64();
             Name = node.Properties[1].AsString();
-            var property70 = node.Find(FbxConstStrings.Properties70());
+            var property70 = node.FindChild(FbxConstStrings.Properties70());
             Translation = default;
             Rotation = default;
             Scale = Vector3.One;
@@ -81,7 +81,7 @@ namespace Elffy.Serialization.Fbx.Semantic
             Rotation = default;
             Scale = Vector3.One;
 
-            var property70 = node.Find(FbxConstStrings.Properties70());
+            var property70 = node.FindChild(FbxConstStrings.Properties70());
             foreach(var p in property70.Children) {
                 var props = p.Properties;
                 var propTypeName = props[0].AsString();

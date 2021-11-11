@@ -19,8 +19,8 @@ namespace Elffy.Serialization.Fbx.Internal
 
         public SemanticResolver(FbxObject fbx)
         {
-            _objectsNode = fbx.Find(FbxConstStrings.Objects());
-            var connectionsNode = fbx.Find(FbxConstStrings.Connections());
+            _objectsNode = fbx.FindChild(FbxConstStrings.Objects());
+            var connectionsNode = fbx.FindChild(FbxConstStrings.Connections());
             _deformerList = new(_objectsNode);
             _connResolver = new(connectionsNode);
             _modelList = new(_objectsNode);

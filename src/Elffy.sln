@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28803.452
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elffy.Engine", "Elffy.Engine\Elffy.Engine.csproj", "{EFA362D3-EFDB-45B7-85EF-B97F14CDBBDF}"
 EndProject
@@ -40,7 +40,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elffy.Generator.EnumLike", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elffy.Events", "Elffy.Async\Elffy.Events.csproj", "{9FBBC1D1-F874-4587-B250-30900484D0EF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmarks.Events", "Benchmarks\Benchmarks.Events.csproj", "{C05FD280-2CA7-4847-8B75-A0B576559A4B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmarks.Events", "Benchmarks\Benchmarks.Events.csproj", "{C05FD280-2CA7-4847-8B75-A0B576559A4B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

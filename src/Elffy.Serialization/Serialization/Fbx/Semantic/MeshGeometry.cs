@@ -97,35 +97,35 @@ namespace Elffy.Serialization.Fbx.Semantic
                 else if(nodeName.SequenceEqual(FbxConstStrings.LayerElementNormal())) {
                     // "LayerElementNormal"
 
-                    _normals = node.Find(FbxConstStrings.Normals()).Properties[0].AsDoubleArray();
+                    _normals = node.FindChild(FbxConstStrings.Normals()).Properties[0].AsDoubleArray();
 
-                    var referenceType = node.Find(FbxConstStrings.ReferenceInformationType()).Properties[0].AsString();
-                    var mappingType = node.Find(FbxConstStrings.MappingInformationType()).Properties[0].AsString();
+                    var referenceType = node.FindChild(FbxConstStrings.ReferenceInformationType()).Properties[0].AsString();
+                    var mappingType = node.FindChild(FbxConstStrings.MappingInformationType()).Properties[0].AsString();
 
                     NormalReferenceType = referenceType.ToReferenceInformationType();
                     NormalMappingType = mappingType.ToMappingInformationType();
 
                     if(NormalReferenceType == ReferenceInformationType.IndexToDirect) {
-                        _normalIndices = node.Find(FbxConstStrings.NormalIndex()).Properties[0].AsInt32Array();
+                        _normalIndices = node.FindChild(FbxConstStrings.NormalIndex()).Properties[0].AsInt32Array();
                     }
                 }
                 else if(nodeName.SequenceEqual(FbxConstStrings.LayerElementUV())) {
                     // "LayerElementUV"
 
-                    _uv = node.Find(FbxConstStrings.UV()).Properties[0].AsDoubleArray();
-                    var referenceType = node.Find(FbxConstStrings.ReferenceInformationType()).Properties[0].AsString();
-                    var mappingType = node.Find(FbxConstStrings.MappingInformationType()).Properties[0].AsString();
+                    _uv = node.FindChild(FbxConstStrings.UV()).Properties[0].AsDoubleArray();
+                    var referenceType = node.FindChild(FbxConstStrings.ReferenceInformationType()).Properties[0].AsString();
+                    var mappingType = node.FindChild(FbxConstStrings.MappingInformationType()).Properties[0].AsString();
                     UVReferenceType = referenceType.ToReferenceInformationType();
                     UVMappingType = mappingType.ToMappingInformationType();
 
                     if(UVReferenceType == ReferenceInformationType.IndexToDirect) {
-                        _uvIndices = node.Find(FbxConstStrings.UVIndex()).Properties[0].AsInt32Array();
+                        _uvIndices = node.FindChild(FbxConstStrings.UVIndex()).Properties[0].AsInt32Array();
                     }
                 }
                 else if(nodeName.SequenceEqual(FbxConstStrings.LayerElementMaterial())) {
                     // "LayerElementMaterial"
 
-                    Materials = node.Find(FbxConstStrings.Materials()).Properties[0].AsInt32Array();
+                    Materials = node.FindChild(FbxConstStrings.Materials()).Properties[0].AsInt32Array();
                 }
             }
         }
