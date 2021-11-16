@@ -21,7 +21,7 @@ namespace Elffy
 
         internal LayerCollection(RenderingArea owner)
         {
-            _list = LazyApplyingList<Layer>.New();
+            _list = new();
             _owner = owner;
         }
 

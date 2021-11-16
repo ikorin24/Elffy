@@ -44,7 +44,7 @@ namespace Elffy.Serialization.Fbx.Internal
 
         public UnsafeRawList<LimbNode> GetChildrenLimbs(in LimbNode parent)
         {
-            var list = UnsafeRawList<LimbNode>.New(32);
+            var list = new UnsafeRawList<LimbNode>(32);
             try {
                 foreach(var childID in GetSources(parent.ID)) {
                     if(_modelList.TryGetLimb(childID, out var limb)) {

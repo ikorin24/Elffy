@@ -28,7 +28,7 @@ namespace Elffy.Serialization.Fbx
                 _matrices = default;
                 return;
             }
-            var bones = UnsafeRawList<BoneData>.New();
+            var bones = new UnsafeRawList<BoneData>();
             try {
                 bones.Add(new BoneData(null, limb.ID));
                 CreateBoneTree(resolver, bones, 0, limb);

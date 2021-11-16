@@ -1,9 +1,11 @@
 ﻿#nullable enable
+using Elffy.AssemblyServices;
 using Elffy.Effective.Unsafes;
 using System;
 
 namespace Elffy.Serialization.Fbx.Internal
 {
+    [DontUseDefault]
     internal readonly struct ResolvedMesh<TVertex> : IDisposable where TVertex : unmanaged
     {
         private readonly UnsafeRawList<TVertex> _vertices;
@@ -15,15 +17,11 @@ namespace Elffy.Serialization.Fbx.Internal
         public int VerticesCount => _vertices.Count;
         public int IndicesCount => _indices.Count;
 
-        private ResolvedMesh(int capacity)
+        public ResolvedMesh()
         {
-            _vertices = UnsafeRawList<TVertex>.New(capacity);
-            _indices = UnsafeRawList<int>.New(capacity);
-        }
-
-        public static ResolvedMesh<TVertex> New()
-        {
-            return new ResolvedMesh<TVertex>(1024);
+            const int capacity = 1024;
+            _vertices = new UnsafeRawList<TVertex>(capacity);
+            _indices = new UnsafeRawList<int>(capacity);
         }
 
         public void AddVertex(in TVertex vertex)

@@ -133,7 +133,7 @@ namespace Elffy.Serialization.Fbx
                     throw new FormatException();
             }
 
-            var resolvedMesh = ResolvedMesh<TVertex>.New();
+            var resolvedMesh = new ResolvedMesh<TVertex>();
             try {
                 int n_gon = 0;
                 for(int i = 0; i < indicesRaw.Length; i++) {

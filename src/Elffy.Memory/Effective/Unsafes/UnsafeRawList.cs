@@ -5,20 +5,19 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
+using Elffy.AssemblyServices;
 
 namespace Elffy.Effective.Unsafes
 {
     /// <summary>Provides list which is allocated in unmanaged memory.</summary>
     /// <remarks>
-    /// 1) DO NOT create a default instance (<see langword="new"/> <see cref="UnsafeRawList{T}"/>(), or <see langword="default"/>).
-    ///    That means <see langword="null"/> for reference types.<para/>
-    ///    Use <see cref="New()"/> instead.<para/>
-    /// 2) You MUST call <see cref="Dispose"/> after use it. Or it causes MEMORY LEAK !<para/>
-    /// 3) It DOES NOT check any boundary of access by index.<para/>
+    /// 1) You MUST call <see cref="Dispose"/> after use it. Or it causes MEMORY LEAK !<para/>
+    /// 2) It DOES NOT check any boundary of access by index.<para/>
     /// </remarks>
     /// <typeparam name="T">element type</typeparam>
     [DebuggerTypeProxy(typeof(UnsafeRawListDebuggerTypeProxy<>))]
     [DebuggerDisplay("{DebugView,nq}")]
+    [DontUseDefault]
     public unsafe readonly struct UnsafeRawList<T> : IDisposable, IEquatable<UnsafeRawList<T>> where T : unmanaged
     {
         // =============================================================
@@ -102,13 +101,14 @@ namespace Elffy.Effective.Unsafes
 
         public static UnsafeRawList<T> Null => default;
 
-        public static UnsafeRawList<T> New() => new UnsafeRawList<T>(4);
+        /// <summary>Create <see cref="UnsafeRawList{T}"/> with default capacity.</summary>
+        public UnsafeRawList() : this(4)
+        {
+        }
 
-        public static UnsafeRawList<T> New(int capacity) => new UnsafeRawList<T>(capacity);
-
-        public static UnsafeRawList<T> New(ReadOnlySpan<T> collection) => new UnsafeRawList<T>(collection);
-
-        private UnsafeRawList(int capacity)
+        /// <summary>Create <see cref="UnsafeRawList{T}"/> with the specified capacity.</summary>
+        /// <param name="capacity">capacity of the list</param>
+        public UnsafeRawList(int capacity)
         {
             if(capacity < 0) {
                 ThrowOutOfRange(nameof(capacity));
@@ -118,7 +118,9 @@ namespace Elffy.Effective.Unsafes
             ArrayRef() = new UnsafeRawArray<T>(capacity);
         }
 
-        private UnsafeRawList(ReadOnlySpan<T> collection)
+        /// <summary>Create <see cref="UnsafeRawList{T}"/> which is initialized by the specified collection.</summary>
+        /// <param name="collection"></param>
+        public UnsafeRawList(ReadOnlySpan<T> collection)
         {
             _ptr = Marshal.AllocHGlobal(sizeof(int) + sizeof(UnsafeRawArray<T>));
             CountRef() = collection.Length;

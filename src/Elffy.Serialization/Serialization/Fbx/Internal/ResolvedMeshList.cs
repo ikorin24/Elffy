@@ -12,7 +12,7 @@ namespace Elffy.Serialization.Fbx.Internal
 
         private ResolvedMeshList(int capacity)
         {
-            _meshes = UnsafeRawList<ResolvedMesh<TVertex>>.New(capacity);
+            _meshes = new UnsafeRawList<ResolvedMesh<TVertex>>(capacity);
         }
 
         public static ResolvedMeshList<TVertex> New()

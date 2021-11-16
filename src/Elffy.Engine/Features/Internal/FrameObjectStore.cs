@@ -1,13 +1,16 @@
 ﻿#nullable enable
 using Cysharp.Threading.Tasks;
 using Elffy.Effective;
+using Elffy.AssemblyServices;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace Elffy.Features.Internal
 {
+    [DontUseDefault]
     internal readonly struct FrameObjectStore
     {
         private readonly List<FrameObject> _list;
@@ -21,7 +24,7 @@ namespace Elffy.Features.Internal
         public ReadOnlySpan<FrameObject> Removed => _removedBuf.AsReadOnlySpan();
         public ReadOnlySpan<Renderable> Renderables => _renderables.AsReadOnlySpan();
 
-        private FrameObjectStore(int capacityHint)
+        public FrameObjectStore(int capacityHint)
         {
             Debug.Assert(capacityHint >= 0);
             _list = new List<FrameObject>(capacityHint);
@@ -30,13 +33,9 @@ namespace Elffy.Features.Internal
             _renderables = new List<Renderable>(capacityHint);
         }
 
-        /// <summary>Create new <see cref="FrameObjectStore"/></summary>
-        /// <param name="capacityHint">capacity hint</param>
-        /// <returns>instance</returns>
-        public static FrameObjectStore New(int capacityHint)
-        {
-            return new FrameObjectStore(capacityHint);
-        }
+        [Obsolete("Don't use default constructor", true)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public FrameObjectStore() => throw new NotSupportedException("Don't use default constructor");
 
         /// <summary>指定した<see cref="FrameObject"/>を追加します</summary>
         /// <param name="frameObject">追加するオブジェクト</param>

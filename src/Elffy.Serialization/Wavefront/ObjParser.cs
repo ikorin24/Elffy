@@ -27,7 +27,7 @@ namespace Elffy.Serialization.Wavefront
             if(stream.CanSeek) {
                 var streamLen = stream.Length;
                 if(streamLen <= int.MaxValue) {
-                    var buffer = UnsafeRawList<byte>.New((int)streamLen);
+                    var buffer = new UnsafeRawList<byte>((int)streamLen);
                     try {
                         length = stream.Read(buffer.Extend((int)streamLen, false));
                         return buffer;
@@ -42,7 +42,7 @@ namespace Elffy.Serialization.Wavefront
                 }
             }
             else {
-                var buffer = UnsafeRawList<byte>.New();
+                var buffer = new UnsafeRawList<byte>();
                 var totalLen = 0;
                 while(true) {
                     const int BlockSize = 1024;
@@ -57,10 +57,10 @@ namespace Elffy.Serialization.Wavefront
 
         private static bool TryParsePrivate(ReadOnlySpan<byte> text, [MaybeNullWhen(false)] out ObjObject obj)
         {
-            var positions = UnsafeRawList<Vector3>.New();
-            var normals = UnsafeRawList<Vector3>.New();
-            var uvs = UnsafeRawList<Vector2>.New();
-            var fList = UnsafeRawList<ObjFace>.New();
+            var positions = new UnsafeRawList<Vector3>();
+            var normals = new UnsafeRawList<Vector3>();
+            var uvs = new UnsafeRawList<Vector2>();
+            var fList = new UnsafeRawList<ObjFace>();
             try {
                 var lines = text.Lines();
                 foreach(var line in lines) {

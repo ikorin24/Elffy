@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using Elffy.Effective.Unsafes;
+using System;
 using System.IO;
 
 namespace Elffy.Imaging.Internal
@@ -8,7 +9,10 @@ namespace Elffy.Imaging.Internal
     {
         public static UnsafeRawList<byte> ReadToEnd(this Stream stream, out int length)
         {
-            var buf = UnsafeRawList<byte>.New(0);
+            if(stream is null) {
+                throw new ArgumentNullException(nameof(stream));
+            }
+            var buf = new UnsafeRawList<byte>(0);
             try {
                 length = 0;
                 while(true) {

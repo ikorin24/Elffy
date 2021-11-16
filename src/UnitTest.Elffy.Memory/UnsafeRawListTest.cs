@@ -21,20 +21,20 @@ namespace UnitTest
                 Assert.Throws<NullReferenceException>(() => list.Add(0));
             }
 
-            using(var list = UnsafeRawList<int>.New()) {
+            using(var list = new UnsafeRawList<int>()) {
                 Assert.Equal(0, list.Count);
                 Assert.True(list.Capacity >= 0);
                 Assert.NotEqual(IntPtr.Zero, list.Ptr);
             }
 
-            using(var list = UnsafeRawList<int>.New(capacity: 10)) {
+            using(var list = new UnsafeRawList<int>(10)) {
                 Assert.Equal(0, list.Count);
                 Assert.Equal(10, list.Capacity);
                 Assert.NotEqual(IntPtr.Zero, list.Ptr);
             }
 
             ReadOnlySpan<int> source = Enumerable.Range(0, 100).ToArray();
-            using(var list = UnsafeRawList<int>.New(source)) {
+            using(var list = new UnsafeRawList<int>(source)) {
                 Assert.Equal(source.Length, list.Count);
                 Assert.True(source.Length >= list.Capacity);
                 Assert.NotEqual(IntPtr.Zero, list.Ptr);
@@ -45,7 +45,7 @@ namespace UnitTest
         [Fact]
         public void Add()
         {
-            using(var list = UnsafeRawList<int>.New()) {
+            using(var list = new UnsafeRawList<int>()) {
                 const int Count = 10;
                 for(int i = 0; i < Count; i++) {
                     list.Add(i);
@@ -57,7 +57,7 @@ namespace UnitTest
 
             ReadOnlySpan<int> source = Enumerable.Range(0, 100).ToArray();
 
-            using(var list = UnsafeRawList<int>.New(source)) {
+            using(var list = new UnsafeRawList<int>(source)) {
                 list.AddRange(source);
                 Assert.True(list.AsSpan(0, source.Length).SequenceEqual(source));
                 Assert.True(list.AsSpan(source.Length, source.Length).SequenceEqual(source));
@@ -69,7 +69,7 @@ namespace UnitTest
         {
             ReadOnlySpan<int> source = Enumerable.Range(0, 10).ToArray();
 
-            using(var list = UnsafeRawList<int>.New(source)) {
+            using(var list = new UnsafeRawList<int>(source)) {
                 list.Clear();
                 Assert.Equal(0, list.Count);
                 Assert.True(list.Capacity >= 0);
@@ -81,7 +81,7 @@ namespace UnitTest
         {
             ReadOnlySpan<int> source = Enumerable.Range(0, 10).ToArray();
 
-            using(var list = UnsafeRawList<int>.New(source)) {
+            using(var list = new UnsafeRawList<int>(source)) {
                 for(int i = 0; i < list.Count; i++) {
                     Assert.True(list.IndexOf(i) == list[i]);
                 }
@@ -93,7 +93,7 @@ namespace UnitTest
         {
             const int Count = 10;
             ReadOnlySpan<int> source = Enumerable.Range(0, Count).ToArray();
-            using(var list = UnsafeRawList<int>.New(source)) {
+            using(var list = new UnsafeRawList<int>(source)) {
                 for(int i = 0; i < Count; i++) {
                     var removed = list.Remove(i);
                     Assert.True(removed);
@@ -107,7 +107,7 @@ namespace UnitTest
         {
             const int Count = 10;
             ReadOnlySpan<int> source = Enumerable.Range(0, Count).ToArray();
-            using(var list = UnsafeRawList<int>.New(source)) {
+            using(var list = new UnsafeRawList<int>(source)) {
                 Assert.True(list.AsSpan().SequenceEqual(source));
                 list.RemoveAt(5);
                 Assert.True(list.AsSpan().SequenceEqual(new[] { 0, 1, 2, 3, 4, 6, 7, 8, 9 }));
@@ -123,11 +123,11 @@ namespace UnitTest
         [Fact]
         public unsafe void GetReference()
         {
-            using(var list = UnsafeRawList<int>.New(capacity: 0)) {
+            using(var list = new UnsafeRawList<int>(0)) {
                 Assert.True(Unsafe.AsPointer(ref list.GetReference()) == null);
             }
 
-            using(var list = UnsafeRawList<int>.New(new[] { 0, 1, 2, 3, 4 })) {
+            using(var list = new UnsafeRawList<int>(new[] { 0, 1, 2, 3, 4 })) {
                 Assert.True(Unsafe.AreSame(ref list.GetReference(), ref list[0]));
             }
         }
@@ -135,7 +135,7 @@ namespace UnitTest
         [Fact]
         public void Extend()
         {
-            using(var list = UnsafeRawList<int>.New(capacity: 0)) {
+            using(var list = new UnsafeRawList<int>(0)) {
                 Assert.True(list.Count == 0);
                 Assert.True(list.Capacity == 0);
                 var extended = list.Extend(0, true);
@@ -144,7 +144,7 @@ namespace UnitTest
                 Assert.True(extended.IsEmpty);
             }
 
-            using(var list = UnsafeRawList<int>.New(capacity: 0)) {
+            using(var list = new UnsafeRawList<int>(0)) {
                 Assert.True(list.Count == 0);
                 Assert.True(list.Capacity == 0);
                 var extended = list.Extend(3, true);
@@ -155,7 +155,7 @@ namespace UnitTest
                 Assert.True(extended.Length == 3);
             }
 
-            using(var list = UnsafeRawList<int>.New(capacity: 40)) {
+            using(var list = new UnsafeRawList<int>(40)) {
                 Assert.True(list.Count == 0);
                 Assert.True(list.Capacity == 40);
                 var extended1 = list.Extend(10, true);

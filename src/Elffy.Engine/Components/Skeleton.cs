@@ -243,7 +243,7 @@ namespace Elffy.Components
                     for(int i = 0; i < childrenBuf.Length; i++) {
                         if(tree[i].Parent != null) {
                             var parentID = tree[i].Parent->ID;
-                            childrenBuf[parentID] = UnsafeRawList<int>.New();
+                            childrenBuf[parentID] = new UnsafeRawList<int>();
                             childrenBuf[parentID].Add(i);
                         }
                     }

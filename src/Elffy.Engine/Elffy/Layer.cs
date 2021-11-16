@@ -53,7 +53,7 @@ namespace Elffy
             _isVisible = true;
             _sortNumber = sortNumber;
             _timingPoints = new LayerTimingPointList(this);
-            _store = FrameObjectStore.New(capacity);
+            _store = new FrameObjectStore(capacity);
             _state = LayerLifeState.New;
         }
 

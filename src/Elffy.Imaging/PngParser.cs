@@ -35,7 +35,7 @@ namespace Elffy.Imaging
             CheckSignature(stream);
 
             var buf = new BufferSpanReader(stackalloc byte[8]);
-            using var data = UnsafeRawList<byte>.New();
+            using var data = new UnsafeRawList<byte>(0);
             UnsafeEx.SkipInitIfPossible(out Header header);
             var palette = UnsafeRawArray<PngColor>.Empty;
             try {
@@ -171,7 +171,7 @@ namespace Elffy.Imaging
 
             using var ptrStream = PointerStream.Create(ptr, len);
             using var deflateStream = new DeflateStream(ptrStream, CompressionMode.Decompress);
-            using var buf = UnsafeRawList<byte>.New(capacity: len);
+            using var buf = new UnsafeRawList<byte>(len);
             var end = false;
             var size = 0;
             while(!end) {

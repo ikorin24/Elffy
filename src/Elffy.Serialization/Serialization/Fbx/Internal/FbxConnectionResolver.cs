@@ -19,10 +19,10 @@ namespace Elffy.Serialization.Fbx.Internal
         public FbxConnectionResolver(FbxNode connectionsNode)
         {
             var count = connectionsNode.Children.Count;
-            var destLists = UnsafeRawList<UnsafeRawList<long>>.New(capacity: count);
-            var srcToDest = new BufferPooledDictionary<long, int>(capacity: count);
-            var destToSrc = new BufferPooledDictionary<long, int>(capacity: count);
-            var srcLists = UnsafeRawList<UnsafeRawList<long>>.New(capacity: count);
+            var destLists = new UnsafeRawList<UnsafeRawList<long>>(count);
+            var srcToDest = new BufferPooledDictionary<long, int>(count);
+            var destToSrc = new BufferPooledDictionary<long, int>(count);
+            var srcLists = new UnsafeRawList<UnsafeRawList<long>>(count);
 
             try {
                 foreach(var c in connectionsNode.Children) {
@@ -33,7 +33,7 @@ namespace Elffy.Serialization.Fbx.Internal
                     {
                         UnsafeRawList<long> dests;
                         if(srcToDest.TryAdd(conn.SourceID, destLists.Count)) {
-                            dests = UnsafeRawList<long>.New();
+                            dests = new UnsafeRawList<long>();
                             destLists.Add(dests);
                         }
                         else {
@@ -47,7 +47,7 @@ namespace Elffy.Serialization.Fbx.Internal
                     {
                         UnsafeRawList<long> sources;
                         if(destToSrc.TryAdd(conn.DestID, srcLists.Count)) {
-                            sources = UnsafeRawList<long>.New();
+                            sources = new UnsafeRawList<long>();
                             srcLists.Add(sources);
                         }
                         else {

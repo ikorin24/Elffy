@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using Elffy.AssemblyServices;
 using Elffy.Effective;
 using System;
 using System.Collections.Generic;
@@ -6,6 +7,7 @@ using System.Runtime.CompilerServices;
 
 namespace Elffy.Features.Internal
 {
+    [DontUseDefault]
     internal readonly struct LazyApplyingList<T>
     {
         private readonly List<T> _list;
@@ -14,16 +16,11 @@ namespace Elffy.Features.Internal
 
         public int Count => _list.Count;
 
-        private LazyApplyingList(List<T> list, List<T> addedList, List<T> removedList)
+        public LazyApplyingList()
         {
-            _list = list;
-            _addedList = addedList;
-            _removedList = removedList;
-        }
-
-        public static LazyApplyingList<T> New()
-        {
-            return new LazyApplyingList<T>(new List<T>(), new List<T>(), new List<T>());
+            _list = new List<T>();
+            _addedList = new List<T>();
+            _removedList= new List<T>();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
