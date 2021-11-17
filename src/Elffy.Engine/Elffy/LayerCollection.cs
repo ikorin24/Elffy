@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Elffy.Features.Internal;
+using Elffy.Graphics.OpenGL;
 
 namespace Elffy
 {
@@ -105,8 +106,9 @@ namespace Elffy
         internal void Render()
         {
             var screen = Screen;
+            var fbo = FBO.Empty;
             foreach(var layer in AsSpan()) {
-                layer.Render(screen);
+                layer.Render(screen, ref fbo);
             }
         }
 

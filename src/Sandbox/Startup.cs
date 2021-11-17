@@ -20,19 +20,8 @@ namespace Sandbox
         public static async UniTask Start2()
         {
             var screen = Game.Screen;
-            //var (layer, drLayer) = await UniTask.WhenAll(
-            //    WorldLayer.NewActivate(screen, "World"),
-            //    DeferedRenderingLayer.NewActivate(screen, "Defered", 1)
-            //);
-
-            //var layer = await DeferedRenderingLayer.NewActivate(screen, "Defered", 1);
-            var (drLayer, wlayer) = await UniTask.WhenAll(
-                new DeferedRenderingLayer(1).Activate(screen),
-                new WorldLayer().Activate(screen)
-                );
-
-
-
+            var (drLayer, wLayer, uiLayer) = await LayerPipelines.DefaultDeferedRendering(screen);
+            var uiRoot = uiLayer.UIRoot;
             /*
              context =>
                 {
@@ -45,46 +34,36 @@ namespace Sandbox
                 }
              
              */
+            CreateTestUI(uiLayer);
+            var timings = screen.TimingPoints;
+            uiRoot.Background = Color4.Black;
+            try {
+                await UniTask.WhenAll(
+                    CreateDice2(drLayer),
+                    CreateCameraMouse(wLayer, new Vector3(0, 3, 0)),
+                    CreateDice(wLayer),
+                    CreateModel2(wLayer),
+                    CreateBox(wLayer),
+                    CreateFloor(wLayer),
+                    CreateSky(wLayer),
+                    timings.Update.DelayTime(800));
 
-            var cube = Resources.Sandbox["Dice.fbx"].CreateFbxModel();
-            var material = new PbrMaterialData(new Color3(1, 0.8f, 0.2f), 0.99f, 0.1f, default).ToMaterial();
-            cube.AddComponent(material);
-            cube.Shader = PbrDeferedShader.Instance;
-            await UniTask.WhenAll(
-                cube.Activate(drLayer),
-                CreateCameraMouse(drLayer, cube.Position)
-            );
-
-            //Game.Screen.StartCoroutine(deferedRenderer, static async (coroutine, deferedRenderer) =>
-            //{
-            //    using var pos = new ValueTypeRentMemory<Vector4>(deferedRenderer.LightCount);
-            //    using var color = new ValueTypeRentMemory<Color4>(deferedRenderer.LightCount);
-            //    long i = 0;
-            //    while(coroutine.CanRun) {
-            //        await Timing.DelayTime(1000);
-            //        color[0] = Rand.Color4();
-            //        if(i % 2 == 0) {
-            //            pos[0] = new Vector4(0, 100, -50, 1f);
-            //        }
-            //        else {
-            //            pos[0] = new Vector4(0, 100, 50, 1f);
-            //        }
-            //        deferedRenderer.UpdateLightPositions(pos.AsSpan());
-            //        deferedRenderer.UpdateLightColors(color.AsSpan());
-            //        i++;
-            //    }
-            //}).Forget();
+                var time = TimeSpanF.FromMilliseconds(200);
+                await foreach(var frame in timings.Update.Frames()) {
+                    if(frame.Time >= time) {
+                        break;
+                    }
+                    uiRoot.Background.A = 1f - frame.Time / time;
+                }
+            }
+            finally {
+                uiRoot.Background = Color4.Transparent;
+            }
         }
 
-        //[GameEntryPoint]
-        public static async UniTask Start()
-        {
-            var screen = Game.Screen;
-            var timings = screen.TimingPoints;
 
-            var (layer, uiLayer) = await UniTask.WhenAll(
-                new WorldLayer().Activate(screen),
-                new UILayer().Activate(screen));
+        private static void CreateTestUI(UILayer uiLayer)
+        {
             var uiRoot = uiLayer.UIRoot;
 
             const int ColumnCount = 6;
@@ -102,35 +81,22 @@ namespace Sandbox
                 button.KeyUp += _ => Debug.WriteLine($"Clicked");
                 grid.Children.Add(button);
             }
-
-            uiRoot.Background = Color4.Black;
-            try {
-                await UniTask.WhenAll(
-                    CreateModel1(layer),
-                    CreateModel2(layer),
-                    CreateBox(layer),
-                    CreateFloor(layer),
-                    CreateSky(layer),
-                    CreateCameraMouse(layer, new Vector3(0, 3, 0)),
-                    timings.Update.DelayTime(800));
-                var time = TimeSpanF.FromMilliseconds(200);
-                await foreach(var frame in timings.Update.Frames()) {
-                    if(frame.Time >= time) {
-                        break;
-                    }
-                    uiRoot.Background.A = 1f - frame.Time / time;
-                }
-            }
-            finally {
-                uiRoot.Background = Color4.Transparent;
-            }
         }
 
-        private static UniTask<Model3D> CreateModel1(WorldLayer layer)
+        private static UniTask<Model3D> CreateDice(WorldLayer layer)
         {
             var dice = Resources.Sandbox["Dice.fbx"].CreateFbxModel();
-            dice.Position.X = 3f;
-            dice.Position.Y = 1.5f;
+            dice.Position = new Vector3(3, 1, -2);
+            return dice.Activate(layer);
+        }
+
+        private static UniTask<Model3D> CreateDice2(DeferedRenderingLayer layer)
+        {
+            var dice = Resources.Sandbox["Dice.fbx"].CreateFbxModel();
+            dice.Position = new Vector3(3, 1, 2);
+            var material = new PbrMaterialData(new Color3(1, 0.8f, 0.2f), 0.99f, 0.1f, default).ToMaterial();
+            dice.AddComponent(material);
+            dice.Shader = PbrDeferedShader.Instance;
             return dice.Activate(layer);
         }
 

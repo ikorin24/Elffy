@@ -1,5 +1,7 @@
 ﻿#nullable enable
 
+using Elffy.Graphics.OpenGL;
+
 namespace Elffy
 {
     public class WorldLayer : Layer
@@ -20,14 +22,15 @@ namespace Elffy
             // nop
         }
 
-        protected override void OnRendered(IHostScreen screen)
+        protected override void OnRendered(IHostScreen screen, ref FBO currentFbo)
         {
             // nop
         }
 
-        protected override void OnRendering(IHostScreen screen)
+        protected override void OnRendering(IHostScreen screen, ref FBO currentFbo)
         {
-            // nop
+            FBO.Bind(FBO.Empty, FBO.Target.FrameBuffer);
+            currentFbo = FBO.Empty;
         }
 
         protected override void OnSizeChanged(IHostScreen screen)

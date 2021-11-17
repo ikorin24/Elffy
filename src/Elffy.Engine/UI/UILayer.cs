@@ -1,9 +1,9 @@
 ﻿#nullable enable
 using Cysharp.Threading.Tasks;
+using Elffy.Graphics.OpenGL;
 using Elffy.InputSystem;
 using OpenTK.Graphics.OpenGL4;
 using System;
-using System.Threading;
 
 namespace Elffy.UI
 {
@@ -47,12 +47,14 @@ namespace Elffy.UI
             projection = _uiProjection;
         }
 
-        protected override void OnRendering(IHostScreen screen)
+        protected override void OnRendering(IHostScreen screen, ref FBO currentFbo)
         {
+            currentFbo = FBO.Empty;
+            FBO.Bind(currentFbo, FBO.Target.FrameBuffer);
             GL.Disable(EnableCap.DepthTest);
         }
 
-        protected override void OnRendered(IHostScreen screen)
+        protected override void OnRendered(IHostScreen screen, ref FBO currentFbo)
         {
             GL.Enable(EnableCap.DepthTest);
         }

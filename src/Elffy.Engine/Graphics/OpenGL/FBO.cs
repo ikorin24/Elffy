@@ -132,6 +132,10 @@ namespace Elffy.Graphics.OpenGL
 
         public bool Equals(FBO other) => _fbo == other._fbo;
 
+        public static bool operator ==(FBO left, FBO right) => left.Equals(right);
+
+        public static bool operator !=(FBO left, FBO right) => !(left == right);
+
         public override int GetHashCode() => _fbo.GetHashCode();
 
         public enum Target

@@ -11,19 +11,13 @@ namespace Elffy.Shading.Defered
         private readonly GBuffer _gBuffer;
         private readonly LightBuffer _lightBuffer;
         private readonly MatrixProvider _viewProvider;
-        private readonly IHostScreen _screen;
 
         public override string FragShaderSource => FragSource;
 
         internal PbrDeferedRenderingPostProcess(GBuffer gBuffer, LightBuffer lightBuffer, MatrixProvider viewProvider)
         {
-            var hasScreen = gBuffer.TryGetHostScreen(out var screen);
-            Debug.Assert(hasScreen);
-            Debug.Assert(lightBuffer.TryGetHostScreen(out var s));
-            Debug.Assert(screen == s);
             _gBuffer = gBuffer;
             _lightBuffer = lightBuffer;
-            _screen = screen;
             _viewProvider = viewProvider;
         }
 
@@ -31,10 +25,15 @@ namespace Elffy.Shading.Defered
         {
             Debug.Assert(_gBuffer.IsInitialized);
             Debug.Assert(_lightBuffer.IsInitialized);
+            Debug.Assert(_gBuffer.TryGetHostScreen(out var s1) && _lightBuffer.TryGetHostScreen(out var s2) && s1 == s2);
 
-            var g = _gBuffer.GetBufferData();
+            var gBuffer = _gBuffer;
+            if(gBuffer.TryGetHostScreen(out var screen) == false) {
+                throw new System.InvalidOperationException();
+            }
+            var g = gBuffer.GetBufferData();
             var lightData = _lightBuffer.GetBufferData();
-            uniform.Send("_view", _viewProvider(_screen));
+            uniform.Send("_view", _viewProvider(screen));
             uniform.Send("_lightCount", _lightBuffer.LightCount);
             uniform.SendTexture2D("_posSampler", g.Position, TextureUnitNumber.Unit0);
             uniform.SendTexture2D("_normalSampler", g.Normal, TextureUnitNumber.Unit1);

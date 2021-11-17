@@ -6,11 +6,12 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Elffy.Features.Internal;
+using Elffy.Graphics.OpenGL;
 
 namespace Elffy
 {
     /// <summary>Layer class which has the list of <see cref="FrameObject"/></summary>
-    [DebuggerDisplay("{GetType().Name,nq}: {Name} (ObjectCount = {ObjectCount}, IsVisible = {IsVisible})")]
+    [DebuggerDisplay("{GetType().Name,nq} (ObjectCount = {ObjectCount}, IsVisible = {IsVisible})")]
     public abstract class Layer
     {
         private readonly FrameObjectStore _store;
@@ -130,21 +131,21 @@ namespace Elffy
         internal void Update() => _store.Update();
         internal void LateUpdate() => _store.LateUpdate();
         internal void ClearFrameObject() => _store.ClearFrameObject();
-        internal void Render(IHostScreen screen)
+        internal void Render(IHostScreen screen, ref FBO currentFbo)
         {
-            RenderOverride(screen);
+            RenderOverride(screen, ref currentFbo);
         }
 
-        private protected virtual void RenderOverride(IHostScreen screen)
+        private protected virtual void RenderOverride(IHostScreen screen, ref FBO currentFbo)
         {
             var timingPoints = _timingPoints;
             timingPoints.BeforeRendering.DoQueuedEvents();
             SelectMatrix(screen, out var view, out var projection);
-            OnRendering(screen);
+            OnRendering(screen, ref currentFbo);
             if(_isVisible) {
                 _store.Render(view, projection);
             }
-            OnRendered(screen);
+            OnRendered(screen, ref currentFbo);
             timingPoints.AfterRendering.DoQueuedEvents();
         }
 
@@ -160,9 +161,9 @@ namespace Elffy
             projection = camera.Projection;
         }
 
-        protected abstract void OnRendering(IHostScreen screen);
+        protected abstract void OnRendering(IHostScreen screen, ref FBO currentFbo);
 
-        protected abstract void OnRendered(IHostScreen screen);
+        protected abstract void OnRendered(IHostScreen screen, ref FBO currentFbo);
 
         protected abstract void OnAlive(IHostScreen screen);
 
