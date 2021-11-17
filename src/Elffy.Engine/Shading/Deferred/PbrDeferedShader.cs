@@ -3,20 +3,20 @@ using System;
 using Elffy.Components;
 using Elffy.Graphics.OpenGL;
 
-namespace Elffy.Shading.Defered
+namespace Elffy.Shading.Deferred
 {
-    public sealed class PbrDeferedShader : ShaderSource
+    public sealed class PbrDeferredShader : ShaderSource
     {
         private static readonly PbrMaterialData _fallback = new PbrMaterialData();
 
-        private static PbrDeferedShader? _instance;
-        public static PbrDeferedShader Instance => _instance ??= new PbrDeferedShader();
+        private static PbrDeferredShader? _instance;
+        public static PbrDeferredShader Instance => _instance ??= new PbrDeferredShader();
 
         public override string VertexShaderSource => VertSource;
 
         public override string FragmentShaderSource => FragSource;
 
-        private PbrDeferedShader()
+        private PbrDeferredShader()
         {
         }
 

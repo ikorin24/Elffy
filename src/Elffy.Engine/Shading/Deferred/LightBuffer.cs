@@ -8,7 +8,7 @@ using Elffy.Effective;
 using Elffy.Features;
 using Elffy.Graphics.OpenGL;
 
-namespace Elffy.Shading.Defered
+namespace Elffy.Shading.Deferred
 {
     internal sealed class LightBuffer : IDisposable
     {

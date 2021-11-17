@@ -3,18 +3,18 @@ using System;
 using Elffy.Components;
 using Elffy.Graphics.OpenGL;
 
-namespace Elffy.Shading.Defered
+namespace Elffy.Shading.Deferred
 {
-    public sealed class DeferedRenderingShader : ShaderSource
+    public sealed class DeferredRenderingShader : ShaderSource
     {
-        private static DeferedRenderingShader? _instance;
-        public static DeferedRenderingShader Instance => _instance ??= new DeferedRenderingShader();
+        private static DeferredRenderingShader? _instance;
+        public static DeferredRenderingShader Instance => _instance ??= new DeferredRenderingShader();
 
         public override string VertexShaderSource => VertSource;
 
         public override string FragmentShaderSource => FragSource;
 
-        private DeferedRenderingShader()
+        private DeferredRenderingShader()
         {
         }
 

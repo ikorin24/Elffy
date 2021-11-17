@@ -11,7 +11,7 @@ using Elffy.Components.Implementation;
 using Elffy.Components;
 using TextureWrapMode = Elffy.Components.TextureWrapMode;
 
-namespace Elffy.Shading.Defered
+namespace Elffy.Shading.Deferred
 {
     internal sealed class GBuffer : IDisposable
     {

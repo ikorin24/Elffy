@@ -6,10 +6,10 @@ namespace Elffy
 {
     public static class LayerPipelines
     {
-        public static UniTask<(DeferedRenderingLayer, WorldLayer, UILayer)> DefaultDeferedRendering(IHostScreen screen)
+        public static UniTask<(DeferredRenderingLayer, WorldLayer, UILayer)> DefaultDeferredRendering(IHostScreen screen)
         {
             return UniTask.WhenAll(
-                new DeferedRenderingLayer(1).Activate(screen),
+                new DeferredRenderingLayer(1).Activate(screen),
                 new WorldLayer().Activate(screen),
                 new UILayer().Activate(screen));
         }

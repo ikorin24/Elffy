@@ -4,7 +4,7 @@ using Cysharp.Threading.Tasks;
 using Elffy;
 using Elffy.Mathematics;
 using Elffy.Shapes;
-using Elffy.Shading.Defered;
+using Elffy.Shading.Deferred;
 using Elffy.Shading.Forward;
 using Elffy.Components;
 using Elffy.Effective;
@@ -20,7 +20,7 @@ namespace Sandbox
         public static async UniTask Start2()
         {
             var screen = Game.Screen;
-            var (drLayer, wLayer, uiLayer) = await LayerPipelines.DefaultDeferedRendering(screen);
+            var (drLayer, wLayer, uiLayer) = await LayerPipelines.DefaultDeferredRendering(screen);
             var uiRoot = uiLayer.UIRoot;
             /*
              context =>
@@ -90,13 +90,13 @@ namespace Sandbox
             return dice.Activate(layer);
         }
 
-        private static UniTask<Model3D> CreateDice2(DeferedRenderingLayer layer)
+        private static UniTask<Model3D> CreateDice2(DeferredRenderingLayer layer)
         {
             var dice = Resources.Sandbox["Dice.fbx"].CreateFbxModel();
             dice.Position = new Vector3(3, 1, 2);
             var material = new PbrMaterialData(new Color3(1, 0.8f, 0.2f), 0.99f, 0.1f, default).ToMaterial();
             dice.AddComponent(material);
-            dice.Shader = PbrDeferedShader.Instance;
+            dice.Shader = PbrDeferredShader.Instance;
             return dice.Activate(layer);
         }
 

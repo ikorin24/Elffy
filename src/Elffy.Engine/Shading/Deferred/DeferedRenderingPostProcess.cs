@@ -2,10 +2,10 @@
 using System;
 using Elffy.Graphics.OpenGL;
 
-namespace Elffy.Shading.Defered
+namespace Elffy.Shading.Deferred
 {
     [Obsolete("Obsolete", true)]
-    internal sealed class DeferedRenderingPostProcess : PostProcess
+    internal sealed class DeferredRenderingPostProcess : PostProcess
     {
         private readonly GBuffer _gBuffer;
         private readonly LightBuffer _lightBuffer;
@@ -14,7 +14,7 @@ namespace Elffy.Shading.Defered
 
         public override string FragShaderSource => FragSource;
 
-        internal DeferedRenderingPostProcess(GBuffer gBuffer, LightBuffer lightBuffer)
+        internal DeferredRenderingPostProcess(GBuffer gBuffer, LightBuffer lightBuffer)
         {
             _gBuffer = gBuffer;
             _lightBuffer = lightBuffer;

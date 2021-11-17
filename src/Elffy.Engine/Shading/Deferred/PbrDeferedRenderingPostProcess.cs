@@ -2,9 +2,9 @@
 using Elffy.Graphics.OpenGL;
 using System.Diagnostics;
 
-namespace Elffy.Shading.Defered
+namespace Elffy.Shading.Deferred
 {
-    internal sealed class PbrDeferedRenderingPostProcess : PostProcess
+    internal sealed class PbrDeferredRenderingPostProcess : PostProcess
     {
         internal delegate ref readonly Matrix4 MatrixProvider(IHostScreen screen);
 
@@ -14,7 +14,7 @@ namespace Elffy.Shading.Defered
 
         public override string FragShaderSource => FragSource;
 
-        internal PbrDeferedRenderingPostProcess(GBuffer gBuffer, LightBuffer lightBuffer, MatrixProvider viewProvider)
+        internal PbrDeferredRenderingPostProcess(GBuffer gBuffer, LightBuffer lightBuffer, MatrixProvider viewProvider)
         {
             _gBuffer = gBuffer;
             _lightBuffer = lightBuffer;
