@@ -59,30 +59,31 @@ namespace Elffy.Features.Internal
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ApplyAdd(Action<T> onAdded)
+        public bool ApplyAdd<TState>(TState state, Action<T, TState> onAdded)
         {
-            if(_addedList.Count == 0) { return; }
-            Apply(this, onAdded);
+            if(_addedList.Count == 0) { return false; }
+            Apply(this, state, onAdded);
+            return true;
 
             // uncommon path
             [MethodImpl(MethodImplOptions.NoInlining)]
-            static void Apply(in LazyApplyingList<T> self, Action<T> onAdded)
+            static void Apply(in LazyApplyingList<T> self, TState state, Action<T, TState> onAdded)
             {
                 var addedList = self._addedList;
                 var list = self._list;
                 foreach(var item in addedList.AsSpan()) {
                     list.Add(item);
-                    onAdded(item);
+                    onAdded(item, state);
                 }
                 addedList.Clear();
             }
         }
 
-        public void ApplyRemove(Action<T> onRemoved)
+        public bool ApplyRemove(Action<T> onRemoved)
         {
-            if(_removedList.Count == 0) { return; }
-
+            if(_removedList.Count == 0) { return false; }
             Apply(this, onRemoved);
+            return true;
 
             // uncommon path
             [MethodImpl(MethodImplOptions.NoInlining)]

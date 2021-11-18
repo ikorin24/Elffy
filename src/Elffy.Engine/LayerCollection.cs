@@ -66,11 +66,17 @@ namespace Elffy
         internal void ApplyAdd()
         {
             var screen = Screen;
-            _list.ApplyAdd(addedLayer => addedLayer.OnAddedToListCallback(this));
-            _list.AsSpan().Sort(static (l1, l2) => l1.SortNumber - l2.SortNumber);
+            var applied = _list.ApplyAdd((this, screen), static (addedLayer, state) =>
+            {
+                var (self, screen) = state;
+                addedLayer.OnAddedToListCallback(self);
+                addedLayer.OnSizeChangedCallback(screen);
+            });
+            if(applied) {
+                _list.AsSpan().Sort(static (l1, l2) => l1.SortNumber - l2.SortNumber);
+            }
             foreach(var layer in AsSpan()) {
                 layer.ApplyAdd();
-                layer.OnSizeChangedCallback(screen);
             }
         }
 

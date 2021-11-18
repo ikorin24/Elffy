@@ -13,7 +13,7 @@ using TextureWrapMode = Elffy.Components.TextureWrapMode;
 
 namespace Elffy.Shading.Deferred
 {
-    internal sealed class GBuffer : IDisposable
+    internal sealed class GBuffer : IGBuffer, IDisposable
     {
         private IHostScreen? _screen;
         private FBO _fbo;
@@ -23,11 +23,14 @@ namespace Elffy.Shading.Deferred
         private TextureObject _emit;       // Texture2D, Rgba16f, (emit.r, emit.g, emit.b, 1)
         private TextureObject _metallicRoughness;   // Texture2D, Rgba16f, (metallic, roughness, 0, 1)
         private RBO _depth;
+        private Vector2i _size;
         private bool _initialized;
 
         public bool IsInitialized => _initialized;
 
         public ref readonly FBO FBO => ref _fbo;
+
+        public Vector2i Size => _size;
 
         public GBuffer()
         {
@@ -62,9 +65,28 @@ namespace Elffy.Shading.Deferred
 
             CreateGBuffer(screen.FrameBufferSize, out _fbo, out _position, out _normal,
                           out _albedo, out _emit, out _metallicRoughness, out _depth);
+            _size = screen.FrameBufferSize;
             ContextAssociatedMemorySafety.Register(this, screen);
             _screen = screen;
             _initialized = true;
+        }
+
+        public void Resize()
+        {
+            if(TryGetHostScreen(out var screen) == false) {
+                ThrowNotInitialized();
+            }
+            if(Engine.CurrentContext != screen) {
+                ThrowInvalidContext();
+                [DoesNotReturn] static void ThrowInvalidContext() => throw new InvalidOperationException("Invalid current context");
+            }
+            var newSize = screen.FrameBufferSize;
+            if(newSize != _size) {
+                DeleteResources();
+                CreateGBuffer(newSize, out _fbo, out _position, out _normal,
+                              out _albedo, out _emit, out _metallicRoughness, out _depth);
+                _size = newSize;
+            }
         }
 
         public void Dispose()
@@ -79,17 +101,22 @@ namespace Elffy.Shading.Deferred
 
             if(disposing) {
                 _screen = null;
-                FBO.Delete(ref _fbo);
-                TextureObject.Delete(ref _position);
-                TextureObject.Delete(ref _normal);
-                TextureObject.Delete(ref _albedo);
-                TextureObject.Delete(ref _emit);
-                TextureObject.Delete(ref _metallicRoughness);
-                RBO.Delete(ref _depth);
+                DeleteResources();
             }
             else {
                 ContextAssociatedMemorySafety.OnFinalized(this);
             }
+        }
+
+        private void DeleteResources()
+        {
+            FBO.Delete(ref _fbo);
+            TextureObject.Delete(ref _position);
+            TextureObject.Delete(ref _normal);
+            TextureObject.Delete(ref _albedo);
+            TextureObject.Delete(ref _emit);
+            TextureObject.Delete(ref _metallicRoughness);
+            RBO.Delete(ref _depth);
         }
 
         private unsafe static void CreateGBuffer(in Vector2i frameBufferSize,
@@ -163,8 +190,8 @@ namespace Elffy.Shading.Deferred
                 TextureObject.Image2D(frameBufferSize, (Color4*)null, TextureInternalFormat.Rgba16f, 0);
                 TextureObject.Parameter2DMagFilter(TextureExpansionMode.NearestNeighbor);
                 TextureObject.Parameter2DMinFilter(TextureShrinkMode.NearestNeighbor, TextureMipmapMode.None);
-                TextureObject.Parameter2DWrapS(TextureWrapMode.ClampToEdge);
-                TextureObject.Parameter2DWrapT(TextureWrapMode.ClampToEdge);
+                TextureObject.Parameter2DWrapS(TextureWrapMode.ClampToBorder);
+                TextureObject.Parameter2DWrapT(TextureWrapMode.ClampToBorder);
             }
         }
 
@@ -187,6 +214,11 @@ namespace Elffy.Shading.Deferred
 
         [DoesNotReturn]
         private static void ThrowNotInitialized() => throw new InvalidOperationException($"{nameof(GBuffer)} is not initialized.");
+    }
+
+    internal interface IGBuffer
+    {
+        GBufferData GetBufferData();
     }
 
     internal readonly ref struct GBufferData

@@ -8,38 +8,35 @@ namespace Elffy.Shading.Deferred
     {
         internal delegate ref readonly Matrix4 MatrixProvider(IHostScreen screen);
 
-        private readonly GBuffer _gBuffer;
-        private readonly LightBuffer _lightBuffer;
+        private readonly IPbrDeferredRenderingInfo _pbrInfo;
+        private readonly IGBuffer _gBuffer;
+        private readonly ILightBuffer _lightBuffer;
         private readonly MatrixProvider _viewProvider;
 
         public override string FragShaderSource => FragSource;
 
-        internal PbrDeferredRenderingPostProcess(GBuffer gBuffer, LightBuffer lightBuffer, MatrixProvider viewProvider)
+        internal PbrDeferredRenderingPostProcess(IPbrDeferredRenderingInfo pbrInfo, MatrixProvider viewProvider)
         {
-            _gBuffer = gBuffer;
-            _lightBuffer = lightBuffer;
+            _pbrInfo = pbrInfo;
+            _gBuffer = pbrInfo.GBuffer;
+            _lightBuffer = pbrInfo.LightBuffer;
             _viewProvider = viewProvider;
         }
 
         protected override void SendUniforms(Uniform uniform, in Vector2i screenSize)
         {
-            Debug.Assert(_gBuffer.IsInitialized);
-            Debug.Assert(_lightBuffer.IsInitialized);
-            Debug.Assert(_gBuffer.TryGetHostScreen(out var s1) && _lightBuffer.TryGetHostScreen(out var s2) && s1 == s2);
-
-            var gBuffer = _gBuffer;
-            if(gBuffer.TryGetHostScreen(out var screen) == false) {
+            if(_pbrInfo.TryGetHostScreen(out var screen) == false) {
                 throw new System.InvalidOperationException();
             }
-            var g = gBuffer.GetBufferData();
+            var gData = _gBuffer.GetBufferData();
             var lightData = _lightBuffer.GetBufferData();
             uniform.Send("_view", _viewProvider(screen));
-            uniform.Send("_lightCount", _lightBuffer.LightCount);
-            uniform.SendTexture2D("_posSampler", g.Position, TextureUnitNumber.Unit0);
-            uniform.SendTexture2D("_normalSampler", g.Normal, TextureUnitNumber.Unit1);
-            uniform.SendTexture2D("_albedoSampler", g.Albedo, TextureUnitNumber.Unit2);
-            uniform.SendTexture2D("_emitSampler", g.Emit, TextureUnitNumber.Unit3);
-            uniform.SendTexture2D("_metallicRoughnessSampler", g.MetallicRoughness, TextureUnitNumber.Unit4);
+            uniform.Send("_lightCount", lightData.LightCount);
+            uniform.SendTexture2D("_posSampler", gData.Position, TextureUnitNumber.Unit0);
+            uniform.SendTexture2D("_normalSampler", gData.Normal, TextureUnitNumber.Unit1);
+            uniform.SendTexture2D("_albedoSampler", gData.Albedo, TextureUnitNumber.Unit2);
+            uniform.SendTexture2D("_emitSampler", gData.Emit, TextureUnitNumber.Unit3);
+            uniform.SendTexture2D("_metallicRoughnessSampler", gData.MetallicRoughness, TextureUnitNumber.Unit4);
             uniform.SendTexture1D("_lightPosSampler", lightData.Positions, TextureUnitNumber.Unit5);
             uniform.SendTexture1D("_lightColorSampler", lightData.Colors, TextureUnitNumber.Unit6);
         }

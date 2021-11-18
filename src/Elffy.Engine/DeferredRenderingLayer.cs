@@ -10,7 +10,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy
 {
-    public sealed class DeferredRenderingLayer : WorldLayer
+    public sealed class DeferredRenderingLayer : WorldLayer, IPbrDeferredRenderingInfo
     {
         private const int MaxLightCount = 1024 * 1024;
         private const int DRLayerDefaultSort = -100;
@@ -21,6 +21,14 @@ namespace Elffy
         private readonly int _lightCount;
         private PostProcessProgram? _ppProgram;
 
+        private bool _isSizeChangeObserved;
+        private bool _isSizeChangeRequested;
+        private long _sizeChangeRequestedFrameNum;
+
+        IGBuffer IPbrDeferredRenderingInfo.GBuffer => _gBuffer;
+
+        ILightBuffer IPbrDeferredRenderingInfo.LightBuffer => _lightBuffer;
+
         public DeferredRenderingLayer(int lightCount, int sortNumber = DRLayerDefaultSort) : base(sortNumber)
         {
             if(lightCount <= 0) { ThrowLightCountIsZeroOrNegative(); }
@@ -28,7 +36,7 @@ namespace Elffy
             _lightCount = lightCount;
             _gBuffer = new GBuffer();
             _lightBuffer = new LightBuffer();
-            _postProcess = new PbrDeferredRenderingPostProcess(_gBuffer, _lightBuffer, static screen => ref screen.Camera.View);
+            _postProcess = new PbrDeferredRenderingPostProcess(this, static screen => ref screen.Camera.View);
             Activating.Subscribe((l, ct) => SafeCast.As<DeferredRenderingLayer>(l).OnActivating());
         }
 
@@ -66,17 +74,52 @@ namespace Elffy
         {
             var targetFbo = FBO.Empty;
 
+            var gBuffer = _gBuffer;
+            var screenSize = screen.FrameBufferSize;
+            var gBufSize = gBuffer.Size;
+
             Debug.Assert(_postProcess is not null);
             Debug.Assert(_ppProgram is not null);
             FBO.Bind(targetFbo, FBO.Target.FrameBuffer);
             if(IsVisible) {
-                _ppProgram.Render(screen.FrameBufferSize);
+                _ppProgram.Render(screenSize, (Vector2)screenSize / (Vector2)gBufSize);
             }
-            FBO.Bind(_gBuffer.FBO, FBO.Target.Read);
+
+            FBO.Bind(gBuffer.FBO, FBO.Target.Read);
             FBO.Bind(targetFbo, FBO.Target.Draw);
-            Graphic.BlitDepthBuffer(screen.FrameBufferSize);
+            var gBufAspect = (float)gBufSize.X / gBufSize.Y;
+            var srcRect = new RectI(Vector2i.Zero, gBufSize);
+            var destRect = new RectI(0, 0, (int)(gBufSize.Y * gBufAspect), gBufSize.Y);
+            Graphic.BlitDepthBuffer(srcRect, destRect);
             FBO.Bind(targetFbo, FBO.Target.FrameBuffer);
             currentFbo = targetFbo;
+        }
+
+        protected override void OnSizeChanged(IHostScreen screen)
+        {
+            base.OnSizeChanged(screen);
+            _isSizeChangeRequested = true;
+            _sizeChangeRequestedFrameNum = screen.FrameNum;
+            if(_isSizeChangeObserved == false) {
+                _isSizeChangeObserved = true;
+                StartObserveSizeChanged(screen);
+            }
+        }
+
+        private void StartObserveSizeChanged(IHostScreen screen)
+        {
+            screen.StartCoroutine(this, static async (co, self) =>
+            {
+                while(co.CanRun) {
+                    if(self._isSizeChangeRequested && co.Screen.FrameNum - self._sizeChangeRequestedFrameNum > 1) {
+                        // TODO: when height is 0.
+                        self._gBuffer.Resize();
+                        Debug.WriteLine("Resize !!!!!!!!!!!!");
+                        self._isSizeChangeRequested = false;
+                    }
+                    await co.TimingPoints.FrameInitializing.Next();
+                }
+            }, FrameTiming.FrameInitializing).Forget();
         }
 
         [DoesNotReturn]
@@ -84,5 +127,13 @@ namespace Elffy
 
         [DoesNotReturn]
         private static void ThrowLightCountIsZeroOrNegative() => throw new ArgumentOutOfRangeException("Light count must be more than one.");
+    }
+
+    internal interface IPbrDeferredRenderingInfo
+    {
+        IGBuffer GBuffer { get; }
+        ILightBuffer LightBuffer { get; }
+
+        bool TryGetHostScreen([MaybeNullWhen(false)] out IHostScreen screen);
     }
 }

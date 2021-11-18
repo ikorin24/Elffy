@@ -13,9 +13,10 @@ namespace Elffy.Shading
 in vec3 _pos;
 in vec2 _v_uv;
 out vec2 _uv;
+uniform vec2 _postProcessUVScale;
 void main()
 {
-    _uv = _v_uv;
+    _uv = _v_uv * _postProcessUVScale;
     gl_Position = vec4(_pos, 1.0);
 }
 ";
@@ -34,9 +35,11 @@ void main()
         protected abstract void SendUniforms(Uniform uniform, in Vector2i screenSize);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SendUniformsInternal(ProgramObject program, in Vector2i screenSize)
+        internal void SendUniformsInternal(ProgramObject program, in Vector2i screenSize, in Vector2 uvScale)
         {
-            SendUniforms(new Uniform(program), screenSize);
+            var uniform = new Uniform(program);
+            uniform.Send("_postProcessUVScale", uvScale);
+            SendUniforms(uniform, screenSize);
         }
 
         /// <summary>Compile post process fragment shader.</summary>

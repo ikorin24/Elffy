@@ -10,7 +10,7 @@ using Elffy.Graphics.OpenGL;
 
 namespace Elffy.Shading.Deferred
 {
-    internal sealed class LightBuffer : IDisposable
+    internal sealed class LightBuffer : ILightBuffer, IDisposable
     {
         private static Vector4 DefaultLightPosition => new Vector4(0, 500, 0, 1);
         private static Color4 DefaultLightColor => Color4.White;
@@ -143,6 +143,11 @@ namespace Elffy.Shading.Deferred
 
         [DoesNotReturn]
         private static void ThrowNotInitialized() => throw new InvalidOperationException($"{nameof(LightBuffer)} is not initialized.");
+    }
+
+    internal interface ILightBuffer
+    {
+        LightBufferData GetBufferData();
     }
 
     internal readonly ref struct LightBufferData

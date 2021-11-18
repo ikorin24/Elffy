@@ -120,9 +120,21 @@ namespace Elffy
                 await screen.TimingPoints.FrameInitializing.Next(cancellationToken);
             }
             layer.AddFrameObject(this);
+            //await WaitUntilAlive(this, screen, timingPoint, cancellationToken);
             await WaitForNextFrame(screen, timingPoint, cancellationToken);
             Debug.Assert(_state.IsSameOrAfter(LifeState.Alive));
             return;
+
+            static async UniTask WaitUntilAlive(FrameObject self, IHostScreen screen, FrameTimingPoint timingPoint, CancellationToken cancellationToken)
+            {
+                while(screen.IsRunning) {
+                    await screen.TimingPoints.FrameInitializing.Next(cancellationToken);
+                    await timingPoint.NextOrNow(cancellationToken);
+                    if(self._state.IsSameOrAfter(LifeState.Alive)) {
+                        return;
+                    }
+                }
+            }
 
             [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(layer));
             [DoesNotReturn] static void ThrowInvalidLayer() => throw new ArgumentException($"{nameof(layer)} is not associated with {nameof(IHostScreen)}");
