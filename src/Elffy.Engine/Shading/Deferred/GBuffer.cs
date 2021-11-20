@@ -119,7 +119,7 @@ namespace Elffy.Shading.Deferred
             RBO.Delete(ref _depth);
         }
 
-        private unsafe static void CreateGBuffer(in Vector2i frameBufferSize,
+        private unsafe static void CreateGBuffer(Vector2i frameBufferSize,
                                                  out FBO fbo,
                                                  out TextureObject position,
                                                  out TextureObject normal,
@@ -136,6 +136,8 @@ namespace Elffy.Shading.Deferred
             metallicRoughness = default;
             depth = default;
             try {
+                frameBufferSize.X = Math.Max(1, frameBufferSize.X);
+                frameBufferSize.Y = Math.Max(1, frameBufferSize.Y);
                 fbo = FBO.Create();
                 FBO.Bind(fbo, FBO.Target.FrameBuffer);
                 const int bufCount = 5; // buffer count except depth buffer
