@@ -10,9 +10,9 @@ namespace Elffy.Shading.Forward
         /// <summary>Get singleton instance</summary>
         public static EmptyShader Instance => _instance ??= new();
 
-        public override string VertexShaderSource => VertSource;
+        protected override string VertexShaderSource => VertSource;
 
-        public override string FragmentShaderSource => FragSource;
+        protected override string FragmentShaderSource => FragSource;
 
         private EmptyShader()
         {

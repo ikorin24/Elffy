@@ -12,9 +12,9 @@ namespace Elffy.Shading.Deferred
         private static PbrDeferredShader? _instance;
         public static PbrDeferredShader Instance => _instance ??= new PbrDeferredShader();
 
-        public override string VertexShaderSource => VertSource;
+        protected override string VertexShaderSource => VertSource;
 
-        public override string FragmentShaderSource => FragSource;
+        protected override string FragmentShaderSource => FragSource;
 
         private PbrDeferredShader()
         {

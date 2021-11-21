@@ -10,9 +10,9 @@ namespace Elffy.Shading.Forward
         private static PmxModelShader? _instance;
         public static PmxModelShader Instance => _instance ??= new();
 
-        public override string VertexShaderSource => VertSource;
+        protected override string VertexShaderSource => VertSource;
 
-        public override string FragmentShaderSource => FragSource;
+        protected override string FragmentShaderSource => FragSource;
 
         private PmxModelShader() { }
 

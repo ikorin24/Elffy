@@ -5,13 +5,13 @@ using System;
 
 namespace Sandbox
 {
-    public class SkyShader : ShaderSource
+    public sealed class SkyShader : ShaderSource
     {
         public static readonly SkyShader Instance = new SkyShader();
 
-        public override string VertexShaderSource => VertSource;
+        protected override string VertexShaderSource => VertSource;
 
-        public override string FragmentShaderSource => FragSource;
+        protected override string FragmentShaderSource => FragSource;
 
         private SkyShader()
         {

@@ -10,9 +10,9 @@ namespace Elffy.Shading.Deferred
         private static DeferredRenderingShader? _instance;
         public static DeferredRenderingShader Instance => _instance ??= new DeferredRenderingShader();
 
-        public override string VertexShaderSource => VertSource;
+        protected override string VertexShaderSource => VertSource;
 
-        public override string FragmentShaderSource => FragSource;
+        protected override string FragmentShaderSource => FragSource;
 
         private DeferredRenderingShader()
         {

@@ -6,9 +6,9 @@ namespace Elffy.Shading.Forward
 {
     internal sealed class DefaultUIShader : UIShaderSource
     {
-        public override string VertexShaderSource => VertSource;
+        protected override string VertexShaderSource => VertSource;
 
-        public override string FragmentShaderSource => FragSource;
+        protected override string FragmentShaderSource => FragSource;
 
         public static readonly DefaultUIShader Instance = new DefaultUIShader();
 

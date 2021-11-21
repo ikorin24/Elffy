@@ -10,9 +10,13 @@ namespace Elffy.Shading
     {
         private int _sourceHashCache;
 
-        public abstract string VertexShaderSource { get; }
+        protected abstract string VertexShaderSource { get; }
 
-        public abstract string FragmentShaderSource { get; }
+        protected abstract string FragmentShaderSource { get; }
+
+        string IShaderSource.VertexShaderSource => VertexShaderSource;
+
+        string IShaderSource.FragmentShaderSource => FragmentShaderSource;
 
         protected abstract void DefineLocation(VertexDefinition<VertexSlim> definition, Control target);
 

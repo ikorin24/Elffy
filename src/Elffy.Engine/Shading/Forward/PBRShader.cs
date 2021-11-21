@@ -6,11 +6,12 @@ using System.Runtime.CompilerServices;
 namespace Elffy.Shading.Forward
 {
     /// <summary>Shader source for physics based rendering</summary>
+    [Obsolete("Don't use.", true)]
     public sealed class PBRShader : ShaderSource
     {
-        public override string VertexShaderSource => VertSource;
+        protected override string VertexShaderSource => VertSource;
 
-        public override string FragmentShaderSource => FragSource;
+        protected override string FragmentShaderSource => FragSource;
 
         protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
         {

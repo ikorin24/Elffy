@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using Elffy.Components;
 using Elffy.Graphics.OpenGL;
 using System;
 
@@ -8,16 +7,22 @@ namespace Elffy.Shading.Forward
     /// <summary>Simple shader which displays texture.</summary>
     public sealed class ColorTextureShader : ShaderSource
     {
-        private static ColorTextureShader? _instance;
+        private ShaderTextureSelector<ColorTextureShader>? _textureSelector;
 
-        /// <summary>Get singleton instance</summary>
-        public static ColorTextureShader Instance => _instance ??= new();
+        protected override string VertexShaderSource => VertSource;
 
-        public override string VertexShaderSource => VertSource;
+        protected override string FragmentShaderSource => FragSource;
 
-        public override string FragmentShaderSource => FragSource;
+        public ShaderTextureSelector<ColorTextureShader>? TextureSelector
+        {
+            get => _textureSelector;
+            set => _textureSelector = value;
+        }
 
-        private ColorTextureShader() { }
+        public ColorTextureShader(ShaderTextureSelector<ColorTextureShader>? textureSelector = null)
+        {
+            _textureSelector = textureSelector;
+        }
 
         protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
         {
@@ -27,9 +32,11 @@ namespace Elffy.Shading.Forward
 
         protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
-            var texture = target.GetComponent<Texture>();
+            var selector = _textureSelector ?? DefaultShaderTextureSelector<ColorTextureShader>.Default;
+            var hasTexture = selector.Invoke(this, target, out var texObj);
 
-            uniform.SendTexture2D("_sampler", texture.TextureObject, TextureUnitNumber.Unit0);
+            uniform.Send("_hasTexture", hasTexture);
+            uniform.SendTexture2D("_sampler", texObj, TextureUnitNumber.Unit0);
             uniform.Send("_mvp", projection * view * model);
         }
 
@@ -50,10 +57,16 @@ void main()
 @"#version 410
 in vec2 _vUV;
 uniform sampler2D _sampler;
+uniform bool _hasTexture;
 out vec4 _fragColor;
 void main()
 {
-    _fragColor = texture(_sampler, _vUV);
+    if(_hasTexture) {
+        _fragColor = texture(_sampler, _vUV);
+    }
+    else {
+        _fragColor = vec4(1.0, 0.0, 1.0, 1.0);
+    }
 }
 ";
     }
