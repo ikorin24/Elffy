@@ -5,21 +5,21 @@ using System;
 namespace Elffy.Shading.Forward
 {
     /// <summary>Simple shader which displays texture.</summary>
-    public sealed class ColorTextureShader : ShaderSource
+    public sealed class TextureShader : ShaderSource
     {
-        private ShaderTextureSelector<ColorTextureShader>? _textureSelector;
+        private ShaderTextureSelector<TextureShader>? _textureSelector;
 
         protected override string VertexShaderSource => VertSource;
 
         protected override string FragmentShaderSource => FragSource;
 
-        public ShaderTextureSelector<ColorTextureShader>? TextureSelector
+        public ShaderTextureSelector<TextureShader>? TextureSelector
         {
             get => _textureSelector;
             set => _textureSelector = value;
         }
 
-        public ColorTextureShader(ShaderTextureSelector<ColorTextureShader>? textureSelector = null)
+        public TextureShader(ShaderTextureSelector<TextureShader>? textureSelector = null)
         {
             _textureSelector = textureSelector;
         }
@@ -32,7 +32,7 @@ namespace Elffy.Shading.Forward
 
         protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
-            var selector = _textureSelector ?? DefaultShaderTextureSelector<ColorTextureShader>.Default;
+            var selector = _textureSelector ?? DefaultShaderTextureSelector<TextureShader>.Default;
             var hasTexture = selector.Invoke(this, target, out var texObj);
 
             uniform.Send("_hasTexture", hasTexture);
