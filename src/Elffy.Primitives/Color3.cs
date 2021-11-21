@@ -9,7 +9,7 @@ namespace Elffy
 {
     [DebuggerDisplay("{DebugView}")]
     [StructLayout(LayoutKind.Explicit)]
-    public struct Color3 : IEquatable<Color3>
+    public partial struct Color3 : IEquatable<Color3>
     {
         [FieldOffset(0)]
         public float R;
@@ -19,7 +19,8 @@ namespace Elffy
         public float B;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private readonly string DebugView => $"(R, G, B) = ({ToByte(R)}, {ToByte(G)}, {ToByte(B)}) = ({R}, {G}, {B})";
+        private readonly string DebugView
+            => $"(R, G, B) = = ({R}, {G}, {B}) = ({(byte)(R * byte.MaxValue)}, {(byte)(G * byte.MaxValue)}, {(byte)(B * byte.MaxValue)})";
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Color3(float r, float g, float b) => (R, G, B) = (r, g, b);
@@ -38,18 +39,20 @@ namespace Elffy
 
         public readonly override string ToString() => DebugView;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly Color4 ToColor4() => new(R, G, B, 1f);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly Color4 ToColor4(float alpha) => new(R, G, B, alpha);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly ColorByte ToColorByte() => new((byte)(R * byte.MaxValue), (byte)(G * byte.MaxValue), (byte)(B * byte.MaxValue), byte.MaxValue);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly ColorByte ToColorByte(byte alpha) => new((byte)(R * byte.MaxValue), (byte)(G * byte.MaxValue), (byte)(B * byte.MaxValue), alpha);
+
         public static bool operator ==(in Color3 left, in Color3 right) => left.Equals(right);
 
         public static bool operator !=(in Color3 left, in Color3 right) => !(left == right);
-
-        public static explicit operator Color4(in Color3 color) => new Color4(color);
-        public static explicit operator Color3(in Color4 color) => new Color3(color.R, color.G, color.B);
-
-        private static byte ToByte(float value)
-        {
-            var tmp = value * byte.MaxValue;
-            return (tmp < 0f) ? (byte)0 :
-                   (tmp > (float)byte.MaxValue) ? byte.MaxValue : (byte)tmp;
-        }
     }
 }
