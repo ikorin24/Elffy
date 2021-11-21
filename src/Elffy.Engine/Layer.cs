@@ -11,7 +11,7 @@ using Elffy.Graphics.OpenGL;
 namespace Elffy
 {
     /// <summary>Layer class which has the list of <see cref="FrameObject"/></summary>
-    [DebuggerDisplay("{GetType().Name,nq} (ObjectCount = {ObjectCount}, IsVisible = {IsVisible})")]
+    [DebuggerDisplay("{GetType(),nq} (ObjectCount = {ObjectCount}, IsVisible = {IsVisible})")]
     public abstract class Layer
     {
         private readonly FrameObjectStore _store;
