@@ -7,14 +7,74 @@ namespace Elffy.Shading.Forward
 {
     public sealed class PhongShader : ShaderSource
     {
-        private static PhongShader? _instance;
-        public static PhongShader Instance => _instance ??= new();
+        private const float DefaultAFactor = 0.8f;
+        private const float DefaultDFactor = 0.35f;
+        private const float DefaultSFactor = 0.5f;
+        private const float DefaultShininess = 10f;
+
+        private readonly static PhongShaderTextureSelector _defaultTextureSelector
+            = (PhongShader _, Renderable renderable, out TextureObject t) =>
+            {
+                if(renderable.TryGetComponent<Texture>(out var texture)) {
+                    t = texture.TextureObject;
+                    return true;
+                }
+                t = TextureObject.Empty;
+                return false;
+            };
+
+        private Color3 _ambient;
+        private Color3 _diffuse;
+        private Color3 _specular;
+        private float _shininess;
+        private PhongShaderTextureSelector? _textureSelector;
 
         public override string VertexShaderSource => VertSource;
 
         public override string FragmentShaderSource => FragSource;
 
-        private PhongShader() { }
+        public ref Color3 Ambient => ref _ambient;
+        public ref Color3 Diffuse => ref _diffuse;
+        public ref Color3 Specular => ref _specular;
+        public float Shininess
+        {
+            get => _shininess;
+            set => _shininess = value;
+        }
+        public PhongShaderTextureSelector? TextureSelector
+        {
+            get => _textureSelector;
+            set => _textureSelector = value;
+        }
+
+        public PhongShader(PhongShaderTextureSelector? textureSelector = null) : this(Color3.White, textureSelector)
+        {
+        }
+
+        public PhongShader(Color3 color, PhongShaderTextureSelector? textureSelector = null)
+        {
+            _ambient = new Color3(color.R * DefaultAFactor, color.G * DefaultAFactor, color.B * DefaultAFactor);
+            _diffuse = new Color3(color.R * DefaultDFactor, color.G * DefaultDFactor, color.B * DefaultDFactor);
+            _specular = new Color3(color.R * DefaultSFactor, color.G * DefaultSFactor, color.B * DefaultSFactor);
+            _shininess = DefaultShininess;
+            _textureSelector = textureSelector;
+        }
+
+        public PhongShader(Color3 ambient, Color3 diffuse, Color3 specular, float shininess, PhongShaderTextureSelector? textureSelector = null)
+        {
+            _ambient = ambient;
+            _diffuse = diffuse;
+            _specular = specular;
+            _shininess = shininess;
+            _textureSelector = textureSelector;
+        }
+
+        public void SetColor(Color3 color)
+        {
+            _ambient = new Color3(color.R * DefaultAFactor, color.G * DefaultAFactor, color.B * DefaultAFactor);
+            _diffuse = new Color3(color.R * DefaultDFactor, color.G * DefaultDFactor, color.B * DefaultDFactor);
+            _specular = new Color3(color.R * DefaultSFactor, color.G * DefaultSFactor, color.B * DefaultSFactor);
+        }
 
         protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
         {
@@ -25,10 +85,10 @@ namespace Elffy.Shading.Forward
 
         protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
-            uniform.Send("ma", new Color3(0.8f));
-            uniform.Send("md", new Color3(0.35f));
-            uniform.Send("ms", new Color3(0.5f));
-            uniform.Send("shininess", 10f);
+            uniform.Send("ma", _ambient);
+            uniform.Send("md", _diffuse);
+            uniform.Send("ms", _specular);
+            uniform.Send("shininess", _shininess);
 
             uniform.Send("model", model);
             uniform.Send("view", view);
@@ -39,8 +99,8 @@ namespace Elffy.Shading.Forward
             uniform.Send("ld", new Vector3(0.8f));
             uniform.Send("ls", new Vector3(0.2f));
 
-            var hasTexture = target.TryGetComponent<Texture>(out var texture);
-            var texObj = hasTexture ? texture!.TextureObject : TextureObject.Empty;
+            var selector = _textureSelector ?? _defaultTextureSelector;
+            var hasTexture = selector.Invoke(this, target, out var texObj);
             uniform.SendTexture2D("tex_sampler", texObj, TextureUnitNumber.Unit0);
             uniform.Send("hasTexture", hasTexture);
         }
@@ -110,4 +170,6 @@ void main()
 ";
 
     }
+
+    public delegate bool PhongShaderTextureSelector(PhongShader shader, Renderable target, out TextureObject textureObject);
 }

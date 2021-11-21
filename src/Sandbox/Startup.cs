@@ -86,6 +86,7 @@ namespace Sandbox
         private static UniTask<Model3D> CreateDice(WorldLayer layer)
         {
             var dice = Resources.Sandbox["Dice.fbx"].CreateFbxModel();
+            dice.Shader = new PhongShader(Color3.Aquamarine);
             dice.Position = new Vector3(3, 1, -2);
             return dice.Activate(layer);
         }
@@ -119,7 +120,7 @@ namespace Sandbox
         {
             var plain = new Plain();
             plain.Scale = new Vector3(10f);
-            plain.Shader = PhongShader.Instance;
+            plain.Shader = new PhongShader();
             var config = new TextureConfig(TextureExpansionMode.NearestNeighbor, TextureShrinkMode.NearestNeighbor,
                                            TextureMipmapMode.None, TextureWrapMode.ClampToEdge, TextureWrapMode.ClampToEdge);
             var texture = await Resources.Sandbox["floor.png"].LoadTextureAsync(config);
@@ -132,7 +133,7 @@ namespace Sandbox
         {
             var cube = new Cube();
             cube.Position = new(-3, 0.5f, 0);
-            cube.Shader = PhongShader.Instance;
+            cube.Shader = new PhongShader();
             cube.AddComponent(await Resources.Sandbox["box.png"].LoadTextureAsync());
             await cube.Activate(layer);
             cube.StartCoroutine(static async (coroutine, cube) =>
