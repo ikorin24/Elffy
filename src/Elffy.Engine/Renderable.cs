@@ -158,13 +158,7 @@ namespace Elffy
                     _shader = DefaultUIShader.Instance;
                 }
                 else {
-                    var typeData = VertexMarshalHelper.GetVertexTypeData(typeof(TVertex));
-                    if(typeData.TryGetField(VertexSpecialField.Normal, out _)) {
-                        _shader = PhongShader.Instance;
-                    }
-                    else {
-                        _shader = EmptyShader.Instance;
-                    }
+                    _shader = EmptyShader.Instance;
                 }
             }
 
