@@ -5,6 +5,7 @@ using Elffy.Graphics.OpenGL;
 
 namespace Elffy.Shading.Deferred
 {
+    [Obsolete("Don't use", true)]
     public sealed class DeferredRenderingShader : ShaderSource
     {
         private static DeferredRenderingShader? _instance;

@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 namespace Elffy.Components
 {
     [DebuggerDisplay("{DebugView,nq}")]
+    [Obsolete("Don't use", true)]
     public sealed class PbrMaterial : IComponent
     {
         private PbrMaterialData _data;
@@ -45,6 +46,7 @@ namespace Elffy.Components
 
     [DebuggerDisplay("{DebugView,nq}")]
     [StructLayout(LayoutKind.Explicit)]
+    [Obsolete("Don't use", true)]
     public struct PbrMaterialData : IEquatable<PbrMaterialData>
     {
         [FieldOffset(0)]
