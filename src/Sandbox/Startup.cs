@@ -20,7 +20,7 @@ namespace Sandbox
         public static async UniTask Start2()
         {
             var screen = Game.Screen;
-            var (drLayer, wLayer, uiLayer) = await LayerPipelines.DefaultDeferredRendering(screen);
+            var (drLayer, wLayer, uiLayer) = await LayerPipelines.UseDeferredForward(screen);
             var uiRoot = uiLayer.UIRoot;
             /*
              context =>
@@ -34,7 +34,7 @@ namespace Sandbox
                 }
              
              */
-            CreateTestUI(uiLayer);
+            //CreateTestUI(uiLayer);
             var timings = screen.TimingPoints;
             uiRoot.Background = Color4.Black;
             try {
@@ -95,9 +95,12 @@ namespace Sandbox
         {
             var dice = Resources.Sandbox["Dice.fbx"].CreateFbxModel();
             dice.Position = new Vector3(3, 1, 2);
-            var material = new PbrMaterialData(new Color3(1, 0.8f, 0.2f), 0.99f, 0.1f, default).ToMaterial();
-            dice.AddComponent(material);
-            dice.Shader = PbrDeferredShader.Instance;
+            dice.Shader = new PbrDeferredShader()
+            {
+                Albedo = new Color3(1, 0.8f, 0.2f),
+                Metallic = 0.99f,
+                Roughness = 0.1f,
+            };
             return dice.Activate(layer);
         }
 
