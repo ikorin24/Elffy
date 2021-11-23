@@ -7,17 +7,35 @@ namespace Elffy.Shading.Deferred
 {
     public sealed class PbrDeferredShader : ShaderSource
     {
-        private static readonly PbrMaterialData _fallback = new PbrMaterialData();
+        private ShaderTextureSelector<PbrDeferredShader>? _textureSelector;
+        private Color3 _albedo;
+        private float _metallic;
+        private float _roughness;
+        private float _emit;
 
-        private static PbrDeferredShader? _instance;
-        public static PbrDeferredShader Instance => _instance ??= new PbrDeferredShader();
+        public ref Color3 Albedo => ref _albedo;
+        public float Metallic { get => _metallic; set => _metallic = value; }
+        public float Roughness { get => _roughness; set => _roughness = value; }
+        public float Emit { get => _emit; set => _emit = value; }
+
+        public ShaderTextureSelector<PbrDeferredShader>? TextureSelector { get => _textureSelector; set => _textureSelector = value; }
 
         protected override string VertexShaderSource => VertSource;
 
         protected override string FragmentShaderSource => FragSource;
 
-        private PbrDeferredShader()
+        public PbrDeferredShader(ShaderTextureSelector<PbrDeferredShader>? textureSelector = null)
         {
+            _textureSelector = textureSelector;
+        }
+
+        public PbrDeferredShader(Color3 albedo, float metallic, float roughness, float emit, ShaderTextureSelector<PbrDeferredShader>? textureSelector = null)
+        {
+            _albedo = albedo;
+            _metallic = metallic;
+            _roughness = roughness;
+            _emit = emit;
+            _textureSelector = textureSelector;
         }
 
         protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
@@ -32,14 +50,11 @@ namespace Elffy.Shading.Deferred
             uniform.Send("_model", model);
             uniform.Send("_view", view);
             uniform.Send("_mvp", projection * view * model);
+            uniform.Send("_albedoMetallic", new Color4(_albedo, _metallic));
+            uniform.Send("_emitRoughness", new Color4(_emit, _emit, _emit, _roughness));
 
-            ref readonly var material = ref target.TryGetComponent<PbrMaterial>(out var m) ? ref m.Data : ref _fallback;
-
-            uniform.Send("_albedoMetallic", new Color4(material.Albedo, material.Metallic));
-            uniform.Send("_emitRoughness", new Color4(material.Emit, material.Roughness));
-
-            var hasTexture = target.TryGetComponent<Texture>(out var texture);
-            var texObj = hasTexture ? texture!.TextureObject : TextureObject.Empty;
+            var selector = _textureSelector ?? DefaultShaderTextureSelector<PbrDeferredShader>.Default;
+            var hasTexture = selector.Invoke(this, target, out var texObj);
             uniform.SendTexture2D("_tex", texObj, TextureUnitNumber.Unit0);
             uniform.Send("_hasTexture", hasTexture);
         }
