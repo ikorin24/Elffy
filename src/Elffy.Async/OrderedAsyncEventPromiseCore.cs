@@ -20,6 +20,7 @@ namespace Elffy
         private CapturedExceptionWrapper _exception;
         private int _completedCount;
         private short _version;
+        private FastSpinLock _lock;
 
         public PooledAsyncEventFuncs<Func<T, CancellationToken, UniTask>> Funcs => _funcs;
         public CancellationToken CancellationToken => _cancellationToken;
@@ -38,6 +39,7 @@ namespace Elffy
             _continuationState = null;
             _exception = CapturedExceptionWrapper.None;
             _completedCount = 0;
+            _lock = new FastSpinLock();
         }
 
 #if !DEBUG
@@ -45,25 +47,31 @@ namespace Elffy
 #endif
         public void GetResultAndReset(short token)
         {
-            ValidateToken(token);
-            _version = 0;
-            if(_completedCount < _funcs.Count) {
-                UniTaskSourceHelper.ThrowNotCompleted();
-            }
-            _exception.ThrowIfCaptured();
+            _lock.Enter();
+            try {
+                ValidateToken(token);
+                _version = 0;
+                if(_completedCount < _funcs.Count) {
+                    UniTaskSourceHelper.ThrowNotCompleted();
+                }
+                _exception.ThrowIfCaptured();
 
-            // Reset instance
-            _version = 0;
-            _funcs.Return();
-            _funcs = default;
-            _continuation = null;
-            _continuationState = null;
-            if(RuntimeHelpers.IsReferenceOrContainsReferences<T>()) {
-                _arg = default!;
+                // Reset instance
+                _version = 0;
+                _funcs.Return();
+                _funcs = default;
+                _continuation = null;
+                _continuationState = null;
+                if(RuntimeHelpers.IsReferenceOrContainsReferences<T>()) {
+                    _arg = default!;
+                }
+                _cancellationToken = default;
+                _exception = CapturedExceptionWrapper.None;
+                _completedCount = 0;
             }
-            _cancellationToken = default;
-            _exception = CapturedExceptionWrapper.None;
-            _completedCount = 0;
+            finally {
+                _lock.Exit();
+            }
         }
 
 #if !DEBUG
@@ -72,8 +80,14 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public UniTaskStatus GetStatus(short token)
         {
-            ValidateToken(token);
-            return UnsafeGetStatus();
+            _lock.Enter();
+            try {
+                ValidateToken(token);
+                return UnsafeGetStatusPrivate(false);
+            }
+            finally {
+                _lock.Exit();
+            }
         }
 
 #if !DEBUG
@@ -85,10 +99,16 @@ namespace Elffy
             if(continuation is null) {
                 UniTaskSourceHelper.ThrowNullArg(nameof(continuation));
             }
-            ValidateToken(token);
-            _continuationState = state;
-            if(Interlocked.CompareExchange(ref _continuation, continuation, null) != null) {
-                UniTaskSourceHelper.ThrowCannotAwaitTwice();
+            _lock.Enter();
+            try {
+                ValidateToken(token);
+                _continuationState = state;
+                if(Interlocked.CompareExchange(ref _continuation, continuation, null) != null) {
+                    UniTaskSourceHelper.ThrowCannotAwaitTwice();
+                }
+            }
+            finally {
+                _lock.Exit();
             }
         }
 
@@ -96,11 +116,88 @@ namespace Elffy
         [DebuggerHidden]
 #endif
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public UniTaskStatus UnsafeGetStatus()
+        public UniTaskStatus UnsafeGetStatus() => UnsafeGetStatusPrivate(true);
+
+#if !DEBUG
+        [DebuggerHidden]
+#endif
+        public void CaptureException(Exception ex)
         {
-            var exceptionStatus = _exception.Status;
+            _lock.Enter();
+            try {
+                _exception = CapturedExceptionWrapper.Capture(ex);
+            }
+            finally {
+                _lock.Exit();
+            }
+        }
+
+#if !DEBUG
+        [DebuggerHidden]
+#endif
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void InvokeContinuation()
+        {
+            Action<object>? continuation;
+            object? state;
+            _lock.Enter();
+            try {
+                continuation = Interlocked.Exchange(ref _continuation, UniTaskSourceHelper.ContinuationSentinel);
+                state = _continuationState!;
+            }
+            finally {
+                _lock.Exit();
+            }
+
+            Debug.Assert(continuation is not null);
+            continuation(state);
+        }
+
+
+#if !DEBUG
+        [DebuggerHidden]
+#endif
+        public void InvokeInnerTaskCompleted(in UniTask.Awaiter awaiter)
+        {
+            _lock.Enter();
+            try {
+                awaiter.GetResult();
+                _completedCount += 1;
+            }
+            catch(Exception ex) {
+                _exception = CapturedExceptionWrapper.Capture(ex);
+                _completedCount = _funcs.Count;
+                return;
+            }
+            finally {
+                _lock.Exit();
+            }
+        }
+
+#if !DEBUG
+        [DebuggerHidden]
+#endif
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private UniTaskStatus UnsafeGetStatusPrivate(bool useLock)
+        {
+            UniTaskCapturedExceptionStatus exceptionStatus;
+            int funcsCount;
+            int completedCount;
+            if(useLock) {
+                _lock.Enter();
+                exceptionStatus = _exception.Status;
+                funcsCount = _funcs.Count;
+                completedCount = _completedCount;
+                _lock.Exit();
+            }
+            else {
+                exceptionStatus = _exception.Status;
+                funcsCount = _funcs.Count;
+                completedCount = _completedCount;
+            }
+
             if(exceptionStatus == UniTaskCapturedExceptionStatus.None) {
-                if(_completedCount < _funcs.Count) {
+                if(completedCount < funcsCount) {
                     return UniTaskStatus.Pending;
                 }
                 else {
@@ -116,43 +213,6 @@ namespace Elffy
                     return UniTaskStatus.Faulted;
                 }
             }
-        }
-
-#if !DEBUG
-        [DebuggerHidden]
-#endif
-        public void CaptureException(Exception ex)
-        {
-            _exception = CapturedExceptionWrapper.Capture(ex);
-        }
-
-#if !DEBUG
-        [DebuggerHidden]
-#endif
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void InvokeContinuation()
-        {
-            var continuation = Interlocked.Exchange(ref _continuation, UniTaskSourceHelper.ContinuationSentinel);
-            Debug.Assert(continuation is not null);
-            var state = _continuationState!;
-            continuation(state);
-        }
-
-
-#if !DEBUG
-        [DebuggerHidden]
-#endif
-        public void InvokeInnerTaskCompleted(in UniTask.Awaiter awaiter)
-        {
-            try {
-                awaiter.GetResult();
-            }
-            catch(Exception ex) {
-                _exception = CapturedExceptionWrapper.Capture(ex);
-                _completedCount = _funcs.Count;
-                return;
-            }
-            _completedCount += 1;
         }
 
 #if !DEBUG

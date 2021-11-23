@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy
@@ -31,6 +32,12 @@ namespace Elffy
 #if !DEBUG
         [System.Diagnostics.DebuggerHidden]
 #endif
-        private static void ContinuationSentinelAction(object _) => throw new InvalidOperationException($"can not invoke continuation twice.");
+        private static void ContinuationSentinelAction(object _)
+        {
+            // [NOTE]
+            // Don't throw exception here.
+            // There is no longer a way to successfully communicate exceptions.
+            Debug.Fail("can not invoke continuation twice.");
+        }
     }
 }
