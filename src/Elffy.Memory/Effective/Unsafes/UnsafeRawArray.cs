@@ -3,6 +3,8 @@ using System;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
+using System.ComponentModel;
+using Elffy.AssemblyServices;
 
 namespace Elffy.Effective.Unsafes
 {
@@ -60,9 +62,14 @@ namespace Elffy.Effective.Unsafes
             }
         }
 
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("Don't use default constructor.", true)]
+        public UnsafeRawArray() => throw new NotSupportedException("Don't use default constructor.");
+
         /// <summary>Allocate non-zero-initialized array of specified length.</summary>
         /// <param name="length">length of new array</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Obsolete]
         public UnsafeRawArray(int length)
         {
             if(length < 0) {

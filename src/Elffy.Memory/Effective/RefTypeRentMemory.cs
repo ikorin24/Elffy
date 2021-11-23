@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -9,6 +10,9 @@ using Elffy.Effective.Unsafes;
 namespace Elffy.Effective
 {
     /// <summary>Shared memories from memory pool, that provides <see cref="Span{T}"/>.</summary>
+    /// <remarks>
+    /// Don't call <see cref="Dispose"/> twice.
+    /// </remarks>
     /// <typeparam name="T">element type</typeparam>
     [DebuggerDisplay("{DebugDisplay}")]
     [DebuggerTypeProxy(typeof(RefTypeRentMemoryDebuggerTypeProxy<>))]
@@ -45,6 +49,10 @@ namespace Elffy.Effective
                 return ref Unsafe.Add(ref GetReference(), index);
             }
         }
+
+        [Obsolete("Don't use default constructor.", true)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public RefTypeRentMemory() => throw new NotSupportedException("Don't use default constructor.");
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RefTypeRentMemory(int length)
@@ -86,6 +94,8 @@ namespace Elffy.Effective
 
         public T[] ToArray() => AsSpan().ToArray();
 
+        /// <summary>Release the memory</summary>
+        /// <remarks>*** Don't call this method twice. ***</remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
         {

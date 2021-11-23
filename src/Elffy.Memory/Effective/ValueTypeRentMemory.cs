@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using Elffy.Effective.Unsafes;
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -58,6 +59,10 @@ namespace Elffy.Effective
                 return ref Unsafe.Add(ref GetReference(), index);
             }
         }
+
+        [Obsolete("Don't use default constructor.", true)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public ValueTypeRentMemory() => throw new NotSupportedException("Don't use default constructor.");
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe ValueTypeRentMemory(int length, bool zeroFill)
