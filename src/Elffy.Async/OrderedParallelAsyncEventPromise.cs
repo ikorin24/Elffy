@@ -85,10 +85,6 @@ namespace Elffy
 
             var index = 0;
         NEXT_TASK:
-            if(InvokeContinuationIfEnd(funcs.Count)) {
-                return;
-            }
-
             if(index >= funcs.Count) {
                 return;
             }
@@ -101,35 +97,30 @@ namespace Elffy
             }
             catch(Exception ex) {
                 _core.CaptureException(ex);
-                goto NEXT_TASK;
+                _isCompletedSuccessfully = false;
+                _core.InvokeContinuation();
+                return;
             }
 
             if(awaiter.IsCompleted) {
-                _core.InvokeInnerTaskCompleted(awaiter);
+                _core.InvokeInnerTaskCompleted(awaiter, out var callContinuationNeeded, out var successflyCompleted);
+                if(callContinuationNeeded) {
+                    _isCompletedSuccessfully = successflyCompleted;
+                    _core.InvokeContinuation();
+                }
                 goto NEXT_TASK;
             }
             awaiter.SourceOnCompleted(static s =>
             {
                 var (self, awaiter) = PromiseAndAwaiterPair.Extract<OrderedParallelAsyncEventPromise<T>>(s);
                 ref var core = ref self._core;
-                core.InvokeInnerTaskCompleted(awaiter);
-                self.InvokeContinuationIfEnd(core.Funcs.Count);
+                core.InvokeInnerTaskCompleted(awaiter, out var callContinuationNeeded, out var successflyCompleted);
+                if(callContinuationNeeded) {
+                    self._isCompletedSuccessfully = successflyCompleted;
+                    self._core.InvokeContinuation();
+                }
             }, PromiseAndAwaiterPair.Create(this, awaiter));
             goto NEXT_TASK;
-        }
-
-        private bool InvokeContinuationIfEnd(int funcCount)
-        {
-            if(_core.CompletedCount == funcCount) {
-                _isCompletedSuccessfully = true;
-                _core.InvokeContinuation();
-                return true;
-            }
-            else if(_core.Exception.Status != UniTaskCapturedExceptionStatus.None) {
-                _core.InvokeContinuation();
-                return true;
-            }
-            return false;
         }
     }
 }

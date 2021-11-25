@@ -25,54 +25,70 @@ namespace Elffy.Effective
             if(funcs.Length <= maxParallel) {
                 var copiedFuncs = new PooledAsyncEventFuncs<Func<TArg, CancellationToken, UniTask>>(funcs.Length);
                 funcs.CopyTo(copiedFuncs.AsSpan());
-                return Execute(arg, copiedFuncs, cancellationToken);
+                return OrderedParallelAsyncEventPromise<TArg>.CreateTask(copiedFuncs, arg, cancellationToken);
+            }
+            else {
+                var runner = new LimitedParallelRunner<TArg>(funcs, arg, maxParallel);
+                return Execute(runner, cancellationToken);
 
-                static async UniTask Execute(TArg arg, PooledAsyncEventFuncs<Func<TArg, CancellationToken, UniTask>> copiedFuncs, CancellationToken ct)
+                static async UniTask Execute(LimitedParallelRunner<TArg> runner, CancellationToken ct)
                 {
                     try {
-                        await OrderedParallelAsyncEventPromise<TArg>.CreateTask(copiedFuncs, arg, ct);
+                        await runner.Execute(ct);
                     }
                     finally {
-                        copiedFuncs.Return();
+                        runner.Dispose();
                     }
                 }
             }
-            else {
-                // TODO: optimize
+        }
 
-                var parallel = new AsyncEventRaiser<TArg>();
-                var sequentials = new RefTypeRentMemory<AsyncEventRaiser<TArg>>(maxParallel);
-                try {
-                    for(int i = 0; i < sequentials.Length; i++) {
-                        var r = new AsyncEventRaiser<TArg>();
-                        sequentials[i] = r;
-                        parallel.Subscribe((arg, ct) => r.RaiseSequentially(arg, ct));
-                    }
+        // [NOTE] Don't change this class into struct.
+        private sealed class LimitedParallelRunner<TArg> : IDisposable
+        {
+            private RefTypeRentMemory<Func<TArg, CancellationToken, UniTask>> _funcs;
+            private TArg _arg;
+            private readonly int _maxParallel;
+            private int _channelId;
 
-                    var j = 0;
-                    for(int i = 0; i < funcs.Length; i++) {
-                        sequentials[j].Subscribe(funcs[i]);
-                        j++;
-                        if(j == sequentials.Length) {
-                            j = 0;
-                        }
-                    }
-                }
-                catch {
-                    sequentials.Dispose();
-                    throw;
-                }
-                return Execute(parallel, arg, sequentials, cancellationToken);
+            public LimitedParallelRunner(ReadOnlySpan<Func<TArg, CancellationToken, UniTask>> funcs, in TArg arg, int maxParallel)
+            {
+                _arg = arg;
+                _maxParallel = maxParallel;
+                _channelId = 0;
+                _funcs = new RefTypeRentMemory<Func<TArg, CancellationToken, UniTask>>(funcs.Length);
+                funcs.CopyTo(_funcs.AsSpan());
+            }
 
-                static async UniTask Execute(AsyncEventRaiser<TArg> parallel, TArg arg, RefTypeRentMemory<AsyncEventRaiser<TArg>> disposable, CancellationToken ct)
-                {
-                    try {
-                        await parallel.Raise(arg, ct);
-                    }
-                    finally {
-                        disposable.Dispose();
-                    }
+            public UniTask Execute(CancellationToken ct)
+            {
+                var parallelFuncs = new PooledAsyncEventFuncs<Func<LimitedParallelRunner<TArg>, CancellationToken, UniTask>>(_maxParallel);
+                var span = parallelFuncs.AsSpan();
+                for(int i = 0; i < parallelFuncs.Count; i++) {
+                    span[i] = static (self, ct) => self.ExecuteChannel(ct);
                 }
+                return OrderedParallelAsyncEventPromise<LimitedParallelRunner<TArg>>.CreateTask(parallelFuncs, this, ct);
+            }
+
+            public void Dispose()
+            {
+                _funcs.Dispose();
+            }
+
+            private UniTask ExecuteChannel(CancellationToken ct)
+            {
+                var maxParallel = _maxParallel;
+                var parallelId = Interlocked.Increment(ref _channelId) - 1;
+                var funcs = _funcs.AsSpan();
+                var q = Math.DivRem(funcs.Length, maxParallel, out var r);
+                var funcCount = q + ((parallelId < r) ? 1 : 0);
+
+                var sequentialFuncs = new PooledAsyncEventFuncs<Func<TArg, CancellationToken, UniTask>>(funcCount);
+                var sf = sequentialFuncs.AsSpan();
+                for(int i = 0; i < sf.Length; i++) {
+                    sf[i] = funcs[i * maxParallel];
+                }
+                return OrderedSequentialAsyncEventPromise<TArg>.CreateTask(sequentialFuncs, _arg, ct);
             }
         }
     }

@@ -18,7 +18,10 @@ namespace Elffy
         [DebuggerHidden]
         public static T? As<T>(object? value) where T : class
         {
-            Debug.Assert(value is null || value is T);
+#if DEBUG
+            Debug.Assert(value is null || value is T,
+                $"Cannot cast to {typeof(T).FullName}: value is {value?.GetType().ToString() ?? "null"}");
+#endif
             return Unsafe.As<T?>(value);
         }
 

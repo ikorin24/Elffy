@@ -16,12 +16,14 @@ namespace Elffy
 
         private OrderedSequentialAsyncEventPromise<T>? _nextPooled;
         private OrderedAsyncEventPromiseCore<T> _core;
+        private int _nextIndex;
 
         public ref OrderedSequentialAsyncEventPromise<T>? NextPooled => ref _nextPooled;
 
         private OrderedSequentialAsyncEventPromise(in PooledAsyncEventFuncs<Func<T, CancellationToken, UniTask>> funcs, T arg, CancellationToken ct, short version)
         {
             _core = new OrderedAsyncEventPromiseCore<T>(funcs, arg, ct, version);
+            _nextIndex = 0;
         }
 
         public static UniTask CreateTask(in PooledAsyncEventFuncs<Func<T, CancellationToken, UniTask>> funcs, T arg, CancellationToken ct)
@@ -32,6 +34,7 @@ namespace Elffy
             var token = _tokenFactory.CreateToken();
             if(ChainInstancePool<OrderedSequentialAsyncEventPromise<T>>.TryGetInstanceFast(out var promise)) {
                 promise._core = new OrderedAsyncEventPromiseCore<T>(funcs, arg, ct, token);
+                promise._nextIndex = 0;
             }
             else {
                 promise = new OrderedSequentialAsyncEventPromise<T>(funcs, arg, ct, token);
@@ -77,12 +80,11 @@ namespace Elffy
             var ct = _core.CancellationToken;
 
         NEXT_TASK:
-            var index = _core.CompletedCount;
-            if(index == funcs.Count || _core.Exception.Status != UniTaskCapturedExceptionStatus.None) {
-                _core.InvokeContinuation();
+            var index = Interlocked.Increment(ref _nextIndex) - 1;
+            UniTask.Awaiter awaiter;
+            if(index >= funcs.Count) {
                 return;
             }
-            UniTask.Awaiter awaiter;
             try {
                 var f = funcs[index];
                 Debug.Assert(f is not null);
@@ -91,18 +93,27 @@ namespace Elffy
             }
             catch(Exception ex) {
                 _core.CaptureException(ex);
-                goto NEXT_TASK;
+                _core.InvokeContinuation();
+                return;
             }
 
             if(awaiter.IsCompleted) {
-                _core.InvokeInnerTaskCompleted(awaiter);
+                _core.InvokeInnerTaskCompleted(awaiter, out var callContinuationNeeded, out _);
+                if(callContinuationNeeded) {
+                    _core.InvokeContinuation();
+                }
                 goto NEXT_TASK;
             }
             awaiter.SourceOnCompleted(static s =>
             {
                 var (self, awaiter) = PromiseAndAwaiterPair.Extract<OrderedSequentialAsyncEventPromise<T>>(s);
-                self._core.InvokeInnerTaskCompleted(awaiter);
-                self.ExecuteNextTask();
+                self._core.InvokeInnerTaskCompleted(awaiter, out var callContinuationNeeded, out _);
+                if(callContinuationNeeded) {
+                    self._core.InvokeContinuation();
+                }
+                else {
+                    self.ExecuteNextTask();
+                }
             }, PromiseAndAwaiterPair.Create(this, awaiter));
         }
     }

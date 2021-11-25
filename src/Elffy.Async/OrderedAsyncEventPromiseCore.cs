@@ -22,11 +22,38 @@ namespace Elffy
         private short _version;
         private FastSpinLock _lock;
 
-        public PooledAsyncEventFuncs<Func<T, CancellationToken, UniTask>> Funcs => _funcs;
-        public CancellationToken CancellationToken => _cancellationToken;
-        public int CompletedCount => _completedCount;
-        public CapturedExceptionWrapper Exception => _exception;
-        public T Arg => _arg;
+        public PooledAsyncEventFuncs<Func<T, CancellationToken, UniTask>> Funcs
+        {
+            get
+            {
+                _lock.Enter();
+                var funcs = _funcs;
+                _lock.Exit();
+                return funcs;
+            }
+        }
+
+        public CancellationToken CancellationToken
+        {
+            get
+            {
+                _lock.Enter();
+                var ct = _cancellationToken;
+                _lock.Exit();
+                return ct;
+            }
+        }
+
+        public T Arg
+        {
+            get
+            {
+                _lock.Enter();
+                var arg = _arg;
+                _lock.Exit();
+                return arg;
+            }
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public OrderedAsyncEventPromiseCore(in PooledAsyncEventFuncs<Func<T, CancellationToken, UniTask>> funcs, T arg, CancellationToken ct, short version)
@@ -51,10 +78,10 @@ namespace Elffy
             try {
                 ValidateToken(token);
                 _version = 0;
+                _exception.ThrowIfCaptured();
                 if(_completedCount < _funcs.Count) {
                     UniTaskSourceHelper.ThrowNotCompleted();
                 }
-                _exception.ThrowIfCaptured();
 
                 // Reset instance
                 _version = 0;
@@ -157,16 +184,20 @@ namespace Elffy
 #if !DEBUG
         [DebuggerHidden]
 #endif
-        public void InvokeInnerTaskCompleted(in UniTask.Awaiter awaiter)
+        public void InvokeInnerTaskCompleted(in UniTask.Awaiter awaiter, out bool callContinuationNeeded, out bool successflyCompleted)
         {
             _lock.Enter();
             try {
                 awaiter.GetResult();
                 _completedCount += 1;
+                callContinuationNeeded = _completedCount == _funcs.Count;
+                successflyCompleted = true;
             }
             catch(Exception ex) {
                 _exception = CapturedExceptionWrapper.Capture(ex);
-                _completedCount = _funcs.Count;
+                callContinuationNeeded = true;
+                successflyCompleted = false;
+                //_completedCount = _funcs.Count;
                 return;
             }
             finally {

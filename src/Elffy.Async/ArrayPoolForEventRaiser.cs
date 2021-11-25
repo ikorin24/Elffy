@@ -63,6 +63,7 @@ namespace Elffy
         {
             Debug.Assert(instance.Length == LengthOfPoolTargetArray);
 #if DEBUG
+            Debug.Assert(instance.GetType() == typeof(object[]));
             for(int i = 0; i < LengthOfPoolTargetArray; i++) {
                 Debug.Assert(instance[i] == null);
             }
