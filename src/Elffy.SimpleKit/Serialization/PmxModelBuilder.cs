@@ -54,7 +54,6 @@ namespace Elffy.Serialization
         private static async UniTask Build(ModelState obj, Model3D model, Model3DLoadMeshDelegate load)
         {
             obj.CancellationToken.ThrowIfCancellationRequested();
-
             Debug.Assert(model.LifeState == LifeState.Activating);
 
             // Run on thread pool
@@ -63,131 +62,31 @@ namespace Elffy.Serialization
             //      ↓ thread pool
 
             obj.CancellationToken.ThrowIfCancellationRequested();
-
-            // Parse pmx file
-            var pmx = PMXParser.Parse(obj.File.GetStream());
-            await BuildCore(pmx, model, load, obj);
-        }
-
-        private static UniTask BuildCore(PMXObject pmx, Model3D model, Model3DLoadMeshDelegate load, ModelState obj)
-        {
-            // ------------------------------
-            //      ↓ thread pool
-            Debug.Assert(Engine.IsThreadMain == false);
-            var file = obj.File;
-            var fileResourceLoader = file.ResourceLoader;
-
-            var textureNames = pmx.TextureList.AsSpan();
-            var dir = ResourcePath.GetDirectoryName(file.Name);
-            var images = new Image[textureNames.Length];
-
-            for(int i = 0; i < images.Length; i++) {
-                using var _ = GetTexturePath(dir, textureNames[i], out var texturePath, out var ext);
-                var path = texturePath.ToString();
-
-                // Some pmx have the texture paths that don't exist. (Nobody references them.)
-                // So skip them.
-                if(fileResourceLoader.TryGetStream(path, out var stream)) {
-                    using(stream) {
-                        images[i] = Image.FromStream(stream, Image.GetTypeFromExt(ext));
-                    }
-                }
-            }
+            using var pmx = PMXParser.Parse(obj.File.GetStream());
 
             // [NOTE] Though pmx is read only, overwrite pmx data.
             PmxModelLoadHelper.ReverseTrianglePolygon(pmx.SurfaceList.AsSpan().AsWritable());
-
-            return LoadToModel(pmx, model, load, obj, images);
+            await LoadToModel(pmx, model, load, obj);
         }
 
-        private static async UniTask LoadToModel(PMXObject pmx, Model3D model, Model3DLoadMeshDelegate load, ModelState obj, Image[] images)
+        private static async UniTask LoadToModel(PMXObject pmx, Model3D model, Model3DLoadMeshDelegate load, ModelState obj)
         {
             // ------------------------------
             //      ↓ thread pool
             Debug.Assert(Engine.IsThreadMain == false);
-
             UnsafeRawArray<RigVertex> vertices = default;
             ValueTypeRentMemory<int> vertexCountArray = default;
             ValueTypeRentMemory<int> textureIndexArray = default;
             ValueTypeRentMemory<TextureObject> textures = default;
             UnsafeRawArray<Components.Bone> bones = default;
+            Image[] images = Array.Empty<Image>();
             try {
-                (vertices, (vertexCountArray, textureIndexArray), bones) = await UniTask.WhenAll(
-                    // build vertices
-                    UniTask.Run(pmx =>
-                    {
-                        Debug.Assert(pmx is PMXObject);
-                        var pmxVertexList = Unsafe.As<PMXObject>(pmx).VertexList.AsSpan();
-                        var vertices = new UnsafeRawArray<RigVertex>(pmxVertexList.Length);
-                        try {
-                            for(int i = 0; i < pmxVertexList.Length; i++) {
-                                vertices[i] = pmxVertexList[i].ToRigVertex();
-                            }
-                        }
-                        catch {
-                            vertices.Dispose();
-                            throw;
-                        }
-                        return vertices;
-                    }, pmx, configureAwait: false),
-
-                    // build each parts
-                    UniTask.Run(pmx =>
-                    {
-                        Debug.Assert(pmx is PMXObject);
-                        var materials = Unsafe.As<PMXObject>(pmx).MaterialList.AsSpan();
-                        var vertexCountArray = new ValueTypeRentMemory<int>(materials.Length, false);
-                        var textureIndexArray = new ValueTypeRentMemory<int>(materials.Length, false);
-                        try {
-                            var vSpan = vertexCountArray.AsSpan();
-                            var tSpan = textureIndexArray.AsSpan();
-                            for(int i = 0; i < materials.Length; i++) {
-                                vSpan[i] = materials[i].VertexCount;
-                                tSpan[i] = materials[i].Texture;
-                            }
-                        }
-                        catch {
-                            vertexCountArray.Dispose();
-                            textureIndexArray.Dispose();
-                            throw;
-                        }
-                        return (vertexCountArray, textureIndexArray);
-                    }, pmx, configureAwait: false),
-
-                    // build bones
-                    UniTask.Run(pmx =>
-                    {
-                        Debug.Assert(pmx is PMXObject);
-                        var pmxBones = Unsafe.As<PMXObject>(pmx).BoneList.AsSpan();
-                        var bones = new UnsafeRawArray<Components.Bone>(pmxBones.Length);
-                        try {
-                            for(int i = 0; i < pmxBones.Length; i++) {
-                                //bones[i] = new(UnsafeEx.As<PmxVector3, Vector3>(in pmxBones[i].Position),
-                                //               pmxBones[i].ParentBone >= 0 ? pmxBones[i].ParentBone : null,
-                                //               pmxBones[i].ConnectedBone >= 0 ? pmxBones[i].ConnectedBone : null);
-
-                                var parentBone = pmxBones[i].ParentBone >= 0 ? pmxBones[i].ParentBone : (int?)null;
-                                //var transform = pmxBones[i].ConnectedBone >= 0 ? new Vector3()
-
-                                Vector3 boneVec;
-                                var c = pmxBones[i].ConnectedBone;
-                                if(c >= 0) {
-                                    boneVec = pmxBones[c].Position.ToVector3() - pmxBones[i].Position.ToVector3();
-                                }
-                                else {
-                                    boneVec = pmxBones[i].PositionOffset.ToVector3();
-                                }
-
-                                bones[i] = new Components.Bone();
-
-                            }
-                        }
-                        catch {
-                            bones.Dispose();
-                            throw;
-                        }
-                        return bones;
-                    }, pmx, configureAwait: false));
+                (vertices, (vertexCountArray, textureIndexArray), bones, images) =
+                    await UniTask.WhenAll(
+                        BuildVertices(pmx),
+                        BuildParts(pmx),
+                        BuildBones(pmx),
+                        LoadTextureImages(pmx, obj.File));
 
                 // create skeleton
                 model.TryGetHostScreen(out var screen);
@@ -205,8 +104,7 @@ namespace Elffy.Serialization
                 Debug.Assert(model.LifeState == LifeState.Activating);
 
                 // create parts
-                textures = new ValueTypeRentMemory<TextureObject>(images.Length, false);
-                textures.AsSpan().Clear();  // must be cleared
+                textures = new ValueTypeRentMemory<TextureObject>(images.Length, true); // It must be initialized by zero
                 for(int i = 0; i < textures.Length; i++) {
                     var image = images[i];
                     if(image.IsEmpty) {
@@ -243,7 +141,6 @@ namespace Elffy.Serialization
                     images[i].Dispose();
                 }
                 //bitmaps.Dispose();
-                pmx.Dispose();
                 vertices.Dispose();
             }
 
@@ -259,6 +156,126 @@ namespace Elffy.Serialization
             }
         }
 
+        private static async UniTask<UnsafeRawArray<RigVertex>> BuildVertices(PMXObject pmx)
+        {
+            await UniTask.SwitchToThreadPool();
+            return await OnThreadPool(pmx);
+
+            static UniTask<UnsafeRawArray<RigVertex>> OnThreadPool(PMXObject pmx)
+            {
+                // build vertices
+                var pmxVertices = Unsafe.As<PMXObject>(pmx).VertexList.AsSpan();
+                var vertices = new UnsafeRawArray<RigVertex>(pmxVertices.Length, false);
+                try {
+                    for(int i = 0; i < pmxVertices.Length; i++) {
+                        vertices[i] = pmxVertices[i].ToRigVertex();
+                    }
+                }
+                catch {
+                    vertices.Dispose();
+                    throw;
+                }
+                return UniTask.FromResult(vertices);
+            }
+        }
+
+        private static async UniTask<(ValueTypeRentMemory<int>, ValueTypeRentMemory<int>)> BuildParts(PMXObject pmx)
+        {
+            await UniTask.SwitchToThreadPool();
+            return await OnThreadPool(pmx);
+
+            static UniTask<(ValueTypeRentMemory<int>, ValueTypeRentMemory<int>)> OnThreadPool(PMXObject pmx)
+            {
+                var materials = pmx.MaterialList.AsSpan();
+                var vertexCountArray = new ValueTypeRentMemory<int>(materials.Length, false);
+                var textureIndexArray = new ValueTypeRentMemory<int>(materials.Length, false);
+                try {
+                    var vSpan = vertexCountArray.AsSpan();
+                    var tSpan = textureIndexArray.AsSpan();
+                    for(int i = 0; i < materials.Length; i++) {
+                        vSpan[i] = materials[i].VertexCount;
+                        tSpan[i] = materials[i].Texture;
+                    }
+                }
+                catch {
+                    vertexCountArray.Dispose();
+                    textureIndexArray.Dispose();
+                    throw;
+                }
+                return UniTask.FromResult((vertexCountArray, textureIndexArray));
+            }
+        }
+
+        private static async UniTask<UnsafeRawArray<Components.Bone>> BuildBones(PMXObject pmx)
+        {
+            await UniTask.SwitchToThreadPool();
+            return await OnThreadPool(pmx);
+
+            static UniTask<UnsafeRawArray<Components.Bone>> OnThreadPool(PMXObject pmx)
+            {
+                var pmxBones = pmx.BoneList.AsSpan();
+                var bones = new UnsafeRawArray<Components.Bone>(pmxBones.Length, false);
+                try {
+                    for(int i = 0; i < pmxBones.Length; i++) {
+                        var parentBone = pmxBones[i].ParentBone >= 0 ? pmxBones[i].ParentBone : (int?)null;
+                        Vector3 boneVec;
+                        var c = pmxBones[i].ConnectedBone;
+                        if(c >= 0) {
+                            boneVec = pmxBones[c].Position.ToVector3() - pmxBones[i].Position.ToVector3();
+                        }
+                        else {
+                            boneVec = pmxBones[i].PositionOffset.ToVector3();
+                        }
+
+                        bones[i] = new Components.Bone();
+
+                    }
+                }
+                catch {
+                    bones.Dispose();
+                    throw;
+                }
+                return UniTask.FromResult(bones);
+            }
+        }
+
+        private static async UniTask<Image[]> LoadTextureImages(PMXObject pmx, ResourceFile pmxFile)
+        {
+            await UniTask.SwitchToThreadPool();
+            return await OnThreadPool(pmx, pmxFile);
+
+            static UniTask<Image[]> OnThreadPool(PMXObject pmx, ResourceFile pmxFile)
+            {
+                var dir = ResourcePath.GetDirectoryName(pmxFile.Name);
+                var textureNames = pmx.TextureList.AsSpan();
+                var resourceLoader = pmxFile.ResourceLoader;
+                var images = new Image[textureNames.Length];
+                try {
+                    for(int i = 0; i < textureNames.Length; i++) {
+                        using var _ = GetTexturePath(dir, textureNames[i], out var texturePath, out var ext);
+                        var path = texturePath.ToString();
+
+                        // Some pmx have the texture paths that don't exist. (Nobody references them.)
+                        // So skip them.
+                        if(resourceLoader.TryGetStream(path, out var stream)) {
+                            try {
+                                images[i] = Image.FromStream(stream, Image.GetTypeFromExt(ext));
+                            }
+                            finally {
+                                stream.Dispose();
+                            }
+                        }
+                    }
+                    return UniTask.FromResult(images);
+                }
+                catch {
+                    foreach(var image in images) {
+                        image.Dispose();
+                    }
+                    throw;
+                }
+            }
+        }
 
         private static PooledArray<char> GetTexturePath(ReadOnlySpan<char> dir, ReadOnlyRawString name, out Span<char> texturePath, out ReadOnlySpan<char> ext)
         {
