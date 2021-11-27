@@ -79,7 +79,7 @@ namespace Elffy.Serialization
             ValueTypeRentMemory<int> textureIndexArray = default;
             ValueTypeRentMemory<TextureObject> textures = default;
             UnsafeRawArray<Components.Bone> bones = default;
-            Image[] images = Array.Empty<Image>();
+            var images = RefTypeRentMemory<IImageSource?>.Empty;
             try {
                 (vertices, (vertexCountArray, textureIndexArray), bones, images) =
                     await UniTask.WhenAll(
@@ -107,11 +107,11 @@ namespace Elffy.Serialization
                 textures = new ValueTypeRentMemory<TextureObject>(images.Length, true); // It must be initialized by zero
                 for(int i = 0; i < textures.Length; i++) {
                     var image = images[i];
-                    if(image.IsEmpty) {
+                    if(image is null) {
                         textures[i] = TextureObject.Empty;
                     }
                     else {
-                        textures[i] = TextureLoadHelper.LoadByDMA(image, TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear,
+                        textures[i] = TextureLoadHelper.LoadByDMA(image.AsImageRef(), TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear,
                                             TextureMipmapMode.Bilinear, TextureWrapMode.Repeat, TextureWrapMode.Repeat);
                     }
                     // Scadule the loading of textures to each frame.
@@ -138,9 +138,9 @@ namespace Elffy.Serialization
                 // I don't care about the thread.
                 bones.Dispose();
                 for(int i = 0; i < images.Length; i++) {
-                    images[i].Dispose();
+                    images[i]?.Dispose();
                 }
-                //bitmaps.Dispose();
+                images.Dispose();
                 vertices.Dispose();
             }
 
@@ -239,17 +239,17 @@ namespace Elffy.Serialization
             }
         }
 
-        private static async UniTask<Image[]> LoadTextureImages(PMXObject pmx, ResourceFile pmxFile)
+        private static async UniTask<RefTypeRentMemory<IImageSource?>> LoadTextureImages(PMXObject pmx, ResourceFile pmxFile)
         {
             await UniTask.SwitchToThreadPool();
             return await OnThreadPool(pmx, pmxFile);
 
-            static UniTask<Image[]> OnThreadPool(PMXObject pmx, ResourceFile pmxFile)
+            static UniTask<RefTypeRentMemory<IImageSource?>> OnThreadPool(PMXObject pmx, ResourceFile pmxFile)
             {
                 var dir = ResourcePath.GetDirectoryName(pmxFile.Name);
                 var textureNames = pmx.TextureList.AsSpan();
                 var resourceLoader = pmxFile.ResourceLoader;
-                var images = new Image[textureNames.Length];
+                var images = new RefTypeRentMemory<IImageSource?>(textureNames.Length);
                 try {
                     for(int i = 0; i < textureNames.Length; i++) {
                         using var _ = GetTexturePath(dir, textureNames[i], out var texturePath, out var ext);
@@ -259,7 +259,7 @@ namespace Elffy.Serialization
                         // So skip them.
                         if(resourceLoader.TryGetStream(path, out var stream)) {
                             try {
-                                images[i] = Image.FromStream(stream, Image.GetTypeFromExt(ext));
+                                images[i] = Image.LoadToImageSource(stream, Image.GetTypeFromExt(ext));
                             }
                             finally {
                                 stream.Dispose();
@@ -269,8 +269,8 @@ namespace Elffy.Serialization
                     return UniTask.FromResult(images);
                 }
                 catch {
-                    foreach(var image in images) {
-                        image.Dispose();
+                    foreach(var image in images.AsSpan()) {
+                        image?.Dispose();
                     }
                     throw;
                 }

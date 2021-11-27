@@ -15,6 +15,17 @@ namespace Elffy.Effective
             return (short)Interlocked.Increment(ref _tokenFactory);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public short CreateNonZeroToken()
+        {
+        CREATE:
+            var token = CreateToken();
+            if(token == 0) {
+                goto CREATE;
+            }
+            return token;
+        }
+
         public override bool Equals(object? obj) => obj is Int16TokenFactory factory && Equals(factory);
 
         public bool Equals(Int16TokenFactory other) => _tokenFactory == other._tokenFactory;

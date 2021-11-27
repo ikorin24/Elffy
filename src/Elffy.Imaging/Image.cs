@@ -17,16 +17,16 @@ namespace Elffy.Imaging
     {
         private const string Message_EmptyOrDisposed = "The image is empty or already disposed.";
 
-        private readonly ImageObj? _image;
-        private readonly uint _token;
+        private readonly IImageSource? _source;
+        private readonly short _token;
 
-        public int Width => _image?.Width ?? 0;
-        public int Height => _image?.Height ?? 0;
+        public int Width => _source?.Width ?? 0;
+        public int Height => _source?.Height ?? 0;
 
         public bool IsEmpty
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _image is null || _image.Token != _token;
+            get => _source is null || _source.Token != _token;
         }
 
         public static Image Empty => default;
@@ -43,22 +43,22 @@ namespace Elffy.Imaging
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                var image = _image;
-                if(image is null) {
+                var source = _source;
+                if(source is null) {
                     ThrowHelper.ThrowInvalidOp(Message_EmptyOrDisposed);
                 }
-                if((uint)x >= (uint)image.Width) {
+                if((uint)x >= (uint)source.Width) {
                     ThrowHelper.ThrowArgOutOfRange(nameof(x));
                 }
-                if((uint)y >= (uint)image.Height) {
+                if((uint)y >= (uint)source.Height) {
                     ThrowHelper.ThrowArgOutOfRange(nameof(y));
                 }
-                return ref image.Pixels[y * Width + x];
+                return ref source.Pixels[y * Width + x];
             }
         }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
-        [Obsolete("Don't use default constructor.")]
+        [Obsolete("Don't use default constructor.", true)]
         public Image()
         {
             throw new NotSupportedException("Don't use default constructor.");
@@ -89,19 +89,26 @@ namespace Elffy.Imaging
                 this = default;
             }
             else {
-                // TODO: instance pooling
-                _image = new ImageObj(width, height, zeroFill);
-                _token = _image.Token;
+                this = DefaultImageSource.CreateImage(width, height, zeroFill);
             }
+        }
+
+        public Image(IImageSource source, short token)
+        {
+            if(source == null) {
+                ThrowHelper.ThrowNullArg(nameof(source));
+            }
+            _source = source;
+            _token = token;
         }
 
         public override string ToString() => DebugView;
 
         public void Dispose()
         {
-            var image = Interlocked.Exchange(ref Unsafe.AsRef(in _image), null);
-            image?.Dispose();
+            var source = Interlocked.Exchange(ref Unsafe.AsRef(in _source), null);
             Unsafe.AsRef(_token) = 0;
+            source?.Dispose();
         }
 
         /// <summary>Get pointer to the pixels.</summary>
@@ -114,8 +121,8 @@ namespace Elffy.Imaging
             if(IsEmpty) {
                 ThrowHelper.ThrowInvalidOp(Message_EmptyOrDisposed);
             }
-            Debug.Assert(_image is not null);
-            return _image.Pixels;
+            Debug.Assert(_source is not null);
+            return _source.Pixels;
         }
 
         /// <summary>Get span of the pixels.</summary>
@@ -127,8 +134,8 @@ namespace Elffy.Imaging
             if(IsEmpty) {
                 return Span<ColorByte>.Empty;
             }
-            Debug.Assert(_image is not null);
-            return MemoryMarshal.CreateSpan(ref *_image.Pixels, Width * Height);
+            Debug.Assert(_source is not null);
+            return MemoryMarshal.CreateSpan(ref *_source.Pixels, Width * Height);
         }
 
         /// <summary>Get span of the specified row line pixels.</summary>
@@ -137,30 +144,30 @@ namespace Elffy.Imaging
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe Span<ColorByte> GetRowLine(int row)
         {
-            var image = _image;
-            if(image is null || image.Token != _token) {
+            var source = _source;
+            if(source is null || source.Token != _token) {
                 ThrowHelper.ThrowInvalidOp(Message_EmptyOrDisposed);
             }
-            if((uint)row >= (uint)image.Height) {
+            if((uint)row >= (uint)source.Height) {
                 ThrowHelper.ThrowArgOutOfRange(nameof(row));
             }
-            return MemoryMarshal.CreateSpan(ref *(image.Pixels + image.Width * row), image.Width);
+            return MemoryMarshal.CreateSpan(ref *(source.Pixels + source.Width * row), source.Width);
         }
 
         /// <summary>Create deep copy of the image</summary>
         /// <returns>clone image</returns>
         public Image ToImage()
         {
-            var image = _image;
-            if(image is null || image.Token != _token) {
+            var source = _source;
+            if(source is null || source.Token != _token) {
                 return Empty;
             }
-            var clone = new Image(image.Width, image.Height);
+            var clone = new Image(source.Width, source.Height, false);
             try {
-                Debug.Assert(clone._image is not null);
-                var source = MemoryMarshal.CreateSpan(ref *image.Pixels, image.Width * image.Height);
-                var dest = MemoryMarshal.CreateSpan(ref *clone._image.Pixels, clone._image.Width * clone._image.Height);
-                source.CopyTo(dest);
+                Debug.Assert(clone._source is not null);
+                var sourceSpan = MemoryMarshal.CreateSpan(ref *source.Pixels, source.Width * source.Height);
+                var destSpan = MemoryMarshal.CreateSpan(ref *clone._source.Pixels, clone._source.Width * clone._source.Height);
+                sourceSpan.CopyTo(destSpan);
                 return clone;
             }
             catch {
@@ -172,25 +179,25 @@ namespace Elffy.Imaging
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ImageRef AsImageRef()
         {
-            var image = _image;
-            if(image is null || image.Token != _token) {
+            var source = _source;
+            if(source is null || source.Token != _token) {
                 return ImageRef.Empty;
             }
-            Debug.Assert(image.Height > 0 && image.Height > 0);
-            var firstRowLine = MemoryMarshal.CreateSpan(ref *image.Pixels, image.Width);
-            return ImageRef.CreateUnsafe(firstRowLine, image.Height);
+            Debug.Assert(source.Height > 0 && source.Height > 0);
+            var firstRowLine = MemoryMarshal.CreateSpan(ref *source.Pixels, source.Width);
+            return ImageRef.CreateUnsafe(firstRowLine, source.Height);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ReadOnlyImageRef AsReadOnlyImageRef()
         {
-            var image = _image;
-            if(image is null || image.Token != _token) {
+            var source = _source;
+            if(source is null || source.Token != _token) {
                 return ImageRef.Empty;
             }
-            Debug.Assert(image.Height > 0 && image.Height > 0);
-            var firstRowLine = MemoryMarshal.CreateSpan(ref *image.Pixels, image.Width);
-            return ReadOnlyImageRef.CreateUnsafe(firstRowLine, image.Height);
+            Debug.Assert(source.Height > 0 && source.Height > 0);
+            var firstRowLine = MemoryMarshal.CreateSpan(ref *source.Pixels, source.Width);
+            return ReadOnlyImageRef.CreateUnsafe(firstRowLine, source.Height);
         }
 
         public static Image FromStream(Stream stream, string fileExtension)
@@ -205,11 +212,17 @@ namespace Elffy.Imaging
 
         public static Image FromStream(Stream stream, ImageType type)
         {
+            var source = LoadToImageSource(stream, type);
+            return new Image(source, source.Token);
+        }
+
+        public static IImageSource LoadToImageSource(Stream stream, ImageType type)
+        {
             if(type is ImageType.Png or ImageType.Jpg or ImageType.Bmp) {
-                return ParseStreamToImage(stream);
+                return ParseToImageSouce(stream);
             }
             else if(type == ImageType.Tga) {
-                return TgaParser.Parse(stream);
+                return TgaParser.ParseToImageSource(stream);
             }
             else {
                 throw new NotSupportedException($"Not supported type : {type}");
@@ -242,9 +255,9 @@ namespace Elffy.Imaging
 
         public override bool Equals(object? obj) => obj is Image image && Equals(image);
 
-        public bool Equals(Image other) => _image == other._image && _token == other._token;
+        public bool Equals(Image other) => _source == other._source && _token == other._token;
 
-        public override int GetHashCode() => HashCode.Combine(_image, _token);
+        public override int GetHashCode() => HashCode.Combine(_source, _token);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(Image left, Image right) => left.Equals(right);
@@ -290,58 +303,61 @@ namespace Elffy.Imaging
             }
         }
 
-        [DebuggerDisplay("{DebugView,nq}")]
-        private unsafe sealed class ImageObj : IDisposable
+        private static IImageSource ParseToImageSouce(Stream stream)
         {
-            private static uint _tokenFactory;
-
-            private int _width;
-            private int _height;
-            private ColorByte* _pixels;
-            private uint _token;
-
-            public int Width => _width;
-            public int Height => _height;
-            public ColorByte* Pixels => _pixels;
-            public uint Token => _token;
-
-            [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-            private string DebugView => $"(Token = {_token})";
-
-            public ImageObj(int width, int height, bool zeroFill)
-            {
-                _width = width;
-                _height = height;
-                var len = width * height;
-                _pixels = (ColorByte*)Marshal.AllocHGlobal(sizeof(ColorByte) * len);
-                if(zeroFill) {
-                    new Span<ColorByte>(_pixels, len).Clear();
-                }
-
-                do {
-                    _token = (uint)Interlocked.Increment(ref Unsafe.As<uint, int>(ref _tokenFactory));
-                }
-                while(_token == 0);
+            var skBitmap = ParseToSKBitmap(stream);
+            try {
+                return new SKBitmapImageSouce(skBitmap);
+            }
+            catch {
+                skBitmap.Dispose();
+                throw;
             }
 
-            ~ImageObj() => Dispose(false);
+            static SKBitmap ParseToSKBitmap(Stream stream)
+            {
+                using var buf = stream.ReadToEnd(out var len);
+                using var skData = SKData.Create(buf.Ptr, len);
+                using var codec = SKCodec.Create(skData);
+                var info = codec.Info;
+                info.ColorType = SKColorType.Rgba8888;
+                info.AlphaType = SKAlphaType.Unpremul;
+                var skBitmap = SKBitmap.Decode(codec, info);
+                Debug.Assert(skBitmap.ColorType == SKColorType.Rgba8888);
+                return skBitmap;
+            }
+        }
+
+        private unsafe sealed class SKBitmapImageSouce : IImageSource
+        {
+            private SKBitmap? _skBitmap;
+
+            public int Width => _skBitmap?.Width ?? 0;
+            public int Height => _skBitmap?.Height ?? 0;
+            public ColorByte* Pixels => (ColorByte*)(_skBitmap?.GetPixels() ?? IntPtr.Zero);
+            public short Token => 0;
+
+            public SKBitmapImageSouce(SKBitmap skBitmap)
+            {
+                if(skBitmap is null) { ThrowHelper.ThrowNullArg(nameof(skBitmap)); }
+                if(skBitmap.ColorType != SKColorType.Rgba8888) { throw new NotSupportedException("ColorType must be Rgba8888."); }
+                _skBitmap = skBitmap;
+            }
 
             public void Dispose()
             {
-                GC.SuppressFinalize(this);
-                Dispose(true);
+                _skBitmap?.Dispose();
+                _skBitmap = null;
             }
 
-            private void Dispose(bool disposing)
+            public Span<ColorByte> GetPixels()
             {
-                Marshal.FreeHGlobal((IntPtr)_pixels);
-                _pixels = null;
-                _width = 0;
-                _height = 0;
-                _token = 0;
+                var skBitmap = _skBitmap;
+                if(skBitmap == null) {
+                    return Span<ColorByte>.Empty;
+                }
+                return new Span<ColorByte>((void*)skBitmap.GetPixels(), skBitmap.Width * skBitmap.Height);
             }
-
-            public override string ToString() => DebugView;
         }
     }
 }

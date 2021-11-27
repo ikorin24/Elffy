@@ -23,22 +23,28 @@ namespace Elffy.Imaging
 
         public static Image Parse(Stream stream)
         {
+            var source = ParseToImageSource(stream);
+            return new Image(source, source.Token);
+        }
+
+        public unsafe static IImageSource ParseToImageSource(Stream stream)
+        {
             if(stream is null) {
                 ThrowHelper.ThrowNullArg(nameof(stream));
             }
 
             using var reader = new ZBinaryReader(stream!);
             ParseHeader(reader, out var header);
-            var image = new Image(header.Width, header.Height);
+            var imageSource = DefaultImageSource.CreateSource(header.Width, header.Height, true);
             try {
                 ParseID(reader, header);
                 ParseColorMap(reader, header);
-                ParseData(reader, header, image.GetPixels());
+                ParseData(reader, header, imageSource.GetPixels());
                 ParseFooter(reader, header);
-                return image;
+                return imageSource;
             }
             catch {
-                image.Dispose();
+                imageSource.Dispose();
                 throw;
             }
         }
