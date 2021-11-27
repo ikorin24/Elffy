@@ -91,14 +91,14 @@ namespace Elffy
                 })
                 .ToArray();
 
-            var source = GeneratorSigniture + CreateSource(structNS, structName, fields);
+            var source = CreateSource(structNS, structName, fields);
             context.AddSource(structName, SourceText.From(source, Encoding.UTF8));
         }
 
         private static string CreateSource(string vertexNamespace, string vertexName, VertexFieldInfo[] fields)
         {
             var sb = new StringBuilder();
-            sb.Append(GeneratorUtil.GetGeneratorSigniture(typeof(CustomVertexGenerator))).Append(
+            sb.Append(GeneratorSigniture).Append(
 @$"using {nameof(Elffy)};
 using System;
 using System.ComponentModel;
