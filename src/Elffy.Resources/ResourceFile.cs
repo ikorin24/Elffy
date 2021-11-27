@@ -1,12 +1,14 @@
 ﻿#nullable enable
 using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.CompilerServices;
 
 namespace Elffy
 {
+    [DebuggerDisplay("ResourceFile: {Name}")]
     public readonly struct ResourceFile : IEquatable<ResourceFile>
     {
         private readonly IResourceLoader? _loader;
