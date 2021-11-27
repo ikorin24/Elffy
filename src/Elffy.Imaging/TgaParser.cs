@@ -41,21 +41,6 @@ namespace Elffy.Imaging
                 image.Dispose();
                 throw;
             }
-
-
-            //var bitmap = new Bitmap(header.Width, header.Height, PixelFormat.Format32bppArgb);
-            //using var pixels = bitmap.GetPixels(ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
-            //try {
-            //    ParseID(reader, header);
-            //    ParseColorMap(reader, header);
-            //    ParseData(reader, header, pixels.AsSpan());
-            //    ParseFooter(reader, header);
-            //}
-            //catch(Exception ex) {
-            //    Debugger.Log(0, "", $"[ERROR] Failed loading tga image pixels. {ex.GetType().Name}");
-            //    MemoryMarshal.Cast<byte, uint>(pixels.AsSpan()).Fill(0xffff0000);   // fill pixels with white
-            //}
-            //return bitmap;
         }
 
         private static unsafe void ParseHeader(in ZBinaryReader reader, out TgaHeader header)

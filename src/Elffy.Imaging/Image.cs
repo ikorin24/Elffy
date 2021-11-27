@@ -8,6 +8,7 @@ using System.Diagnostics;
 using Elffy.Imaging.Internal;
 using Elffy.Effective;
 using SkiaSharp;
+using System.ComponentModel;
 
 namespace Elffy.Imaging
 {
@@ -54,6 +55,13 @@ namespace Elffy.Imaging
                 }
                 return ref image.Pixels[y * Width + x];
             }
+        }
+
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("Don't use default constructor.")]
+        public Image()
+        {
+            throw new NotSupportedException("Don't use default constructor.");
         }
 
         /// <summary>Create a new image with specified size, which pixels are initialized as (0, 0, 0, 0).</summary>
@@ -197,15 +205,15 @@ namespace Elffy.Imaging
 
         public static Image FromStream(Stream stream, ImageType type)
         {
-            return type switch
-            {
-                //ImageType.Png => PngParser.Parse(stream),     // TODO: can not parse some png well.
-                ImageType.Png => ImageParserTemporary.Parse(stream),
-                ImageType.Tga => TgaParser.Parse(stream),
-                ImageType.Jpg => ImageParserTemporary.Parse(stream),    // TODO: jpg parser
-                ImageType.Bmp => ImageParserTemporary.Parse(stream),    // TODO: bmp parser
-                _ => throw new NotSupportedException($"Not supported type : {type}"),
-            };
+            if(type is ImageType.Png or ImageType.Jpg or ImageType.Bmp) {
+                return ParseStreamToImage(stream);
+            }
+            else if(type == ImageType.Tga) {
+                return TgaParser.Parse(stream);
+            }
+            else {
+                throw new NotSupportedException($"Not supported type : {type}");
+            }
         }
 
         public static ImageType GetTypeFromExt(ReadOnlySpan<char> ext)
@@ -249,6 +257,38 @@ namespace Elffy.Imaging
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator ReadOnlyImageRef(Image image) => image.AsReadOnlyImageRef();
+
+        private static Image ParseStreamToImage(Stream stream)
+        {
+            using var skBitmap = ParseToSKBitmap(stream);
+            if(skBitmap.ColorType != SKColorType.Rgba8888) {
+                throw new NotSupportedException();
+            }
+            var image = new Image(skBitmap.Width, skBitmap.Height, false);
+            try {
+                skBitmap.GetPixelSpan()
+                      .MarshalCast<byte, ColorByte>()
+                      .CopyTo(image.GetPixels());
+                return image;
+            }
+            catch {
+                image.Dispose();
+                throw;
+            }
+
+            static SKBitmap ParseToSKBitmap(Stream stream)
+            {
+                using var buf = stream.ReadToEnd(out var len);
+                using var skData = SKData.Create(buf.Ptr, len);
+                using var codec = SKCodec.Create(skData);
+                var info = codec.Info;
+                info.ColorType = SKColorType.Rgba8888;
+                info.AlphaType = SKAlphaType.Unpremul;
+                var skBitmap = SKBitmap.Decode(codec, info);
+                Debug.Assert(skBitmap.ColorType == SKColorType.Rgba8888);
+                return skBitmap;
+            }
+        }
 
         [DebuggerDisplay("{DebugView,nq}")]
         private unsafe sealed class ImageObj : IDisposable
@@ -302,42 +342,6 @@ namespace Elffy.Imaging
             }
 
             public override string ToString() => DebugView;
-        }
-    }
-}
-
-namespace Elffy.Imaging.Internal
-{
-    internal unsafe static class ImageParserTemporary
-    {
-        // I want to parse 'jpg' and 'bmp' by my own pure C# parser in the future.
-
-        public static Image Parse(Stream stream)
-        {
-            using var buf = stream.ReadToEnd(out var len);
-            using var skBitmap = SKBitmap.Decode(buf.AsSpan(0, len));
-            if(skBitmap.ColorType != SKColorType.Rgba8888) {
-                using var tmp = skBitmap.Copy(SKColorType.Rgba8888);
-                return CreateImage(tmp);
-            }
-            else {
-                return CreateImage(skBitmap);
-            }
-
-            static Image CreateImage(SKBitmap bitmap)
-            {
-                var image = new Image(bitmap.Width, bitmap.Height, false);
-                try {
-                    bitmap.GetPixelSpan()
-                          .MarshalCast<byte, ColorByte>()
-                          .CopyTo(image.GetPixels());
-                    return image;
-                }
-                catch {
-                    image.Dispose();
-                    throw;
-                }
-            }
         }
     }
 }
