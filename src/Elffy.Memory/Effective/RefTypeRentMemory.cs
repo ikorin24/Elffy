@@ -25,6 +25,8 @@ namespace Elffy.Effective
         private readonly int _start;
         private readonly int _length;
 
+        public static RefTypeRentMemory<T> Empty => default;
+
         public int Length
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
