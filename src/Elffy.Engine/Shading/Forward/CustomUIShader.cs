@@ -4,7 +4,7 @@ using Elffy.UI;
 
 namespace Elffy.Shading.Forward
 {
-    public sealed class CustonUIShader : UIShaderSource
+    public sealed class CustomUIShader : UIShaderSource
     {
         private ShaderTextureSelector<PhongShader>? _textureSelector;
         private Vector4 _cornerRadius;
@@ -21,7 +21,7 @@ namespace Elffy.Shading.Forward
 
         public ref Vector4 CornerRadius => ref _cornerRadius;
 
-        public CustonUIShader(ShaderTextureSelector<PhongShader>? textureSelector = null)
+        public CustomUIShader(ShaderTextureSelector<PhongShader>? textureSelector = null)
         {
 
         }
@@ -48,7 +48,7 @@ namespace Elffy.Shading.Forward
                 var uvScale = size / (Vector2)texture.Size;
                 uniform.Send("uvScale", uvScale);
             }
-            uniform.Send("back", target is Button button && button.IsKeyPressed ? Color4.Aquamarine : target.IsMouseOver ? Color4.MediumAquamarine : target.Background);
+            uniform.Send("back", target is Button button && button.IsKeyPressed ? Color4.MediumAquamarine : target.IsMouseOver ? Color4.Aquamarine : target.Background);
             uniform.Send("_size", size);
         }
 

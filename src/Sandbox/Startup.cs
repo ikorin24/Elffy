@@ -99,7 +99,7 @@ namespace Sandbox
                     Width = 120,
                     Height = 45,
                     Background = new Color4(0.8f),
-                    Shader = new CustonUIShader
+                    Shader = new CustomUIShader
                     {
                         CornerRadius = new Vector4(4),
                     },
