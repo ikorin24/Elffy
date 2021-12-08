@@ -34,7 +34,7 @@ namespace Sandbox
                 }
              
              */
-            //CreateTestUI(uiLayer);
+            CreateTestUI(uiLayer);
             var timings = screen.TimingPoints;
             uiRoot.Background = Color4.Black;
             try {
@@ -67,19 +67,46 @@ namespace Sandbox
             var uiRoot = uiLayer.UIRoot;
 
             const int ColumnCount = 6;
-            var gridLength = LayoutLength.Proportion(1f / ColumnCount);
+            var gridLength = LayoutLength.Length(200);
             var grid = new Grid();
-            grid.ColumnDefinition(Enumerable.Repeat(gridLength, ColumnCount).ToArray());
+            grid.ColumnDefinition(stackalloc LayoutLength[2]
+            {
+                LayoutLength.Length(160),
+                LayoutLength.Proportion(1f),
+            });
             uiRoot.Children.Add(grid);
 
+            var leftPanel = new Grid()
+            {
+                //Background = Color3.Red.ToColor4(0.5f),
+                //Padding = new LayoutThickness(5, 5, 5, 5),
+            };
+            leftPanel.SetGridColumn(grid, 0);
+            leftPanel.RowDefinition(stackalloc LayoutLength[ColumnCount]
+            {
+                LayoutLength.Length(60),
+                LayoutLength.Length(60),
+                LayoutLength.Length(60),
+                LayoutLength.Length(60),
+                LayoutLength.Length(60),
+                LayoutLength.Length(60),
+            });
+            grid.Children.Add(leftPanel);   // TODO: これ忘れると Assert 失敗するの直す
+
             for(int i = 0; i < ColumnCount; i++) {
-                var button = new Button();
-                button.SetGridColumn(grid, i);
-                button.Width = 100;
-                button.Height = 100;
-                button.Background = Color4.Red;
+                var button = new Button
+                {
+                    Width = 120,
+                    Height = 45,
+                    Background = new Color4(0.8f),
+                    Shader = new CustonUIShader
+                    {
+                        CornerRadius = new Vector4(4),
+                    },
+                };
+                button.SetGridRow(leftPanel, i);
                 button.KeyUp += _ => Debug.WriteLine($"Clicked");
-                grid.Children.Add(button);
+                leftPanel.Children.Add(button);
             }
         }
 
