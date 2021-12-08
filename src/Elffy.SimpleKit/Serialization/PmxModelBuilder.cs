@@ -27,7 +27,8 @@ namespace Elffy.Serialization
         {
             ResourceFile.ThrowArgumentExceptionIfInvalid(file);
             var obj = new ModelState(file, cancellationToken);
-            return Model3D.Create(obj, _build, _render);
+            //return Model3D.Create(obj, _build, _render);
+            return Model3D.Create(obj, _build);
         }
 
         private static void RenderModel(Model3D model3D, in Matrix4 model, in Matrix4 view, in Matrix4 projection, Model3DDrawElementsDelegate drawElements)
@@ -66,7 +67,62 @@ namespace Elffy.Serialization
 
             // [NOTE] Though pmx is read only, overwrite pmx data.
             PmxModelLoadHelper.ReverseTrianglePolygon(pmx.SurfaceList.AsSpan().AsWritable());
-            await LoadToModel(pmx, model, load, obj);
+            //await LoadToModel(pmx, model, load, obj);
+            await LoadToModel_ArrayTextureVer(pmx, model, load, obj);
+        }
+
+        private static async UniTask LoadToModel_ArrayTextureVer(PMXObject pmx, Model3D model, Model3DLoadMeshDelegate load, ModelState obj)
+        {
+            // ------------------------------
+            //      ↓ thread pool
+            Debug.Assert(Engine.IsThreadMain == false);
+            ValueTypeRentMemory<int> vertexCountArray = default;
+            ValueTypeRentMemory<int> textureIndexArray = default;
+            try {
+                var d = await UniTask.WhenAll(
+                        BuildVertices(pmx),
+                        BuildParts(pmx),
+                        BuildBones(pmx),
+                        LoadTextureImages(pmx, obj.File));
+                (vertexCountArray, textureIndexArray) = d.Item2;
+                using var modelData = new ModelData(d.Item1, d.Item3, d.Item4);
+
+                // create skeleton
+                model.TryGetHostScreen(out var screen);
+                Debug.Assert(screen is not null);
+
+                // Don't make the followings parallel like UniTask.WhenAll.
+                // ModelData will be disposed when an exception is throw, but another parallel code could not know that.
+                await CreateArrayTexture(model, modelData.Images.AsSpan(), screen.TimingPoints.Update, obj.CancellationToken);
+                await UniTask.SwitchToThreadPool();
+                var skeleton = new HumanoidSkeleton();
+                model.AddComponent(skeleton);
+                await skeleton.LoadAsync(modelData.Bones.AsSpanLike(), screen.TimingPoints, obj.CancellationToken);
+
+                //      ↑ thread pool
+                // ------------------------------
+                await screen.TimingPoints.Update.NextOrNow(obj.CancellationToken);
+                // ------------------------------
+                //      ↓ main thread
+                Debug.Assert(Engine.CurrentContext == screen);
+                Debug.Assert(model.LifeState == LifeState.Activating);
+
+                // TODO: shader for arraytexture
+                // set shader
+                //model.Shader = PmxModelShader.Instance;
+
+                // load vertices and indices
+                load.Invoke(modelData.Vertices.AsSpan().AsReadOnly(), pmx.SurfaceList.AsSpan().MarshalCast<Surface, int>());
+
+                //      ↑ main thread
+                // ------------------------------
+            }
+            catch {
+                // I don't care about the thread
+                vertexCountArray.Dispose();
+                textureIndexArray.Dispose();
+                throw;
+            }
         }
 
         private static async UniTask LoadToModel(PMXObject pmx, Model3D model, Model3DLoadMeshDelegate load, ModelState obj)
@@ -277,6 +333,55 @@ namespace Elffy.Serialization
             }
         }
 
+        private static UniTask<ArrayTexture> CreateArrayTexture(Model3D model, ReadOnlySpan<IImageSource?> images, FrameTimingPoint timingPoint, CancellationToken ct)
+        {
+            var arrayTexture = new ArrayTexture(TextureConfig.BilinearRepeat);
+            model.AddComponent(arrayTexture);
+            if(images.IsEmpty) {
+                return UniTask.FromResult(arrayTexture);
+            }
+            // TODO: all images must be same size;
+            var width = images[0].Width;
+            var height = images[0].Height;
+            var count = 0;
+            var buffer = new ValueTypeRentMemory<ColorByte>(width * height * images.Length, false);
+            try {
+                foreach(var image in images) {
+                    if(image == null) { continue; }
+                    ct.ThrowIfCancellationRequested();
+                    image.GetPixels().CopyTo(buffer.AsSpan(count * width * height));
+                    count++;
+                }
+            }
+            catch {
+                buffer.Dispose();
+                throw;
+            }
+            return Foo(arrayTexture, new Vector3i(width, height, count), buffer, timingPoint, ct);
+
+            static async UniTask<ArrayTexture> Foo(ArrayTexture arrayTexture, Vector3i size, ValueTypeRentMemory<ColorByte> buffer, FrameTimingPoint timingPoint, CancellationToken ct)
+            {
+                try {
+                    await timingPoint.Next(ct);
+                }
+                catch {
+                    buffer.Dispose();
+                    throw;
+                }
+                return Bar(arrayTexture, size, buffer);
+
+                static unsafe ArrayTexture Bar(ArrayTexture arrayTexture, Vector3i size, ValueTypeRentMemory<ColorByte> buffer)
+                {
+                    using(buffer) {
+                        fixed(ColorByte* ptr = buffer.AsSpan()) {
+                            arrayTexture.Load(new(size.X, size.Y), size.Z, ptr);
+                        }
+                        return arrayTexture;
+                    }
+                }
+            }
+        }
+
         private static PooledArray<char> GetTexturePath(ReadOnlySpan<char> dir, ReadOnlyRawString name, out Span<char> texturePath, out ReadOnlySpan<char> ext)
         {
             var pooledArray = new PooledArray<char>(dir.Length + 1 + name.GetCharCount());
@@ -293,6 +398,39 @@ namespace Elffy.Serialization
             catch {
                 pooledArray.Dispose();
                 throw;
+            }
+        }
+
+        private struct ModelData : IDisposable
+        {
+            public UnsafeRawArray<RigVertex> Vertices;
+            //public ValueTypeRentMemory<int> VertexCountArray;
+            //public ValueTypeRentMemory<int> TextureIndexArray;
+            public UnsafeRawArray<Components.Bone> Bones;
+            public RefTypeRentMemory<IImageSource?> Images;
+
+            public ModelData(
+                UnsafeRawArray<RigVertex> vertices,
+                //(ValueTypeRentMemory<int> VertexCountArray, ValueTypeRentMemory<int> TextureIndexArray) aa,
+                UnsafeRawArray<Components.Bone> bones,
+                RefTypeRentMemory<IImageSource?> images)
+            {
+                Vertices = vertices;
+                //(VertexCountArray, TextureIndexArray) = aa;
+                Bones = bones;
+                Images = images;
+            }
+
+            public void Dispose()
+            {
+                Vertices.Dispose();
+                //VertexCountArray.Dispose();
+                //TextureIndexArray.Dispose();
+                Bones.Dispose();
+                foreach(var image in Images.AsSpan()) {
+                    image?.Dispose();
+                }
+                Images.Dispose();
             }
         }
     }

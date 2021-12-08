@@ -46,6 +46,15 @@ namespace Elffy.Components
             WrapModeY = TextureWrapMode.ClampToEdge,
         };
 
+        public static readonly TextureConfig BilinearRepeat = new()
+        {
+            ExpansionMode = TextureExpansionMode.Bilinear,
+            ShrinkMode = TextureShrinkMode.Bilinear,
+            MipmapMode = TextureMipmapMode.Bilinear,
+            WrapModeX = TextureWrapMode.Repeat,
+            WrapModeY = TextureWrapMode.Repeat,
+        };
+
         public override bool Equals(object? obj) => obj is TextureConfig config && Equals(config);
 
         public bool Equals(TextureConfig other)

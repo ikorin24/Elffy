@@ -72,6 +72,12 @@ namespace Elffy.Graphics.OpenGL
             GL.BindTexture(TextureTarget.Texture1D, to._texture);
         }
 
+        public static void Bind2DArray(in TextureObject to)
+        {
+            GLAssert.EnsureContext();
+            GL.BindTexture(TextureTarget.Texture2DArray, to._texture);
+        }
+
         /// <summary>Call glBindTexture with texture2D as 0</summary>
         public static void Unbind2D()
         {
@@ -82,6 +88,24 @@ namespace Elffy.Graphics.OpenGL
         public static void Unbind1D()
         {
             Bind1D(Empty);
+        }
+
+        public static void Unbind2DArray()
+        {
+            Bind2DArray(Empty);
+        }
+
+        [Obsolete("Don't use yet", true)]
+        public static unsafe void Image2DArray(in Image3D image3D, int level)
+        {
+            GL.TexImage3D(TextureTarget.Texture2DArray, level, PixelInternalFormat.Rgba, image3D.Width, image3D.Height, image3D.Depth,
+                          0, TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)image3D.GetPtr());
+        }
+
+        public static unsafe void Image2DArray(in Vector2i size, int depth, ColorByte* pixels, int level)
+        {
+            GL.TexImage3D(TextureTarget.Texture2DArray, level, PixelInternalFormat.Rgba, size.X, size.Y, depth,
+                          0, TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
         }
 
         /// <summary>Call glTexImge2D</summary>
@@ -206,6 +230,35 @@ namespace Elffy.Graphics.OpenGL
         public static void GenerateMipmap2D()
         {
             GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+        }
+
+        /// <summary>Call glTexParameter with texture2Darray and texture min filter</summary>
+        /// <param name="shrinkMode">shrink mode</param>
+        /// <param name="mipmapMode">mipmap mode</param>
+        public static void Parameter2DArrayMinFilter(TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode)
+        {
+            GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureMinFilter, GetMinParameter(shrinkMode, mipmapMode));
+        }
+
+        /// <summary>Call glTexParameter with texture2Darray and texture mag filter</summary>
+        /// <param name="expansionMode">expantion mode</param>
+        public static void Parameter2DArrayMagFilter(TextureExpansionMode expansionMode)
+        {
+            GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureMagFilter, GetMagParameter(expansionMode));
+        }
+
+        /// <summary>Call glTexparameter with texture2Darray and texture wrap s</summary>
+        /// <param name="wrapMode">texture wrap mode</param>
+        public static void Parameter2DArrayWrapS(TextureWrapMode wrapMode)
+        {
+            GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureWrapS, GetWrapMode(wrapMode));
+        }
+
+        /// <summary>Call glTexparameter with texture2Darray and texture wrap t</summary>
+        /// <param name="wrapMode">texture wrap mode</param>
+        public static void Parameter2DArrayWrapT(TextureWrapMode wrapMode)
+        {
+            GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureWrapT, GetWrapMode(wrapMode));
         }
 
         /// <summary>Call glTexImage1D</summary>
