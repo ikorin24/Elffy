@@ -58,7 +58,7 @@ namespace Elffy.Serialization
             // ModelData will be disposed when an exception is throw, but another parallel code could not know that.
             using var vertices = GetVertices(pmx);
             using var bones = GetBones(pmx);
-            await BuildTexture(pmx, obj.File, model, vertices);
+            await BuildTexture(pmx, obj.File, model, vertices, obj.CancellationToken);
             await UniTask.SwitchToThreadPool();
 
             var skeleton = new HumanoidSkeleton();
@@ -126,7 +126,7 @@ namespace Elffy.Serialization
             return bones;
         }
 
-        private static UniTask BuildTexture(PMXObject pmx, ResourceFile pmxFile, Model3D model, UnsafeRawArray<SkinnedVertex> vertices)
+        private static UniTask BuildTexture(PMXObject pmx, ResourceFile pmxFile, Model3D model, UnsafeRawArray<SkinnedVertex> vertices, CancellationToken ct)
         {
             var arrayTexture = new ArrayTexture(TextureConfig.BilinearRepeat);
             model.AddComponent(arrayTexture);
@@ -207,7 +207,7 @@ namespace Elffy.Serialization
                 buffer.Dispose();
                 throw;
             }
-            return BackToMainThread(arrayTexture, new Vector3i(size.X, size.Y, count), buffer, model.Screen!.TimingPoints.Update, CancellationToken.None);  // TODO: CancellationToken
+            return BackToMainThread(arrayTexture, new Vector3i(size.X, size.Y, count), buffer, model.Screen!.TimingPoints.Update, ct);
 
             static async UniTask BackToMainThread(ArrayTexture arrayTexture, Vector3i size, ValueTypeRentMemory<ColorByte> buffer, FrameTimingPoint timingPoint, CancellationToken ct)
             {
