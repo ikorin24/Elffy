@@ -48,6 +48,18 @@ namespace Elffy.Components
             ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
         }
 
+        public void LoadAsPowerOfTwo(ReadOnlySpan<Vector4> pixels)
+        {
+            _impl.LoadAsPOT(pixels.MarshalCast<Vector4, Color4>());
+            ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
+        }
+
+        public void LoadAsPowerOfTwo(ReadOnlySpan<Color4> pixels)
+        {
+            _impl.LoadAsPOT(pixels);
+            ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
+        }
+
         public void Update(ReadOnlySpan<Vector4> pixels, int xOffset) => _impl.Update(pixels.MarshalCast<Vector4, Color4>(), xOffset);
 
         public void Update(ReadOnlySpan<Color4> pixels, int xOffset) => _impl.Update(pixels, xOffset);
