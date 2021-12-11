@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 
 namespace Elffy.Components
 {
+    [Obsolete("obsolete")]
     [DebuggerDisplay("Ambient=({Ambient.R}, {Ambient.G}, {Ambient.B}, {Ambient.A}), Diffuse=({Diffuse.R}, {Diffuse.G}, {Diffuse.B}, {Diffuse.A}), Specular=({Specular.R}, {Specular.G}, {Specular.B}, {Specular.A}), Shininess={Shininess}")]
     public sealed class LambertMaterial : IComponent
     {

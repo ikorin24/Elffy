@@ -23,6 +23,7 @@ namespace Elffy.Shading.Forward
             definition.Map(vertexType, "vUV", VertexSpecialField.UV);
             definition.Map(vertexType, "bone", VertexSpecialField.Bone);
             definition.Map(vertexType, "weight", VertexSpecialField.Weight);
+            definition.Map(vertexType, "vtexIndex", VertexSpecialField.TextureIndex);
         }
 
         protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
@@ -43,9 +44,7 @@ namespace Elffy.Shading.Forward
 
             var skeleton = target.GetComponent<HumanoidSkeleton>();
             uniform.SendTexture1D("_boneTrans", skeleton.TranslationData, TextureUnitNumber.Unit0);
-            var parts = target.GetComponent<PmxModelParts>();
-            ref readonly var texture = ref parts.Textures[parts.TextureIndexArray[parts.Current]];
-            uniform.SendTexture2D("tex_sampler", texture, TextureUnitNumber.Unit1);
+            uniform.SendTexture2DArray("_texArrSampler", target.GetComponent<ArrayTexture>().TextureObject, TextureUnitNumber.Unit1);
         }
 
         private const string VertSource =
@@ -56,9 +55,11 @@ in vec3 vNormal;
 in vec2 vUV;
 in ivec4 bone;
 in vec4 weight;
+in int vtexIndex;
 out vec4 Pos;
 out vec3 Normal;
 out vec2 UV;
+flat out float texIndex;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -83,15 +84,18 @@ void main()
     gl_Position = Pos;
     Normal = transpose(inverse(mat3(skinning))) * vNormal;
     UV = vUV;
+    texIndex = vtexIndex;
 }
 ";
 
         private const string FragSource =
 @"#version 410
+#extension GL_NV_texture_array : enable
 
 in vec2 UV;
 in vec4 Pos;
 in vec3 Normal;
+flat in float texIndex;
 out vec4 fragColor;
 
 uniform mat4 model;
@@ -106,7 +110,7 @@ uniform vec3 md;
 uniform vec3 ms;
 uniform float shininess;
 
-uniform sampler2D tex_sampler;
+uniform sampler2DArray _texArrSampler;
 
 void main()
 {
@@ -119,8 +123,7 @@ void main()
     vec3 R = reflect(-L, N);
     vec3 V = normalize(-posView);
     vec3 color = (la * ma) + (ld * md * dot(N, L)) + (ls * ms * max(pow(max(0.0, dot(R, V)), shininess), 0.0));
-
-    fragColor = vec4(color, 1.0) * texture(tex_sampler, UV);
+    fragColor = vec4(color, 1.0) * texture2DArray(_texArrSampler, vec3(UV, texIndex));
 }
 ";
     }

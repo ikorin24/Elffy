@@ -11,6 +11,7 @@ using Elffy.Effective;
 using Elffy.UI;
 using System.Diagnostics;
 using System.Linq;
+using Elffy.Imaging;
 
 namespace Sandbox
 {
@@ -131,11 +132,25 @@ namespace Sandbox
             return dice.Activate(layer);
         }
 
-        private static UniTask<Model3D> CreateModel2(WorldLayer layer)
+        private static async UniTask<Model3D> CreateModel2(WorldLayer layer)
         {
             var model = Resources.Sandbox["Alicia/Alicia_solid.pmx"].CreatePmxModel();
             model.Scale = new Vector3(0.3f);
-            return model.Activate(layer);
+            await model.Activate(layer);
+            model.StartCoroutine(async (c, model) =>
+            {
+                while(c.CanRun) {
+                    var keyborad = c.Screen.Keyboard;
+                    if(keyborad.IsPress(Elffy.InputSystem.Keys.Down)) {
+                        model.Position.Y -= 0.1f;
+                    }
+                    if(keyborad.IsPress(Elffy.InputSystem.Keys.Up)) {
+                        model.Position.Y += 0.1f;
+                    }
+                    await c.Update.Next();
+                }
+            }).Forget();
+            return model;
         }
 
         private static UniTask<SkySphere> CreateSky(WorldLayer layer)

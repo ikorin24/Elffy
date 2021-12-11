@@ -18,6 +18,8 @@ namespace Elffy.Components
 
         public bool IsEmpty => _to.IsEmpty;
 
+        public TextureObject TextureObject => _to;
+
         public bool AutoDisposeOnDetached => _core.AutoDisposeOnDetached;
 
         public int Width => _size.X;
@@ -37,7 +39,17 @@ namespace Elffy.Components
 
         ~ArrayTexture() => Dispose(false);
 
-        public unsafe void Load(in Vector2i size, int count, ColorByte* data)
+        public unsafe void Load(Vector2i size, int count, ReadOnlySpan<ColorByte> data)
+        {
+            if(size.X * size.Y * count != data.Length) {
+                throw new ArgumentException($"Length of data is invalid, which must be size.X * size.Y * count.");
+            }
+            fixed(ColorByte* ptr = data) {
+                Load(size, count, ptr);
+            }
+        }
+
+        public unsafe void Load(Vector2i size, int count, ColorByte* data)
         {
             _to = TextureObject.Create();
             TextureObject.Bind2DArray(_to);
@@ -49,10 +61,9 @@ namespace Elffy.Components
 
             TextureObject.Image2DArray(size, count, data, 0);
 
-            // TODO: How do I create mipmap of texture2d array ?
-            //if(MipmapMode != TextureMipmapMode.None) {
-            //    TextureObject.GenerateMipmap2DArray();
-            //}
+            if(_config.MipmapMode != TextureMipmapMode.None) {
+                TextureObject.GenerateMipmap2DArray();
+            }
             TextureObject.Unbind2DArray();
             _size = size;
             _count = count;

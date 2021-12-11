@@ -261,6 +261,12 @@ namespace Elffy.Graphics.OpenGL
             GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureWrapT, GetWrapMode(wrapMode));
         }
 
+        /// <summary>Call glGenerateMipmap with texture2D</summary>
+        public static void GenerateMipmap2DArray()
+        {
+            GL.GenerateMipmap(GenerateMipmapTarget.Texture2DArray);
+        }
+
         /// <summary>Call glTexImage1D</summary>
         /// <param name="width">texture width</param>
         /// <param name="pixels">texture to load</param>

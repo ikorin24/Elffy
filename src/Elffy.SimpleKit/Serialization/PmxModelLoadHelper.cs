@@ -27,7 +27,7 @@ namespace Elffy.Serialization
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vertex ToVertex(this MMD.Vertex v) => new Vertex(ToVector3(v.Position), ToVector3(v.Normal), ToVector2(v.UV));
 
-        public static RigVertex ToRigVertex(in this MMD.Vertex v)
+        public static SkinnedVertex ToRigVertex(in this MMD.Vertex v)
         {
             // BoneIndex が (A, 0, 0, 0) の時 (A > 0) は
             // Weight が (0, 0, 0, 0) になっているので (1, 0, 0, 0) にする
@@ -43,11 +43,12 @@ namespace Elffy.Serialization
                 weight = new Vector4(v.Weight1, v.Weight2, v.Weight3, v.Weight4);
             }
 
-            return new RigVertex(v.Position.ToVector3(),
+            return new SkinnedVertex(v.Position.ToVector3(),
                                  v.Normal.ToVector3(),
                                  v.UV.AsVector2(),
                                  new Vector4i(v.BoneIndex1, v.BoneIndex2, v.BoneIndex3, v.BoneIndex4),
-                                 weight);
+                                 weight,
+                                 0);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
