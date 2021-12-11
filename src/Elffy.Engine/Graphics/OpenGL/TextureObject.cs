@@ -95,13 +95,6 @@ namespace Elffy.Graphics.OpenGL
             Bind2DArray(Empty);
         }
 
-        [Obsolete("Don't use yet", true)]
-        public static unsafe void Image2DArray(in Image3D image3D, int level)
-        {
-            GL.TexImage3D(TextureTarget.Texture2DArray, level, PixelInternalFormat.Rgba, image3D.Width, image3D.Height, image3D.Depth,
-                          0, TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)image3D.GetPtr());
-        }
-
         public static unsafe void Image2DArray(in Vector2i size, int depth, ColorByte* pixels, int level)
         {
             GL.TexImage3D(TextureTarget.Texture2DArray, level, PixelInternalFormat.Rgba, size.X, size.Y, depth,
