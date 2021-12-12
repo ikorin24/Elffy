@@ -32,7 +32,6 @@ namespace Elffy.Graphics.OpenGL
         private GLFWCallbacks.MonitorCallback? _monitorCallback;
         private GLFWCallbacks.WindowRefreshCallback? _refreshCallback;
 
-
         public event Action<WindowGLFW>? Load;
 
         //public event Action<WindowGLFW>? Unload;
@@ -81,15 +80,17 @@ namespace Elffy.Graphics.OpenGL
             // Do not register callback to GLFW as lambda or method. (That cannot work)
             // Put delegate on a field and register it to GLFW.
 
-            _posCallback = (_, x, y) =>
+            _posCallback = (wnd, x, y) =>
             {
+                if(wnd != _window) { return; }
                 _location = new Vector2i(x, y);
                 Move?.Invoke(this, new WindowPositionEventArgs(x, y));
             };
             GLFW.SetWindowPosCallback(_window, _posCallback);
 
-            _sizeCallback = (_, width, height) =>
+            _sizeCallback = (wnd, width, height) =>
             {
+                if(wnd != _window) { return; }
                 GLFW.GetWindowFrameSize(_window, out var left, out var top, out var right, out var bottom);
                 _clientSize = new Vector2i(width, height);
                 _size = new Vector2i(_clientSize.X + left + right, _clientSize.Y + top + bottom);
@@ -97,15 +98,17 @@ namespace Elffy.Graphics.OpenGL
             };
             GLFW.SetWindowSizeCallback(_window, _sizeCallback);
 
-            _frameBufferSizeCallback = (_, width, height) =>
+            _frameBufferSizeCallback = (wnd, width, height) =>
             {
+                if(wnd != _window) { return; }
                 _frameBufferSize = new Vector2i(width, height);
                 FrameBufferSizeChanged?.Invoke(this, _frameBufferSize);
             };
             GLFW.SetFramebufferSizeCallback(_window, _frameBufferSizeCallback);
 
-            _closeCallback = _ =>
+            _closeCallback = wnd =>
             {
+                if(wnd != _window) { return; }
                 var cancel = false;
                 var e = new CancelEventArgs(&cancel);
                 Closing?.Invoke(this, e);
@@ -116,26 +119,30 @@ namespace Elffy.Graphics.OpenGL
             GLFW.SetWindowCloseCallback(_window, _closeCallback);
 
 
-            _iconifyCallback = (_, minimized) =>
+            _iconifyCallback = (wnd, minimized) =>
             {
+                if(wnd != _window) { return; }
                 Minimized?.Invoke(this, new MinimizedEventArgs(minimized));
             };
             GLFW.SetWindowIconifyCallback(_window, _iconifyCallback);
 
-            _focusCallback = (_, focused) =>
+            _focusCallback = (wnd, focused) =>
             {
+                if(wnd != _window) { return; }
                 FocusedChanged?.Invoke(this, new FocusedChangedEventArgs(focused));
             };
             GLFW.SetWindowFocusCallback(_window, _focusCallback);
 
-            _charCallback = (_, unicode) =>
+            _charCallback = (wnd, unicode) =>
             {
+                if(wnd != _window) { return; }
                 CharInput?.Invoke(this, new CharInputEventArgs(unicode));
             };
             GLFW.SetCharCallback(_window, _charCallback);
 
-            _keyCallback = (_, glfwKey, scanCode, action, glfwMods) =>
+            _keyCallback = (wnd, glfwKey, scanCode, action, glfwMods) =>
             {
+                if(wnd != _window) { return; }
                 var e = new KeyboardKeyEventArgs(glfwKey, scanCode, glfwMods, action == GlfwInputAction.Repeat);
 
                 if(action == GlfwInputAction.Release) {
@@ -147,8 +154,9 @@ namespace Elffy.Graphics.OpenGL
             };
             GLFW.SetKeyCallback(_window, _keyCallback);
 
-            _cursorEnterCallback = (_, entered) =>
+            _cursorEnterCallback = (wnd, entered) =>
             {
+                if(wnd != _window) { return; }
                 if(entered) {
                     MouseEnter?.Invoke(this);
                 }
@@ -158,8 +166,9 @@ namespace Elffy.Graphics.OpenGL
             };
             GLFW.SetCursorEnterCallback(_window, _cursorEnterCallback);
 
-            _mouseButtonCallback = (_, button, action, mods) =>
+            _mouseButtonCallback = (wnd, button, action, mods) =>
             {
+                if(wnd != _window) { return; }
                 var e = new MouseButtonEventArgs(button, action, mods);
 
                 if(action == GlfwInputAction.Release) {
@@ -171,22 +180,25 @@ namespace Elffy.Graphics.OpenGL
             };
             GLFW.SetMouseButtonCallback(_window, _mouseButtonCallback);
 
-            _cursorPosCallback = (_, posX, posY) =>
+            _cursorPosCallback = (wnd, posX, posY) =>
             {
+                if(wnd != _window) { return; }
                 var e = new MouseMoveEventArgs(new Vector2((int)posX, (int)posY));
                 MouseMove?.Invoke(this, e);
             };
             GLFW.SetCursorPosCallback(_window, _cursorPosCallback);
 
-            _scrollCallback = (_, offsetX, offsetY) =>
+            _scrollCallback = (wnd, offsetX, offsetY) =>
             {
+                if(wnd != _window) { return; }
                 var e = new MouseWheelEventArgs((float)offsetX, (float)offsetY);
                 MouseWheel?.Invoke(this, e);
             };
             GLFW.SetScrollCallback(_window, _scrollCallback);
 
-            _dropCallback = (_, count, paths) =>
+            _dropCallback = (wnd, count, paths) =>
             {
+                if(wnd != _window) { return; }
                 var e = new FileDropEventArgs(count, paths);
                 FileDrop?.Invoke(this, e);
             };
@@ -206,11 +218,33 @@ namespace Elffy.Graphics.OpenGL
             };
             GLFW.SetMonitorCallback(_monitorCallback);
 
-            _refreshCallback = _ =>
+            _refreshCallback = wnd =>
             {
+                if(wnd != _window) { return; }
                 Refresh?.Invoke(this);
             };
             GLFW.SetWindowRefreshCallback(_window, _refreshCallback);
         }
+
+        //private enum GLFWCallbackType
+        //{
+        //    None = 0,
+        //    PositionChanged,
+        //    WindowSizeChanged,
+        //    FrameBufferSizeChanged,
+        //    Close,
+        //    Iconify,
+        //    Focus,
+        //    Char,
+        //    Key,
+        //    CursorEnter,
+        //    MouseButton,
+        //    CursorPosition,
+        //    Scroll,
+        //    Drop,
+        //    Joystick,
+        //    Monitor,
+        //    Refresh,
+        //}
     }
 }

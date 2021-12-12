@@ -32,14 +32,22 @@ namespace Elffy
             Debug.Assert(layer is not null);
             Debug.Assert(layer.Owner == this);
             Debug.Assert(layer.LifeState == LayerLifeState.Activating);
-            _list.Add(layer);
+
+            _list.Add(layer, addedLayer =>  // [capture] this
+            {
+                addedLayer.OnAddedToListCallback(this);
+                addedLayer.OnSizeChangedCallback(Screen);
+            });
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void Remove(Layer layer)
         {
             if(layer is null) { ThrowNullArg(nameof(layer)); }
-            _list.Remove(layer);
+            _list.Remove(layer, removedLayer =>
+            {
+                removedLayer.OnLayerTerminatedCallback();
+            });
         }
 
         internal void TerminateAllImmediately()
@@ -65,13 +73,7 @@ namespace Elffy
 
         internal void ApplyAdd()
         {
-            var screen = Screen;
-            var applied = _list.ApplyAdd((this, screen), static (addedLayer, state) =>
-            {
-                var (self, screen) = state;
-                addedLayer.OnAddedToListCallback(self);
-                addedLayer.OnSizeChangedCallback(screen);
-            });
+            var applied = _list.ApplyAdd();
             if(applied) {
                 _list.AsSpan().Sort(static (l1, l2) => l1.SortNumber - l2.SortNumber);
             }
@@ -85,7 +87,7 @@ namespace Elffy
             foreach(var layer in AsSpan()) {
                 layer.ApplyRemove();
             }
-            _list.ApplyRemove(removedLayer => removedLayer.OnLayerTerminatedCallback());
+            _list.ApplyRemove();
         }
 
         internal void EarlyUpdate()

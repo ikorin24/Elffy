@@ -40,20 +40,20 @@ namespace Elffy
         /// <summary>Get real time since the engine started.</summary>
         public static TimeSpanF RunningRealTime => _watch.Elapsed;
 
-        internal static void AddScreen(IHostScreen screen)
+        internal static void AddScreen(IHostScreen screen, Action<IHostScreen> onAdded)
         {
             if(!IsRunning) {
                 ThrowInvalidOperation("The engine is not running.");
             }
-            _screens.Add(screen);
+            _screens.Add(screen, onAdded);
         }
 
-        internal static void RemoveScreen(IHostScreen screen)
+        internal static void RemoveScreen(IHostScreen screen, Action<IHostScreen> onRemoved)
         {
             if(!IsRunning) {
                 ThrowInvalidOperation("The engine is not running.");
             }
-            _screens.Remove(screen);
+            _screens.Remove(screen, onRemoved);
         }
 
         internal static void SetCurrentContext(IHostScreen? screen)

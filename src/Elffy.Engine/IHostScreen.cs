@@ -49,6 +49,9 @@ namespace Elffy
         /// <summary>Get screen running token, which is canceled when screen got closed.</summary>
         CancellationToken RunningToken { get; }
 
+        /// <summary>Get screen life state</summary>
+        HostScreenLifeState LifeState { get; }
+
         /// <summary>Get whether screen is running</summary>
         bool IsRunning { get; }
 

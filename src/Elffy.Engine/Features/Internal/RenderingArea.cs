@@ -175,19 +175,21 @@ namespace Elffy.Features.Internal
             }
         }
 
-        public unsafe void RequestClose()
+        public unsafe bool RequestClose()
         {
             if(_isCloseRequested) {
-                return;
+                return false;
             }
             var isCanceled = false;
             var e = new CancelEventArgs(&isCanceled);
             try {
                 Closing?.Invoke(OwnerScreen, e);
-                _isCloseRequested = e.Cancel == false;
+                _isCloseRequested = !isCanceled;
+                return !isCanceled;
             }
             catch {
                 _isCloseRequested = true;
+                return true;
             }
         }
 

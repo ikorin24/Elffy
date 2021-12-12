@@ -11,28 +11,28 @@ namespace Elffy.Features.Internal
     internal readonly struct LazyApplyingList<T>
     {
         private readonly List<T> _list;
-        private readonly List<T> _addedList;
-        private readonly List<T> _removedList;
+        private readonly List<(T, Action<T>)> _addedList;
+        private readonly List<(T, Action<T>)> _removedList;
 
         public int Count => _list.Count;
 
         public LazyApplyingList()
         {
             _list = new List<T>();
-            _addedList = new List<T>();
-            _removedList= new List<T>();
+            _addedList = new();
+            _removedList = new();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(in T item)
+        public void Add(in T item, Action<T> onAdded)
         {
-            _addedList.Add(item);
+            _addedList.Add((item, onAdded));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Remove(in T item)
+        public void Remove(in T item, Action<T> onRemoved)
         {
-            _removedList.Add(item);
+            _removedList.Add((item, onRemoved));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -44,73 +44,53 @@ namespace Elffy.Features.Internal
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ApplyAdd()
-        {
-            if(_addedList.Count == 0) { return; }
-            Apply(this);
-
-            // uncommon path
-            [MethodImpl(MethodImplOptions.NoInlining)]
-            static void Apply(in LazyApplyingList<T> self)
-            {
-                self._list.AddRange(self._addedList);
-                self._addedList.Clear();
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool ApplyAdd<TState>(TState state, Action<T, TState> onAdded)
+        public bool ApplyAdd()
         {
             if(_addedList.Count == 0) { return false; }
-            Apply(this, state, onAdded);
+            Apply(this);
             return true;
 
             // uncommon path
             [MethodImpl(MethodImplOptions.NoInlining)]
-            static void Apply(in LazyApplyingList<T> self, TState state, Action<T, TState> onAdded)
+            static void Apply(in LazyApplyingList<T> self)
             {
                 var addedList = self._addedList;
-                var list = self._list;
-                foreach(var item in addedList.AsSpan()) {
-                    list.Add(item);
-                    onAdded(item, state);
-                }
-                addedList.Clear();
-            }
-        }
-
-        public bool ApplyRemove(Action<T> onRemoved)
-        {
-            if(_removedList.Count == 0) { return false; }
-            Apply(this, onRemoved);
-            return true;
-
-            // uncommon path
-            [MethodImpl(MethodImplOptions.NoInlining)]
-            static void Apply(in LazyApplyingList<T> self, Action<T> onRemoved)
-            {
-                foreach(var item in self._removedList.AsSpan()) {
-                    if(self._list.Remove(item)) {
-                        onRemoved.Invoke(item);
+                int addedCount;
+                {
+                    var addedListSpan = addedList.AsSpan();
+                    addedCount = addedListSpan.Length;
+                    var list = self._list;
+                    foreach(var (item, onAdded) in addedListSpan) {
+                        list.Add(item);
+                        onAdded.Invoke(item);
                     }
                 }
-                self._removedList.Clear();
+                addedList.RemoveRange(0, addedCount);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ApplyRemove()
+        public bool ApplyRemove()
         {
-            if(_removedList.Count == 0) { return; }
+            if(_removedList.Count == 0) { return false; }
             Apply(this);
+            return true;
 
             // uncommon path
             static void Apply(in LazyApplyingList<T> self)
             {
-                foreach(var item in self._removedList.AsSpan()) {
-                    self._list.Remove(item);
+                var removedList = self._removedList;
+                int removedCount;
+                {
+                    var removedListSpan = removedList.AsSpan();
+                    removedCount = removedListSpan.Length;
+                    var list = self._list;
+                    foreach(var (item, onRemove) in removedListSpan) {
+                        list.Remove(item);
+                        onRemove.Invoke(item);
+                    }
                 }
-                self._removedList.Clear();
+                removedList.RemoveRange(0, removedCount);
             }
         }
 

@@ -27,7 +27,7 @@ namespace Elffy.Graphics.OpenGL
         private Vector2i _frameBufferSize;
         private Vector2i _location;
         private string? _title;
-        private bool _isRunning;
+        //private bool _isRunning;
 
         private double? _updateFrequency = 60.0;
         private double _updateEpsilon; // 前回のアップデートからの持ちこし誤差 (sec), quantization error for Updating
@@ -41,7 +41,7 @@ namespace Elffy.Graphics.OpenGL
 
         public bool IsDisposed => _window == null;
 
-        public bool IsRunning => _isRunning;
+        //public bool IsRunning => _isRunning;
 
         /// <summary>Frequency of updating (Hz). If null, update is called as faster as possible.</summary>
         public double? UpdateFrequency
@@ -107,6 +107,9 @@ namespace Elffy.Graphics.OpenGL
             // - Opengl api (not es)
             // - 4.1 or later (4.1 is the last version Mac supports)
             // Vsync is enabled
+
+            var currentHostScreen = Engine.CurrentContext;
+            var currentContext = GLFW.GetCurrentContext();
 
             _owner = screen;
 
@@ -188,7 +191,7 @@ namespace Elffy.Graphics.OpenGL
             }
             finally {
                 GLFW.DefaultWindowHints();
-                ClearContextCurrent();
+                RestoreContextCurrent(currentContext, currentHostScreen);
             }
         }
 
@@ -201,6 +204,8 @@ namespace Elffy.Graphics.OpenGL
                 _watchUpdate.Start();
             }
 
+            var currentHostScreen = Engine.CurrentContext;
+            var currentContext = GLFW.GetCurrentContext();
             try {
                 MakeContextCurrent();
                 if(!_isLoaded) {
@@ -237,7 +242,7 @@ namespace Elffy.Graphics.OpenGL
                 }
             }
             finally {
-                ClearContextCurrent();
+                RestoreContextCurrent(currentContext, currentHostScreen);
             }
             
 
@@ -298,7 +303,7 @@ namespace Elffy.Graphics.OpenGL
                 _initArgs = default;
             }
             if(IsDisposed) { ThrowDisposed(); }
-            _isRunning = true;
+            //_isRunning = true;
             GLFW.ShowWindow(_window);
         }
 
@@ -309,10 +314,10 @@ namespace Elffy.Graphics.OpenGL
             GLFW.HideWindow(_window);
         }
 
-        private static void ClearContextCurrent()
+        private static void RestoreContextCurrent(Wnd* context, IHostScreen? screen)
         {
-            GLFW.MakeContextCurrent(null);
-            Engine.SetCurrentContext(null);
+            GLFW.MakeContextCurrent(context);
+            Engine.SetCurrentContext(screen);
         }
 
         private static void InitializeGlBindings()
@@ -345,7 +350,7 @@ namespace Elffy.Graphics.OpenGL
             if(!_isActivated || IsDisposed) { return; }  // Block re-entrant
             var window = _window;
             _window = null;
-            _isRunning = false;
+            //_isRunning = false;
             GLFW.DestroyWindow(window);
         }
 

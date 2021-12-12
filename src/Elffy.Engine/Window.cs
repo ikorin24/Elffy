@@ -21,15 +21,12 @@ namespace Elffy
         private const int DefaultWidth = 800;
         private const int DefaultHeight = 450;
 
-        private bool _isActivated;
+        private HostScreenLifeState _lifeState;
         private readonly WindowGLFW _windowImpl;
         private readonly RenderingArea _renderingArea;
         private TimeSpanF _frameDelta;
         private TimeSpanF _time;
         private long _frameNum;
-
-        ///// <inheritdoc/>
-        //public RootPanel UIRoot => _renderingArea.Layers.UILayer.UIRoot;
 
         /// <inheritdoc/>
         public Mouse Mouse => _renderingArea.Mouse;
@@ -69,8 +66,10 @@ namespace Elffy
         /// <inheritdoc/>
         public CancellationToken RunningToken => _renderingArea.RunningToken;
 
+        public HostScreenLifeState LifeState => _lifeState;
+
         /// <inheritdoc/>
-        public bool IsRunning => _windowImpl.IsRunning && !_renderingArea.RunningToken.IsCancellationRequested;
+        public bool IsRunning => _lifeState.IsRunning() && !_renderingArea.RunningToken.IsCancellationRequested;
 
         /// <inheritdoc/>
         public CurrentFrameTiming CurrentTiming => _renderingArea.CurrentTiming;
@@ -141,7 +140,7 @@ namespace Elffy
 
             _frameDelta = TimeSpanF.FromSeconds(1.0 / 60.0); // TODO: とりあえず固定で
             _windowImpl.UpdateFrame += (_, e) => UpdateFrame();
-            _windowImpl.Refresh += _ => UpdateFrame();
+            //_windowImpl.Refresh += _ => UpdateFrame();        // TODO: 複数ウィンドウの時におかしくなる
             _windowImpl.Load += _ => _renderingArea.Initialize();
             _windowImpl.FrameBufferSizeChanged += (_, size) => _renderingArea.SetFrameBufferSize(size);
             _windowImpl.MouseMove += (_, e) => Mouse.ChangePosition(e.Position);
@@ -153,12 +152,7 @@ namespace Elffy
             _windowImpl.KeyDown += (_, e) => Keyboard.ChangeToDown(e);
             _windowImpl.KeyUp += (_, e) => Keyboard.ChangeToUp(e);
             _windowImpl.Closing += (_, e) => Close();
-
-            _renderingArea.Disposed += () =>
-            {
-                _windowImpl.Dispose();
-                Engine.RemoveScreen(this);
-            };
+            _renderingArea.Disposed += () => OnClosed();
 
             void MouseButtonStateChanged(WindowGLFW _, TKMouseButtonEventArgs e)
             {
@@ -187,47 +181,68 @@ namespace Elffy
         public void Maximize()
         {
             if(!Engine.IsThreadMain) { ThrowNotMainThread(); }
-            if(!_isActivated) { ThrowNotActivated(); }
+            if(_lifeState.IsRunning() == false) { ThrowNotRunning(); }
             _windowImpl.Maximize();
         }
 
         public void Normalize()
         {
             if(!Engine.IsThreadMain) { ThrowNotMainThread(); }
-            if(!_isActivated) { ThrowNotActivated(); }
+            if(_lifeState.IsRunning() == false) { ThrowNotRunning(); }
             _windowImpl.Normalize();
         }
 
         public void Minimize()
         {
             if(!Engine.IsThreadMain) { ThrowNotMainThread(); }
-            if(!_isActivated) { ThrowNotActivated(); }
+            if(_lifeState.IsRunning() == false) { ThrowNotRunning(); }
             _windowImpl.Minimize();
         }
 
         public void Close()
         {
             if(!Engine.IsThreadMain) { ThrowNotMainThread(); }
-            if(!_isActivated) { return; }
-            _renderingArea.RequestClose();
+            if(_lifeState.IsRunning() == false) { return; }
+
+            if(_renderingArea.RequestClose()) {
+                Debug.Assert(_lifeState == HostScreenLifeState.Alive);
+                _lifeState = HostScreenLifeState.Terminating;
+            }
+        }
+
+        private void OnClosed()
+        {
+            Engine.RemoveScreen(this, static screen =>
+            {
+                var self = SafeCast.As<Window>(screen);
+                self._windowImpl.Dispose();
+                self._lifeState = HostScreenLifeState.Dead;
+            });
         }
 
         /// <summary>Acticate the window</summary>
         public void Activate()
         {
             if(!Engine.IsThreadMain) { ThrowNotMainThread(); }
-            if(_isActivated == false) {
-                _isActivated = true;
-                _windowImpl.Activate();
-                Engine.AddScreen(this);
+            if(_lifeState.IsAfter(HostScreenLifeState.New)) {
+                throw new InvalidOperationException("Cannot activate twice.");
             }
+            _lifeState = HostScreenLifeState.Activating;
+
+            Engine.AddScreen(this, static screen =>
+            {
+                var self = SafeCast.As<Window>(screen);
+                Debug.Assert(self._lifeState == HostScreenLifeState.Activating);
+                self._windowImpl.Activate();
+                self._lifeState = HostScreenLifeState.Alive;
+            });
         }
 
         /// <inheritdoc/>
         void IHostScreen.HandleOnce()
         {
             if(!Engine.IsThreadMain) { ThrowNotMainThread(); }
-            if(!_isActivated) { ThrowNotActivated(); }
+            if(_lifeState.IsRunning() == false) { ThrowNotRunning(); }
             _windowImpl.HandleOnce();
         }
 
@@ -240,7 +255,7 @@ namespace Elffy
         }
 
         [DoesNotReturn]
-        private static void ThrowNotActivated() => throw new InvalidOperationException("Window is not activated yet.");
+        private static void ThrowNotRunning() => throw new InvalidOperationException("Window is not activated yet or already dead.");
 
         [DoesNotReturn]
         private static void ThrowNotMainThread() => throw new InvalidOperationException("Current thread is not main thread of the Engine.");
