@@ -9,17 +9,38 @@ using Elffy.Text;
 
 namespace Elffy.Serialization.Wavefront
 {
-    internal static class ObjParser
+    public static class ObjParser
     {
+        private const string FormatExceptionMessage = "Invalid format or not supported.";
+
+        public static ObjObject Parse(ReadOnlySpan<byte> data)
+        {
+            if(TryParsePrivate(data, out var obj) == false) { ThrowFormat(); }
+            return new ObjObject(ref obj);
+        }
+
+        internal static ObjObjectUnsafe ParseUnsafe(ReadOnlySpan<byte> data)
+        {
+            if(TryParsePrivate(data, out var obj) == false) { ThrowFormat(); }
+            return new ObjObjectUnsafe(ref obj);
+        }
+
         public static ObjObject Parse(Stream stream)
         {
             if(stream is null) { ThrowNullArg(nameof(stream)); }
             using var buf = ReadToBuffer(stream, out var length);
             var text = buf.AsSpan(0, length);
-            if(TryParsePrivate(text, out var obj) == false) {
-                throw new FormatException();
-            }
-            return obj;
+            if(TryParsePrivate(text, out var obj) == false) { ThrowFormat(); }
+            return new ObjObject(ref obj);
+        }
+
+        internal static ObjObjectUnsafe ParseUnsafe(Stream stream)
+        {
+            if(stream is null) { ThrowNullArg(nameof(stream)); }
+            using var buf = ReadToBuffer(stream, out var length);
+            var text = buf.AsSpan(0, length);
+            if(TryParsePrivate(text, out var obj) == false) { ThrowFormat(); }
+            return new ObjObjectUnsafe(ref obj);
         }
 
         private static UnsafeRawList<byte> ReadToBuffer(Stream stream, out int length)
@@ -55,54 +76,44 @@ namespace Elffy.Serialization.Wavefront
             }
         }
 
-        private static bool TryParsePrivate(ReadOnlySpan<byte> text, [MaybeNullWhen(false)] out ObjObject obj)
+        private static bool TryParsePrivate(ReadOnlySpan<byte> text, out ObjObjectCore obj)
         {
-            var positions = new UnsafeRawList<Vector3>();
-            var normals = new UnsafeRawList<Vector3>();
-            var uvs = new UnsafeRawList<Vector2>();
-            var fList = new UnsafeRawList<ObjFace>();
+            ObjObjectCore core = default;
             try {
+                core = new ObjObjectCore();
                 var lines = text.Lines();
-                foreach(var line in lines) {
-                    var lineReader = new Utf8Reader(line);
+                foreach(Utf8Reader lineReader in lines) {
                     if(lineReader.MoveIfMatch((byte)'#')) {
                         continue;
                     }
                     else if(lineReader.MoveIfMatch((byte)'v', (byte)' ')) {
                         if(TryParseVector3(lineReader.Current, out var pos) == false) { goto FAILURE; }
-                        positions.Add(pos);
+                        core.Positions.Add(pos);
                     }
                     else if(lineReader.MoveIfMatch((byte)'v', (byte)'t', (byte)' ')) {
                         if(TryParseVector2(lineReader.Current, out var uv) == false) { goto FAILURE; }
-                        uvs.Add(uv);
+                        core.UVs.Add(uv);
                     }
                     else if(lineReader.MoveIfMatch((byte)'v', (byte)'n', (byte)' ')) {
                         if(TryParseVector3(lineReader.Current, out var normal) == false) { goto FAILURE; }
-                        normals.Add(normal);
+                        core.Normals.Add(normal);
                     }
                     else if(lineReader.MoveIfMatch((byte)'f', (byte)' ')) {
-                        if(TryParseFLine(lineReader.Current) == false) { goto FAILURE; }
+                        if(TryParseFLine(lineReader.Current, ref core) == false) { goto FAILURE; }
                     }
                     else {
                         continue;
                     }
                 }
-                obj = new ObjObject(positions, normals, uvs, fList);
+                obj = core;
                 return true;
             FAILURE:
-                positions.Dispose();
-                normals.Dispose();
-                uvs.Dispose();
-                fList.Dispose();
-                obj = null;
+                obj = default;
                 return false;
             }
             catch {
-                positions.Dispose();
-                normals.Dispose();
-                uvs.Dispose();
-                fList.Dispose();
-                obj = null;
+                core.Dispose();
+                obj = default;
                 return false;
             }
         }
@@ -132,42 +143,89 @@ namespace Elffy.Serialization.Wavefront
             return true;
         }
 
-        private static bool TryParseFLine(ReadOnlySpan<byte> str)
+        private static bool TryParseFLine(ReadOnlySpan<byte> str, ref ObjObjectCore core)
         {
             // <pos_i>/<uv_i>/<normal_i> <pos_i>/<uv_i>/<normal_i> <pos_i>/<uv_i>/<normal_i> ...
 
-            // TODO: more than 4
-            Span<(int Pos, int UV, int Normal)> buf = stackalloc (int Pos, int UV, int Normal)[4];
-            var vCount = 0;
-            var splits = str.Split((byte)' ', StringSplitOptions.RemoveEmptyEntries);
-            foreach(var v in splits) {
-                if(TryParseFLineVertexData(v, out var pos, out var uv, out var normal) == false) {
-                    return false;
-                }
-                buf[vCount] = (Pos: pos, UV: uv, Normal: normal);
-                vCount++;
-            }
+            FaceData v0;
+            FaceData v1;
+            FaceData v2;
 
-            throw new NotImplementedException();    // TODO: Triangulation
+            var splits = str.Split((byte)' ', StringSplitOptions.RemoveEmptyEntries);
+            using(var e = splits.GetEnumerator()) {
+                int? pos;
+                int? uv;
+                int? normal;
+
+                if(e.MoveNext() == false) { return false; }
+                if(TryParseFaceLine(e.Current, out pos, out uv, out normal) == false || pos.HasValue == false) { return false; }
+                v0 = new(pos.Value, uv, normal);
+
+                if(e.MoveNext() == false) { return false; }
+                if(TryParseFaceLine(e.Current, out pos, out uv, out normal) == false || pos.HasValue == false) { return false; }
+                v1 = new(pos.Value, uv, normal);
+
+                if(e.MoveNext() == false) { return false; }
+                if(TryParseFaceLine(e.Current, out pos, out uv, out normal) == false || pos.HasValue == false) { return false; }
+                v2 = new(pos.Value, uv, normal);
+
+                if(TryAdd(ref core, v0, v1, v2) == false) { return false; }
+                while(e.MoveNext()) {
+                    v1 = v2;
+                    if(TryParseFaceLine(e.Current, out pos, out uv, out normal) == false || pos.HasValue == false) { return false; }
+                    v2 = new(pos.Value, uv, normal);
+                    if(TryAdd(ref core, v0, v1, v2) == false) { return false; }
+                }
+            }
+            return true;
+
+            static bool TryAdd(ref ObjObjectCore core, in FaceData v0, in FaceData v1, in FaceData v2)
+            {
+                core.PositionIndices.Add(v0.Pos - 1);
+                core.PositionIndices.Add(v1.Pos - 1);
+                core.PositionIndices.Add(v2.Pos - 1);
+                if(v0.UV.HasValue) {
+                    if(v1.UV.HasValue == false || v2.UV.HasValue == false) { return false; }
+                    core.UVIndices.Add(v0.UV.Value - 1);
+                    core.UVIndices.Add(v1.UV.Value - 1);
+                    core.UVIndices.Add(v2.UV.Value - 1);
+                }
+                if(v0.Normal.HasValue) {
+                    if(v1.Normal.HasValue == false || v2.Normal.HasValue == false) { return false; }
+                    core.NormalIndices.Add(v0.Normal.Value - 1);
+                    core.NormalIndices.Add(v1.Normal.Value - 1);
+                    core.NormalIndices.Add(v2.Normal.Value - 1);
+                }
+                return true;
+            }
         }
 
-        private static bool TryParseFLineVertexData(ReadOnlySpan<byte> str, out int pos, out int uv, out int normal)
+        private static bool TryParseFaceLine(ReadOnlySpan<byte> str, out int? pos, out int? uv, out int? normal)
         {
             // <pos_i>/<uv_i>/<normal_i>
 
-            var e = str.Split((byte)'/').GetEnumerator();
-            if(e.MoveNext() == false || Utf8Parser.TryParse(e.Current, out pos, out _) == false ||
-               e.MoveNext() == false || Utf8Parser.TryParse(e.Current, out uv, out _) == false ||
-               e.MoveNext() == false || Utf8Parser.TryParse(e.Current, out normal, out _) == false) {
-                pos = default;
-                uv = default;
-                normal = default;
-                return false;
-            }
+            var e = str.Split((byte)'/', StringSplitOptions.None).GetEnumerator();
+            if(e.MoveNext() == false) { goto FAILURE; }
+            pos = Utf8Parser.TryParse(e.Current, out int p, out _) ? p : null;
+            if(e.MoveNext() == false) { goto FAILURE; }
+            uv = Utf8Parser.TryParse(e.Current, out int t, out _) ? t : null;
+            if(e.MoveNext() == false) { goto FAILURE; }
+            normal = Utf8Parser.TryParse(e.Current, out int n, out _) ? n : null;
             return true;
+
+        FAILURE:
+            pos = null;
+            uv = null;
+            normal = null;
+            return false;
         }
 
         [DoesNotReturn]
         private static void ThrowNullArg(string message) => throw new ArgumentNullException(message);
+
+        [DoesNotReturn]
+        private static void ThrowFormat() => throw new FormatException(FormatExceptionMessage);
+
+        private record struct FaceData(int Pos, int? UV, int? Normal);
     }
 }

@@ -13,7 +13,6 @@ namespace Elffy
             return FbxModelBuilder.CreateLazyLoadingFbx(file, cancellationToken);
         }
 
-        [System.Obsolete("Not implemented yet", true)]
         public static Model3D CreateObjModel(this ResourceFile file, CancellationToken cancellationToken = default)
         {
             return ObjModelBuilder.CreateLazyLoadingObj(file, cancellationToken);

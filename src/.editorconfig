@@ -21,6 +21,12 @@ indent_style = space
 tab_width = 4
 insert_final_newline = true
 
+[*.csproj]
+indent_size = 2
+indent_style = space
+tab_width = 2
+insert_final_newline = true
+
 # CSharp formatting settings:
 [*.cs]
 # インデントと間隔

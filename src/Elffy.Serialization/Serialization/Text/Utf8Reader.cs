@@ -20,6 +20,8 @@ namespace Elffy.Serialization.Text
             _pos = 0;
         }
 
+        public static implicit operator Utf8Reader(ReadOnlySpan<byte> text) => new Utf8Reader(text);
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsMatch(byte c) => (_pos < _text.Length) && (_text.At(_pos) == c);
 
