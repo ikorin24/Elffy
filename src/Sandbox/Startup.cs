@@ -47,6 +47,13 @@ namespace Sandbox
                     CreateBox(wLayer),
                     CreateFloor(wLayer),
                     CreateSky(wLayer),
+                    UniTask.Create(async () =>
+                    {
+                        var g = Resources.Sandbox["gizmos.obj"].CreateObjModel();
+                        g.Position = new Vector3(-3, 4, 0);
+                        g.Shader = new PhongShader();
+                        await g.Activate(wLayer);
+                    }),
                     timings.Update.DelayTime(800));
 
                 var time = TimeSpanF.FromMilliseconds(200);
