@@ -153,27 +153,27 @@ namespace Elffy.Serialization.Wavefront
 
             var splits = str.Split((byte)' ', StringSplitOptions.RemoveEmptyEntries);
             using(var e = splits.GetEnumerator()) {
-                int? pos;
+                int pos;
                 int? uv;
                 int? normal;
 
                 if(e.MoveNext() == false) { return false; }
-                if(TryParseFaceLine(e.Current, out pos, out uv, out normal) == false || pos.HasValue == false) { return false; }
-                v0 = new(pos.Value, uv, normal);
+                if(TryParseFace(e.Current, out pos, out uv, out normal) == false) { return false; }
+                v0 = new(pos, uv, normal);
 
                 if(e.MoveNext() == false) { return false; }
-                if(TryParseFaceLine(e.Current, out pos, out uv, out normal) == false || pos.HasValue == false) { return false; }
-                v1 = new(pos.Value, uv, normal);
+                if(TryParseFace(e.Current, out pos, out uv, out normal) == false) { return false; }
+                v1 = new(pos, uv, normal);
 
                 if(e.MoveNext() == false) { return false; }
-                if(TryParseFaceLine(e.Current, out pos, out uv, out normal) == false || pos.HasValue == false) { return false; }
-                v2 = new(pos.Value, uv, normal);
+                if(TryParseFace(e.Current, out pos, out uv, out normal) == false) { return false; }
+                v2 = new(pos, uv, normal);
 
                 if(TryAdd(ref core, v0, v1, v2) == false) { return false; }
                 while(e.MoveNext()) {
                     v1 = v2;
-                    if(TryParseFaceLine(e.Current, out pos, out uv, out normal) == false || pos.HasValue == false) { return false; }
-                    v2 = new(pos.Value, uv, normal);
+                    if(TryParseFace(e.Current, out pos, out uv, out normal) == false) { return false; }
+                    v2 = new(pos, uv, normal);
                     if(TryAdd(ref core, v0, v1, v2) == false) { return false; }
                 }
             }
@@ -200,21 +200,50 @@ namespace Elffy.Serialization.Wavefront
             }
         }
 
-        private static bool TryParseFaceLine(ReadOnlySpan<byte> str, out int? pos, out int? uv, out int? normal)
+        private static bool TryParseFace(ReadOnlySpan<byte> str, out int pos, out int? uv, out int? normal)
         {
             // <pos_i>/<uv_i>/<normal_i>
 
+            ReadOnlySpan<byte> current;
             var e = str.Split((byte)'/', StringSplitOptions.None).GetEnumerator();
+
+            // [pos]
             if(e.MoveNext() == false) { goto FAILURE; }
-            pos = Utf8Parser.TryParse(e.Current, out int p, out _) ? p : null;
-            if(e.MoveNext() == false) { goto FAILURE; }
-            uv = Utf8Parser.TryParse(e.Current, out int t, out _) ? t : null;
-            if(e.MoveNext() == false) { goto FAILURE; }
-            normal = Utf8Parser.TryParse(e.Current, out int n, out _) ? n : null;
+            current = e.Current;
+            if(current.IsEmpty || Utf8Parser.TryParse(current, out int p, out _) == false) { goto FAILURE; }
+            pos = p;
+
+            // [uv]
+            if(e.MoveNext() == false) {
+                uv = null;
+                normal = null;
+                return true;
+            }
+            current = e.Current;
+            if(current.IsEmpty) {
+                uv = null;
+            }
+            else {
+                if(Utf8Parser.TryParse(e.Current, out int t, out _) == false) { goto FAILURE; }
+                uv = t;
+            }
+
+            if(e.MoveNext() == false) {
+                normal = null;
+                return true;
+            }
+            current = e.Current;
+            if(current.IsEmpty) {
+                normal = null;
+            }
+            else {
+                if(Utf8Parser.TryParse(current, out int n, out _) == false) { goto FAILURE; }
+                normal = n;
+            }
             return true;
 
         FAILURE:
-            pos = null;
+            pos = default;
             uv = null;
             normal = null;
             return false;

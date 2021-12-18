@@ -42,26 +42,23 @@ namespace Elffy.Serialization.Wavefront
         {
             using var stream = file.GetStream();
             using var obj = ObjParser.ParseUnsafe(stream);
-            var hasNormal = !obj.NormalIndices.IsEmpty;
-            BuildMesh(obj, hasNormal, verticesBuffer, indicesBuffer);
-            if(hasNormal == false) {
-                MeshOperations.RecalculateNormal(verticesBuffer.WrittenSpan, indicesBuffer.WrittenSpan);
-            }
-        }
-
-        private static void BuildMesh(in ObjObjectUnsafe obj, bool hasNormal, UnsafeBufferWriter<Vertex> verticesBuffer, UnsafeBufferWriter<int> indicesBuffer)
-        {
-            using var normalIndicesBuf = hasNormal ? UnsafeRawArray<int>.Empty : new UnsafeRawArray<int>(obj.PositionIndices.Length, true);
-            var normals = hasNormal ? obj.Normals : stackalloc Vector3[1] { Vector3.UnitX };
-            var normalIndices = hasNormal ? obj.NormalIndices : normalIndicesBuf.AsSpan();
 
             var hasUV = !obj.UVIndices.IsEmpty;
             using var uvIndicesBuf = hasUV ? UnsafeRawArray<int>.Empty : new UnsafeRawArray<int>(obj.PositionIndices.Length, true);
             var uvs = hasUV ? obj.UVs : stackalloc Vector2[1] { Vector2.Zero };
             var uvIndices = hasUV ? obj.UVIndices : uvIndicesBuf.AsSpan();
-            MeshOperations.CreateInterleavedVertices(obj.Positions, obj.PositionIndices,
-                                                     normals, normalIndices,
-                                                     uvs, uvIndices, verticesBuffer, indicesBuffer);
+
+            var hasNormal = !obj.NormalIndices.IsEmpty;
+            if(hasNormal == false) {
+                using var normalsBuf = new UnsafeBufferWriter<Vector3>();
+                var positions = obj.Positions;
+                var posNormalIndices = obj.PositionIndices;
+                var normals = MeshOperations.RecalculateNormal(positions, posNormalIndices, normalsBuf);
+                MeshOperations.CreateInterleavedVertices(positions, posNormalIndices, normals, posNormalIndices, uvs, uvIndices, verticesBuffer, indicesBuffer);
+            }
+            else {
+                MeshOperations.CreateInterleavedVertices(obj.Positions, obj.PositionIndices, obj.Normals, obj.NormalIndices, uvs, uvIndices, verticesBuffer, indicesBuffer);
+            }
         }
     }
 }

@@ -9,6 +9,43 @@ namespace Elffy
 {
     public static class MeshOperations
     {
+        public static Span<Vector3> RecalculateNormal<TBufferWriter>(ReadOnlySpan<Vector3> positions, ReadOnlySpan<int> indices, TBufferWriter normalsBuffer) where TBufferWriter : IBufferWriter<Vector3>
+        {
+            var normals = normalsBuffer.GetSpan(positions.Length);
+            RecalculateNormal(positions, indices, normals);
+            normalsBuffer.Advance(normals.Length);
+            return normals;
+        }
+
+        public static void RecalculateNormal(ReadOnlySpan<Vector3> positions, ReadOnlySpan<int> indices, Span<Vector3> normals)
+        {
+            if(indices.Length % 3 != 0) {
+                ThrowArgumentIndicesLengthInvalid();
+            }
+
+            // [NOTE]
+            // Sharp edge is not supported.
+
+            normals.Clear();
+
+            using var countsBuf = new ValueTypeRentMemory<int>(positions.Length, true);
+            var counts = countsBuf.AsSpan();
+
+            var faces = indices.MarshalCast<int, Face>();
+            foreach(var f in faces) {
+                var n = Vector3.Cross(positions[f.I1] - positions[f.I0], positions[f.I2] - positions[f.I0]).Normalized();
+                normals[f.I0] += n;
+                normals[f.I1] += n;
+                normals[f.I2] += n;
+                counts[f.I0] += 1;
+                counts[f.I1] += 1;
+                counts[f.I2] += 1;
+            }
+            for(int i = 0; i < positions.Length; i++) {
+                normals[i] /= counts[i];
+            }
+        }
+
         public static void RecalculateNormal(Span<Vertex> vertices, ReadOnlySpan<int> indices)  // TODO: something wrong
         {
             if(indices.Length % 3 != 0) {
@@ -43,15 +80,15 @@ namespace Elffy
         {
             using var verticesBuffer = new UnsafeBufferWriter<Vertex>();
             using var indicesBuffer = new UnsafeBufferWriter<int>();
-            CreateInterleavedVertices(positions, positionIndices, normals, normalIndices,
-                                      uvs, uvIndices, verticesBuffer, indicesBuffer);
-            return (verticesBuffer.WrittenSpan.ToArray(), indicesBuffer.WrittenSpan.ToArray());
+            var (vertices, indices) = CreateInterleavedVertices(positions, positionIndices, normals, normalIndices, uvs, uvIndices, verticesBuffer, indicesBuffer);
+            return (vertices.ToArray(), indices.ToArray());
         }
 
-        public static void CreateInterleavedVertices(ReadOnlySpan<Vector3> positions, ReadOnlySpan<int> positionIndices,
-                                                     ReadOnlySpan<Vector3> normals, ReadOnlySpan<int> normalIndices,
-                                                     ReadOnlySpan<Vector2> uvs, ReadOnlySpan<int> uvIndices,
-                                                     IBufferWriter<Vertex> verticesWriter, IBufferWriter<int> indicesWriter)
+        public static InterleavedMesh<Vertex> CreateInterleavedVertices(
+            ReadOnlySpan<Vector3> positions, ReadOnlySpan<int> positionIndices,
+            ReadOnlySpan<Vector3> normals, ReadOnlySpan<int> normalIndices,
+            ReadOnlySpan<Vector2> uvs, ReadOnlySpan<int> uvIndices,
+            IBufferWriter<Vertex> verticesWriter, IBufferWriter<int> indicesWriter)
         {
             var isValid = (positionIndices.Length == normalIndices.Length) && (positionIndices.Length == uvIndices.Length);
             if(isValid == false) {
@@ -81,6 +118,8 @@ namespace Elffy
 
             verticesWriter.Advance(verticesCount);
             indicesWriter.Advance(indicesCount);
+
+            return new(vertices.Slice(0, verticesCount), indices.Slice(0, indicesCount));
         }
 
         private record struct Face(int I0, int I1, int I2);
@@ -88,5 +127,23 @@ namespace Elffy
 
         [DoesNotReturn]
         private static void ThrowArgumentIndicesLengthInvalid() => throw new ArgumentException();
+    }
+
+    public readonly ref struct InterleavedMesh<TVertex> where TVertex : unmanaged
+    {
+        public readonly Span<TVertex> Vertices;
+        public readonly Span<int> Indices;
+
+        public InterleavedMesh(Span<TVertex> vertices, Span<int> indices)
+        {
+            Vertices = vertices;
+            Indices = indices;
+        }
+
+        public void Deconstruct(out Span<TVertex> vertices, out Span<int> indices)
+        {
+            vertices = Vertices;
+            indices = Indices;
+        }
     }
 }
