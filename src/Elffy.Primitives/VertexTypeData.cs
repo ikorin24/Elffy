@@ -11,11 +11,15 @@ namespace Elffy
 
         public int VertexSize => _vertexSize;
 
+        public int FieldCount => _fields.Length;
+
         internal VertexTypeData(VertexFieldData[] fields, int vertexSize)
         {
             _fields = fields;
             _vertexSize = vertexSize;
         }
+
+        public ReadOnlySpan<VertexFieldData> GetFields() => _fields;
 
         public bool TryGetField(string fieldName, [MaybeNullWhen(false)] out VertexFieldData field)
         {
