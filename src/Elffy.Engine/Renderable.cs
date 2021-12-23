@@ -35,6 +35,8 @@ namespace Elffy
         /// <summary>Vertex array object</summary>
         public ref readonly VAO VAO => ref _vao;
 
+        public Type? VertexType => _vertexType;
+
         /// <summary>Get whether the <see cref="Renderable"/> is loaded and ready to be rendered.</summary>
         public bool IsLoaded => _isLoaded;
 
@@ -79,6 +81,61 @@ namespace Elffy
 
         public Renderable()
         {
+        }
+
+        public unsafe (int VertexCount, int IndexCount) GetMesh<TVertex>(Span<TVertex> vertices, Span<int> indices) where TVertex : unmanaged
+        {
+            fixed(TVertex* v = vertices)
+            fixed(int* i = indices) {
+                var (vCount, iCount) = GetMesh(v, (ulong)vertices.Length, i, (uint)indices.Length);
+                return ((int)vCount, (int)iCount);
+            }
+        }
+
+        public unsafe (ulong VertexCount, uint IndexCount) GetMesh<TVertex>(TVertex* vertices, ulong vertexCount, int* indices, uint indexCount) where TVertex : unmanaged
+        {
+            if(TryGetHostScreen(out var screen) == false) {
+                throw new InvalidOperationException();
+            }
+            if(Engine.CurrentContext != screen) {
+                throw new InvalidOperationException("Invalid current context.");
+            }
+            if(IsLoaded == false) {
+                return (0, 0);
+            }
+            var vertexType = _vertexType;
+            Debug.Assert(vertexType != null);
+            if(typeof(TVertex) != vertexType) {
+                throw new InvalidOperationException($"Vertex type is invalid. (Vertex Type={vertexType?.FullName}, SpecifiedVertexType={typeof(TVertex).FullName})");
+            }
+            var vCount = _vbo.Length;
+            var iCount = _ibo.Length;
+            if(vertexCount < vCount) {
+                throw new ArgumentOutOfRangeException($"{nameof(vertexCount)} is too short.");
+            }
+            if(indexCount < iCount) {
+                throw new ArgumentOutOfRangeException($"{nameof(indexCount)} is too short.");
+            }
+
+            try {
+                VBO.Bind(_vbo);
+                var vSource = (void*)VBO.MapBufferReadOnly();
+                System.Buffer.MemoryCopy(vSource, vertices, vertexCount * (ulong)sizeof(TVertex), vCount * (ulong)sizeof(TVertex));
+            }
+            finally {
+                VBO.UnmapBuffer();
+                VBO.Unbind();
+            }
+            try {
+                IBO.Bind(_ibo);
+                var iSource = (void*)IBO.MapBufferReadOnly();
+                System.Buffer.MemoryCopy(iSource, indices, indexCount * sizeof(int), iCount * sizeof(int));
+            }
+            finally {
+                IBO.UnmapBuffer();
+                IBO.Unbind();
+            }
+            return (vCount, iCount);
         }
 
         /// <summary>Render the <see cref="Renderable"/>.</summary>

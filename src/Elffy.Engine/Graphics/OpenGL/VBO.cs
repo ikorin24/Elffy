@@ -63,6 +63,26 @@ namespace Elffy.Graphics.OpenGL
             GL.BindBuffer(BufferTarget.ArrayBuffer, Consts.NULL);
         }
 
+        internal static IntPtr MapBufferReadOnly()
+        {
+            return GL.MapBuffer(BufferTarget.ArrayBuffer, BufferAccess.ReadOnly);
+        }
+
+        internal static IntPtr MapBufferReadWrite()
+        {
+            return GL.MapBuffer(BufferTarget.ArrayBuffer, BufferAccess.ReadWrite);
+        }
+
+        internal static IntPtr MapBufferWriteOnly()
+        {
+            return GL.MapBuffer(BufferTarget.ArrayBuffer, BufferAccess.WriteOnly);
+        }
+
+        internal static bool UnmapBuffer()
+        {
+            return GL.UnmapBuffer(BufferTarget.ArrayBuffer);
+        }
+
         /// <summary>Bind <see cref="VBO"/> and send data</summary>
         /// <typeparam name="T">data type</typeparam>
         /// <param name="vbo"><see cref="VBO"/> to send data to</param>
@@ -84,7 +104,7 @@ namespace Elffy.Graphics.OpenGL
             if(length > uint.MaxValue && IntPtr.Size == 4) {
                 ThrowOnlyFor64bitsRuntime();
 
-                [DoesNotReturn] static void ThrowOnlyFor64bitsRuntime() => 
+                [DoesNotReturn] static void ThrowOnlyFor64bitsRuntime() =>
                     throw new PlatformNotSupportedException("Length larger than max value of UInt32 is only for 64 bits runtime.");
             }
 

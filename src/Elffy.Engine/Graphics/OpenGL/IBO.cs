@@ -57,6 +57,26 @@ namespace Elffy.Graphics.OpenGL
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, Consts.NULL);
         }
 
+        internal static IntPtr MapBufferReadOnly()
+        {
+            return GL.MapBuffer(BufferTarget.ElementArrayBuffer, BufferAccess.ReadOnly);
+        }
+
+        internal static IntPtr MapBufferReadWrite()
+        {
+            return GL.MapBuffer(BufferTarget.ElementArrayBuffer, BufferAccess.ReadWrite);
+        }
+
+        internal static IntPtr MapBufferWriteOnly()
+        {
+            return GL.MapBuffer(BufferTarget.ElementArrayBuffer, BufferAccess.WriteOnly);
+        }
+
+        internal static bool UnmapBuffer()
+        {
+            return GL.UnmapBuffer(BufferTarget.ElementArrayBuffer);
+        }
+
         /// <summary>Bind ibo and set buffer data. (Call glBindBuffer and glBufferData)</summary>
         /// <param name="ibo">index buffer object to bind and set data</param>
         /// <param name="indices">indices data to send to ibo</param>
