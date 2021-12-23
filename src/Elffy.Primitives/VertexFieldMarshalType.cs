@@ -4,7 +4,7 @@ namespace Elffy
 {
     // This file is referenced from source generator.
 
-    public enum VertexFieldMarshalType
+    public enum VertexFieldMarshalType : int
     {
         // floating point types
 
