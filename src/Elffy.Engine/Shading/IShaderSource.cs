@@ -6,6 +6,7 @@ namespace Elffy.Shading
     {
         string VertexShaderSource { get; }
         string FragmentShaderSource { get; }
+        string? GeometryShaderSource { get; }
 
         internal int GetSourceHash();
 

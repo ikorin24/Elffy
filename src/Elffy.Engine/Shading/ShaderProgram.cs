@@ -127,7 +127,7 @@ namespace Elffy.Shading
                     _dic[screen] = dic;
                 }
                 if(!dic.TryGetValue(key, out var cache)) {
-                    cache = new(ShaderSource.CompileToProgramObject(key.VertSoruce, key.FragSource), 1);
+                    cache = new(ShaderSource.CompileToProgramObject(key.VertSoruce, key.FragSource, key.GeometrySource), 1);
                 }
                 else {
                     cache.Count++;
@@ -187,6 +187,7 @@ namespace Elffy.Shading
 
             public string VertSoruce => _shaderSource.VertexShaderSource;
             public string FragSource => _shaderSource.FragmentShaderSource;
+            public string? GeometrySource => _shaderSource.GeometryShaderSource;
 
             public SourceKey(IShaderSource shaderSource)
             {
@@ -197,7 +198,12 @@ namespace Elffy.Shading
 
             public bool Equals(SourceKey other)
             {
-                return ReferenceEquals(_shaderSource, other._shaderSource) || (VertSoruce == other.VertSoruce && FragSource == other.FragSource);
+                if(ReferenceEquals(_shaderSource, other._shaderSource)) {
+                    return true;
+                }
+                return (VertSoruce == other.VertSoruce)
+                    && (FragSource == other.FragSource)
+                    && (GeometrySource == other.GeometrySource);
             }
 
             public override int GetHashCode() => _shaderSource.GetSourceHash();

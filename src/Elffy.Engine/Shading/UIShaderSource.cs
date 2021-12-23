@@ -18,6 +18,8 @@ namespace Elffy.Shading
 
         string IShaderSource.FragmentShaderSource => FragmentShaderSource;
 
+        string? IShaderSource.GeometryShaderSource => null;
+
         protected abstract void DefineLocation(VertexDefinition<VertexSlim> definition, Control target);
 
         protected abstract void SendUniforms(Uniform uniform, Control target, in Matrix4 model, in Matrix4 view, in Matrix4 projection);

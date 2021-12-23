@@ -47,6 +47,12 @@ namespace Elffy.Shading
         public void Send(string name, in Matrix4 value) => Send(GL.GetUniformLocation(_program.Value, name), value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Send(string name, in Matrix3 value) => Send(GL.GetUniformLocation(_program.Value, name), value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Send(string name, in Matrix2 value) => Send(GL.GetUniformLocation(_program.Value, name), value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Send(string name, ReadOnlySpan<float> value) => Send(GL.GetUniformLocation(_program.Value, name), value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -115,6 +121,14 @@ namespace Elffy.Shading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Send(int location, in Matrix4 value)
             => GL.ProgramUniformMatrix4(_program.Value, location, 1, false, ref Unsafe.As<Matrix4, float>(ref Unsafe.AsRef(value)));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Send(int location, in Matrix3 value)
+            => GL.ProgramUniformMatrix3(_program.Value, location, 1, false, ref Unsafe.As<Matrix3, float>(ref Unsafe.AsRef(value)));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Send(int location, in Matrix2 value)
+            => GL.ProgramUniformMatrix2(_program.Value, location, 1, false, ref Unsafe.As<Matrix2, float>(ref Unsafe.AsRef(value)));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Send(int location, ReadOnlySpan<float> value)

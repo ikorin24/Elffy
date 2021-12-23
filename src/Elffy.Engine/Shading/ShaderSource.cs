@@ -21,9 +21,13 @@ namespace Elffy.Shading
 
         protected abstract string FragmentShaderSource { get; }
 
+        protected virtual string? GeometryShaderSource { get; } = null;
+
         string IShaderSource.VertexShaderSource => VertexShaderSource;
 
         string IShaderSource.FragmentShaderSource => FragmentShaderSource;
+
+        string? IShaderSource.GeometryShaderSource => GeometryShaderSource;
 
         protected abstract void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType);
 
@@ -65,22 +69,29 @@ namespace Elffy.Shading
         internal int GetSourceHash()
         {
             if(_sourceHashCache == 0) {
-                _sourceHashCache = HashCode.Combine(VertexShaderSource, FragmentShaderSource);
+                _sourceHashCache = HashCode.Combine(VertexShaderSource, FragmentShaderSource, GeometryShaderSource);
             }
             return _sourceHashCache;
         }
 
-        internal static ProgramObject CompileToProgramObject(string vertSource, string fragSource)
+        internal static ProgramObject CompileToProgramObject(string vertSource, string fragSource, string? geometrySource)
         {
             var vertShader = Consts.NULL;
             var fragShader = Consts.NULL;
+            var geometryShader = Consts.NULL;
             var program = ProgramObject.Empty;
             try {
                 vertShader = CompileSource(vertSource, ShaderType.VertexShader);
+                if(geometrySource != null) {
+                    geometryShader = CompileSource(geometrySource, ShaderType.GeometryShader);
+                }
                 fragShader = CompileSource(fragSource, ShaderType.FragmentShader);
 
                 program = ProgramObject.Create();
                 GL.AttachShader(program.Value, vertShader);
+                if(geometrySource != null) {
+                    GL.AttachShader(program.Value, geometryShader);
+                }
                 GL.AttachShader(program.Value, fragShader);
                 GL.LinkProgram(program.Value);
                 GL.GetProgram(program.Value, GetProgramParameterName.LinkStatus, out int linkStatus);
@@ -112,7 +123,7 @@ namespace Elffy.Shading
         /// <returns>shader program id</returns>
         private static int CompileSource(string source, ShaderType shaderType)
         {
-            Debug.Assert(shaderType == ShaderType.FragmentShader || shaderType == ShaderType.VertexShader, "Not supported");
+            Debug.Assert(shaderType == ShaderType.FragmentShader || shaderType == ShaderType.VertexShader || shaderType == ShaderType.GeometryShader, "Not supported");
 
             var shaderID = GL.CreateShader(shaderType);
             GL.ShaderSource(shaderID, source);
