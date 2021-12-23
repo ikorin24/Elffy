@@ -116,26 +116,17 @@ namespace Elffy
             IBO.Unbind();
         }
 
-        protected void DrawElements(int byteOffset, int count)
+        protected void DrawElements(int byteOffset, uint count)
         {
             if(_instancingCount == 0) {
-                GL.DrawElements(BeginMode.Triangles, count, DrawElementsType.UnsignedInt, byteOffset);
+                GL.DrawElements(BeginMode.Triangles, (int)count, DrawElementsType.UnsignedInt, byteOffset);
             }
             else {
-                GL.DrawElementsInstanced(PrimitiveType.Triangles, count, DrawElementsType.UnsignedInt, (IntPtr)byteOffset, _instancingCount);
+                GL.DrawElementsInstanced(PrimitiveType.Triangles, (int)count, DrawElementsType.UnsignedInt, (IntPtr)byteOffset, _instancingCount);
             }
         }
 
-        protected unsafe void LoadMesh<TVertex>(TVertex* vertices, int vertexCount, int* indices, int indexCount) where TVertex : unmanaged
-        {
-            LoadMesh(new ReadOnlySpan<TVertex>(vertices, vertexCount), new ReadOnlySpan<int>(indices, indexCount));
-        }
-
-        /// <summary>Load mesh data</summary>
-        /// <typeparam name="TVertex">type of vertex</typeparam>
-        /// <param name="vertices">vertex data to load</param>
-        /// <param name="indices">index data to load</param>
-        protected void LoadMesh<TVertex>(ReadOnlySpan<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged
+        protected unsafe void LoadMesh<TVertex>(TVertex* vertices, ulong vertexCount, int* indices, uint indexCount) where TVertex : unmanaged
         {
             if(TryGetHostScreen(out var screen) == false) {
                 throw new InvalidOperationException();
@@ -163,9 +154,9 @@ namespace Elffy
             }
 
             _vbo = VBO.Create();
-            VBO.BindBufferData(ref _vbo, vertices, BufferUsageHint.StaticDraw);
+            VBO.BindBufferData(ref _vbo, vertices, vertexCount, BufferUsageHint.StaticDraw);
             _ibo = IBO.Create();
-            IBO.BindBufferData(ref _ibo, indices, BufferUsageHint.StaticDraw);
+            IBO.BindBufferData(ref _ibo, indices, indexCount, BufferUsageHint.StaticDraw);
             _vao = VAO.Create();
             VAO.Bind(_vao);
             Debug.Assert(_shaderProgram.IsEmpty);
@@ -180,6 +171,18 @@ namespace Elffy
             }
             _vertexType = vertexType;
             _isLoaded = true;
+        }
+
+        /// <summary>Load mesh data</summary>
+        /// <typeparam name="TVertex">type of vertex</typeparam>
+        /// <param name="vertices">vertex data to load</param>
+        /// <param name="indices">index data to load</param>
+        protected unsafe void LoadMesh<TVertex>(ReadOnlySpan<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged
+        {
+            fixed(TVertex* v = vertices)
+            fixed(int* i = indices) {
+                LoadMesh(v, (ulong)vertices.Length, i, (uint)indices.Length);
+            }
         }
 
         protected override void OnDead()

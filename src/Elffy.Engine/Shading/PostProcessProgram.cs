@@ -33,7 +33,7 @@ namespace Elffy.Shading
             IBO.Bind(_ibo);
             ProgramObject.Bind(_program);
             _source.SendUniformsInternal(_program, screenSize, uvScale);
-            GL.DrawElements(BeginMode.Triangles, _ibo.Length, DrawElementsType.UnsignedInt, 0);
+            GL.DrawElements(BeginMode.Triangles, (int)_ibo.Length, DrawElementsType.UnsignedInt, 0);
             VAO.Unbind();
             IBO.Unbind();
         }

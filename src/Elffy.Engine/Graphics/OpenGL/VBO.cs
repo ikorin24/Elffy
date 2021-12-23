@@ -3,6 +3,7 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
 using OpenTK.Graphics.OpenGL4;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Graphics.OpenGL
 {
@@ -11,11 +12,11 @@ namespace Elffy.Graphics.OpenGL
     public readonly struct VBO : IEquatable<VBO>
     {
         private readonly int _vbo;
-        private readonly int _length;
+        private readonly ulong _length;
         private readonly int _elementSize;
 
         internal int Value => _vbo;
-        public int Length => _length;
+        public ulong Length => _length;
         public int ElementSize => _elementSize;
 
         /// <summary>Get whether the vertex buffer object is empty or not.</summary>
@@ -71,13 +72,28 @@ namespace Elffy.Graphics.OpenGL
         {
             Bind(vbo);
             Unsafe.AsRef(vbo._elementSize) = sizeof(T);
-            Unsafe.AsRef(vbo._length) = vertices.Length;
+            Unsafe.AsRef(vbo._length) = (ulong)vertices.Length;
             fixed(T* ptr = vertices) {
                 GLAssert.EnsureContext();
-                GL.BufferData(BufferTarget.ArrayBuffer, vbo._length * vbo._elementSize, (IntPtr)ptr, usage);
+                GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)((uint)vertices.Length * (uint)vbo._elementSize), (IntPtr)ptr, usage);
             }
         }
 
+        internal static unsafe void BindBufferData<T>(ref VBO vbo, T* vertices, ulong length, BufferUsageHint usage) where T : unmanaged
+        {
+            if(length > uint.MaxValue && IntPtr.Size == 4) {
+                ThrowOnlyFor64bitsRuntime();
+
+                [DoesNotReturn] static void ThrowOnlyFor64bitsRuntime() => 
+                    throw new PlatformNotSupportedException("Length larger than max value of UInt32 is only for 64 bits runtime.");
+            }
+
+            Bind(vbo);
+            Unsafe.AsRef(vbo._elementSize) = sizeof(T);
+            Unsafe.AsRef(vbo._length) = length;
+            GLAssert.EnsureContext();
+            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(length * (ulong)sizeof(T)), (IntPtr)vertices, usage);
+        }
 
 
         public override string ToString() => _vbo.ToString();

@@ -76,7 +76,7 @@ namespace Elffy.Shapes
 
         // This method is used by Model3DLoadMeshDelegate
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void DrawElementsInternal(int startIndex, int indexCount)
+        internal void DrawElementsInternal(int startIndex, uint indexCount)
         {
             DrawElements(startIndex * sizeof(int), indexCount);
         }
@@ -179,7 +179,7 @@ namespace Elffy.Shapes
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Invoke(int startIndex, int indexCount)
+        public void Invoke(int startIndex, uint indexCount)
         {
             _model?.DrawElementsInternal(startIndex, indexCount);
         }

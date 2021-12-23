@@ -11,11 +11,11 @@ namespace Elffy.Graphics.OpenGL
     public readonly struct IBO : IEquatable<IBO>
     {
         private readonly int _ibo;
-        private readonly int _length;
+        private readonly uint _length;
 
         internal int Value => _ibo;
 
-        public int Length => _length;
+        public uint Length => _length;
 
         private IBO(int ibo)
         {
@@ -68,9 +68,25 @@ namespace Elffy.Graphics.OpenGL
                 GLAssert.EnsureContext();
                 GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(int), (IntPtr)ptr, usage);
             }
-            Unsafe.AsRef(ibo._length) = indices.Length;
+            Unsafe.AsRef(ibo._length) = (uint)indices.Length;
         }
 
+        public static unsafe void BindBufferData(ref IBO ibo, int* indices, uint length, BufferUsageHint usage)
+        {
+            // OpenGL does not support 64bit Length IBO.
+            // The max is UInt32.MaxLength
+
+            const uint Max = uint.MaxValue / sizeof(int);
+            if(length > Max) {
+                ThrowTooLarge();
+                static void ThrowTooLarge() => throw new ArgumentOutOfRangeException("Buffer size is too large.");
+            }
+            uint size = length * sizeof(int);
+            Bind(ibo);
+            GLAssert.EnsureContext();
+            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)size, (IntPtr)indices, usage);
+            Unsafe.AsRef(ibo._length) = length;
+        }
 
         public readonly override string ToString() => _ibo.ToString();
 
