@@ -19,7 +19,7 @@ namespace Elffy.Imaging
                 ThrowHelper.ThrowFormatException();
             }
 
-            using var entries = new UnsafeRawArray<ICONDIRENTRY>(icondir.idCount);
+            using var entries = new UnsafeRawArray<ICONDIRENTRY>(icondir.idCount, false);
             stream.SafeRead(entries.AsBytes());
 
             var icon = new Icon(icondir.idCount);
@@ -47,7 +47,7 @@ namespace Elffy.Imaging
                 if((int)entry.dwBytesInRes < 0) {
                     throw new InvalidDataException();
                 }
-                using var pngData = new UnsafeRawArray<byte>((int)entry.dwBytesInRes);
+                using var pngData = new UnsafeRawArray<byte>((int)entry.dwBytesInRes, false);
                 *(BITMAPINFOHEADER*)pngData.Ptr = header;
                 stream.SafeRead(pngData.AsSpan().Slice(sizeof(BITMAPINFOHEADER)));
                 using var pngStream = PointerStream.Create(pngData.Ptr.ToPointer(), pngData.Length);
@@ -106,7 +106,7 @@ namespace Elffy.Imaging
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static UnsafeRawArray<T> ReadToUnsafeRawArray<T>(Stream stream, int count) where T : unmanaged
         {
-            var array = new UnsafeRawArray<T>(count);
+            var array = new UnsafeRawArray<T>(count, false);
             try {
                 stream.SafeRead(array.AsBytes());
                 return array;

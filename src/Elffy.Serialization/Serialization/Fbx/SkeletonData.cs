@@ -38,7 +38,7 @@ namespace Elffy.Serialization.Fbx
                 bones.Dispose();
                 throw;
             }
-            var matrices = new UnsafeRawArray<Matrix4>(bones.Count);
+            var matrices = new UnsafeRawArray<Matrix4>(bones.Count, false);
             try {
                 // I don't know which way is better.
                 //matrices.AsSpan().Clear();

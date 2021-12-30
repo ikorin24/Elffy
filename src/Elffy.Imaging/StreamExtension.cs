@@ -32,7 +32,7 @@ namespace Elffy.Imaging
             }
             else {
                 if(byteLength > 128) {
-                    using var buf = new UnsafeRawArray<byte>(byteLength);
+                    using var buf = new UnsafeRawArray<byte>(byteLength, false);
                     SafeRead(stream, buf.AsSpan());
                 }
                 else {

@@ -115,7 +115,7 @@ namespace Elffy.Effective.Unsafes
             }
             _ptr = Marshal.AllocHGlobal(sizeof(int) + sizeof(UnsafeRawArray<T>));
             CountRef() = 0;
-            ArrayRef() = new UnsafeRawArray<T>(capacity);
+            ArrayRef() = new UnsafeRawArray<T>(capacity, false);
         }
 
         /// <summary>Create <see cref="UnsafeRawList{T}"/> which is initialized by the specified collection.</summary>
@@ -125,7 +125,7 @@ namespace Elffy.Effective.Unsafes
             _ptr = Marshal.AllocHGlobal(sizeof(int) + sizeof(UnsafeRawArray<T>));
             CountRef() = collection.Length;
             ref var array = ref ArrayRef();
-            array = new UnsafeRawArray<T>(collection.Length);
+            array = new UnsafeRawArray<T>(collection.Length, false);
             collection.CopyTo(array.AsSpan());
         }
 
@@ -155,7 +155,7 @@ namespace Elffy.Effective.Unsafes
 
             ref var count = ref CountRef();
             if(count + collection.Length >= array.Length) {
-                var newArray = new UnsafeRawArray<T>(count + collection.Length);
+                var newArray = new UnsafeRawArray<T>(count + collection.Length, false);
                 try {
                     array.AsSpan(0, count).CopyTo(newArray.AsSpan());
                 }

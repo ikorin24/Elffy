@@ -38,8 +38,8 @@ namespace Elffy.Serialization.Fbx.Internal
                     indicesCout += mesh.IndicesCount;
                     verticesCount += mesh.VerticesCount;
                 }
-                vertices = new UnsafeRawArray<TVertex>(verticesCount);
-                indices = new UnsafeRawArray<int>(indicesCout);
+                vertices = new UnsafeRawArray<TVertex>(verticesCount, false);
+                indices = new UnsafeRawArray<int>(indicesCout, false);
 
                 var offsetV = 0;
                 var offsetI = 0;

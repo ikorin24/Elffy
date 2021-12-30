@@ -19,8 +19,8 @@ namespace Elffy.Shapes
             const int a = 16;
             const int b = 16;
 
-            vertices = new UnsafeRawArray<Vertex>((a + 1) * (b + 1));
-            indices = new UnsafeRawArray<int>(a * b * 6);
+            vertices = new UnsafeRawArray<Vertex>((a + 1) * (b + 1), false);
+            indices = new UnsafeRawArray<int>(a * b * 6, false);
 
             // 'UnsafeRawArray' does not check boundary of index accessing. Be careful!
 

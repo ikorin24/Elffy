@@ -539,7 +539,7 @@ namespace Elffy.Imaging
             if(mod3 != 0) {
                 ThrowHelper.ThrowFormatException("Invalid PLTE chunk size.");
             }
-            var palette = new UnsafeRawArray<PngColor>(colorCount);
+            var palette = new UnsafeRawArray<PngColor>(colorCount, false);
             try {
                 stream.SafeRead(palette.AsBytes());
                 return palette;

@@ -66,23 +66,6 @@ namespace Elffy.Effective.Unsafes
         [Obsolete("Don't use default constructor.", true)]
         public UnsafeRawArray() => throw new NotSupportedException("Don't use default constructor.");
 
-        /// <summary>Allocate non-zero-initialized array of specified length.</summary>
-        /// <param name="length">length of new array</param>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [Obsolete]
-        public UnsafeRawArray(int length)
-        {
-            if(length < 0) {
-                throw new ArgumentOutOfRangeException();
-            }
-            if(length == 0) {
-                this = default;
-                return;
-            }
-            Length = length;
-            Ptr = Marshal.AllocHGlobal(length * sizeof(T));
-        }
-
         /// <summary>Allocate array of specified length.</summary>
         /// <param name="length">length of new array</param>
         /// <param name="zeroFill">Whether to initialized the array by zero.</param>
