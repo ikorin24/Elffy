@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using Elffy.Graphics.OpenGL;
-using System.Diagnostics;
 
 namespace Elffy.Shading.Deferred
 {
@@ -135,7 +134,14 @@ void main()
         vec4 lPosWorld = texelFetch(_lightPosSampler, i, 0);
         vec3 lColor = texelFetch(_lightColorSampler, i, 0).rgb; // light color
         vec4 lPos = _view * lPosWorld;              // light pos in eye space
-        vec3 l = normalize(lPos.xyz - pos);         // light vec in eye space, normalized
+
+        vec3 l;
+        if(lPos.w < 0.001) {
+            l = normalize(lPos.xyz);                // light vec in eye space, normalized
+        }
+        else {
+            l = normalize(lPos.xyz - pos);          // light vec in eye space, normalized
+        }
         vec3 h = normalize(v + l);                  // half vector in eye space, normalized
         float dot_nl = max(0.0, dot(n, l));
         float dot_nh = max(0.0, dot(n, h));

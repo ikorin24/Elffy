@@ -12,7 +12,7 @@ namespace Elffy.Shading.Deferred
 {
     internal sealed class LightBuffer : ILightBuffer, IDisposable
     {
-        private static Vector4 DefaultLightPosition => new Vector4(0, 500, 0, 1);
+        private static Vector4 DefaultLightPosition => new Vector4(1, 1, 1, 0);
         private static Color4 DefaultLightColor => Color4.White;
 
         private IHostScreen? _screen;
