@@ -83,6 +83,110 @@ namespace Elffy
         {
         }
 
+        public unsafe bool TryGetMesh([MaybeNullWhen(false)] out Mesh mesh)
+        {
+            if(TryGetHostScreen(out var screen) == false) { goto FAILURE; }
+            if(Engine.CurrentContext != screen) { goto FAILURE; }
+            if(IsLoaded == false) { goto FAILURE; }
+
+            const uint IndexSize = sizeof(int);
+
+            var vertexType = _vertexType;
+            Debug.Assert(vertexType != null);
+            if(VertexMarshalHelper.TryGetVertexTypeData(vertexType, out var vertexTypeData) == false) { goto FAILURE; }
+
+            var vertexSize = (ulong)vertexTypeData.VertexSize;
+            Debug.Assert(vertexType != null);
+            var verticesCount = _vbo.Length;
+            var indicesCount = _ibo.Length;
+            var verticesByteSize = verticesCount * vertexSize;
+            var indicesByteSize = indicesCount * IndexSize;
+
+            var bufLen = verticesByteSize + indicesByteSize;
+            var buf = UniquePtr.Malloc(checked((nuint)bufLen));
+            var vDest = (void*)buf.Ptr;
+            var iDest = buf.GetPtr<byte>() + verticesByteSize;
+            try {
+                try {
+                    VBO.Bind(_vbo);
+                    var vSource = (void*)VBO.MapBufferReadOnly();
+                    System.Buffer.MemoryCopy(vSource, vDest, bufLen, verticesByteSize);
+                }
+                finally {
+                    VBO.UnmapBuffer();
+                    VBO.Unbind();
+                }
+                try {
+                    IBO.Bind(_ibo);
+                    var iSource = (void*)IBO.MapBufferReadOnly();
+                    System.Buffer.MemoryCopy(iSource, iDest, bufLen, indicesByteSize);
+                }
+                finally {
+                    IBO.UnmapBuffer();
+                    IBO.Unbind();
+                }
+                mesh = Mesh.Create(vertexTypeData, IndexSize, vDest, verticesByteSize, iDest, indicesByteSize, ref buf, static buf => buf.Dispose());
+                return true;
+            }
+            finally {
+                buf.Dispose();
+            }
+
+        FAILURE:
+            mesh = null;
+            return false;
+        }
+
+        public unsafe bool TryGetMeshRaw(void* vertices, ulong verticesByteSize,
+                                         int* indices, ulong indicesByteSize,
+                                         [MaybeNullWhen(false)] out Type vertexType,
+                                         out ulong verticesByteSizeActual,
+                                         out uint indicesByteSizeActual)
+        {
+            if(TryGetHostScreen(out var screen) == false) { goto FAILURE; }
+            if(Engine.CurrentContext != screen) { goto FAILURE; }
+            if(IsLoaded == false) { goto FAILURE; }
+            vertexType = _vertexType;
+            Debug.Assert(vertexType != null);
+            if(VertexMarshalHelper.TryGetVertexTypeData(vertexType, out var vertexTypeData) == false) { goto FAILURE; }
+
+            var vertexSize = (ulong)vertexTypeData.VertexSize;
+            Debug.Assert(vertexType != null);
+            var verticesCount = _vbo.Length;
+            var indicesCount = _ibo.Length;
+            verticesByteSizeActual = verticesCount * vertexSize;
+            indicesByteSizeActual = indicesCount * sizeof(int);
+
+            if(verticesByteSize < verticesByteSizeActual) { goto FAILURE; }
+            if(indicesByteSize < indicesByteSizeActual) { goto FAILURE; }
+
+            try {
+                VBO.Bind(_vbo);
+                var vSource = (void*)VBO.MapBufferReadOnly();
+                System.Buffer.MemoryCopy(vSource, vertices, verticesByteSize, verticesByteSizeActual);
+            }
+            finally {
+                VBO.UnmapBuffer();
+                VBO.Unbind();
+            }
+            try {
+                IBO.Bind(_ibo);
+                var iSource = (void*)IBO.MapBufferReadOnly();
+                System.Buffer.MemoryCopy(iSource, indices, indicesByteSize, indicesByteSizeActual);
+            }
+            finally {
+                IBO.UnmapBuffer();
+                IBO.Unbind();
+            }
+            return true;
+
+        FAILURE:
+            vertexType = null;
+            verticesByteSizeActual = 0;
+            indicesByteSizeActual = 0;
+            return false;
+        }
+
         public unsafe (int VertexCount, int IndexCount) GetMesh<TVertex>(Span<TVertex> vertices, Span<int> indices) where TVertex : unmanaged
         {
             fixed(TVertex* v = vertices)
@@ -240,6 +344,11 @@ namespace Elffy
             fixed(int* i = indices) {
                 LoadMesh(v, (ulong)vertices.Length, i, (uint)indices.Length);
             }
+        }
+
+        protected void LoadMesh(Mesh mesh)
+        {
+            throw new NotImplementedException();
         }
 
         protected override void OnDead()

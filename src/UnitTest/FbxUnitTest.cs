@@ -76,5 +76,17 @@ namespace UnitTest
         }
 
         public bool Exists(string? name) => true;
+
+        public bool TryGetHandle(string? name, out ResourceFileHandle handle)
+        {
+            if(name is null) {
+                handle = ResourceFileHandle.None;
+                return false;
+            }
+            var path = Path.Combine(CurrentDirectory, name);
+            var size = new FileInfo(path).Length;
+            handle = new ResourceFileHandle(File.OpenHandle(path), 0, size);
+            return true;
+        }
     }
 }

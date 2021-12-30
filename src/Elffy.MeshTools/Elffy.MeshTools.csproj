@@ -17,7 +17,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Elffy.Memory\Elffy.Memory.csproj" />
-    <ProjectReference Include="..\Elffy.Primitives\Elffy.Primitives.csproj" />
+    <ProjectReference Include="..\Elffy.Containers\Elffy.Containers.csproj" />
+    <ProjectReference Include="..\Elffy.Resources\Elffy.Resources.csproj" />
   </ItemGroup>
 
 </Project>

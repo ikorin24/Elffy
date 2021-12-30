@@ -45,6 +45,8 @@ namespace Elffy
             [DoesNotReturn] static void Throw(string? paramName) => throw new ArgumentException(paramName);
         }
 
+        public ResourceFileHandle GetHandle() => ResourceLoader.TryGetHandle(_name, out var handle) ? handle : ResourceFileHandle.None;
+
         public Stream GetStream() => ResourceLoader.TryGetStream(_name, out var stream) ? stream : Stream.Null;
 
         public override bool Equals(object? obj) => obj is ResourceFile file && Equals(file);

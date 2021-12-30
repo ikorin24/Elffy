@@ -21,7 +21,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="NonCopyableAnalyzer" Version="0.7.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Elffy.Generator.Vertex\Elffy.Generator.Vertex.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Elffy.Memory.SmartPtr\Elffy.Memory.SmartPtr.csproj" />
   </ItemGroup>
 
 </Project>

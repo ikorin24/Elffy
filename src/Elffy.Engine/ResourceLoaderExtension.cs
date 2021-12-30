@@ -5,6 +5,8 @@ using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Elffy
 {
@@ -82,6 +84,15 @@ namespace Elffy
             return AsyncLoadCore(static file => LoadTypeface(file), file,
                                  static typeface => typeface.Dispose(),
                                  timingPoint, cancellationToken);
+        }
+
+        public unsafe static Mesh LoadMeshContainer(this ResourceFile file) => MeshResourceLoader.LoadMeshContainer(file);
+
+        public static UniTask<Mesh> LoadMeshContainerAsync(this ResourceFile file, FrameTimingPoint? timingPoint, CancellationToken cancellationToken = default)
+        {
+            return AsyncLoadCore(
+                static file => LoadMeshContainer(file), file,
+                null, timingPoint, cancellationToken);
         }
 
         private static async UniTask<T> AsyncLoadCore<T, TState>(Func<TState, T> onTreadPool, TState state, Action<T>? onCatch,

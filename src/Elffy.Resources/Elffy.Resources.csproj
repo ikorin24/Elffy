@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Elffy.Memory\Elffy.Memory.csproj" />
+    <ProjectReference Include="..\Elffy.Containers\Elffy.Containers.csproj" />
   </ItemGroup>
 
 </Project>

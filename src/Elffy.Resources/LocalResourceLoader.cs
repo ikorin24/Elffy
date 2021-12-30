@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -51,6 +52,17 @@ namespace Elffy
         {
             return name is not null && _resources.ContainsKey(name);
         }
+
+        public bool TryGetHandle(string? name, out ResourceFileHandle handle)
+        {
+            if(name is null || _resources.TryGetValue(name, out var resource) == false) {
+                handle = ResourceFileHandle.None;
+                return false;
+            }
+            var fileHandle = File.OpenHandle(_resourcePackageFilePath, FileMode.Open, FileAccess.Read);
+            handle = new ResourceFileHandle(fileHandle, resource.Position, resource.Length);
+            return true;
+        }
     }
 
     internal sealed class EmptyResourceLoader : IResourceLoader
@@ -58,15 +70,21 @@ namespace Elffy
         private static readonly EmptyResourceLoader _instance = new EmptyResourceLoader();
         public static EmptyResourceLoader Null => _instance;
 
-        public bool Exists(string name) => false;
+        public bool Exists(string? name) => false;
 
-        public bool TryGetSize(string name, out long size)
+        public bool TryGetHandle(string? name, out ResourceFileHandle handle)
+        {
+            handle = ResourceFileHandle.None;
+            return false;
+        }
+
+        public bool TryGetSize(string? name, out long size)
         {
             size = 0;
             return false;
         }
 
-        public bool TryGetStream(string name, out Stream stream)
+        public bool TryGetStream(string? name, out Stream stream)
         {
             stream = Stream.Null;
             return false;

@@ -25,7 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Elffy.Async\Elffy.Events.csproj" />
+    <ProjectReference Include="..\Elffy.Events\Elffy.Events.csproj" />
     <ProjectReference Include="..\Elffy.Generator.EnumLike\Elffy.Generator.EnumLike.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\Elffy.Imaging\Elffy.Imaging.csproj" />
     <ProjectReference Include="..\Elffy.MeshTools\Elffy.MeshTools.csproj" />

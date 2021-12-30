@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Elffy.Async\Elffy.Events.csproj" />
+    <ProjectReference Include="..\Elffy.Events\Elffy.Events.csproj" />
   </ItemGroup>
 
 </Project>
