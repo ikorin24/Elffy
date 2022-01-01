@@ -42,7 +42,7 @@ namespace Elffy.Shading.Deferred
         }
 
         private const string FragSource =
-@"#version 440
+@"#version 410
 #define m_float mediump float
 #define m_vec2  mediump vec2
 #define m_vec3  mediump vec3
