@@ -61,7 +61,7 @@ namespace Sandbox
 
         private static void InitializeLights(IHostScreen screen)
         {
-            ReadOnlySpan<LightData> lights = stackalloc LightData[2]
+            ReadOnlySpan<LightData> lights = stackalloc LightData[]
             {
                 new()
                 {
@@ -69,12 +69,12 @@ namespace Sandbox
                     Position = new Vector3(1, 1, 0),
                     Type = LightType.DirectLight,
                 },
-                new()
-                {
-                    Color = Color3.OrangeRed,
-                    Position = new Vector3(1, 0, 0),
-                    Type = LightType.DirectLight,
-                },
+                //new()
+                //{
+                //    Color = Color3.OrangeRed,
+                //    Position = new Vector3(1, 0, 0),
+                //    Type = LightType.DirectLight,
+                //},
             };
             screen.Lights.StaticLights.Initialize(lights);
         }

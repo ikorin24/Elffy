@@ -115,9 +115,9 @@ void main()
     vec3 posView = (modelView * Pos).xyz;                    // vertex pos in eye space
     vec3 normalView = transpose(inverse(mat3(modelView))) * Normal;    // normal in eye space
     vec3 lightColor = vec3(0, 0, 0);
-    const vec3 ma = vec3(0.88, 0.88, 0.88);
-    const vec3 md = vec3(0.18, 0.18, 0.18);
-    const vec3 ms = vec3(0.1, 0.1, 0.1);
+    const vec3 ma = vec3(0.8, 0.8, 0.8);
+    const vec3 md = vec3(0.2, 0.2, 0.2);
+    const vec3 ms = vec3(0.5, 0.5, 0.5);
     const float shininess = 5;
     for(int i = 0; i < lightCount; i++) {
         vec4 lPosView = view * texelFetch(lPosSampler, i, 0);               // light pos in eye space
