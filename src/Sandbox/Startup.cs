@@ -21,20 +21,9 @@ namespace Sandbox
         public static async UniTask Start2()
         {
             var screen = Game.Screen;
+            screen.Lights.StaticLights.Initialize();
             var (drLayer, wLayer, uiLayer) = await LayerPipelines.UseDeferredForward(screen);
             var uiRoot = uiLayer.UIRoot;
-            /*
-             context =>
-                {
-                    var interval = 100;
-                    for(int i = 0; i < context.LightCount; i++) {
-                        var x = i * interval - context.LightCount * interval / 2;
-                        var pos = new Vector3(x, 10, 0);
-                        context.SetPointLight(i, pos, Color4.White);
-                    }
-                }
-             
-             */
             CreateTestUI(uiLayer);
             var timings = screen.TimingPoints;
             uiRoot.Background = Color4.Black;

@@ -6,6 +6,7 @@ using OpenTK.Graphics.OpenGL4;
 using System;
 using System.Diagnostics;
 using System.Threading;
+using Elffy.Shading;
 
 namespace Elffy.Features.Internal
 {
@@ -38,6 +39,8 @@ namespace Elffy.Features.Internal
 
         public FrameTimingPointList TimingPoints { get; }
 
+        public LightManager Lights { get; }
+
         public CurrentFrameTiming CurrentTiming => (_runningThreadId == ThreadHelper.CurrentThreadId) ? _currentTiming : CurrentFrameTiming.OutOfFrameLoop;
 
         public Color4 ClearColor
@@ -55,6 +58,7 @@ namespace Elffy.Features.Internal
             _clearColor = Color4.Black;
             OwnerScreen = screen;
             TimingPoints = new FrameTimingPointList(screen);
+            Lights = new LightManager(screen);
             Layers = new LayerCollection(this);
             _runningTokenSource = new CancellationTokenSource();
         }
@@ -204,6 +208,7 @@ namespace Elffy.Features.Internal
             layers.TerminateAllImmediately();
 
             TimingPoints.AbortAllEvents();
+            Lights.ReleaseBuffer();
             ContextAssociatedMemorySafety.EnsureCollect(OwnerScreen);   // Must be called before the opengl context is deleted.
             Disposed?.Invoke();
         }

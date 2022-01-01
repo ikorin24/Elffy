@@ -8,12 +8,12 @@ using Elffy.Effective;
 using Elffy.Features;
 using Elffy.Graphics.OpenGL;
 
-namespace Elffy.Shading.Deferred
+namespace Elffy.Shading
 {
     internal sealed class LightBuffer : ILightBuffer, IDisposable
     {
-        private static Vector4 DefaultLightPosition => new Vector4(1, 1, 1, 0);
-        private static Color4 DefaultLightColor => Color4.White;
+        //private static Vector4 DefaultLightPosition => new Vector4(1, 1, 1, 0);
+        //private static Color4 DefaultLightColor => Color4.White;
 
         private IHostScreen? _screen;
         private FloatDataTextureCore _lightColors;
@@ -45,28 +45,28 @@ namespace Elffy.Shading.Deferred
             return new LightBufferData(_lightColors.TextureObject, _lightPositions.TextureObject, _lightCount);
         }
 
-        public unsafe void Initialize(int lightCount)
-        {
-            const int Threshold = 16;
+        //public unsafe void Initialize(int lightCount)
+        //{
+        //    const int Threshold = 16;
 
-            if(lightCount <= Threshold) {
-                Vector4* posPtr = stackalloc Vector4[Threshold];
-                Color4* colorsPtr = stackalloc Color4[Threshold];
-                FillAndInitialize(this, new Span<Vector4>(posPtr, lightCount), new Span<Color4>(colorsPtr, lightCount));
-            }
-            else {
-                using var positionsBuf = new ValueTypeRentMemory<Vector4>(lightCount, false);
-                using var colorsBuf = new ValueTypeRentMemory<Color4>(lightCount, false);
-                FillAndInitialize(this, positionsBuf.AsSpan(), colorsBuf.AsSpan());
-            }
+        //    if(lightCount <= Threshold) {
+        //        Vector4* posPtr = stackalloc Vector4[Threshold];
+        //        Color4* colorsPtr = stackalloc Color4[Threshold];
+        //        FillAndInitialize(this, new Span<Vector4>(posPtr, lightCount), new Span<Color4>(colorsPtr, lightCount));
+        //    }
+        //    else {
+        //        using var positionsBuf = new ValueTypeRentMemory<Vector4>(lightCount, false);
+        //        using var colorsBuf = new ValueTypeRentMemory<Color4>(lightCount, false);
+        //        FillAndInitialize(this, positionsBuf.AsSpan(), colorsBuf.AsSpan());
+        //    }
 
-            static void FillAndInitialize(LightBuffer lightBuffer, Span<Vector4> positions, Span<Color4> colors)
-            {
-                positions.Fill(DefaultLightPosition);
-                colors.Fill(DefaultLightColor);
-                lightBuffer.Initialize(positions, colors);
-            }
-        }
+        //    static void FillAndInitialize(LightBuffer lightBuffer, Span<Vector4> positions, Span<Color4> colors)
+        //    {
+        //        positions.Fill(DefaultLightPosition);
+        //        colors.Fill(DefaultLightColor);
+        //        lightBuffer.Initialize(positions, colors);
+        //    }
+        //}
 
         public void Initialize(ReadOnlySpan<Vector4> positions, ReadOnlySpan<Color4> colors)
         {
@@ -88,6 +88,18 @@ namespace Elffy.Shading.Deferred
             _initialized = true;
         }
 
+        public void ReadPositions(Span<Vector4> positions)
+        {
+            if(_initialized == false) { ThrowNotInitialized(); }
+            _lightPositions.Get(positions.MarshalCast<Vector4, Color4>());
+        }
+
+        public void ReadColors(Span<Color4> colors)
+        {
+            if(_initialized == false) { ThrowNotInitialized(); }
+            _lightColors.Get(colors);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void UpdatePositions(ReadOnlySpan<Vector4> positions, int offset)
         {
@@ -96,10 +108,10 @@ namespace Elffy.Shading.Deferred
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void UpdateColors(ReadOnlySpan<Color4> positions, int offset)
+        public void UpdateColors(ReadOnlySpan<Color4> colors, int offset)
         {
             if(_initialized == false) { ThrowNotInitialized(); }
-            _lightColors.Update(positions, offset);
+            _lightColors.Update(colors, offset);
         }
 
         public void Dispose()

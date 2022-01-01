@@ -7,18 +7,17 @@ namespace Elffy.Shading.Deferred
     {
         internal delegate ref readonly Matrix4 MatrixProvider(IHostScreen screen);
 
-        private readonly IPbrDeferredRenderingInfo _pbrInfo;
+        private readonly IGBufferSource _pbrInfo;
         private readonly IGBuffer _gBuffer;
-        private readonly ILightBuffer _lightBuffer;
         private readonly MatrixProvider _viewProvider;
+        private ILightBuffer? _lightBuffer;
 
         public override string FragShaderSource => FragSource;
 
-        internal PbrDeferredRenderingPostProcess(IPbrDeferredRenderingInfo pbrInfo, MatrixProvider viewProvider)
+        internal PbrDeferredRenderingPostProcess(IGBufferSource gbufferSource, MatrixProvider viewProvider)
         {
-            _pbrInfo = pbrInfo;
-            _gBuffer = pbrInfo.GBuffer;
-            _lightBuffer = pbrInfo.LightBuffer;
+            _pbrInfo = gbufferSource;
+            _gBuffer = gbufferSource.GBuffer;
             _viewProvider = viewProvider;
         }
 
@@ -27,8 +26,10 @@ namespace Elffy.Shading.Deferred
             if(_pbrInfo.TryGetHostScreen(out var screen) == false) {
                 throw new System.InvalidOperationException();
             }
+            var lightBuffer = (_lightBuffer ??= screen.Lights.StaticLights.LightBuffer);
+            var lightData = lightBuffer.GetBufferData();
             var gData = _gBuffer.GetBufferData();
-            var lightData = _lightBuffer.GetBufferData();
+
             uniform.Send("_view", _viewProvider(screen));
             uniform.Send("_lightCount", lightData.LightCount);
             uniform.SendTexture2D("_posSampler", gData.Position, TextureUnitNumber.Unit0);

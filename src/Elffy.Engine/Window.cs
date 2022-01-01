@@ -10,6 +10,7 @@ using Elffy.Features.Internal;
 using Elffy.Features;
 using TKMouseButton = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
 using TKMouseButtonEventArgs = OpenTK.Windowing.Common.MouseButtonEventArgs;
+using Elffy.Shading;
 
 namespace Elffy
 {
@@ -39,6 +40,8 @@ namespace Elffy
 
         /// <inheritdoc/>
         public LayerCollection Layers => _renderingArea.Layers;
+
+        public LightManager Lights => _renderingArea.Lights;
 
         /// <inheritdoc/>
         public Camera Camera => _renderingArea.Camera;

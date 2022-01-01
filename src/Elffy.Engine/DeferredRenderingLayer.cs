@@ -10,32 +10,24 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy
 {
-    public sealed class DeferredRenderingLayer : WorldLayer, IPbrDeferredRenderingInfo
+    public sealed class DeferredRenderingLayer : WorldLayer, IGBufferSource
     {
         private const int MaxLightCount = 1024 * 1024;
         private const int DRLayerDefaultSort = -100;
 
         private readonly GBuffer _gBuffer;
-        private readonly LightBuffer _lightBuffer;
         private readonly PbrDeferredRenderingPostProcess _postProcess;
-        private readonly int _lightCount;
         private PostProcessProgram? _ppProgram;
 
         private bool _isSizeChangeObserved;
         private bool _isSizeChangeRequested;
         private long _sizeChangeRequestedFrameNum;
 
-        IGBuffer IPbrDeferredRenderingInfo.GBuffer => _gBuffer;
+        IGBuffer IGBufferSource.GBuffer => _gBuffer;
 
-        ILightBuffer IPbrDeferredRenderingInfo.LightBuffer => _lightBuffer;
-
-        public DeferredRenderingLayer(int lightCount, int sortNumber = DRLayerDefaultSort) : base(sortNumber)
+        public DeferredRenderingLayer(int sortNumber = DRLayerDefaultSort) : base(sortNumber)
         {
-            if(lightCount <= 0) { ThrowLightCountIsZeroOrNegative(); }
-            if(lightCount > MaxLightCount) { ThrowTooManyLightCount(); }
-            _lightCount = lightCount;
             _gBuffer = new GBuffer();
-            _lightBuffer = new LightBuffer();
             _postProcess = new PbrDeferredRenderingPostProcess(this, static screen => ref screen.Camera.View);
             Activating.Subscribe((l, ct) => SafeCast.As<DeferredRenderingLayer>(l).OnActivating());
         }
@@ -44,10 +36,7 @@ namespace Elffy
         {
             var screen = Screen;
             Debug.Assert(screen is not null);
-
-            var lightBuffer = _lightBuffer;
             var gBuffer = _gBuffer;
-            lightBuffer.Initialize(_lightCount);
             gBuffer.Initialize(screen);
             _ppProgram = _postProcess.Compile(screen);
             return UniTask.CompletedTask;
@@ -57,8 +46,6 @@ namespace Elffy
         {
             base.OnLayerTerminated();
             _gBuffer.Dispose();
-            _lightBuffer.Dispose();
-
             _ppProgram?.Dispose();
             _ppProgram = null;
         }
@@ -129,10 +116,9 @@ namespace Elffy
         private static void ThrowLightCountIsZeroOrNegative() => throw new ArgumentOutOfRangeException("Light count must be more than one.");
     }
 
-    internal interface IPbrDeferredRenderingInfo
+    internal interface IGBufferSource
     {
         IGBuffer GBuffer { get; }
-        ILightBuffer LightBuffer { get; }
 
         bool TryGetHostScreen([MaybeNullWhen(false)] out IHostScreen screen);
     }

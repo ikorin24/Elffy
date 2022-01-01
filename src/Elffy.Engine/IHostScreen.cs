@@ -4,6 +4,7 @@ using Elffy.UI;
 using System;
 using System.Threading;
 using Elffy.Features;
+using Elffy.Shading;
 
 namespace Elffy
 {
@@ -21,6 +22,8 @@ namespace Elffy
 
         /// <summary>Get camera</summary>
         Camera Camera { get; }
+
+        LightManager Lights { get; }
 
         /// <summary>Get asynchronous timing points</summary>
         public FrameTimingPointList TimingPoints { get; }

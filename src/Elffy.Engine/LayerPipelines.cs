@@ -9,7 +9,7 @@ namespace Elffy
         public static UniTask<(DeferredRenderingLayer, WorldLayer, UILayer)> UseDeferredForward(IHostScreen screen)
         {
             return UniTask.WhenAll(
-                new DeferredRenderingLayer(1).Activate(screen),
+                new DeferredRenderingLayer().Activate(screen),
                 new WorldLayer().Activate(screen),
                 new UILayer().Activate(screen));
         }
