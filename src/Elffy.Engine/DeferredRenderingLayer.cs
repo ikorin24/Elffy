@@ -12,7 +12,6 @@ namespace Elffy
 {
     public sealed class DeferredRenderingLayer : WorldLayer, IGBufferSource
     {
-        private const int MaxLightCount = 1024 * 1024;
         private const int DRLayerDefaultSort = -100;
 
         private readonly GBuffer _gBuffer;
@@ -108,12 +107,6 @@ namespace Elffy
                 }
             }, FrameTiming.FrameInitializing).Forget();
         }
-
-        [DoesNotReturn]
-        private static void ThrowTooManyLightCount() => throw new ArgumentOutOfRangeException($"Light count is too many. (Max Count: {MaxLightCount})");
-
-        [DoesNotReturn]
-        private static void ThrowLightCountIsZeroOrNegative() => throw new ArgumentOutOfRangeException("Light count must be more than one.");
     }
 
     internal interface IGBufferSource

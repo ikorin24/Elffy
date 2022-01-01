@@ -82,7 +82,22 @@ namespace Elffy
             _owner = screen.Layers;
             screen.Layers.Add(this);
 
-            await _activating.RaiseIfNotNull(this, cancellationToken);
+            try {
+                await _activating.RaiseIfNotNull(this, cancellationToken);
+            }
+            catch {
+                // If exceptions throw on activating, terminate the layer if possible.
+                if(screen.RunningToken.IsCancellationRequested == false) {
+                    await timingPoint.NextOrNow(CancellationToken.None);
+                    try {
+                        await TerminateFromScreen(timingPoint);
+                    }
+                    catch {
+                        // Ignore exceptions in Terminate
+                    }
+                }
+                throw;  // Throw exceptions of activating.
+            }
             _activating?.Clear();
             await WaitForNextFrame(screen, timingPoint, cancellationToken);
 
@@ -92,6 +107,18 @@ namespace Elffy
             [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(screen));
             [DoesNotReturn] static void ThrowContextMismatch() => throw new InvalidOperationException("Invalid current context.");
             [DoesNotReturn] static void ThrowNowActivating() => throw new InvalidOperationException($"Cannot call Activate method when the life state is {LayerLifeState.Activating}.");
+        }
+
+        internal UniTask<Layer> TerminateFromScreen(FrameTimingPoint? timingPoint)
+        {
+            var context = Engine.CurrentContext;
+            var screen = Screen;
+            if(context is null || context != screen) { ThrowContextMismatch(); }
+
+            throw new NotImplementedException();    // TODO:
+
+
+            [DoesNotReturn] static void ThrowContextMismatch() => throw new InvalidOperationException("Invalid current context.");
         }
 
         private static async UniTask WaitForNextFrame(IHostScreen screen, FrameTimingPoint timingPoint, CancellationToken cancellationToken)
