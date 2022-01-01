@@ -12,6 +12,7 @@ using Elffy.UI;
 using System.Diagnostics;
 using System.Linq;
 using Elffy.Imaging;
+using Elffy.Shading;
 
 namespace Sandbox
 {
@@ -21,8 +22,8 @@ namespace Sandbox
         public static async UniTask Start2()
         {
             var screen = Game.Screen;
-            screen.Lights.StaticLights.Initialize();
             var (drLayer, wLayer, uiLayer) = await LayerPipelines.UseDeferredForward(screen);
+            InitializeLights(screen);
             var uiRoot = uiLayer.UIRoot;
             CreateTestUI(uiLayer);
             var timings = screen.TimingPoints;
@@ -58,6 +59,25 @@ namespace Sandbox
             }
         }
 
+        private static void InitializeLights(IHostScreen screen)
+        {
+            ReadOnlySpan<LightData> lights = stackalloc LightData[2]
+            {
+                new()
+                {
+                    Color = Color3.White,
+                    Position = new Vector3(1, 1, 0),
+                    Type = LightType.DirectLight,
+                },
+                new()
+                {
+                    Color = Color3.OrangeRed,
+                    Position = new Vector3(1, 0, 0),
+                    Type = LightType.DirectLight,
+                },
+            };
+            screen.Lights.StaticLights.Initialize(lights);
+        }
 
         private static void CreateTestUI(UILayer uiLayer)
         {

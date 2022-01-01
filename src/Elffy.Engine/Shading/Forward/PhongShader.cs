@@ -16,6 +16,7 @@ namespace Elffy.Shading.Forward
         private Color3 _specular;
         private float _shininess;
         private ShaderTextureSelector<PhongShader>? _textureSelector;
+        private StaticLightManager? _staticLights;
 
         protected override string VertexShaderSource => VertSource;
 
@@ -78,19 +79,25 @@ namespace Elffy.Shading.Forward
             uniform.Send("ms", _specular);
             uniform.Send("shininess", _shininess);
 
-            uniform.Send("model", model);
-            uniform.Send("view", view);
             uniform.Send("projection", projection);
-
-            uniform.Send("lPos", new Vector4(0, 1, 0, 0));
-            uniform.Send("la", new Vector3(0.8f));
-            uniform.Send("ld", new Vector3(0.8f));
-            uniform.Send("ls", new Vector3(0.2f));
+            uniform.Send("view", view);
+            uniform.Send("modelView", view * model);
 
             var selector = _textureSelector ?? DefaultShaderTextureSelector<PhongShader>.Default;
             var hasTexture = selector.Invoke(this, target, out var texObj);
             uniform.SendTexture2D("tex_sampler", texObj, TextureUnitNumber.Unit0);
             uniform.Send("hasTexture", hasTexture);
+
+            var staticLights = _staticLights;
+            if (staticLights == null) {
+                if(target.TryGetHostScreen(out var screen) == false) { throw new InvalidOperationException(); }
+                staticLights = screen.Lights.StaticLights;
+                _staticLights = staticLights;
+            }
+            var (lColor, lPos, lightCount) = staticLights.GetBufferData();
+            uniform.Send("lightCount", lightCount);
+            uniform.SendTexture1D("lColorSampler", lColor, TextureUnitNumber.Unit1);
+            uniform.SendTexture1D("lPosSampler", lPos, TextureUnitNumber.Unit2);
         }
 
         private const string VertSource =
@@ -103,8 +110,7 @@ out vec3 Pos;
 out vec3 Normal;
 out vec2 UV;
 
-uniform mat4 model;
-uniform mat4 view;
+uniform mat4 modelView;
 uniform mat4 projection;
 
 void main()
@@ -112,7 +118,6 @@ void main()
     UV = vUV;
     Pos = vPos;
     Normal = vNormal;
-    mat4 modelView = view * model;
     gl_Position = projection * modelView * vec4(vPos, 1.0);
 }
 ";
@@ -125,13 +130,12 @@ in vec3 Pos;
 in vec3 Normal;
 out vec4 fragColor;
 
-uniform mat4 model;
+uniform mat4 modelView;
 uniform mat4 view;
 uniform mat4 projection;
-uniform vec4 lPos;
-uniform vec3 la;
-uniform vec3 ld;
-uniform vec3 ls;
+uniform int lightCount;
+uniform sampler1D lPosSampler;
+uniform sampler1D lColorSampler;
 uniform vec3 ma;
 uniform vec3 md;
 uniform vec3 ms;
@@ -142,18 +146,24 @@ uniform bool hasTexture;
 
 void main()
 {
-    mat4 modelView = view * model;
     vec3 posView = (modelView * vec4(Pos, 1.0)).xyz;                    // vertex pos in eye space
     vec3 normalView = transpose(inverse(mat3(modelView))) * Normal;    // normal in eye space
-    vec4 lPosView = view * lPos;                                        // light pos in eye space
-    vec3 L = (lPosView.w == 0.0) ? normalize(lPosView.xyz) : normalize(lPosView.xyz / lPosView.w - posView);
-    vec3 N = normalize(normalView);
-    vec3 R = reflect(-L, N);
-    vec3 V = normalize(-posView);
-    vec3 color = (la * ma) + (ld * md * dot(N, L)) + (ls * ms * max(pow(max(0.0, dot(R, V)), shininess), 0.0));
-
-    fragColor = hasTexture ? vec4(color, 1.0) * texture(tex_sampler, UV)
-                           : vec4(color, 1.0);
+    vec3 lightColor = vec3(0, 0, 0);
+    for(int i = 0; i < lightCount; i++) {
+        vec4 lPosView = view * texelFetch(lPosSampler, i, 0);
+        vec3 L = (lPosView.w == 0.0) ? normalize(lPosView.xyz) : normalize(lPosView.xyz / lPosView.w - posView);
+        vec3 N = normalize(normalView);
+        vec3 R = reflect(-L, N);
+        vec3 V = normalize(-posView);
+        vec3 l = texelFetch(lColorSampler, i, 0).rgb;
+        vec3 la = l * 0.8;
+        vec3 ld = l * 0.8;
+        vec3 ls = l * 0.2;
+        vec3 color = (la * ma) + (ld * md * dot(N, L)) + (ls * ms * max(pow(max(0.0, dot(R, V)), shininess), 0.0));
+        lightColor += color;
+    }
+    fragColor = hasTexture ? vec4(lightColor, 1.0) * texture(tex_sampler, UV)
+                           : vec4(lightColor, 1.0);
 }
 ";
     }

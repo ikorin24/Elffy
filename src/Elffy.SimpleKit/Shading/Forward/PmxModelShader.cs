@@ -7,14 +7,16 @@ namespace Elffy.Shading.Forward
 {
     public sealed class PmxModelShader : ShaderSource
     {
-        private static PmxModelShader? _instance;
-        public static PmxModelShader Instance => _instance ??= new();
+        private StaticLightManager? _staticLights;
 
         protected override string VertexShaderSource => VertSource;
 
         protected override string FragmentShaderSource => FragSource;
 
-        private PmxModelShader() { }
+        public PmxModelShader()
+        {
+
+        }
 
         protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
         {
@@ -28,23 +30,24 @@ namespace Elffy.Shading.Forward
 
         protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
-            uniform.Send("ma", new Color3(0.88f));
-            uniform.Send("md", new Color3(0.18f));
-            uniform.Send("ms", new Color3(0.1f));
-            uniform.Send("shininess", 5f);
-
-            uniform.Send("model", model);
+            uniform.Send("modelView", view * model);
             uniform.Send("view", view);
             uniform.Send("projection", projection);
-
-            uniform.Send("lPos", new Vector4(0, 1, 0, 0));
-            uniform.Send("la", new Vector3(0.8f));
-            uniform.Send("ld", new Vector3(0.8f));
-            uniform.Send("ls", new Vector3(0.2f));
 
             var skeleton = target.GetComponent<HumanoidSkeleton>();
             uniform.SendTexture1D("_boneTrans", skeleton.TranslationData, TextureUnitNumber.Unit0);
             uniform.SendTexture2DArray("_texArrSampler", target.GetComponent<ArrayTexture>().TextureObject, TextureUnitNumber.Unit1);
+
+            var staticLights = _staticLights;
+            if(staticLights == null) {
+                if(target.TryGetHostScreen(out var screen) == false) { throw new InvalidOperationException(); }
+                staticLights = screen.Lights.StaticLights;
+                _staticLights = staticLights;
+            }
+            var (lColor, lPos, lightCount) = staticLights.GetBufferData();
+            uniform.Send("lightCount", lightCount);
+            uniform.SendTexture1D("lColorSampler", lColor, TextureUnitNumber.Unit2);
+            uniform.SendTexture1D("lPosSampler", lPos, TextureUnitNumber.Unit3);
         }
 
         private const string VertSource =
@@ -61,7 +64,7 @@ out vec3 Normal;
 out vec2 UV;
 flat out float texIndex;
 
-uniform mat4 model;
+uniform mat4 modelView;
 uniform mat4 view;
 uniform mat4 projection;
 uniform sampler1D _boneTrans;
@@ -80,7 +83,7 @@ void main()
                     weight.y * GetMat(bone.y) +
                     weight.z * GetMat(bone.z) +
                     weight.w * GetMat(bone.w);
-    Pos = projection * view * model * skinning * vec4(vPos, 1.0);
+    Pos = projection * modelView * skinning * vec4(vPos, 1.0);
     gl_Position = Pos;
     Normal = transpose(inverse(mat3(skinning))) * vNormal;
     UV = vUV;
@@ -98,32 +101,38 @@ in vec3 Normal;
 flat in float texIndex;
 out vec4 fragColor;
 
-uniform mat4 model;
+uniform mat4 modelView;
 uniform mat4 view;
 uniform mat4 projection;
-uniform vec4 lPos;
-uniform vec3 la;
-uniform vec3 ld;
-uniform vec3 ls;
-uniform vec3 ma;
-uniform vec3 md;
-uniform vec3 ms;
-uniform float shininess;
+uniform int lightCount;
+uniform sampler1D lPosSampler;
+uniform sampler1D lColorSampler;
 
 uniform sampler2DArray _texArrSampler;
 
 void main()
 {
-    mat4 modelView = view * model;
     vec3 posView = (modelView * Pos).xyz;                    // vertex pos in eye space
     vec3 normalView = transpose(inverse(mat3(modelView))) * Normal;    // normal in eye space
-    vec4 lPosView = view * lPos;                                        // light pos in eye space
-    vec3 L = (lPosView.w == 0.0) ? normalize(lPosView.xyz) : normalize(lPosView.xyz / lPosView.w - posView);
-    vec3 N = normalize(normalView);
-    vec3 R = reflect(-L, N);
-    vec3 V = normalize(-posView);
-    vec3 color = (la * ma) + (ld * md * dot(N, L)) + (ls * ms * max(pow(max(0.0, dot(R, V)), shininess), 0.0));
-    fragColor = vec4(color, 1.0) * texture2DArray(_texArrSampler, vec3(UV, texIndex));
+    vec3 lightColor = vec3(0, 0, 0);
+    const vec3 ma = vec3(0.88, 0.88, 0.88);
+    const vec3 md = vec3(0.18, 0.18, 0.18);
+    const vec3 ms = vec3(0.1, 0.1, 0.1);
+    const float shininess = 5;
+    for(int i = 0; i < lightCount; i++) {
+        vec4 lPosView = view * texelFetch(lPosSampler, i, 0);               // light pos in eye space
+        vec3 L = (lPosView.w == 0) ? normalize(lPosView.xyz) : normalize(lPosView.xyz / lPosView.w - posView);
+        vec3 N = normalize(normalView);
+        vec3 R = reflect(-L, N);
+        vec3 V = normalize(-posView);
+        vec3 l = texelFetch(lColorSampler, i, 0).rgb;
+        vec3 la = l * 0.8;
+        vec3 ld = l * 0.8;
+        vec3 ls = l * 0.2;
+        vec3 color = (la * ma) + (ld * md * dot(N, L)) + (ls * ms * max(pow(max(0.0, dot(R, V)), shininess), 0.0));
+        lightColor += color;
+    }
+    fragColor = vec4(lightColor, 1.0) * texture2DArray(_texArrSampler, vec3(UV, texIndex));
 }
 ";
     }

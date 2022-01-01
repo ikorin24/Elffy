@@ -73,7 +73,7 @@ namespace Elffy.Serialization
             Debug.Assert(Engine.CurrentContext == screen);
             Debug.Assert(model.LifeState == LifeState.Activating);
 
-            model.Shader ??= PmxModelShader.Instance;
+            model.Shader ??= new PmxModelShader();
 
             // load vertices and indices
             load.Invoke(vertices.AsSpan().AsReadOnly(), pmx.SurfaceList.AsSpan().MarshalCast<Surface, int>());
