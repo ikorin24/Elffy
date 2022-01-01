@@ -19,7 +19,7 @@ namespace Sandbox
     public static class Startup
     {
         [GameEntryPoint]
-        public static async UniTask Start2()
+        public static async UniTask Start()
         {
             var screen = Game.Screen;
             var (drLayer, wLayer, uiLayer) = await LayerPipelines.UseDeferredForward(screen);
