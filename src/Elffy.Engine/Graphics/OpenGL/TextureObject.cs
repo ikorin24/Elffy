@@ -101,6 +101,46 @@ namespace Elffy.Graphics.OpenGL
                           0, TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
         }
 
+        public static unsafe void GetImage2D(Color4* pixels)
+        {
+            GetImage2D(pixels, 0);
+        }
+
+        public static unsafe void GetImage2D(ColorByte* pixels)
+        {
+            GetImage2D(pixels, 0);
+        }
+
+        public static unsafe void GetImage2D(Color4* pixels, int level)
+        {
+            GL.GetTexImage(TextureTarget.Texture2D, level, TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
+        }
+
+        public static unsafe void GetImage2D(ColorByte* pixels, int level)
+        {
+            GL.GetTexImage(TextureTarget.Texture2D, level, TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
+        }
+
+        public static unsafe void GetImage1D(Color4* pixels)
+        {
+            GetImage1D(pixels, 0);
+        }
+
+        public static unsafe void GetImage1D(ColorByte* pixels)
+        {
+            GetImage1D(pixels, 0);
+        }
+
+        public static unsafe void GetImage1D(Color4* pixels, int level)
+        {
+            GL.GetTexImage(TextureTarget.Texture1D, level, TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
+        }
+
+        public static unsafe void GetImage1D(ColorByte* pixels, int level)
+        {
+            GL.GetTexImage(TextureTarget.Texture1D, level, TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
+        }
+
         /// <summary>Call glTexImge2D</summary>
         /// <param name="image">image to load</param>
         /// <param name="level">texture level</param>

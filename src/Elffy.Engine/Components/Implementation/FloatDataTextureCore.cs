@@ -20,6 +20,20 @@ namespace Elffy.Components.Implementation
         /// <remarks>[NOTE] This is the count of pixels in the texture, NOT the count of float values.</remarks>
         public readonly int Length => _length;
 
+        public unsafe void Get(Span<Color4> pixels)
+        {
+            if(TextureObject.IsEmpty) {
+                ThrowNotLoaded();
+            }
+            if(pixels.IsEmpty) { return; }
+
+            TextureObject.Bind1D(_to);
+            fixed(Color4* p = pixels) {
+                TextureObject.GetImage1D(p);
+            }
+            TextureObject.Unbind1D();
+        }
+
         /// <summary>Allocate memory and load pixels to the texture1D</summary>
         /// <param name="pixels">pixels to load</param>
         public unsafe void Load(ReadOnlySpan<Color4> pixels)
@@ -128,5 +142,8 @@ namespace Elffy.Components.Implementation
 
         [DoesNotReturn]
         private static void ThrowAlreadyLoaded() => throw new InvalidOperationException("The texture is already loaded");
+
+        [DoesNotReturn]
+        private static void ThrowNotLoaded() => throw new InvalidOperationException("The texture is not loaded");
     }
 }
