@@ -6,22 +6,15 @@ namespace Elffy.Shading.Forward
 {
     public sealed class CustomUIShader : UIShaderSource
     {
-        private ShaderTextureSelector<PhongShader>? _textureSelector;
         private Vector4 _cornerRadius;
 
         protected override string VertexShaderSource => VertSource;
 
         protected override string FragmentShaderSource => FragSource;
 
-        public ShaderTextureSelector<PhongShader>? TextureSelector
-        {
-            get => _textureSelector;
-            set => _textureSelector = value;
-        }
-
         public ref Vector4 CornerRadius => ref _cornerRadius;
 
-        public CustomUIShader(ShaderTextureSelector<PhongShader>? textureSelector = null)
+        public CustomUIShader()
         {
 
         }
