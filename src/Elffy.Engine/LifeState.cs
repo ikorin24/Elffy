@@ -6,11 +6,11 @@ namespace Elffy
 {
     /// <summary>Life states of <see cref="FrameObject"/></summary>
     [GenerateEnumLikeStruct(typeof(byte))]
-    [EnumLikeValue(nameof(LSV.New), LSV.New, $"Initial state of <see cref=\"{nameof(FrameObject)}\"/>. Not managed by the engine.")]
-    [EnumLikeValue(nameof(LSV.Activating), LSV.Activating)]
-    [EnumLikeValue(nameof(LSV.Alive), LSV.Alive, $"State that <see cref=\"{nameof(FrameObject)}\"/> is running.")]
-    [EnumLikeValue(nameof(LSV.Terminating), LSV.Terminating, $"State that <see cref=\"{nameof(FrameObject)}\"/> is in the termination queue. (It is still running, it gets dead in the next frame.)")]
-    [EnumLikeValue(nameof(LSV.Dead), LSV.Dead, $"State that <see cref=\"{nameof(FrameObject)}\"/> is dead. Not managed by the engine.")]
+    [EnumLikeValue(nameof(LSV.New), LSV.New, "public", $"Initial state of <see cref=\"{nameof(FrameObject)}\"/>. Not managed by the engine.")]
+    [EnumLikeValue(nameof(LSV.Activating), LSV.Activating, "public")]
+    [EnumLikeValue(nameof(LSV.Alive), LSV.Alive, "public", $"State that <see cref=\"{nameof(FrameObject)}\"/> is running.")]
+    [EnumLikeValue(nameof(LSV.Terminating), LSV.Terminating, "public", $"State that <see cref=\"{nameof(FrameObject)}\"/> is in the termination queue. (It is still running, it gets dead in the next frame.)")]
+    [EnumLikeValue(nameof(LSV.Dead), LSV.Dead, "public", $"State that <see cref=\"{nameof(FrameObject)}\"/> is dead. Not managed by the engine.")]
     public partial struct LifeState
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -16,6 +16,8 @@ namespace Elffy
         private readonly FrameTimingPoint _beforeRenderingPoint;
         private readonly FrameTimingPoint _afterRenderingPoint;
 
+        private readonly FrameTimingPoint _internalEndOfFrame;
+
         internal IHostScreen Screen => _screen;
 
         public FrameTimingPoint FrameInitializing => _frameInitializingPoint;
@@ -24,6 +26,8 @@ namespace Elffy
         public FrameTimingPoint LateUpdate => _lateUpdatePoint;
         public FrameTimingPoint BeforeRendering => _beforeRenderingPoint;
         public FrameTimingPoint AfterRendering => _afterRenderingPoint;
+
+        internal FrameTimingPoint InternalEndOfFrame => _internalEndOfFrame;
 
         internal FrameTimingPointList(IHostScreen screen)
         {
@@ -34,6 +38,7 @@ namespace Elffy
             _lateUpdatePoint = new FrameTimingPoint(screen, FrameTiming.LateUpdate);
             _beforeRenderingPoint = new FrameTimingPoint(screen, FrameTiming.BeforeRendering);
             _afterRenderingPoint = new FrameTimingPoint(screen, FrameTiming.AfterRendering);
+            _internalEndOfFrame = new FrameTimingPoint(screen, FrameTiming.Internal_EndOfFrame);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -48,6 +53,9 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetTimingOf(FrameTiming timing, [MaybeNullWhen(false)] out FrameTimingPoint timingPoint)
         {
+            // [NOTE]
+            // Only for public timing point
+
             if(timing == FrameTiming.FrameInitializing) {
                 timingPoint = _frameInitializingPoint;
                 return true;
@@ -73,7 +81,6 @@ namespace Elffy
                 return true;
             }
             else {
-                Debug.Assert(timing.IsSpecified() == false);
                 timingPoint = null;
                 return false;
             }
@@ -88,6 +95,7 @@ namespace Elffy
             _lateUpdatePoint.AbortAllEvents();
             _beforeRenderingPoint.AbortAllEvents();
             _afterRenderingPoint.AbortAllEvents();
+            _internalEndOfFrame.AbortAllEvents();
         }
 
         [DoesNotReturn]

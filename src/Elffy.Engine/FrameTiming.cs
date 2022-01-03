@@ -15,6 +15,7 @@ namespace Elffy
     [EnumLikeValue(nameof(FTV.LateUpdate), FTV.LateUpdate)]
     [EnumLikeValue(nameof(FTV.BeforeRendering), FTV.BeforeRendering)]
     [EnumLikeValue(nameof(FTV.AfterRendering), FTV.AfterRendering)]
+    [EnumLikeValue(nameof(FTV.Internal_EndOfFrame), FTV.Internal_EndOfFrame, "internal")]
     public partial struct FrameTiming
     {
         private const string DefaultMessage_TimingNotSpecified = "The timing must be specified.";
@@ -62,6 +63,7 @@ namespace Elffy
     [EnumLikeValue(nameof(FTV.Rendering), FTV.Rendering)]
     [EnumLikeValue(nameof(FTV.AfterRendering), FTV.AfterRendering)]
     [EnumLikeValue(nameof(FTV.FrameFinalizing), FTV.FrameFinalizing)]
+    [EnumLikeValue(nameof(FTV.Internal_EndOfFrame), FTV.Internal_EndOfFrame, "internal")]
     public partial struct CurrentFrameTiming
     {
         public bool IsOutOfFrameLoop() => _value == OutOfFrameLoop._value;
@@ -80,7 +82,8 @@ namespace Elffy
         internal const byte Rendering = 100;
         internal const byte AfterRendering = 7;
         internal const byte FrameFinalizing = 101;
+        internal const byte Internal_EndOfFrame = 8;
 
-        internal const byte __FrameTimingValidMax = 7;
+        internal const byte __FrameTimingValidMax = 8;
     }
 }

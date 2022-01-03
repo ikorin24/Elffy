@@ -37,6 +37,10 @@ namespace Elffy
             return _screen.Frames(_timing, cancellationToken);
         }
 
+        /// <summary>Switch to the next timing.</summary>
+        /// <remarks>[NOTE] It is not necessarily the next frame.</remarks>
+        /// <param name="cancellationToken">cancellation token</param>
+        /// <returns>awaitable object</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public UniTask<AsyncUnit> Next(CancellationToken cancellationToken = default)
         {
@@ -50,6 +54,18 @@ namespace Elffy
                 return new UniTask<AsyncUnit>(AsyncUnit.Default);
             }
             return Next(cancellationToken);
+        }
+
+        public async UniTask<AsyncUnit> NextFrame(CancellationToken cancellationToken = default)
+        {
+            var currentTiming = CurrentTiming;
+            if(currentTiming == CurrentFrameTiming.OutOfFrameLoop) {
+                return await Next(cancellationToken);
+            }
+
+            var endOfFrame = _screen.TimingPoints.InternalEndOfFrame;
+            await endOfFrame.NextOrNow(cancellationToken);
+            return await Next(cancellationToken);
         }
 
         /// <summary>Wait for the specified number of frames.</summary>

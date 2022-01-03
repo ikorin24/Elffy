@@ -171,6 +171,11 @@ namespace Elffy.Features.Internal
             layers.ApplyRemove();
 
             // ------------------------------------------------------------
+            // End of frame (only internal accessible)
+            _currentTiming = CurrentFrameTiming.Internal_EndOfFrame;
+            frameTimingPoints.InternalEndOfFrame.DoQueuedEvents();
+
+            // ------------------------------------------------------------
             // Out of frame loop
             _currentTiming = CurrentFrameTiming.OutOfFrameLoop;
             ContextAssociatedMemorySafety.CollectIfExist(OwnerScreen);
