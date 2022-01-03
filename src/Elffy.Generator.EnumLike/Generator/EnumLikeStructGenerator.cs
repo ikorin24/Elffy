@@ -43,7 +43,11 @@ namespace Elffy
     [AttributeUsage(AttributeTargets.Struct, AllowMultiple = true, Inherited = false)]
     internal sealed class EnumLikeValueAttribute : Attribute
     {
-        public EnumLikeValueAttribute(string name, int value, string description = """")
+        public EnumLikeValueAttribute(string name, long value, string description = """")
+        {
+        }
+
+        public EnumLikeValueAttribute(string name, ulong value, string description = """")
         {
         }
     }
@@ -89,7 +93,8 @@ namespace Elffy
                 .Where(a => _regexELVA.IsMatch(a.Name.ToString()))
                 .Select(a => (Name: GeneratorUtil.GetAttrArgString(a, 0, semantic),
                               Value: GeneratorUtil.GetAttrArgEnumNum(a, 1, semantic),
-                              Description: a.ArgumentList!.Arguments.Count >= 3 ? GeneratorUtil.GetAttrArgEnumNum(a, 2, semantic) : ""));
+                              Description: a.ArgumentList!.Arguments.Count >= 3 ? GeneratorUtil.GetAttrArgEnumNum(a, 2, semantic) : ""))
+                .ToArray();
 
             var sb = new StringBuilder();
             sb.Append(GeneratorSigniture).Append(
@@ -159,18 +164,47 @@ $@"        /// <summary>{nv.Description}</summary>
         public static bool operator ==({structName} left, {structName} right) => left.Equals(right);
 
         public static bool operator !=({structName} left, {structName} right) => !(left == right);
-
-        public override string ToString() => ToString(this);
-
-        private static string ToString({structName} v)
-        {{
-            return ").AppendForeach(nameValuePairs, nv => @$"(v == {nv.Name}) ? ""{nv.Name}"" :
-                   ").Append(@"v._value.ToString();
-        }
+");
+            AppendToStringSource(sb, nameValuePairs, underlyingType);
+            sb.Append(@"
     }
 }
 ");
             context.AddSource(structName, SourceText.From(sb.ToString(), Encoding.UTF8));
+        }
+
+        private static void AppendToStringSource(StringBuilder sb, (string Name, string Value, string _)[] nameValuePairs, string underlyingType)
+        {
+            var sorted = (underlyingType == "ulong")
+                ? nameValuePairs.OrderBy(x => ulong.Parse(x.Value)).Select(x => (x.Name, x.Value)).ToArray()
+                : nameValuePairs.OrderBy(x => long.Parse(x.Value)).Select(x => (x.Name, x.Value)).ToArray();
+            sb.AppendLine(@"
+        public override string ToString()
+        {
+            var value = _value;");
+            Foo(sorted, 3, sb);
+            sb.AppendLine(@"
+        }");
+
+            static void Foo(ReadOnlySpan<(string Name, string Value)> span, int depth, StringBuilder sb)
+            {
+                var indent = new string(' ', depth * 4);
+                if(span.Length == 0) {
+                    sb.AppendLine($"{indent}return \"\";");
+                    return;
+                }
+                if(span.Length == 1) {
+                    sb.AppendLine($"{indent}return (value == {span[0].Value}) ? \"{span[0].Name}\" : \"\";");
+                    return;
+                }
+                var m = span.Length / 2;
+                var mid = span[m - 1].Value;
+                sb.AppendLine(@$"{indent}if(value <= {mid}) {{");
+                Foo(span.Slice(0, m), depth + 1, sb);
+                sb.AppendLine($"{indent}}} else {{");
+                Foo(span.Slice(m), depth + 1, sb);
+                sb.AppendLine($"{indent}}}");
+            }
         }
 
         private class GenerateEnumLikeStructSyntaxReciever : ISyntaxReceiver
