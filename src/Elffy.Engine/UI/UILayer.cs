@@ -67,7 +67,7 @@ namespace Elffy.UI
             _uiRoot.RequestRelayout();
         }
 
-        protected override void OnLayerTerminated()
+        protected override void OnDead()
         {
             // nop
         }

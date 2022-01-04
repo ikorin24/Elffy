@@ -120,32 +120,14 @@ namespace Elffy
                 await screen.TimingPoints.FrameInitializing.Next(cancellationToken);
             }
             layer.AddFrameObject(this);
-            //await WaitUntilAlive(this, screen, timingPoint, cancellationToken);
-            await WaitForNextFrame(screen, timingPoint, cancellationToken);
+            await timingPoint.NextFrame(cancellationToken);
             Debug.Assert(_state.IsSameOrAfter(LifeState.Alive));
             return;
-
-            static async UniTask WaitUntilAlive(FrameObject self, IHostScreen screen, FrameTimingPoint timingPoint, CancellationToken cancellationToken)
-            {
-                while(screen.IsRunning) {
-                    await screen.TimingPoints.FrameInitializing.Next(cancellationToken);
-                    await timingPoint.NextOrNow(cancellationToken);
-                    if(self._state.IsSameOrAfter(LifeState.Alive)) {
-                        return;
-                    }
-                }
-            }
 
             [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(layer));
             [DoesNotReturn] static void ThrowInvalidLayer() => throw new ArgumentException($"{nameof(layer)} is not associated with {nameof(IHostScreen)}");
             [DoesNotReturn] static void ThrowContextMismatch() => throw new InvalidOperationException("Invalid current context.");
             [DoesNotReturn] static void ThrowNowActivating() => throw new InvalidOperationException($"Cannot call Activate method when the life state is {LifeState.Activating}.");
-        }
-
-        private static async UniTask WaitForNextFrame(IHostScreen screen, FrameTimingPoint timingPoint, CancellationToken cancellationToken)
-        {
-            await screen.TimingPoints.FrameInitializing.Next(cancellationToken);
-            await timingPoint.NextOrNow(cancellationToken);
         }
 
         internal void ActivateOnUILayer(UILayer layer)
@@ -183,7 +165,7 @@ namespace Elffy
             if(_state == LifeState.New) { ThrowNotActivated(); }
             if(_state.IsSameOrAfter(LifeState.Terminating)) { ThrowTerminateTwice(); }
 
-            await OnTerminating();
+            //await OnTerminating();
 
             Debug.Assert(_state == LifeState.Activating || _state == LifeState.Alive);
             Debug.Assert(_layer is not null);
@@ -191,8 +173,7 @@ namespace Elffy
             _layer.RemoveFrameObject(this);
             var screen = _hostScreen;
             Debug.Assert(screen is not null);
-            timingPoint ??= screen.TimingPoints.Update;
-            await WaitForNextFrame(screen, timingPoint, CancellationToken.None);
+            await (timingPoint ?? screen.TimingPoints.Update).NextFrame(CancellationToken.None);
             Debug.Assert(_state == LifeState.Dead);
             return;
 
@@ -207,7 +188,7 @@ namespace Elffy
 
         protected virtual void OnLateUpdte() => LateUpdated?.Invoke(this);
 
-        protected virtual UniTask OnTerminating() => UniTask.CompletedTask;
+        //protected virtual UniTask OnTerminating() => UniTask.CompletedTask;
 
         protected virtual void OnAlive() => Alive?.Invoke(this);
 

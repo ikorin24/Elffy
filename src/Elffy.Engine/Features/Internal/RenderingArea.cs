@@ -14,9 +14,9 @@ namespace Elffy.Features.Internal
     internal sealed class RenderingArea : IDisposable
     {
         private readonly CancellationTokenSource _runningTokenSource;
-        private bool _isCloseRequested;
         private bool _disposed;
-        private bool _initializedEventCalled;
+        private RenderingAreaLifeState _state;
+        private bool _isCloseRequested;
         private int _runningThreadId;
         private Vector2i _frameBufferSize;
         private Color4 _clearColor;
@@ -55,6 +55,7 @@ namespace Elffy.Features.Internal
 
         internal RenderingArea(IHostScreen screen)
         {
+            _state = RenderingAreaLifeState.New;
             _clearColor = Color4.Black;
             OwnerScreen = screen;
             TimingPoints = new FrameTimingPointList(screen);
@@ -65,6 +66,7 @@ namespace Elffy.Features.Internal
 
         public void Initialize()
         {
+            _state = RenderingAreaLifeState.Activating;
             _runningThreadId = ThreadHelper.CurrentThreadId;
             InitializeGL();
 
@@ -90,43 +92,46 @@ namespace Elffy.Features.Internal
             GL.Disable(EnableCap.Multisample);  // I don't care about MSAA
         }
 
-        private void InvokeInitializedEvent()
-        {
-            try {
-                Initialized?.Invoke(OwnerScreen);
-            }
-            catch {
-                // Don't throw. (Ignore exceptions in user code)
-            }
-        }
-
         /// <summary>Update and render the next frame</summary>
         public void RenderFrame()
         {
             // ------------------------------------------------------------
             // Out of frame loop
             Debug.Assert(_currentTiming == CurrentFrameTiming.OutOfFrameLoop);
-            var isLastFrame = _isCloseRequested;
-            if(isLastFrame) {
-                _runningTokenSource.Cancel();
-            }
+            var isCloseRequested = _isCloseRequested;
+            var layers = Layers;
 
             var frameTimingPoints = TimingPoints;
-            var layers = Layers;
             Mouse.InitFrame();
             Keyboard.InitFrame();
 
             // ------------------------------------------------------------
             // First Frame initializing
-            if(_initializedEventCalled == false) {
-                _initializedEventCalled = true;
+            if(_state == RenderingAreaLifeState.Activating) {
                 _currentTiming = CurrentFrameTiming.FirstFrameInitializing;
-                InvokeInitializedEvent();
+                try {
+                    Initialized?.Invoke(OwnerScreen);
+                }
+                catch {
+                    // Don't throw. (Ignore exceptions in user code)
+                }
+                finally {
+                    _state = RenderingAreaLifeState.Alive;
+                }
             }
 
             // ------------------------------------------------------------
             // Frame initializing
             _currentTiming = CurrentFrameTiming.FrameInitializing;
+            if(isCloseRequested && _state == RenderingAreaLifeState.Alive) {
+                _state = RenderingAreaLifeState.Terminating;
+                _runningTokenSource.Cancel();
+                layers.TerminateAllLayers(this,
+                    onDead: static self =>
+                {
+                    self._state = RenderingAreaLifeState.Dead;
+                });
+            }
             layers.ApplyAdd();
             frameTimingPoints.FrameInitializing.DoQueuedEvents();
 
@@ -179,7 +184,8 @@ namespace Elffy.Features.Internal
             // Out of frame loop
             _currentTiming = CurrentFrameTiming.OutOfFrameLoop;
             ContextAssociatedMemorySafety.CollectIfExist(OwnerScreen);
-            if(isLastFrame) {
+
+            if(_state == RenderingAreaLifeState.Dead) {
                 Dispose();
             }
         }
@@ -189,12 +195,18 @@ namespace Elffy.Features.Internal
             if(_isCloseRequested) {
                 return false;
             }
+            _isCloseRequested = true;
             var isCanceled = false;
             var e = new CancelEventArgs(&isCanceled);
             try {
                 Closing?.Invoke(OwnerScreen, e);
-                _isCloseRequested = !isCanceled;
-                return !isCanceled;
+                if(isCanceled) {
+                    _isCloseRequested = false;
+                    return false;
+                }
+                else {
+                    return true;
+                }
             }
             catch {
                 _isCloseRequested = true;
@@ -209,8 +221,7 @@ namespace Elffy.Features.Internal
 
             _currentTiming = CurrentFrameTiming.OutOfFrameLoop;
 
-            var layers = Layers;
-            layers.TerminateAllImmediately();
+            Layers.AbortAllLayers();
 
             TimingPoints.AbortAllEvents();
             Lights.ReleaseBuffer();
@@ -235,5 +246,15 @@ namespace Elffy.Features.Internal
             var layers = Layers;
             layers.NotifySizeChanged();
         }
+    }
+
+    [GenerateEnumLikeStruct(typeof(byte))]
+    [EnumLikeValue(nameof(LifeStateValue.New), LifeStateValue.New)]
+    [EnumLikeValue(nameof(LifeStateValue.Activating), LifeStateValue.Activating)]
+    [EnumLikeValue(nameof(LifeStateValue.Alive), LifeStateValue.Alive)]
+    [EnumLikeValue(nameof(LifeStateValue.Terminating), LifeStateValue.Terminating)]
+    [EnumLikeValue(nameof(LifeStateValue.Dead), LifeStateValue.Dead)]
+    internal partial struct RenderingAreaLifeState
+    {
     }
 }

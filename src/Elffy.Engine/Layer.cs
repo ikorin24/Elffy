@@ -11,20 +11,23 @@ using Elffy.Graphics.OpenGL;
 namespace Elffy
 {
     /// <summary>Layer class which has the list of <see cref="FrameObject"/></summary>
-    [DebuggerDisplay("{GetType(),nq} (ObjectCount = {ObjectCount}, IsVisible = {IsVisible})")]
+    [DebuggerDisplay("{GetType().FullName,nq} (ObjectCount = {ObjectCount}, IsVisible = {IsVisible})")]
     public abstract class Layer
     {
         private readonly FrameObjectStore _store;
+        private readonly CancellationTokenSource _runningTokenSource;
         private readonly LayerTimingPointList _timingPoints;
         private LayerCollection? _owner;
         private readonly int _sortNumber;
         private bool _isVisible;
         private LayerLifeState _state;
         private AsyncEventRaiser<Layer>? _activating;
+        private AsyncEventRaiser<Layer>? _terminating;
 
         internal LayerCollection? Owner => _owner;
 
-        /// <inheritdoc/>
+        public CancellationToken RunningToken => _runningTokenSource.Token;
+
         public bool IsVisible { get => _isVisible; set => _isVisible = value; }
 
         public int SortNumber => _sortNumber;
@@ -39,6 +42,7 @@ namespace Elffy
         public LayerLifeState LifeState => _state;
 
         public AsyncEvent<Layer> Activating => new(ref _activating);
+        public AsyncEvent<Layer> Terminating => new(ref _terminating);
 
         protected ReadOnlySpan<FrameObject> Objects => _store.List;
         protected ReadOnlySpan<FrameObject> AddedObjects => _store.Added;
@@ -51,6 +55,7 @@ namespace Elffy
 
         private protected Layer(int sortNumber, int capacity)
         {
+            _runningTokenSource = new CancellationTokenSource();
             _isVisible = true;
             _sortNumber = sortNumber;
             _timingPoints = new LayerTimingPointList(this);
@@ -65,80 +70,110 @@ namespace Elffy
             return screen is not null;
         }
 
-        internal async UniTask<Layer> ActivateOnScreen(IHostScreen screen, FrameTimingPoint timingPoint, CancellationToken cancellationToken)
+        internal async UniTask ActivateOnScreen(IHostScreen screen, FrameTimingPoint timingPoint, CancellationToken ct)
         {
-            if(screen is null) { ThrowNullArg(); }
+            ArgumentNullException.ThrowIfNull(screen);
             if(Engine.CurrentContext != screen) { ThrowContextMismatch(); }
-            cancellationToken.ThrowIfCancellationRequested();
-            if(_state == LayerLifeState.Activating) { ThrowNowActivating(); }
+            ct.ThrowIfCancellationRequested();
             if(_state.IsAfter(LayerLifeState.New)) {
-                await timingPoint.NextOrNow(cancellationToken);
-                return this;
+                throw new InvalidOperationException("Cannot activate the layer twice.");
             }
 
             Debug.Assert(_state == LayerLifeState.New);
             Debug.Assert(_owner is null);
             _state = LayerLifeState.Activating;
             _owner = screen.Layers;
-            screen.Layers.Add(this);
 
             try {
-                await _activating.RaiseIfNotNull(this, cancellationToken);
+                await _activating.RaiseIfNotNull(this, ct);
             }
-            catch {
+            catch(Exception ex) {
                 // If exceptions throw on activating, terminate the layer if possible.
                 if(screen.RunningToken.IsCancellationRequested == false) {
                     await timingPoint.NextOrNow(CancellationToken.None);
                     try {
                         await TerminateFromScreen(timingPoint);
                     }
-                    catch {
-                        // Ignore exceptions in Terminate
+                    catch(Exception ex2) {
+                        throw new AggregateException(ex, ex2);
                     }
                 }
                 throw;  // Throw exceptions of activating.
             }
             _activating?.Clear();
-            await WaitForNextFrame(screen, timingPoint, cancellationToken);
-
+            screen.Layers.Add(this, OnAddedToList);
+            await timingPoint.NextFrame(CancellationToken.None);
             Debug.Assert(_state.IsSameOrAfter(LayerLifeState.Alive));
-            return this;
+            return;
 
-            [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(screen));
+            static void OnAddedToList(Layer self)
+            {
+                var screen = self.Screen;
+                Debug.Assert(self._state == LayerLifeState.Activating);
+                Debug.Assert(screen != null);
+                self._state = LayerLifeState.Alive;
+                try {
+                    self.OnAlive(screen);
+                }
+                catch {
+                    // ignore exceptions in user code.
+                }
+                try {
+                    self.OnSizeChanged(screen);
+                }
+                catch {
+                    // ignore exceptions in user code.
+                }
+            }
+
             [DoesNotReturn] static void ThrowContextMismatch() => throw new InvalidOperationException("Invalid current context.");
-            [DoesNotReturn] static void ThrowNowActivating() => throw new InvalidOperationException($"Cannot call Activate method when the life state is {LayerLifeState.Activating}.");
         }
 
-        internal UniTask<Layer> TerminateFromScreen(FrameTimingPoint? timingPoint)
+        internal async UniTask TerminateFromScreen(FrameTimingPoint? timingPoint)
         {
             var context = Engine.CurrentContext;
             var screen = Screen;
-            if(context is null || context != screen) { ThrowContextMismatch(); }
+            if(context is null || context != screen) {
+                throw new InvalidOperationException("Invalid current context.");
+            }
+            if(_state == LayerLifeState.New) {
+                throw new InvalidOperationException("Cannot terminate the layer because it is not activated.");
+            }
+            if(_state.IsSameOrAfter(LayerLifeState.Terminating)) {
+                throw new InvalidOperationException("Cannot terminate the layer twice.");
+            }
+            Debug.Assert(_state == LayerLifeState.Activating || _state == LayerLifeState.Alive);
 
-            throw new NotImplementedException();    // TODO:
+            if(_state == LayerLifeState.Alive) {
+                _state = LayerLifeState.Terminating;
+            }
+            _runningTokenSource.Cancel();
+            var owner = _owner;
+            Debug.Assert(owner != null);
+            owner.Remove(this, OnRemovedFromList);
 
+            // I don't care about exceptions in terminating event
+            // because the layer is already registered to the removed list.
+            // That means the layer will be dead in the next frame even if exceptions are thrown.
+            await _terminating.RaiseIfNotNull(this, CancellationToken.None);
 
-            [DoesNotReturn] static void ThrowContextMismatch() => throw new InvalidOperationException("Invalid current context.");
-        }
+            await (timingPoint ?? screen.TimingPoints.Update).NextFrame(CancellationToken.None);
+            Debug.Assert(_state == LayerLifeState.Dead);
+            return;
 
-        private static async UniTask WaitForNextFrame(IHostScreen screen, FrameTimingPoint timingPoint, CancellationToken cancellationToken)
-        {
-            await screen.TimingPoints.FrameInitializing.Next(cancellationToken);
-            await timingPoint.NextOrNow(cancellationToken);
-        }
-
-        internal void OnAddedToListCallback(LayerCollection owner)
-        {
-            Debug.Assert(_state == LayerLifeState.Activating);
-            _state = LayerLifeState.Alive;
-            OnAlive(owner.Screen);
-        }
-
-        internal void OnLayerTerminatedCallback()
-        {
-            _owner = null;
-            _timingPoints.AbortAllEvents();
-            OnLayerTerminated();
+            static void OnRemovedFromList(Layer self)
+            {
+                Debug.Assert(self._state == LayerLifeState.Terminating || self._state == LayerLifeState.Activating);
+                self._owner = null;
+                self._state = LayerLifeState.Dead;
+                self._timingPoints.AbortAllEvents();
+                try {
+                    self.OnDead();
+                }
+                catch {
+                    // Ignore exceptions in user code.
+                }
+            }
         }
 
         internal void AddFrameObject(FrameObject frameObject)
@@ -194,7 +229,7 @@ namespace Elffy
 
         protected abstract void OnAlive(IHostScreen screen);
 
-        protected abstract void OnLayerTerminated();
+        protected abstract void OnDead();
 
         protected abstract void OnSizeChanged(IHostScreen screen);
     }
@@ -215,6 +250,22 @@ namespace Elffy
             return layer;
         }
 
-        // TODO: Terminate Layer
+        public static async UniTask<TLayer> Terminate<TLayer>(this TLayer layer, FrameTimingPoint timingPoint) where TLayer : Layer
+        {
+            ArgumentNullException.ThrowIfNull(timingPoint);
+            await layer.TerminateFromScreen(timingPoint);
+            Debug.Assert(layer.LifeState == LayerLifeState.Dead);
+            return layer;
+        }
+
+        public static async UniTask<TLayer> Terminate<TLayer>(this TLayer layer, FrameTiming timing) where TLayer : Layer
+        {
+            var timingPoint = layer.TryGetHostScreen(out var screen) ?
+                                (screen.TimingPoints.TryGetTimingOf(timing, out var tp) ? tp : null)
+                                : null;
+            await layer.TerminateFromScreen(timingPoint);
+            Debug.Assert(layer.LifeState == LayerLifeState.Dead);
+            return layer;
+        }
     }
 }

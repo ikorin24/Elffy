@@ -17,7 +17,7 @@ namespace Elffy
             // nop
         }
 
-        protected override void OnLayerTerminated()
+        protected override void OnDead()
         {
             // nop
         }

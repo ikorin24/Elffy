@@ -3,6 +3,8 @@ using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using Cysharp.Threading.Tasks;
+using Elffy.Effective;
 using Elffy.Features.Internal;
 using Elffy.Graphics.OpenGL;
 
@@ -27,39 +29,56 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void Add(Layer layer)
+        internal void Add(Layer layer, Action<Layer> onAdded)
         {
             Debug.Assert(layer is not null);
+            Debug.Assert(onAdded is not null);
             Debug.Assert(layer.Owner == this);
             Debug.Assert(layer.LifeState == LayerLifeState.Activating);
 
-            _list.Add(layer, addedLayer =>  // [capture] this
-            {
-                addedLayer.OnAddedToListCallback(this);
-                addedLayer.OnSizeChangedCallback(Screen);
-            });
+            _list.Add(layer, onAdded);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void Remove(Layer layer)
+        internal void Remove(Layer layer, Action<Layer> onRemoved)
         {
             if(layer is null) { ThrowNullArg(nameof(layer)); }
-            _list.Remove(layer, removedLayer =>
-            {
-                removedLayer.OnLayerTerminatedCallback();
-            });
+            _list.Remove(layer, onRemoved);
         }
 
-        internal void TerminateAllImmediately()
+        internal void TerminateAllLayers<T>(T state, Action<T> onDead)
         {
-            // Clear all objects in all layers.
-            foreach(var layer in AsSpan()) {
-                layer.ClearFrameObject();
+            var layers = AsSpan();
+            var tasks = new UniTask<Layer>[layers.Length];
+            for(int i = 0; i < tasks.Length; i++) {
+                var layer = layers[i];
+                try {
+                    tasks[i] = layer.Terminate(FrameTiming.NotSpecified);
+                }
+                catch {
+                    // ignore exceptions
+                    tasks[i] = UniTask.FromResult(layer);
+                }
             }
-            // Terminate all layers immediately.
-            foreach(var layer in AsSpan()) {
-                layer.OnLayerTerminatedCallback();
+            TerminateAllPrivate(UniTask.WhenAll(tasks), state, onDead);
+            return;
+
+            static async void TerminateAllPrivate(UniTask<Layer[]> task, T state, Action<T> onDead)
+            {
+                try {
+                    await task;
+                }
+                catch {
+                    // ignore exceptions
+                }
+                finally {
+                    onDead(state);
+                }
             }
+        }
+
+        internal void AbortAllLayers()
+        {
             _list.Clear();
         }
 

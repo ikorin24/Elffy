@@ -41,9 +41,9 @@ namespace Elffy
             return UniTask.CompletedTask;
         }
 
-        protected override void OnLayerTerminated()
+        protected override void OnDead()
         {
-            base.OnLayerTerminated();
+            base.OnDead();
             _gBuffer.Dispose();
             _ppProgram?.Dispose();
             _ppProgram = null;
