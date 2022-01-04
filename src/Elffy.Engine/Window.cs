@@ -138,10 +138,12 @@ namespace Elffy
             if(width <= 0) { throw new ArgumentOutOfRangeException(nameof(width)); }
             if(height <= 0) { throw new ArgumentOutOfRangeException(nameof(height)); }
 
-            renderingArea = new RenderingArea(this);
-            windowImpl = new WindowGLFW(this, width, height, title, windowStyle, ref icon);
+            const float FrameRate = 60f;    // TODO: とりあえず固定で
 
-            _frameDelta = TimeSpanF.FromSeconds(1.0 / 60.0); // TODO: とりあえず固定で
+            renderingArea = new RenderingArea(this);
+            windowImpl = new WindowGLFW(this, width, height, title, FrameRate, windowStyle, ref icon);
+
+            _frameDelta = TimeSpanF.FromSeconds(1.0 / FrameRate);
             _windowImpl.UpdateFrame += (_, e) => UpdateFrame();
             //_windowImpl.Refresh += _ => UpdateFrame();        // TODO: 複数ウィンドウの時におかしくなる
             _windowImpl.Load += _ => _renderingArea.Initialize();

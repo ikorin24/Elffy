@@ -18,6 +18,8 @@ namespace Elffy.Graphics.OpenGL
     /// <summary>Raw window class of GLFW</summary>
     internal unsafe sealed partial class WindowGLFW : IDisposable
     {
+        private record struct InitArgs(IHostScreen Screen, int Width, int Height, string Title, float FrameRate, WindowStyle Style, Icon Icon);
+
         const double MaxUpdateFrequency = 500;
 
         private IHostScreen? _owner;
@@ -29,14 +31,14 @@ namespace Elffy.Graphics.OpenGL
         private string? _title;
         //private bool _isRunning;
 
-        private double? _updateFrequency = 60.0;
+        private double? _updateFrequency;
         private double _updateEpsilon; // 前回のアップデートからの持ちこし誤差 (sec), quantization error for Updating
 
         private readonly Stopwatch _watchUpdate = new Stopwatch();
 
         private bool _isLoaded; // It get true when the first frame is handled.
 
-        private (IHostScreen screen, int width, int height, string title, WindowStyle style, Icon icon) _initArgs;
+        private InitArgs _initArgs;
         private bool _isActivated;
 
         public bool IsDisposed => _window == null;
@@ -94,13 +96,22 @@ namespace Elffy.Graphics.OpenGL
             }
         }
 
-        public WindowGLFW(IHostScreen screen, int width, int height, string title, WindowStyle style, ref Icon icon)
+        public WindowGLFW(IHostScreen screen, int width, int height, string title, float frameRate, WindowStyle style, ref Icon icon)
         {
-            _initArgs = (screen, width, height, title ?? "", style, icon);
+            _initArgs = new InitArgs
+            {
+                Screen = screen,
+                Width = width,
+                Height = height,
+                Title = title,
+                FrameRate = frameRate,
+                Style = style,
+                Icon = icon,
+            };
             icon = default;
         }
 
-        private void Init(IHostScreen screen, int width, int height, string title, WindowStyle style, in Icon icon)
+        private void Init(IHostScreen screen, int width, int height, string title, float frameRate, WindowStyle style, in Icon icon)
         {
             // [Hard coded setting]
             // - Opengl core profile
@@ -152,7 +163,8 @@ namespace Elffy.Graphics.OpenGL
             GLFW.WindowHint(WindowHintInt.GreenBits, videoMode->GreenBits);
             GLFW.WindowHint(WindowHintInt.BlueBits, videoMode->BlueBits);
             //GLFW.WindowHint(WindowHintInt.RefreshRate, videoMode->RefreshRate);
-            GLFW.WindowHint(WindowHintInt.RefreshRate, 60);                         // TODO: とりあえず60fps固定
+            GLFW.WindowHint(WindowHintInt.RefreshRate, (int)frameRate);                         // TODO: とりあえず60fps固定
+            _updateFrequency = frameRate;
             if(isFullscreen) {
                 _window = GLFW.CreateWindow(videoMode->Width, videoMode->Height, title, monitor, null);
             }
@@ -296,11 +308,14 @@ namespace Elffy.Graphics.OpenGL
         {
             if(!_isActivated) {
                 _isActivated = true;
-                var (screen, width, height, title, style, icon) = _initArgs;
-                using(icon) {
-                    Init(screen, width, height, title, style, icon);
-                }
+                var (screen, width, height, title, frameRate, style, icon) = _initArgs;
                 _initArgs = default;
+                try {
+                    Init(screen, width, height, title, frameRate, style, icon);
+                }
+                finally {
+                    icon.Dispose();
+                }
             }
             if(IsDisposed) { ThrowDisposed(); }
             //_isRunning = true;
