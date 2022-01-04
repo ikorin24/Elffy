@@ -24,9 +24,6 @@ namespace Elffy
         internal bool IsSpecified() => _value != FTV.NotSpecified;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal bool IsValid() => _value <= FTV.__FrameTimingValidMax;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void ThrowArgExceptionIfNotSpecified(string msg = DefaultMessage_TimingNotSpecified)
         {
             if(!IsSpecified()) {
