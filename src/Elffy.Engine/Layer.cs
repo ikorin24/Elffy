@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using Elffy.Effective;
 using Elffy.Features.Internal;
 using Elffy.Graphics.OpenGL;
 
@@ -70,20 +71,21 @@ namespace Elffy
             return screen is not null;
         }
 
-        internal async UniTask ActivateOnScreen(IHostScreen screen, FrameTimingPoint timingPoint, CancellationToken ct)
+        internal virtual async UniTask ActivateOnScreen(IHostScreen screen, FrameTimingPoint timingPoint, CancellationToken ct)
         {
             ArgumentNullException.ThrowIfNull(screen);
-            if(Engine.CurrentContext != screen) { ThrowContextMismatch(); }
-            ct.ThrowIfCancellationRequested();
+            if(Engine.CurrentContext != screen) {
+                throw new InvalidOperationException("Invalid current context.");
+            }
             if(_state.IsAfter(LayerLifeState.New)) {
                 throw new InvalidOperationException("Cannot activate the layer twice.");
             }
+            ct.ThrowIfCancellationRequested();
 
             Debug.Assert(_state == LayerLifeState.New);
             Debug.Assert(_owner is null);
             _state = LayerLifeState.Activating;
             _owner = screen.Layers;
-
             try {
                 await _activating.RaiseIfNotNull(this, ct);
             }
@@ -100,7 +102,9 @@ namespace Elffy
                 }
                 throw;  // Throw exceptions of activating.
             }
-            _activating?.Clear();
+            finally {
+                _activating?.Clear();
+            }
             screen.Layers.Add(this, OnAddedToList);
             await timingPoint.NextFrame(CancellationToken.None);
             Debug.Assert(_state.IsSameOrAfter(LayerLifeState.Alive));
@@ -125,8 +129,6 @@ namespace Elffy
                     // ignore exceptions in user code.
                 }
             }
-
-            [DoesNotReturn] static void ThrowContextMismatch() => throw new InvalidOperationException("Invalid current context.");
         }
 
         internal async UniTask TerminateFromScreen(FrameTimingPoint? timingPoint)
@@ -152,6 +154,8 @@ namespace Elffy
             Debug.Assert(owner != null);
             owner.Remove(this, OnRemovedFromList);
 
+            await TerminateAllFrameObjects(Objects);
+
             // I don't care about exceptions in terminating event
             // because the layer is already registered to the removed list.
             // That means the layer will be dead in the next frame even if exceptions are thrown.
@@ -160,6 +164,25 @@ namespace Elffy
             await (timingPoint ?? screen.TimingPoints.Update).NextFrame(CancellationToken.None);
             Debug.Assert(_state == LayerLifeState.Dead);
             return;
+
+            static UniTask TerminateAllFrameObjects(ReadOnlySpan<FrameObject> frameObjects)
+            {
+                var tasks = new UniTask[frameObjects.Length];
+                for(int i = 0; i < frameObjects.Length; i++) {
+                    tasks[i] = CreateTerminationTask(frameObjects[i]);
+                }
+                return ParallelOperation.WhenAll(tasks);
+
+                static async UniTask CreateTerminationTask(FrameObject frameObject)
+                {
+                    try {
+                        await frameObject.Terminate();
+                    }
+                    catch {
+                        // Ignore exceptions.
+                    }
+                }
+            }
 
             static void OnRemovedFromList(Layer self)
             {
@@ -248,6 +271,11 @@ namespace Elffy
             await layer.ActivateOnScreen(screen, timingPoint, cancellationToken);
             Debug.Assert(layer.LifeState.IsSameOrAfter(LayerLifeState.Alive));
             return layer;
+        }
+
+        public static UniTask<TLayer> Terminate<TLayer>(this TLayer layer) where TLayer : Layer
+        {
+            return Terminate(layer, FrameTiming.Update);
         }
 
         public static async UniTask<TLayer> Terminate<TLayer>(this TLayer layer, FrameTimingPoint timingPoint) where TLayer : Layer

@@ -29,16 +29,12 @@ namespace Elffy.UI
             _owner = owner;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(Control item, CancellationToken cancellationToken = default)
+        public UniTask Add(Control item, CancellationToken cancellationToken = default)
         {
-            if(item is null) {
-                ThrowNullArg();
-                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(item));
-            }
+            ArgumentNullException.ThrowIfNull(item);
             if(item.LifeState != LifeState.New) { ThrowNotNewControl(); }
             _owner.ChildrenCore.Add(item);
-            item.AddedToListCallback(_owner, cancellationToken);
+            return item.AddedToListCallback(_owner, cancellationToken);
         }
 
         public unsafe void Clear()

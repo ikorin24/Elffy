@@ -9,6 +9,7 @@ using Elffy.Shading;
 using Elffy.Components.Implementation;
 using Elffy.Features.Internal;
 using System.Threading;
+using Cysharp.Threading.Tasks;
 
 namespace Elffy.UI
 {
@@ -114,6 +115,8 @@ namespace Elffy.UI
             get => Renderable.Visibility == RenderVisibility.Visible;
             set => Renderable.Visibility = value ? RenderVisibility.Visible : RenderVisibility.InvisibleSelf;
         }
+
+        public IHostScreen? Screen => Renderable.Screen;
 
         internal ref readonly TextureCore Texture => ref _texture;
 
@@ -222,15 +225,18 @@ namespace Elffy.UI
             _isMouseOver = isHit;
         }
 
-        internal void AddedToListCallback(Control parent, CancellationToken cancellationToken)
+        internal UniTask AddedToListCallback(Control parent, CancellationToken ct)
         {
             Debug.Assert(parent is not null);
             Debug.Assert(parent.Root is not null);
             Debug.Assert(LifeState == LifeState.New);
-            _parent = parent;
             var root = parent.Root;
+            if(root.TryGetHostScreen(out var screen) == false) {
+                throw new InvalidOperationException();
+            }
+            _parent = parent;
             _root = root;
-            Renderable.ActivateOnUILayer(root.UILayer);
+            return Renderable.ActivateOnLayer(root.UILayer, screen.TimingPoints.Update, ct);
         }
 
         internal void RemovedFromListCallback()

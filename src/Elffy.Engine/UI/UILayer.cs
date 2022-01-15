@@ -4,6 +4,8 @@ using Elffy.Graphics.OpenGL;
 using Elffy.InputSystem;
 using OpenTK.Graphics.OpenGL4;
 using System;
+using System.Diagnostics;
+using System.Threading;
 
 namespace Elffy.UI
 {
@@ -31,11 +33,15 @@ namespace Elffy.UI
             _uiRoot = new RootPanel(this);
         }
 
+        internal sealed override async UniTask ActivateOnScreen(IHostScreen screen, FrameTimingPoint timingPoint, CancellationToken ct)
+        {
+            await base.ActivateOnScreen(screen, timingPoint, ct);
+            await _uiRoot.Initialize(timingPoint, ct);
+            Coroutine.StartOrReserve(screen, this, UIEventPipelineFunc, FrameTiming.FrameInitializing);
+        }
+
         protected override void OnAlive(IHostScreen screen)
         {
-            var uiRoot = _uiRoot;
-            uiRoot.Initialize();
-            Coroutine.StartOrReserve(screen, this, UIEventPipelineFunc, FrameTiming.FrameInitializing);
         }
 
         protected override void SelectMatrix(IHostScreen screen, out Matrix4 view, out Matrix4 projection)

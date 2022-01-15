@@ -1,8 +1,10 @@
 ﻿#nullable enable
+using Cysharp.Threading.Tasks;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Elffy.UI
 {
@@ -35,10 +37,14 @@ namespace Elffy.UI
             _relayoutRequested = true;
         }
 
-        internal void Initialize()
+        internal async UniTask Initialize(FrameTimingPoint timingPoint, CancellationToken ct)
         {
+            var layer = _uiLayer;
+            Debug.Assert(layer.LifeState.IsSameOrAfter(LayerLifeState.Alive));
+            var screen = layer.Screen;
+            Debug.Assert(screen is not null);
             SetAsRootControl();
-            Renderable.ActivateOnUILayer(UILayer);
+            await Renderable.ActivateOnLayer(layer, timingPoint, ct);
             Renderable.BeforeRendering += ExecuteRelayout;
         }
 
