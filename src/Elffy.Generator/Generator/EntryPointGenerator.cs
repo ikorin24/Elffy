@@ -189,7 +189,7 @@ namespace Elffy
                 Engine.Run();
                 var screen = CreateScreen();
                 screen.Initialized += OnScreenInitialized;").AppendIf(useSyncContext, @"
-                CustomSynchronizationContext.CreateIfNeeded(out _, out var syncContextReciever);").Append(@"
+                CustomSynchronizationContext.InstallIfNeeded(out _, out var syncContextReciever);").Append(@"
                 screen.Activate();
                 while(Engine.HandleOnce()) { ").AppendIf(useSyncContext, @"
                     syncContextReciever?.DoAll();").Append(@"

@@ -14,10 +14,10 @@ namespace Elffy.Threading
         private static SynchronizationContext? _previousSyncContext;
 
         /// <summary>Get <see cref="Thread"/> related with this <see cref="CustomSynchronizationContext"/>.</summary>
-        private Thread? DestinationThread 
+        private Thread? DestinationThread
             => _destinationThread.TryGetTarget(out var thread) ? thread : null;
         private readonly WeakReference<Thread> _destinationThread;
-        
+
         /// <summary>Create synchronization context of current thread.</summary>
         /// <param name="receiver">Synchronization context receiver</param>
         private CustomSynchronizationContext(SyncContextReceiver receiver)
@@ -47,20 +47,29 @@ namespace Elffy.Threading
             return new CustomSynchronizationContext(DestinationThread, _syncContextReceiver);
         }
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public static bool CreateIfNeeded(out CustomSynchronizationContext? syncContext, out SyncContextReceiver? reciever)
+        public static CustomSynchronizationContext Install(out SyncContextReceiver receiver)
+        {
+            var context = AsyncOperationManager.SynchronizationContext;
+            _previousSyncContext = context;
+            receiver = new SyncContextReceiver();
+            var syncContext = new CustomSynchronizationContext(receiver);
+            AsyncOperationManager.SynchronizationContext = syncContext;
+            return syncContext;
+        }
+
+        public static bool InstallIfNeeded(out CustomSynchronizationContext? syncContext, out SyncContextReceiver? receiver)
         {
             var context = AsyncOperationManager.SynchronizationContext;
             if(context is null || context.GetType() == typeof(SynchronizationContext)) {
                 _previousSyncContext = context;
-                reciever = new SyncContextReceiver();
-                syncContext = new CustomSynchronizationContext(reciever);
+                receiver = new SyncContextReceiver();
+                syncContext = new CustomSynchronizationContext(receiver);
                 AsyncOperationManager.SynchronizationContext = syncContext;
                 return true;
             }
             else {
                 syncContext = null;
-                reciever = null;
+                receiver = null;
                 return false;
             }
         }
