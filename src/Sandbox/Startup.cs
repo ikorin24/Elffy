@@ -135,7 +135,8 @@ namespace Sandbox
         private static UniTask<Model3D> CreateDice(WorldLayer layer)
         {
             var dice = Resources.Sandbox["Dice.fbx"].CreateFbxModel();
-            dice.Shader = new PhongShader(Color3.Aquamarine);
+            dice.AddComponent(Resources.Sandbox["Dice.png"].LoadTexture());
+            dice.Shader = new PhongShader();
             dice.Position = new Vector3(3, 1, -2);
             return dice.Activate(layer);
         }
@@ -143,12 +144,12 @@ namespace Sandbox
         private static UniTask<Model3D> CreateDice2(DeferredRenderingLayer layer)
         {
             var dice = Resources.Sandbox["Dice.fbx"].CreateFbxModel();
+            dice.AddComponent(Resources.Sandbox["Dice.png"].LoadTexture());
             dice.Position = new Vector3(3, 1, 2);
             dice.Shader = new PbrDeferredShader()
             {
-                Albedo = new Color3(1, 0.8f, 0.2f),
-                Metallic = 0.99f,
-                Roughness = 0.1f,
+                Metallic = 0.1f,
+                Roughness = 0.05f,
             };
             return dice.Activate(layer);
         }

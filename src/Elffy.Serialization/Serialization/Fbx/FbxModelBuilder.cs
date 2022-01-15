@@ -21,28 +21,21 @@ namespace Elffy.Serialization.Fbx
         public static Model3D CreateLazyLoadingFbx(ResourceFile file, CancellationToken cancellationToken = default)
         {
             ResourceFile.ThrowArgumentExceptionIfInvalid(file);
-            var obj = new StateObject(file, cancellationToken);
-
-            return Model3D.Create(obj, _build);
+            var state = new StateObject(file, cancellationToken);
+            return Model3D.Create(state, _build);
         }
 
-        private static async UniTask Build(StateObject obj, Model3D model, Model3DLoadMeshDelegate load)
+        private static async UniTask Build(StateObject state, Model3D model, Model3DLoadMeshDelegate load)
         {
             //var (resourceLoader, name, token) = obj;
-            var (file, token) = obj;
+            var (file, token) = state;
             model.TryGetHostScreen(out var screen);
             Debug.Assert(screen is not null);
             var timingPoints = screen.TimingPoints;
             token.ThrowIfCancellationRequested();
 
-            await UniTask.SwitchToThreadPool();                                         // ↓ thread pool -------------------------------------- 
+            await UniTask.SwitchToThreadPool();     // ↓ thread pool -------------------------------------- 
             token.ThrowIfCancellationRequested();
-
-
-            // TODO:
-            // - サブメッシュの実装 (メッシュごとにテクスチャを設定したい、実態は結合メッシュへのスライス、CPU側からのアクセスはとりあえず実装しない、表示/非表示切り替えもなし)
-            // - マルチテクスチャの実装
-
 
             // Parse fbx file
             using var fbx = FbxSemanticParser<SkinnedVertex>.ParseUnsafe(file.GetStream(), false, token);
@@ -61,7 +54,7 @@ namespace Elffy.Serialization.Fbx
             }
 
             load.Invoke(fbx.Vertices, fbx.Indices);
-            await UniTask.SwitchToThreadPool();                                         // ↓ thread pool -------------------------------------- 
+            await UniTask.SwitchToThreadPool();         // ↓ thread pool -------------------------------------- 
 
             // 'using' scope ends here. Dispose resources on a thread pool. 
             // Nobody knows the thread if exceptions are thrown in this method,
@@ -78,7 +71,8 @@ namespace Elffy.Serialization.Fbx
             using var textureLoader = texture.GetLoaderContext(fbx.Textures.Length);
             try {
                 for(int i = 0; i < fbx.Textures.Length; i++) {
-                    var path = fbx.Textures[i].ToString().Replace('\\', '/');
+                    var texPath = fbx.Textures[i];
+                    var path = texPath.ToString().Replace('\\', '/');
                     Debug.WriteLine(path);
                     continue;
 
