@@ -26,6 +26,8 @@ namespace UnitTest
 
         private static void Launch()
         {
+            EngineSetting.UserCodeExceptionCatchMode = UserCodeExceptionCatchMode.Throw;
+
             try {
                 Elffy.Diagnostics.DevEnv.Run();
                 Engine.Run();

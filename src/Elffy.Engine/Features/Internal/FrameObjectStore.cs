@@ -81,6 +81,7 @@ namespace Elffy.Features.Internal
                     frameObject.EarlyUpdate();
                 }
                 catch {
+                    if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
                     // Don't throw. (Ignore exceptions in user code)
                 }
             }
@@ -95,6 +96,7 @@ namespace Elffy.Features.Internal
                     frameObject.Update();
                 }
                 catch {
+                    if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
                     // Don't throw. (Ignore exceptions in user code)
                 }
             }
@@ -109,6 +111,7 @@ namespace Elffy.Features.Internal
                     frameObject.LateUpdate();
                 }
                 catch {
+                    if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
                     // Don't throw. (Ignore exceptions in user code)
                 }
             }
@@ -125,6 +128,7 @@ namespace Elffy.Features.Internal
                     renderable.Render(identity, view, projection);
                 }
                 catch {
+                    if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
                     // Don't throw. (Ignore exceptions in user code)
                 }
             }
@@ -142,6 +146,7 @@ namespace Elffy.Features.Internal
                     item.Terminate().Forget();  // TODO: await
                 }
                 catch {
+                    if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
                     // Don't throw. (Ignore exceptions in user code)
                 }
             }
@@ -173,6 +178,7 @@ namespace Elffy.Features.Internal
                     item.RemovedFromObjectStoreCallback();
                 }
                 catch {
+                    if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
                     // Don't throw. (Ignore exceptions in user code)
                 }
             }
@@ -192,6 +198,7 @@ namespace Elffy.Features.Internal
                     item.AddToObjectStoreCallback();
                 }
                 catch {
+                    if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
                     // Don't throw. (Ignore exceptions in user code)
                 }
             }

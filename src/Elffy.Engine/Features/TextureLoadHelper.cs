@@ -62,6 +62,7 @@ namespace Elffy.Features
                 }
                 catch {
                     TextureObject.Delete(ref tex);
+                    throw;
                 }
                 finally {
                     TextureObject.Unbind2D();

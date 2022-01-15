@@ -113,6 +113,7 @@ namespace Elffy.Features.Internal
                     Initialized?.Invoke(OwnerScreen);
                 }
                 catch {
+                    if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
                     // Don't throw. (Ignore exceptions in user code)
                 }
                 finally {
@@ -209,6 +210,7 @@ namespace Elffy.Features.Internal
                 }
             }
             catch {
+                if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
                 _isCloseRequested = true;
                 return true;
             }

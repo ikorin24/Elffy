@@ -29,6 +29,7 @@ namespace Elffy.Threading
                         item.callback(item.state);
                     }
                     catch {
+                        if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
                         // Don't throw. (Ignore exceptions in user code)
                     }
                     count--;

@@ -109,7 +109,7 @@ namespace Elffy
                 _isThreadMain = false;
                 _watch.Stop();
                 //_watch.Reset();
-                //EngineSetting.Unlock();
+                EngineSetting.Unlock();
                 Volatile.Write(ref _mainThreadID, 0);   // This means 'IsRunning = false'
             }
         }

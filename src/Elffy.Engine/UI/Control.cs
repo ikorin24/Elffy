@@ -143,13 +143,19 @@ namespace Elffy.UI
                 try {
                     MouseEnter?.Invoke(this);
                 }
-                catch { }   // Don't throw, ignore exceptions in user code.
+                catch {
+                    if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
+                    // Don't throw, ignore exceptions in user code.
+                }
             }
             if(!_isMouseOver && _isMouseOverPrevious) {
                 try {
                     MouseLeave?.Invoke(this);
                 }
-                catch { }   // Don't throw, ignore exceptions in user code.
+                catch {
+                    if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
+                    // Don't throw, ignore exceptions in user code.
+                }
             }
         }
 

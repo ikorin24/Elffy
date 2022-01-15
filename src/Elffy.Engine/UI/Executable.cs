@@ -85,7 +85,10 @@ namespace Elffy.UI
             try {
                 action?.Invoke(arg);
             }
-            catch { }   // Don't throw, ignore exceptions in user code.
+            catch {
+                if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
+                // Don't throw, ignore exceptions in user code.
+            }
         }
     }
 }

@@ -10,11 +10,18 @@ namespace Elffy
         private static bool _isLocked;
 
         private static bool _enableContextAssociatedMemorySafety = true;
+        private static UserCodeExceptionCatchMode _userCodeExceptionCatchMode = UserCodeExceptionCatchMode.Default;
 
         public static bool EnableContextAssociatedMemorySafety
         {
             get => _enableContextAssociatedMemorySafety;
-            set => SyncSet(ref _enableContextAssociatedMemorySafety, true);
+            set => SyncSet(ref _enableContextAssociatedMemorySafety, value);
+        }
+
+        public static UserCodeExceptionCatchMode UserCodeExceptionCatchMode
+        {
+            get => _userCodeExceptionCatchMode;
+            set => SyncSet(ref _userCodeExceptionCatchMode, value);
         }
 
 
@@ -46,5 +53,11 @@ namespace Elffy
 
         [DoesNotReturn]
         private static void ThrowAlreadyLocked() => throw new InvalidOperationException($"{nameof(EngineSetting)} is locked. Set values before the Engine runs.");
+    }
+
+    public enum UserCodeExceptionCatchMode
+    {
+        Default = 0,
+        Throw = 1,
     }
 }

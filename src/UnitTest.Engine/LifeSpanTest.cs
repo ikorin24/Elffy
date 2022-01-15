@@ -41,24 +41,30 @@ namespace UnitTest
                 .CreateBuilder(screen)
                 .Build(() => new WorldLayer());
 
+            // 1. <New> -> call Terminate() -> exception
+            // 2. <Activating> -> call Activate() -> exception
+            // =================================================
+
             var cube = new Cube();
-            await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            {
-                //await screen.TimingPoints.Update.Next();
-                await cube.Terminate();
-            });
             Assert.Equal(LifeState.New, cube.LifeState);
 
+            // 1.
+            await Assert.ThrowsAsync<InvalidOperationException>(async () => await cube.Terminate());
+            Assert.Equal(LifeState.New, cube.LifeState);
+            // ---------------------------------
+
+            // 2.
             cube.Activating.Subscribe(async (cube, ct) =>
             {
                 Assert.Equal(LifeState.Activating, cube.LifeState);
                 await Assert.ThrowsAsync<InvalidOperationException>(async () => await cube.Activate(layer));
-                Assert.Equal(LifeState.Dead, cube.LifeState);
             });
-
             await cube.Activate(layer);
+            Assert.Equal(LifeState.Alive, cube.LifeState);
+            // ---------------------------------
 
-            //await screen.TimingPoints.Update.Next();
+            await cube.Terminate();
+            Assert.Equal(LifeState.Dead, cube.LifeState);
         });
 
         [Fact]

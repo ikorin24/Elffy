@@ -120,12 +120,14 @@ namespace Elffy
                     self.OnAlive(screen);
                 }
                 catch {
+                    if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
                     // ignore exceptions in user code.
                 }
                 try {
                     self.OnSizeChanged(screen);
                 }
                 catch {
+                    if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
                     // ignore exceptions in user code.
                 }
             }
@@ -179,6 +181,7 @@ namespace Elffy
                         await frameObject.Terminate();
                     }
                     catch {
+                        if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
                         // Ignore exceptions.
                     }
                 }
@@ -194,6 +197,7 @@ namespace Elffy
                     self.OnDead();
                 }
                 catch {
+                    if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
                     // Ignore exceptions in user code.
                 }
             }

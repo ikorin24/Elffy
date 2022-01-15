@@ -381,6 +381,7 @@ namespace Elffy.Graphics.OpenGL
 #endif
             }
             catch {
+                if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
 #if DEBUG
                 throw;
 #endif

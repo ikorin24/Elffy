@@ -325,7 +325,12 @@ namespace Elffy
                 }
             }
             catch(Exception ex) {
-                onCatch?.Invoke(ex);
+                if(onCatch != null) {
+                    onCatch.Invoke(ex);
+                }
+                else {
+                    if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
+                }
             }
         }
 

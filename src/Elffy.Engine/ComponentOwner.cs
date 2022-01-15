@@ -249,6 +249,7 @@ namespace Elffy
                     component.OnDetached(owner);
                 }
                 catch {
+                    if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
                     // Don't throw. Ignore exceptions in user code.
                 }
             }

@@ -56,6 +56,7 @@ namespace Elffy
                     tasks[i] = layer.Terminate(FrameTiming.NotSpecified);
                 }
                 catch {
+                    if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
                     // ignore exceptions
                     tasks[i] = UniTask.FromResult(layer);
                 }
@@ -69,6 +70,7 @@ namespace Elffy
                     await task;
                 }
                 catch {
+                    if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
                     // ignore exceptions
                 }
                 finally {

@@ -76,6 +76,7 @@ namespace Elffy.Features.Internal
                             workItem.Invoke();
                         }
                         catch {
+                            if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
                             // Don't throw
                         }
                     }
