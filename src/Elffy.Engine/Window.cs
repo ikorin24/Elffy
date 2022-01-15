@@ -22,6 +22,8 @@ namespace Elffy
         private const int DefaultWidth = 800;
         private const int DefaultHeight = 450;
 
+        private const float DefaultFrameRate = 60f;    // TODO: とりあえず固定で
+
         private HostScreenLifeState _lifeState;
         private readonly WindowGLFW _windowImpl;
         private readonly RenderingArea _renderingArea;
@@ -130,20 +132,40 @@ namespace Elffy
         /// <param name="icon">window icon (The instance is copied, so you can dispose it after call the constructor.)</param>
         public Window(int width, int height, string title, WindowStyle windowStyle, Icon icon)
         {
-            Ctor(out _renderingArea, out _windowImpl, width, height, title, windowStyle, icon.Clone());
+            var config = new WindowConfig
+            {
+                Width = width,
+                Height = height,
+                Title = title,
+                FrameRate = DefaultFrameRate,
+                Style = windowStyle,
+                BorderStyle = WindowBorderStyle.Default,
+                Visibility = WindowVisibility.Visible,
+            };
+            Ctor(out _renderingArea, out _windowImpl, config, icon.Clone());
         }
 
-        private void Ctor(out RenderingArea renderingArea, out WindowGLFW windowImpl, int width, int height, string title, WindowStyle windowStyle, Icon icon)
-        {
-            if(width <= 0) { throw new ArgumentOutOfRangeException(nameof(width)); }
-            if(height <= 0) { throw new ArgumentOutOfRangeException(nameof(height)); }
+        public Window(in WindowConfig config) : this(config, Icon.None) { }
 
-            const float FrameRate = 60f;    // TODO: とりあえず固定で
+        public Window(in WindowConfig config, Icon icon)
+        {
+            var c = config with
+            {
+                FrameRate = DefaultFrameRate,
+            };
+            Ctor(out _renderingArea, out _windowImpl, c, icon.Clone());
+        }
+
+        //private void Ctor(out RenderingArea renderingArea, out WindowGLFW windowImpl, int width, int height, string title, WindowStyle windowStyle, Icon icon)
+        private void Ctor(out RenderingArea renderingArea, out WindowGLFW windowImpl, in WindowConfig config, Icon icon)
+        {
+            if(config.Width <= 0) { throw new ArgumentOutOfRangeException(nameof(WindowConfig.Width)); }
+            if(config.Height <= 0) { throw new ArgumentOutOfRangeException(nameof(WindowConfig.Height)); }
 
             renderingArea = new RenderingArea(this);
-            windowImpl = new WindowGLFW(this, width, height, title, FrameRate, windowStyle, ref icon);
+            windowImpl = new WindowGLFW(this, config, ref icon);
 
-            _frameDelta = TimeSpanF.FromSeconds(1.0 / FrameRate);
+            _frameDelta = TimeSpanF.FromSeconds(1.0 / config.FrameRate);
             _windowImpl.UpdateFrame += (_, e) => UpdateFrame();
             //_windowImpl.Refresh += _ => UpdateFrame();        // TODO: 複数ウィンドウの時におかしくなる
             _windowImpl.Load += _ => _renderingArea.Initialize();
@@ -181,6 +203,20 @@ namespace Elffy
         {
             var timingPoint = TimingPoints.TimingOf(timing);
             return new FrameAsyncEnumerable(timingPoint, cancellationToken);
+        }
+
+        public void Hide()
+        {
+            if(!Engine.IsThreadMain) { ThrowNotMainThread(); }
+            if(_lifeState.IsRunning() == false) { ThrowNotRunning(); }
+            _windowImpl.Hide();
+        }
+
+        public void Show()
+        {
+            if(!Engine.IsThreadMain) { ThrowNotMainThread(); }
+            if(_lifeState.IsRunning() == false) { ThrowNotRunning(); }
+            _windowImpl.Show();
         }
 
         public void Maximize()

@@ -1,11 +1,8 @@
 ﻿#nullable enable
 using System;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Elffy.Imaging;
-using Elffy.Effective;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -18,7 +15,25 @@ namespace Elffy.Graphics.OpenGL
     /// <summary>Raw window class of GLFW</summary>
     internal unsafe sealed partial class WindowGLFW : IDisposable
     {
-        private record struct InitArgs(IHostScreen Screen, int Width, int Height, string Title, float FrameRate, WindowStyle Style, Icon Icon);
+        private record struct InitArgs : IDisposable
+        {
+            public int Width { get; init; }
+            public int Height { get; init; }
+            public string Title { get; init; }
+            public float FrameRate { get; init; }
+            public WindowStyle Style { get; init; }
+            public WindowBorderStyle BorderStyle { get; init; }
+            public WindowVisibility Visibility { get; init; }
+
+            public IHostScreen Screen { get; init; }
+            public Icon Icon { get; init; }
+
+            public void Dispose()
+            {
+                Icon.Dispose();
+                this = default;
+            }
+        }
 
         const double MaxUpdateFrequency = 500;
 
@@ -29,7 +44,6 @@ namespace Elffy.Graphics.OpenGL
         private Vector2i _frameBufferSize;
         private Vector2i _location;
         private string? _title;
-        //private bool _isRunning;
 
         private double? _updateFrequency;
         private double _updateEpsilon; // 前回のアップデートからの持ちこし誤差 (sec), quantization error for Updating
@@ -42,8 +56,6 @@ namespace Elffy.Graphics.OpenGL
         private bool _isActivated;
 
         public bool IsDisposed => _window == null;
-
-        //public bool IsRunning => _isRunning;
 
         /// <summary>Frequency of updating (Hz). If null, update is called as faster as possible.</summary>
         public double? UpdateFrequency
@@ -96,22 +108,24 @@ namespace Elffy.Graphics.OpenGL
             }
         }
 
-        public WindowGLFW(IHostScreen screen, int width, int height, string title, float frameRate, WindowStyle style, ref Icon icon)
+        public WindowGLFW(IHostScreen screen, in WindowConfig config, ref Icon icon)
         {
             _initArgs = new InitArgs
             {
+                Width = config.Width,
+                Height = config.Height,
+                Title = config.Title,
+                FrameRate = config.FrameRate,
+                Style = config.Style,
+                BorderStyle = config.BorderStyle,
+                Visibility = config.Visibility,
                 Screen = screen,
-                Width = width,
-                Height = height,
-                Title = title,
-                FrameRate = frameRate,
-                Style = style,
                 Icon = icon,
             };
             icon = default;
         }
 
-        private void Init(IHostScreen screen, int width, int height, string title, float frameRate, WindowStyle style, in Icon icon)
+        private void Init(in InitArgs args)
         {
             // [Hard coded setting]
             // - Opengl core profile
@@ -122,7 +136,7 @@ namespace Elffy.Graphics.OpenGL
             var currentHostScreen = Engine.CurrentContext;
             var currentContext = GLFW.GetCurrentContext();
 
-            _owner = screen;
+            _owner = args.Screen;
 
             GLFW.Init();
             GLFW.SetErrorCallback((errorCode, description) => throw new GLFWException(description, errorCode));
@@ -133,7 +147,7 @@ namespace Elffy.Graphics.OpenGL
             }
             GLFW.DefaultWindowHints();
             var isFullscreen = false;
-            switch(style) {
+            switch(args.Style) {
                 case WindowStyle.Default:
                     GLFW.WindowHint(WindowHintBool.Resizable, true);
                     break;
@@ -145,7 +159,7 @@ namespace Elffy.Graphics.OpenGL
                     GLFW.WindowHint(WindowHintBool.Resizable, false);
                     break;
                 default:
-                    throw new ArgumentException(nameof(style));
+                    throw new ArgumentException("Invalid window style");
             }
 
             GLFW.WindowHint(WindowHintOpenGlProfile.OpenGlProfile, OpenGlProfile.Core);
@@ -156,21 +170,26 @@ namespace Elffy.Graphics.OpenGL
             GLFW.WindowHint(WindowHintBool.Focused, true);
             GLFW.WindowHint(WindowHintBool.Visible, false);
             GLFW.WindowHint(WindowHintBool.FocusOnShow, true);
-            //GLFW.WindowHint(WindowHintBool.Decorated, false);
+            GLFW.WindowHint(WindowHintBool.Decorated, args.BorderStyle switch
+            {
+                WindowBorderStyle.Default => true,
+                WindowBorderStyle.NoBorder => false,
+                _ => true,
+            });
 
             var videoMode = GLFW.GetVideoMode(monitor);
             GLFW.WindowHint(WindowHintInt.RedBits, videoMode->RedBits);
             GLFW.WindowHint(WindowHintInt.GreenBits, videoMode->GreenBits);
             GLFW.WindowHint(WindowHintInt.BlueBits, videoMode->BlueBits);
             //GLFW.WindowHint(WindowHintInt.RefreshRate, videoMode->RefreshRate);
-            GLFW.WindowHint(WindowHintInt.RefreshRate, (int)frameRate);                         // TODO: とりあえず60fps固定
-            _updateFrequency = frameRate;
+            GLFW.WindowHint(WindowHintInt.RefreshRate, (int)args.FrameRate);
+            _updateFrequency = args.FrameRate;
             if(isFullscreen) {
-                _window = GLFW.CreateWindow(videoMode->Width, videoMode->Height, title, monitor, null);
+                _window = GLFW.CreateWindow(videoMode->Width, videoMode->Height, args.Title, monitor, null);
             }
             else {
-                _window = GLFW.CreateWindow(width, height, title, null, null);
-                GLFW.SetWindowPos(_window, (videoMode->Width - width) / 2, (videoMode->Height - height) / 2);
+                _window = GLFW.CreateWindow(args.Width, args.Height, args.Title, null, null);
+                GLFW.SetWindowPos(_window, (videoMode->Width - args.Width) / 2, (videoMode->Height - args.Height) / 2);
             }
 
             GLFW.GetFramebufferSize(_window, out _frameBufferSize.X, out _frameBufferSize.Y);
@@ -180,7 +199,8 @@ namespace Elffy.Graphics.OpenGL
                 InitializeGlBindings();
                 RegisterWindowCallbacks();
                 GLFW.FocusWindow(_window);
-                _title = title;
+                _title = args.Title;
+                var icon = args.Icon;
                 if(icon.ImageCount > 0) {
                     var image = icon.GetImage(0);
                     if(image.IsEmpty == false) {
@@ -204,6 +224,10 @@ namespace Elffy.Graphics.OpenGL
             finally {
                 GLFW.DefaultWindowHints();
                 RestoreContextCurrent(currentContext, currentHostScreen);
+            }
+
+            if(args.Visibility == WindowVisibility.Visible) {
+                GLFW.ShowWindow(_window);
             }
         }
 
@@ -256,7 +280,7 @@ namespace Elffy.Graphics.OpenGL
             finally {
                 RestoreContextCurrent(currentContext, currentHostScreen);
             }
-            
+
 
             void Update(double elapsed)
             {
@@ -308,17 +332,20 @@ namespace Elffy.Graphics.OpenGL
         {
             if(!_isActivated) {
                 _isActivated = true;
-                var (screen, width, height, title, frameRate, style, icon) = _initArgs;
-                _initArgs = default;
                 try {
-                    Init(screen, width, height, title, frameRate, style, icon);
+                    Init(in _initArgs);
                 }
                 finally {
-                    icon.Dispose();
+                    _initArgs.Dispose();
                 }
             }
             if(IsDisposed) { ThrowDisposed(); }
-            //_isRunning = true;
+        }
+
+        public void Show()
+        {
+            if(!_isActivated) { ThrowNotActivated(); }
+            if(IsDisposed) { ThrowDisposed(); }
             GLFW.ShowWindow(_window);
         }
 
@@ -365,7 +392,6 @@ namespace Elffy.Graphics.OpenGL
             if(!_isActivated || IsDisposed) { return; }  // Block re-entrant
             var window = _window;
             _window = null;
-            //_isRunning = false;
             GLFW.DestroyWindow(window);
         }
 
