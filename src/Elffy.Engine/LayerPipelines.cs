@@ -6,19 +6,13 @@ namespace Elffy
 {
     public static class LayerPipelines
     {
-        public static UniTask<(DeferredRenderingLayer, WorldLayer, UILayer)> UseDeferredForward(IHostScreen screen)
+        public static UniTask<(WorldLayer, UILayer)> BuildDefault(IHostScreen screen)
         {
-            return UniTask.WhenAll(
-                new DeferredRenderingLayer().Activate(screen),
-                new WorldLayer().Activate(screen),
-                new UILayer().Activate(screen));
+            return CreateBuilder(screen)
+                .Build(() => new WorldLayer(),
+                       () => new UILayer());
         }
 
-        public static UniTask<(WorldLayer, UILayer)> UseForward(IHostScreen screen)
-        {
-            return UniTask.WhenAll(
-                new WorldLayer().Activate(screen),
-                new UILayer().Activate(screen));
-        }
+        public static LayerPipelineBuilder CreateBuilder(IHostScreen screen) => new LayerPipelineBuilder(screen);
     }
 }

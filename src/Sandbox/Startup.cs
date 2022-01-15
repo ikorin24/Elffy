@@ -22,7 +22,12 @@ namespace Sandbox
         public static async UniTask Start()
         {
             var screen = Game.Screen;
-            var (drLayer, wLayer, uiLayer) = await LayerPipelines.UseDeferredForward(screen);
+            var (drLayer, wLayer, uiLayer) =
+                await LayerPipelines.CreateBuilder(screen).Build(
+                    () => new DeferredRenderingLayer(),
+                    () => new WorldLayer(),
+                    () => new UILayer());
+
             InitializeLights(screen);
             var uiRoot = uiLayer.UIRoot;
             CreateTestUI(uiLayer);
