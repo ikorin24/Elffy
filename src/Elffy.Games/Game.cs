@@ -60,5 +60,16 @@ namespace Elffy
             Layers = screen.Layers;
             Camera = screen.Camera;
         }
+
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void Clear()
+        {
+            _screen = null;
+            _runningToken = default;
+            Keyboard = null!;
+            Mouse = null!;
+            Layers = null!;
+            Camera = null!;
+        }
     }
 }

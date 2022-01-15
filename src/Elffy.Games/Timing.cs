@@ -33,6 +33,13 @@ namespace Elffy
             _timingPoints = screen.TimingPoints;
         }
 
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public static void Clear()
+        {
+            _screen = null;
+            _timingPoints = null;
+        }
+
         /// <summary>Get current screen frame loop timing.</summary>
         /// <remarks>If not main thread of <see cref="IHostScreen"/>, always returns <see cref="CurrentFrameTiming.OutOfFrameLoop"/></remarks>
         public static CurrentFrameTiming CurrentTiming => _screen!.CurrentTiming;

@@ -5,7 +5,7 @@ using System.Threading;
 
 namespace Elffy.Effective
 {
-    public static class ParallelOperation
+    public static partial class ParallelOperation
     {
         public static UniTask LimitedParallel<TArg>(ReadOnlySpan<Func<TArg, CancellationToken, UniTask>> funcs, TArg arg, int maxParallel, CancellationToken cancellationToken = default)
         {
