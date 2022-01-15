@@ -3,6 +3,7 @@
 namespace Elffy.Effective
 {
     /// <summary>Indicates how to copy memory.</summary>
+    [System.Obsolete]
     public enum MemoryCopyMode : byte
     {
         /// <summary>Deep copy, i.e., recursively copy all memory and create an object that is independent of the original object.</summary>
