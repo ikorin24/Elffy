@@ -29,8 +29,7 @@ namespace Elffy.Shading
         {
             var screen = Engine.CurrentContext;
             if(screen is null) {
-                ThrowInvalidContext();
-                [DoesNotReturn] static void ThrowInvalidContext() => throw new InvalidOperationException("Invaid context");
+                ContextMismatchException.ThrowCurrentContextIsNull();
             }
             var shader = owner.ShaderInternal;
             Debug.Assert(shader is not null);
@@ -101,8 +100,7 @@ namespace Elffy.Shading
             if(IsEmpty) { return; }
             var screen = Engine.CurrentContext;
             if(screen is null) {
-                ThrowInvalidContext();
-                [DoesNotReturn] static void ThrowInvalidContext() => throw new InvalidOperationException("Invaid context");
+                ContextMismatchException.ThrowCurrentContextIsNull();
             }
 
             Debug.Assert(_owner.ShaderInternal is not null);

@@ -79,8 +79,9 @@ namespace Elffy
                 throw new ArgumentException($"The layer is not associated with {nameof(IHostScreen)}");
             }
             Debug.Assert(screen is not null);
-            if(Engine.CurrentContext != screen) {
-                throw new InvalidOperationException("Invalid current context.");
+            var currentContext = Engine.CurrentContext;
+            if(currentContext != screen) {
+                ContextMismatchException.Throw(currentContext, screen);
             }
             if(_state.IsAfter(LifeState.New)) {
                 throw new InvalidOperationException("Cannot activate the layer twice.");
@@ -168,7 +169,9 @@ namespace Elffy
                 if(_state == LifeState.Dead) { throw new InvalidOperationException($"Cannot terminate {nameof(FrameObject)} because it is already dead."); }
                 Debug.Fail("Something wrong.");
             }
-            if(context != screen) { ThrowContextMismatch(); }
+            if(context != screen) {
+                ContextMismatchException.Throw(context, screen);
+            }
             if(_state.IsSameOrAfter(LifeState.Terminating)) { ThrowTerminateTwice(); }
             Debug.Assert(timingPoint is not null);
             Debug.Assert(_state == LifeState.Activating || _state == LifeState.Alive);
@@ -180,7 +183,6 @@ namespace Elffy
             Debug.Assert(_state == LifeState.Dead);
             return;
 
-            [DoesNotReturn] static void ThrowContextMismatch() => throw new InvalidOperationException("Invalid current context.");
             [DoesNotReturn] static void ThrowNotActivated() => throw new InvalidOperationException($"Cannot terminate {nameof(FrameObject)} because it is not activated.");
             [DoesNotReturn] static void ThrowTerminateTwice() => throw new InvalidOperationException($"Cannot terminate {nameof(FrameObject)} twice.");
         }

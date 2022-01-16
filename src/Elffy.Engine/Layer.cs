@@ -74,8 +74,9 @@ namespace Elffy
         internal virtual async UniTask ActivateOnScreen(IHostScreen screen, FrameTimingPoint timingPoint, CancellationToken ct)
         {
             ArgumentNullException.ThrowIfNull(screen);
-            if(Engine.CurrentContext != screen) {
-                throw new InvalidOperationException("Invalid current context.");
+            var currentContext = Engine.CurrentContext;
+            if(currentContext != screen) {
+                ContextMismatchException.Throw(currentContext, screen);
             }
             if(_state.IsAfter(LayerLifeState.New)) {
                 throw new InvalidOperationException("Cannot activate the layer twice.");
@@ -137,8 +138,11 @@ namespace Elffy
         {
             var context = Engine.CurrentContext;
             var screen = Screen;
-            if(context is null || context != screen) {
-                throw new InvalidOperationException("Invalid current context.");
+            if(context is null) {
+                ContextMismatchException.ThrowCurrentContextIsNull();
+            }
+            if(context != screen) {
+                ContextMismatchException.Throw(context, screen);
             }
             if(_state == LayerLifeState.New) {
                 throw new InvalidOperationException("Cannot terminate the layer because it is not activated.");

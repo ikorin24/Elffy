@@ -47,7 +47,7 @@ namespace Elffy.Shading
         {
             var screen = Engine.CurrentContext;
             if(screen is null) {
-                throw new InvalidOperationException();
+                ContextMismatchException.ThrowCurrentContextIsNull();
             }
             if(_initialized) {
                 ThrowAlreadyInitialized();
@@ -60,7 +60,7 @@ namespace Elffy.Shading
         {
             var screen = Engine.CurrentContext;
             if(screen is null) {
-                throw new InvalidOperationException();
+                ContextMismatchException.ThrowCurrentContextIsNull();
             }
             if(positions.Length != colors.Length) {
                 ThrowInvalidLength();

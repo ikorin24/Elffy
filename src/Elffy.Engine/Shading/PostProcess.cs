@@ -48,8 +48,11 @@ void main()
         [SkipLocalsInit]
         public PostProcessProgram Compile(IHostScreen screen)
         {
-            if(screen is null) { throw new ArgumentNullException(); }
-            if(Engine.CurrentContext != screen) { throw new InvalidOperationException(); }
+            ArgumentNullException.ThrowIfNull(screen);
+            var currentContext = Engine.CurrentContext;
+            if(currentContext != screen) {
+                ContextMismatchException.Throw(currentContext, screen);
+            }
 
             // 0 - 3    polygon
             // | / |

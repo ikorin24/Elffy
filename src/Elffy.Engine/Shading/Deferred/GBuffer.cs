@@ -55,9 +55,9 @@ namespace Elffy.Shading.Deferred
                 ThrowNullArg();
                 [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(screen));
             }
-            if(Engine.CurrentContext != screen) {
-                ThrowInvalidContext();
-                [DoesNotReturn] static void ThrowInvalidContext() => throw new InvalidOperationException("Invalid current context");
+            var currentContext = Engine.CurrentContext;
+            if(currentContext != screen) {
+                ContextMismatchException.Throw(currentContext, screen);
             }
             if(_initialized) {
                 ThrowNotInitialized();
@@ -76,9 +76,9 @@ namespace Elffy.Shading.Deferred
             if(TryGetHostScreen(out var screen) == false) {
                 ThrowNotInitialized();
             }
-            if(Engine.CurrentContext != screen) {
-                ThrowInvalidContext();
-                [DoesNotReturn] static void ThrowInvalidContext() => throw new InvalidOperationException("Invalid current context");
+            var currentContext = Engine.CurrentContext;
+            if(currentContext != screen) {
+                ContextMismatchException.Throw(currentContext, screen);
             }
             var newSize = screen.FrameBufferSize;
             if(newSize != _size) {

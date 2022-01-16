@@ -76,7 +76,7 @@ namespace Elffy.Components
                 throw new InvalidOperationException("Cannot load image before the component is attached.");
             }
             if(Engine.CurrentContext is null) {
-                throw new InvalidOperationException("Invalid context");
+                ContextMismatchException.ThrowCurrentContextIsNull();
             }
         }
 

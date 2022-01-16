@@ -201,8 +201,9 @@ namespace Elffy
             if(TryGetHostScreen(out var screen) == false) {
                 throw new InvalidOperationException();
             }
-            if(Engine.CurrentContext != screen) {
-                throw new InvalidOperationException("Invalid current context.");
+            var currentContext = Engine.CurrentContext;
+            if(currentContext != screen) {
+                ContextMismatchException.Throw(currentContext, screen);
             }
             if(IsLoaded == false) {
                 return (0, 0);
@@ -292,8 +293,9 @@ namespace Elffy
             if(TryGetHostScreen(out var screen) == false) {
                 throw new InvalidOperationException();
             }
-            if(Engine.CurrentContext != screen) {
-                throw new InvalidOperationException("Invalid current context.");
+            var currentContext = Engine.CurrentContext;
+            if(currentContext != screen) {
+                ContextMismatchException.Throw(currentContext, screen);
             }
             if(IsLoaded) { ThrowAlreadyLoaded(); }
 
