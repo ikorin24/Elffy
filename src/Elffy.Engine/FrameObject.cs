@@ -16,10 +16,12 @@ namespace Elffy
         private IHostScreen? _hostScreen;
         private Layer? _layer;
         private AsyncEventRaiser<FrameObject>? _activating;
+        private AsyncEventRaiser<FrameObject>? _terminating;
         private LifeState _state = LifeState.New;
         private bool _isFrozen;
 
         public AsyncEvent<FrameObject> Activating => new(ref _activating);
+        public AsyncEvent<FrameObject> Terminating => new(ref _terminating);
 
         /// <summary>Event of alive, which fires in the first frame where <see cref="LifeState"/> get <see cref="LifeState.Alive"/>.</summary>
         public event Action<FrameObject>? Alive;
@@ -177,7 +179,15 @@ namespace Elffy
             Debug.Assert(_state == LifeState.Activating || _state == LifeState.Alive);
             Debug.Assert(_layer is not null);
             _state = LifeState.Terminating;
-            _layer.RemoveFrameObject(this);
+            try {
+                await _terminating.RaiseIfNotNull(this, CancellationToken.None);
+            }
+            catch {
+                if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
+            }
+            finally {
+                _layer.RemoveFrameObject(this);
+            }
             Debug.Assert(screen is not null);
             await (timingPoint ?? screen.TimingPoints.Update).NextFrame(CancellationToken.None);
             Debug.Assert(_state == LifeState.Dead);
