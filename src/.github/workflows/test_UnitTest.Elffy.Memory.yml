@@ -1,0 +1,41 @@
+name: UnitTest.Elffy.Memory
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target-framework: [ 'netcoreapp3.1', 'net5.0', 'net6.0' ]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET Core 3.1
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.x
+    - name: Setup .NET5
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.x
+    - name: Setup .NET6
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 6.0.x
+    - name: Restore dependencies
+      run: dotnet restore src/UnitTest.Elffy.Memory/UnitTest.Elffy.Memory.csproj
+    - name: Build Debug
+      run: dotnet build --no-restore -c Debug --framework ${{ matrix.target-framework }} /nowarn:cs1591 src/UnitTest.Elffy.Memory/UnitTest.Elffy.Memory.csproj
+    - name: Test Debug
+      run: dotnet test --no-build --verbosity normal -c Debug --framework ${{ matrix.target-framework }} src/UnitTest.Elffy.Memory/UnitTest.Elffy.Memory.csproj
+    - name: Build Release
+      run: dotnet build --no-restore -c Release --framework ${{ matrix.target-framework }} /nowarn:cs1591 src/UnitTest.Elffy.Memory/UnitTest.Elffy.Memory.csproj
+    - name: Test Release
+      run: dotnet test --no-build --verbosity normal -c Release src/UnitTest.Elffy.Memory/UnitTest.Elffy.Memory.csproj
