@@ -5,7 +5,7 @@ using Xunit;
 
 namespace UnitTest
 {
-    [Collection("UseEngine")]
+    [Collection(TestEngineEntryPoint.UseEngineSymbol)]
     public sealed class EngineRunTest
     {
         [Fact]

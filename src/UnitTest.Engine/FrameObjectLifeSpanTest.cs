@@ -3,13 +3,14 @@ using Cysharp.Threading.Tasks;
 using Elffy;
 using Elffy.Shapes;
 using System;
+using System.Diagnostics;
 using Xunit;
 using Xunit.Sdk;
 
 namespace UnitTest
 {
-    [Collection("UseEngine")]
-    public sealed class LifeSpanTest
+    [Collection(TestEngineEntryPoint.UseEngineSymbol)]
+    public sealed class FrameObjectLifeSpanTest
     {
         [Fact]
         public static void LifeSpan_FrameObject() => TestEngineEntryPoint.Start(async screen =>
@@ -40,7 +41,8 @@ namespace UnitTest
                 Assert.Equal(LifeState.Activating, cube.LifeState);
                 var screen = cube.Screen;
                 Assert.NotNull(screen);
-                await screen!.TimingPoints.Update.DelayFrame(4, ct);
+                Debug.Assert(screen is not null);
+                await screen.TimingPoints.Update.DelayFrame(4, ct);
                 isAsyncActivatingEventCalled = true;
                 Assert.Equal(LifeState.Activating, cube.LifeState);
             });
@@ -119,128 +121,48 @@ namespace UnitTest
             Assert.Equal(LifeState.Dead, cube.LifeState);
         });
 
-        [Fact(Skip = "Not implemented yet")]
-        public static void LifeSpan_FrameObject_ValidOperation() => TestEngineEntryPoint.Start(async screen =>
+        [Fact]
+        public static void LifeSpan_FrameObject_InvalidOperation2() => TestEngineEntryPoint.Start(async screen =>
         {
             var layer = await LayerPipelines
                 .CreateBuilder(screen)
                 .Build(() => new WorldLayer());
 
-            // <New> -> call Activate() -> <Activating> -> call Terminate() -> <Dead>
+            // <New> -> call Activate() -> <Activating> -> call Terminate()
+            // -> exception is catched -> <Alive> -> call Terminate() -> <Terminating> -> <Dead>
             // =================================================
 
             var cube = new Cube();
             cube.Activating.Subscribe(async (cube, ct) =>
             {
-                await cube.Terminate();
+                await Assert.ThrowsAsync<InvalidOperationException>(async () => await cube.Terminate());
             });
             await cube.Activate(layer);
+            Assert.Equal(LifeState.Alive, cube.LifeState);
+
+            cube.Terminating.Subscribe((cube, ct) =>
+            {
+                Assert.Equal(LifeState.Terminating, cube.LifeState);
+                return UniTask.CompletedTask;
+            });
+            await cube.Terminate();
             Assert.Equal(LifeState.Dead, cube.LifeState);
         });
 
-
-
         [Fact]
-        public static void LifeSpan_FrameObject_OnThrown() => TestEngineEntryPoint.Start(async screen =>
+        public static void LifeSpan_FrameObject_OnThrown() => TestEngineEntryPoint.Start(UserCodeExceptionCatchMode.Throw, async screen =>
         {
             var layer = await LayerPipelines
                 .CreateBuilder(screen)
                 .Build(() => new WorldLayer());
 
-            // <Activating> -> exception is thrown -> <Dead>
+            // <Activating> -> exception is thrown -> <Alive>
             // =================================================
 
             var cube = new Cube();
             cube.Activating.Subscribe((cube, ct) => throw new XunitException());
             await Assert.ThrowsAsync<XunitException>(async () => await cube.Activate(layer));
-            Assert.Equal(LifeState.Dead, cube.LifeState);
-        });
-
-        [Fact]
-        public static void LifeSpan_Layer() => TestEngineEntryPoint.Start(async screen =>
-        {
-            var layer = new WorldLayer();
-            Assert.Equal(LayerLifeState.New, layer.LifeState);
-            await layer.Activate(screen);
-            Assert.Equal(LayerLifeState.Alive, layer.LifeState);
-            await layer.Terminate();
-            Assert.Equal(LayerLifeState.Dead, layer.LifeState);
-        });
-
-        [Fact]
-        public static void LifeSpan_Layer_FrameObject() => TestEngineEntryPoint.Start(async screen =>
-        {
-            // 1. Activate Layer
-            // 2. Activate FrameObject
-            // 3. Terminate FrameObject
-            // 4. Terminate Layer
-            // --------------------------------------------
-
-            // 1.
-            var layer = new WorldLayer();
-            Assert.Equal(LayerLifeState.New, layer.LifeState);
-            await layer.Activate(screen);
-            Assert.Equal(LayerLifeState.Alive, layer.LifeState);
-
-            // 2.
-            var cube = new Cube();
-            Assert.Equal(LifeState.New, cube.LifeState);
-            var isActivatingEventCalled = false;
-            cube.Activating.Subscribe((cube, ct) =>
-            {
-                isActivatingEventCalled = true;
-                Assert.Equal(LifeState.Activating, cube.LifeState);
-                return UniTask.CompletedTask;
-            });
-            await cube.Activate(layer);
-            Assert.True(isActivatingEventCalled);
             Assert.Equal(LifeState.Alive, cube.LifeState);
-
-            // 3.
-            await cube.Terminate();
-            Assert.Equal(LifeState.Dead, cube.LifeState);
-
-            // 4.
-            await layer.Terminate();
-            Assert.Equal(LayerLifeState.Dead, layer.LifeState);
-        });
-
-        [Fact]
-        public static void LifeSpan_Layer_FrameObject2() => TestEngineEntryPoint.Start(async screen =>
-        {
-            // 1. Activate Layer
-            // 2. Activate FrameObject
-            // 3. Terminate Layer
-            // 4. No FrameObject are alive
-            // --------------------------------------------
-
-            // 1.
-            var layer = new WorldLayer();
-            Assert.Equal(LayerLifeState.New, layer.LifeState);
-            await layer.Activate(screen);
-            Assert.Equal(LayerLifeState.Alive, layer.LifeState);
-
-            // 2.
-            var cube = new Cube();
-            Assert.Equal(LifeState.New, cube.LifeState);
-            var isActivatingEventCalled = false;
-            cube.Activating.Subscribe((cube, ct) =>
-            {
-                isActivatingEventCalled = true;
-                Assert.Equal(LifeState.Activating, cube.LifeState);
-                return UniTask.CompletedTask;
-            });
-            await cube.Activate(layer);
-            Assert.True(isActivatingEventCalled);
-            Assert.Equal(LifeState.Alive, cube.LifeState);
-
-            // 3.
-            await layer.Terminate();
-            Assert.Equal(LayerLifeState.Dead, layer.LifeState);
-
-            // 4.
-            Assert.Equal(LifeState.Dead, cube.LifeState);
-            Assert.Equal(0, layer.ObjectCount);
         });
     }
 }

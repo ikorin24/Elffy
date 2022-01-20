@@ -14,19 +14,26 @@ namespace UnitTest
     {
         private static Func<IHostScreen, UniTask>? _func;
 
+        public const string UseEngineSymbol = "UseEngine";
+
         public static void Start(Func<IHostScreen, UniTask> func)
+        {
+            Start(UserCodeExceptionCatchMode.Default, func);
+        }
+
+        public static void Start(UserCodeExceptionCatchMode exceptionMode, Func<IHostScreen, UniTask> func)
         {
             ProcessHelper.SingleLaunch(() =>
             {
                 _func = func;
-                Launch();
+                Launch(exceptionMode);
             },
             () => throw new InvalidOperationException("Multiple engines cannot be started at the same time."));
         }
 
-        private static void Launch()
+        private static void Launch(UserCodeExceptionCatchMode exceptionMode)
         {
-            EngineSetting.UserCodeExceptionCatchMode = UserCodeExceptionCatchMode.Throw;
+            EngineSetting.UserCodeExceptionCatchMode = exceptionMode;
 
             try {
                 Elffy.Diagnostics.DevEnv.Run();

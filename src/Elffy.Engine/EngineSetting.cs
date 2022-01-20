@@ -18,7 +18,7 @@ namespace Elffy
             set => SyncSet(ref _enableContextAssociatedMemorySafety, value);
         }
 
-        public static UserCodeExceptionCatchMode UserCodeExceptionCatchMode
+        internal static UserCodeExceptionCatchMode UserCodeExceptionCatchMode
         {
             get => _userCodeExceptionCatchMode;
             set => SyncSet(ref _userCodeExceptionCatchMode, value);
@@ -55,7 +55,7 @@ namespace Elffy
         private static void ThrowAlreadyLocked() => throw new InvalidOperationException($"{nameof(EngineSetting)} is locked. Set values before the Engine runs.");
     }
 
-    public enum UserCodeExceptionCatchMode
+    internal enum UserCodeExceptionCatchMode
     {
         Default = 0,
         Throw = 1,

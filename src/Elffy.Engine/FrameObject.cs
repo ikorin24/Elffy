@@ -7,6 +7,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using Elffy.UI;
 using Elffy.Threading;
+using System.Runtime.ExceptionServices;
 
 namespace Elffy
 {
@@ -95,70 +96,27 @@ namespace Elffy
             _hostScreen = screen;
             _layer = layer;
             _state = LifeState.Activating;
+            ExceptionDispatchInfo? edi = null;
             try {
                 await _activating.RaiseIfNotNull(this, ct);
-            }
-            catch(Exception ex) {
-                // If exceptions throw on activating, terminate the object if possible.
-                if(screen.RunningToken.IsCancellationRequested == false) {
-                    await timingPoint.NextOrNow(CancellationToken.None);
-                    try {
-                        await TerminateFromLayer(timingPoint);
-                    }
-                    catch(Exception ex2) {
-                        throw new AggregateException(ex, ex2);
-                    }
-                }
-                throw;  // Throw exceptions of activating.
-            }
-            finally {
                 _activating?.Clear();
             }
+            catch(Exception ex) {
+                if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) {
+                    edi = ExceptionDispatchInfo.Capture(ex);
+                }
+            }
+
+            // TODO: Consider the case that screen is already dead.
             if(screen.CurrentTiming.IsOutOfFrameLoop()) {
                 await screen.TimingPoints.FrameInitializing.Next(ct);
             }
             layer.AddFrameObject(this);
             await timingPoint.NextFrame(ct);
             Debug.Assert(_state.IsSameOrAfter(LifeState.Alive));
-            return;
-        }
-
-        [Obsolete("obsolete", true)]
-        internal async UniTask ActivateOnUILayer(UILayer layer, CancellationToken ct)
-        {
-            //if(_state != LifeState.New) { return; }
-            Debug.Assert(layer is not null);
-            Debug.Assert(layer.LifeState == LayerLifeState.Alive);
-            Debug.Assert(GetType() == typeof(UIRenderable));
-
-            var screen = layer.Screen;
-            Debug.Assert(screen is not null);
-            Debug.Assert(Engine.CurrentContext == screen);
-
-            _hostScreen = screen;
-            _state = LifeState.Activating;
-            _layer = layer;
-            try {
-                await _activating.RaiseIfNotNull(this, ct);
+            if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) {
+                edi?.Throw();
             }
-            catch(Exception ex) {
-                if(screen.RunningToken.IsCancellationRequested == false) {
-                    try {
-
-                    }
-                    catch(Exception ex2) {
-                        throw new AggregateException(ex, ex2);
-                    }
-                }
-                throw;
-            }
-            finally {
-                _activating?.Clear();
-            }
-
-            layer.AddFrameObject(this);
-            //await WaitForNextFrame(screen, timingPoint, cancellationToken);   // TODO: Lazy applying control list, Wait for alive
-            //Debug.Assert(_state.IsSameOrAfter(LifeState.Alive));  // TODO:
             return;
         }
 
@@ -174,9 +132,12 @@ namespace Elffy
             if(context != screen) {
                 ContextMismatchException.Throw(context, screen);
             }
+            if(_state == LifeState.Activating) {
+                throw new InvalidOperationException($"Cannot terminate {nameof(FrameObject)} when activating.");
+            }
             if(_state.IsSameOrAfter(LifeState.Terminating)) { ThrowTerminateTwice(); }
             Debug.Assert(timingPoint is not null);
-            Debug.Assert(_state == LifeState.Activating || _state == LifeState.Alive);
+            Debug.Assert(_state == LifeState.Alive);
             Debug.Assert(_layer is not null);
             _state = LifeState.Terminating;
             try {
