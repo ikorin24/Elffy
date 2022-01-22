@@ -4,9 +4,9 @@ using System.Numerics;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using System.Collections.Generic;
 using Elffy.Effective.Unsafes;
 using Elffy.Mathematics;
+using Cysharp.Threading.Tasks;
 
 namespace Elffy.Features.Internal
 {
@@ -108,13 +108,8 @@ namespace Elffy.Features.Internal
 
         public int IndexOf(T item)
         {
-            var span = AsSpan();
-            for(int i = 0; i < span.Length; i++) {
-                if(EqualityComparer<T>.Default.Equals(span[i], item)) {
-                    return i;
-                }
-            }
-            return -1;
+            var array = _array;
+            return (array is null) ? -1 : Array.IndexOf(array, item, 0, _count);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
