@@ -18,7 +18,7 @@ namespace UnitTest
 
         public static void Start(Func<IHostScreen, UniTask> func)
         {
-            Start(UserCodeExceptionCatchMode.Default, func);
+            Start(UserCodeExceptionCatchMode.Throw, func);
         }
 
         public static void Start(UserCodeExceptionCatchMode exceptionMode, Func<IHostScreen, UniTask> func)

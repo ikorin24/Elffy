@@ -245,11 +245,12 @@ namespace Elffy.UI
             return Renderable.ActivateOnLayer(root.UILayer, screen.TimingPoints.Update, ct);
         }
 
-        internal void RemovedFromListCallback()
+        internal UniTask RemovedFromListCallback()
         {
             _parent = null;
             _root = null;
-            Renderable.Terminate();
+            var timingPoint = TryGetHostScreen(out var screen) ? screen.TimingPoints.Update : null;
+            return Renderable.TerminateFromLayer(timingPoint);
         }
 
         protected virtual void OnDead() => Dead?.Invoke(this);

@@ -1,7 +1,9 @@
 ﻿#nullable enable
 using Cysharp.Threading.Tasks;
+using Elffy.Effective;
 using Elffy.Features;
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -22,6 +24,10 @@ namespace Elffy.UI
 
         public int Count => _owner.ChildrenCore.Count;
 
+        [Obsolete("Don't use default constructor.", true)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public ControlCollection() => throw new NotSupportedException("Don't use default constructor.");
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal ControlCollection(Control owner)
         {
@@ -37,20 +43,37 @@ namespace Elffy.UI
             return item.AddedToListCallback(_owner, cancellationToken);
         }
 
-        public unsafe void Clear()
+        public UniTask Clear()
         {
-            _owner.ChildrenCore.Clear(&Callback);
-
-            static void Callback(Control[]? items)
-            {
-                foreach(var item in items.AsSpan()) {
-                    if(item is not null) {
-                        item.RemovedFromListCallback();
-                    }
-                    else {
-                        return;
-                    }
+            var controls = AsSpan();
+            if(controls.Length > 0) {
+                var tasks = new UniTask[controls.Length + 1];
+                for(int i = 0; i < controls.Length; i++) {
+                    tasks[i] = controls[i].Children.Clear();
                 }
+                tasks[tasks.Length - 1] = ClearPrivate(in this);
+                return ParallelOperation.WhenAll(tasks);
+            }
+            else {
+                return ClearPrivate(in this);
+            }
+
+            static UniTask ClearPrivate(in ControlCollection self)
+            {
+                return self._owner.ChildrenCore.Clear(static items =>
+                {
+                    if(items.IsEmpty) {
+                        return UniTask.CompletedTask;
+                    }
+                    if(items.Length == 1) {
+                        return items[0]?.RemovedFromListCallback() ?? UniTask.CompletedTask;
+                    }
+                    var tasks = new UniTask[items.Length];
+                    for(int i = 0; i < items.Length; i++) {
+                        tasks[i] = items[i]?.RemovedFromListCallback() ?? UniTask.CompletedTask;
+                    }
+                    return ParallelOperation.WhenAll(tasks);
+                });
             }
         }
 
@@ -64,17 +87,29 @@ namespace Elffy.UI
             return _owner.ChildrenCore.IndexOf(item);
         }
 
-        public bool Remove(Control item)
+        public async UniTask<bool> Remove(Control item)
         {
-            if(item is null) {
+            ArgumentNullException.ThrowIfNull(item);
+            var index = _owner.ChildrenCore.IndexOf(item);
+            if(index < 0) {
                 return false;
             }
-            var result = _owner.ChildrenCore.Remove(item);
-            if(result) {
-                item.RemovedFromListCallback();
+            var tasks = new UniTask[2]
+            {
+                ClearChildrenOfItemAndRemoveItem(_owner, item, index),
+                item.RemovedFromListCallback(),
+            };
+            await ParallelOperation.WhenAll(tasks);
+            return true;
+
+            static async UniTask ClearChildrenOfItemAndRemoveItem(Control owner, Control item, int index)
+            {
+                await item.Children.Clear();
+                owner.ChildrenCore.RemoveAt(index);
             }
-            return result;
         }
+
+        public Control[] ToArray() => AsSpan().ToArray();
 
         public ReadOnlySpan<Control> AsSpan() => _owner.ChildrenCore.AsSpan();
 

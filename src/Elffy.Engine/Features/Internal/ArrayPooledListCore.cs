@@ -120,10 +120,19 @@ namespace Elffy.Features.Internal
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void Clear(delegate*<T[]?, void> cleared)
+        public void Clear(ReadOnlySpanAction<T> cleared)
         {
+            var count = _count;
             _count = 0;
-            Pool.TryPush(ref _array, cleared);
+            Pool.TryPushWithCallback(ref _array, count, cleared);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public UniTask Clear(AsyncReadOnlySpanAction<T> cleared)
+        {
+            var count = _count;
+            _count = 0;
+            return Pool.TryPushWithCallback(ref _array, count, cleared).AsUniTask();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -213,10 +222,10 @@ namespace Elffy.Features.Internal
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static unsafe bool TryPush(ref T[]? array) => TryPush(ref array, null);
+            public static bool TryPush(ref T[]? array) => TryPushWithCallback(ref array, 0, default(ReadOnlySpanAction<T>));
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static unsafe bool TryPush(ref T[]? array, delegate*<T[]?, void> cleared)
+            public static bool TryPushWithCallback(ref T[]? array, int count, ReadOnlySpanAction<T>? cleared)
             {
                 Debug.Assert(array is null || MathTool.IsPowerOfTwo(array.Length), $"Length of array must be power of two.");
 
@@ -232,9 +241,7 @@ namespace Elffy.Features.Internal
                 array = null;
 
                 // 2. Fire the delegete
-                if(cleared != null) {
-                    cleared(copy);
-                }
+                cleared?.Invoke(copy.AsSpan(0, count));
 
                 if(copy is null) {
                     return false;
@@ -257,6 +264,58 @@ namespace Elffy.Features.Internal
                 }
 
                 return bucket.TryPush(copy);
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static UniTask<bool> TryPushWithCallback(ref T[]? array, int count, AsyncReadOnlySpanAction<T>? cleared)
+            {
+                Debug.Assert(array is null || MathTool.IsPowerOfTwo(array.Length), $"Length of array must be power of two.");
+
+                // 1. array = null
+                // 2. Fire the delegete
+                // 3. Clear elements in the array. (If needed)
+                // 4. Pool the instance
+                // ----------------------------------------------
+
+
+                // 1. array = null
+                var copy = array;
+                array = null;
+                return TryPushCore(copy, count, cleared);
+
+                static async UniTask<bool> TryPushCore(T[]? copy, int count, AsyncReadOnlySpanAction<T>? cleared)
+                {
+                    // 2. Fire the delegete
+                    if(cleared != null) {
+                        await cleared.Invoke(copy.AsSpan(0, count));
+                    }
+
+                    if(copy is null) {
+                        return false;
+                    }
+
+                    // 3. Clear elements in the array. (If needed)
+                    if(RuntimeHelpers.IsReferenceOrContainsReferences<T>()) {
+                        Array.Clear(copy, 0, copy.Length);
+                    }
+
+                    // 4. Pool the instance
+                    var index = GetBucketIndex((uint)copy.Length);
+                    if((uint)index >= (uint)BucketCount) {
+                        return false;
+                    }
+                    return SyncOperation(copy, index);
+
+                    static bool SyncOperation(T[] copy, int index)
+                    {
+                        _buckets ??= new Bucket[BucketCount];
+                        ref var bucket = ref _buckets.At(index);
+                        if(bucket.IsEmpty) {
+                            InitBucket(index, out bucket);
+                        }
+                        return bucket.TryPush(copy);
+                    }
+                }
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]

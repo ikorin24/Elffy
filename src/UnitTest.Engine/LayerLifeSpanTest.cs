@@ -38,7 +38,6 @@ namespace UnitTest
                 Debug.Assert(screen is not null);
                 await screen.TimingPoints.Update.DelayFrame(4, ct);
                 isAsyncActivatingEventCalled = true;
-                Assert.Equal(LayerLifeState.Activating, layer.LifeState);
             });
             layer.Terminating.Subscribe((layer, ct) =>
             {
@@ -56,7 +55,6 @@ namespace UnitTest
                 Debug.Assert(screen is not null);
                 await screen.TimingPoints.Update.DelayFrame(4, ct);
                 isAsyncTerminatingEventCalled = true;
-                Assert.Equal(LayerLifeState.Terminating, layer.LifeState);
             });
 
             await layer.Activate(screen);
