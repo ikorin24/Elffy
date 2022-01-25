@@ -193,20 +193,6 @@ namespace Elffy.UI
             }
         }
 
-        /// <summary>このオブジェクトの <see cref="Children"/> 以下に存在する全ての子孫を取得します。列挙順は深さ優先探索 (DFS; depth-first search) です。</summary>
-        /// <returns>全ての子孫オブジェクト</returns>
-        [Obsolete("", true)]
-        [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
-        public IEnumerable<Control> GetOffspring()
-        {
-            foreach(var child in Children) {
-                yield return child;
-                foreach(var offspring in child.GetOffspring()) {
-                    yield return offspring;
-                }
-            }
-        }
-
         /// <summary>マウスオーバーしているかを取得します</summary>
         /// <param name="mouse">マウス</param>
         /// <returns>マウスオーバーしているか</returns>
