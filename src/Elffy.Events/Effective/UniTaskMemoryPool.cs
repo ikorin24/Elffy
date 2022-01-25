@@ -60,6 +60,7 @@ namespace Elffy.Effective
 
             public ref UniTaskArray16? NextPooled => ref _next;
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public Span<UniTask> AsSpan()
             {
                 return MemoryMarshal.CreateSpan(ref _core.E0, UniTaskArray16Core.ElementCount);
@@ -131,18 +132,21 @@ namespace Elffy.Effective
         [EditorBrowsable(EditorBrowsableState.Never)]
         public UniTaskRentArray() => throw new NotSupportedException("Don't use default constructor.");
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal UniTaskRentArray(UniTaskMemoryPool.UniTaskArray16 array16, int length)
         {
             _obj = array16;
             _length = length;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal UniTaskRentArray(UniTask[] array)
         {
             _obj = array;
             _length = array.Length;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal bool TryExtractArray16([MaybeNullWhen(false)] out UniTaskMemoryPool.UniTaskArray16 array16)
         {
             if(_obj is UniTaskMemoryPool.UniTaskArray16 a) {
@@ -155,6 +159,7 @@ namespace Elffy.Effective
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal bool TryExtractArray([MaybeNullWhen(false)] out UniTask[] array)
         {
             if(_obj is UniTask[] a) {
@@ -167,6 +172,7 @@ namespace Elffy.Effective
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Span<UniTask> AsSpan()
         {
             var obj = _obj;
