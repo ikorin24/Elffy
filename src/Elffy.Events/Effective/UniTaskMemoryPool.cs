@@ -85,7 +85,6 @@ namespace Elffy.Effective
         [Obsolete("Don't call this method explicitly.", true)]
         internal static void __ModuleInitializer_SizeAssertionUniTaskArray16Core()
         {
-            Debugger.Break();
             var a = new UniTaskArray16Core();
             Debug.Assert(Unsafe.AreSame(ref Unsafe.Add(ref a.E0, UniTaskArray16Core.ElementCount - 1), ref a.E15));
             Debug.Assert(Unsafe.SizeOf<UniTaskArray16Core>() == Unsafe.SizeOf<UniTask>() * UniTaskArray16Core.ElementCount);
