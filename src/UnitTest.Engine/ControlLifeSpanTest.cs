@@ -24,8 +24,7 @@ namespace UnitTest
             Assert.Equal(LifeState.Alive, button.LifeState);
             Assert.Equal(1, uiRoot.Children.Count);
 
-            var isRemoved = await uiRoot.Children.Remove(button);
-            Assert.True(isRemoved);
+            await uiRoot.Children.Remove(button);
             Assert.Equal(LifeState.Dead, button.LifeState);
             Assert.Equal(0, uiRoot.Children.Count);
         });

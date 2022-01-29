@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Collections.Generic;
 using System.Diagnostics;
 using Elffy.InputSystem;
 using Elffy.Components;
@@ -10,6 +9,7 @@ using Elffy.Components.Implementation;
 using Elffy.Features.Internal;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using Elffy.Effective;
 
 namespace Elffy.UI
 {
@@ -217,26 +217,171 @@ namespace Elffy.UI
             _isMouseOver = isHit;
         }
 
-        internal UniTask AddedToListCallback(Control parent, CancellationToken ct)
+        private (IHostScreen Screen, UILayer Layer, RootPanel Root) CheckArgAndStateForAddChild(Control childToAdd)
         {
-            Debug.Assert(parent is not null);
-            Debug.Assert(parent.Root is not null);
-            Debug.Assert(LifeState == LifeState.New);
-            var root = parent.Root;
-            if(root.TryGetHostScreen(out var screen) == false) {
+            // Check arguments and states
+            ArgumentNullException.ThrowIfNull(childToAdd);
+            if(_renderable.TryGetUILayer(out var layer) == false) {
+                throw new InvalidOperationException("The parent has no layer.");
+            }
+            if(layer.TryGetHostScreen(out var screen) == false) {
+                throw new InvalidOperationException($"The parent has no {nameof(IHostScreen)}.");
+            }
+            var root = layer.UIRoot;
+            var currentContext = Engine.CurrentContext;
+            if(screen != currentContext) {
+                ContextMismatchException.Throw(currentContext, screen);
+            }
+            var childState = childToAdd.LifeState;
+            if(childState != LifeState.New) {
+                throw new InvalidOperationException($"The state of the child to add must be '{nameof(LifeState.New)}'");
+            }
+            if(childToAdd._parent is not null) {
+                throw new ArgumentException($"The specified child already has a parent control.");
+            }
+            var lifeState = LifeState;
+            if(lifeState == LifeState.New || lifeState.IsSameOrAfter(LifeState.Terminating)) {
                 throw new InvalidOperationException();
             }
-            _parent = parent;
-            _root = root;
-            return Renderable.ActivateOnLayer(root.UILayer, screen.TimingPoints.Update, ct);
+            var layerLifeState = layer.LifeState;
+            if(layerLifeState == LayerLifeState.New || layerLifeState.IsSameOrAfter(LayerLifeState.Terminating)) {
+                throw new InvalidOperationException();
+            }
+            return (screen, layer, root);
         }
 
-        internal UniTask RemovedFromListCallback()
+        private (IHostScreen Screen, UILayer Layer, int Index) CheckArgAndStateForRemoveChild(Control childToRemove)
         {
-            _parent = null;
-            _root = null;
-            var timingPoint = TryGetHostScreen(out var screen) ? screen.TimingPoints.Update : null;
-            return Renderable.TerminateFromLayer(timingPoint);
+            ArgumentNullException.ThrowIfNull(childToRemove);
+            if(TryGetHostScreen(out var screen) == false) {
+                throw new InvalidOperationException();
+            }
+            var currentContext = Engine.CurrentContext;
+            if(screen != currentContext) {
+                ContextMismatchException.Throw(currentContext, screen);
+            }
+            if(_renderable.TryGetUILayer(out var layer) == false) {
+                throw new InvalidOperationException();
+            }
+            var childState = childToRemove.LifeState;
+            if(childState == LifeState.New || childState.IsSameOrAfter(LifeState.Terminating)) {
+                throw new InvalidOperationException();
+            }
+            var parent = childToRemove.Parent;
+            if(parent != this) {
+                throw new ArgumentException($"The specified child is not a member of children of the parent.");
+            }
+            var lifeState = LifeState;
+            if(lifeState == LifeState.New || lifeState.IsSameOrAfter(LifeState.Terminating)) {
+                throw new InvalidOperationException();
+            }
+            var layerState = layer.LifeState;
+            if(layerState == LayerLifeState.New || layerState.IsSameOrAfter(LayerLifeState.Terminating)) {
+                throw new InvalidOperationException();
+            }
+            var root = _root;
+            if(root is null) {
+                throw new InvalidOperationException();
+            }
+            if(childToRemove._root != root) {
+                throw new ArgumentException();
+            }
+            Debug.Assert(screen is not null);
+            if(childToRemove.Screen != screen) {
+                throw new ArgumentException();
+            }
+            Debug.Assert(layer is not null);
+            if(childToRemove._renderable.Layer != layer) {
+                throw new ArgumentException();
+            }
+            var index = _childrenCore.IndexOf(childToRemove);
+            if(index < 0) {
+                throw new ArgumentException();
+            }
+            return (screen, layer, index);
+        }
+
+        private void CheckStateForClearChildren()
+        {
+            if(TryGetHostScreen(out var screen) == false) {
+                throw new InvalidOperationException();
+            }
+            var currentContext = Engine.CurrentContext;
+            if(screen != currentContext) {
+                ContextMismatchException.Throw(currentContext, screen);
+            }
+            if(_renderable.TryGetUILayer(out var layer) == false) {
+                throw new InvalidOperationException();
+            }
+            var lifeState = LifeState;
+            if(lifeState == LifeState.New || lifeState.IsSameOrAfter(LifeState.Terminating)) {
+                throw new InvalidOperationException();
+            }
+            var layerState = layer.LifeState;
+            if(layerState == LayerLifeState.New || layerState.IsSameOrAfter(LayerLifeState.Terminating)) {
+                throw new InvalidOperationException();
+            }
+            var root = _root;
+            if(root is null) {
+                throw new InvalidOperationException();
+            }
+        }
+
+        internal UniTask AddChild(Control control)
+        {
+            var (screen, layer, root) = CheckArgAndStateForAddChild(control);
+
+            control._parent = this;
+            control._root = root;
+            _childrenCore.Add(control);
+            return ActivateChild(control.Renderable, root, layer, screen);
+
+            static async UniTask ActivateChild(UIRenderable controlRenderable, RootPanel root, UILayer layer, IHostScreen screen)
+            {
+                var activationTimingPoint = screen.TimingPoints.FrameInitializing;
+                await controlRenderable.ActivateOnLayerWithoutCheck(layer, activationTimingPoint, screen, CancellationToken.None);
+                Debug.Assert(screen.CurrentTiming == CurrentFrameTiming.FrameInitializing);
+                root.RequestRelayout();
+                await screen.TimingPoints.Update.NextOrNow();
+            }
+        }
+
+        internal async UniTask RemoveChild(Control child)
+        {
+            var (screen, layer, index) = CheckArgAndStateForRemoveChild(child);
+            await ParallelOperation.WhenAll(
+                child.ClearChildren(),
+                RemoveOnlyChild(this, child, index, layer, screen));
+            await screen.TimingPoints.Update.NextOrNow();
+            return;
+
+            static async UniTask RemoveOnlyChild(Control control, Control child, int index, UILayer layer, IHostScreen screen)
+            {
+                var terminationTimingPoint = screen.TimingPoints.FrameInitializing;
+                child._parent = null;
+                child._root = null;
+                control._childrenCore.RemoveAt(index);
+                await child._renderable.TerminateFromLayerWithoutCheck(layer, terminationTimingPoint, screen);
+                Debug.Assert(screen.CurrentTiming == CurrentFrameTiming.FrameInitializing);
+                layer.UIRoot.RequestRelayout();
+            }
+        }
+
+        internal UniTask ClearChildren()
+        {
+            CheckStateForClearChildren();
+            var childCount = _childrenCore.Count;
+            if(childCount == 0) {
+                return UniTask.CompletedTask;
+            }
+            return ParallelOperation.WhenAll(childCount, this, static (Span<UniTask> tasks, in Control self) =>
+            {
+                // [NOTE] I remove children in reverse order because it is faster.
+                var children = self._childrenCore.AsSpan();
+                for(int i = 0; i < tasks.Length; i++) {
+                    tasks[i] = self.RemoveChild(children[tasks.Length - 1 - i]);
+                }
+            });
         }
 
         protected virtual void OnDead() => Dead?.Invoke(this);

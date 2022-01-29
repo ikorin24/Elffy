@@ -160,7 +160,7 @@ namespace Elffy
             Debug.Assert(owner != null);
             owner.Remove(this, OnRemovedFromList);
 
-            await TerminateAllFrameObjects(Objects);
+            await TerminateAllFrameObjects(this);
 
             // I don't care about exceptions in terminating event
             // because the layer is already registered to the removed list.
@@ -171,13 +171,15 @@ namespace Elffy
             Debug.Assert(_state == LayerLifeState.Dead);
             return;
 
-            static UniTask TerminateAllFrameObjects(ReadOnlySpan<FrameObject> frameObjects)
+            static UniTask TerminateAllFrameObjects(Layer self)
             {
-                var tasks = new UniTask[frameObjects.Length];
-                for(int i = 0; i < frameObjects.Length; i++) {
-                    tasks[i] = CreateTerminationTask(frameObjects[i]);
-                }
-                return ParallelOperation.WhenAll(tasks);
+                return ParallelOperation.WhenAll(self.ObjectCount, self, static (Span<UniTask> tasks, in Layer self) =>
+                {
+                    var frameObjects = self.Objects;
+                    for(int i = 0; i < tasks.Length; i++) {
+                        tasks[i] = CreateTerminationTask(frameObjects[i]);
+                    }
+                });
 
                 static async UniTask CreateTerminationTask(FrameObject frameObject)
                 {

@@ -74,23 +74,33 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void LateUpdate() => OnLateUpdte();
 
-        internal async UniTask ActivateOnLayer(Layer layer, FrameTimingPoint timingPoint, CancellationToken ct)
+        internal UniTask ActivateOnLayer(Layer layer, FrameTimingPoint timingPoint, CancellationToken ct)
+        {
+            var screen = layer.Screen;
+            CheckStateAndThreadForActivation(screen, layer, timingPoint);
+            ct.ThrowIfCancellationRequested();
+            return ActivateOnLayerWithoutCheck(layer, timingPoint, screen, ct);
+        }
+
+        internal void CheckStateAndThreadForActivation([NotNull] IHostScreen? screen, [NotNull] Layer? layer, [NotNull] FrameTimingPoint? timingPoint)
         {
             ArgumentNullException.ThrowIfNull(layer);
             ArgumentNullException.ThrowIfNull(timingPoint);
-            if(layer.TryGetHostScreen(out var screen) == false) {
-                throw new ArgumentException($"The layer is not associated with {nameof(IHostScreen)}");
+            ArgumentNullException.ThrowIfNull(screen);
+            if(layer.Screen != screen) {
+                throw new ArgumentException($"The layer is not associated with the specified {nameof(IHostScreen)}.");
             }
-            Debug.Assert(screen is not null);
             var currentContext = Engine.CurrentContext;
             if(currentContext != screen) {
                 ContextMismatchException.Throw(currentContext, screen);
             }
             if(_state.IsAfter(LifeState.New)) {
-                throw new InvalidOperationException("Cannot activate the layer twice.");
+                throw new InvalidOperationException($"Cannot activate the {nameof(FrameObject)} twice.");
             }
-            ct.ThrowIfCancellationRequested();
+        }
 
+        internal async UniTask ActivateOnLayerWithoutCheck(Layer layer, FrameTimingPoint timingPoint, IHostScreen screen, CancellationToken ct)
+        {
             Debug.Assert(_state == LifeState.New);
             Debug.Assert(_hostScreen is null);
             _hostScreen = screen;
@@ -120,7 +130,24 @@ namespace Elffy
             return;
         }
 
-        internal async UniTask TerminateFromLayer(FrameTimingPoint? timingPoint)
+        internal async UniTask TerminateFromLayerWithoutCheck(Layer layer, FrameTimingPoint timingPoint, IHostScreen screen)
+        {
+            _state = LifeState.Terminating;
+            try {
+                await _terminating.RaiseIfNotNull(this, CancellationToken.None);
+            }
+            catch {
+                if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
+            }
+            finally {
+                layer.RemoveFrameObject(this);
+            }
+            Debug.Assert(screen is not null);
+            await timingPoint.NextFrame(CancellationToken.None);
+            Debug.Assert(_state == LifeState.Dead);
+        }
+
+        internal UniTask TerminateFromLayer(FrameTimingPoint? timingPoint)
         {
             var context = Engine.CurrentContext;
             var screen = _hostScreen;
@@ -139,20 +166,8 @@ namespace Elffy
             Debug.Assert(timingPoint is not null);
             Debug.Assert(_state == LifeState.Alive);
             Debug.Assert(_layer is not null);
-            _state = LifeState.Terminating;
-            try {
-                await _terminating.RaiseIfNotNull(this, CancellationToken.None);
-            }
-            catch {
-                if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
-            }
-            finally {
-                _layer.RemoveFrameObject(this);
-            }
-            Debug.Assert(screen is not null);
-            await (timingPoint ?? screen.TimingPoints.Update).NextFrame(CancellationToken.None);
-            Debug.Assert(_state == LifeState.Dead);
-            return;
+
+            return TerminateFromLayerWithoutCheck(_layer, timingPoint ?? screen.TimingPoints.Update, screen);
 
             [DoesNotReturn] static void ThrowNotActivated() => throw new InvalidOperationException($"Cannot terminate {nameof(FrameObject)} because it is not activated.");
             [DoesNotReturn] static void ThrowTerminateTwice() => throw new InvalidOperationException($"Cannot terminate {nameof(FrameObject)} twice.");

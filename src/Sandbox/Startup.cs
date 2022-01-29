@@ -10,9 +10,8 @@ using Elffy.Components;
 using Elffy.Effective;
 using Elffy.UI;
 using System.Diagnostics;
-using System.Linq;
-using Elffy.Imaging;
 using Elffy.Shading;
+using System.Collections.Generic;
 
 namespace Sandbox
 {
@@ -30,11 +29,11 @@ namespace Sandbox
 
             InitializeLights(screen);
             var uiRoot = uiLayer.UIRoot;
-            CreateTestUI(uiLayer);
             var timings = screen.TimingPoints;
             uiRoot.Background = Color4.Black;
             try {
-                await UniTask.WhenAll(
+                await ParallelOperation.WhenAll(
+                    CreateTestUI(uiLayer),
                     CreateDice2(drLayer),
                     CreateCameraMouse(wLayer, new Vector3(0, 3, 0)),
                     CreateDice(wLayer),
@@ -42,15 +41,7 @@ namespace Sandbox
                     CreateBox(wLayer),
                     CreateFloor(wLayer),
                     CreateSky(wLayer),
-                    UniTask.Create(async () =>
-                    {
-                        var g = Resources.Sandbox["gizmos.obj"].CreateObjModel();
-                        g.Position = new Vector3(-3, 4, 0);
-                        g.Shader = new PhongShader();
-                        await g.Activate(wLayer);
-                    }),
                     timings.Update.DelayTime(800));
-
                 var time = TimeSpanF.FromMilliseconds(200);
                 await foreach(var frame in timings.Update.Frames()) {
                     if(frame.Time >= time) {
@@ -84,9 +75,10 @@ namespace Sandbox
             screen.Lights.StaticLights.Initialize(lights);
         }
 
-        private static void CreateTestUI(UILayer uiLayer)
+        private static UniTask CreateTestUI(UILayer uiLayer)
         {
             var uiRoot = uiLayer.UIRoot;
+            var tasks = new List<UniTask>();
 
             const int ColumnCount = 6;
             var gridLength = LayoutLength.Length(200);
@@ -96,12 +88,12 @@ namespace Sandbox
                 LayoutLength.Length(160),
                 LayoutLength.Proportion(1f),
             });
-            uiRoot.Children.Add(grid);
+            tasks.Add(uiRoot.Children.Add(grid));
 
             var leftPanel = new Grid()
             {
-                //Background = Color3.Red.ToColor4(0.5f),
-                //Padding = new LayoutThickness(5, 5, 5, 5),
+                Background = Color3.Purple.ToColor4(0.5f),
+                Padding = new LayoutThickness(5, 5, 5, 5),
             };
             leftPanel.SetGridColumn(grid, 0);
             leftPanel.RowDefinition(stackalloc LayoutLength[ColumnCount]
@@ -113,7 +105,7 @@ namespace Sandbox
                 LayoutLength.Length(60),
                 LayoutLength.Length(60),
             });
-            grid.Children.Add(leftPanel);   // TODO: これ忘れると Assert 失敗するの直す
+            tasks.Add(grid.Children.Add(leftPanel));
 
             for(int i = 0; i < ColumnCount; i++) {
                 var button = new Button
@@ -128,8 +120,9 @@ namespace Sandbox
                 };
                 button.SetGridRow(leftPanel, i);
                 button.KeyUp += _ => Debug.WriteLine($"Clicked");
-                leftPanel.Children.Add(button);
+                tasks.Add(leftPanel.Children.Add(button));
             }
+            return ParallelOperation.WhenAll(tasks.AsSpan());
         }
 
         private static UniTask<Model3D> CreateDice(WorldLayer layer)
