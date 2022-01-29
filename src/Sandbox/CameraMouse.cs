@@ -76,8 +76,9 @@ namespace Sandbox
             beta = MathF.Max(MathF.Min(beta, MaxVertical), MinVertical);
 
             Vector3 result;
-            (result.X, result.Z) = Matrix2.GetRotation(horizontalAngle) * vec.Xz * (radius * MathF.Cos(beta) / xzLength);
-            result.Y = radius * MathF.Sin(beta);
+            var (sinBeta, cosBeta) = MathF.SinCos(beta);
+            (result.X, result.Z) = Matrix2.GetRotation(horizontalAngle) * vec.Xz * (radius * cosBeta / xzLength);
+            result.Y = radius * sinBeta;
             return result + center;
         }
     }
