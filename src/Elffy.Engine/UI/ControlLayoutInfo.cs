@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
@@ -18,6 +19,10 @@ namespace Elffy.UI
         public ref LayoutThickness Padding => ref _l.Padding;
         public ref Matrix3 RenderTransform => ref _l.RenderTransform;
         public ref Vector2 RenderTransformOrigin => ref _l.RenderTransformOrigin;
+
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("Don't use default constructor.", true)]
+        public ControlLayoutInfo() => throw new NotSupportedException("Don't use default constructor.");
 
         internal ControlLayoutInfo(ControlLayoutInfoInternal l)
         {
