@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Cysharp.Threading.Tasks;
 using Elffy.Graphics.OpenGL;
@@ -24,6 +25,13 @@ namespace Elffy.UI
             _control = control;
             IsFrozen = true;        // disable calling update method per frame
             Activating.Subscribe((f, ct) => SafeCast.As<UIRenderable>(f).OnActivating());
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetUILayer([MaybeNullWhen(false)] out UILayer layer)
+        {
+            layer = SafeCast.As<UILayer>(Layer);
+            return layer is not null;
         }
 
         internal void DoUIEvent() => _control.DoUIEvent();
