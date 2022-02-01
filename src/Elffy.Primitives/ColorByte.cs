@@ -54,5 +54,74 @@ namespace Elffy
         public static bool operator !=(in ColorByte left, in ColorByte right) => !(left == right);
 
         public readonly override string ToString() => DebugView;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ColorByte FromHexCode(string hexCode) => FromHexCode(hexCode.AsSpan());
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ColorByte FromHexCode(ReadOnlySpan<char> hexCode) =>
+            TryFromHexCode(hexCode, out var color) ? color : throw new FormatException($"Invalid Format: '{hexCode.ToString()}'");
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool TryFromHexCode(string hex, out ColorByte color) => TryFromHexCode(hex.AsSpan(), out color);
+
+        public static bool TryFromHexCode(ReadOnlySpan<char> hexCode, out ColorByte color)
+        {
+            if(hexCode.Length < 7) { goto FAILURE; }
+            if(hexCode[0] != '#') { goto FAILURE; }
+            if(HexToByte(hexCode[1], hexCode[2], out color.R) == false) { goto FAILURE; }
+            if(HexToByte(hexCode[3], hexCode[4], out color.G) == false) { goto FAILURE; }
+            if(HexToByte(hexCode[5], hexCode[6], out color.B) == false) { goto FAILURE; }
+
+            if(hexCode.Length == 9) {
+                if(HexToByte(hexCode[7], hexCode[8], out color.A) == false) { goto FAILURE; }
+            }
+            else {
+                color.A = byte.MaxValue;
+            }
+            return true;
+
+        FAILURE:
+            color = default;
+            return false;
+
+            static bool HexToByte(char upper, char lower, out byte value)
+            {
+                if(AtoiHex(upper, out var a) == false) {
+                    value = default;
+                    return false;
+                }
+                value = (byte)(a << 4);
+                if(AtoiHex(lower, out var b) == false) {
+                    value = default;
+                    return false;
+                }
+                value += b;
+                return true;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            static bool AtoiHex(char c, out byte value)
+            {
+                var n = c - '0';
+                if((uint)n <= 9) {
+                    value = (byte)n;
+                    return true;
+                }
+                var l = c - 'A';
+                if((uint)l <= 5) {
+                    value = (byte)(l + 10);
+                    return true;
+                }
+                var s = c - 'a';
+                if((uint)s <= 5) {
+                    value = (byte)(s + 10);
+                    return true;
+                }
+                value = default;
+                return false;
+            }
+
+        }
     }
 }

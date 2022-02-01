@@ -58,5 +58,25 @@ namespace Elffy
 
         public static explicit operator Color4(in ColorByte color) => color.ToColor4();
         public static explicit operator ColorByte(in Color4 color) => color.ToColorByte();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Color4 FromHexCode(string hexCode) => FromHexCode(hexCode.AsSpan());
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Color4 FromHexCode(ReadOnlySpan<char> hexCode) =>
+            TryFromHexCode(hexCode, out var color) ? color : throw new FormatException($"Invalid Format: '{hexCode.ToString()}'");
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool TryFromHexCode(string hex, out Color4 color) => TryFromHexCode(hex.AsSpan(), out color);
+
+        public static bool TryFromHexCode(ReadOnlySpan<char> hexCode, out Color4 color)
+        {
+            if(ColorByte.TryFromHexCode(hexCode, out var colorByte)) {
+                color = colorByte.ToColor4();
+                return true;
+            }
+            color = default;
+            return false;
+        }
     }
 }
