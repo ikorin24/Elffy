@@ -38,10 +38,10 @@ namespace Elffy
         public readonly void Deconstruct(out byte r, out byte g, out byte b, out byte a) => (r, g, b, a) = (R, G, B, A);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly Color3 ToColor3() => new(R / byte.MaxValue, G / byte.MaxValue, B / byte.MaxValue);
+        public readonly Color3 ToColor3() => new((float)R / byte.MaxValue, (float)G / byte.MaxValue, (float)B / byte.MaxValue);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly Color4 ToColor4() => new(R / byte.MaxValue, G / byte.MaxValue, B / byte.MaxValue, A / byte.MaxValue);
+        public readonly Color4 ToColor4() => new((float)R / byte.MaxValue, (float)G / byte.MaxValue, (float)B / byte.MaxValue, (float)A / byte.MaxValue);
 
         public readonly override bool Equals(object? obj) => obj is ColorByte color && Equals(color);
 
