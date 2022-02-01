@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
@@ -6,10 +7,18 @@ namespace Elffy.Effective
 {
     public static class ChainInstancePool<T> where T : class, IChainInstancePooled<T>
     {
-        private const int MaxPoolingCount = 1024;
+        private static int _maxPoolingCount = 1024;
         private static FastSpinLock _lock;
         private static T? _root;
         private static int _pooledCount;
+
+        public static void SetMaxPoolingCount(int maxPoolingCount)
+        {
+            maxPoolingCount = Math.Max(0, maxPoolingCount);
+            _lock.Enter();
+            _maxPoolingCount = maxPoolingCount;
+            _lock.Exit();
+        }
 
         public static bool TryGetInstanceFast([MaybeNullWhen(false)] out T instance)
         {
@@ -62,7 +71,7 @@ namespace Elffy.Effective
             }
             try {
                 var pooledCount = _pooledCount;
-                if(pooledCount == MaxPoolingCount) { return; }
+                if(pooledCount >= _maxPoolingCount) { return; }
                 var root = _root;
                 _pooledCount = pooledCount + 1;
                 _root = instance;
@@ -81,7 +90,7 @@ namespace Elffy.Effective
             try {
                 _lock.Enter();
                 var pooledCount = _pooledCount;
-                if(pooledCount == MaxPoolingCount) { return; }
+                if(pooledCount >= _maxPoolingCount) { return; }
                 var root = _root;
                 _pooledCount = pooledCount + 1;
                 _root = instance;
