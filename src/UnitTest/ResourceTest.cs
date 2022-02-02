@@ -31,7 +31,7 @@ namespace UnitTest
 
             // デコンパイル実行
             var decompiled = new DirectoryInfo("decompiled");
-            var hashfunc = new SHA256CryptoServiceProvider();
+            var hashfunc = SHA256.Create();
             Compiler.Decompile(output, decompiled.FullName);
 
             IEnumerable<FileInfo> GetAllChildren(DirectoryInfo di) => di.GetFiles().Concat(di.GetDirectories().SelectMany(GetAllChildren));
@@ -124,7 +124,7 @@ namespace UnitTest
             Uri GetDirUri(DirectoryInfo di) => new Uri($"{di.FullName}");
             Uri GetFileUri(FileInfo fi) => new Uri($"{fi.FullName}");
 
-            var hashfunc = new SHA256CryptoServiceProvider();
+            var hashfunc = SHA256.Create();
 
             // 元ファイルの一覧を取得
             var sourceNames = GetAllChildren(resource).Select(x => GetDirUri(resource).MakeRelativeUri(GetFileUri(x)))

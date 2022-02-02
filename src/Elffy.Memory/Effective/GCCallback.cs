@@ -23,7 +23,7 @@ namespace Elffy.Effective
             }
             if((uint)generation > (uint)GC.MaxGeneration) {
                 ThrowOutOfRange();
-                [DoesNotReturn] static void ThrowOutOfRange() => new ArgumentOutOfRangeException(nameof(generation));
+                [DoesNotReturn] static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(generation));
             }
 
             // This is zombie object. No one can access it but it survives.
@@ -50,7 +50,7 @@ namespace Elffy.Effective
             }
             if((uint)generation > (uint)GC.MaxGeneration) {
                 ThrowOutOfRange();
-                [DoesNotReturn] static void ThrowOutOfRange() => new ArgumentOutOfRangeException(nameof(generation));
+                [DoesNotReturn] static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(generation));
             }
 
             // This is zombie object. No one can access it but it survives.

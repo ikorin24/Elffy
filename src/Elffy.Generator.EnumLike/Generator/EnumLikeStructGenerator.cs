@@ -230,7 +230,7 @@ $@"        /// <summary>{nv.Description}</summary>
 
         public static IEnumerable<(string Name, {structName} Value)> AllPublicNameValues() => _allPublicNameValues;
 
-        public override bool Equals(object obj) => obj is {structName} v && Equals(v);
+        public override bool Equals(object? obj) => obj is {structName} v && Equals(v);
 
         public bool Equals({structName} other) => _value == other._value;
 

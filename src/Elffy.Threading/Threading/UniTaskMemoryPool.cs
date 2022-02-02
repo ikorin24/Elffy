@@ -148,26 +148,6 @@ namespace Elffy.Threading
             }
         }
 
-#if DEBUG
-        [ModuleInitializer]// TODO: move the code to unit test
-        [Obsolete("Don't call this method explicitly.", true)]
-        internal static void __ModuleInitializer_SizeAssertionUniTaskArray16Core()
-        {
-            var a = new UniTaskArray16Core();
-            Debug.Assert(Unsafe.AreSame(ref Unsafe.Add(ref a.E0, UniTaskArray16Core.ElementCount - 1), ref a.E15));
-            Debug.Assert(Unsafe.SizeOf<UniTaskArray16Core>() == Unsafe.SizeOf<UniTask>() * UniTaskArray16Core.ElementCount);
-        }
-
-        [ModuleInitializer] // TODO: move the code to unit test
-        [Obsolete("Don't call this method explicitly.", true)]
-        internal static void __ModuleInitializer_SizeAssertionUniTaskArray64Core()
-        {
-            var a = new UniTaskArray64Core();
-            Debug.Assert(Unsafe.AreSame(ref Unsafe.Add(ref a.Array0.E0, UniTaskArray64Core.ElementCount - 1), ref a.Array3.E15));
-            Debug.Assert(Unsafe.SizeOf<UniTaskArray64Core>() == Unsafe.SizeOf<UniTask>() * UniTaskArray64Core.ElementCount);
-        }
-#endif
-
         [StructLayout(LayoutKind.Sequential, Pack = 0)]
         private struct UniTaskArray16Core
         {
