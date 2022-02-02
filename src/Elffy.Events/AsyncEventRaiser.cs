@@ -106,9 +106,8 @@ namespace Elffy
                     _funcs = func;
                 }
                 else if(count == 1) {
-                    Debug.Assert(_funcs is Func<T, CancellationToken, UniTask>);
                     var funcs = new Func<T, CancellationToken, UniTask>[DefaultBufferCapacity];
-                    funcs[0] = Unsafe.As<Func<T, CancellationToken, UniTask>>(_funcs);
+                    funcs[0] = SafeCast.NotNullAs<Func<T, CancellationToken, UniTask>>(_funcs);
                     funcs[1] = func;
                     _funcs = funcs;
                 }
@@ -149,8 +148,7 @@ namespace Elffy
                     return;
                 }
                 else {
-                    Debug.Assert(funcs is Func<T, CancellationToken, UniTask>[]);
-                    var funcSpan = Unsafe.As<Func<T, CancellationToken, UniTask>[]>(funcs).AsSpan(0, count);
+                    var funcSpan = SafeCast.NotNullAs<Func<T, CancellationToken, UniTask>[]>(funcs).AsSpan(0, count);
                     for(int i = 0; i < funcSpan.Length; i++) {
                         if(funcSpan[i] == func) {
                             _count = count - 1;
