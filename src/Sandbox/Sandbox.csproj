@@ -16,6 +16,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Elffy.Animations\Elffy.Animations.csproj" />
     <ProjectReference Include="..\Elffy.Games\Elffy.Games.csproj" />
     <ProjectReference Include="..\Elffy.Serialization\Elffy.Serialization.csproj" />
     <ProjectReference Include="..\Elffy.SimpleKit\Elffy.SimpleKit.csproj" />
