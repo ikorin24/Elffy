@@ -1,5 +1,5 @@
 ﻿#nullable enable
-using Elffy.Effective;
+using Elffy.Threading;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;

@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.Diagnostics;
 using Cysharp.Threading.Tasks;
 using Elffy;
 using Elffy.Mathematics;
@@ -7,11 +8,9 @@ using Elffy.Shapes;
 using Elffy.Shading.Deferred;
 using Elffy.Shading.Forward;
 using Elffy.Components;
-using Elffy.Effective;
 using Elffy.UI;
-using System.Diagnostics;
 using Elffy.Shading;
-using System.Collections.Generic;
+using Elffy.Threading;
 
 namespace Sandbox
 {
@@ -78,7 +77,7 @@ namespace Sandbox
         private static UniTask CreateTestUI(UILayer uiLayer)
         {
             var uiRoot = uiLayer.UIRoot;
-            var tasks = new List<UniTask>();
+            var tasks = new ParallelOperation();
 
             const int ColumnCount = 6;
             var gridLength = LayoutLength.Length(200);
@@ -122,7 +121,7 @@ namespace Sandbox
                 button.KeyUp += _ => Debug.WriteLine($"Clicked");
                 tasks.Add(leftPanel.Children.Add(button));
             }
-            return ParallelOperation.WhenAll(tasks.AsSpan());
+            return tasks.WhenAll();
         }
 
         private static UniTask<Model3D> CreateDice(WorldLayer layer)

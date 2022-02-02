@@ -1,12 +1,13 @@
 ﻿#nullable enable
 using Cysharp.Threading.Tasks;
+using Elffy.Effective;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Elffy.Effective
+namespace Elffy.Threading
 {
     public static class UniTaskMemoryPool
     {
@@ -148,7 +149,7 @@ namespace Elffy.Effective
         }
 
 #if DEBUG
-        [ModuleInitializer]
+        [ModuleInitializer]// TODO: move the code to unit test
         [Obsolete("Don't call this method explicitly.", true)]
         internal static void __ModuleInitializer_SizeAssertionUniTaskArray16Core()
         {
@@ -157,7 +158,7 @@ namespace Elffy.Effective
             Debug.Assert(Unsafe.SizeOf<UniTaskArray16Core>() == Unsafe.SizeOf<UniTask>() * UniTaskArray16Core.ElementCount);
         }
 
-        [ModuleInitializer]
+        [ModuleInitializer] // TODO: move the code to unit test
         [Obsolete("Don't call this method explicitly.", true)]
         internal static void __ModuleInitializer_SizeAssertionUniTaskArray64Core()
         {

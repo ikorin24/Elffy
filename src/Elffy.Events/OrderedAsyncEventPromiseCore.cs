@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Elffy.Effective;
+using Elffy.Threading;
 
 #pragma warning disable CA1068 // CancellationToken parameters must come last
 

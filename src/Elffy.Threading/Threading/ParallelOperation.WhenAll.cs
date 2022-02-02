@@ -5,10 +5,11 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks.Sources;
-using Elffy.Effective.Unsafes;
 using System.Diagnostics.CodeAnalysis;
+using Elffy.Effective;
+using Elffy.Effective.Unsafes;
 
-namespace Elffy.Effective
+namespace Elffy.Threading
 {
     partial class ParallelOperation
     {

@@ -7,6 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Elffy.Components;
 using Elffy.Effective;
+using Elffy.Threading;
 
 namespace Elffy.Features.Internal
 {

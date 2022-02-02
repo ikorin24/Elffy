@@ -25,7 +25,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Elffy.Events\Elffy.Events.csproj" />
     <ProjectReference Include="..\Elffy.Generator.EnumLike\Elffy.Generator.EnumLike.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\Elffy.Imaging\Elffy.Imaging.csproj" />
     <ProjectReference Include="..\Elffy.MeshTools\Elffy.MeshTools.csproj" />
@@ -33,6 +32,7 @@
     <ProjectReference Include="..\Elffy.Resources\Elffy.Resources.csproj" />
     <ProjectReference Include="..\Elffy.Generator.Vertex\Elffy.Generator.Vertex.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\Elffy.InternalTools\Elffy.InternalTools.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Elffy.Threading\Elffy.Threading.csproj" />
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

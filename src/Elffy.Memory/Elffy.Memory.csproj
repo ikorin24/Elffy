@@ -18,5 +18,9 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>DEBUG</DefineConstants>
   </PropertyGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\Elffy.Threading.Lock\Elffy.Threading.Lock.csproj" />
+  </ItemGroup>
 
 </Project>

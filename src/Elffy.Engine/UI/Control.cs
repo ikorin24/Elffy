@@ -9,7 +9,7 @@ using Elffy.Components.Implementation;
 using Elffy.Features.Internal;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using Elffy.Effective;
+using Elffy.Threading;
 
 namespace Elffy.UI
 {

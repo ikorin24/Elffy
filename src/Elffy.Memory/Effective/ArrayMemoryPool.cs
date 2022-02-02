@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Elffy.Effective.Unsafes;
+using Elffy.Threading;
 
 namespace Elffy.Effective
 {

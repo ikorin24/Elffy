@@ -1,12 +1,13 @@
 ﻿#nullable enable
 using Cysharp.Threading.Tasks;
+using Elffy.Effective;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
-namespace Elffy.Effective
+namespace Elffy.Threading
 {
     public sealed partial class ParallelOperation
     {
@@ -55,6 +56,10 @@ namespace Elffy.Effective
         {
             _lock.Enter();
             try {
+                if(_isDead) {
+                    ThrowCannotCallTwice();
+                    [DoesNotReturn] static void ThrowCannotCallTwice() => throw new InvalidOperationException($"Can not call {nameof(WhenAll)} method twice.");
+                }
                 _isDead = true;
                 return WhenAll(_array.AsSpan(0, _count));
             }

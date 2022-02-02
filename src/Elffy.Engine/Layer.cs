@@ -5,9 +5,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using Elffy.Effective;
 using Elffy.Features.Internal;
 using Elffy.Graphics.OpenGL;
+using Elffy.Threading;
 
 namespace Elffy
 {

@@ -6,6 +6,7 @@ using System.Diagnostics;
 using Elffy.Components;
 using Elffy.Effective;
 using Elffy.Features.Internal;
+using Elffy.Threading;
 
 namespace Elffy
 {

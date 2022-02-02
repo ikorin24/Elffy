@@ -7,7 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Elffy.Effective
+namespace Elffy.Threading
 {
     [DebuggerDisplay("{DebuggerView,nq}")]
     [DebuggerTypeProxy(typeof(UniTaskRentArrayTypeProxy))]
