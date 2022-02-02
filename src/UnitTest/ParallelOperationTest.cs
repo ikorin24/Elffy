@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 using Cysharp.Threading.Tasks;
-using Elffy.Effective;
+using Elffy.Threading;
 
 namespace UnitTest
 {
