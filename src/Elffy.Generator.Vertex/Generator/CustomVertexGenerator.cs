@@ -19,7 +19,8 @@ namespace Elffy.Generator
         private static readonly string GeneratorSigniture = GeneratorUtil.GetGeneratorSigniture(typeof(CustomVertexGenerator));
 
         private const string SourceGVA =
-@"using System;
+@"#nullable enable
+using System;
 using System.Diagnostics;
 
 namespace Elffy
@@ -35,7 +36,8 @@ namespace Elffy
 }
 ";
         private const string SourceVFA =
-@"using System;
+@"#nullable enable
+using System;
 using System.Diagnostics;
 
 namespace Elffy
@@ -99,7 +101,8 @@ namespace Elffy
         {
             var sb = new StringBuilder();
             sb.Append(GeneratorSigniture).Append(
-@$"using {nameof(Elffy)};
+@$"#nullable enable
+using {nameof(Elffy)};
 using System;
 using System.ComponentModel;
 using System.Runtime.InteropServices;

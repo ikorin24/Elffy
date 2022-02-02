@@ -18,7 +18,8 @@ namespace Elffy.Generator
         private static readonly Regex _regexELVA = new Regex(@"^(global::)?(Elffy\.)?EnumLikeValue(Attribute)?$");
 
         private const string SourceGELSA =
-@"using System;
+@"#nullable enable
+using System;
 using System.Diagnostics;
 
 namespace Elffy
@@ -34,7 +35,8 @@ namespace Elffy
 }
 ";
         private const string SourceELVA =
-@"using System;
+@"#nullable enable
+using System;
 using System.Diagnostics;
 
 namespace Elffy
@@ -134,7 +136,8 @@ namespace Elffy
 
             var sb = new StringBuilder();
             sb.Append(GeneratorSigniture).Append(
-$@"using System;
+$@"#nullable enable
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
