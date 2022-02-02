@@ -28,13 +28,13 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public AsyncEvent(ref AsyncEventRaiser<T>? raiser)
+        public AsyncEvent([AllowNull] ref AsyncEventRaiser<T> raiser)
         {
-            _raiserRef = MemoryMarshal.CreateSpan(ref raiser, 1);
+            _raiserRef = MemoryMarshal.CreateSpan(ref raiser!, 1)!;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static AsyncEvent<T> FromRaiser(ref AsyncEventRaiser<T>? raiser)
+        public static AsyncEvent<T> FromRaiser([AllowNull] ref AsyncEventRaiser<T> raiser)
         {
             return new AsyncEvent<T>(ref raiser);
         }
