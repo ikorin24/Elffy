@@ -14,14 +14,12 @@ namespace Elffy.Features
                                                      TextureWrapMode wrapModeX, TextureWrapMode wrapModeY)
         {
             fixed(ColorByte* ptr = image) {
-                var state = ((IntPtr)ptr, image.Width * image.Height);
-                return LoadByDMA(state, new(image.Width, image.Height), new(&Builder), expansionMode, shrinkMode, mipmapMode, wrapModeX, wrapModeY);
-            }
-
-            static void Builder((IntPtr ptr, int length) state, ImageRef dest)
-            {
-                new Span<ColorByte>((void*)state.ptr, state.length)
-                    .CopyTo(dest.GetPixels());
+                var state = (Ptr: (IntPtr)ptr, Length: image.Width * image.Height);
+                return LoadByDMA(
+                    state,
+                    new Vector2i(image.Width, image.Height),
+                    static (state, dest) => new Span<ColorByte>((void*)state.Ptr, state.Length).CopyTo(dest.GetPixels()),
+                    expansionMode, shrinkMode, mipmapMode, wrapModeX, wrapModeY);
             }
         }
 
@@ -33,7 +31,7 @@ namespace Elffy.Features
             if(size.X <= 0 || size.Y <= 0) {
                 ThrowInvalidSize($"{nameof(size)} is invalid");
             }
-            if(imageBuilder.IsNull) {
+            if(imageBuilder is null) {
                 ThrowNullArg(nameof(imageBuilder));
             }
             var pbo = PBO.Create();
