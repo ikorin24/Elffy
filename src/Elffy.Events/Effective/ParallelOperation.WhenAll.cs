@@ -10,7 +10,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Effective
 {
-    static partial class ParallelOperation
+    partial class ParallelOperation
     {
         public delegate void TaskBuildAction<TArg>(Span<UniTask> tasks, in TArg arg);
         public delegate void TaskBuildAction(Span<UniTask> tasks);
@@ -33,7 +33,7 @@ namespace Elffy.Effective
             }
             var rent = UniTaskMemoryPool.Rent(taskCount);
             try {
-                var tasks = rent.AsSpan();
+                var tasks = rent.AsSpan(0, taskCount);
                 taskBuilder.Invoke(tasks);
                 return WhenAll(tasks);
             }
@@ -50,7 +50,7 @@ namespace Elffy.Effective
             }
             var rent = UniTaskMemoryPool.Rent(taskCount);
             try {
-                var tasks = rent.AsSpan();
+                var tasks = rent.AsSpan(0, taskCount);
                 taskBuilder.Invoke(tasks, in state);
                 return WhenAll(tasks);
             }
@@ -64,7 +64,7 @@ namespace Elffy.Effective
             const int TaskCount = 2;
             var rent = UniTaskMemoryPool.Rent(TaskCount);
             try {
-                var tasks = rent.AsSpan();
+                var tasks = rent.AsSpan(0, TaskCount);
                 Debug.Assert(tasks.Length == TaskCount);
                 tasks.At(0) = task1;
                 tasks.At(1) = task2;
@@ -80,7 +80,7 @@ namespace Elffy.Effective
             const int TaskCount = 3;
             var rent = UniTaskMemoryPool.Rent(TaskCount);
             try {
-                var tasks = rent.AsSpan();
+                var tasks = rent.AsSpan(0, TaskCount);
                 Debug.Assert(tasks.Length == TaskCount);
                 tasks.At(0) = task1;
                 tasks.At(1) = task2;
@@ -97,7 +97,7 @@ namespace Elffy.Effective
             const int TaskCount = 4;
             var rent = UniTaskMemoryPool.Rent(TaskCount);
             try {
-                var tasks = rent.AsSpan();
+                var tasks = rent.AsSpan(0, TaskCount);
                 Debug.Assert(tasks.Length == TaskCount);
                 tasks.At(0) = task1;
                 tasks.At(1) = task2;
@@ -116,7 +116,7 @@ namespace Elffy.Effective
             const int TaskCount = 5;
             var rent = UniTaskMemoryPool.Rent(TaskCount);
             try {
-                var tasks = rent.AsSpan();
+                var tasks = rent.AsSpan(0, TaskCount);
                 Debug.Assert(tasks.Length == TaskCount);
                 tasks.At(0) = task1;
                 tasks.At(1) = task2;
@@ -136,7 +136,7 @@ namespace Elffy.Effective
             const int TaskCount = 6;
             var rent = UniTaskMemoryPool.Rent(TaskCount);
             try {
-                var tasks = rent.AsSpan();
+                var tasks = rent.AsSpan(0, TaskCount);
                 Debug.Assert(tasks.Length == TaskCount);
                 tasks.At(0) = task1;
                 tasks.At(1) = task2;
@@ -157,7 +157,7 @@ namespace Elffy.Effective
             const int TaskCount = 7;
             var rent = UniTaskMemoryPool.Rent(TaskCount);
             try {
-                var tasks = rent.AsSpan();
+                var tasks = rent.AsSpan(0, TaskCount);
                 Debug.Assert(tasks.Length == TaskCount);
                 tasks.At(0) = task1;
                 tasks.At(1) = task2;
@@ -179,7 +179,7 @@ namespace Elffy.Effective
             const int TaskCount = 8;
             var rent = UniTaskMemoryPool.Rent(TaskCount);
             try {
-                var tasks = rent.AsSpan();
+                var tasks = rent.AsSpan(0, TaskCount);
                 Debug.Assert(tasks.Length == TaskCount);
                 tasks.At(0) = task1;
                 tasks.At(1) = task2;
@@ -203,7 +203,7 @@ namespace Elffy.Effective
             const int TaskCount = 9;
             var rent = UniTaskMemoryPool.Rent(TaskCount);
             try {
-                var tasks = rent.AsSpan();
+                var tasks = rent.AsSpan(0, TaskCount);
                 Debug.Assert(tasks.Length == TaskCount);
                 tasks.At(0) = task1;
                 tasks.At(1) = task2;
@@ -228,7 +228,7 @@ namespace Elffy.Effective
             const int TaskCount = 10;
             var rent = UniTaskMemoryPool.Rent(TaskCount);
             try {
-                var tasks = rent.AsSpan();
+                var tasks = rent.AsSpan(0, TaskCount);
                 Debug.Assert(tasks.Length == TaskCount);
                 tasks.At(0) = task1;
                 tasks.At(1) = task2;
@@ -254,7 +254,7 @@ namespace Elffy.Effective
             const int TaskCount = 11;
             var rent = UniTaskMemoryPool.Rent(TaskCount);
             try {
-                var tasks = rent.AsSpan();
+                var tasks = rent.AsSpan(0, TaskCount);
                 Debug.Assert(tasks.Length == TaskCount);
                 tasks.At(0) = task1;
                 tasks.At(1) = task2;
@@ -281,7 +281,7 @@ namespace Elffy.Effective
             const int TaskCount = 12;
             var rent = UniTaskMemoryPool.Rent(TaskCount);
             try {
-                var tasks = rent.AsSpan();
+                var tasks = rent.AsSpan(0, TaskCount);
                 Debug.Assert(tasks.Length == TaskCount);
                 tasks.At(0) = task1;
                 tasks.At(1) = task2;
@@ -310,7 +310,7 @@ namespace Elffy.Effective
             const int TaskCount = 13;
             var rent = UniTaskMemoryPool.Rent(TaskCount);
             try {
-                var tasks = rent.AsSpan();
+                var tasks = rent.AsSpan(0, TaskCount);
                 Debug.Assert(tasks.Length == TaskCount);
                 tasks.At(0) = task1;
                 tasks.At(1) = task2;
@@ -340,7 +340,7 @@ namespace Elffy.Effective
             const int TaskCount = 14;
             var rent = UniTaskMemoryPool.Rent(TaskCount);
             try {
-                var tasks = rent.AsSpan();
+                var tasks = rent.AsSpan(0, TaskCount);
                 Debug.Assert(tasks.Length == TaskCount);
                 tasks.At(0) = task1;
                 tasks.At(1) = task2;
@@ -371,7 +371,7 @@ namespace Elffy.Effective
             const int TaskCount = 15;
             var rent = UniTaskMemoryPool.Rent(TaskCount);
             try {
-                var tasks = rent.AsSpan();
+                var tasks = rent.AsSpan(0, TaskCount);
                 Debug.Assert(tasks.Length == TaskCount);
                 tasks.At(0) = task1;
                 tasks.At(1) = task2;
@@ -403,7 +403,7 @@ namespace Elffy.Effective
             const int TaskCount = 16;
             var rent = UniTaskMemoryPool.Rent(TaskCount);
             try {
-                var tasks = rent.AsSpan();
+                var tasks = rent.AsSpan(0, TaskCount);
                 Debug.Assert(tasks.Length == TaskCount);
                 tasks.At(0) = task1;
                 tasks.At(1) = task2;

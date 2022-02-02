@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using Cysharp.Threading.Tasks;
 using System;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -11,24 +10,30 @@ namespace Elffy.Effective
 {
     public static class UniTaskMemoryPool
     {
-        public static UniTaskRentArray Rent(int length)
+        public static UniTaskRentArray Rent(int minLength)
         {
-            if(length < 0) {
+            if(minLength < 0) {
                 ThrowArgOutOfRange();
                 return default;
-                [DoesNotReturn] static void ThrowArgOutOfRange() => throw new ArgumentOutOfRangeException(nameof(length));
+                [DoesNotReturn] static void ThrowArgOutOfRange() => throw new ArgumentOutOfRangeException(nameof(minLength));
             }
-            else if(length == 0) {
+            else if(minLength == 0) {
                 return UniTaskRentArray.Empty;
             }
-            else if(length <= 16) {
+            else if(minLength <= 16) {
                 if(ChainInstancePool<UniTaskArray16>.TryGetInstanceFast(out var instance) == false) {
                     instance = new UniTaskArray16();
                 }
-                return new UniTaskRentArray(instance, length);
+                return new UniTaskRentArray(instance);
+            }
+            else if(minLength <= 64) {
+                if(ChainInstancePool<UniTaskArray64>.TryGetInstanceFast(out var instance) == false) {
+                    instance = new UniTaskArray64();
+                }
+                return new UniTaskRentArray(instance);
             }
             else {
-                return new UniTaskRentArray(new UniTask[length]);
+                return new UniTaskRentArray(new UniTask[minLength]);
             }
         }
 
@@ -38,6 +43,11 @@ namespace Elffy.Effective
                 // The array must be cleared because UniTask contains a reference type field.
                 array16.AsSpan().Clear();
                 ChainInstancePool<UniTaskArray16>.ReturnInstance(array16);
+            }
+            else if(rentArray.TryExtractArray64(out var array64)) {
+                // The array must be cleared because UniTask contains a reference type field.
+                array64.AsSpan().Clear();
+                ChainInstancePool<UniTaskArray64>.ReturnInstance(array64);
             }
         }
 
@@ -60,6 +70,14 @@ namespace Elffy.Effective
 
             public ref UniTaskArray16? NextPooled => ref _next;
 
+            static UniTaskArray16()
+            {
+                ChainInstancePool<UniTaskArray16>.SetMaxPoolingCount(64);
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public ref UniTask GetReference() => ref _core.E0;
+
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public Span<UniTask> AsSpan()
             {
@@ -81,6 +99,54 @@ namespace Elffy.Effective
             }
         }
 
+        internal sealed class UniTaskArray64 : IChainInstancePooled<UniTaskArray64>
+        {
+            private UniTaskArray64Core _core;
+            private UniTaskArray64? _next;
+
+            public int Length => UniTaskArray64Core.ElementCount;
+
+            public ref UniTask this[int index]
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                get
+                {
+                    if((uint)index >= Length) { throw new ArgumentOutOfRangeException(nameof(index)); }
+                    return ref Unsafe.Add(ref _core.Array0.E0, index);
+                }
+            }
+
+            public ref UniTaskArray64? NextPooled => ref _next;
+
+            static UniTaskArray64()
+            {
+                ChainInstancePool<UniTaskArray64>.SetMaxPoolingCount(32);
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public ref UniTask GetReference() => ref _core.Array0.E0;
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public Span<UniTask> AsSpan()
+            {
+                return MemoryMarshal.CreateSpan(ref _core.Array0.E0, UniTaskArray64Core.ElementCount);
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public Span<UniTask> AsSpan(int start, int length)
+            {
+                if((uint)start >= UniTaskArray64Core.ElementCount) {
+                    ThrowArgOutOfRange();
+                    [DoesNotReturn] static void ThrowArgOutOfRange() => throw new ArgumentOutOfRangeException(nameof(start));
+                }
+                if((uint)length > (uint)(UniTaskArray64Core.ElementCount - start)) {
+                    ThrowArgOutOfRange();
+                    [DoesNotReturn] static void ThrowArgOutOfRange() => throw new ArgumentOutOfRangeException(nameof(length));
+                }
+                return MemoryMarshal.CreateSpan(ref Unsafe.Add(ref _core.Array0.E0, start), length);
+            }
+        }
+
 #if DEBUG
         [ModuleInitializer]
         [Obsolete("Don't call this method explicitly.", true)]
@@ -89,6 +155,15 @@ namespace Elffy.Effective
             var a = new UniTaskArray16Core();
             Debug.Assert(Unsafe.AreSame(ref Unsafe.Add(ref a.E0, UniTaskArray16Core.ElementCount - 1), ref a.E15));
             Debug.Assert(Unsafe.SizeOf<UniTaskArray16Core>() == Unsafe.SizeOf<UniTask>() * UniTaskArray16Core.ElementCount);
+        }
+
+        [ModuleInitializer]
+        [Obsolete("Don't call this method explicitly.", true)]
+        internal static void __ModuleInitializer_SizeAssertionUniTaskArray64Core()
+        {
+            var a = new UniTaskArray64Core();
+            Debug.Assert(Unsafe.AreSame(ref Unsafe.Add(ref a.Array0.E0, UniTaskArray64Core.ElementCount - 1), ref a.Array3.E15));
+            Debug.Assert(Unsafe.SizeOf<UniTaskArray64Core>() == Unsafe.SizeOf<UniTask>() * UniTaskArray64Core.ElementCount);
         }
 #endif
 
@@ -114,79 +189,16 @@ namespace Elffy.Effective
             public UniTask E14;
             public UniTask E15;
         }
-    }
 
-    internal abstract class UniTaskArray
-    {
-        public abstract int Length { get; }
-    }
-
-    public readonly struct UniTaskRentArray
-    {
-        private readonly object? _obj;
-        private readonly int _length;
-
-        internal static UniTaskRentArray Empty => default;
-
-        [Obsolete("Don't use default constructor.", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public UniTaskRentArray() => throw new NotSupportedException("Don't use default constructor.");
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal UniTaskRentArray(UniTaskMemoryPool.UniTaskArray16 array16, int length)
+        [StructLayout(LayoutKind.Sequential, Pack = 0)]
+        private struct UniTaskArray64Core
         {
-            _obj = array16;
-            _length = length;
-        }
+            public const int ElementCount = 64;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal UniTaskRentArray(UniTask[] array)
-        {
-            _obj = array;
-            _length = array.Length;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal bool TryExtractArray16([MaybeNullWhen(false)] out UniTaskMemoryPool.UniTaskArray16 array16)
-        {
-            if(_obj is UniTaskMemoryPool.UniTaskArray16 a) {
-                array16 = a;
-                return true;
-            }
-            else {
-                array16 = default;
-                return false;
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal bool TryExtractArray([MaybeNullWhen(false)] out UniTask[] array)
-        {
-            if(_obj is UniTask[] a) {
-                array = a;
-                return true;
-            }
-            else {
-                array = default;
-                return false;
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Span<UniTask> AsSpan()
-        {
-            var obj = _obj;
-            if(obj is null) {
-                return Span<UniTask>.Empty;
-            }
-            else if(obj is UniTaskMemoryPool.UniTaskArray16 array16) {
-                return array16.AsSpan(0, _length);
-            }
-            else {
-                var array = SafeCast.As<UniTask[]>(obj);
-                Debug.Assert(array.Length == _length);
-                return array.AsSpan();
-            }
+            public UniTaskArray16Core Array0;
+            public UniTaskArray16Core Array1;
+            public UniTaskArray16Core Array2;
+            public UniTaskArray16Core Array3;
         }
     }
 }

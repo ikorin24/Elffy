@@ -1,12 +1,70 @@
 ﻿#nullable enable
 using Cysharp.Threading.Tasks;
 using System;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Elffy.Effective
 {
-    public static partial class ParallelOperation
+    public sealed partial class ParallelOperation
     {
+        private const int MinCapacity = 16;
+
+        private UniTaskRentArray _array;
+        private int _count;
+        private FastSpinLock _lock;
+        private bool _isDead;
+
+        public ParallelOperation()
+        {
+        }
+
+        public void Add(UniTask task)
+        {
+            _lock.Enter();
+            try {
+                if(task.Status == UniTaskStatus.Succeeded) { return; }
+                if(_isDead) {
+                    Throw();
+                    [DoesNotReturn] static void Throw() => throw new InvalidOperationException($"Can not add a task after call '{nameof(WhenAll)}' method.");
+                }
+                if(_array.Length == _count) {
+                    ResizeBuffer(ref _array);
+                }
+                Debug.Assert(_array.Length > _count);
+                _array[_count] = task;
+                _count++;
+            }
+            finally {
+                _lock.Exit();
+            }
+
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            static void ResizeBuffer(ref UniTaskRentArray currentArray)
+            {
+                var newArray = UniTaskMemoryPool.Rent(Math.Max(MinCapacity, currentArray.Length * 2));
+                currentArray.AsSpan().CopyTo(newArray.AsSpan());
+                UniTaskMemoryPool.Return(currentArray);
+                currentArray = newArray;
+            }
+        }
+
+        public UniTask WhenAll()
+        {
+            _lock.Enter();
+            try {
+                _isDead = true;
+                return WhenAll(_array.AsSpan(0, _count));
+            }
+            finally {
+                UniTaskMemoryPool.Return(_array);
+                _array = UniTaskRentArray.Empty;
+                _lock.Exit();
+            }
+        }
+
         public static UniTask LimitedParallel<TArg>(ReadOnlySpan<Func<TArg, CancellationToken, UniTask>> funcs, TArg arg, int maxParallel, CancellationToken cancellationToken = default)
         {
             if(maxParallel <= 0) {
