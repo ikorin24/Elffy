@@ -92,17 +92,36 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryParseExact([NotNullWhen(true)] string? input, [NotNullWhen(true)] string? format, IFormatProvider? formatProvider, TimeSpanStyles styles, out TimeSpanF result)
         {
+#if NETCOREAPP3_1
+#pragma warning disable CS8604
+#endif
             return TimeSpan.TryParseExact(input, format, formatProvider, styles, out OutAsTimeSpanF(out result));
+#if NETCOREAPP3_1
+#pragma warning restore CS8604
+#endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryParseExact(ReadOnlySpan<char> input, [NotNullWhen(true)] string?[]? formats, IFormatProvider? formatProvider, out TimeSpanF result)
         {
+#if NETCOREAPP3_1
+#pragma warning disable CS8604, CS8620
+#endif
             return TimeSpan.TryParseExact(input, formats, formatProvider, out OutAsTimeSpanF(out result));
+#if NETCOREAPP3_1
+#pragma warning restore CS8604, CS8620
+#endif
+
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryParseExact(ReadOnlySpan<char> input, [NotNullWhen(true)] string?[]? formats, IFormatProvider? formatProvider, TimeSpanStyles styles, out TimeSpanF result)
         {
+#if NETCOREAPP3_1
+#pragma warning disable CS8604, CS8620
+#endif
             return TimeSpan.TryParseExact(input, formats, formatProvider, styles, out OutAsTimeSpanF(out result));
+#if NETCOREAPP3_1
+#pragma warning restore CS8604, CS8620
+#endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryParseExact(ReadOnlySpan<char> input, ReadOnlySpan<char> format, IFormatProvider? formatProvider, out TimeSpanF result)
@@ -117,17 +136,35 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryParseExact([NotNullWhen(true)] string? input, [NotNullWhen(true)] string?[]? formats, IFormatProvider? formatProvider, TimeSpanStyles styles, out TimeSpanF result)
         {
+#if NETCOREAPP3_1
+#pragma warning disable CS8604, CS8620
+#endif
             return TimeSpan.TryParseExact(input, formats, formatProvider, styles, out OutAsTimeSpanF(out result));
+#if NETCOREAPP3_1
+#pragma warning restore CS8604, CS8620
+#endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryParseExact([NotNullWhen(true)] string? input, [NotNullWhen(true)] string?[]? formats, IFormatProvider? formatProvider, out TimeSpanF result)
         {
+#if NETCOREAPP3_1
+#pragma warning disable CS8604, CS8620
+#endif
             return TimeSpan.TryParseExact(input, formats, formatProvider, out OutAsTimeSpanF(out result));
+#if NETCOREAPP3_1
+#pragma warning restore CS8604, CS8620
+#endif
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryParseExact([NotNullWhen(true)] string? input, [NotNullWhen(true)] string? format, IFormatProvider? formatProvider, out TimeSpanF result)
         {
+#if NETCOREAPP3_1
+#pragma warning disable CS8604
+#endif
             return TimeSpan.TryParseExact(input, format, formatProvider, out OutAsTimeSpanF(out result));
+#if NETCOREAPP3_1
+#pragma warning restore CS8604
+#endif
         }
     }
 }

@@ -61,7 +61,7 @@ namespace Elffy.Serialization.Fbx
             // but I don't care about that.
         }
 
-        private static async UniTask CreateTexture(ResourceFile file, FbxSemanticsUnsafe<SkinnedVertex> fbx, Model3D model)
+        private static UniTask CreateTexture(ResourceFile file, FbxSemanticsUnsafe<SkinnedVertex> fbx, Model3D model)
         {
             // ↓ main thread --------------------------------------
             var contextExist = model.TryGetHostScreen(out var screen);
@@ -86,6 +86,7 @@ namespace Elffy.Serialization.Fbx
                 (texture as IDisposable).Dispose();
                 throw;
             }
+            return UniTask.CompletedTask;
         }
     }
 }
