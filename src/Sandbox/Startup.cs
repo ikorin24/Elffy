@@ -91,8 +91,8 @@ namespace Sandbox
 
             var leftPanel = new Grid()
             {
-                Background = Color3.Purple.ToColor4(0.5f),
-                Padding = new LayoutThickness(5, 5, 5, 5),
+                Background = new ColorByte(40, 44, 52, 255).ToColor4(),
+                Padding = new LayoutThickness(0, 10, 0, 10),
             };
             leftPanel.SetGridColumn(grid, 0);
             leftPanel.RowDefinition(stackalloc LayoutLength[ColumnCount]
@@ -110,8 +110,10 @@ namespace Sandbox
                 var button = new Button
                 {
                     Width = 120,
-                    Height = 45,
-                    Background = new Color4(0.8f),
+                    Height = 40,
+                    Background = new ColorByte(210, 210, 210, 255).ToColor4(),
+                    Margin = new LayoutThickness(0, 20, 0, 0),
+                    VerticalAlignment = VerticalAlignment.Top,
                     Shader = new CustomUIShader
                     {
                         CornerRadius = new Vector4(4),
