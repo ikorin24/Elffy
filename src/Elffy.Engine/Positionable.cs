@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
 using Elffy.Features.Internal;
+using System.Collections;
+using System.ComponentModel;
 
 namespace Elffy
 {
@@ -141,14 +143,7 @@ namespace Elffy
 
         /// <summary>Get all parents recursively. Iterate objects from the parent of self to root.</summary>
         /// <returns>All parents</returns>
-        public IEnumerable<Positionable> GetAncestor()
-        {
-            Positionable? target = this;
-            while(target!.IsRoot == false) {
-                yield return target.Parent!;
-                target = target.Parent;
-            }
-        }
+        public PositionableAncestors GetAncestors() => new PositionableAncestors(this);
 
         /// <summary>Get the root <see cref="Positionable"/>.</summary>
         /// <returns>The root object</returns>
@@ -171,6 +166,67 @@ namespace Elffy
             base.OnDead();
             // TODO: 子が生きてる場合、子の座標はどうする？
             //Children.Clear();
+        }
+    }
+
+    public readonly struct PositionableAncestors : IEnumerable<Positionable>
+    {
+        private readonly Positionable _target;
+
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("Don't use default constructor.", true)]
+        public PositionableAncestors() => throw new NotSupportedException("Don't use default constructor.");
+
+        public PositionableAncestors(Positionable target) => _target = target;
+
+        public Enumerator GetEnumerator() => new Enumerator(_target);
+
+        IEnumerator<Positionable> IEnumerable<Positionable>.GetEnumerator() => new EnumeratorClass(_target);
+        IEnumerator IEnumerable.GetEnumerator() => new EnumeratorClass(_target);
+
+        public struct Enumerator : IEnumerator<Positionable>
+        {
+            private Positionable? _current;
+
+            [EditorBrowsable(EditorBrowsableState.Never)]
+            [Obsolete("Don't use default constructor.", true)]
+            public Enumerator() => throw new NotSupportedException("Don't use default constructor.");
+
+            internal Enumerator(Positionable target)
+            {
+                _current = target;
+            }
+
+            public Positionable Current => _current!;
+
+            object IEnumerator.Current => Current;
+
+            public void Dispose() { }
+
+            public bool MoveNext()
+            {
+                _current = _current!.Parent;
+                return _current != null;
+            }
+
+            public void Reset() => throw new NotSupportedException();
+        }
+
+        private sealed class EnumeratorClass : IEnumerator<Positionable>
+        {
+            private Enumerator _e;  // Mutable object. Don't make it readonly.
+
+            public EnumeratorClass(Positionable target) => _e = new Enumerator(target);
+
+            public Positionable Current => _e.Current;
+
+            object IEnumerator.Current => Current;
+
+            public void Dispose() => _e.Dispose();
+
+            public bool MoveNext() => _e.MoveNext();
+
+            public void Reset() => _e.Reset();
         }
     }
 }

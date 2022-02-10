@@ -161,8 +161,8 @@ namespace UnitTest
             Assert.True(a.GetOffspring().SequenceEqual(new [] { b, c, d, e, f }));
 
             // Get Ancestor test
-            Assert.True(e.GetAncestor().SequenceEqual(new[] { d, c, a }));
-            Assert.True(f.GetAncestor().SequenceEqual(new[] { c, a }));
+            Assert.True(e.GetAncestors().SequenceEqual(new[] { d, c, a }));
+            Assert.True(f.GetAncestors().SequenceEqual(new[] { c, a }));
 
             Assert.Equal(a.GetRoot(), a);
             Assert.Equal(b.GetRoot(), a);
