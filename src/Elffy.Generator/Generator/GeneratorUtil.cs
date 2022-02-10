@@ -29,7 +29,7 @@ namespace Elffy.Generator
                 if(parent == null) {
                     throw new Exception();
                 }
-                if(parent.Kind() == SyntaxKind.StructDeclaration && parent is StructDeclarationSyntax ret) {
+                if(parent.IsKind(SyntaxKind.StructDeclaration) && parent is StructDeclarationSyntax ret) {
                     return ret;
                 }
                 parent = parent.Parent;
