@@ -20,6 +20,7 @@ namespace Elffy
         private AsyncEventRaiser<FrameObject>? _terminating;
         private LifeState _state = LifeState.New;
         private bool _isFrozen;
+        private FrameObjectInstanceType _instanceType = FrameObjectInstanceType.FrameObject;
 
         public AsyncEvent<FrameObject> Activating => new(ref _activating);
         public AsyncEvent<FrameObject> Terminating => new(ref _terminating);
@@ -48,6 +49,24 @@ namespace Elffy
         public IHostScreen? Screen => _hostScreen;
         public Layer? Layer => _layer;
 
+        public FrameObject()
+        {
+        }
+
+        private protected FrameObject(FrameObjectInstanceType instanceType)
+        {
+            _instanceType = instanceType;
+#if DEBUG
+            Debug.Assert(_instanceType == this switch
+            {
+                Renderable => FrameObjectInstanceType.Renderable,
+                Positionable => FrameObjectInstanceType.Positionable,
+                ComponentOwner => FrameObjectInstanceType.ComponentOwner,
+                FrameObject => FrameObjectInstanceType.FrameObject,
+            });
+#endif
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetLayer([MaybeNullWhen(false)] out Layer layer)
         {
@@ -63,6 +82,45 @@ namespace Elffy
         {
             screen = _hostScreen;
             return screen is not null;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal bool IsComponentOwner() => _instanceType >= FrameObjectInstanceType.ComponentOwner;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal bool IsComponentOwner([MaybeNullWhen(false)] out ComponentOwner componentOwner)
+        {
+            if(IsComponentOwner()) {
+                componentOwner = SafeCast.As<ComponentOwner>(this);
+                return true;
+            }
+            componentOwner = null;
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal bool IsPositionable() => _instanceType >= FrameObjectInstanceType.Positionable;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal bool IsPositionable([MaybeNullWhen(false)] out Positionable positionable)
+        {
+            if(IsPositionable()) {
+                positionable = SafeCast.As<Positionable>(this);
+                return true;
+            }
+            positionable = null;
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal bool IsRenderable() => _instanceType >= FrameObjectInstanceType.Renderable;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal bool IsRenderable([MaybeNullWhen(false)] out Renderable renderable)
+        {
+            if(IsRenderable()) {
+                renderable = SafeCast.As<Renderable>(this);
+                return true;
+            }
+            renderable = null;
+            return false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -201,6 +259,14 @@ namespace Elffy
             _layer = null;
             _hostScreen = null;
             OnDead();
+        }
+
+        private protected enum FrameObjectInstanceType : byte
+        {
+            FrameObject = 0,
+            ComponentOwner = 1,
+            Positionable = 2,
+            Renderable = 3,
         }
     }
 

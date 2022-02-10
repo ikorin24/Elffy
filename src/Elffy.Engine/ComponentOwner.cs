@@ -22,6 +22,14 @@ namespace Elffy
         /// <summary>Event which fires when a component get detached.</summary>
         public event Action<ComponentOwner, IComponent>? ComponentDetached;
 
+        public ComponentOwner() : base(FrameObjectInstanceType.ComponentOwner)
+        {
+        }
+
+        private protected ComponentOwner(FrameObjectInstanceType instanceType) : base(instanceType)
+        {
+        }
+
         /// <summary>Get component of specified type</summary>
         /// <param name="type">component type</param>
         /// <returns>component object</returns>

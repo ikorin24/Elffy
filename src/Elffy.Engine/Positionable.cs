@@ -77,7 +77,11 @@ namespace Elffy
         /// <summary>Get or set scale of <see cref="Positionable"/>.</summary>
         public ref Vector3 Scale => ref _scale;
 
-        public Positionable()
+        public Positionable() : base(FrameObjectInstanceType.Positionable)
+        {
+        }
+
+        private protected Positionable(FrameObjectInstanceType instanceType) : base(instanceType)
         {
         }
 

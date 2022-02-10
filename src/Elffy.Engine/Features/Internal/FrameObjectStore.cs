@@ -171,7 +171,7 @@ namespace Elffy.Features.Internal
 
                 // The FrameObject is not in the list if it failed to activate.
                 list.Remove(item);
-                if(item is Renderable renderable) {
+                if(item.IsRenderable(out var renderable)) {
                     renderables.Remove(renderable);
                 }
                 try {
@@ -191,7 +191,7 @@ namespace Elffy.Features.Internal
             _list.AddRange(_addedBuf);
             foreach(var item in _addedBuf.AsSpan()) {
                 Debug.Assert(item.LifeState == LifeState.Activating);
-                if(item is Renderable renderable) {
+                if(item.IsRenderable(out var renderable)) {
                     _renderables.Add(renderable);
                 }
                 try {

@@ -79,7 +79,7 @@ namespace Elffy
 
         public ref readonly ShaderProgram ShaderProgram => ref _shaderProgram;
 
-        public Renderable()
+        public Renderable() : base(FrameObjectInstanceType.Renderable)
         {
         }
 
@@ -260,7 +260,7 @@ namespace Elffy
                 }
                 if(HasChild) {
                     foreach(var child in Children.AsSpan()) {
-                        if(child is Renderable renderable) {
+                        if(child.IsRenderable(out var renderable)) {
                             renderable.Render(withoutScale, view, projection);
                         }
                     }
