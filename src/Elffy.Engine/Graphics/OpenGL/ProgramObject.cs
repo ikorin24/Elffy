@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using OpenTK.Graphics.OpenGL4;
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 
 namespace Elffy.Graphics.OpenGL
@@ -14,6 +15,10 @@ namespace Elffy.Graphics.OpenGL
         internal bool IsEmpty => _program == Consts.NULL;
 
         internal static ProgramObject Empty => default;
+
+        [Obsolete("Don't use defaut constructor.", true)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public ProgramObject() => throw new NotSupportedException("Don't use defaut constructor.");
 
         private ProgramObject(int program)
         {
