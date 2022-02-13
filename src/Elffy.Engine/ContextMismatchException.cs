@@ -2,6 +2,7 @@
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace Elffy
 {
@@ -23,6 +24,16 @@ namespace Elffy
             var current = currentContext?.Title ?? "null";
             var expected = expectedContext?.Title ?? "null";
             return $"{DefaultMessage} (Current Context: {current}, Expected Context: {expected})";
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void ThrowIfContextNotEqual(IHostScreen actual, IHostScreen expected)
+        {
+            Debug.Assert(actual != null);
+            Debug.Assert(expected != null);
+            if(actual != expected) {
+                Throw(actual, expected);
+            }
         }
 
         [DoesNotReturn]

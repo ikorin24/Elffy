@@ -61,6 +61,15 @@ namespace Elffy
             _currentContext = screen;
         }
 
+        public static IHostScreen GetValidCurrentContext()
+        {
+            var screen = _currentContext;
+            if(screen == null) {
+                ContextMismatchException.ThrowCurrentContextIsNull();
+            }
+            return screen;
+        }
+
         /// <summary>Start the engine</summary>
         public static void Run()
         {
