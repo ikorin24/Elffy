@@ -12,8 +12,8 @@ public sealed class InternalToolGenerator : IIncrementalGenerator
     private const string SafeCastSource =
 @"#nullable enable
 
-namespace Elffy;
-
+namespace Elffy
+{
 /// <summary>Helper class for fast cast</summary>
 internal static class SafeCast
 {
@@ -62,6 +62,7 @@ internal static class SafeCast
 #endif
         return global::System.Runtime.CompilerServices.Unsafe.As<T>(value);
     }
+}
 }
 ";
 
