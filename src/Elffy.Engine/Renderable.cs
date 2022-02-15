@@ -77,7 +77,7 @@ namespace Elffy
             }
         }
 
-        public ref readonly ShaderProgram ShaderProgram => ref _shaderProgram;
+        internal ref readonly ShaderProgram ShaderProgram => ref _shaderProgram;
 
         public Renderable() : base(FrameObjectInstanceType.Renderable)
         {
