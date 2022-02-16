@@ -65,7 +65,7 @@ uniform vec4 back;
 void main()
 {
     if(hasTexture) {
-        vec4 t = texture(tex_sampler, UV);
+        vec4 t = textureLod(tex_sampler, UV, 0);
         float tai = 1.0 - t.a;
         fragColor = vec4(t.r * t.a + back.r * tai,
                          t.g * t.a + back.g * tai,
