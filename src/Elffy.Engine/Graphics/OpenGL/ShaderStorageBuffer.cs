@@ -37,10 +37,19 @@ namespace Elffy.Graphics.OpenGL
         public void BindBase(int index) => Ssbo.BindBase(_ssbo, index);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void BufferData<T>(ReadOnlySpan<T> data, BufferUsageHint usage) where T : unmanaged => Ssbo.BufferData(data, usage);
+        public void BufferData<T>(ReadOnlySpan<T> data, BufferHint hint) where T : unmanaged
+        {
+            Ssbo.BufferData(data, hint);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void BufferDataUndefined(int byteSize, BufferUsageHint usage) => Ssbo.BufferData(byteSize, null, usage);
+        public unsafe void BufferDataUndefined<T>(int elementCount, BufferHint hint) where T : unmanaged
+        {
+            Ssbo.BufferData(elementCount * sizeof(T), null, hint);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe void BufferDataUndefinedByte(int byteSize, BufferHint hint) => Ssbo.BufferData(byteSize, null, hint);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()

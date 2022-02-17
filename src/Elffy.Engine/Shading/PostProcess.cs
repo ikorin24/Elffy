@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using System;
 using System.Runtime.CompilerServices;
-using OpenTK.Graphics.OpenGL4;
 using Elffy.Graphics.OpenGL;
 
 namespace Elffy.Shading
@@ -77,9 +76,9 @@ void main()
             var program = ProgramObject.Empty;
             try {
                 vbo = VBO.Create();
-                VBO.BindBufferData(ref vbo, vertices, BufferUsageHint.StaticDraw);
+                VBO.BindBufferData(ref vbo, vertices, BufferHint.StaticDraw);
                 ibo = IBO.Create();
-                IBO.BindBufferData(ref ibo, indices, BufferUsageHint.StaticDraw);
+                IBO.BindBufferData(ref ibo, indices, BufferHint.StaticDraw);
                 vao = VAO.Create();
                 VAO.Bind(vao);
                 program = ShaderCompiler.Compile(VertShaderSource, FragShaderSource, null);

@@ -50,10 +50,10 @@ namespace Elffy.Graphics.OpenGL
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void BufferData(BufferPackTarget target, int size, IntPtr ptr, BufferUsage usage)
+        public static void BufferData(BufferPackTarget target, int size, IntPtr ptr, BufferHint hint)
         {
             GLAssert.EnsureContext();
-            GL.BufferData(target.Compat(), size, ptr, usage.Compat());
+            GL.BufferData(target.Compat(), size, ptr, hint.ToOriginalValue());
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

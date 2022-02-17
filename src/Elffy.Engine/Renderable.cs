@@ -317,9 +317,9 @@ namespace Elffy
             }
 
             _vbo = VBO.Create();
-            VBO.BindBufferData(ref _vbo, vertices, vertexCount, BufferUsageHint.StaticDraw);
+            VBO.BindBufferData(ref _vbo, vertices, vertexCount, BufferHint.StaticDraw);
             _ibo = IBO.Create();
-            IBO.BindBufferData(ref _ibo, indices, indexCount, BufferUsageHint.StaticDraw);
+            IBO.BindBufferData(ref _ibo, indices, indexCount, BufferHint.StaticDraw);
             _vao = VAO.Create();
             VAO.Bind(_vao);
             Debug.Assert(_shaderProgram.IsEmpty);

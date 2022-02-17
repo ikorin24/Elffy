@@ -80,18 +80,18 @@ namespace Elffy.Graphics.OpenGL
         /// <summary>Bind ibo and set buffer data. (Call glBindBuffer and glBufferData)</summary>
         /// <param name="ibo">index buffer object to bind and set data</param>
         /// <param name="indices">indices data to send to ibo</param>
-        /// <param name="usage">buffer usage hint</param>
-        public static unsafe void BindBufferData(ref IBO ibo, ReadOnlySpan<int> indices, BufferUsageHint usage)
+        /// <param name="hint">buffer usage hint</param>
+        public static unsafe void BindBufferData(ref IBO ibo, ReadOnlySpan<int> indices, BufferHint hint)
         {
             Bind(ibo);
             fixed(int* ptr = indices) {
                 GLAssert.EnsureContext();
-                GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(int), (IntPtr)ptr, usage);
+                GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(int), (IntPtr)ptr, hint.ToOriginalValue());
             }
             Unsafe.AsRef(ibo._length) = (uint)indices.Length;
         }
 
-        public static unsafe void BindBufferData(ref IBO ibo, int* indices, uint length, BufferUsageHint usage)
+        public static unsafe void BindBufferData(ref IBO ibo, int* indices, uint length, BufferHint hint)
         {
             // OpenGL does not support 64bit Length IBO.
             // The max is UInt32.MaxLength
@@ -104,7 +104,7 @@ namespace Elffy.Graphics.OpenGL
             uint size = length * sizeof(int);
             Bind(ibo);
             GLAssert.EnsureContext();
-            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)size, (IntPtr)indices, usage);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)size, (IntPtr)indices, hint.ToOriginalValue());
             Unsafe.AsRef(ibo._length) = length;
         }
 

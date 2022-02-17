@@ -52,23 +52,6 @@ namespace Elffy.Graphics.OpenGL
         ReadWrite = BufferAccess.ReadWrite,
     }
 
-    public enum BufferUsage
-    {
-        /// <summary>Every frame, application -> GL</summary>
-        StreamDraw = BufferUsageHint.StreamDraw,
-        /// <summary>One time on initializing, application -> GL</summary>
-        StaticDraw = BufferUsageHint.StaticDraw,
-        /// <summary>Frequently, application -> GL</summary>
-        DynamicDraw = BufferUsageHint.DynamicDraw,
-
-        //StreamRead = BufferUsageHint.StreamRead,
-        //StreamCopy = BufferUsageHint.StreamCopy,
-        //StaticRead = BufferUsageHint.StaticRead,
-        //StaticCopy = BufferUsageHint.StaticCopy,
-        //DynamicRead = BufferUsageHint.DynamicRead,
-        //DynamicCopy = BufferUsageHint.DynamicCopy,
-    }
-
     internal static class EnumCompatibleCastExtension
     {
         public static PixelInternalFormat Compat(this TextureInternalFormat source) => (PixelInternalFormat)source;
@@ -76,7 +59,5 @@ namespace Elffy.Graphics.OpenGL
         public static ClearBufferMask Compat(this ClearMask source) => (ClearBufferMask)source;
 
         public static BufferTarget Compat(this BufferPackTarget source) => (BufferTarget)source;
-
-        public static BufferUsageHint Compat(this BufferUsage source) => (BufferUsageHint)source;
     }
 }

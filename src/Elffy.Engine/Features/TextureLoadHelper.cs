@@ -37,7 +37,7 @@ namespace Elffy.Features
             var pbo = PBO.Create();
             PBO.Bind(pbo, BufferPackTarget.PixelUnpackBuffer);
             try {
-                PBO.BufferData(BufferPackTarget.PixelUnpackBuffer, size.X * size.Y * sizeof(ColorByte), IntPtr.Zero, BufferUsage.StaticDraw);
+                PBO.BufferData(BufferPackTarget.PixelUnpackBuffer, size.X * size.Y * sizeof(ColorByte), IntPtr.Zero, BufferHint.StaticDraw);
                 var pixels = PBO.MapBuffer<ColorByte>(BufferPackTarget.PixelUnpackBuffer, BufferAccessMode.WriteOnly);
                 try {
                     var dest = new ImageRef(pixels, size.X, size.Y);

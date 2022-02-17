@@ -87,19 +87,19 @@ namespace Elffy.Graphics.OpenGL
         /// <typeparam name="T">data type</typeparam>
         /// <param name="vbo"><see cref="VBO"/> to send data to</param>
         /// <param name="vertices">sended data to vbo</param>
-        /// <param name="usage">buffer usage hint</param>
-        internal static unsafe void BindBufferData<T>(ref VBO vbo, ReadOnlySpan<T> vertices, BufferUsageHint usage) where T : unmanaged
+        /// <param name="hint">buffer usage hint</param>
+        internal static unsafe void BindBufferData<T>(ref VBO vbo, ReadOnlySpan<T> vertices, BufferHint hint) where T : unmanaged
         {
             Bind(vbo);
             Unsafe.AsRef(vbo._elementSize) = sizeof(T);
             Unsafe.AsRef(vbo._length) = (ulong)vertices.Length;
             fixed(T* ptr = vertices) {
                 GLAssert.EnsureContext();
-                GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)((uint)vertices.Length * (uint)vbo._elementSize), (IntPtr)ptr, usage);
+                GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)((uint)vertices.Length * (uint)vbo._elementSize), (IntPtr)ptr, hint.ToOriginalValue());
             }
         }
 
-        internal static unsafe void BindBufferData<T>(ref VBO vbo, T* vertices, ulong length, BufferUsageHint usage) where T : unmanaged
+        internal static unsafe void BindBufferData<T>(ref VBO vbo, T* vertices, ulong length, BufferHint hint) where T : unmanaged
         {
             if(length > uint.MaxValue && IntPtr.Size == 4) {
                 ThrowOnlyFor64bitsRuntime();
@@ -112,7 +112,7 @@ namespace Elffy.Graphics.OpenGL
             Unsafe.AsRef(vbo._elementSize) = sizeof(T);
             Unsafe.AsRef(vbo._length) = length;
             GLAssert.EnsureContext();
-            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(length * (ulong)sizeof(T)), (IntPtr)vertices, usage);
+            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(length * (ulong)sizeof(T)), (IntPtr)vertices, hint.ToOriginalValue());
         }
 
 

@@ -62,18 +62,18 @@ namespace Elffy.Graphics.OpenGL
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void BufferData<T>(ReadOnlySpan<T> data, BufferUsageHint usage) where T : unmanaged
+        public static unsafe void BufferData<T>(ReadOnlySpan<T> data, BufferHint hint) where T : unmanaged
         {
             fixed(T* ptr = data) {
-                BufferData(data.Length * sizeof(T), ptr, usage);
+                BufferData(data.Length * sizeof(T), ptr, hint);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void BufferData(int byteSize, void* data, BufferUsageHint usage)
+        public static unsafe void BufferData(int byteSize, void* data, BufferHint hint)
         {
             GLAssert.EnsureContext();
-            GL.BufferData(BufferTarget.ShaderStorageBuffer, byteSize, (IntPtr)data, usage);
+            GL.BufferData(BufferTarget.ShaderStorageBuffer, byteSize, (IntPtr)data, hint.ToOriginalValue());
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
