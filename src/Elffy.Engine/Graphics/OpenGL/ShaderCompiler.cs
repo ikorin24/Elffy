@@ -86,14 +86,16 @@ namespace Elffy.Graphics.OpenGL
 
         private static void ThrowIfCompilationFailure(int shaderID, string source, int compilationStatus)
         {
-            if(compilationStatus == Consts.ShaderCompileFailed) {
+            const int Failure = 0;
+            if(compilationStatus == Failure) {
                 ThrowCompilationFailure(shaderID, source);
             }
         }
 
         private static void ThrowIfLinkFailed(int programID, int linkStatus)
         {
-            if(linkStatus == Consts.ShaderProgramLinkFailed) {
+            const int Failure = 0;
+            if(linkStatus == Failure) {
                 ThrowLinkFailed(programID);
             }
         }
