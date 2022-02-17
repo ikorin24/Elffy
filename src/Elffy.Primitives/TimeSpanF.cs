@@ -27,8 +27,8 @@ namespace Elffy
         public float TotalMilliseconds => (float)_ts.TotalMilliseconds;
         public float TotalHours => (float)_ts.TotalHours;
         public float TotalDays => (float)_ts.TotalDays;
-        public double TotalMinutes => (float)_ts.TotalMinutes;
-        public double TotalSeconds => (float)_ts.TotalSeconds;
+        public float TotalMinutes => (float)_ts.TotalMinutes;
+        public float TotalSeconds => (float)_ts.TotalSeconds;
 
         public long Ticks => _ts.Ticks;
         public int Seconds => _ts.Seconds;
