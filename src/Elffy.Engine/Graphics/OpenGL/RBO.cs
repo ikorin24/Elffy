@@ -14,7 +14,7 @@ namespace Elffy.Graphics.OpenGL
         internal int Value => _rbo;
 
         /// <summary>Get whether the render buffer object is empty or not</summary>
-        public bool IsEmpty => _rbo == Consts.NULL;
+        public bool IsEmpty => _rbo == 0;
 
         /// <summary>Get empty <see cref="RBO"/>. (that means 0)</summary>
         public static RBO Empty => new RBO();

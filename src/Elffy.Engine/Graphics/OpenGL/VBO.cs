@@ -20,7 +20,7 @@ namespace Elffy.Graphics.OpenGL
         public int ElementSize => _elementSize;
 
         /// <summary>Get whether the vertex buffer object is empty or not.</summary>
-        public bool IsEmpty => _vbo == Consts.NULL;
+        public bool IsEmpty => _vbo == 0;
 
         private VBO(int vbo)
         {
@@ -41,7 +41,7 @@ namespace Elffy.Graphics.OpenGL
         /// <param name="vbo"><see cref="VBO"/> to delete</param>
         public static unsafe void Delete(ref VBO vbo)
         {
-            if(vbo._vbo != Consts.NULL) {
+            if(vbo._vbo != 0) {
                 GLAssert.EnsureContext();
                 GL.DeleteBuffer(vbo._vbo);
                 vbo = default;
@@ -60,7 +60,7 @@ namespace Elffy.Graphics.OpenGL
         public static void Unbind()
         {
             GLAssert.EnsureContext();
-            GL.BindBuffer(BufferTarget.ArrayBuffer, Consts.NULL);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
         }
 
         internal static IntPtr MapBufferReadOnly()

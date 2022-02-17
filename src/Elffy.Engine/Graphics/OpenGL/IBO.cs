@@ -35,7 +35,7 @@ namespace Elffy.Graphics.OpenGL
         /// <param name="ibo">index buffer object to delete</param>
         public static void Delete(ref IBO ibo)
         {
-            if(ibo._ibo != Consts.NULL) {
+            if(ibo._ibo != 0) {
                 GLAssert.EnsureContext();
                 GL.DeleteBuffer(ibo._ibo);
                 ibo = default;
@@ -54,7 +54,7 @@ namespace Elffy.Graphics.OpenGL
         public static void Unbind()
         {
             GLAssert.EnsureContext();
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, Consts.NULL);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
         }
 
         internal static IntPtr MapBufferReadOnly()

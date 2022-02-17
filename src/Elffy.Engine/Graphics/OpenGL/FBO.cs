@@ -19,7 +19,7 @@ namespace Elffy.Graphics.OpenGL
 
         internal int Value => _fbo;
 
-        public bool IsEmpty => _fbo == Consts.NULL;
+        public bool IsEmpty => _fbo == 0;
 
         public static FBO Empty => default;
 
@@ -75,7 +75,7 @@ namespace Elffy.Graphics.OpenGL
                 _readBinded[context] = Empty;
             }
 
-            GL.BindFramebuffer((FramebufferTarget)target, Consts.NULL);
+            GL.BindFramebuffer((FramebufferTarget)target, 0);
         }
 
         /// <summary>Call glFreameBufferTexture2D</summary>

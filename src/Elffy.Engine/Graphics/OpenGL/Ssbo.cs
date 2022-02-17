@@ -14,7 +14,7 @@ namespace Elffy.Graphics.OpenGL
 
         internal int Value => _ssbo;
 
-        public bool IsEmpty => _ssbo == Consts.NULL;
+        public bool IsEmpty => _ssbo == 0;
 
         public static Ssbo Empty => default;
 
@@ -41,7 +41,7 @@ namespace Elffy.Graphics.OpenGL
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Delete(ref Ssbo ssbo)
         {
-            if(ssbo._ssbo != Consts.NULL) {
+            if(ssbo._ssbo != 0) {
                 GLAssert.EnsureContext();
                 GL.DeleteBuffer(ssbo._ssbo);
                 ssbo = default;

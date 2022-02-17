@@ -19,7 +19,7 @@ namespace Elffy.Graphics.OpenGL
 
         internal int Value => _texture;
 
-        public bool IsEmpty => _texture == Consts.NULL;
+        public bool IsEmpty => _texture == 0;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private string DebuggerView => IsEmpty ? "Texture (null)" : $"Texture={_texture}";
@@ -396,7 +396,7 @@ namespace Elffy.Graphics.OpenGL
         /// <param name="to">texture object to delete</param>
         public static void Delete(ref TextureObject to)
         {
-            if(to._texture != Consts.NULL) {
+            if(to._texture != 0) {
                 GLAssert.EnsureContext();
                 GL.DeleteTexture(to._texture);
                 to = default;

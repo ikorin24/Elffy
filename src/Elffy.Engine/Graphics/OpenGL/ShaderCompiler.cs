@@ -16,7 +16,7 @@ namespace Elffy.Graphics.OpenGL
                 return LinkShaders(stackalloc int[1] { shader });
             }
             finally {
-                if(shader != Consts.NULL) {
+                if(shader != 0) {
                     GL.DeleteShader(shader);
                 }
             }
@@ -26,7 +26,7 @@ namespace Elffy.Graphics.OpenGL
         {
             ArgumentNullException.ThrowIfNull(vertexShaderSource);
             ArgumentNullException.ThrowIfNull(fragmentShaderSource);
-            Span<int> shaders = stackalloc int[3] { Consts.NULL, Consts.NULL, Consts.NULL };
+            Span<int> shaders = stackalloc int[3] { 0, 0, 0 };
             try {
                 shaders[0] = CompileShader(vertexShaderSource, ShaderType.VertexShader);
                 shaders[1] = CompileShader(fragmentShaderSource, ShaderType.FragmentShader);
@@ -37,7 +37,7 @@ namespace Elffy.Graphics.OpenGL
             }
             finally {
                 foreach(var shader in shaders) {
-                    if(shader != Consts.NULL) {
+                    if(shader != 0) {
                         GL.DeleteShader(shader);
                     }
                 }
@@ -46,7 +46,7 @@ namespace Elffy.Graphics.OpenGL
 
         private static int CompileShader(string shaderSource, ShaderType shaderType)
         {
-            int shaderID = Consts.NULL;
+            int shaderID = 0;
             try {
                 shaderID = GL.CreateShader(shaderType);
                 GL.ShaderSource(shaderID, shaderSource);
@@ -56,7 +56,7 @@ namespace Elffy.Graphics.OpenGL
                 return shaderID;
             }
             catch {
-                if(shaderID != Consts.NULL) {
+                if(shaderID != 0) {
                     GL.DeleteShader(shaderID);
                 }
                 throw;
@@ -69,7 +69,7 @@ namespace Elffy.Graphics.OpenGL
             try {
                 program = ProgramObject.Create();
                 foreach(var shader in shaders) {
-                    if(shader != Consts.NULL) {
+                    if(shader != 0) {
                         GL.AttachShader(program.Value, shader);
                     }
                 }

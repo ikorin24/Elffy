@@ -29,7 +29,7 @@ namespace Elffy.Graphics.OpenGL
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Delete(ref PBO pbo)
         {
-            if(pbo._pbo != Consts.NULL) {
+            if(pbo._pbo != 0) {
                 GL.DeleteBuffer(pbo._pbo);
                 pbo = default;
             }
@@ -46,7 +46,7 @@ namespace Elffy.Graphics.OpenGL
         public static void Unbind(BufferPackTarget target)
         {
             GLAssert.EnsureContext();
-            GL.BindBuffer(target.Compat(), Consts.NULL);
+            GL.BindBuffer(target.Compat(), 0);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

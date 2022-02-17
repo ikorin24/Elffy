@@ -14,7 +14,7 @@ namespace Elffy.Graphics.OpenGL
         internal int Value => _vao;
 
         /// <summary>Get whether the <see cref="VAO "/> is empty or not.</summary>
-        public bool IsEmpty => _vao == Consts.NULL;
+        public bool IsEmpty => _vao == 0;
 
         /// <summary>Get empty vertex array object. (that means 0)</summary>
         public static VAO Empty => default;
@@ -36,7 +36,7 @@ namespace Elffy.Graphics.OpenGL
         /// <param name="vao">vertex array object to delete</param>
         public static void Delete(ref VAO vao)
         {
-            if(vao._vao != Consts.NULL) {
+            if(vao._vao != 0) {
                 GLAssert.EnsureContext();
                 GL.DeleteVertexArray(vao._vao);
                 vao = default;
@@ -55,7 +55,7 @@ namespace Elffy.Graphics.OpenGL
         public static void Unbind()
         {
             GLAssert.EnsureContext();
-            GL.BindVertexArray(Consts.NULL);
+            GL.BindVertexArray(0);
         }
 
 

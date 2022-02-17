@@ -12,7 +12,7 @@ namespace Elffy.Graphics.OpenGL
         private readonly int _program;
 
         internal int Value => _program;
-        internal bool IsEmpty => _program == Consts.NULL;
+        internal bool IsEmpty => _program == 0;
 
         internal static ProgramObject Empty => default;
 
@@ -33,7 +33,7 @@ namespace Elffy.Graphics.OpenGL
 
         internal static void Delete(ref ProgramObject po)
         {
-            if(po._program != Consts.NULL) {
+            if(po._program != 0) {
                 GLAssert.EnsureContext();
                 GL.DeleteProgram(po._program);
                 po = default;
@@ -49,7 +49,7 @@ namespace Elffy.Graphics.OpenGL
         internal static void Unbind()
         {
             GLAssert.EnsureContext();
-            GL.UseProgram(Consts.NULL);
+            GL.UseProgram(0);
         }
 
         public override bool Equals(object? obj) => obj is ProgramObject po && Equals(po);
