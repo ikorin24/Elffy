@@ -82,7 +82,7 @@ void main()
                 IBO.BindBufferData(ref ibo, indices, BufferUsageHint.StaticDraw);
                 vao = VAO.Create();
                 VAO.Bind(vao);
-                program = ShaderSource.CompileToProgramObject(VertShaderSource, FragShaderSource, null);
+                program = ShaderCompiler.Compile(VertShaderSource, FragShaderSource, null);
                 DefineLocation(new VertexDefinition<VertexSlim>(program));
                 VAO.Unbind();
                 VBO.Unbind();

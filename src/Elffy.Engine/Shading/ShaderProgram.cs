@@ -125,7 +125,7 @@ namespace Elffy.Shading
                     _dic[screen] = dic;
                 }
                 if(!dic.TryGetValue(key, out var cache)) {
-                    cache = new(ShaderSource.CompileToProgramObject(key.VertSoruce, key.FragSource, key.GeometrySource), 1);
+                    cache = new(ShaderCompiler.Compile(key.VertSoruce, key.FragSource, key.GeometrySource), 1);
                 }
                 else {
                     cache.Count++;
