@@ -1,26 +1,23 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <LangVersion>9.0</LangVersion>
+    <LangVersion>10.0</LangVersion>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <Version>0.0.0</Version>
     <Authors>ikorin24</Authors>
     <Description />
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <NoWarn>$(NoWarn);NU5128;1591</NoWarn>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <RootNamespace>Elffy</RootNamespace>
+    <IsRoslynComponent>true</IsRoslynComponent>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\Elffy.Generator\Generator\GeneratorUtil.cs" Link="Generator\GeneratorUtil.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.8.0" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.1" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.3" PrivateAssets="all">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.1" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
