@@ -92,6 +92,8 @@ namespace Elffy
     /// <summary>Provides helper methods for <see cref="StatefulFunc{TResult}"/></summary>
     public static class StatefulFunc
     {
+        public static StatefulFunc<TResult> None<TResult>() => StatefulFunc<TResult>.None;
+
         /// <summary>Create <see cref="StatefulFunc{TResult}"/> from a state and <see cref="Func{T, TResult}"/>.</summary>
         /// <typeparam name="TState">type of the state</typeparam>
         /// <typeparam name="TResult">type of the result</typeparam>
