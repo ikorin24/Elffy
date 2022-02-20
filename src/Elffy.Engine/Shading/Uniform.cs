@@ -215,6 +215,15 @@ namespace Elffy.Shading
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void BufferBase(Ssbo ssbo, int index)
+        {
+            GLAssert.EnsureContext();
+            GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, index, ssbo.Value);
+
+            // Don't unbind here.
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal Uniform(ProgramObject program)
         {
             _program = program;

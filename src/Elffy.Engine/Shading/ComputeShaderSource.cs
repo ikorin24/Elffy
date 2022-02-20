@@ -17,6 +17,7 @@ namespace Elffy.Shading
         {
             var context = new ComputeShaderContext(screen);
             var uniform = new Uniform(program);
+            ProgramObject.Bind(program);
             SendUniforms(uniform, context);
             GL.DispatchCompute(groupCount.X, groupCount.Y, groupCount.Z);
         }

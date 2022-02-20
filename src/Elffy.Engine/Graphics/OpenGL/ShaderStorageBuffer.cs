@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using Elffy.Features;
-using OpenTK.Graphics.OpenGL4;
 using System;
 using System.Runtime.CompilerServices;
 
@@ -9,6 +8,8 @@ namespace Elffy.Graphics.OpenGL
     public sealed class ShaderStorageBuffer : IDisposable
     {
         private Ssbo _ssbo;
+
+        public Ssbo Ssbo => _ssbo;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ShaderStorageBuffer(Ssbo ssbo)
