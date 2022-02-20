@@ -9,7 +9,7 @@ namespace UnitTest
         [Fact]
         public void ToStringTest_Int32()
         {
-            var nameValues = TestEnumInt32.AllNameValuesSpan();
+            var nameValues = TestEnumInt32.AllNameValues().Span;
             foreach(var (name, value) in nameValues) {
                 var toStringName = value.ToString();
                 Assert.Equal(name, toStringName);
@@ -19,7 +19,7 @@ namespace UnitTest
         [Fact]
         public void ToStringTest_UInt32()
         {
-            var nameValues = TestEnumUInt32.AllNameValuesSpan();
+            var nameValues = TestEnumUInt32.AllNameValues().Span;
             foreach(var (name, value) in nameValues) {
                 var toStringName = value.ToString();
                 Assert.Equal(name, toStringName);
@@ -29,7 +29,7 @@ namespace UnitTest
         [Fact]
         public void ToStringTest_Int16()
         {
-            var nameValues = TestEnumInt16.AllNameValuesSpan();
+            var nameValues = TestEnumInt16.AllNameValues().Span;
             foreach(var (name, value) in nameValues) {
                 var toStringName = value.ToString();
                 Assert.Equal(name, toStringName);
@@ -39,7 +39,7 @@ namespace UnitTest
         [Fact]
         public void ToStringTest_UInt16()
         {
-            var nameValues = TestEnumUInt16.AllNameValuesSpan();
+            var nameValues = TestEnumUInt16.AllNameValues().Span;
             foreach(var (name, value) in nameValues) {
                 var toStringName = value.ToString();
                 Assert.Equal(name, toStringName);
@@ -49,7 +49,7 @@ namespace UnitTest
         [Fact]
         public void ToStringTest_Int8()
         {
-            var nameValues = TestEnumInt8.AllNameValuesSpan();
+            var nameValues = TestEnumInt8.AllNameValues().Span;
             foreach(var (name, value) in nameValues) {
                 var toStringName = value.ToString();
                 Assert.Equal(name, toStringName);
@@ -59,7 +59,7 @@ namespace UnitTest
         [Fact]
         public void ToStringTest_UInt8()
         {
-            var nameValues = TestEnumUInt8.AllNameValuesSpan();
+            var nameValues = TestEnumUInt8.AllNameValues().Span;
             foreach(var (name, value) in nameValues) {
                 var toStringName = value.ToString();
                 Assert.Equal(name, toStringName);
@@ -69,7 +69,7 @@ namespace UnitTest
         [Fact]
         public void ToStringTest_Int64()
         {
-            var nameValues = TestEnumInt64.AllNameValuesSpan();
+            var nameValues = TestEnumInt64.AllNameValues().Span;
             foreach(var (name, value) in nameValues) {
                 var toStringName = value.ToString();
                 Assert.Equal(name, toStringName);
@@ -79,7 +79,7 @@ namespace UnitTest
         [Fact]
         public void ToStringTest_UInt64()
         {
-            var nameValues = TestEnumUInt64.AllNameValuesSpan();
+            var nameValues = TestEnumUInt64.AllNameValues().Span;
             foreach(var (name, value) in nameValues) {
                 var toStringName = value.ToString();
                 Assert.Equal(name, toStringName);

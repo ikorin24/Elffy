@@ -36,13 +36,13 @@ namespace UnitTest
             }
 
             {
-                var allTimings = FrameTiming.AllValues();
+                var allTimings = FrameTiming.AllValues().ToArray();
                 var specifiedTimings = allTimings.Where(t => t != FrameTiming.NotSpecified).ToArray();
                 Assert.True(specifiedTimings.All(t => t.IsSpecified()));
                 Assert.True(FrameTiming.NotSpecified.IsSpecified() == false);
 
-                Assert.True(FrameTiming.AllValuesSpan().Contains(default));
-                Assert.True(CurrentFrameTiming.AllValuesSpan().Contains(default));
+                Assert.True(FrameTiming.AllValues().Span.Contains(default));
+                Assert.True(CurrentFrameTiming.AllValues().Span.Contains(default));
             }
         }
     }
