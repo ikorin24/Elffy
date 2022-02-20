@@ -7,7 +7,7 @@ namespace Elffy.Shading
     /// <summary>
     /// Required: OpenGL 4.3
     /// </summary>
-    public abstract class ComputeShaderSource
+    public abstract class ComputeShader
     {
         protected abstract string ShaderSource { get; }
 

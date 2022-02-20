@@ -8,11 +8,11 @@ namespace Elffy.Shading
 {
     public sealed class ComputeShaderDispatcher : IDisposable
     {
-        private readonly ComputeShaderSource _source;
+        private readonly ComputeShader _source;
         private readonly IHostScreen _screen;
         private ProgramObject _program;
 
-        private ComputeShaderDispatcher(ProgramObject program, IHostScreen screen, ComputeShaderSource source)
+        private ComputeShaderDispatcher(ProgramObject program, IHostScreen screen, ComputeShader source)
         {
             Debug.Assert(program.IsEmpty == false);
             _program = program;
@@ -22,7 +22,7 @@ namespace Elffy.Shading
 
         ~ComputeShaderDispatcher() => Dispose(false);
 
-        internal static ComputeShaderDispatcher Create(ProgramObject program, IHostScreen screen, ComputeShaderSource source)
+        internal static ComputeShaderDispatcher Create(ProgramObject program, IHostScreen screen, ComputeShader source)
         {
             var instance = new ComputeShaderDispatcher(program, screen, source);
             ContextAssociatedMemorySafety.Register(instance, screen);
