@@ -9,6 +9,8 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Shading
 {
+    // TODO: Remove
+
     /// <summary>Shader program associated with specific <see cref="Renderable"/>.</summary>
     public readonly struct ShaderProgram   // not IDisposable, dispose only from internal
     {
