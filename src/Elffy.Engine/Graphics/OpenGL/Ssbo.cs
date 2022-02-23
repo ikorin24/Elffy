@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 
 namespace Elffy.Graphics.OpenGL
 {
+    /// <summary>SSBO; Shader Storage Buffer Object (required OpenGL 4.3)</summary>
     [DebuggerDisplay("{DebuggerView,nq}")]
     public readonly struct Ssbo : IEquatable<Ssbo>
     {

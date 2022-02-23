@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace Elffy.Graphics.OpenGL
 {
+    /// <summary>Wrapper class of SSBO. (Required OpenGL 4.3)</summary>
     public sealed class ShaderStorageBuffer : IDisposable
     {
         private Ssbo _ssbo;
@@ -19,12 +20,39 @@ namespace Elffy.Graphics.OpenGL
 
         ~ShaderStorageBuffer() => Dispose(false);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ShaderStorageBuffer Create()
         {
             var screen = Engine.GetValidCurrentContext();
             var instance = new ShaderStorageBuffer(Ssbo.Create());
             ContextAssociatedMemorySafety.Register(instance, screen);
+            return instance;
+        }
+
+        public static ShaderStorageBuffer Create<T>(ReadOnlySpan<T> data) where T : unmanaged
+        {
+            return Create(data, BufferHint.DynamicCopy);
+        }
+
+        public static ShaderStorageBuffer Create<T>(ReadOnlySpan<T> data, BufferHint hint) where T : unmanaged
+        {
+            var instance = Create();
+            instance.Bind();
+            instance.BufferData(data, hint);
+            instance.Unbind();
+            return instance;
+        }
+
+        public static ShaderStorageBuffer CreateUninitialized<T>(int elementCount) where T : unmanaged
+        {
+            return CreateUninitialized<T>(elementCount, BufferHint.DynamicCopy);
+        }
+
+        public static ShaderStorageBuffer CreateUninitialized<T>(int elementCount, BufferHint hint) where T : unmanaged
+        {
+            var instance = Create();
+            instance.Bind();
+            instance.BufferDataUninitialized<T>(elementCount, hint);
+            instance.Unbind();
             return instance;
         }
 
@@ -44,13 +72,10 @@ namespace Elffy.Graphics.OpenGL
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void BufferDataUndefined<T>(int elementCount, BufferHint hint) where T : unmanaged
+        public unsafe void BufferDataUninitialized<T>(int elementCount, BufferHint hint) where T : unmanaged
         {
             Ssbo.BufferData(elementCount * sizeof(T), null, hint);
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe void BufferDataUndefinedByte(int byteSize, BufferHint hint) => Ssbo.BufferData(byteSize, null, hint);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Dispose()
