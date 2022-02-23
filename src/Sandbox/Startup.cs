@@ -11,6 +11,7 @@ using Elffy.Components;
 using Elffy.UI;
 using Elffy.Shading;
 using Elffy.Threading;
+using Elffy.Graphics.OpenGL;
 
 namespace Sandbox
 {
@@ -39,6 +40,7 @@ namespace Sandbox
                     CreateModel2(wLayer),
                     CreateBox(wLayer),
                     CreateFloor(wLayer),
+                    CreateFloor2(wLayer),
                     CreateSky(wLayer),
                     timings.Update.DelayTime(800));
                 var time = TimeSpanF.FromMilliseconds(200);
@@ -180,6 +182,7 @@ namespace Sandbox
         private static async UniTask<Plain> CreateFloor(WorldLayer layer)
         {
             var plain = new Plain();
+            plain.Position.Z = -10;
             plain.Scale = new Vector3(10f);
             plain.Shader = new PhongShader();
             var config = new TextureConfig(TextureExpansionMode.NearestNeighbor, TextureShrinkMode.NearestNeighbor,
@@ -187,6 +190,25 @@ namespace Sandbox
             var texture = await Resources.Sandbox["floor.png"].LoadTextureAsync(config);
             plain.AddComponent(texture);
             plain.Rotation = Quaternion.FromAxisAngle(Vector3.UnitX, -90.ToRadian());
+            return await plain.Activate(layer);
+        }
+
+        private static async UniTask<Plain> CreateFloor2(WorldLayer layer)
+        {
+            var bufSize = new Vector2i(256, 256);
+            var buffer = ShaderStorageBuffer.CreateUninitialized<Color4>(bufSize.X * bufSize.Y);
+            var dispatcher = new TestComputeShader(() => buffer.Ssbo).CreateDispatcher();
+            var plain = new Plain();
+            plain.Dead += _ =>
+            {
+                buffer.Dispose();
+                dispatcher.Dispose();
+            };
+            plain.Updated += _ => dispatcher.Dispatch(bufSize.X, bufSize.Y, 1);
+            plain.Scale = new Vector3(10f);
+            plain.Shader = new TestShader(() => (buffer.Ssbo, bufSize.X, bufSize.Y));
+            plain.Rotation = Quaternion.FromAxisAngle(Vector3.UnitX, -90.ToRadian());
+
             return await plain.Activate(layer);
         }
 
