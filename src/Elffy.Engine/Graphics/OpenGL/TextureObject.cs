@@ -191,7 +191,7 @@ namespace Elffy.Graphics.OpenGL
             // Allocate memory of specified size without initialization
             // if pixels == null.
 
-            GL.TexImage2D(TextureTarget.Texture2D, level, internalFormat.Compat(), size.X, size.Y,
+            GL.TexImage2D(TextureTarget.Texture2D, level, internalFormat.ToOriginalValue(), size.X, size.Y,
                           0, TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
         }
 
@@ -206,7 +206,7 @@ namespace Elffy.Graphics.OpenGL
             // Allocate memory of specified size without initialization
             // if pixels == null.
 
-            GL.TexImage2D(TextureTarget.Texture2D, level, internalFormat.Compat(), size.X, size.Y,
+            GL.TexImage2D(TextureTarget.Texture2D, level, internalFormat.ToOriginalValue(), size.X, size.Y,
                           0, TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
         }
 
@@ -327,7 +327,7 @@ namespace Elffy.Graphics.OpenGL
         /// <param name="level">texture level</param>
         public static unsafe void Image1D(int width, ColorByte* pixels, TextureInternalFormat internalFormat, int level)
         {
-            GL.TexImage1D(TextureTarget.Texture1D, level, internalFormat.Compat(), width,
+            GL.TexImage1D(TextureTarget.Texture1D, level, internalFormat.ToOriginalValue(), width,
                           0, TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
         }
 
@@ -338,7 +338,7 @@ namespace Elffy.Graphics.OpenGL
         /// <param name="level">texture level</param>
         public static unsafe void Image1D(int width, Color4* pixels, TextureInternalFormat internalFormat, int level)
         {
-            GL.TexImage1D(TextureTarget.Texture1D, level, internalFormat.Compat(), width,
+            GL.TexImage1D(TextureTarget.Texture1D, level, internalFormat.ToOriginalValue(), width,
                           0, TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
         }
 

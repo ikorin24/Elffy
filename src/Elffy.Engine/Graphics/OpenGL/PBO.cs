@@ -39,35 +39,35 @@ namespace Elffy.Graphics.OpenGL
         public static void Bind(in PBO pbo, BufferPackTarget target)
         {
             GLAssert.EnsureContext();
-            GL.BindBuffer(target.Compat(), pbo._pbo);
+            GL.BindBuffer(target.ToOriginalValue(), pbo._pbo);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Unbind(BufferPackTarget target)
         {
             GLAssert.EnsureContext();
-            GL.BindBuffer(target.Compat(), 0);
+            GL.BindBuffer(target.ToOriginalValue(), 0);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void BufferData(BufferPackTarget target, int size, IntPtr ptr, BufferHint hint)
         {
             GLAssert.EnsureContext();
-            GL.BufferData(target.Compat(), size, ptr, hint.ToOriginalValue());
+            GL.BufferData(target.ToOriginalValue(), size, ptr, hint.ToOriginalValue());
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe T* MapBuffer<T>(BufferPackTarget target, BufferAccessMode access) where T : unmanaged
         {
             GLAssert.EnsureContext();
-            return (T*)GL.MapBuffer(target.Compat(), (BufferAccess)access);
+            return (T*)GL.MapBuffer(target.ToOriginalValue(), access.ToOriginalValue());
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void UnmapBuffer(BufferPackTarget target)
         {
             GLAssert.EnsureContext();
-            GL.UnmapBuffer(target.Compat());
+            GL.UnmapBuffer(target.ToOriginalValue());
         }
 
         public override bool Equals(object? obj) => obj is PBO pbo && Equals(pbo);

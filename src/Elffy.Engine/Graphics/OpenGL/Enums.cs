@@ -1,24 +1,20 @@
 ﻿#nullable enable
 using System;
 using OpenTK.Graphics.OpenGL4;
+using Elffy;
 
 namespace Elffy.Graphics.OpenGL
 {
-    public enum TextureInternalFormat
+    [GenerateEnumLikeStruct(typeof(int))]
+    [EnumLikeValue(nameof(PixelInternalFormat.Rgba8), (int)PixelInternalFormat.Rgba8, "public", "(R8 G8 B8 A8), each channel is unsigned byte (0 ~ 255)")]
+    [EnumLikeValue(nameof(PixelInternalFormat.Rgba16f), (int)PixelInternalFormat.Rgba16f, "public", "(R16 G16 B16 A16), each channel is 16bit floating point value")]
+    [EnumLikeValue(nameof(PixelInternalFormat.Rgba32f), (int)PixelInternalFormat.Rgba32f, "public", "(R32 G32 B32 A32), each channel is 32bit floating point value")]
+    [EnumLikeValue(nameof(PixelInternalFormat.DepthComponent), (int)PixelInternalFormat.DepthComponent, "public", "GL_DEPTH_COMPONENT. Use texture as a depth buffer. The driver chooses its precision.")]
+    [EnumLikeValue(nameof(PixelInternalFormat.DepthComponent16), (int)PixelInternalFormat.DepthComponent16, "public", "GL_DEPTH_COMPONENT16. Use texture as a depth buffer. 16 bits precision.")]
+    [EnumLikeValue(nameof(PixelInternalFormat.DepthComponent24), (int)PixelInternalFormat.DepthComponent24, "public", "GL_DEPTH_COMPONENT24. Use texture as a depth buffer. 24 bits precision.")]
+    public partial struct TextureInternalFormat
     {
-        /// <summary>(R8 G8 B8 A8), each channel is unsigned byte (0 ~ 255)</summary>
-        Rgba8 = PixelInternalFormat.Rgba8,
-        /// <summary>(R16 G16 B16 A16), each channel is 16bit floating point value</summary>
-        Rgba16f = PixelInternalFormat.Rgba16f,
-        /// <summary>(R32 G32 B32 A32), each channel is 32bit floating point value</summary>
-        Rgba32f = PixelInternalFormat.Rgba32f,
-
-        /// <summary>GL_DEPTH_COMPONENT. Use texture as a depth buffer. The driver chooses its precision.</summary>
-        DepthComponent = PixelInternalFormat.DepthComponent,
-        /// <summary>GL_DEPTH_COMPONENT16. Use texture as a depth buffer. 16 bits precision.</summary>
-        DepthComponent16 = PixelInternalFormat.DepthComponent16,
-        /// <summary>GL_DEPTH_COMPONENT24. Use texture as a depth buffer. 24 bits precision.</summary>
-        DepthComponent24 = PixelInternalFormat.DepthComponent24,
+        internal PixelInternalFormat ToOriginalValue() => (PixelInternalFormat)_value;
     }
 
     [Flags]
@@ -36,28 +32,29 @@ namespace Elffy.Graphics.OpenGL
         ColorBufferBit = ClearBufferMask.ColorBufferBit,
     }
 
-    public enum BufferPackTarget
+    [GenerateEnumLikeStruct(typeof(int))]
+    [EnumLikeValue(nameof(BufferTarget.PixelPackBuffer), (int)BufferTarget.PixelPackBuffer, "public", "GL_PIXEL_PACK_BUFFER = 0x88EB")]
+    [EnumLikeValue(nameof(BufferTarget.PixelUnpackBuffer), (int)BufferTarget.PixelUnpackBuffer, "public", "GL_PIXEL_UNPACK_BUFFER = 0x88EC")]
+    public partial struct BufferPackTarget
     {
-        PixelPackBuffer = BufferTarget.PixelPackBuffer,
-        PixelUnpackBuffer = BufferTarget.PixelUnpackBuffer,
+        internal BufferTarget ToOriginalValue() => (BufferTarget)_value;
     }
 
-    public enum BufferAccessMode
+    [GenerateEnumLikeStruct(typeof(int))]
+    [EnumLikeValue(nameof(BufferAccess.ReadOnly), (int)BufferAccess.ReadOnly, "public", "GL_READ_ONLY = 0x88B8")]
+    [EnumLikeValue(nameof(BufferAccess.WriteOnly), (int)BufferAccess.WriteOnly, "public", "GL_WRITE_ONLY = 0x88B9")]
+    [EnumLikeValue(nameof(BufferAccess.ReadWrite), (int)BufferAccess.ReadWrite, "public", "GL_READ_WRITE = 0x88BA")]
+    public partial struct BufferAccessMode
     {
-        /// <summary>GL_READ_ONLY</summary>
-        ReadOnly = BufferAccess.ReadOnly,
-        /// <summary>GL_WRITE_ONLY</summary>
-        WriteOnly = BufferAccess.WriteOnly,
-        /// <summary>GL_READ_WRITE</summary>
-        ReadWrite = BufferAccess.ReadWrite,
+        internal BufferAccess ToOriginalValue() => (BufferAccess)_value;
     }
 
     internal static class EnumCompatibleCastExtension
     {
-        public static PixelInternalFormat Compat(this TextureInternalFormat source) => (PixelInternalFormat)source;
+        //public static PixelInternalFormat Compat(this TextureInternalFormat source) => (PixelInternalFormat)source;
 
         public static ClearBufferMask Compat(this ClearMask source) => (ClearBufferMask)source;
 
-        public static BufferTarget Compat(this BufferPackTarget source) => (BufferTarget)source;
+        //public static BufferTarget Compat(this BufferPackTarget source) => (BufferTarget)source;
     }
 }
