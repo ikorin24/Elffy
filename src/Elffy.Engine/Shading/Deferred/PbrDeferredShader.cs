@@ -45,18 +45,18 @@ namespace Elffy.Shading.Deferred
             definition.Map(vertexType, "_vUV", VertexSpecialField.UV);
         }
 
-        protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        protected override void SendUniforms(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
-            uniform.Send("_model", model);
-            uniform.Send("_view", view);
-            uniform.Send("_mvp", projection * view * model);
-            uniform.Send("_albedoMetallic", new Color4(_albedo, _metallic));
-            uniform.Send("_emitRoughness", new Color4(_emit, _emit, _emit, _roughness));
+            dispatcher.SendUniform("_model", model);
+            dispatcher.SendUniform("_view", view);
+            dispatcher.SendUniform("_mvp", projection * view * model);
+            dispatcher.SendUniform("_albedoMetallic", new Color4(_albedo, _metallic));
+            dispatcher.SendUniform("_emitRoughness", new Color4(_emit, _emit, _emit, _roughness));
 
             var selector = _textureSelector ?? DefaultShaderTextureSelector<PbrDeferredShader>.Default;
             var hasTexture = selector.Invoke(this, target, out var texObj);
-            uniform.SendTexture2D("_tex", texObj, TextureUnitNumber.Unit0);
-            uniform.Send("_hasTexture", hasTexture);
+            dispatcher.SendUniformTexture2D("_tex", texObj, TextureUnitNumber.Unit0);
+            dispatcher.SendUniform("_hasTexture", hasTexture);
         }
 
         private const string VertSource =

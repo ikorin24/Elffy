@@ -7,7 +7,7 @@ namespace Elffy.Shading
     /// <summary>Required: OpenGL 4.3</summary>
     public interface IComputeShader
     {
-        protected void SendUniforms(Uniform uniform, ComputeShaderContext context);
+        protected void SendUniforms(ShaderDataDispatcher dispatcher, ComputeShaderContext context);
 
         protected string GetShaderSource();
 
@@ -18,9 +18,9 @@ namespace Elffy.Shading
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void SendUniformsInternal(IComputeShader shader, Uniform uniform, ComputeShaderContext context)
+        internal static void SendUniformsInternal(IComputeShader shader, ShaderDataDispatcher dispatcher, ComputeShaderContext context)
         {
-            shader.SendUniforms(uniform, context);
+            shader.SendUniforms(dispatcher, context);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

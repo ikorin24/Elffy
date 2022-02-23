@@ -28,15 +28,15 @@ namespace Elffy.Shading.Forward
             definition.Map(vertexType, "vtexIndex", VertexSpecialField.TextureIndex);
         }
 
-        protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        protected override void SendUniforms(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
-            uniform.Send("modelView", view * model);
-            uniform.Send("view", view);
-            uniform.Send("projection", projection);
+            dispatcher.SendUniform("modelView", view * model);
+            dispatcher.SendUniform("view", view);
+            dispatcher.SendUniform("projection", projection);
 
             var skeleton = target.GetComponent<HumanoidSkeleton>();
-            uniform.SendTexture1D("_boneTrans", skeleton.TranslationData, TextureUnitNumber.Unit0);
-            uniform.SendTexture2DArray("_texArrSampler", target.GetComponent<ArrayTexture>().TextureObject, TextureUnitNumber.Unit1);
+            dispatcher.SendUniformTexture1D("_boneTrans", skeleton.TranslationData, TextureUnitNumber.Unit0);
+            dispatcher.SendUniformTexture2DArray("_texArrSampler", target.GetComponent<ArrayTexture>().TextureObject, TextureUnitNumber.Unit1);
 
             var staticLights = _staticLights;
             if(staticLights == null) {
@@ -45,9 +45,9 @@ namespace Elffy.Shading.Forward
                 _staticLights = staticLights;
             }
             var (lColor, lPos, lightCount) = staticLights.GetBufferData();
-            uniform.Send("lightCount", lightCount);
-            uniform.SendTexture1D("lColorSampler", lColor, TextureUnitNumber.Unit2);
-            uniform.SendTexture1D("lPosSampler", lPos, TextureUnitNumber.Unit3);
+            dispatcher.SendUniform("lightCount", lightCount);
+            dispatcher.SendUniformTexture1D("lColorSampler", lColor, TextureUnitNumber.Unit2);
+            dispatcher.SendUniformTexture1D("lPosSampler", lPos, TextureUnitNumber.Unit3);
         }
 
         private const string VertSource =

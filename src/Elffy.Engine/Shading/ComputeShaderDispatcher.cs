@@ -44,7 +44,7 @@ namespace Elffy.Shading
             var program = _program;
             ProgramObject.Bind(program);
             var context = new ComputeShaderContext(screen);
-            var uniform = new Uniform(program);
+            var uniform = new ShaderDataDispatcher(program);
             IComputeShader.SendUniformsInternal(_shader, uniform, context);
             IComputeShader.DispatchCompute(xGroupCount, yGroupCount, zGroupCount);
         }

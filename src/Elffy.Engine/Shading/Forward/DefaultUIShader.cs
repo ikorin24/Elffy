@@ -22,18 +22,18 @@ namespace Elffy.Shading.Forward
             definition.Map("vUV", nameof(VertexSlim.UV));
         }
 
-        protected override void SendUniforms(Uniform uniform, Control target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        protected override void SendUniforms(ShaderDataDispatcher dispatcher, Control target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             var mvp = projection * view * model;
-            uniform.Send("mvp", mvp);
+            dispatcher.SendUniform("mvp", mvp);
 
             ref readonly var texture = ref target.Texture;
-            uniform.SendTexture2D("tex_sampler", texture.Texture, TextureUnitNumber.Unit0);
-            uniform.Send("hasTexture", texture.IsEmpty == false);
+            dispatcher.SendUniformTexture2D("tex_sampler", texture.Texture, TextureUnitNumber.Unit0);
+            dispatcher.SendUniform("hasTexture", texture.IsEmpty == false);
 
             var uvScale = target.ActualSize / (Vector2)texture.Size;
-            uniform.Send("uvScale", uvScale);
-            uniform.Send("back", target.Background);
+            dispatcher.SendUniform("uvScale", uvScale);
+            dispatcher.SendUniform("back", target.Background);
         }
 
         private const string VertSource =

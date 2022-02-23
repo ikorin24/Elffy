@@ -72,21 +72,21 @@ namespace Elffy.Shading.Forward
             definition.Map(vertexType, "vUV", VertexSpecialField.UV);
         }
 
-        protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        protected override void SendUniforms(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
-            uniform.Send("ma", _ambient);
-            uniform.Send("md", _diffuse);
-            uniform.Send("ms", _specular);
-            uniform.Send("shininess", _shininess);
+            dispatcher.SendUniform("ma", _ambient);
+            dispatcher.SendUniform("md", _diffuse);
+            dispatcher.SendUniform("ms", _specular);
+            dispatcher.SendUniform("shininess", _shininess);
 
-            uniform.Send("projection", projection);
-            uniform.Send("view", view);
-            uniform.Send("modelView", view * model);
+            dispatcher.SendUniform("projection", projection);
+            dispatcher.SendUniform("view", view);
+            dispatcher.SendUniform("modelView", view * model);
 
             var selector = _textureSelector ?? DefaultShaderTextureSelector<PhongShader>.Default;
             var hasTexture = selector.Invoke(this, target, out var texObj);
-            uniform.SendTexture2D("tex_sampler", texObj, TextureUnitNumber.Unit0);
-            uniform.Send("hasTexture", hasTexture);
+            dispatcher.SendUniformTexture2D("tex_sampler", texObj, TextureUnitNumber.Unit0);
+            dispatcher.SendUniform("hasTexture", hasTexture);
 
             var staticLights = _staticLights;
             if (staticLights == null) {
@@ -95,9 +95,9 @@ namespace Elffy.Shading.Forward
                 _staticLights = staticLights;
             }
             var (lColor, lPos, lightCount) = staticLights.GetBufferData();
-            uniform.Send("lightCount", lightCount);
-            uniform.SendTexture1D("lColorSampler", lColor, TextureUnitNumber.Unit1);
-            uniform.SendTexture1D("lPosSampler", lPos, TextureUnitNumber.Unit2);
+            dispatcher.SendUniform("lightCount", lightCount);
+            dispatcher.SendUniformTexture1D("lColorSampler", lColor, TextureUnitNumber.Unit1);
+            dispatcher.SendUniformTexture1D("lPosSampler", lPos, TextureUnitNumber.Unit2);
         }
 
         private const string VertSource =

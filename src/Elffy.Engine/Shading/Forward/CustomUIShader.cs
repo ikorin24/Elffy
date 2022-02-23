@@ -25,24 +25,24 @@ namespace Elffy.Shading.Forward
             definition.Map("vUV", nameof(VertexSlim.UV));
         }
 
-        protected override void SendUniforms(Uniform uniform, Control target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        protected override void SendUniforms(ShaderDataDispatcher dispatcher, Control target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             var size = target.ActualSize;
-            uniform.Send("_cornerRadius", _cornerRadius);
+            dispatcher.SendUniform("_cornerRadius", _cornerRadius);
 
             var mvp = projection * view * model;
-            uniform.Send("mvp", mvp);
+            dispatcher.SendUniform("mvp", mvp);
 
             ref readonly var texture = ref target.Texture;
             var hasTexture = !texture.IsEmpty;
-            uniform.Send("hasTexture", hasTexture);
+            dispatcher.SendUniform("hasTexture", hasTexture);
             if(hasTexture) {
-                uniform.SendTexture2D("tex_sampler", texture.Texture, TextureUnitNumber.Unit0);
+                dispatcher.SendUniformTexture2D("tex_sampler", texture.Texture, TextureUnitNumber.Unit0);
                 var uvScale = size / (Vector2)texture.Size;
-                uniform.Send("uvScale", uvScale);
+                dispatcher.SendUniform("uvScale", uvScale);
             }
-            uniform.Send("back", target is Button button && button.IsKeyPressed ? Color4.MediumAquamarine : target.IsMouseOver ? Color4.Aquamarine : target.Background);
-            uniform.Send("_size", size);
+            dispatcher.SendUniform("back", target is Button button && button.IsKeyPressed ? Color4.MediumAquamarine : target.IsMouseOver ? Color4.Aquamarine : target.Background);
+            dispatcher.SendUniform("_size", size);
         }
 
         private const string VertSource =

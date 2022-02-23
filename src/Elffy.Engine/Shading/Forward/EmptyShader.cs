@@ -23,9 +23,9 @@ namespace Elffy.Shading.Forward
             definition.Map(vertexType, "_pos", VertexSpecialField.Position);
         }
 
-        protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        protected override void SendUniforms(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
-            uniform.Send("_mvp", projection * view * model);
+            dispatcher.SendUniform("_mvp", projection * view * model);
         }
 
         private const string VertSource =

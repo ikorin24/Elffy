@@ -30,14 +30,14 @@ namespace Elffy.Shading.Forward
             definition.Map(vertexType, "_uv", VertexSpecialField.UV);
         }
 
-        protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        protected override void SendUniforms(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             var selector = _textureSelector ?? DefaultShaderTextureSelector<TextureShader>.Default;
             var hasTexture = selector.Invoke(this, target, out var texObj);
 
-            uniform.Send("_hasTexture", hasTexture);
-            uniform.SendTexture2D("_sampler", texObj, TextureUnitNumber.Unit0);
-            uniform.Send("_mvp", projection * view * model);
+            dispatcher.SendUniform("_hasTexture", hasTexture);
+            dispatcher.SendUniformTexture2D("_sampler", texObj, TextureUnitNumber.Unit0);
+            dispatcher.SendUniform("_mvp", projection * view * model);
         }
 
         private const string VertSource =

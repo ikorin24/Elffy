@@ -21,7 +21,7 @@ namespace Elffy.Shading.Deferred
             _viewProvider = viewProvider;
         }
 
-        protected override void SendUniforms(Uniform uniform, in Vector2i screenSize)
+        protected override void SendUniforms(ShaderDataDispatcher dispatcher, in Vector2i screenSize)
         {
             if(_pbrInfo.TryGetHostScreen(out var screen) == false) {
                 throw new System.InvalidOperationException();
@@ -30,15 +30,15 @@ namespace Elffy.Shading.Deferred
             var lightData = lightBuffer.GetBufferData();
             var gData = _gBuffer.GetBufferData();
 
-            uniform.Send("_view", _viewProvider(screen));
-            uniform.Send("_lightCount", lightData.LightCount);
-            uniform.SendTexture2D("_posSampler", gData.Position, TextureUnitNumber.Unit0);
-            uniform.SendTexture2D("_normalSampler", gData.Normal, TextureUnitNumber.Unit1);
-            uniform.SendTexture2D("_albedoSampler", gData.Albedo, TextureUnitNumber.Unit2);
-            uniform.SendTexture2D("_emitSampler", gData.Emit, TextureUnitNumber.Unit3);
-            uniform.SendTexture2D("_metallicRoughnessSampler", gData.MetallicRoughness, TextureUnitNumber.Unit4);
-            uniform.SendTexture1D("_lightPosSampler", lightData.Positions, TextureUnitNumber.Unit5);
-            uniform.SendTexture1D("_lightColorSampler", lightData.Colors, TextureUnitNumber.Unit6);
+            dispatcher.SendUniform("_view", _viewProvider(screen));
+            dispatcher.SendUniform("_lightCount", lightData.LightCount);
+            dispatcher.SendUniformTexture2D("_posSampler", gData.Position, TextureUnitNumber.Unit0);
+            dispatcher.SendUniformTexture2D("_normalSampler", gData.Normal, TextureUnitNumber.Unit1);
+            dispatcher.SendUniformTexture2D("_albedoSampler", gData.Albedo, TextureUnitNumber.Unit2);
+            dispatcher.SendUniformTexture2D("_emitSampler", gData.Emit, TextureUnitNumber.Unit3);
+            dispatcher.SendUniformTexture2D("_metallicRoughnessSampler", gData.MetallicRoughness, TextureUnitNumber.Unit4);
+            dispatcher.SendUniformTexture1D("_lightPosSampler", lightData.Positions, TextureUnitNumber.Unit5);
+            dispatcher.SendUniformTexture1D("_lightColorSampler", lightData.Colors, TextureUnitNumber.Unit6);
         }
 
         private const string FragSource =

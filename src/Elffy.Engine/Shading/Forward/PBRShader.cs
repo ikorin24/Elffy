@@ -20,13 +20,13 @@ namespace Elffy.Shading.Forward
             definition.Map(vertexType, "_vUV", VertexSpecialField.UV);
         }
 
-        protected override void SendUniforms(Uniform uniform, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        protected override void SendUniforms(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
-            uniform.Send("_view", view);
-            uniform.Send("_modelView", view * model);
-            uniform.Send("_projection", projection);
-            uniform.Send("_lPos", new Vector4(0, 100, 0, 1));
-            uniform.Send("_lColor", new Color3(1, 1, 1));
+            dispatcher.SendUniform("_view", view);
+            dispatcher.SendUniform("_modelView", view * model);
+            dispatcher.SendUniform("_projection", projection);
+            dispatcher.SendUniform("_lPos", new Vector4(0, 100, 0, 1));
+            dispatcher.SendUniform("_lColor", new Color3(1, 1, 1));
 
             ref var material = ref Unsafe.NullRef<PbrMaterialData>();
             if(target.TryGetComponent<PbrMaterial>(out var m)) {
@@ -35,9 +35,9 @@ namespace Elffy.Shading.Forward
             else {
                 material = new PbrMaterialData();
             }
-            uniform.Send("_metallic", (float)material.Metallic);
-            uniform.Send("_albedo", material.Albedo);
-            uniform.Send("_roughness", (float)material.Roughness);
+            dispatcher.SendUniform("_metallic", (float)material.Metallic);
+            dispatcher.SendUniform("_albedo", material.Albedo);
+            dispatcher.SendUniform("_roughness", (float)material.Roughness);
         }
 
 
