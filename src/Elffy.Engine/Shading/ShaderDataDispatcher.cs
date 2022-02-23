@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using Elffy.Graphics.OpenGL;
 using Elffy.Effective;
 using OpenTK.Graphics.OpenGL4;
+using System.ComponentModel;
 
 namespace Elffy.Shading
 {
@@ -222,6 +223,10 @@ namespace Elffy.Shading
 
             // Don't unbind here.
         }
+
+        [Obsolete("Don't use default constructor", true)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public ShaderDataDispatcher() => throw new NotSupportedException("Don't use default constructor");
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal ShaderDataDispatcher(ProgramObject program)
