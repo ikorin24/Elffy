@@ -28,7 +28,7 @@ namespace Elffy.Shading.Forward
             definition.Map(vertexType, "vtexIndex", VertexSpecialField.TextureIndex);
         }
 
-        protected override void SendUniforms(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        protected override void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             dispatcher.SendUniform("modelView", view * model);
             dispatcher.SendUniform("view", view);

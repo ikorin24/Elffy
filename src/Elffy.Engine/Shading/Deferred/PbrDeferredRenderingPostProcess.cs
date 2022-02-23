@@ -21,7 +21,7 @@ namespace Elffy.Shading.Deferred
             _viewProvider = viewProvider;
         }
 
-        protected override void SendUniforms(ShaderDataDispatcher dispatcher, in Vector2i screenSize)
+        protected override void OnRendering(ShaderDataDispatcher dispatcher, in Vector2i screenSize)
         {
             if(_pbrInfo.TryGetHostScreen(out var screen) == false) {
                 throw new System.InvalidOperationException();

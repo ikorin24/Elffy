@@ -20,7 +20,7 @@ namespace Elffy.Shading.Forward
             definition.Map(vertexType, "_vUV", VertexSpecialField.UV);
         }
 
-        protected override void SendUniforms(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        protected override void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             dispatcher.SendUniform("_view", view);
             dispatcher.SendUniform("_modelView", view * model);

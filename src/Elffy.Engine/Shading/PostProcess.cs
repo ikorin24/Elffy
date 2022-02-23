@@ -31,14 +31,14 @@ void main()
         /// <summary>Send uniform variables to glsl shader code.</summary>
         /// <param name="dispatcher">helper object to send uniform variables</param>
         /// <param name="screenSize">screen size</param>
-        protected abstract void SendUniforms(ShaderDataDispatcher dispatcher, in Vector2i screenSize);
+        protected abstract void OnRendering(ShaderDataDispatcher dispatcher, in Vector2i screenSize);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SendUniformsInternal(ProgramObject program, in Vector2i screenSize, in Vector2 uvScale)
+        internal void OnRenderingInternal(ProgramObject program, in Vector2i screenSize, in Vector2 uvScale)
         {
             var uniform = new ShaderDataDispatcher(program);
             uniform.SendUniform("_postProcessUVScale", uvScale);
-            SendUniforms(uniform, screenSize);
+            OnRendering(uniform, screenSize);
         }
 
         /// <summary>Compile post process fragment shader.</summary>

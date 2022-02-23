@@ -25,7 +25,7 @@ namespace Elffy.Shading.Forward
             definition.Map("vUV", nameof(VertexSlim.UV));
         }
 
-        protected override void SendUniforms(ShaderDataDispatcher dispatcher, Control target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        protected override void OnRendering(ShaderDataDispatcher dispatcher, Control target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             var size = target.ActualSize;
             dispatcher.SendUniform("_cornerRadius", _cornerRadius);

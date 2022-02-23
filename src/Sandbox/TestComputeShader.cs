@@ -23,7 +23,7 @@ public sealed unsafe class TestComputeShader : IComputeShader
         _ssboProvider = ssboProvider;
     }
 
-    void IComputeShader.SendUniforms(ShaderDataDispatcher dispatcher, ComputeShaderContext context)
+    void IComputeShader.OnDispatching(ShaderDataDispatcher dispatcher, ComputeShaderContext context)
     {
         var ssbo = _ssboProvider.Invoke();
         dispatcher.BufferBase(ssbo, 0);
@@ -111,7 +111,7 @@ void main()
         definition.Map(vertexType, "_v_uv", VertexSpecialField.UV);
     }
 
-    protected override void SendUniforms(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+    protected override void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
     {
         dispatcher.SendUniform("_mvp", projection * view * model);
         var (ssbo, w, h) = _ssboProvider.Invoke();

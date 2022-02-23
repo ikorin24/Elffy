@@ -52,7 +52,7 @@ namespace Elffy.Shading
             Debug.Assert(_owner.Shader is not null);
 
             ProgramObject.Bind(_program);
-            _owner.Shader.SendUniformsInternal(_program, _owner, model, view, projection);
+            _owner.Shader.OnRenderingInternal(_program, _owner, model, view, projection);
         }
 
         internal void ApplyForUI(in Matrix4 model, in Matrix4 view, in Matrix4 projection)
@@ -64,7 +64,7 @@ namespace Elffy.Shading
             var shaderSource = SafeCast.As<UIShaderSource>(_owner.ShaderInternal);
             Debug.Assert(shaderSource is not null);
             var control = SafeCast.As<UIRenderable>(_owner).Control;
-            shaderSource.SendUniformsInternal(_program, control, model, view, projection);
+            shaderSource.OnRenderingInternal(_program, control, model, view, projection);
         }
 
         internal void Initialize(Type vertexType)

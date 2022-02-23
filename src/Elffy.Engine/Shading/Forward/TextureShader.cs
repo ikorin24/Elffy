@@ -30,7 +30,7 @@ namespace Elffy.Shading.Forward
             definition.Map(vertexType, "_uv", VertexSpecialField.UV);
         }
 
-        protected override void SendUniforms(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        protected override void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             var selector = _textureSelector ?? DefaultShaderTextureSelector<TextureShader>.Default;
             var hasTexture = selector.Invoke(this, target, out var texObj);

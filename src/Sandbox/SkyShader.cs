@@ -23,7 +23,7 @@ namespace Sandbox
             definition.Map(vertexType, "vUV", VertexSpecialField.UV);
         }
 
-        protected override void SendUniforms(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        protected override void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
             dispatcher.SendUniform("mvp", projection * view * model);
         }

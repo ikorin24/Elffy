@@ -22,7 +22,7 @@ namespace Elffy.Shading
 
         protected abstract void DefineLocation(VertexDefinition<VertexSlim> definition, Control target);
 
-        protected abstract void SendUniforms(ShaderDataDispatcher dispatcher, Control target, in Matrix4 model, in Matrix4 view, in Matrix4 projection);
+        protected abstract void OnRendering(ShaderDataDispatcher dispatcher, Control target, in Matrix4 model, in Matrix4 view, in Matrix4 projection);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void DefineLocationInternal(ProgramObject program, Control target)
@@ -31,9 +31,9 @@ namespace Elffy.Shading
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void SendUniformsInternal(ProgramObject program, Control target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        internal void OnRenderingInternal(ProgramObject program, Control target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
-            SendUniforms(new ShaderDataDispatcher(program), target, model, view, projection);
+            OnRendering(new ShaderDataDispatcher(program), target, model, view, projection);
         }
 
         ShaderProgram IShaderSource.Compile(Renderable owner) => Compile(owner);
