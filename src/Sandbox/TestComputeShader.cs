@@ -56,7 +56,7 @@ void main()
 }";
 }
 
-public sealed class TestShader : ShaderSource
+public sealed class TestShader : RenderingShader
 {
     protected override string VertexShaderSource =>
 @"#version 430

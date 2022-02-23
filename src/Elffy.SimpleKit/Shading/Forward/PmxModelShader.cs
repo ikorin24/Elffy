@@ -5,7 +5,7 @@ using System;
 
 namespace Elffy.Shading.Forward
 {
-    public sealed class PmxModelShader : ShaderSource
+    public sealed class PmxModelShader : RenderingShader
     {
         private StaticLightManager? _staticLights;
 

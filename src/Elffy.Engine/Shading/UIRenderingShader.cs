@@ -6,7 +6,7 @@ using Elffy.Graphics.OpenGL;
 
 namespace Elffy.Shading
 {
-    public abstract class UIShaderSource : IShaderSource
+    public abstract class UIRenderingShader : IShaderSource
     {
         private int _sourceHashCache;
 

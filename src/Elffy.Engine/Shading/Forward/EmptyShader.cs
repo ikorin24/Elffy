@@ -3,7 +3,7 @@ using System;
 
 namespace Elffy.Shading.Forward
 {
-    internal sealed class EmptyShader : ShaderSource
+    internal sealed class EmptyShader : RenderingShader
     {
         private static EmptyShader? _instance;
 

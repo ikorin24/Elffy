@@ -61,7 +61,7 @@ namespace Elffy.Shading
             if(!_owner.IsLoaded) { ThrowNotInitialized(); }
             ProgramObject.Bind(_program);
 
-            var shaderSource = SafeCast.As<UIShaderSource>(_owner.ShaderInternal);
+            var shaderSource = SafeCast.As<UIRenderingShader>(_owner.ShaderInternal);
             Debug.Assert(shaderSource is not null);
             var control = SafeCast.As<UIRenderable>(_owner).Control;
             shaderSource.OnRenderingInternal(_program, control, model, view, projection);
@@ -82,7 +82,7 @@ namespace Elffy.Shading
         internal void InitializeForUI()
         {
             Debug.Assert(_owner is UIRenderable);
-            var shaderSource = SafeCast.As<UIShaderSource>(_owner.ShaderInternal);
+            var shaderSource = SafeCast.As<UIRenderingShader>(_owner.ShaderInternal);
             Debug.Assert(shaderSource is not null);
             var control = SafeCast.As<UIRenderable>(_owner).Control;
 

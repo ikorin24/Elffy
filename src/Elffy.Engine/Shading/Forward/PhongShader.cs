@@ -4,7 +4,7 @@ using System;
 
 namespace Elffy.Shading.Forward
 {
-    public sealed class PhongShader : ShaderSource
+    public sealed class PhongShader : RenderingShader
     {
         private const float DefaultAFactor = 0.8f;
         private const float DefaultDFactor = 0.35f;

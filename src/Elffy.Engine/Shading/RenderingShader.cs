@@ -5,7 +5,7 @@ using Elffy.Graphics.OpenGL;
 
 namespace Elffy.Shading
 {
-    public abstract class ShaderSource : IShaderSource
+    public abstract class RenderingShader : IShaderSource
     {
         // [NOTE]
         // ShaderSource don't have any opengl resources. (e.g. ProgramObject)

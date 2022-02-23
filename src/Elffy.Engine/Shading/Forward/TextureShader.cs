@@ -5,7 +5,7 @@ using System;
 namespace Elffy.Shading.Forward
 {
     /// <summary>Simple shader which displays texture.</summary>
-    public sealed class TextureShader : ShaderSource
+    public sealed class TextureShader : RenderingShader
     {
         private ShaderTextureSelector<TextureShader>? _textureSelector;
 

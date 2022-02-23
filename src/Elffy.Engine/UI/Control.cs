@@ -68,9 +68,9 @@ namespace Elffy.UI
 
         public bool IsRoot => ReferenceEquals(_root, this);
 
-        public UIShaderSource? Shader
+        public UIRenderingShader? Shader
         {
-            get => SafeCast.As<UIShaderSource>(_renderable.ShaderInternal);
+            get => SafeCast.As<UIRenderingShader>(_renderable.ShaderInternal);
             set => _renderable.ShaderInternal = value;
         }
 

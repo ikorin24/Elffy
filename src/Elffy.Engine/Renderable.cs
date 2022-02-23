@@ -44,9 +44,9 @@ namespace Elffy
         public RenderVisibility Visibility { get => _visibility; set => _visibility = value; }
 
         /// <summary>Get or set a shader source</summary>
-        public ShaderSource? Shader
+        public RenderingShader? Shader
         {
-            get => SafeCast.As<ShaderSource>(_shader);
+            get => SafeCast.As<RenderingShader>(_shader);
             set
             {
                 if(_isLoaded) { ThrowAlreadyLoaded(); }

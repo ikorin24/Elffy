@@ -5,7 +5,7 @@ using Elffy.Graphics.OpenGL;
 
 namespace Elffy.Shading.Deferred
 {
-    public sealed class PbrDeferredShader : ShaderSource
+    public sealed class PbrDeferredShader : RenderingShader
     {
         private ShaderTextureSelector<PbrDeferredShader>? _textureSelector;
         private Color3 _albedo;

@@ -4,7 +4,7 @@ using Elffy.UI;
 
 namespace Elffy.Shading.Forward
 {
-    internal sealed class DefaultUIShader : UIShaderSource
+    internal sealed class DefaultUIShader : UIRenderingShader
     {
         protected override string VertexShaderSource => VertSource;
 

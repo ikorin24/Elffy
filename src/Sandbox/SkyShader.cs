@@ -5,7 +5,7 @@ using System;
 
 namespace Sandbox
 {
-    public sealed class SkyShader : ShaderSource
+    public sealed class SkyShader : RenderingShader
     {
         public static readonly SkyShader Instance = new SkyShader();
 

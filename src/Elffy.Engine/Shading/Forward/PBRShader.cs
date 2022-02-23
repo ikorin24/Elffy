@@ -7,7 +7,7 @@ namespace Elffy.Shading.Forward
 {
     /// <summary>Shader source for physics based rendering</summary>
     [Obsolete("Don't use.", true)]
-    public sealed class PBRShader : ShaderSource
+    public sealed class PBRShader : RenderingShader
     {
         protected override string VertexShaderSource => VertSource;
 

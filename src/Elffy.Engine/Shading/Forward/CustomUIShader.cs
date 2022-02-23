@@ -4,7 +4,7 @@ using Elffy.UI;
 
 namespace Elffy.Shading.Forward
 {
-    public sealed class CustomUIShader : UIShaderSource
+    public sealed class CustomUIShader : UIRenderingShader
     {
         private Vector4 _cornerRadius;
 
