@@ -7,6 +7,7 @@ using Elffy.Shading;
 using Elffy.Shading.Forward;
 using Elffy.Graphics.OpenGL;
 using Elffy.UI;
+using Elffy.Features.Internal;
 
 namespace Elffy
 {
@@ -83,59 +84,7 @@ namespace Elffy
         {
         }
 
-        public unsafe bool TryGetMesh([MaybeNullWhen(false)] out Mesh mesh)
-        {
-            if(TryGetHostScreen(out var screen) == false) { goto FAILURE; }
-            if(Engine.CurrentContext != screen) { goto FAILURE; }
-            if(IsLoaded == false) { goto FAILURE; }
-
-            const uint IndexSize = sizeof(int);
-
-            var vertexType = _vertexType;
-            Debug.Assert(vertexType != null);
-            if(VertexMarshalHelper.TryGetVertexTypeData(vertexType, out var vertexTypeData) == false) { goto FAILURE; }
-
-            var vertexSize = (ulong)vertexTypeData.VertexSize;
-            Debug.Assert(vertexType != null);
-            var verticesCount = _vbo.Length;
-            var indicesCount = _ibo.Length;
-            var verticesByteSize = verticesCount * vertexSize;
-            var indicesByteSize = indicesCount * IndexSize;
-
-            var bufLen = verticesByteSize + indicesByteSize;
-            var buf = UniquePtr.Malloc(checked((nuint)bufLen));
-            var vDest = (void*)buf.Ptr;
-            var iDest = buf.GetPtr<byte>() + verticesByteSize;
-            try {
-                try {
-                    VBO.Bind(_vbo);
-                    var vSource = (void*)VBO.MapBufferReadOnly();
-                    System.Buffer.MemoryCopy(vSource, vDest, bufLen, verticesByteSize);
-                }
-                finally {
-                    VBO.UnmapBuffer();
-                    VBO.Unbind();
-                }
-                try {
-                    IBO.Bind(_ibo);
-                    var iSource = (void*)IBO.MapBufferReadOnly();
-                    System.Buffer.MemoryCopy(iSource, iDest, bufLen, indicesByteSize);
-                }
-                finally {
-                    IBO.UnmapBuffer();
-                    IBO.Unbind();
-                }
-                mesh = Mesh.Create(vertexTypeData, IndexSize, vDest, verticesByteSize, iDest, indicesByteSize, ref buf, static buf => buf.Dispose());
-                return true;
-            }
-            finally {
-                buf.Dispose();
-            }
-
-        FAILURE:
-            mesh = null;
-            return false;
-        }
+        public unsafe bool TryGetMesh([MaybeNullWhen(false)] out Mesh mesh) => MeshHelper.TryGetMesh(this, out mesh);
 
         public unsafe bool TryGetMeshRaw(void* vertices, ulong verticesByteSize,
                                          int* indices, ulong indicesByteSize,
@@ -143,105 +92,16 @@ namespace Elffy
                                          out ulong verticesByteSizeActual,
                                          out uint indicesByteSizeActual)
         {
-            if(TryGetHostScreen(out var screen) == false) { goto FAILURE; }
-            if(Engine.CurrentContext != screen) { goto FAILURE; }
-            if(IsLoaded == false) { goto FAILURE; }
-            vertexType = _vertexType;
-            Debug.Assert(vertexType != null);
-            if(VertexMarshalHelper.TryGetVertexTypeData(vertexType, out var vertexTypeData) == false) { goto FAILURE; }
-
-            var vertexSize = (ulong)vertexTypeData.VertexSize;
-            Debug.Assert(vertexType != null);
-            var verticesCount = _vbo.Length;
-            var indicesCount = _ibo.Length;
-            verticesByteSizeActual = verticesCount * vertexSize;
-            indicesByteSizeActual = indicesCount * sizeof(int);
-
-            if(verticesByteSize < verticesByteSizeActual) { goto FAILURE; }
-            if(indicesByteSize < indicesByteSizeActual) { goto FAILURE; }
-
-            try {
-                VBO.Bind(_vbo);
-                var vSource = (void*)VBO.MapBufferReadOnly();
-                System.Buffer.MemoryCopy(vSource, vertices, verticesByteSize, verticesByteSizeActual);
-            }
-            finally {
-                VBO.UnmapBuffer();
-                VBO.Unbind();
-            }
-            try {
-                IBO.Bind(_ibo);
-                var iSource = (void*)IBO.MapBufferReadOnly();
-                System.Buffer.MemoryCopy(iSource, indices, indicesByteSize, indicesByteSizeActual);
-            }
-            finally {
-                IBO.UnmapBuffer();
-                IBO.Unbind();
-            }
-            return true;
-
-        FAILURE:
-            vertexType = null;
-            verticesByteSizeActual = 0;
-            indicesByteSizeActual = 0;
-            return false;
+            return MeshHelper.TryGetMeshRaw(
+                this, vertices, verticesByteSize, indices, indicesByteSize,
+                out vertexType, out verticesByteSizeActual, out indicesByteSizeActual);
         }
 
         public unsafe (int VertexCount, int IndexCount) GetMesh<TVertex>(Span<TVertex> vertices, Span<int> indices) where TVertex : unmanaged
-        {
-            fixed(TVertex* v = vertices)
-            fixed(int* i = indices) {
-                var (vCount, iCount) = GetMesh(v, (ulong)vertices.Length, i, (uint)indices.Length);
-                return ((int)vCount, (int)iCount);
-            }
-        }
+            => MeshHelper.GetMesh(this, vertices, indices);
 
         public unsafe (ulong VertexCount, uint IndexCount) GetMesh<TVertex>(TVertex* vertices, ulong vertexCount, int* indices, uint indexCount) where TVertex : unmanaged
-        {
-            if(TryGetHostScreen(out var screen) == false) {
-                throw new InvalidOperationException();
-            }
-            var currentContext = Engine.CurrentContext;
-            if(currentContext != screen) {
-                ContextMismatchException.Throw(currentContext, screen);
-            }
-            if(IsLoaded == false) {
-                return (0, 0);
-            }
-            var vertexType = _vertexType;
-            Debug.Assert(vertexType != null);
-            if(typeof(TVertex) != vertexType) {
-                throw new InvalidOperationException($"Vertex type is invalid. (Vertex Type={vertexType?.FullName}, SpecifiedVertexType={typeof(TVertex).FullName})");
-            }
-            var vCount = _vbo.Length;
-            var iCount = _ibo.Length;
-            if(vertexCount < vCount) {
-                throw new ArgumentOutOfRangeException($"{nameof(vertexCount)} is too short.");
-            }
-            if(indexCount < iCount) {
-                throw new ArgumentOutOfRangeException($"{nameof(indexCount)} is too short.");
-            }
-
-            try {
-                VBO.Bind(_vbo);
-                var vSource = (void*)VBO.MapBufferReadOnly();
-                System.Buffer.MemoryCopy(vSource, vertices, vertexCount * (ulong)sizeof(TVertex), vCount * (ulong)sizeof(TVertex));
-            }
-            finally {
-                VBO.UnmapBuffer();
-                VBO.Unbind();
-            }
-            try {
-                IBO.Bind(_ibo);
-                var iSource = (void*)IBO.MapBufferReadOnly();
-                System.Buffer.MemoryCopy(iSource, indices, indexCount * sizeof(int), iCount * sizeof(int));
-            }
-            finally {
-                IBO.UnmapBuffer();
-                IBO.Unbind();
-            }
-            return (vCount, iCount);
-        }
+            => MeshHelper.GetMesh(this, vertices, vertexCount, indices, indexCount);
 
         /// <summary>Render the <see cref="Renderable"/>.</summary>
         /// <param name="modelParent">parent model matrix</param>
