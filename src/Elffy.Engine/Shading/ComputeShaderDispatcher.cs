@@ -8,37 +8,50 @@ namespace Elffy.Shading
 {
     public sealed class ComputeShaderDispatcher : IDisposable
     {
-        private readonly ComputeShader _source;
+        private readonly IComputeShader _shader;
         private readonly IHostScreen _screen;
         private ProgramObject _program;
 
-        private ComputeShaderDispatcher(ProgramObject program, IHostScreen screen, ComputeShader source)
+        public IHostScreen Screen => _screen;
+
+        private ComputeShaderDispatcher(ProgramObject program, IHostScreen screen, IComputeShader shader)
         {
             Debug.Assert(program.IsEmpty == false);
             _program = program;
             _screen = screen;
-            _source = source;
+            _shader = shader;
         }
 
         ~ComputeShaderDispatcher() => Dispose(false);
 
-        internal static ComputeShaderDispatcher Create(ProgramObject program, IHostScreen screen, ComputeShader source)
+        public static ComputeShaderDispatcher Create(IComputeShader shader)
         {
-            var instance = new ComputeShaderDispatcher(program, screen, source);
+            ArgumentNullException.ThrowIfNull(shader);
+
+            var screen = Engine.GetValidCurrentContext();
+            var source = IComputeShader.GetShaderSourceInternal(shader);
+            var program = ShaderCompiler.CompileComputeShader(source);
+            var instance = new ComputeShaderDispatcher(program, screen, shader);
             ContextAssociatedMemorySafety.Register(instance, screen);
             return instance;
         }
 
         public void Dispatch(int xGroupCount, int yGroupCount, int zGroupCount)
         {
-            Dispatch(new Vector3i(xGroupCount, yGroupCount, zGroupCount));
+            var screen = _screen;
+            ContextMismatchException.ThrowIfContextNotEqual(Engine.GetValidCurrentContext(), screen);
+
+            var program = _program;
+            ProgramObject.Bind(program);
+            var context = new ComputeShaderContext(screen);
+            var uniform = new Uniform(program);
+            IComputeShader.SendUniformsInternal(_shader, uniform, context);
+            IComputeShader.DispatchCompute(xGroupCount, yGroupCount, zGroupCount);
         }
 
         public void Dispatch(Vector3i groupCount)
         {
-            var screen = _screen;
-            ContextMismatchException.ThrowIfContextNotEqual(Engine.GetValidCurrentContext(), screen);
-            _source.Dispatch(_program, screen, groupCount);
+            Dispatch(groupCount.X, groupCount.Y, groupCount.Z);
         }
 
         public void Dispose()
