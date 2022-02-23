@@ -10,7 +10,7 @@ namespace Elffy.Graphics.OpenGL
         /// <param name="mask">clear buffer mask</param>
         public static void Clear(ClearMask mask)
         {
-            GL.Clear(mask.Compat());
+            GL.Clear(mask.ToOriginalValue());
         }
     }
 }

@@ -1,7 +1,5 @@
 ﻿#nullable enable
-using System;
 using OpenTK.Graphics.OpenGL4;
-using Elffy;
 
 namespace Elffy.Graphics.OpenGL
 {
@@ -17,19 +15,23 @@ namespace Elffy.Graphics.OpenGL
         internal PixelInternalFormat ToOriginalValue() => (PixelInternalFormat)_value;
     }
 
-    [Flags]
-    public enum ClearMask
+    [GenerateEnumLikeStruct(typeof(int))]
+    [EnumLikeValue(nameof(ClearBufferMask.None), (int)ClearBufferMask.None, "public", "GL_NONE = 0")]
+    [EnumLikeValue(nameof(ClearBufferMask.DepthBufferBit), (int)ClearBufferMask.DepthBufferBit, "public", "GL_DEPTH_BUFFER_BIT = 0x00000100")]
+    [EnumLikeValue(nameof(ClearBufferMask.AccumBufferBit), (int)ClearBufferMask.AccumBufferBit, "public", "GL_ACCUM_BUFFER_BIT = 0x00000200")]
+    [EnumLikeValue(nameof(ClearBufferMask.StencilBufferBit), (int)ClearBufferMask.StencilBufferBit, "public", "GL_STENCIL_BUFFER_BIT = 0x00000400")]
+    [EnumLikeValue(nameof(ClearBufferMask.ColorBufferBit), (int)ClearBufferMask.ColorBufferBit, "public", "GL_COLOR_BUFFER_BIT = 0x00004000")]
+    public partial struct ClearMask
     {
-        /// <summary>GL_NONE</summary>
-        None = ClearBufferMask.None,
-        /// <summary>GL_DEPTH_BUFFER_BIT</summary>
-        DepthBufferBit = ClearBufferMask.DepthBufferBit,
-        /// <summary>GL_ACCUM_BUFFER_BIT</summary>
-        AccumBufferBit = ClearBufferMask.AccumBufferBit,
-        /// <summary>GL_STENCIL_BUFFER_BIT</summary>
-        StencilBufferBit = ClearBufferMask.StencilBufferBit,
-        /// <summary>GL_COLOR_BUFFER_BIT</summary>
-        ColorBufferBit = ClearBufferMask.ColorBufferBit,
+        internal ClearBufferMask ToOriginalValue() => (ClearBufferMask)_value;
+
+        // TODO: Auto generate implementation for flags
+
+        public bool HasFlag(ClearMask value) => (_value | value._value) == value._value;
+
+        public static ClearMask operator |(ClearMask left, ClearMask right) => new ClearMask(left._value | right._value);
+        public static ClearMask operator &(ClearMask left, ClearMask right) => new ClearMask(left._value & right._value);
+        public static ClearMask operator ~(ClearMask value) => new ClearMask(~value._value);
     }
 
     [GenerateEnumLikeStruct(typeof(int))]
@@ -47,14 +49,5 @@ namespace Elffy.Graphics.OpenGL
     public partial struct BufferAccessMode
     {
         internal BufferAccess ToOriginalValue() => (BufferAccess)_value;
-    }
-
-    internal static class EnumCompatibleCastExtension
-    {
-        //public static PixelInternalFormat Compat(this TextureInternalFormat source) => (PixelInternalFormat)source;
-
-        public static ClearBufferMask Compat(this ClearMask source) => (ClearBufferMask)source;
-
-        //public static BufferTarget Compat(this BufferPackTarget source) => (BufferTarget)source;
     }
 }
