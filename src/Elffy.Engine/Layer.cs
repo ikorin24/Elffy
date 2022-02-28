@@ -65,10 +65,20 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetHostScreen([MaybeNullWhen(false)] out IHostScreen screen)
+        public bool TryGetScreen([MaybeNullWhen(false)] out IHostScreen screen)
         {
             screen = _owner?.Screen;
             return screen is not null;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public IHostScreen GetValidScreen()
+        {
+            var screen = _owner?.Screen;
+            if(screen is null) {
+                ThrowHelper.ThrowInvalidNullScreen();
+            }
+            return screen;
         }
 
         internal virtual async UniTask ActivateOnScreen(IHostScreen screen, FrameTimingPoint timingPoint, CancellationToken ct)
@@ -211,7 +221,7 @@ namespace Elffy
 
         internal void AddFrameObject(FrameObject frameObject)
         {
-            Debug.Assert(TryGetHostScreen(out var screen) && screen.CurrentTiming.IsOutOfFrameLoop() == false);
+            Debug.Assert(TryGetScreen(out var screen) && screen.CurrentTiming.IsOutOfFrameLoop() == false);
             _store.AddFrameObject(frameObject);
         }
 
@@ -298,7 +308,7 @@ namespace Elffy
 
         public static async UniTask<TLayer> Terminate<TLayer>(this TLayer layer, FrameTiming timing) where TLayer : Layer
         {
-            var timingPoint = layer.TryGetHostScreen(out var screen) ?
+            var timingPoint = layer.TryGetScreen(out var screen) ?
                                 (screen.TimingPoints.TryGetTimingOf(timing, out var tp) ? tp : null)
                                 : null;
             await layer.TerminateFromScreen(timingPoint);

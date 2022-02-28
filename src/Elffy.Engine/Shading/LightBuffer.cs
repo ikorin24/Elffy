@@ -32,7 +32,7 @@ namespace Elffy.Shading
 
         ~LightBuffer() => Dispose(false);
 
-        public bool TryGetHostScreen([MaybeNullWhen(false)] out IHostScreen screen)
+        public bool TryGetScreen([MaybeNullWhen(false)] out IHostScreen screen)
         {
             screen = _screen;
             return _screen is not null;

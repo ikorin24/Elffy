@@ -78,10 +78,18 @@ namespace Elffy
         /// <param name="screen">HostScreen of the <see cref="FrameObject"/></param>
         /// <returns>success or not</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetHostScreen([MaybeNullWhen(false)] out IHostScreen screen)
+        public bool TryGetScreen([MaybeNullWhen(false)] out IHostScreen screen)
         {
             screen = _hostScreen;
             return screen is not null;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public IHostScreen GetValidScreen()
+        {
+            var screen = _hostScreen;
+            if(screen is null) { ThrowHelper.ThrowInvalidNullScreen(); }
+            return screen;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -276,7 +284,7 @@ namespace Elffy
         public static async UniTask<T> Activate<T>(this T source, WorldLayer layer, CancellationToken cancellationToken = default)
             where T : FrameObject
         {
-            if(layer.TryGetHostScreen(out var screen) == false) {
+            if(layer.TryGetScreen(out var screen) == false) {
                 ThrowInvalidLayer();
             }
             await source.ActivateOnLayer(layer, screen.TimingPoints.Update, cancellationToken);
@@ -294,7 +302,7 @@ namespace Elffy
         public static async UniTask<T> Activate<T>(this T frameObject, WorldLayer layer, FrameTiming timing, CancellationToken cancellationToken = default)
             where T : FrameObject
         {
-            if(layer.TryGetHostScreen(out var screen) == false) {
+            if(layer.TryGetScreen(out var screen) == false) {
                 ThrowInvalidLayer();
             }
             var timingPoint = screen.TimingPoints.TimingOf(timing);
@@ -321,7 +329,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static async UniTask<T> Terminate<T>(this T frameObject, FrameTiming timing) where T : FrameObject
         {
-            var timingPoint = frameObject.TryGetHostScreen(out var screen) ? screen.TimingPoints.TimingOf(timing) : null;
+            var timingPoint = frameObject.TryGetScreen(out var screen) ? screen.TimingPoints.TimingOf(timing) : null;
             await frameObject.TerminateFromLayer(timingPoint);
             return frameObject;
         }

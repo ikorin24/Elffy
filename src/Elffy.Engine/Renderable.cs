@@ -150,9 +150,7 @@ namespace Elffy
 
         protected unsafe void LoadMesh<TVertex>(TVertex* vertices, ulong vertexCount, int* indices, uint indexCount) where TVertex : unmanaged
         {
-            if(TryGetHostScreen(out var screen) == false) {
-                throw new InvalidOperationException();
-            }
+            var screen = GetValidScreen();
             var currentContext = Engine.CurrentContext;
             if(currentContext != screen) {
                 ContextMismatchException.Throw(currentContext, screen);

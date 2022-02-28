@@ -38,7 +38,7 @@ namespace Elffy.Shading.Deferred
 
         ~GBuffer() => Dispose(false);
 
-        public bool TryGetHostScreen([MaybeNullWhen(false)] out IHostScreen screen)
+        public bool TryGetScreen([MaybeNullWhen(false)] out IHostScreen screen)
         {
             screen = _screen;
             return _screen is not null;
@@ -73,7 +73,7 @@ namespace Elffy.Shading.Deferred
 
         public void Resize()
         {
-            if(TryGetHostScreen(out var screen) == false) {
+            if(TryGetScreen(out var screen) == false) {
                 ThrowNotInitialized();
             }
             var currentContext = Engine.CurrentContext;

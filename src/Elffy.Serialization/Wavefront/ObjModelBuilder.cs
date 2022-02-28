@@ -23,8 +23,7 @@ namespace Elffy.Serialization.Wavefront
         private static async UniTask Build(StateObject state, Model3D model, Model3DLoadMeshDelegate load)
         {
             var (file, ct) = state;
-            model.TryGetHostScreen(out var screen);
-            Debug.Assert(screen is not null);
+            var screen = model.GetValidScreen();
             ct.ThrowIfCancellationRequested();
 
             await UniTask.SwitchToThreadPool();

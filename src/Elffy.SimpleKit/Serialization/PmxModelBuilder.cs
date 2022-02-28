@@ -51,8 +51,7 @@ namespace Elffy.Serialization
             // ------------------------------
             //      ↓ thread pool
             Debug.Assert(Engine.IsThreadMain == false);
-            model.TryGetHostScreen(out var screen);
-            Debug.Assert(screen is not null);
+            var screen = model.GetValidScreen();
 
             // Don't make the followings parallel like UniTask.WhenAll.
             // ModelData will be disposed when an exception is throw, but another parallel code could not know that.

@@ -4,13 +4,12 @@ using Elffy.Graphics.OpenGL;
 using Elffy.Shading;
 using Elffy.Shading.Deferred;
 using Elffy.Graphics;
-using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy
 {
-    public sealed class DeferredRenderingLayer : WorldLayer, IGBufferSource
+    public sealed class DeferredRenderingLayer : WorldLayer, IGBufferProvider
     {
         private const int DRLayerDefaultSort = -100;
 
@@ -22,7 +21,7 @@ namespace Elffy
         private bool _isSizeChangeRequested;
         private long _sizeChangeRequestedFrameNum;
 
-        IGBuffer IGBufferSource.GBuffer => _gBuffer;
+        IGBuffer IGBufferProvider.GBuffer => _gBuffer;
 
         public DeferredRenderingLayer(int sortNumber = DRLayerDefaultSort) : base(sortNumber)
         {
@@ -109,10 +108,26 @@ namespace Elffy
         }
     }
 
-    internal interface IGBufferSource
+    internal interface IGBufferProvider
     {
         IGBuffer GBuffer { get; }
 
-        bool TryGetHostScreen([MaybeNullWhen(false)] out IHostScreen screen);
+        bool TryGetScreen([MaybeNullWhen(false)] out IHostScreen screen);
+
+        public IHostScreen GetValidScreen()
+        {
+            if(TryGetScreen(out var screen) == false) {
+                ThrowHelper.ThrowInvalidNullScreen();
+            }
+            return screen;
+        }
+
+        public (IHostScreen Screen, IGBuffer GBuffer) GetValidScreenAndGBuffer()
+        {
+            if(TryGetScreen(out var screen) == false) {
+                ThrowHelper.ThrowInvalidNullScreen();
+            }
+            return (screen, GBuffer);
+        }
     }
 }

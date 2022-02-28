@@ -7,28 +7,24 @@ namespace Elffy.Shading.Deferred
     {
         internal delegate ref readonly Matrix4 MatrixProvider(IHostScreen screen);
 
-        private readonly IGBufferSource _pbrInfo;
-        private readonly IGBuffer _gBuffer;
+        private readonly IGBufferProvider _gBufferProvider;
         private readonly MatrixProvider _viewProvider;
         private ILightBuffer? _lightBuffer;
 
         public override string FragShaderSource => FragSource;
 
-        internal PbrDeferredRenderingPostProcess(IGBufferSource gbufferSource, MatrixProvider viewProvider)
+        internal PbrDeferredRenderingPostProcess(IGBufferProvider gBufferProvider, MatrixProvider viewProvider)
         {
-            _pbrInfo = gbufferSource;
-            _gBuffer = gbufferSource.GBuffer;
+            _gBufferProvider = gBufferProvider;
             _viewProvider = viewProvider;
         }
 
         protected override void OnRendering(ShaderDataDispatcher dispatcher, in Vector2i screenSize)
         {
-            if(_pbrInfo.TryGetHostScreen(out var screen) == false) {
-                throw new System.InvalidOperationException();
-            }
-            var lightBuffer = (_lightBuffer ??= screen.Lights.StaticLights.LightBuffer);
+            var (screen, gBuffer) = _gBufferProvider.GetValidScreenAndGBuffer();
+            var lightBuffer = _lightBuffer ??= screen.Lights.StaticLights.LightBuffer;
             var lightData = lightBuffer.GetBufferData();
-            var gData = _gBuffer.GetBufferData();
+            var gData = gBuffer.GetBufferData();
 
             dispatcher.SendUniform("_view", _viewProvider(screen));
             dispatcher.SendUniform("_lightCount", lightData.LightCount);

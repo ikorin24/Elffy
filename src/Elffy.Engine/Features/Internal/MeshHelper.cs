@@ -12,7 +12,7 @@ namespace Elffy.Features.Internal
         {
             ArgumentNullException.ThrowIfNull(renderable);
 
-            if(renderable.TryGetHostScreen(out var screen) == false) { goto FAILURE; }
+            if(renderable.TryGetScreen(out var screen) == false) { goto FAILURE; }
             if(Engine.CurrentContext != screen) { goto FAILURE; }
             if(renderable.IsLoaded == false) { goto FAILURE; }
 
@@ -78,7 +78,7 @@ namespace Elffy.Features.Internal
         {
             ArgumentNullException.ThrowIfNull(renderable);
 
-            if(renderable.TryGetHostScreen(out var screen) == false) { goto FAILURE; }
+            if(renderable.TryGetScreen(out var screen) == false) { goto FAILURE; }
             if(Engine.CurrentContext != screen) { goto FAILURE; }
             if(renderable.IsLoaded == false) { goto FAILURE; }
             vertexType = renderable.VertexType;
@@ -138,10 +138,7 @@ namespace Elffy.Features.Internal
         public static unsafe (ulong VertexCount, uint IndexCount) GetMesh<TVertex>(Renderable renderable, TVertex* vertices, ulong vertexCount, int* indices, uint indexCount) where TVertex : unmanaged
         {
             ArgumentNullException.ThrowIfNull(renderable);
-
-            if(renderable.TryGetHostScreen(out var screen) == false) {
-                throw new InvalidOperationException();
-            }
+            var screen = renderable.GetValidScreen();
             var currentContext = Engine.CurrentContext;
             if(currentContext != screen) {
                 ContextMismatchException.Throw(currentContext, screen);

@@ -40,7 +40,7 @@ namespace Elffy.Shading.Forward
 
             var staticLights = _staticLights;
             if(staticLights == null) {
-                if(target.TryGetHostScreen(out var screen) == false) { throw new InvalidOperationException(); }
+                var screen = target.GetValidScreen();
                 staticLights = screen.Lights.StaticLights;
                 _staticLights = staticLights;
             }

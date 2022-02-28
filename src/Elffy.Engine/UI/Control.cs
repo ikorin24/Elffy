@@ -79,21 +79,21 @@ namespace Elffy.UI
         /// <summary>Get absolute position of the control.</summary>
         public Vector2 ActualPosition
         {
-            get => Renderable.Position.Xy;
-            internal set => Renderable.Position.RefXy() = value;
+            get => _renderable.Position.Xy;
+            internal set => _renderable.Position.RefXy() = value;
         }
 
         /// <summary>Get actual width of <see cref="Control"/></summary>
-        public float ActualWidth => Renderable.Scale.X;
+        public float ActualWidth => _renderable.Scale.X;
 
         /// <summary>Get actual height of <see cref="Control"/></summary>
-        public float ActualHeight => Renderable.Scale.Y;
+        public float ActualHeight => _renderable.Scale.Y;
 
         /// <summary>Get actual size of <see cref="Control"/></summary>
         public Vector2 ActualSize
         {
-            get => Renderable.Scale.Xy;
-            internal set => Renderable.Scale.RefXy() = value;
+            get => _renderable.Scale.Xy;
+            internal set => _renderable.Scale.RefXy() = value;
         }
 
         /// <summary>get or set whether this <see cref="Control"/> is enabled in HitTest</summary>
@@ -112,11 +112,11 @@ namespace Elffy.UI
         /// <summary>get or set <see cref="Control"/> is visible on rendering.</summary>
         public bool IsVisible
         {
-            get => Renderable.Visibility == RenderVisibility.Visible;
-            set => Renderable.Visibility = value ? RenderVisibility.Visible : RenderVisibility.InvisibleSelf;
+            get => _renderable.Visibility == RenderVisibility.Visible;
+            set => _renderable.Visibility = value ? RenderVisibility.Visible : RenderVisibility.InvisibleSelf;
         }
 
-        public IHostScreen? Screen => Renderable.Screen;
+        public IHostScreen? Screen => _renderable.Screen;
 
         internal ref readonly TextureCore Texture => ref _texture;
 
@@ -130,10 +130,9 @@ namespace Elffy.UI
             _texture = new TextureCore(textureConfig);
         }
 
-        public bool TryGetHostScreen([MaybeNullWhen(false)] out IHostScreen screen)
-        {
-            return Renderable.TryGetHostScreen(out screen);
-        }
+        public bool TryGetScreen([MaybeNullWhen(false)] out IHostScreen screen) => _renderable.TryGetScreen(out screen);
+
+        public IHostScreen GetValidScreen() => _renderable.GetValidScreen();
 
         internal void DoUIEvent() => OnUIEvent();
 
@@ -224,7 +223,7 @@ namespace Elffy.UI
             if(_renderable.TryGetUILayer(out var layer) == false) {
                 throw new InvalidOperationException("The parent has no layer.");
             }
-            if(layer.TryGetHostScreen(out var screen) == false) {
+            if(layer.TryGetScreen(out var screen) == false) {
                 throw new InvalidOperationException($"The parent has no {nameof(IHostScreen)}.");
             }
             var root = layer.UIRoot;
@@ -253,7 +252,7 @@ namespace Elffy.UI
         private (IHostScreen Screen, UILayer Layer, int Index) CheckArgAndStateForRemoveChild(Control childToRemove)
         {
             ArgumentNullException.ThrowIfNull(childToRemove);
-            if(TryGetHostScreen(out var screen) == false) {
+            if(TryGetScreen(out var screen) == false) {
                 throw new InvalidOperationException();
             }
             var currentContext = Engine.CurrentContext;
@@ -303,7 +302,7 @@ namespace Elffy.UI
 
         private void CheckStateForClearChildren()
         {
-            if(TryGetHostScreen(out var screen) == false) {
+            if(TryGetScreen(out var screen) == false) {
                 throw new InvalidOperationException();
             }
             var currentContext = Engine.CurrentContext;
@@ -334,7 +333,7 @@ namespace Elffy.UI
             control._parent = this;
             control._root = root;
             _childrenCore.Add(control);
-            return ActivateChild(control.Renderable, root, layer, screen);
+            return ActivateChild(control._renderable, root, layer, screen);
 
             static async UniTask ActivateChild(UIRenderable controlRenderable, RootPanel root, UILayer layer, IHostScreen screen)
             {

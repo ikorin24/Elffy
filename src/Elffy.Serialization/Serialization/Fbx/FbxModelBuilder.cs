@@ -29,8 +29,7 @@ namespace Elffy.Serialization.Fbx
         {
             //var (resourceLoader, name, token) = obj;
             var (file, token) = state;
-            model.TryGetHostScreen(out var screen);
-            Debug.Assert(screen is not null);
+            var screen = model.GetValidScreen();
             var timingPoints = screen.TimingPoints;
             token.ThrowIfCancellationRequested();
 
@@ -64,8 +63,8 @@ namespace Elffy.Serialization.Fbx
         private static UniTask CreateTexture(ResourceFile file, FbxSemanticsUnsafe<SkinnedVertex> fbx, Model3D model)
         {
             // ↓ main thread --------------------------------------
-            var contextExist = model.TryGetHostScreen(out var screen);
-            Debug.Assert(contextExist && Engine.CurrentContext == screen);
+            var screen = model.GetValidScreen();
+            Debug.Assert(Engine.CurrentContext == screen);
             var texture = new MultiTexture();
             model.AddComponent(texture);
             using var textureLoader = texture.GetLoaderContext(fbx.Textures.Length);

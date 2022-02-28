@@ -52,7 +52,7 @@ namespace Elffy.UI
 
             // isMouseOver か _keyPressed の少なくともいずれか1つは true
 
-            if(TryGetHostScreen(out var screen) == false) { return; }
+            if(TryGetScreen(out var screen) == false) { return; }
             var mouse = screen.Mouse;
             if(mouse.IsPressed(MouseButton.Left)) {
                 if(isMouseOver) {
