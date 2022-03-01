@@ -68,15 +68,14 @@ namespace Elffy
             FBO.Bind(targetFbo, FBO.Target.FrameBuffer);
             if(IsVisible) {
                 _ppProgram.Render(screenSize, (Vector2)screenSize / (Vector2)gBufSize);
-            }
-
-            FBO.Bind(gBuffer.FBO, FBO.Target.Read);
-            FBO.Bind(targetFbo, FBO.Target.Draw);
-            var gBufAspect = (float)gBufSize.X / gBufSize.Y;
-            var srcRect = new RectI(Vector2i.Zero, gBufSize);
-            var destRect = new RectI(0, 0, (int)(gBufSize.Y * gBufAspect), gBufSize.Y);
-            Graphic.BlitDepthBuffer(srcRect, destRect);
-            FBO.Bind(targetFbo, FBO.Target.FrameBuffer);
+                FBO.Bind(gBuffer.FBO, FBO.Target.Read);
+                FBO.Bind(targetFbo, FBO.Target.Draw);
+                var gBufAspect = (float)gBufSize.X / gBufSize.Y;
+                var srcRect = new RectI(Vector2i.Zero, gBufSize);
+                var destRect = new RectI(0, 0, (int)(gBufSize.Y * gBufAspect), gBufSize.Y);
+                Graphic.BlitDepthBuffer(srcRect, destRect);
+                FBO.Bind(targetFbo, FBO.Target.FrameBuffer);
+            }            
             currentFbo = targetFbo;
         }
 
