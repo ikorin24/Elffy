@@ -57,7 +57,7 @@ void main()
             // | / |
             // 1 - 2
 
-            const float z = 0.9f;
+            const float z = 0f;
             ReadOnlySpan<VertexSlim> vertices = stackalloc VertexSlim[4]
             {
                 new (new (-1, 1, z),  new (0, 1)),

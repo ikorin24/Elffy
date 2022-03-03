@@ -71,6 +71,16 @@ namespace Elffy.Shading.Deferred
             _initialized = true;
         }
 
+        public unsafe void ClearColorBuffers()
+        {
+            float* clearColor = stackalloc float[4] { 0, 0, 0, 0 };
+            GL.ClearBuffer(ClearBuffer.Color, 0, clearColor);
+            GL.ClearBuffer(ClearBuffer.Color, 1, clearColor);
+            GL.ClearBuffer(ClearBuffer.Color, 2, clearColor);
+            GL.ClearBuffer(ClearBuffer.Color, 3, clearColor);
+            GL.ClearBuffer(ClearBuffer.Color, 4, clearColor);
+        }
+
         public void Resize()
         {
             if(TryGetScreen(out var screen) == false) {

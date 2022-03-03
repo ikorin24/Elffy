@@ -94,9 +94,14 @@ layout (location = 2) out vec4 _gAlbedo;            // (albedo.r, albedo.g, albe
 layout (location = 3) out vec4 _gEmit;              // (emit.r, emit.g, emit.b, 1)
 layout (location = 4) out vec4 _gMetallicRoughness; // (metallic, roughness, 0, 1)
 
+vec3 ToVec3(vec4 v)
+{
+    return v.xyz / v.w;
+}
+
 void main()
 {
-    _gPosition = _model * vec4(_pos, 1.0);
+    _gPosition = vec4(ToVec3(_model * vec4(_pos, 1.0)).xyz, 1);
     _gNormal = vec4(normalize(transpose(inverse(mat3(_model))) * _normal), 1.0);
     _gAlbedo = _hasTexture ? vec4(texture(_tex, _uv).rgb, 1.0) : vec4(_albedoMetallic.rgb, 1.0);
     _gEmit = vec4(_emitRoughness.rgb, 1.0);

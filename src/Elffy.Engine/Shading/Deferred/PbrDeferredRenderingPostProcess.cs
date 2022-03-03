@@ -8,7 +8,6 @@ namespace Elffy.Shading.Deferred
         internal delegate ref readonly Matrix4 MatrixProvider(IHostScreen screen);
 
         private readonly IGBufferProvider _gBufferProvider;
-        private readonly MatrixProvider _viewProvider;
         private ILightBuffer? _lightBuffer;
 
         public override string FragShaderSource => FragSource;
@@ -16,7 +15,6 @@ namespace Elffy.Shading.Deferred
         internal PbrDeferredRenderingPostProcess(IGBufferProvider gBufferProvider, MatrixProvider viewProvider)
         {
             _gBufferProvider = gBufferProvider;
-            _viewProvider = viewProvider;
         }
 
         protected override void OnRendering(ShaderDataDispatcher dispatcher, in Vector2i screenSize)
@@ -26,7 +24,9 @@ namespace Elffy.Shading.Deferred
             var lightData = lightBuffer.GetBufferData();
             var gData = gBuffer.GetBufferData();
 
-            dispatcher.SendUniform("_view", _viewProvider(screen));
+            var camera = screen.Camera;
+            dispatcher.SendUniform("_view", camera.View);
+            dispatcher.SendUniform("_projection", camera.Projection);
             dispatcher.SendUniform("_lightCount", lightData.LightCount);
             dispatcher.SendUniformTexture2D("_posSampler", gData.Position, TextureUnitNumber.Unit0);
             dispatcher.SendUniformTexture2D("_normalSampler", gData.Normal, TextureUnitNumber.Unit1);
@@ -52,6 +52,7 @@ const float DielectricF0 = 0.04;
 
 in vec2 _uv;
 uniform mat4 _view;
+uniform mat4 _projection;
 uniform sampler2D _posSampler;
 uniform sampler2D _normalSampler;
 uniform sampler2D _albedoSampler;
@@ -109,14 +110,24 @@ float Fd_Burley(float dot_nv, float dot_nl, float dot_lh, float roughness)
     return lightScatter * viewScatter * INV_PI;
 }
 
+vec3 ToVec3(vec4 v)
+{
+    return v.xyz / v.w;
+}
+
 void main()
 {
+    vec4 posWorld = textureLod(_posSampler, _uv, 0);
+    if(posWorld.w < 0.01) {
+        gl_FragDepth = 1;
+        discard;
+        return;
+    }
     mat3 viewInvT = transpose(inverse(mat3(_view)));
     vec3 nWorld = textureLod(_normalSampler, _uv, 0).rgb;
-    vec3 posWorld = textureLod(_posSampler, _uv, 0).rgb;
     vec3 albedo = textureLod(_albedoSampler, _uv, 0).rgb;
     vec3 emit = textureLod(_emitSampler, _uv, 0).rgb;
-    vec3 pos = (_view * vec4(posWorld, 1.0)).xyz;   // pos in eye space
+    vec3 pos = ToVec3(_view * posWorld);    // pos in eye space
     vec4 metallicRoughness = textureLod(_metallicRoughnessSampler, _uv, 0);
     float metallic = metallicRoughness.r;
     float roughness = metallicRoughness.g;
@@ -158,6 +169,8 @@ void main()
 
         fragColor += diffuse + specular;
     }
+    vec4 dncPos = _projection * vec4(pos, 1);    // device-normalized-coordinate position
+    gl_FragDepth = (dncPos.z / dncPos.w) * 0.5 + 0.5;
     _fragColor = vec4(fragColor, 1.0);
 }
 ";
