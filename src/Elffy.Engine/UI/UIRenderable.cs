@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Cysharp.Threading.Tasks;
 using Elffy.Graphics.OpenGL;
+using Elffy.Shading;
 
 namespace Elffy.UI
 {
@@ -76,17 +77,25 @@ namespace Elffy.UI
         {
             var control = Control;
             var rt = control.RenderTransform;
+            var shader = SafeCast.NotNullAs<UIRenderingShader>(ShaderInternal);
+            var program = RendererData.GetValidProgram();
+            if(IsLoaded == false) {
+                throw new InvalidOperationException("Not loaded yet.");
+            }
 
             VAO.Bind(VAO);
             IBO.Bind(IBO);
+            ProgramObject.UseProgram(program);
             if(rt.IsIdentity) {
-                ShaderProgram.ApplyForUI(in model, in view, in projection);
+                shader.OnRenderingInternal(program, control, model, view, projection);
+
             }
             else {
-                // TODO: 実装
+                // TODO:
                 var modelTransformed = model;
                 //ref var rto = ref control.RenderTransformOrigin;
-                ShaderProgram.ApplyForUI(in modelTransformed, in view, in projection);
+
+                shader.OnRenderingInternal(program, control, modelTransformed, view, projection);
             }
             DrawElements(0, IBO.Length);
             VAO.Unbind();

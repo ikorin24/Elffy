@@ -6,7 +6,7 @@ using Elffy.Graphics.OpenGL;
 
 namespace Elffy.Shading
 {
-    public abstract class UIRenderingShader : IShaderSource
+    public abstract class UIRenderingShader : IRenderingShader
     {
         private int _sourceHashCache;
 
@@ -14,11 +14,11 @@ namespace Elffy.Shading
 
         protected abstract string FragmentShaderSource { get; }
 
-        string IShaderSource.VertexShaderSource => VertexShaderSource;
+        string IRenderingShader.VertexShaderSource => VertexShaderSource;
 
-        string IShaderSource.FragmentShaderSource => FragmentShaderSource;
+        string IRenderingShader.FragmentShaderSource => FragmentShaderSource;
 
-        string? IShaderSource.GeometryShaderSource => null;
+        string? IRenderingShader.GeometryShaderSource => null;
 
         protected abstract void DefineLocation(VertexDefinition<VertexSlim> definition, Control target);
 
@@ -36,14 +36,7 @@ namespace Elffy.Shading
             OnRendering(new ShaderDataDispatcher(program), target, model, view, projection);
         }
 
-        ShaderProgram IShaderSource.Compile(Renderable owner) => Compile(owner);
-
-        internal ShaderProgram Compile(Renderable owner)
-        {
-            return ShaderProgram.Create(owner);
-        }
-
-        int IShaderSource.GetSourceHash() => GetSourceHash();
+        int IRenderingShader.GetSourceHash() => GetSourceHash();
 
         internal int GetSourceHash()
         {

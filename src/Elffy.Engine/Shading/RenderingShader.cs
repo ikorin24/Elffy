@@ -8,7 +8,7 @@ using Elffy.Graphics.OpenGL;
 
 namespace Elffy.Shading
 {
-    public abstract class RenderingShader : IShaderSource
+    public abstract class RenderingShader : IRenderingShader
     {
         // [NOTE]
         // ShaderSource don't have any opengl resources. (e.g. ProgramObject)
@@ -22,11 +22,11 @@ namespace Elffy.Shading
 
         protected virtual string? GeometryShaderSource { get; } = null;
 
-        string IShaderSource.VertexShaderSource => VertexShaderSource;
+        string IRenderingShader.VertexShaderSource => VertexShaderSource;
 
-        string IShaderSource.FragmentShaderSource => FragmentShaderSource;
+        string IRenderingShader.FragmentShaderSource => FragmentShaderSource;
 
-        string? IShaderSource.GeometryShaderSource => GeometryShaderSource;
+        string? IRenderingShader.GeometryShaderSource => GeometryShaderSource;
 
         protected abstract void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType);
 
@@ -50,14 +50,7 @@ namespace Elffy.Shading
             OnRendering(new ShaderDataDispatcher(program), target, model, view, projection);
         }
 
-        ShaderProgram IShaderSource.Compile(Renderable owner) => Compile(owner);
-
-        internal ShaderProgram Compile(Renderable owner)
-        {
-            return ShaderProgram.Create(owner);
-        }
-
-        int IShaderSource.GetSourceHash() => GetSourceHash();
+        int IRenderingShader.GetSourceHash() => GetSourceHash();
 
         internal int GetSourceHash()
         {

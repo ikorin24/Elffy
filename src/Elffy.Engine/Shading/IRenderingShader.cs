@@ -2,14 +2,12 @@
 
 namespace Elffy.Shading
 {
-    internal interface IShaderSource
+    internal interface IRenderingShader
     {
         string VertexShaderSource { get; }
         string FragmentShaderSource { get; }
         string? GeometryShaderSource { get; }
 
         internal int GetSourceHash();
-
-        internal ShaderProgram Compile(Renderable owner);
     }
 }
