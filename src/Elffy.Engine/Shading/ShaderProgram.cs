@@ -51,7 +51,7 @@ namespace Elffy.Shading
             Debug.Assert(_owner is not UIRenderable, $"Use {nameof(ApplyForUI)} method for {nameof(UIRenderable)}.");
             Debug.Assert(_owner.Shader is not null);
 
-            ProgramObject.Bind(_program);
+            ProgramObject.UseProgram(_program);
             _owner.Shader.OnRenderingInternal(_program, _owner, model, view, projection);
         }
 
@@ -59,12 +59,11 @@ namespace Elffy.Shading
         {
             if(IsEmpty) { ThrowEmptyShader(); }
             if(!_owner.IsLoaded) { ThrowNotInitialized(); }
-            ProgramObject.Bind(_program);
+            ProgramObject.UseProgram(_program);
 
-            var shaderSource = SafeCast.As<UIRenderingShader>(_owner.ShaderInternal);
-            Debug.Assert(shaderSource is not null);
+            var shader = SafeCast.NotNullAs<UIRenderingShader>(_owner.ShaderInternal);
             var control = SafeCast.As<UIRenderable>(_owner).Control;
-            shaderSource.OnRenderingInternal(_program, control, model, view, projection);
+            shader.OnRenderingInternal(_program, control, model, view, projection);
         }
 
         internal void Initialize(Type vertexType)

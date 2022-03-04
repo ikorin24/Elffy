@@ -42,7 +42,7 @@ namespace Elffy.Shading
             ContextMismatchException.ThrowIfContextNotEqual(Engine.GetValidCurrentContext(), screen);
 
             var program = _program;
-            ProgramObject.Bind(program);
+            ProgramObject.UseProgram(program);
             var context = new ComputeShaderContext(screen);
             var uniform = new ShaderDataDispatcher(program);
             IComputeShader.OnDispatchingInternal(_shader, uniform, context);

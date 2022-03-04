@@ -40,16 +40,10 @@ namespace Elffy.Graphics.OpenGL
             }
         }
 
-        internal static void Bind(in ProgramObject po)
+        internal static void UseProgram(in ProgramObject po)
         {
             GLAssert.EnsureContext();
             GL.UseProgram(po._program);
-        }
-
-        internal static void Unbind()
-        {
-            GLAssert.EnsureContext();
-            GL.UseProgram(0);
         }
 
         public override bool Equals(object? obj) => obj is ProgramObject po && Equals(po);
