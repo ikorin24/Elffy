@@ -15,7 +15,7 @@ namespace Elffy
         private readonly string? _name;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private string DebugView => _loader is null ? "<empty>" : $"{nameof(ResourceFile)}: \"{Name}\" (in {_loader.GetType().Name})";
+        private string DebugView => _loader is null ? "<empty>" : $"{nameof(ResourceFile)}: \"{Name}\" (in {_loader.Name})";
 
         public string Name => _name ?? "";
 

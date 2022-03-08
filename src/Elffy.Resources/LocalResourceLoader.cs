@@ -9,10 +9,13 @@ namespace Elffy
 {
     internal sealed class LocalResourceLoader : IResourceLoader
     {
+        private readonly string _name;
         private readonly string _resourcePackageFilePath;
         private readonly Dictionary<string, ResourceObject> _resources;
 
         internal string ResourcePackageFilePath => _resourcePackageFilePath;
+
+        public string Name => _name;
 
         public LocalResourceLoader(string resourcePackageFilePath)
         {
@@ -20,6 +23,7 @@ namespace Elffy
 
             _resourcePackageFilePath = Path.Combine(AppContext.BaseDirectory, resourcePackageFilePath);
             _resources = LocalResourceInitializer.CreateDictionary(_resourcePackageFilePath);
+            _name = Path.GetFileNameWithoutExtension(_resourcePackageFilePath);
         }
 
         // This method is only for debug.
@@ -69,6 +73,8 @@ namespace Elffy
     {
         private static readonly EmptyResourceLoader _instance = new EmptyResourceLoader();
         public static EmptyResourceLoader Null => _instance;
+
+        public string Name => "Empty";
 
         public bool Exists(string? name) => false;
 
