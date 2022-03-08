@@ -8,17 +8,22 @@ using System.Runtime.CompilerServices;
 
 namespace Elffy
 {
-    [DebuggerDisplay("ResourceFile: {Name}")]
+    [DebuggerDisplay("{DebugView,nq}")]
     public readonly struct ResourceFile : IEquatable<ResourceFile>
     {
         private readonly IResourceLoader? _loader;
         private readonly string? _name;
 
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private string DebugView => _loader is null ? "<empty>" : $"{nameof(ResourceFile)}: \"{Name}\" (in {_loader.GetType().Name})";
+
         public string Name => _name ?? "";
+
+        public bool IsNone => _loader is null;
 
         public ReadOnlySpan<char> FileExtension => ResourcePath.GetExtension(_name.AsSpan());
 
-        public static ResourceFile InvalidInstance => default;
+        public static ResourceFile None => default;
 
         public long FileSize => ResourceLoader.TryGetSize(_name, out var size) ? size : 0;
 

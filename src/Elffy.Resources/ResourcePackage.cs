@@ -21,7 +21,7 @@ namespace Elffy
         public bool TryGetFile(string name, out ResourceFile file)
         {
             if(_loader.Exists(name) == false) {
-                file = ResourceFile.InvalidInstance;
+                file = ResourceFile.None;
                 return false;
             }
             file = new ResourceFile(_loader, name);

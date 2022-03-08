@@ -94,23 +94,23 @@ namespace Elffy
         }
 
         /// <summary>Create new <see cref="Window"/></summary>
-        public Window() : this(DefaultWidth, DefaultHeight, DefaultTitle, WindowStyle.Default, Icon.None) { }
+        public Window() : this(DefaultWidth, DefaultHeight, DefaultTitle, WindowStyle.Default, ResourceFile.None) { }
 
         /// <summary>Create new <see cref="Window"/></summary>
         /// <param name="width">window width</param>
         /// <param name="height">window height</param>
-        public Window(int width, int height) : this(width, height, DefaultTitle, WindowStyle.Default, Icon.None) { }
+        public Window(int width, int height) : this(width, height, DefaultTitle, WindowStyle.Default, ResourceFile.None) { }
 
         /// <summary>Create new <see cref="Window"/></summary>
         /// <param name="width">window width</param>
         /// <param name="height">window height</param>
         /// <param name="title">window title</param>
-        public Window(int width, int height, string title) : this(width, height, title, WindowStyle.Default, Icon.None) { }
+        public Window(int width, int height, string title) : this(width, height, title, WindowStyle.Default, ResourceFile.None) { }
 
         /// <summary>Create new <see cref="Window"/></summary>
         /// <param name="windowStyle">window style</param>
         public Window(WindowStyle windowStyle)
-            : this(DefaultWidth, DefaultHeight, DefaultTitle, windowStyle, Icon.None)
+            : this(DefaultWidth, DefaultHeight, DefaultTitle, windowStyle, ResourceFile.None)
         {
         }
 
@@ -120,7 +120,7 @@ namespace Elffy
         /// <param name="title">window title</param>
         /// <param name="windowStyle">window style</param>
         public Window(int width, int height, string title, WindowStyle windowStyle)
-            : this(width, height, title, windowStyle, Icon.None)
+            : this(width, height, title, windowStyle, ResourceFile.None)
         {
         }
 
@@ -129,41 +129,39 @@ namespace Elffy
         /// <param name="height">height of the window</param>
         /// <param name="title">title of the window</param>
         /// <param name="windowStyle">window style</param>
-        /// <param name="icon">window icon (The instance is copied, so you can dispose it after call the constructor.)</param>
-        public Window(int width, int height, string title, WindowStyle windowStyle, Icon icon)
+        /// <param name="icon">window icon</param>
+        public Window(int width, int height, string title, WindowStyle windowStyle, ResourceFile icon)
         {
             var config = new WindowConfig
             {
                 Width = width,
                 Height = height,
                 Title = title,
+                Icon = icon,
                 FrameRate = DefaultFrameRate,
                 Style = windowStyle,
                 BorderStyle = WindowBorderStyle.Default,
                 Visibility = WindowVisibility.Visible,
             };
-            Ctor(out _renderingArea, out _windowImpl, config, icon.Clone());
+            Ctor(out _renderingArea, out _windowImpl, config);
         }
 
-        public Window(in WindowConfig config) : this(config, Icon.None) { }
-
-        public Window(in WindowConfig config, Icon icon)
+        public Window(in WindowConfig config)
         {
             var c = config with
             {
                 FrameRate = DefaultFrameRate,
             };
-            Ctor(out _renderingArea, out _windowImpl, c, icon.Clone());
+            Ctor(out _renderingArea, out _windowImpl, c);
         }
 
-        //private void Ctor(out RenderingArea renderingArea, out WindowGLFW windowImpl, int width, int height, string title, WindowStyle windowStyle, Icon icon)
-        private void Ctor(out RenderingArea renderingArea, out WindowGLFW windowImpl, in WindowConfig config, Icon icon)
+        private void Ctor(out RenderingArea renderingArea, out WindowGLFW windowImpl, in WindowConfig config)
         {
             if(config.Width <= 0) { throw new ArgumentOutOfRangeException(nameof(WindowConfig.Width)); }
             if(config.Height <= 0) { throw new ArgumentOutOfRangeException(nameof(WindowConfig.Height)); }
 
             renderingArea = new RenderingArea(this);
-            windowImpl = new WindowGLFW(this, config, ref icon);
+            windowImpl = new WindowGLFW(this, config);
 
             _frameDelta = TimeSpanF.FromSeconds(1.0 / config.FrameRate);
             _windowImpl.UpdateFrame += (_, e) => UpdateFrame();

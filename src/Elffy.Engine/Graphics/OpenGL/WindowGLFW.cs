@@ -2,7 +2,6 @@
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using Elffy.Imaging;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
@@ -15,29 +14,9 @@ namespace Elffy.Graphics.OpenGL
     /// <summary>Raw window class of GLFW</summary>
     internal unsafe sealed partial class WindowGLFW : IDisposable
     {
-        private record struct InitArgs : IDisposable
-        {
-            public int Width { get; init; }
-            public int Height { get; init; }
-            public string Title { get; init; }
-            public float FrameRate { get; init; }
-            public WindowStyle Style { get; init; }
-            public WindowBorderStyle BorderStyle { get; init; }
-            public WindowVisibility Visibility { get; init; }
-
-            public IHostScreen Screen { get; init; }
-            public Icon Icon { get; init; }
-
-            public void Dispose()
-            {
-                Icon.Dispose();
-                this = default;
-            }
-        }
-
         const double MaxUpdateFrequency = 500;
 
-        private IHostScreen? _owner;
+        private readonly IHostScreen _owner;
         private Wnd* _window;
         private Vector2i _clientSize;
         private Vector2i _size;
@@ -52,7 +31,7 @@ namespace Elffy.Graphics.OpenGL
 
         private bool _isLoaded; // It get true when the first frame is handled.
 
-        private InitArgs _initArgs;
+        private WindowConfig _initialConfig;
         private bool _isActivated;
 
         public bool IsDisposed => _window == null;
@@ -108,24 +87,13 @@ namespace Elffy.Graphics.OpenGL
             }
         }
 
-        public WindowGLFW(IHostScreen screen, in WindowConfig config, ref Icon icon)
+        public WindowGLFW(IHostScreen screen, in WindowConfig config)
         {
-            _initArgs = new InitArgs
-            {
-                Width = config.Width,
-                Height = config.Height,
-                Title = config.Title,
-                FrameRate = config.FrameRate,
-                Style = config.Style,
-                BorderStyle = config.BorderStyle,
-                Visibility = config.Visibility,
-                Screen = screen,
-                Icon = icon,
-            };
-            icon = default;
+            _owner = screen;
+            _initialConfig = config;
         }
 
-        private void Init(in InitArgs args)
+        private void Init()
         {
             // [Hard coded setting]
             // - Opengl core profile
@@ -136,8 +104,6 @@ namespace Elffy.Graphics.OpenGL
             var currentHostScreen = Engine.CurrentContext;
             var currentContext = GLFW.GetCurrentContext();
 
-            _owner = args.Screen;
-
             GLFW.Init();
             GLFW.SetErrorCallback((errorCode, description) => throw new GLFWException(description, errorCode));
 
@@ -147,7 +113,7 @@ namespace Elffy.Graphics.OpenGL
             }
             GLFW.DefaultWindowHints();
             var isFullscreen = false;
-            switch(args.Style) {
+            switch(_initialConfig.Style) {
                 case WindowStyle.Default:
                     GLFW.WindowHint(WindowHintBool.Resizable, true);
                     break;
@@ -170,7 +136,7 @@ namespace Elffy.Graphics.OpenGL
             GLFW.WindowHint(WindowHintBool.Focused, true);
             GLFW.WindowHint(WindowHintBool.Visible, false);
             GLFW.WindowHint(WindowHintBool.FocusOnShow, true);
-            GLFW.WindowHint(WindowHintBool.Decorated, args.BorderStyle switch
+            GLFW.WindowHint(WindowHintBool.Decorated, _initialConfig.BorderStyle switch
             {
                 WindowBorderStyle.Default => true,
                 WindowBorderStyle.NoBorder => false,
@@ -182,14 +148,14 @@ namespace Elffy.Graphics.OpenGL
             GLFW.WindowHint(WindowHintInt.GreenBits, videoMode->GreenBits);
             GLFW.WindowHint(WindowHintInt.BlueBits, videoMode->BlueBits);
             //GLFW.WindowHint(WindowHintInt.RefreshRate, videoMode->RefreshRate);
-            GLFW.WindowHint(WindowHintInt.RefreshRate, (int)args.FrameRate);
-            _updateFrequency = args.FrameRate;
+            GLFW.WindowHint(WindowHintInt.RefreshRate, (int)_initialConfig.FrameRate);
+            _updateFrequency = _initialConfig.FrameRate;
             if(isFullscreen) {
-                _window = GLFW.CreateWindow(videoMode->Width, videoMode->Height, args.Title, monitor, null);
+                _window = GLFW.CreateWindow(videoMode->Width, videoMode->Height, _initialConfig.Title, monitor, null);
             }
             else {
-                _window = GLFW.CreateWindow(args.Width, args.Height, args.Title, null, null);
-                GLFW.SetWindowPos(_window, (videoMode->Width - args.Width) / 2, (videoMode->Height - args.Height) / 2);
+                _window = GLFW.CreateWindow(_initialConfig.Width, _initialConfig.Height, _initialConfig.Title, null, null);
+                GLFW.SetWindowPos(_window, (videoMode->Width - _initialConfig.Width) / 2, (videoMode->Height - _initialConfig.Height) / 2);
             }
 
             GLFW.GetFramebufferSize(_window, out _frameBufferSize.X, out _frameBufferSize.Y);
@@ -199,14 +165,13 @@ namespace Elffy.Graphics.OpenGL
                 InitializeGlBindings();
                 RegisterWindowCallbacks();
                 GLFW.FocusWindow(_window);
-                _title = args.Title;
-                var icon = args.Icon;
-                if(icon.ImageCount > 0) {
-                    var image = icon.GetImage(0);
-                    if(image.IsEmpty == false) {
-                        var img = new GLFWImage(image.Width, image.Height, (byte*)image.GetPtr());
-                        GLFW.SetWindowIconRaw(_window, 1, &img);
-                    }
+                _title = _initialConfig.Title;
+                var icon = _initialConfig.Icon;
+                if(icon.IsNone == false) {
+                    using var iconImage = icon.LoadIcon();
+                    var image0 = iconImage.GetImage(0);
+                    var img = new GLFWImage(image0.Width, image0.Height, (byte*)image0.GetPtr());
+                    GLFW.SetWindowIconRaw(_window, 1, &img);
                 }
 
                 GLFW.GetWindowSize(_window, out _clientSize.X, out _clientSize.Y);
@@ -226,7 +191,7 @@ namespace Elffy.Graphics.OpenGL
                 RestoreContextCurrent(currentContext, currentHostScreen);
             }
 
-            if(args.Visibility == WindowVisibility.Visible) {
+            if(_initialConfig.Visibility == WindowVisibility.Visible) {
                 GLFW.ShowWindow(_window);
             }
         }
@@ -332,12 +297,7 @@ namespace Elffy.Graphics.OpenGL
         {
             if(!_isActivated) {
                 _isActivated = true;
-                try {
-                    Init(in _initArgs);
-                }
-                finally {
-                    _initArgs.Dispose();
-                }
+                Init();
             }
             if(IsDisposed) { ThrowDisposed(); }
         }
