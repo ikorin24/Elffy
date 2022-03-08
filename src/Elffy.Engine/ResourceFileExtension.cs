@@ -5,12 +5,10 @@ using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 namespace Elffy
 {
-    public static class ResourceLoaderExtension
+    public static class ResourceFileExtension
     {
         public static Icon LoadIcon(this ResourceFile file)
         {

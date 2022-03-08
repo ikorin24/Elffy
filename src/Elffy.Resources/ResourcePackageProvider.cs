@@ -4,9 +4,9 @@ namespace Elffy
 {
     public static class ResourcePackageProvider
     {
-        public static ResourcePackage CreateLocalResourcePackage(string resourcePackageFilePath)
+        public static IResourcePackage CreateLocalResourcePackage(string packageName, string resourcePackageFilePath)
         {
-            return new ResourcePackage(new LocalResourceLoader(resourcePackageFilePath));
+            return new LocalResourcePackage(packageName, resourcePackageFilePath);
         }
     }
 }

@@ -132,7 +132,7 @@ namespace Elffy.Serialization
 
             var dir = ResourcePath.GetDirectoryName(pmxFile.Name);
             var textureNames = pmx.TextureList.AsSpan();
-            var resourceLoader = pmxFile.ResourceLoader;
+            var resourcePackage = pmxFile.Package;
 
             var materials = pmx.MaterialList.AsSpan();
             using var matTexMem = new ValueTypeRentMemory<int>(materials.Length, true);
@@ -165,7 +165,7 @@ namespace Elffy.Serialization
 
                     // Some pmx have the texture paths that don't exist. (Nobody references them.)
                     // So skip them.
-                    if(resourceLoader.TryGetStream(path, out var stream) == false) { continue; }
+                    if(resourcePackage.TryGetStream(path, out var stream) == false) { continue; }
                     textureUsed[i] = true;
                     var dest = buffer.AsSpan(count * size.X * size.Y);
                     try {

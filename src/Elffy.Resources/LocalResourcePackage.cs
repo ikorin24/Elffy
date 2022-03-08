@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace Elffy
 {
-    internal sealed class LocalResourceLoader : IResourceLoader
+    internal sealed class LocalResourcePackage : IResourcePackage
     {
         private readonly string _name;
         private readonly string _resourcePackageFilePath;
@@ -17,13 +17,14 @@ namespace Elffy
 
         public string Name => _name;
 
-        public LocalResourceLoader(string resourcePackageFilePath)
+        public LocalResourcePackage(string packageName, string resourcePackageFilePath)
         {
-            if(resourcePackageFilePath is null) { throw new ArgumentNullException(nameof(resourcePackageFilePath)); }
+            ArgumentNullException.ThrowIfNull(packageName);
+            ArgumentNullException.ThrowIfNull(resourcePackageFilePath);
 
             _resourcePackageFilePath = Path.Combine(AppContext.BaseDirectory, resourcePackageFilePath);
             _resources = LocalResourceInitializer.CreateDictionary(_resourcePackageFilePath);
-            _name = Path.GetFileNameWithoutExtension(_resourcePackageFilePath);
+            _name = packageName;
         }
 
         // This method is only for debug.
@@ -66,34 +67,6 @@ namespace Elffy
             var fileHandle = File.OpenHandle(_resourcePackageFilePath, FileMode.Open, FileAccess.Read);
             handle = new ResourceFileHandle(fileHandle, resource.Position, resource.Length);
             return true;
-        }
-    }
-
-    internal sealed class EmptyResourceLoader : IResourceLoader
-    {
-        private static readonly EmptyResourceLoader _instance = new EmptyResourceLoader();
-        public static EmptyResourceLoader Null => _instance;
-
-        public string Name => "Empty";
-
-        public bool Exists(string? name) => false;
-
-        public bool TryGetHandle(string? name, out ResourceFileHandle handle)
-        {
-            handle = ResourceFileHandle.None;
-            return false;
-        }
-
-        public bool TryGetSize(string? name, out long size)
-        {
-            size = 0;
-            return false;
-        }
-
-        public bool TryGetStream(string? name, out Stream stream)
-        {
-            stream = Stream.Null;
-            return false;
         }
     }
 }

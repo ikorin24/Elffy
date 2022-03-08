@@ -29,7 +29,7 @@ namespace Elffy
             foreach(var (importedName, packageFilePath) in localResources) {
                 sb.AppendLine(
 $@"        /// <summary>Get resource package ""{importedName}""</summary>
-        public static ResourcePackage {importedName} {{ get; }} = ResourcePackageProvider.CreateLocalResourcePackage(""{packageFilePath}"");");
+        public static global::Elffy.IResourcePackage {importedName} {{ get; }} = global::Elffy.ResourcePackageProvider.CreateLocalResourcePackage(""{importedName}"", ""{packageFilePath}"");");
             }
 
             sb.Append(@"

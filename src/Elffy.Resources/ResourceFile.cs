@@ -11,27 +11,27 @@ namespace Elffy
     [DebuggerDisplay("{DebugView,nq}")]
     public readonly struct ResourceFile : IEquatable<ResourceFile>
     {
-        private readonly IResourceLoader? _loader;
+        private readonly IResourcePackage? _package;
         private readonly string? _name;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private string DebugView => _loader is null ? "<empty>" : $"{nameof(ResourceFile)}: \"{Name}\" (in {_loader.Name})";
+        private string DebugView => _package is null ? "<empty>" : $"{nameof(ResourceFile)}: \"{Name}\" (in {_package.Name})";
 
         public string Name => _name ?? "";
 
-        public bool IsNone => _loader is null;
+        public bool IsNone => _package is null;
 
         public ReadOnlySpan<char> FileExtension => ResourcePath.GetExtension(_name.AsSpan());
 
         public static ResourceFile None => default;
 
-        public long FileSize => ResourceLoader.TryGetSize(_name, out var size) ? size : 0;
+        public long FileSize => Package.TryGetSize(_name, out var size) ? size : 0;
 
-        public IResourceLoader ResourceLoader => _loader ?? EmptyResourceLoader.Null;
+        public IResourcePackage Package => _package ?? EmptyResourcePackage.Instance;
 
-        internal ResourceFile(IResourceLoader loader, string name)
+        internal ResourceFile(IResourcePackage package, string name)
         {
-            _loader = loader;
+            _package = package;
             _name = name;
         }
 
@@ -44,24 +44,52 @@ namespace Elffy
 
         public static void ThrowArgumentExceptionIfInvalid(ResourceFile resource, [CallerArgumentExpression("resource")] string? paramName = null)
         {
-            if(resource._loader is null) {
+            if(resource._package is null) {
                 Throw(paramName);
             }
             [DoesNotReturn] static void Throw(string? paramName) => throw new ArgumentException(paramName);
         }
 
-        public ResourceFileHandle GetHandle() => ResourceLoader.TryGetHandle(_name, out var handle) ? handle : ResourceFileHandle.None;
+        public ResourceFileHandle GetHandle() => Package.TryGetHandle(_name, out var handle) ? handle : ResourceFileHandle.None;
 
-        public Stream GetStream() => ResourceLoader.TryGetStream(_name, out var stream) ? stream : Stream.Null;
+        public Stream GetStream() => Package.TryGetStream(_name, out var stream) ? stream : Stream.Null;
 
         public override bool Equals(object? obj) => obj is ResourceFile file && Equals(file);
 
-        public bool Equals(ResourceFile other) => _loader == other._loader && _name == other._name;
+        public bool Equals(ResourceFile other) => _package == other._package && _name == other._name;
 
-        public override int GetHashCode() => HashCode.Combine(_loader, _name);
+        public override int GetHashCode() => HashCode.Combine(_package, _name);
 
         public static bool operator ==(ResourceFile left, ResourceFile right) => left.Equals(right);
 
         public static bool operator !=(ResourceFile left, ResourceFile right) => !(left == right);
+
+        private sealed class EmptyResourcePackage : IResourcePackage
+        {
+            private static readonly EmptyResourcePackage _instance = new EmptyResourcePackage();
+            public static EmptyResourcePackage Instance => _instance;
+
+            public string Name => "Empty";
+
+            public bool Exists(string? name) => false;
+
+            public bool TryGetHandle(string? name, out ResourceFileHandle handle)
+            {
+                handle = ResourceFileHandle.None;
+                return false;
+            }
+
+            public bool TryGetSize(string? name, out long size)
+            {
+                size = 0;
+                return false;
+            }
+
+            public bool TryGetStream(string? name, out Stream stream)
+            {
+                stream = Stream.Null;
+                return false;
+            }
+        }
     }
 }

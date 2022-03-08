@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 
 namespace Elffy
 {
-    /// <summary>Stream class used by <see cref="LocalResourceLoader"/></summary>
+    /// <summary>Stream class used by <see cref="LocalResourcePackage"/></summary>
     internal sealed class LocalResourceStream : Stream
     {
         // このクラスはもとになる Stream の一部だけを切り出した Stream として振る舞う。

@@ -12,9 +12,9 @@ namespace UnitTest
         [Fact]
         public void CreateFbxModelTest()
         {
-            var loader = new TestFileResourceLoader(TestValues.FileDirectory);
+            var package = new TestFileResourcePackage(TestValues.FileDirectory);
             var files = Directory.GetFiles(TestValues.FileDirectory, "*.fbx")
-                                 .Select(path => new ResourceFile(loader, Path.GetFileName(path)));
+                                 .Select(path => new ResourceFile(package, Path.GetFileName(path)));
 
             foreach(var file in files) {
                 var model = FbxModelBuilder.CreateLazyLoadingFbx(file);
@@ -25,9 +25,9 @@ namespace UnitTest
         [Fact]
         public void LoadFbxModelTest()
         {
-            var loader = new TestFileResourceLoader(TestValues.FileDirectory);
+            var package = new TestFileResourcePackage(TestValues.FileDirectory);
             var files = Directory.GetFiles(TestValues.FileDirectory, "*.fbx")
-                                 .Select(path => new ResourceFile(loader, Path.GetFileName(path)));
+                                 .Select(path => new ResourceFile(package, Path.GetFileName(path)));
 
             foreach(var file in files) {
                 using var stream = file.GetStream();
@@ -46,13 +46,13 @@ namespace UnitTest
         }
     }
 
-    internal sealed class TestFileResourceLoader : IResourceLoader
+    internal sealed class TestFileResourcePackage : IResourcePackage
     {
         public string CurrentDirectory { get; }
 
         public string Name => "Test";
 
-        public TestFileResourceLoader(string currentDir)
+        public TestFileResourcePackage(string currentDir)
         {
             CurrentDirectory = currentDir;
         }
