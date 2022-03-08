@@ -17,10 +17,27 @@ namespace Sandbox
 {
     public static class Startup
     {
-        [GameEntryPoint]
-        public static async UniTask Start()
+        private static void Main(string[] args)
         {
-            var screen = Game.Screen;
+            new AppStarter
+            {
+                Width = (int)(1200 * 1.5),
+                Height = (int)(675 * 1.5f),
+                Title = "Sandbox",
+                AllowMultiLaunch = false,
+                Style = WindowStyle.Default,
+                Icon = Resources.Sandbox["icon.ico"],
+#if DEBUG
+                IsDebugMode = true,
+#endif
+            }.Run(Start);
+        }
+
+        private static async UniTask Start(IHostScreen screen)
+        {
+            Game.Initialize(screen);
+            Timing.Initialize(screen);
+
             var (drLayer, wLayer, uiLayer) =
                 await LayerPipelines.CreateBuilder(screen).Build(
                     () => new DeferredRenderingLayer(),
@@ -181,13 +198,14 @@ namespace Sandbox
 
         private static async UniTask<Plain> CreateFloor(WorldLayer layer)
         {
+            var timing = layer.GetValidScreen().TimingPoints.Update;
             var plain = new Plain();
             plain.Position.Z = -10;
             plain.Scale = new Vector3(10f);
             plain.Shader = new PhongShader();
             var config = new TextureConfig(TextureExpansionMode.NearestNeighbor, TextureShrinkMode.NearestNeighbor,
                                            TextureMipmapMode.None, TextureWrapMode.ClampToEdge, TextureWrapMode.ClampToEdge);
-            var texture = await Resources.Sandbox["floor.png"].LoadTextureAsync(config);
+            var texture = await Resources.Sandbox["floor.png"].LoadTextureAsync(config, timing);
             plain.AddComponent(texture);
             plain.Rotation = Quaternion.FromAxisAngle(Vector3.UnitX, -90.ToRadian());
             return await plain.Activate(layer);
