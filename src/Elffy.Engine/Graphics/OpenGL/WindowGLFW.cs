@@ -170,8 +170,10 @@ namespace Elffy.Graphics.OpenGL
                 if(icon.IsNone == false) {
                     using var iconImage = icon.LoadIcon();
                     var image0 = iconImage.GetImage(0);
-                    var img = new GLFWImage(image0.Width, image0.Height, (byte*)image0.GetPtr());
-                    GLFW.SetWindowIconRaw(_window, 1, &img);
+                    fixed(ColorByte* ptr = image0) {
+                        var img = new GLFWImage(image0.Width, image0.Height, (byte*)ptr);
+                        GLFW.SetWindowIconRaw(_window, 1, &img);
+                    }
                 }
 
                 GLFW.GetWindowSize(_window, out _clientSize.X, out _clientSize.Y);

@@ -12,6 +12,9 @@ namespace Elffy.Imaging
     {
         public static Icon Parse(Stream stream)
         {
+            if(stream is null) {
+                throw new ArgumentNullException(nameof(stream));
+            }
             UnsafeEx.SkipInitIfPossible(out ICONDIR icondir);   // 6 bytes
             stream.SafeRead(UnsafeEx.AsBytes(ref icondir));
 
@@ -22,18 +25,13 @@ namespace Elffy.Imaging
             using var entries = new UnsafeRawArray<ICONDIRENTRY>(icondir.idCount, false);
             stream.SafeRead(entries.AsBytes());
 
-            var icon = new Icon(icondir.idCount);
-            try {
-                var images = icon.GetImagesSpan();
+            return Icon.Create(icondir.idCount, (stream, entries), static (images, state) =>
+            {
+                var (stream, entries) = state;
                 for(int i = 0; i < images.Length; i++) {
                     images[i] = ParseImage(stream, entries[i]);
                 }
-                return icon;
-            }
-            catch {
-                icon.Dispose();
-                throw;
-            }
+            });
         }
 
         private static Image ParseImage(Stream stream, in ICONDIRENTRY entry)

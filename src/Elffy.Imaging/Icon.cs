@@ -1,5 +1,7 @@
 ﻿#nullable enable
 using System;
+using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Elffy.Effective;
@@ -12,52 +14,47 @@ namespace Elffy.Imaging
     {
         private readonly Image[]? _images;
 
-        public ReadOnlySpan<Image> Images => _images.AsSpan();
+        //public ReadOnlySpan<Image> Images => _images.AsSpan();
 
         public int ImageCount => _images?.Length ?? 0;
 
         public static Icon None => default;
 
-        public Icon(ReadOnlySpan<Image> images) : this(images, MemoryCopyMode.DeepCopy)
+        [Obsolete("Don't use defaut constructor.", true)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public Icon() => throw new NotSupportedException("Don't use defaut constructor.");
+
+        private Icon(int count)
         {
+            _images = new Image[count];
         }
 
-        public Icon(ReadOnlySpan<Image> images, MemoryCopyMode copyMode)
+        public static Icon Create<TState>(int imageCount, TState state, IconCreateAction<TState> action)
         {
-            if(images.Length == 0) {
-                _images = null;
-                return;
+            if(action is null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(action));
             }
-
-            var iconImages = new Image[images.Length];  // TODO: instance pooling ?
-            if(copyMode == MemoryCopyMode.ArrayOnly) {
-                images.CopyTo(iconImages.AsSpanUnsafe());
+            var icon = new Icon(imageCount);
+            try {
+                action.Invoke(icon._images.AsSpan(), state);
+                return icon;
             }
-            else if(copyMode == MemoryCopyMode.DeepCopy) {
-                for(int i = 0; i < images.Length; i++) {
-                    iconImages[i] = images[i].ToImage();
-                }
+            catch {
+                icon.Dispose();
+                throw;
             }
-            else {
-                ThrowHelper.ThrowArgException(nameof(copyMode));
-            }
-            _images = iconImages;
         }
 
-        internal Icon(int count)
-        {
-            _images = new Image[count];  // TODO: instance pooling ?
-        }
+        public delegate void IconCreateAction<in TArg>(Span<Image> images, TArg arg);
 
-        public ref readonly Image GetImage(int index)
+        public ImageRef GetImage(int index)
         {
             if(_images is null || (uint)index >= _images.Length) {
                 ThrowHelper.ThrowArgOutOfRange(nameof(index));
             }
-            return ref _images.At(index);
+            return _images.At(index);
         }
-
-        internal Span<Image> GetImagesSpan() => _images.AsSpan();
 
         public void Dispose()
         {
@@ -68,11 +65,13 @@ namespace Elffy.Imaging
             }
         }
 
-        public Icon Clone() => Clone(MemoryCopyMode.DeepCopy);
-
-        public Icon Clone(MemoryCopyMode copyMode)
+        public Icon Clone()
         {
-            return new Icon(_images, copyMode);
+            var images = _images;
+            if(images is null || images.Length == 0) {
+                return None;
+            }
+            return Create(images.Length, images, static (newImages, originals) => originals.CopyTo(newImages));
         }
 
         public override bool Equals(object? obj) => obj is Icon icon && Equals(icon);
