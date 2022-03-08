@@ -50,6 +50,8 @@ namespace UnitTest
     {
         public string CurrentDirectory { get; }
 
+        public string Name => "Test";
+
         public TestFileResourceLoader(string currentDir)
         {
             CurrentDirectory = currentDir;
