@@ -27,7 +27,6 @@
     <ProjectReference Include="..\Elffy.Engine\Elffy.Engine.csproj" />
     <ProjectReference Include="..\Elffy.SimpleKit\Elffy.SimpleKit.csproj" />
     <ProjectReference Include="..\Elffy.Serialization\Elffy.Serialization.csproj" />
-    <ProjectReference Include="..\Elffy.Games\Elffy.Games.csproj" />
   </ItemGroup>
 
 </Project>

@@ -35,9 +35,6 @@ namespace Sandbox
 
         private static async UniTask Start(IHostScreen screen)
         {
-            Game.Initialize(screen);
-            Timing.Initialize(screen);
-
             var (drLayer, wLayer, uiLayer) =
                 await LayerPipelines.CreateBuilder(screen).Build(
                     () => new DeferredRenderingLayer(),
@@ -232,10 +229,11 @@ namespace Sandbox
 
         private static async UniTask<Cube> CreateBox(WorldLayer layer)
         {
+            var timing = layer.GetValidScreen().TimingPoints.Update;
             var cube = new Cube();
             cube.Position = new(-3, 0.5f, 0);
             cube.Shader = new PhongShader();
-            cube.AddComponent(await Resources.Sandbox["box.png"].LoadTextureAsync());
+            cube.AddComponent(await Resources.Sandbox["box.png"].LoadTextureAsync(timing));
             await cube.Activate(layer);
             cube.StartCoroutine(static async (coroutine, cube) =>
             {

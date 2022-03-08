@@ -18,8 +18,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElffyResourceCompiler", "El
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTest", "UnitTest\UnitTest.csproj", "{6871FA5F-A591-4E02-B914-43AF5CA7A889}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elffy.Games", "Elffy.Games\Elffy.Games.csproj", "{C37CECC7-A291-4AA1-B1BA-C30ABDC3927D}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elffy.Memory", "Elffy.Memory\Elffy.Memory.csproj", "{96B1EDE5-ACE3-4B24-BFB9-DCFA77F0A9C7}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTest.Elffy.Memory", "UnitTest.Elffy.Memory\UnitTest.Elffy.Memory.csproj", "{80E7C609-A702-41C8-84BA-55017D574318}"
@@ -60,9 +58,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elffy.Animations", "Elffy.A
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elffy.InternalTools", "Elffy.InternalTools\Elffy.InternalTools.csproj", "{90C324FE-C575-4D45-9EC6-DE03F77FBC74}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Elffy.Threading", "Elffy.Threading\Elffy.Threading.csproj", "{25168954-2A6F-4E69-B083-3B76E1619D73}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elffy.Threading", "Elffy.Threading\Elffy.Threading.csproj", "{25168954-2A6F-4E69-B083-3B76E1619D73}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Elffy.Threading.Lock", "Elffy.Threading.Lock\Elffy.Threading.Lock.csproj", "{79F7F221-B79F-467A-8F43-808D525282DD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elffy.Threading.Lock", "Elffy.Threading.Lock\Elffy.Threading.Lock.csproj", "{79F7F221-B79F-467A-8F43-808D525282DD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -134,18 +132,6 @@ Global
 		{6871FA5F-A591-4E02-B914-43AF5CA7A889}.Release|x64.Build.0 = Release|Any CPU
 		{6871FA5F-A591-4E02-B914-43AF5CA7A889}.Release|x86.ActiveCfg = Release|Any CPU
 		{6871FA5F-A591-4E02-B914-43AF5CA7A889}.Release|x86.Build.0 = Release|Any CPU
-		{C37CECC7-A291-4AA1-B1BA-C30ABDC3927D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C37CECC7-A291-4AA1-B1BA-C30ABDC3927D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C37CECC7-A291-4AA1-B1BA-C30ABDC3927D}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{C37CECC7-A291-4AA1-B1BA-C30ABDC3927D}.Debug|x64.Build.0 = Debug|Any CPU
-		{C37CECC7-A291-4AA1-B1BA-C30ABDC3927D}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{C37CECC7-A291-4AA1-B1BA-C30ABDC3927D}.Debug|x86.Build.0 = Debug|Any CPU
-		{C37CECC7-A291-4AA1-B1BA-C30ABDC3927D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C37CECC7-A291-4AA1-B1BA-C30ABDC3927D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C37CECC7-A291-4AA1-B1BA-C30ABDC3927D}.Release|x64.ActiveCfg = Release|Any CPU
-		{C37CECC7-A291-4AA1-B1BA-C30ABDC3927D}.Release|x64.Build.0 = Release|Any CPU
-		{C37CECC7-A291-4AA1-B1BA-C30ABDC3927D}.Release|x86.ActiveCfg = Release|Any CPU
-		{C37CECC7-A291-4AA1-B1BA-C30ABDC3927D}.Release|x86.Build.0 = Release|Any CPU
 		{96B1EDE5-ACE3-4B24-BFB9-DCFA77F0A9C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{96B1EDE5-ACE3-4B24-BFB9-DCFA77F0A9C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{96B1EDE5-ACE3-4B24-BFB9-DCFA77F0A9C7}.Debug|x64.ActiveCfg = Debug|Any CPU
