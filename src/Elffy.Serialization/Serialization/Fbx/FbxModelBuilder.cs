@@ -20,7 +20,7 @@ namespace Elffy.Serialization.Fbx
 
         public static Model3D CreateLazyLoadingFbx(ResourceFile file, CancellationToken cancellationToken = default)
         {
-            ResourceFile.ThrowArgumentExceptionIfInvalid(file);
+            ResourceFile.ThrowArgumentExceptionIfNone(file);
             var state = new StateObject(file, cancellationToken);
             return Model3D.Create(state, _build);
         }

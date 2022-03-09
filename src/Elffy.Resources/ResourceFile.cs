@@ -37,18 +37,69 @@ namespace Elffy
 
         [Obsolete($"{nameof(ResourceFile)} does not support default constructor.", true)]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public ResourceFile()
-        {
-            throw new NotSupportedException($"{nameof(ResourceFile)} does not support default constructor.");
-        }
+        public ResourceFile() => throw new NotSupportedException($"{nameof(ResourceFile)} does not support default constructor.");
 
-        public static void ThrowArgumentExceptionIfInvalid(ResourceFile resource, [CallerArgumentExpression("resource")] string? paramName = null)
+        public static void ThrowArgumentExceptionIfNone(ResourceFile resource, [CallerArgumentExpression("resource")] string? paramName = null)
         {
-            if(resource._package is null) {
+            if(resource.IsNone) {
                 Throw(paramName);
             }
             [DoesNotReturn] static void Throw(string? paramName) => throw new ArgumentException(paramName);
         }
+
+        public int ReadBytes(Span<byte> buffer) => ReadBytes(buffer, 0);
+
+        public int ReadBytes(Span<byte> buffer, long fileOffset)
+        {
+            unsafe {
+                fixed(byte* ptr = buffer) {
+                    return (int)ReadBytes((IntPtr)ptr, (nuint)buffer.Length, fileOffset);
+                }
+            }
+        }
+
+        public long ReadBytes(IntPtr buffer, nuint bufferLength) => ReadBytes(buffer, bufferLength, 0);
+
+        public long ReadBytes(IntPtr buffer, nuint bufferLength, long fileOffset)
+        {
+            if(TryGetHandle(out var handle)) {
+                try {
+                    return handle.Read(buffer, bufferLength, fileOffset);
+                }
+                finally {
+                    handle.Dispose();
+                }
+            }
+            else {
+                using var stream = GetStream();
+                return ReadStreamAll(stream, fileOffset, buffer, (long)bufferLength);
+            }
+
+            static unsafe long ReadStreamAll(Stream stream, long fileOffset, IntPtr buffer, long bufferLength)
+            {
+                if(fileOffset != 0) {
+                    if(stream.CanSeek) {
+                        stream.Position = fileOffset;
+                    }
+                    else {
+                        throw new NotSupportedException("Cannot seek the specified stream.");    // TODO: unseekable stream
+                    }
+                }
+
+                long totalLen = 0;
+                while(true) {
+                    var dest = (byte*)buffer + totalLen;
+                    var destLen = (int)Math.Min(bufferLength - totalLen, int.MaxValue);
+                    var readLen = stream.Read(new Span<byte>(dest, destLen));
+                    totalLen += readLen;
+                    if(totalLen == bufferLength || readLen == 0) {
+                        return totalLen;
+                    }
+                }
+            }
+        }
+
+        public bool TryGetHandle(out ResourceFileHandle handle) => Package.TryGetHandle(_name, out handle);
 
         public ResourceFileHandle GetHandle() => Package.TryGetHandle(_name, out var handle) ? handle : ResourceFileHandle.None;
 
