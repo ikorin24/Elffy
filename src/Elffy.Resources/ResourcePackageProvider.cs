@@ -11,15 +11,9 @@ namespace Elffy
     {
         private static readonly ConcurrentDictionary<string, IResourcePackage> _registeredPackage = new();
 
-        public static IResourcePackage CreateLocalResourcePackage(string packageName, string resourcePackageFilePath, string? packageId = null)
+        public static IResourcePackage CreateLocalResourcePackage(string packageName, string resourcePackageFilePath)
         {
             var package = new LocalResourcePackage(packageName, resourcePackageFilePath);
-            if(string.IsNullOrEmpty(packageId) == false) {
-                if(_registeredPackage.TryAdd(packageId, package) == false) {
-                    ThrowDuplicatedPackageId(packageId);
-                    [DoesNotReturn] static void ThrowDuplicatedPackageId(string packageId) => throw new ArgumentException($"Package ID is duplicatred. (Package ID: '{packageId}')");
-                }
-            }
             return package;
         }
 
