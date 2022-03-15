@@ -27,9 +27,7 @@ namespace Sandbox
                 AllowMultiLaunch = false,
                 Style = WindowStyle.Default,
                 Icon = Resources.Sandbox["icon.ico"],
-#if DEBUG
-                IsDebugMode = true,
-#endif
+                IsDebugMode = AssemblyBuildInfo.IsDebug,
             }.Run(Start);
         }
 
