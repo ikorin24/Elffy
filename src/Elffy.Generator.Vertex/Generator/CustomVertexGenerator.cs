@@ -298,3 +298,25 @@ $@"            }}).ThrowIfError();
     }
 }
 
+internal static class StringBuilderExtensions
+{
+    public static StringBuilder AppendForeach<T>(this StringBuilder sb, T[] array, Func<T, string> func)
+    {
+        foreach(var item in array) {
+            sb.Append(func(item));
+        }
+        return sb;
+    }
+
+    public static StringBuilder AppendForeach<T>(this StringBuilder sb, IEnumerable<T> list, Func<T, string> func, string separator)
+    {
+        using var e = list.GetEnumerator();
+        if(e.MoveNext() == false) { return sb; }
+        while(true) {
+            sb.Append(func(e.Current));
+            if(e.MoveNext() == false) { break; }
+            sb.Append(separator);
+        }
+        return sb;
+    }
+}
