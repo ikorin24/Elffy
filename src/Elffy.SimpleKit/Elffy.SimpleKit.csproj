@@ -7,7 +7,6 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <RootNamespace>Elffy</RootNamespace>
-    <Configurations>Debug;Release</Configurations>
     <Version>0.0.0</Version>
     <Authors>ikorin24</Authors>
     <Description />
@@ -20,9 +19,5 @@
     <ProjectReference Include="..\Elffy.Engine\Elffy.Engine.csproj" />
     <ProjectReference Include="..\Elffy.Generator.Vertex\Elffy.Generator.Vertex.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>DEBUG;</DefineConstants>
-  </PropertyGroup>
 
 </Project>
