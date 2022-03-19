@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
-using System.IO;
-using System.Reflection;
 
 namespace ElffyResourceCompiler
 {
     class Program
     {
         private static readonly string[] VALID_OPTION = new[] { "-o", "-h" };
-        private const string DefaultOutput = "Resources.dat";
 
         public static int Main(string[] args)
         {
@@ -34,7 +31,9 @@ namespace ElffyResourceCompiler
             var resourceDir = param.Args[0];
 
             if(!param.OptionalArgs.TryGetValue("-o", out var output)) {
-                output = Path.Combine(Assembly.GetEntryAssembly()!.Location, DefaultOutput);
+                Console.WriteLine("Set output path.");
+                ShowHelp();
+                return -1;
             }
 
             var sw = new Stopwatch();
@@ -47,8 +46,13 @@ namespace ElffyResourceCompiler
 
         private static void ShowHelp()
         {
-            var exe = Path.GetFileName(Assembly.GetEntryAssembly()!.Location);
-            Console.WriteLine($"usage : {exe} [-h] [-o output-path] resource-dir");
+            //var exe = Path.GetFileName(Assembly.GetEntryAssembly()!.Location);
+            Console.WriteLine($"usage : [-h] [-o output-path] resource-dir");
+        }
+
+        private static string GetBaseDirectory()
+        {
+            return AppDomain.CurrentDomain.BaseDirectory ?? throw new InvalidOperationException();
         }
     }
 }

@@ -13,11 +13,18 @@
     <ProjectReference Include="..\Elffy.Animations\Elffy.Animations.csproj" />
     <ProjectReference Include="..\Elffy.Serialization\Elffy.Serialization.csproj" />
     <ProjectReference Include="..\Elffy.SimpleKit\Elffy.SimpleKit.csproj" />
-    <ProjectReference Include="..\Elffy.Generator\Elffy.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\Elffy.Generator.Resources\Elffy.Generator.Resources.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-  <ProjectReference Include="..\Elffy.InternalTools\Elffy.InternalTools.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Elffy.InternalTools\Elffy.InternalTools.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
-  <Import Project="..\Elffy.Generator\Elffy.Generator.props" />
+  <Target Name="ElffyPostBuildEvent" AfterTargets="PostBuildEvent">
+    <Exec Command="dotnet run -c Release --project ../ElffyResourceCompiler/ElffyResourceCompiler.csproj -- -o $(TargetDir)Sandbox.dat $(ProjectDir)Resources" />
+  </Target>
+  <Target Name="ElffyPostPublishEvent" AfterTargets="Publish">
+    <Exec Command="dotnet run -c Release --project ../ElffyResourceCompiler/ElffyResourceCompiler.csproj -- -o $(PublishDir)Sandbox.dat $(ProjectDir)Resources" />
+  </Target>
+  <Target Name="ElffyPostCleanEvent" AfterTargets="Clean">
+    <Delete Files="$(TargetDir)Sandbox.dat" />
+  </Target>
 
 </Project>

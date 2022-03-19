@@ -73,6 +73,11 @@ namespace ElffyResourceCompiler
             _stream.Write(value, 0, value.Length);
         }
 
+        public void Write(ReadOnlySpan<byte> value)
+        {
+            _stream.Write(value);
+        }
+
         public void Write(byte[] value, int offset, int count)
         {
             _stream.Write(value, offset, count);

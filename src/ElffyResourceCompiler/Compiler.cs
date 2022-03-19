@@ -9,9 +9,12 @@ namespace ElffyResourceCompiler
 {
     public static class Compiler
     {
-        private const string FORMAT_VERSION = "1.0";
-        /// <summary>正常解凍を確認するためのマジックワード</summary>
-        private const string MAGIC_WORD = "ELFFY_RESOURCE";
+        private static ReadOnlySpan<byte> FormatVersion => new byte[3] { (byte)'1', (byte)'.', (byte)'0' };
+        private static ReadOnlySpan<byte> MaticWord => new byte[14]
+        {
+            (byte)'E', (byte)'L', (byte)'F', (byte)'F', (byte)'Y', (byte)'_',
+            (byte)'R', (byte)'E', (byte)'S', (byte)'O', (byte)'U', (byte)'R',(byte)'C',(byte)'E',
+        };
 
         public static void Compile(string resourceDir, string outputPath, bool forceCompile = false)
         {
@@ -22,10 +25,10 @@ namespace ElffyResourceCompiler
                 using var stream = File.OpenRead(outputPath);
                 var reader = new LightBinaryReader(stream);
 
-                if(reader.ReadUTF8(FORMAT_VERSION.Length) != FORMAT_VERSION) {
+                if(CheckMatch(reader, FormatVersion) == false) {
                     goto RECOMPILE;
                 }
-                if(reader.ReadUTF8(MAGIC_WORD.Length) != MAGIC_WORD) {
+                if(CheckMatch(reader, MaticWord) == false) {
                     goto RECOMPILE;
                 }
                 var fileCount = reader.ReadInt32();
@@ -53,7 +56,10 @@ namespace ElffyResourceCompiler
             }
 
         RECOMPILE:
-            Directory.CreateDirectory(new FileInfo(outputPath).DirectoryName);
+            var dirPath = new FileInfo(outputPath).DirectoryName;
+            if(Directory.Exists(dirPath) == false) {
+                Directory.CreateDirectory(dirPath);
+            }
             string TMP_FILE = Path.Combine(Path.GetDirectoryName(outputPath)!, "____tmp____");
             if(File.Exists(outputPath)) {
                 if(File.Exists(TMP_FILE)) {
@@ -96,8 +102,8 @@ namespace ElffyResourceCompiler
 
                 using(var fs = File.OpenRead(inputPath)) {
                     var reader = new LightBinaryReader(fs);
-                    if(reader.ReadUTF8(3) != FORMAT_VERSION) { return false; }
-                    if(reader.ReadUTF8(MAGIC_WORD.Length) != MAGIC_WORD) { return false; }
+                    if(CheckMatch(reader, FormatVersion) == false) { return false; }
+                    if(CheckMatch(reader, MaticWord) == false) { return false; }
                     var filecount = reader.ReadInt32();
                     var hashSum = reader.ReadInt64();
 
@@ -120,13 +126,20 @@ namespace ElffyResourceCompiler
             return true;
         }
 
+        private static bool CheckMatch(in LightBinaryReader reader, ReadOnlySpan<byte> data)
+        {
+            Span<byte> buffer = stackalloc byte[data.Length];
+            reader.Read(buffer);
+            return buffer.SequenceEqual(FormatVersion);
+        }
 
         private static void CompilePrivate(string resourceDir, string outputPath)
         {
             using(var fs = File.OpenWrite(outputPath)) {
                 var writer = new LightBinaryWriter(fs);
-                writer.WriteAsUTF8(FORMAT_VERSION);
-                writer.WriteAsUTF8(MAGIC_WORD);
+                writer.Write(FormatVersion);
+                writer.Write(MaticWord);
+
                 var fileCountPosition = fs.Position;                // ファイル数を書き込むための場所
                 int fileCount = 0;
                 fs.Position += Unsafe.SizeOf<int>();
