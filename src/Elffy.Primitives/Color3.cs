@@ -54,5 +54,22 @@ namespace Elffy
         public static bool operator ==(in Color3 left, in Color3 right) => left.Equals(right);
 
         public static bool operator !=(in Color3 left, in Color3 right) => !(left == right);
+
+        /// <summary>Try to get color from web color name, which must be small letter.</summary>
+        /// <param name="name">web color name</param>
+        /// <param name="color">color</param>
+        /// <returns>success or not</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool TryFromWebColorName(string name, out Color3 color) => WebColors.TryGetColor3(name, out color);
+
+        /// <summary>Get color from web color name, which must be small letter.</summary>
+        /// <param name="name">web color name</param>
+        /// <returns>color</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Color3 FromWebColorName(string name) =>
+            WebColors.TryGetColor3(name, out var color) ? color :
+            throw new ArgumentException($"Web color name is not defined. The name must be small letter. (name='{name}')");
+
+        public static bool IsWebColorDefined(string name) => WebColors.IsDefined(name);
     }
 }

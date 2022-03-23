@@ -78,5 +78,22 @@ namespace Elffy
             color = default;
             return false;
         }
+
+        /// <summary>Try to get color from web color name, which must be small letter.</summary>
+        /// <param name="name">web color name</param>
+        /// <param name="color">color</param>
+        /// <returns>success or not</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool TryFromWebColorName(string name, out Color4 color) => WebColors.TryGetColor4(name, out color);
+
+        /// <summary>Get color from web color name, which must be small letter.</summary>
+        /// <param name="name">web color name</param>
+        /// <returns>color</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Color4 FromWebColorName(string name) =>
+            WebColors.TryGetColor4(name, out var color) ? color :
+            throw new ArgumentException($"Web color name is not defined. The name must be small letter. (name='{name}')");
+
+        public static bool IsWebColorDefined(string name) => WebColors.IsDefined(name);
     }
 }
