@@ -91,7 +91,7 @@ namespace Sandbox
         private static UniTask CreateTestUI(UILayer uiLayer)
         {
             var uiRoot = uiLayer.UIRoot;
-            var tasks = new ParallelOperation();
+            using var tasks = new ParallelOperation();
 
             const int ColumnCount = 6;
             var gridLength = LayoutLength.Length(200);

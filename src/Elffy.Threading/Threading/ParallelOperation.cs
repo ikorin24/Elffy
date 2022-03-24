@@ -9,7 +9,7 @@ using System.Threading;
 
 namespace Elffy.Threading
 {
-    public sealed partial class ParallelOperation
+    public sealed partial class ParallelOperation : IDisposable
     {
         private const int MinCapacity = 16;
 
@@ -21,6 +21,8 @@ namespace Elffy.Threading
         public ParallelOperation()
         {
         }
+
+        ~ParallelOperation() => Dispose(false);
 
         public void Add(UniTask task)
         {
@@ -55,8 +57,9 @@ namespace Elffy.Threading
         public UniTask WhenAll()
         {
             _lock.Enter();
+            var isDead = _isDead;
             try {
-                if(_isDead) {
+                if(isDead) {
                     ThrowCannotCallTwice();
                     [DoesNotReturn] static void ThrowCannotCallTwice() => throw new InvalidOperationException($"Can not call {nameof(WhenAll)} method twice.");
                 }
@@ -64,10 +67,35 @@ namespace Elffy.Threading
                 return WhenAll(_array.AsSpan(0, _count));
             }
             finally {
-                UniTaskMemoryPool.Return(_array);
-                _array = UniTaskRentArray.Empty;
+                if(isDead == false) {
+                    UniTaskMemoryPool.Return(_array);
+                    _array = UniTaskRentArray.Empty;
+                }
                 _lock.Exit();
             }
+        }
+
+        private void Dispose(bool disposing)
+        {
+            _lock.Enter();
+            var isDead = _isDead;
+            try {
+                if(isDead) { return; }
+                _isDead = true;
+            }
+            finally {
+                if(isDead == false) {
+                    UniTaskMemoryPool.Return(_array);
+                    _array = UniTaskRentArray.Empty;
+                }
+                _lock.Exit();
+            }
+        }
+
+        public void Dispose()
+        {
+            GC.SuppressFinalize(this);
+            Dispose(true);
         }
 
         public static UniTask LimitedParallel<TArg>(ReadOnlySpan<Func<TArg, CancellationToken, UniTask>> funcs, TArg arg, int maxParallel, CancellationToken cancellationToken = default)
