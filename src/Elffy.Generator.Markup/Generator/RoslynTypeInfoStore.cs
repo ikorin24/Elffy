@@ -4,19 +4,21 @@ using System.Collections.Generic;
 using System;
 using System.Threading;
 using U8Xml;
+using Elffy.Markup;
+using TypeInfo = Elffy.Markup.TypeInfo;
 
 namespace Elffy.Generator;
 
-internal sealed class TypeInfoStore : ITypeInfoStore
+internal sealed class RoslynTypeInfoStore : ITypeInfoStore
 {
     private readonly Dictionary<string, (TypeInfo Type, Dictionary<string, TypeInfo> Members)> _typeDic;
 
-    private TypeInfoStore(Dictionary<string, (TypeInfo Type, Dictionary<string, TypeInfo> Members)> typeDic)
+    private RoslynTypeInfoStore(Dictionary<string, (TypeInfo Type, Dictionary<string, TypeInfo> Members)> typeDic)
     {
         _typeDic = typeDic;
     }
 
-    public static TypeInfoStore Create(XmlObject xml, Compilation compilation, CancellationToken ct)
+    public static RoslynTypeInfoStore Create(XmlObject xml, Compilation compilation, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
         var types = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
@@ -37,7 +39,7 @@ internal sealed class TypeInfoStore : ITypeInfoStore
             });
             typeDic.Add(type.Name, (Type: new TypeInfo(type), Members: members));
         }
-        return new TypeInfoStore(typeDic);
+        return new RoslynTypeInfoStore(typeDic);
     }
 
     public bool TryGetTypeInfo(string typeName, out TypeInfo typeInfo, out TypeMemberInfoStore memberInfoStore)

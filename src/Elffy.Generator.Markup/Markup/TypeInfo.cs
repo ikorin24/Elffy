@@ -2,7 +2,7 @@
 using Microsoft.CodeAnalysis;
 using System;
 
-namespace Elffy.Generator;
+namespace Elffy.Markup;
 
 public readonly struct TypeInfo : IEquatable<TypeInfo>
 {

@@ -1,6 +1,6 @@
 ﻿#nullable enable
 
-namespace Elffy.Generator;
+namespace Elffy.Markup;
 
 public enum TypeInfoKind
 {

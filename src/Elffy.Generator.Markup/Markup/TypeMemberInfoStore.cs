@@ -1,7 +1,7 @@
 ﻿#nullable enable
 using System.Collections.Generic;
 
-namespace Elffy.Generator;
+namespace Elffy.Markup;
 
 public readonly struct TypeMemberInfoStore
 {
