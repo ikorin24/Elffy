@@ -30,14 +30,20 @@ public sealed class MarkupTranslationGenerator : IIncrementalGenerator
                     var (file, compilation) = x;
                     var filePath = file.Path;
 
-                    using var xml = XmlParser.ParseFile(file.Path);
+                    XmlObject xml;
+                    try {
+                        xml = XmlParser.ParseFile(filePath);
+                    }
+                    catch(FormatException) {
+                        DiagnosticHelper.InvalidXmlFormat(filePath);
+                        return result;
+                    }
                     var typeInfoStore = RoslynTypeInfoStore.Create(xml, compilation, ct);
                     var outputName = filePath.Replace(MarkupFileExt, ".g.cs");
 
                     // TODO:
                     var source = MarkupTranslator.Translate(xml, "Foo", "Bar", typeInfoStore, ct);
                     var sourceText = SourceText.From(source, Encoding.UTF8);
-
                     result.SetResult(outputName, sourceText);
                 }
                 catch(Exception ex) when(ex is not OperationCanceledException) {
