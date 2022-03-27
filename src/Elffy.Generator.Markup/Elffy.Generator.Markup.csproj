@@ -9,7 +9,7 @@
     <Authors>ikorin24</Authors>
     <Description />
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <NoWarn>$(NoWarn);NU5128;1591</NoWarn>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <RootNamespace>Elffy</RootNamespace>
 
     <!-- Settings for source senerator -->

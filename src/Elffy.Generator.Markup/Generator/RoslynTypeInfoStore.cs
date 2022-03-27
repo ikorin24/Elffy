@@ -11,9 +11,9 @@ namespace Elffy.Generator;
 
 internal sealed class RoslynTypeInfoStore : ITypeInfoStore
 {
-    private readonly Dictionary<string, (TypeInfo Type, Dictionary<string, TypeInfo> Members)> _typeDic;
+    private readonly Dictionary<string, (INamedTypeSymbol Type, TypeMemberDic Members)> _typeDic;
 
-    private RoslynTypeInfoStore(Dictionary<string, (TypeInfo Type, Dictionary<string, TypeInfo> Members)> typeDic)
+    private RoslynTypeInfoStore(Dictionary<string, (INamedTypeSymbol Type, TypeMemberDic Members)> typeDic)
     {
         _typeDic = typeDic;
     }
@@ -21,45 +21,76 @@ internal sealed class RoslynTypeInfoStore : ITypeInfoStore
     public static RoslynTypeInfoStore Create(XmlObject xml, Compilation compilation, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
-        var types = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
-        foreach(var typeFullName in CollectInstanceTypes(xml)) {
-            ct.ThrowIfCancellationRequested();
-            var typeSymbol = compilation.GetTypeByMetadataName(typeFullName);
-            if(typeSymbol == null) { continue; }
-            types.Add(typeSymbol);
-            GetInstanceMembers(typeSymbol, types, ct, static (x, types) => types.Add(x.MemberType));
-        }
-
-        var typeDic = new Dictionary<string, (TypeInfo Type, Dictionary<string, TypeInfo> Members)>(types.Count);
-        foreach(var type in types) {
-            var members = new Dictionary<string, TypeInfo>();
-            GetInstanceMembers(type, members, ct, static (x, members) =>
+        var typeDic = new Dictionary<string, (INamedTypeSymbol Type, TypeMemberDic Members)>();
+        CollectInstanceTypes(xml, (typeDic, compilation), ct, static (x, typeFullName, ct) =>
+        {
+            var (typeDic, compilation) = x;
+            var type = compilation.GetTypeByMetadataName(typeFullName.ToString());
+            if(type == null) { return; }
+            var typeName = type.Name;
+            if(typeDic.ContainsKey(typeName)) { return; }
+            var members = new TypeMemberDic();
+            CollectInstanceMembers(type, (typeDic, members), ct, static (m, x) =>
             {
-                members.Add(x.Member.Name, new TypeInfo(x.MemberType));
+                var (typeDic, members) = x;
+                members.Add(m.Member.Name, new TypeInfo(m.MemberType));
+                var memberTypeName = m.MemberType.Name;
+                if(typeDic.ContainsKey(memberTypeName)) { return; }
+                typeDic.Add(memberTypeName, (m.MemberType, TypeMemberDic.Null));
             });
-            typeDic.Add(type.Name, (Type: new TypeInfo(type), Members: members));
+            typeDic.Add(typeName, (type, members));
+        });
+
+        foreach(var typeName in typeDic.Keys) {
+            ct.ThrowIfCancellationRequested();
+            var (type, members) = typeDic[typeName];
+            if(members.IsNull == false) { continue; }
+            members = new TypeMemberDic();
+            CollectInstanceMembers(type, members, ct, static (m, members) =>
+            {
+                members.Add(m.Member.Name, new TypeInfo(m.MemberType));
+            });
+            typeDic[typeName] = (type, members);
         }
         return new RoslynTypeInfoStore(typeDic);
     }
 
-    public bool TryGetTypeInfo(string typeName, out TypeInfo typeInfo, out TypeMemberInfoStore memberInfoStore)
+    public bool TryGetTypeInfo(string typeName, out TypeInfo typeInfo, out TypeMemberDic members)
     {
         if(_typeDic.TryGetValue(typeName, out var value) == false) {
             typeInfo = default;
-            memberInfoStore = default;
+            members = default;
             return false;
         }
-        typeInfo = value.Type;
-        memberInfoStore = new TypeMemberInfoStore(value.Members);
+        typeInfo = new TypeInfo(value.Type);
+        members = value.Members;
         return true;
     }
 
-    private static IEnumerable<string> CollectInstanceTypes(XmlObject xml)
+    private static void CollectInstanceTypes<T>(XmlObject xml, T state, CancellationToken ct, Action<T, TypeFullName, CancellationToken> collector)
     {
-        return Array.Empty<string>();   // TODO:
+        CollectRecursively(xml.Root, state, collector, ct);
+
+        static void CollectRecursively(XmlNode node, T state, Action<T, TypeFullName, CancellationToken> collector, CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+            collector.Invoke(state, node.GetTypeFullName(), ct);
+
+            foreach(var childNode in node.Children) {
+                var isPropertyNode = childNode.GetFullName().Name.Split2((byte)'.').Item2.IsEmpty == false;
+                if(isPropertyNode) {
+                    foreach(var valueNode in childNode.Children) {
+                        CollectRecursively(valueNode, state, collector, ct);
+                    }
+                }
+                else {
+                    CollectRecursively(childNode, state, collector, ct);
+                }
+            }
+        }
     }
 
-    private static void GetInstanceMembers<T>(INamedTypeSymbol typeSymbol, T arg, CancellationToken ct, Action<(ISymbol Member, INamedTypeSymbol MemberType), T> collector)
+    private static void CollectInstanceMembers<T>(INamedTypeSymbol typeSymbol, T arg, CancellationToken ct, Action<(ISymbol Member, INamedTypeSymbol MemberType), T> collector)
     {
         ct.ThrowIfCancellationRequested();
         var kind = typeSymbol.TypeKind;
