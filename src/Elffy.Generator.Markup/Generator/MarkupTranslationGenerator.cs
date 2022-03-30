@@ -10,7 +10,7 @@ using U8Xml;
 
 namespace Elffy.Generator;
 
-// [Generator]
+[Generator]
 public sealed class MarkupTranslationGenerator : IIncrementalGenerator
 {
     private const string MarkupFileExt = ".e.xml";

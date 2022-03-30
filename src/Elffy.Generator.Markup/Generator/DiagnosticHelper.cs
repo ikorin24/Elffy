@@ -30,11 +30,13 @@ internal static class DiagnosticHelper
         var diagnostic = _dicEGM.GetOrAdd(ID, key => new(
             key,
             "Generator Internal Exception",
-            "Internal exception in the generator. Exception: {0}.",
+            "Internal exception in the generator. Exception: {0}, StackTrace: {1}.",
             Category_Error,
             DiagnosticSeverity.Error,
             true));
-        return Diagnostic.Create(diagnostic, Location.None, ex);
+        var message = ex.Message.Replace(Environment.NewLine, "\\n");
+        var stacktrace = ex.StackTrace.Replace(Environment.NewLine, "\\n");
+        return Diagnostic.Create(diagnostic, Location.None, message, stacktrace);
     }
 
     public static Diagnostic InvalidXmlFormat(string filePath, Location? location = null)

@@ -3,6 +3,7 @@ using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
 using System;
 using System.Threading;
+using System.Linq;
 using U8Xml;
 using Elffy.Markup;
 using TypeInfo = Elffy.Markup.TypeInfo;
@@ -41,7 +42,8 @@ internal sealed class RoslynTypeInfoStore : ITypeInfoStore
             typeDic.Add(typeName, (type, members));
         });
 
-        foreach(var typeName in typeDic.Keys) {
+        var typeNames = typeDic.Keys.ToArray(); // copy keys to the array
+        foreach(var typeName in typeNames) {
             ct.ThrowIfCancellationRequested();
             var (type, members) = typeDic[typeName];
             if(members.IsNull == false) { continue; }
