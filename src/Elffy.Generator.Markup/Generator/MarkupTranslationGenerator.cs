@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Diagnostics.CodeAnalysis;
 using Elffy.Markup;
 using Microsoft.CodeAnalysis;
@@ -14,13 +13,14 @@ namespace Elffy.Generator;
 // [Generator]
 public sealed class MarkupTranslationGenerator : IIncrementalGenerator
 {
-    private const string MarkupFileExt = ".m.xml";
+    private const string MarkupFileExt = ".e.xml";
+    private const string OutputSourceExt = ".g.cs";
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var results = context
             .AdditionalTextsProvider
-            .Where(x => x.Path.EndsWith(MarkupFileExt))
+            .Where(x => x.Path.EndsWith(MarkupFileExt, StringComparison.OrdinalIgnoreCase))
             .Combine(context.CompilationProvider)
             .Select(static (x, ct) =>
             {
@@ -28,8 +28,11 @@ public sealed class MarkupTranslationGenerator : IIncrementalGenerator
                 try {
                     ct.ThrowIfCancellationRequested();
                     var (file, compilation) = x;
+                    if(compilation.Language != "C#") {
+                        result.AddDiagnostic(DiagnosticHelper.LanguageNotSupported(compilation.Language));
+                        return result;
+                    }
                     var filePath = file.Path;
-
                     XmlObject xml;
                     try {
                         xml = XmlParser.ParseFile(filePath);
@@ -39,12 +42,10 @@ public sealed class MarkupTranslationGenerator : IIncrementalGenerator
                         return result;
                     }
                     var typeInfoStore = RoslynTypeInfoStore.Create(xml, compilation, ct);
-                    var outputName = filePath.Replace(MarkupFileExt, ".g.cs");
+                    var outputName = filePath.Substring(0, filePath.Length - MarkupFileExt.Length) + OutputSourceExt;
+                    result.SetOutputName(outputName);
 
-                    // TODO:
-                    var source = MarkupTranslator.Translate(xml, "Foo", "Bar", typeInfoStore, ct);
-                    var sourceText = SourceText.From(source, Encoding.UTF8);
-                    result.SetResult(outputName, sourceText);
+                    MarkupTranslator.Translate(xml, typeInfoStore, result, ct);
                 }
                 catch(Exception ex) when(ex is not OperationCanceledException) {
                     result.AddDiagnostic(DiagnosticHelper.GeneratorInternalException(ex));
@@ -67,7 +68,7 @@ public sealed class MarkupTranslationGenerator : IIncrementalGenerator
         });
     }
 
-    private sealed class MarkupTranslationResult
+    private sealed class MarkupTranslationResult : IMarkupTranslationResultHolder, IDiagnosticAccumulator
     {
         private string? _outputName;
         private SourceText? _sourceText;
@@ -77,9 +78,13 @@ public sealed class MarkupTranslationGenerator : IIncrementalGenerator
         {
         }
 
-        public void SetResult(string outputName, SourceText sourceText)
+        public void SetOutputName(string outputName)
         {
             _outputName = outputName;
+        }
+
+        public void SetResult(SourceText sourceText)
+        {
             _sourceText = sourceText;
         }
 
@@ -103,5 +108,18 @@ public sealed class MarkupTranslationGenerator : IIncrementalGenerator
                 context.ReportDiagnostic(d);
             }
         }
+
+        void IDiagnosticAccumulator.AddDiagnostic(object diagnostic)
+        {
+            if(diagnostic is Diagnostic d) {
+                AddDiagnostic(d);
+            }
+        }
     }
+}
+
+public interface IMarkupTranslationResultHolder
+{
+    void AddDiagnostic(Diagnostic diagnostic);
+    void SetResult(SourceText sourceText);
 }
