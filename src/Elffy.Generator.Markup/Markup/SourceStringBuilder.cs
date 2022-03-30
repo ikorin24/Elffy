@@ -45,7 +45,7 @@ namespace {_nameSpace}
         {{
         }}
 
-        private ref struct Context
+        private struct Context : global::System.IDisposable
         {{
             private global::Elffy.Threading.ParallelOperation? _tasks;
             public void AddTask(global::Cysharp.Threading.Tasks.UniTask task)

@@ -18,4 +18,12 @@ internal static class U8XmlMarkupExtensions
         ReadOnlySpan<byte> xmlns_colon = new byte[] { (byte)'x', (byte)'m', (byte)'l', (byte)'n', (byte)'s', (byte)':' };
         return attr.Name == xmlns || attr.Name.StartsWith(xmlns_colon);
     }
+
+    public static bool Contains(this RawString rawString, byte c)
+    {
+        foreach(var x in rawString.AsSpan()) {
+            if(x == c) { return true; }
+        }
+        return false;
+    }
 }

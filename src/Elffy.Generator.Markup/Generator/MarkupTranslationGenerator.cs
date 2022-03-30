@@ -7,6 +7,7 @@ using Elffy.Markup;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 using U8Xml;
+using System.IO;
 
 namespace Elffy.Generator;
 
@@ -42,7 +43,7 @@ public sealed class MarkupTranslationGenerator : IIncrementalGenerator
                         return result;
                     }
                     var typeInfoStore = RoslynTypeInfoStore.Create(xml, compilation, ct);
-                    var outputName = filePath.Substring(0, filePath.Length - MarkupFileExt.Length) + OutputSourceExt;
+                    var outputName = Path.GetFileNameWithoutExtension(filePath) + OutputSourceExt;
                     result.SetOutputName(outputName);
 
                     MarkupTranslator.Translate(xml, typeInfoStore, result, ct);

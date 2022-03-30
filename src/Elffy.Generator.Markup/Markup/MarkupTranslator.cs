@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using Elffy.Generator;
 using Microsoft.CodeAnalysis.Text;
-using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Threading;
@@ -13,7 +12,6 @@ public static class MarkupTranslator
 {
     private const int SkippedMethodID = -1;
 
-    //[global::System.Obsolete("", true)]
     public static void Translate(
         XmlObject xml,
         ITypeInfoStore typeInfoStore,
@@ -21,7 +19,6 @@ public static class MarkupTranslator
         CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
-
 
         if(TryGetBuilderName(xml, out var builderNS, out var builderName) == false) {
             resultHolder.AddDiagnostic(DiagnosticHelper.BuilderNotSpecified());
@@ -41,25 +38,28 @@ public static class MarkupTranslator
                 rootMethod.AppendLine($"public static async global::Cysharp.Threading.Tasks.UniTask Create()");
             }
             else {
-                rootMethod.AppendLine($"public static async global::Cysharp.Threading.Tasks.UniTask<global::{returnedType}> Create()");
+                rootMethod.AppendLine($"public static async global::Cysharp.Threading.Tasks.UniTask<global::{returnedType.Name}> Create()");
             }
             rootMethod.AppendLine("{ throw new global::System.InvalidOperationException(\"The markup file was not translated to code successfully.\"); }");
             return;
         }
 
-        rootMethod.AppendLine($"public static async global::Cysharp.Threading.Tasks.UniTask<global::{returnedType}> Create()");
+        var unitaskT = $"global::Cysharp.Threading.Tasks.UniTask<global::{returnedType.Name}>";
+        rootMethod.AppendLine($@"public static async {unitaskT} Create(global::System.Func<global::{returnedType.Name}, {unitaskT}> beforeInit = null)");
         rootMethod.AppendLine("{");
         rootMethod.IncrementIndent();
         rootMethod.AppendLine("var context = new Context();");
         rootMethod.AppendLine("try {");
-        rootMethod.AppendLine($"    var obj = __F{id}(ref context, parent);");
+        rootMethod.AppendLine($"    var obj = __F{id}(ref context);");
+        rootMethod.AppendLine("    await (beforeInit?.Invoke(obj) ?? default);");
         rootMethod.AppendLine("    await context.WhenAllTask();");
+        rootMethod.AppendLine("    return obj;");
         rootMethod.AppendLine("} finally { context.Dispose(); }");
-        rootMethod.AppendLine("return obj;");
         rootMethod.DecrementIndent();
         rootMethod.AppendLine("}");
 
-        var result = SourceText.From(sourceBuilder.ToString(), Encoding.UTF8);
+        var source = sourceBuilder.ToString();
+        var result = SourceText.From(source, Encoding.UTF8);
         resultHolder.SetResult(result);
 
     }
@@ -68,6 +68,7 @@ public static class MarkupTranslator
     {
         // x:builder="Foo.Bar.Baz" xmlns:x="Elffy.Markup.Extensions"
 
+        // TODO:
         if(xml.Root.TryFindAttribute("Elffy.Markup.Extensions", "builder", out var attr) == false) {
             builderNS = null;
             builderName = null;
@@ -110,6 +111,9 @@ public static class MarkupTranslator
         foreach(var attr in node.Attributes) {
             if(attr.IsNamespaceAttr()) {
                 continue;
+            }
+            if(attr.Name.Contains((byte)':')) {
+                continue;   // TODO:
             }
             var propName = attr.Name.ToString();
             var literal = context.XmlEntities.ResolveToString(attr.Value);

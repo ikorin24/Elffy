@@ -26,16 +26,22 @@ internal sealed class RoslynTypeInfoStore : ITypeInfoStore
         CollectInstanceTypes(xml, (typeDic, compilation), ct, static (x, typeFullName, ct) =>
         {
             var (typeDic, compilation) = x;
+
+            // TODO: generic type
+            // The arg of the method should be like "System.Collections.Generic.Dictionary`2".
+            // (Can not input "System.Collections.Generic.Dictionary<string, int>")
             var type = compilation.GetTypeByMetadataName(typeFullName.ToString());
+
             if(type == null) { return; }
-            var typeName = type.Name;
+            var typeName = type.ToString();
             if(typeDic.ContainsKey(typeName)) { return; }
             var members = new TypeMemberDic();
             CollectInstanceMembers(type, (typeDic, members), ct, static (m, x) =>
             {
                 var (typeDic, members) = x;
-                members.Add(m.Member.Name, new TypeInfo(m.MemberType));
-                var memberTypeName = m.MemberType.Name;
+                var memberType = new TypeInfo(m.MemberType);
+                members.Add(m.Member.Name, memberType);
+                var memberTypeName = memberType.Name;
                 if(typeDic.ContainsKey(memberTypeName)) { return; }
                 typeDic.Add(memberTypeName, (m.MemberType, TypeMemberDic.Null));
             });

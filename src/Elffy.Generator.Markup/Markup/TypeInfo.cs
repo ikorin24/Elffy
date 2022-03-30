@@ -10,15 +10,25 @@ namespace Elffy.Markup;
 public readonly struct TypeInfo : IEquatable<TypeInfo>
 {
     private readonly INamedTypeSymbol? _typeSymbol;
+    private readonly string? _fullName;
 
     public static TypeInfo Null => default;
     public bool IsNull => _typeSymbol == null;
 
-    public string Name => _typeSymbol?.Name ?? "";
+    public string Name => _fullName ?? "";
 
     public TypeInfo(INamedTypeSymbol typeSymbol)
     {
         _typeSymbol = typeSymbol;
+
+        // (ex)
+        // delegate:  "System.Action"
+        // enum:      "System.StringSplitOptions"
+        // primitive: "int"
+        // class:     "System.Text.Encoding"
+        // struct:    "System.TimeSpan"
+        // generics:  "System.Collections.Generic.Dictionary`2"
+        _fullName = typeSymbol.ToString();
     }
 
     public bool TryGetLiteralCode(string literal, [MaybeNullWhen(false)] out string result, [MaybeNullWhen(true)] out Diagnostic diagnostic)
@@ -51,6 +61,8 @@ public readonly struct TypeInfo : IEquatable<TypeInfo>
         result = null;
         return false;
     }
+
+    public override string ToString() => Name;
 
     public override bool Equals(object? obj) => obj is TypeInfo info && Equals(info);
 
