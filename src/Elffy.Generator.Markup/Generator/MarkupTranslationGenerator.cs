@@ -8,7 +8,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 using U8Xml;
 using System.IO;
-using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
