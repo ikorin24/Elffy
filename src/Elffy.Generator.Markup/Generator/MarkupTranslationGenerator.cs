@@ -8,6 +8,10 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 using U8Xml;
 using System.IO;
+using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 
 namespace Elffy.Generator;
 
@@ -22,6 +26,12 @@ public sealed class MarkupTranslationGenerator : IIncrementalGenerator
         var results = context
             .AdditionalTextsProvider
             .Where(x => x.Path.EndsWith(MarkupFileExt, StringComparison.OrdinalIgnoreCase))
+            .Select((x, ct) =>
+            {
+                ct.ThrowIfCancellationRequested();
+                return new MarkupFile(x.Path, MarkupFile.ComputeFileHash(x.Path));
+            })
+            .WithComparer(MarkupFileEqualityComparer.Default)
             .Combine(context.CompilationProvider)
             .Select(static (x, ct) =>
             {
@@ -33,7 +43,7 @@ public sealed class MarkupTranslationGenerator : IIncrementalGenerator
                         result.AddDiagnostic(DiagnosticHelper.LanguageNotSupported(compilation.Language));
                         return result;
                     }
-                    var filePath = file.Path;
+                    var filePath = file.FilePath;
                     XmlObject xml;
                     try {
                         xml = XmlParser.ParseFile(filePath);
@@ -67,6 +77,71 @@ public sealed class MarkupTranslationGenerator : IIncrementalGenerator
                 context.ReportDiagnostic(DiagnosticHelper.GeneratorInternalException(ex));
             }
         });
+    }
+
+    private sealed class MarkupFileEqualityComparer : IEqualityComparer<MarkupFile>
+    {
+        public static readonly MarkupFileEqualityComparer Default = new();
+        private MarkupFileEqualityComparer()
+        {
+        }
+
+        public bool Equals(MarkupFile x, MarkupFile y) => x.Equals(y);
+
+        public int GetHashCode(MarkupFile obj) => obj.GetHashCode();
+
+    }
+
+    private readonly struct MarkupFile : IEquatable<MarkupFile>
+    {
+        [ThreadStatic]
+        private static SHA256? _sha256;
+        private const int HashSizeInBytes = 32;
+
+        public readonly string FilePath;
+        private readonly byte[]? _fileHash;
+
+        [Obsolete("Don't use default constructor.", true)]
+        public MarkupFile() => throw new NotSupportedException("Don't use default constructor.");
+
+        public MarkupFile(string filePath, byte[] hash)
+        {
+            if(hash.Length != HashSizeInBytes) {
+                throw new ArgumentException("Invalid hash size");
+            }
+            FilePath = filePath;
+            _fileHash = hash;
+        }
+
+        public static byte[] ComputeFileHash(string filePath)
+        {
+            _sha256 ??= SHA256.Create();
+            using var stream = File.OpenRead(filePath);
+            return _sha256.ComputeHash(stream);
+        }
+
+        public override bool Equals(object? obj) => obj is MarkupFile file && Equals(file);
+
+        public bool Equals(MarkupFile other)
+        {
+            return FilePath == other.FilePath &&
+                   _fileHash.AsSpan().SequenceEqual(other._fileHash);
+        }
+
+        public override int GetHashCode()
+        {
+            var fileHash = _fileHash;
+            ulong sum = 0;
+            if(fileHash != null) {
+                ref var h0 = ref Unsafe.As<byte, ulong>(ref MemoryMarshal.GetReference(fileHash.AsSpan()));
+                sum = h0 + Unsafe.Add(ref h0, 1) +
+                      Unsafe.Add(ref h0, 2) + Unsafe.Add(ref h0, 3);
+            }
+            int hashCode = 1636216199;
+            hashCode = hashCode * -1521134295 + (FilePath?.GetHashCode() ?? 0);
+            hashCode = hashCode * -1521134295 + (int)sum;
+            return hashCode;
+        }
     }
 
     private sealed class MarkupTranslationResult : IMarkupTranslationResultHolder, IDiagnosticAccumulator
