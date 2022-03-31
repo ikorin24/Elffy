@@ -75,16 +75,17 @@ public readonly struct TypeInfo : IEquatable<TypeInfo>
 
     private static readonly Dictionary<string, Func<string, string>> _embeddedLiteralCodeGenerator = new()
     {
-        ["byte"] = x => $"(byte){byte.Parse(x)}",
-        ["sbyte"] = x => $"(sbyte){sbyte.Parse(x)}",
-        ["ushort"] = x => $"(ushort){ushort.Parse(x)}",
-        ["short"] = x => $"(short){short.Parse(x)}",
-        ["uint"] = x => $"(uint){uint.Parse(x)}",
-        ["int"] = x => $"(int){int.Parse(x)}",
-        ["ulong"] = x => $"(ulong){ulong.Parse(x)}",
-        ["long"] = x => $"(long){long.Parse(x)}",
-        ["float"] = x => $"(float){float.Parse(x)}",
-        ["double"] = x => $"(double){double.Parse(x)}",
+        ["byte"] = x => $"((byte){byte.Parse(x)})",
+        ["sbyte"] = x => $"((sbyte){sbyte.Parse(x)})",
+        ["ushort"] = x => $"((ushort){ushort.Parse(x)})",
+        ["short"] = x => $"((short){short.Parse(x)})",
+        ["uint"] = x => $"((uint){uint.Parse(x)})",
+        ["int"] = x => $"((int){int.Parse(x)})",
+        ["ulong"] = x => $"((ulong){ulong.Parse(x)})",
+        ["long"] = x => $"((long){long.Parse(x)})",
+        ["float"] = x => $"((float){float.Parse(x)})",
+        ["double"] = x => $"((double){double.Parse(x)})",
+        ["bool"] = x => bool.Parse(x) ? "(true)" : "(false)",
     };
 
     private delegate string LiteralCodeGenerator(string literal);

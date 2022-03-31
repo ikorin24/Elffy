@@ -11,6 +11,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <RootNamespace>Elffy</RootNamespace>
+    <IsRoslynComponent>true</IsRoslynComponent>
 
     <!-- Settings for source senerator -->
     <IncludeBuildOutput>false</IncludeBuildOutput>
