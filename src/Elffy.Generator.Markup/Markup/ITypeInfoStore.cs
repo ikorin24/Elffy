@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System.Diagnostics.CodeAnalysis;
 using U8Xml;
+using Elffy.Generator;
 
 namespace Elffy.Markup;
 
@@ -11,7 +12,7 @@ public interface ITypeInfoStore
 
 public static class TypeInfoStoreExtensions
 {
-    public static bool IsPropertyNode(this ITypeInfoStore store, XmlNode node, [MaybeNullWhen(false)] out TypeInfo propOwnerType, out RawString propName)
+    public static bool IsPropertyNode(this RoslynTypeInfoStore store, XmlNode node, out TypeInfo propOwnerType, out RawString propName)
     {
         var (nsName, tmp) = node.GetFullName();
         (var name, propName) = tmp.Split2((byte)'.');
@@ -19,6 +20,11 @@ public static class TypeInfoStoreExtensions
             propOwnerType = default;
             return false;
         }
-        return store.TryGetTypeInfo(new TypeFullName(nsName, name).ToString(), out propOwnerType, out _);
+        if(store.TryGetTypeInfo(new TypeFullName(nsName, name).ToString(), out var members) == false) {
+            propOwnerType = default;
+            return false;
+        }
+        propOwnerType = members.OwnerType;
+        return true;
     }
 }

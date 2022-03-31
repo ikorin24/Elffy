@@ -17,6 +17,9 @@ public readonly struct TypeInfo : IEquatable<TypeInfo>
 
     public string Name => _fullName ?? "";
 
+    [Obsolete("Don't use default constructo", true)]
+    public TypeInfo() => throw new NotSupportedException("Don't use default constructo");
+
     public TypeInfo(INamedTypeSymbol typeSymbol)
     {
         _typeSymbol = typeSymbol;
@@ -89,4 +92,30 @@ public readonly struct TypeInfo : IEquatable<TypeInfo>
     };
 
     private delegate string LiteralCodeGenerator(string literal);
+}
+
+internal delegate TResult RefArgFunc<T1, T2, TResult>(ref T1 arg1, T2 arg2);
+
+internal static class ITypeSymbolExtensions
+{
+    public static bool IsAssignableInstanceMember(
+        this ISymbol s,
+        out string memberName,
+        [MaybeNullWhen(false)] out INamedTypeSymbol memberType)
+    {
+        memberName = s.Name;
+        var isAccessibleInstanceMember = (s.DeclaredAccessibility is Accessibility.Public or Accessibility.Internal) && (!s.IsStatic);
+        if(isAccessibleInstanceMember) {
+            memberType = s.Kind switch
+            {
+                SymbolKind.Property => (s as IPropertySymbol)?.Type as INamedTypeSymbol,
+                SymbolKind.Field => (s as IFieldSymbol)?.Type as INamedTypeSymbol,
+                _ => null,
+            };
+            if(memberType == null) { return false; }
+            return true;
+        }
+        memberType = null;
+        return false;
+    }
 }

@@ -10,7 +10,7 @@ public sealed class MarkupTranslatorContext
 {
     private readonly SourceStringBuilder _sourceBuilder;
     private readonly XmlObject _xml;
-    private readonly ITypeInfoStore _typeInfoStore;
+    private readonly RoslynTypeInfoStore _typeInfoStore;
     private readonly IMarkupTranslationResultHolder _resultHolder;
     private readonly CancellationToken _ct;
 
@@ -19,11 +19,11 @@ public sealed class MarkupTranslatorContext
     public XmlNode RootNode => _xml.Root;
     public XmlEntityTable XmlEntities => _xml.EntityTable;
 
-    public ITypeInfoStore TypeInfoStore => _typeInfoStore;
+    public RoslynTypeInfoStore TypeInfoStore => _typeInfoStore;
 
     public SourceStringBuilder SourceBuilder => _sourceBuilder;
 
-    public MarkupTranslatorContext(XmlObject xml, SourceStringBuilder sourceStringBuilder, ITypeInfoStore typeInfoStore, IMarkupTranslationResultHolder resultHolder, CancellationToken ct)
+    public MarkupTranslatorContext(XmlObject xml, SourceStringBuilder sourceStringBuilder, RoslynTypeInfoStore typeInfoStore, IMarkupTranslationResultHolder resultHolder, CancellationToken ct)
     {
         _sourceBuilder = sourceStringBuilder;
         _xml = xml;

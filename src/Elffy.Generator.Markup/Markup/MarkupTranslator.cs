@@ -14,7 +14,7 @@ public static class MarkupTranslator
 
     public static void Translate(
         XmlObject xml,
-        ITypeInfoStore typeInfoStore,
+        RoslynTypeInfoStore typeInfoStore,
         IMarkupTranslationResultHolder resultHolder,
         CancellationToken ct)
     {
@@ -96,10 +96,11 @@ public static class MarkupTranslator
         context.CancellationToken.ThrowIfCancellationRequested();
 
         var typeInfoStore = context.TypeInfoStore;
-        if(typeInfoStore.TryGetTypeInfo(node.GetTypeFullName().ToString(), out var instanceType, out var members) == false) {
+        if(typeInfoStore.TryGetTypeInfo(node.GetTypeFullName().ToString(), out var members) == false) {
             context.AddDiagnostic(DiagnosticHelper.TypeNotFound(node.GetTypeFullName().ToString()));
             return (SkippedMethodID, TypeInfo.Null);
         }
+        var instanceType = members.OwnerType;
 
         var mb = context.SourceBuilder.CreateMethodBuilder(2, out var methodId);
 

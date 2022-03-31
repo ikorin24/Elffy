@@ -1,19 +1,25 @@
 ﻿#nullable enable
 using System.Collections.Generic;
 using System;
+using Microsoft.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Markup;
 
 public readonly struct TypeMemberDic : IEquatable<TypeMemberDic>
 {
+    private readonly INamedTypeSymbol _typeSymbol;
     private readonly Dictionary<string, TypeInfo>? _dic;
 
-    public bool IsNull => _dic == null;
+    public INamedTypeSymbol OwnerTypeSymbol => _typeSymbol;
+    public TypeInfo OwnerType => new TypeInfo(_typeSymbol);
 
-    public static TypeMemberDic Null => default;
+    [Obsolete("Don't use default constructor.", true)]
+    public TypeMemberDic() => throw new NotSupportedException("Don't use default constructor.");
 
-    public TypeMemberDic()
+    public TypeMemberDic(INamedTypeSymbol typeSymbol)
     {
+        _typeSymbol = typeSymbol;
         _dic = new Dictionary<string, TypeInfo>();
     }
 
@@ -27,17 +33,44 @@ public readonly struct TypeMemberDic : IEquatable<TypeMemberDic>
 
     public bool TryGetMember(string memberName, out TypeInfo typeInfo)
     {
-        var dic = _dic;
-        if(dic == null || dic.TryGetValue(memberName, out typeInfo) == false) {
-            typeInfo = default;
-            return false;
+        //var dic = _dic;
+        //if(dic == null || dic.TryGetValue(memberName, out typeInfo) == false) {
+        //    typeInfo = default;
+        //    return false;
+        //}
+        //return true;
+        if(TryFindMember(_typeSymbol, memberName, out var memberType)) {
+            typeInfo = new TypeInfo(memberType);
+            return true;
         }
-        return true;
+        typeInfo = default;
+        return false;
+    }
+
+    private static bool TryFindMember(ITypeSymbol targetType, string memberName, [MaybeNullWhen(false)] out INamedTypeSymbol result)
+    {
+        var current = targetType;
+        while(current != null) {
+            foreach(var m in current.GetMembers(memberName)) {
+                if(m.IsAssignableInstanceMember(out _, out result)) {
+                    return true;
+                }
+            }
+            current = current.BaseType;
+        }
+        result = null;
+        return false;
     }
 
     public override bool Equals(object? obj) => obj is TypeMemberDic dic && Equals(dic);
 
-    public bool Equals(TypeMemberDic other) => _dic == other._dic;
+    public bool Equals(TypeMemberDic other) => SymbolEqualityComparer.Default.Equals(_typeSymbol, other._typeSymbol) && (_dic == other._dic);
 
-    public override int GetHashCode() => _dic?.GetHashCode() ?? 0;
+    public override int GetHashCode()
+    {
+        int hashCode = -1193346184;
+        hashCode = hashCode * -1521134295 + SymbolEqualityComparer.Default.GetHashCode(_typeSymbol);
+        hashCode = hashCode * -1521134295 + _dic?.GetHashCode() ?? 0;
+        return hashCode;
+    }
 }
