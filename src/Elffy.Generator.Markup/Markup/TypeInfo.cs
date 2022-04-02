@@ -17,6 +17,8 @@ public readonly struct TypeInfo : IEquatable<TypeInfo>
 
     public string Name => _fullName ?? "";
 
+    public bool IsValueType => _typeSymbol?.IsValueType ?? false;
+
     [Obsolete("Don't use default constructo", true)]
     public TypeInfo() => throw new NotSupportedException("Don't use default constructo");
 
@@ -34,23 +36,23 @@ public readonly struct TypeInfo : IEquatable<TypeInfo>
         _fullName = typeSymbol.ToString();
     }
 
-    public bool TryGetLiteralCode(string literal, [MaybeNullWhen(false)] out string result, [MaybeNullWhen(true)] out Diagnostic diagnostic)
+    public bool TryGetLiteralCode(string literal, [MaybeNullWhen(false)] out string code, [MaybeNullWhen(true)] out Diagnostic diagnostic)
     {
         var typeName = Name;
         if(_embeddedLiteralCodeGenerator.TryGetValue(typeName, out var generator)) {
             try {
-                result = generator.Invoke(literal);
+                code = generator.Invoke(literal);
                 diagnostic = null;
                 return true;
             }
             catch(Exception ex) {
                 diagnostic = DiagnosticHelper.CannotCreateValueFromLiteral(literal, typeName, ex);
-                result = null;
+                code = null;
                 return false;
             }
         }
         diagnostic = DiagnosticHelper.LiteralValueNotSupported(typeName);
-        result = null;
+        code = null;
         return false;
     }
 

@@ -50,7 +50,7 @@ public static class MarkupTranslator
         }
 
         var unitaskT = $"global::Cysharp.Threading.Tasks.UniTask<global::{returnedType.Name}>";
-        rootMethod.AppendLine($@"public static async {unitaskT} Create(global::System.Func<global::{returnedType.Name}, {unitaskT}> beforeInit = null)");
+        rootMethod.AppendLine($@"public static async {unitaskT} Create(global::System.Func<global::{returnedType.Name}, {unitaskT}>? beforeInit = null)");
         rootMethod.AppendLine("{");
         rootMethod.IncrementIndent();
         rootMethod.AppendLine("var context = new Context();");
@@ -96,8 +96,9 @@ public static class MarkupTranslator
         context.CancellationToken.ThrowIfCancellationRequested();
 
         var typeInfoStore = context.TypeInfoStore;
-        if(typeInfoStore.TryGetTypeInfo(node.GetTypeFullName().ToString(), out var members) == false) {
-            context.AddDiagnostic(DiagnosticHelper.TypeNotFound(node.GetTypeFullName().ToString()));
+        var nodeTypeName = node.GetTypeFullName().ToString();
+        if(typeInfoStore.TryGetTypeInfo(nodeTypeName, out var members) == false) {
+            context.AddDiagnostic(DiagnosticHelper.TypeNotFound(nodeTypeName));
             return (SkippedMethodID, TypeInfo.Null);
         }
         var instanceType = members.OwnerType;
@@ -112,7 +113,25 @@ public static class MarkupTranslator
         }
         mb.AppendLine("{");
         mb.IncrementIndent();
-        mb.AppendLine($"var obj = new global::{instanceType.Name}();");
+        if(node.InnerText.IsEmpty) {
+            mb.AppendLine($"var obj = new global::{instanceType.Name}();");
+        }
+        else {
+            // typed literal
+            var literal = node.InnerText.ToString();
+            if(instanceType.TryGetLiteralCode(literal, out var literalCode, out var diagnostic)) {
+                mb.AppendLine($"var obj = {literalCode};");
+            }
+            else {
+                context.AddDiagnostic(diagnostic);
+                if(instanceType.IsValueType) {
+                    mb.AppendLine($"var obj = default(global::{instanceType.Name});");
+                }
+                else {
+                    mb.AppendLine($"var obj = default(global::{instanceType.Name})!;");
+                }
+            }
+        }
 
         foreach(var attr in node.Attributes) {
             if(attr.IsNamespaceAttr()) {
@@ -122,12 +141,12 @@ public static class MarkupTranslator
                 continue;   // TODO:
             }
             var propName = attr.Name.ToString();
-            var literal = context.XmlEntities.ResolveToString(attr.Value);
             if(members.TryGetMember(propName, out var propType) == false) {
                 context.AddDiagnostic(DiagnosticHelper.SettableMemberNotFound(instanceType.Name, propName));
                 // Skip this property
                 continue;
             }
+            var literal = context.XmlEntities.ResolveToString(attr.Value);
             if(propType.TryGetLiteralCode(literal, out var literalCode, out var diagnostic) == false) {
                 context.AddDiagnostic(diagnostic);
                 // Skip this property
@@ -139,37 +158,7 @@ public static class MarkupTranslator
 
         foreach(var childNode in node.Children) {
             if(typeInfoStore.IsPropertyNode(childNode, out var propOwnerType, out var propName)) {
-                if(members.TryGetMember(propName.ToString(), out var propType) == false) {
-                    context.AddDiagnostic(DiagnosticHelper.SettableMemberNotFound(instanceType.Name, propName.ToString()));
-
-                    // Skip this property and child values of it.
-                    continue;
-                }
-                var instanceCode = (propOwnerType.Name == instanceType.Name) ? "obj" : $"((global::{propOwnerType.Name})obj)";
-
-                if(childNode.Children.Count == 1) {
-                    var (id, _) = GenerateFactoryMethodCode(childNode.FirstChild.Value, instanceType, context);
-                    if(id == SkippedMethodID) {
-                        // Skip this property and child values of it.
-                        continue;
-                    }
-                    else {
-                        mb.AppendLine($"{instanceCode}.{propName} = __F{id}(ref context, obj);");
-                    }
-                }
-                else if(childNode.Children.Count == 0) {
-                    var literal = context.XmlEntities.ResolveToString(childNode.InnerText);
-                    if(propType.TryGetLiteralCode(literal, out var code, out var diagnostic) == false) {
-                        context.AddDiagnostic(diagnostic);
-                        // Skip this property
-                        continue;
-                    }
-                    mb.AppendLine($"{instanceCode}.{propName} = {code};");
-                }
-                else {
-                    context.AddDiagnostic(DiagnosticHelper.MutipleValuesNotSupported(instanceType.Name, propName.ToString()));
-                    continue;
-                }
+                BuildPropertyNode(members, childNode, propOwnerType, propName, context, mb);
             }
             else {
                 var (id, _) = GenerateFactoryMethodCode(childNode, instanceType, context);
@@ -183,10 +172,46 @@ public static class MarkupTranslator
                 }
             }
         }
+
         mb.AppendLine("return obj;");
         mb.DecrementIndent();
         mb.AppendLine(@"}
 ");
         return (methodId, instanceType);
+    }
+
+    private static void BuildPropertyNode(
+        TypeMemberDic members, XmlNode propertyNode, TypeInfo propOwnerType, RawString propName,
+        MarkupTranslatorContext context,
+        MethodSourceBuilder mb)
+    {
+        var instanceType = members.OwnerType;
+        if(members.TryGetMember(propName.ToString(), out var propType) == false) {
+            context.AddDiagnostic(DiagnosticHelper.SettableMemberNotFound(instanceType.Name, propName.ToString()));
+            return;
+        }
+        var instanceCode = (propOwnerType.Name == instanceType.Name) ? "obj" : $"((global::{propOwnerType.Name})obj)";
+
+        if(propertyNode.Children.Count == 1) {
+            var (id, _) = GenerateFactoryMethodCode(propertyNode.FirstChild.Value, instanceType, context);
+            if(id != SkippedMethodID) {
+                mb.AppendLine($"{instanceCode}.{propName} = __F{id}(ref context, obj);");
+            }
+            return;
+        }
+        else if(propertyNode.Children.Count == 0) {
+            var literal = context.XmlEntities.ResolveToString(propertyNode.InnerText);
+            if(propType.TryGetLiteralCode(literal, out var code, out var diagnostic) == false) {
+                context.AddDiagnostic(diagnostic);
+            }
+            else {
+                mb.AppendLine($"{instanceCode}.{propName} = {code};");
+            }
+            return;
+        }
+        else {
+            context.AddDiagnostic(DiagnosticHelper.MutipleValuesNotSupported(instanceType.Name, propName.ToString()));
+            return;
+        }
     }
 }
