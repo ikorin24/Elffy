@@ -9,7 +9,7 @@ namespace Elffy.Markup;
 public readonly struct TypeMemberDic : IEquatable<TypeMemberDic>
 {
     private readonly INamedTypeSymbol _typeSymbol;
-    private readonly Dictionary<string, TypeInfo>? _dic;
+    private readonly Dictionary<string, TypeInfo>? _members;
 
     public INamedTypeSymbol OwnerTypeSymbol => _typeSymbol;
     public TypeInfo OwnerType => new TypeInfo(_typeSymbol);
@@ -20,25 +20,19 @@ public readonly struct TypeMemberDic : IEquatable<TypeMemberDic>
     public TypeMemberDic(INamedTypeSymbol typeSymbol)
     {
         _typeSymbol = typeSymbol;
-        _dic = new Dictionary<string, TypeInfo>();
+        _members = new Dictionary<string, TypeInfo>();
     }
 
     public void Add(string memberName, TypeInfo memberType)
     {
-        if(_dic == null) {
+        if(_members == null) {
             throw new InvalidOperationException();
         }
-        _dic.Add(memberName, memberType);
+        _members.Add(memberName, memberType);
     }
 
     public bool TryGetMember(string memberName, out TypeInfo typeInfo)
     {
-        //var dic = _dic;
-        //if(dic == null || dic.TryGetValue(memberName, out typeInfo) == false) {
-        //    typeInfo = default;
-        //    return false;
-        //}
-        //return true;
         if(TryFindMember(_typeSymbol, memberName, out var memberType)) {
             typeInfo = new TypeInfo(memberType);
             return true;
@@ -64,13 +58,13 @@ public readonly struct TypeMemberDic : IEquatable<TypeMemberDic>
 
     public override bool Equals(object? obj) => obj is TypeMemberDic dic && Equals(dic);
 
-    public bool Equals(TypeMemberDic other) => SymbolEqualityComparer.Default.Equals(_typeSymbol, other._typeSymbol) && (_dic == other._dic);
+    public bool Equals(TypeMemberDic other) => SymbolEqualityComparer.Default.Equals(_typeSymbol, other._typeSymbol) && (_members == other._members);
 
     public override int GetHashCode()
     {
         int hashCode = -1193346184;
         hashCode = hashCode * -1521134295 + SymbolEqualityComparer.Default.GetHashCode(_typeSymbol);
-        hashCode = hashCode * -1521134295 + _dic?.GetHashCode() ?? 0;
+        hashCode = hashCode * -1521134295 + _members?.GetHashCode() ?? 0;
         return hashCode;
     }
 }
