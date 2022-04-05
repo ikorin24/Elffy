@@ -10,8 +10,8 @@ public sealed class MarkupTranslatorContext
 {
     private readonly SourceStringBuilder _sourceBuilder;
     private readonly XmlObject _xml;
-    private readonly RoslynTypeInfoStore _typeInfoStore;
-    private readonly IMarkupTranslationResultHolder _resultHolder;
+    private readonly TypeDataStore _typeStore;
+    private readonly MarkupTranslationResult _result;
     private readonly CancellationToken _ct;
 
     public CancellationToken CancellationToken => _ct;
@@ -19,21 +19,21 @@ public sealed class MarkupTranslatorContext
     public XmlNode RootNode => _xml.Root;
     public XmlEntityTable XmlEntities => _xml.EntityTable;
 
-    public RoslynTypeInfoStore TypeInfoStore => _typeInfoStore;
+    public TypeDataStore TypeStore => _typeStore;
 
     public SourceStringBuilder SourceBuilder => _sourceBuilder;
 
-    public MarkupTranslatorContext(XmlObject xml, SourceStringBuilder sourceStringBuilder, RoslynTypeInfoStore typeInfoStore, IMarkupTranslationResultHolder resultHolder, CancellationToken ct)
+    public MarkupTranslatorContext(XmlObject xml, SourceStringBuilder sourceStringBuilder, TypeDataStore typeStore, MarkupTranslationResult resultHolder, CancellationToken ct)
     {
         _sourceBuilder = sourceStringBuilder;
         _xml = xml;
-        _typeInfoStore = typeInfoStore;
-        _resultHolder = resultHolder;
+        _typeStore = typeStore;
+        _result = resultHolder;
         _ct = ct;
     }
 
     public void AddDiagnostic(Diagnostic diagnostic)
     {
-        _resultHolder.AddDiagnostic(diagnostic);
+        _result.AddDiagnostic(diagnostic);
     }
 }

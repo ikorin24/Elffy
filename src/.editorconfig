@@ -16,9 +16,9 @@ indent_size = 4
 insert_final_newline = true
 
 [*.xml]
-indent_size = 4
+indent_size = 2
 indent_style = space
-tab_width = 4
+tab_width = 2
 insert_final_newline = true
 
 [*.csproj]
