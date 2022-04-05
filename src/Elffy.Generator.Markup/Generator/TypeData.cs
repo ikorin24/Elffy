@@ -15,7 +15,7 @@ public sealed class TypeData
     private readonly INamedTypeSymbol? _baseTypeSymbol;
     private Dictionary<string, TypeData>? _membersCache;
     private TypeData? _baseTypeCache;
-    private readonly TypedLiteralConverter _literalConverter;
+    private readonly ITypedLiteralConverter _literalConverter;
     private static readonly Dictionary<string, Func<string, string>> _embeddedLiteralCodeGenerator = new()
     {
         ["byte"] = x => $"((byte){byte.Parse(x)})",

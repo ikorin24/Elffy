@@ -57,7 +57,7 @@ public sealed class TypeDataStore
         return true;
     }
 
-    public TypedLiteralConverter CreateLiteralConverter(INamedTypeSymbol typeSymbol)
+    public ITypedLiteralConverter CreateLiteralConverter(INamedTypeSymbol typeSymbol)
     {
         return TypedLiteralConverter.Create(typeSymbol, _typedLiteralMarkupAttr);
     }

@@ -1,13 +1,10 @@
 ﻿#nullable enable
-using Elffy.Generator;
 using Microsoft.CodeAnalysis;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Markup;
 
-internal static class ITypeSymbolExtensions
+internal static class TypeSymbolExtensions
 {
     public static bool IsAssignableInstanceMember(
         this ISymbol member,
