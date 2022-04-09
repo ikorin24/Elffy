@@ -2,13 +2,19 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using Elffy.Markup;
 
 namespace Elffy
 {
     [DebuggerDisplay("{DebugDisplay}")]
     [StructLayout(LayoutKind.Explicit)]
+    [UseLiteralMarkup]
+    [LiteralMarkupPattern(LiteralPattern, LiteralEmit)]
     public struct RectF : IEquatable<RectF>
     {
+        private const string LiteralPattern = @$"^(?<x>{RegexPatterns.Float}), *(?<y>{RegexPatterns.Float}), *(?<wi>{RegexPatterns.Float}), *(?<he>{RegexPatterns.Float})$";
+        private const string LiteralEmit = @"new global::Elffy.RectF((float)(${x}), (float)(${y}), (float)(${wi}), (float)(${he}))";
+
         [FieldOffset(0)]
         public float X;
         [FieldOffset(4)]

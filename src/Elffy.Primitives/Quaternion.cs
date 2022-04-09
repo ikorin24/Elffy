@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using Elffy.Markup;
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -11,8 +12,13 @@ namespace Elffy
 {
     [DebuggerDisplay("{DebugView}")]
     [StructLayout(LayoutKind.Explicit)]
+    [UseLiteralMarkup]
+    [LiteralMarkupPattern(LiteralPattern, LiteralEmit)]
     public struct Quaternion : IEquatable<Quaternion>
     {
+        private const string LiteralPattern = @$"^(?<x>{RegexPatterns.Float}), *(?<y>{RegexPatterns.Float}), *(?<z>{RegexPatterns.Float}), *(?<w>{RegexPatterns.Float})$";
+        private const string LiteralEmit = @"new global::Elffy.Quaternion((float)(${x}), (float)(${y}), (float)(${z}), (float)(${w}))";
+
         [FieldOffset(0)]
         public float X;
         [FieldOffset(4)]

@@ -4,13 +4,19 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using Elffy.Markup;
 
 namespace Elffy
 {
     [StructLayout(LayoutKind.Explicit)]
     [DebuggerDisplay("{DebuggerDisplay}")]
+    [UseLiteralMarkup]
+    [LiteralMarkupPattern(LiteralPattern, LiteralEmit)]
     public struct Vector3i : IEquatable<Vector3i>
     {
+        private const string LiteralPattern = @$"^(?<x>{RegexPatterns.Int}), *(?<y>{RegexPatterns.Int}), *(?<z>{RegexPatterns.Int})$";
+        private const string LiteralEmit = @"new global::Elffy.Vector3i((int)(${x}), (int)(${y}), (int)(${z}))";
+
         [FieldOffset(0)]
         public int X;
         [FieldOffset(4)]
