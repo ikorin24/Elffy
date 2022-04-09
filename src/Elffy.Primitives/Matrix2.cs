@@ -2,11 +2,15 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Elffy.Markup;
+using RP = Elffy.Markup.RegexPatterns;
 
 namespace Elffy
 {
     /// <summary>Matrix of 2x2</summary>
     [StructLayout(LayoutKind.Explicit)]
+    [UseLiteralMarkup]
+    [LiteralMarkupPattern(LiteralPattern, LiteralEmit)]
     public struct Matrix2 : IEquatable<Matrix2>
     {
         // =================================================
@@ -32,6 +36,9 @@ namespace Elffy
         //           | M10 * x0 + M11 * y0 |
         // =================================================
 
+        private const string LiteralPattern = @$"^(?<m00>{RP.Float}), *(?<m01>{RP.Float}), *(?<m10>{RP.Float}), *(?<m11>{RP.Float})$";
+        private const string LiteralEmit = @"new global::Elffy.Matrix2((float)(${m00}), (float)(${m01}), (float)(${m10}), (float)(${m11}))";
+
         [FieldOffset(0)]
         public float M00;
         [FieldOffset(4)]
@@ -41,6 +48,7 @@ namespace Elffy
         [FieldOffset(12)]
         public float M11;
 
+        [LiteralMarkupMember]
         public static readonly Matrix2 Identity = new Matrix2(1, 0, 0, 1);
 
         /// <summary>

@@ -3,6 +3,8 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Elffy.Mathematics;
+using Elffy.Markup;
+using RP = Elffy.Markup.RegexPatterns;
 using NVec3 = System.Numerics.Vector3;
 using NMat4 = System.Numerics.Matrix4x4;
 
@@ -10,6 +12,8 @@ namespace Elffy
 {
     /// <summary>Matrix of 4x4</summary>
     [StructLayout(LayoutKind.Explicit)]
+    [UseLiteralMarkup]
+    [LiteralMarkupPattern(LiteralPattern, LiteralEmit)]
     public struct Matrix4 : IEquatable<Matrix4>
     {
         // =================================================
@@ -40,6 +44,11 @@ namespace Elffy
         //           | M20*x0 + M21*y0 + M22*z0 + M23*w0 |
         //           | M30*x0 + M31*y0 + M32*z0 + M33*w0 |
         // =================================================
+
+        private const string LiteralPattern =
+@$"^(?<m00>{RP.Float}), *(?<m01>{RP.Float}), *(?<m02>{RP.Float}), *(?<m03>{RP.Float}), *(?<m10>{RP.Float}), *(?<m11>{RP.Float}), *(?<m12>{RP.Float}), *(?<m13>{RP.Float}), *(?<m20>{RP.Float}), *(?<m21>{RP.Float}), *(?<m22>{RP.Float}), *(?<m23>{RP.Float}), *(?<m30>{RP.Float}), *(?<m31>{RP.Float}), *(?<m32>{RP.Float}), *(?<m33>{RP.Float})$";
+        private const string LiteralEmit =
+@"new global::Elffy.Matrix4((float)(${m00}), (float)(${m01}), (float)(${m02}), (float)(${m03}), (float)(${m10}), (float)(${m11}), (float)(${m12}), (float)(${m13}), (float)(${m20}), (float)(${m21}), (float)(${m22}), (float)(${m23}), (float)(${m30}), (float)(${m31}), (float)(${m32}), (float)(${m33}))";
 
         [FieldOffset(0)]
         public float M00;
@@ -79,11 +88,12 @@ namespace Elffy
 
         public static unsafe readonly int SizeInBytes = sizeof(Matrix4);
 
+        [LiteralMarkupMember]
         public static readonly Matrix4 Identity = new Matrix4(1, 0, 0, 0,
                                                               0, 1, 0, 0,
                                                               0, 0, 1, 0,
                                                               0, 0, 0, 1);
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Matrix4(float m00, float m01, float m02, float m03,
                        float m10, float m11, float m12, float m13,

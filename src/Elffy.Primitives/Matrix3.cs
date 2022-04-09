@@ -7,12 +7,16 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Elffy.Markup;
+using RP = Elffy.Markup.RegexPatterns;
 using NVec3 = System.Numerics.Vector3;
 
 namespace Elffy
 {
     /// <summary>Matrix of 3x3</summary>
     [StructLayout(LayoutKind.Explicit)]
+    [UseLiteralMarkup]
+    [LiteralMarkupPattern(LiteralPattern, LiteralEmit)]
     public struct Matrix3 : IEquatable<Matrix3>
     {
         // =================================================
@@ -41,6 +45,11 @@ namespace Elffy
         //           | M20*x0 + M21*y0 + M22*z0 |
         // =================================================
 
+        private const string LiteralPattern =
+@$"^(?<m00>{RP.Float}), *(?<m01>{RP.Float}), *(?<m02>{RP.Float}), *(?<m10>{RP.Float}), *(?<m11>{RP.Float}), *(?<m12>{RP.Float}), *(?<m20>{RP.Float}), *(?<m21>{RP.Float}), *(?<m22>{RP.Float})$";
+        private const string LiteralEmit =
+@"new global::Elffy.Matrix3((float)(${m00}), (float)(${m01}), (float)(${m02}), (float)(${m10}), (float)(${m11}), (float)(${m12}), (float)(${m20}), (float)(${m21}), (float)(${m22}))";
+
         [FieldOffset(0)]
         public float M00;
         [FieldOffset(4)]
@@ -60,6 +69,7 @@ namespace Elffy
         [FieldOffset(32)]
         public float M22;
 
+        [LiteralMarkupMember]
         public static readonly Matrix3 Identity = new Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1);
 
         /// <summary>Get whether the matrix is identity</summary>
