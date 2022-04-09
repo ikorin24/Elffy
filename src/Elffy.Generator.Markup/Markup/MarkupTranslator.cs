@@ -50,7 +50,7 @@ public static class MarkupTranslator
         }
 
         var unitaskT = $"global::Cysharp.Threading.Tasks.UniTask<global::{returnedType.Name}>";
-        rootMethod.AppendLine($@"public static async {unitaskT} Create(global::System.Func<global::{returnedType.Name}, {unitaskT}>? beforeInit = null)");
+        rootMethod.AppendLine($@"public static async {unitaskT} Create(global::System.Func<global::{returnedType.Name}, global::Cysharp.Threading.Tasks.UniTask>? beforeInit = null)");
         rootMethod.AppendLine("{");
         rootMethod.IncrementIndent();
         rootMethod.AppendLine("var context = new Context();");
