@@ -4,13 +4,20 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Elffy.Markup;
 
 namespace Elffy
 {
     [DebuggerDisplay("{DebugView}")]
     [StructLayout(LayoutKind.Explicit)]
+    [UseLiteralMarkup]
+    [LiteralMarkupPattern(HexCodePattern, HexCodeEmit)]
     public partial struct Color3 : IEquatable<Color3>
     {
+        // lang=regex
+        private const string HexCodePattern = @"^#[0-9a-fA-F]{6}$";
+        private const string HexCodeEmit = @"global::Elffy.Color3.FromHexCode(""$0"")";
+
         [FieldOffset(0)]
         public float R;
         [FieldOffset(4)]
@@ -20,7 +27,7 @@ namespace Elffy
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private readonly string DebugView
-            => $"(R, G, B) = = ({R}, {G}, {B}) = ({(byte)(R * byte.MaxValue)}, {(byte)(G * byte.MaxValue)}, {(byte)(B * byte.MaxValue)})";
+            => $"(R, G, B) = ({R}, {G}, {B}) = ({(byte)(R * byte.MaxValue)}, {(byte)(G * byte.MaxValue)}, {(byte)(B * byte.MaxValue)})";
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Color3(float r, float g, float b) => (R, G, B) = (r, g, b);
@@ -54,6 +61,26 @@ namespace Elffy
         public static bool operator ==(in Color3 left, in Color3 right) => left.Equals(right);
 
         public static bool operator !=(in Color3 left, in Color3 right) => !(left == right);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Color3 FromHexCode(string hexCode) => FromHexCode(hexCode.AsSpan());
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Color3 FromHexCode(ReadOnlySpan<char> hexCode) =>
+            TryFromHexCode(hexCode, out var color) ? color : throw new FormatException($"Invalid Format: '{hexCode.ToString()}'");
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool TryFromHexCode(string hex, out Color3 color) => TryFromHexCode(hex.AsSpan(), out color);
+
+        public static bool TryFromHexCode(ReadOnlySpan<char> hexCode, out Color3 color)
+        {
+            if(ColorByte.TryFromHexCode(hexCode, out var colorByte) && colorByte.A == byte.MaxValue) {
+                color = colorByte.ToColor3();
+                return true;
+            }
+            color = default;
+            return false;
+        }
 
         /// <summary>Try to get color from web color name, which must be small letter.</summary>
         /// <param name="name">web color name</param>

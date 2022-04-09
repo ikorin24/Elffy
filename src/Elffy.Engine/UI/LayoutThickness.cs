@@ -2,13 +2,22 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using Elffy.Markup;
 
 namespace Elffy.UI
 {
     [DebuggerDisplay("{DebugDisplay}")]
     [StructLayout(LayoutKind.Explicit)]
+    [UseLiteralMarkup]
+    [LiteralMarkupPattern(NumPattern, NumEmit)]
+    [LiteralMarkupPattern(Num4Pattern, Num4Emit)]
     public struct LayoutThickness : IEquatable<LayoutThickness>
     {
+        private const string NumPattern = @$"^{RegexPatterns.Float}$";
+        private const string NumEmit = "new global::Elffy.UI.LayoutThickness((float)($0))";
+        private const string Num4Pattern = @$"^(?<l>{RegexPatterns.Float}), *(?<t>{RegexPatterns.Float}), *(?<r>{RegexPatterns.Float}), *(?<b>{RegexPatterns.Float})$";
+        private const string Num4Emit = "new global::Elffy.UI.LayoutThickness((float)(${l}), (float)(${t}), (float)(${r}), (float)(${b}))";
+
         [FieldOffset(0)]
         public float Left;
         [FieldOffset(4)]

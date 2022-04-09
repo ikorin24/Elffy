@@ -4,14 +4,21 @@ using System.Diagnostics;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
+using Elffy.Markup;
 
 namespace Elffy
 {
     /// <summary>Color structure with RGBA bytes format</summary>
     [DebuggerDisplay("{DebugView,nq}")]
     [StructLayout(LayoutKind.Explicit)]
+    [UseLiteralMarkup]
+    [LiteralMarkupPattern(HexCodePattern, HexCodeEmit)]
     public partial struct ColorByte : IEquatable<ColorByte>
     {
+        // lang=regex
+        private const string HexCodePattern = @"^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$";
+        private const string HexCodeEmit = @"global::Elffy.ColorByte.FromHexCode(""$0"")";
+
         [FieldOffset(0)]
         public byte R;
         [FieldOffset(1)]

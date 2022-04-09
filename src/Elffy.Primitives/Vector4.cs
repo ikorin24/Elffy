@@ -4,14 +4,20 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using Elffy.Markup;
 using NVec4 = System.Numerics.Vector4;
 
 namespace Elffy
 {
     [StructLayout(LayoutKind.Explicit)]
     [DebuggerDisplay("{DebuggerDisplay}")]
+    [UseLiteralMarkup]
+    [LiteralMarkupPattern(LiteralPattern, LiteralEmit)]
     public struct Vector4 : IEquatable<Vector4>
     {
+        private const string LiteralPattern = @$"^(?<x>{RegexPatterns.Float}), *(?<y>{RegexPatterns.Float}), *(?<z>{RegexPatterns.Float}), *(?<w>{RegexPatterns.Float})$";
+        private const string LiteralEmit = @"new global::Elffy.Vector4((float)(${x}), (float)(${y}), (float)(${z}), (float)(${w}))";
+
         [FieldOffset(0)]
         public float X;
         [FieldOffset(4)]
