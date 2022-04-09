@@ -4,13 +4,20 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Elffy.Markup;
 
 namespace Elffy
 {
     [DebuggerDisplay("{DebugView}")]
     [StructLayout(LayoutKind.Explicit)]
+    [UseLiteralMarkup]
+    [LiteralMarkupPattern(HexCodePattern, HexCodeEmit)]
     public partial struct Color4 : IEquatable<Color4>
     {
+        // lang=regex
+        private const string HexCodePattern = @"^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$";
+        private const string HexCodeEmit = @"global::Elffy.Color4.FromHexCode(""$0"")";
+
         [FieldOffset(0)]
         public float R;
         [FieldOffset(4)]

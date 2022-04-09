@@ -30,13 +30,12 @@ internal static class DiagnosticHelper
         var diagnostic = _dicEGM.GetOrAdd(ID, key => new(
             key,
             "Generator Internal Exception",
-            "Internal exception in the generator. Exception: {0} {1}, StackTrace: {2}.",
+            "Internal exception in the generator. Exception: {0}.",
             Category_Error,
             DiagnosticSeverity.Error,
             true));
-        var message = ex.Message.Replace(Environment.NewLine, "\\n");
-        var stacktrace = ex.StackTrace.Replace(Environment.NewLine, "\\n");
-        return Diagnostic.Create(diagnostic, Location.None, ex.GetType().FullName, message, stacktrace);
+        var exStr = ExceptionToString(ex);
+        return Diagnostic.Create(diagnostic, Location.None, exStr);
     }
 
     public static Diagnostic InvalidXmlFormat(string filePath, Location? location = null)
@@ -49,7 +48,7 @@ internal static class DiagnosticHelper
             Category_Error,
             DiagnosticSeverity.Error,
             true));
-        return Diagnostic.Create(diagnostic, location ?? Location.None, filePath);
+        return Diagnostic.Create(diagnostic, location, filePath);
     }
 
     public static Diagnostic TypeNotFound(string typeName, Location? location = null)
@@ -62,7 +61,7 @@ internal static class DiagnosticHelper
             Category_Error,
             DiagnosticSeverity.Error,
             true));
-        return Diagnostic.Create(diagnostic, location ?? Location.None, typeName);
+        return Diagnostic.Create(diagnostic, location, typeName);
     }
 
     public static Diagnostic SettableMemberNotFound(string targetTypeName, string memberName, Location? location = null)
@@ -75,7 +74,7 @@ internal static class DiagnosticHelper
             Category_Error,
             DiagnosticSeverity.Error,
             true));
-        return Diagnostic.Create(diagnostic, location ?? Location.None, targetTypeName, memberName);
+        return Diagnostic.Create(diagnostic, location, targetTypeName, memberName);
     }
 
     public static Diagnostic MutipleValuesNotSupported(string targetTypeName, string memberName, Location? location = null)
@@ -88,7 +87,7 @@ internal static class DiagnosticHelper
             Category_Error,
             DiagnosticSeverity.Error,
             true));
-        return Diagnostic.Create(diagnostic, location ?? Location.None, targetTypeName, memberName);
+        return Diagnostic.Create(diagnostic, location, targetTypeName, memberName);
     }
 
     public static Diagnostic DirectContentNotSupported(string targetTypeName, Location? location = null)
@@ -101,7 +100,7 @@ internal static class DiagnosticHelper
             Category_Error,
             DiagnosticSeverity.Error,
             true));
-        return Diagnostic.Create(diagnostic, location ?? Location.None, targetTypeName);
+        return Diagnostic.Create(diagnostic, location, targetTypeName);
     }
 
     public static Diagnostic BuilderNotSpecified(Location? location = null)
@@ -114,7 +113,7 @@ internal static class DiagnosticHelper
             Category_Error,
             DiagnosticSeverity.Error,
             true));
-        return Diagnostic.Create(diagnostic, location ?? Location.None);
+        return Diagnostic.Create(diagnostic, location);
     }
 
     public static Diagnostic LiteralValueNotSupported(string targetTypeName, Location? location = null)
@@ -127,19 +126,44 @@ internal static class DiagnosticHelper
             Category_Error,
             DiagnosticSeverity.Error,
             true));
-        return Diagnostic.Create(diagnostic, location ?? Location.None, targetTypeName);
+        return Diagnostic.Create(diagnostic, location, targetTypeName);
     }
 
-    public static Diagnostic CannotCreateValueFromLiteral(string literal, string literalTypeName, Exception? exception, Location? location = null)
+    public static Diagnostic InvalidLiteral(string literal, string literalTypeName, Location? location = null)
     {
         const string ID = "EGM0009";
         var diagnostic = _dicEGM.GetOrAdd(ID, key => new(
             key,
-            "Cannot Create Value from Literal",
-            "Cannot create value from specified literal. Literal: {0}, Type: {1}, Exception: {2}.",
+            "Invalid Literal",
+            "Invalid Literal '{0}'. Type: {1}.",
             Category_Error,
             DiagnosticSeverity.Error,
             true));
-        return Diagnostic.Create(diagnostic, location ?? Location.None, literal, literalTypeName, exception);
+        return Diagnostic.Create(diagnostic, location, literal, literalTypeName);
+    }
+
+    public static Diagnostic InvalidLiteralWithException(string literal, string literalTypeName, Exception ex, Location? location = null)
+    {
+        const string ID = "EGM0010";
+        var diagnostic = _dicEGM.GetOrAdd(ID, key => new(
+            key,
+            "Invalid Literal",
+            "Invalid Literal '{0}'. Type: {1}, Exception: {2}.",
+            Category_Error,
+            DiagnosticSeverity.Error,
+            true));
+        var exStr = ExceptionToString(ex);
+        return Diagnostic.Create(diagnostic, location, literal, literalTypeName, exStr);
+    }
+
+    private static string ExceptionToString(Exception? ex)
+    {
+        if(ex == null) {
+            return "null";
+        }
+        var fullName = ex.GetType().FullName;
+        var message = ex.Message.Replace(Environment.NewLine, " ");
+        var stacktrace = ex.StackTrace.Replace(Environment.NewLine, " ");
+        return $"{fullName} {message}, {stacktrace}";
     }
 }

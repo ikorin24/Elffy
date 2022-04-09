@@ -15,7 +15,7 @@ public sealed class TypeData
     private readonly INamedTypeSymbol? _baseTypeSymbol;
     private Dictionary<string, TypeData>? _membersCache;
     private TypeData? _baseTypeCache;
-    private readonly ITypedLiteralConverter _literalConverter;
+    private readonly ITypedLiteralConverter? _literalConverter;
     private static readonly Dictionary<string, Func<string, string>> _embeddedLiteralCodeGenerator = new()
     {
         ["byte"] = x => $"((byte){byte.Parse(x)})",
@@ -108,21 +108,27 @@ public sealed class TypeData
                 return true;
             }
             catch(Exception ex) {
-                diagnostic = DiagnosticHelper.CannotCreateValueFromLiteral(literal, typeName, ex);
+                diagnostic = DiagnosticHelper.InvalidLiteralWithException(literal, typeName, ex);
                 code = null;
                 return false;
             }
         }
         else {
-            if(_literalConverter.TryConvert(literal, out code)) {
+            var literalConverter = _literalConverter;
+            if(literalConverter is null) {
+                diagnostic = DiagnosticHelper.LiteralValueNotSupported(typeName);
+                code = null;
+                return false;
+            }
+            if(literalConverter.TryConvert(literal, out code)) {
                 diagnostic = null;
                 return true;
             }
+            else {
+                diagnostic = DiagnosticHelper.InvalidLiteral(literal, typeName);
+                return false;
+            }
         }
-
-        diagnostic = DiagnosticHelper.LiteralValueNotSupported(typeName);
-        code = null;
-        return false;
     }
 
     public bool TryGetContentSetterCode(string contentCode, [MaybeNullWhen(false)] out string result)

@@ -10,13 +10,21 @@ namespace Elffy.Generator;
 public sealed class TypeDataStore
 {
     private readonly Dictionary<string, TypeData> _typeDic;
-    private readonly INamedTypeSymbol? _typedLiteralMarkupAttr;
+    private readonly MarkupAttributes? _markupAttrs;
     private readonly Compilation _compilation;
 
     private TypeDataStore(Compilation compilation)
     {
         _typeDic = new Dictionary<string, TypeData>();
-        _typedLiteralMarkupAttr = compilation.GetTypeByMetadataName("Elffy.Markup.TypedLiteralMarkupAttribute");
+        var useLiteralAttr = compilation.GetTypeByMetadataName("Elffy.Markup.UseLiteralMarkupAttribute");
+        var patternAttr = compilation.GetTypeByMetadataName("Elffy.Markup.LiteralMarkupPatternAttribute");
+        var memberAttr = compilation.GetTypeByMetadataName("Elffy.Markup.LiteralMarkupMemberAttribute");
+        if(useLiteralAttr == null || patternAttr == null || memberAttr == null) {
+            _markupAttrs = null;
+        }
+        else {
+            _markupAttrs = new MarkupAttributes(useLiteralAttr, patternAttr, memberAttr);
+        }
         _compilation = compilation;
     }
 
@@ -57,8 +65,10 @@ public sealed class TypeDataStore
         return true;
     }
 
-    public ITypedLiteralConverter CreateLiteralConverter(INamedTypeSymbol typeSymbol)
+    public ITypedLiteralConverter? CreateLiteralConverter(INamedTypeSymbol typeSymbol)
     {
-        return TypedLiteralConverter.Create(typeSymbol, _typedLiteralMarkupAttr);
+        return TypedLiteralConverter.Create(typeSymbol, _markupAttrs);
     }
 }
+
+public record MarkupAttributes(INamedTypeSymbol UseLiteralAttr, INamedTypeSymbol PatternAttr, INamedTypeSymbol MemberAttr);

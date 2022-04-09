@@ -7,9 +7,10 @@ using Elffy.Markup;
 namespace Elffy.UI
 {
     [DebuggerDisplay("{ToString(),nq}")]
-    [TypedLiteralMarkup(LengthPattern, LengthEmit)]
-    [TypedLiteralMarkup(ProportionPattern, ProportionEmit)]
-    [TypedLiteralMarkup(ProportionPattern2, ProportionEmit2)]
+    [UseLiteralMarkup]
+    [LiteralMarkupPattern(LengthPattern, LengthEmit)]
+    [LiteralMarkupPattern(ProportionPattern, ProportionEmit)]
+    [LiteralMarkupPattern(ProportionPattern2, ProportionEmit2)]
     public readonly struct LayoutLength : IEquatable<LayoutLength>
     {
         private const string LengthPattern = @$"^(?<n>{RegexPatterns.Int})$";

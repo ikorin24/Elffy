@@ -4,15 +4,28 @@ using System;
 namespace Elffy.Markup
 {
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Enum, AllowMultiple = true, Inherited = true)]
-    public sealed class TypedLiteralMarkupAttribute : Attribute
+    public sealed class LiteralMarkupPatternAttribute : Attribute
     {
         public string Pattern { get; }
         public string Replacement { get; }
 
-        public TypedLiteralMarkupAttribute(string pattern, string replacement)
+        public LiteralMarkupPatternAttribute(string pattern, string replacement)
         {
             Pattern = pattern;
             Replacement = replacement;
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = true)]
+    public sealed class UseLiteralMarkupAttribute : Attribute
+    {
+    }
+
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
+    public sealed class LiteralMarkupMemberAttribute : Attribute
+    {
+        public LiteralMarkupMemberAttribute()
+        {
         }
     }
 

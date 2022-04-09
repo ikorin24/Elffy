@@ -11,22 +11,26 @@ namespace Elffy.Generator;
 
 public static class TypedLiteralConverter
 {
-    public static ITypedLiteralConverter Create(INamedTypeSymbol typeSymbol, INamedTypeSymbol? typedLiteralAttr)
+    public static ITypedLiteralConverter? Create(INamedTypeSymbol typeSymbol, MarkupAttributes? attrs)
     {
         switch(typeSymbol.TypeKind) {
             case TypeKind.Enum: {
                 var enumConverter = EnumLiteralConverter.Create(typeSymbol);
-                if(typedLiteralAttr is not null && CustomLiteralConverter.TryCreate(typeSymbol, typedLiteralAttr, out var customConverter)) {
-                    var converters = new ITypedLiteralConverter[] { customConverter, enumConverter };
-                    return new MargedLiteralConverter(converters);
+                if(attrs is null) {
+                    return enumConverter;
                 }
-                return enumConverter;
+                else {
+                    var customConverter = CustomLiteralConverter.Create(typeSymbol, attrs);
+                    return new MargedLiteralConverter(enumConverter, customConverter);
+                }
             }
             default: {
-                if(typedLiteralAttr is not null && CustomLiteralConverter.TryCreate(typeSymbol, typedLiteralAttr, out var customConverter)) {
-                    return customConverter;
+                if(attrs is null) {
+                    return null;
                 }
-                return DoNothingLiteralConverter.Instance;
+                else {
+                    return CustomLiteralConverter.Create(typeSymbol, attrs);
+                }
             }
         }
     }
@@ -48,70 +52,115 @@ public static class TypedLiteralConverter
 
     private sealed class CustomLiteralConverter : ITypedLiteralConverter
     {
-        private readonly CustomLiteralRegexData[] _array;
+        private readonly PatternData[] _patterns;
+        private readonly MemberNameData[] _members;
 
-        private CustomLiteralConverter(CustomLiteralRegexData[] array)
+        private CustomLiteralConverter(PatternData[] patterns, MemberNameData[] members)
         {
-            _array = array;
+            _patterns = patterns;
+            _members = members;
         }
 
-        public static bool TryCreate(INamedTypeSymbol typeSymbol, INamedTypeSymbol typedLiteralAttr, [MaybeNullWhen(false)] out CustomLiteralConverter converter)
+        public static CustomLiteralConverter Create(INamedTypeSymbol typeSymbol, MarkupAttributes attrs)
         {
-            var array = EnumerateTypedLiteralData(typeSymbol, typedLiteralAttr).ToArray();
-            if(array.Length == 0) {
-                converter = null;
-                return false;
-            }
-            converter = new CustomLiteralConverter(array);
-            return true;
+            var patterns = EnumeratePatternsData(typeSymbol, attrs.PatternAttr).ToArray();
+            var members = EnumerateMembers(typeSymbol, attrs.MemberAttr).ToArray();
+            return new CustomLiteralConverter(patterns, members);
 
-            static IEnumerable<CustomLiteralRegexData> EnumerateTypedLiteralData(INamedTypeSymbol typeSymbol, INamedTypeSymbol typedLiteralAttr)
+            static IEnumerable<PatternData> EnumeratePatternsData(INamedTypeSymbol typeSymbol, INamedTypeSymbol patternAttr)
             {
                 var comparer = SymbolEqualityComparer.Default;
                 foreach(var attr in typeSymbol.GetAttributes()) {
-                    if(comparer.Equals(typedLiteralAttr, attr.AttributeClass) == false) { continue; }
+                    if(comparer.Equals(patternAttr, attr.AttributeClass) == false) { continue; }
                     if(TryGetDataFromAttr(attr, out var data)) {
                         yield return data;
                     }
                 }
-            }
+                yield break;
 
-            static bool TryGetDataFromAttr(AttributeData attr, out CustomLiteralRegexData data)
-            {
-                var args = attr.ConstructorArguments;
-                if(args.Length != 2) { goto FAILURE; }
+                static bool TryGetDataFromAttr(AttributeData attr, out PatternData data)
+                {
+                    var args = attr.ConstructorArguments;
+                    if(args.Length != 2) { goto FAILURE; }
 
-                var pattern = args[0].Value?.ToString();
-                var replacement = args[1].Value?.ToString();
-                if(pattern == null || replacement == null) { goto FAILURE; }
-                try {
-                    data = new CustomLiteralRegexData(new Regex(pattern), replacement);
-                    return true;
-                }
-                catch {
+                    var pattern = args[0].Value?.ToString();
+                    var replacement = args[1].Value?.ToString();
+                    if(pattern == null || replacement == null) { goto FAILURE; }
+                    try {
+                        data = new PatternData(new Regex(pattern), replacement);
+                        return true;
+                    }
+                    catch {
+                        data = default;
+                        return false;
+                    }
+
+                FAILURE:
                     data = default;
                     return false;
                 }
+            }
 
-            FAILURE:
-                data = default;
-                return false;
+            static IEnumerable<MemberNameData> EnumerateMembers(INamedTypeSymbol typeSymbol, INamedTypeSymbol memberAttr)
+            {
+                var comparer = SymbolEqualityComparer.Default;
+                var typeFullName = typeSymbol.GetTypeName();
+                foreach(var member in typeSymbol.GetMembers()) {
+                    if(!member.IsStatic || member.Kind is not SymbolKind.Property and not SymbolKind.Field) {
+                        continue;
+                    }
+                    foreach(var attr in member.GetAttributes()) {
+                        if(!comparer.Equals(attr.AttributeClass, memberAttr)) {
+                            continue;
+                        }
+                        yield return new MemberNameData(typeFullName, member.Name);
+                        break;
+                    }
+                }
             }
         }
+
         public bool TryConvert(string literal, [MaybeNullWhen(false)] out string result)
         {
-            var array = _array;
-            if(array == null) {
-                result = null;
-                return false;
+            foreach(var pattern in _patterns) {
+                if(pattern.TryConvert(literal, out result)) {
+                    return true;
+                }
             }
-            foreach(var data in array) {
-                if(data.TryConvert(literal, out result)) {
+            foreach(var member in _members) {
+                if(member.TryConvert(literal, out result)) {
                     return true;
                 }
             }
             result = null;
             return false;
+        }
+
+        private record struct PatternData(Regex Regex, string Replacement)
+        {
+            public bool TryConvert(string literal, [MaybeNullWhen(false)] out string result)
+            {
+                var match = Regex.Match(literal);
+                if(match.Success == false) {
+                    result = null;
+                    return false;
+                }
+                result = match.Result(Replacement);
+                return true;
+            }
+        }
+
+        private record struct MemberNameData(string TypeFullName, string Name)
+        {
+            public bool TryConvert(string literal, [MaybeNullWhen(false)] out string result)
+            {
+                if(literal == Name) {
+                    result = $"global::{TypeFullName}.{Name}";
+                    return true;
+                }
+                result = null;
+                return false;
+            }
         }
     }
 
@@ -163,7 +212,7 @@ public static class TypedLiteralConverter
     {
         private readonly ITypedLiteralConverter[] _converters;
 
-        public MargedLiteralConverter(ITypedLiteralConverter[] converters)
+        public MargedLiteralConverter(params ITypedLiteralConverter[] converters)
         {
             _converters = converters;
         }
