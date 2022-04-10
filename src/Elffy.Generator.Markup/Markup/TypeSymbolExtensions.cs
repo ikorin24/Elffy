@@ -38,4 +38,27 @@ internal static class TypeSymbolExtensions
         // generics:  "System.Collections.Generic.Dictionary`2"
         return typeSymbol.ToString();
     }
+
+    public static bool IsSubtypeOf(this INamedTypeSymbol self, INamedTypeSymbol type)
+    {
+        switch(type.TypeKind) {
+            case TypeKind.Class: {
+                var comparer = SymbolEqualityComparer.Default;
+                var current = self;
+                while(current != null) {
+                    if(comparer.Equals(current, type)) {
+                        return true;
+                    }
+                    current = current.BaseType;
+                }
+                return false;
+            }
+            case TypeKind.Interface: {
+                return self.AllInterfaces.Contains(type);
+            }
+            default: {
+                return false;
+            }
+        }
+    }
 }
