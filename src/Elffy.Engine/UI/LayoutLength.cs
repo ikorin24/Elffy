@@ -14,11 +14,11 @@ namespace Elffy.UI
     public readonly struct LayoutLength : IEquatable<LayoutLength>
     {
         private const string LengthPattern = @$"^(?<n>{RegexPatterns.Int})$";
-        private const string LengthEmit = "new global::Elffy.UI.LayoutLength((int)(${n}), global::Elffy.UI.LayoutLengthType.Length)";
+        private const string LengthEmit = @"new global::Elffy.UI.LayoutLength((int)(${n}), global::Elffy.UI.LayoutLengthType.Length)";
         private const string ProportionPattern = @$"^(?<n>{RegexPatterns.Float})\*$";
-        private const string ProportionEmit = "new global::Elffy.UI.LayoutLength((float)(${n}), global::Elffy.UI.LayoutLengthType.Proportion)";
-        private const string ProportionPattern2 = @$"^\*$";
-        private const string ProportionEmit2 = "new global::Elffy.UI.LayoutLength(1f, global::Elffy.UI.LayoutLengthType.Proportion)";
+        private const string ProportionEmit = @"new global::Elffy.UI.LayoutLength((float)(${n}), global::Elffy.UI.LayoutLengthType.Proportion)";
+        private const string ProportionPattern2 = @"^\*$";
+        private const string ProportionEmit2 = @"new global::Elffy.UI.LayoutLength(1f, global::Elffy.UI.LayoutLengthType.Proportion)";
 
         public readonly float Value;
         public readonly LayoutLengthType Type;
