@@ -1,10 +1,9 @@
 ﻿#nullable enable
-using Elffy.Generator;
 using Microsoft.CodeAnalysis;
 using System.Threading;
 using U8Xml;
 
-namespace Elffy.Markup;
+namespace Elffy.Generator;
 
 public sealed class MarkupTranslatorContext
 {

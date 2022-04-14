@@ -2,7 +2,7 @@
 using Microsoft.CodeAnalysis;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Elffy.Markup;
+namespace Elffy.Generator;
 
 internal static class TypeSymbolExtensions
 {

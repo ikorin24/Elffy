@@ -5,7 +5,7 @@ using System.ComponentModel;
 using System.Text;
 using System.Diagnostics;
 
-namespace Elffy.Markup;
+namespace Elffy.Generator;
 
 [DebuggerDisplay("{ToString()}")]
 internal readonly struct TypeFullName : IEquatable<TypeFullName>

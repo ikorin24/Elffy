@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using Elffy.Generator;
 using Microsoft.CodeAnalysis.Text;
 using System;
 using System.Diagnostics.CodeAnalysis;
@@ -7,7 +6,7 @@ using System.Text;
 using System.Threading;
 using U8Xml;
 
-namespace Elffy.Markup;
+namespace Elffy.Generator;
 
 public static class MarkupTranslator
 {

@@ -2,7 +2,6 @@
 using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
 using U8Xml;
-using Elffy.Markup;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Generator;

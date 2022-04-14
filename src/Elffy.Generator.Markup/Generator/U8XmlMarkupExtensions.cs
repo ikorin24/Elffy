@@ -2,7 +2,7 @@
 using System;
 using U8Xml;
 
-namespace Elffy.Markup;
+namespace Elffy.Generator;
 
 internal static class U8XmlMarkupExtensions
 {
