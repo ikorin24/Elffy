@@ -4,18 +4,19 @@ using System.Collections.Generic;
 using System;
 using Elffy.Markup;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 
 namespace Elffy.Generator;
 
 public sealed class TypeData
 {
-    private readonly TypeDataStore _store;
-    private readonly INamedTypeSymbol _symbol;
-    private readonly string _fullName;
-    private readonly INamedTypeSymbol? _baseTypeSymbol;
-    private Dictionary<string, TypeData>? _membersCache;
-    private TypeData? _baseTypeCache;
-    private readonly ITypedLiteralConverter? _literalConverter;
+    private static readonly (string Name, string Value)[] _list = new[]
+    {
+        ("${obj}", "obj"),
+        ("${addTask}", "context.AddTask"),
+        ("${caller}", "caller"),
+    };
+    private const string _type = "${type}";
     private static readonly Dictionary<string, Func<string, string>> _embeddedLiteralCodeGenerator = new()
     {
         ["byte"] = x => $"((byte){byte.Parse(x)})",
@@ -32,6 +33,15 @@ public sealed class TypeData
         ["bool"] = x => bool.Parse(x) ? "(true)" : "(false)",
     };
 
+    private readonly TypeDataStore _store;
+    private readonly INamedTypeSymbol _symbol;
+    private readonly string _fullName;
+    private readonly INamedTypeSymbol? _baseTypeSymbol;
+    private Dictionary<string, TypeData>? _membersCache;
+    private TypeData? _baseTypeCache;
+    private readonly ITypedLiteralConverter? _literalConverter;
+    private readonly string _ctorCode;
+
     public INamedTypeSymbol Symbol => _symbol;
     public string Name => _fullName;
     public bool IsValueType => _symbol.IsValueType;
@@ -43,6 +53,9 @@ public sealed class TypeData
         _fullName = symbol.GetTypeName();
         _store = store;
         _literalConverter = store.CreateLiteralConverter(symbol);
+
+        var ctorCode = store.GetCtorCode(symbol);
+        _ctorCode = (ctorCode != null) ? ReplaceMetaVariable(ctorCode, _fullName) : $"new global::{_fullName}()";
     }
 
     private TypeData? GetBaseType()
@@ -134,13 +147,61 @@ public sealed class TypeData
     public bool TryGetContentSetterCode(string contentCode, [MaybeNullWhen(false)] out string result)
     {
         // TODO:
-        if(Name == "Elffy.UI.Control") {
-            result = $"context.AddTask(obj.Children.Add({contentCode}));";
-            return true;
+        if(_store.TryGetTypeData("Elffy.UI.Control", out var control)) {
+            if(_symbol.IsSubtypeOf(control.Symbol)) {
+                result = $"_ = {contentCode};";
+                return true;
+            }
         }
         result = null;
         return false;
     }
 
+    public string GetConstructorCode()
+    {
+        return _ctorCode;
+    }
+
     public override string ToString() => _fullName;
+
+    private static string ReplaceMetaVariable(string input, string typeName)
+    {
+        var sb = new StringBuilder();
+        ReplaceMetaVariable(input, typeName, sb, (sb, str) => sb.Append(str));
+        return sb.ToString();
+    }
+
+    private static void ReplaceMetaVariable<T>(string input, string typeName, T state, Action<T, string> accumulator)
+    {
+        if(input.Length == 0) {
+            accumulator.Invoke(state, "");
+            return;
+        }
+
+        var list = _list;
+        var pos = 0;
+        for(int i = 0; i < input.Length; i++) {
+            var current = input.AsSpan(i);
+            if(current.StartsWith(_type.AsSpan())) {
+                accumulator.Invoke(state, input.Substring(pos, i - pos));
+                accumulator.Invoke(state, "global::");
+                accumulator.Invoke(state, typeName);
+                i += _type.Length;
+                pos = i;
+                continue;
+            }
+
+            foreach(var (name, value) in list) {
+                if(current.StartsWith(name.AsSpan()) == false) { continue; }
+                accumulator.Invoke(state, input.Substring(pos, i - pos));
+                accumulator.Invoke(state, value);
+                i += name.Length;
+                pos = i;
+                break;
+            }
+        }
+        if(pos != input.Length) {
+            accumulator.Invoke(state, input.Substring(pos));
+        }
+    }
 }

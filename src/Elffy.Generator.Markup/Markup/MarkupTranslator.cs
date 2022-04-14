@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using Elffy.Generator;
 using Microsoft.CodeAnalysis.Text;
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Threading;
@@ -35,7 +36,12 @@ public static class MarkupTranslator
 
         var rootNode = xml.Root;
         var rootMethod = sourceBuilder.CreateMethodBuilder(2, out _);
-        var (id, returnedType) = GenerateFactoryMethodCode(rootNode, null, context);
+
+        if(typeStore.TryGetTypeData("Elffy.UI.Control", out var rootCallerType) == false) {
+            throw new NotSupportedException("not found: Elffy.UI.Control");
+        }
+
+        var (id, returnedType) = GenerateFactoryMethodCode(rootNode, rootCallerType, context);
 
         if(id == SkippedMethodID || returnedType == null) {
             rootMethod.AppendLine("[global::System.Obsolete(\"The markup file was not translated to code successfully.\", true)]");
@@ -50,13 +56,13 @@ public static class MarkupTranslator
         }
 
         var unitaskT = $"global::Cysharp.Threading.Tasks.UniTask<global::{returnedType.Name}>";
-        rootMethod.AppendLine($@"public static async {unitaskT} Create(global::System.Func<global::{returnedType.Name}, global::Cysharp.Threading.Tasks.UniTask>? beforeInit = null)");
+        rootMethod.AppendLine($@"public static async {unitaskT} CreateUI(global::Elffy.UI.Control parent)");
         rootMethod.AppendLine("{");
         rootMethod.IncrementIndent();
+        rootMethod.AppendLine("global::System.ArgumentNullException.ThrowIfNull(parent);");
         rootMethod.AppendLine("var context = new Context();");
         rootMethod.AppendLine("try {");
-        rootMethod.AppendLine($"    var obj = __F{id}(ref context);");
-        rootMethod.AppendLine("    await (beforeInit?.Invoke(obj) ?? default);");
+        rootMethod.AppendLine($"    var obj = __F{id}(ref context, parent);");
         rootMethod.AppendLine("    await context.WhenAllTask();");
         rootMethod.AppendLine("    return obj;");
         rootMethod.AppendLine("} finally { context.Dispose(); }");
@@ -112,7 +118,7 @@ public static class MarkupTranslator
         mb.AppendLine("{");
         mb.IncrementIndent();
         if(node.InnerText.IsEmpty) {
-            mb.AppendLine($"var obj = new global::{instanceType.Name}();");
+            mb.AppendLine($"var obj = {instanceType.GetConstructorCode()};");
         }
         else {
             // typed literal

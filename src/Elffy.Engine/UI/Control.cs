@@ -10,6 +10,7 @@ using Elffy.Features.Internal;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Elffy.Threading;
+using Elffy.Markup;
 
 namespace Elffy.UI
 {
@@ -33,6 +34,7 @@ namespace Elffy.UI
     // Don't put the instance public even if as Renderable or FrameObject.
 
     /// <summary>Base class of UI element, which forms a UI tree and provides hit test.</summary>
+    [MarkupConstructor("new ${type}(); ${addTask}(${caller}.Children.Add(${obj}))")]
     public abstract partial class Control
     {
         private readonly UIRenderable _renderable;

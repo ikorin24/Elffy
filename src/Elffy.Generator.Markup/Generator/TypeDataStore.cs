@@ -19,11 +19,13 @@ public sealed class TypeDataStore
         var useLiteralAttr = compilation.GetTypeByMetadataName("Elffy.Markup.UseLiteralMarkupAttribute");
         var patternAttr = compilation.GetTypeByMetadataName("Elffy.Markup.LiteralMarkupPatternAttribute");
         var memberAttr = compilation.GetTypeByMetadataName("Elffy.Markup.LiteralMarkupMemberAttribute");
-        if(useLiteralAttr == null || patternAttr == null || memberAttr == null) {
+        var ctorAttr = compilation.GetTypeByMetadataName("Elffy.Markup.MarkupConstructorAttribute");
+
+        if(useLiteralAttr == null || patternAttr == null || memberAttr == null || ctorAttr == null) {
             _markupAttrs = null;
         }
         else {
-            _markupAttrs = new MarkupAttributes(useLiteralAttr, patternAttr, memberAttr);
+            _markupAttrs = new MarkupAttributes(useLiteralAttr, patternAttr, memberAttr, ctorAttr);
         }
         _compilation = compilation;
     }
@@ -69,6 +71,45 @@ public sealed class TypeDataStore
     {
         return TypedLiteralConverter.Create(typeSymbol, _markupAttrs);
     }
+
+    public string? GetCtorCode(INamedTypeSymbol typeSymbol)
+    {
+        var markupAttrs = _markupAttrs;
+        if(markupAttrs is null) {
+            return null;
+        }
+        switch(typeSymbol.TypeKind) {
+            case TypeKind.Class:
+            case TypeKind.Struct: {
+                return GetCtorCodePrivate(typeSymbol, markupAttrs.CtorAttr);
+            }
+            default: {
+                return null;
+            }
+        }
+
+        static string? GetCtorCodePrivate(INamedTypeSymbol typeSymbol, INamedTypeSymbol ctorAttr)
+        {
+            var comparer = SymbolEqualityComparer.Default;
+            var current = typeSymbol;
+            while(current != null) {
+                foreach(var attr in current.GetAttributes()) {
+                    if(comparer.Equals(ctorAttr, attr.AttributeClass) == false) { continue; }
+                    var args = attr.ConstructorArguments;
+                    if(args.Length == 0) { continue; }
+                    var code = args[0].Value?.ToString();
+                    if(code == null) { continue; }
+                    return code;
+                }
+                current = current.BaseType;
+            }
+            return null;
+        }
+    }
 }
 
-public record MarkupAttributes(INamedTypeSymbol UseLiteralAttr, INamedTypeSymbol PatternAttr, INamedTypeSymbol MemberAttr);
+public record MarkupAttributes(
+    INamedTypeSymbol UseLiteralAttr,
+    INamedTypeSymbol PatternAttr,
+    INamedTypeSymbol MemberAttr,
+    INamedTypeSymbol CtorAttr);

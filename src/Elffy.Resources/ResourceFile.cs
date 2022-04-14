@@ -5,12 +5,19 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.CompilerServices;
+using Elffy.Markup;
 
 namespace Elffy
 {
     [DebuggerDisplay("{DebugView,nq}")]
+    [UseLiteralMarkup]
+    [LiteralMarkupPattern(MarkupPattern, MarkupEmit)]
     public readonly struct ResourceFile : IEquatable<ResourceFile>
     {
+        // lang=regex
+        private const string MarkupPattern = @"^(?<p>\w)\[(?<n>.+)\]$";
+        private const string MarkupEmit = @"global::Elffy.Resources.${p}.GetFile(""${n}"")";
+
         private readonly IResourcePackage? _package;
         private readonly string? _name;
 
@@ -23,6 +30,7 @@ namespace Elffy
 
         public ReadOnlySpan<char> FileExtension => ResourcePath.GetExtension(_name.AsSpan());
 
+        [LiteralMarkupMember]
         public static ResourceFile None => default;
 
         public long FileSize => Package.TryGetSize(_name, out var size) ? size : 0;
