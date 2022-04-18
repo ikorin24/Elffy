@@ -1,0 +1,7 @@
+﻿<Button xmlns="Elffy.UI" xmlns:x="Elffy.Markup.Extensions"
+        x:builder="Sandbox.Sample" x:builderType="ui"
+        Width="0.5*" Height="*" HorizontalAlignment="Left" Background="Blue">
+  <Grid Background="Red" Width="0.5*" Height="0.5*">
+    <Button Background="Gray" Margin="4"/>
+  </Grid>
+</Button>

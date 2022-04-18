@@ -11,10 +11,15 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Elffy.Animations\Elffy.Animations.csproj" />
+    <ProjectReference Include="..\Elffy.Generator.Markup\Elffy.Generator.Markup.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\Elffy.Serialization\Elffy.Serialization.csproj" />
     <ProjectReference Include="..\Elffy.SimpleKit\Elffy.SimpleKit.csproj" />
     <ProjectReference Include="..\Elffy.Generator.Resources\Elffy.Generator.Resources.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\Elffy.InternalTools\Elffy.InternalTools.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="Sample.e.xml" />
   </ItemGroup>
 
   <Target Name="ElffyPostBuildEvent" AfterTargets="PostBuildEvent">
