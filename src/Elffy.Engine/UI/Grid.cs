@@ -18,40 +18,42 @@ namespace Elffy.UI
         private GridIndexDic GridCol => _gridCol ??= GridIndexDic.Create();
         private GridIndexDic GridRow => _gridRow ??= GridIndexDic.Create();
 
-        public void RowDefinition(ReadOnlySpan<LayoutLength> definition)
-        {
-            _rowDef.SetDefinition(definition);
-        }
+        public ReadOnlySpan<LayoutLength> RowDefinition => _rowDef.GetDefinition();
 
-        public void ColumnDefinition(ReadOnlySpan<LayoutLength> definition)
-        {
-            _colDef.SetDefinition(definition);
-        }
+        public ReadOnlySpan<LayoutLength> ColumnDefinition => _colDef.GetDefinition();
 
-        internal void SetGridColumnOf(Control control, int column)
+        public void DefineRow(int count, SpanAction<LayoutLength> setter) => _rowDef.SetDefinition(count, setter);
+
+        public void DefineRow<T>(int count, T arg, SpanAction<LayoutLength, T> setter) => _rowDef.SetDefinition(count, arg, setter);
+
+        public void DefineColumn(int count, SpanAction<LayoutLength> setter) => _colDef.SetDefinition(count, setter);
+
+        public void DefineColumn<T>(int count, T arg, SpanAction<LayoutLength, T> setter) => _colDef.SetDefinition(count, arg, setter);
+
+        public void SetColumnOf(Control control, int column)
         {
-            if(control is null) { ThrowNullArg(nameof(control)); }
+            ArgumentNullException.ThrowIfNull(control);
             if(column < 0) { ThrowOutOfRange(nameof(column)); }
             GridCol[control] = column;
         }
 
-        internal int GetGridColumnOf(Control control)
+        public void SetRowOf(Control control, int row)
         {
-            if(control is null) { ThrowNullArg(nameof(control)); }
-            return _gridCol is null ? 0 :
-                   _gridCol.TryGetValue(control, out var column) ? column : 0;
-        }
-
-        internal void SetGridRowOf(Control control, int row)
-        {
-            if(control is null) { ThrowNullArg(nameof(control)); }
+            ArgumentNullException.ThrowIfNull(control);
             if(row < 0) { ThrowOutOfRange(nameof(row)); }
             GridRow[control] = row;
         }
 
-        internal int GetGridRowOf(Control control)
+        public int GetColumnOf(Control control)
         {
-            if(control is null) { ThrowNullArg(nameof(control)); }
+            ArgumentNullException.ThrowIfNull(control);
+            return _gridCol is null ? 0 :
+                   _gridCol.TryGetValue(control, out var column) ? column : 0;
+        }
+
+        public int GetRowOf(Control control)
+        {
+            ArgumentNullException.ThrowIfNull(control);
             return _gridRow is null ? 0 :
                    _gridRow.TryGetValue(control, out var row) ? row : 0;
         }
@@ -86,9 +88,6 @@ namespace Elffy.UI
 
             return (cellSize, cellOffsetPos);
         }
-
-        [DoesNotReturn]
-        private static void ThrowNullArg(string msg) => throw new ArgumentNullException(msg);
 
         [DoesNotReturn]
         private static void ThrowOutOfRange(string msg) => throw new ArgumentOutOfRangeException(msg);
@@ -144,34 +143,11 @@ namespace Elffy.UI
 
                 var padding = grid.Padding;
                 var gridContentsSize = grid.ActualSize - new Vector2(padding.Left + padding.Right, padding.Top + padding.Bottom);
-                var col = target.GetGridColumn(grid);
-                var row = target.GetGridRow(grid);
+                var col = grid.GetColumnOf(target);
+                var row = grid.GetRowOf(target);
                 var (cellSize, cellPos) = grid.GetCellSizePos(gridContentsSize, col, row);
                 return new ContentAreaInfo(cellPos, cellSize, LayoutThickness.Zero);
             }
-        }
-    }
-
-    public static class GridIndexExtension
-    {
-        public static void SetGridColumn(this Control control, Grid targetGrid, int column)
-        {
-            targetGrid.SetGridColumnOf(control, column);
-        }
-
-        public static int GetGridColumn(this Control control, Grid targetGrid)
-        {
-            return targetGrid.GetGridColumnOf(control);
-        }
-
-        public static void SetGridRow(this Control control, Grid targetGrid, int row)
-        {
-            targetGrid.SetGridRowOf(control, row);
-        }
-
-        public static int GetGridRow(this Control control, Grid targetGrid)
-        {
-            return targetGrid.GetGridRowOf(control);
         }
     }
 }

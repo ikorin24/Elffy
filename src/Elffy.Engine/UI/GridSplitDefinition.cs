@@ -1,14 +1,14 @@
 ﻿#nullable enable
 using Elffy.Effective;
 using System;
-using System.Runtime.CompilerServices;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.UI
 {
     internal struct GridSplitDefinition : IDisposable
     {
         private ValueTypeRentMemory<LayoutLength> _def;
-        private ValueTypeRentMemory<(float c, float p)> _pos;
+        private ValueTypeRentMemory<CP> _pos;
         private float _constSum;
         private float _proportionSum;
 
@@ -17,14 +17,12 @@ namespace Elffy.UI
             if((uint)index >= (uint)_def.Length) {
                 return parentSize;
             }
-            ref var d = ref Unsafe.Add(ref _def.GetReference(), index);
-            switch(d.Type) {
-                case LayoutLengthType.Length:
-                default:
-                    return d.Value;
-                case LayoutLengthType.Proportion:
-                    return (parentSize - _constSum) * d.Value / _proportionSum;
-            }
+            ref var d = ref _def[index];
+            return d.Type switch
+            {
+                LayoutLengthType.Proportion => (parentSize - _constSum) * d.Value / _proportionSum,
+                LayoutLengthType.Length or _ => d.Value,
+            };
         }
 
         public float EvalPosition(float parentSize, int index)
@@ -36,73 +34,26 @@ namespace Elffy.UI
             return c + p * parentSize;
         }
 
-        public void SetDefinition(ReadOnlySpan<LayoutLength> layout)
+        public ReadOnlySpan<LayoutLength> GetDefinition() => _def.AsSpan();
+
+        public void SetDefinition(int count, SpanAction<LayoutLength> setter)
         {
-            if(_def.IsEmpty) {
-                _def = new ValueTypeRentMemory<LayoutLength>(layout.Length, false);
-                layout.CopyTo(_def.AsSpan());
-            }
-            else if(_def.Length != layout.Length) {
-                _def.Dispose();
-                _def = new ValueTypeRentMemory<LayoutLength>(layout.Length, false);
-                layout.CopyTo(_def.AsSpan());
-            }
-            else {
-                layout.CopyTo(_def.AsSpan());
-            }
+            ArgumentNullException.ThrowIfNull(setter);
+            if(count <= 0) { ThrowOutOfRange(nameof(count)); }
 
-            if(_pos.IsEmpty) {
-                _pos = new ValueTypeRentMemory<(float c, float p)>(layout.Length, false);
-            }
-            else if(_pos.Length != layout.Length) {
-                _pos.Dispose();
-            }
+            Initialize(count, out var defSpan, out var posSpan);
+            setter.Invoke(defSpan);
+            (_constSum, _proportionSum) = Update(defSpan, posSpan);
+        }
 
-            //if(_def is null) {
-            //    _def = layout.ToUnmanagedArray();
-            //}
-            //else if(_def.Length != layout.Length) {
-            //    _def.Dispose();
-            //    _def = layout.ToUnmanagedArray();
-            //}
+        public void SetDefinition<T>(int count, T arg, SpanAction<LayoutLength, T> setter)
+        {
+            ArgumentNullException.ThrowIfNull(setter);
+            if(count <= 0) { ThrowOutOfRange(nameof(count)); }
 
-            //if(_pos is null) {
-            //    _pos = new UnmanagedArray<(float, float)>(layout.Length);
-            //}
-            //else if(_pos.Length != layout.Length) {
-            //    _pos.Dispose();
-            //    _pos = new UnmanagedArray<(float, float)>(layout.Length);
-            //}
-
-            _constSum = 0;
-            _proportionSum = 0;
-            foreach(var l in layout) {
-                switch(l.Type) {
-                    case LayoutLengthType.Length:
-                    default:
-                        _constSum += l.Value;
-                        break;
-                    case LayoutLengthType.Proportion:
-                        _proportionSum += l.Value;
-                        break;
-                }
-            }
-
-            var pos = _pos.AsSpan();
-            float c = 0f;
-            float p = 0f;
-            for(int i = 0; i < layout.Length; i++) {
-                pos[i] = (c, p);
-                switch(layout[i].Type) {
-                    case LayoutLengthType.Length:
-                    default:
-                        c += layout[i].Value;
-                        break;
-                    case LayoutLengthType.Proportion:
-                        p += layout[i].Value / _proportionSum;
-                        break;
-                }
-            }
+            Initialize(count, out var defSpan, out var posSpan);
+            setter.Invoke(defSpan, arg);
+            (_constSum, _proportionSum) = Update(defSpan, posSpan);
         }
 
         public void Dispose()
@@ -110,5 +61,57 @@ namespace Elffy.UI
             _def.Dispose();
             _pos.Dispose();
         }
+
+        private void Initialize(int count, out Span<LayoutLength> defSpan, out Span<CP> posSpan)
+        {
+            _def.Dispose();
+            _pos.Dispose();
+            _def = new ValueTypeRentMemory<LayoutLength>(count, true);
+            _pos = new ValueTypeRentMemory<CP>(count, false);
+            defSpan = _def.AsSpan();
+            posSpan = _pos.AsSpan();
+        }
+
+        private static (float ConstSum, float ProportionSum) Update(ReadOnlySpan<LayoutLength> def, Span<CP> pos)
+        {
+            float constSum = 0;
+            float proportionSum = 0;
+            foreach(var d in def) {
+                switch(d.Type) {
+                    case LayoutLengthType.Length:
+                    default: {
+                        constSum += d.Value;
+                        break;
+                    }
+                    case LayoutLengthType.Proportion: {
+                        proportionSum += d.Value;
+                        break;
+                    }
+                }
+            }
+
+            float c = 0f;
+            float p = 0f;
+            for(int i = 0; i < def.Length; i++) {
+                pos[i] = new CP(c, p);
+                switch(def[i].Type) {
+                    case LayoutLengthType.Length:
+                    default: {
+                        c += def[i].Value;
+                        break;
+                    }
+                    case LayoutLengthType.Proportion: {
+                        p += def[i].Value / proportionSum;
+                        break;
+                    }
+                }
+            }
+            return (constSum, proportionSum);
+        }
+
+        [DoesNotReturn]
+        private static void ThrowOutOfRange(string message) => throw new ArgumentOutOfRangeException(message);
+
+        private record struct CP(float c, float p);
     }
 }

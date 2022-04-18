@@ -96,10 +96,10 @@ namespace Sandbox
             const int ColumnCount = 6;
             var gridLength = LayoutLength.Length(200);
             var grid = new Grid();
-            grid.ColumnDefinition(stackalloc LayoutLength[2]
+            grid.DefineColumn(2, static col =>
             {
-                LayoutLength.Length(160),
-                LayoutLength.Proportion(1f),
+                col[0] = LayoutLength.Length(160);
+                col[1] = LayoutLength.Proportion(1f);
             });
             tasks.Add(uiRoot.Children.Add(grid));
 
@@ -108,15 +108,15 @@ namespace Sandbox
                 Background = new ColorByte(40, 44, 52, 255).ToColor4(),
                 Padding = new LayoutThickness(0, 10, 0, 10),
             };
-            leftPanel.SetGridColumn(grid, 0);
-            leftPanel.RowDefinition(stackalloc LayoutLength[ColumnCount]
+            grid.SetColumnOf(leftPanel, 0);
+            leftPanel.DefineRow(6, static row =>
             {
-                LayoutLength.Length(60),
-                LayoutLength.Length(60),
-                LayoutLength.Length(60),
-                LayoutLength.Length(60),
-                LayoutLength.Length(60),
-                LayoutLength.Length(60),
+                row[0] = LayoutLength.Length(60);
+                row[1] = LayoutLength.Length(60);
+                row[2] = LayoutLength.Length(60);
+                row[3] = LayoutLength.Length(60);
+                row[4] = LayoutLength.Length(60);
+                row[5] = LayoutLength.Length(60);
             });
             tasks.Add(grid.Children.Add(leftPanel));
 
@@ -133,7 +133,7 @@ namespace Sandbox
                         CornerRadius = new Vector4(4),
                     },
                 };
-                button.SetGridRow(leftPanel, i);
+                leftPanel.SetRowOf(button, i);
                 button.KeyUp += _ => Debug.WriteLine($"Clicked");
                 tasks.Add(leftPanel.Children.Add(button));
             }
