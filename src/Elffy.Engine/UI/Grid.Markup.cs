@@ -22,7 +22,7 @@ namespace Elffy.UI
             @"new global::Elffy.UI.LayoutLength((int)(${n}), global::Elffy.UI.LayoutLengthType.Length), ",
             @"new global::Elffy.UI.LayoutLength((float)(${n}), global::Elffy.UI.LayoutLengthType.Proportion), ",
             @"new global::Elffy.UI.LayoutLength(1f, global::Elffy.UI.LayoutLengthType.Proportion), ",
-            @"${obj}.DefineColumn(stackalloc new global::Elffy.UI.LayoutLength[] { ",
+            @"${obj}.DefineColumn(stackalloc global::Elffy.UI.LayoutLength[] { ",
             @" });",
         })
     ]
@@ -44,7 +44,7 @@ namespace Elffy.UI
             @"new global::Elffy.UI.LayoutLength((int)(${n}), global::Elffy.UI.LayoutLengthType.Length), ",
             @"new global::Elffy.UI.LayoutLength((float)(${n}), global::Elffy.UI.LayoutLengthType.Proportion), ",
             @"new global::Elffy.UI.LayoutLength(1f, global::Elffy.UI.LayoutLengthType.Proportion), ",
-            @"${obj}.DefineRow(stackalloc new global::Elffy.UI.LayoutLength[] { ",
+            @"${obj}.DefineRow(stackalloc global::Elffy.UI.LayoutLength[] { ",
             @" });",
         })
     ]
