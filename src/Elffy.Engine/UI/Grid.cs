@@ -3,17 +3,60 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using Elffy.Markup;
 
 namespace Elffy.UI
 {
+    [MarkupMemberSetter(
+        "ColumnDefinition",
+        $@"^{LayoutLength.MatchPattern}(,\s*{LayoutLength.MatchPattern})*$",
+        new[]
+        {
+            $@"(?<n>{RegexPatterns.Int})(,\s*)?",
+            $@"(?<n>{RegexPatterns.Float})\*(,\s*)?",
+            $@"\*(,\s*)?",
+            @"^",
+            @"$",
+        },
+        new[]
+        {
+            @"new global::Elffy.UI.LayoutLength((int)(${n}), global::Elffy.UI.LayoutLengthType.Length), ",
+            @"new global::Elffy.UI.LayoutLength((float)(${n}), global::Elffy.UI.LayoutLengthType.Proportion), ",
+            @"new global::Elffy.UI.LayoutLength(1f, global::Elffy.UI.LayoutLengthType.Proportion), ",
+            @"${obj}.DefineColumn(stackalloc new global::Elffy.UI.LayoutLength[] { ",
+            @" });",
+        })
+    ]
+    [MarkupMemberSetter(
+        "RowDefinition",
+        $@"^{LayoutLength.MatchPattern}(,\s*{LayoutLength.MatchPattern})*$",
+        new[]
+        {
+            $@"(?<n>{RegexPatterns.Int})(,\s*)?",
+            $@"(?<n>{RegexPatterns.Float})\*(,\s*)?",
+            $@"\*(,\s*)?",
+            @"^",
+            @"$",
+        },
+        new[]
+        {
+            @"new global::Elffy.UI.LayoutLength((int)(${n}), global::Elffy.UI.LayoutLengthType.Length), ",
+            @"new global::Elffy.UI.LayoutLength((float)(${n}), global::Elffy.UI.LayoutLengthType.Proportion), ",
+            @"new global::Elffy.UI.LayoutLength(1f, global::Elffy.UI.LayoutLengthType.Proportion), ",
+            @"${obj}.DefineRow(stackalloc new global::Elffy.UI.LayoutLength[] { ",
+            @" });",
+        })
+    ]
+    [MarkupAttachedProperty("Column", "${caller}." + nameof(SetColumnAt) + "(${arg0}, ${obj})", new Type[] { typeof(int) })]
+    [MarkupAttachedProperty("Row", "${caller}." + nameof(SetRowAt) + "(${arg0}, ${obj})", new Type[] { typeof(int) })]
     public class Grid : Panel
     {
         private static readonly GridChildLayouter _childLayouter = new GridChildLayouter();
 
         private GridIndexDic? _gridCol;
         private GridIndexDic? _gridRow;
-        private GridSplitDefinition _colDef;
-        private GridSplitDefinition _rowDef;
+        private GridSplitDefinitionInternal _colDef;
+        private GridSplitDefinitionInternal _rowDef;
 
         private GridIndexDic GridCol => _gridCol ??= GridIndexDic.Create();
         private GridIndexDic GridRow => _gridRow ??= GridIndexDic.Create();
@@ -26,18 +69,38 @@ namespace Elffy.UI
 
         public void DefineRow<T>(int count, T arg, SpanAction<LayoutLength, T> setter) => _rowDef.SetDefinition(count, arg, setter);
 
+        public unsafe void DefineRow(ReadOnlySpan<LayoutLength> definition)
+        {
+            fixed(LayoutLength* ptr = definition) {
+                _rowDef.SetDefinition(definition.Length, (IntPtr)ptr, static (row, ptr) =>
+                {
+                    new Span<LayoutLength>((void*)ptr, row.Length).CopyTo(row);
+                });
+            }
+        }
+
         public void DefineColumn(int count, SpanAction<LayoutLength> setter) => _colDef.SetDefinition(count, setter);
 
         public void DefineColumn<T>(int count, T arg, SpanAction<LayoutLength, T> setter) => _colDef.SetDefinition(count, arg, setter);
 
-        public void SetColumnOf(Control control, int column)
+        public unsafe void DefineColumn(ReadOnlySpan<LayoutLength> definition)
+        {
+            fixed(LayoutLength* ptr = definition) {
+                _colDef.SetDefinition(definition.Length, (IntPtr)ptr, static (col, ptr) =>
+                {
+                    new Span<LayoutLength>((void*)ptr, col.Length).CopyTo(col);
+                });
+            }
+        }
+
+        public void SetColumnAt(int column, Control control)
         {
             ArgumentNullException.ThrowIfNull(control);
             if(column < 0) { ThrowOutOfRange(nameof(column)); }
             GridCol[control] = column;
         }
 
-        public void SetRowOf(Control control, int row)
+        public void SetRowAt(int row, Control control)
         {
             ArgumentNullException.ThrowIfNull(control);
             if(row < 0) { ThrowOutOfRange(nameof(row)); }

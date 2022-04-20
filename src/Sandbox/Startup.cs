@@ -38,6 +38,9 @@ namespace Sandbox
                     () => new DeferredRenderingLayer(),
                     () => new WorldLayer(),
                     () => new UILayer());
+            //var b = await Sample.CreateUI(uiLayer.UIRoot);
+            //Debug.WriteLine($"IsEnabled: {b.IsEnabled}");
+            //return;
 
             InitializeLights(screen);
             var uiRoot = uiLayer.UIRoot;
@@ -108,7 +111,7 @@ namespace Sandbox
                 Background = new ColorByte(40, 44, 52, 255).ToColor4(),
                 Padding = new LayoutThickness(0, 10, 0, 10),
             };
-            grid.SetColumnOf(leftPanel, 0);
+            grid.SetColumnAt(0, leftPanel);
             leftPanel.DefineRow(6, static row =>
             {
                 row[0] = LayoutLength.Length(60);
@@ -133,7 +136,7 @@ namespace Sandbox
                         CornerRadius = new Vector4(4),
                     },
                 };
-                leftPanel.SetRowOf(button, i);
+                leftPanel.SetRowAt(i, button);
                 button.KeyUp += _ => Debug.WriteLine($"Clicked");
                 tasks.Add(leftPanel.Children.Add(button));
             }

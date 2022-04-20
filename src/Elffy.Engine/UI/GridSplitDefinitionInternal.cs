@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.UI
 {
-    internal struct GridSplitDefinition : IDisposable
+    internal struct GridSplitDefinitionInternal : IDisposable
     {
         private ValueTypeRentMemory<LayoutLength> _def;
         private ValueTypeRentMemory<CP> _pos;
