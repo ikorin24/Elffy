@@ -9,7 +9,7 @@ namespace Elffy.UI
     [MarkupMemberSetter(
         "ColumnDefinition",
         $@"^{LayoutLength.MatchPattern}(,\s*{LayoutLength.MatchPattern})*$",
-        new[]
+        new string[5]
         {
             $@"(?<n>{RegexPatterns.Int})(,\s*)?",
             $@"(?<n>{RegexPatterns.Float})\*(,\s*)?",
@@ -17,12 +17,12 @@ namespace Elffy.UI
             @"^",
             @"$",
         },
-        new[]
+        new string[5]
         {
             @"new global::Elffy.UI.LayoutLength((int)(${n}), global::Elffy.UI.LayoutLengthType.Length), ",
             @"new global::Elffy.UI.LayoutLength((float)(${n}), global::Elffy.UI.LayoutLengthType.Proportion), ",
             @"new global::Elffy.UI.LayoutLength(1f, global::Elffy.UI.LayoutLengthType.Proportion), ",
-            @"${obj}.DefineColumn(stackalloc global::Elffy.UI.LayoutLength[] { ",
+            @$"${{obj}}.{nameof(DefineColumn)}((global::System.ReadOnlySpan<global::Elffy.UI.LayoutLength>)stackalloc[] {{ ",
             @" });",
         })
     ]
@@ -31,7 +31,7 @@ namespace Elffy.UI
     [MarkupMemberSetter(
         "RowDefinition",
         $@"^{LayoutLength.MatchPattern}(,\s*{LayoutLength.MatchPattern})*$",
-        new[]
+        new string[5]
         {
             $@"(?<n>{RegexPatterns.Int})(,\s*)?",
             $@"(?<n>{RegexPatterns.Float})\*(,\s*)?",
@@ -39,12 +39,12 @@ namespace Elffy.UI
             @"^",
             @"$",
         },
-        new[]
+        new string[5]
         {
             @"new global::Elffy.UI.LayoutLength((int)(${n}), global::Elffy.UI.LayoutLengthType.Length), ",
             @"new global::Elffy.UI.LayoutLength((float)(${n}), global::Elffy.UI.LayoutLengthType.Proportion), ",
             @"new global::Elffy.UI.LayoutLength(1f, global::Elffy.UI.LayoutLengthType.Proportion), ",
-            @"${obj}.DefineRow(stackalloc global::Elffy.UI.LayoutLength[] { ",
+            $@"${{obj}}.{nameof(DefineRow)}((global::System.ReadOnlySpan<global::Elffy.UI.LayoutLength>)stackalloc[] {{ ",
             @" });",
         })
     ]
