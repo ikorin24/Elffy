@@ -4,18 +4,16 @@ using System;
 namespace Elffy.Markup;
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = true, Inherited = false)]
-public sealed class MarkupAttachedPropertyAttribute : Attribute
+public sealed class MarkupAttachedMemberAttribute : Attribute
 {
-    private readonly Type[] _argTypes;
-
     public string Name { get; }
     public string Code { get; }
-    public ReadOnlyMemory<Type> ArgTypes => _argTypes;
+    public Type MemberType { get; }
 
-    public MarkupAttachedPropertyAttribute(string name, string code, Type[] argTypes)
+    public MarkupAttachedMemberAttribute(string name, string code, Type memberType)
     {
         Name = name;
         Code = code;
-        _argTypes = argTypes;
+        MemberType = memberType;
     }
 }

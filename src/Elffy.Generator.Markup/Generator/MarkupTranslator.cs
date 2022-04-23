@@ -140,22 +140,46 @@ public static class MarkupTranslator
             if(attr.IsNamespaceAttr()) {
                 continue;
             }
-            if(attr.Name.Contains((byte)':')) {
+            //if(attr.Name.Contains((byte)':')) {
+            //    continue;   // TODO:
+            //}
+            if(attr.Name.StartsWith("x:")) {
                 continue;   // TODO:
             }
             var propName = attr.Name.ToString();
-            if(instanceType.TryGetMember(propName, out var propType) == false) {
-                context.AddDiagnostic(DiagnosticHelper.SettableMemberNotFound(instanceType.Name, propName));
-                // Skip this property
+
+            if(instanceType.TryGetMember(propName, out var propType)) {
+                var literal = context.XmlEntities.ResolveToString(attr.Value);
+                if(propType.TryGetLiteralCode(literal, out var literalCode, out var diagnostic)) {
+                    mb.AppendLine($"obj.{propName} = {literalCode};");
+                }
+                else {
+                    context.AddDiagnostic(diagnostic);
+                }
                 continue;
             }
-            var literal = context.XmlEntities.ResolveToString(attr.Value);
-            if(propType.TryGetLiteralCode(literal, out var literalCode, out var diagnostic) == false) {
-                context.AddDiagnostic(diagnostic);
-                // Skip this property
+
+            if(attr.IsAttachedMemberAttr(typeStore, out var attachedMemberName, out var attachedMemberOwnerType)) {
+
+                //throw new Exception("hoge");
+
+                // (ex) ui:Grid.Row="0"
+                var literal = context.XmlEntities.ResolveToString(attr.Value);
+                //throw new Exception($"member: {attachedMemberName.ToString()}, ownerType: {attachedMemberOwnerType.Name}");
+                if(attachedMemberOwnerType.TryGetCodeForSetAttachedMemberValue(attachedMemberName.ToString(), literal, out var code, out var diagnostic)) {
+                    mb.AppendLine(code + ";");
+                    //throw new Exception("tttt");
+                }
+                if(diagnostic != null) {
+                    context.AddDiagnostic(diagnostic);
+                }
+                //throw new Exception("aaa");
                 continue;
             }
-            mb.AppendLine($"obj.{propName} = {literalCode};");
+
+            context.AddDiagnostic(DiagnosticHelper.SettableMemberNotFound(instanceType.Name, propName));
+            // Skip this property
+            continue;
         }
 
 
@@ -187,8 +211,9 @@ public static class MarkupTranslator
         MarkupTranslatorContext context,
         MethodSourceBuilder mb)
     {
-        if(propOwnerType.TryGetMember(propName.ToString(), out var propType) == false) {
-            context.AddDiagnostic(DiagnosticHelper.SettableMemberNotFound(instanceType.Name, propName.ToString()));
+        var propNameStr = propName.ToString();
+        if(propOwnerType.TryGetMember(propNameStr, out var propType) == false) {
+            context.AddDiagnostic(DiagnosticHelper.SettableMemberNotFound(instanceType.Name, propNameStr));
             return;
         }
         var instanceCode = (propOwnerType.Name == instanceType.Name) ? "obj" : $"((global::{propOwnerType.Name})obj)";
@@ -196,7 +221,7 @@ public static class MarkupTranslator
         if(propertyNode.Children.Count == 1) {
             var (id, _) = GenerateFactoryMethodCode(propertyNode.FirstChild.Value, instanceType, context);
             if(id != SkippedMethodID) {
-                mb.AppendLine($"{instanceCode}.{propName} = __F{id}(ref context, obj);");
+                mb.AppendLine($"{instanceCode}.{propNameStr} = __F{id}(ref context, obj);");
             }
             return;
         }
@@ -206,12 +231,12 @@ public static class MarkupTranslator
                 context.AddDiagnostic(diagnostic);
             }
             else {
-                mb.AppendLine($"{instanceCode}.{propName} = {code};");
+                mb.AppendLine($"{instanceCode}.{propNameStr} = {code};");
             }
             return;
         }
         else {
-            context.AddDiagnostic(DiagnosticHelper.MutipleValuesNotSupported(instanceType.Name, propName.ToString()));
+            context.AddDiagnostic(DiagnosticHelper.MutipleValuesNotSupported(instanceType.Name, propNameStr));
             return;
         }
     }

@@ -4,7 +4,7 @@ using System;
 namespace Elffy.Markup;
 
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = true, Inherited = true)]
-public class MarkupMemberSetterAttribute : Attribute
+public sealed class MarkupMemberSetterAttribute : Attribute
 {
     private readonly string[] _replacePatterns;
     private readonly string[] _replaces;

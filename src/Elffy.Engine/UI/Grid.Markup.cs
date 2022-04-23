@@ -49,11 +49,9 @@ namespace Elffy.UI
         })
     ]
     // (ex)
-    // <Grid RowDefinition="0.5*,0.5*" ColumnDefinition="0.5*,0.5*">
-    //   <Button Grid.Row="0" Grid.Column="0"/>
-    // </Grid>
-    [MarkupAttachedProperty("Column", "${caller}." + nameof(SetColumnAt) + "(${arg0}, ${obj})", new Type[] { typeof(int) })]
-    [MarkupAttachedProperty("Row", "${caller}." + nameof(SetRowAt) + "(${arg0}, ${obj})", new Type[] { typeof(int) })]
+    // <Button Grid.Row="0" Grid.Column="0"/>
+    [MarkupAttachedMember("Column", "${caller}." + nameof(SetColumnAt) + "($_, ${obj})", typeof(int))]
+    [MarkupAttachedMember("Row", "${caller}." + nameof(SetRowAt) + "($_, ${obj})", typeof(int))]
     partial class Grid
     {
     }

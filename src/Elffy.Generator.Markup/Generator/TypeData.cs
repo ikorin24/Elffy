@@ -40,6 +40,7 @@ public sealed class TypeData
     private TypeData? _baseTypeCache;
     private readonly ITypedLiteralConverter? _literalConverter;
     private readonly string _ctorCode;
+    private readonly AttachedMemberList _attachedMembers;
 
     public INamedTypeSymbol Symbol => _symbol;
     public string Name => _fullName;
@@ -55,6 +56,7 @@ public sealed class TypeData
 
         var ctorCode = store.GetCtorCode(symbol);
         _ctorCode = (ctorCode != null) ? ReplaceMetaVariable(ctorCode, _fullName) : $"new global::{_fullName}()";
+        _attachedMembers = store.CreateAttachedMembers(symbol);
     }
 
     private TypeData? GetBaseType()
@@ -65,6 +67,13 @@ public sealed class TypeData
         }
 
         return _baseTypeCache ??= _store.GetOrCreateType(baseTypeSymbol);
+    }
+
+    public bool IsSubtypeOf(TypeData type) => _symbol.IsSubtypeOf(type.Symbol);
+
+    public bool TryGetCodeForSetAttachedMemberValue(string memberName, string literal, [MaybeNullWhen(false)] out string code, out Diagnostic? diagnostic)
+    {
+        return _attachedMembers.TryGetCodeForSetValue(memberName, literal, out code, out diagnostic);
     }
 
     public bool TryGetMember(string memberName, [MaybeNullWhen(false)] out TypeData type)
@@ -147,7 +156,7 @@ public sealed class TypeData
     {
         // TODO:
         if(_store.TryGetTypeData("Elffy.UI.Control", out var control)) {
-            if(_symbol.IsSubtypeOf(control.Symbol)) {
+            if(IsSubtypeOf(control)) {
                 result = $"_ = {contentCode};";
                 return true;
             }
@@ -162,6 +171,12 @@ public sealed class TypeData
     }
 
     public override string ToString() => _fullName;
+
+    public string ReplaceMetaVariable(string input)
+    {
+        // TODO: メタ変数置換用の型を別に用意して TypeData から切り離す
+        return ReplaceMetaVariable(input, _fullName);
+    }
 
     private static string ReplaceMetaVariable(string input, string typeName)
     {

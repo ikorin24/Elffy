@@ -61,4 +61,29 @@ internal static class TypeSymbolExtensions
             }
         }
     }
+
+    public static INamedTypeSymbol? GetTypeByMetadataNameOrSpecialType(this Compilation compilation, string name)
+    {
+        return name switch
+        {
+            "object" => compilation.GetSpecialType(SpecialType.System_Object),
+            "bool" => compilation.GetSpecialType(SpecialType.System_Boolean),
+            "char" => compilation.GetSpecialType(SpecialType.System_Char),
+            "sbyte" => compilation.GetSpecialType(SpecialType.System_SByte),
+            "byte" => compilation.GetSpecialType(SpecialType.System_Byte),
+            "short" => compilation.GetSpecialType(SpecialType.System_Int16),
+            "ushort" => compilation.GetSpecialType(SpecialType.System_UInt16),
+            "int" => compilation.GetSpecialType(SpecialType.System_Int32),
+            "uint" => compilation.GetSpecialType(SpecialType.System_UInt32),
+            "long" => compilation.GetSpecialType(SpecialType.System_Int64),
+            "ulong" => compilation.GetSpecialType(SpecialType.System_UInt64),
+            "decimal" => compilation.GetSpecialType(SpecialType.System_Decimal),
+            "float" => compilation.GetSpecialType(SpecialType.System_Single),
+            "double" => compilation.GetSpecialType(SpecialType.System_Double),
+            "string" => compilation.GetSpecialType(SpecialType.System_String),
+            "nint" => compilation.GetSpecialType(SpecialType.System_IntPtr),
+            "nuint" => compilation.GetSpecialType(SpecialType.System_UIntPtr),
+            _ => compilation.GetTypeByMetadataName(name),
+        };
+    }
 }

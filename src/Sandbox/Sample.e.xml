@@ -2,6 +2,6 @@
         x:builder="Sandbox.Sample" x:builderType="ui"
         Width="0.5*" Height="*" HorizontalAlignment="Left" Background="Blue">
   <Grid Background="Red" Width="0.5*" Height="0.5*">
-    <Button Background="Gray" Margin="4"/>
+    <Button Background="Pink" Margin="4" Grid.Row="0" Grid.Column="0"/>
   </Grid>
 </Button>
