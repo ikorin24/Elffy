@@ -1,6 +1,4 @@
 ﻿#nullable enable
-using System;
-using System.Linq;
 using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
 using U8Xml;
@@ -108,13 +106,48 @@ public sealed class TypeDataStore
         }
         return AttachedMemberList.Create(typeSymbol, this, markupAttrs.AttachedMemberAttr);
     }
+
+    public MemberSetterList GetMemberSetterCodes(INamedTypeSymbol typeSymbol)
+    {
+        return MemberSetterList.Create(typeSymbol, this, _markupAttrs?.MemberSetterAttr);
+    }
+}
+
+public sealed class MemberSetterList
+{
+    private static readonly MemberSetterList Empty = new MemberSetterList();
+
+    private readonly INamedTypeSymbol? _ownerType;
+    private readonly Dictionary<string, string>? _dic;   // memberName => code
+    private readonly TypeDataStore? _store;
+
+    private MemberSetterList()
+    {
+    }
+
+    public bool TryGetSetterCode(string memberName, string literal, [MaybeNullWhen(false)] out string code, out Diagnostic? diagnostic)
+    {
+        var dic = _dic;
+        var store = _store;
+        diagnostic = null;
+        code = null;
+
+        // TODO: not implemented yet
+        return false;
+    }
+
+    public static MemberSetterList Create(INamedTypeSymbol typeSymbol, TypeDataStore store, INamedTypeSymbol? memberSetterAttr)
+    {
+        // TODO: not implemented yet
+        return Empty;
+    }
 }
 
 public sealed class AttachedMemberList
 {
     public static readonly AttachedMemberList Empty = new AttachedMemberList();
 
-    private INamedTypeSymbol? _ownerType;
+    private readonly INamedTypeSymbol? _ownerType;
     private readonly Dictionary<string, AttachedMemberData>? _dic;
     private readonly TypeDataStore? _store;
 
@@ -145,7 +178,6 @@ public sealed class AttachedMemberList
         var store = _store;
         diagnostic = null;
         code = null;
-        //throw new Exception($"why null ? owner: {_ownerType?.GetTypeName() ?? "null"}, memberName: {memberName}, literal: {literal}, store: {store?.ToString() ?? "null"}");
         if(dic is null || store is null || _ownerType is null) {
             return false;
         }
@@ -204,14 +236,19 @@ public sealed class AttachedMemberData
     }
 }
 
-public record MarkupAttributes(
-    INamedTypeSymbol UseLiteralAttr,
-    INamedTypeSymbol PatternAttr,
-    INamedTypeSymbol MemberAttr,
-    INamedTypeSymbol CtorAttr,
-    INamedTypeSymbol AttachedMemberAttr,
-    INamedTypeSymbol MemberSetterAttr)
+public record MarkupAttributes
 {
+    public INamedTypeSymbol UseLiteralAttr { get; init; } = null!;
+    public INamedTypeSymbol PatternAttr { get; init; } = null!;
+    public INamedTypeSymbol MemberAttr { get; init; } = null!;
+    public INamedTypeSymbol CtorAttr { get; init; } = null!;
+    public INamedTypeSymbol AttachedMemberAttr { get; init; } = null!;
+    public INamedTypeSymbol MemberSetterAttr { get; init; } = null!;
+
+    private MarkupAttributes()
+    {
+    }
+
     public static MarkupAttributes? CreateOrNull(Compilation compilation)
     {
         var useLiteralAttr = compilation.GetTypeByMetadataName("Elffy.Markup.UseLiteralMarkupAttribute");
@@ -224,13 +261,14 @@ public record MarkupAttributes(
         if(useLiteralAttr == null || patternAttr == null || memberAttr == null || ctorAttr == null || attachedMemberAttr == null || memberSetter == null) {
             return null;
         }
-
-        return new MarkupAttributes(
-            useLiteralAttr,
-            patternAttr,
-            memberAttr,
-            ctorAttr,
-            attachedMemberAttr,
-            memberSetter);
+        return new()
+        {
+            UseLiteralAttr = useLiteralAttr,
+            PatternAttr = patternAttr,
+            MemberAttr = memberAttr,
+            CtorAttr = ctorAttr,
+            AttachedMemberAttr = attachedMemberAttr,
+            MemberSetterAttr = memberSetter,
+        };
     }
 }

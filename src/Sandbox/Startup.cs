@@ -12,6 +12,7 @@ using Elffy.UI;
 using Elffy.Shading;
 using Elffy.Threading;
 using Elffy.Graphics.OpenGL;
+using Cysharp.Threading.Tasks.Linq;
 
 namespace Sandbox
 {
@@ -38,9 +39,9 @@ namespace Sandbox
                     () => new DeferredRenderingLayer(),
                     () => new WorldLayer(),
                     () => new UILayer());
-            //var b = await Sample.CreateUI(uiLayer.UIRoot);
-            //Debug.WriteLine($"IsEnabled: {b.IsEnabled}");
-            //return;
+            var b = await Sample.CreateUI(uiLayer.UIRoot);
+            Debug.WriteLine($"IsEnabled: {b.IsEnabled}");
+            return;
 
             InitializeLights(screen);
             var uiRoot = uiLayer.UIRoot;

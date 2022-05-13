@@ -28,15 +28,15 @@ public sealed class MarkupTranslationGenerator : IIncrementalGenerator
             .Combine(context.CompilationProvider)
             .Select(static (x, ct) =>
             {
-                var result = new MarkupTranslationResult();
+                var (file, compilation) = x;
+                var filePath = file.FilePath;
+                var result = new MarkupTranslationResult(filePath);
                 try {
                     ct.ThrowIfCancellationRequested();
-                    var (file, compilation) = x;
                     if(compilation.Language != "C#") {
                         result.AddDiagnostic(DiagnosticHelper.LanguageNotSupported(compilation.Language));
                         return result;
                     }
-                    var filePath = file.FilePath;
                     XmlObject xml;
                     try {
                         xml = XmlParser.ParseFile(filePath);
@@ -52,7 +52,7 @@ public sealed class MarkupTranslationGenerator : IIncrementalGenerator
                     MarkupTranslator.Translate(xml, typeStore, result, ct);
                 }
                 catch(Exception ex) when(ex is not OperationCanceledException) {
-                    result.AddDiagnostic(DiagnosticHelper.GeneratorInternalException(ex));
+                    result.AddDiagnostic(DiagnosticHelper.GeneratorInternalException(ex, filePath));
                 }
                 return result;
             });
@@ -67,7 +67,7 @@ public sealed class MarkupTranslationGenerator : IIncrementalGenerator
                 }
             }
             catch(Exception ex) when(ex is not OperationCanceledException) {
-                context.ReportDiagnostic(DiagnosticHelper.GeneratorInternalException(ex));
+                context.ReportDiagnostic(DiagnosticHelper.GeneratorInternalException(ex, result.MarkupFilePath));
             }
         });
     }

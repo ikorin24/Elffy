@@ -147,9 +147,19 @@ public static class MarkupTranslator
                 continue;   // TODO:
             }
             var propName = attr.Name.ToString();
+            var literal = context.XmlEntities.ResolveToString(attr.Value);
+
+            {
+                if(instanceType.TryGetMemberSetterCode(propName, literal, out var memberSetterCode, out var diagnostic)) {
+                    mb.AppendLine(memberSetterCode + ";");
+                    if(diagnostic != null) {
+                        context.AddDiagnostic(diagnostic);
+                    }
+                    continue;
+                }
+            }
 
             if(instanceType.TryGetMember(propName, out var propType)) {
-                var literal = context.XmlEntities.ResolveToString(attr.Value);
                 if(propType.TryGetLiteralCode(literal, out var literalCode, out var diagnostic)) {
                     mb.AppendLine($"obj.{propName} = {literalCode};");
                 }
@@ -160,20 +170,13 @@ public static class MarkupTranslator
             }
 
             if(attr.IsAttachedMemberAttr(typeStore, out var attachedMemberName, out var attachedMemberOwnerType)) {
-
-                //throw new Exception("hoge");
-
                 // (ex) ui:Grid.Row="0"
-                var literal = context.XmlEntities.ResolveToString(attr.Value);
-                //throw new Exception($"member: {attachedMemberName.ToString()}, ownerType: {attachedMemberOwnerType.Name}");
                 if(attachedMemberOwnerType.TryGetCodeForSetAttachedMemberValue(attachedMemberName.ToString(), literal, out var code, out var diagnostic)) {
                     mb.AppendLine(code + ";");
-                    //throw new Exception("tttt");
                 }
                 if(diagnostic != null) {
                     context.AddDiagnostic(diagnostic);
                 }
-                //throw new Exception("aaa");
                 continue;
             }
 

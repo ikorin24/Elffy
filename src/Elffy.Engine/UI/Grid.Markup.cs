@@ -11,18 +11,18 @@ namespace Elffy.UI
         $@"^{LayoutLength.MatchPattern}(,\s*{LayoutLength.MatchPattern})*$",
         new string[5]
         {
-            $@"(?<n>{RegexPatterns.Int})(,\s*)?",
             $@"(?<n>{RegexPatterns.Float})\*(,\s*)?",
             $@"\*(,\s*)?",
+            $@"(?<n>{RegexPatterns.Int})(,\s*)?",
             @"^",
             @"$",
         },
         new string[5]
         {
-            @"new global::Elffy.UI.LayoutLength((int)(${n}), global::Elffy.UI.LayoutLengthType.Length), ",
             @"new global::Elffy.UI.LayoutLength((float)(${n}), global::Elffy.UI.LayoutLengthType.Proportion), ",
             @"new global::Elffy.UI.LayoutLength(1f, global::Elffy.UI.LayoutLengthType.Proportion), ",
-            @$"${{obj}}.{nameof(DefineColumn)}((global::System.ReadOnlySpan<global::Elffy.UI.LayoutLength>)stackalloc[] {{ ",
+            @"new global::Elffy.UI.LayoutLength((int)(${n}), global::Elffy.UI.LayoutLengthType.Length), ",
+            @"${obj}." + nameof(DefineColumn) + "((global::System.ReadOnlySpan<global::Elffy.UI.LayoutLength>)stackalloc[] { ",
             @" });",
         })
     ]
@@ -33,18 +33,18 @@ namespace Elffy.UI
         $@"^{LayoutLength.MatchPattern}(,\s*{LayoutLength.MatchPattern})*$",
         new string[5]
         {
-            $@"(?<n>{RegexPatterns.Int})(,\s*)?",
             $@"(?<n>{RegexPatterns.Float})\*(,\s*)?",
             $@"\*(,\s*)?",
+            $@"(?<n>{RegexPatterns.Int})(,\s*)?",
             @"^",
             @"$",
         },
         new string[5]
         {
-            @"new global::Elffy.UI.LayoutLength((int)(${n}), global::Elffy.UI.LayoutLengthType.Length), ",
             @"new global::Elffy.UI.LayoutLength((float)(${n}), global::Elffy.UI.LayoutLengthType.Proportion), ",
             @"new global::Elffy.UI.LayoutLength(1f, global::Elffy.UI.LayoutLengthType.Proportion), ",
-            $@"${{obj}}.{nameof(DefineRow)}((global::System.ReadOnlySpan<global::Elffy.UI.LayoutLength>)stackalloc[] {{ ",
+            @"new global::Elffy.UI.LayoutLength((int)(${n}), global::Elffy.UI.LayoutLengthType.Length), ",
+            @"${obj}" + nameof(DefineRow) + @"((global::System.ReadOnlySpan<global::Elffy.UI.LayoutLength>)stackalloc[] { ",
             @" });",
         })
     ]

@@ -29,6 +29,7 @@ public sealed class TypeData
         ["float"] = x => $"((float){float.Parse(x)})",
         ["double"] = x => $"((double){double.Parse(x)})",
         ["decimal"] = x => $"((decimal){decimal.Parse(x)})",
+        // TODO: nint, nuint
         ["bool"] = x => bool.Parse(x) ? "(true)" : "(false)",
     };
 
@@ -41,6 +42,7 @@ public sealed class TypeData
     private readonly ITypedLiteralConverter? _literalConverter;
     private readonly string _ctorCode;
     private readonly AttachedMemberList _attachedMembers;
+    private readonly MemberSetterList _memberSetters;
 
     public INamedTypeSymbol Symbol => _symbol;
     public string Name => _fullName;
@@ -57,6 +59,7 @@ public sealed class TypeData
         var ctorCode = store.GetCtorCode(symbol);
         _ctorCode = (ctorCode != null) ? ReplaceMetaVariable(ctorCode, _fullName) : $"new global::{_fullName}()";
         _attachedMembers = store.CreateAttachedMembers(symbol);
+        _memberSetters = store.GetMemberSetterCodes(symbol);
     }
 
     private TypeData? GetBaseType()
@@ -117,6 +120,11 @@ public sealed class TypeData
             membersCache = members;
             return isFound;
         }
+    }
+
+    public bool TryGetMemberSetterCode(string memberName, string literal, [MaybeNullWhen(false)] out string code, out Diagnostic? diagnostic)
+    {
+        return _memberSetters.TryGetSetterCode(memberName, literal, out code, out diagnostic);
     }
 
     public bool TryGetLiteralCode(string literal, [MaybeNullWhen(false)] out string code, [MaybeNullWhen(true)] out Diagnostic diagnostic)

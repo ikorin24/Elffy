@@ -18,22 +18,45 @@ namespace Elffy.UI
         private GridIndexDic GridCol => _gridCol ??= GridIndexDic.Create();
         private GridIndexDic GridRow => _gridRow ??= GridIndexDic.Create();
 
-        public ReadOnlySpan<LayoutLength> RowDefinition => _rowDef.GetDefinition();
+        public ReadOnlySpan<LayoutLength> RowDefinition
+        {
+            get => _rowDef.GetDefinition();
+            set
+            {
+                unsafe {
+                    fixed(LayoutLength* p = value) {
+                        _rowDef.SetDefinition(value.Length, (IntPtr)p, static (row, p) =>
+                        {
+                            new Span<LayoutLength>((void*)p, row.Length).CopyTo(row);
+                        });
+                    }
+                }
+            }
+        }
 
-        public ReadOnlySpan<LayoutLength> ColumnDefinition => _colDef.GetDefinition();
+        public ReadOnlySpan<LayoutLength> ColumnDefinition
+        {
+            get => _colDef.GetDefinition();
+            set
+            {
+                unsafe {
+                    fixed(LayoutLength* ptr = value) {
+                        _colDef.SetDefinition(value.Length, (IntPtr)ptr, static (col, ptr) =>
+                        {
+                            new Span<LayoutLength>((void*)ptr, col.Length).CopyTo(col);
+                        });
+                    }
+                }
+            }
+        }
 
         public void DefineRow(int count, SpanAction<LayoutLength> setter) => _rowDef.SetDefinition(count, setter);
 
         public void DefineRow<T>(int count, T arg, SpanAction<LayoutLength, T> setter) => _rowDef.SetDefinition(count, arg, setter);
 
-        public unsafe void DefineRow(ReadOnlySpan<LayoutLength> definition)
+        public void DefineRow(ReadOnlySpan<LayoutLength> definition)
         {
-            fixed(LayoutLength* ptr = definition) {
-                _rowDef.SetDefinition(definition.Length, (IntPtr)ptr, static (row, ptr) =>
-                {
-                    new Span<LayoutLength>((void*)ptr, row.Length).CopyTo(row);
-                });
-            }
+            RowDefinition = definition;
         }
 
         public void DefineColumn(int count, SpanAction<LayoutLength> setter) => _colDef.SetDefinition(count, setter);
@@ -42,12 +65,7 @@ namespace Elffy.UI
 
         public unsafe void DefineColumn(ReadOnlySpan<LayoutLength> definition)
         {
-            fixed(LayoutLength* ptr = definition) {
-                _colDef.SetDefinition(definition.Length, (IntPtr)ptr, static (col, ptr) =>
-                {
-                    new Span<LayoutLength>((void*)ptr, col.Length).CopyTo(col);
-                });
-            }
+            ColumnDefinition = definition;
         }
 
         public void SetColumnAt(int column, Control control)

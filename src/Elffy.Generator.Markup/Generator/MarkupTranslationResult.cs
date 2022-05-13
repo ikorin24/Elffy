@@ -8,12 +8,16 @@ namespace Elffy.Generator;
 
 public sealed class MarkupTranslationResult
 {
+    private readonly string _markupFilePath;
     private string? _outputName;
     private SourceText? _sourceText;
     private List<Diagnostic>? _diagnosticList;
 
-    public MarkupTranslationResult()
+    public string MarkupFilePath => _markupFilePath;
+
+    public MarkupTranslationResult(string markupFilePath)
     {
+        _markupFilePath = markupFilePath;
     }
 
     public void SetOutputName(string outputName)

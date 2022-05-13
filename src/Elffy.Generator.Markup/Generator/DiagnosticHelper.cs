@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.Collections.Concurrent;
+using Microsoft.CodeAnalysis.Text;
 using Microsoft.CodeAnalysis;
 
 namespace Elffy.Generator;
@@ -24,7 +25,7 @@ internal static class DiagnosticHelper
         return Diagnostic.Create(diagnostic, Location.None, language);
     }
 
-    public static Diagnostic GeneratorInternalException(Exception ex)
+    public static Diagnostic GeneratorInternalException(Exception ex, string filePath)
     {
         const string ID = "EGM0001";
         var diagnostic = _dicEGM.GetOrAdd(ID, key => new(
@@ -35,7 +36,8 @@ internal static class DiagnosticHelper
             DiagnosticSeverity.Error,
             true));
         var exStr = ExceptionToString(ex);
-        return Diagnostic.Create(diagnostic, Location.None, exStr);
+        var location = Location.Create(filePath, new TextSpan(0, 0), new LinePositionSpan(new LinePosition(0, 0), new LinePosition(0, 0)));
+        return Diagnostic.Create(diagnostic, location, exStr);
     }
 
     public static Diagnostic InvalidXmlFormat(string filePath, Location? location = null)

@@ -21,7 +21,7 @@ namespace Elffy.UI
         private const string ProportionPattern2 = @"^\*$";
         private const string ProportionEmit2 = @"new global::Elffy.UI.LayoutLength(1f, global::Elffy.UI.LayoutLengthType.Proportion)";
 
-        internal const string MatchPattern = $@"({RP.Int}|{RP.Float}?\*)";
+        internal const string MatchPattern = $@"({RP.Float}?\*|{RP.Int})";
 
         public readonly float Value;
         public readonly LayoutLengthType Type;
