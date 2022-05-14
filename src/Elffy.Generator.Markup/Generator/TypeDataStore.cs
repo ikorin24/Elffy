@@ -1,8 +1,12 @@
 ﻿#nullable enable
 using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
-using U8Xml;
 using System.Diagnostics.CodeAnalysis;
+using System.Collections.Immutable;
+using U8Xml;
+using System;
+using System.Text.RegularExpressions;
+using System.Diagnostics;
 
 namespace Elffy.Generator;
 
@@ -115,31 +119,133 @@ public sealed class TypeDataStore
 
 public sealed class MemberSetterList
 {
+    private record MemberSetterData(string MemberName, Regex Pattern, ReadOnlyMemory<Regex> ReplacePatterns, ReadOnlyMemory<string> Replaces);
+
     private static readonly MemberSetterList Empty = new MemberSetterList();
 
     private readonly INamedTypeSymbol? _ownerType;
-    private readonly Dictionary<string, string>? _dic;   // memberName => code
+    private readonly Dictionary<string, MemberSetterData>? _dic;
     private readonly TypeDataStore? _store;
 
     private MemberSetterList()
     {
     }
 
+    private MemberSetterList(TypeDataStore store, INamedTypeSymbol ownerType, Dictionary<string, MemberSetterData> dic)
+    {
+        _ownerType = ownerType;
+        _dic = dic;
+        _store = store;
+    }
+
     public bool TryGetSetterCode(string memberName, string literal, [MaybeNullWhen(false)] out string code, out Diagnostic? diagnostic)
     {
-        var dic = _dic;
-        var store = _store;
-        diagnostic = null;
-        code = null;
+        // Returns false if memberName not found,
+        // otherwise true even if literal does not match the pattern.
 
-        // TODO: not implemented yet
-        return false;
+        if(_dic == null || _store == null || _ownerType == null || _ownerType == null || _dic.TryGetValue(memberName, out var data) == false) {
+            code = null;
+            diagnostic = null;
+            return false;
+        }
+        if(data.Pattern.IsMatch(literal) == false) {
+            code = $"// Invalid literal. memberName: {memberName}, literal: {literal}";
+            diagnostic = DiagnosticHelper.InvalidLiteralForMember(literal, memberName);
+            return true;
+        }
+
+        var tmp = literal;
+        var replacePatterns = data.ReplacePatterns.Span;
+        var replaces = data.Replaces.Span;
+        var ownerType = _store.GetOrCreateType(_ownerType);
+        for(int i = 0; i < replacePatterns.Length; i++) {
+            tmp = replacePatterns[i].Replace(tmp, replaces[i]);
+            tmp = ownerType.ReplaceMetaVariable(tmp);
+        }
+        code = tmp;
+        diagnostic = null;
+        return true;
     }
 
     public static MemberSetterList Create(INamedTypeSymbol typeSymbol, TypeDataStore store, INamedTypeSymbol? memberSetterAttr)
     {
-        // TODO: not implemented yet
-        return Empty;
+        if(memberSetterAttr == null) {
+            return Empty;
+        }
+
+        var comparer = SymbolEqualityComparer.Default;
+        Dictionary<string, MemberSetterData>? dic = null;
+
+        foreach(var attr in typeSymbol.GetAttributes()) {
+            if(comparer.Equals(memberSetterAttr, attr.AttributeClass) == false) { continue; }
+            var args = attr.ConstructorArguments;
+
+            if(args.Length != 4) { continue; }
+            if(TryGetString(args[0], out var memberName) == false) { continue; }
+            if(TryGetRegex(args[1], out var pattern) == false) { continue; }
+            if(TryGetRegexPatterns(args[2].Values, out var replacePatterns) == false) { continue; }
+            if(TryGetStrings(args[3].Values, out var replaces) == false) { continue; }
+            if(replacePatterns.Length != replaces.Length) { continue; }
+
+            var data = new MemberSetterData(memberName, pattern, replacePatterns, replaces);
+            dic ??= new();
+            if(dic.ContainsKey(memberName) == false) {
+                dic.Add(memberName, data);
+            }
+        }
+        if(dic == null) { return Empty; }
+        return new MemberSetterList(store, typeSymbol, dic);
+    }
+
+    private static bool TryGetRegex(TypedConstant value, [MaybeNullWhen(false)] out Regex result)
+    {
+        if(TryGetString(value, out var str) == false) {
+            result = default;
+            return false;
+        }
+        result = new Regex(str);
+        return true;
+    }
+
+    private static bool TryGetString(TypedConstant value, [MaybeNullWhen(false)] out string result)
+    {
+        var s = value.Value?.ToString();
+        if(s == null) {
+            result = null;
+            return false;
+        }
+        result = s;
+        return true;
+    }
+
+    private static bool TryGetRegexPatterns(ImmutableArray<TypedConstant> values, [MaybeNullWhen(false)] out Regex[] result)
+    {
+        var array = new Regex[values.Length];
+        for(int i = 0; i < array.Length; i++) {
+            var value = values[i].Value?.ToString();
+            if(value == null) {
+                result = null;
+                return false;
+            }
+            array[i] = new Regex(value);
+        }
+        result = array;
+        return true;
+    }
+
+    private static bool TryGetStrings(ImmutableArray<TypedConstant> values, [MaybeNullWhen(false)] out string[] result)
+    {
+        var array = new string[values.Length];
+        for(int i = 0; i < array.Length; i++) {
+            var value = values[i].Value?.ToString();
+            if(value == null) {
+                result = null;
+                return false;
+            }
+            array[i] = value;
+        }
+        result = array;
+        return true;
     }
 }
 

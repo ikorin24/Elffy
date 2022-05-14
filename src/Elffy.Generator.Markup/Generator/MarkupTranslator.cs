@@ -151,7 +151,7 @@ public static class MarkupTranslator
 
             {
                 if(instanceType.TryGetMemberSetterCode(propName, literal, out var memberSetterCode, out var diagnostic)) {
-                    mb.AppendLine(memberSetterCode + ";");
+                    mb.AppendLine(memberSetterCode);
                     if(diagnostic != null) {
                         context.AddDiagnostic(diagnostic);
                     }

@@ -158,6 +158,19 @@ internal static class DiagnosticHelper
         return Diagnostic.Create(diagnostic, location, literal, literalTypeName, exStr);
     }
 
+    public static Diagnostic InvalidLiteralForMember(string literal, string memberName, Location? location = null)
+    {
+        const string ID = "EGM00011";
+        var diagnostic = _dicEGM.GetOrAdd(ID, key => new(
+            key,
+            "Invalid Literal",
+            "Invalid Literal '{0}'. MemberName: {1}.",
+            Category_Error,
+            DiagnosticSeverity.Error,
+            true));
+        return Diagnostic.Create(diagnostic, location, literal, memberName);
+    }
+
     private static string ExceptionToString(Exception? ex)
     {
         if(ex == null) {
