@@ -1,7 +1,9 @@
 ﻿<Button xmlns="Elffy.UI" xmlns:x="Elffy.Markup.Extensions"
         x:builder="Sandbox.Sample" x:builderType="ui"
         Width="0.5*" Height="*" HorizontalAlignment="Left" Background="Blue">
-  <Grid Background="Red" Width="0.5*" Height="0.5*" RowDefinition="100" ColumnDefinition="100">
-    <Button Background="Pink" Margin="4" Grid.Row="0" Grid.Column="0"/>
+  <Grid Background="Red" Width="0.5*" Height="0.5*" RowDefinition="100,100,100" ColumnDefinition="100,0.5*,100">
+    <Button Background="Pink" Margin="0" Grid.Row="0" Grid.Column="0"/>
+    <Button Background="Green" Margin="0" Grid.Row="1" Grid.Column="1"/>
+    <Button Background="Purple" Margin="0" Grid.Row="2" Grid.Column="2"/>
   </Grid>
 </Button>

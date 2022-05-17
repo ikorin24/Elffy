@@ -6,7 +6,7 @@ using System.Collections.Immutable;
 using U8Xml;
 using System;
 using System.Text.RegularExpressions;
-using System.Diagnostics;
+using System.Text;
 
 namespace Elffy.Generator;
 
@@ -153,16 +153,10 @@ public sealed class MemberSetterList
             diagnostic = DiagnosticHelper.InvalidLiteralForMember(literal, memberName);
             return true;
         }
-
-        var tmp = literal;
         var replacePatterns = data.ReplacePatterns.Span;
         var replaces = data.Replaces.Span;
         var ownerType = _store.GetOrCreateType(_ownerType);
-        for(int i = 0; i < replacePatterns.Length; i++) {
-            tmp = replacePatterns[i].Replace(tmp, replaces[i]);
-            tmp = ownerType.ReplaceMetaVariable(tmp);
-        }
-        code = tmp;
+        code = ownerType.ReplaceMetaVariable(EvalRegexReplace(literal, replacePatterns, replaces));
         diagnostic = null;
         return true;
     }
@@ -195,6 +189,46 @@ public sealed class MemberSetterList
         }
         if(dic == null) { return Empty; }
         return new MemberSetterList(store, typeSymbol, dic);
+    }
+
+    private static string EvalRegexReplace(string input, ReadOnlySpan<Regex> replacePatterns, ReadOnlySpan<string> replaces)
+    {
+        var matchSegments = new List<(int Start, int Length, string Replace)>();
+        for(int i = 0; i < replacePatterns.Length; i++) {
+            foreach(Match match in replacePatterns[i].Matches(input)) {
+                var seg = (Start: match.Index, Length: match.Length, Replace: match.Result(replaces[i]));
+                var addToList = true;
+                foreach(var (start, len, _) in matchSegments) {
+                    var isIntersect = !((seg.Start + seg.Length <= start) || (start + len <= seg.Start));
+                    if(isIntersect) {
+                        addToList = false;
+                        break;
+                    }
+                }
+                if(addToList) {
+                    matchSegments.Add(seg);
+                }
+            }
+        }
+        matchSegments.Sort((x, y) =>
+        {
+            // 'Length' may be zero. (e.g. pattern "^", "$")
+            // Thus, x.Start can be the same as y.Start
+
+            var a = x.Start - y.Start;
+            return a != 0 ? a : (x.Length - y.Length);  // Length may be zero. (e.g. pattern "^", "$")
+        });
+
+        var sb = new StringBuilder();
+        var pos = 0;
+        foreach(var seg in matchSegments) {
+            sb.Append(input, pos, seg.Start - pos);
+            sb.Append(seg.Replace);
+            pos = seg.Start + seg.Length;
+        }
+
+        sb.Append(input, pos, input.Length - pos);
+        return sb.ToString();
     }
 
     private static bool TryGetRegex(TypedConstant value, [MaybeNullWhen(false)] out Regex result)
