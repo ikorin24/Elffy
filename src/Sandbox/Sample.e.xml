@@ -1,12 +1,12 @@
 ﻿<Button xmlns="Elffy.UI" xmlns:x="Elffy.Markup.Extensions"
         x:builder="Sandbox.Sample" x:builderType="ui"
-        Width="0.5*" Height="*" HorizontalAlignment="Left" Background="Blue">
-  <Grid Background="Red" Width="0.5*" Height="0.5*" RowDefinition="*,*,*,*,*" ColumnDefinition="50,1*,1*,1*,50">
-    <Button Background="Pink" Margin="0" Grid.Row="0" Grid.Column="0"/>
-    <Button Background="Green" Margin="0" Grid.Row="1" Grid.Column="1"/>
-    <Button Background="Purple" Margin="0" Grid.Row="2" Grid.Column="2"/>
-    <Button Background="Gray" Margin="0" Grid.Row="3" Grid.Column="3"/>
-    <Button Background="White" Margin="0" Grid.Row="4" Grid.Column="4"/>
+        HorizontalAlignment="Left" Background="Blue">
+  <Grid Background="Red" Width="0.8*" Height="0.8*" RowDefinition="*,*,*,*,*" ColumnDefinition="100,*,*,*,100">
+    <Button Background="Pink" Grid.Row="0" Grid.Column="0"/>
+    <Button Background="Green" Grid.Row="1" Grid.Column="1"/>
+    <Button Background="Purple" Grid.Row="2" Grid.Column="2"/>
+    <Button Background="#FFC6FD" Grid.Row="2" Grid.Column="2" Margin="10" />
+    <Button Background="Gray" Grid.Row="3" Grid.Column="3"/>
+    <Button Background="White" Grid.Row="4" Grid.Column="4"/>
   </Grid>
 </Button>
-
