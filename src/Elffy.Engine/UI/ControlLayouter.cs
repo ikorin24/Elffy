@@ -1,65 +1,30 @@
 ﻿#nullable enable
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Elffy.UI
 {
-    public static class ControlLayoutHelper
-    {
-        /// <summary>Layout the specified <see cref="Control"/> and update <see cref="Control.ActualSize"/> and <see cref="Control.ActualPosition"/>.</summary>
-        /// <param name="control"></param>
-        public static void LayoutSelf(Control control)
-        {
-            LayoutSelf(control, ControlLayouter.Default);
-        }
-
-        public static void LayoutSelf(Control control, ControlLayouter layouter)
-        {
-            if(control is null) { ThrowNullArg(nameof(control)); }
-            if(layouter is null) {
-                ThrowArg($"Control layouter is null. ({control.GetType().FullName})");
-            }
-            if(control.IsRoot) { return; }
-
-            var rect = layouter.MesureAbsoluteRect(control);
-            control.ActualSize = rect.Size;
-            control.ActualPosition = rect.Position;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void LayoutChildrenRecursively(Control control)
-        {
-            if(control is null) {
-                ThrowNullArg(nameof(control));
-            }
-            control.InvokeLayoutChildreRecursively();
-        }
-
-        [DoesNotReturn]
-        private static void ThrowNullArg(string message) => throw new ArgumentNullException(message);
-
-        [DoesNotReturn]
-        private static void ThrowArg(string message) => throw new ArgumentException(message);
-    }
-
     public class ControlLayouter
     {
-        private static ControlLayouter _default = new ControlLayouter();
+        private static readonly ControlLayouter _default = new ControlLayouter();
 
         public static ControlLayouter Default => _default;
 
-        internal RectF MesureAbsoluteRect(Control target)
+        internal void LayoutSelf(Control control)
         {
-            Debug.Assert(target is not RootPanel);
-            var parent = target.Parent;
+            ArgumentNullException.ThrowIfNull(control);
+            if(control.IsRoot) { return; }
+
+            var parent = control.Parent;
             Debug.Assert(parent is not null);
             Debug.Assert(parent.ActualSize.X >= 0f && parent.ActualSize.Y >= 0f);
-
-            var contentArea = MesureContentArea(parent, target);
-            var rect = DecideRect(target, contentArea);
-            return new RectF(rect.Position + parent.ActualPosition, rect.Size);
+            var contentArea = MesureContentArea(parent, control);
+            var relativeRect = DecideRect(control, contentArea);
+            var absRect = new RectF(relativeRect.Position + parent.ActualPosition, relativeRect.Size);
+            control.ActualSize = absRect.Size;
+            control.ActualPosition = absRect.Position;
         }
 
         protected virtual ContentAreaInfo MesureContentArea(Control parent, Control target)
@@ -136,7 +101,22 @@ namespace Elffy.UI
         }
     }
 
-    public readonly struct ContentAreaInfo
+    public readonly struct ControlLayoutContext
+    {
+        internal static ControlLayoutContext Default => default;
+
+        [Obsolete("Don't use default constructor", true)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public ControlLayoutContext() => throw new NotSupportedException("Don't use default constructor");
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void LayoutSelf(ControlLayouter layouter, Control control) => layouter.LayoutSelf(control);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void LayoutChildreRecursively(Control control) => control.InvokeLayoutChildreRecursively(this);
+    }
+
+    public readonly struct ContentAreaInfo : IEquatable<ContentAreaInfo>
     {
         public readonly RectF ContentArea;
         public readonly LayoutThickness ContentPadding;
@@ -152,5 +132,17 @@ namespace Elffy.UI
             ContentArea = contentArea;
             ContentPadding = contentPadding;
         }
+
+        public override bool Equals(object? obj) => obj is ContentAreaInfo info && Equals(info);
+
+        public bool Equals(ContentAreaInfo other)
+            => ContentArea.Equals(other.ContentArea) &&
+               ContentPadding.Equals(other.ContentPadding);
+
+        public override int GetHashCode() => HashCode.Combine(ContentArea, ContentPadding);
+
+        public static bool operator ==(ContentAreaInfo left, ContentAreaInfo right) => left.Equals(right);
+
+        public static bool operator !=(ContentAreaInfo left, ContentAreaInfo right) => !(left == right);
     }
 }

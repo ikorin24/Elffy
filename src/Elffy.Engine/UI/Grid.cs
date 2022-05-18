@@ -96,11 +96,12 @@ namespace Elffy.UI
                    _gridRow.TryGetValue(control, out var row) ? row : 0;
         }
 
-        protected override void OnLayoutChildreRecursively()
+        protected override void OnLayoutChildreRecursively(ControlLayoutContext context)
         {
+            var childLayouter = _childLayouter;
             foreach(var child in Children.AsSpan()) {
-                ControlLayoutHelper.LayoutSelf(child, _childLayouter);
-                ControlLayoutHelper.LayoutChildrenRecursively(child);
+                context.LayoutSelf(childLayouter, child);
+                context.LayoutChildreRecursively(child);
             }
         }
 
@@ -177,7 +178,7 @@ namespace Elffy.UI
         {
             protected override ContentAreaInfo MesureContentArea(Control parent, Control target)
             {
-                var grid = (Grid)parent;
+                var grid = SafeCast.As<Grid>(parent);
 
                 var padding = grid.Padding;
                 var gridContentsSize = grid.ActualSize - new Vector2(padding.Left + padding.Right, padding.Top + padding.Bottom);

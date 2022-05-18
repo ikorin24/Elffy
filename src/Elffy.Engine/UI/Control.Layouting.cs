@@ -65,13 +65,14 @@ namespace Elffy.UI
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void InvokeLayoutChildreRecursively() => OnLayoutChildreRecursively();
+        internal void InvokeLayoutChildreRecursively(ControlLayoutContext context) => OnLayoutChildreRecursively(context);
 
-        protected virtual void OnLayoutChildreRecursively()
+        protected virtual void OnLayoutChildreRecursively(ControlLayoutContext context)
         {
+            var layouter = ControlLayouter.Default;
             foreach(var child in Children.AsSpan()) {
-                ControlLayoutHelper.LayoutSelf(child);
-                ControlLayoutHelper.LayoutChildrenRecursively(child);
+                context.LayoutSelf(layouter, child);
+                context.LayoutChildreRecursively(child);
             }
         }
 

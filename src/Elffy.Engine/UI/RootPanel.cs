@@ -64,7 +64,7 @@ namespace Elffy.UI
         {
             if(_relayoutRequested || forceToRelayout) {
                 _relayoutRequested = false;
-                ControlLayoutHelper.LayoutChildrenRecursively(this);
+                OnLayoutChildreRecursively(ControlLayoutContext.Default);
             }
         }
 
