@@ -1,4 +1,4 @@
-﻿<Grid xmlns="Elffy.UI" xmlns:x="Elffy.Markup.Extensions" xmlns:f="Elffy.Shading.Forward"
+﻿<Grid xmlns="Elffy.UI" xmlns:x="Elffy.Markup.Extensions" xmlns:esf="Elffy.Shading.Forward"
       x:builder="Sandbox.Sample" x:builderType="ui"
       ColumnDefinition="160,*">
   <Grid Grid.Column="0" Padding="0,10,0,10" Background="#282A34" RowDefinition="60,60,60,60,60,60">
@@ -9,7 +9,7 @@
     <Button Width="120" Height="40" Background="#D2D2D2" Margin="0,20,0,0" VerticalAlignment="Top" Grid.Row="4"/>
     <Button Width="120" Height="40" Background="#D2D2D2" Margin="0,20,0,0" VerticalAlignment="Top" Grid.Row="5">
       <Button.Shader>
-        <f:CustomUIShader CornerRadius="4,4,4,4"/>
+        <esf:CustomUIShader CornerRadius="4,4,4,4"/>
       </Button.Shader>
     </Button>
   </Grid>
