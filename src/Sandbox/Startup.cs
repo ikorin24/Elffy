@@ -12,7 +12,6 @@ using Elffy.UI;
 using Elffy.Shading;
 using Elffy.Threading;
 using Elffy.Graphics.OpenGL;
-using Cysharp.Threading.Tasks.Linq;
 
 namespace Sandbox
 {
@@ -39,9 +38,6 @@ namespace Sandbox
                     () => new DeferredRenderingLayer(),
                     () => new WorldLayer(),
                     () => new UILayer());
-            var b = await Sample.CreateUI(uiLayer.UIRoot);
-            Debug.WriteLine($"IsEnabled: {b.IsEnabled}");
-            return;
 
             InitializeLights(screen);
             var uiRoot = uiLayer.UIRoot;
@@ -49,7 +45,7 @@ namespace Sandbox
             uiRoot.Background = Color4.Black;
             try {
                 await ParallelOperation.WhenAll(
-                    CreateTestUI(uiLayer),
+                    Sample.CreateUI(uiLayer.UIRoot),
                     CreateDice2(drLayer),
                     CreateCameraMouse(wLayer, new Vector3(0, 3, 0)),
                     CreateDice(wLayer),
@@ -98,7 +94,7 @@ namespace Sandbox
             using var tasks = new ParallelOperation();
 
             const int ColumnCount = 6;
-            var gridLength = LayoutLength.Length(200);
+            //var gridLength = LayoutLength.Length(200);
             var grid = new Grid();
             grid.DefineColumn(2, static col =>
             {

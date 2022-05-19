@@ -19,7 +19,7 @@ namespace Elffy.Shading
 
         public bool HasShader => _shader is not null;
 
-        public bool IsCompiled => _program.IsEmpty == false;
+        public bool IsShaderCompiled => _program.IsEmpty == false;
 
         internal static RendererData Empty => default;
 
@@ -49,15 +49,16 @@ namespace Elffy.Shading
             return shader;
         }
 
-        internal static void Compile(ref RendererData rendererData)
+        internal static bool Compile(ref RendererData rendererData)
         {
-            if(rendererData._program.IsEmpty == false) { ThrowProgramAlreadyCompiled(); }
+            if(rendererData._program.IsEmpty == false) { return false; }
             var shader = rendererData._shader;
             if(shader is null) { ThrowEmptyShader(); }
 
             var key = new SourceKey(shader);
             var screen = Engine.GetValidCurrentContext();
             Unsafe.AsRef(in rendererData._program) = CompiledProgramCacheStore.GetCacheOrCompile(screen, key);
+            return true;
         }
 
         internal static void Release(ref RendererData rendererData)
@@ -74,7 +75,6 @@ namespace Elffy.Shading
             Unsafe.AsRef<IRenderingShader?>(rendererData._shader) = null;
         }
 
-        [DoesNotReturn] static void ThrowProgramAlreadyCompiled() => throw new InvalidOperationException("The shader program is already compiled.");
         [DoesNotReturn] static void ThrowEmptyProgram() => throw new InvalidOperationException("The shader program is empty or deleted.");
         [DoesNotReturn] static void ThrowEmptyShader() => throw new InvalidOperationException("The shader is empty or deleted.");
 

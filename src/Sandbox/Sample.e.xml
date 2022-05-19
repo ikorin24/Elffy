@@ -1,12 +1,16 @@
-﻿<Button xmlns="Elffy.UI" xmlns:x="Elffy.Markup.Extensions"
-        x:builder="Sandbox.Sample" x:builderType="ui"
-        HorizontalAlignment="Left" Background="Blue">
-  <Grid Background="Red" Width="0.8*" Height="0.8*" RowDefinition="*,*,*,*,*" ColumnDefinition="100,*,*,*,100">
-    <Button Background="Pink" Grid.Row="0" Grid.Column="0"/>
-    <Button Background="Green" Grid.Row="1" Grid.Column="1"/>
-    <Button Background="Purple" Grid.Row="2" Grid.Column="2"/>
-    <Button Background="#FFC6FD" Grid.Row="2" Grid.Column="2" Margin="10" />
-    <Button Background="Gray" Grid.Row="3" Grid.Column="3"/>
-    <Button Background="White" Grid.Row="4" Grid.Column="4"/>
+﻿<Grid xmlns="Elffy.UI" xmlns:x="Elffy.Markup.Extensions" xmlns:f="Elffy.Shading.Forward"
+      x:builder="Sandbox.Sample" x:builderType="ui"
+      ColumnDefinition="160,*">
+  <Grid Grid.Column="0" Padding="0,10,0,10" Background="#282A34" RowDefinition="60,60,60,60,60,60">
+    <Button Width="120" Height="40" Background="#D2D2D2" Margin="0,20,0,0" VerticalAlignment="Top" Grid.Row="0"/>
+    <Button Width="120" Height="40" Background="#D2D2D2" Margin="0,20,0,0" VerticalAlignment="Top" Grid.Row="1"/>
+    <Button Width="120" Height="40" Background="#D2D2D2" Margin="0,20,0,0" VerticalAlignment="Top" Grid.Row="2"/>
+    <Button Width="120" Height="40" Background="#D2D2D2" Margin="0,20,0,0" VerticalAlignment="Top" Grid.Row="3"/>
+    <Button Width="120" Height="40" Background="#D2D2D2" Margin="0,20,0,0" VerticalAlignment="Top" Grid.Row="4"/>
+    <Button Width="120" Height="40" Background="#D2D2D2" Margin="0,20,0,0" VerticalAlignment="Top" Grid.Row="5">
+      <Button.Shader>
+        <f:CustomUIShader CornerRadius="4,4,4,4"/>
+      </Button.Shader>
+    </Button>
   </Grid>
-</Button>
+</Grid>
