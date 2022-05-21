@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <AdditionalFiles Include="Sample.e.xml" />
+    <AdditionalFiles Include="**/*.e.xml" />
   </ItemGroup>
 
   <Target Name="ElffyPostBuildEvent" AfterTargets="PostBuildEvent">
