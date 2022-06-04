@@ -32,6 +32,10 @@ namespace Elffy.Shading
 
         protected abstract void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection);
 
+        protected virtual void OnProgramDisposed() { }      // nop
+
+        void IRenderingShader.InvokeOnProgramDisposed() => OnProgramDisposed();
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void DefineLocationInternal(ProgramObject program, Renderable target, Type vertexType)
         {
@@ -50,9 +54,7 @@ namespace Elffy.Shading
             OnRendering(new ShaderDataDispatcher(program), target, model, view, projection);
         }
 
-        int IRenderingShader.GetSourceHash() => GetSourceHash();
-
-        internal int GetSourceHash()
+        int IRenderingShader.GetSourceHash()
         {
             if(_sourceHashCache == 0) {
                 _sourceHashCache = HashCode.Combine(VertexShaderSource, FragmentShaderSource, GeometryShaderSource);

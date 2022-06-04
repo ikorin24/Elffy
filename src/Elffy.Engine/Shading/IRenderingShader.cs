@@ -8,6 +8,8 @@ namespace Elffy.Shading
         string FragmentShaderSource { get; }
         string? GeometryShaderSource { get; }
 
-        internal int GetSourceHash();
+        void InvokeOnProgramDisposed();
+
+        int GetSourceHash();
     }
 }

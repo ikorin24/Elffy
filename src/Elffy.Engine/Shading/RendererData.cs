@@ -61,18 +61,21 @@ namespace Elffy.Shading
             return true;
         }
 
-        internal static void Release(ref RendererData rendererData)
+        internal static bool Release(ref RendererData rendererData)
         {
             // [NOTE] The struct is readonly struct, but I change the field by Unsafe.
             // Be careful.
 
             if(rendererData.Program.IsEmpty || rendererData._shader is null) {
-                return;
+                return false;
             }
             var screen = Engine.GetValidCurrentContext();
             var key = new SourceKey(rendererData._shader);
             CompiledProgramCacheStore.Delete(screen, key, ref Unsafe.AsRef(in rendererData._program));
+            var shader = rendererData._shader;
             Unsafe.AsRef<IRenderingShader?>(rendererData._shader) = null;
+            shader.InvokeOnProgramDisposed();
+            return true;
         }
 
         [DoesNotReturn] static void ThrowEmptyProgram() => throw new InvalidOperationException("The shader program is empty or deleted.");
