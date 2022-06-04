@@ -18,6 +18,7 @@ public sealed class TypeData
     private const string _type = "${type}";
     private static readonly Dictionary<string, Func<string, string>> _embeddedLiteralCodeGenerator = new()
     {
+        ["string"] = x => $"@\"{x}\"",
         ["byte"] = x => $"((byte){byte.Parse(x)})",
         ["sbyte"] = x => $"((sbyte){sbyte.Parse(x)})",
         ["ushort"] = x => $"((ushort){ushort.Parse(x)})",
