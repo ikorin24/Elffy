@@ -68,7 +68,7 @@ namespace Elffy.Components
             _size = size;
             _count = count;
 
-            ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
+            ContextAssociatedMemorySafety.Register(this, Engine.GetValidCurrentContext());
         }
 
         void IDisposable.Dispose()

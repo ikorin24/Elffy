@@ -54,7 +54,7 @@ namespace Elffy.Components
                     span[i] = core;
                     core.Load(images[i]);
                 }
-                ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
+                ContextAssociatedMemorySafety.Register(this, Engine.GetValidCurrentContext());
                 _textureCores = texCores;
             }
             catch {
@@ -153,7 +153,7 @@ namespace Elffy.Components
         {
             _multiTexture = multiTexture;
             multiTexture.InitializeCapacity(count);
-            ContextAssociatedMemorySafety.Register(multiTexture, Engine.CurrentContext!);
+            ContextAssociatedMemorySafety.Register(multiTexture, Engine.GetValidCurrentContext());
         }
 
         public void Load(int index, in ReadOnlyImageRef image)

@@ -43,7 +43,7 @@ namespace Elffy.Components
         public void Load<T>(in Vector2i size, ImageBuilderDelegate<T> imageBuilder, T state)
         {
             _textureCore.Load(state, size, imageBuilder);
-            ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
+            ContextAssociatedMemorySafety.Register(this, Engine.GetValidCurrentContext());
         }
 
         /// <summary>Load image</summary>
@@ -51,7 +51,7 @@ namespace Elffy.Components
         public void Load(in ReadOnlyImageRef image)
         {
             _textureCore.Load(image);
-            ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
+            ContextAssociatedMemorySafety.Register(this, Engine.GetValidCurrentContext());
         }
 
         /// <summary>Load pixel data filled with specified color</summary>
@@ -61,7 +61,7 @@ namespace Elffy.Components
         public unsafe void Load(in Vector2i size, in ColorByte fill)
         {
             _textureCore.Load(size, fill);
-            ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
+            ContextAssociatedMemorySafety.Register(this, Engine.GetValidCurrentContext());
         }
 
         /// <summary>Create gpu texture buffer with specified size, but no uploading pixels. Pixels color remain undefined.</summary>
@@ -70,7 +70,7 @@ namespace Elffy.Components
         public void LoadUndefined(in Vector2i size)
         {
             _textureCore.LoadUndefined(size);
-            ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
+            ContextAssociatedMemorySafety.Register(this, Engine.GetValidCurrentContext());
         }
 
         public void Update(in Vector2i offset, in ReadOnlyImageRef subImage) => _textureCore.Update(offset, subImage);

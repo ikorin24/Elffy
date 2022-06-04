@@ -57,7 +57,7 @@ namespace Elffy.Components
             if(IsBoneLoaded) { throw new InvalidOperationException("Already loaded"); }
             InitializeSkeletonData(this, bones);
             _boneTranslationData.Load(_matrices!.AsSpan().MarshalCast<Matrix4, Color4>());
-            ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
+            ContextAssociatedMemorySafety.Register(this, Engine.GetValidCurrentContext());
         }
 
         public UniTask LoadAsync<TBoneSpan>(TBoneSpan bones, FrameTimingPointList timingPoints, CancellationToken cancellationToken = default) where TBoneSpan : IReadOnlySpan<Bone>
@@ -90,7 +90,7 @@ namespace Elffy.Components
                 throw;
             }
 
-            ContextAssociatedMemorySafety.Register(this, Engine.CurrentContext!);
+            ContextAssociatedMemorySafety.Register(this, Engine.GetValidCurrentContext());
             return;
         }
 
