@@ -196,6 +196,37 @@ namespace Elffy.Imaging
             }
         }
 
+        public void CopyTo(ImageRef dest, Vector2i pos)
+        {
+            /*
+            +---------------+
+            |      dest     |
+            |      +--------+------+
+            |      |////////|      |
+            +------+--------+      |
+                   |   src (this)  |
+                   |               |
+                   +---------------+
+             */
+            if(pos.X >= dest.Width && pos.X + Width < 0) {
+                return;
+            }
+            var destRowStart = Math.Max(pos.Y, 0);
+            var destRowEnd = Math.Min(pos.Y + Height, dest.Height);
+
+            var destColStart = Math.Min(Math.Max(0, pos.X), dest.Width);
+            var destColEnd = Math.Min(Math.Max(0, pos.X + Width), dest.Width);
+            var widthToCopy = destColEnd - destColStart;
+            var srcColStart = Math.Min(Math.Max(0, -pos.X), Width);
+
+            for(int destRow = destRowStart; destRow < destRowEnd; destRow++) {
+                var srcRow = destRow - destRowStart;
+                var destRowLine = dest.GetRowLine(destRow).Slice(destColStart);
+                var srcRowLine = GetRowLine(srcRow).Slice(srcColStart, widthToCopy);
+                srcRowLine.CopyTo(destRowLine);
+            }
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly ColorByte GetReference()
         {
