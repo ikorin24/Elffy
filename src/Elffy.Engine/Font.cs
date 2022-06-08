@@ -34,6 +34,7 @@ namespace Elffy
 
             _size = size;
             _skFont = new SKFont(typeface.GetSKTypeface(), size);
+            _skFont.Subpixel = true;
         }
 
         public Font(SKFont skFont)
@@ -47,9 +48,7 @@ namespace Elffy
             _skFont = skFont;
         }
 
-        ~Font() => Dispose(false);
-
-        public SKFont GetSKFont()
+        internal SKFont GetSKFont()
         {
             if(_skFont is null) {
                 ThrowDisposed();
@@ -60,17 +59,8 @@ namespace Elffy
 
         public void Dispose()
         {
-            GC.SuppressFinalize(this);
-            Dispose(true);
-        }
-
-        private void Dispose(bool disposing)
-        {
-            if(_skFont is null) { return; }
-            if(disposing) {
-                _skFont.Dispose();
-                _skFont = null;
-            }
+            _skFont?.Dispose();
+            _skFont = null;
         }
     }
 }
