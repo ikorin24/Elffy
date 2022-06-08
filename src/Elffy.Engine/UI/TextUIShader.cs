@@ -90,7 +90,7 @@ namespace Elffy.UI
             using var stream = Typeface.GetStream();
             using var tf = SKTypeface.FromStream(stream);
             using var font = new SKFont(tf);
-            font.Size = 82;
+            font.Size = 20;
             font.Subpixel = true;
             var textUtf16Bytes = _text.AsSpan().MarshalCast<char, byte>();
             DrawCore(textUtf16Bytes, SKTextEncoding.Utf16, font, target.ActualSize, _textAlignment, VerticalTextAlignment.Center, _textColor, _background, this, &Callback);
@@ -107,7 +107,14 @@ namespace Elffy.UI
                 result.CopyTo(dest, pos);
                 self._textureCore.Update(Vector2i.Zero, dest);
 
-                //self._textureCore.Update(pos, result);
+                //if((pos.X < 0) || (pos.X + result.Width > textureSize.X) ||
+                //   (pos.Y < 0) || (pos.Y + result.Height > textureSize.Y)) {
+                //    using var subimage = result.ToSubimage(,,,);
+                //    self._textureCore.Update(, subimage);
+                //}
+                //else {
+                //    self._textureCore.Update(pos, result);
+                //}
             }
         }
 
