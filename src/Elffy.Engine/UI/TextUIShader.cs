@@ -18,7 +18,6 @@ namespace Elffy.UI
         private IHostScreen? _screen;
         private int _fontSize;
         private ColorByte _textColor = new ColorByte(0, 0, 0, 255);
-        private ColorByte _background = new ColorByte(230, 230, 230, 255);
         private HorizontalTextAlignment _textAlignment;
         private bool _isDirty;
 
@@ -92,119 +91,29 @@ namespace Elffy.UI
             using var font = new SKFont(tf);
             font.Size = 20;
             font.Subpixel = true;
-            var textUtf16Bytes = _text.AsSpan().MarshalCast<char, byte>();
-            DrawCore(textUtf16Bytes, SKTextEncoding.Utf16, font, target.ActualSize, _textAlignment, VerticalTextAlignment.Center, _textColor, _background, this, &Callback);
-            return;
-
-            static void Callback(ReadOnlyImageRef result, Vector2i pos, TextUIShader self)
-            {
-                var textureSize = self._textureCore.Size;
-
-                // TODO:
-                using var buf = new ValueTypeRentMemory<ColorByte>(textureSize.X * textureSize.Y, false);
-                var dest = new ImageRef(buf.AsSpan(), textureSize.X, textureSize.Y);
-                dest.GetPixels().Fill(ColorByte.Gray);
-                result.CopyTo(dest, pos);
-                self._textureCore.Update(Vector2i.Zero, dest);
-
-                //if((pos.X < 0) || (pos.X + result.Width > textureSize.X) ||
-                //   (pos.Y < 0) || (pos.Y + result.Height > textureSize.Y)) {
-                //    using var subimage = result.ToSubimage(,,,);
-                //    self._textureCore.Update(, subimage);
-                //}
-                //else {
-                //    self._textureCore.Update(pos, result);
-                //}
-            }
-        }
-
-        private static unsafe void DrawCore<TState>(
-            ReadOnlySpan<byte> text,
-            SKTextEncoding enc,
-            SKFont skFont,
-            in Vector2 targetSize,
-            HorizontalTextAlignment hAlign,
-            VerticalTextAlignment vAlign,
-            ColorByte fontColor,
-            ColorByte backgroundColor,
-            TState state,
-            delegate*<ReadOnlyImageRef, Vector2i, TState, void> callback)
-        {
-            var glyphCount = skFont.CountGlyphs(text, enc);
-            if(glyphCount == 0) {
+            using var result = TextDrawer.Draw(_text, font, target.ActualSize, _textAlignment, VerticalTextAlignment.Center, _textColor, target.Background.ToColorByte());
+            if(result.IsNone) {
                 return;
             }
-
-            using var builder = new SKTextBlobBuilder();    // TODO: pool SKTextBlobBuilder instance
-            using var paint = new SKPaint();  // TODO: pool
-            paint.Reset();
-            paint.Color = new SKColor(fontColor.R, fontColor.G, fontColor.B, fontColor.A);
-            paint.Style = SKPaintStyle.Fill;
-            paint.IsAntialias = true;
-            paint.SubpixelText = true;
-            paint.LcdRenderText = true;
-            paint.TextAlign = SKTextAlign.Left;
-
-            var buffer = builder.AllocatePositionedRun(skFont, glyphCount);
-            var glyphs = buffer.GetGlyphSpan();
-            skFont.GetGlyphs(text, enc, glyphs);
-            var glyphPositions = buffer.GetPositionSpan();
-            skFont.GetGlyphPositions(glyphs, glyphPositions);
-            skFont.MeasureText(glyphs, out var bounds, paint);
-            skFont.GetFontMetrics(out var metrics);
-
-            var pos = new Vector2
-            {
-                X = hAlign switch
-                {
-                    HorizontalTextAlignment.Center => (int)((targetSize.X - bounds.Width) / 2),
-                    HorizontalTextAlignment.Right => targetSize.X - bounds.Width,
-                    HorizontalTextAlignment.Left or _ => 0,
-                },
-                Y = vAlign switch
-                {
-                    VerticalTextAlignment.Center => targetSize.Y / 2 - metrics.Bottom + (metrics.Bottom - metrics.Top) / 2,
-                    VerticalTextAlignment.Top => -metrics.Top,
-                    VerticalTextAlignment.Bottom => targetSize.Y - metrics.Bottom,
-                    _ => 0,
-                }
-            };
-            float y0 = pos.Y + metrics.Top;
-
-            var posPixel = new Vector2i
-            {
-                X = (int)MathF.Floor(pos.X),
-                Y = (int)MathF.Floor(y0),
-            };
-            var posSubpixel = new Vector2
-            {
-                X = pos.X - posPixel.X,
-                Y = y0 - posPixel.Y,
-            };
-
-            var size = new Vector2i
-            {
-                X = (int)MathF.Ceiling(posSubpixel.X + bounds.Width),
-                Y = (int)MathF.Ceiling(posSubpixel.Y + metrics.Bottom - metrics.Top),
-            };
-
-            // This color type is same as texture inner pixel format of opengl, and Elffy.ColorByte
-            const SKColorType ColorType = SKColorType.Rgba8888;
-            var info = new SKImageInfo(size.X, size.Y, ColorType, SKAlphaType.Premul);
-            using var bitmap = new SKBitmap(info);
-            using var canvas = new SKCanvas(bitmap);
-
-            var pixelSpan = new Span<ColorByte>((ColorByte*)bitmap.GetPixels(), size.X * size.Y);
-            pixelSpan.Fill(backgroundColor);
-
-            using(var textBlob = builder.Build()) {
-                var x = posSubpixel.X;
-                var y = posSubpixel.Y - metrics.Top;
-                canvas.DrawText(textBlob, x, y, paint);
+            var textureSize = _textureCore.Size;
+            var pos = result.Position;
+            var image = result.Image;
+            if((pos.X < 0) || (pos.X + image.Width > textureSize.X) ||
+               (pos.Y < 0) || (pos.Y + image.Height > textureSize.Y)) {
+                var destRowStart = Math.Max(pos.Y, 0);
+                var destRowEnd = Math.Min(pos.Y + image.Height, textureSize.Y);
+                var destColStart = Math.Min(Math.Max(0, pos.X), textureSize.X);
+                var destColEnd = Math.Min(Math.Max(0, pos.X + image.Width), textureSize.X);
+                var width = destColEnd - destColStart;
+                var height = destRowEnd - destRowStart;
+                var srcColStart = Math.Min(Math.Max(0, -pos.X), image.Width);
+                var srcRowStart = Math.Min(Math.Max(0, -pos.Y), image.Height);
+                using var subimage = image.ToSubimage(srcColStart, srcRowStart, width, height);
+                _textureCore.Update(new Vector2i(destColStart, destRowStart), subimage);
             }
-
-            var result = new ReadOnlyImageRef((ColorByte*)bitmap.GetPixels(), size.X, size.Y);
-            callback(result, posPixel, state);
+            else {
+                _textureCore.Update(result.Position, result.Image);
+            }
         }
 
         protected override void DefineLocation(VertexDefinition<VertexSlim> definition, Control target)
@@ -279,5 +188,141 @@ void main()
         Center = 0,
         Top,
         Bottom,
+    }
+
+    internal static class TextDrawer
+    {
+        public static DrawResult Draw(ReadOnlySpan<char> text, SKFont skFont,
+            in Vector2 targetSize,
+            HorizontalTextAlignment hAlign,
+            VerticalTextAlignment vAlign,
+            ColorByte fontColor,
+            ColorByte backgroundColor)
+        {
+            return DrawPrivate(text.MarshalCast<char, byte>(), SKTextEncoding.Utf16, skFont, targetSize, hAlign, vAlign, fontColor, backgroundColor);
+        }
+
+        private static unsafe DrawResult DrawPrivate(
+            ReadOnlySpan<byte> text,
+            SKTextEncoding enc,
+            SKFont skFont,
+            in Vector2 targetSize,
+            HorizontalTextAlignment hAlign,
+            VerticalTextAlignment vAlign,
+            ColorByte fontColor,
+            ColorByte backgroundColor)
+        {
+            var glyphCount = skFont.CountGlyphs(text, enc);
+            if(glyphCount == 0) {
+                return DrawResult.None;
+            }
+
+            using var builder = new SKTextBlobBuilder();    // TODO: pool SKTextBlobBuilder instance
+            using var paint = new SKPaint();  // TODO: pool
+            paint.Reset();
+            paint.Color = new SKColor(fontColor.R, fontColor.G, fontColor.B, fontColor.A);
+            paint.Style = SKPaintStyle.Fill;
+            paint.IsAntialias = true;
+            paint.SubpixelText = true;
+            paint.LcdRenderText = true;
+            paint.TextAlign = SKTextAlign.Left;
+
+            var buffer = builder.AllocatePositionedRun(skFont, glyphCount);
+            var glyphs = buffer.GetGlyphSpan();
+            skFont.GetGlyphs(text, enc, glyphs);
+            var glyphPositions = buffer.GetPositionSpan();
+            skFont.GetGlyphPositions(glyphs, glyphPositions);
+            skFont.MeasureText(glyphs, out var bounds, paint);
+            skFont.GetFontMetrics(out var metrics);
+
+            var pos = new Vector2
+            {
+                X = hAlign switch
+                {
+                    HorizontalTextAlignment.Center => (int)((targetSize.X - bounds.Width) / 2),
+                    HorizontalTextAlignment.Right => targetSize.X - bounds.Width,
+                    HorizontalTextAlignment.Left or _ => 0,
+                },
+                Y = vAlign switch
+                {
+                    VerticalTextAlignment.Center => targetSize.Y / 2 - metrics.Bottom + (metrics.Bottom - metrics.Top) / 2,
+                    VerticalTextAlignment.Top => -metrics.Top,
+                    VerticalTextAlignment.Bottom => targetSize.Y - metrics.Bottom,
+                    _ => 0,
+                }
+            };
+            float y0 = pos.Y + metrics.Top;
+
+            var posPixel = new Vector2i
+            {
+                X = (int)MathF.Floor(pos.X),
+                Y = (int)MathF.Floor(y0),
+            };
+            var posSubpixel = new Vector2
+            {
+                X = pos.X - posPixel.X,
+                Y = y0 - posPixel.Y,
+            };
+
+            var size = new Vector2i
+            {
+                X = (int)MathF.Ceiling(posSubpixel.X + bounds.Width),
+                Y = (int)MathF.Ceiling(posSubpixel.Y + metrics.Bottom - metrics.Top),
+            };
+
+            // This color type is same as texture inner pixel format of opengl, and Elffy.ColorByte
+            const SKColorType ColorType = SKColorType.Rgba8888;
+            var info = new SKImageInfo(size.X, size.Y, ColorType, SKAlphaType.Premul);
+            var bitmap = new SKBitmap(info);
+            var canvas = new SKCanvas(bitmap);
+            try {
+                var result = new ImageRef((ColorByte*)bitmap.GetPixels(), size.X, size.Y);
+                result.GetPixels().Fill(backgroundColor);
+
+                using(var textBlob = builder.Build()) {
+                    var x = posSubpixel.X;
+                    var y = posSubpixel.Y - metrics.Top;
+                    canvas.DrawText(textBlob, x, y, paint);
+                }
+                return new DrawResult(bitmap, canvas, result, posPixel);
+            }
+            catch {
+                bitmap.Dispose();
+                canvas.Dispose();
+                throw;
+            }
+        }
+
+        internal readonly ref struct DrawResult
+        {
+            private readonly SKBitmap? _bitmap;
+            private readonly SKCanvas? _canvas;
+            private readonly ReadOnlyImageRef _result;
+            private readonly Vector2i _position;
+
+            public static DrawResult None => default;
+
+            public ReadOnlyImageRef Image => _result;
+            public Vector2i Position => _position;
+
+            public bool IsNone => _result.IsEmpty;
+
+            [Obsolete("Don't use default constructor.")]
+            public DrawResult() => throw new NotSupportedException("Don't use default constructor.");
+
+            public DrawResult(SKBitmap bitmap, SKCanvas canvas, ReadOnlyImageRef result, Vector2i position)
+            {
+                _bitmap = bitmap;
+                _canvas = canvas;
+                _result = result;
+                _position = position;
+            }
+
+            public void Dispose()
+            {
+                _bitmap?.Dispose();
+                _canvas?.Dispose();
+            }
+        }
     }
 }
