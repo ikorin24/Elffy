@@ -12,6 +12,7 @@ using Elffy.UI;
 using Elffy.Shading;
 using Elffy.Threading;
 using Elffy.Graphics.OpenGL;
+using Elffy.Imaging;
 
 namespace Sandbox
 {
@@ -33,6 +34,14 @@ namespace Sandbox
 
         private static async UniTask Start(IHostScreen screen)
         {
+            UniTask.Void(async () =>
+            {
+                await foreach(var _ in screen.Frames(FrameTiming.Update)) {
+                    if(screen.Keyboard.IsPress(Elffy.InputSystem.Keys.Escape)) {
+                        screen.Close();
+                    }
+                }
+            });
             var (drLayer, wLayer, uiLayer) =
                 await LayerPipelines.CreateBuilder(screen).Build(
                     () => new DeferredRenderingLayer(),

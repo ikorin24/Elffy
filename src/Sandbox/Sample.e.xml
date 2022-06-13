@@ -2,15 +2,17 @@
       x:builder="Sandbox.Sample" x:builderType="ui"
       ColumnDefinition="160,*">
   <Grid Grid.Column="0" Padding="0,10,0,10" Background="#282A34" RowDefinition="60,60,60,60,60,60">
-    <Button Width="120" Height="40" Background="#D2D2D2" Margin="0,20,0,0" VerticalAlignment="Top" Grid.Row="0"/>
-    <Button Width="120" Height="40" Background="#D2D2D2" Margin="0,20,0,0" VerticalAlignment="Top" Grid.Row="1"/>
-    <Button Width="120" Height="40" Background="#D2D2D2" Margin="0,20,0,0" VerticalAlignment="Top" Grid.Row="2"/>
-    <Button Width="120" Height="40" Background="#D2D2D2" Margin="0,20,0,0" VerticalAlignment="Top" Grid.Row="3"/>
-    <Button Width="120" Height="40" Background="#D2D2D2" Margin="0,20,0,0" VerticalAlignment="Top" Grid.Row="4"/>
-    <Button Width="120" Height="40" Background="#D2D2D2" Margin="0,20,0,0" VerticalAlignment="Top" Grid.Row="5">
+    <Button Width="100" Height="26" Background="#D2D2D2" Margin="0,10,0,0" VerticalAlignment="Top" Grid.Row="0"/>
+    <Button Width="100" Height="26" Background="#D2D2D2" Margin="0,10,0,0" VerticalAlignment="Top" Grid.Row="1"/>
+    <Button Width="100" Height="26" Background="#D2D2D2" Margin="0,10,0,0" VerticalAlignment="Top" Grid.Row="2"/>
+    <Button Width="100" Height="26" Background="#D2D2D2" Margin="0,10,0,0" VerticalAlignment="Top" Grid.Row="3"/>
+    <Button Width="100" Height="26" Background="#D2D2D2" Margin="0,10,0,0" VerticalAlignment="Top" Grid.Row="4"/>
+    <Button Width="100" Height="26" Background="#D2D2D2" Margin="0,10,0,0" VerticalAlignment="Top" Grid.Row="5">
       <Button.Shader>
         <esf:CustomUIShader CornerRadius="4,4,4,4"/>
       </Button.Shader>
     </Button>
   </Grid>
 </Grid>
+
+<!--<ButtonDefaultShader Typeface="Sandbox:mplus-1p-regular.otf"/>-->

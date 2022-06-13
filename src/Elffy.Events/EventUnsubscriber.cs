@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.ComponentModel;
 
 namespace Elffy
 {
@@ -10,7 +11,11 @@ namespace Elffy
 
         public static EventUnsubscriber<T> None => default;
 
-        public EventUnsubscriber(EventRaiser<T>? raiser, Action<T> action)
+        [Obsolete("Don't use default constructor.", true)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public EventUnsubscriber() => throw new NotSupportedException("Don't use default constructor.");
+
+        internal EventUnsubscriber(EventRaiser<T>? raiser, Action<T> action)
         {
             _raiser = raiser;
             _action = action;

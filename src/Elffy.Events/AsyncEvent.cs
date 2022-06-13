@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Diagnostics;
+using System.ComponentModel;
 
 namespace Elffy
 {
@@ -19,13 +20,32 @@ namespace Elffy
         private readonly Span<AsyncEventRaiser<T>?> _raiserRef;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private string DebuggerView => $"{nameof(AsyncEvent<T>)}<{nameof(T)}> (Subscibed = {Raiser?.SubscibedCount ?? 0})";
+        private string DebuggerView
+        {
+            get
+            {
+                if(IsNever) {
+                    return $"{nameof(AsyncEvent<T>)}<{typeof(T).Name}> (Never)";
+                }
+                else {
+                    return $"{nameof(AsyncEvent<T>)}<{typeof(T).Name}> (Subscibed = {Raiser?.SubscibedCount ?? 0})";
+                }
+            }
+        }
 
-        private readonly ref AsyncEventRaiser<T>? Raiser
+        private ref AsyncEventRaiser<T>? Raiser
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => ref MemoryMarshal.GetReference(_raiserRef);
         }
+
+        public bool IsNever => Unsafe.IsNullRef(ref Raiser);
+
+        public static AsyncEvent<T> Never => default;
+
+        [Obsolete("Don't use default constructor.", true)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public AsyncEvent() => throw new NotSupportedException("Don't use default constructor.");
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public AsyncEvent([AllowNull] ref AsyncEventRaiser<T> raiser)
@@ -42,8 +62,9 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public AsyncEventUnsubscriber<T> Subscribe(Func<T, CancellationToken, UniTask> func)
         {
-            if(func is null) {
-                ThrowNullArg(nameof(func));
+            ArgumentNullException.ThrowIfNull(func);
+            if(IsNever) {
+                return AsyncEventUnsubscriber<T>.None;
             }
             ref var raiser = ref Raiser;
             if(raiser is null) {
@@ -66,8 +87,5 @@ namespace Elffy
         {
             Interlocked.CompareExchange(ref raiser, new AsyncEventRaiser<T>(), null);
         }
-
-        [DoesNotReturn]
-        private static void ThrowNullArg(string message) => throw new ArgumentNullException(message);
     }
 }
