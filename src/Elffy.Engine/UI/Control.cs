@@ -44,6 +44,7 @@ namespace Elffy.UI
         private ArrayPooledListCore<Control> _childrenCore;
         private TextureCore _texture;
         private Color4 _background;
+        private Vector4 _cornerRadius;
         private bool _isHitTestVisible;
         private bool _isMouseOver;
         private bool _isMouseOverPrevious;
@@ -117,6 +118,8 @@ namespace Elffy.UI
             get => _renderable.Visibility == RenderVisibility.Visible;
             set => _renderable.Visibility = value ? RenderVisibility.Visible : RenderVisibility.InvisibleSelf;
         }
+
+        public ref Vector4 CornerRadius => ref _cornerRadius;
 
         public IHostScreen? Screen => _renderable.Screen;
 
