@@ -8,6 +8,12 @@ namespace Elffy.UI
 {
     internal static class TextDrawer
     {
+        [ThreadStatic]
+        private static SKTextBlobBuilder? _textBlobBuilder;
+
+        [ThreadStatic]
+        private static SKPaint? _paint;
+
         public static DrawResult Draw(ReadOnlySpan<byte> utf8Text, in TextDrawOptions options)
         {
             return DrawPrivate(utf8Text, SKTextEncoding.Utf8, options);
@@ -28,8 +34,10 @@ namespace Elffy.UI
                 return DrawResult.None;
             }
 
-            using var builder = new SKTextBlobBuilder();    // TODO: pool SKTextBlobBuilder instance
-            using var paint = new SKPaint();  // TODO: pool
+            // Use cached instance to avoid GC
+            var builder = (_textBlobBuilder ??= new SKTextBlobBuilder());
+            var paint = (_paint ??= new SKPaint());
+
             paint.Reset();
             var foreground = options.Foreground;
             paint.Color = new SKColor(foreground.R, foreground.G, foreground.B, foreground.A);
@@ -90,7 +98,7 @@ namespace Elffy.UI
 
             // This color type is same as texture inner pixel format of opengl, and Elffy.ColorByte
             const SKColorType ColorType = SKColorType.Rgba8888;
-            var info = new SKImageInfo(size.X, size.Y, ColorType, SKAlphaType.Premul);
+            var info = new SKImageInfo(size.X, size.Y, ColorType, SKAlphaType.Unpremul);
             var bitmap = new SKBitmap(info);
             var canvas = new SKCanvas(bitmap);
             try {
@@ -125,7 +133,7 @@ namespace Elffy.UI
 
             public bool IsNone => _result.IsEmpty;
 
-            [Obsolete("Don't use default constructor.")]
+            [Obsolete("Don't use default constructor.", true)]
             public DrawResult() => throw new NotSupportedException("Don't use default constructor.");
 
             public DrawResult(SKBitmap bitmap, SKCanvas canvas, ReadOnlyImageRef result, Vector2i position)
