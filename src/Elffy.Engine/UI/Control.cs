@@ -109,9 +109,6 @@ namespace Elffy.UI
         /// <summary>get whether the mouse is over this <see cref="Control"/></summary>
         public bool IsMouseOver => _isMouseOver;
 
-        /// <summary>get <see cref="IsMouseOver"/> of the previouse frame</summary>
-        public bool IsMouseOverPreviouse => _isMouseOverPrevious;
-
         /// <summary>get or set <see cref="Control"/> is visible on rendering.</summary>
         public bool IsVisible
         {
