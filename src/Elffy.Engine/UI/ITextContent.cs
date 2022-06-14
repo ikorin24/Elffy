@@ -8,24 +8,28 @@ namespace Elffy.UI
     public interface ITextContent
     {
         string? Text { get; set; }
+        string? FontFamily { get; set; }
         int FontSize { get; set; }
         ColorByte Foreground { get; set; }
         HorizontalTextAlignment TextAlignment { get; set; }
         Event<(ITextContent Sender, string PropertyName)> TextContentChanged { get; }
     }
 
-    internal struct TextContentImpl
+    internal struct TextContentImpl : ITextContent
     {
         private ITextContent _owner;
         private string? _text;
+        private string? _fontFamily;
         private int _fontSize;
         private ColorByte _foreground;
         private HorizontalTextAlignment _textAlignment;
 
         private EventRaiser<(ITextContent Sender, string PropertyName)>? _propertyChanged;
-        public Event<(ITextContent Sender, string PropertyName)> PropertyChanged => new(ref _propertyChanged);
+        public Event<(ITextContent Sender, string PropertyName)> TextContentChanged => new(ref _propertyChanged);
 
         public string? Text { get => _text; set => SetValue(ref _text, value); }
+
+        public string? FontFamily { get => _fontFamily; set => SetValue(ref _fontFamily, value); }
 
         public int FontSize { get => _fontSize; set => SetValue(ref _fontSize, value); }
 
@@ -42,6 +46,7 @@ namespace Elffy.UI
             _propertyChanged = null;
             _foreground = ColorByte.Black;
             _text = null;
+            _fontFamily = null;
             _fontSize = 14;
             _textAlignment = HorizontalTextAlignment.Center;
         }

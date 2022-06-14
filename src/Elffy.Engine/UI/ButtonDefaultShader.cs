@@ -6,15 +6,15 @@ using Elffy.Shading;
 using Elffy.Imaging;
 using System;
 using SkiaSharp;
+using System.Diagnostics;
 
 namespace Elffy.UI
 {
-    public sealed class ButtonDefaultShader : UIRenderingShader
+    internal sealed class ButtonDefaultShader : UIRenderingShader
     {
         private TextureCore _textureCore;
-        private ResourceFile _typeface;
         private IHostScreen? _screen;
-        private Button? _target;
+        private ITextContent? _target;
         private EventUnsubscriber<(ITextContent Sender, string PropertyName)> _unsubscriber;
         private bool _requireUpdateTexture;
 
@@ -22,34 +22,24 @@ namespace Elffy.UI
 
         protected override string FragmentShaderSource => FragSource;
 
-        public ResourceFile Typeface
-        {
-            get => _typeface;
-            set
-            {
-                _typeface = value;
-            }
-        }
-
         public ButtonDefaultShader()
         {
             _textureCore = new TextureCore(TextureConfig.DefaultNearestNeighbor);
             _requireUpdateTexture = true;
         }
 
-        private unsafe void EraseAndDraw(Button target)
+        private unsafe void EraseAndDraw(ITextContent target, Vector2 targetSize)
         {
             // TODO: font
-            using var stream = Typeface.GetStream();
-            using var tf = SKTypeface.FromStream(stream);
-            using var font = new SKFont(tf);
+            var fontFamily = FontFamilies.Instance.GetFontFamilyOrDefault(target.FontFamily);
+            using var font = fontFamily.SkTypeface != null ? new SKFont(fontFamily.SkTypeface) : new SKFont();
             font.Size = target.FontSize;
             font.Subpixel = true;
             var options = new TextDrawOptions
             {
                 Font = font,
-                TargetSize = target.ActualSize,
-                Background = target.Background.ToColorByte(),
+                TargetSize = targetSize,
+                Background = ColorByte.Transparent,
                 Alignment = target.TextAlignment,
                 Foreground = target.Foreground,
             };
@@ -86,30 +76,55 @@ namespace Elffy.UI
 
             _textureCore.Load((Vector2i)target.ActualSize, ColorByte.Transparent);
 
-            if(target is Button button) {
-                _target = button;
-                _unsubscriber = button.TextContentChanged.Subscribe(_ => _requireUpdateTexture = true);   // capture this
+            if(target is ITextContent textContent) {
+                _target = textContent;
+                _unsubscriber = textContent.TextContentChanged.Subscribe(x =>
+                {
+                    // avoid capturing 'this'
+                    var shader = SafeCast.As<Control>(x.Sender).Shader;
+                    Debug.Assert(shader is not null);
+#if DEBUG
+                    Debug.Assert(ReferenceEquals(shader, this));
+#endif
+                    var self = SafeCast.As<ButtonDefaultShader>(shader);
+                    self._requireUpdateTexture = true;
+                });
             }
         }
 
         protected override void OnRendering(ShaderDataDispatcher dispatcher, Control target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
+            if(ReferenceEquals(target, _target) == false) {
+                Debug.Fail("invalid target");
+                return;
+            }
             var screen = _screen;
-            if(screen == null) { return; }
-            if(_requireUpdateTexture && _target is not null) {
-                EraseAndDraw(_target);
+            if(screen == null) {
+                Debug.Fail("Why is the screen null ?");
+                return;
+            }
+            if(_requireUpdateTexture) {
+                EraseAndDraw(_target, target.ActualSize);
                 _requireUpdateTexture = false;
             }
+            var background = (target is Executable executable) ? GetBackground(executable) : target.Background;
 
             var mvp = projection * view * model;
             dispatcher.SendUniform("_mvp", mvp);
             dispatcher.SendUniformTexture2D("_tex", _textureCore.Texture, TextureUnitNumber.Unit0);
-            dispatcher.SendUniform("_background", target.Background);
+            dispatcher.SendUniform("_background", background);
             dispatcher.SendUniform("_screenHeight", screen.FrameBufferSize.Y);
             dispatcher.SendUniform("_origin", target.ActualPosition);
 
             dispatcher.SendUniform("_size", target.ActualSize);
             dispatcher.SendUniform("_cornerRadius", target.CornerRadius);
+        }
+
+        private static Color4 GetBackground(Executable control)
+        {
+            return control.IsKeyPressed ? Color4.Red :
+                   control.IsMouseOver ? Color4.BlueViolet :
+                   control.Background;
         }
 
         protected override void OnProgramDisposed()

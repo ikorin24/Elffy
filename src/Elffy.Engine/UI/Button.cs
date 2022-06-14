@@ -1,36 +1,25 @@
 ﻿#nullable enable
+
 namespace Elffy.UI
 {
     /// <summary>Button class which fires event on mouse click.</summary>
-    public class Button : Executable, ITextContent
+    public class Button : Executable, ITextContent, IEnableControl
     {
         private bool _isEnabled;
         private bool _isEnabledChanged;
-        private TextContentImpl _textContentImpl;
+        private TextContentImpl _textContent;
 
-        public string? Text
-        {
-            get => _textContentImpl.Text;
-            set => _textContentImpl.Text = value;
-        }
+        public string? Text { get => _textContent.Text; set => _textContent.Text = value; }
 
-        public int FontSize
-        {
-            get => _textContentImpl.FontSize;
-            set => _textContentImpl.FontSize = value;
-        }
+        public string? FontFamily { get => _textContent.FontFamily; set => _textContent.FontFamily = value; }
 
-        public ColorByte Foreground
-        {
-            get => _textContentImpl.Foreground;
-            set => _textContentImpl.Foreground = value;
-        }
+        public int FontSize { get => _textContent.FontSize; set => _textContent.FontSize = value; }
 
-        public HorizontalTextAlignment TextAlignment
-        {
-            get => _textContentImpl.TextAlignment;
-            set => _textContentImpl.TextAlignment = value;
-        }
+        public ColorByte Foreground { get => _textContent.Foreground; set => _textContent.Foreground = value; }
+
+        public HorizontalTextAlignment TextAlignment { get => _textContent.TextAlignment; set => _textContent.TextAlignment = value; }
+
+        public Event<(ITextContent Sender, string PropertyName)> TextContentChanged => _textContent.TextContentChanged;
 
         public bool IsEnabled
         {
@@ -43,16 +32,13 @@ namespace Elffy.UI
             }
         }
 
-        public Event<(ITextContent Sender, string PropertyName)> TextContentChanged => _textContentImpl.PropertyChanged;
-
         /// <summary>Create new <see cref="Button"/></summary>
         public Button()
         {
             _isEnabled = true;
-            _textContentImpl = new TextContentImpl(this);
-            Text = "button";  // TODO:
+            _textContent = new TextContentImpl(this);
             Shader = new ButtonDefaultShader(); // TODO:
-            CornerRadius = new Vector4(2);
+            CornerRadius = new Vector4(3);
         }
 
         protected override void OnUIEvent()
