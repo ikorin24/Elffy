@@ -17,6 +17,8 @@ internal readonly struct TypeFullName : IEquatable<TypeFullName>
     public RawString Name => _name;
     public bool HasNamespace => _namespaceName.IsEmpty == false;
 
+    public static TypeFullName Empty => default;
+
     [Obsolete("Don't use default constructor.", true)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     public TypeFullName() => throw new NotSupportedException("Don't use default constructor.");

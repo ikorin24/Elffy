@@ -1,5 +1,5 @@
-﻿<Grid xmlns="Elffy.UI" xmlns:x="Elffy.Markup.Extensions" xmlns:esf="Elffy.Shading.Forward"
-      x:builder="Sandbox.Sample" x:builderType="ui"
+﻿<Grid xmlns="Elffy.UI" xmlns:esf="Elffy.Shading.Forward"
+      x-Builder="Sandbox.Sample"
       ColumnDefinition="160,*">
   <Grid Grid.Column="0" Padding="0,10,0,10" Background="#282A34" RowDefinition="60,60,60,60,60,60">
     <Button Width="100" Height="26" Background="#D2D2D2" Margin="0,10,0,0" VerticalAlignment="Top" Grid.Row="0"/>

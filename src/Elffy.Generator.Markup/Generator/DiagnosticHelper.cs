@@ -171,6 +171,19 @@ internal static class DiagnosticHelper
         return Diagnostic.Create(diagnostic, location, literal, memberName);
     }
 
+    public static Diagnostic InvalidBuilderName(string builderName, Location? location = null)
+    {
+        const string ID = "EGM00012";
+        var diagnostic = _dicEGM.GetOrAdd(ID, key => new(
+            key,
+            "Invalid Builder Name",
+            "Invalid builder name '{0}'. It must be in full name format, such as 'Namespace.Name'.",
+            Category_Error,
+            DiagnosticSeverity.Error,
+            true));
+        return Diagnostic.Create(diagnostic, location, builderName);
+    }
+
     private static string ExceptionToString(Exception? ex)
     {
         if(ex == null) {
