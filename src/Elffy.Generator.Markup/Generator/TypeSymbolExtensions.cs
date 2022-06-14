@@ -36,6 +36,9 @@ internal static class TypeSymbolExtensions
         // class:     "System.Text.Encoding"
         // struct:    "System.TimeSpan"
         // generics:  "System.Collections.Generic.Dictionary`2"
+
+        // nullable-ref:   "string?"
+        // nullable-value: "int?"
         return typeSymbol.ToString();
     }
 

@@ -131,7 +131,15 @@ public sealed class TypeData
     public bool TryGetLiteralCode(string literal, [MaybeNullWhen(false)] out string code, [MaybeNullWhen(true)] out Diagnostic diagnostic)
     {
         var typeName = Name;
-        if(_embeddedLiteralCodeGenerator.TryGetValue(typeName, out var generator)) {
+        var isNullable = typeName.EndsWith("?");
+        // TODO:
+        if(isNullable && literal == "{null}") {
+            code = "null";
+            diagnostic = null;
+            return true;
+        }
+        var nonNullTypeName = isNullable ? typeName.Substring(0, typeName.Length - 1) : typeName;
+        if(_embeddedLiteralCodeGenerator.TryGetValue(nonNullTypeName, out var generator)) {
             try {
                 code = generator.Invoke(literal);
                 diagnostic = null;
