@@ -51,12 +51,24 @@ namespace Elffy.UI
             var glyphs = buffer.GetGlyphSpan();
             skFont.GetGlyphs(text, enc, glyphs);
             var glyphPositions = buffer.GetPositionSpan();
+            skFont.MeasureText(glyphs, out var bounds, paint);
             skFont.GetGlyphPositions(glyphs, glyphPositions);
 
-            float boundsWidth;
+            float textWidth;
             {
-                skFont.MeasureText(glyphs, out var bounds, paint);
-                boundsWidth = bounds.Width + 1;
+                const int Threshold = 128;
+                if(glyphCount <= Threshold) {
+                    float* s = stackalloc float[Threshold];
+                    var widths = new Span<float>(s, glyphCount);
+                    skFont.GetGlyphWidths(glyphs, widths, Span<SKRect>.Empty, paint);   // Set Span<SKRect>.Empty if it is not needed. (That is valid.)
+                    textWidth = glyphPositions[^1].X + widths[^1];
+                }
+                else {
+                    using var m = new ValueTypeRentMemory<float>(glyphCount, false);
+                    var widths = m.AsSpan();
+                    skFont.GetGlyphWidths(glyphs, widths, Span<SKRect>.Empty, paint);   // Set Span<SKRect>.Empty if it is not needed. (That is valid.)
+                    textWidth = glyphPositions[^1].X + widths[^1];
+                }
             }
             skFont.GetFontMetrics(out var metrics);
 
@@ -64,17 +76,10 @@ namespace Elffy.UI
             {
                 X = options.Alignment switch
                 {
-                    HorizontalTextAlignment.Center => (int)((targetSize.X - boundsWidth) / 2),
-                    HorizontalTextAlignment.Right => targetSize.X - boundsWidth,
+                    HorizontalTextAlignment.Center => (int)((targetSize.X - textWidth) / 2),
+                    HorizontalTextAlignment.Right => targetSize.X - textWidth,
                     HorizontalTextAlignment.Left or _ => 0,
                 },
-                //Y = options.VerticalAlignment switch
-                //{
-                //    VerticalTextAlignment.Center => targetSize.Y / 2 - metrics.Bottom + (metrics.Bottom - metrics.Top) / 2,
-                //    VerticalTextAlignment.Top => -metrics.Top,
-                //    VerticalTextAlignment.Bottom => targetSize.Y - metrics.Bottom,
-                //    _ => 0,
-                //}
                 Y = targetSize.Y / 2 - metrics.Bottom + (metrics.Bottom - metrics.Top) / 2,
             };
             float y0 = pos.Y + metrics.Top;
@@ -92,7 +97,7 @@ namespace Elffy.UI
 
             var size = new Vector2i
             {
-                X = (int)MathF.Ceiling(posSubpixel.X + boundsWidth),
+                X = (int)MathF.Ceiling(posSubpixel.X + textWidth),
                 Y = (int)MathF.Ceiling(posSubpixel.Y + metrics.Bottom - metrics.Top),
             };
 
