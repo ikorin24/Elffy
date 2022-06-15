@@ -1,6 +1,9 @@
 ﻿#nullable enable
 using System;
+using System.IO;
+using Elffy;
 using Elffy.Imaging.Internal;
+using SkiaSharp;
 
 namespace Elffy.Imaging
 {
@@ -114,6 +117,33 @@ namespace Elffy.Imaging
                 var destRowLine = dest.GetRowLine(destRow).Slice(destColStart);
                 var srcRowLine = source.GetRowLine(srcRow).Slice(srcColStart, widthToCopy);
                 srcRowLine.CopyTo(destRowLine);
+            }
+        }
+
+        public static unsafe void WriteAsPng(in this ReadOnlyImageRef source, Stream stream)
+        {
+            EncodeImage(source, SKEncodedImageFormat.Png, stream, static (span, stream) => stream.Write(span));
+        }
+
+        public static unsafe void SaveAsPng(in this ReadOnlyImageRef source, string filePath)
+        {
+            EncodeImage(source, SKEncodedImageFormat.Png, filePath, static (span, filePath) =>
+            {
+                if(File.Exists(filePath)) {
+                    File.Delete(filePath);
+                }
+                using var handle = File.OpenHandle(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.None, preallocationSize: span.Length);
+                RandomAccess.Write(handle, span, 0);
+            });
+        }
+
+        private static unsafe void EncodeImage<TState>(ReadOnlyImageRef source, SKEncodedImageFormat format, TState state, System.Buffers.ReadOnlySpanAction<byte, TState> action)
+        {
+            fixed(void* ptr = source) {
+                var info = new SKImageInfo(source.Width, source.Height, SKColorType.Rgba8888, SKAlphaType.Unpremul);
+                using var pixmap = new SKPixmap(info, (IntPtr)ptr);
+                using var data = pixmap.Encode(format, 0);
+                action.Invoke(data.AsSpan(), state);
             }
         }
     }
