@@ -13,6 +13,7 @@ using Elffy.Components.Implementation;
 namespace Elffy.Components
 {
     /// <summary>Painter object for <see cref="Texture"/></summary>
+    [Obsolete("don't use", true)]
     public unsafe struct TexturePainter : IDisposable
     {
         // This color type is same as texture inner pixel format of opengl, and Elffy.ColorByte

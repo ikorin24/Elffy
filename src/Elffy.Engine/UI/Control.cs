@@ -42,7 +42,6 @@ namespace Elffy.UI
         private Control? _parent;
         private RootPanel? _root;
         private ArrayPooledListCore<Control> _childrenCore;
-        private TextureCore _texture;
         private Color4 _background;
         private Vector4 _cornerRadius;
         private bool _isHitTestVisible;
@@ -120,8 +119,6 @@ namespace Elffy.UI
 
         public IHostScreen? Screen => _renderable.Screen;
 
-        internal ref readonly TextureCore Texture => ref _texture;
-
         /// <summary>constructor of <see cref="Control"/></summary>
         public Control()
         {
@@ -129,7 +126,6 @@ namespace Elffy.UI
             _layoutInfo = ControlLayoutInfoInternal.Create();
             _renderable = new UIRenderable(this);
             var textureConfig = new TextureConfig(TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear, TextureMipmapMode.None, TextureWrapMode.ClampToEdge, TextureWrapMode.ClampToEdge);
-            _texture = new TextureCore(textureConfig);
         }
 
         public bool TryGetScreen([MaybeNullWhen(false)] out IHostScreen screen) => _renderable.TryGetScreen(out screen);
@@ -164,34 +160,6 @@ namespace Elffy.UI
         {
             Debug.Assert(this is RootPanel);
             _root = SafeCast.As<RootPanel>(this);
-        }
-
-        public TexturePainter GetPainter(bool copyFromOriginal = true)
-        {
-            if(_texture.IsEmpty) {
-                _texture.LoadUndefined((Vector2i)ActualSize);
-                var p = _texture.GetPainter(false);
-                if(copyFromOriginal) {
-                    p.Fill(ColorByte.White);        // TODO: デフォルトが白じゃない場合は？
-                }
-                return p;
-            }
-            else {
-                return _texture.GetPainter(copyFromOriginal);
-            }
-        }
-
-        public TexturePainter GetPainter(in RectI rect, bool copyFromOriginal = true)
-        {
-            if(_texture.IsEmpty) {
-                _texture.LoadUndefined((Vector2i)ActualSize);
-                var p = _texture.GetPainter(rect, copyFromOriginal);
-                p.Fill(ColorByte.White);            // TODO: デフォルトが白じゃない場合は？
-                return p;
-            }
-            else {
-                return _texture.GetPainter(rect, copyFromOriginal);
-            }
         }
 
         /// <summary>マウスオーバーしているかを取得します</summary>

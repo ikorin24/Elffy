@@ -1,18 +1,21 @@
 ﻿<Grid xmlns="Elffy.UI" xmlns:esf="Elffy.Shading.Forward"
       x-Builder="Sandbox.Sample"
-      ColumnDefinition="160,*">
-  <Grid Grid.Column="0" Padding="0,10,0,10" Background="#282A34" RowDefinition="60,60,60,60,60,60">
-    <Button Width="100" Height="26" Background="#D2D2D2" Margin="0,10,0,0" VerticalAlignment="Top" Grid.Row="0"/>
-    <Button Width="100" Height="26" Background="#D2D2D2" Margin="0,10,0,0" VerticalAlignment="Top" Grid.Row="1"/>
-    <Button Width="100" Height="26" Background="#D2D2D2" Margin="0,10,0,0" VerticalAlignment="Top" Grid.Row="2"/>
-    <Button Width="100" Height="26" Background="#D2D2D2" Margin="0,10,0,0" VerticalAlignment="Top" Grid.Row="3"/>
-    <Button Width="100" Height="26" Background="#D2D2D2" Margin="0,10,0,0" VerticalAlignment="Top" Grid.Row="4"/>
+      ColumnDefinition="260,*">
+  <Grid Grid.Column="0" Padding="0,10,0,10" Background="#232323" RowDefinition="60,60,60,60,60,60">
+    <Button Width="*" Height="50" Margin="5,0,5,0" Background="Transparent" VerticalAlignment="Bottom" Grid.Row="0" Text="button 1" Foreground="White" FontSize="22"/>
+    <Button Width="*" Height="50" Margin="5,0,5,0" Background="Transparent" VerticalAlignment="Bottom" Grid.Row="1" Text="button 2" Foreground="White" FontSize="22"/>
+    <Button Width="*" Height="50" Margin="5,0,5,0" Background="Transparent" VerticalAlignment="Bottom" Grid.Row="2" Text="button 3" Foreground="White" FontSize="22"/>
+    <Button Width="*" Height="50" Margin="5,0,5,0" Background="Transparent" VerticalAlignment="Bottom" Grid.Row="3" Text="button 4" Foreground="White" FontSize="22"/>
+    <Button Width="*" Height="50" Margin="5,0,5,0" Background="Transparent" VerticalAlignment="Bottom" Grid.Row="4" Text="button 5" Foreground="White" FontSize="22"/>
+    
+    <!--<ImageBlock Source="Sandbox:foo.png" Height="10" x-name="1" x-builder-type="UI"/>-->
     <!--<Button Width="100" Height="26" Background="#D2D2D2" Margin="0,10,0,0" VerticalAlignment="Top" Grid.Row="5">
       <Button.Shader>
         <esf:CustomUIShader CornerRadius="4,4,4,4"/>
       </Button.Shader>
     </Button>-->
   </Grid>
+  <Button Width="600" Height="400" Background="#353535" Grid.Column="1" Text="Hello" FontSize="120" Foreground="White"/>
 </Grid>
 
 <!--<ButtonDefaultShader Typeface="Sandbox:mplus-1p-regular.otf"/>-->

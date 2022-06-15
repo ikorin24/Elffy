@@ -1,13 +1,12 @@
 ﻿#nullable enable
 using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 using Elffy.Effective.Unsafes;
 using Elffy.Graphics.OpenGL;
 using Elffy.Imaging;
 using OpenTK.Graphics.OpenGL4;
-using TKPixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 using Elffy.Features;
+using TKPixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
 namespace Elffy.Components.Implementation
 {
@@ -37,8 +36,8 @@ namespace Elffy.Components.Implementation
             if(!Texture.IsEmpty) {
                 ThrowAlreadyLoaded();
             }
-            Texture = TextureLoadHelper.LoadByDMA(state, size, imageBuilder, 
-                                                  ExpansionMode, ShrinkMode, 
+            Texture = TextureLoadHelper.LoadByDMA(state, size, imageBuilder,
+                                                  ExpansionMode, ShrinkMode,
                                                   MipmapMode, WrapModeX, WrapModeY);
             Size = size;
         }
@@ -159,6 +158,8 @@ namespace Elffy.Components.Implementation
             TextureObject.Unbind2D();
         }
 
+        public void GetPixels(in Vector2i offset, in ImageRef dest) => GetPixels(new RectI(offset, dest.Size), dest.GetPixels());
+
         public unsafe int GetPixels(in RectI rect, Span<ColorByte> buffer)
         {
             if(Texture.IsEmpty) {
@@ -242,35 +243,6 @@ namespace Elffy.Components.Implementation
 
             [DoesNotReturn] static void ThrowOutOfRange(string message) => throw new ArgumentOutOfRangeException(message);
             [DoesNotReturn] static void ThrowInvalidFBO(string message) => throw new InvalidOperationException(message);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TexturePainter GetPainter(bool copyFromOriginal = true)
-        {
-            if(Texture.IsEmpty) {
-                ThrowEmptyTexture();
-            }
-
-            return new TexturePainter(Texture, new RectI(default, Size), copyFromOriginal);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TexturePainter GetPainter(in RectI rect, bool copyFromOriginal = true)
-        {
-            if(Texture.IsEmpty) {
-                ThrowEmptyTexture();
-            }
-
-            if((uint)rect.X >= (uint)Size.X ||
-               (uint)rect.Y >= (uint)Size.Y ||
-               (uint)rect.Width > (uint)(Size.X - rect.X) ||
-               (uint)rect.Height > (uint)(Size.Y - rect.Y)) {
-                ThrowOutOfRange();
-
-                [DoesNotReturn] static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(rect));
-            }
-
-            return new TexturePainter(Texture, rect, copyFromOriginal);
         }
 
         public void Dispose()

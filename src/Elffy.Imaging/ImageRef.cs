@@ -25,6 +25,9 @@ namespace Elffy.Imaging
         /// <summary>Get height of the image.</summary>
         public int Height => _height;
 
+        /// <summary>Get size of the image</summary>
+        public Vector2i Size => new Vector2i(Width, Height);
+
         /// <summary>Get whether the image is empty or not.</summary>
         public bool IsEmpty
         {

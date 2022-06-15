@@ -97,58 +97,6 @@ namespace Sandbox
             screen.Lights.StaticLights.Initialize(lights);
         }
 
-        private static UniTask CreateTestUI(UILayer uiLayer)
-        {
-            var uiRoot = uiLayer.UIRoot;
-            using var tasks = new ParallelOperation();
-
-            const int ColumnCount = 6;
-            //var gridLength = LayoutLength.Length(200);
-            var grid = new Grid();
-            grid.DefineColumn(2, static col =>
-            {
-                col[0] = LayoutLength.Length(160);
-                col[1] = LayoutLength.Proportion(1f);
-            });
-            tasks.Add(uiRoot.Children.Add(grid));
-
-            var leftPanel = new Grid()
-            {
-                Background = new ColorByte(40, 44, 52, 255).ToColor4(),
-                Padding = new LayoutThickness(0, 10, 0, 10),
-            };
-            grid.SetColumnAt(0, leftPanel);
-            leftPanel.DefineRow(6, static row =>
-            {
-                row[0] = LayoutLength.Length(60);
-                row[1] = LayoutLength.Length(60);
-                row[2] = LayoutLength.Length(60);
-                row[3] = LayoutLength.Length(60);
-                row[4] = LayoutLength.Length(60);
-                row[5] = LayoutLength.Length(60);
-            });
-            tasks.Add(grid.Children.Add(leftPanel));
-
-            for(int i = 0; i < ColumnCount; i++) {
-                var button = new Button
-                {
-                    Width = 120,
-                    Height = 40,
-                    Background = new ColorByte(210, 210, 210, 255).ToColor4(),
-                    Margin = new LayoutThickness(0, 20, 0, 0),
-                    VerticalAlignment = VerticalAlignment.Top,
-                    Shader = new CustomUIShader
-                    {
-                        CornerRadius = new Vector4(4),
-                    },
-                };
-                leftPanel.SetRowAt(i, button);
-                button.KeyUp += _ => Debug.WriteLine($"Clicked");
-                tasks.Add(leftPanel.Children.Add(button));
-            }
-            return tasks.WhenAll();
-        }
-
         private static UniTask<Model3D> CreateDice(WorldLayer layer)
         {
             var dice = Resources.Sandbox["Dice.fbx"].CreateFbxModel();

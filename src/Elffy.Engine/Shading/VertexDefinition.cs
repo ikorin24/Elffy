@@ -79,6 +79,7 @@ namespace Elffy.Shading
     }
 
 
+    [Obsolete]  // TODO: remove VertexDefinition<TVertex>
     public readonly ref struct VertexDefinition<TVertex> where TVertex : unmanaged
     {
         private readonly ProgramObject _program;

@@ -80,9 +80,8 @@ namespace Elffy.Components
 
         public int GetPixels(in RectI rect, Span<ColorByte> buffer) => _textureCore.GetPixels(rect, buffer);
 
-        public TexturePainter GetPainter(bool copyFromOriginal = true) => _textureCore.GetPainter(copyFromOriginal);
+        public void GetPixels(in Vector2i offset, in ImageRef dest) => _textureCore.GetPixels(offset, dest);
 
-        public TexturePainter GetPainter(in RectI rect, bool copyFromOriginal = true) => _textureCore.GetPainter(rect, copyFromOriginal);
 
         void IComponent.OnAttached(ComponentOwner owner) => _core.OnAttached(owner, this);
 
