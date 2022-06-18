@@ -3,9 +3,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics;
 using Elffy.InputSystem;
-using Elffy.Components;
 using Elffy.Shading;
-using Elffy.Components.Implementation;
 using Elffy.Features.Internal;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -44,6 +42,8 @@ namespace Elffy.UI
         private ArrayPooledListCore<Control> _childrenCore;
         private Color4 _background;
         private Vector4 _cornerRadius;
+        private Vector4 _borderWidth;
+        private Color4 _borderColor;
         private bool _isHitTestVisible;
         private bool _isMouseOver;
         private bool _isMouseOverPrevious;
@@ -78,12 +78,16 @@ namespace Elffy.UI
 
         public ref Color4 Background => ref _background;
 
+        public ref Vector4 BorderWidth => ref _borderWidth;
+
         /// <summary>Get absolute position of the control.</summary>
         public Vector2 ActualPosition
         {
             get => _renderable.Position.Xy;
             internal set => _renderable.Position.RefXy() = value;
         }
+
+        public RectF ActualRect => new RectF(ActualPosition, ActualSize);
 
         /// <summary>Get actual width of <see cref="Control"/></summary>
         public float ActualWidth => _renderable.Scale.X;
@@ -117,6 +121,8 @@ namespace Elffy.UI
 
         public ref Vector4 CornerRadius => ref _cornerRadius;
 
+        public Vector4 ActualCornerRadius => CalcActualCornerRadius(ActualSize, CornerRadius);
+
         public IHostScreen? Screen => _renderable.Screen;
 
         /// <summary>constructor of <see cref="Control"/></summary>
@@ -125,7 +131,6 @@ namespace Elffy.UI
             _isHitTestVisible = true;
             _layoutInfo = ControlLayoutInfoInternal.Create();
             _renderable = new UIRenderable(this);
-            var textureConfig = new TextureConfig(TextureExpansionMode.Bilinear, TextureShrinkMode.Bilinear, TextureMipmapMode.None, TextureWrapMode.ClampToEdge, TextureWrapMode.ClampToEdge);
         }
 
         public bool TryGetScreen([MaybeNullWhen(false)] out IHostScreen screen) => _renderable.TryGetScreen(out screen);
@@ -162,20 +167,46 @@ namespace Elffy.UI
             _root = SafeCast.As<RootPanel>(this);
         }
 
-        /// <summary>マウスオーバーしているかを取得します</summary>
-        /// <param name="mouse">マウス</param>
-        /// <returns>マウスオーバーしているか</returns>
-        internal bool MouseOverTest(Mouse mouse)
+        internal bool HitTest(Mouse mouse) => HitTest(mouse.Position);
+
+        internal bool HitTest(Vector2 pos)
         {
             if(IsVisible == false || IsHitTestVisible == false) {
                 return false;
             }
-            var mousePos = (Vector2i)mouse.Position;
-            var pos = ActualPosition;
-            return pos.X <= mousePos.X &&
-                   mousePos.X < pos.X + ActualWidth &&
-                   pos.Y <= mousePos.Y &&
-                   mousePos.Y < pos.Y + ActualHeight;
+            var rect = ActualRect;
+            var inRect = rect.Contains(pos);
+
+            // corner radius of (left-top, right-top, right-bottom, left-bottom)
+            var radius = ActualCornerRadius;
+            if(radius.IsZero) {
+                return inRect;
+            }
+
+            if(inRect == false) {
+                return false;
+            }
+            // position based on left-top of the control
+            var p = pos - rect.Position;
+
+            var c1 = new Vector2(radius.X, radius.X);
+            if(p.X < c1.X && p.Y < c1.Y) {
+                return (p - c1).Length <= radius.X;
+            }
+            var c2 = new Vector2(rect.Width - radius.Y, radius.Y);
+            if(p.X > c2.X && p.Y < c2.Y) {
+                return (p - c2).Length <= radius.Y;
+            }
+            var c3 = new Vector2(rect.Width - radius.Z, rect.Height - radius.Z);
+            if(p.X > c3.X && p.Y > c3.Y) {
+                return (p - c3).Length <= radius.Z;
+            }
+            var c4 = new Vector2(radius.W, rect.Height - radius.W);
+            if(p.X < c4.X && p.Y > c4.Y) {
+                return (p - c4).Length <= radius.W;
+            }
+
+            return true;
         }
 
         /// <summary>Notify the result of the hit test</summary>
@@ -364,6 +395,38 @@ namespace Elffy.UI
                 Debug.Assert(_layoutInfo is not null);
                 ControlLayoutInfoInternal.Return(ref _layoutInfo);
             }
+        }
+
+        private static Vector4 CalcActualCornerRadius(in Vector2 controlActualSize, in Vector4 cornerRadius)
+        {
+            var (width, height) = controlActualSize;
+            // avoid zero-dividing
+            if(width == 0 || height == 0) {
+                return Vector4.Zero;
+            }
+            var (lt, rt, rb, lb) = cornerRadius;
+            lt = MathF.Max(0, lt);
+            rt = MathF.Max(0, rt);
+            rb = MathF.Max(0, rb);
+            lb = MathF.Max(0, lb);
+
+            const float Epsilon = 1e-4f;    // for avoiding zero-dividing
+            var lRounded = lt + lb + Epsilon;
+            var tRounded = lt + rt + Epsilon;
+            var rRounded = rt + rb + Epsilon;
+            var bRounded = lb + rb + Epsilon;
+            if((tRounded <= width) && (bRounded <= width) && (lRounded <= height) && (rRounded <= height)) {
+                return new Vector4(lt, rt, rb, lb);
+            }
+            var lCoef = MathF.Min(1, lRounded / height) * height / lRounded;
+            var tCoef = MathF.Min(1, tRounded / width) * width / tRounded;
+            var rCoef = MathF.Min(1, rRounded / height) * height / rRounded;
+            var bCoef = MathF.Min(1, bRounded / width) * width / bRounded;
+            return new Vector4(
+                lt * MathF.Min(lCoef, tCoef),
+                rt * MathF.Min(rCoef, tCoef),
+                rb * MathF.Min(rCoef, bCoef),
+                lb * MathF.Min(lCoef, bCoef));
         }
     }
 }

@@ -41,7 +41,7 @@ namespace Elffy.UI
                 TargetSize = targetSize,
                 Background = ColorByte.Transparent,
                 Alignment = target.TextAlignment,
-                Foreground = target.Foreground,
+                Foreground = target.Foreground.ToColorByte(),
             };
             using var result = TextDrawer.Draw(target.Text, options);
             if(result.IsNone) {
@@ -117,7 +117,7 @@ namespace Elffy.UI
             dispatcher.SendUniform("_origin", target.ActualPosition);
 
             dispatcher.SendUniform("_size", target.ActualSize);
-            dispatcher.SendUniform("_cornerRadius", target.CornerRadius);
+            dispatcher.SendUniform("_cornerRadius", target.ActualCornerRadius);
         }
 
         private static Color4 GetBackground(Executable control)

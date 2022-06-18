@@ -15,7 +15,7 @@ namespace Elffy.UI
 
         public int FontSize { get => _textContent.FontSize; set => _textContent.FontSize = value; }
 
-        public ColorByte Foreground { get => _textContent.Foreground; set => _textContent.Foreground = value; }
+        public Color4 Foreground { get => _textContent.Foreground; set => _textContent.Foreground = value; }
 
         public HorizontalTextAlignment TextAlignment { get => _textContent.TextAlignment; set => _textContent.TextAlignment = value; }
 

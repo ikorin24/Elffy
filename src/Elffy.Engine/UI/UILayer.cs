@@ -111,7 +111,7 @@ namespace Elffy.UI
 
             static void RecursiveMouseOverTest(Control control, Mouse mouse, ref Control? hitControl)
             {
-                if(control.MouseOverTest(mouse)) {
+                if(control.HitTest(mouse)) {
                     hitControl = control;
                 }
                 foreach(var child in control.ChildrenCore.AsSpan()) {
