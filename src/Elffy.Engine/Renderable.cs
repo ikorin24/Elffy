@@ -206,7 +206,7 @@ namespace Elffy
                     _rendererData = new RendererData(shader);
                 }
                 RendererData.Compile(ref _rendererData);
-                shader.DefineLocationInternal(_rendererData.Program, uIRenderable.Control);
+                shader.DefineLocationInternal(_rendererData.Program, uIRenderable.Control, vertexType);
             }
             else {
                 var shader = SafeCast.As<RenderingShader>(_rendererData.Shader);

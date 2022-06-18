@@ -68,11 +68,11 @@ namespace Elffy.UI
             }
         }
 
-        protected override void DefineLocation(VertexDefinition<VertexSlim> definition, Control target)
+        protected override void DefineLocation(VertexDefinition definition, Control target, Type vertexType)
         {
             _screen = Engine.GetValidCurrentContext();
-            definition.Map("_vPos", nameof(VertexSlim.Position));
-            definition.Map("_vUV", nameof(VertexSlim.UV));
+            definition.Map(vertexType, "_vPos", VertexSpecialField.Position);
+            definition.Map(vertexType, "_vUV", VertexSpecialField.UV);
 
             _textureCore.Load((Vector2i)target.ActualSize, ColorByte.Transparent);
 

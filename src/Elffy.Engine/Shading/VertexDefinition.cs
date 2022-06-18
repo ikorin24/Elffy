@@ -77,48 +77,4 @@ namespace Elffy.Shading
 
         public override string ToString() => _program.ToString();
     }
-
-
-    [Obsolete]  // TODO: remove VertexDefinition<TVertex>
-    public readonly ref struct VertexDefinition<TVertex> where TVertex : unmanaged
-    {
-        private readonly ProgramObject _program;
-
-        internal VertexDefinition(ProgramObject program)
-        {
-            _program = program;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Map(int index, string vertexFieldName)
-        {
-            if(index < 0) {
-                ThrowInvalidIndex();
-            }
-            VertexMapper.Map<TVertex>(index, vertexFieldName);
-
-            [DoesNotReturn] static void ThrowInvalidIndex() => throw new ArgumentException($"{nameof(index)} is negative value.");
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Map(string name, string vertexFieldName)
-        {
-            var index = GL.GetAttribLocation(_program.Value, name);
-            if(index < 0 && DevEnv.IsEnabled) {
-                DevEnv.ForceWriteLine($"[warning] '{name}' vertex field input is not found in shader program({_program.Value}).");
-            }
-            else {
-                VertexMapper.Map<TVertex>(index, vertexFieldName);
-            }
-        }
-
-        public override int GetHashCode() => _program.GetHashCode();
-
-        public override bool Equals(object? obj) => false;
-
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public bool Equals(VertexDefinition<TVertex> d) => _program.Equals(d._program);
-
-        public override string ToString() => _program.ToString();
-    }
 }

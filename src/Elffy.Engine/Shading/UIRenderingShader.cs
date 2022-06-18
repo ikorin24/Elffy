@@ -20,16 +20,16 @@ namespace Elffy.Shading
 
         string? IRenderingShader.GeometryShaderSource => null;
 
-        protected abstract void DefineLocation(VertexDefinition<VertexSlim> definition, Control target);
+        protected abstract void DefineLocation(VertexDefinition definition, Control target, Type vertexType);
 
         protected abstract void OnRendering(ShaderDataDispatcher dispatcher, Control target, in Matrix4 model, in Matrix4 view, in Matrix4 projection);
 
         protected virtual void OnProgramDisposed() { }  // nop
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void DefineLocationInternal(ProgramObject program, Control target)
+        internal void DefineLocationInternal(ProgramObject program, Control target, Type vertexType)
         {
-            DefineLocation(new VertexDefinition<VertexSlim>(program), target);
+            DefineLocation(new VertexDefinition(program), target, vertexType);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

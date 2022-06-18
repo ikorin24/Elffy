@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Elffy.Graphics.OpenGL;
 
@@ -21,12 +22,6 @@ void main()
 ";
         /// <summary>Get fragment shader code of glsl</summary>
         public abstract string FragShaderSource { get; }
-
-        private void DefineLocation(VertexDefinition<VertexSlim> definition)
-        {
-            definition.Map("_pos", nameof(VertexSlim.Position));
-            definition.Map("_v_uv", nameof(VertexSlim.UV));
-        }
 
         /// <summary>Send uniform variables to glsl shader code.</summary>
         /// <param name="dispatcher">helper object to send uniform variables</param>
@@ -82,7 +77,9 @@ void main()
                 vao = VAO.Create();
                 VAO.Bind(vao);
                 program = ShaderCompiler.Compile(VertShaderSource, FragShaderSource, null);
-                DefineLocation(new VertexDefinition<VertexSlim>(program));
+                var definition = new VertexDefinition(program);
+                definition.Map<VertexSlim>("_pos", nameof(VertexSlim.Position));
+                definition.Map<VertexSlim>("_v_uv", nameof(VertexSlim.UV));
                 VAO.Unbind();
                 VBO.Unbind();
                 return new PostProcessProgram(this, program, vbo, ibo, vao, screen);

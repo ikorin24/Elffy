@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using Elffy.UI;
+using System;
 
 namespace Elffy.Shading.Forward
 {
@@ -15,9 +16,9 @@ namespace Elffy.Shading.Forward
         {
         }
 
-        protected override void DefineLocation(VertexDefinition<VertexSlim> definition, Control target)
+        protected override void DefineLocation(VertexDefinition definition, Control target, Type vertexType)
         {
-            definition.Map("vPos", nameof(VertexSlim.Position));
+            definition.Map(vertexType, "vPos", VertexSpecialField.Position);
         }
 
         protected override void OnRendering(ShaderDataDispatcher dispatcher, Control target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
