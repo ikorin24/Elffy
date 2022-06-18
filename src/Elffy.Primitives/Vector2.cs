@@ -32,6 +32,8 @@ namespace Elffy
         public static Vector2 One => new Vector2(1, 1);
         public static unsafe int SizeInBytes => sizeof(Vector2);
 
+        public readonly bool IsZero => this == default;
+
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         public readonly Vector2 Yx => new Vector2(Y, X);
 

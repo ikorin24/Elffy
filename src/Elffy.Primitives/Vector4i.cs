@@ -36,6 +36,8 @@ namespace Elffy
         public static Vector4i One => new Vector4i(1, 1, 1, 1);
         public static unsafe int SizeInBytes => sizeof(Vector4i);
 
+        public readonly bool IsZero => this == default;
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector4i(int x, int y, int z, int w) => (X, Y, Z, W) = (x, y, z, w);
 

@@ -50,7 +50,13 @@ namespace Elffy
         public readonly Color3 ToColor3() => new(R, G, B);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly ColorByte ToColorByte() => new((byte)(R * byte.MaxValue), (byte)(G * byte.MaxValue), (byte)(B * byte.MaxValue), (byte)(A * byte.MaxValue));
+        public readonly ColorByte ToColorByte() => new()
+        {
+            R = (byte)MathF.Max(0, MathF.Min(byte.MaxValue, R * byte.MaxValue)),
+            G = (byte)MathF.Max(0, MathF.Min(byte.MaxValue, G * byte.MaxValue)),
+            B = (byte)MathF.Max(0, MathF.Min(byte.MaxValue, B * byte.MaxValue)),
+            A = (byte)MathF.Max(0, MathF.Min(byte.MaxValue, A * byte.MaxValue)),
+        };
 
         public readonly override bool Equals(object? obj) => obj is Color4 color && Equals(color);
 

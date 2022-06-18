@@ -43,6 +43,8 @@ namespace Elffy
             Height = size.Y;
         }
 
+        public bool Contains(Vector2i pos) => ((uint)(pos.X - X) < Width) && ((uint)(pos.Y - Y) < Height);
+
         public readonly override bool Equals(object? obj) => obj is RectI i && Equals(i);
 
         public readonly bool Equals(RectI other) => X == other.X &&

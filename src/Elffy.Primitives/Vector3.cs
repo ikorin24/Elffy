@@ -35,6 +35,8 @@ namespace Elffy
         public static Vector3 One => new Vector3(1, 1, 1);
         public static unsafe int SizeInBytes => sizeof(Vector3);
 
+        public readonly bool IsZero => this == default;
+
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         public readonly Vector2 Xy => new Vector2(X, Y);
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
@@ -67,12 +69,6 @@ namespace Elffy
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => MathF.Sqrt(LengthSquared);
-        }
-
-        public readonly bool IsZero
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => this == Zero;
         }
 
         /// <summary>Return true if vector contains NaN, +Infinity or -Infinity. Otherwise false.</summary>

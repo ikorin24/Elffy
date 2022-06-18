@@ -46,6 +46,12 @@ namespace Elffy
             Height = size.Y;
         }
 
+        public bool Contains(Vector2 pos)
+        {
+            return (X <= pos.X) && (pos.X < X + Width) &&
+                   (Y <= pos.Y) && (pos.Y < Y + Height);
+        }
+
         public override string ToString() => DebugDisplay;
 
         public override bool Equals(object? obj) => obj is RectF f && Equals(f);
