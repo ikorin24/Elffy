@@ -1,5 +1,4 @@
 ﻿#nullable enable
-
 namespace Elffy.UI
 {
     /// <summary>Button class which fires event on mouse click.</summary>
@@ -32,12 +31,16 @@ namespace Elffy.UI
             }
         }
 
+        static Button()
+        {
+            ControlShaderSelector.SetDefault<Button>(static () => new ButtonDefaultShader());
+        }
+
         /// <summary>Create new <see cref="Button"/></summary>
         public Button()
         {
             _isEnabled = true;
             _textContent = new TextContentImpl(this);
-            Shader = new ButtonDefaultShader(); // TODO:
             CornerRadius = new Vector4(3);
         }
 

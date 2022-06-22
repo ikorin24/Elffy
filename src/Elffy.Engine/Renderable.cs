@@ -202,7 +202,7 @@ namespace Elffy
                 Debug.Assert(vertexType == typeof(VertexSlim));
                 var shader = SafeCast.As<UIRenderingShader>(_rendererData.Shader);
                 if(shader is null) {
-                    shader = DefaultUIShader.Instance;
+                    shader = ControlShaderSelector.GetDefault(uIRenderable.Control.GetType());
                     _rendererData = new RendererData(shader);
                 }
                 RendererData.Compile(ref _rendererData);
