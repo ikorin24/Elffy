@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.ComponentModel;
+using System.Runtime.InteropServices;
 
 namespace Elffy.Shading
 {
@@ -84,22 +85,22 @@ namespace Elffy.Shading
         private static class CompiledProgramCacheStore
         {
             [ThreadStatic]
-            private static Dictionary<IHostScreen, Dictionary<SourceKey, CompiledCache>>? _dic;
+            private static Dictionary<IHostScreen, Dictionary<SourceKey, CompiledCache>>? _dictionaries;
 
             public static ProgramObject GetCacheOrCompile(IHostScreen screen, SourceKey key)
             {
-                _dic ??= new();
-                if(!_dic.TryGetValue(screen, out var dic)) {
-                    dic = new();
-                    _dic[screen] = dic;
-                }
-                if(!dic.TryGetValue(key, out var cache)) {
-                    cache = new(ShaderCompiler.Compile(key.VertSoruce, key.FragSource, key.GeometrySource), 1);
+                _dictionaries ??= new();
+
+                ref var dic = ref CollectionsMarshal.GetValueRefOrAddDefault(_dictionaries, screen, out _);
+                dic ??= new();
+                ref var cache = ref CollectionsMarshal.GetValueRefOrAddDefault(dic, key, out var hasCache);
+                if(hasCache == false) {
+                    var program = ShaderCompiler.Compile(key.VertSoruce, key.FragSource, key.GeometrySource);
+                    cache = new CompiledCache(program, 1);
                 }
                 else {
                     cache.Count++;
                 }
-                dic[key] = cache;
                 Debug.Assert(cache.Count > 0);
                 Debug.Assert(!cache.Program.IsEmpty);
                 return cache.Program;
@@ -107,19 +108,20 @@ namespace Elffy.Shading
 
             public static void Delete(IHostScreen screen, SourceKey key, ref ProgramObject program)
             {
-                if(_dic is null) {
+                if(_dictionaries is null) {
                     goto DELETE;
                 }
-                if(!_dic.TryGetValue(screen, out var dic)) {
+                if(_dictionaries.TryGetValue(screen, out var dic) == false) {
                     goto DELETE;
                 }
-                if(!dic.TryGetValue(key, out var cache)) {
+
+                ref var cache = ref CollectionsMarshal.GetValueRefOrNullRef(dic, key);
+                if(Unsafe.IsNullRef(ref cache)) {
                     goto DELETE;
                 }
                 cache.Count--;
-                dic[key] = cache;
                 if(cache.Count <= 0) {
-                    dic.Remove(key, out _);
+                    dic.Remove(key);
                     goto DELETE;
                 }
                 return;
