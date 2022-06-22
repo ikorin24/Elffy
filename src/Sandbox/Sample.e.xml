@@ -7,7 +7,7 @@
     <Button Width="*" Height="50" Margin="5,0,5,0" Background="Transparent" VerticalAlignment="Bottom" Grid.Row="1" Text="button 2" Foreground="White" FontSize="22"/>
     <Button Width="*" Height="50" Margin="5,0,5,0" Background="Transparent" VerticalAlignment="Bottom" Grid.Row="2" Text="button 3" Foreground="White" FontSize="22"/>
     <Button Width="*" Height="50" Margin="5,0,5,0" Background="Transparent" VerticalAlignment="Bottom" Grid.Row="3" Text="button 4" Foreground="White" FontSize="22"/>
-    <Button Width="*" Height="50" Margin="5,0,5,0" Background="Transparent" VerticalAlignment="Bottom" Grid.Row="4" Text="button 5" Foreground="White" FontSize="22"/>
+    <TextBlock Width="*" Height="50" Margin="5,0,5,0" Background="Transparent" VerticalAlignment="Bottom" Grid.Row="4" Text="Text" Foreground="White" FontSize="22"/>
   </Grid>
   <Grid
     Grid.Column="1"

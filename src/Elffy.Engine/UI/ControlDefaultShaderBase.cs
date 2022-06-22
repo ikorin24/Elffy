@@ -41,13 +41,13 @@ namespace Elffy.UI
                 var screen = target.GetValidScreen();
                 dispatcher.SendUniformTexture2D("_tex", texture, TextureUnitNumber.Unit0);
                 dispatcher.SendUniform("_screenHeight", screen.FrameBufferSize.Y);
+                dispatcher.SendUniform("_origin", target.ActualPosition);
             }
 
             var cornerRadius = target.ActualCornerRadius;
             var hasCornerRadius = !cornerRadius.IsZero;
             dispatcher.SendUniform("_hasCornerRadius", hasCornerRadius);
             if(hasCornerRadius) {
-                dispatcher.SendUniform("_origin", target.ActualPosition);
                 dispatcher.SendUniform("_size", target.ActualSize);
                 dispatcher.SendUniform("_cornerRadius", cornerRadius);
             }
