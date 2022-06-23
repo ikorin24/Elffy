@@ -102,6 +102,15 @@ namespace Elffy.Imaging
             }
         }
 
+        /// <summary>Create a new image with specified size.</summary>
+        /// <param name="width">image width</param>
+        /// <param name="height">image height</param>
+        /// <param name="fill">color to initialize all pixels</param>
+        public Image(int width, int height, ColorByte fill) : this(width, height, false)
+        {
+            GetPixels().Fill(fill);
+        }
+
         public Image(IImageSource source, short token)
         {
             if(source == null) {
