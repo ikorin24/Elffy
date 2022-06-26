@@ -18,8 +18,6 @@ namespace Elffy.UI
 
         protected override void DefineLocation(VertexDefinition definition, Control target, Type vertexType)
         {
-            LoadImage((Vector2i)target.ActualSize, ColorByte.Transparent);
-
             if(target is ITextContent textContent) {
                 _target = textContent;
                 _unsubscriber = textContent.TextContentChanged.Subscribe(x =>
@@ -45,7 +43,7 @@ namespace Elffy.UI
                 return;
             }
             if(_requireUpdateTexture) {
-                EraseAndDraw(_target, target.ActualSize);
+                EraseAndDraw(_target);
                 _requireUpdateTexture = false;
             }
 
@@ -59,7 +57,25 @@ namespace Elffy.UI
             base.OnProgramDisposed();
         }
 
-        private unsafe void EraseAndDraw(ITextContent target, Vector2 targetSize)
+        protected override (HorizontalAlignment HAlignment, VerticalAlignment VAlignment) GetImageAlignment(Control target)
+        {
+            if(ReferenceEquals(target, _target) == false) {
+                Debug.Fail("invalid target");
+                return default;
+            }
+            return (
+                HAlignment: _target.TextAlignment switch
+                {
+                    HorizontalTextAlignment.Center => HorizontalAlignment.Center,
+                    HorizontalTextAlignment.Left => HorizontalAlignment.Left,
+                    HorizontalTextAlignment.Right => HorizontalAlignment.Right,
+                    _ => default,
+                },
+                VAlignment: VerticalAlignment.Center
+            );
+        }
+
+        private unsafe void EraseAndDraw(ITextContent target)
         {
             // TODO: font
             var fontFamily = FontFamilies.Instance.GetFontFamilyOrDefault(target.FontFamily);
@@ -69,13 +85,13 @@ namespace Elffy.UI
             var options = new TextDrawOptions
             {
                 Font = font,
-                TargetSize = targetSize,
                 Background = ColorByte.Transparent,
-                Alignment = target.TextAlignment,
                 Foreground = target.Foreground.ToColorByte(),
             };
             using var result = TextDrawer.Draw(target.Text, options);
-            UpdateImage(result.Position, result.Image);
+
+            ReleaseImage();
+            LoadImage(result.Image);
         }
     }
 }

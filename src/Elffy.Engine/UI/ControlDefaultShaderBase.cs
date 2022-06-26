@@ -42,6 +42,12 @@ namespace Elffy.UI
                 dispatcher.SendUniformTexture2D("_tex", texture, TextureUnitNumber.Unit0);
                 dispatcher.SendUniform("_screenHeight", screen.FrameBufferSize.Y);
                 dispatcher.SendUniform("_origin", target.ActualPosition);
+
+                var imageSize = _textureCore.Size;
+                var (h, v) = GetImageAlignment(target);
+                var imagePos = CalcImagePosition(target.ActualSize, imageSize, h, v);
+                dispatcher.SendUniform("_imagePos", imagePos);
+                dispatcher.SendUniform("_imageSize", imageSize);
             }
 
             var cornerRadius = target.ActualCornerRadius;
@@ -53,7 +59,27 @@ namespace Elffy.UI
             }
         }
 
+        static Vector2 CalcImagePosition(Vector2 targetSize, Vector2i imageSize, HorizontalAlignment hAlignment, VerticalAlignment vAlignment)
+        {
+            var pos = new Vector2
+            {
+                X = hAlignment switch
+                {
+                    HorizontalAlignment.Center => (targetSize.X - imageSize.X) / 2,
+                    HorizontalAlignment.Right => targetSize.X - imageSize.X,
+                    HorizontalAlignment.Left or _ => 0,
+                },
+                Y = (targetSize.Y - imageSize.Y) / 2,
+            };
+            return pos;
+        }
+
         protected virtual Color4 GetBackground(Control target) => target.Background;
+
+        protected virtual (HorizontalAlignment HAlignment, VerticalAlignment VAlignment) GetImageAlignment(Control target)
+        {
+            return (HorizontalAlignment.Center, VerticalAlignment.Center);
+        }
 
         protected void LoadImage(in ReadOnlyImageRef image) => _textureCore.Load(image);
 
@@ -106,6 +132,11 @@ void main()
 ";
         private const string FragSource =
 @"#version 410
+#define LE(th,x) (step(th,x))   // (th <= x)
+#define LT(th,x) (1-step(x,th)) // (th < x)
+#define GE(th,x) (step(x,th))   // (th >= x)
+#define GT(th,x) (1-step(th,x)) // (th > x)
+
 in vec2 _uv;
 out vec4 _fragColor;
 
@@ -115,6 +146,8 @@ uniform bool _hasTex;
 uniform sampler2D _tex;
 uniform int _screenHeight;
 uniform vec2 _origin;
+uniform vec2 _imagePos;
+uniform ivec2 _imageSize;
 
 uniform bool _hasCornerRadius;
 uniform vec2 _size;
@@ -151,8 +184,9 @@ float FilterCorner(vec4 r, vec2 uv, vec2 size)
 void main()
 {
     if(_hasTex) {
-        vec2 p = vec2(gl_FragCoord.x, _screenHeight - gl_FragCoord.y) - _origin;
-        vec4 color = texelFetch(_tex, ivec2(p), 0);
+        vec2 v = vec2(gl_FragCoord.x, _screenHeight - gl_FragCoord.y);
+        ivec2 p = ivec2(v - _origin - _imagePos);
+        vec4 color = LE(0, p.x) * LT(p.x, _imageSize.x) * LE(0, p.y) * LT(p.y, _imageSize.y) * texelFetch(_tex, p, 0);
         _fragColor = vec4(mix(_background.rgb, color.rgb, color.a), _background.a * (1 - color.a) + color.a);
     }
     else {
