@@ -15,8 +15,10 @@ namespace Elffy
     public readonly struct ResourceFile : IEquatable<ResourceFile>
     {
         // lang=regex
-        private const string MarkupPattern = @"^(?<p>[^:]+)\:(?<n>.+)$";
-        private const string MarkupEmit = @"global::Elffy.Resources.${p}.GetFile(""${n}"")";
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public const string MarkupPattern = @"^(?<p>[^:]+)\:(?<n>.+)$";
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public const string MarkupEmit = @"global::Elffy.Resources.${p}.GetFile(""${n}"")";
 
         private readonly IResourcePackage? _package;
         private readonly string? _name;

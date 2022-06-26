@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <PackageReference Include="NonCopyableAnalyzer" Version="0.7.0" />
+    <PackageReference Include="UniTask" Version="2.2.5" />
   </ItemGroup>
 
   <ItemGroup>

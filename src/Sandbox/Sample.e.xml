@@ -2,19 +2,16 @@
   xmlns="Elffy.UI"
   x-Builder="Sandbox.Sample"
   ColumnDefinition="260,*">
-  <Grid Grid.Column="0" Padding="0,10,0,10" Background="#232323" RowDefinition="60,60,60,60,60,60">
+  <Grid Grid.Column="0" Padding="0,10,0,10" Background="#232323" RowDefinition="60,60,60,60,60,80">
     <Button Width="*" Height="50" Margin="5,0,5,0" Background="Transparent" VerticalAlignment="Bottom" Grid.Row="0" Text="button 1" Foreground="White" FontSize="22"/>
     <Button Width="*" Height="50" Margin="5,0,5,0" Background="Transparent" VerticalAlignment="Bottom" Grid.Row="1" Text="button 2" Foreground="White" FontSize="22"/>
     <Button Width="*" Height="50" Margin="5,0,5,0" Background="Transparent" VerticalAlignment="Bottom" Grid.Row="2" Text="button 3" Foreground="White" FontSize="22"/>
     <Button Width="*" Height="50" Margin="5,0,5,0" Background="Transparent" VerticalAlignment="Bottom" Grid.Row="3" Text="button 4" Foreground="White" FontSize="22"/>
     <TextBlock Width="*" Height="50" Margin="5,0,5,0" Background="Transparent" VerticalAlignment="Bottom" Grid.Row="4" Text="Text" Foreground="White" FontSize="22"/>
+    <Button Width="200" Height="60" Margin="5,0,5,0" Background="#0083FF" Grid.Row="5" Text="CONTINUE" FontSize="20" Foreground="White"/>
   </Grid>
-  <Grid
-    Grid.Column="1"
-    RowDefinition="*,*">
+  <Grid Grid.Column="1" RowDefinition="*,*">
     <Button Width="800" Height="400" Background="#353535" Grid.Row="0" Text="Hello" FontSize="120" Foreground="White" CornerRadius="100,100,100,100"/>
-    <Button Width="260" Height="70" Background="#0083FF" Grid.Row="1" Text="CONTINUE" FontSize="20" Foreground="White"/>
+    <ImageBlock Width="*" Height="*" Grid.Row="1" Source="Sandbox:box.png"/>
   </Grid>
 </Grid>
-
-<!--<ButtonDefaultShader Typeface="Sandbox:mplus-1p-regular.otf"/>-->

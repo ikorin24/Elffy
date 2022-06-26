@@ -20,7 +20,6 @@
     <PackageReference Include="FbxParser" Version="2.0.0" />
     <PackageReference Include="OpenTK" Version="4.6.4" />
     <PackageReference Include="PMXParser" Version="1.1.1" />
-    <PackageReference Include="UniTask" Version="2.2.5" />
   </ItemGroup>
 
   <ItemGroup>
