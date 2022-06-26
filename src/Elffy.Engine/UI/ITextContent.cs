@@ -11,7 +11,8 @@ namespace Elffy.UI
         string? FontFamily { get; set; }
         int FontSize { get; set; }
         Color4 Foreground { get; set; }
-        HorizontalTextAlignment TextAlignment { get; set; }
+        HorizontalAlignment TextAlignment { get; set; }
+        VerticalAlignment VerticalTextAlignment { get; set; }
         Event<(ITextContent Sender, string PropertyName)> TextContentChanged { get; }
     }
 
@@ -22,7 +23,8 @@ namespace Elffy.UI
         private string? _fontFamily;
         private int _fontSize;
         private Color4 _foreground;
-        private HorizontalTextAlignment _textAlignment;
+        private HorizontalAlignment _textAlignment;
+        private VerticalAlignment _verticalTextAlignment;
 
         private EventRaiser<(ITextContent Sender, string PropertyName)>? _propertyChanged;
         public Event<(ITextContent Sender, string PropertyName)> TextContentChanged => new(ref _propertyChanged);
@@ -35,7 +37,8 @@ namespace Elffy.UI
 
         public Color4 Foreground { get => _foreground; set => SetValue(ref _foreground, value); }
 
-        public HorizontalTextAlignment TextAlignment { get => _textAlignment; set => SetValue(ref _textAlignment, value); }
+        public HorizontalAlignment TextAlignment { get => _textAlignment; set => SetValue(ref _textAlignment, value); }
+        public VerticalAlignment VerticalTextAlignment { get => _verticalTextAlignment; set => _verticalTextAlignment = value; }
 
         [Obsolete("Don't use default constructor.")]
         public TextContentImpl() => throw new NotSupportedException("Don't use default constructor.");
@@ -48,7 +51,8 @@ namespace Elffy.UI
             _text = null;
             _fontFamily = null;
             _fontSize = 14;
-            _textAlignment = HorizontalTextAlignment.Center;
+            _textAlignment = HorizontalAlignment.Center;
+            _verticalTextAlignment = VerticalAlignment.Center;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

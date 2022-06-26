@@ -16,7 +16,9 @@ namespace Elffy.UI
 
         public Color4 Foreground { get => _textContent.Foreground; set => _textContent.Foreground = value; }
 
-        public HorizontalTextAlignment TextAlignment { get => _textContent.TextAlignment; set => _textContent.TextAlignment = value; }
+        public HorizontalAlignment TextAlignment { get => _textContent.TextAlignment; set => _textContent.TextAlignment = value; }
+
+        public VerticalAlignment VerticalTextAlignment { get => _textContent.VerticalTextAlignment; set => _textContent.VerticalTextAlignment = value; }
 
         public Event<(ITextContent Sender, string PropertyName)> TextContentChanged => _textContent.TextContentChanged;
 

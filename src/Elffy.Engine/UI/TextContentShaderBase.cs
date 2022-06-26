@@ -64,14 +64,8 @@ namespace Elffy.UI
                 return default;
             }
             return (
-                HAlignment: _target.TextAlignment switch
-                {
-                    HorizontalTextAlignment.Center => HorizontalAlignment.Center,
-                    HorizontalTextAlignment.Left => HorizontalAlignment.Left,
-                    HorizontalTextAlignment.Right => HorizontalAlignment.Right,
-                    _ => default,
-                },
-                VAlignment: VerticalAlignment.Center
+                HAlignment: _target.TextAlignment,
+                VAlignment: _target.VerticalTextAlignment
             );
         }
 

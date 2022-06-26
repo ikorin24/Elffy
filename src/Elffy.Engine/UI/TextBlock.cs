@@ -30,13 +30,19 @@ namespace Elffy.UI
             set => _textContentImpl.Foreground = value;
         }
 
-        public HorizontalTextAlignment TextAlignment
+        public HorizontalAlignment TextAlignment
         {
             get => _textContentImpl.TextAlignment;
             set => _textContentImpl.TextAlignment = value;
         }
 
         public Event<(ITextContent Sender, string PropertyName)> TextContentChanged => _textContentImpl.TextContentChanged;
+
+        public VerticalAlignment VerticalTextAlignment
+        {
+            get => _textContentImpl.VerticalTextAlignment;
+            set => _textContentImpl.VerticalTextAlignment = value;
+        }
 
         static TextBlock()
         {

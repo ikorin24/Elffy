@@ -69,7 +69,12 @@ namespace Elffy.UI
                     HorizontalAlignment.Right => targetSize.X - imageSize.X,
                     HorizontalAlignment.Left or _ => 0,
                 },
-                Y = (targetSize.Y - imageSize.Y) / 2,
+                Y = vAlignment switch
+                {
+                    VerticalAlignment.Center => (targetSize.Y - imageSize.Y) / 2,
+                    VerticalAlignment.Bottom => targetSize.Y - imageSize.Y,
+                    VerticalAlignment.Top or _ => 0,
+                }
             };
             return pos;
         }
@@ -198,20 +203,5 @@ void main()
     }
 }
 ";
-    }
-
-    public enum HorizontalTextAlignment : byte
-    {
-        Center = 0,
-        Left,
-        Right,
-        //Justify,
-    }
-
-    public enum VerticalTextAlignment : byte
-    {
-        Center = 0,
-        Top,
-        Bottom,
     }
 }
