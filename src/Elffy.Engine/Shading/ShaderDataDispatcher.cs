@@ -45,6 +45,15 @@ namespace Elffy.Shading
         public void SendUniform(string name, in Color4 value) => SendUniform(GL.GetUniformLocation(_program.Value, name), value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SendUniform(string name, in Vector2i value) => SendUniform(GL.GetUniformLocation(_program.Value, name), value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SendUniform(string name, in Vector3i value) => SendUniform(GL.GetUniformLocation(_program.Value, name), value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SendUniform(string name, in Vector4i value) => SendUniform(GL.GetUniformLocation(_program.Value, name), value);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SendUniform(string name, in Matrix4 value) => SendUniform(GL.GetUniformLocation(_program.Value, name), value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -118,6 +127,39 @@ namespace Elffy.Shading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SendUniform(int location, in Color3 value)
             => GL.ProgramUniform3(_program.Value, location, 1, ref Unsafe.As<Color3, float>(ref Unsafe.AsRef(value)));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SendUniform(int location, in Vector2i value)
+        {
+            ref int v = ref Unsafe.As<Vector2i, int>(ref Unsafe.AsRef(value));
+            unsafe {
+                fixed(int* p = &v) {
+                    GL.ProgramUniform2(_program.Value, location, 1, p);
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SendUniform(int location, in Vector3i value)
+        {
+            ref int v = ref Unsafe.As<Vector3i, int>(ref Unsafe.AsRef(value));
+            unsafe {
+                fixed(int* p = &v) {
+                    GL.ProgramUniform3(_program.Value, location, 1, p);
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SendUniform(int location, in Vector4i value)
+        {
+            ref int v = ref Unsafe.As<Vector4i, int>(ref Unsafe.AsRef(value));
+            unsafe {
+                fixed(int* p = &v) {
+                    GL.ProgramUniform4(_program.Value, location, 1, p);
+                }
+            }
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SendUniform(int location, in Matrix4 value)
