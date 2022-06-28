@@ -245,9 +245,9 @@ namespace Elffy
         {
             var timingPoints = _timingPoints;
             timingPoints.BeforeRendering.DoQueuedEvents();
-            SelectMatrix(screen, out var view, out var projection);
             OnRendering(screen, ref currentFbo);
             if(_isVisible) {
+                SelectMatrix(screen, out var view, out var projection);
                 _store.Render(view, projection);
             }
             OnRendered(screen, ref currentFbo);

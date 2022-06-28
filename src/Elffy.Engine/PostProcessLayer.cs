@@ -11,7 +11,7 @@ namespace Elffy
         {
         }
 
-        private protected override void RenderOverride(IHostScreen screen, ref FBO currentFbo)
+        private protected sealed override void RenderOverride(IHostScreen screen, ref FBO currentFbo)
         {
             var timingPoints = TimingPoints;
             timingPoints.BeforeRendering.DoQueuedEvents();

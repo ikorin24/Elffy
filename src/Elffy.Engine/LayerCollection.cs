@@ -136,7 +136,8 @@ namespace Elffy
         {
             var screen = Screen;
             var fbo = FBO.Empty;
-            foreach(var layer in AsSpan()) {
+            var layers = AsSpan();
+            foreach(var layer in layers) {
                 layer.Render(screen, ref fbo);
             }
         }
