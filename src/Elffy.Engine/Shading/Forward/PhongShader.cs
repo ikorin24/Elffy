@@ -94,10 +94,10 @@ namespace Elffy.Shading.Forward
                 staticLights = screen.Lights.StaticLights;
                 _staticLights = staticLights;
             }
-            var (lColor, lPos, lightCount) = staticLights.GetBufferData();
-            dispatcher.SendUniform("lightCount", lightCount);
-            dispatcher.SendUniformTexture1D("lColorSampler", lColor, TextureUnitNumber.Unit1);
-            dispatcher.SendUniformTexture1D("lPosSampler", lPos, TextureUnitNumber.Unit2);
+            var lightData = staticLights.GetBufferData();
+            dispatcher.SendUniform("lightCount", lightData.LightCount);
+            dispatcher.SendUniformTexture1D("lColorSampler", lightData.Colors, TextureUnitNumber.Unit1);
+            dispatcher.SendUniformTexture1D("lPosSampler", lightData.Positions, TextureUnitNumber.Unit2);
         }
 
         private const string VertSource =
