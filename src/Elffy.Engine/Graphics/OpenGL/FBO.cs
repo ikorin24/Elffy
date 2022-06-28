@@ -111,6 +111,13 @@ namespace Elffy.Graphics.OpenGL
             return !isError;
         }
 
+        public static void ThrowIfInvalidStatus()
+        {
+            if(CheckStatus(out var error) == false) {
+                throw new InvalidOperationException(error);
+            }
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static FBO Create()
         {

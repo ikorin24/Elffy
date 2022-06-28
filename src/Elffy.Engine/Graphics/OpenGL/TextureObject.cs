@@ -210,6 +210,14 @@ namespace Elffy.Graphics.OpenGL
                           0, TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
         }
 
+        public static unsafe void DepthImage2DUninitialized(in Vector2i size)
+        {
+            // Allocate memory of specified size without initialization
+
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.DepthComponent, size.X, size.Y,
+                          0, TKPixelFormat.DepthComponent, TKPixelType.Float, IntPtr.Zero);
+        }
+
         /// <summary>Call glTexSubImage2D</summary>
         /// <param name="rect">sub texture rect</param>
         /// <param name="pixels">sub texture to load</param>
