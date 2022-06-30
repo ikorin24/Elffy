@@ -7,7 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace Elffy.Components.Implementation
 {
     /// <summary>Float data texture implementation struct</summary>
-    public struct FloatDataTextureCore : IDisposable
+    public struct FloatDataTextureCore : IEquatable<FloatDataTextureCore>, IDisposable
     {
         private TextureObject _to;
         private int _length;
@@ -145,5 +145,11 @@ namespace Elffy.Components.Implementation
 
         [DoesNotReturn]
         private static void ThrowNotLoaded() => throw new InvalidOperationException("The texture is not loaded");
+
+        public override bool Equals(object? obj) => obj is FloatDataTextureCore core && Equals(core);
+
+        public bool Equals(FloatDataTextureCore other) => _to.Equals(other._to) && _length == other._length;
+
+        public override int GetHashCode() => HashCode.Combine(_to, _length);
     }
 }
