@@ -54,6 +54,20 @@ namespace Elffy.Effective
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ReadOnlySpan<byte> AsBytes<T>(this ReadOnlySpan<T> source) where T : unmanaged => MemoryMarshal.AsBytes(source);
 
+        /// <summary>Get byte length of source span</summary>
+        /// <typeparam name="T">element type</typeparam>
+        /// <param name="source">source span</param>
+        /// <returns>byte length</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int GetByteLength<T>(this Span<T> source) where T : unmanaged => Unsafe.SizeOf<T>() * source.Length;
+
+        /// <summary>Get byte length of source span</summary>
+        /// <typeparam name="T">element type</typeparam>
+        /// <param name="source">source span</param>
+        /// <returns>byte length</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int GetByteLength<T>(this ReadOnlySpan<T> source) where T : unmanaged => Unsafe.SizeOf<T>() * source.Length;
+
         /// <summary>
         /// Cast whole <see cref="Span{T}"/> to another type of <see cref="Span{T}"/>.      <para/>
         /// This is not each-element cast. The memory layout is not changed.                <para/>
