@@ -7,8 +7,6 @@ namespace Elffy.Shading.Forward
 {
     public sealed class PmxModelShader : RenderingShader
     {
-        private StaticLightManager? _staticLights;
-
         protected override string VertexShaderSource => VertSource;
 
         protected override string FragmentShaderSource => FragSource;
@@ -38,13 +36,8 @@ namespace Elffy.Shading.Forward
             dispatcher.SendUniformTexture1D("_boneTrans", skeleton.TranslationData, TextureUnitNumber.Unit0);
             dispatcher.SendUniformTexture2DArray("_texArrSampler", target.GetComponent<ArrayTexture>().TextureObject, TextureUnitNumber.Unit1);
 
-            var staticLights = _staticLights;
-            if(staticLights == null) {
-                var screen = target.GetValidScreen();
-                staticLights = screen.Lights.StaticLights;
-                _staticLights = staticLights;
-            }
-            var lightData = staticLights.GetBufferData();
+            var screen = target.GetValidScreen();
+            var lightData = screen.Lights.GetBufferData();
             dispatcher.SendUniform("lightCount", lightData.LightCount);
             dispatcher.SendUniformTexture1D("lColorSampler", lightData.Colors, TextureUnitNumber.Unit2);
             dispatcher.SendUniformTexture1D("lPosSampler", lightData.Positions, TextureUnitNumber.Unit3);

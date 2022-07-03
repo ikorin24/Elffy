@@ -10,8 +10,8 @@
     <TextBlock Width="*" Height="50" Margin="5,0,5,0" Background="Transparent" VerticalAlignment="Bottom" Grid.Row="4" Text="Text" Foreground="White" FontSize="22"/>
     <Button Width="200" Height="60" Margin="5,0,5,0" Background="#0083FF" Grid.Row="5" Text="CONTINUE" FontSize="20" Foreground="White"/>
   </Grid>
-  <Grid Grid.Column="1" RowDefinition="*,*">
+  <!--<Grid Grid.Column="1" RowDefinition="*,*">
     <Button Width="800" Height="400" Background="#353535" Grid.Row="0" Text="Hello" FontSize="120" Foreground="White" CornerRadius="100,100,100,100"/>
     <ImageBlock Width="*" Height="*" Grid.Row="1" Source="Sandbox:box.png"/>
-  </Grid>
+  </Grid>-->
 </Grid>

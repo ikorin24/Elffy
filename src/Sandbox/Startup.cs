@@ -79,22 +79,17 @@ namespace Sandbox
 
         private static void InitializeLights(IHostScreen screen)
         {
-            ReadOnlySpan<LightData> lights = stackalloc LightData[]
+            ReadOnlySpan<Vector4> pos = stackalloc Vector4[]
             {
-                new()
-                {
-                    Color = Color3.White,
-                    Position = new Vector3(1, 1, 0),
-                    Type = LightType.DirectLight,
-                },
-                //new()
-                //{
-                //    Color = Color3.OrangeRed,
-                //    Position = new Vector3(1, 0, 0),
-                //    Type = LightType.DirectLight,
-                //},
+                new(1, 1, 0, 0),
+                //new(1, 0, 0, 0),
             };
-            screen.Lights.StaticLights.Initialize(lights);
+            ReadOnlySpan<Color4> color = stackalloc Color4[]
+            {
+                Color4.White,
+                //Color4.OrangeRed,
+            };
+            screen.Lights.Initialize(pos, color);
         }
 
         private static UniTask<Model3D> CreateDice(WorldLayer layer)
@@ -152,7 +147,6 @@ namespace Sandbox
         {
             var timing = layer.GetValidScreen().TimingPoints.Update;
             var plain = new Plain();
-            plain.Position.Z = -10;
             plain.Scale = new Vector3(10f);
             plain.Shader = new PhongShader();
             var config = new TextureConfig(TextureExpansionMode.NearestNeighbor, TextureShrinkMode.NearestNeighbor,
@@ -169,6 +163,7 @@ namespace Sandbox
             var buffer = ShaderStorageBuffer.CreateUninitialized<Color4>(bufSize.X * bufSize.Y);
             var dispatcher = new TestComputeShader(() => buffer.Ssbo).CreateDispatcher();
             var plain = new Plain();
+            plain.Position.Z = -10;
             plain.Dead += _ =>
             {
                 buffer.Dispose();

@@ -8,7 +8,6 @@ namespace Elffy.Shading.Deferred
         internal delegate ref readonly Matrix4 MatrixProvider(IHostScreen screen);
 
         private readonly IGBufferProvider _gBufferProvider;
-        private ILightBuffer? _lightBuffer;
 
         public override string FragShaderSource => FragSource;
 
@@ -20,8 +19,7 @@ namespace Elffy.Shading.Deferred
         protected override void OnRendering(ShaderDataDispatcher dispatcher, in Vector2i screenSize)
         {
             var (screen, gBuffer) = _gBufferProvider.GetValidScreenAndGBuffer();
-            var lightBuffer = _lightBuffer ??= screen.Lights.StaticLights.LightBuffer;
-            var lightData = lightBuffer.GetBufferData();
+            var lightData = screen.Lights.GetBufferData();
             var gData = gBuffer.GetBufferData();
 
             var camera = screen.Camera;

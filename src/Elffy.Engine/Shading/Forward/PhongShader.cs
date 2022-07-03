@@ -16,7 +16,6 @@ namespace Elffy.Shading.Forward
         private Color3 _specular;
         private float _shininess;
         private ShaderTextureSelector<PhongShader>? _textureSelector;
-        private StaticLightManager? _staticLights;
 
         protected override string VertexShaderSource => VertSource;
 
@@ -88,13 +87,8 @@ namespace Elffy.Shading.Forward
             dispatcher.SendUniformTexture2D("tex_sampler", texObj, TextureUnitNumber.Unit0);
             dispatcher.SendUniform("hasTexture", hasTexture);
 
-            var staticLights = _staticLights;
-            if (staticLights == null) {
-                var screen = target.GetValidScreen();
-                staticLights = screen.Lights.StaticLights;
-                _staticLights = staticLights;
-            }
-            var lightData = staticLights.GetBufferData();
+            var screen = target.GetValidScreen();
+            var lightData = screen.Lights.GetBufferData();
             dispatcher.SendUniform("lightCount", lightData.LightCount);
             dispatcher.SendUniformTexture1D("lColorSampler", lightData.Colors, TextureUnitNumber.Unit1);
             dispatcher.SendUniformTexture1D("lPosSampler", lightData.Positions, TextureUnitNumber.Unit2);
