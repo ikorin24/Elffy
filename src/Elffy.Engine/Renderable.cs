@@ -22,7 +22,6 @@ namespace Elffy
         private int _instancingCount;
         private bool _isLoaded;
         private RenderVisibility _visibility;
-        private Type? _vertexType;
 
         /// <summary>Before-rendering event</summary>
         public event RenderingEventHandler? BeforeRendering;
@@ -36,7 +35,7 @@ namespace Elffy
         /// <summary>Vertex array object</summary>
         public ref readonly VAO VAO => ref _vao;
 
-        public Type? VertexType => _vertexType;
+        public Type? VertexType => _rendererData.VertexType;
 
         /// <summary>Get whether the <see cref="Renderable"/> is loaded and ready to be rendered.</summary>
         public bool IsLoaded => _isLoaded;
@@ -56,9 +55,9 @@ namespace Elffy
             get => _rendererData.Shader;
             set
             {
-                RendererData.Release(ref _rendererData);
-                _isShaderProgramInitialized = false;
-                _rendererData = new RendererData(value);
+                if(_rendererData.SetShader(value)) {
+                    _isShaderProgramInitialized = false;
+                }
             }
         }
 
@@ -119,7 +118,7 @@ namespace Elffy
                 if(visibility == RenderVisibility.Visible) {
                     var model = withoutScale * Scale.ToScaleMatrix4();
                     EnsureShaderInitialized();
-                    Debug.Assert(_rendererData.IsShaderCompiled);
+                    Debug.Assert(_rendererData.State is RendererDataState.Compiled);
                     BeforeRendering?.Invoke(this, in model, in view, in projection);
                     OnRendering(in model, in view, in projection);
                     Rendered?.Invoke(this, in model, in view, in projection);
@@ -168,8 +167,7 @@ namespace Elffy
 
             if(_isLoaded) { ThrowAlreadyLoaded(); }
 
-            Debug.Assert(_rendererData.IsShaderCompiled == false);
-            Debug.Assert(_isShaderProgramInitialized == false);
+            Debug.Assert(_isShaderProgramInitialized == false); // TODO: ???
 
             var lifeState = LifeState;
             if(lifeState.Is(LifeState.New) || lifeState.IsSameOrAfter(LifeState.Terminating)) {
@@ -182,44 +180,54 @@ namespace Elffy
             _ibo = IBO.Create();
             IBO.BindBufferData(ref _ibo, indices, indexCount, BufferHint.StaticDraw);
             VAO.Unbind();
-            _vertexType = typeof(TVertex);
+
+            if(_rendererData.SetVertexType(typeof(TVertex))) {
+                _isShaderProgramInitialized = false;
+            }
             _isLoaded = true;
         }
 
         private void EnsureShaderInitialized()
         {
             if(_isShaderProgramInitialized) {
-                Debug.Assert(_rendererData.HasShader);
-                Debug.Assert(_rendererData.IsShaderCompiled);
+                Debug.Assert(_rendererData.Shader is not null);
+                Debug.Assert(_rendererData.State is RendererDataState.Compiled);
                 return;
             }
 
-            var vertexType = _vertexType;
-            Debug.Assert(vertexType != null);
             VAO.Bind(_vao);
             VBO.Bind(_vbo);
             if(this is UIRenderable uIRenderable) {
-                Debug.Assert(vertexType == typeof(VertexSlim));
-                var shader = SafeCast.As<UIRenderingShader>(_rendererData.Shader);
-                if(shader is null) {
+                Debug.Assert(_rendererData.VertexType == typeof(VertexSlim));
+
+                UIRenderingShader shader;
+                if(_rendererData.Shader is null) {
                     shader = ControlShaderSelector.GetDefault(uIRenderable.Control.GetType());
-                    _rendererData = new RendererData(shader);
+                    _rendererData.SetShader(shader);
                 }
-                RendererData.Compile(ref _rendererData);
-                shader.DefineLocationInternal(_rendererData.Program, uIRenderable.Control, vertexType);
+                else {
+                    shader = SafeCast.As<UIRenderingShader>(_rendererData.Shader);
+                }
+                _rendererData.Compile();
+                Debug.Assert(_rendererData.VertexType is not null);
+                shader.DefineLocationInternal(_rendererData.Program, uIRenderable.Control, _rendererData.VertexType);
             }
             else {
-                var shader = SafeCast.As<RenderingShader>(_rendererData.Shader);
-                if(shader is null) {
+                RenderingShader shader;
+                if(_rendererData.Shader is null) {
                     shader = EmptyShader.Instance;
-                    _rendererData = new RendererData(shader);
+                    _rendererData.SetShader(shader);
                 }
-                RendererData.Compile(ref _rendererData);
-                shader.DefineLocationInternal(_rendererData.Program, this, vertexType);
+                else {
+                    shader = SafeCast.As<RenderingShader>(_rendererData.Shader);
+                }
+                _rendererData.Compile();
+                Debug.Assert(_rendererData.VertexType is not null);
+                shader.DefineLocationInternal(_rendererData.Program, this, _rendererData.VertexType);
             }
             VAO.Unbind();
             VBO.Unbind();
-            Debug.Assert(_rendererData.IsShaderCompiled);
+            Debug.Assert(_rendererData.State == RendererDataState.Compiled);
             _isShaderProgramInitialized = true;
         }
 
@@ -245,7 +253,7 @@ namespace Elffy
             var isLoaded = IsLoaded;
             _isLoaded = false;
             base.OnDead();
-            RendererData.Release(ref _rendererData);
+            _rendererData.Release();
             _isShaderProgramInitialized = false;
             if(isLoaded) {
                 VBO.Delete(ref _vbo);

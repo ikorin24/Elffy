@@ -5,33 +5,58 @@ using Elffy.Graphics.OpenGL;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.ComponentModel;
 using System.Runtime.InteropServices;
 
 namespace Elffy.Shading
 {
-    internal readonly struct RendererData   // not IDisposable, dispose only from internal
+    internal struct RendererData   // not IDisposable, dispose only from internal
     {
-        private readonly IRenderingShader? _shader;
-        private readonly ProgramObject _program;
+        private IRenderingShader? _shader;
+        private Type? _vertexType;
+        private ProgramObject _program;
 
         public ProgramObject Program => _program;
         public IRenderingShader? Shader => _shader;
+        public Type? VertexType => _vertexType;
 
-        public bool HasShader => _shader is not null;
-
-        public bool IsShaderCompiled => _program.IsEmpty == false;
+        public RendererDataState State
+        {
+            get
+            {
+                if(_program.IsEmpty == false) {
+                    Debug.Assert(_shader is not null);
+                    Debug.Assert(_vertexType is not null);
+                    return RendererDataState.Compiled;
+                }
+                if(_vertexType is not null && _shader is not null) {
+                    return RendererDataState.ReadyToCompile;
+                }
+                return RendererDataState.NotCompiled;
+            }
+        }
 
         internal static RendererData Empty => default;
 
-        [Obsolete("Don't use default constructor", true)]
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public RendererData() => throw new NotSupportedException("Don't use default constructor");
-
-        public RendererData(IRenderingShader? shader)
+        public bool SetVertexType(Type? vertexType)
         {
+            if(_vertexType == vertexType) { return false; }
+            if(State == RendererDataState.Compiled) {
+                Release();
+            }
+            Debug.Assert(State != RendererDataState.Compiled);
+            _vertexType = vertexType;
+            return true;
+        }
+
+        public bool SetShader(IRenderingShader? shader)
+        {
+            if(_shader == shader) { return false; }
+            if(State == RendererDataState.Compiled) {
+                Release();
+            }
+            Debug.Assert(State != RendererDataState.Compiled);
             _shader = shader;
-            _program = ProgramObject.Empty;
+            return true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -50,32 +75,38 @@ namespace Elffy.Shading
             return shader;
         }
 
-        internal static bool Compile(ref RendererData rendererData)
+        public bool Compile()
         {
-            if(rendererData._program.IsEmpty == false) { return false; }
-            var shader = rendererData._shader;
-            if(shader is null) { ThrowEmptyShader(); }
-
-            var key = new SourceKey(shader);
+            var state = State;
+            if(state == RendererDataState.Compiled) {
+                return false;
+            }
+            Debug.Assert(_shader is not null);
+            Debug.Assert(_vertexType is not null);
+            var key = new SourceKey(_shader, _vertexType);
             var screen = Engine.GetValidCurrentContext();
-            Unsafe.AsRef(in rendererData._program) = CompiledProgramCacheStore.GetCacheOrCompile(screen, key);
+            _program = CompiledProgramCacheStore.GetCacheOrCompile(screen, key);
             return true;
         }
 
-        internal static bool Release(ref RendererData rendererData)
+        public bool Release()
         {
-            // [NOTE] The struct is readonly struct, but I change the field by Unsafe.
-            // Be careful.
-
-            if(rendererData.Program.IsEmpty || rendererData._shader is null) {
+            if(State != RendererDataState.Compiled) {
                 return false;
             }
+            Debug.Assert(_shader is not null);
+            Debug.Assert(_vertexType is not null);
+            var key = new SourceKey(_shader, _vertexType);
             var screen = Engine.GetValidCurrentContext();
-            var key = new SourceKey(rendererData._shader);
-            CompiledProgramCacheStore.Delete(screen, key, ref Unsafe.AsRef(in rendererData._program));
-            var shader = rendererData._shader;
-            Unsafe.AsRef<IRenderingShader?>(rendererData._shader) = null;
-            shader.InvokeOnProgramDisposed();
+            CompiledProgramCacheStore.Delete(screen, key, ref _program);
+            try {
+                _shader.InvokeOnProgramDisposed();
+            }
+            catch {
+                if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
+                // ignore exceptions in user code.
+            }
+            Debug.Assert(State != RendererDataState.Compiled);
             return true;
         }
 
@@ -124,6 +155,7 @@ namespace Elffy.Shading
                     dic.Remove(key);
                     goto DELETE;
                 }
+                program = ProgramObject.Empty;
                 return;
             DELETE:
                 ProgramObject.Delete(ref program);
@@ -153,29 +185,36 @@ namespace Elffy.Shading
         private readonly struct SourceKey : IEquatable<SourceKey>
         {
             private readonly IRenderingShader _shaderSource;
+            private readonly Type _vertexType;
 
             public string VertSoruce => _shaderSource.VertexShaderSource;
             public string FragSource => _shaderSource.FragmentShaderSource;
             public string? GeometrySource => _shaderSource.GeometryShaderSource;
 
-            public SourceKey(IRenderingShader shaderSource)
+            public SourceKey(IRenderingShader shaderSource, Type vertexType)
             {
                 _shaderSource = shaderSource;
+                _vertexType = vertexType;
             }
 
             public override bool Equals(object? obj) => obj is SourceKey key && Equals(key);
 
             public bool Equals(SourceKey other)
             {
-                if(ReferenceEquals(_shaderSource, other._shaderSource)) {
-                    return true;
-                }
                 return (VertSoruce == other.VertSoruce)
                     && (FragSource == other.FragSource)
-                    && (GeometrySource == other.GeometrySource);
+                    && (GeometrySource == other.GeometrySource)
+                    && _vertexType == other._vertexType;
             }
 
-            public override int GetHashCode() => _shaderSource.GetSourceHash();
+            public override int GetHashCode() => _shaderSource.GetSourceHash() ^ _vertexType.GetHashCode();
         }
+    }
+
+    internal enum RendererDataState
+    {
+        NotCompiled = 0,
+        ReadyToCompile,
+        Compiled,
     }
 }
