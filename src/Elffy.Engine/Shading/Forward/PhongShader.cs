@@ -88,10 +88,10 @@ namespace Elffy.Shading.Forward
             dispatcher.SendUniform("hasTexture", hasTexture);
 
             var screen = target.GetValidScreen();
-            var lightData = screen.Lights.GetBufferData();
-            dispatcher.SendUniform("lightCount", lightData.LightCount);
-            dispatcher.SendUniformTexture1D("lColorSampler", lightData.Colors, TextureUnitNumber.Unit1);
-            dispatcher.SendUniformTexture1D("lPosSampler", lightData.Positions, TextureUnitNumber.Unit2);
+            var lights = screen.Lights;
+            dispatcher.SendUniform("lightCount", lights.LightCount);
+            dispatcher.SendUniformTexture1D("lColorSampler", lights.ColorTexture, TextureUnitNumber.Unit1);
+            dispatcher.SendUniformTexture1D("lPosSampler", lights.PositionTexture, TextureUnitNumber.Unit2);
         }
 
         private const string VertSource =

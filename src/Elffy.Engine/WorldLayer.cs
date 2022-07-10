@@ -1,16 +1,21 @@
 ﻿#nullable enable
 
 using Elffy.Graphics.OpenGL;
+using System;
 
 namespace Elffy
 {
-    public class WorldLayer : Layer
+    public class WorldLayer : Layer, IObjectLayer
     {
         private const int DefaultSortNumber = 0;
 
         public WorldLayer(int sortNumber = DefaultSortNumber) : base(sortNumber)
         {
         }
+
+        public ReadOnlySpan<FrameObject> GetFrameObjects() => Objects;
+
+        public ReadOnlySpan<Renderable> GetRenderables() => Renderables;
 
         protected override void OnAlive(IHostScreen screen)
         {
@@ -37,5 +42,11 @@ namespace Elffy
         {
             // nop
         }
+    }
+
+    public interface IObjectLayer
+    {
+        ReadOnlySpan<FrameObject> GetFrameObjects();
+        ReadOnlySpan<Renderable> GetRenderables();
     }
 }

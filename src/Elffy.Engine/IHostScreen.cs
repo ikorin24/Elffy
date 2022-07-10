@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using Elffy.InputSystem;
-using Elffy.UI;
 using System;
 using System.Threading;
 using Elffy.Features;
@@ -26,7 +25,7 @@ namespace Elffy
         LightManager Lights { get; }
 
         /// <summary>Get asynchronous timing points</summary>
-        public FrameTimingPointList TimingPoints { get; }
+        FrameTimingPointList TimingPoints { get; }
 
         /// <summary>Get pixel size of rendering area.</summary>
         Vector2i ClientSize { get; set; }

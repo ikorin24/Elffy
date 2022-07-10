@@ -19,20 +19,20 @@ namespace Elffy.Shading.Deferred
         protected override void OnRendering(ShaderDataDispatcher dispatcher, in Vector2i screenSize)
         {
             var (screen, gBuffer) = _gBufferProvider.GetValidScreenAndGBuffer();
-            var lightData = screen.Lights.GetBufferData();
+            var lights = screen.Lights;
             var gData = gBuffer.GetBufferData();
 
             var camera = screen.Camera;
             dispatcher.SendUniform("_view", camera.View);
             dispatcher.SendUniform("_projection", camera.Projection);
-            dispatcher.SendUniform("_lightCount", lightData.LightCount);
+            dispatcher.SendUniform("_lightCount", lights.LightCount);
             dispatcher.SendUniformTexture2D("_posSampler", gData.Position, TextureUnitNumber.Unit0);
             dispatcher.SendUniformTexture2D("_normalSampler", gData.Normal, TextureUnitNumber.Unit1);
             dispatcher.SendUniformTexture2D("_albedoSampler", gData.Albedo, TextureUnitNumber.Unit2);
             dispatcher.SendUniformTexture2D("_emitSampler", gData.Emit, TextureUnitNumber.Unit3);
             dispatcher.SendUniformTexture2D("_metallicRoughnessSampler", gData.MetallicRoughness, TextureUnitNumber.Unit4);
-            dispatcher.SendUniformTexture1D("_lightPosSampler", lightData.Positions, TextureUnitNumber.Unit5);
-            dispatcher.SendUniformTexture1D("_lightColorSampler", lightData.Colors, TextureUnitNumber.Unit6);
+            dispatcher.SendUniformTexture1D("_lightPosSampler", lights.PositionTexture, TextureUnitNumber.Unit5);
+            dispatcher.SendUniformTexture1D("_lightColorSampler", lights.ColorTexture, TextureUnitNumber.Unit6);
         }
 
         private const string FragSource =

@@ -142,7 +142,7 @@ namespace Elffy
             }
         }
 
-        private ReadOnlySpan<Layer> AsSpan() => _list.AsReadOnlySpan();
+        public ReadOnlySpan<Layer> AsSpan() => _list.AsReadOnlySpan();
 
         [DoesNotReturn]
         private static void ThrowNullArg(string message) => throw new ArgumentNullException(message);

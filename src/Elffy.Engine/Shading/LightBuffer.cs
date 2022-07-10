@@ -16,6 +16,10 @@ namespace Elffy.Shading
 
         public int LightCount => _lightPos.DataCount;
 
+        public TextureObject PositionTexture => _lightPos.TextureObject;
+        public TextureObject ColorTexture => _lightColor.TextureObject;
+        public TextureObject MatrixTexture => _lightMatrices.TextureObject;
+
         internal LightBuffer()
         {
         }
@@ -26,11 +30,6 @@ namespace Elffy.Shading
         {
             screen = _screen;
             return _screen is not null;
-        }
-
-        public LightBufferData GetBufferData()
-        {
-            return new LightBufferData(_lightColor.TextureObject, _lightPos.TextureObject, _lightPos.AsSpan());
         }
 
         public void Initialize(ReadOnlySpan<Vector4> positions, ReadOnlySpan<Color4> colors)
@@ -48,6 +47,8 @@ namespace Elffy.Shading
         public ReadOnlySpan<Vector4> GetPositions() => _lightPos.AsSpan();
 
         public ReadOnlySpan<Color4> GetColors() => _lightColor.AsSpan();
+
+        public ReadOnlySpan<Matrix4> GetMatrices() => _lightMatrices.AsSpan();
 
         public unsafe void UpdatePositions(ReadOnlySpan<Vector4> positions, int offset)
         {
@@ -143,19 +144,4 @@ namespace Elffy.Shading
     }
 
     public delegate void LightUpdateAction<TArg>(UpdateTrackedSpan<Vector4> positions, UpdateTrackedSpan<Color4> colors, TArg arg);
-
-    public readonly ref struct LightBufferData
-    {
-        public readonly TextureObject Colors { get; }
-        public readonly TextureObject Positions { get; }
-        public readonly ReadOnlySpan<Vector4> PositionData { get; }
-        public readonly int LightCount => PositionData.Length;
-
-        public LightBufferData(in TextureObject colors, in TextureObject positions, ReadOnlySpan<Vector4> positionData)
-        {
-            Colors = colors;
-            Positions = positions;
-            PositionData = positionData;
-        }
-    }
 }

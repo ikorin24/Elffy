@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using Elffy.Features;
+using Elffy.Graphics.OpenGL;
 using System;
 
 namespace Elffy.Shading
@@ -11,6 +12,12 @@ namespace Elffy.Shading
 
         public IHostScreen Screen => _screen;
 
+        public int LightCount => _lights.LightCount;
+
+        public TextureObject PositionTexture => _lights.PositionTexture;
+        public TextureObject ColorTexture => _lights.ColorTexture;
+        public TextureObject MatrixTexture => _lights.MatrixTexture;
+
         internal LightManager(IHostScreen screen)
         {
             _screen = screen;
@@ -19,11 +26,11 @@ namespace Elffy.Shading
 
         public void Initialize(ReadOnlySpan<Vector4> positions, ReadOnlySpan<Color4> colors) => _lights.Initialize(positions, colors);
 
-        public LightBufferData GetBufferData() => _lights.GetBufferData();
-
         public ReadOnlySpan<Vector4> GetPositions() => _lights.GetPositions();
 
         public ReadOnlySpan<Color4> GetColors() => _lights.GetColors();
+
+        public ReadOnlySpan<Matrix4> GetMatrices() => _lights.GetMatrices();
 
         public void UpdatePositions(ReadOnlySpan<Vector4> positions, int offset) => _lights.UpdatePositions(positions, offset);
 
