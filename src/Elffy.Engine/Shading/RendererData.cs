@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
+using Elffy.UI;
 
 namespace Elffy.Shading
 {
@@ -75,7 +76,7 @@ namespace Elffy.Shading
             return shader;
         }
 
-        public bool Compile()
+        private bool Compile()
         {
             var state = State;
             if(state == RendererDataState.Compiled) {
@@ -86,6 +87,36 @@ namespace Elffy.Shading
             var key = new SourceKey(_shader, _vertexType);
             var screen = Engine.GetValidCurrentContext();
             _program = CompiledProgramCacheStore.GetCacheOrCompile(screen, key);
+            return true;
+        }
+
+        public bool CompileForRenderable(Renderable renderable)
+        {
+            if(Compile() == false) {
+                return false;
+            }
+            Debug.Assert(_vertexType is not null);
+            if(_shader is RenderingShader shader) {
+                shader.DefineLocationInternal(_program, renderable, _vertexType);
+            }
+            else {
+                Debug.Fail($"Shader must be {nameof(RenderingShader)}. actual: {_shader?.GetType()?.FullName}");
+            }
+            return true;
+        }
+
+        public bool CompileForUI(Control control)
+        {
+            if(Compile() == false) {
+                return false;
+            }
+            Debug.Assert(_vertexType is not null);
+            if(_shader is UIRenderingShader shader) {
+                shader.DefineLocationInternal(_program, control, _vertexType);
+            }
+            else {
+                Debug.Fail($"Shader must be {nameof(UIRenderingShader)}. actual: {_shader?.GetType()?.FullName}");
+            }
             return true;
         }
 

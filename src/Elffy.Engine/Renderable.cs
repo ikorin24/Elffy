@@ -18,7 +18,6 @@ namespace Elffy
         private IBO _ibo;
         private VAO _vao;
         private RendererData _rendererData;
-        private bool _isShaderProgramInitialized;
         private int _instancingCount;
         private bool _isLoaded;
         private RenderVisibility _visibility;
@@ -53,12 +52,7 @@ namespace Elffy
         internal IRenderingShader? ShaderInternal
         {
             get => _rendererData.Shader;
-            set
-            {
-                if(_rendererData.SetShader(value)) {
-                    _isShaderProgramInitialized = false;
-                }
-            }
+            set => _rendererData.SetShader(value);
         }
 
         /// <summary>Get or set instancing count. No instancing if 0.</summary>
@@ -167,8 +161,6 @@ namespace Elffy
 
             if(_isLoaded) { ThrowAlreadyLoaded(); }
 
-            Debug.Assert(_isShaderProgramInitialized == false); // TODO: ???
-
             var lifeState = LifeState;
             if(lifeState.Is(LifeState.New) || lifeState.IsSameOrAfter(LifeState.Terminating)) {
                 return;
@@ -181,54 +173,34 @@ namespace Elffy
             IBO.BindBufferData(ref _ibo, indices, indexCount, BufferHint.StaticDraw);
             VAO.Unbind();
 
-            if(_rendererData.SetVertexType(typeof(TVertex))) {
-                _isShaderProgramInitialized = false;
-            }
+            _rendererData.SetVertexType(typeof(TVertex));
             _isLoaded = true;
         }
 
         private void EnsureShaderInitialized()
         {
-            if(_isShaderProgramInitialized) {
-                Debug.Assert(_rendererData.Shader is not null);
-                Debug.Assert(_rendererData.State is RendererDataState.Compiled);
+            if(_rendererData.State == RendererDataState.Compiled) {
                 return;
             }
-
             VAO.Bind(_vao);
             VBO.Bind(_vbo);
             if(this is UIRenderable uIRenderable) {
                 Debug.Assert(_rendererData.VertexType == typeof(VertexSlim));
-
-                UIRenderingShader shader;
                 if(_rendererData.Shader is null) {
-                    shader = ControlShaderSelector.GetDefault(uIRenderable.Control.GetType());
+                    var shader = ControlShaderSelector.GetDefault(uIRenderable.Control.GetType());
                     _rendererData.SetShader(shader);
                 }
-                else {
-                    shader = SafeCast.As<UIRenderingShader>(_rendererData.Shader);
-                }
-                _rendererData.Compile();
-                Debug.Assert(_rendererData.VertexType is not null);
-                shader.DefineLocationInternal(_rendererData.Program, uIRenderable.Control, _rendererData.VertexType);
+                _rendererData.CompileForUI(uIRenderable.Control);
             }
             else {
-                RenderingShader shader;
                 if(_rendererData.Shader is null) {
-                    shader = EmptyShader.Instance;
-                    _rendererData.SetShader(shader);
+                    _rendererData.SetShader(EmptyShader.Instance);
                 }
-                else {
-                    shader = SafeCast.As<RenderingShader>(_rendererData.Shader);
-                }
-                _rendererData.Compile();
-                Debug.Assert(_rendererData.VertexType is not null);
-                shader.DefineLocationInternal(_rendererData.Program, this, _rendererData.VertexType);
+                _rendererData.CompileForRenderable(this);
             }
             VAO.Unbind();
             VBO.Unbind();
             Debug.Assert(_rendererData.State == RendererDataState.Compiled);
-            _isShaderProgramInitialized = true;
         }
 
         /// <summary>Load mesh data</summary>
@@ -254,7 +226,6 @@ namespace Elffy
             _isLoaded = false;
             base.OnDead();
             _rendererData.Release();
-            _isShaderProgramInitialized = false;
             if(isLoaded) {
                 VBO.Delete(ref _vbo);
                 IBO.Delete(ref _ibo);
