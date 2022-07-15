@@ -226,7 +226,7 @@ namespace Elffy.Features.Internal
             Layers.AbortAllLayers();
 
             TimingPoints.AbortAllEvents();
-            Lights.ReleaseBuffer();
+            Lights.Release();
             ContextAssociatedMemorySafety.EnsureCollect(OwnerScreen);   // Must be called before the opengl context is deleted.
             Disposed?.Invoke();
         }

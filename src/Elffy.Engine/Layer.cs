@@ -241,6 +241,13 @@ namespace Elffy
             RenderOverride(screen, ref currentFbo);
         }
 
+        internal virtual void RenderShadowMap(IHostScreen screen, in Matrix4 lightViewProjection)
+        {
+            if(_isVisible) {
+                _store.RenderShadowMap(lightViewProjection);
+            }
+        }
+
         private protected virtual void RenderOverride(IHostScreen screen, ref FBO currentFbo)
         {
             var timingPoints = _timingPoints;

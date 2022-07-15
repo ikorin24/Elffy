@@ -134,6 +134,23 @@ namespace Elffy.Features.Internal
             }
         }
 
+        public void RenderShadowMap(in Matrix4 lightViewProjection)
+        {
+            var identity = Matrix4.Identity;
+            foreach(var renderable in _renderables.AsSpan()) {
+                // Render only root objects.
+                // Childen are rendered from thier parent 'Render' method.
+                if(renderable.IsRoot == false) { continue; }
+                try {
+                    renderable.RenderShadowMap(identity, lightViewProjection);
+                }
+                catch {
+                    if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
+                    // Don't throw. (Ignore exceptions in user code)
+                }
+            }
+        }
+
         /// <summary>Clear all <see cref="FrameObject"/> in lists</summary>
         public void ClearFrameObject()
         {

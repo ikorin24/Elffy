@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using Elffy.Effective;
 using Elffy.Features;
 using Elffy.Graphics.OpenGL;
 using System;
@@ -7,8 +8,11 @@ namespace Elffy.Shading
 {
     public sealed class LightManager
     {
+        private const int ShadowMapSize = 1024;
+
         private readonly IHostScreen _screen;
         private readonly LightBuffer _lights;
+        private ValueTypeRentMemory<ShadowMapData> _shadowMaps;
 
         public IHostScreen Screen => _screen;
 
@@ -22,15 +26,41 @@ namespace Elffy.Shading
         {
             _screen = screen;
             _lights = new LightBuffer();
+            _shadowMaps = ValueTypeRentMemory<ShadowMapData>.Empty;
         }
 
-        public void Initialize(ReadOnlySpan<Vector4> positions, ReadOnlySpan<Color4> colors) => _lights.Initialize(positions, colors);
+        public void Initialize(ReadOnlySpan<Vector4> positions, ReadOnlySpan<Color4> colors)
+        {
+            _lights.Initialize(positions, colors);
+
+            var count = positions.Length;
+            var shadowMaps = ValueTypeRentMemory<ShadowMapData>.Empty;
+            try {
+                shadowMaps = new ValueTypeRentMemory<ShadowMapData>(count, true);
+                var span = shadowMaps.AsSpan();
+                for(int i = 0; i < span.Length; i++) {
+                    var sm = new ShadowMapData();
+                    sm.Initialize(ShadowMapSize, ShadowMapSize);
+                    span[i] = sm;
+                }
+            }
+            catch {
+                foreach(var item in shadowMaps.AsSpan()) {
+                    item.Release();
+                }
+                shadowMaps.Dispose();
+                throw;
+            }
+            _shadowMaps = shadowMaps;
+        }
 
         public ReadOnlySpan<Vector4> GetPositions() => _lights.GetPositions();
 
         public ReadOnlySpan<Color4> GetColors() => _lights.GetColors();
 
         public ReadOnlySpan<Matrix4> GetMatrices() => _lights.GetMatrices();
+
+        public ReadOnlySpan<ShadowMapData> GetShadowMaps() => _shadowMaps.AsSpan();
 
         public void UpdatePositions(ReadOnlySpan<Vector4> positions, int offset) => _lights.UpdatePositions(positions, offset);
 
@@ -44,9 +74,13 @@ namespace Elffy.Shading
 
         public void UpdateColors<TArg>(TArg arg, SpanUpdateAction<Color4, TArg> action) => _lights.UpdateColors(arg, action);
 
-        internal void ReleaseBuffer()
+        internal void Release()
         {
             _lights.Dispose();
+            foreach(var map in _shadowMaps.AsSpan()) {
+                map.Release();
+            }
+            _shadowMaps.Dispose();
         }
     }
 }

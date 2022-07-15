@@ -135,9 +135,21 @@ namespace Elffy
         internal void Render()
         {
             var screen = Screen;
+
+            // render shadow to shadow maps
+            var lights = screen.Lights;
+            var shadowMaps = lights.GetShadowMaps();
+            var lightMatrices = lights.GetMatrices();
+            for(int i = 0; i < shadowMaps.Length; i++) {
+                FBO.Bind(shadowMaps[i].Fbo, FBO.Target.FrameBuffer);
+                foreach(var layer in AsSpan()) {
+                    layer.RenderShadowMap(screen, lightMatrices[i]);
+                }
+            }
+
+            // render objects
             var fbo = FBO.Empty;
-            var layers = AsSpan();
-            foreach(var layer in layers) {
+            foreach(var layer in AsSpan()) {
                 layer.Render(screen, ref fbo);
             }
         }

@@ -78,6 +78,11 @@ namespace Elffy.UI
             // nop
         }
 
+        internal override void RenderShadowMap(IHostScreen screen, in Matrix4 lightViewProjection)
+        {
+            // nop
+        }
+
         private static async UniTask UIEventPipeline(CoroutineState coroutine, UILayer layer)
         {
             while(coroutine.CanRun && layer.LifeState.IsRunning()) {

@@ -18,6 +18,8 @@ namespace Elffy
         private IBO _ibo;
         private VAO _vao;
         private RendererData _rendererData;
+        private RendererData _shadowRendererData;
+        private bool _hasShadow;
         private int _instancingCount;
         private bool _isLoaded;
         private RenderVisibility _visibility;
@@ -125,6 +127,81 @@ namespace Elffy
                     }
                 }
             }
+
+            void EnsureShaderInitialized()
+            {
+                if(_rendererData.State == RendererDataState.Compiled) {
+                    return;
+                }
+                VAO.Bind(_vao);
+                VBO.Bind(_vbo);
+                if(this is UIRenderable uIRenderable) {
+                    Debug.Assert(_rendererData.VertexType == typeof(VertexSlim));
+                    if(_rendererData.Shader is null) {
+                        var shader = ControlShaderSelector.GetDefault(uIRenderable.Control.GetType());
+                        _rendererData.SetShader(shader);
+                    }
+                    _rendererData.CompileForUI(uIRenderable.Control);
+                }
+                else {
+                    if(_rendererData.Shader is null) {
+                        _rendererData.SetShader(EmptyShader.Instance);
+                    }
+                    _rendererData.CompileForRenderable(this);
+                }
+                VAO.Unbind();
+                VBO.Unbind();
+                Debug.Assert(_rendererData.State == RendererDataState.Compiled);
+            }
+        }
+
+        internal void RenderShadowMap(in Matrix4 modelParent, in Matrix4 lightViewProjection)
+        {
+            var visibility = _visibility;
+            if(_hasShadow) {
+                if(IsLoaded && visibility == RenderVisibility.Visible || visibility == RenderVisibility.InvisibleSelf) {
+                    var withoutScale = modelParent * Position.ToTranslationMatrix4() * Rotation.ToMatrix4();
+                    if(visibility == RenderVisibility.Visible) {
+                        EnsureShadowRendererInitialized();
+                        var program = _shadowRendererData.GetValidProgram();
+                        var shader = SafeCast.As<RenderingShader>(_shadowRendererData.GetValidShader());
+                        var model = withoutScale * Scale.ToScaleMatrix4();
+                        VAO.Bind(_vao);
+                        IBO.Bind(_ibo);
+                        ProgramObject.UseProgram(program);
+                        shader.OnRenderingInternal(program, this, model, lightViewProjection, default);
+                        DrawElements(0, IBO.Length);
+                        VAO.Unbind();
+                        IBO.Unbind();
+                    }
+                    if(HasChild) {
+                        foreach(var child in Children.AsSpan()) {
+                            if(child.IsRenderable(out var renderable)) {
+                                renderable.RenderShadowMap(withoutScale, lightViewProjection);
+                            }
+                        }
+                    }
+                }
+            }
+
+            void EnsureShadowRendererInitialized()
+            {
+                if(_shadowRendererData.State == RendererDataState.Compiled) {
+                    return;
+                }
+                VAO.Bind(_vao);
+                VBO.Bind(_vbo);
+                Debug.Assert(this is not UIRenderable);
+                if(_shadowRendererData.Shader is null) {
+                    throw new NotImplementedException();    // TODO:
+                    //IRenderingShader shader;
+                    //_shadowRendererData.SetShader(shader);
+                }
+                _shadowRendererData.CompileForRenderable(this);
+                VAO.Unbind();
+                VBO.Unbind();
+                Debug.Assert(_rendererData.State == RendererDataState.Compiled);
+            }
         }
 
         protected virtual void OnRendering(in Matrix4 model, in Matrix4 view, in Matrix4 projection)
@@ -175,32 +252,6 @@ namespace Elffy
 
             _rendererData.SetVertexType(typeof(TVertex));
             _isLoaded = true;
-        }
-
-        private void EnsureShaderInitialized()
-        {
-            if(_rendererData.State == RendererDataState.Compiled) {
-                return;
-            }
-            VAO.Bind(_vao);
-            VBO.Bind(_vbo);
-            if(this is UIRenderable uIRenderable) {
-                Debug.Assert(_rendererData.VertexType == typeof(VertexSlim));
-                if(_rendererData.Shader is null) {
-                    var shader = ControlShaderSelector.GetDefault(uIRenderable.Control.GetType());
-                    _rendererData.SetShader(shader);
-                }
-                _rendererData.CompileForUI(uIRenderable.Control);
-            }
-            else {
-                if(_rendererData.Shader is null) {
-                    _rendererData.SetShader(EmptyShader.Instance);
-                }
-                _rendererData.CompileForRenderable(this);
-            }
-            VAO.Unbind();
-            VBO.Unbind();
-            Debug.Assert(_rendererData.State == RendererDataState.Compiled);
         }
 
         /// <summary>Load mesh data</summary>
