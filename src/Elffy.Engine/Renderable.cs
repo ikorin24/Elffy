@@ -41,6 +41,8 @@ namespace Elffy
         /// <summary>Get whether the <see cref="Renderable"/> is loaded and ready to be rendered.</summary>
         public bool IsLoaded => _isLoaded;
 
+        public bool HasShadow { get => _hasShadow; set => _hasShadow = value; }
+
         /// <summary>Get or set visibility in rendering.</summary>
         public RenderVisibility Visibility { get => _visibility; set => _visibility = value; }
 
@@ -74,6 +76,7 @@ namespace Elffy
 
         public Renderable() : base(FrameObjectInstanceType.Renderable)
         {
+            _hasShadow = true;
         }
 
         public RenderingShader GetValidShader()
@@ -158,18 +161,20 @@ namespace Elffy
         internal void RenderShadowMap(in Matrix4 modelParent, in Matrix4 lightViewProjection)
         {
             var visibility = _visibility;
-            if(_hasShadow) {
+            var hasShadow = _hasShadow;
+            if(hasShadow) {
                 if(IsLoaded && visibility == RenderVisibility.Visible || visibility == RenderVisibility.InvisibleSelf) {
                     var withoutScale = modelParent * Position.ToTranslationMatrix4() * Rotation.ToMatrix4();
                     if(visibility == RenderVisibility.Visible) {
                         EnsureShadowRendererInitialized();
+                        Debug.Assert(_shadowRendererData.State == RendererDataState.Compiled);
                         var program = _shadowRendererData.GetValidProgram();
-                        var shader = SafeCast.As<RenderingShader>(_shadowRendererData.GetValidShader());
+                        var shader = SafeCast.As<RenderShadowMapShader>(_shadowRendererData.GetValidShader());
                         var model = withoutScale * Scale.ToScaleMatrix4();
                         VAO.Bind(_vao);
                         IBO.Bind(_ibo);
                         ProgramObject.UseProgram(program);
-                        shader.OnRenderingInternal(program, this, model, lightViewProjection, default);
+                        shader.DispatchShader(new ShaderDataDispatcher(program), model, lightViewProjection);
                         DrawElements(0, IBO.Length);
                         VAO.Unbind();
                         IBO.Unbind();
@@ -193,14 +198,12 @@ namespace Elffy
                 VBO.Bind(_vbo);
                 Debug.Assert(this is not UIRenderable);
                 if(_shadowRendererData.Shader is null) {
-                    throw new NotImplementedException();    // TODO:
-                    //IRenderingShader shader;
-                    //_shadowRendererData.SetShader(shader);
+                    _shadowRendererData.SetShader(RenderShadowMapShader.Instance);
                 }
-                _shadowRendererData.CompileForRenderable(this);
+                _shadowRendererData.CompileForShadowMap(this);
                 VAO.Unbind();
                 VBO.Unbind();
-                Debug.Assert(_rendererData.State == RendererDataState.Compiled);
+                Debug.Assert(_shadowRendererData.State == RendererDataState.Compiled);
             }
         }
 
@@ -251,6 +254,7 @@ namespace Elffy
             VAO.Unbind();
 
             _rendererData.SetVertexType(typeof(TVertex));
+            _shadowRendererData.SetVertexType(typeof(TVertex));
             _isLoaded = true;
         }
 
@@ -277,6 +281,7 @@ namespace Elffy
             _isLoaded = false;
             base.OnDead();
             _rendererData.Release();
+            _shadowRendererData.Release();
             if(isLoaded) {
                 VBO.Delete(ref _vbo);
                 IBO.Delete(ref _ibo);

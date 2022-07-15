@@ -76,7 +76,7 @@ namespace Elffy.Shading
             return shader;
         }
 
-        private bool Compile()
+        private bool CompileIfNeeded()
         {
             var state = State;
             if(state == RendererDataState.Compiled) {
@@ -92,7 +92,7 @@ namespace Elffy.Shading
 
         public bool CompileForRenderable(Renderable renderable)
         {
-            if(Compile() == false) {
+            if(CompileIfNeeded() == false) {
                 return false;
             }
             Debug.Assert(_vertexType is not null);
@@ -107,7 +107,7 @@ namespace Elffy.Shading
 
         public bool CompileForUI(Control control)
         {
-            if(Compile() == false) {
+            if(CompileIfNeeded() == false) {
                 return false;
             }
             Debug.Assert(_vertexType is not null);
@@ -116,6 +116,22 @@ namespace Elffy.Shading
             }
             else {
                 Debug.Fail($"Shader must be {nameof(UIRenderingShader)}. actual: {_shader?.GetType()?.FullName}");
+            }
+            return true;
+        }
+
+        public bool CompileForShadowMap(Renderable target)
+        {
+            if(CompileIfNeeded() == false) {
+                return false;
+            }
+            Debug.Assert(_vertexType is not null);
+            if(_shader is RenderShadowMapShader shader) {
+                var definition = new VertexDefinition(_program);
+                shader.DefineLocation(definition, target, _vertexType);
+            }
+            else {
+                Debug.Fail($"Shader must be {nameof(RenderShadowMapShader)}. actual: {_shader?.GetType()?.FullName}");
             }
             return true;
         }
