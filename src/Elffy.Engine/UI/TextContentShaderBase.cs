@@ -83,9 +83,10 @@ namespace Elffy.UI
                 Foreground = target.Foreground.ToColorByte(),
             };
             using var result = TextDrawer.Draw(target.Text, options);
-
             ReleaseImage();
-            LoadImage(result.Image);
+            if(result.IsNone == false) {
+                LoadImage(result.Image);
+            }
         }
     }
 }
