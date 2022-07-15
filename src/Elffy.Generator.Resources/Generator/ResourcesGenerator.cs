@@ -118,6 +118,10 @@ $@"        /// <summary>Get resource package ""{info.ImportedName}""</summary>
     {
         public string ImportedName { get; init; } = "";
         public string Path { get; init; } = "";
+
+        public LocalResourceInfo()
+        {
+        }
     }
 
     private sealed class ImmutableArraySequenceEqualityComparer<T> : IEqualityComparer<ImmutableArray<T>>

@@ -26,7 +26,7 @@ namespace Elffy
         public int Width { get; init; }
         public int Height { get; init; }
         public float FrameRate { get; init; }
-        public string Title { get; init; } = "";
+        public string? Title { get; init; }
         public ResourceFile Icon { get; init; }
         public WindowStyle Style { get; init; }
         public WindowBorderStyle BorderStyle { get; init; }

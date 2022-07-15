@@ -151,10 +151,10 @@ namespace Elffy.Graphics.OpenGL
             GLFW.WindowHint(WindowHintInt.RefreshRate, (int)_initialConfig.FrameRate);
             _updateFrequency = _initialConfig.FrameRate;
             if(isFullscreen) {
-                _window = GLFW.CreateWindow(videoMode->Width, videoMode->Height, _initialConfig.Title, monitor, null);
+                _window = GLFW.CreateWindow(videoMode->Width, videoMode->Height, _initialConfig.Title ?? "", monitor, null);
             }
             else {
-                _window = GLFW.CreateWindow(_initialConfig.Width, _initialConfig.Height, _initialConfig.Title, null, null);
+                _window = GLFW.CreateWindow(_initialConfig.Width, _initialConfig.Height, _initialConfig.Title ?? "", null, null);
                 GLFW.SetWindowPos(_window, (videoMode->Width - _initialConfig.Width) / 2, (videoMode->Height - _initialConfig.Height) / 2);
             }
 
