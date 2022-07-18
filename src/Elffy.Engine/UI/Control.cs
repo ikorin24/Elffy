@@ -115,8 +115,8 @@ namespace Elffy.UI
         /// <summary>get or set <see cref="Control"/> is visible on rendering.</summary>
         public bool IsVisible
         {
-            get => _renderable.Visibility == RenderVisibility.Visible;
-            set => _renderable.Visibility = value ? RenderVisibility.Visible : RenderVisibility.InvisibleSelf;
+            get => _renderable.IsVisible;
+            set => _renderable.IsVisible = value;
         }
 
         public ref Vector4 CornerRadius => ref _cornerRadius;

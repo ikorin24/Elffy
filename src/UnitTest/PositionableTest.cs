@@ -17,13 +17,6 @@ namespace UnitTest
             Assert.True(root.Children.Count == 0);
             Assert.True(root.Children.AsSpan().IsEmpty);
 
-            // Invalid instance throws exception
-            Assert.Throws<InvalidOperationException>(() =>
-            {
-                var invalidCollection = new PositionableCollection();
-                invalidCollection.Add(new TestObject());
-            });
-
             // Add ten items
             var items = Enumerable.Range(0, 10).Select(i => new TestObject()).ToArray();
             foreach(var item in items) {
@@ -82,7 +75,7 @@ namespace UnitTest
             c.Children.Add(d);
             c.Children.Add(f);
             d.Children.Add(e);
-            
+
             Assert.True(a.Parent == null);
             Assert.True(b.Parent == a);
             Assert.True(c.Parent == a);
@@ -109,7 +102,7 @@ namespace UnitTest
 
             AssertEqual(a.Position, pos1);
             AssertEqual(b.Position, Vector3.Zero);
-            AssertEqual(c.Position, Vector3.Zero);     
+            AssertEqual(c.Position, Vector3.Zero);
             AssertEqual(d.Position, Vector3.Zero);             // a
             AssertEqual(e.Position, Vector3.Zero);             // |-- b
             AssertEqual(f.Position, Vector3.Zero);             // `-- c
@@ -158,7 +151,7 @@ namespace UnitTest
 
 
             // Get offspring, depth-first search test (If breadth-first search or other order, exception.)
-            Assert.True(a.GetOffspring().SequenceEqual(new [] { b, c, d, e, f }));
+            Assert.True(a.GetOffspring().SequenceEqual(new[] { b, c, d, e, f }));
 
             // Get Ancestor test
             Assert.True(e.GetAncestors().SequenceEqual(new[] { d, c, a }));

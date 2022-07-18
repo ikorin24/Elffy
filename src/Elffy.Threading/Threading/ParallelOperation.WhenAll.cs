@@ -43,6 +43,23 @@ namespace Elffy.Threading
             }
         }
 
+        public static UniTask WhenAll<TState>(int taskCount, TState state, SpanAction<UniTask, TState> taskBuilder)
+        {
+            if(taskBuilder is null) {
+                ThrowNullArg();
+                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(taskBuilder));
+            }
+            var rent = UniTaskMemoryPool.Rent(taskCount);
+            try {
+                var tasks = rent.AsSpan(0, taskCount);
+                taskBuilder.Invoke(tasks, state);
+                return WhenAll(tasks);
+            }
+            finally {
+                UniTaskMemoryPool.Return(rent);
+            }
+        }
+
         public static UniTask WhenAll<TState>(int taskCount, in TState state, TaskBuildAction<TState> taskBuilder)
         {
             if(taskBuilder is null) {

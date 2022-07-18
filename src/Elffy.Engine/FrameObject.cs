@@ -20,7 +20,7 @@ namespace Elffy
         private AsyncEventRaiser<FrameObject>? _terminating;
         private LifeState _state = LifeState.New;
         private bool _isFrozen;
-        private FrameObjectInstanceType _instanceType = FrameObjectInstanceType.FrameObject;
+        private readonly FrameObjectInstanceType _instanceType = FrameObjectInstanceType.FrameObject;
 
         public AsyncEvent<FrameObject> Activating => new(ref _activating);
         public AsyncEvent<FrameObject> Terminating => new(ref _terminating);
@@ -229,11 +229,31 @@ namespace Elffy
                 throw new InvalidOperationException($"Cannot terminate {nameof(FrameObject)} when activating.");
             }
             if(_state.IsSameOrAfter(LifeState.Terminating)) { ThrowTerminateTwice(); }
-            Debug.Assert(timingPoint is not null);
+
+            timingPoint ??= screen.TimingPoints.Update;
             Debug.Assert(_state == LifeState.Alive);
             Debug.Assert(_layer is not null);
 
-            return TerminateFromLayerWithoutCheck(_layer, timingPoint ?? screen.TimingPoints.Update, screen);
+            if(IsPositionable(out var positionable) && positionable.HasChild) {
+                var children = positionable.Children;
+                var args = (
+                    Self: this,
+                    Layer: _layer,
+                    TimingPoint: timingPoint,
+                    Screen: screen);
+                return children.Clear(args, static (children, args) =>
+                {
+                    using var tasks = new ParallelOperation();
+                    for(int i = children.Length - 1; i >= 0; i--) {
+                        tasks.Add(children[i].TerminateFromLayer(args.TimingPoint));
+                    }
+                    tasks.Add(args.Self.TerminateFromLayerWithoutCheck(args.Layer, args.TimingPoint, args.Screen));
+                    return tasks.WhenAll();
+                });
+            }
+            else {
+                return TerminateFromLayerWithoutCheck(_layer, timingPoint, screen);
+            }
 
             [DoesNotReturn] static void ThrowNotActivated() => throw new InvalidOperationException($"Cannot terminate {nameof(FrameObject)} because it is not activated.");
             [DoesNotReturn] static void ThrowTerminateTwice() => throw new InvalidOperationException($"Cannot terminate {nameof(FrameObject)} twice.");
@@ -266,6 +286,12 @@ namespace Elffy
             _state = LifeState.Dead;
             _layer = null;
             _hostScreen = null;
+            if(IsPositionable(out var positionable)) {
+                var parent = positionable.Parent;
+                if(parent is not null) {
+                    parent.Children.Remove(positionable);
+                }
+            }
             OnDead();
         }
 

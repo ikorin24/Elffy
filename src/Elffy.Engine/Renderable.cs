@@ -8,6 +8,7 @@ using Elffy.Shading.Forward;
 using Elffy.Graphics.OpenGL;
 using Elffy.UI;
 using Elffy.Features.Internal;
+using System.Runtime.CompilerServices;
 
 namespace Elffy
 {
@@ -22,7 +23,7 @@ namespace Elffy
         private bool _hasShadow;
         private int _instancingCount;
         private bool _isLoaded;
-        private RenderVisibility _visibility;
+        private bool _isVisible;
 
         /// <summary>Before-rendering event</summary>
         public event RenderingEventHandler? BeforeRendering;
@@ -43,8 +44,12 @@ namespace Elffy
 
         public bool HasShadow { get => _hasShadow; set => _hasShadow = value; }
 
-        /// <summary>Get or set visibility in rendering.</summary>
-        public RenderVisibility Visibility { get => _visibility; set => _visibility = value; }
+        /// <summary>Get or set visibility of itself</summary>
+        public bool IsVisible
+        {
+            get => _isVisible;
+            set => _isVisible = value;
+        }
 
         /// <summary>Get or set a shader source</summary>
         public RenderingShader? Shader
@@ -76,6 +81,7 @@ namespace Elffy
 
         public Renderable() : base(FrameObjectInstanceType.Renderable)
         {
+            _isVisible = true;
             _hasShadow = true;
         }
 
@@ -109,21 +115,49 @@ namespace Elffy
         public unsafe (ulong VertexCount, uint IndexCount) GetMesh<TVertex>(TVertex* vertices, ulong vertexCount, int* indices, uint indexCount) where TVertex : unmanaged
             => MeshHelper.GetMesh(this, vertices, vertexCount, indices, indexCount);
 
+        /// <summary>Get visibility in rendering.</summary>
+        /// <returns>visibility</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public RenderVisibility GetVisibility()
+        {
+            if(_isVisible == false) {
+                return RenderVisibility.InvisibleSelf;
+            }
+            if(Parent == null) {
+                return RenderVisibility.Visible;
+            }
+            return GetVisibilityInTree(this);
+
+            static RenderVisibility GetVisibilityInTree(Renderable self)
+            {
+                var parent = self.Parent;
+                while(true) {
+                    if(parent == null) {
+                        return RenderVisibility.Visible;
+                    }
+                    if(parent.IsRenderable(out var c) && c._isVisible == false) {
+                        return RenderVisibility.InvisibleHierarchical;
+                    }
+                    parent = parent.Parent;
+                }
+            }
+
+        }
+
         internal void Render(in Matrix4 modelParent, in Matrix4 view, in Matrix4 projection)
         {
-            var visibility = _visibility;
-            if(IsLoaded && visibility == RenderVisibility.Visible || visibility == RenderVisibility.InvisibleSelf) {
+            var visibility = GetVisibility();
+            if(_isLoaded && visibility == RenderVisibility.Visible) {
                 var withoutScale = modelParent * Position.ToTranslationMatrix4() * Rotation.ToMatrix4();
-                if(visibility == RenderVisibility.Visible) {
-                    var model = withoutScale * Scale.ToScaleMatrix4();
-                    EnsureShaderInitialized();
-                    Debug.Assert(_rendererData.State is RendererDataState.Compiled);
-                    BeforeRendering?.Invoke(this, in model, in view, in projection);
-                    OnRendering(in model, in view, in projection);
-                    Rendered?.Invoke(this, in model, in view, in projection);
-                }
-                if(HasChild) {
-                    foreach(var child in Children.AsSpan()) {
+                var model = withoutScale * Scale.ToScaleMatrix4();
+                EnsureShaderInitialized();
+                Debug.Assert(_rendererData.State is RendererDataState.Compiled);
+                BeforeRendering?.Invoke(this, in model, in view, in projection);
+                OnRendering(in model, in view, in projection);
+                Rendered?.Invoke(this, in model, in view, in projection);
+                var children = Children.AsSpan();
+                if(children.Length > 0) {
+                    foreach(var child in children) {
                         if(child.IsRenderable(out var renderable)) {
                             renderable.Render(withoutScale, view, projection);
                         }
@@ -160,30 +194,30 @@ namespace Elffy
 
         internal void RenderShadowMap(in Matrix4 modelParent, in Matrix4 lightViewProjection)
         {
-            var visibility = _visibility;
+            var visibility = GetVisibility();
             var hasShadow = _hasShadow;
-            if(hasShadow) {
-                if(IsLoaded && visibility == RenderVisibility.Visible || visibility == RenderVisibility.InvisibleSelf) {
-                    var withoutScale = modelParent * Position.ToTranslationMatrix4() * Rotation.ToMatrix4();
-                    if(visibility == RenderVisibility.Visible) {
-                        EnsureShadowRendererInitialized();
-                        Debug.Assert(_shadowRendererData.State == RendererDataState.Compiled);
-                        var program = _shadowRendererData.GetValidProgram();
-                        var shader = SafeCast.As<RenderShadowMapShader>(_shadowRendererData.GetValidShader());
-                        var model = withoutScale * Scale.ToScaleMatrix4();
-                        VAO.Bind(_vao);
-                        IBO.Bind(_ibo);
-                        ProgramObject.UseProgram(program);
-                        shader.DispatchShader(new ShaderDataDispatcher(program), model, lightViewProjection);
-                        DrawElements(0, IBO.Length);
-                        VAO.Unbind();
-                        IBO.Unbind();
-                    }
-                    if(HasChild) {
-                        foreach(var child in Children.AsSpan()) {
-                            if(child.IsRenderable(out var renderable)) {
-                                renderable.RenderShadowMap(withoutScale, lightViewProjection);
-                            }
+            if(hasShadow == false) {
+                return;
+            }
+            if(_isLoaded && visibility == RenderVisibility.Visible) {
+                var withoutScale = modelParent * Position.ToTranslationMatrix4() * Rotation.ToMatrix4();
+                EnsureShadowRendererInitialized();
+                Debug.Assert(_shadowRendererData.State == RendererDataState.Compiled);
+                var program = _shadowRendererData.GetValidProgram();
+                var shader = SafeCast.As<RenderShadowMapShader>(_shadowRendererData.GetValidShader());
+                var model = withoutScale * Scale.ToScaleMatrix4();
+                VAO.Bind(_vao);
+                IBO.Bind(_ibo);
+                ProgramObject.UseProgram(program);
+                shader.DispatchShader(new ShaderDataDispatcher(program), model, lightViewProjection);
+                DrawElements(0, IBO.Length);
+                VAO.Unbind();
+                IBO.Unbind();
+                var children = Children.AsSpan();
+                if(children.Length > 0) {
+                    foreach(var child in children) {
+                        if(child.IsRenderable(out var renderable)) {
+                            renderable.RenderShadowMap(withoutScale, lightViewProjection);
                         }
                     }
                 }

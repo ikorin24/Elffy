@@ -136,6 +136,14 @@ namespace Elffy.Features.Internal
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public UniTask Clear<TState>(TState state, AsyncReadOnlySpanAction<T, TState> cleared)
+        {
+            var count = _count;
+            _count = 0;
+            return Pool.TryPushWithCallback(ref _array, count, state, cleared).AsUniTask();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Span<T> AsSpan()
         {
             // this method is valid if '_array' is null.
@@ -269,6 +277,13 @@ namespace Elffy.Features.Internal
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static UniTask<bool> TryPushWithCallback(ref T[]? array, int count, AsyncReadOnlySpanAction<T>? cleared)
             {
+                return TryPushWithCallback(ref array, count, cleared,
+                    static (span, cleared) => cleared?.Invoke(span) ?? UniTask.CompletedTask);
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static UniTask<bool> TryPushWithCallback<TState>(ref T[]? array, int count, TState state, AsyncReadOnlySpanAction<T, TState>? cleared)
+            {
                 Debug.Assert(array is null || MathTool.IsPowerOfTwo(array.Length), $"Length of array must be power of two.");
 
                 // 1. array = null
@@ -281,13 +296,13 @@ namespace Elffy.Features.Internal
                 // 1. array = null
                 var copy = array;
                 array = null;
-                return TryPushCore(copy, count, cleared);
+                return TryPushCore(copy, count, state, cleared);
 
-                static async UniTask<bool> TryPushCore(T[]? copy, int count, AsyncReadOnlySpanAction<T>? cleared)
+                static async UniTask<bool> TryPushCore(T[]? copy, int count, TState state, AsyncReadOnlySpanAction<T, TState>? cleared)
                 {
                     // 2. Fire the delegete
                     if(cleared != null) {
-                        await cleared.Invoke(copy.AsSpan(0, count));
+                        await cleared.Invoke(copy.AsSpan(0, count), state);
                     }
 
                     if(copy is null) {

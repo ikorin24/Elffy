@@ -4,6 +4,7 @@ using Elffy;
 using Elffy.Shapes;
 using System;
 using System.Diagnostics;
+using System.Linq;
 using Xunit;
 using Xunit.Sdk;
 
@@ -163,6 +164,119 @@ namespace UnitTest
             cube.Activating.Subscribe((cube, ct) => throw new XunitException());
             await Assert.ThrowsAsync<XunitException>(async () => await cube.Activate(layer));
             Assert.Equal(LifeState.Alive, cube.LifeState);
+        });
+
+        [Fact]
+        public static void LifeSpan_Positionable() => TestEngineEntryPoint.Start(async screen =>
+        {
+            var layer = await LayerPipelines
+                .CreateBuilder(screen)
+                .Build(() => new WorldLayer());
+
+            // cubes[0] -+-- cubes[1] ---- cubes[2]
+            //           |-- cubes[3]
+            //           `-- cubes[4] ---- cubes[5] ---- cubes[6]
+
+
+            var cubes = await UniTask.WhenAll(Enumerable
+                .Range(0, 7)
+                .Select(i => new Cube().Activate(layer)));
+
+            cubes[0].Children.Add(cubes[1]);
+            cubes[0].Children.Add(cubes[3]);
+            cubes[0].Children.Add(cubes[4]);
+            cubes[1].Children.Add(cubes[2]);
+            cubes[4].Children.Add(cubes[5]);
+            cubes[5].Children.Add(cubes[6]);
+
+            foreach(var cube in cubes) {
+                Assert.Equal(LifeState.Alive, cube.LifeState);
+            }
+
+            // terminate 5 (and 6)
+            await cubes[5].Terminate();
+            Assert.Equal(LifeState.Dead, cubes[5].LifeState);
+            Assert.Equal(LifeState.Dead, cubes[6].LifeState);
+            Assert.Equal(0, cubes[4].Children.Count);
+
+
+            Assert.Equal(3, cubes[0].Children.Count);
+
+
+            // terminate 3
+            await cubes[3].Terminate();
+            Assert.Equal(LifeState.Dead, cubes[3].LifeState);
+
+
+            // terminate 0 (and 1, 2, 4)
+            await cubes[0].Terminate();
+            Assert.Equal(0, cubes[0].Children.Count);
+            foreach(var cube in cubes) {
+                Assert.Equal(LifeState.Dead, cube.LifeState);
+            }
+        });
+
+        [Fact]
+        public static void Visibility_RenderableTree() => TestEngineEntryPoint.Start(async screen =>
+        {
+            var layer = await LayerPipelines
+                .CreateBuilder(screen)
+                .Build(() => new WorldLayer());
+
+            // cubes[0] -+-- cubes[1] ---- cubes[2]
+            //           |-- cubes[3]
+            //           `-- cubes[4] ---- cubes[5] ---- cubes[6]
+
+
+            var cubes = await UniTask.WhenAll(Enumerable
+                .Range(0, 7)
+                .Select(i => new Cube().Activate(layer)));
+
+            cubes[0].Children.Add(cubes[1]);
+            cubes[0].Children.Add(cubes[3]);
+            cubes[0].Children.Add(cubes[4]);
+            cubes[1].Children.Add(cubes[2]);
+            cubes[4].Children.Add(cubes[5]);
+            cubes[5].Children.Add(cubes[6]);
+
+            foreach(var cube in cubes) {
+                Assert.True(cube.IsVisible);
+            }
+            foreach(var cube in cubes) {
+                Assert.Equal(RenderVisibility.Visible, cube.GetVisibility());
+            }
+
+            cubes[4].IsVisible = false;
+            Assert.True(cubes[0].IsVisible);
+            Assert.True(cubes[1].IsVisible);
+            Assert.True(cubes[2].IsVisible);
+            Assert.True(cubes[3].IsVisible);
+            Assert.False(cubes[4].IsVisible);
+            Assert.True(cubes[5].IsVisible);
+            Assert.True(cubes[6].IsVisible);
+            Assert.Equal(RenderVisibility.Visible, cubes[0].GetVisibility());
+            Assert.Equal(RenderVisibility.Visible, cubes[1].GetVisibility());
+            Assert.Equal(RenderVisibility.Visible, cubes[2].GetVisibility());
+            Assert.Equal(RenderVisibility.Visible, cubes[3].GetVisibility());
+            Assert.Equal(RenderVisibility.InvisibleSelf, cubes[4].GetVisibility());
+            Assert.Equal(RenderVisibility.InvisibleHierarchical, cubes[5].GetVisibility());
+            Assert.Equal(RenderVisibility.InvisibleHierarchical, cubes[6].GetVisibility());
+
+            cubes[0].IsVisible = false;
+            Assert.False(cubes[0].IsVisible);
+            Assert.True(cubes[1].IsVisible);
+            Assert.True(cubes[2].IsVisible);
+            Assert.True(cubes[3].IsVisible);
+            Assert.False(cubes[4].IsVisible);
+            Assert.True(cubes[5].IsVisible);
+            Assert.True(cubes[6].IsVisible);
+            Assert.Equal(RenderVisibility.InvisibleSelf, cubes[0].GetVisibility());
+            Assert.Equal(RenderVisibility.InvisibleHierarchical, cubes[1].GetVisibility());
+            Assert.Equal(RenderVisibility.InvisibleHierarchical, cubes[2].GetVisibility());
+            Assert.Equal(RenderVisibility.InvisibleHierarchical, cubes[3].GetVisibility());
+            Assert.Equal(RenderVisibility.InvisibleSelf, cubes[4].GetVisibility());
+            Assert.Equal(RenderVisibility.InvisibleHierarchical, cubes[5].GetVisibility());
+            Assert.Equal(RenderVisibility.InvisibleHierarchical, cubes[6].GetVisibility());
         });
     }
 }

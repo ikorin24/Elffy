@@ -1,6 +1,8 @@
 ﻿#nullable enable
+using Cysharp.Threading.Tasks;
 using Elffy.Features;
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -19,6 +21,10 @@ namespace Elffy
         public Positionable this[int index] => _owner.ChildrenCore[index];
 
         public int Count => _owner.ChildrenCore.Count;
+
+        [Obsolete("Don't use default constructor.", true)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public PositionableCollection() => throw new NotSupportedException("Don't use default constructor.");
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal PositionableCollection(Positionable owner)
@@ -47,6 +53,16 @@ namespace Elffy
                 item.Parent = null;
             }
             core.Clear();
+        }
+
+        internal UniTask Clear<TState>(TState state, AsyncReadOnlySpanAction<Positionable, TState> callback)
+        {
+            ThrowIfInvalidInstance();
+            ref var core = ref _owner.ChildrenCore;
+            foreach(var item in core.AsSpan()) {
+                item.Parent = null;
+            }
+            return core.Clear(state, callback);
         }
 
         public bool Contains(Positionable item)

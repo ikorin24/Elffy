@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Elffy.Events\Elffy.Events.csproj" />
+    <ProjectReference Include="..\Elffy.Primitives\Elffy.Primitives.csproj" />
     <ProjectReference Include="..\Elffy.Threading.Lock\Elffy.Threading.Lock.csproj" />
   </ItemGroup>
 

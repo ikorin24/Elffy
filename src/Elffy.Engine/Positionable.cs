@@ -164,13 +164,6 @@ namespace Elffy
                 return obj;
             }
         }
-
-        protected override void OnDead()
-        {
-            base.OnDead();
-            // TODO: 子が生きてる場合、子の座標はどうする？
-            //Children.Clear();
-        }
     }
 
     public readonly struct PositionableAncestors : IEnumerable<Positionable>
