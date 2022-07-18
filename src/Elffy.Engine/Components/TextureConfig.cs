@@ -28,7 +28,7 @@ namespace Elffy.Components
         /// <remarks>
         /// ExpansionMode: Bilinear, ShrinkMode: Bilinear, MipmapMode: Bilinear, WrapModeX: ClampToEdge, WrapModeY: ClampToEdge
         /// </remarks>
-        public static readonly TextureConfig Default = new()
+        public static TextureConfig Default => new()
         {
             ExpansionMode = TextureExpansionMode.Bilinear,
             ShrinkMode = TextureShrinkMode.Bilinear,
@@ -37,7 +37,7 @@ namespace Elffy.Components
             WrapModeY = TextureWrapMode.ClampToEdge,
         };
 
-        public static readonly TextureConfig DefaultNearestNeighbor = new()
+        public static TextureConfig DefaultNearestNeighbor => new()
         {
             ExpansionMode = TextureExpansionMode.NearestNeighbor,
             ShrinkMode = TextureShrinkMode.NearestNeighbor,
@@ -46,7 +46,7 @@ namespace Elffy.Components
             WrapModeY = TextureWrapMode.ClampToEdge,
         };
 
-        public static readonly TextureConfig BilinearRepeat = new()
+        public static TextureConfig BilinearRepeat => new()
         {
             ExpansionMode = TextureExpansionMode.Bilinear,
             ShrinkMode = TextureShrinkMode.Bilinear,
