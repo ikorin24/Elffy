@@ -29,7 +29,7 @@ namespace Elffy.Shading
 
         public void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
         {
-            definition.Map(vertexType, "_vPos", VertexSpecialField.Position);
+            definition.Map(vertexType, 0, VertexSpecialField.Position);
         }
 
         public void DispatchShader(ShaderDataDispatcher dispatcher, in Matrix4 model, in Matrix4 lightViewProjection)
@@ -41,7 +41,7 @@ namespace Elffy.Shading
 
         private const string Vert =
 @"#version 410
-in vec3 _vPos;
+layout (location = 0) in vec3 _vPos;
 uniform mat4 _lmvp;
 void main()
 {

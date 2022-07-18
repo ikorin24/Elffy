@@ -120,25 +120,22 @@ namespace Elffy.Shading
 
         private static void CalcLightMatrix(ReadOnlySpan<Vector4> positions, Span<Matrix4> lightMatrices)
         {
-            const float Near = 1;
-            const float Far = 10;
-            const float L = 100;
-
             for(int i = 0; i < positions.Length; i++) {
-                Vector3 p;
-                Matrix4 projection;
+                const float Near = 0f;
+                const float Far = 100;
+                const float L = 20;
                 if(positions[i].W == 0) {
-                    p = positions[i].Xyz;
-                    Matrix4.OrthographicProjection(-L, L, -L, L, Near, Far, out projection);    // TODO:
+                    var vec = positions[i].Xyz.Normalized();
+                    var v = new Vector3(vec.X, 0, vec.Z);
+                    var up = Quaternion.FromTwoVectors(v, vec) * Vector3.UnitY;
+                    Matrix4.LookAt(vec * (Far * 0.5f), Vector3.Zero, up, out var view);
+                    Matrix4.OrthographicProjection(-L, L, -L, L, Near, Far, out var projection);
+                    lightMatrices[i] = projection * view;
                 }
                 else {
-                    p = positions[i].Xyz / positions[i].W;
-                    Matrix4.OrthographicProjection(-L, L, -L, L, Near, Far, out projection);    // TODO:
+                    //p = positions[i].Xyz / positions[i].W;
+                    throw new NotImplementedException();
                 }
-                var v = new Vector3(p.X, 0, p.Z);
-                var up = Quaternion.FromTwoVectors(v, p) * Vector3.UnitY;
-                Matrix4.LookAt(p, Vector3.Zero, up, out var view);
-                lightMatrices[i] = projection * view;
             }
         }
     }

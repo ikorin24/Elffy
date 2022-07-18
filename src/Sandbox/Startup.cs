@@ -54,14 +54,14 @@ namespace Sandbox
             uiRoot.Background = Color4.Black;
             try {
                 await ParallelOperation.WhenAll(
-                    Sample.CreateUI(uiLayer.UIRoot),
+                    //Sample.CreateUI(uiLayer.UIRoot),
                     CreateDice2(drLayer),
                     CreateCameraMouse(wLayer, new Vector3(0, 3, 0)),
                     CreateDice(wLayer),
                     CreateModel2(wLayer),
                     CreateBox(wLayer),
                     CreateFloor(wLayer),
-                    CreateFloor2(wLayer),
+                    //CreateFloor2(wLayer),
                     CreateSky(wLayer),
                     timings.Update.DelayTime(800));
                 var time = TimeSpanF.FromMilliseconds(200);
@@ -81,7 +81,7 @@ namespace Sandbox
         {
             ReadOnlySpan<Vector4> pos = stackalloc Vector4[]
             {
-                new(1, 1, 0, 0),
+                new(1, 1, 1, 0),
                 //new(1, 0, 0, 0),
             };
             ReadOnlySpan<Color4> color = stackalloc Color4[]
@@ -147,13 +147,23 @@ namespace Sandbox
         {
             var timing = layer.GetValidScreen().TimingPoints.Update;
             var plain = new Plain();
-            plain.Scale = new Vector3(10f);
+            plain.Scale = new Vector3(40f);
             plain.Shader = new PhongShader();
             var config = new TextureConfig(TextureExpansionMode.NearestNeighbor, TextureShrinkMode.NearestNeighbor,
                                            TextureMipmapMode.None, TextureWrapMode.ClampToEdge, TextureWrapMode.ClampToEdge);
             var texture = await Resources.Sandbox["floor.png"].LoadTextureAsync(config, timing);
             plain.AddComponent(texture);
             plain.Rotation = Quaternion.FromAxisAngle(Vector3.UnitX, -90.ToRadian());
+            plain.Updated += _ =>
+            {
+                var k = plain.GetValidScreen().Keyboard;
+                if(k.IsPress(Elffy.InputSystem.Keys.Down)) {
+                    plain.Position.Y -= 0.5f;
+                }
+                else if(k.IsPress(Elffy.InputSystem.Keys.Up)) {
+                    plain.Position.Y += 0.5f;
+                }
+            };
             return await plain.Activate(layer);
         }
 

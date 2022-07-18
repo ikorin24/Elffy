@@ -3,12 +3,13 @@ using Elffy.Effective;
 using Elffy.Features;
 using Elffy.Graphics.OpenGL;
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Shading
 {
     public sealed class LightManager
     {
-        private const int ShadowMapSize = 1024;
+        private const int ShadowMapSize = 2048;
 
         private readonly IHostScreen _screen;
         private readonly LightBuffer _lights;
@@ -17,6 +18,18 @@ namespace Elffy.Shading
         public IHostScreen Screen => _screen;
 
         public int LightCount => _lights.LightCount;
+
+        public Light this[int index]
+        {
+            get
+            {
+                if((uint)index >= (uint)LightCount) {
+                    ThrowOutOfRange();
+                    [DoesNotReturn] static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(index));
+                }
+                return new Light(this, index);
+            }
+        }
 
         public TextureObject PositionTexture => _lights.PositionTexture;
         public TextureObject ColorTexture => _lights.ColorTexture;
@@ -82,5 +95,31 @@ namespace Elffy.Shading
             }
             _shadowMaps.Dispose();
         }
+    }
+
+    public readonly struct Light : IEquatable<Light>
+    {
+        private readonly LightManager _lightManager;
+        private readonly int _index;
+
+        public ref readonly Vector4 Position => ref _lightManager.GetPositions()[_index];
+
+        public ref readonly Color4 Color => ref _lightManager.GetColors()[_index];
+
+        public ref readonly Matrix4 LightMatrix => ref _lightManager.GetMatrices()[_index];
+
+        public ref readonly ShadowMapData ShadowMap => ref _lightManager.GetShadowMaps()[_index];
+
+        internal Light(LightManager lightManager, int index)
+        {
+            _lightManager = lightManager;
+            _index = index;
+        }
+
+        public override bool Equals(object? obj) => obj is Light light && Equals(light);
+
+        public bool Equals(Light other) => (_lightManager == other._lightManager) && (_index == other._index);
+
+        public override int GetHashCode() => HashCode.Combine(_lightManager, _index);
     }
 }

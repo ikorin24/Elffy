@@ -38,14 +38,14 @@ namespace Elffy.Shading
                     TextureObject.DepthImage2DUninitialized(size);
                     TextureObject.Parameter2DMinFilter(TextureShrinkMode.NearestNeighbor, TextureMipmapMode.None);
                     TextureObject.Parameter2DMagFilter(TextureExpansionMode.NearestNeighbor);
-                    TextureObject.Parameter2DWrapS(TextureWrapMode.Repeat);
-                    TextureObject.Parameter2DWrapT(TextureWrapMode.Repeat);
+                    TextureObject.Parameter2DWrapS(TextureWrapMode.ClampToBorder);
+                    TextureObject.Parameter2DWrapT(TextureWrapMode.ClampToBorder);
                     fbo = FBO.Create();
                     FBO.Bind(fbo, FBO.Target.FrameBuffer);
                     FBO.SetTexture2DBuffer(depth, FBO.Attachment.DepthAttachment);
-                    FBO.ThrowIfInvalidStatus();
                     GL.DrawBuffer(DrawBufferMode.None);
                     GL.ReadBuffer(ReadBufferMode.None);
+                    FBO.ThrowIfInvalidStatus();
                     FBO.Unbind(FBO.Target.FrameBuffer);
                     return (Screen: screen, Fbo: fbo, DepthTex: depth, Size: size);
                 }

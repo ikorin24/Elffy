@@ -142,6 +142,9 @@ namespace Elffy
             var lightMatrices = lights.GetMatrices();
             for(int i = 0; i < shadowMaps.Length; i++) {
                 FBO.Bind(shadowMaps[i].Fbo, FBO.Target.FrameBuffer);
+                var size = shadowMaps[i].Size;
+                OpenTK.Graphics.OpenGL4.GL.Viewport(0, 0, size.X, size.Y);
+                ElffyGL.Clear(ClearMask.DepthBufferBit);
                 foreach(var layer in AsSpan()) {
                     layer.RenderShadowMap(screen, lightMatrices[i]);
                 }
@@ -149,6 +152,8 @@ namespace Elffy
 
             // render objects
             var fbo = FBO.Empty;
+            var screenSize = screen.FrameBufferSize;
+            OpenTK.Graphics.OpenGL4.GL.Viewport(0, 0, screenSize.X, screenSize.Y);
             foreach(var layer in AsSpan()) {
                 layer.Render(screen, ref fbo);
             }
