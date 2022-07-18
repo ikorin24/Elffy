@@ -19,7 +19,6 @@ namespace Elffy.Features.Internal
         private bool _isCloseRequested;
         private int _runningThreadId;
         private Vector2i _frameBufferSize;
-        private Color4 _clearColor;
         private CurrentFrameTiming _currentTiming;
 
         public event Action<IHostScreen>? Initialized;
@@ -43,20 +42,9 @@ namespace Elffy.Features.Internal
 
         public CurrentFrameTiming CurrentTiming => (_runningThreadId == ThreadHelper.CurrentThreadId) ? _currentTiming : CurrentFrameTiming.OutOfFrameLoop;
 
-        public Color4 ClearColor
-        {
-            get => _clearColor;
-            set
-            {
-                _clearColor = value;
-                GL.ClearColor(value.R, value.G, value.B, value.A);
-            }
-        }
-
         internal RenderingArea(IHostScreen screen)
         {
             _state = RenderingAreaLifeState.New;
-            _clearColor = Color4.Black;
             OwnerScreen = screen;
             TimingPoints = new FrameTimingPointList(screen);
             Lights = new LightManager(screen);
@@ -76,8 +64,7 @@ namespace Elffy.Features.Internal
 
         private void InitializeGL()
         {
-            var clearColor = _clearColor;
-            GL.ClearColor(clearColor.R, _clearColor.G, _clearColor.B, _clearColor.A);
+            GL.ClearColor(0, 0, 0, 0);
             GL.Enable(EnableCap.DepthTest);
 
             // Enable alpha blending.
