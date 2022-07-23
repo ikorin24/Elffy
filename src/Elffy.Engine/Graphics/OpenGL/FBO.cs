@@ -78,24 +78,33 @@ namespace Elffy.Graphics.OpenGL
             GL.BindFramebuffer((FramebufferTarget)target, 0);
         }
 
-        /// <summary>Call glFreameBufferTexture2D</summary>
+        /// <summary>Call glFreameBufferTexture2D with GL_COLOR_ATTACHMENT`n` (`n` is <paramref name="colorAttachmentNum"/>)</summary>
         /// <param name="to">texture object</param>
-        /// <param name="attachment">attachment type</param>
+        /// <param name="colorAttachmentNum">color attachment number</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void SetTexture2DBuffer(in TextureObject to, Attachment attachment)
+        public static void SetTexture2DColorAttachment(in TextureObject to, int colorAttachmentNum)
         {
             GLAssert.EnsureContext();
-            GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, (FramebufferAttachment)attachment, TextureTarget.Texture2D, to.Value, 0);
+            var attachment = FramebufferAttachment.ColorAttachment0 + colorAttachmentNum;
+            GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, attachment, TextureTarget.Texture2D, to.Value, 0);
         }
 
-        /// <summary>Call glFramebufferRenderbuffer</summary>
-        /// <param name="rbo">render buffer object</param>
-        /// <param name="attachment">attachment type</param>
+        /// <summary>Call glFreameBufferTexture2D with GL_DEPTH_ATTACHMENT</summary>
+        /// <param name="to">texture object</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void SetRenderBuffer(in RBO rbo, Attachment attachment)
+        public static void SetTexture2DDepthAttachment(in TextureObject to)
         {
             GLAssert.EnsureContext();
-            GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, (FramebufferAttachment)attachment, RenderbufferTarget.Renderbuffer, rbo.Value);
+            GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment, TextureTarget.Texture2D, to.Value, 0);
+        }
+
+        /// <summary>Call glFramebufferRenderbuffer with GL_DEPTH_STENCIL_ATTACHMENT</summary>
+        /// <param name="rbo">render buffer object</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void SetRenderBufferDepthStencilAttachment(in RBO rbo)
+        {
+            GLAssert.EnsureContext();
+            GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthStencilAttachment, RenderbufferTarget.Renderbuffer, rbo.Value);
         }
 
         /// <summary>Call glCheckFramebufferStatus</summary>
@@ -150,21 +159,6 @@ namespace Elffy.Graphics.OpenGL
             FrameBuffer = FramebufferTarget.Framebuffer,
             Draw = FramebufferTarget.DrawFramebuffer,
             Read = FramebufferTarget.ReadFramebuffer,
-        }
-
-        public enum Attachment
-        {
-            DepthAttachment = FramebufferAttachment.DepthAttachment,
-            StencilAttachment = FramebufferAttachment.StencilAttachment,
-            ColorAttachment0 = FramebufferAttachment.ColorAttachment0,
-            ColorAttachment1 = FramebufferAttachment.ColorAttachment1,
-            ColorAttachment2 = FramebufferAttachment.ColorAttachment2,
-            ColorAttachment3 = FramebufferAttachment.ColorAttachment3,
-            ColorAttachment4 = FramebufferAttachment.ColorAttachment4,
-            ColorAttachment5 = FramebufferAttachment.ColorAttachment5,
-            ColorAttachment6 = FramebufferAttachment.ColorAttachment6,
-            ColorAttachment7 = FramebufferAttachment.ColorAttachment7,
-            DepthStencilAttachment = FramebufferAttachment.DepthStencilAttachment,
         }
     }
 }

@@ -42,7 +42,7 @@ namespace Elffy.Shading
                     TextureObject.Parameter2DWrapT(TextureWrapMode.ClampToBorder);
                     fbo = FBO.Create();
                     FBO.Bind(fbo, FBO.Target.FrameBuffer);
-                    FBO.SetTexture2DBuffer(depth, FBO.Attachment.DepthAttachment);
+                    FBO.SetTexture2DDepthAttachment(depth);
                     GL.DrawBuffer(DrawBufferMode.None);
                     GL.ReadBuffer(ReadBufferMode.None);
                     FBO.ThrowIfInvalidStatus();

@@ -3,6 +3,7 @@ using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using OpenTK.Graphics.OpenGL4;
 using Elffy.Effective;
 using Elffy.Graphics.OpenGL;
@@ -13,15 +14,19 @@ using TextureWrapMode = Elffy.Components.TextureWrapMode;
 
 namespace Elffy.Shading.Deferred
 {
-    internal sealed class GBuffer : IGBuffer, IDisposable
+    internal sealed unsafe class GBuffer : IGBuffer, IDisposable
     {
+        // index  | format  | R        | G         | B        | A        |
+        // ----
+        // mrt[0] | Rgba16f | pos.x    | pos.y     | pos.z    | 1        |
+        // mrt[1] | Rgba16f | normal.x | normal.y  | normal.z | 1        |
+        // mrt[2] | Rgba16f | albedo.r | albedo.g  | albedo.b | 1        |
+        // mrt[3] | Rgba16f | emit.r   | emit.g    | emit.b   | 1        |
+        // mrt[4] | Rgba16f | metallic | roughness | 0        | 1        |
+
         private IHostScreen? _screen;
         private FBO _fbo;
-        private TextureObject _position;            // Texture2D, Rgba16f, (x, y, z, 1)
-        private TextureObject _normal;              // Texture2D, Rgba16f, (normal.x, normal.y, normal.z, 1)
-        private TextureObject _albedo;      // Texture2D, Rgba16f, (albedo.r, albedo.g, albedo.b, 1)
-        private TextureObject _emit;       // Texture2D, Rgba16f, (emit.r, emit.g, emit.b, 1)
-        private TextureObject _metallicRoughness;   // Texture2D, Rgba16f, (metallic, roughness, 0, 1)
+        private GBufferMrt _mrt;
         private RBO _depth;
         private Vector2i _size;
         private bool _initialized;
@@ -31,6 +36,8 @@ namespace Elffy.Shading.Deferred
         public ref readonly FBO FBO => ref _fbo;
 
         public Vector2i Size => _size;
+
+        private Span<TextureObject> Mrt => MemoryMarshal.CreateSpan(ref _mrt.Mrt0, GBufferMrt.MrtCount);
 
         public GBuffer()
         {
@@ -46,7 +53,7 @@ namespace Elffy.Shading.Deferred
 
         public GBufferData GetBufferData()
         {
-            return new GBufferData(_fbo, _position, _normal, _albedo, _emit, _metallicRoughness);
+            return new GBufferData(_fbo, Mrt);
         }
 
         public void Initialize(IHostScreen screen)
@@ -62,9 +69,7 @@ namespace Elffy.Shading.Deferred
             if(_initialized) {
                 ThrowNotInitialized();
             }
-
-            CreateGBuffer(screen.FrameBufferSize, out _fbo, out _position, out _normal,
-                          out _albedo, out _emit, out _metallicRoughness, out _depth);
+            CreateGBuffer(screen.FrameBufferSize, out _fbo, out _depth, Mrt);
             _size = screen.FrameBufferSize;
             ContextAssociatedMemorySafety.Register(this, screen);
             _screen = screen;
@@ -74,11 +79,9 @@ namespace Elffy.Shading.Deferred
         public unsafe void ClearColorBuffers()
         {
             float* clearColor = stackalloc float[4] { 0, 0, 0, 0 };
-            GL.ClearBuffer(ClearBuffer.Color, 0, clearColor);
-            GL.ClearBuffer(ClearBuffer.Color, 1, clearColor);
-            GL.ClearBuffer(ClearBuffer.Color, 2, clearColor);
-            GL.ClearBuffer(ClearBuffer.Color, 3, clearColor);
-            GL.ClearBuffer(ClearBuffer.Color, 4, clearColor);
+            for(int i = 0; i < GBufferMrt.MrtCount; i++) {
+                GL.ClearBuffer(ClearBuffer.Color, i, clearColor);
+            }
         }
 
         public void Resize()
@@ -93,8 +96,7 @@ namespace Elffy.Shading.Deferred
             var newSize = screen.FrameBufferSize;
             if(newSize != _size) {
                 DeleteResources();
-                CreateGBuffer(newSize, out _fbo, out _position, out _normal,
-                              out _albedo, out _emit, out _metallicRoughness, out _depth);
+                CreateGBuffer(screen.FrameBufferSize, out _fbo, out _depth, Mrt);
                 _size = newSize;
             }
         }
@@ -121,75 +123,45 @@ namespace Elffy.Shading.Deferred
         private void DeleteResources()
         {
             FBO.Delete(ref _fbo);
-            TextureObject.Delete(ref _position);
-            TextureObject.Delete(ref _normal);
-            TextureObject.Delete(ref _albedo);
-            TextureObject.Delete(ref _emit);
-            TextureObject.Delete(ref _metallicRoughness);
+            var mrt = Mrt;
+            for(int i = 0; i < mrt.Length; i++) {
+                TextureObject.Delete(ref mrt[i]);
+            }
             RBO.Delete(ref _depth);
         }
 
         private unsafe static void CreateGBuffer(Vector2i frameBufferSize,
                                                  out FBO fbo,
-                                                 out TextureObject position,
-                                                 out TextureObject normal,
-                                                 out TextureObject albedo,
-                                                 out TextureObject emit,
-                                                 out TextureObject metallicRoughness,
-                                                 out RBO depth)
+                                                 out RBO depth,
+                                                 Span<TextureObject> mrt)
         {
             fbo = default;
-            position = default;
-            normal = default;
-            albedo = default;
-            emit = default;
-            metallicRoughness = default;
             depth = default;
             try {
                 frameBufferSize.X = Math.Max(1, frameBufferSize.X);
                 frameBufferSize.Y = Math.Max(1, frameBufferSize.Y);
                 fbo = FBO.Create();
                 FBO.Bind(fbo, FBO.Target.FrameBuffer);
-                const int bufCount = 5; // buffer count except depth buffer
-                var bufs = stackalloc DrawBuffersEnum[bufCount];
-
-                CreateTextureObject(frameBufferSize, out position);
-                FBO.SetTexture2DBuffer(position, FBO.Attachment.ColorAttachment0);
-                bufs[0] = DrawBuffersEnum.ColorAttachment0;
-
-                CreateTextureObject(frameBufferSize, out normal);
-                FBO.SetTexture2DBuffer(normal, FBO.Attachment.ColorAttachment1);
-                bufs[1] = DrawBuffersEnum.ColorAttachment1;
-
-                CreateTextureObject(frameBufferSize, out albedo);
-                FBO.SetTexture2DBuffer(albedo, FBO.Attachment.ColorAttachment2);
-                bufs[2] = DrawBuffersEnum.ColorAttachment2;
-
-                CreateTextureObject(frameBufferSize, out emit);
-                FBO.SetTexture2DBuffer(emit, FBO.Attachment.ColorAttachment3);
-                bufs[3] = DrawBuffersEnum.ColorAttachment3;
-
-                CreateTextureObject(frameBufferSize, out metallicRoughness);
-                FBO.SetTexture2DBuffer(metallicRoughness, FBO.Attachment.ColorAttachment4);
-                bufs[4] = DrawBuffersEnum.ColorAttachment4;
+                var bufs = stackalloc DrawBuffersEnum[mrt.Length];
+                for(int i = 0; i < mrt.Length; i++) {
+                    CreateTextureObject(frameBufferSize, out mrt[i]);
+                    bufs[i] = DrawBuffersEnum.ColorAttachment0 + i;
+                    FBO.SetTexture2DColorAttachment(mrt[i], i);
+                }
 
                 depth = RBO.Create();
                 RBO.Bind(depth);
                 RBO.Storage(frameBufferSize, RBO.StorageType.Depth24Stencil8);
-                FBO.SetRenderBuffer(depth, FBO.Attachment.DepthStencilAttachment);
-
-                if(!FBO.CheckStatus(out var error)) {
-                    throw new Exception(error);
-                }
-                GL.DrawBuffers(bufCount, bufs);
+                FBO.SetRenderBufferDepthStencilAttachment(depth);
+                FBO.ThrowIfInvalidStatus();
+                GL.DrawBuffers(mrt.Length, bufs);
                 TextureObject.Unbind2D();
             }
             catch {
                 FBO.Delete(ref fbo);
-                TextureObject.Delete(ref position);
-                TextureObject.Delete(ref normal);
-                TextureObject.Delete(ref albedo);
-                TextureObject.Delete(ref emit);
+                for(int i = 0; i < mrt.Length; i++) {
+                    TextureObject.Delete(ref mrt[i]);
+                }
                 RBO.Delete(ref depth);
                 FBO.Unbind(FBO.Target.FrameBuffer);
                 throw;
@@ -226,6 +198,18 @@ namespace Elffy.Shading.Deferred
 
         [DoesNotReturn]
         private static void ThrowNotInitialized() => throw new InvalidOperationException($"{nameof(GBuffer)} is not initialized.");
+
+        [StructLayout(LayoutKind.Sequential, Pack = 0)]
+        private unsafe struct GBufferMrt
+        {
+            public const int MrtCount = 5;
+
+            public TextureObject Mrt0;
+            public TextureObject Mrt1;
+            public TextureObject Mrt2;
+            public TextureObject Mrt3;
+            public TextureObject Mrt4;
+        }
     }
 
     internal interface IGBuffer
@@ -235,29 +219,14 @@ namespace Elffy.Shading.Deferred
 
     internal readonly ref struct GBufferData
     {
-        public readonly FBO FBO;
-        /// <summary>Texture2D, Rgba16f, (x, y, z, 1)</summary>
-        public readonly TextureObject Position;
-        /// <summary>Texture2D, Rgba16f, (normal.x, normal.y, normal.z, 1)</summary>
-        public readonly TextureObject Normal;
-        /// <summary>Texture2D, Rgba16f, (albedo.r, albedo.g, albedo.b, 1)</summary>
-        public readonly TextureObject Albedo;
-        /// <summary>Texture2D, Rgba16f, (emit.r, emit.g, emit.b, 1)</summary>
-        public readonly TextureObject Emit;
-        /// <summary>Texture2D, Rgba16f, (metallic, roughness, 0, 1)</summary>
-        public readonly TextureObject MetallicRoughness;
+        public readonly FBO Fbo;
+        public readonly ReadOnlySpan<TextureObject> Mrt;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public GBufferData(in FBO fbo, in TextureObject position, in TextureObject normal,
-                           in TextureObject albedoMetallic, in TextureObject emitRoughness,
-                           in TextureObject metallicRoughness)
+        public GBufferData(FBO fbo, ReadOnlySpan<TextureObject> mrt)
         {
-            FBO = fbo;
-            Position = position;
-            Normal = normal;
-            Albedo = albedoMetallic;
-            Emit = emitRoughness;
-            MetallicRoughness = metallicRoughness;
+            Fbo = fbo;
+            Mrt = mrt;
         }
     }
 }

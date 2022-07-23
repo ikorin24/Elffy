@@ -25,11 +25,11 @@ namespace Elffy.Shading.Deferred
             dispatcher.SendUniform("_view", camera.View);
             dispatcher.SendUniform("_projection", camera.Projection);
             dispatcher.SendUniform("_lightCount", lightCount);
-            dispatcher.SendUniformTexture2D("_posSampler", gData.Position, TextureUnitNumber.Unit0);
-            dispatcher.SendUniformTexture2D("_normalSampler", gData.Normal, TextureUnitNumber.Unit1);
-            dispatcher.SendUniformTexture2D("_albedoSampler", gData.Albedo, TextureUnitNumber.Unit2);
-            dispatcher.SendUniformTexture2D("_emitSampler", gData.Emit, TextureUnitNumber.Unit3);
-            dispatcher.SendUniformTexture2D("_metallicRoughnessSampler", gData.MetallicRoughness, TextureUnitNumber.Unit4);
+            dispatcher.SendUniformTexture2D("_mrt0", gData.Mrt[0], TextureUnitNumber.Unit0);
+            dispatcher.SendUniformTexture2D("_mrt1", gData.Mrt[1], TextureUnitNumber.Unit1);
+            dispatcher.SendUniformTexture2D("_mrt2", gData.Mrt[2], TextureUnitNumber.Unit2);
+            dispatcher.SendUniformTexture2D("_mrt3", gData.Mrt[3], TextureUnitNumber.Unit3);
+            dispatcher.SendUniformTexture2D("_mrt4", gData.Mrt[4], TextureUnitNumber.Unit4);
             dispatcher.SendUniformTexture1D("_lightPosSampler", lights.PositionTexture, TextureUnitNumber.Unit5);
             dispatcher.SendUniformTexture1D("_lightColorSampler", lights.ColorTexture, TextureUnitNumber.Unit6);
 
@@ -56,11 +56,11 @@ const float DielectricF0 = 0.04;
 in vec2 _uv;
 uniform mat4 _view;
 uniform mat4 _projection;
-uniform sampler2D _posSampler;
-uniform sampler2D _normalSampler;
-uniform sampler2D _albedoSampler;
-uniform sampler2D _emitSampler;
-uniform sampler2D _metallicRoughnessSampler;
+uniform sampler2D _mrt0;
+uniform sampler2D _mrt1;
+uniform sampler2D _mrt2;
+uniform sampler2D _mrt3;
+uniform sampler2D _mrt4;
 uniform sampler1D _lightPosSampler;
 uniform sampler1D _lightColorSampler;
 uniform int _lightCount;
@@ -133,20 +133,20 @@ float CalcShadow(vec3 shadowMapNDC, sampler2D shadowMap)
 
 void main()
 {
-    vec4 posWorld = textureLod(_posSampler, _uv, 0);
+    vec4 posWorld = textureLod(_mrt0, _uv, 0);
     if(posWorld.w < 0.01) {
         gl_FragDepth = 1;
         discard;
         return;
     }
     mat3 viewInvT = transpose(inverse(mat3(_view)));
-    vec3 nWorld = textureLod(_normalSampler, _uv, 0).rgb;
-    vec3 albedo = textureLod(_albedoSampler, _uv, 0).rgb;
-    vec3 emit = textureLod(_emitSampler, _uv, 0).rgb;
+    vec3 nWorld = textureLod(_mrt1, _uv, 0).rgb;
+    vec3 albedo = textureLod(_mrt2, _uv, 0).rgb;
+    vec3 emit = textureLod(_mrt3, _uv, 0).rgb;
     vec3 pos = ToVec3(_view * posWorld);    // pos in eye space
     vec4 dncPos = _projection * vec4(pos, 1);    // device-normalized-coordinate position
     gl_FragDepth = (dncPos.z / dncPos.w) * 0.5 + 0.5;
-    vec4 metallicRoughness = textureLod(_metallicRoughnessSampler, _uv, 0);
+    vec4 metallicRoughness = textureLod(_mrt4, _uv, 0);
     float metallic = metallicRoughness.r;
     float roughness = metallicRoughness.g;
     vec3 v = -normalize(pos);                               // eye direction in eye space, normalized

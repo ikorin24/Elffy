@@ -183,10 +183,8 @@ namespace Elffy.Components.Implementation
             var fbo = FBO.Create();
             try {
                 FBO.Bind(fbo, FBO.Target.FrameBuffer);
-                FBO.SetTexture2DBuffer(Texture, FBO.Attachment.ColorAttachment0);
-                if(!FBO.CheckStatus(out var error)) {
-                    ThrowInvalidFBO(error);
-                }
+                FBO.SetTexture2DColorAttachment(Texture, 0);
+                FBO.ThrowIfInvalidStatus();
                 fixed(void* ptr = buffer) {
                     GL.ReadPixels(rect.X, rect.Y, rect.Width, rect.Height, TKPixelFormat.Rgba, PixelType.UnsignedByte, (IntPtr)ptr);
                 }
@@ -202,7 +200,6 @@ namespace Elffy.Components.Implementation
             return len;
 
             [DoesNotReturn] static void ThrowOutOfRange(string message) => throw new ArgumentOutOfRangeException(message);
-            [DoesNotReturn] static void ThrowInvalidFBO(string message) => throw new InvalidOperationException(message);
         }
 
         internal static unsafe int GetPixels(in TextureObject to, in RectI rect, Span<ColorByte> buffer)
@@ -223,10 +220,8 @@ namespace Elffy.Components.Implementation
             var fbo = FBO.Create();
             try {
                 FBO.Bind(fbo, FBO.Target.FrameBuffer);
-                FBO.SetTexture2DBuffer(to, FBO.Attachment.ColorAttachment0);
-                if(!FBO.CheckStatus(out var error)) {
-                    ThrowInvalidFBO(error);
-                }
+                FBO.SetTexture2DColorAttachment(to, 0);
+                FBO.ThrowIfInvalidStatus();
                 fixed(void* ptr = buffer) {
                     GL.ReadPixels(rect.X, rect.Y, rect.Width, rect.Height, TKPixelFormat.Rgba, PixelType.UnsignedByte, (IntPtr)ptr);
                 }
@@ -242,7 +237,6 @@ namespace Elffy.Components.Implementation
             return len;
 
             [DoesNotReturn] static void ThrowOutOfRange(string message) => throw new ArgumentOutOfRangeException(message);
-            [DoesNotReturn] static void ThrowInvalidFBO(string message) => throw new InvalidOperationException(message);
         }
 
         public void Dispose()

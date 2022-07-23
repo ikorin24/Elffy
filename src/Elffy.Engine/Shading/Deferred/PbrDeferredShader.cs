@@ -88,11 +88,11 @@ uniform vec4 _albedoMetallic;
 uniform vec4 _emitRoughness;
 uniform sampler2D _tex;
 uniform bool _hasTexture;
-layout (location = 0) out vec4 _gPosition;          // (x, y, z, 1)
-layout (location = 1) out vec4 _gNormal;            // (normal.x, normal.y, normal.z, 1)
-layout (location = 2) out vec4 _gAlbedo;            // (albedo.r, albedo.g, albedo.b, 1)
-layout (location = 3) out vec4 _gEmit;              // (emit.r, emit.g, emit.b, 1)
-layout (location = 4) out vec4 _gMetallicRoughness; // (metallic, roughness, 0, 1)
+layout (location = 0) out vec4 _mrt0;       // (x, y, z, 1)
+layout (location = 1) out vec4 _mrt1;       // (normal.x, normal.y, normal.z, 1)
+layout (location = 2) out vec4 _mrt2;       // (albedo.r, albedo.g, albedo.b, 1)
+layout (location = 3) out vec4 _mrt3;       // (emit.r, emit.g, emit.b, 1)
+layout (location = 4) out vec4 _mrt4;       // (metallic, roughness, 0, 1)
 
 vec3 ToVec3(vec4 v)
 {
@@ -101,11 +101,11 @@ vec3 ToVec3(vec4 v)
 
 void main()
 {
-    _gPosition = vec4(ToVec3(_model * vec4(_pos, 1.0)).xyz, 1);
-    _gNormal = vec4(normalize(transpose(inverse(mat3(_model))) * _normal), 1.0);
-    _gAlbedo = _hasTexture ? vec4(texture(_tex, _uv).rgb, 1.0) : vec4(_albedoMetallic.rgb, 1.0);
-    _gEmit = vec4(_emitRoughness.rgb, 1.0);
-    _gMetallicRoughness = vec4(_albedoMetallic.a, _emitRoughness.a, 0.0, 1.0);
+    _mrt0 = vec4(ToVec3(_model * vec4(_pos, 1.0)).xyz, 1.0);
+    _mrt1 = vec4(normalize(transpose(inverse(mat3(_model))) * _normal), 0.5);
+    _mrt2 = _hasTexture ? vec4(texture(_tex, _uv).rgb, 1.0) : vec4(_albedoMetallic.rgb, 1.0);
+    _mrt3 = vec4(_emitRoughness.rgb, 1.0);
+    _mrt4 = vec4(_albedoMetallic.a, _emitRoughness.a, 0.0, 1.0);
 }
 ";
     }

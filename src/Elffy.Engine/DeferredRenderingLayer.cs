@@ -5,6 +5,7 @@ using Elffy.Shading;
 using Elffy.Shading.Deferred;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using OpenTK.Graphics.OpenGL4;
 
 namespace Elffy
 {
@@ -19,6 +20,7 @@ namespace Elffy
         private bool _isSizeChangeObserved;
         private bool _isSizeChangeRequested;
         private long _sizeChangeRequestedFrameNum;
+        private bool _isBlendEnabledCache;
 
         IGBuffer IGBufferProvider.GBuffer => _gBuffer;
 
@@ -52,11 +54,19 @@ namespace Elffy
             currentFbo = _gBuffer.FBO;
             FBO.Bind(currentFbo, FBO.Target.FrameBuffer);
             ElffyGL.Clear(ClearMask.ColorBufferBit | ClearMask.DepthBufferBit);
+            bool isBlendEnabled = GL.GetInteger(GetPName.Blend) != 0;
+            _isBlendEnabledCache = isBlendEnabled;
+            if(isBlendEnabled) {
+                GL.Disable(EnableCap.Blend);
+            }
             _gBuffer.ClearColorBuffers();
         }
 
         protected override void OnRendered(IHostScreen screen, ref FBO currentFbo)
         {
+            if(_isBlendEnabledCache) {
+                GL.Enable(EnableCap.Blend);
+            }
             var targetFbo = FBO.Empty;
 
             var gBuffer = _gBuffer;
@@ -91,7 +101,6 @@ namespace Elffy
                     if(self._isSizeChangeRequested && co.Screen.FrameNum - self._sizeChangeRequestedFrameNum > 1) {
                         // TODO: when height is 0.
                         self._gBuffer.Resize();
-                        Debug.WriteLine("Resize !!!!!!!!!!!!");
                         self._isSizeChangeRequested = false;
                     }
                     await co.TimingPoints.FrameInitializing.Next();
