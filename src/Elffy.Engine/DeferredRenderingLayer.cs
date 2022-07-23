@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using Elffy.Graphics.OpenGL;
 using Elffy.Shading;
 using Elffy.Shading.Deferred;
-using Elffy.Graphics;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
@@ -14,7 +13,7 @@ namespace Elffy
         private const int DRLayerDefaultSort = -100;
 
         private readonly GBuffer _gBuffer;
-        private readonly PbrDeferredRenderingPostProcess _postProcess;
+        private readonly PbrDeferredPostProcess _postProcess;
         private PostProcessProgram? _ppProgram;
 
         private bool _isSizeChangeObserved;
@@ -26,7 +25,7 @@ namespace Elffy
         public DeferredRenderingLayer(int sortNumber = DRLayerDefaultSort) : base(sortNumber)
         {
             _gBuffer = new GBuffer();
-            _postProcess = new PbrDeferredRenderingPostProcess(this, static screen => ref screen.Camera.View);
+            _postProcess = new PbrDeferredPostProcess(this);
             Activating.Subscribe((l, ct) => SafeCast.As<DeferredRenderingLayer>(l).OnActivating());
         }
 
@@ -69,7 +68,7 @@ namespace Elffy
             FBO.Bind(targetFbo, FBO.Target.FrameBuffer);
             if(IsEnabled) {
                 _ppProgram.Render(screenSize, (Vector2)screenSize / (Vector2)gBufSize);
-            }            
+            }
             currentFbo = targetFbo;
         }
 

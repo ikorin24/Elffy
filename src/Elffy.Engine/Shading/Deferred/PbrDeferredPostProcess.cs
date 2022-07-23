@@ -3,15 +3,13 @@ using Elffy.Graphics.OpenGL;
 
 namespace Elffy.Shading.Deferred
 {
-    internal sealed class PbrDeferredRenderingPostProcess : PostProcess
+    internal sealed class PbrDeferredPostProcess : PostProcess
     {
-        internal delegate ref readonly Matrix4 MatrixProvider(IHostScreen screen);
-
         private readonly IGBufferProvider _gBufferProvider;
 
         public override string FragShaderSource => FragSource;
 
-        internal PbrDeferredRenderingPostProcess(IGBufferProvider gBufferProvider, MatrixProvider viewProvider)
+        internal PbrDeferredPostProcess(IGBufferProvider gBufferProvider)
         {
             _gBufferProvider = gBufferProvider;
         }
