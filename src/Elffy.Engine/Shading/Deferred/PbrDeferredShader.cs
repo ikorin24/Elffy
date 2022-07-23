@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using System;
-using Elffy.Components;
 using Elffy.Graphics.OpenGL;
 
 namespace Elffy.Shading.Deferred
@@ -8,15 +7,13 @@ namespace Elffy.Shading.Deferred
     public sealed class PbrDeferredShader : RenderingShader
     {
         private ShaderTextureSelector<PbrDeferredShader>? _textureSelector;
-        private Color3 _albedo;
+        private Color3 _baseColor;
         private float _metallic;
         private float _roughness;
-        private float _emit;
 
-        public ref Color3 Albedo => ref _albedo;
+        public ref Color3 BaseColor => ref _baseColor;
         public float Metallic { get => _metallic; set => _metallic = value; }
         public float Roughness { get => _roughness; set => _roughness = value; }
-        public float Emit { get => _emit; set => _emit = value; }
 
         public ShaderTextureSelector<PbrDeferredShader>? TextureSelector { get => _textureSelector; set => _textureSelector = value; }
 
@@ -29,12 +26,11 @@ namespace Elffy.Shading.Deferred
             _textureSelector = textureSelector;
         }
 
-        public PbrDeferredShader(Color3 albedo, float metallic, float roughness, float emit, ShaderTextureSelector<PbrDeferredShader>? textureSelector = null)
+        public PbrDeferredShader(Color3 albedo, float metallic, float roughness, ShaderTextureSelector<PbrDeferredShader>? textureSelector = null)
         {
-            _albedo = albedo;
+            _baseColor = albedo;
             _metallic = metallic;
             _roughness = roughness;
-            _emit = emit;
             _textureSelector = textureSelector;
         }
 
@@ -50,8 +46,8 @@ namespace Elffy.Shading.Deferred
             dispatcher.SendUniform("_model", model);
             dispatcher.SendUniform("_view", view);
             dispatcher.SendUniform("_mvp", projection * view * model);
-            dispatcher.SendUniform("_albedoMetallic", new Color4(_albedo, _metallic));
-            dispatcher.SendUniform("_emitRoughness", new Color4(_emit, _emit, _emit, _roughness));
+            dispatcher.SendUniform("_baseColorMetallic", new Color4(_baseColor, _metallic));
+            dispatcher.SendUniform("_roughness", _roughness);
 
             var selector = _textureSelector ?? DefaultShaderTextureSelector<PbrDeferredShader>.Default;
             var hasTexture = selector.Invoke(this, target, out var texObj);
@@ -77,6 +73,14 @@ void main()
     gl_Position = _mvp * vec4(_pos, 1.0);
 }";
 
+        // index  | R           | G            | B           | A         |
+        // ----
+        // mrt[0] | pos.x       | pos.y        | pos.z       | 1         |
+        // mrt[1] | normal.x    | normal.y     | normal.z    | roughness |
+        // mrt[2] | baseColor.r | baseColor.g  | baseColor.b | metallic  |
+        // mrt[3] | 0           | 0            | 0           | 0         |
+        // mrt[4] | 0           | 0            | 0           | 0         |
+
         private const string FragSource =
 @"#version 410
 in vec3 _pos;
@@ -84,15 +88,15 @@ in vec3 _normal;
 in vec2 _uv;
 uniform mat4 _model;
 uniform mat4 _view;
-uniform vec4 _albedoMetallic;
-uniform vec4 _emitRoughness;
+uniform vec4 _baseColorMetallic;
+uniform float _roughness;
 uniform sampler2D _tex;
 uniform bool _hasTexture;
-layout (location = 0) out vec4 _mrt0;       // (x, y, z, 1)
-layout (location = 1) out vec4 _mrt1;       // (normal.x, normal.y, normal.z, 1)
-layout (location = 2) out vec4 _mrt2;       // (albedo.r, albedo.g, albedo.b, 1)
-layout (location = 3) out vec4 _mrt3;       // (emit.r, emit.g, emit.b, 1)
-layout (location = 4) out vec4 _mrt4;       // (metallic, roughness, 0, 1)
+layout (location = 0) out vec4 _mrt0;
+layout (location = 1) out vec4 _mrt1;
+layout (location = 2) out vec4 _mrt2;
+layout (location = 3) out vec4 _mrt3;
+layout (location = 4) out vec4 _mrt4;
 
 vec3 ToVec3(vec4 v)
 {
@@ -102,10 +106,15 @@ vec3 ToVec3(vec4 v)
 void main()
 {
     _mrt0 = vec4(ToVec3(_model * vec4(_pos, 1.0)).xyz, 1.0);
-    _mrt1 = vec4(normalize(transpose(inverse(mat3(_model))) * _normal), 0.5);
-    _mrt2 = _hasTexture ? vec4(texture(_tex, _uv).rgb, 1.0) : vec4(_albedoMetallic.rgb, 1.0);
-    _mrt3 = vec4(_emitRoughness.rgb, 1.0);
-    _mrt4 = vec4(_albedoMetallic.a, _emitRoughness.a, 0.0, 1.0);
+    _mrt1 = vec4(normalize(transpose(inverse(mat3(_model))) * _normal), _roughness);
+    if(_hasTexture) {
+        _mrt2 = vec4(texture(_tex, _uv).rgb, _baseColorMetallic.a);
+    }
+    else {
+        _mrt2 = _baseColorMetallic;
+    }
+    _mrt3 = vec4(0, 0, 0, 0);
+    _mrt4 = vec4(0, 0, 0, 0);
 }
 ";
     }

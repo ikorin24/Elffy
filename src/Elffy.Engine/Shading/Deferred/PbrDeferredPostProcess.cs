@@ -28,8 +28,6 @@ namespace Elffy.Shading.Deferred
             dispatcher.SendUniformTexture2D("_mrt0", gBuffer.Mrt[0], TextureUnitNumber.Unit0);
             dispatcher.SendUniformTexture2D("_mrt1", gBuffer.Mrt[1], TextureUnitNumber.Unit1);
             dispatcher.SendUniformTexture2D("_mrt2", gBuffer.Mrt[2], TextureUnitNumber.Unit2);
-            dispatcher.SendUniformTexture2D("_mrt3", gBuffer.Mrt[3], TextureUnitNumber.Unit3);
-            dispatcher.SendUniformTexture2D("_mrt4", gBuffer.Mrt[4], TextureUnitNumber.Unit4);
             dispatcher.SendUniformTexture1D("_lightPosSampler", lights.PositionTexture, TextureUnitNumber.Unit5);
             dispatcher.SendUniformTexture1D("_lightColorSampler", lights.ColorTexture, TextureUnitNumber.Unit6);
 
@@ -39,6 +37,14 @@ namespace Elffy.Shading.Deferred
                 dispatcher.SendUniformTexture2D("_shadowMap", shadowMaps[0].DepthTexture, TextureUnitNumber.Unit8);
             }
         }
+
+        // index  | R           | G            | B           | A         |
+        // ----
+        // mrt[0] | pos.x       | pos.y        | pos.z       | 1         |
+        // mrt[1] | normal.x    | normal.y     | normal.z    | roughness |
+        // mrt[2] | baseColor.r | baseColor.g  | baseColor.b | metallic  |
+        // mrt[3] | 0           | 0            | 0           | 0         |
+        // mrt[4] | 0           | 0            | 0           | 0         |
 
         private const string FragSource =
 @"#version 410
@@ -59,8 +65,6 @@ uniform mat4 _projection;
 uniform sampler2D _mrt0;
 uniform sampler2D _mrt1;
 uniform sampler2D _mrt2;
-uniform sampler2D _mrt3;
-uniform sampler2D _mrt4;
 uniform sampler1D _lightPosSampler;
 uniform sampler1D _lightColorSampler;
 uniform int _lightCount;
@@ -133,27 +137,28 @@ float CalcShadow(vec3 shadowMapNDC, sampler2D shadowMap)
 
 void main()
 {
-    vec4 posWorld = textureLod(_mrt0, _uv, 0);
-    if(posWorld.w < 0.01) {
+    vec4 mrt0Value = textureLod(_mrt0, _uv, 0);
+    vec4 posWorld = vec4(mrt0Value.rgb, 1.0);
+    if(mrt0Value.w == 0) {
         gl_FragDepth = 1;
         discard;
         return;
     }
     mat3 viewInvT = transpose(inverse(mat3(_view)));
-    vec3 nWorld = textureLod(_mrt1, _uv, 0).rgb;
-    vec3 albedo = textureLod(_mrt2, _uv, 0).rgb;
-    vec3 emit = textureLod(_mrt3, _uv, 0).rgb;
+    vec4 mrt1Value = textureLod(_mrt1, _uv, 0);
+    vec4 mrt2Value = textureLod(_mrt2, _uv, 0);
+    vec3 nWorld = mrt1Value.rgb;
+    vec3 baseColor = mrt2Value.rgb;
     vec3 pos = ToVec3(_view * posWorld);    // pos in eye space
     vec4 dncPos = _projection * vec4(pos, 1);    // device-normalized-coordinate position
     gl_FragDepth = (dncPos.z / dncPos.w) * 0.5 + 0.5;
-    vec4 metallicRoughness = textureLod(_mrt4, _uv, 0);
-    float metallic = metallicRoughness.r;
-    float roughness = metallicRoughness.g;
+    float metallic = mrt2Value.a;
+    float roughness = mrt1Value.a;
     vec3 v = -normalize(pos);                               // eye direction in eye space, normalized
     vec3 n = viewInvT * nWorld;                             // normal direction in eye space, normalized
     float dot_nv = abs(dot(n, v));
     float reflectivity = mix(DielectricF0, 1.0, metallic);
-    vec3 f0 = mix(vec3(DielectricF0, DielectricF0, DielectricF0), albedo, metallic);
+    vec3 f0 = mix(vec3(DielectricF0, DielectricF0, DielectricF0), baseColor, metallic);
 
     vec3 fragColor = vec3(0.0, 0.0, 0.0);
     for(int i = 0; i < _lightCount; i++) {
@@ -175,7 +180,7 @@ void main()
 
         // Diffuse
         float diffuseTerm = Fd_Burley(dot_nv, dot_nl, dot_lh, roughness) * dot_nl;
-        vec3 diffuse = (1.0 - reflectivity) * diffuseTerm * lColor * albedo;
+        vec3 diffuse = (1.0 - reflectivity) * diffuseTerm * lColor * baseColor;
 
         // Specular
         float alpha = roughness * roughness;
