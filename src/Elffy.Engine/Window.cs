@@ -38,7 +38,7 @@ namespace Elffy
         public Keyboard Keyboard => _renderingArea.Keyboard;
 
         /// <inheritdoc/>
-        public FrameTimingPointList TimingPoints => _renderingArea.TimingPoints;
+        public FrameTimingPointList Timings => _renderingArea.TimingPoints;
 
         /// <inheritdoc/>
         public LayerCollection Layers => _renderingArea.Layers;
@@ -199,7 +199,7 @@ namespace Elffy
 
         public FrameAsyncEnumerable Frames(FrameTiming timing, CancellationToken cancellationToken = default)
         {
-            var timingPoint = TimingPoints.TimingOf(timing);
+            var timingPoint = Timings.GetTiming(timing);
             return new FrameAsyncEnumerable(timingPoint, cancellationToken);
         }
 

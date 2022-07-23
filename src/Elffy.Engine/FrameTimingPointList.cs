@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using System;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
@@ -42,16 +41,16 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public FrameTimingPoint TimingOf(FrameTiming timing)
+        public FrameTimingPoint GetTiming(FrameTiming timing)
         {
-            if(TryGetTimingOf(timing, out var timingPoint) == false) {
+            if(TryGetTiming(timing, out var timingPoint) == false) {
                 ThrowTimingNotSpecified();
             }
             return timingPoint;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetTimingOf(FrameTiming timing, [MaybeNullWhen(false)] out FrameTimingPoint timingPoint)
+        internal bool TryGetTiming(FrameTiming timing, [MaybeNullWhen(false)] out FrameTimingPoint timingPoint)
         {
             // [NOTE]
             // Only for public timing point

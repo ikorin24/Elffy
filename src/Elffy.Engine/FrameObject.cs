@@ -185,7 +185,7 @@ namespace Elffy
 
             // TODO: Consider the case that screen is already dead.
             if(screen.CurrentTiming.IsOutOfFrameLoop()) {
-                await screen.TimingPoints.FrameInitializing.Next(ct);
+                await screen.Timings.FrameInitializing.Next(ct);
             }
             layer.AddFrameObject(this);
             await timingPoint.NextFrame(ct);
@@ -230,7 +230,7 @@ namespace Elffy
             }
             if(_state.IsSameOrAfter(LifeState.Terminating)) { ThrowTerminateTwice(); }
 
-            timingPoint ??= screen.TimingPoints.Update;
+            timingPoint ??= screen.Timings.Update;
             Debug.Assert(_state == LifeState.Alive);
             Debug.Assert(_layer is not null);
 
@@ -313,7 +313,7 @@ namespace Elffy
             if(layer.TryGetScreen(out var screen) == false) {
                 ThrowInvalidLayer();
             }
-            await source.ActivateOnLayer(layer, screen.TimingPoints.Update, cancellationToken);
+            await source.ActivateOnLayer(layer, screen.Timings.Update, cancellationToken);
             return source;
         }
 
@@ -331,7 +331,7 @@ namespace Elffy
             if(layer.TryGetScreen(out var screen) == false) {
                 ThrowInvalidLayer();
             }
-            var timingPoint = screen.TimingPoints.TimingOf(timing);
+            var timingPoint = screen.Timings.GetTiming(timing);
             await frameObject.ActivateOnLayer(layer, timingPoint, cancellationToken);
             return frameObject;
         }
@@ -355,7 +355,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static async UniTask<T> Terminate<T>(this T frameObject, FrameTiming timing) where T : FrameObject
         {
-            var timingPoint = frameObject.TryGetScreen(out var screen) ? screen.TimingPoints.TimingOf(timing) : null;
+            var timingPoint = frameObject.TryGetScreen(out var screen) ? screen.Timings.GetTiming(timing) : null;
             await frameObject.TerminateFromLayer(timingPoint);
             return frameObject;
         }

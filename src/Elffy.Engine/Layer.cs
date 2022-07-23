@@ -177,7 +177,7 @@ namespace Elffy
             // That means the layer will be dead in the next frame even if exceptions are thrown.
             await _terminating.RaiseIfNotNull(this, CancellationToken.None);
 
-            await (timingPoint ?? screen.TimingPoints.Update).NextFrame(CancellationToken.None);
+            await (timingPoint ?? screen.Timings.Update).NextFrame(CancellationToken.None);
             Debug.Assert(_state == LayerLifeState.Dead);
             return;
 
@@ -288,7 +288,7 @@ namespace Elffy
     {
         public static async UniTask<TLayer> Activate<TLayer>(this TLayer layer, IHostScreen screen, CancellationToken cancellationToken = default) where TLayer : Layer
         {
-            await layer.ActivateOnScreen(screen, screen.TimingPoints.Update, cancellationToken);
+            await layer.ActivateOnScreen(screen, screen.Timings.Update, cancellationToken);
             Debug.Assert(layer.LifeState.IsSameOrAfter(LayerLifeState.Alive));
             return layer;
         }
@@ -316,7 +316,7 @@ namespace Elffy
         public static async UniTask<TLayer> Terminate<TLayer>(this TLayer layer, FrameTiming timing) where TLayer : Layer
         {
             var timingPoint = layer.TryGetScreen(out var screen) ?
-                                (screen.TimingPoints.TryGetTimingOf(timing, out var tp) ? tp : null)
+                                (screen.Timings.TryGetTiming(timing, out var tp) ? tp : null)
                                 : null;
             await layer.TerminateFromScreen(timingPoint);
             Debug.Assert(layer.LifeState == LayerLifeState.Dead);

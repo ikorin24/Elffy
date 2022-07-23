@@ -63,7 +63,7 @@ namespace Elffy
                 return await Next(cancellationToken);
             }
 
-            var endOfFrame = _screen.TimingPoints.InternalEndOfFrame;
+            var endOfFrame = _screen.Timings.InternalEndOfFrame;
             await endOfFrame.NextOrNow(cancellationToken);
             return await Next(cancellationToken);
         }

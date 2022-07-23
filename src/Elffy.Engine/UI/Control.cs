@@ -338,11 +338,11 @@ namespace Elffy.UI
 
             static async UniTask ActivateChild(UIRenderable controlRenderable, RootPanel root, UILayer layer, IHostScreen screen)
             {
-                var activationTimingPoint = screen.TimingPoints.FrameInitializing;
+                var activationTimingPoint = screen.Timings.FrameInitializing;
                 await controlRenderable.ActivateOnLayerWithoutCheck(layer, activationTimingPoint, screen, CancellationToken.None);
                 Debug.Assert(screen.CurrentTiming == CurrentFrameTiming.FrameInitializing);
                 root.RequestRelayout();
-                await screen.TimingPoints.Update.NextOrNow();
+                await screen.Timings.Update.NextOrNow();
             }
         }
 
@@ -352,12 +352,12 @@ namespace Elffy.UI
             await ParallelOperation.WhenAll(
                 child.ClearChildren(),
                 RemoveOnlyChild(this, child, index, layer, screen));
-            await screen.TimingPoints.Update.NextOrNow();
+            await screen.Timings.Update.NextOrNow();
             return;
 
             static async UniTask RemoveOnlyChild(Control control, Control child, int index, UILayer layer, IHostScreen screen)
             {
-                var terminationTimingPoint = screen.TimingPoints.FrameInitializing;
+                var terminationTimingPoint = screen.Timings.FrameInitializing;
                 child._parent = null;
                 child._root = null;
                 control._childrenCore.RemoveAt(index);

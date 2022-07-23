@@ -34,7 +34,7 @@ namespace Elffy
             Debug.Assert(screen is not null);
             _frameObject = null;
             _screen = screen;
-            _timingPoints = screen.TimingPoints;
+            _timingPoints = screen.Timings;
         }
 
         internal CoroutineState(FrameObject frameObject)
@@ -46,7 +46,7 @@ namespace Elffy
             Debug.Assert(screen is not null);
             _frameObject = frameObject;
             _screen = screen;
-            _timingPoints = screen.TimingPoints;
+            _timingPoints = screen.Timings;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -60,7 +60,7 @@ namespace Elffy
             }
         }
 
-        public FrameTimingPoint TimingOf(FrameTiming timing) => _timingPoints.TimingOf(timing);
+        public FrameTimingPoint TimingOf(FrameTiming timing) => _timingPoints.GetTiming(timing);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public CoroutineFrameAsyncEnumerable Frames(FrameTiming timing)

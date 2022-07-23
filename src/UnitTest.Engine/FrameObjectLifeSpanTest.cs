@@ -43,7 +43,7 @@ namespace UnitTest
                 var screen = cube.Screen;
                 Assert.NotNull(screen);
                 Debug.Assert(screen is not null);
-                await screen.TimingPoints.Update.DelayFrame(4, ct);
+                await screen.Timings.Update.DelayFrame(4, ct);
                 isAsyncActivatingEventCalled = true;
                 Assert.Equal(LifeState.Activating, cube.LifeState);
             });
@@ -60,7 +60,7 @@ namespace UnitTest
                 Assert.Equal(LifeState.Terminating, cube.LifeState);
                 var screen = cube.Screen;
                 Assert.NotNull(screen);
-                await screen!.TimingPoints.Update.DelayFrame(4, ct);
+                await screen!.Timings.Update.DelayFrame(4, ct);
                 isAsyncTerminatingEventCalled = true;
                 Assert.Equal(LifeState.Terminating, cube.LifeState);
             });

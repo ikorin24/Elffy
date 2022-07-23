@@ -62,11 +62,11 @@ namespace Elffy.Serialization
 
             var skeleton = new HumanoidSkeleton();
             model.AddComponent(skeleton);
-            await skeleton.LoadAsync(bones.AsSpanLike(), screen.TimingPoints, obj.CancellationToken);
+            await skeleton.LoadAsync(bones.AsSpanLike(), screen.Timings, obj.CancellationToken);
 
             //      ↑ thread pool
             // ------------------------------
-            await screen.TimingPoints.Update.NextOrNow(obj.CancellationToken);
+            await screen.Timings.Update.NextOrNow(obj.CancellationToken);
             // ------------------------------
             //      ↓ main thread
             Debug.Assert(Engine.CurrentContext == screen);
@@ -206,7 +206,7 @@ namespace Elffy.Serialization
                 buffer.Dispose();
                 throw;
             }
-            return BackToMainThread(arrayTexture, new Vector3i(size.X, size.Y, count), buffer, model.Screen!.TimingPoints.Update, ct);
+            return BackToMainThread(arrayTexture, new Vector3i(size.X, size.Y, count), buffer, model.Screen!.Timings.Update, ct);
 
             static async UniTask BackToMainThread(ArrayTexture arrayTexture, Vector3i size, ValueTypeRentMemory<ColorByte> buffer, FrameTimingPoint timingPoint, CancellationToken ct)
             {

@@ -30,7 +30,7 @@ namespace Elffy.Serialization.Fbx
             //var (resourceLoader, name, token) = obj;
             var (file, token) = state;
             var screen = model.GetValidScreen();
-            var timingPoints = screen.TimingPoints;
+            var timingPoints = screen.Timings;
             token.ThrowIfCancellationRequested();
 
             await UniTask.SwitchToThreadPool();     // ↓ thread pool -------------------------------------- 

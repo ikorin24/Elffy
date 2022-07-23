@@ -86,7 +86,7 @@ namespace UnitTest
             }
             catch(Exception ex) {
                 edi = ExceptionDispatchInfo.Capture(ex);
-                await screen.TimingPoints.Update.Next();
+                await screen.Timings.Update.Next();
             }
             finally {
                 screen.Close();

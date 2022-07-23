@@ -25,7 +25,7 @@ namespace Elffy
         LightManager Lights { get; }
 
         /// <summary>Get asynchronous timing points</summary>
-        FrameTimingPointList TimingPoints { get; }
+        FrameTimingPointList Timings { get; }
 
         /// <summary>Get pixel size of rendering area.</summary>
         Vector2i ClientSize { get; set; }

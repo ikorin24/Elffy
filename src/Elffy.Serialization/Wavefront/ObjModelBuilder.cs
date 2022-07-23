@@ -33,7 +33,7 @@ namespace Elffy.Serialization.Wavefront
             using var indicesBuffer = new UnsafeBufferWriter<int>();
             ParseFromFile(file, verticesBuffer, indicesBuffer);
 
-            await screen.TimingPoints.Update.Next(ct);
+            await screen.Timings.Update.Next(ct);
             load.Invoke(verticesBuffer.WrittenSpan, indicesBuffer.WrittenSpan);
         }
 

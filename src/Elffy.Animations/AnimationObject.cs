@@ -59,7 +59,7 @@ namespace Elffy
         public async UniTask DuringTime<TState>(TimeSpanF time, TState state, Action<TState, float> action, AnimationToken token)
         {
             var screen = token.Screen;
-            var timingPoint = screen.TimingPoints.Update;
+            var timingPoint = screen.Timings.Update;
             var startTime = screen.Time;
             while(true) {
                 var t = screen.Time - startTime;

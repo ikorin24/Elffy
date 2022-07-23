@@ -36,7 +36,7 @@ namespace UnitTest
                 var screen = layer.Screen;
                 Assert.NotNull(screen);
                 Debug.Assert(screen is not null);
-                await screen.TimingPoints.Update.DelayFrame(4, ct);
+                await screen.Timings.Update.DelayFrame(4, ct);
                 isAsyncActivatingEventCalled = true;
             });
             layer.Terminating.Subscribe((layer, ct) =>
@@ -53,7 +53,7 @@ namespace UnitTest
                 var screen = layer.Screen;
                 Assert.NotNull(screen);
                 Debug.Assert(screen is not null);
-                await screen.TimingPoints.Update.DelayFrame(4, ct);
+                await screen.Timings.Update.DelayFrame(4, ct);
                 isAsyncTerminatingEventCalled = true;
             });
 

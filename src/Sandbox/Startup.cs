@@ -34,7 +34,7 @@ namespace Sandbox
 
         private static async UniTask Start(IHostScreen screen)
         {
-            screen.TimingPoints.OnUpdate(() =>
+            screen.Timings.OnUpdate(() =>
             {
                 if(screen.Keyboard.IsPress(Elffy.InputSystem.Keys.Escape)) {
                     screen.Close();
@@ -48,7 +48,7 @@ namespace Sandbox
 
             InitializeLights(screen);
             var uiRoot = uiLayer.UIRoot;
-            var timings = screen.TimingPoints;
+            var timings = screen.Timings;
             uiRoot.Background = Color4.Black;
             try {
                 await ParallelOperation.WhenAll(
@@ -143,7 +143,7 @@ namespace Sandbox
 
         private static async UniTask<Plain> CreateFloor(WorldLayer layer)
         {
-            var timing = layer.GetValidScreen().TimingPoints.Update;
+            var timing = layer.GetValidScreen().Timings.Update;
             var plain = new Plain();
             plain.Scale = new Vector3(40f);
             plain.Shader = new PhongShader();
@@ -157,7 +157,7 @@ namespace Sandbox
 
         private static async UniTask<Plain> CreateFloor(DeferredRenderingLayer layer)
         {
-            var timing = layer.GetValidScreen().TimingPoints.Update;
+            var timing = layer.GetValidScreen().Timings.Update;
             var dice = new Plain()
             {
                 Scale = new Vector3(40f),
@@ -196,7 +196,7 @@ namespace Sandbox
 
         private static async UniTask<Cube> CreateBox(WorldLayer layer)
         {
-            var timing = layer.GetValidScreen().TimingPoints.Update;
+            var timing = layer.GetValidScreen().Timings.Update;
             var cube = new Cube();
             cube.Position = new(-3, 0.5f, 0);
             cube.Shader = new PhongShader();

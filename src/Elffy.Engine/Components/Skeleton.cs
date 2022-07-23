@@ -77,7 +77,7 @@ namespace Elffy.Components
             cancellationToken.ThrowIfCancellationRequested();
             try {
                 InitializeSkeletonData(this, bones.AsReadOnlySpan());
-                await timingPoints.TimingOf(timing).Next(cancellationToken);
+                await timingPoints.GetTiming(timing).Next(cancellationToken);
                 if(IsBoneLoaded) { throw new InvalidOperationException("Already loaded"); }
                 _boneTranslationData.Load(_matrices!.AsSpan().MarshalCast<Matrix4, Color4>());
             }
