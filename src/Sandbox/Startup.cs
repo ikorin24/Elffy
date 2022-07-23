@@ -152,17 +152,26 @@ namespace Sandbox
             var texture = await Resources.Sandbox["floor.png"].LoadTextureAsync(config, timing);
             plain.AddComponent(texture);
             plain.Rotation = Quaternion.FromAxisAngle(Vector3.UnitX, -90.ToRadian());
-            plain.Updated += _ =>
-            {
-                var k = plain.GetValidScreen().Keyboard;
-                if(k.IsPress(Elffy.InputSystem.Keys.Down)) {
-                    plain.Position.Y -= 0.5f;
-                }
-                else if(k.IsPress(Elffy.InputSystem.Keys.Up)) {
-                    plain.Position.Y += 0.5f;
-                }
-            };
             return await plain.Activate(layer);
+        }
+
+        private static async UniTask<Plain> CreateFloor(DeferredRenderingLayer layer)
+        {
+            var timing = layer.GetValidScreen().TimingPoints.Update;
+            var dice = new Plain()
+            {
+                Scale = new Vector3(40f),
+                Rotation = Quaternion.FromAxisAngle(Vector3.UnitX, -90.ToRadian()),
+                Shader = new PbrDeferredShader()
+                {
+                    Metallic = 0.1f,
+                    Roughness = 0.15f,
+                },
+            };
+            var texture = await Resources.Sandbox["floor.png"]
+                .LoadTextureAsync(TextureConfig.DefaultNearestNeighbor, timing);
+            dice.AddComponent(texture);
+            return await dice.Activate(layer);
         }
 
         private static async UniTask<Plain> CreateFloor2(WorldLayer layer)
