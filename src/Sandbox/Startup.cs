@@ -34,12 +34,10 @@ namespace Sandbox
 
         private static async UniTask Start(IHostScreen screen)
         {
-            UniTask.Void(async () =>
+            screen.TimingPoints.OnUpdate(() =>
             {
-                await foreach(var _ in screen.Frames(FrameTiming.Update)) {
-                    if(screen.Keyboard.IsPress(Elffy.InputSystem.Keys.Escape)) {
-                        screen.Close();
-                    }
+                if(screen.Keyboard.IsPress(Elffy.InputSystem.Keys.Escape)) {
+                    screen.Close();
                 }
             });
             var (drLayer, wLayer, uiLayer) =
