@@ -67,7 +67,7 @@ namespace Elffy
             Debug.Assert(_postProcess is not null);
             Debug.Assert(_ppProgram is not null);
             FBO.Bind(targetFbo, FBO.Target.FrameBuffer);
-            if(IsVisible) {
+            if(IsEnabled) {
                 _ppProgram.Render(screenSize, (Vector2)screenSize / (Vector2)gBufSize);
             }            
             currentFbo = targetFbo;

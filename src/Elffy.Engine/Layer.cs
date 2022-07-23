@@ -12,7 +12,7 @@ using Elffy.Threading;
 namespace Elffy
 {
     /// <summary>Layer class which has the list of <see cref="FrameObject"/></summary>
-    [DebuggerDisplay("{GetType().FullName,nq} (ObjectCount = {ObjectCount}, IsVisible = {IsVisible})")]
+    [DebuggerDisplay("{GetType().FullName,nq} (ObjectCount = {ObjectCount}, IsEnabled = {IsEnabled})")]
     public abstract class Layer
     {
         private readonly FrameObjectStore _store;
@@ -20,7 +20,7 @@ namespace Elffy
         private readonly LayerTimingPointList _timingPoints;
         private LayerCollection? _owner;
         private readonly int _sortNumber;
-        private bool _isVisible;
+        private bool _isEnabled;
         private LayerLifeState _state;
         private AsyncEventRaiser<Layer>? _activating;
         private AsyncEventRaiser<Layer>? _terminating;
@@ -29,7 +29,7 @@ namespace Elffy
 
         public CancellationToken RunningToken => _runningTokenSource.Token;
 
-        public bool IsVisible { get => _isVisible; set => _isVisible = value; }
+        public bool IsEnabled { get => _isEnabled; set => _isEnabled = value; }
 
         public int SortNumber => _sortNumber;
 
@@ -57,7 +57,7 @@ namespace Elffy
         private protected Layer(int sortNumber, int capacity)
         {
             _runningTokenSource = new CancellationTokenSource();
-            _isVisible = true;
+            _isEnabled = true;
             _sortNumber = sortNumber;
             _timingPoints = new LayerTimingPointList(this);
             _store = new FrameObjectStore(capacity);
@@ -243,7 +243,7 @@ namespace Elffy
 
         internal virtual void RenderShadowMap(IHostScreen screen, in Matrix4 lightViewProjection)
         {
-            if(_isVisible) {
+            if(_isEnabled) {
                 _store.RenderShadowMap(lightViewProjection);
             }
         }
@@ -253,7 +253,7 @@ namespace Elffy
             var timingPoints = _timingPoints;
             timingPoints.BeforeRendering.DoQueuedEvents();
             OnRendering(screen, ref currentFbo);
-            if(_isVisible) {
+            if(_isEnabled) {
                 SelectMatrix(screen, out var view, out var projection);
                 _store.Render(view, projection);
             }

@@ -15,7 +15,7 @@ namespace Elffy
         {
             var timings = Timings;
             timings.BeforeRendering.DoQueuedEvents();
-            if(IsVisible) {
+            if(IsEnabled) {
                 RenderPostProcess(screen, ref currentFbo);
             }
             timings.AfterRendering.DoQueuedEvents();
