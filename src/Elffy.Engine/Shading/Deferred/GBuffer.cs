@@ -16,13 +16,13 @@ namespace Elffy.Shading.Deferred
 {
     internal sealed unsafe class GBuffer : IDisposable
     {
-        // index  | format  | R        | G         | B        | A        |
+        // index  | format  |
         // ----
-        // mrt[0] | Rgba16f | pos.x    | pos.y     | pos.z    | 1        |
-        // mrt[1] | Rgba16f | normal.x | normal.y  | normal.z | 1        |
-        // mrt[2] | Rgba16f | albedo.r | albedo.g  | albedo.b | 1        |
-        // mrt[3] | Rgba16f | emit.r   | emit.g    | emit.b   | 1        |
-        // mrt[4] | Rgba16f | metallic | roughness | 0        | 1        |
+        // mrt[0] | Rgba16f |
+        // mrt[1] | Rgba16f |
+        // mrt[2] | Rgba16f |
+        // mrt[3] | Rgba16f |
+        // mrt[4] | Rgba16f |
 
         private IHostScreen? _screen;
         private FBO _fbo;
