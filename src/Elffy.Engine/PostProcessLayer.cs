@@ -13,12 +13,12 @@ namespace Elffy
 
         private protected sealed override void RenderOverride(IHostScreen screen, ref FBO currentFbo)
         {
-            var timingPoints = TimingPoints;
-            timingPoints.BeforeRendering.DoQueuedEvents();
+            var timings = Timings;
+            timings.BeforeRendering.DoQueuedEvents();
             if(IsVisible) {
                 RenderPostProcess(screen, ref currentFbo);
             }
-            timingPoints.AfterRendering.DoQueuedEvents();
+            timings.AfterRendering.DoQueuedEvents();
         }
 
         protected abstract void RenderPostProcess(IHostScreen screen, ref FBO currentFbo);

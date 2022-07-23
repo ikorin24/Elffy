@@ -33,7 +33,7 @@ namespace Elffy
 
         public int SortNumber => _sortNumber;
 
-        public LayerTimingPointList TimingPoints => _timingPoints;
+        public LayerTimingPointList Timings => _timingPoints;
 
         public IHostScreen? Screen => _owner?.Screen;
 
