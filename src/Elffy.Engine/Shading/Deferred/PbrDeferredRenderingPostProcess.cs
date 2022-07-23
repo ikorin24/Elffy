@@ -22,10 +22,11 @@ namespace Elffy.Shading.Deferred
             var lights = screen.Lights;
             var gData = gBuffer.GetBufferData();
 
+            var lightCount = lights.LightCount;
             var camera = screen.Camera;
             dispatcher.SendUniform("_view", camera.View);
             dispatcher.SendUniform("_projection", camera.Projection);
-            dispatcher.SendUniform("_lightCount", lights.LightCount);
+            dispatcher.SendUniform("_lightCount", lightCount);
             dispatcher.SendUniformTexture2D("_posSampler", gData.Position, TextureUnitNumber.Unit0);
             dispatcher.SendUniformTexture2D("_normalSampler", gData.Normal, TextureUnitNumber.Unit1);
             dispatcher.SendUniformTexture2D("_albedoSampler", gData.Albedo, TextureUnitNumber.Unit2);
@@ -33,6 +34,12 @@ namespace Elffy.Shading.Deferred
             dispatcher.SendUniformTexture2D("_metallicRoughnessSampler", gData.MetallicRoughness, TextureUnitNumber.Unit4);
             dispatcher.SendUniformTexture1D("_lightPosSampler", lights.PositionTexture, TextureUnitNumber.Unit5);
             dispatcher.SendUniformTexture1D("_lightColorSampler", lights.ColorTexture, TextureUnitNumber.Unit6);
+
+            if(lightCount > 0) {
+                var shadowMaps = lights.GetShadowMaps();
+                dispatcher.SendUniformTexture1D("_lmat", lights.MatrixTexture, TextureUnitNumber.Unit7);
+                dispatcher.SendUniformTexture2D("_shadowMap", shadowMaps[0].DepthTexture, TextureUnitNumber.Unit8);
+            }
         }
 
         private const string FragSource =
@@ -59,6 +66,8 @@ uniform sampler2D _metallicRoughnessSampler;
 uniform sampler1D _lightPosSampler;
 uniform sampler1D _lightColorSampler;
 uniform int _lightCount;
+uniform sampler1D _lmat;
+uniform sampler2D _shadowMap;
 out vec4 _fragColor;
 
 m_float D_GGX(m_vec3 n, m_vec3 h, m_float dot_nh, m_float roughness)     // Trowbridge-Reitz
@@ -113,6 +122,17 @@ vec3 ToVec3(vec4 v)
     return v.xyz / v.w;
 }
 
+float CalcShadow(vec3 shadowMapNDC, sampler2D shadowMap)
+{
+    const float bias = 0.0004;
+    vec3 range = 1.0 - step(vec3(1.0), abs(shadowMapNDC));
+    float filter = range.x * range.y * range.z;
+    vec3 shadowMapUV = shadowMapNDC * 0.5 + 0.5;
+    float d = textureLod(shadowMap, shadowMapUV.xy, 0).x;
+    float shadow = 1.0 - step(shadowMapUV.z - bias, d);
+    return shadow * filter;
+}
+
 void main()
 {
     vec4 posWorld = textureLod(_posSampler, _uv, 0);
@@ -126,6 +146,8 @@ void main()
     vec3 albedo = textureLod(_albedoSampler, _uv, 0).rgb;
     vec3 emit = textureLod(_emitSampler, _uv, 0).rgb;
     vec3 pos = ToVec3(_view * posWorld);    // pos in eye space
+    vec4 dncPos = _projection * vec4(pos, 1);    // device-normalized-coordinate position
+    gl_FragDepth = (dncPos.z / dncPos.w) * 0.5 + 0.5;
     vec4 metallicRoughness = textureLod(_metallicRoughnessSampler, _uv, 0);
     float metallic = metallicRoughness.r;
     float roughness = metallicRoughness.g;
@@ -165,10 +187,22 @@ void main()
         vec3 specular = V * D * F * dot_nl * lColor;
         specular = max(vec3(0.0, 0.0, 0.0), specular);
 
-        fragColor += diffuse + specular;
+        if(i == 0) {
+            mat4 lmat = mat4(
+                texelFetch(_lmat, 0, 0),
+                texelFetch(_lmat, 1, 0),
+                texelFetch(_lmat, 2, 0),
+                texelFetch(_lmat, 3, 0)
+            );
+            vec3 shadowMapNdc = ToVec3(lmat * posWorld);
+            float shadow = CalcShadow(shadowMapNdc, _shadowMap);
+            fragColor += (diffuse + specular) * (1.0 - shadow);
+        }
+        else {
+            fragColor += diffuse + specular;
+        }
     }
-    vec4 dncPos = _projection * vec4(pos, 1);    // device-normalized-coordinate position
-    gl_FragDepth = (dncPos.z / dncPos.w) * 0.5 + 0.5;
+    
     _fragColor = vec4(fragColor, 1.0);
 }
 ";

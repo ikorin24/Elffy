@@ -58,7 +58,7 @@ namespace Sandbox
                     CreateDice(wLayer),
                     CreateModel2(wLayer),
                     CreateBox(wLayer),
-                    CreateFloor(wLayer),
+                    CreateFloor(drLayer),
                     //CreateFloor2(wLayer),
                     CreateSky(wLayer),
                     timings.Update.DelayTime(800));
