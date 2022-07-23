@@ -16,20 +16,20 @@ namespace Elffy.Shading.Deferred
 
         protected override void OnRendering(ShaderDataDispatcher dispatcher, in Vector2i screenSize)
         {
-            var (screen, gBuffer) = _gBufferProvider.GetValidScreenAndGBuffer();
+            var gBuffer = _gBufferProvider.GetGBufferData();
+            var screen = _gBufferProvider.GetValidScreen();
             var lights = screen.Lights;
-            var gData = gBuffer.GetBufferData();
 
             var lightCount = lights.LightCount;
             var camera = screen.Camera;
             dispatcher.SendUniform("_view", camera.View);
             dispatcher.SendUniform("_projection", camera.Projection);
             dispatcher.SendUniform("_lightCount", lightCount);
-            dispatcher.SendUniformTexture2D("_mrt0", gData.Mrt[0], TextureUnitNumber.Unit0);
-            dispatcher.SendUniformTexture2D("_mrt1", gData.Mrt[1], TextureUnitNumber.Unit1);
-            dispatcher.SendUniformTexture2D("_mrt2", gData.Mrt[2], TextureUnitNumber.Unit2);
-            dispatcher.SendUniformTexture2D("_mrt3", gData.Mrt[3], TextureUnitNumber.Unit3);
-            dispatcher.SendUniformTexture2D("_mrt4", gData.Mrt[4], TextureUnitNumber.Unit4);
+            dispatcher.SendUniformTexture2D("_mrt0", gBuffer.Mrt[0], TextureUnitNumber.Unit0);
+            dispatcher.SendUniformTexture2D("_mrt1", gBuffer.Mrt[1], TextureUnitNumber.Unit1);
+            dispatcher.SendUniformTexture2D("_mrt2", gBuffer.Mrt[2], TextureUnitNumber.Unit2);
+            dispatcher.SendUniformTexture2D("_mrt3", gBuffer.Mrt[3], TextureUnitNumber.Unit3);
+            dispatcher.SendUniformTexture2D("_mrt4", gBuffer.Mrt[4], TextureUnitNumber.Unit4);
             dispatcher.SendUniformTexture1D("_lightPosSampler", lights.PositionTexture, TextureUnitNumber.Unit5);
             dispatcher.SendUniformTexture1D("_lightColorSampler", lights.ColorTexture, TextureUnitNumber.Unit6);
 

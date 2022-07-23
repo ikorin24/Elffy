@@ -14,7 +14,7 @@ using TextureWrapMode = Elffy.Components.TextureWrapMode;
 
 namespace Elffy.Shading.Deferred
 {
-    internal sealed unsafe class GBuffer : IGBuffer, IDisposable
+    internal sealed unsafe class GBuffer : IDisposable
     {
         // index  | format  | R        | G         | B        | A        |
         // ----
@@ -212,15 +212,10 @@ namespace Elffy.Shading.Deferred
         }
     }
 
-    internal interface IGBuffer
+    public readonly ref struct GBufferData
     {
-        GBufferData GetBufferData();
-    }
-
-    internal readonly ref struct GBufferData
-    {
-        public readonly FBO Fbo;
-        public readonly ReadOnlySpan<TextureObject> Mrt;
+        public FBO Fbo { get; }
+        public ReadOnlySpan<TextureObject> Mrt { get; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public GBufferData(FBO fbo, ReadOnlySpan<TextureObject> mrt)

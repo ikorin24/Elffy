@@ -22,13 +22,16 @@ namespace Elffy
         private long _sizeChangeRequestedFrameNum;
         private bool _isBlendEnabledCache;
 
-        IGBuffer IGBufferProvider.GBuffer => _gBuffer;
-
         public DeferredRenderingLayer(int sortNumber = DRLayerDefaultSort) : base(sortNumber)
         {
             _gBuffer = new GBuffer();
             _postProcess = new PbrDeferredPostProcess(this);
             Activating.Subscribe((l, ct) => SafeCast.As<DeferredRenderingLayer>(l).OnActivating());
+        }
+
+        public GBufferData GetGBufferData()
+        {
+            return _gBuffer.GetBufferData();
         }
 
         private UniTask OnActivating()
@@ -111,9 +114,9 @@ namespace Elffy
 
     internal interface IGBufferProvider
     {
-        IGBuffer GBuffer { get; }
-
         bool TryGetScreen([MaybeNullWhen(false)] out IHostScreen screen);
+
+        GBufferData GetGBufferData();
 
         public IHostScreen GetValidScreen()
         {
@@ -121,14 +124,6 @@ namespace Elffy
                 ThrowHelper.ThrowInvalidNullScreen();
             }
             return screen;
-        }
-
-        public (IHostScreen Screen, IGBuffer GBuffer) GetValidScreenAndGBuffer()
-        {
-            if(TryGetScreen(out var screen) == false) {
-                ThrowHelper.ThrowInvalidNullScreen();
-            }
-            return (screen, GBuffer);
         }
     }
 }
