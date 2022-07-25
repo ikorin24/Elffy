@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace Elffy
 {
@@ -64,5 +65,18 @@ namespace Elffy
         private static void ThrowFieldNotFound(string fieldName) => throw new InvalidOperationException($"The field is not found. (Field Name: {fieldName})");
     }
 
-    public record VertexFieldData(string Name, Type Type, VertexSpecialField SpecialField, int ByteOffset, VertexFieldMarshalType MarshalType, int MarshalCount);
+    public record VertexFieldData(string Name, Type Type, VertexSpecialField SpecialField, int ByteOffset, VertexFieldMarshalType MarshalType, int MarshalCount)
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref T GetRef<TVertex, T>(ref TVertex vertex)
+        {
+            return ref Unsafe.As<TVertex, T>(ref Unsafe.AddByteOffset(ref vertex, (nuint)ByteOffset));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref readonly T ReadRef<TVertex, T>(in TVertex vertex)
+        {
+            return ref Unsafe.As<TVertex, T>(ref Unsafe.AddByteOffset(ref Unsafe.AsRef(in vertex), (nuint)ByteOffset));
+        }
+    }
 }

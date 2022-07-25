@@ -1,16 +1,19 @@
 ﻿#nullable enable
 using Cysharp.Threading.Tasks;
-using System;
-using System.Threading;
 
 namespace Elffy.Shapes
 {
-    [Obsolete("Not implemented yet", true)]
     public class Sphere : Renderable
     {
         public Sphere()
         {
-            throw new NotImplementedException();
+            Activating.Subscribe(static (sender, ct) =>
+            {
+                var self = SafeCast.As<Sphere>(sender);
+                PrimitiveMeshProvider<VertexSlim>.LoadSphere(self,
+                    static (self, vertices, indices) => self.LoadMesh(vertices, indices));
+                return UniTask.CompletedTask;
+            });
         }
     }
 }

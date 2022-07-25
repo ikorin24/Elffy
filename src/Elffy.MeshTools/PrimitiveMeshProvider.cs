@@ -1,7 +1,9 @@
 ﻿#nullable enable
+using Elffy.Effective.Unsafes;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace Elffy
 {
@@ -118,6 +120,82 @@ namespace Elffy
                 }
                 action.Invoke(state, verticesSpan, new ReadOnlySpan<int>(indices, IndexCount));
             }
+        }
+
+        public static void LoadSphere(MeshLoadAction<TVertex> action)
+        {
+            LoadSphere(action, static (action, vertices, indices) => action(vertices, indices));
+        }
+
+        public static void LoadSphere<TState>(TState state, MeshLoadAction<TState, TVertex> action)
+        {
+            ArgumentNullException.ThrowIfNull(action);
+
+            const int a = 16;
+            const int b = 32;
+
+            if(VertexMarshalHelper.TryGetVertexTypeData(typeof(TVertex), out var typeData) == false) {
+                ThrowInvalidVertexType();
+            }
+
+            if(typeData.TryGetField(VertexSpecialField.Position, out var posField) == false) {
+                ThrowInvalidVertexType();
+            }
+            typeData.TryGetField(VertexSpecialField.UV, out var uvField);
+            typeData.TryGetField(VertexSpecialField.Normal, out var normalField);
+
+            using var vertices = new UnsafeRawArray<TVertex>((a + 1) * (b + 1), false);
+            using var indices = new UnsafeRawArray<int>(a * b * 6, false);
+
+            for(int y = 0; y < a + 1; y++) {
+                var phi = MathF.PI / 2 - MathF.PI / a * y;
+                for(int x = 0; x < b + 1; x++) {
+                    var theta = MathF.PI - MathF.PI * 2 / b * x;
+                    var (sinPhi, cosPhi) = MathF.SinCos(phi);
+                    var (sinTheta, cosTheta) = MathF.SinCos(theta);
+                    var pos = new Vector3(cosPhi * cosTheta, sinPhi, cosPhi * sinTheta);
+                    var uv = new Vector2((float)x / b, (float)y / a);
+
+                    ref var v = ref vertices[(b + 1) * y + x];
+                    if(typeof(TVertex) == typeof(Vertex)) {
+                        Unsafe.As<TVertex, Vertex>(ref v) = new Vertex
+                        {
+                            Position = pos,
+                            Normal = pos,
+                            UV = uv,
+                        };
+                    }
+                    else {
+                        v = default;
+                        posField.GetRef<TVertex, Vector3>(ref v) = pos;
+                        if(uvField is not null) {
+                            uvField.GetRef<TVertex, Vector2>(ref v) = uv;
+                        }
+                        if(normalField is not null) {
+                            normalField.GetRef<TVertex, Vector3>(ref v) = pos;
+                        }
+                    }
+                }
+            }
+            for(int y = 0; y < a; y++) {
+                for(int x = 0; x < b; x++) {
+                    var k = (b * y + x) * 6;
+
+                    var lt = (b + 1) * y + x;
+                    var lb = (b + 1) * (y + 1) + x;
+                    var rb = (b + 1) * (y + 1) + (x + 1) % (b + 1);
+                    var rt = (b + 1) * y + (x + 1) % (b + 1);
+
+                    indices[k] = lt;
+                    indices[k + 1] = lb;
+                    indices[k + 2] = rb;
+                    indices[k + 3] = lt;
+                    indices[k + 4] = rb;
+                    indices[k + 5] = rt;
+                }
+            }
+
+            action.Invoke(state, vertices.AsSpan(), indices.AsSpan());
         }
 
         [DoesNotReturn]
