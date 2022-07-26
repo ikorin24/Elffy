@@ -131,8 +131,9 @@ namespace Elffy
         {
             ArgumentNullException.ThrowIfNull(action);
 
-            const int a = 16;
-            const int b = 32;
+            const float R = 0.5f;
+            const int A = 32;
+            const int B = 16;
 
             if(VertexMarshalHelper.TryGetVertexTypeData(typeof(TVertex), out var typeData) == false) {
                 ThrowInvalidVertexType();
@@ -144,30 +145,37 @@ namespace Elffy
             typeData.TryGetField(VertexSpecialField.UV, out var uvField);
             typeData.TryGetField(VertexSpecialField.Normal, out var normalField);
 
-            using var vertices = new UnsafeRawArray<TVertex>((a + 1) * (b + 1), false);
-            using var indices = new UnsafeRawArray<int>(a * b * 6, false);
+            using var vertices = new UnsafeRawArray<TVertex>((B + 1) * (A + 1), false);
+            using var indices = new UnsafeRawArray<int>(B * A * 6, false);
 
-            for(int y = 0; y < a + 1; y++) {
-                var phi = MathF.PI / 2 - MathF.PI / a * y;
-                for(int x = 0; x < b + 1; x++) {
-                    var theta = MathF.PI - MathF.PI * 2 / b * x;
+            for(int y = 0; y < B + 1; y++) {
+                var phi = MathF.PI / 2 - MathF.PI / B * y;
+                for(int x = 0; x < A + 1; x++) {
+                    var theta = MathF.PI - MathF.PI * 2 / A * x;
                     var (sinPhi, cosPhi) = MathF.SinCos(phi);
                     var (sinTheta, cosTheta) = MathF.SinCos(theta);
                     var pos = new Vector3(cosPhi * cosTheta, sinPhi, cosPhi * sinTheta);
-                    var uv = new Vector2((float)x / b, (float)y / a);
+                    var uv = new Vector2((float)x / A, (float)y / B);
 
-                    ref var v = ref vertices[(b + 1) * y + x];
+                    ref var v = ref vertices[(A + 1) * y + x];
                     if(typeof(TVertex) == typeof(Vertex)) {
                         Unsafe.As<TVertex, Vertex>(ref v) = new Vertex
                         {
-                            Position = pos,
+                            Position = pos * R,
                             Normal = pos,
+                            UV = uv,
+                        };
+                    }
+                    else if(typeof(TVertex) == typeof(VertexSlim)) {
+                        Unsafe.As<TVertex, VertexSlim>(ref v) = new VertexSlim
+                        {
+                            Position = pos * R,
                             UV = uv,
                         };
                     }
                     else {
                         v = default;
-                        posField.GetRef<TVertex, Vector3>(ref v) = pos;
+                        posField.GetRef<TVertex, Vector3>(ref v) = pos * R;
                         if(uvField is not null) {
                             uvField.GetRef<TVertex, Vector2>(ref v) = uv;
                         }
@@ -177,14 +185,14 @@ namespace Elffy
                     }
                 }
             }
-            for(int y = 0; y < a; y++) {
-                for(int x = 0; x < b; x++) {
-                    var k = (b * y + x) * 6;
+            for(int y = 0; y < B; y++) {
+                for(int x = 0; x < A; x++) {
+                    var k = (A * y + x) * 6;
 
-                    var lt = (b + 1) * y + x;
-                    var lb = (b + 1) * (y + 1) + x;
-                    var rb = (b + 1) * (y + 1) + (x + 1) % (b + 1);
-                    var rt = (b + 1) * y + (x + 1) % (b + 1);
+                    var lt = (A + 1) * y + x;
+                    var lb = (A + 1) * (y + 1) + x;
+                    var rb = (A + 1) * (y + 1) + (x + 1) % (A + 1);
+                    var rt = (A + 1) * y + (x + 1) % (A + 1);
 
                     indices[k] = lt;
                     indices[k + 1] = lb;

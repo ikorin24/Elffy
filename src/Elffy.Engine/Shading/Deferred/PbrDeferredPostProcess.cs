@@ -28,13 +28,13 @@ namespace Elffy.Shading.Deferred
             dispatcher.SendUniformTexture2D("_mrt0", gBuffer.Mrt[0], TextureUnitNumber.Unit0);
             dispatcher.SendUniformTexture2D("_mrt1", gBuffer.Mrt[1], TextureUnitNumber.Unit1);
             dispatcher.SendUniformTexture2D("_mrt2", gBuffer.Mrt[2], TextureUnitNumber.Unit2);
-            dispatcher.SendUniformTexture1D("_lightPosSampler", lights.PositionTexture, TextureUnitNumber.Unit5);
-            dispatcher.SendUniformTexture1D("_lightColorSampler", lights.ColorTexture, TextureUnitNumber.Unit6);
+            dispatcher.SendUniformTexture1D("_lightPosSampler", lights.PositionTexture, TextureUnitNumber.Unit3);
+            dispatcher.SendUniformTexture1D("_lightColorSampler", lights.ColorTexture, TextureUnitNumber.Unit4);
 
             if(lightCount > 0) {
                 var shadowMaps = lights.GetShadowMaps();
-                dispatcher.SendUniformTexture1D("_lmat", lights.MatrixTexture, TextureUnitNumber.Unit7);
-                dispatcher.SendUniformTexture2D("_shadowMap", shadowMaps[0].DepthTexture, TextureUnitNumber.Unit8);
+                dispatcher.SendUniformTexture1D("_lmat", lights.MatrixTexture, TextureUnitNumber.Unit5);
+                dispatcher.SendUniformTexture2D("_shadowMap", shadowMaps[0].DepthTexture, TextureUnitNumber.Unit6);
             }
         }
 

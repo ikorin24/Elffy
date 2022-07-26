@@ -48,7 +48,7 @@ namespace Sandbox
 
             InitializeLights(screen);
             var uiRoot = uiLayer.UIRoot;
-            var timings = screen.Timings;
+            var update = screen.Timings.Update;
             uiRoot.Background = Color4.Black;
             try {
                 await ParallelOperation.WhenAll(
@@ -57,13 +57,23 @@ namespace Sandbox
                     CreateCameraMouse(wLayer, new Vector3(0, 3, 0)),
                     CreateDice(wLayer),
                     CreateModel2(wLayer),
-                    CreateBox(wLayer),
+                    CreateBox(drLayer),
                     CreateFloor(drLayer),
-                    //CreateFloor2(wLayer),
                     CreateSky(wLayer),
-                    timings.Update.DelayTime(800));
+                    new Sphere()
+                    {
+                        Position = new Vector3(-5, 1, 1),
+                        Shader = new PbrDeferredShader()
+                        {
+                            Metallic = 1f,
+                            BaseColor = new Color3(1f, 0.766f, 0.336f),
+                            Roughness = 0.01f,
+                        },
+                    }.Activate(drLayer),
+                    update.DelayTime(800)
+                    );
                 var time = TimeSpanF.FromMilliseconds(200);
-                await foreach(var frame in timings.Update.Frames()) {
+                await foreach(var frame in update.Frames()) {
                     if(frame.Time >= time) {
                         break;
                     }
@@ -106,8 +116,8 @@ namespace Sandbox
             dice.Position = new Vector3(3, 1, 2);
             dice.Shader = new PbrDeferredShader()
             {
-                Metallic = 0.1f,
-                Roughness = 0.05f,
+                Metallic = 0f,
+                Roughness = 0.02f,
             };
             return dice.Activate(layer);
         }
@@ -160,12 +170,12 @@ namespace Sandbox
             var timing = layer.GetValidScreen().Timings.Update;
             var dice = new Plain()
             {
-                Scale = new Vector3(40f),
+                Scale = new Vector3(20f),
                 Rotation = Quaternion.FromAxisAngle(Vector3.UnitX, -90.ToRadian()),
                 Shader = new PbrDeferredShader()
                 {
-                    Metallic = 0.1f,
-                    Roughness = 0.15f,
+                    Metallic = 0,
+                    Roughness = 0.25f,
                 },
             };
             var texture = await Resources.Sandbox["floor.png"]
@@ -194,12 +204,16 @@ namespace Sandbox
             return await plain.Activate(layer);
         }
 
-        private static async UniTask<Cube> CreateBox(WorldLayer layer)
+        private static async UniTask<Cube> CreateBox(DeferredRenderingLayer layer)
         {
             var timing = layer.GetValidScreen().Timings.Update;
             var cube = new Cube();
             cube.Position = new(-3, 0.5f, 0);
-            cube.Shader = new PhongShader();
+            cube.Shader = new PbrDeferredShader
+            {
+                Metallic = 0f,
+                Roughness = 0.15f,
+            };
             cube.AddComponent(await Resources.Sandbox["box.png"].LoadTextureAsync(timing));
             await cube.Activate(layer);
             cube.StartCoroutine(static async (coroutine, cube) =>
