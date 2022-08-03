@@ -7,6 +7,7 @@ using Elffy.Markup;
 using RP = Elffy.Markup.RegexPatterns;
 using NVec3 = System.Numerics.Vector3;
 using NMat4 = System.Numerics.Matrix4x4;
+using N = System.Numerics;
 
 namespace Elffy
 {
@@ -119,32 +120,25 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Matrix4(ReadOnlySpan<Vector4> columns)
+        {
+            if(columns.Length != 4) { throw new ArgumentException("Length must be 4."); }
+            this = Unsafe.As<Vector4, Matrix4>(ref MemoryMarshal.GetReference(columns));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Matrix4(ReadOnlySpan<float> matrix)
         {
-            if(matrix.Length < 16) { throw new ArgumentException("Length >= 16 is needed."); }
-            M00 = matrix[0];
-            M10 = matrix[1];
-            M20 = matrix[2];
-            M30 = matrix[3];
-            M01 = matrix[4];
-            M11 = matrix[5];
-            M21 = matrix[6];
-            M31 = matrix[7];
-            M02 = matrix[8];
-            M12 = matrix[9];
-            M22 = matrix[10];
-            M32 = matrix[11];
-            M03 = matrix[12];
-            M13 = matrix[13];
-            M23 = matrix[14];
-            M33 = matrix[15];
+            if(matrix.Length != 16) { throw new ArgumentException("Length must be 16."); }
+            this = Unsafe.As<float, Matrix4>(ref MemoryMarshal.GetReference(matrix));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal Matrix4(in Matrix3 matrix) : this(matrix.M00, matrix.M01, matrix.M02, 0,
                                                    matrix.M10, matrix.M11, matrix.M12, 0,
                                                    matrix.M20, matrix.M21, matrix.M22, 0,
-                                                   0, 0, 0, 1) { }
+                                                   0, 0, 0, 1)
+        { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Transpose() => (M10, M20, M30, M01, M21, M31, M02, M12, M32, M03, M13, M23) = (M01, M02, M03, M10, M12, M13, M20, M21, M23, M30, M31, M32);
@@ -157,11 +151,7 @@ namespace Elffy
 
         public readonly bool Inverted(out Matrix4 result)
         {
-#if NET5_0_OR_GREATER
             Unsafe.SkipInit(out result);
-#else
-            result = default;
-#endif
             return NMat4.Invert(AsNMat4(this), out Unsafe.As<Matrix4, NMat4>(ref result));
         }
 
@@ -171,44 +161,16 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Equals(Matrix4 other)
         {
-            return M00 == other.M00 &&
-                   M10 == other.M10 &&
-                   M20 == other.M20 &&
-                   M30 == other.M30 &&
-                   M01 == other.M01 &&
-                   M11 == other.M11 &&
-                   M21 == other.M21 &&
-                   M31 == other.M31 &&
-                   M02 == other.M02 &&
-                   M12 == other.M12 &&
-                   M22 == other.M22 &&
-                   M32 == other.M32 &&
-                   M03 == other.M03 &&
-                   M13 == other.M13 &&
-                   M23 == other.M23 &&
-                   M33 == other.M33;
+            ref var v1 = ref Unsafe.As<Matrix4, N.Vector<float>>(ref Unsafe.AsRef(in this));
+            ref var v2 = ref Unsafe.As<Matrix4, N.Vector<float>>(ref Unsafe.AsRef(in other));
+            return N.Vector.EqualsAll(v1, v2);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode()
         {
             var hash = new HashCode();
-            hash.Add(M00);
-            hash.Add(M10);
-            hash.Add(M20);
-            hash.Add(M30);
-            hash.Add(M01);
-            hash.Add(M11);
-            hash.Add(M21);
-            hash.Add(M31);
-            hash.Add(M02);
-            hash.Add(M12);
-            hash.Add(M22);
-            hash.Add(M32);
-            hash.Add(M03);
-            hash.Add(M13);
-            hash.Add(M23);
-            hash.Add(M33);
+            hash.AddBytes(this.AsReadOnlyBytes());
             return hash.ToHashCode();
         }
 
@@ -234,7 +196,7 @@ namespace Elffy
         public static bool operator ==(in Matrix4 left, in Matrix4 right) => left.Equals(right);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(in Matrix4 left, in Matrix4 right) => !(left == right);
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void OrthographicProjection(float left, float right, float bottom, float top, float depthNear, float depthFar, out Matrix4 result)
         {
@@ -242,17 +204,17 @@ namespace Elffy
             var invTB = 1.0f / (top - bottom);
             var invFN = 1.0f / (depthFar - depthNear);
 
-            result = new Matrix4(2 * invRL, 0,         0,          -(right + left) * invRL,
-                                 0,         2 * invTB, 0,          -(top + bottom) * invTB,
-                                 0,         0,         -2 * invFN, -(depthFar + depthNear) * invFN,
-                                 0,         0,         0,          1);
+            result = new Matrix4(2 * invRL, 0, 0, -(right + left) * invRL,
+                                 0, 2 * invTB, 0, -(top + bottom) * invTB,
+                                 0, 0, -2 * invFN, -(depthFar + depthNear) * invFN,
+                                 0, 0, 0, 1);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PerspectiveProjection(float left, float right, float bottom, float top, float depthNear, float depthFar, out Matrix4 result)
         {
             if(depthNear <= 0) { throw new ArgumentOutOfRangeException(nameof(depthNear)); }
-            if(depthFar <= 0) { throw new ArgumentOutOfRangeException(nameof(depthFar));}
+            if(depthFar <= 0) { throw new ArgumentOutOfRangeException(nameof(depthFar)); }
             if(depthNear >= depthFar) { throw new ArgumentOutOfRangeException(nameof(depthNear)); }
 
             var x = 2.0f * depthNear / (right - left);
@@ -293,7 +255,7 @@ namespace Elffy
             result = new Matrix4(x.X, x.Y, x.Z, -x.Dot(eye),
                                  y.X, y.Y, y.Z, -y.Dot(eye),
                                  z.X, z.Y, z.Z, -z.Dot(eye),
-                                 0,   0,   0,   1);
+                                 0, 0, 0, 1);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -327,5 +289,28 @@ namespace Elffy
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static ref readonly NVec3 AsNVec3(in Vector3 vec) => ref Unsafe.As<Vector3, NVec3>(ref Unsafe.AsRef(vec));
+    }
+
+    public static class MatrixExtensions
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Span<byte> AsBytes(ref this Matrix4 matrix) => MemoryMarshal.CreateSpan(ref Unsafe.As<Matrix4, byte>(ref matrix), Unsafe.SizeOf<Matrix4>());
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ReadOnlySpan<byte> AsReadOnlyBytes(in this Matrix4 matrix)
+            => MemoryMarshal.CreateSpan(ref Unsafe.As<Matrix4, byte>(ref Unsafe.AsRef(in matrix)), Unsafe.SizeOf<Matrix4>());
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Span<float> AsFloatSpan(ref this Matrix4 matrix) => MemoryMarshal.CreateSpan(ref matrix.M00, 16);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ReadOnlySpan<float> AsReadOnlyFloatSpan(in this Matrix4 matrix) => MemoryMarshal.CreateReadOnlySpan(ref Unsafe.AsRef(in matrix.M00), 16);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Span<Vector4> AsVec4Span(ref this Matrix4 matrix) => MemoryMarshal.CreateSpan(ref Unsafe.As<Matrix4, Vector4>(ref matrix), 4);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ReadOnlySpan<Vector4> AsReadOnlyVec4Span(in this Matrix4 matrix)
+            => MemoryMarshal.CreateSpan(ref Unsafe.As<Matrix4, Vector4>(ref Unsafe.AsRef(in matrix)), 4);
     }
 }
