@@ -21,7 +21,7 @@ namespace Elffy
         private LayerCollection? _owner;
         private readonly int _sortNumber;
         private bool _isEnabled;
-        private LayerLifeState _state;
+        private LifeState _state;
         private AsyncEventRaiser<Layer>? _activating;
         private AsyncEventRaiser<Layer>? _terminating;
 
@@ -40,7 +40,7 @@ namespace Elffy
         /// <summary>Get count of alive objects in the current frame.</summary>
         public int ObjectCount => _store.ObjectCount;
 
-        public LayerLifeState LifeState => _state;
+        public LifeState LifeState => _state;
 
         public AsyncEvent<Layer> Activating => new(ref _activating);
         public AsyncEvent<Layer> Terminating => new(ref _terminating);
@@ -61,7 +61,7 @@ namespace Elffy
             _sortNumber = sortNumber;
             _timingPoints = new LayerTimingPointList(this);
             _store = new FrameObjectStore(capacity);
-            _state = LayerLifeState.New;
+            _state = LifeState.New;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -88,14 +88,14 @@ namespace Elffy
             if(currentContext != screen) {
                 ContextMismatchException.Throw(currentContext, screen);
             }
-            if(_state.IsAfter(LayerLifeState.New)) {
+            if(_state > LifeState.New) {
                 throw new InvalidOperationException("Cannot activate the layer twice.");
             }
             ct.ThrowIfCancellationRequested();
 
-            Debug.Assert(_state == LayerLifeState.New);
+            Debug.Assert(_state == LifeState.New);
             Debug.Assert(_owner is null);
-            _state = LayerLifeState.Activating;
+            _state = LifeState.Activating;
             _owner = screen.Layers;
             try {
                 await _activating.RaiseIfNotNull(this, ct);
@@ -118,15 +118,15 @@ namespace Elffy
             }
             screen.Layers.Add(this, OnAddedToList);
             await timingPoint.NextFrame(CancellationToken.None);
-            Debug.Assert(_state.IsSameOrAfter(LayerLifeState.Alive));
+            Debug.Assert(_state >= LifeState.Alive);
             return;
 
             static void OnAddedToList(Layer self)
             {
                 var screen = self.Screen;
-                Debug.Assert(self._state == LayerLifeState.Activating);
+                Debug.Assert(self._state == LifeState.Activating);
                 Debug.Assert(screen != null);
-                self._state = LayerLifeState.Alive;
+                self._state = LifeState.Alive;
                 try {
                     self.OnAlive(screen);
                 }
@@ -154,16 +154,16 @@ namespace Elffy
             if(context != screen) {
                 ContextMismatchException.Throw(context, screen);
             }
-            if(_state == LayerLifeState.New) {
+            if(_state == LifeState.New) {
                 throw new InvalidOperationException("Cannot terminate the layer because it is not activated.");
             }
-            if(_state.IsSameOrAfter(LayerLifeState.Terminating)) {
+            if(_state >= LifeState.Terminating) {
                 throw new InvalidOperationException("Cannot terminate the layer twice.");
             }
-            Debug.Assert(_state == LayerLifeState.Activating || _state == LayerLifeState.Alive);
+            Debug.Assert(_state == LifeState.Activating || _state == LifeState.Alive);
 
-            if(_state == LayerLifeState.Alive) {
-                _state = LayerLifeState.Terminating;
+            if(_state == LifeState.Alive) {
+                _state = LifeState.Terminating;
             }
             _runningTokenSource.Cancel();
             var owner = _owner;
@@ -178,7 +178,7 @@ namespace Elffy
             await _terminating.RaiseIfNotNull(this, CancellationToken.None);
 
             await (timingPoint ?? screen.Timings.Update).NextFrame(CancellationToken.None);
-            Debug.Assert(_state == LayerLifeState.Dead);
+            Debug.Assert(_state == LifeState.Dead);
             return;
 
             static UniTask TerminateAllFrameObjects(Layer self)
@@ -205,9 +205,9 @@ namespace Elffy
 
             static void OnRemovedFromList(Layer self)
             {
-                Debug.Assert(self._state == LayerLifeState.Terminating || self._state == LayerLifeState.Activating);
+                Debug.Assert(self._state == LifeState.Terminating || self._state == LifeState.Activating);
                 self._owner = null;
-                self._state = LayerLifeState.Dead;
+                self._state = LifeState.Dead;
                 self._timingPoints.AbortAllEvents();
                 try {
                     self.OnDead();
@@ -289,14 +289,14 @@ namespace Elffy
         public static async UniTask<TLayer> Activate<TLayer>(this TLayer layer, IHostScreen screen, CancellationToken cancellationToken = default) where TLayer : Layer
         {
             await layer.ActivateOnScreen(screen, screen.Timings.Update, cancellationToken);
-            Debug.Assert(layer.LifeState.IsSameOrAfter(LayerLifeState.Alive));
+            Debug.Assert(layer.LifeState >= LifeState.Alive);
             return layer;
         }
 
         public static async UniTask<TLayer> Activate<TLayer>(this TLayer layer, IHostScreen screen, FrameTimingPoint timingPoint, CancellationToken cancellationToken = default) where TLayer : Layer
         {
             await layer.ActivateOnScreen(screen, timingPoint, cancellationToken);
-            Debug.Assert(layer.LifeState.IsSameOrAfter(LayerLifeState.Alive));
+            Debug.Assert(layer.LifeState >= LifeState.Alive);
             return layer;
         }
 
@@ -309,7 +309,7 @@ namespace Elffy
         {
             ArgumentNullException.ThrowIfNull(timingPoint);
             await layer.TerminateFromScreen(timingPoint);
-            Debug.Assert(layer.LifeState == LayerLifeState.Dead);
+            Debug.Assert(layer.LifeState == LifeState.Dead);
             return layer;
         }
 
@@ -319,7 +319,7 @@ namespace Elffy
                                 (screen.Timings.TryGetTiming(timing, out var tp) ? tp : null)
                                 : null;
             await layer.TerminateFromScreen(timingPoint);
-            Debug.Assert(layer.LifeState == LayerLifeState.Dead);
+            Debug.Assert(layer.LifeState == LifeState.Dead);
             return layer;
         }
     }

@@ -40,7 +40,7 @@ namespace Elffy.UI
         internal async UniTask Initialize(FrameTimingPoint timingPoint, CancellationToken ct)
         {
             var layer = _uiLayer;
-            Debug.Assert(layer.LifeState.IsSameOrAfter(LayerLifeState.Alive));
+            Debug.Assert(layer.LifeState >= LifeState.Alive);
             var screen = layer.Screen;
             Debug.Assert(screen is not null);
             SetAsRootControl();

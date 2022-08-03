@@ -52,7 +52,7 @@ namespace Elffy
         CancellationToken RunningToken { get; }
 
         /// <summary>Get screen life state</summary>
-        HostScreenLifeState LifeState { get; }
+        LifeState LifeState { get; }
 
         /// <summary>Get whether screen is running</summary>
         bool IsRunning { get; }

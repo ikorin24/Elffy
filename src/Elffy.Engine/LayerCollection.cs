@@ -34,7 +34,7 @@ namespace Elffy
             Debug.Assert(layer is not null);
             Debug.Assert(onAdded is not null);
             Debug.Assert(layer.Owner == this);
-            Debug.Assert(layer.LifeState == LayerLifeState.Activating);
+            Debug.Assert(layer.LifeState == LifeState.Activating);
 
             _list.Add(layer, onAdded);
         }

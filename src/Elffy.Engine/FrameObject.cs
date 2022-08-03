@@ -160,7 +160,7 @@ namespace Elffy
             if(currentContext != screen) {
                 ContextMismatchException.Throw(currentContext, screen);
             }
-            if(_state.IsAfter(LifeState.New)) {
+            if(_state > LifeState.New) {
                 throw new InvalidOperationException($"Cannot activate the {nameof(FrameObject)} twice.");
             }
         }
@@ -189,7 +189,7 @@ namespace Elffy
             }
             layer.AddFrameObject(this);
             await timingPoint.NextFrame(ct);
-            Debug.Assert(_state.IsSameOrAfter(LifeState.Alive));
+            Debug.Assert(_state >= LifeState.Alive);
             if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) {
                 edi?.Throw();
             }
@@ -228,7 +228,7 @@ namespace Elffy
             if(_state == LifeState.Activating) {
                 throw new InvalidOperationException($"Cannot terminate {nameof(FrameObject)} when activating.");
             }
-            if(_state.IsSameOrAfter(LifeState.Terminating)) { ThrowTerminateTwice(); }
+            if(_state >= LifeState.Terminating) { ThrowTerminateTwice(); }
 
             timingPoint ??= screen.Timings.Update;
             Debug.Assert(_state == LifeState.Alive);

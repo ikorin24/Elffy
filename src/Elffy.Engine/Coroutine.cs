@@ -203,7 +203,7 @@ namespace Elffy
             }
             else if(typeof(TParent) == typeof(FrameObject)) {
                 var parentFrameObject = SafeCast.As<FrameObject>(parent);
-                if(parentFrameObject.LifeState.IsBefore(LifeState.Alive)) {
+                if(parentFrameObject.LifeState < LifeState.Alive) {
                     ReserveCoroutine(parentFrameObject, state, coroutine, null, timing);
                 }
                 else {
@@ -230,7 +230,7 @@ namespace Elffy
             }
             else if(typeof(TParent) == typeof(FrameObject)) {
                 var parentFrameObject = SafeCast.As<FrameObject>(parent);
-                if(parentFrameObject.LifeState.IsBefore(LifeState.Alive)) {
+                if(parentFrameObject.LifeState < LifeState.Alive) {
                     ThrowParentNotAlive();
                     return UniTask.CompletedTask;
                 }
@@ -310,7 +310,7 @@ namespace Elffy
                 if(coroutineState.Screen.IsRunning == false) { return; }
             }
             else {
-                Debug.Assert(fo.LifeState.IsSameOrAfter(LifeState.Alive));
+                Debug.Assert(fo.LifeState >= LifeState.Alive);
                 if(fo.LifeState == LifeState.Dead) { return; }
             }
             try {

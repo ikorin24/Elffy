@@ -15,7 +15,7 @@ namespace UnitTest
         public static void LifeSpan_Layer() => TestEngineEntryPoint.Start(async screen =>
         {
             var layer = new WorldLayer();
-            Assert.Equal(LayerLifeState.New, layer.LifeState);
+            Assert.Equal(LifeState.New, layer.LifeState);
 
             var isSyncActivatingEventCalled = false;
             var isAsyncActivatingEventCalled = false;
@@ -26,13 +26,13 @@ namespace UnitTest
             {
                 Assert.False(isSyncActivatingEventCalled);
                 isSyncActivatingEventCalled = true;
-                Assert.Equal(LayerLifeState.Activating, layer.LifeState);
+                Assert.Equal(LifeState.Activating, layer.LifeState);
                 return UniTask.CompletedTask;
             });
             layer.Activating.Subscribe(async (layer, ct) =>
             {
                 Assert.False(isAsyncActivatingEventCalled);
-                Assert.Equal(LayerLifeState.Activating, layer.LifeState);
+                Assert.Equal(LifeState.Activating, layer.LifeState);
                 var screen = layer.Screen;
                 Assert.NotNull(screen);
                 Debug.Assert(screen is not null);
@@ -43,13 +43,13 @@ namespace UnitTest
             {
                 Assert.False(isSyncTerminatingEventCalled);
                 isSyncTerminatingEventCalled = true;
-                Assert.Equal(LayerLifeState.Terminating, layer.LifeState);
+                Assert.Equal(LifeState.Terminating, layer.LifeState);
                 return UniTask.CompletedTask;
             });
             layer.Terminating.Subscribe(async (layer, ct) =>
             {
                 Assert.False(isAsyncTerminatingEventCalled);
-                Assert.Equal(LayerLifeState.Terminating, layer.LifeState);
+                Assert.Equal(LifeState.Terminating, layer.LifeState);
                 var screen = layer.Screen;
                 Assert.NotNull(screen);
                 Debug.Assert(screen is not null);
@@ -60,12 +60,12 @@ namespace UnitTest
             await layer.Activate(screen);
             Assert.True(isSyncActivatingEventCalled);
             Assert.True(isAsyncActivatingEventCalled);
-            Assert.Equal(LayerLifeState.Alive, layer.LifeState);
+            Assert.Equal(LifeState.Alive, layer.LifeState);
 
             await layer.Terminate();
             Assert.True(isSyncTerminatingEventCalled);
             Assert.True(isAsyncTerminatingEventCalled);
-            Assert.Equal(LayerLifeState.Dead, layer.LifeState);
+            Assert.Equal(LifeState.Dead, layer.LifeState);
         });
 
         [Fact]
@@ -102,7 +102,7 @@ namespace UnitTest
 
             // 4.
             await layer.Terminate();
-            Assert.Equal(LayerLifeState.Dead, layer.LifeState);
+            Assert.Equal(LifeState.Dead, layer.LifeState);
             Assert.Equal(0, layer.ObjectCount);
         });
 
@@ -140,7 +140,7 @@ namespace UnitTest
 
             // 3.
             await layer.Terminate();
-            Assert.Equal(LayerLifeState.Dead, layer.LifeState);
+            Assert.Equal(LifeState.Dead, layer.LifeState);
 
             // 4.
             Assert.True(cubes.All(cube => cube.LifeState == LifeState.Dead));

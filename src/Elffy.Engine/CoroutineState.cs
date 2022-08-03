@@ -40,7 +40,7 @@ namespace Elffy
         internal CoroutineState(FrameObject frameObject)
         {
             Debug.Assert(frameObject is not null);
-            Debug.Assert(frameObject.LifeState.IsSameOrAfter(LifeState.Alive));
+            Debug.Assert(frameObject.LifeState >= LifeState.Alive);
             var hasScreen = frameObject.TryGetScreen(out var screen);
             Debug.Assert(hasScreen);
             Debug.Assert(screen is not null);
@@ -56,7 +56,7 @@ namespace Elffy
                 return screen.IsRunning;
             }
             else {
-                return screen.IsRunning && frameObject.LifeState.IsBefore(LifeState.Dead);
+                return screen.IsRunning && frameObject.LifeState < LifeState.Dead;
             }
         }
 

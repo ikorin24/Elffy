@@ -14,22 +14,16 @@ namespace Elffy
     public partial struct LifeState
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Is(LifeState state) => _value == state._value;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsBefore(LifeState state) => _value < state._value;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsSameOrBefore(LifeState state) => _value <= state._value;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsAfter(LifeState state) => _value > state._value;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsSameOrAfter(LifeState state) => _value >= state._value;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsRunning() => _value == Alive._value || _value == Terminating._value;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator <(LifeState left, LifeState right) => left._value < right._value;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator >(LifeState left, LifeState right) => left._value > right._value;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator <=(LifeState left, LifeState right) => left._value <= right._value;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator >=(LifeState left, LifeState right) => left._value >= right._value;
     }
 
     internal static class LifeStateValue

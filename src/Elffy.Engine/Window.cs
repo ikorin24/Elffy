@@ -24,7 +24,7 @@ namespace Elffy
 
         private const float DefaultFrameRate = 60f;    // TODO: とりあえず固定で
 
-        private HostScreenLifeState _lifeState;
+        private LifeState _lifeState;
         private readonly WindowGLFW _windowImpl;
         private readonly RenderingArea _renderingArea;
         private TimeSpanF _frameDelta;
@@ -71,7 +71,7 @@ namespace Elffy
         /// <inheritdoc/>
         public CancellationToken RunningToken => _renderingArea.RunningToken;
 
-        public HostScreenLifeState LifeState => _lifeState;
+        public LifeState LifeState => _lifeState;
 
         /// <inheritdoc/>
         public bool IsRunning => _lifeState.IsRunning() && !_renderingArea.RunningToken.IsCancellationRequested;
@@ -244,8 +244,8 @@ namespace Elffy
             if(_lifeState.IsRunning() == false) { return; }
 
             if(_renderingArea.RequestClose()) {
-                Debug.Assert(_lifeState == HostScreenLifeState.Alive);
-                _lifeState = HostScreenLifeState.Terminating;
+                Debug.Assert(_lifeState == LifeState.Alive);
+                _lifeState = LifeState.Terminating;
             }
         }
 
@@ -255,7 +255,7 @@ namespace Elffy
             {
                 var self = SafeCast.As<Window>(screen);
                 self._windowImpl.Dispose();
-                self._lifeState = HostScreenLifeState.Dead;
+                self._lifeState = LifeState.Dead;
             });
         }
 
@@ -263,17 +263,17 @@ namespace Elffy
         public void Activate()
         {
             if(!Engine.IsThreadMain) { ThrowNotMainThread(); }
-            if(_lifeState.IsAfter(HostScreenLifeState.New)) {
+            if(_lifeState > LifeState.New) {
                 throw new InvalidOperationException("Cannot activate twice.");
             }
-            _lifeState = HostScreenLifeState.Activating;
+            _lifeState = LifeState.Activating;
 
             Engine.AddScreen(this, static screen =>
             {
                 var self = SafeCast.As<Window>(screen);
-                Debug.Assert(self._lifeState == HostScreenLifeState.Activating);
+                Debug.Assert(self._lifeState == LifeState.Activating);
                 self._windowImpl.Activate();
-                self._lifeState = HostScreenLifeState.Alive;
+                self._lifeState = LifeState.Alive;
             });
         }
 

@@ -276,7 +276,7 @@ namespace Elffy
             if(_isLoaded) { ThrowAlreadyLoaded(); }
 
             var lifeState = LifeState;
-            if(lifeState.Is(LifeState.New) || lifeState.IsSameOrAfter(LifeState.Terminating)) {
+            if(lifeState == LifeState.New || lifeState >= LifeState.Terminating) {
                 return;
             }
             _vao = VAO.Create();

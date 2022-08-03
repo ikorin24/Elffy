@@ -240,11 +240,11 @@ namespace Elffy.UI
                 throw new ArgumentException($"The specified child already has a parent control.");
             }
             var lifeState = LifeState;
-            if(lifeState == LifeState.New || lifeState.IsSameOrAfter(LifeState.Terminating)) {
+            if(lifeState == LifeState.New || lifeState >= LifeState.Terminating) {
                 throw new InvalidOperationException();
             }
             var layerLifeState = layer.LifeState;
-            if(layerLifeState == LayerLifeState.New || layerLifeState.IsSameOrAfter(LayerLifeState.Terminating)) {
+            if(layerLifeState == LifeState.New || layerLifeState >= LifeState.Terminating) {
                 throw new InvalidOperationException();
             }
             return (screen, layer, root);
@@ -264,7 +264,7 @@ namespace Elffy.UI
                 throw new InvalidOperationException();
             }
             var childState = childToRemove.LifeState;
-            if(childState == LifeState.New || childState.IsSameOrAfter(LifeState.Terminating)) {
+            if(childState == LifeState.New || childState >= LifeState.Terminating) {
                 throw new InvalidOperationException();
             }
             var parent = childToRemove.Parent;
@@ -272,11 +272,11 @@ namespace Elffy.UI
                 throw new ArgumentException($"The specified child is not a member of children of the parent.");
             }
             var lifeState = LifeState;
-            if(lifeState == LifeState.New || lifeState.IsSameOrAfter(LifeState.Terminating)) {
+            if(lifeState == LifeState.New || lifeState >= LifeState.Terminating) {
                 throw new InvalidOperationException();
             }
             var layerState = layer.LifeState;
-            if(layerState == LayerLifeState.New || layerState.IsSameOrAfter(LayerLifeState.Terminating)) {
+            if(layerState == LifeState.New || layerState >= LifeState.Terminating) {
                 throw new InvalidOperationException();
             }
             var root = _root;
@@ -314,11 +314,11 @@ namespace Elffy.UI
                 throw new InvalidOperationException();
             }
             var lifeState = LifeState;
-            if(lifeState == LifeState.New || lifeState.IsSameOrAfter(LifeState.Terminating)) {
+            if(lifeState == LifeState.New || lifeState >= LifeState.Terminating) {
                 throw new InvalidOperationException();
             }
             var layerState = layer.LifeState;
-            if(layerState == LayerLifeState.New || layerState.IsSameOrAfter(LayerLifeState.Terminating)) {
+            if(layerState == LifeState.New || layerState >= LifeState.Terminating) {
                 throw new InvalidOperationException();
             }
             var root = _root;
