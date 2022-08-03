@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using System;
-using System.Diagnostics;
 using Cysharp.Threading.Tasks;
 using Elffy;
 using Elffy.Mathematics;
@@ -12,7 +11,6 @@ using Elffy.UI;
 using Elffy.Shading;
 using Elffy.Threading;
 using Elffy.Graphics.OpenGL;
-using Elffy.Imaging;
 
 namespace Sandbox
 {
@@ -46,7 +44,7 @@ namespace Sandbox
                     () => new WorldLayer(),
                     () => new UILayer());
 
-            InitializeLights(screen);
+            await InitializeLights(wLayer);
             var uiRoot = uiLayer.UIRoot;
             var update = screen.Timings.Update;
             uiRoot.Background = Color4.Black;
@@ -85,19 +83,43 @@ namespace Sandbox
             }
         }
 
-        private static void InitializeLights(IHostScreen screen)
+        private static async UniTask InitializeLights(WorldLayer layer)
         {
-            ReadOnlySpan<Vector4> pos = stackalloc Vector4[]
+            var screen = layer.GetValidScreen();
+            var pos = new Vector3(0, 10, 10);
+
+            var color = Color4.White;
+            var (arrow, sphere) = await UniTask.WhenAll(
+                new Arrow
+                {
+                    Shader = new SolidColorShader
+                    {
+                        Color = color,
+                    },
+                    HasShadow = false,
+                    Scale = new Vector3(2)
+                }.Activate(layer),
+                new Sphere
+                {
+                    Shader = new SolidColorShader
+                    {
+                        Color = color,
+                    },
+                    Position = pos,
+                    HasShadow = false,
+                }.Activate(layer));
+            var light = screen.Lights.CreatePointLight(pos, color);
+
+            var i = 0;
+            screen.Timings.OnUpdate(() =>
             {
-                new(1, 1, 1, 0),
-                //new(1, 0, 0, 0),
-            };
-            ReadOnlySpan<Color4> color = stackalloc Color4[]
-            {
-                Color4.White,
-                //Color4.OrangeRed,
-            };
-            screen.Lights.Initialize(pos, color);
+                var angle = i++.ToRadian();
+                var (sin, cos) = MathF.SinCos(angle);
+                sphere.Position = new Vector3(sin * 10, 10, cos * 10);
+                light.Position = new Vector4(sphere.Position, 1);
+                arrow.SetDirection(-sphere.Position.Normalized(), sphere.Position);
+            });
+
         }
 
         private static UniTask<Model3D> CreateDice(WorldLayer layer)

@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using System;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Elffy.Components.Implementation;
@@ -16,6 +15,8 @@ namespace Elffy.Features
         private FloatDataTextureCore _textureCore;
         private ValueTypeRentMemory<T> _memory;
 
+        public static MappedFloatDataTextureCore<T> Empty => default;
+
         /// <summary>Byte length of the data</summary>
         public readonly int ByteLength => _memory.Length * Unsafe.SizeOf<T>();
 
@@ -28,6 +29,8 @@ namespace Elffy.Features
         /// <summary>texture object (texture1D)</summary>
         /// <remarks>Don't write the texture directly via this property.</remarks>
         public readonly TextureObject TextureObject => _textureCore.TextureObject;
+
+        public readonly ref readonly T this[int index] => ref _memory[index];
 
         public void Load(ReadOnlySpan<T> data, bool asPowerOfTwoTexture = true)
         {
@@ -82,9 +85,9 @@ namespace Elffy.Features
             _textureCore.Update(data, xOffset);
         }
 
-        public void UpdateAsVector4(SpanUpdateAction<Vector4> action) => UpdateAsVector4(action, static (span, action) => action.Invoke(span));
+        public void Update(SpanUpdateAction<Vector4> action) => Update(action, static (span, action) => action.Invoke(span));
 
-        public void UpdateAsVector4<TArg>(TArg arg, SpanUpdateAction<Vector4, TArg> action)
+        public void Update<TArg>(TArg arg, SpanUpdateAction<Vector4, TArg> action)
         {
             ArgumentNullException.ThrowIfNull(action);
             var span = _memory.AsSpan().MarshalCast<T, Vector4>();
@@ -94,9 +97,9 @@ namespace Elffy.Features
             _textureCore.Update(updated, modifiedRange.Start);
         }
 
-        public void UpdateAsColor4(SpanUpdateAction<Color4> action) => UpdateAsColor4(action, static (span, action) => action.Invoke(span));
+        public void Update(SpanUpdateAction<Color4> action) => Update(action, static (span, action) => action.Invoke(span));
 
-        public void UpdateAsColor4<TArg>(TArg arg, SpanUpdateAction<Color4, TArg> action)
+        public void Update<TArg>(TArg arg, SpanUpdateAction<Color4, TArg> action)
         {
             ArgumentNullException.ThrowIfNull(action);
             var span = _memory.AsSpan().MarshalCast<T, Color4>();
@@ -106,14 +109,6 @@ namespace Elffy.Features
             _textureCore.Update(updated, modifiedRange.Start);
         }
 
-        internal Span<T> GetWritableSpan() => _memory.AsSpan();
-
-        internal void UpdateTextureFromMemory(int xOffset, int pixelCount)
-        {
-            var targetPixels = AsColor4SpanPrivate().Slice(xOffset, pixelCount);
-            _textureCore.Update(targetPixels, xOffset);
-        }
-
         public void Dispose()
         {
             _memory.Dispose();
@@ -121,6 +116,8 @@ namespace Elffy.Features
         }
 
         public readonly ReadOnlySpan<T> AsSpan() => _memory.AsSpan();
+        public readonly ReadOnlySpan<T> AsSpan(int start) => _memory.AsSpan(start);
+        public readonly ReadOnlySpan<T> AsSpan(int start, int length) => _memory.AsSpan(start, length);
 
         public readonly ReadOnlySpan<float> AsFloatSpan() => _memory.AsSpan().MarshalCast<T, float>();
 
@@ -153,15 +150,6 @@ namespace Elffy.Features
         private readonly Span<(int Start, int Length)> _rangeRef;     // TODO: change into ref field in C# 11
 
         public ReadOnlySpan<T> Span => _span;
-
-        //public Range ModifiedRange
-        //{
-        //    get
-        //    {
-        //        ref var range = ref _rangeRef.GetReference();
-        //        return Unsafe.IsNullRef(ref range) ? default : range;
-        //    }
-        //}
 
         public UpdateTrackedSpan(Span<T> span, out (int Start, int Length) modifiedRange)
         {
