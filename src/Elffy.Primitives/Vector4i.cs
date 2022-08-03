@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 using Elffy.Markup;
+using N = System.Numerics;
 
 namespace Elffy
 {
@@ -59,10 +60,12 @@ namespace Elffy
         public readonly override bool Equals(object? obj) => obj is Vector4i i && Equals(i);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly bool Equals(Vector4i other) => X == other.X &&
-                                                       Y == other.Y &&
-                                                       Z == other.Z &&
-                                                       W == other.W;
+        public readonly bool Equals(Vector4i other)
+        {
+            ref var v1 = ref Unsafe.As<Vector4i, N.Vector<int>>(ref Unsafe.AsRef(in this));
+            ref var v2 = ref Unsafe.As<Vector4i, N.Vector<int>>(ref Unsafe.AsRef(in other));
+            return N.Vector.EqualsAll(v1, v2);
+        }
 
         public readonly override int GetHashCode() => HashCode.Combine(X, Y, Z, W);
 
