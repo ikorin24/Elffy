@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Elffy.Markup;
+using NVec4 = System.Numerics.Vector4;
 
 namespace Elffy
 {
@@ -60,7 +61,8 @@ namespace Elffy
 
         public readonly override bool Equals(object? obj) => obj is Color4 color && Equals(color);
 
-        public readonly bool Equals(Color4 other) => R == other.R && G == other.G && B == other.B && A == other.A;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly bool Equals(Color4 other) => AsNVec4(this) == AsNVec4(other);
 
         public readonly override int GetHashCode() => HashCode.Combine(R, G, B, A);
         public readonly override string ToString() => DebugView;
@@ -108,5 +110,9 @@ namespace Elffy
             throw new ArgumentException($"Web color name is not defined. The name must be small letter. (name='{name}')");
 
         public static bool IsWebColorDefined(string name) => WebColors.IsDefined(name);
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static ref readonly NVec4 AsNVec4(in Color4 vec) => ref Unsafe.As<Color4, NVec4>(ref Unsafe.AsRef(vec));
     }
 }

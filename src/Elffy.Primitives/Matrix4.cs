@@ -7,7 +7,6 @@ using Elffy.Markup;
 using RP = Elffy.Markup.RegexPatterns;
 using NVec3 = System.Numerics.Vector3;
 using NMat4 = System.Numerics.Matrix4x4;
-using N = System.Numerics;
 
 namespace Elffy
 {
@@ -159,12 +158,7 @@ namespace Elffy
         public override bool Equals(object? obj) => obj is Matrix4 matrix && Equals(matrix);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Equals(Matrix4 other)
-        {
-            ref var v1 = ref Unsafe.As<Matrix4, N.Vector<float>>(ref Unsafe.AsRef(in this));
-            ref var v2 = ref Unsafe.As<Matrix4, N.Vector<float>>(ref Unsafe.AsRef(in other));
-            return N.Vector.EqualsAll(v1, v2);
-        }
+        public bool Equals(Matrix4 other) => AsNMat4(this) == AsNMat4(other);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode()

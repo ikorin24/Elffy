@@ -4,7 +4,6 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 using Elffy.Markup;
-using N = System.Numerics;
 
 namespace Elffy
 {
@@ -62,9 +61,9 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly bool Equals(Vector4i other)
         {
-            ref var v1 = ref Unsafe.As<Vector4i, N.Vector<int>>(ref Unsafe.AsRef(in this));
-            ref var v2 = ref Unsafe.As<Vector4i, N.Vector<int>>(ref Unsafe.AsRef(in other));
-            return N.Vector.EqualsAll(v1, v2);
+            // Use UInt128 in C# 11
+            return Unsafe.As<int, ulong>(ref Unsafe.AsRef(in X)) == Unsafe.As<int, ulong>(ref other.X) &&
+                   Unsafe.As<int, ulong>(ref Unsafe.AsRef(in Z)) == Unsafe.As<int, ulong>(ref other.Z);
         }
 
         public readonly override int GetHashCode() => HashCode.Combine(X, Y, Z, W);
