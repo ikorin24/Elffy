@@ -78,7 +78,7 @@ namespace Elffy.Features.Internal
             foreach(var frameObject in _list.AsSpan()) {
                 if(frameObject.IsFrozen) { continue; }
                 try {
-                    frameObject.EarlyUpdate();
+                    frameObject.InvokeEarlyUpdate();
                 }
                 catch {
                     if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
@@ -93,7 +93,7 @@ namespace Elffy.Features.Internal
             foreach(var frameObject in _list.AsSpan()) {
                 if(frameObject.IsFrozen) { continue; }
                 try {
-                    frameObject.Update();
+                    frameObject.InvokeUpdate();
                 }
                 catch {
                     if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
@@ -108,7 +108,7 @@ namespace Elffy.Features.Internal
             foreach(var frameObject in _list.AsSpan()) {
                 if(frameObject.IsFrozen) { continue; }
                 try {
-                    frameObject.LateUpdate();
+                    frameObject.InvokeLateUpdate();
                 }
                 catch {
                     if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }

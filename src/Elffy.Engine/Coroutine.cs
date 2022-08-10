@@ -277,22 +277,34 @@ namespace Elffy
                 if(typeof(TState) == typeof(DummyState)) {
                     if(onCatch is null) {
                         // [capture] coroutine, timing
-                        parentFrameObject.Alive += f => StartCoroutine(new CoroutineState(f), DummyState.Null, coroutine, null, timing).Forget();
+                        parentFrameObject.Alive.Subscribe(f =>
+                        {
+                            StartCoroutine(new CoroutineState(f), DummyState.Null, coroutine, null, timing).Forget();
+                        });
                     }
                     else {
                         // [capture] coroutine, onCatch, timing
-                        parentFrameObject.Alive += f => StartCoroutine(new CoroutineState(f), DummyState.Null, coroutine, onCatch, timing).Forget();
+                        parentFrameObject.Alive.Subscribe(f =>
+                        {
+                            StartCoroutine(new CoroutineState(f), DummyState.Null, coroutine, onCatch, timing).Forget();
+                        });
                     }
                     return;
                 }
                 else {
                     if(onCatch is null) {
                         // [capture] state, coroutine, timing
-                        parentFrameObject.Alive += f => StartCoroutine(new CoroutineState(f), state, coroutine, null, timing).Forget();
+                        parentFrameObject.Alive.Subscribe(f =>
+                        {
+                            StartCoroutine(new CoroutineState(f), state, coroutine, null, timing).Forget();
+                        });
                     }
                     else {
                         // [capture] state, coroutine, onCatch, timing
-                        parentFrameObject.Alive += f => StartCoroutine(new CoroutineState(f), state, coroutine, onCatch, timing).Forget();
+                        parentFrameObject.Alive.Subscribe(f =>
+                        {
+                            StartCoroutine(new CoroutineState(f), state, coroutine, onCatch, timing).Forget();
+                        });
                     }
                     return;
                 }

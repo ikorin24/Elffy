@@ -4,10 +4,9 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
-using Cysharp.Threading.Tasks;
-using Elffy.UI;
-using Elffy.Threading;
 using System.Runtime.ExceptionServices;
+using Cysharp.Threading.Tasks;
+using Elffy.Threading;
 
 namespace Elffy
 {
@@ -18,27 +17,28 @@ namespace Elffy
         private Layer? _layer;
         private AsyncEventRaiser<FrameObject>? _activating;
         private AsyncEventRaiser<FrameObject>? _terminating;
+        private EventRaiser<FrameObject>? _update;
+        private EventRaiser<FrameObject>? _lateUpdate;
+        private EventRaiser<FrameObject>? _earlyUpdate;
+        private EventRaiser<FrameObject>? _alive;
+        private EventRaiser<FrameObject>? _dead;
         private LifeState _state = LifeState.New;
         private bool _isFrozen;
         private readonly FrameObjectInstanceType _instanceType = FrameObjectInstanceType.FrameObject;
 
         public AsyncEvent<FrameObject> Activating => new(ref _activating);
+
         public AsyncEvent<FrameObject> Terminating => new(ref _terminating);
 
-        /// <summary>Event of alive, which fires in the first frame where <see cref="LifeState"/> get <see cref="LifeState.Alive"/>.</summary>
-        public event Action<FrameObject>? Alive;
+        public Event<FrameObject> Alive => new Event<FrameObject>(ref _alive);
 
-        /// <summary>Event of dead, which fires in the first frame where <see cref="LifeState"/> get <see cref="LifeState.Dead"/>.</summary>
-        public event Action<FrameObject>? Dead;
+        public Event<FrameObject> Dead => new Event<FrameObject>(ref _dead);
 
-        /// <summary>Event of early updating</summary>
-        public event Action<FrameObject>? EarlyUpdated;
+        public Event<FrameObject> OnEarlyUpdate => new Event<FrameObject>(ref _earlyUpdate);
 
-        /// <summary>Event of updating</summary>
-        public event Action<FrameObject>? Updated;
+        public Event<FrameObject> OnLateUpdate => new Event<FrameObject>(ref _lateUpdate);
 
-        /// <summary>Event of late updating</summary>
-        public event Action<FrameObject>? LateUpdated;
+        public Event<FrameObject> OnUpdate => new Event<FrameObject>(ref _update);
 
         /// <summary>Get life state of <see cref="FrameObject"/></summary>
         public LifeState LifeState => _state;
@@ -132,13 +132,13 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void EarlyUpdate() => OnEarlyUpdate();
+        internal void InvokeEarlyUpdate() => _earlyUpdate?.Raise(this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void Update() => OnUpdate();
+        internal void InvokeUpdate() => _update?.Raise(this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void LateUpdate() => OnLateUpdte();
+        internal void InvokeLateUpdate() => _lateUpdate?.Raise(this);
 
         internal UniTask ActivateOnLayer(Layer layer, FrameTimingPoint timingPoint, CancellationToken ct)
         {
@@ -259,17 +259,11 @@ namespace Elffy
             [DoesNotReturn] static void ThrowTerminateTwice() => throw new InvalidOperationException($"Cannot terminate {nameof(FrameObject)} twice.");
         }
 
-        protected virtual void OnEarlyUpdate() => EarlyUpdated?.Invoke(this);
+        //protected virtual void OnAlive() => Alive?.Invoke(this);
+        protected virtual void OnAlive() => _alive?.Raise(this);
 
-        protected virtual void OnUpdate() => Updated?.Invoke(this);
-
-        protected virtual void OnLateUpdte() => LateUpdated?.Invoke(this);
-
-        //protected virtual UniTask OnTerminating() => UniTask.CompletedTask;
-
-        protected virtual void OnAlive() => Alive?.Invoke(this);
-
-        protected virtual void OnDead() => Dead?.Invoke(this);
+        //protected virtual void OnDead() => Dead?.Invoke(this);
+        protected virtual void OnDead() => _dead?.Raise(this);
 
         internal void AddToObjectStoreCallback()
         {
