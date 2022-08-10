@@ -26,7 +26,7 @@ namespace Elffy.UI
         private HorizontalAlignment _textAlignment;
         private VerticalAlignment _verticalTextAlignment;
 
-        private EventRaiser<(ITextContent Sender, string PropertyName)>? _propertyChanged;
+        private EventSource<(ITextContent Sender, string PropertyName)>? _propertyChanged;
         public Event<(ITextContent Sender, string PropertyName)> TextContentChanged => new(ref _propertyChanged);
 
         public string? Text { get => _text; set => SetValue(ref _text, value); }
@@ -60,7 +60,7 @@ namespace Elffy.UI
         {
             if(EqualityComparer<TValue>.Default.Equals(field, value)) { return; }
             field = value;
-            _propertyChanged?.Raise((_owner, callerName));
+            _propertyChanged?.Invoke((_owner, callerName));
         }
     }
 }

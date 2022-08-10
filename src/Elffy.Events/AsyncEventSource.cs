@@ -11,7 +11,7 @@ using System.Threading;
 
 namespace Elffy
 {
-    public sealed class AsyncEventRaiser<T>
+    public sealed class AsyncEventSource<T>
     {
         private const int DefaultBufferCapacity = 4;
 
@@ -24,23 +24,23 @@ namespace Elffy
 
         public int SubscibedCount => _count;
 
-        public AsyncEventRaiser()
+        internal AsyncEventSource()
         {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public UniTask RaiseSequentially(T arg, CancellationToken cancellationToken = default)
+        public UniTask InvokeSequentially(T arg, CancellationToken cancellationToken = default)
         {
-            return RaiseCore(arg, cancellationToken, EventRaiseMode.Sequential);
+            return InvokeCore(arg, cancellationToken, EventInvokeMode.Sequential);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public UniTask Raise(T arg, CancellationToken cancellationToken = default)
+        public UniTask Invoke(T arg, CancellationToken cancellationToken = default)
         {
-            return RaiseCore(arg, cancellationToken, EventRaiseMode.Parallel);
+            return InvokeCore(arg, cancellationToken, EventInvokeMode.Parallel);
         }
 
-        private UniTask RaiseCore(T arg, CancellationToken cancellationToken, EventRaiseMode mode)
+        private UniTask InvokeCore(T arg, CancellationToken cancellationToken, EventInvokeMode mode)
         {
             if(cancellationToken.IsCancellationRequested) {
                 return UniTask.FromCanceled(cancellationToken);
@@ -68,11 +68,11 @@ namespace Elffy
                 finally {
                     _lock.Exit();       // ---- exit
                 }
-                if(mode == EventRaiseMode.Parallel) {
+                if(mode == EventInvokeMode.Parallel) {
                     return OrderedParallelAsyncEventPromise<T>.CreateTask(copiedFuncs, arg, cancellationToken);
                 }
                 else {
-                    Debug.Assert(mode == EventRaiseMode.Sequential);
+                    Debug.Assert(mode == EventInvokeMode.Sequential);
                     return OrderedSequentialAsyncEventPromise<T>.CreateTask(copiedFuncs, arg, cancellationToken);
                 }
             }
@@ -80,12 +80,12 @@ namespace Elffy
 
         public Func<T, CancellationToken, UniTask> ToSequentialDelegate()
         {
-            return RaiseSequentially;
+            return InvokeSequentially;
         }
 
         public Func<T, CancellationToken, UniTask> ToDelegate()
         {
-            return Raise;
+            return Invoke;
         }
 
         public void Clear()
@@ -172,20 +172,20 @@ namespace Elffy
             }
         }
 
-        private enum EventRaiseMode : byte
+        private enum EventInvokeMode : byte
         {
             Parallel = 0,
             Sequential = 1,
         }
     }
 
-    public static class EventRaiserExtension
+    public static class EventSourceExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static UniTask RaiseSequentiallyIfNotNull<T>(this AsyncEventRaiser<T>? raiser, T arg, CancellationToken cancellationToken = default)
+        public static UniTask InvokeSequentiallyIfNotNull<T>(this AsyncEventSource<T>? source, T arg, CancellationToken cancellationToken = default)
         {
-            if(raiser is not null) {
-                return raiser.RaiseSequentially(arg, cancellationToken);
+            if(source is not null) {
+                return source.InvokeSequentially(arg, cancellationToken);
             }
             else {
                 if(cancellationToken.IsCancellationRequested) {
@@ -198,10 +198,10 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static UniTask RaiseIfNotNull<T>(this AsyncEventRaiser<T>? raiser, T arg, CancellationToken cancellationToken = default)
+        public static UniTask InvokeIfNotNull<T>(this AsyncEventSource<T>? source, T arg, CancellationToken cancellationToken = default)
         {
-            if(raiser is not null) {
-                return raiser.Raise(arg, cancellationToken);
+            if(source is not null) {
+                return source.Invoke(arg, cancellationToken);
             }
             else {
                 if(cancellationToken.IsCancellationRequested) {

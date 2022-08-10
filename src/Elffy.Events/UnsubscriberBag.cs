@@ -16,45 +16,49 @@ namespace Elffy
         private List<BagItem>? _list;
         private FastSpinLock _lock;
 
+        public UnsubscriberBag()
+        {
+        }
+
         public unsafe void Add<T>(EventUnsubscriber<T> unsubscriber)
         {
-            var (raiser, func) = unsubscriber.GetInnerValues();
-            if(raiser == null || func == null) { return; }
+            var (source, func) = unsubscriber.GetInnerValues();
+            if(source == null || func == null) { return; }
             _lock.Enter();
             try {
                 _list ??= new();
-                _list.Add(new BagItem(&OnDispose, raiser, func));
+                _list.Add(new BagItem(&OnDispose, source, func));
             }
             finally {
                 _lock.Exit();
             }
 
-            static void OnDispose(object r, Delegate f)
+            static void OnDispose(object s, Delegate f)
             {
-                var raiser = SafeCast.As<EventRaiser<T>>(r);
+                var source = SafeCast.As<EventSource<T>>(s);
                 var func = SafeCast.As<Action<T>>(f);
-                raiser.Unsubscribe(func);
+                source.Unsubscribe(func);
             }
         }
 
         public unsafe void Add<T>(AsyncEventUnsubscriber<T> unsubscriber)
         {
-            var (raiser, func) = unsubscriber.GetInnerValues();
-            if(raiser == null || func == null) { return; }
+            var (source, func) = unsubscriber.GetInnerValues();
+            if(source == null || func == null) { return; }
             _lock.Enter();
             try {
                 _list ??= new();
-                _list.Add(new BagItem(&OnDispose, raiser, func));
+                _list.Add(new BagItem(&OnDispose, source, func));
             }
             finally {
                 _lock.Exit();
             }
 
-            static void OnDispose(object r, Delegate f)
+            static void OnDispose(object s, Delegate f)
             {
-                var raiser = SafeCast.As<AsyncEventRaiser<T>>(r);
+                var source = SafeCast.As<AsyncEventSource<T>>(s);
                 var func = SafeCast.As<Func<T, CancellationToken, UniTask>>(f);
-                raiser.Unsubscribe(func);
+                source.Unsubscribe(func);
             }
         }
 
@@ -77,37 +81,34 @@ namespace Elffy
         private unsafe readonly struct BagItem
         {
             private readonly delegate*<object, Delegate, void> _p;
-            private readonly object _raiser;
+            private readonly object _o;
             private readonly Delegate _delegate;
 
-            public BagItem(delegate*<object, Delegate, void> p, object raiser, Delegate del)
+            public BagItem(delegate*<object, Delegate, void> p, object o, Delegate del)
             {
                 _p = p;
-                _raiser = raiser;
+                _o = o;
                 _delegate = del;
             }
 
-            public void Invoke() => _p(_raiser, _delegate);
+            public void Invoke() => _p(_o, _delegate);
         }
     }
 
-    public static class UnsubscriberBagExtension
+    public static class UnsubscriberBagExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void AddTo<T>(this EventUnsubscriber<T> unsubscriber, UnsubscriberBag bag)
         {
-            if(bag is null) { ThrowNullArg(nameof(bag)); }
+            ArgumentNullException.ThrowIfNull(bag);
             bag.Add(unsubscriber);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void AddTo<T>(this AsyncEventUnsubscriber<T> unsubscriber, UnsubscriberBag bag)
         {
-            if(bag is null) { ThrowNullArg(nameof(bag)); }
+            ArgumentNullException.ThrowIfNull(bag);
             bag.Add(unsubscriber);
         }
-
-        [DoesNotReturn]
-        private static void ThrowNullArg(string message) => throw new ArgumentNullException(message);
     }
 }

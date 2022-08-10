@@ -15,13 +15,13 @@ namespace Elffy
     {
         private IHostScreen? _hostScreen;
         private Layer? _layer;
-        private AsyncEventRaiser<FrameObject>? _activating;
-        private AsyncEventRaiser<FrameObject>? _terminating;
-        private EventRaiser<FrameObject>? _update;
-        private EventRaiser<FrameObject>? _lateUpdate;
-        private EventRaiser<FrameObject>? _earlyUpdate;
-        private EventRaiser<FrameObject>? _alive;
-        private EventRaiser<FrameObject>? _dead;
+        private AsyncEventSource<FrameObject>? _activating;
+        private AsyncEventSource<FrameObject>? _terminating;
+        private EventSource<FrameObject>? _update;
+        private EventSource<FrameObject>? _lateUpdate;
+        private EventSource<FrameObject>? _earlyUpdate;
+        private EventSource<FrameObject>? _alive;
+        private EventSource<FrameObject>? _dead;
         private LifeState _state = LifeState.New;
         private bool _isFrozen;
         private readonly FrameObjectInstanceType _instanceType = FrameObjectInstanceType.FrameObject;
@@ -34,11 +34,11 @@ namespace Elffy
 
         public Event<FrameObject> Dead => new Event<FrameObject>(ref _dead);
 
-        public Event<FrameObject> OnEarlyUpdate => new Event<FrameObject>(ref _earlyUpdate);
+        public Event<FrameObject> EarlyUpdate => new Event<FrameObject>(ref _earlyUpdate);
 
-        public Event<FrameObject> OnLateUpdate => new Event<FrameObject>(ref _lateUpdate);
+        public Event<FrameObject> LateUpdate => new Event<FrameObject>(ref _lateUpdate);
 
-        public Event<FrameObject> OnUpdate => new Event<FrameObject>(ref _update);
+        public Event<FrameObject> Update => new Event<FrameObject>(ref _update);
 
         /// <summary>Get life state of <see cref="FrameObject"/></summary>
         public LifeState LifeState => _state;
@@ -132,13 +132,13 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void InvokeEarlyUpdate() => _earlyUpdate?.Raise(this);
+        internal void InvokeEarlyUpdate() => _earlyUpdate?.Invoke(this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void InvokeUpdate() => _update?.Raise(this);
+        internal void InvokeUpdate() => _update?.Invoke(this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void InvokeLateUpdate() => _lateUpdate?.Raise(this);
+        internal void InvokeLateUpdate() => _lateUpdate?.Invoke(this);
 
         internal UniTask ActivateOnLayer(Layer layer, FrameTimingPoint timingPoint, CancellationToken ct)
         {
@@ -174,7 +174,7 @@ namespace Elffy
             _state = LifeState.Activating;
             ExceptionDispatchInfo? edi = null;
             try {
-                await _activating.RaiseIfNotNull(this, ct);
+                await _activating.InvokeIfNotNull(this, ct);
                 _activating?.Clear();
             }
             catch(Exception ex) {
@@ -200,7 +200,7 @@ namespace Elffy
         {
             _state = LifeState.Terminating;
             try {
-                await _terminating.RaiseIfNotNull(this, CancellationToken.None);
+                await _terminating.InvokeIfNotNull(this, CancellationToken.None);
             }
             catch {
                 if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
@@ -259,11 +259,9 @@ namespace Elffy
             [DoesNotReturn] static void ThrowTerminateTwice() => throw new InvalidOperationException($"Cannot terminate {nameof(FrameObject)} twice.");
         }
 
-        //protected virtual void OnAlive() => Alive?.Invoke(this);
-        protected virtual void OnAlive() => _alive?.Raise(this);
+        protected virtual void OnAlive() => _alive?.Invoke(this);
 
-        //protected virtual void OnDead() => Dead?.Invoke(this);
-        protected virtual void OnDead() => _dead?.Raise(this);
+        protected virtual void OnDead() => _dead?.Invoke(this);
 
         internal void AddToObjectStoreCallback()
         {

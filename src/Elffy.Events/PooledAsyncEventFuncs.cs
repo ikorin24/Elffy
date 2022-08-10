@@ -30,12 +30,12 @@ namespace Elffy
 
         public PooledAsyncEventFuncs(int count)
         {
-            if(count <= ArrayPoolForEventRaiser.LengthOfPoolTargetArray) {
-                if(ArrayPoolForEventRaiser.TryGetArray4(out var array)) {
+            if(count <= ArrayPoolForEventSource.LengthOfPoolTargetArray) {
+                if(ArrayPoolForEventSource.TryGetArray4(out var array)) {
                     _array = array;
                     _start = 0;
                     _count = count;
-                    _returnFunc = &ReturnArrayPoolForEventRaiser;
+                    _returnFunc = &ReturnArrayPoolForEventSource;
                     return;
                 }
             }
@@ -46,16 +46,17 @@ namespace Elffy
             _count = count;
             _returnFunc = null;
 
-            static void ReturnArrayPoolForEventRaiser(in PooledAsyncEventFuncs<T> funcs)
+            static void ReturnArrayPoolForEventSource(in PooledAsyncEventFuncs<T> funcs)
             {
                 var array = funcs._array;
                 Debug.Assert(array is not null);
-                Debug.Assert(array.Length == ArrayPoolForEventRaiser.LengthOfPoolTargetArray);
+                Debug.Assert(array.Length == ArrayPoolForEventSource.LengthOfPoolTargetArray);
+                Debug.Assert(array.Length == 4);
+                array[3] = null;
                 array[0] = null;
                 array[1] = null;
                 array[2] = null;
-                array[3] = null;
-                ArrayPoolForEventRaiser.ReturnArray4Fast(array);
+                ArrayPoolForEventSource.ReturnArray4Fast(array);
             }
         }
 

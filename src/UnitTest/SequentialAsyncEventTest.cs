@@ -218,7 +218,7 @@ namespace UnitTest
 
         private sealed class TestSample
         {
-            private AsyncEventRaiser<TestSample>? _test;
+            private AsyncEventSource<TestSample>? _test;
 
             public AsyncEvent<TestSample> Test => new AsyncEvent<TestSample>(ref _test);
 
@@ -229,7 +229,7 @@ namespace UnitTest
 
             public UniTask SequentiallyRaiseTest(CancellationToken ct)
             {
-                return _test.RaiseSequentiallyIfNotNull(this, ct);
+                return _test.InvokeSequentiallyIfNotNull(this, ct);
             }
         }
     }

@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 
 namespace Elffy
 {
-    public sealed class EventRaiser<T>
+    public sealed class EventSource<T>
     {
-        private const int DefaultBufferCapacity = ArrayPoolForEventRaiser.LengthOfPoolTargetArray;
+        private const int DefaultBufferCapacity = ArrayPoolForEventSource.LengthOfPoolTargetArray;
 
         // [NOTE]
         // _count == 0      || 1         || n (n >= 2)
@@ -21,11 +21,11 @@ namespace Elffy
 
         public int SubscibedCount => _count;
 
-        public EventRaiser()
+        internal EventSource()
         {
         }
 
-        public void Raise(T arg)
+        public void Invoke(T arg)
         {
             // When _count == 0, there is no need to perform exclusive locking.
             if(_count == 0) { return; }
@@ -67,7 +67,7 @@ namespace Elffy
 
         public Action<T> ToDelegate()
         {
-            return Raise;
+            return Invoke;
         }
 
         internal void Subscribe(Action<T> action)
@@ -83,7 +83,7 @@ namespace Elffy
                 else if(count == 1) {
                     Debug.Assert(_actions is Action<T>);
 
-                    if(ArrayPoolForEventRaiser.TryGetArray4Fast(out var actions) == false) {
+                    if(ArrayPoolForEventSource.TryGetArray4Fast(out var actions) == false) {
                         actions = new object[DefaultBufferCapacity];
                     }
                     Debug.Assert(actions.Length >= 2);
@@ -96,12 +96,12 @@ namespace Elffy
                     if(actions.Length == count) {
                         var newActions = new object[actions.Length * 2];
                         actions.AsSpan().CopyTo(newActions);
-                        if(actions.Length == ArrayPoolForEventRaiser.LengthOfPoolTargetArray) {
+                        if(actions.Length == ArrayPoolForEventSource.LengthOfPoolTargetArray) {
                             actions[0] = null;
                             actions[1] = null;
                             actions[2] = null;
                             actions[3] = null;
-                            ArrayPoolForEventRaiser.ReturnArray4Fast(actions);
+                            ArrayPoolForEventSource.ReturnArray4Fast(actions);
                         }
                         _actions = newActions;
                         actions = newActions;
@@ -146,12 +146,12 @@ namespace Elffy
                             if(_count == 1) {
                                 var a = actionSpan[0];
                                 var actionsArray = SafeCast.NotNullAs<object?[]>(actions);
-                                if(actionsArray.Length == ArrayPoolForEventRaiser.LengthOfPoolTargetArray) {
+                                if(actionsArray.Length == ArrayPoolForEventSource.LengthOfPoolTargetArray) {
                                     actionsArray[0] = null;
                                     actionsArray[1] = null;
                                     actionsArray[2] = null;
                                     actionsArray[3] = null;
-                                    ArrayPoolForEventRaiser.ReturnArray4Fast(actionsArray);
+                                    ArrayPoolForEventSource.ReturnArray4Fast(actionsArray);
                                 }
                                 _actions = a;
                             }

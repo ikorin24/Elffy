@@ -22,8 +22,8 @@ namespace Elffy
         private readonly int _sortNumber;
         private bool _isEnabled;
         private LifeState _state;
-        private AsyncEventRaiser<Layer>? _activating;
-        private AsyncEventRaiser<Layer>? _terminating;
+        private AsyncEventSource<Layer>? _activating;
+        private AsyncEventSource<Layer>? _terminating;
 
         internal LayerCollection? Owner => _owner;
 
@@ -98,7 +98,7 @@ namespace Elffy
             _state = LifeState.Activating;
             _owner = screen.Layers;
             try {
-                await _activating.RaiseIfNotNull(this, ct);
+                await _activating.InvokeIfNotNull(this, ct);
             }
             catch(Exception ex) {
                 // If exceptions throw on activating, terminate the layer if possible.
@@ -175,7 +175,7 @@ namespace Elffy
             // I don't care about exceptions in terminating event
             // because the layer is already registered to the removed list.
             // That means the layer will be dead in the next frame even if exceptions are thrown.
-            await _terminating.RaiseIfNotNull(this, CancellationToken.None);
+            await _terminating.InvokeIfNotNull(this, CancellationToken.None);
 
             await (timingPoint ?? screen.Timings.Update).NextFrame(CancellationToken.None);
             Debug.Assert(_state == LifeState.Dead);

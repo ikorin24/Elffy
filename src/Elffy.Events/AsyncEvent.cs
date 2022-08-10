@@ -17,7 +17,7 @@ namespace Elffy
         // Use Span<T> as a ByReference<T>.
         // For now, ByReference<T> is not yet available in the user library.
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private readonly Span<AsyncEventRaiser<T>?> _raiserRef;
+        private readonly Span<AsyncEventSource<T>?> _sourceRef;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private string DebuggerView
@@ -28,18 +28,18 @@ namespace Elffy
                     return $"{nameof(AsyncEvent<T>)}<{typeof(T).Name}> (Never)";
                 }
                 else {
-                    return $"{nameof(AsyncEvent<T>)}<{typeof(T).Name}> (Subscibed = {Raiser?.SubscibedCount ?? 0})";
+                    return $"{nameof(AsyncEvent<T>)}<{typeof(T).Name}> (Subscibed = {Source?.SubscibedCount ?? 0})";
                 }
             }
         }
 
-        private ref AsyncEventRaiser<T>? Raiser
+        private ref AsyncEventSource<T>? Source
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => ref MemoryMarshal.GetReference(_raiserRef);
+            get => ref MemoryMarshal.GetReference(_sourceRef);
         }
 
-        public bool IsNever => Unsafe.IsNullRef(ref Raiser);
+        public bool IsNever => Unsafe.IsNullRef(ref Source);
 
         public static AsyncEvent<T> Never => default;
 
@@ -48,15 +48,15 @@ namespace Elffy
         public AsyncEvent() => throw new NotSupportedException("Don't use default constructor.");
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public AsyncEvent([AllowNull] ref AsyncEventRaiser<T> raiser)
+        public AsyncEvent([AllowNull] ref AsyncEventSource<T> source)
         {
-            _raiserRef = MemoryMarshal.CreateSpan(ref raiser!, 1)!;
+            _sourceRef = MemoryMarshal.CreateSpan(ref source!, 1)!;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static AsyncEvent<T> FromRaiser([AllowNull] ref AsyncEventRaiser<T> raiser)
+        public static AsyncEvent<T> FromSource([AllowNull] ref AsyncEventSource<T> source)
         {
-            return new AsyncEvent<T>(ref raiser);
+            return new AsyncEvent<T>(ref source);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -66,26 +66,26 @@ namespace Elffy
             if(IsNever) {
                 return AsyncEventUnsubscriber<T>.None;
             }
-            ref var raiser = ref Raiser;
-            if(raiser is null) {
-                CreateRaiser(ref raiser);
+            ref var source = ref Source;
+            if(source is null) {
+                CreateSource(ref source);
             }
-            raiser.Subscribe(func);
-            return new AsyncEventUnsubscriber<T>(raiser, func);
+            source.Subscribe(func);
+            return new AsyncEventUnsubscriber<T>(source, func);
         }
 
         public override bool Equals(object? obj) => false;
 
-        public override int GetHashCode() => Raiser?.GetHashCode() ?? 0;
+        public override int GetHashCode() => Source?.GetHashCode() ?? 0;
 
-        public static bool operator ==(AsyncEvent<T> left, AsyncEvent<T> right) => left.Raiser == right.Raiser;
+        public static bool operator ==(AsyncEvent<T> left, AsyncEvent<T> right) => left.Source == right.Source;
 
         public static bool operator !=(AsyncEvent<T> left, AsyncEvent<T> right) => !(left == right);
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private static void CreateRaiser([AllowNull] ref AsyncEventRaiser<T> raiser)
+        private static void CreateSource([AllowNull] ref AsyncEventSource<T> source)
         {
-            Interlocked.CompareExchange(ref raiser, new AsyncEventRaiser<T>(), null);
+            Interlocked.CompareExchange(ref source, new AsyncEventSource<T>(), null);
         }
     }
 }

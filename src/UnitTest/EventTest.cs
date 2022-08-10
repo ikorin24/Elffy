@@ -56,7 +56,7 @@ namespace UnitTest
 
         private sealed class Sample
         {
-            private EventRaiser<Sample>? _testEvent;
+            private EventSource<Sample>? _testEvent;
 
             public Event<Sample> TestEvent => new(ref _testEvent);
 
@@ -64,7 +64,7 @@ namespace UnitTest
 
             public void RaiseTest()
             {
-                _testEvent?.Raise(this);
+                _testEvent?.Invoke(this);
             }
         }
     }

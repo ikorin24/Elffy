@@ -237,7 +237,7 @@ namespace Sandbox
                 buffer.Dispose();
                 dispatcher.Dispose();
             });
-            plain.OnUpdate.Subscribe(_ => dispatcher.Dispatch(bufSize.X, bufSize.Y, 1));
+            plain.Update.Subscribe(_ => dispatcher.Dispatch(bufSize.X, bufSize.Y, 1));
             plain.Scale = new Vector3(10f);
             plain.Shader = new TestShader(() => (buffer.Ssbo, bufSize.X, bufSize.Y));
             plain.Rotation = Quaternion.FromAxisAngle(Vector3.UnitX, -90.ToRadian());

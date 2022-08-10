@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 
 namespace Elffy
 {
-    internal static class ArrayPoolForEventRaiser
+    internal static class ArrayPoolForEventSource
     {
         internal const int LengthOfPoolTargetArray = 4; // Don't change
 
