@@ -94,8 +94,9 @@ namespace Elffy.Shading.Forward
             dispatcher.SendUniformTexture1D("lPosSampler", lights.PositionTexture, TextureUnitNumber.Unit2);
 
             bool hasShadowMap;
-            if(lights.LightCount > 0) {
-                var light = lights[0];
+
+            var light = lights.GetLights().FirstOrDefault();
+            if(light != null) {
                 dispatcher.SendUniform("_lmvp", light.LightMatrix * model);
                 dispatcher.SendUniformTexture2D("_shadowMap", light.ShadowMap.DepthTexture, TextureUnitNumber.Unit3);
                 hasShadowMap = true;

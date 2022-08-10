@@ -31,10 +31,10 @@ namespace Elffy.Shading.Deferred
             dispatcher.SendUniformTexture1D("_lightPosSampler", lights.PositionTexture, TextureUnitNumber.Unit3);
             dispatcher.SendUniformTexture1D("_lightColorSampler", lights.ColorTexture, TextureUnitNumber.Unit4);
 
-            if(lightCount > 0) {
-                var shadowMaps = lights.GetShadowMaps();
+            var light = lights.GetLights().FirstOrDefault();
+            if(light != null) {
                 dispatcher.SendUniformTexture1D("_lmat", lights.MatrixTexture, TextureUnitNumber.Unit5);
-                dispatcher.SendUniformTexture2D("_shadowMap", shadowMaps[0].DepthTexture, TextureUnitNumber.Unit6);
+                dispatcher.SendUniformTexture2D("_shadowMap", light.ShadowMap.DepthTexture, TextureUnitNumber.Unit6);
             }
         }
 

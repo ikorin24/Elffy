@@ -13,11 +13,13 @@ namespace Elffy.Shading
         private TextureObject _depth;
         private Vector2i _size;
 
-        public Vector2i Size => _size;
+        public readonly bool IsEmpty => _depth.IsEmpty;
 
-        public TextureObject DepthTexture => _depth;
+        public readonly Vector2i Size => _size;
 
-        public FBO Fbo => _fbo;
+        public readonly TextureObject DepthTexture => _depth;
+
+        public readonly FBO Fbo => _fbo;
 
         internal void Initialize(int width, int height)
         {

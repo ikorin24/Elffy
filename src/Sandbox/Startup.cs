@@ -57,7 +57,7 @@ namespace Sandbox
                     CreateModel2(wLayer),
                     CreateBox(drLayer),
                     CreateFloor(drLayer),
-                    CreateSky(wLayer),
+                    //CreateSky(wLayer),
                     new Sphere()
                     {
                         Position = new Vector3(-5, 1, 1),
@@ -89,7 +89,11 @@ namespace Sandbox
             var pos = new Vector3(0, 10, 10);
 
             var color = Color4.White;
-            var (arrow, sphere) = await UniTask.WhenAll(
+            var (
+                arrow,
+                sphere,
+                light
+                ) = await UniTask.WhenAll(
                 new Arrow
                 {
                     Shader = new SolidColorShader
@@ -107,19 +111,34 @@ namespace Sandbox
                     },
                     Position = pos,
                     HasShadow = false,
-                }.Activate(layer));
-            var light = screen.Lights.CreatePointLight(pos, color);
+                }.Activate(layer),
+                //PointLight.Create(screen, pos, color)
+                DirectLight.Create(screen, -pos, color)
+                );
 
             var i = 0;
             screen.Timings.OnUpdate(() =>
             {
                 var angle = i++.ToRadian();
                 var (sin, cos) = MathF.SinCos(angle);
-                sphere.Position = new Vector3(sin * 10, 10, cos * 10);
-                light.Position = new Vector4(sphere.Position, 1);
+                sphere.Position = new Vector3(sin * 2, 10, cos * 10);
+
+                //light.Position = sphere.Position;
+                light.Direction = -sphere.Position;
                 arrow.SetDirection(-sphere.Position.Normalized(), sphere.Position);
             });
 
+            UniTask.Void(async () =>
+            {
+                var update = screen.Timings.Update;
+                while(true) {
+                    await update.Next();
+                    if(screen.Keyboard.IsDown(Elffy.InputSystem.Keys.Space)) {
+                        await light.Terminate();
+                        return;
+                    }
+                }
+            });
         }
 
         private static UniTask<Model3D> CreateDice(WorldLayer layer)
@@ -192,7 +211,7 @@ namespace Sandbox
             var timing = layer.GetValidScreen().Timings.Update;
             var dice = new Plain()
             {
-                Scale = new Vector3(20f),
+                Scale = new Vector3(150f),
                 Rotation = Quaternion.FromAxisAngle(Vector3.UnitX, -90.ToRadian()),
                 Shader = new PbrDeferredShader()
                 {
