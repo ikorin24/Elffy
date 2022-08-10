@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using System;
 using System.Runtime.CompilerServices;
 using Elffy.InputSystem;
 
@@ -10,15 +9,15 @@ namespace Elffy.UI
     {
         private bool _keyPressed;
         private bool _isEventFlowCanceled;
+        private EventSource<Executable>? _keyDown;
+        private EventSource<Executable>? _keyPress;
+        private EventSource<Executable>? _keyUp;
 
         public bool IsKeyPressed => _keyPressed;
 
-        /// <summary>Key down event</summary>
-        public event Action<Executable>? KeyDown;
-        /// <summary>Key press event</summary>
-        public event Action<Executable>? KeyPress;
-        /// <summary>Key up event</summary>
-        public event Action<Executable>? KeyUp;
+        public Event<Executable> KeyDown => new Event<Executable>(ref _keyDown);
+        public Event<Executable> KeyPress => new Event<Executable>(ref _keyPress);
+        public Event<Executable> KeyUp => new Event<Executable>(ref _keyUp);
 
         public Executable()
         {
@@ -41,49 +40,46 @@ namespace Elffy.UI
                 if(_keyPressed) {
                     _keyPressed = false;
                     _isEventFlowCanceled = false;
-                    FireEvent(KeyUp, this);
+                    InvokeEvent(_keyUp, this);
                 }
                 return;
             }
 
             var isMouseOver = IsMouseOver;
-            // ヒットテストがヒットしていなくても、押しっぱなしなら処理を継続
             if((isMouseOver || _keyPressed) == false) { return; }
-
-            // isMouseOver か _keyPressed の少なくともいずれか1つは true
 
             if(TryGetScreen(out var screen) == false) { return; }
             var mouse = screen.Mouse;
             if(mouse.IsPressed(MouseButton.Left)) {
                 if(isMouseOver) {
                     if(_keyPressed) {
-                        FireEvent(KeyPress, this);
+                        InvokeEvent(_keyPress, this);
                     }
                     else {
                         if(mouse.IsDown(MouseButton.Left)) {
                             _keyPressed = true;
-                            FireEvent(KeyDown, this);
-                            FireEvent(KeyPress, this);
+                            InvokeEvent(_keyDown, this);
+                            InvokeEvent(_keyPress, this);
                         }
                     }
                 }
                 else if(_keyPressed) {
-                    FireEvent(KeyPress, this);
+                    InvokeEvent(_keyPress, this);
                 }
             }
             else {
                 if(_keyPressed) {
                     _keyPressed = false;
-                    FireEvent(KeyUp, this);
+                    InvokeEvent(_keyUp, this);
                 }
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void FireEvent(Action<Executable>? action, Executable arg)
+        private static void InvokeEvent(EventSource<Executable>? source, Executable arg)
         {
             try {
-                action?.Invoke(arg);
+                source?.Invoke(arg);
             }
             catch {
                 if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }

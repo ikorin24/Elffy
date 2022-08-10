@@ -48,12 +48,13 @@ namespace Elffy.UI
         private bool _isMouseOver;
         private bool _isMouseOverPrevious;
 
-        /// <summary>Mouse enter event</summary>
-        public event Action<Control>? MouseEnter;
-        /// <summary>Mouse leave event</summary>
-        public event Action<Control>? MouseLeave;
+        private EventSource<Control>? _mouseEnter;
+        private EventSource<Control>? _mouseLeave;
+        private EventSource<Control>? _dead;
 
-        public event Action<Control>? Dead;
+        public Event<Control> MouseEnter => new Event<Control>(ref _mouseEnter);
+        public Event<Control> MouseLeave => new Event<Control>(ref _mouseLeave);
+        public Event<Control> Dead => new Event<Control>(ref _dead);
 
         internal ref ArrayPooledListCore<Control> ChildrenCore => ref _childrenCore;
 
@@ -143,7 +144,7 @@ namespace Elffy.UI
         {
             if(_isMouseOver && !_isMouseOverPrevious) {
                 try {
-                    MouseEnter?.Invoke(this);
+                    _mouseEnter?.Invoke(this);
                 }
                 catch {
                     if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
@@ -152,7 +153,7 @@ namespace Elffy.UI
             }
             if(!_isMouseOver && _isMouseOverPrevious) {
                 try {
-                    MouseLeave?.Invoke(this);
+                    _mouseLeave?.Invoke(this);
                 }
                 catch {
                     if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
@@ -384,7 +385,7 @@ namespace Elffy.UI
             });
         }
 
-        protected virtual void OnDead() => Dead?.Invoke(this);
+        protected virtual void OnDead() => _dead?.Invoke(this);
 
         internal void OnRenderableDead()
         {
