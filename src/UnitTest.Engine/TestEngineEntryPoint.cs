@@ -16,6 +16,15 @@ namespace UnitTest
 
         public const string UseEngineSymbol = "UseEngine";
 
+        public static void Start(Action<IHostScreen> action)
+        {
+            Start(screen =>
+            {
+                action.Invoke(screen);
+                return UniTask.CompletedTask;
+            });
+        }
+
         public static void Start(Func<IHostScreen, UniTask> func)
         {
             Start(UserCodeExceptionCatchMode.Throw, func);

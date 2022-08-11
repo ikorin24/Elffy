@@ -162,6 +162,7 @@ namespace Elffy.Features.Internal
             // ------------------------------------------------------------
             // Frame finalizing
             _currentTiming = CurrentFrameTiming.FrameFinalizing;
+            frameTimingPoints.FrameFinalizing.DoQueuedEvents();
             layers.ApplyRemove();
 
             // ------------------------------------------------------------

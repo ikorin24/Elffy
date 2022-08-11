@@ -15,6 +15,7 @@ namespace Elffy
     [EnumLikeValue(nameof(FTV.LateUpdate), FTV.LateUpdate)]
     [EnumLikeValue(nameof(FTV.BeforeRendering), FTV.BeforeRendering)]
     [EnumLikeValue(nameof(FTV.AfterRendering), FTV.AfterRendering)]
+    [EnumLikeValue(nameof(FTV.FrameFinalizing), FTV.FrameFinalizing)]
     [EnumLikeValue(nameof(FTV.Internal_EndOfFrame), FTV.Internal_EndOfFrame, "internal")]
     public partial struct FrameTiming
     {
@@ -32,6 +33,64 @@ namespace Elffy
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator <(FrameTiming left, FrameTiming right)
+        {
+            // NotSpecified always returns false for any large/small comparison.
+            if(left._value == FTV.NotSpecified || right._value == FTV.NotSpecified) {
+                return false;
+            }
+            return left._value < right._value;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator >(FrameTiming left, FrameTiming right)
+        {
+            // NotSpecified always returns false for any large/small comparison.
+            if(left._value == FTV.NotSpecified || right._value == FTV.NotSpecified) {
+                return false;
+            }
+            return left._value > right._value;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator <=(FrameTiming left, FrameTiming right)
+        {
+            // NotSpecified always returns false for any large/small comparison
+            // except both of them are NotSpecified.
+            if(left._value == FTV.NotSpecified || right._value == FTV.NotSpecified) {
+                return left._value == right._value;
+            }
+            return left._value <= right._value;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator >=(FrameTiming left, FrameTiming right)
+        {
+            // NotSpecified always returns false for any large/small comparison
+            // except both of them are NotSpecified.
+            if(left._value == FTV.NotSpecified || right._value == FTV.NotSpecified) {
+                return left._value == right._value;
+            }
+            return left._value >= right._value;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public CurrentFrameTiming ToCurrentFrameTiming()
+        {
+            // It is valid
+            // cast FrameTiming -> CurrentFrameTiming
+
+            Debug.Assert(Unsafe.SizeOf<CurrentFrameTiming>() == sizeof(byte));
+            Debug.Assert(Unsafe.SizeOf<FrameTiming>() == sizeof(byte));
+
+            return Unsafe.As<byte, CurrentFrameTiming>(ref Unsafe.AsRef(in _value));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator CurrentFrameTiming(FrameTiming timing) => timing.ToCurrentFrameTiming();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(CurrentFrameTiming left, FrameTiming right)
         {
             Debug.Assert(Unsafe.SizeOf<CurrentFrameTiming>() == sizeof(byte));
@@ -41,10 +100,13 @@ namespace Elffy
             return (l._value != 0) && (l._value == right._value);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(CurrentFrameTiming left, FrameTiming right) => !(left == right);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(FrameTiming left, CurrentFrameTiming right) => right == left;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(FrameTiming left, CurrentFrameTiming right) => !(left == right);
     }
 
@@ -76,11 +138,9 @@ namespace Elffy
         internal const byte Update = 4;
         internal const byte LateUpdate = 5;
         internal const byte BeforeRendering = 6;
-        internal const byte Rendering = 100;
-        internal const byte AfterRendering = 7;
-        internal const byte FrameFinalizing = 101;
-        internal const byte Internal_EndOfFrame = 8;
-
-        internal const byte __FrameTimingValidMax = 8;
+        internal const byte Rendering = 7;
+        internal const byte AfterRendering = 8;
+        internal const byte FrameFinalizing = 9;
+        internal const byte Internal_EndOfFrame = 10;
     }
 }

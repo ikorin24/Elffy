@@ -14,6 +14,7 @@ namespace Elffy
         private readonly FrameTimingPoint _lateUpdatePoint;
         private readonly FrameTimingPoint _beforeRenderingPoint;
         private readonly FrameTimingPoint _afterRenderingPoint;
+        private readonly FrameTimingPoint _frameFinalizingPoint;
 
         private readonly FrameTimingPoint _internalEndOfFrame;
 
@@ -25,6 +26,7 @@ namespace Elffy
         public FrameTimingPoint LateUpdate => _lateUpdatePoint;
         public FrameTimingPoint BeforeRendering => _beforeRenderingPoint;
         public FrameTimingPoint AfterRendering => _afterRenderingPoint;
+        public FrameTimingPoint FrameFinalizing => _frameFinalizingPoint;
 
         internal FrameTimingPoint InternalEndOfFrame => _internalEndOfFrame;
 
@@ -37,6 +39,7 @@ namespace Elffy
             _lateUpdatePoint = new FrameTimingPoint(screen, FrameTiming.LateUpdate);
             _beforeRenderingPoint = new FrameTimingPoint(screen, FrameTiming.BeforeRendering);
             _afterRenderingPoint = new FrameTimingPoint(screen, FrameTiming.AfterRendering);
+            _frameFinalizingPoint = new FrameTimingPoint(screen, FrameTiming.FrameFinalizing);
             _internalEndOfFrame = new FrameTimingPoint(screen, FrameTiming.Internal_EndOfFrame);
         }
 
@@ -79,6 +82,10 @@ namespace Elffy
                 timingPoint = _afterRenderingPoint;
                 return true;
             }
+            else if(timing == FrameTiming.FrameFinalizing) {
+                timingPoint = _frameFinalizingPoint;
+                return true;
+            }
             else {
                 timingPoint = null;
                 return false;
@@ -94,6 +101,7 @@ namespace Elffy
             _lateUpdatePoint.AbortAllEvents();
             _beforeRenderingPoint.AbortAllEvents();
             _afterRenderingPoint.AbortAllEvents();
+            _frameFinalizingPoint.AbortAllEvents();
             _internalEndOfFrame.AbortAllEvents();
         }
 
