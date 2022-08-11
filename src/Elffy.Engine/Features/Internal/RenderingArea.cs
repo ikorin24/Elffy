@@ -6,7 +6,6 @@ using OpenTK.Graphics.OpenGL4;
 using System;
 using System.Diagnostics;
 using System.Threading;
-using Elffy.Shading;
 
 namespace Elffy.Features.Internal
 {
@@ -15,7 +14,7 @@ namespace Elffy.Features.Internal
     {
         private readonly CancellationTokenSource _runningTokenSource;
         private bool _disposed;
-        private RenderingAreaLifeState _state;
+        private LifeState _state;
         private bool _isCloseRequested;
         private int _runningThreadId;
         private Vector2i _frameBufferSize;
@@ -44,7 +43,7 @@ namespace Elffy.Features.Internal
 
         internal RenderingArea(IHostScreen screen)
         {
-            _state = RenderingAreaLifeState.New;
+            _state = LifeState.New;
             OwnerScreen = screen;
             TimingPoints = new FrameTimingPointList(screen);
             Lights = new LightManager(screen);
@@ -54,7 +53,7 @@ namespace Elffy.Features.Internal
 
         public void Initialize()
         {
-            _state = RenderingAreaLifeState.Activating;
+            _state = LifeState.Activating;
             _runningThreadId = ThreadHelper.CurrentThreadId;
             InitializeGL();
 
@@ -96,7 +95,7 @@ namespace Elffy.Features.Internal
 
             // ------------------------------------------------------------
             // First Frame initializing
-            if(_state == RenderingAreaLifeState.Activating) {
+            if(_state == LifeState.Activating) {
                 _currentTiming = CurrentFrameTiming.FirstFrameInitializing;
                 try {
                     Initialized?.Invoke(OwnerScreen);
@@ -106,20 +105,20 @@ namespace Elffy.Features.Internal
                     // Don't throw. (Ignore exceptions in user code)
                 }
                 finally {
-                    _state = RenderingAreaLifeState.Alive;
+                    _state = LifeState.Alive;
                 }
             }
 
             // ------------------------------------------------------------
             // Frame initializing
             _currentTiming = CurrentFrameTiming.FrameInitializing;
-            if(isCloseRequested && _state == RenderingAreaLifeState.Alive) {
-                _state = RenderingAreaLifeState.Terminating;
+            if(isCloseRequested && _state == LifeState.Alive) {
+                _state = LifeState.Terminating;
                 _runningTokenSource.Cancel();
                 layers.TerminateAllLayers(this,
                     onDead: static self =>
                 {
-                    self._state = RenderingAreaLifeState.Dead;
+                    self._state = LifeState.Dead;
                 });
             }
             layers.ApplyAdd();
@@ -175,7 +174,7 @@ namespace Elffy.Features.Internal
             _currentTiming = CurrentFrameTiming.OutOfFrameLoop;
             ContextAssociatedMemorySafety.CollectIfExist(OwnerScreen);
 
-            if(_state == RenderingAreaLifeState.Dead) {
+            if(_state == LifeState.Dead) {
                 Dispose();
             }
         }
@@ -237,15 +236,5 @@ namespace Elffy.Features.Internal
             var layers = Layers;
             layers.NotifySizeChanged();
         }
-    }
-
-    [GenerateEnumLikeStruct(typeof(byte))]
-    [EnumLikeValue(nameof(LifeStateValue.New), LifeStateValue.New)]
-    [EnumLikeValue(nameof(LifeStateValue.Activating), LifeStateValue.Activating)]
-    [EnumLikeValue(nameof(LifeStateValue.Alive), LifeStateValue.Alive)]
-    [EnumLikeValue(nameof(LifeStateValue.Terminating), LifeStateValue.Terminating)]
-    [EnumLikeValue(nameof(LifeStateValue.Dead), LifeStateValue.Dead)]
-    internal partial struct RenderingAreaLifeState
-    {
     }
 }
