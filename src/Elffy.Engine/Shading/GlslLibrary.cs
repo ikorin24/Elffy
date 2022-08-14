@@ -1,8 +1,10 @@
 ﻿#nullable enable
+using System;
 
 namespace Elffy.Shading
 {
-    public static class GlslLibrary
+    [Obsolete]
+    internal static class GlslLibrary
     {
         /// <summary>Get random value from value</summary>
         public const string Rand =
