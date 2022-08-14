@@ -68,7 +68,7 @@ namespace Elffy
             var endTiming = timings.GetTiming(timing);
 
             _state = LifeState.Terminating;
-            await timings.AfterRendering.NextOrNow();
+            await timings.FrameFinalizing.NextOrNow();
             manager.RemoveLight(this);
             _state = LifeState.Dead;
             await endTiming.NextFrame();
