@@ -137,17 +137,14 @@ public static class GlbModelBuilder
 
                                                     switch(indices.componentType) {
                                                         case AccessorComponentType.UnsignedByte: {
-                                                            int l = (int)(bin.Length);
-                                                            var dest = indicesOutput.GetSpan(l).Slice(0, l);
+                                                            nuint l = bin.Length;
+                                                            var dest = indicesOutput.GetSpan((int)l).Slice(0, (int)l);
                                                             unsafe {
-                                                                byte* binPtr = bin.Ptr;
-                                                                // TODO: use SIMD
-                                                                for(int i = 0; i < l; i++) {
-                                                                    // cast uint8 to int32
-                                                                    dest.At(i) = binPtr[i];
+                                                                fixed(int* d = dest) {
+                                                                    ConvertUInt8ToUInt32(bin.Ptr, (uint*)d, l);
                                                                 }
                                                             }
-                                                            indicesOutput.Advance(l);
+                                                            indicesOutput.Advance((int)l);
                                                             break;
                                                         }
                                                         case AccessorComponentType.UnsignedShort: {
@@ -263,22 +260,29 @@ public static class GlbModelBuilder
 
     private static unsafe void ConvertUInt16ToUInt32(ushort* src, uint* dest, nuint elementCount)
     {
-        if(Avx2.IsSupported) {
+        if(Sse2.IsSupported && Avx2.IsSupported) {
+            // extend each packed u16 to u32
+            //
+            // <u16, u16, u16, u16, u16, u16, u16, u16> (128 bits)
+            //   |    |    |    |    |    |    |    |
+            //   |    |    |    |    |    |    |    | 
+            // <u32, u32, u32, u32, u32, u32, u32, u32> (256 bits)
+
             var (n, m) = Math.DivRem(elementCount, 8);
 
             const uint LoopUnrollFactor = 4;
             var (n1, n2) = Math.DivRem(n, LoopUnrollFactor);
             for(nuint i = 0; i < n1; i++) {
                 var x = i * 8 * LoopUnrollFactor;
-                Unsafe.As<uint, Vector256<int>>(ref dest[x]) = Avx2.ConvertToVector256Int32(Avx2.LoadVector128(&src[x]));
-                Unsafe.As<uint, Vector256<int>>(ref dest[x + 8]) = Avx2.ConvertToVector256Int32(Avx2.LoadVector128(&src[x + 8]));
-                Unsafe.As<uint, Vector256<int>>(ref dest[x + 16]) = Avx2.ConvertToVector256Int32(Avx2.LoadVector128(&src[x + 16]));
-                Unsafe.As<uint, Vector256<int>>(ref dest[x + 24]) = Avx2.ConvertToVector256Int32(Avx2.LoadVector128(&src[x + 24]));
+                Unsafe.As<uint, Vector256<int>>(ref dest[x]) = Avx2.ConvertToVector256Int32(Sse2.LoadVector128(&src[x]));
+                Unsafe.As<uint, Vector256<int>>(ref dest[x + 8]) = Avx2.ConvertToVector256Int32(Sse2.LoadVector128(&src[x + 8]));
+                Unsafe.As<uint, Vector256<int>>(ref dest[x + 16]) = Avx2.ConvertToVector256Int32(Sse2.LoadVector128(&src[x + 16]));
+                Unsafe.As<uint, Vector256<int>>(ref dest[x + 24]) = Avx2.ConvertToVector256Int32(Sse2.LoadVector128(&src[x + 24]));
             }
             var offset = n1 * 8 * LoopUnrollFactor;
             for(nuint i = 0; i < n2; i++) {
                 var x = offset + i * 8;
-                Unsafe.As<uint, Vector256<int>>(ref dest[x]) = Avx2.ConvertToVector256Int32(Avx2.LoadVector128(&src[x]));
+                Unsafe.As<uint, Vector256<int>>(ref dest[x]) = Avx2.ConvertToVector256Int32(Sse2.LoadVector128(&src[x]));
             }
             offset += n2 * 8;
             for(nuint i = 0; i < m; i++) {
@@ -290,6 +294,54 @@ public static class GlbModelBuilder
         }
 
         static void NonVectorFallback(ushort* src, uint* dest, nuint elementCount)
+        {
+            for(nuint i = 0; i < elementCount; i++) {
+                dest[i] = (uint)src[i];
+            }
+        }
+    }
+
+    private static unsafe void ConvertUInt8ToUInt32(byte* src, uint* dest, nuint elementCount)
+    {
+        if(Sse2.IsSupported && Avx2.IsSupported) {
+            // extend each packed u8 to u32
+            // 
+            // (uint8 * 16) is packed in 128 bits,
+            // but 'Avx2.ConvertToVector256Int32' method converts only eight packed uint8 in lower 64 bits.
+
+            // 128 bits
+            // <u8, u8, u8, u8, u8, u8, u8, u8, u8, u8, u8, u8, u8, u8, u8, u8>
+            //                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            //                                              | lower 64 bits
+            // 256 bits                                     |
+            // <u32, u32, u32, u32, u32, u32, u32, u32>  <--'
+
+            var (n, m) = Math.DivRem(elementCount, 8);
+
+            const uint LoopUnrollFactor = 4;
+            var (n1, n2) = Math.DivRem(n, LoopUnrollFactor);
+            for(nuint i = 0; i < n1; i++) {
+                var x = i * 8 * LoopUnrollFactor;
+                Unsafe.As<uint, Vector256<int>>(ref dest[x]) = Avx2.ConvertToVector256Int32(Sse2.LoadVector128(&src[x]));
+                Unsafe.As<uint, Vector256<int>>(ref dest[x + 8]) = Avx2.ConvertToVector256Int32(Sse2.LoadVector128(&src[x + 8]));
+                Unsafe.As<uint, Vector256<int>>(ref dest[x + 16]) = Avx2.ConvertToVector256Int32(Sse2.LoadVector128(&src[x + 16]));
+                Unsafe.As<uint, Vector256<int>>(ref dest[x + 24]) = Avx2.ConvertToVector256Int32(Sse2.LoadVector128(&src[x + 24]));
+            }
+            var offset = n1 * 8 * LoopUnrollFactor;
+            for(nuint i = 0; i < n2; i++) {
+                var x = offset + i * 8;
+                Unsafe.As<uint, Vector256<int>>(ref dest[x]) = Avx2.ConvertToVector256Int32(Sse2.LoadVector128(&src[x]));
+            }
+            offset += n2 * 8;
+            for(nuint i = 0; i < m; i++) {
+                dest[offset + i] = (uint)src[offset + i];
+            }
+        }
+        else {
+            NonVectorFallback(src, dest, elementCount);
+        }
+
+        static void NonVectorFallback(byte* src, uint* dest, nuint elementCount)
         {
             for(nuint i = 0; i < elementCount; i++) {
                 dest[i] = (uint)src[i];
