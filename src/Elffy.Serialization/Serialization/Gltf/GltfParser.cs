@@ -154,7 +154,6 @@ internal static class GltfParser
                     0 or _ => 0,
                 };
                 Debug.Assert(pos % 4 == 0);
-                //ReadUInt32(in data, pos)
                 var chunkLen = ReadUInt32(in data, pos);
                 pos += 4;
                 var chunkType = ReadUInt32(in data, pos);

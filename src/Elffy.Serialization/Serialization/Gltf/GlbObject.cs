@@ -8,7 +8,7 @@ namespace Elffy.Serialization.Gltf;
 
 internal sealed class GlbObject : IDisposable
 {
-    private List<GlbBinaryBuffer> _binaryBuffers;
+    private readonly List<GlbBinaryBuffer> _binaryBuffers;
 
     private GltfObject _gltf;
     public GltfObject Gltf => _gltf;

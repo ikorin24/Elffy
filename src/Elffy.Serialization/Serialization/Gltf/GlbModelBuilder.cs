@@ -2,12 +2,13 @@
 using Cysharp.Threading.Tasks;
 using Elffy.Effective;
 using Elffy.Effective.Unsafes;
-using Elffy.Serialization.Gltf.Internal;
 using Elffy.Shapes;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 using System.Threading;
 
 namespace Elffy.Serialization.Gltf;
@@ -86,27 +87,21 @@ public static class GlbModelBuilder
     private static void BuildRoot(UnsafeBufferWriter<Vertex> verticesOutput, UnsafeBufferWriter<int> indicesOutput, GlbObject glb, Model3D model, Model3DLoadMeshDelegate load)
     {
         var gltf = glb.Gltf;
-        var version = gltf.asset.version.AsSpan();
 
-        if(version.SequenceEqual(stackalloc byte[] { (byte)'2', (byte)'.', (byte)'0' }) == false) {
-            throw new NotSupportedException("only supports gltf v2.0");
-        }
+        ValidateVersion(gltf);
 
-        if(TryGetValue(gltf.scene, out var scene)) {
-            var scenes = AsNotNull(gltf.scenes);
-            var nodes = AsNotNull(gltf.nodes);
-            var meshes = AsNotNull(gltf.meshes);
+        if(gltf.scene.TryGetValue(out var sceneNum)) {
             var accessors = gltf.accessors;
             var bufferViews = gltf.bufferViews;
             var buffers = gltf.buffers;
 
-            ref readonly var defaultScene = ref scenes[scene];
+            ref readonly var defaultScene = ref GetItemOrThrow(gltf.scenes, sceneNum);
             if(defaultScene.nodes != null) {
                 foreach(var nodeNum in defaultScene.nodes) {
-                    ref readonly var node = ref nodes[nodeNum];
-                    if(TryGetValue(node.mesh, out var meshNum)) {
-                        ref readonly var mesh = ref meshes[meshNum];
-                        foreach(var meshPrimitive in mesh.primitives) {
+                    ref readonly var node = ref GetItemOrThrow(gltf.nodes, nodeNum);
+                    if(node.mesh.TryGetValue(out var meshNum)) {
+                        ref readonly var mesh = ref GetItemOrThrow(gltf.meshes, meshNum);
+                        foreach(ref readonly var meshPrimitive in mesh.primitives.AsSpan()) {
                             switch(meshPrimitive.mode) {
                                 case MeshPrimitiveMode.Points:
                                 case MeshPrimitiveMode.Lines:
@@ -116,19 +111,16 @@ public static class GlbModelBuilder
                                 }
                                 case MeshPrimitiveMode.Triangles: {
                                     ref readonly var attrs = ref meshPrimitive.attributes;
-                                    if(TryGetValue(meshPrimitive.indices, out var indicesNum)) {
-                                        ThrowIfNull(accessors);
-                                        ref readonly var indices = ref accessors[indicesNum];
+                                    if(meshPrimitive.indices.TryGetValue(out var indicesNum)) {
+                                        ref readonly var indices = ref GetItemOrThrow(gltf.accessors, indicesNum);
                                         if(indices.type != AccessorType.Scalar) {
                                             ThrowInvalidGlb();
                                         }
-                                        if(TryGetValue(indices.bufferView, out var bufferViewNum)) {
-                                            ThrowIfNull(bufferViews);
-                                            ref readonly var bufferView = ref bufferViews[bufferViewNum];
-                                            ThrowIfNull(buffers);
-                                            ref readonly var buffer = ref buffers[bufferView.buffer];
+                                        if(indices.bufferView.TryGetValue(out var bufferViewNum)) {
+                                            ref readonly var bufferView = ref GetItemOrThrow(gltf.bufferViews, bufferViewNum);
+                                            ref readonly var buffer = ref GetItemOrThrow(gltf.buffers, bufferView.buffer);
                                             if(buffer.uri == null) {
-                                                if(TryGetValue(bufferView.byteStride, out var stride)) {
+                                                if(bufferView.byteStride.TryGetValue(out var stride)) {
                                                     throw new NotImplementedException();
                                                 }
                                                 else {
@@ -159,17 +151,14 @@ public static class GlbModelBuilder
                                                             break;
                                                         }
                                                         case AccessorComponentType.UnsignedShort: {
-                                                            int l = (int)(bin.Length / sizeof(ushort));
-                                                            var dest = indicesOutput.GetSpan(l).Slice(0, l);
+                                                            nuint l = bin.Length / sizeof(ushort);
+                                                            var dest = indicesOutput.GetSpan((int)l).Slice(0, (int)l);
                                                             unsafe {
-                                                                ushort* binPtr = (ushort*)bin.Ptr;
-                                                                // TODO: use SIMD
-                                                                for(int i = 0; i < l; i++) {
-                                                                    // cast uint16 to int32
-                                                                    dest.At(i) = binPtr[i];
+                                                                fixed(int* d = dest) {
+                                                                    ConvertUInt16ToUInt32((ushort*)bin.Ptr, (uint*)d, l);
                                                                 }
                                                             }
-                                                            indicesOutput.Advance(l);
+                                                            indicesOutput.Advance((int)l);
                                                             break;
                                                         }
                                                         case AccessorComponentType.UnsignedInt: {
@@ -193,10 +182,9 @@ public static class GlbModelBuilder
                                         }
                                     }
                                     else {
-                                        if(TryGetValue(attrs.POSITION, out var positionNum)) {
-                                            ThrowIfNull(accessors);
-                                            ref readonly var position = ref accessors[positionNum];
-                                            if(TryGetValue(position.bufferView, out var bufferViewNum)) {
+                                        if(attrs.POSITION.TryGetValue(out var positionNum)) {
+                                            ref readonly var position = ref GetItemOrThrow(accessors, positionNum);
+                                            if(position.bufferView.TryGetValue(out var bufferViewNum)) {
 
                                             }
                                         }
@@ -219,6 +207,24 @@ public static class GlbModelBuilder
         // not implemented yet
     }
 
+    private static void ValidateVersion(GltfObject gltf)
+    {
+        var version = gltf.asset.version.AsSpan();
+        if(version.SequenceEqual(stackalloc byte[] { (byte)'2', (byte)'.', (byte)'0' }) == false) {
+            throw new NotSupportedException("only supports gltf v2.0");
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static ref T GetItemOrThrow<T>(T[]? array, int index)
+    {
+        if(array == null) {
+            ThrowInvalidGlb();
+        }
+        return ref array[index];
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static T AsNotNull<T>(T? obj) where T : class
     {
         if(obj is null) {
@@ -227,23 +233,67 @@ public static class GlbModelBuilder
         return obj;
     }
 
-    private static void ThrowIfNull([NotNull] object? obj)
-    {
-        if(obj is null) {
-            throw new FormatException("invalid glb");
-        }
-    }
-
     [DoesNotReturn]
     private static void ThrowInvalidGlb() => throw new FormatException("invalid glb");
 
-    private static bool TryGetValue<T>(T? input, out T value) where T : struct
+    //private static unsafe void ConvertUInt16ToUInt32___(ushort* src, uint* dest, nuint elementCount)
+    //{
+    //    if(Avx2.IsSupported) {
+    //        var (n, m) = Math.DivRem(elementCount, 8);
+    //        for(nuint i = 0; i < n; i++) {
+    //            Unsafe.As<uint, Vector256<int>>(ref dest[i * 8]) =
+    //                Avx2.ConvertToVector256Int32(Avx2.LoadVector128(src + i * 8));
+    //        }
+    //        var offset = n * 8;
+    //        for(nuint i = 0; i < m; i++) {
+    //            dest[offset + i] = (uint)src[offset + i];
+    //        }
+    //    }
+    //    else {
+    //        NonVectorFallback(src, dest, elementCount);
+    //    }
+
+    //    static void NonVectorFallback(ushort* src, uint* dest, nuint elementCount)
+    //    {
+    //        for(nuint i = 0; i < elementCount; i++) {
+    //            dest[i] = (uint)src[i];
+    //        }
+    //    }
+    //}
+
+    private static unsafe void ConvertUInt16ToUInt32(ushort* src, uint* dest, nuint elementCount)
     {
-        if(input.HasValue) {
-            value = input.Value;
-            return true;
+        if(Avx2.IsSupported) {
+            var (n, m) = Math.DivRem(elementCount, 8);
+
+            const uint LoopUnrollFactor = 4;
+            var (n1, n2) = Math.DivRem(n, LoopUnrollFactor);
+            for(nuint i = 0; i < n1; i++) {
+                var x = i * 8 * LoopUnrollFactor;
+                Unsafe.As<uint, Vector256<int>>(ref dest[x]) = Avx2.ConvertToVector256Int32(Avx2.LoadVector128(&src[x]));
+                Unsafe.As<uint, Vector256<int>>(ref dest[x + 8]) = Avx2.ConvertToVector256Int32(Avx2.LoadVector128(&src[x + 8]));
+                Unsafe.As<uint, Vector256<int>>(ref dest[x + 16]) = Avx2.ConvertToVector256Int32(Avx2.LoadVector128(&src[x + 16]));
+                Unsafe.As<uint, Vector256<int>>(ref dest[x + 24]) = Avx2.ConvertToVector256Int32(Avx2.LoadVector128(&src[x + 24]));
+            }
+            var offset = n1 * 8 * LoopUnrollFactor;
+            for(nuint i = 0; i < n2; i++) {
+                var x = offset + i * 8;
+                Unsafe.As<uint, Vector256<int>>(ref dest[x]) = Avx2.ConvertToVector256Int32(Avx2.LoadVector128(&src[x]));
+            }
+            offset += n2 * 8;
+            for(nuint i = 0; i < m; i++) {
+                dest[offset + i] = (uint)src[offset + i];
+            }
         }
-        value = default;
-        return false;
+        else {
+            NonVectorFallback(src, dest, elementCount);
+        }
+
+        static void NonVectorFallback(ushort* src, uint* dest, nuint elementCount)
+        {
+            for(nuint i = 0; i < elementCount; i++) {
+                dest[i] = (uint)src[i];
+            }
+        }
     }
 }
