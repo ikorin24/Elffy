@@ -11,7 +11,7 @@ internal struct Sampler
     public SamplerMinFilter? minFilter = null;
     public SamplerWrap wrapS = SamplerWrap.Repeat;
     public SamplerWrap wrapT = SamplerWrap.Repeat;
-    public string? name = null;
+    public U8String? name = null;
 
     public Sampler()
     {

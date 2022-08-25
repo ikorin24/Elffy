@@ -9,7 +9,7 @@ internal struct Image
 {
     public U8String? uri = null;
     public ImageMimeType? mimeType = null;
-    public int? bufferView = null;
+    public uint? bufferView = null;
     public U8String? name = null;
     public Image()
     {
@@ -19,7 +19,9 @@ internal struct Image
 [JsonConverter(typeof(ImageMimeTypeConverter))]
 internal enum ImageMimeType
 {
+    /// <summary>image/jpeg</summary>
     ImageJpeg,
+    /// <summary>image/png</summary>
     ImagePng,
 }
 

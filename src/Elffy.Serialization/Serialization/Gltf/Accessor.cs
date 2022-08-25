@@ -7,11 +7,11 @@ namespace Elffy.Serialization.Gltf;
 
 internal struct Accessor
 {
-    public int? bufferView = null;
-    public int byteOffset = 0;
+    public uint? bufferView = null;
+    public nuint byteOffset = 0;
     public AccessorComponentType componentType = default;  // must
     public bool normalized = false;
-    public int count = default;  // must
+    public nuint count = default;  // must
     public AccessorType type = default;   // must
     public float[]? max = null;
     public float[]? min = null;
@@ -25,7 +25,7 @@ internal struct Accessor
 
 internal struct AccessorSparse
 {
-    public int count = default;  // must
+    public nuint count = default;  // must
     public AccessorSparseIndices indices = new();   // must
     public AccessorSparseValues values = new();     // must
 
@@ -36,8 +36,8 @@ internal struct AccessorSparse
 
 internal struct AccessorSparseValues
 {
-    public int bufferView = default; // must
-    public int byteOffset = 0;
+    public uint bufferView = default; // must
+    public nuint byteOffset = 0;
 
     public AccessorSparseValues()
     {
@@ -46,8 +46,8 @@ internal struct AccessorSparseValues
 
 internal struct AccessorSparseIndices
 {
-    public int bufferView = default; // must
-    public int byteOffset = 0;
+    public uint bufferView = default; // must
+    public nuint byteOffset = 0;
     public AccessorSparseIndicesComponentType componentType = default;  // must
     public AccessorSparseIndices()
     {

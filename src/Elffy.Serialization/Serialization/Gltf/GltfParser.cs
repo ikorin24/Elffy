@@ -7,6 +7,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Elffy.Serialization.Gltf.Internal;
 
 namespace Elffy.Serialization.Gltf;
@@ -18,7 +19,27 @@ internal static class GltfParser
     private static readonly JsonSerializerOptions _options = new()
     {
         IncludeFields = true,
+        Converters =
+        {
+            new NUIntConverter(),
+        },
     };
+
+    private sealed class NUIntConverter : JsonConverter<nuint>
+    {
+        public override nuint Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            if(Unsafe.SizeOf<nuint>() == 4) {
+                return (nuint)reader.GetUInt32();
+            }
+            if(Unsafe.SizeOf<nuint>() == 8) {
+                return (nuint)reader.GetUInt64();
+            }
+            throw new NotSupportedException();
+        }
+
+        public override void Write(Utf8JsonWriter writer, nuint value, JsonSerializerOptions options) => throw new NotSupportedException();
+    }
 
     public static GltfObject ParseGltfFile(string filePath)
     {

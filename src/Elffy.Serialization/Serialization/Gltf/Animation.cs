@@ -21,7 +21,7 @@ internal struct Animation
 
 internal struct AnimationChannel
 {
-    public int sampler = default;    // must
+    public uint sampler = default;    // must
     public AnimationChannelTarget target = new();  // must
 
     public AnimationChannel()
@@ -31,7 +31,7 @@ internal struct AnimationChannel
 
 internal struct AnimationChannelTarget
 {
-    public int? node = null;
+    public uint? node = null;
     public AnimationChannelTargetPath path = default;    // must
     public AnimationChannelTarget()
     {

@@ -22,7 +22,7 @@ internal sealed class GltfObject
     public Mesh[]? meshes { get; set; }
     public Node[]? nodes { get; set; }
     public Sampler[]? samplers { get; set; }
-    public int? scene { get; set; }
+    public uint? scene { get; set; }
     public Scene[]? scenes { get; set; }
     public Skin[]? skins { get; set; }
     public Texture[]? textures { get; set; }

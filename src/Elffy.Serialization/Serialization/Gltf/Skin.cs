@@ -5,9 +5,9 @@ namespace Elffy.Serialization.Gltf;
 
 internal struct Skin
 {
-    public int? inverseBindMatrices = null;
-    public int? skeleton = null;
-    public int[] joints = Array.Empty<int>();  // must
+    public uint? inverseBindMatrices = null;
+    public uint? skeleton = null;
+    public uint[] joints = Array.Empty<uint>();  // must
     public U8String? name = null;
 
     public Skin()

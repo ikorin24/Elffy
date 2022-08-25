@@ -39,8 +39,12 @@ public static class GlbModelBuilder
 
         using var glb = ParseGlb(file, ct);
 
-        using var verticesBuffer = new UnsafeBufferWriter<Vertex>();
-        using var indicesBuffer = new UnsafeBufferWriter<int>();
+        //using var verticesBuffer = new UnsafeBufferWriter<Vertex>();
+        //using var indicesBuffer = new UnsafeBufferWriter<int>();
+
+        using var verticesBuffer = new LargeBufferWriter<Vertex>();
+        using var indicesBuffer = new LargeBufferWriter<uint>();
+
         BuildRoot(verticesBuffer, indicesBuffer, glb, model, load);
 
         await screen.Timings.Update.Next(ct);
@@ -86,17 +90,13 @@ public static class GlbModelBuilder
         }
     }
 
-    private static void BuildRoot(UnsafeBufferWriter<Vertex> verticesOutput, UnsafeBufferWriter<int> indicesOutput, GlbObject glb, Model3D model, Model3DLoadMeshDelegate load)
+    private unsafe static void BuildRoot(LargeBufferWriter<Vertex> verticesOutput, LargeBufferWriter<uint> indicesOutput, GlbObject glb, Model3D model, Model3DLoadMeshDelegate load)
     {
         var gltf = glb.Gltf;
 
         ValidateVersion(gltf);
 
         if(gltf.scene.TryGetValue(out var sceneNum)) {
-            var accessors = gltf.accessors;
-            var bufferViews = gltf.bufferViews;
-            var buffers = gltf.buffers;
-
             ref readonly var defaultScene = ref GetItemOrThrow(gltf.scenes, sceneNum);
             if(defaultScene.nodes != null) {
                 foreach(var nodeNum in defaultScene.nodes) {
@@ -118,67 +118,39 @@ public static class GlbModelBuilder
                                         if(indices.type != AccessorType.Scalar) {
                                             ThrowInvalidGlb();
                                         }
-                                        if(indices.bufferView.TryGetValue(out var bufferViewNum)) {
-                                            ref readonly var bufferView = ref GetItemOrThrow(gltf.bufferViews, bufferViewNum);
-                                            ref readonly var buffer = ref GetItemOrThrow(gltf.buffers, bufferView.buffer);
-                                            if(buffer.uri == null) {
-                                                if(bufferView.byteStride.TryGetValue(out var stride)) {
-                                                    throw new NotImplementedException();
+                                        ReadBufferData(glb, indices, indicesOutput, static (output, ptr, byteLength, type) =>
+                                        {
+                                            switch(type) {
+                                                case AccessorComponentType.UnsignedByte: {
+                                                    uint* dest = output.GetBufferToWrite(byteLength);
+                                                    ConvertUInt8ToUInt32((byte*)ptr, dest, byteLength);
+                                                    output.Advance(byteLength);
+                                                    break;
                                                 }
-                                                else {
-                                                    var offset = (nuint)bufferView.byteOffset;
-                                                    var len = (nuint)bufferView.byteLength;
-                                                    var bin = glb.GetBinaryData(bufferView.buffer).Slice(offset, len);
-
-                                                    if(bin.Length > int.MaxValue) {
-                                                        throw new NotSupportedException();
-                                                    }
-
-                                                    switch(indices.componentType) {
-                                                        case AccessorComponentType.UnsignedByte: {
-                                                            nuint l = bin.Length;
-                                                            var dest = indicesOutput.GetSpan((int)l).Slice(0, (int)l);
-                                                            unsafe {
-                                                                fixed(int* d = dest) {
-                                                                    ConvertUInt8ToUInt32(bin.Ptr, (uint*)d, l);
-                                                                }
-                                                            }
-                                                            indicesOutput.Advance((int)l);
-                                                            break;
-                                                        }
-                                                        case AccessorComponentType.UnsignedShort: {
-                                                            nuint l = bin.Length / sizeof(ushort);
-                                                            var dest = indicesOutput.GetSpan((int)l).Slice(0, (int)l);
-                                                            unsafe {
-                                                                fixed(int* d = dest) {
-                                                                    ConvertUInt16ToUInt32((ushort*)bin.Ptr, (uint*)d, l);
-                                                                }
-                                                            }
-                                                            indicesOutput.Advance((int)l);
-                                                            break;
-                                                        }
-                                                        case AccessorComponentType.UnsignedInt: {
-                                                            var l = (int)(bin.Length / sizeof(uint));
-                                                            if(BitConverter.IsLittleEndian == false) {
-                                                                throw new PlatformNotSupportedException("only for little endian runtime.");
-                                                            }
-                                                            var dest = indicesOutput.GetSpan(l).Slice(0, l).MarshalCast<int, byte>();
-                                                            bin.CopyTo(dest);
-                                                            indicesOutput.Advance(l);
-                                                            break;
-                                                        }
-                                                        default: {
-                                                            ThrowInvalidGlb();
-                                                            break;
-                                                        }
-
-                                                    }
+                                                case AccessorComponentType.UnsignedShort: {
+                                                    nuint l = byteLength / sizeof(ushort);
+                                                    uint* dest = output.GetBufferToWrite(l);
+                                                    ConvertUInt16ToUInt32((ushort*)ptr, dest, l);
+                                                    output.Advance(l);
+                                                    break;
                                                 }
+                                                case AccessorComponentType.UnsignedInt: {
+                                                    nuint l = byteLength / sizeof(uint);
+                                                    uint* dest = output.GetBufferToWrite(l);
+                                                    System.Buffer.MemoryCopy(ptr, dest, byteLength, byteLength);
+                                                    if(BitConverter.IsLittleEndian == false) {
+                                                        ReverseEndian(dest, l);
+                                                    }
+                                                    output.Advance(l);
+                                                    break;
+                                                }
+                                                default: {
+                                                    ThrowInvalidGlb();
+                                                    break;
+                                                }
+
                                             }
-                                            else {
-                                                throw new NotImplementedException();
-                                            }
-                                        }
+                                        });
                                     }
                                     else {
 
@@ -209,13 +181,53 @@ public static class GlbModelBuilder
         }
     }
 
+    private unsafe delegate void ReadBufferAction<T>(T state, void* ptr, nuint byteLength, AccessorComponentType type);
+
+    private unsafe static void ReadBufferData<T>(GlbObject glb, in Accessor accessor, T state, ReadBufferAction<T> onRead)
+    {
+        // LargeBufferWriter<T> output
+        var gltf = glb.Gltf;
+
+        if(accessor.bufferView.TryGetValue(out var bufferViewNum) == false) {
+            return;
+        }
+
+        ref readonly var bufferView = ref GetItemOrThrow(gltf.bufferViews, bufferViewNum);
+        ref readonly var buffer = ref GetItemOrThrow(gltf.buffers, bufferView.buffer);
+        if(buffer.uri == null) {
+            if(bufferView.byteStride.TryGetValue(out var stride)) {
+                throw new NotImplementedException();
+            }
+            else {
+                nuint offset = bufferView.byteOffset;
+                nuint len = bufferView.byteLength;
+                var bin = glb.GetBinaryData(bufferView.buffer).Slice(offset, len);
+
+                if(bin.ByteLength > int.MaxValue) {
+                    throw new NotSupportedException();
+                }
+                onRead.Invoke(state, bin.Ptr, bin.ByteLength, accessor.componentType);
+            }
+        }
+        else {
+            throw new NotImplementedException();
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static ref T GetItemOrThrow<T>(T[]? array, int index)
+    private static ref T GetItemOrThrow<T>(T[]? array, uint index)
     {
         if(array == null) {
             ThrowInvalidGlb();
         }
         return ref array[index];
+    }
+
+    private unsafe static void ReverseEndian(uint* p, nuint count)
+    {
+        for(nuint i = 0; i < count; i++) {
+            p[i] = ((p[i] & 0x0000_00FF) << 24) + ((p[i] & 0x0000_FF00) << 8) + ((p[i] & 0x00FF_0000) >> 8) + ((p[i] & 0xFF00_0000) >> 24);
+        }
     }
 
     [DoesNotReturn]
@@ -332,6 +344,10 @@ internal unsafe sealed class LargeBufferWriter<T> : IDisposable where T : unmana
         _count += count;
     }
 
+    public LargeBufferWriter() : this(0)
+    {
+    }
+
     public LargeBufferWriter(nuint initialCapacity)
     {
         var byteCapacity = checked(initialCapacity * (nuint)sizeof(T));
@@ -361,15 +377,16 @@ internal unsafe sealed class LargeBufferWriter<T> : IDisposable where T : unmana
     public T* GetBufferToWrite(nuint count)
     {
         if(count > Capacity - _count) {
-            ResizeBuffer();
+            ResizeBuffer(Capacity + count);
             Debug.Assert(count <= Capacity - _count);
         }
         return (T*)_buf.Ptr + _count;
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]  // uncommon path, no inlining
-    private void ResizeBuffer()
+    private void ResizeBuffer(nuint minCapacity)
     {
+        nuint minByteCapacity = minCapacity * (nuint)sizeof(T);
         nuint availableMaxByteLength = nuint.MaxValue - nuint.MaxValue % (nuint)sizeof(T);
 
         if(_buf.ByteLength == availableMaxByteLength) {
@@ -380,7 +397,10 @@ internal unsafe sealed class LargeBufferWriter<T> : IDisposable where T : unmana
             newByteCapacity = availableMaxByteLength;
         }
         else {
-            newByteCapacity = Math.Max(4, _buf.ByteLength * 2);
+            newByteCapacity = Math.Max(Math.Max(4, minByteCapacity), _buf.ByteLength * 2);
+        }
+        if(newByteCapacity < minByteCapacity) {
+            throw new ArgumentOutOfRangeException("Required capacity is too large.");
         }
 
         var newBuf = new NativeBuffer(newByteCapacity);

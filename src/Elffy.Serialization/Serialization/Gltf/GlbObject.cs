@@ -21,9 +21,9 @@ internal sealed class GlbObject : IDisposable
         _binaryBuffers = new List<GlbBinaryBuffer>();
     }
 
-    public unsafe GlbBinaryData GetBinaryData(int index)
+    public unsafe GlbBinaryData GetBinaryData(uint index)
     {
-        var buf = _binaryBuffers[index];
+        var buf = _binaryBuffers[(int)index];
         return new GlbBinaryData(buf.Ptr, buf.byteLength);
     }
 
@@ -49,7 +49,7 @@ internal unsafe struct GlbBinaryData
     private nuint _length;
 
     public byte* Ptr => _ptr;
-    public nuint Length => _length;
+    public nuint ByteLength => _length;
 
     public GlbBinaryData(byte* ptr, nuint length)
     {
@@ -77,9 +77,9 @@ internal unsafe struct GlbBinaryData
         }
     }
 
-    public void CopyTo(void* dest, nuint destLength)
+    public void CopyTo(void* dest, nuint destByteLength)
     {
-        System.Buffer.MemoryCopy(_ptr, dest, destLength, _length);
+        System.Buffer.MemoryCopy(_ptr, dest, destByteLength, _length);
     }
 }
 

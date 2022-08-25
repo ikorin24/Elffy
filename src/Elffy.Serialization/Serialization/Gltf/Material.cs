@@ -64,8 +64,8 @@ internal struct MaterialPbrMetallicRoughness
 
 internal struct TextureInfo
 {
-    public int index = default;  // must
-    public int texCoord = 0;
+    public uint index = default;  // must
+    public uint texCoord = 0;
 
     public TextureInfo()
     {
@@ -74,8 +74,8 @@ internal struct TextureInfo
 
 internal struct MaterialNormalTextureInfo
 {
-    public int index = default;  // must
-    public int texCoord = 0;
+    public uint index = default;  // must
+    public uint texCoord = 0;
     public float scale = 1;
 
     public MaterialNormalTextureInfo()
@@ -85,8 +85,8 @@ internal struct MaterialNormalTextureInfo
 
 internal struct MaterialOcclusionTextureInfo
 {
-    public int index = default;  // must
-    public int texCoord = 0;
+    public uint index = default;  // must
+    public uint texCoord = 0;
     public float strength = 1;
 
     public MaterialOcclusionTextureInfo()

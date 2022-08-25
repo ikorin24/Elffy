@@ -4,8 +4,8 @@ namespace Elffy.Serialization.Gltf;
 
 internal struct Texture
 {
-    public int? sampler = null;
-    public int? source = null;
+    public uint? sampler = null;
+    public uint? source = null;
     public U8String? name = null;
     public Texture()
     {

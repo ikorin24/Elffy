@@ -8,7 +8,7 @@ namespace Elffy.Serialization.Gltf;
 internal struct Buffer
 {
     public U8String? uri = null;
-    public int byteLength = default;     // must
+    public nuint byteLength = default;     // must
     public U8String? name = null;
 
     public Buffer()
@@ -18,10 +18,10 @@ internal struct Buffer
 
 internal struct BufferView
 {
-    public int buffer = default;     // must
-    public int byteOffset = 0;
-    public int byteLength = default; // must
-    public int? byteStride = null;
+    public uint buffer = default;     // must
+    public nuint byteOffset = 0;
+    public nuint byteLength = default; // must
+    public uint? byteStride = null;
     public BufferViewTarget? target = null;
     public U8String? name = null;
     public BufferView()

@@ -1,6 +1,4 @@
 ﻿#nullable enable
-
-using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
@@ -22,8 +20,8 @@ internal struct Mesh
 internal struct MeshPrimitive
 {
     public MeshPrimitiveAttributes attributes = new MeshPrimitiveAttributes();
-    public int? indices = null;
-    public int? material = null;
+    public uint? indices = null;
+    public uint? material = null;
     public MeshPrimitiveMode mode = MeshPrimitiveMode.Triangles;
     public MeshPrimitveTarget[]? targets = null;
 
@@ -34,20 +32,20 @@ internal struct MeshPrimitive
 
 internal struct MeshPrimitiveAttributes
 {
-    // The correct form is 'Dictionary<string, int>'
+    // The correct form is 'Dictionary<string, uint>'
 
-    public int? POSITION = null;
-    public int? COLOR_0 = null;
-    public int? JOINTS_0 = null;
-    public int? NORMAL = null;
-    public int? TANGENT = null;
-    public int? TEXCOORD_0 = null;
-    public int? TEXCOORD_1 = null;
-    public int? TEXCOORD_2 = null;
-    public int? TEXCOORD_3 = null;
-    public int? WEIGHTS_0 = null;
+    public uint? POSITION = null;
+    public uint? COLOR_0 = null;
+    public uint? JOINTS_0 = null;
+    public uint? NORMAL = null;
+    public uint? TANGENT = null;
+    public uint? TEXCOORD_0 = null;
+    public uint? TEXCOORD_1 = null;
+    public uint? TEXCOORD_2 = null;
+    public uint? TEXCOORD_3 = null;
+    public uint? WEIGHTS_0 = null;
 
-    public int? this[string key]
+    public uint? this[string key]
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get
@@ -71,7 +69,7 @@ internal struct MeshPrimitiveAttributes
     }
 
     // TODO: avoid yield return
-    public IEnumerable<(string Key, int Value)> GetKeyValues()
+    public IEnumerable<(string Key, uint Value)> GetKeyValues()
     {
         if(POSITION != null) { yield return (nameof(POSITION), POSITION.Value); }
         if(COLOR_0 != null) { yield return (nameof(COLOR_0), COLOR_0.Value); }
@@ -100,10 +98,10 @@ internal enum MeshPrimitiveMode
 
 internal struct MeshPrimitveTarget
 {
-    // The correct form is 'Dictionary<string, int>'
+    // The correct form is 'Dictionary<string, uint>'
 
-    public int? POSITION = null;
-    public int? NORMAL = null;
+    public uint? POSITION = null;
+    public uint? NORMAL = null;
     public MeshPrimitveTarget()
     {
     }
