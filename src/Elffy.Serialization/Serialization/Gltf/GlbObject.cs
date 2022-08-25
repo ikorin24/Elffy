@@ -24,7 +24,7 @@ internal sealed class GlbObject : IDisposable
     public unsafe GlbBinaryData GetBinaryData(int index)
     {
         var buf = _binaryBuffers[index];
-        return new GlbBinaryData(buf.Ptr, buf.Length);
+        return new GlbBinaryData(buf.Ptr, buf.byteLength);
     }
 
     internal GlbBinaryBuffer CreateNewBuffer(nuint size)
@@ -89,7 +89,7 @@ internal unsafe sealed class GlbBinaryBuffer
     private NativeBuffer _buf;
 
     public byte* Ptr => _buf.Ptr;
-    public nuint Length => _buf.Length;
+    public nuint byteLength => _buf.ByteLength;
 
     internal GlbBinaryBuffer(nuint size)
     {

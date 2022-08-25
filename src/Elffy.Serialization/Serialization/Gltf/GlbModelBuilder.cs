@@ -2,8 +2,10 @@
 using Cysharp.Threading.Tasks;
 using Elffy.Effective;
 using Elffy.Effective.Unsafes;
+using Elffy.Serialization.Gltf.Internal;
 using Elffy.Shapes;
 using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -131,9 +133,6 @@ public static class GlbModelBuilder
                                                     if(bin.Length > int.MaxValue) {
                                                         throw new NotSupportedException();
                                                     }
-                                                    if(BitConverter.IsLittleEndian == false) {
-                                                        throw new PlatformNotSupportedException("only for little endian runtime.");
-                                                    }
 
                                                     switch(indices.componentType) {
                                                         case AccessorComponentType.UnsignedByte: {
@@ -160,6 +159,9 @@ public static class GlbModelBuilder
                                                         }
                                                         case AccessorComponentType.UnsignedInt: {
                                                             var l = (int)(bin.Length / sizeof(uint));
+                                                            if(BitConverter.IsLittleEndian == false) {
+                                                                throw new PlatformNotSupportedException("only for little endian runtime.");
+                                                            }
                                                             var dest = indicesOutput.GetSpan(l).Slice(0, l).MarshalCast<int, byte>();
                                                             bin.CopyTo(dest);
                                                             indicesOutput.Advance(l);
@@ -179,12 +181,7 @@ public static class GlbModelBuilder
                                         }
                                     }
                                     else {
-                                        if(attrs.POSITION.TryGetValue(out var positionNum)) {
-                                            ref readonly var position = ref GetItemOrThrow(accessors, positionNum);
-                                            if(position.bufferView.TryGetValue(out var bufferViewNum)) {
 
-                                            }
-                                        }
                                         // TODO: other attributes
                                     }
                                     break;
@@ -221,42 +218,8 @@ public static class GlbModelBuilder
         return ref array[index];
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static T AsNotNull<T>(T? obj) where T : class
-    {
-        if(obj is null) {
-            throw new FormatException("invalid glb");
-        }
-        return obj;
-    }
-
     [DoesNotReturn]
     private static void ThrowInvalidGlb() => throw new FormatException("invalid glb");
-
-    //private static unsafe void ConvertUInt16ToUInt32___(ushort* src, uint* dest, nuint elementCount)
-    //{
-    //    if(Avx2.IsSupported) {
-    //        var (n, m) = Math.DivRem(elementCount, 8);
-    //        for(nuint i = 0; i < n; i++) {
-    //            Unsafe.As<uint, Vector256<int>>(ref dest[i * 8]) =
-    //                Avx2.ConvertToVector256Int32(Avx2.LoadVector128(src + i * 8));
-    //        }
-    //        var offset = n * 8;
-    //        for(nuint i = 0; i < m; i++) {
-    //            dest[offset + i] = (uint)src[offset + i];
-    //        }
-    //    }
-    //    else {
-    //        NonVectorFallback(src, dest, elementCount);
-    //    }
-
-    //    static void NonVectorFallback(ushort* src, uint* dest, nuint elementCount)
-    //    {
-    //        for(nuint i = 0; i < elementCount; i++) {
-    //            dest[i] = (uint)src[i];
-    //        }
-    //    }
-    //}
 
     private static unsafe void ConvertUInt16ToUInt32(ushort* src, uint* dest, nuint elementCount)
     {
@@ -347,5 +310,88 @@ public static class GlbModelBuilder
                 dest[i] = (uint)src[i];
             }
         }
+    }
+}
+
+internal unsafe sealed class LargeBufferWriter<T> : IDisposable where T : unmanaged
+{
+    private NativeBuffer _buf;
+    private nuint _count;
+    private nuint Capacity
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => _buf.ByteLength / (nuint)sizeof(T);
+    }
+
+    public void Advance(nuint count)
+    {
+        if(count > Capacity - _count) {
+            ThrowArg();
+            [DoesNotReturn] static void ThrowArg() => throw new ArgumentException($"{nameof(count)} is too large", nameof(count));
+        }
+        _count += count;
+    }
+
+    public LargeBufferWriter(nuint initialCapacity)
+    {
+        var byteCapacity = checked(initialCapacity * (nuint)sizeof(T));
+        _buf = new NativeBuffer(byteCapacity);
+        _count = 0;
+    }
+
+    ~LargeBufferWriter()
+    {
+        _buf.Dispose();
+    }
+
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+        _buf.Dispose();
+        _count = 0;
+    }
+
+    public T* GetWrittenBufffer(out nuint count)
+    {
+        count = _count;
+        return (T*)_buf.Ptr;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public T* GetBufferToWrite(nuint count)
+    {
+        if(count > Capacity - _count) {
+            ResizeBuffer();
+            Debug.Assert(count <= Capacity - _count);
+        }
+        return (T*)_buf.Ptr + _count;
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]  // uncommon path, no inlining
+    private void ResizeBuffer()
+    {
+        nuint availableMaxByteLength = nuint.MaxValue - nuint.MaxValue % (nuint)sizeof(T);
+
+        if(_buf.ByteLength == availableMaxByteLength) {
+            throw new InvalidOperationException("cannot write any more.");
+        }
+        nuint newByteCapacity;
+        if(_buf.ByteLength >= availableMaxByteLength / 2) {
+            newByteCapacity = availableMaxByteLength;
+        }
+        else {
+            newByteCapacity = Math.Max(4, _buf.ByteLength * 2);
+        }
+
+        var newBuf = new NativeBuffer(newByteCapacity);
+        try {
+            System.Buffer.MemoryCopy(_buf.Ptr, newBuf.Ptr, newBuf.ByteLength, _count * (nuint)sizeof(T));
+        }
+        catch {
+            newBuf.Dispose();
+            throw;
+        }
+        _buf.Dispose();
+        _buf = newBuf;
     }
 }

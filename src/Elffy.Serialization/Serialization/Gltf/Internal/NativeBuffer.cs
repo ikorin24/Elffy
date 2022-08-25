@@ -11,7 +11,7 @@ internal unsafe readonly struct NativeBuffer : IDisposable
     private readonly nuint _size;
 
     public byte* Ptr => (byte*)_ptr;
-    public nuint Length => _size;
+    public nuint ByteLength => _size;
 
     public NativeBuffer(nuint size)
     {
@@ -51,7 +51,7 @@ internal unsafe readonly struct NativeBuffer : IDisposable
         return memories;
     }
 
-    public PointerMemoryStream GetStream() => new PointerMemoryStream(Ptr, Length);
+    public PointerMemoryStream GetStream() => new PointerMemoryStream(Ptr, ByteLength);
 
     public void Dispose()
     {

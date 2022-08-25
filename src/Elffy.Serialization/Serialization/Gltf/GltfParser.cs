@@ -103,7 +103,7 @@ internal static class GltfParser
         else {
             var memories = buf.GetMemories();
             RandomAccess.Read(handle, memories, 0);
-            return ParseGlb(buf.Ptr, buf.Length);
+            return ParseGlb(buf.Ptr, buf.ByteLength);
         }
     }
 
@@ -165,7 +165,7 @@ internal static class GltfParser
                 var binBuf = glb.CreateNewBuffer(chunkLen);
                 unsafe {
                     fixed(void* source = &chunkData) {
-                        System.Buffer.MemoryCopy(source, binBuf.Ptr, binBuf.Length, chunkLen);
+                        System.Buffer.MemoryCopy(source, binBuf.Ptr, binBuf.byteLength, chunkLen);
                     }
                 }
             }
@@ -194,7 +194,7 @@ internal static class GltfParser
                     var binBuf = glb.CreateNewBuffer(chunkLen);
                     unsafe {
                         fixed(void* source = &chunkData) {
-                            System.Buffer.MemoryCopy(source, binBuf.Ptr, binBuf.Length, chunkLen);
+                            System.Buffer.MemoryCopy(source, binBuf.Ptr, binBuf.byteLength, chunkLen);
                         }
                     }
                 }
