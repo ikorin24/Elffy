@@ -4,6 +4,7 @@ using Elffy.Effective;
 using Elffy.Effective.Unsafes;
 using Elffy.Serialization.Gltf.Internal;
 using Elffy.Shapes;
+using Elffy.Threading;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -38,14 +39,12 @@ public static class GlbModelBuilder
         ct.ThrowIfCancellationRequested();
 
         using var glb = ParseGlb(file, ct);
-
-        //using var verticesBuffer = new UnsafeBufferWriter<Vertex>();
-        //using var indicesBuffer = new UnsafeBufferWriter<int>();
-
         using var verticesBuffer = new LargeBufferWriter<Vertex>();
         using var indicesBuffer = new LargeBufferWriter<uint>();
 
-        BuildRoot(verticesBuffer, indicesBuffer, glb, model, load);
+        var builderState = new BuilderState(glb, verticesBuffer, indicesBuffer);
+
+        await BuildRoot(in builderState, model, load);
 
         await screen.Timings.Update.Next(ct);
 
@@ -90,87 +89,53 @@ public static class GlbModelBuilder
         }
     }
 
-    private unsafe static void BuildRoot(LargeBufferWriter<Vertex> verticesOutput, LargeBufferWriter<uint> indicesOutput, GlbObject glb, Model3D model, Model3DLoadMeshDelegate load)
+    private static UniTask BuildRoot(in BuilderState state, Model3D model, Model3DLoadMeshDelegate load)
     {
-        var gltf = glb.Gltf;
-
+        var gltf = state.Gltf;
         ValidateVersion(gltf);
+        if(gltf.scene.TryGetValue(out var sceneNum) == false) {
+            return UniTask.CompletedTask;
+        }
+        ref readonly var defaultScene = ref GetItemOrThrow(gltf.scenes, sceneNum);
+        if(defaultScene.nodes == null) {
+            return UniTask.CompletedTask;
+        }
+        using var operations = new ParallelOperation();
 
-        if(gltf.scene.TryGetValue(out var sceneNum)) {
-            ref readonly var defaultScene = ref GetItemOrThrow(gltf.scenes, sceneNum);
-            if(defaultScene.nodes != null) {
-                foreach(var nodeNum in defaultScene.nodes) {
-                    ref readonly var node = ref GetItemOrThrow(gltf.nodes, nodeNum);
-                    if(node.mesh.TryGetValue(out var meshNum)) {
-                        ref readonly var mesh = ref GetItemOrThrow(gltf.meshes, meshNum);
-                        foreach(ref readonly var meshPrimitive in mesh.primitives.AsSpan()) {
-                            switch(meshPrimitive.mode) {
-                                case MeshPrimitiveMode.Points:
-                                case MeshPrimitiveMode.Lines:
-                                case MeshPrimitiveMode.LineLoop:
-                                case MeshPrimitiveMode.LineStrip: {
-                                    throw new NotImplementedException();
-                                }
-                                case MeshPrimitiveMode.Triangles: {
-                                    ref readonly var attrs = ref meshPrimitive.attributes;
-                                    if(meshPrimitive.indices.TryGetValue(out var indicesNum)) {
-                                        ref readonly var indices = ref GetItemOrThrow(gltf.accessors, indicesNum);
-                                        if(indices.type != AccessorType.Scalar) {
-                                            ThrowInvalidGlb();
-                                        }
-                                        ReadBufferData(glb, indices, indicesOutput, static (output, ptr, byteLength, type) =>
-                                        {
-                                            switch(type) {
-                                                case AccessorComponentType.UnsignedByte: {
-                                                    uint* dest = output.GetBufferToWrite(byteLength);
-                                                    ConvertUInt8ToUInt32((byte*)ptr, dest, byteLength);
-                                                    output.Advance(byteLength);
-                                                    break;
-                                                }
-                                                case AccessorComponentType.UnsignedShort: {
-                                                    nuint l = byteLength / sizeof(ushort);
-                                                    uint* dest = output.GetBufferToWrite(l);
-                                                    ConvertUInt16ToUInt32((ushort*)ptr, dest, l);
-                                                    output.Advance(l);
-                                                    break;
-                                                }
-                                                case AccessorComponentType.UnsignedInt: {
-                                                    nuint l = byteLength / sizeof(uint);
-                                                    uint* dest = output.GetBufferToWrite(l);
-                                                    System.Buffer.MemoryCopy(ptr, dest, byteLength, byteLength);
-                                                    if(BitConverter.IsLittleEndian == false) {
-                                                        ReverseEndian(dest, l);
-                                                    }
-                                                    output.Advance(l);
-                                                    break;
-                                                }
-                                                default: {
-                                                    ThrowInvalidGlb();
-                                                    break;
-                                                }
+        foreach(var nodeNum in defaultScene.nodes) {
+            ref readonly var node = ref GetItemOrThrow(gltf.nodes, nodeNum);
+            if(node.mesh.TryGetValue(out var meshNum) == false) {
+                continue;
+            }
 
-                                            }
-                                        });
-                                    }
-                                    else {
+            var part = new GlbModelPart();
 
-                                        // TODO: other attributes
-                                    }
-                                    break;
-                                }
-                                case MeshPrimitiveMode.TriangleStrip:
-                                case MeshPrimitiveMode.TriangleFan:
-                                default: {
-                                    throw new NotImplementedException();
-                                }
-                            }
-                        }
-                    }
-                }
+            // glTF and Engine has same coordinate (Y-up, right-hand)
+            part.Rotation = UnsafeEx.As<Quaternion, Elffy.Quaternion>(in node.rotation);
+            part.Position = UnsafeEx.As<Vector3, Elffy.Vector3>(in node.translation);
+            part.Scale = UnsafeEx.As<Vector3, Elffy.Vector3>(in node.scale);
+
+            operations.Add(MakeTree(part, model));
+
+            ref readonly var mesh = ref GetItemOrThrow(gltf.meshes, meshNum);
+            foreach(ref readonly var meshPrimitive in mesh.primitives.AsSpan()) {
+                ReadMeshPrimitive(in state, in meshPrimitive);
             }
         }
 
-        // not implemented yet
+        return operations.WhenAll();
+
+        static async UniTask MakeTree(Positionable obj, Positionable parent)
+        {
+            var layer = parent.Layer as WorldLayer;
+            Debug.Assert(layer != null);
+            var screen = parent.GetValidScreen();
+            await screen.Timings.Update.Next();
+
+            // TODO: 
+            //await obj.Activate(layer);
+            //parent.Children.Add(obj);
+        }
     }
 
     private static void ValidateVersion(GltfObject gltf)
@@ -181,37 +146,302 @@ public static class GlbModelBuilder
         }
     }
 
-    private unsafe delegate void ReadBufferAction<T>(T state, void* ptr, nuint byteLength, AccessorComponentType type);
+    private unsafe static readonly AccessBufferAction _storePositions = StorePositions;
+    private unsafe static readonly AccessBufferAction _storeNormals = StoreNormals;
+    private unsafe static readonly AccessBufferAction _storeUVs = StoreUVs;
+    private unsafe static readonly AccessBufferAction _storeIndices = StoreIndices;
 
-    private unsafe static void ReadBufferData<T>(GlbObject glb, in Accessor accessor, T state, ReadBufferAction<T> onRead)
+    private unsafe static void StorePositions(in BuilderState state, in BufferData data)
     {
-        // LargeBufferWriter<T> output
-        var gltf = glb.Gltf;
+        Debug.Assert(data.ComponentType is AccessorComponentType.Float);
 
+        var output = state.VerticesOutput;
+        nuint elementCount = data.ElementCount;
+        Vertex* dest = output.GetBufferToWrite(elementCount, true);
+        if(BitConverter.IsLittleEndian == false) {
+            throw new PlatformNotSupportedException("Big endian environment is not supported.");
+        }
+        var ptr = data.Ptr;
+        for(nuint i = 0; i < elementCount / 3; i++) {
+            dest[i].Position = new()
+            {
+                X = ((float*)ptr)[i * 3],
+                Y = ((float*)ptr)[i * 3 + 1],
+                Z = ((float*)ptr)[i * 3 + 2],
+            };
+        }
+        output.Advance(elementCount);
+    }
+
+    private unsafe static void StoreNormals(in BuilderState state, in BufferData data)
+    {
+        Debug.Assert(data.ComponentType is AccessorComponentType.Float);
+
+        var output = state.VerticesOutput;
+        nuint elementCount = data.ElementCount;
+        Vertex* dest = output.GetWrittenBufffer(out var writtenCount);
+        Debug.Assert(writtenCount >= elementCount);
+        if(BitConverter.IsLittleEndian == false) {
+            throw new PlatformNotSupportedException("Big endian environment is not supported.");
+        }
+        var ptr = data.Ptr;
+        for(nuint i = 0; i < elementCount / 3; i++) {
+            dest[i].Normal = new()
+            {
+                X = ((float*)ptr)[i * 3],
+                Y = ((float*)ptr)[i * 3 + 1],
+                Z = ((float*)ptr)[i * 3 + 2],
+            };
+        }
+    }
+
+    private unsafe static void StoreUVs(in BuilderState state, in BufferData data)
+    {
+        Debug.Assert(data.ComponentType is AccessorComponentType.Float);
+
+        var output = state.VerticesOutput;
+        nuint elementCount = data.ElementCount;
+        Vertex* dest = output.GetWrittenBufffer(out var writtenCount);
+        Debug.Assert(writtenCount >= elementCount);
+        if(BitConverter.IsLittleEndian == false) {
+            throw new PlatformNotSupportedException("Big endian environment is not supported.");
+        }
+        var ptr = data.Ptr;
+        for(nuint i = 0; i < elementCount / 2; i++) {
+            dest[i].UV = new()
+            {
+                X = ((float*)ptr)[i * 2],
+                Y = ((float*)ptr)[i * 2 + 1],
+            };
+        }
+    }
+
+    private unsafe static void StoreIndices(in BuilderState state, in BufferData data)
+    {
+        var output = state.IndicesOutput;
+        var elementCount = data.ElementCount;
+        switch(data.ComponentType) {
+            case AccessorComponentType.UnsignedByte: {
+                uint* dest = output.GetBufferToWrite(elementCount);
+                ConvertUInt8ToUInt32((byte*)data.Ptr, dest, elementCount);
+                output.Advance(elementCount);
+                break;
+            }
+            case AccessorComponentType.UnsignedShort: {
+                uint* dest = output.GetBufferToWrite(elementCount);
+                ConvertUInt16ToUInt32((ushort*)data.Ptr, dest, elementCount);
+                output.Advance(elementCount);
+                break;
+            }
+            case AccessorComponentType.UnsignedInt: {
+                uint* dest = output.GetBufferToWrite(elementCount);
+                System.Buffer.MemoryCopy(data.Ptr, dest, data.ByteLength, data.ByteLength);
+                if(BitConverter.IsLittleEndian == false) {
+                    ReverseEndian(dest, elementCount);
+                }
+                output.Advance(elementCount);
+                break;
+            }
+            default: {
+                Debug.Fail("It should not be possible to reach here.");
+                break;
+            }
+
+        }
+    }
+
+    private unsafe static void ReadMeshPrimitive(in BuilderState state, in MeshPrimitive meshPrimitive)
+    {
+        var gltf = state.Gltf;
+
+        if(meshPrimitive.material.TryGetValue(out var materialNum)) {
+            ref readonly var material = ref GetItemOrThrow(gltf.materials, materialNum);
+            ReadMaterial(in state, in material);
+        }
+
+        switch(meshPrimitive.mode) {
+            case MeshPrimitiveMode.Points:
+            case MeshPrimitiveMode.Lines:
+            case MeshPrimitiveMode.LineLoop:
+            case MeshPrimitiveMode.LineStrip: {
+                throw new NotImplementedException();
+            }
+            case MeshPrimitiveMode.Triangles: {
+                ref readonly var attrs = ref meshPrimitive.attributes;
+
+                // position
+                if(attrs.POSITION.TryGetValue(out var posAttr)) {
+                    ref readonly var position = ref GetItemOrThrow(gltf.accessors, posAttr);
+                    if(position is not { type: AccessorType.Vec3, componentType: AccessorComponentType.Float }) {
+                        ThrowInvalidGlb();
+                    }
+                    AccessData(in state, in position, _storePositions);
+                }
+                else {
+                    throw new NotSupportedException();
+                }
+
+                // normal
+                if(attrs.NORMAL.TryGetValue(out var normalAttr)) {
+                    ref readonly var normal = ref GetItemOrThrow(gltf.accessors, normalAttr);
+                    if(normal is not { type: AccessorType.Vec3, componentType: AccessorComponentType.Float }) {
+                        ThrowInvalidGlb();
+                    }
+                    AccessData(in state, in normal, _storeNormals);
+                }
+
+                // uv
+                if(attrs.TEXCOORD_0.TryGetValue(out var uv0Attr)) {
+                    ref readonly var uv0 = ref GetItemOrThrow(gltf.accessors, uv0Attr);
+                    if(uv0 is not { type: AccessorType.Vec2, componentType: AccessorComponentType.Float }) {
+                        ThrowInvalidGlb();
+                    }
+                    AccessData(in state, in uv0, _storeUVs);
+                }
+
+                // indices
+                if(meshPrimitive.indices.TryGetValue(out var indicesNum)) {
+                    ref readonly var indices = ref GetItemOrThrow(gltf.accessors, indicesNum);
+                    if(indices is not
+                        {
+                            type: AccessorType.Scalar,
+                            componentType: AccessorComponentType.UnsignedByte or AccessorComponentType.UnsignedShort or AccessorComponentType.UnsignedInt
+                        }) {
+                        ThrowInvalidGlb();
+                    }
+                    AccessData(in state, indices, _storeIndices);
+                }
+                break;
+            }
+            case MeshPrimitiveMode.TriangleStrip:
+            case MeshPrimitiveMode.TriangleFan:
+            default: {
+                throw new NotImplementedException();
+            }
+        }
+    }
+
+    private static void ReadMaterial(in BuilderState state, in Material material)
+    {
+        var gltf = state.Gltf;
+
+        // normal texture
+        if(material.normalTexture.TryGetValue(out var normalTexInfo)) {
+            ref readonly var texture = ref GetItemOrThrow(gltf.textures, normalTexInfo.index);
+            var scale = normalTexInfo.scale;
+            var uvN = normalTexInfo.texCoord;   // texcoord_n
+            if(texture.source.TryGetValue(out var imageNum)) {
+                ref readonly var image = ref GetItemOrThrow(gltf.images, imageNum);
+                // TODO:
+                var loadedImage = ReadImage(in state, in image);
+                loadedImage.Dispose();
+            }
+            if(texture.sampler.TryGetValue(out var samplerNum)) {
+                ref readonly var sampler = ref GetItemOrThrow(gltf.samplers, samplerNum);
+            }
+        }
+
+        // emissive texture
+        if(material.emissiveTexture.TryGetValue(out var emissiveTextureInfo)) {
+            ref readonly var texture = ref GetItemOrThrow(gltf.textures, emissiveTextureInfo.index);
+            var uvN = emissiveTextureInfo.texCoord; // texcoord_n
+            if(texture.source.TryGetValue(out var imageNum)) {
+                ref readonly var image = ref GetItemOrThrow(gltf.images, imageNum);
+                // TODO:
+                var loadedImage = ReadImage(in state, in image);
+                loadedImage.Dispose();
+            }
+            if(texture.sampler.TryGetValue(out var samplerNum)) {
+                ref readonly var sampler = ref GetItemOrThrow(gltf.samplers, samplerNum);
+            }
+        }
+
+        // occlusion texture
+        if(material.occlusionTexture.TryGetValue(out var occlusionTextureInfo)) {
+            ref readonly var texture = ref GetItemOrThrow(gltf.textures, occlusionTextureInfo.index);
+            var uvN = occlusionTextureInfo.texCoord; // texcoord_n
+            var strength = occlusionTextureInfo.strength;
+            if(texture.source.TryGetValue(out var imageNum)) {
+                ref readonly var image = ref GetItemOrThrow(gltf.images, imageNum);
+                // TODO:
+                var loadedImage = ReadImage(in state, in image);
+                loadedImage.Dispose();
+            }
+            if(texture.sampler.TryGetValue(out var samplerNum)) {
+                ref readonly var sampler = ref GetItemOrThrow(gltf.samplers, samplerNum);
+            }
+        }
+    }
+
+    private unsafe static void AccessData(in BuilderState state, in Accessor accessor, AccessBufferAction callback)
+    {
+        var gltf = state.Gltf;
         if(accessor.bufferView.TryGetValue(out var bufferViewNum) == false) {
             return;
         }
-
         ref readonly var bufferView = ref GetItemOrThrow(gltf.bufferViews, bufferViewNum);
+        var bin = ReadBuffer(in state, in bufferView);
+        var data = new BufferData((IntPtr)bin.Ptr, bin.ByteLength, bufferView.byteStride, accessor.componentType);
+        callback.Invoke(in state, in data);
+    }
+
+    private unsafe static GlbBinaryData ReadBuffer(in BuilderState state, in BufferView bufferView)
+    {
+        var gltf = state.Gltf;
         ref readonly var buffer = ref GetItemOrThrow(gltf.buffers, bufferView.buffer);
         if(buffer.uri == null) {
-            if(bufferView.byteStride.TryGetValue(out var stride)) {
-                throw new NotImplementedException();
-            }
-            else {
-                nuint offset = bufferView.byteOffset;
-                nuint len = bufferView.byteLength;
-                var bin = glb.GetBinaryData(bufferView.buffer).Slice(offset, len);
-
-                if(bin.ByteLength > int.MaxValue) {
-                    throw new NotSupportedException();
-                }
-                onRead.Invoke(state, bin.Ptr, bin.ByteLength, accessor.componentType);
-            }
+            nuint offset = bufferView.byteOffset;
+            nuint len = bufferView.byteLength;
+            var bin = state.Glb.GetBinaryData(bufferView.buffer).Slice(offset, len);
+            return bin;
         }
         else {
+            // TODO: fetch data from uri
             throw new NotImplementedException();
         }
+    }
+
+    private unsafe static Imaging.Image ReadImage(in BuilderState state, in Image image)
+    {
+        var gltf = state.Gltf;
+        if(image.uri != null) {
+            throw new NotSupportedException();
+        }
+
+        if(image.bufferView.TryGetValue(out var bufferViewNum) == false) {
+            ThrowInvalidGlb();
+        }
+        ref readonly var bufferView = ref GetItemOrThrow(gltf.bufferViews, bufferViewNum);
+        var bin = ReadBuffer(in state, in bufferView);
+        if(image.mimeType.TryGetValue(out var mimeType) == false) {
+            ThrowInvalidGlb();
+        }
+        using var stream = new PointerMemoryStream(bin.Ptr, bin.ByteLength);
+
+        return mimeType switch
+        {
+            ImageMimeType.ImageJpeg => Imaging.Image.FromStream(stream, Imaging.ImageType.Jpg),
+            ImageMimeType.ImagePng => Imaging.Image.FromStream(stream, Imaging.ImageType.Png),
+            _ => default,
+        };
+    }
+
+    private record struct BufferData(
+        IntPtr P,
+        nuint ByteLength,
+        nuint? ByteStride,
+        AccessorComponentType ComponentType
+    )
+    {
+        public unsafe void* Ptr => (void*)P;
+
+        public nuint ElementCount => ComponentType switch
+        {
+            AccessorComponentType.Byte or AccessorComponentType.UnsignedByte => ByteLength,
+            AccessorComponentType.UnsignedShort or AccessorComponentType.Short => ByteLength / 2,
+            AccessorComponentType.UnsignedInt or AccessorComponentType.Float => ByteLength / 4,
+            _ => throw new InvalidOperationException("Invalid enum value"),
+        };
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -323,6 +553,21 @@ public static class GlbModelBuilder
             }
         }
     }
+
+    private unsafe delegate void AccessBufferAction(in BuilderState state, in BufferData data);
+
+    private record struct BuilderState(
+        GlbObject Glb,
+        LargeBufferWriter<Vertex> VerticesOutput,
+        LargeBufferWriter<uint> IndicesOutput
+    )
+    {
+        public readonly GltfObject Gltf => Glb.Gltf;
+    }
+
+    private sealed class GlbModelPart : Renderable
+    {
+    }
 }
 
 internal unsafe sealed class LargeBufferWriter<T> : IDisposable where T : unmanaged
@@ -374,13 +619,31 @@ internal unsafe sealed class LargeBufferWriter<T> : IDisposable where T : unmana
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public T* GetBufferToWrite(nuint count)
+    public T* GetBufferToWrite(nuint count, bool zeroCleared = false)
     {
         if(count > Capacity - _count) {
             ResizeBuffer(Capacity + count);
             Debug.Assert(count <= Capacity - _count);
         }
-        return (T*)_buf.Ptr + _count;
+        var p = (T*)_buf.Ptr + _count;
+        if(zeroCleared) {
+            Clear(p, count * (nuint)sizeof(T));
+
+            static void Clear(void* ptr, nuint byteLen)
+            {
+#if NET7_0_OR_GREATER
+                NativeMemory.Clear(ptr, byteLen);
+#else
+                if(byteLen <= int.MaxValue) {
+                    new Span<byte>(ptr, (int)byteLen).Clear();
+                }
+                else {
+                    throw new NotImplementedException();
+                }
+#endif
+            }
+        }
+        return p;
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]  // uncommon path, no inlining
