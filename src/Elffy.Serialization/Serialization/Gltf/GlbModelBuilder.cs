@@ -42,11 +42,13 @@ public static class GlbModelBuilder
         using var verticesBuffer = new LargeBufferWriter<Vertex>();
         using var indicesBuffer = new LargeBufferWriter<uint>();
 
-        var builderState = new BuilderState(glb, verticesBuffer, indicesBuffer);
+        using(var operations = new ParallelOperation()) {
+            var builderState = new BuilderState(glb, verticesBuffer, indicesBuffer, operations);
+            BuildRoot(in builderState, model, load);
+            await operations.WhenAll();
+        }
 
-        await BuildRoot(in builderState, model, load);
-
-        await screen.Timings.Update.Next(ct);
+        await screen.Timings.Update.NextOrNow(ct);
 
         // TODO: not implemented yet
         //load.Invoke(verticesBuffer.WrittenSpan, indicesBuffer.WrittenSpan);
@@ -89,41 +91,55 @@ public static class GlbModelBuilder
         }
     }
 
-    private static UniTask BuildRoot(in BuilderState state, Model3D model, Model3DLoadMeshDelegate load)
+    private static void BuildRoot(in BuilderState state, Model3D model, Model3DLoadMeshDelegate load)
     {
         var gltf = state.Gltf;
         ValidateVersion(gltf);
-        if(gltf.scene.TryGetValue(out var sceneNum) == false) {
-            return UniTask.CompletedTask;
-        }
-        ref readonly var defaultScene = ref GetItemOrThrow(gltf.scenes, sceneNum);
-        if(defaultScene.nodes == null) {
-            return UniTask.CompletedTask;
-        }
-        using var operations = new ParallelOperation();
-
-        foreach(var nodeNum in defaultScene.nodes) {
-            ref readonly var node = ref GetItemOrThrow(gltf.nodes, nodeNum);
-            if(node.mesh.TryGetValue(out var meshNum) == false) {
-                continue;
+        if(gltf.scene.TryGetValue(out var sceneNum)) {
+            ref readonly var defaultScene = ref GetItemOrThrow(gltf.scenes, sceneNum);
+            if(defaultScene.nodes != null) {
+                foreach(var nodeNum in defaultScene.nodes) {
+                    ref readonly var node = ref GetItemOrThrow(gltf.nodes, nodeNum);
+                    BuildNode(in state, in node, model);
+                }
             }
+        }
+    }
 
-            var part = new GlbModelPart();
+    private static void ValidateVersion(GltfObject gltf)
+    {
+        var version = gltf.asset.version.AsSpan();
+        if(version.SequenceEqual(stackalloc byte[] { (byte)'2', (byte)'.', (byte)'0' }) == false) {
+            throw new NotSupportedException("only supports gltf v2.0");
+        }
+    }
 
-            // glTF and Engine has same coordinate (Y-up, right-hand)
-            part.Rotation = UnsafeEx.As<Quaternion, Elffy.Quaternion>(in node.rotation);
-            part.Position = UnsafeEx.As<Vector3, Elffy.Vector3>(in node.translation);
-            part.Scale = UnsafeEx.As<Vector3, Elffy.Vector3>(in node.scale);
+    private static void BuildNode(in BuilderState state, in Node node, Positionable parent)
+    {
+        var gltf = state.Gltf;
 
-            operations.Add(MakeTree(part, model));
+        // glTF and Engine has same coordinate (Y-up, right-hand)
+        var part = new GlbModelPart();
+        part.Rotation = UnsafeEx.As<Quaternion, Elffy.Quaternion>(in node.rotation);
+        part.Position = UnsafeEx.As<Vector3, Elffy.Vector3>(in node.translation);
+        part.Scale = UnsafeEx.As<Vector3, Elffy.Vector3>(in node.scale);
+        var matrix = new Elffy.Matrix4(node.matrix.AsSpan());
 
+        if(node.mesh.TryGetValue(out var meshNum)) {
             ref readonly var mesh = ref GetItemOrThrow(gltf.meshes, meshNum);
             foreach(ref readonly var meshPrimitive in mesh.primitives.AsSpan()) {
                 ReadMeshPrimitive(in state, in meshPrimitive);
             }
         }
+        state.Tasks.Add(MakeTree(part, parent));
 
-        return operations.WhenAll();
+        if(node.children != null) {
+            foreach(var childNodeNum in node.children) {
+                ref readonly var childNode = ref GetItemOrThrow(gltf.nodes, childNodeNum);
+                BuildNode(in state, in childNode, part);
+            }
+        }
+        return;
 
         static async UniTask MakeTree(Positionable obj, Positionable parent)
         {
@@ -135,14 +151,6 @@ public static class GlbModelBuilder
             // TODO: 
             //await obj.Activate(layer);
             //parent.Children.Add(obj);
-        }
-    }
-
-    private static void ValidateVersion(GltfObject gltf)
-    {
-        var version = gltf.asset.version.AsSpan();
-        if(version.SequenceEqual(stackalloc byte[] { (byte)'2', (byte)'.', (byte)'0' }) == false) {
-            throw new NotSupportedException("only supports gltf v2.0");
         }
     }
 
@@ -237,7 +245,7 @@ public static class GlbModelBuilder
                 uint* dest = output.GetBufferToWrite(elementCount);
                 System.Buffer.MemoryCopy(data.Ptr, dest, data.ByteLength, data.ByteLength);
                 if(BitConverter.IsLittleEndian == false) {
-                    ReverseEndian(dest, elementCount);
+                    ReverseEndianUInt32(dest, elementCount);
                 }
                 output.Advance(elementCount);
                 break;
@@ -253,71 +261,58 @@ public static class GlbModelBuilder
     private unsafe static void ReadMeshPrimitive(in BuilderState state, in MeshPrimitive meshPrimitive)
     {
         var gltf = state.Gltf;
-
         if(meshPrimitive.material.TryGetValue(out var materialNum)) {
             ref readonly var material = ref GetItemOrThrow(gltf.materials, materialNum);
             ReadMaterial(in state, in material);
         }
 
-        switch(meshPrimitive.mode) {
-            case MeshPrimitiveMode.Points:
-            case MeshPrimitiveMode.Lines:
-            case MeshPrimitiveMode.LineLoop:
-            case MeshPrimitiveMode.LineStrip: {
-                throw new NotImplementedException();
+        var mode = meshPrimitive.mode;
+        if(mode != MeshPrimitiveMode.Triangles) {
+            throw new NotImplementedException();
+        }
+        ref readonly var attrs = ref meshPrimitive.attributes;
+
+        // position
+        if(attrs.POSITION.TryGetValue(out var posAttr)) {
+            ref readonly var position = ref GetItemOrThrow(gltf.accessors, posAttr);
+            if(position is not { type: AccessorType.Vec3, componentType: AccessorComponentType.Float }) {
+                ThrowInvalidGlb();
             }
-            case MeshPrimitiveMode.Triangles: {
-                ref readonly var attrs = ref meshPrimitive.attributes;
+            AccessData(in state, in position, _storePositions);
+        }
+        else {
+            throw new NotSupportedException();
+        }
 
-                // position
-                if(attrs.POSITION.TryGetValue(out var posAttr)) {
-                    ref readonly var position = ref GetItemOrThrow(gltf.accessors, posAttr);
-                    if(position is not { type: AccessorType.Vec3, componentType: AccessorComponentType.Float }) {
-                        ThrowInvalidGlb();
-                    }
-                    AccessData(in state, in position, _storePositions);
-                }
-                else {
-                    throw new NotSupportedException();
-                }
-
-                // normal
-                if(attrs.NORMAL.TryGetValue(out var normalAttr)) {
-                    ref readonly var normal = ref GetItemOrThrow(gltf.accessors, normalAttr);
-                    if(normal is not { type: AccessorType.Vec3, componentType: AccessorComponentType.Float }) {
-                        ThrowInvalidGlb();
-                    }
-                    AccessData(in state, in normal, _storeNormals);
-                }
-
-                // uv
-                if(attrs.TEXCOORD_0.TryGetValue(out var uv0Attr)) {
-                    ref readonly var uv0 = ref GetItemOrThrow(gltf.accessors, uv0Attr);
-                    if(uv0 is not { type: AccessorType.Vec2, componentType: AccessorComponentType.Float }) {
-                        ThrowInvalidGlb();
-                    }
-                    AccessData(in state, in uv0, _storeUVs);
-                }
-
-                // indices
-                if(meshPrimitive.indices.TryGetValue(out var indicesNum)) {
-                    ref readonly var indices = ref GetItemOrThrow(gltf.accessors, indicesNum);
-                    if(indices is not
-                        {
-                            type: AccessorType.Scalar,
-                            componentType: AccessorComponentType.UnsignedByte or AccessorComponentType.UnsignedShort or AccessorComponentType.UnsignedInt
-                        }) {
-                        ThrowInvalidGlb();
-                    }
-                    AccessData(in state, indices, _storeIndices);
-                }
-                break;
+        // normal
+        if(attrs.NORMAL.TryGetValue(out var normalAttr)) {
+            ref readonly var normal = ref GetItemOrThrow(gltf.accessors, normalAttr);
+            if(normal is not { type: AccessorType.Vec3, componentType: AccessorComponentType.Float }) {
+                ThrowInvalidGlb();
             }
-            case MeshPrimitiveMode.TriangleStrip:
-            case MeshPrimitiveMode.TriangleFan:
-            default: {
-                throw new NotImplementedException();
+            AccessData(in state, in normal, _storeNormals);
+        }
+
+        // uv
+        if(attrs.TEXCOORD_0.TryGetValue(out var uv0Attr)) {
+            ref readonly var uv0 = ref GetItemOrThrow(gltf.accessors, uv0Attr);
+            if(uv0 is not { type: AccessorType.Vec2, componentType: AccessorComponentType.Float }) {
+                ThrowInvalidGlb();
             }
+            AccessData(in state, in uv0, _storeUVs);
+        }
+
+        // indices
+        if(meshPrimitive.indices.TryGetValue(out var indicesNum)) {
+            ref readonly var indices = ref GetItemOrThrow(gltf.accessors, indicesNum);
+            if(indices is not
+                {
+                    type: AccessorType.Scalar,
+                    componentType: AccessorComponentType.UnsignedByte or AccessorComponentType.UnsignedShort or AccessorComponentType.UnsignedInt
+                }) {
+                ThrowInvalidGlb();
+            }
+            AccessData(in state, indices, _storeIndices);
         }
     }
 
@@ -380,12 +375,12 @@ public static class GlbModelBuilder
             return;
         }
         ref readonly var bufferView = ref GetItemOrThrow(gltf.bufferViews, bufferViewNum);
-        var bin = ReadBuffer(in state, in bufferView);
+        var bin = ReadBufferView(in state, in bufferView);
         var data = new BufferData((IntPtr)bin.Ptr, bin.ByteLength, bufferView.byteStride, accessor.componentType);
         callback.Invoke(in state, in data);
     }
 
-    private unsafe static GlbBinaryData ReadBuffer(in BuilderState state, in BufferView bufferView)
+    private unsafe static GlbBinaryData ReadBufferView(in BuilderState state, in BufferView bufferView)
     {
         var gltf = state.Gltf;
         ref readonly var buffer = ref GetItemOrThrow(gltf.buffers, bufferView.buffer);
@@ -412,7 +407,7 @@ public static class GlbModelBuilder
             ThrowInvalidGlb();
         }
         ref readonly var bufferView = ref GetItemOrThrow(gltf.bufferViews, bufferViewNum);
-        var bin = ReadBuffer(in state, in bufferView);
+        var bin = ReadBufferView(in state, in bufferView);
         if(image.mimeType.TryGetValue(out var mimeType) == false) {
             ThrowInvalidGlb();
         }
@@ -453,7 +448,7 @@ public static class GlbModelBuilder
         return ref array[index];
     }
 
-    private unsafe static void ReverseEndian(uint* p, nuint count)
+    private unsafe static void ReverseEndianUInt32(uint* p, nuint count)
     {
         for(nuint i = 0; i < count; i++) {
             p[i] = ((p[i] & 0x0000_00FF) << 24) + ((p[i] & 0x0000_FF00) << 8) + ((p[i] & 0x00FF_0000) >> 8) + ((p[i] & 0xFF00_0000) >> 24);
@@ -559,7 +554,8 @@ public static class GlbModelBuilder
     private record struct BuilderState(
         GlbObject Glb,
         LargeBufferWriter<Vertex> VerticesOutput,
-        LargeBufferWriter<uint> IndicesOutput
+        LargeBufferWriter<uint> IndicesOutput,
+        ParallelOperation Tasks
     )
     {
         public readonly GltfObject Gltf => Glb.Gltf;
