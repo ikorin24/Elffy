@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using Elffy.Effective;
 using Elffy.Effective.Unsafes;
 using Elffy.Serialization.Gltf.Internal;
+using Elffy.Serialization.Gltf.Parsing;
 using Elffy.Shapes;
 using Elffy.Threading;
 using System;
@@ -120,10 +121,10 @@ public static class GlbModelBuilder
 
         // glTF and Engine has same coordinate (Y-up, right-hand)
         var part = new GlbModelPart();
-        part.Rotation = UnsafeEx.As<Quaternion, Elffy.Quaternion>(in node.rotation);
-        part.Position = UnsafeEx.As<Vector3, Elffy.Vector3>(in node.translation);
-        part.Scale = UnsafeEx.As<Vector3, Elffy.Vector3>(in node.scale);
-        var matrix = new Elffy.Matrix4(node.matrix.AsSpan());
+        part.Rotation = new Quaternion(node.rotation.X, node.rotation.Y, node.rotation.Z, node.rotation.W);
+        part.Position = new Vector3(node.translation.X, node.translation.Y, node.translation.Z);
+        part.Scale = new Vector3(node.scale.X, node.scale.Y, node.scale.Z);
+        var matrix = new Matrix4(node.matrix.AsSpan());
 
         if(node.mesh.TryGetValue(out var meshNum)) {
             ref readonly var mesh = ref GetItemOrThrow(gltf.meshes, meshNum);

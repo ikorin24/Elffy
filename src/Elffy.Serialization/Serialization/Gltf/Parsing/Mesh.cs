@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace Elffy.Serialization.Gltf;
+namespace Elffy.Serialization.Gltf.Parsing;
 
 internal struct Mesh
 {

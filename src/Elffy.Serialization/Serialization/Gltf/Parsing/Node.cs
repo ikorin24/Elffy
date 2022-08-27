@@ -1,6 +1,6 @@
 ﻿#nullable enable
 
-namespace Elffy.Serialization.Gltf;
+namespace Elffy.Serialization.Gltf.Parsing;
 
 internal struct Node
 {

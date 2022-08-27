@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Elffy.Serialization.Gltf;
+namespace Elffy.Serialization.Gltf.Parsing;
 
 [JsonConverter(typeof(Matrix4Converter))]
 [DebuggerTypeProxy(typeof(Matrix4TypeProxy))]

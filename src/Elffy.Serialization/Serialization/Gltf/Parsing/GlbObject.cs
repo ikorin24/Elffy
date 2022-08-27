@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Elffy.Serialization.Gltf;
+namespace Elffy.Serialization.Gltf.Parsing;
 
 internal sealed class GlbObject : IDisposable
 {

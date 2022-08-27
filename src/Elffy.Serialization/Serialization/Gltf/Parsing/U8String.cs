@@ -7,7 +7,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Elffy.Serialization.Gltf;
+namespace Elffy.Serialization.Gltf.Parsing;
 
 [DebuggerDisplay("{ToString()}")]
 [JsonConverter(typeof(U8StringConverter))]
@@ -131,15 +131,15 @@ internal sealed class U8StringConverter : JsonConverter<U8String>
 
     private static bool TryHexAsciiToInt(byte hexAscii, out int num)
     {
-        if(hexAscii is (>= (byte)'0' and <= (byte)'9')) {
+        if(hexAscii is >= (byte)'0' and <= (byte)'9') {
             num = hexAscii - (byte)'0';
             return true;
         }
-        else if(hexAscii is (>= (byte)'a' and <= (byte)'f')) {
+        else if(hexAscii is >= (byte)'a' and <= (byte)'f') {
             num = hexAscii - (byte)'a' + 10;
             return true;
         }
-        else if(hexAscii is (>= (byte)'A' and <= (byte)'F')) {
+        else if(hexAscii is >= (byte)'A' and <= (byte)'F') {
             num = hexAscii - (byte)'A' + 10;
             return true;
         }

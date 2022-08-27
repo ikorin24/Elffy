@@ -10,7 +10,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Elffy.Serialization.Gltf.Internal;
 
-namespace Elffy.Serialization.Gltf;
+namespace Elffy.Serialization.Gltf.Parsing;
 
 internal static class GltfParser
 {
@@ -30,7 +30,7 @@ internal static class GltfParser
         public override nuint Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             if(Unsafe.SizeOf<nuint>() == 4) {
-                return (nuint)reader.GetUInt32();
+                return reader.GetUInt32();
             }
             if(Unsafe.SizeOf<nuint>() == 8) {
                 return (nuint)reader.GetUInt64();

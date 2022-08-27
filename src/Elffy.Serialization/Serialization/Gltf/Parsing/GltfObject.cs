@@ -1,6 +1,6 @@
 ﻿#nullable enable
 
-namespace Elffy.Serialization.Gltf;
+namespace Elffy.Serialization.Gltf.Parsing;
 
 // https://github.com/KhronosGroup/glTF-Tutorials
 // https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html

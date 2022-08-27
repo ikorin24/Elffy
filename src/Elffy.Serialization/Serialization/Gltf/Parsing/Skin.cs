@@ -1,7 +1,7 @@
 ﻿#nullable enable
 using System;
 
-namespace Elffy.Serialization.Gltf;
+namespace Elffy.Serialization.Gltf.Parsing;
 
 internal struct Skin
 {
