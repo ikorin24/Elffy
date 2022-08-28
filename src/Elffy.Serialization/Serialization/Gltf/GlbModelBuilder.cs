@@ -150,8 +150,8 @@ public static class GlbModelBuilder
             await screen.Timings.Update.Next();
 
             // TODO: 
-            //await obj.Activate(layer);
-            //parent.Children.Add(obj);
+            await obj.Activate(layer);
+            parent.Children.Add(obj);
         }
     }
 
