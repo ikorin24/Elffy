@@ -217,6 +217,42 @@ namespace UnitTest
         });
 
         [Fact]
+        public static void LifeSpan_LayerDead() => TestEngineEntryPoint.Start(async screen =>
+        {
+            var layer = await LayerPipelines
+                .CreateBuilder(screen)
+                .Build(() => new WorldLayer());
+
+            // cubes[0] ---- cubes[1] ---- cubes[2] ---- cubes[3]
+
+            var cubes = await UniTask.WhenAll(Enumerable
+                .Range(0, 4)
+                .Select(i => new Cube().Activate(layer)));
+
+            cubes[0].Children.Add(cubes[1]);
+            cubes[1].Children.Add(cubes[2]);
+            cubes[2].Children.Add(cubes[3]);
+
+            Assert.True(cubes[0].IsRoot);
+            Assert.False(cubes[1].IsRoot);
+            Assert.False(cubes[2].IsRoot);
+            Assert.False(cubes[3].IsRoot);
+
+            foreach(var cube in cubes) {
+                Assert.Equal(layer, cube.Layer);
+                Assert.Equal(LifeState.Alive, cube.LifeState);
+            }
+
+            await layer.Terminate();
+            Assert.Equal(LifeState.Dead, layer.LifeState);
+
+            foreach(var cube in cubes) {
+                Assert.Null(cube.Layer);
+                Assert.Equal(LifeState.Dead, cube.LifeState);
+            }
+        });
+
+        [Fact]
         public static void Visibility_RenderableTree() => TestEngineEntryPoint.Start(async screen =>
         {
             var layer = await LayerPipelines
