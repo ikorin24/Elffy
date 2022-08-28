@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using Cysharp.Threading.Tasks;
 using Elffy.Effective;
-using Elffy.Effective.Unsafes;
 using Elffy.Serialization.Gltf.Internal;
 using Elffy.Serialization.Gltf.Parsing;
 using Elffy.Shapes;
@@ -43,8 +42,10 @@ public static class GlbModelBuilder
         using var verticesBuffer = new LargeBufferWriter<Vertex>();
         using var indicesBuffer = new LargeBufferWriter<uint>();
 
+        var layer = model.Layer as WorldLayer;
+        Debug.Assert(layer is not null);
         using(var operations = new ParallelOperation()) {
-            var builderState = new BuilderState(glb, verticesBuffer, indicesBuffer, operations);
+            var builderState = new BuilderState(glb, layer, verticesBuffer, indicesBuffer, operations);
             BuildRoot(in builderState, model, load);
             await operations.WhenAll();
         }
@@ -120,39 +121,36 @@ public static class GlbModelBuilder
         var gltf = state.Gltf;
 
         // glTF and Engine has same coordinate (Y-up, right-hand)
-        var part = new GlbModelPart();
-        part.Rotation = new Quaternion(node.rotation.X, node.rotation.Y, node.rotation.Z, node.rotation.W);
-        part.Position = new Vector3(node.translation.X, node.translation.Y, node.translation.Z);
-        part.Scale = new Vector3(node.scale.X, node.scale.Y, node.scale.Z);
+        var nodePart = new GlbModelPart();
+        nodePart.Name = node.name?.ToString();
+        nodePart.Rotation = new Quaternion(node.rotation.X, node.rotation.Y, node.rotation.Z, node.rotation.W);
+        nodePart.Position = new Vector3(node.translation.X, node.translation.Y, node.translation.Z);
+        nodePart.Scale = new Vector3(node.scale.X, node.scale.Y, node.scale.Z);
         var matrix = new Matrix4(node.matrix.AsSpan());
+
+        state.Tasks.Add(MakeTree(nodePart, parent, state.Layer));
 
         if(node.mesh.TryGetValue(out var meshNum)) {
             ref readonly var mesh = ref GetItemOrThrow(gltf.meshes, meshNum);
             foreach(ref readonly var meshPrimitive in mesh.primitives.AsSpan()) {
-                ReadMeshPrimitive(in state, in meshPrimitive);
+                ReadMeshPrimitive(in state, in meshPrimitive, nodePart);
             }
         }
-        state.Tasks.Add(MakeTree(part, parent));
 
         if(node.children != null) {
             foreach(var childNodeNum in node.children) {
                 ref readonly var childNode = ref GetItemOrThrow(gltf.nodes, childNodeNum);
-                BuildNode(in state, in childNode, part);
+                BuildNode(in state, in childNode, nodePart);
             }
         }
-        return;
+    }
 
-        static async UniTask MakeTree(Positionable obj, Positionable parent)
-        {
-            var layer = parent.Layer as WorldLayer;
-            Debug.Assert(layer != null);
-            var screen = parent.GetValidScreen();
-            await screen.Timings.Update.Next();
-
-            // TODO: 
-            await obj.Activate(layer);
-            parent.Children.Add(obj);
-        }
+    private static async UniTask MakeTree(Positionable obj, Positionable parent, WorldLayer layer)
+    {
+        var screen = layer.GetValidScreen();
+        await screen.Timings.Update.Next();
+        await obj.Activate(layer);
+        parent.Children.Add(obj);
     }
 
     private unsafe static readonly AccessBufferAction _storePositions = StorePositions;
@@ -259,9 +257,13 @@ public static class GlbModelBuilder
         }
     }
 
-    private unsafe static void ReadMeshPrimitive(in BuilderState state, in MeshPrimitive meshPrimitive)
+    private unsafe static void ReadMeshPrimitive(in BuilderState state, in MeshPrimitive meshPrimitive, Positionable parent)
     {
         var gltf = state.Gltf;
+        var meshPrimitivePart = new GlbModelPart();
+        meshPrimitivePart.Name = "MeshPrimitive";
+        state.Tasks.Add(MakeTree(meshPrimitivePart, parent, state.Layer));
+
         if(meshPrimitive.material.TryGetValue(out var materialNum)) {
             ref readonly var material = ref GetItemOrThrow(gltf.materials, materialNum);
             ReadMaterial(in state, in material);
@@ -554,6 +556,7 @@ public static class GlbModelBuilder
 
     private record struct BuilderState(
         GlbObject Glb,
+        WorldLayer Layer,
         LargeBufferWriter<Vertex> VerticesOutput,
         LargeBufferWriter<uint> IndicesOutput,
         ParallelOperation Tasks

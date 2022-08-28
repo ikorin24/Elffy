@@ -22,6 +22,7 @@ namespace Elffy
         private EventSource<FrameObject>? _earlyUpdate;
         private EventSource<FrameObject>? _alive;
         private EventSource<FrameObject>? _dead;
+        private string? _name;
         private LifeState _state = LifeState.New;
         private bool _isFrozen;
         private readonly FrameObjectInstanceType _instanceType = FrameObjectInstanceType.FrameObject;
@@ -39,6 +40,8 @@ namespace Elffy
         public Event<FrameObject> LateUpdate => new Event<FrameObject>(ref _lateUpdate);
 
         public Event<FrameObject> Update => new Event<FrameObject>(ref _update);
+
+        public string? Name { get => _name; set => _name = value; }
 
         /// <summary>Get life state of <see cref="FrameObject"/></summary>
         public LifeState LifeState => _state;
