@@ -235,21 +235,13 @@ namespace Elffy
             Debug.Assert(_layer is not null);
 
             if(IsPositionable(out var positionable) && positionable.HasChild) {
-                var children = positionable.Children;
-                var args = (
-                    Self: this,
-                    Layer: _layer,
-                    TimingPoint: timingPoint,
-                    Screen: screen);
-                return children.Clear(args, static (children, args) =>
-                {
-                    using var tasks = new ParallelOperation();
-                    for(int i = children.Length - 1; i >= 0; i--) {
-                        tasks.Add(children[i].TerminateFromLayer(args.TimingPoint));
-                    }
-                    tasks.Add(args.Self.TerminateFromLayerWithoutCheck(args.Layer, args.TimingPoint, args.Screen));
-                    return tasks.WhenAll();
-                });
+                var children = positionable.Children.AsSpan();
+                using var tasks = new ParallelOperation();
+                for(int i = children.Length - 1; i >= 0; i--) {
+                    tasks.Add(children[i].TerminateFromLayer(timingPoint));
+                }
+                tasks.Add(TerminateFromLayerWithoutCheck(_layer, timingPoint, screen));
+                return tasks.WhenAll();
             }
             else {
                 return TerminateFromLayerWithoutCheck(_layer, timingPoint, screen);
@@ -283,6 +275,11 @@ namespace Elffy
                 if(parent is not null) {
                     parent.Children.Remove(positionable);
                 }
+
+                // Clear children for returning inner pooled buffer though there are already no children.
+                Debug.Assert(positionable.ChildrenCore.Count == 0);
+                positionable.ChildrenCore.Clear();
+                Debug.Assert(positionable.ChildrenCore.Capacity == 0);
             }
             OnDead();
         }

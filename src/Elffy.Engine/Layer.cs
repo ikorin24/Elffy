@@ -183,13 +183,19 @@ namespace Elffy
 
             static UniTask TerminateAllFrameObjects(Layer self)
             {
-                return ParallelOperation.WhenAll(self.ObjectCount, self, static (Span<UniTask> tasks, in Layer self) =>
-                {
-                    var frameObjects = self.Objects;
-                    for(int i = 0; i < tasks.Length; i++) {
-                        tasks[i] = CreateTerminationTask(frameObjects[i]);
+                using var tasks = new ParallelOperation();
+                foreach(var frameObject in self.Objects) {
+                    // non-root Positionable is terminated by its parent.
+                    if(frameObject.IsPositionable(out var positionable)) {
+                        if(positionable.IsRoot) {
+                            tasks.Add(CreateTerminationTask(positionable));
+                        }
                     }
-                });
+                    else {
+                        tasks.Add(CreateTerminationTask(frameObject));
+                    }
+                }
+                return tasks.WhenAll();
 
                 static async UniTask CreateTerminationTask(FrameObject frameObject)
                 {
