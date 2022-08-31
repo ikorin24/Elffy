@@ -48,7 +48,7 @@ namespace Elffy
         protected ReadOnlySpan<FrameObject> Objects => _store.List;
         protected ReadOnlySpan<FrameObject> AddedObjects => _store.Added;
         protected ReadOnlySpan<FrameObject> RemovedObjects => _store.Removed;
-        protected ReadOnlySpan<Renderable> Renderables => _store.Renderables;
+        protected ReadOnlySpan<Positionable> Positionables => _store.Positionables;
 
         protected Layer(int sortNumber) : this(sortNumber, 32)
         {

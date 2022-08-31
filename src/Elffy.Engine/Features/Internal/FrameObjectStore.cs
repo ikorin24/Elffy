@@ -16,13 +16,13 @@ namespace Elffy.Features.Internal
         private readonly List<FrameObject> _list;
         private readonly List<FrameObject> _addedBuf;
         private readonly List<FrameObject> _removedBuf;
-        private readonly List<Renderable> _renderables;
+        private readonly List<Positionable> _positionables;
 
         public int ObjectCount => _list.Count;
         public ReadOnlySpan<FrameObject> List => _list.AsReadOnlySpan();
         public ReadOnlySpan<FrameObject> Added => _addedBuf.AsReadOnlySpan();
         public ReadOnlySpan<FrameObject> Removed => _removedBuf.AsReadOnlySpan();
-        public ReadOnlySpan<Renderable> Renderables => _renderables.AsReadOnlySpan();
+        public ReadOnlySpan<Positionable> Positionables => _positionables.AsReadOnlySpan();
 
         public FrameObjectStore(int capacityHint)
         {
@@ -30,15 +30,13 @@ namespace Elffy.Features.Internal
             _list = new List<FrameObject>(capacityHint);
             _addedBuf = new List<FrameObject>(capacityHint / 2);
             _removedBuf = new List<FrameObject>(capacityHint / 2);
-            _renderables = new List<Renderable>(capacityHint);
+            _positionables = new List<Positionable>(capacityHint);
         }
 
         [Obsolete("Don't use default constructor", true)]
         [EditorBrowsable(EditorBrowsableState.Never)]
         public FrameObjectStore() => throw new NotSupportedException("Don't use default constructor");
 
-        /// <summary>指定した<see cref="FrameObject"/>を追加します</summary>
-        /// <param name="frameObject">追加するオブジェクト</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddFrameObject(FrameObject frameObject)
         {
@@ -46,9 +44,6 @@ namespace Elffy.Features.Internal
             _addedBuf.Add(frameObject);
         }
 
-        /// <summary>指定した<see cref="FrameObject"/>を削除します</summary>
-        /// <param name="frameObject">削除するオブジェクト</param>
-        /// <returns>削除できたかどうか</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RemoveFrameObject(FrameObject frameObject)
         {
@@ -120,12 +115,12 @@ namespace Elffy.Features.Internal
         public void Render(in Matrix4 view, in Matrix4 projection)
         {
             var identity = Matrix4.Identity;
-            foreach(var renderable in _renderables.AsSpan()) {
+            foreach(var positionable in _positionables.AsSpan()) {
                 // Render only root objects.
-                // Childen are rendered from thier parent 'Render' method.
-                if(renderable.IsRoot == false) { continue; }
+                // Childen are rendered from thier parent method recursively.
+                if(positionable.IsRoot == false) { continue; }
                 try {
-                    renderable.Render(identity, view, projection);
+                    positionable.RenderRecursively(identity, view, projection);
                 }
                 catch {
                     if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
@@ -137,12 +132,12 @@ namespace Elffy.Features.Internal
         public void RenderShadowMap(in Matrix4 lightViewProjection)
         {
             var identity = Matrix4.Identity;
-            foreach(var renderable in _renderables.AsSpan()) {
+            foreach(var positionable in _positionables.AsSpan()) {
                 // Render only root objects.
-                // Childen are rendered from thier parent 'Render' method.
-                if(renderable.IsRoot == false) { continue; }
+                // Childen are rendered from thier parent method recursively.
+                if(positionable.IsRoot == false) { continue; }
                 try {
-                    renderable.RenderShadowMap(identity, lightViewProjection);
+                    positionable.RenderShadowMapRecursively(identity, lightViewProjection);
                 }
                 catch {
                     if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
@@ -174,22 +169,22 @@ namespace Elffy.Features.Internal
             // Clear all other lists
             _list.Clear();
             _removedBuf.Clear();
-            _renderables.Clear();
+            _positionables.Clear();
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]  // uncommon path, no inlining
         private void ApplyRemovePrivate()
         {
             var list = _list;
-            var renderables = _renderables;
+            var positionables = _positionables;
 
             foreach(var item in _removedBuf.AsSpan()) {
                 Debug.Assert(item.LifeState == LifeState.Terminating);
 
                 // The FrameObject is not in the list if it failed to activate.
                 list.Remove(item);
-                if(item.IsRenderable(out var renderable)) {
-                    renderables.Remove(renderable);
+                if(item.IsPositionable(out var positionable)) {
+                    positionables.Remove(positionable);
                 }
                 try {
                     item.RemovedFromObjectStoreCallback();
@@ -208,8 +203,8 @@ namespace Elffy.Features.Internal
             _list.AddRange(_addedBuf);
             foreach(var item in _addedBuf.AsSpan()) {
                 Debug.Assert(item.LifeState == LifeState.Activating);
-                if(item.IsRenderable(out var renderable)) {
-                    _renderables.Add(renderable);
+                if(item.IsPositionable(out var positionable)) {
+                    _positionables.Add(positionable);
                 }
                 try {
                     item.AddToObjectStoreCallback();

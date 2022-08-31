@@ -164,6 +164,32 @@ namespace Elffy
                 return obj;
             }
         }
+
+        internal virtual void RenderRecursively(in Matrix4 modelParent, in Matrix4 view, in Matrix4 projection)
+        {
+            var children = Children.AsSpan();
+            if(children.IsEmpty) {
+                return;
+            }
+
+            var withoutScale = modelParent * Position.ToTranslationMatrix4() * Rotation.ToMatrix4();
+            foreach(var child in children) {
+                child.RenderRecursively(withoutScale, view, projection);
+            }
+        }
+
+        internal virtual void RenderShadowMapRecursively(in Matrix4 modelParent, in Matrix4 lightViewProjection)
+        {
+            var children = Children.AsSpan();
+            if(children.IsEmpty) {
+                return;
+            }
+
+            var withoutScale = modelParent * Position.ToTranslationMatrix4() * Rotation.ToMatrix4();
+            foreach(var child in children) {
+                child.RenderShadowMapRecursively(withoutScale, lightViewProjection);
+            }
+        }
     }
 
     public readonly struct PositionableAncestors : IEnumerable<Positionable>

@@ -144,25 +144,29 @@ namespace Elffy
 
         }
 
-        internal void Render(in Matrix4 modelParent, in Matrix4 view, in Matrix4 projection)
+        internal sealed override void RenderRecursively(in Matrix4 modelParent, in Matrix4 view, in Matrix4 projection)
         {
             var visibility = GetVisibility();
-            if(_isLoaded && visibility == RenderVisibility.Visible) {
-                var withoutScale = modelParent * Position.ToTranslationMatrix4() * Rotation.ToMatrix4();
-                var model = withoutScale * Scale.ToScaleMatrix4();
+            if(visibility != RenderVisibility.Visible) {
+                // In case of InvisibleSelf or InvisibleHierarchical, all children are InvisibleHierarchical
+                return;
+            }
+            var children = Children.AsSpan();
+            var needToRenderSelf = _isLoaded;
+            if(needToRenderSelf == false && children.IsEmpty) {
+                return;
+            }
+            var withoutScale = modelParent * Position.ToTranslationMatrix4() * Rotation.ToMatrix4();
+            if(needToRenderSelf) {
                 EnsureShaderInitialized();
                 Debug.Assert(_rendererData.State is RendererDataState.Compiled);
+                var model = withoutScale * Scale.ToScaleMatrix4();
                 BeforeRendering?.Invoke(this, in model, in view, in projection);
                 OnRendering(in model, in view, in projection);
                 Rendered?.Invoke(this, in model, in view, in projection);
-                var children = Children.AsSpan();
-                if(children.Length > 0) {
-                    foreach(var child in children) {
-                        if(child.IsRenderable(out var renderable)) {
-                            renderable.Render(withoutScale, view, projection);
-                        }
-                    }
-                }
+            }
+            foreach(var child in children) {
+                child.RenderRecursively(withoutScale, view, projection);
             }
 
             void EnsureShaderInitialized()
@@ -192,15 +196,20 @@ namespace Elffy
             }
         }
 
-        internal void RenderShadowMap(in Matrix4 modelParent, in Matrix4 lightViewProjection)
+        internal sealed override void RenderShadowMapRecursively(in Matrix4 modelParent, in Matrix4 lightViewProjection)
         {
             var visibility = GetVisibility();
-            var hasShadow = _hasShadow;
-            if(hasShadow == false) {
+            if(visibility != RenderVisibility.Visible) {
+                // In case of InvisibleSelf or InvisibleHierarchical, all children are InvisibleHierarchical
                 return;
             }
-            if(_isLoaded && visibility == RenderVisibility.Visible) {
-                var withoutScale = modelParent * Position.ToTranslationMatrix4() * Rotation.ToMatrix4();
+            var children = Children.AsSpan();
+            var needToRenderSelf = _isLoaded && _hasShadow;
+            if(!needToRenderSelf && children.IsEmpty) {
+                return;
+            }
+            var withoutScale = modelParent * Position.ToTranslationMatrix4() * Rotation.ToMatrix4();
+            if(needToRenderSelf) {
                 EnsureShadowRendererInitialized();
                 Debug.Assert(_shadowRendererData.State == RendererDataState.Compiled);
                 var program = _shadowRendererData.GetValidProgram();
@@ -213,14 +222,9 @@ namespace Elffy
                 DrawElements(0, IBO.Length);
                 VAO.Unbind();
                 IBO.Unbind();
-                var children = Children.AsSpan();
-                if(children.Length > 0) {
-                    foreach(var child in children) {
-                        if(child.IsRenderable(out var renderable)) {
-                            renderable.RenderShadowMap(withoutScale, lightViewProjection);
-                        }
-                    }
-                }
+            }
+            foreach(var child in children) {
+                child.RenderShadowMapRecursively(withoutScale, lightViewProjection);
             }
 
             void EnsureShadowRendererInitialized()

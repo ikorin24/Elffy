@@ -15,8 +15,6 @@ namespace Elffy
 
         public ReadOnlySpan<FrameObject> GetFrameObjects() => Objects;
 
-        public ReadOnlySpan<Renderable> GetRenderables() => Renderables;
-
         protected override void OnAlive(IHostScreen screen)
         {
             // nop
@@ -47,6 +45,5 @@ namespace Elffy
     public interface IObjectLayer
     {
         ReadOnlySpan<FrameObject> GetFrameObjects();
-        ReadOnlySpan<Renderable> GetRenderables();
     }
 }

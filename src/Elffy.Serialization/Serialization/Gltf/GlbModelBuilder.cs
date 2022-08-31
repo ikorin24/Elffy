@@ -13,6 +13,14 @@ using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 using System.Threading;
+using TextureConfig = Elffy.Components.TextureConfig;
+using TextureWrapMode = Elffy.Components.TextureWrapMode;
+using TextureExpansionMode = Elffy.Components.TextureExpansionMode;
+using TextureMipmapMode = Elffy.Components.TextureMipmapMode;
+using TextureShrinkMode = Elffy.Components.TextureShrinkMode;
+using ImageData = Elffy.Imaging.Image;
+using ImageDataType = Elffy.Imaging.ImageType;
+using ReadOnlyImageRef = Elffy.Imaging.ReadOnlyImageRef;
 
 namespace Elffy.Serialization.Gltf;
 
@@ -21,6 +29,10 @@ public static class GlbModelBuilder
     private sealed record StateObject(ResourceFile File, CancellationToken CancellationToken);
 
     private static readonly Model3DBuilderDelegate<StateObject> _build = Build;
+    private static readonly AccessBufferAction<Vertex> _storePositions = StorePositions;
+    private static readonly AccessBufferAction<Vertex> _storeNormals = StoreNormals;
+    private static readonly AccessBufferAction<Vertex> _storeUVs = StoreUVs;
+    private static readonly AccessBufferAction<uint> _storeIndices = StoreIndices;
 
     public static Model3D CreateLazyLoadingGlb(ResourceFile file, CancellationToken cancellationToken = default)
     {
@@ -39,13 +51,11 @@ public static class GlbModelBuilder
         ct.ThrowIfCancellationRequested();
 
         using var glb = ParseGlb(file, ct);
-        using var verticesBuffer = new LargeBufferWriter<Vertex>();
-        using var indicesBuffer = new LargeBufferWriter<uint>();
 
         var layer = model.Layer as WorldLayer;
         Debug.Assert(layer is not null);
         using(var operations = new ParallelOperation()) {
-            var builderState = new BuilderState(glb, layer, verticesBuffer, indicesBuffer, operations);
+            var builderState = new BuilderState(glb, layer, screen, operations);
             BuildRoot(in builderState, model, load);
             await operations.WhenAll();
         }
@@ -133,7 +143,7 @@ public static class GlbModelBuilder
         if(node.mesh.TryGetValue(out var meshNum)) {
             ref readonly var mesh = ref GetItemOrThrow(gltf.meshes, meshNum);
             foreach(ref readonly var meshPrimitive in mesh.primitives.AsSpan()) {
-                ReadMeshPrimitive(in state, in meshPrimitive, nodePart);
+                BuildMeshPrimitive(in state, in meshPrimitive, nodePart);
             }
         }
 
@@ -145,7 +155,7 @@ public static class GlbModelBuilder
         }
     }
 
-    private static async UniTask MakeTree(Positionable obj, Positionable parent, WorldLayer layer)
+    private static async UniTask MakeTree(GlbModelPart obj, Positionable parent, WorldLayer layer)
     {
         var screen = layer.GetValidScreen();
         await screen.Timings.Update.Next();
@@ -153,16 +163,10 @@ public static class GlbModelBuilder
         parent.Children.Add(obj);
     }
 
-    private unsafe static readonly AccessBufferAction _storePositions = StorePositions;
-    private unsafe static readonly AccessBufferAction _storeNormals = StoreNormals;
-    private unsafe static readonly AccessBufferAction _storeUVs = StoreUVs;
-    private unsafe static readonly AccessBufferAction _storeIndices = StoreIndices;
-
-    private unsafe static void StorePositions(in BuilderState state, in BufferData data)
+    private unsafe static void StorePositions(in BuilderState state, in BufferData data, ILargeBufferWriter<Vertex> output)
     {
         Debug.Assert(data.ComponentType is AccessorComponentType.Float);
 
-        var output = state.VerticesOutput;
         nuint elementCount = data.ElementCount;
         Vertex* dest = output.GetBufferToWrite(elementCount, true);
         if(BitConverter.IsLittleEndian == false) {
@@ -180,11 +184,10 @@ public static class GlbModelBuilder
         output.Advance(elementCount);
     }
 
-    private unsafe static void StoreNormals(in BuilderState state, in BufferData data)
+    private unsafe static void StoreNormals(in BuilderState state, in BufferData data, ILargeBufferWriter<Vertex> output)
     {
         Debug.Assert(data.ComponentType is AccessorComponentType.Float);
 
-        var output = state.VerticesOutput;
         nuint elementCount = data.ElementCount;
         Vertex* dest = output.GetWrittenBufffer(out var writtenCount);
         Debug.Assert(writtenCount >= elementCount);
@@ -202,11 +205,10 @@ public static class GlbModelBuilder
         }
     }
 
-    private unsafe static void StoreUVs(in BuilderState state, in BufferData data)
+    private unsafe static void StoreUVs(in BuilderState state, in BufferData data, ILargeBufferWriter<Vertex> output)
     {
         Debug.Assert(data.ComponentType is AccessorComponentType.Float);
 
-        var output = state.VerticesOutput;
         nuint elementCount = data.ElementCount;
         Vertex* dest = output.GetWrittenBufffer(out var writtenCount);
         Debug.Assert(writtenCount >= elementCount);
@@ -223,25 +225,24 @@ public static class GlbModelBuilder
         }
     }
 
-    private unsafe static void StoreIndices(in BuilderState state, in BufferData data)
+    private unsafe static void StoreIndices(in BuilderState state, in BufferData data, ILargeBufferWriter<uint> output)
     {
-        var output = state.IndicesOutput;
         var elementCount = data.ElementCount;
         switch(data.ComponentType) {
             case AccessorComponentType.UnsignedByte: {
-                uint* dest = output.GetBufferToWrite(elementCount);
+                uint* dest = output.GetBufferToWrite(elementCount, false);
                 ConvertUInt8ToUInt32((byte*)data.Ptr, dest, elementCount);
                 output.Advance(elementCount);
                 break;
             }
             case AccessorComponentType.UnsignedShort: {
-                uint* dest = output.GetBufferToWrite(elementCount);
+                uint* dest = output.GetBufferToWrite(elementCount, false);
                 ConvertUInt16ToUInt32((ushort*)data.Ptr, dest, elementCount);
                 output.Advance(elementCount);
                 break;
             }
             case AccessorComponentType.UnsignedInt: {
-                uint* dest = output.GetBufferToWrite(elementCount);
+                uint* dest = output.GetBufferToWrite(elementCount, false);
                 System.Buffer.MemoryCopy(data.Ptr, dest, data.ByteLength, data.ByteLength);
                 if(BitConverter.IsLittleEndian == false) {
                     ReverseEndianUInt32(dest, elementCount);
@@ -257,16 +258,16 @@ public static class GlbModelBuilder
         }
     }
 
-    private unsafe static void ReadMeshPrimitive(in BuilderState state, in MeshPrimitive meshPrimitive, Positionable parent)
+    private static void BuildMeshPrimitive(in BuilderState state, in MeshPrimitive meshPrimitive, Positionable parent)
     {
         var gltf = state.Gltf;
         var meshPrimitivePart = new GlbModelPart();
-        meshPrimitivePart.Name = "MeshPrimitive";
+        meshPrimitivePart.Name = "mesh.primitive";
         state.Tasks.Add(MakeTree(meshPrimitivePart, parent, state.Layer));
 
         if(meshPrimitive.material.TryGetValue(out var materialNum)) {
             ref readonly var material = ref GetItemOrThrow(gltf.materials, materialNum);
-            ReadMaterial(in state, in material);
+            ReadMaterial(in state, in material, meshPrimitivePart);
         }
 
         var mode = meshPrimitive.mode;
@@ -276,12 +277,14 @@ public static class GlbModelBuilder
         ref readonly var attrs = ref meshPrimitive.attributes;
 
         // position
+        var verticesOutput = meshPrimitivePart.GetVerticesWriter();
         if(attrs.POSITION.TryGetValue(out var posAttr)) {
             ref readonly var position = ref GetItemOrThrow(gltf.accessors, posAttr);
             if(position is not { type: AccessorType.Vec3, componentType: AccessorComponentType.Float }) {
                 ThrowInvalidGlb();
             }
-            AccessData(in state, in position, _storePositions);
+
+            AccessData(in state, in position, verticesOutput, _storePositions);
         }
         else {
             throw new NotSupportedException();
@@ -293,7 +296,7 @@ public static class GlbModelBuilder
             if(normal is not { type: AccessorType.Vec3, componentType: AccessorComponentType.Float }) {
                 ThrowInvalidGlb();
             }
-            AccessData(in state, in normal, _storeNormals);
+            AccessData(in state, in normal, verticesOutput, _storeNormals);
         }
 
         // uv
@@ -302,7 +305,7 @@ public static class GlbModelBuilder
             if(uv0 is not { type: AccessorType.Vec2, componentType: AccessorComponentType.Float }) {
                 ThrowInvalidGlb();
             }
-            AccessData(in state, in uv0, _storeUVs);
+            AccessData(in state, in uv0, verticesOutput, _storeUVs);
         }
 
         // indices
@@ -315,27 +318,140 @@ public static class GlbModelBuilder
                 }) {
                 ThrowInvalidGlb();
             }
-            AccessData(in state, indices, _storeIndices);
+            var indicesOutput = meshPrimitivePart.GetIndicesWriter();
+            AccessData(in state, indices, indicesOutput, _storeIndices);
+        }
+
+        state.Tasks.Add(meshPrimitivePart.GetApplyMeshTask(state.Screen));
+    }
+
+    private unsafe static void WriteSequentialNumbers(ILargeBufferWriter<uint> output, uint length)
+    {
+        uint* ptr = output.GetBufferToWrite(length, false);
+        for(uint i = 0; i < length; i++) {
+            ptr[i] = i;
+        }
+        output.Advance(length);
+    }
+
+    private static TextureConfig ToTextureConfig(in Sampler sampler)
+    {
+        var config = new TextureConfig
+        {
+            WrapModeX = sampler.wrapS switch
+            {
+                SamplerWrap.Repeat => TextureWrapMode.Repeat,
+                SamplerWrap.MirroredRepeat => TextureWrapMode.MirroredRepeat,
+                SamplerWrap.ClampToEdge => TextureWrapMode.ClampToEdge,
+                _ => default,
+            },
+            WrapModeY = sampler.wrapT switch
+            {
+                SamplerWrap.Repeat => TextureWrapMode.Repeat,
+                SamplerWrap.MirroredRepeat => TextureWrapMode.MirroredRepeat,
+                SamplerWrap.ClampToEdge => TextureWrapMode.ClampToEdge,
+                _ => default,
+            },
+            ExpansionMode = sampler.magFilter switch
+            {
+                SamplerMagFilter.Nearest => TextureExpansionMode.NearestNeighbor,
+                SamplerMagFilter.Linear => TextureExpansionMode.Bilinear,
+                _ => default,
+            },
+            MipmapMode = sampler.minFilter switch
+            {
+                SamplerMinFilter.Nearest or SamplerMinFilter.Linear => TextureMipmapMode.None,
+                SamplerMinFilter.NearestMipmapNearest or SamplerMinFilter.NearestMipmapLinear => TextureMipmapMode.NearestNeighbor,
+                SamplerMinFilter.LinearMipmapNearest or SamplerMinFilter.LinearMipmapLinear => TextureMipmapMode.Bilinear,
+                _ => default,
+            },
+            ShrinkMode = sampler.minFilter switch
+            {
+                SamplerMinFilter.Nearest or SamplerMinFilter.NearestMipmapNearest or SamplerMinFilter.LinearMipmapNearest => TextureShrinkMode.NearestNeighbor,
+                SamplerMinFilter.Linear or SamplerMinFilter.NearestMipmapLinear or SamplerMinFilter.LinearMipmapLinear => TextureShrinkMode.Bilinear,
+                _ => default,
+            },
+        };
+        return config;
+    }
+
+    private delegate void LoadTextureAction(GlbModelPart obj, ReadOnlyImageRef imageData, TextureConfig config);
+
+    private static UniTask LoadTextureTask(IHostScreen screen, GlbModelPart obj, ref ImageData imageData, TextureConfig config, LoadTextureAction action)
+    {
+        (imageData, var tmp) = (default, imageData);
+        return Task(screen, obj, tmp, config, action);
+
+        static async UniTask Task(IHostScreen screen, GlbModelPart obj, ImageData imageData, TextureConfig config, LoadTextureAction action)
+        {
+            try {
+                await screen.Timings.Update.Next();
+                action.Invoke(obj, imageData, config);
+            }
+            finally {
+                imageData.Dispose();
+            }
         }
     }
 
-    private static void ReadMaterial(in BuilderState state, in Material material)
+    private static void ReadMaterial(in BuilderState state, in Material material, GlbModelPart obj)
     {
         var gltf = state.Gltf;
+        var screen = state.Screen;
+
+        obj.Shader = new Shading.Forward.TextureShader();
+
+        if(material.pbrMetallicRoughness != null) {
+            var pbr = material.pbrMetallicRoughness.Value;
+
+            // pbr basecolor
+            if(pbr.baseColorTexture.TryGetValue(out var baseColorTexInfo)) {
+                ref readonly var texture = ref GetItemOrThrow(gltf.textures, baseColorTexInfo.index);
+                if(TryReadTexture(in state, in texture, out var imageData, out var texConfig)) {
+                    var loadTexTask = LoadTextureTask(screen, obj, ref imageData, texConfig,
+                        static (obj, imageData, texConfig) =>
+                        {
+                            var texComp = new Components.Texture(texConfig);
+                            obj.AddComponent(texComp);
+                            texComp.Load(imageData);
+                        });
+                    state.Tasks.Add(loadTexTask);
+                }
+            }
+
+            // pbr metallic and roughness
+            if(pbr.metallicRoughnessTexture.TryGetValue(out var metallicRoughnessTexInfo)) {
+                ref readonly var texture = ref GetItemOrThrow(gltf.textures, metallicRoughnessTexInfo.index);
+                if(TryReadTexture(in state, in texture, out var imageData, out var texConfig)) {
+                    var loadTexTask = LoadTextureTask(screen, obj, ref imageData, texConfig,
+                        static (obj, imageData, texConfig) =>
+                        {
+                            // TODO:
+
+                            //var texComp = new Components.Texture(texConfig);
+                            //obj.AddComponent(texComp);
+                            //texComp.Load(imageData);
+                        });
+                    state.Tasks.Add(loadTexTask);
+                }
+            }
+        }
 
         // normal texture
         if(material.normalTexture.TryGetValue(out var normalTexInfo)) {
             ref readonly var texture = ref GetItemOrThrow(gltf.textures, normalTexInfo.index);
             var scale = normalTexInfo.scale;
             var uvN = normalTexInfo.texCoord;   // texcoord_n
-            if(texture.source.TryGetValue(out var imageNum)) {
-                ref readonly var image = ref GetItemOrThrow(gltf.images, imageNum);
-                // TODO:
-                var loadedImage = ReadImage(in state, in image);
-                loadedImage.Dispose();
-            }
-            if(texture.sampler.TryGetValue(out var samplerNum)) {
-                ref readonly var sampler = ref GetItemOrThrow(gltf.samplers, samplerNum);
+            if(TryReadTexture(in state, in texture, out var imageData, out var texConfig)) {
+                var loadTexTask = LoadTextureTask(screen, obj, ref imageData, texConfig,
+                    static (obj, imageData, texConfig) =>
+                    {
+                        // TODO:
+                        //var texComp = new Components.Texture(texConfig);
+                        //obj.AddComponent(texComp);
+                        //texComp.Load(imageData);
+                    });
+                state.Tasks.Add(loadTexTask);
             }
         }
 
@@ -343,14 +459,16 @@ public static class GlbModelBuilder
         if(material.emissiveTexture.TryGetValue(out var emissiveTextureInfo)) {
             ref readonly var texture = ref GetItemOrThrow(gltf.textures, emissiveTextureInfo.index);
             var uvN = emissiveTextureInfo.texCoord; // texcoord_n
-            if(texture.source.TryGetValue(out var imageNum)) {
-                ref readonly var image = ref GetItemOrThrow(gltf.images, imageNum);
-                // TODO:
-                var loadedImage = ReadImage(in state, in image);
-                loadedImage.Dispose();
-            }
-            if(texture.sampler.TryGetValue(out var samplerNum)) {
-                ref readonly var sampler = ref GetItemOrThrow(gltf.samplers, samplerNum);
+            if(TryReadTexture(in state, in texture, out var imageData, out var texConfig)) {
+                var loadTexTask = LoadTextureTask(screen, obj, ref imageData, texConfig,
+                    static (obj, imageData, texConfig) =>
+                    {
+                        // TODO:
+                        //var texComp = new Components.Texture(texConfig);
+                        //obj.AddComponent(texComp);
+                        //texComp.Load(imageData);
+                    });
+                state.Tasks.Add(loadTexTask);
             }
         }
 
@@ -359,19 +477,40 @@ public static class GlbModelBuilder
             ref readonly var texture = ref GetItemOrThrow(gltf.textures, occlusionTextureInfo.index);
             var uvN = occlusionTextureInfo.texCoord; // texcoord_n
             var strength = occlusionTextureInfo.strength;
-            if(texture.source.TryGetValue(out var imageNum)) {
-                ref readonly var image = ref GetItemOrThrow(gltf.images, imageNum);
-                // TODO:
-                var loadedImage = ReadImage(in state, in image);
-                loadedImage.Dispose();
-            }
-            if(texture.sampler.TryGetValue(out var samplerNum)) {
-                ref readonly var sampler = ref GetItemOrThrow(gltf.samplers, samplerNum);
+            if(TryReadTexture(in state, in texture, out var imageData, out var texConfig)) {
+                var loadTexTask = LoadTextureTask(screen, obj, ref imageData, texConfig,
+                    static (obj, imageData, texConfig) =>
+                    {
+                        // TODO:
+                        //var texComp = new Components.Texture(texConfig);
+                        //obj.AddComponent(texComp);
+                        //texComp.Load(imageData);
+                    });
             }
         }
     }
 
-    private unsafe static void AccessData(in BuilderState state, in Accessor accessor, AccessBufferAction callback)
+    private static bool TryReadTexture(in BuilderState state, in Texture texture, out ImageData imageData, out TextureConfig config)
+    {
+        var gltf = state.Gltf;
+        if(texture.source.TryGetValue(out var imageNum)) {
+            ref readonly var image = ref GetItemOrThrow(gltf.images, imageNum);
+            if(texture.sampler.TryGetValue(out var samplerNum)) {
+                ref readonly var sampler = ref GetItemOrThrow(gltf.samplers, samplerNum);
+                config = ToTextureConfig(sampler);
+            }
+            else {
+                config = Components.TextureConfig.Default;
+            }
+            imageData = ReadImage(in state, in image);
+            return true;
+        }
+        imageData = default;
+        config = default;
+        return false;
+    }
+
+    private unsafe static void AccessData<T>(in BuilderState state, in Accessor accessor, ILargeBufferWriter<T> output, AccessBufferAction<T> callback) where T : unmanaged
     {
         var gltf = state.Gltf;
         if(accessor.bufferView.TryGetValue(out var bufferViewNum) == false) {
@@ -380,7 +519,7 @@ public static class GlbModelBuilder
         ref readonly var bufferView = ref GetItemOrThrow(gltf.bufferViews, bufferViewNum);
         var bin = ReadBufferView(in state, in bufferView);
         var data = new BufferData((IntPtr)bin.Ptr, bin.ByteLength, bufferView.byteStride, accessor.componentType);
-        callback.Invoke(in state, in data);
+        callback.Invoke(in state, in data, output);
     }
 
     private unsafe static GlbBinaryData ReadBufferView(in BuilderState state, in BufferView bufferView)
@@ -399,7 +538,7 @@ public static class GlbModelBuilder
         }
     }
 
-    private unsafe static Imaging.Image ReadImage(in BuilderState state, in Image image)
+    private unsafe static ImageData ReadImage(in BuilderState state, in Image image)
     {
         var gltf = state.Gltf;
         if(image.uri != null) {
@@ -418,8 +557,8 @@ public static class GlbModelBuilder
 
         return mimeType switch
         {
-            ImageMimeType.ImageJpeg => Imaging.Image.FromStream(stream, Imaging.ImageType.Jpg),
-            ImageMimeType.ImagePng => Imaging.Image.FromStream(stream, Imaging.ImageType.Png),
+            ImageMimeType.ImageJpeg => ImageData.FromStream(stream, ImageDataType.Jpg),
+            ImageMimeType.ImagePng => ImageData.FromStream(stream, ImageDataType.Png),
             _ => default,
         };
     }
@@ -552,13 +691,12 @@ public static class GlbModelBuilder
         }
     }
 
-    private unsafe delegate void AccessBufferAction(in BuilderState state, in BufferData data);
+    private unsafe delegate void AccessBufferAction<T>(in BuilderState state, in BufferData data, ILargeBufferWriter<T> output) where T : unmanaged;
 
     private record struct BuilderState(
         GlbObject Glb,
         WorldLayer Layer,
-        LargeBufferWriter<Vertex> VerticesOutput,
-        LargeBufferWriter<uint> IndicesOutput,
+        IHostScreen Screen,
         ParallelOperation Tasks
     )
     {
@@ -567,10 +705,77 @@ public static class GlbModelBuilder
 
     private sealed class GlbModelPart : Renderable
     {
+        private LargeBufferWriter<Vertex>? _verticesTemporal;
+        private LargeBufferWriter<uint>? _indicesTemporal;
+        private bool _meshApplied;
+
+        public GlbModelPart()
+        {
+        }
+
+        public ILargeBufferWriter<Vertex> GetVerticesWriter()
+        {
+            if(_meshApplied) {
+                throw new InvalidOperationException();
+            }
+            _verticesTemporal ??= new LargeBufferWriter<Vertex>();
+            return _verticesTemporal;
+        }
+
+        public ILargeBufferWriter<uint> GetIndicesWriter()
+        {
+            if(_meshApplied) {
+                throw new InvalidOperationException();
+            }
+            _indicesTemporal ??= new LargeBufferWriter<uint>();
+            return _indicesTemporal;
+        }
+
+        public async UniTask GetApplyMeshTask(IHostScreen screen)
+        {
+            await screen.Timings.Update.NextOrNow();
+            ApplyMesh();
+        }
+
+        private unsafe void ApplyMesh()
+        {
+            if(_meshApplied) {
+                throw new InvalidOperationException();
+            }
+            if(_verticesTemporal != null && _verticesTemporal.WrittenLength > 0) {
+                nuint vLen = _verticesTemporal.WrittenLength;
+                _indicesTemporal ??= new LargeBufferWriter<uint>();
+                var indicesLen = _indicesTemporal.WrittenLength;
+                if(indicesLen == 0) {
+                    if(vLen > uint.MaxValue) {
+                        throw new NotSupportedException();
+                    }
+                    WriteSequentialNumbers(_indicesTemporal, (uint)vLen);
+                }
+
+                uint* indices = _indicesTemporal.GetWrittenBufffer(out var iLen);
+                if(iLen > uint.MaxValue) {
+                    throw new NotSupportedException();
+                }
+                LoadMesh(_verticesTemporal.GetWrittenBufffer(out _), vLen, (int*)indices, (uint)iLen);
+            }
+            _meshApplied = true;
+            _verticesTemporal?.Dispose();
+            _indicesTemporal?.Dispose();
+            _verticesTemporal = null;
+            _indicesTemporal = null;
+        }
     }
 }
 
-internal unsafe sealed class LargeBufferWriter<T> : IDisposable where T : unmanaged
+internal unsafe interface ILargeBufferWriter<T> where T : unmanaged
+{
+    void Advance(nuint count);
+    T* GetWrittenBufffer(out nuint count);
+    T* GetBufferToWrite(nuint count, bool zeroCleared);
+}
+
+internal unsafe sealed class LargeBufferWriter<T> : ILargeBufferWriter<T>, IDisposable where T : unmanaged
 {
     private NativeBuffer _buf;
     private nuint _count;
@@ -579,6 +784,8 @@ internal unsafe sealed class LargeBufferWriter<T> : IDisposable where T : unmana
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => _buf.ByteLength / (nuint)sizeof(T);
     }
+
+    public nuint WrittenLength => _count;
 
     public void Advance(nuint count)
     {
@@ -619,7 +826,7 @@ internal unsafe sealed class LargeBufferWriter<T> : IDisposable where T : unmana
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public T* GetBufferToWrite(nuint count, bool zeroCleared = false)
+    public T* GetBufferToWrite(nuint count, bool zeroCleared)
     {
         if(count > Capacity - _count) {
             ResizeBuffer(Capacity + count);
