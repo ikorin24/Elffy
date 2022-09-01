@@ -1,7 +1,5 @@
 ﻿#nullable enable
 using Cysharp.Threading.Tasks;
-using Elffy.Effective;
-using Elffy.Mathematics;
 using Elffy.Shading;
 using System;
 
@@ -14,7 +12,7 @@ namespace Elffy.Shapes
             Activating.Subscribe(static (sender, ct) =>
             {
                 var self = SafeCast.As<Gizmo>(sender);
-                PrimitiveMeshProvider.LoadArrow(self, static (self, vertices, indices) => self.LoadMesh(vertices, indices));
+                PrimitiveMeshProvider<VertexPosNormal>.GetArrow(self, static (self, vertices, indices) => self.LoadMesh(vertices, indices));
                 return UniTask.CompletedTask;
             });
             InstancingCount = 3;

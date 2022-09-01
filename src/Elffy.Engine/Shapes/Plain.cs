@@ -12,7 +12,7 @@ namespace Elffy.Shapes
             Activating.Subscribe(static (f, ct) =>
             {
                 var self = SafeCast.As<Plain>(f);
-                PrimitiveMeshProvider<Vertex>.LoadPlain(self, static (self, vertices, indices) => self.LoadMesh(vertices, indices));
+                PrimitiveMeshProvider<Vertex>.GetPlain(self, static (self, vertices, indices) => self.LoadMesh(vertices, indices));
                 return UniTask.FromResult(AsyncUnit.Default);
             });
         }

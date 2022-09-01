@@ -10,7 +10,7 @@ namespace Elffy.Shapes
             Activating.Subscribe(static (sender, ct) =>
             {
                 var self = SafeCast.As<Arrow>(sender);
-                PrimitiveMeshProvider.LoadArrow(self, (self, vertices, indices) => self.LoadMesh(vertices, indices));
+                PrimitiveMeshProvider<Vertex>.GetArrow(self, (self, vertices, indices) => self.LoadMesh(vertices, indices));
                 return UniTask.CompletedTask;
             });
         }
