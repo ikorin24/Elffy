@@ -325,15 +325,6 @@ public static class GlbModelBuilder
         state.Tasks.Add(meshPrimitivePart.GetApplyMeshTask(state.Screen));
     }
 
-    private unsafe static void WriteSequentialNumbers(ILargeBufferWriter<uint> output, uint length)
-    {
-        uint* ptr = output.GetBufferToWrite(length, false);
-        for(uint i = 0; i < length; i++) {
-            ptr[i] = i;
-        }
-        output.Advance(length);
-    }
-
     private static TextureConfig ToTextureConfig(in Sampler sampler)
     {
         var config = new TextureConfig
@@ -375,18 +366,18 @@ public static class GlbModelBuilder
         return config;
     }
 
-    private delegate void LoadTextureAction(GlbModelPart obj, ReadOnlyImageRef imageData, TextureConfig config);
+    private delegate void LoadTextureAction<T>(GlbModelPart obj, ReadOnlyImageRef imageData, TextureConfig config, T arg);
 
-    private static UniTask LoadTextureTask(IHostScreen screen, GlbModelPart obj, ref ImageData imageData, TextureConfig config, LoadTextureAction action)
+    private static UniTask LoadTextureTask<T>(IHostScreen screen, GlbModelPart obj, ref ImageData imageData, TextureConfig config, T arg, LoadTextureAction<T> action)
     {
         (imageData, var tmp) = (default, imageData);
-        return Task(screen, obj, tmp, config, action);
+        return Task(screen, obj, tmp, config, arg, action);
 
-        static async UniTask Task(IHostScreen screen, GlbModelPart obj, ImageData imageData, TextureConfig config, LoadTextureAction action)
+        static async UniTask Task(IHostScreen screen, GlbModelPart obj, ImageData imageData, TextureConfig config, T arg, LoadTextureAction<T> action)
         {
             try {
                 await screen.Timings.Update.Next();
-                action.Invoke(obj, imageData, config);
+                action.Invoke(obj, imageData, config, arg);
             }
             finally {
                 imageData.Dispose();
@@ -399,7 +390,8 @@ public static class GlbModelBuilder
         var gltf = state.Gltf;
         var screen = state.Screen;
 
-        obj.Shader = new Shading.Forward.TextureShader();
+        var shader = new GlbShader();
+        obj.Shader = shader;
 
         if(material.pbrMetallicRoughness != null) {
             var pbr = material.pbrMetallicRoughness.Value;
@@ -408,12 +400,10 @@ public static class GlbModelBuilder
             if(pbr.baseColorTexture.TryGetValue(out var baseColorTexInfo)) {
                 ref readonly var texture = ref GetItemOrThrow(gltf.textures, baseColorTexInfo.index);
                 if(TryReadTexture(in state, in texture, out var imageData, out var texConfig)) {
-                    var loadTexTask = LoadTextureTask(screen, obj, ref imageData, texConfig,
-                        static (obj, imageData, texConfig) =>
+                    var loadTexTask = LoadTextureTask(screen, obj, ref imageData, texConfig, shader,
+                        static (obj, imageData, texConfig, shader) =>
                         {
-                            var texComp = new Components.Texture(texConfig);
-                            obj.AddComponent(texComp);
-                            texComp.Load(imageData);
+                            shader.SetBaseColorTexture(imageData, texConfig);
                         });
                     state.Tasks.Add(loadTexTask);
                 }
@@ -423,14 +413,10 @@ public static class GlbModelBuilder
             if(pbr.metallicRoughnessTexture.TryGetValue(out var metallicRoughnessTexInfo)) {
                 ref readonly var texture = ref GetItemOrThrow(gltf.textures, metallicRoughnessTexInfo.index);
                 if(TryReadTexture(in state, in texture, out var imageData, out var texConfig)) {
-                    var loadTexTask = LoadTextureTask(screen, obj, ref imageData, texConfig,
-                        static (obj, imageData, texConfig) =>
+                    var loadTexTask = LoadTextureTask(screen, obj, ref imageData, texConfig, shader,
+                        static (obj, imageData, texConfig, shader) =>
                         {
                             // TODO:
-
-                            //var texComp = new Components.Texture(texConfig);
-                            //obj.AddComponent(texComp);
-                            //texComp.Load(imageData);
                         });
                     state.Tasks.Add(loadTexTask);
                 }
@@ -443,13 +429,11 @@ public static class GlbModelBuilder
             var scale = normalTexInfo.scale;
             var uvN = normalTexInfo.texCoord;   // texcoord_n
             if(TryReadTexture(in state, in texture, out var imageData, out var texConfig)) {
-                var loadTexTask = LoadTextureTask(screen, obj, ref imageData, texConfig,
-                    static (obj, imageData, texConfig) =>
+                var loadTexTask = LoadTextureTask(screen, obj, ref imageData, texConfig, shader,
+                    static (obj, imageData, texConfig, shader) =>
                     {
                         // TODO:
-                        //var texComp = new Components.Texture(texConfig);
-                        //obj.AddComponent(texComp);
-                        //texComp.Load(imageData);
+                        shader.SetNormalTexture(imageData, texConfig);
                     });
                 state.Tasks.Add(loadTexTask);
             }
@@ -460,13 +444,10 @@ public static class GlbModelBuilder
             ref readonly var texture = ref GetItemOrThrow(gltf.textures, emissiveTextureInfo.index);
             var uvN = emissiveTextureInfo.texCoord; // texcoord_n
             if(TryReadTexture(in state, in texture, out var imageData, out var texConfig)) {
-                var loadTexTask = LoadTextureTask(screen, obj, ref imageData, texConfig,
-                    static (obj, imageData, texConfig) =>
+                var loadTexTask = LoadTextureTask(screen, obj, ref imageData, texConfig, shader,
+                    static (obj, imageData, texConfig, shader) =>
                     {
                         // TODO:
-                        //var texComp = new Components.Texture(texConfig);
-                        //obj.AddComponent(texComp);
-                        //texComp.Load(imageData);
                     });
                 state.Tasks.Add(loadTexTask);
             }
@@ -478,13 +459,10 @@ public static class GlbModelBuilder
             var uvN = occlusionTextureInfo.texCoord; // texcoord_n
             var strength = occlusionTextureInfo.strength;
             if(TryReadTexture(in state, in texture, out var imageData, out var texConfig)) {
-                var loadTexTask = LoadTextureTask(screen, obj, ref imageData, texConfig,
-                    static (obj, imageData, texConfig) =>
+                var loadTexTask = LoadTextureTask(screen, obj, ref imageData, texConfig, shader,
+                    static (obj, imageData, texConfig, shader) =>
                     {
                         // TODO:
-                        //var texComp = new Components.Texture(texConfig);
-                        //obj.AddComponent(texComp);
-                        //texComp.Load(imageData);
                     });
             }
         }
@@ -701,69 +679,5 @@ public static class GlbModelBuilder
     )
     {
         public readonly GltfObject Gltf => Glb.Gltf;
-    }
-
-    private sealed class GlbModelPart : Renderable
-    {
-        private LargeBufferWriter<Vertex>? _verticesTemporal;
-        private LargeBufferWriter<uint>? _indicesTemporal;
-        private bool _meshApplied;
-
-        public GlbModelPart()
-        {
-        }
-
-        public ILargeBufferWriter<Vertex> GetVerticesWriter()
-        {
-            if(_meshApplied) {
-                throw new InvalidOperationException();
-            }
-            _verticesTemporal ??= new LargeBufferWriter<Vertex>();
-            return _verticesTemporal;
-        }
-
-        public ILargeBufferWriter<uint> GetIndicesWriter()
-        {
-            if(_meshApplied) {
-                throw new InvalidOperationException();
-            }
-            _indicesTemporal ??= new LargeBufferWriter<uint>();
-            return _indicesTemporal;
-        }
-
-        public async UniTask GetApplyMeshTask(IHostScreen screen)
-        {
-            await screen.Timings.Update.NextOrNow();
-            ApplyMesh();
-        }
-
-        private unsafe void ApplyMesh()
-        {
-            if(_meshApplied) {
-                throw new InvalidOperationException();
-            }
-            if(_verticesTemporal != null && _verticesTemporal.WrittenLength > 0) {
-                nuint vLen = _verticesTemporal.WrittenLength;
-                _indicesTemporal ??= new LargeBufferWriter<uint>();
-                var indicesLen = _indicesTemporal.WrittenLength;
-                if(indicesLen == 0) {
-                    if(vLen > uint.MaxValue) {
-                        throw new NotSupportedException();
-                    }
-                    WriteSequentialNumbers(_indicesTemporal, (uint)vLen);
-                }
-
-                uint* indices = _indicesTemporal.GetWrittenBufffer(out var iLen);
-                if(iLen > uint.MaxValue) {
-                    throw new NotSupportedException();
-                }
-                LoadMesh(_verticesTemporal.GetWrittenBufffer(out _), vLen, (int*)indices, (uint)iLen);
-            }
-            _meshApplied = true;
-            _verticesTemporal?.Dispose();
-            _indicesTemporal?.Dispose();
-            _verticesTemporal = null;
-            _indicesTemporal = null;
-        }
     }
 }
