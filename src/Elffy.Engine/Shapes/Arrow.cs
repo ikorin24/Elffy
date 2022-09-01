@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using System;
 using Cysharp.Threading.Tasks;
 
 namespace Elffy.Shapes
@@ -8,10 +7,10 @@ namespace Elffy.Shapes
     {
         public Arrow()
         {
-            Activating.Subscribe((sender, ct) =>
+            Activating.Subscribe(static (sender, ct) =>
             {
-                var arrow = SafeCast.As<Arrow>(sender);
-                PrimitiveMeshProvider.LoadArrow(this, (self, vertices, indices) => self.LoadMesh(vertices, indices));
+                var self = SafeCast.As<Arrow>(sender);
+                PrimitiveMeshProvider.LoadArrow(self, (self, vertices, indices) => self.LoadMesh(vertices, indices));
                 return UniTask.CompletedTask;
             });
         }
