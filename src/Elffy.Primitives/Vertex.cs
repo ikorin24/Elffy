@@ -11,6 +11,17 @@ namespace Elffy
     [VertexField("UV", typeof(Vector2), VertexSpecialField.UV, 24, VertexFieldMarshalType.Float, 2)]
     public partial struct Vertex
     {
+        public Vertex(float posX, float posY, float posZ, float normalX, float normalY, float normalZ, float uvX, float uvY)
+        {
+            Position.X = posX;
+            Position.Y = posY;
+            Position.Z = posZ;
+            Normal.X = normalX;
+            Normal.Y = normalY;
+            Normal.Z = normalZ;
+            UV.X = uvX;
+            UV.Y = uvY;
+        }
     }
 
     /// <summary>Slim vertex struct, which has position and uv.</summary>
@@ -21,6 +32,33 @@ namespace Elffy
     [VertexField("UV", typeof(Vector2), VertexSpecialField.UV, 12, VertexFieldMarshalType.Float, 2)]
     public partial struct VertexSlim
     {
+        public VertexSlim(float posX, float posY, float posZ, float uvX, float uvY)
+        {
+            Position.X = posX;
+            Position.Y = posY;
+            Position.Z = posZ;
+            UV.X = uvX;
+            UV.Y = uvY;
+        }
+    }
+
+    /// <summary>slim vertex struct, which has position and normal.</summary>
+    /// <remarks>If you need "UV", use <see cref="Vertex"/> instead.</remarks>
+    [DebuggerDisplay("{Position}")]
+    [GenerateVertex]
+    [VertexField("Position", typeof(Vector3), VertexSpecialField.Position, 0, VertexFieldMarshalType.Float, 3)]
+    [VertexField("Normal", typeof(Vector3), VertexSpecialField.Normal, 12, VertexFieldMarshalType.Float, 3)]
+    public partial struct VertexPosNormal
+    {
+        public VertexPosNormal(float posX, float posY, float posZ, float normalX, float normalY, float normalZ)
+        {
+            Position.X = posX;
+            Position.Y = posY;
+            Position.Z = posZ;
+            Normal.X = normalX;
+            Normal.Y = normalY;
+            Normal.Z = normalZ;
+        }
     }
 
 
