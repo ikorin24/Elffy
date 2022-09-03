@@ -17,10 +17,6 @@ namespace Elffy.Shading.Deferred
 
         public ShaderTextureSelector<PbrDeferredShader>? TextureSelector { get => _textureSelector; set => _textureSelector = value; }
 
-        protected override string VertexShaderSource => VertSource;
-
-        protected override string FragmentShaderSource => FragSource;
-
         public PbrDeferredShader(ShaderTextureSelector<PbrDeferredShader>? textureSelector = null)
         {
             _textureSelector = textureSelector;
@@ -53,6 +49,15 @@ namespace Elffy.Shading.Deferred
             var hasTexture = selector.Invoke(this, target, out var texObj);
             dispatcher.SendUniformTexture2D("_tex", texObj, TextureUnitNumber.Unit0);
             dispatcher.SendUniform("_hasTexture", hasTexture);
+        }
+
+        protected override ShaderSource GetShaderSource(Renderable target, WorldLayer layer)
+        {
+            return new()
+            {
+                VertexShader = VertSource,
+                FragmentShader = FragSource,
+            };
         }
 
         private const string VertSource =

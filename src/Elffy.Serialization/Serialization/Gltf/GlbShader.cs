@@ -13,10 +13,6 @@ internal sealed class GlbShader : RenderingShader
     private TextureCore _baseColorTex;
     private TextureCore _normalTex;
 
-    protected override string VertexShaderSource => VertexShader;
-
-    protected override string FragmentShaderSource => FragmentShader;
-
     public GlbShader()
     {
     }
@@ -54,6 +50,15 @@ internal sealed class GlbShader : RenderingShader
     {
         _baseColorTex.Dispose();
         _normalTex.Dispose();
+    }
+
+    protected override ShaderSource GetShaderSource(Renderable target, WorldLayer layer)
+    {
+        return new()
+        {
+            VertexShader = VertexShader,
+            FragmentShader = FragmentShader,
+        };
     }
 
     private const string VertexShader =

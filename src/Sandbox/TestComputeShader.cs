@@ -58,38 +58,6 @@ void main()
 
 public sealed class TestShader : RenderingShader
 {
-    protected override string VertexShaderSource =>
-@"#version 430
-in vec3 _pos;
-in vec2 _v_uv;
-out vec2 _uv;
-uniform mat4 _mvp;
-void main()
-{
-    _uv = _v_uv;
-    gl_Position = _mvp * vec4(_pos, 1.0);
-}
-";
-
-    protected override string FragmentShaderSource =>
-@"#version 430
-
-in vec2 _uv;
-uniform vec2 _size;
-out vec4 _outColor;
-layout (std430, binding=0) buffer SSBO
-{
-    vec4 _data[];
-};
-
-void main()
-{
-    ivec2 pos = ivec2(_uv * _size);
-    int index = int(pos.y * int(_size.y) + pos.x);
-    _outColor = _data[index];
-}
-";
-
     private readonly StatefulFunc<(Ssbo Ssbo, int Width, int Height)> _ssboProvider;
 
     public TestShader(Func<(Ssbo Ssbo, int Width, int Height)> ssboProvider)
@@ -117,5 +85,40 @@ void main()
         var (ssbo, w, h) = _ssboProvider.Invoke();
         dispatcher.BufferBase(ssbo, 0);
         dispatcher.SendUniform("_size", new Vector2(w, h));
+    }
+
+    protected override ShaderSource GetShaderSource(Renderable target, WorldLayer layer)
+    {
+        return new()
+        {
+            VertexShader =
+@"#version 430
+in vec3 _pos;
+in vec2 _v_uv;
+out vec2 _uv;
+uniform mat4 _mvp;
+void main()
+{
+    _uv = _v_uv;
+    gl_Position = _mvp * vec4(_pos, 1.0);
+}
+",
+            FragmentShader =
+@"#version 430
+in vec2 _uv;
+uniform vec2 _size;
+out vec4 _outColor;
+layout (std430, binding=0) buffer SSBO
+{
+    vec4 _data[];
+};
+void main()
+{
+    ivec2 pos = ivec2(_uv * _size);
+    int index = int(pos.y * int(_size.y) + pos.x);
+    _outColor = _data[index];
+}
+",
+        };
     }
 }

@@ -22,7 +22,7 @@ namespace Elffy.Graphics.OpenGL
             }
         }
 
-        public static ProgramObject Compile(string vertexShaderSource, string fragmentShaderSource, string? geometryShaderSource)
+        public static ProgramObject Compile([AllowNull] string vertexShaderSource, [AllowNull] string fragmentShaderSource, string? geometryShaderSource)
         {
             ArgumentNullException.ThrowIfNull(vertexShaderSource);
             ArgumentNullException.ThrowIfNull(fragmentShaderSource);

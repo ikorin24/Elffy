@@ -10,12 +10,17 @@ namespace Elffy.Shading.Forward
         /// <summary>Get singleton instance</summary>
         public static EmptyShader Instance => _instance ??= new();
 
-        protected override string VertexShaderSource => VertSource;
-
-        protected override string FragmentShaderSource => FragSource;
-
         private EmptyShader()
         {
+        }
+
+        protected override ShaderSource GetShaderSource(Renderable target, WorldLayer layer)
+        {
+            return new()
+            {
+                VertexShader = VertSource,
+                FragmentShader = FragSource,
+            };
         }
 
         protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)

@@ -14,27 +14,22 @@ namespace Elffy.Shading
         // ShaderSource don't have any opengl resources. (e.g. ProgramObject)
         // Keep it thread-independent and context-free.
 
-        private int _sourceHashCache;
-
-        protected abstract string VertexShaderSource { get; }
-
-        protected abstract string FragmentShaderSource { get; }
-
-        protected virtual string? GeometryShaderSource { get; } = null;
-
-        string IRenderingShader.VertexShaderSource => VertexShaderSource;
-
-        string IRenderingShader.FragmentShaderSource => FragmentShaderSource;
-
-        string? IRenderingShader.GeometryShaderSource => GeometryShaderSource;
+        protected abstract ShaderSource GetShaderSource(Renderable target, WorldLayer layer);
 
         protected abstract void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType);
 
         protected abstract void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection);
 
+        protected virtual void OnAttached(Renderable target) { }
+
+        protected virtual void OnDetached(Renderable detachedTarget) { }
+
         protected virtual void OnProgramDisposed() { }      // nop
 
-        void IRenderingShader.InvokeOnProgramDisposed() => OnProgramDisposed();
+        ShaderSource IRenderingShader.GetShaderSourceInternal(Renderable target, WorldLayer layer) => GetShaderSource(target, layer);
+        void IRenderingShader.OnProgramDisposedInternal() => OnProgramDisposed();
+        void IRenderingShader.OnAttachedInternal(Renderable target) => OnAttached(target);
+        void IRenderingShader.OnDetachedInternal(Renderable detachedTarget) => OnDetached(detachedTarget);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void DefineLocationInternal(ProgramObject program, Renderable target, Type vertexType)
@@ -53,19 +48,11 @@ namespace Elffy.Shading
         {
             OnRendering(new ShaderDataDispatcher(program), target, model, view, projection);
         }
-
-        int IRenderingShader.GetSourceHash()
-        {
-            if(_sourceHashCache == 0) {
-                _sourceHashCache = HashCode.Combine(VertexShaderSource, FragmentShaderSource, GeometryShaderSource);
-            }
-            return _sourceHashCache;
-        }
     }
 
     public readonly ref struct RenderingContext
     {
-        // TODO: Change into 'ref feald' in the future for C# 10
+        // TODO: Change into 'ref feald' in the future for C# 11
         private readonly ReadOnlySpan<RenderingContextInternal> _c;   // Length must be 1
         private ref RenderingContextInternal Context => ref MemoryMarshal.GetReference(_c);
 
@@ -108,5 +95,29 @@ namespace Elffy.Shading
         public Matrix4 Model;
         public Matrix4 View;
         public Matrix4 Projection;
+    }
+
+    public readonly struct ShaderSource : IEquatable<ShaderSource>
+    {
+        public string? VertexShader { get; init; }
+        public string? FragmentShader { get; init; }
+        public string? GeometryShader { get; init; }
+
+        public bool IsEmpty => VertexShader is null && FragmentShader is null && GeometryShader is null;
+
+        public static ShaderSource Empty => default;
+
+        public override bool Equals(object? obj) => obj is ShaderSource source && Equals(source);
+
+        public bool Equals(ShaderSource other) =>
+            VertexShader == other.VertexShader &&
+            FragmentShader == other.FragmentShader &&
+            GeometryShader == other.GeometryShader;
+
+        public override int GetHashCode() => HashCode.Combine(VertexShader, FragmentShader, GeometryShader);
+
+        public static bool operator ==(ShaderSource left, ShaderSource right) => left.Equals(right);
+
+        public static bool operator !=(ShaderSource left, ShaderSource right) => !(left == right);
     }
 }

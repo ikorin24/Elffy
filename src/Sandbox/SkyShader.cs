@@ -9,10 +9,6 @@ namespace Sandbox
     {
         public static readonly SkyShader Instance = new SkyShader();
 
-        protected override string VertexShaderSource => VertSource;
-
-        protected override string FragmentShaderSource => FragSource;
-
         private SkyShader()
         {
         }
@@ -28,6 +24,14 @@ namespace Sandbox
             dispatcher.SendUniform("mvp", projection * view * model);
         }
 
+        protected override ShaderSource GetShaderSource(Renderable target, WorldLayer layer)
+        {
+            return new()
+            {
+                VertexShader = VertSource,
+                FragmentShader = FragSource,
+            };
+        }
 
         private const string VertSource =
 @"#version 410

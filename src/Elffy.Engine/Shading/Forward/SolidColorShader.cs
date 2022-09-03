@@ -7,10 +7,6 @@ namespace Elffy.Shading.Forward
     {
         private Color4 _color;
 
-        protected override string VertexShaderSource => VertSource;
-
-        protected override string FragmentShaderSource => FragSource;
-
         public Color4 Color { get => _color; set => _color = value; }
 
         public SolidColorShader()
@@ -26,6 +22,15 @@ namespace Elffy.Shading.Forward
         {
             dispatcher.SendUniform("_mvp", projection * view * model);
             dispatcher.SendUniform("_color", _color);
+        }
+
+        protected override ShaderSource GetShaderSource(Renderable target, WorldLayer layer)
+        {
+            return new()
+            {
+                VertexShader = VertSource,
+                FragmentShader = FragSource,
+            };
         }
 
         private const string VertSource =

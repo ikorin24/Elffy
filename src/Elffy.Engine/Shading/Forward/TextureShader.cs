@@ -9,10 +9,6 @@ namespace Elffy.Shading.Forward
     {
         private ShaderTextureSelector<TextureShader>? _textureSelector;
 
-        protected override string VertexShaderSource => VertSource;
-
-        protected override string FragmentShaderSource => FragSource;
-
         public ShaderTextureSelector<TextureShader>? TextureSelector
         {
             get => _textureSelector;
@@ -38,6 +34,15 @@ namespace Elffy.Shading.Forward
             dispatcher.SendUniform("_hasTexture", hasTexture);
             dispatcher.SendUniformTexture2D("_sampler", texObj, TextureUnitNumber.Unit0);
             dispatcher.SendUniform("_mvp", projection * view * model);
+        }
+
+        protected override ShaderSource GetShaderSource(Renderable target, WorldLayer layer)
+        {
+            return new()
+            {
+                VertexShader = VertSource,
+                FragmentShader = FragSource,
+            };
         }
 
         private const string VertSource =

@@ -9,10 +9,6 @@ namespace Elffy.Shading.Forward
     [Obsolete("Don't use.", true)]
     public sealed class PBRShader : RenderingShader
     {
-        protected override string VertexShaderSource => VertSource;
-
-        protected override string FragmentShaderSource => FragSource;
-
         protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
         {
             definition.Map(vertexType, "_vPos", VertexSpecialField.Position);
@@ -40,6 +36,14 @@ namespace Elffy.Shading.Forward
             dispatcher.SendUniform("_roughness", (float)material.Roughness);
         }
 
+        protected override ShaderSource GetShaderSource(Renderable target, WorldLayer layer)
+        {
+            return new()
+            {
+                VertexShader = VertSource,
+                FragmentShader = FragSource,
+            };
+        }
 
         private const string VertSource =
 @"#version 410

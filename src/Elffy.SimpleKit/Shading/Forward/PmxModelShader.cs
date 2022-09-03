@@ -7,13 +7,8 @@ namespace Elffy.Shading.Forward
 {
     public sealed class PmxModelShader : RenderingShader
     {
-        protected override string VertexShaderSource => VertSource;
-
-        protected override string FragmentShaderSource => FragSource;
-
         public PmxModelShader()
         {
-
         }
 
         protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
@@ -41,6 +36,15 @@ namespace Elffy.Shading.Forward
             dispatcher.SendUniform("lightCount", lights.LightCount);
             dispatcher.SendUniformTexture1D("lColorSampler", lights.ColorTexture, TextureUnitNumber.Unit2);
             dispatcher.SendUniformTexture1D("lPosSampler", lights.PositionTexture, TextureUnitNumber.Unit3);
+        }
+
+        protected override ShaderSource GetShaderSource(Renderable target, WorldLayer layer)
+        {
+            return new()
+            {
+                VertexShader = VertSource,
+                FragmentShader = FragSource,
+            };
         }
 
         private const string VertSource =

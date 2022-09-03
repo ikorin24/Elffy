@@ -5,26 +5,10 @@ namespace Elffy.Shading
 {
     internal sealed class RenderShadowMapShader : IRenderingShader
     {
-        private int _sourceHashCache;
-
         public static RenderShadowMapShader Instance { get; } = new RenderShadowMapShader();
-
-        string IRenderingShader.VertexShaderSource => Vert;
-
-        string IRenderingShader.FragmentShaderSource => Frag;
-
-        public string? GeometryShaderSource => null;
 
         private RenderShadowMapShader()
         {
-        }
-
-        int IRenderingShader.GetSourceHash()
-        {
-            if(_sourceHashCache == 0) {
-                _sourceHashCache = HashCode.Combine(Vert, Frag);
-            }
-            return _sourceHashCache;
         }
 
         public void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
@@ -37,9 +21,15 @@ namespace Elffy.Shading
             dispatcher.SendUniform("_lmvp", lightViewProjection * model);
         }
 
-        void IRenderingShader.InvokeOnProgramDisposed() { }     // nop
+        void IRenderingShader.OnProgramDisposedInternal() { }     // nop
 
-        private const string Vert =
+        void IRenderingShader.OnAttachedInternal(Renderable target) { }   // nop
+
+        void IRenderingShader.OnDetachedInternal(Renderable target) { }   // nop
+
+        ShaderSource IRenderingShader.GetShaderSourceInternal(Renderable target, WorldLayer layer) => new()
+        {
+            VertexShader =
 @"#version 410
 layout (location = 0) in vec3 _vPos;
 uniform mat4 _lmvp;
@@ -47,10 +37,10 @@ void main()
 {
     gl_Position = _lmvp * vec4(_vPos, 1.0);
 }
-";
-
-        private const string Frag =
+",
+            FragmentShader =
 @"#version 410
-void main(){}";
+void main(){}",
+        };
     }
 }

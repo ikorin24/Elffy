@@ -83,6 +83,8 @@ namespace Elffy
         {
             _isVisible = true;
             _hasShadow = true;
+            _rendererData = new RendererData(this);
+            _shadowRendererData = new RendererData(this);
         }
 
         public RenderingShader GetValidShader()
@@ -176,13 +178,13 @@ namespace Elffy
                 }
                 VAO.Bind(_vao);
                 VBO.Bind(_vbo);
-                if(this is UIRenderable uIRenderable) {
+                if(this is UIRenderable ui) {
                     Debug.Assert(_rendererData.VertexType == typeof(VertexSlim));
                     if(_rendererData.Shader is null) {
-                        var shader = ControlShaderSelector.GetDefault(uIRenderable.Control.GetType());
+                        var shader = ControlShaderSelector.GetDefault(ui.Control.GetType());
                         _rendererData.SetShader(shader);
                     }
-                    _rendererData.CompileForUI(uIRenderable.Control);
+                    _rendererData.CompileForUI(ui.Control);
                 }
                 else {
                     if(_rendererData.Shader is null) {

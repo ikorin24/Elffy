@@ -1,15 +1,21 @@
 ﻿#nullable enable
+using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Shading
 {
     internal interface IRenderingShader
     {
-        string VertexShaderSource { get; }
-        string FragmentShaderSource { get; }
-        string? GeometryShaderSource { get; }
+        ShaderSource GetShaderSourceInternal(Renderable target, WorldLayer layer);
+        void OnProgramDisposedInternal();
+        void OnAttachedInternal(Renderable target);
+        void OnDetachedInternal(Renderable detachedTarget);
+    }
 
-        void InvokeOnProgramDisposed();
+    internal interface ISingleTargetRenderingShader : IRenderingShader
+    {
+        Renderable? Target { get; }
 
-        int GetSourceHash();
+        [MemberNotNullWhen(true, nameof(Target))]
+        bool HasTarget { get; }
     }
 }

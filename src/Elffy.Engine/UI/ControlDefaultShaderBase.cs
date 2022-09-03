@@ -12,10 +12,6 @@ namespace Elffy.UI
     {
         private TextureCore _textureCore;
 
-        protected override string VertexShaderSource => VertSource;
-
-        protected override string FragmentShaderSource => FragSource;
-
         protected ControlDefaultShaderBase()
         {
             _textureCore = new TextureCore(TextureConfig.DefaultNearestNeighbor);
@@ -120,6 +116,15 @@ namespace Elffy.UI
         {
             base.OnProgramDisposed();
             _textureCore.Dispose();
+        }
+
+        protected override ShaderSource GetShaderSource(Renderable target, WorldLayer layer)
+        {
+            return new()
+            {
+                VertexShader = VertSource,
+                FragmentShader = FragSource,
+            };
         }
 
         private const string VertSource =

@@ -17,10 +17,6 @@ namespace Elffy.Shading.Forward
         private float _shininess;
         private ShaderTextureSelector<PhongShader>? _textureSelector;
 
-        protected override string VertexShaderSource => VertSource;
-
-        protected override string FragmentShaderSource => FragSource;
-
         public ref Color3 Ambient => ref _ambient;
         public ref Color3 Diffuse => ref _diffuse;
         public ref Color3 Specular => ref _specular;
@@ -105,6 +101,15 @@ namespace Elffy.Shading.Forward
                 hasShadowMap = false;
             }
             dispatcher.SendUniform("_hasShadowMap", hasShadowMap);
+        }
+
+        protected override ShaderSource GetShaderSource(Renderable target, WorldLayer layer)
+        {
+            return new()
+            {
+                VertexShader = VertSource,
+                FragmentShader = FragSource,
+            };
         }
 
         private const string VertSource =

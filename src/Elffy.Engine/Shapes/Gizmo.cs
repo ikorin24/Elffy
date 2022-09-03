@@ -3,51 +3,49 @@ using Cysharp.Threading.Tasks;
 using Elffy.Shading;
 using System;
 
-namespace Elffy.Shapes
+namespace Elffy.Shapes;
+
+public class Gizmo : Renderable
 {
-    public class Gizmo : Renderable
+    public Gizmo()
     {
-        public Gizmo()
+        Activating.Subscribe(static (sender, ct) =>
         {
-            Activating.Subscribe(static (sender, ct) =>
-            {
-                var self = SafeCast.As<Gizmo>(sender);
-                PrimitiveMeshProvider<VertexPosNormal>.GetArrow(self, static (self, vertices, indices) => self.LoadMesh(vertices, indices));
-                return UniTask.CompletedTask;
-            });
-            InstancingCount = 3;
-            Shader = GizmoShader.Instance;
-            HasShadow = false;
+            var self = SafeCast.As<Gizmo>(sender);
+            PrimitiveMeshProvider<VertexPosNormal>.GetArrow(self, static (self, vertices, indices) => self.LoadMesh(vertices, indices));
+            return UniTask.CompletedTask;
+        });
+        InstancingCount = 3;
+        Shader = GizmoShader.Instance;
+        HasShadow = false;
+    }
+
+    private sealed class GizmoShader : RenderingShader
+    {
+        private static GizmoShader? _instance;
+
+        /// <summary>Get singleton instance</summary>
+        public static GizmoShader Instance => _instance ??= new();
+
+        private GizmoShader()
+        {
         }
 
-        private sealed class GizmoShader : RenderingShader
+        protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
         {
-            private static GizmoShader? _instance;
+            definition.Map(vertexType, "_pos", VertexSpecialField.Position);
+            definition.Map(vertexType, "_normal", VertexSpecialField.Normal);
+        }
 
-            /// <summary>Get singleton instance</summary>
-            public static GizmoShader Instance => _instance ??= new();
+        protected override void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        {
+            dispatcher.SendUniform("_model", model);
+            dispatcher.SendUniform("_viewProjection", projection * view);
+        }
 
-            protected override string VertexShaderSource => VertSource;
-
-            protected override string FragmentShaderSource => FragSource;
-
-            private GizmoShader()
-            {
-            }
-
-            protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
-            {
-                definition.Map(vertexType, "_pos", VertexSpecialField.Position);
-                definition.Map(vertexType, "_normal", VertexSpecialField.Normal);
-            }
-
-            protected override void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
-            {
-                dispatcher.SendUniform("_model", model);
-                dispatcher.SendUniform("_viewProjection", projection * view);
-            }
-
-            private const string VertSource =
+        protected override ShaderSource GetShaderSource(Renderable target, WorldLayer layer) => new()
+        {
+            VertexShader =
 @"#version 410
 in vec3 _pos;
 in vec3 _normal;
@@ -71,8 +69,8 @@ void main()
     float colorFactor = dot(vec3(0, 1, 0), (nWorld + vec3(0, 1, 0)) * 0.5) * 0.5 + 0.5;
     _color = ColorTable[gl_InstanceID] * colorFactor;
 }
-";
-            private const string FragSource =
+",
+            FragmentShader =
 @"#version 410
 in vec3 _color;
 out vec4 _fragColor;
@@ -80,7 +78,7 @@ void main()
 {
     _fragColor = vec4(_color, 1);
 }
-";
-        }
+",
+        };
     }
 }
