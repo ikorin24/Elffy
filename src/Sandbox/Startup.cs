@@ -50,10 +50,12 @@ namespace Sandbox
             uiRoot.Background = Color4.Black;
             try {
                 await ParallelOperation.WhenAll(
+                    new Gizmo().Activate(wLayer),
                     //Sample.CreateUI(uiLayer.UIRoot),
                     CreateDice2(drLayer),
                     CreateCameraMouse(wLayer, new Vector3(0, 3, 0)),
                     CreateDice(wLayer),
+                    CreateDiceWireframe(wLayer),
                     CreateModel2(wLayer),
                     CreateBox(drLayer),
                     CreateFloor(drLayer),
@@ -147,6 +149,15 @@ namespace Sandbox
             dice.AddComponent(Resources.Sandbox["Dice.png"].LoadTexture());
             dice.Shader = new PhongShader();
             dice.Position = new Vector3(3, 1, -2);
+            return dice.Activate(layer);
+        }
+
+        private static UniTask<Model3D> CreateDiceWireframe(WorldLayer layer)
+        {
+            var dice = Resources.Sandbox["Dice.fbx"].CreateFbxModel();
+            dice.AddComponent(Resources.Sandbox["Dice.png"].LoadTexture());
+            dice.Shader = new WireframeShader();
+            dice.Position = new Vector3(5, 1, 0);
             return dice.Activate(layer);
         }
 
@@ -269,7 +280,7 @@ namespace Sandbox
 
         private static UniTask<FrameObject> CreateCameraMouse(WorldLayer layer, Vector3 target)
         {
-            var initialCameraPos = target + new Vector3(0, 1.5f, 20);
+            var initialCameraPos = target + new Vector3(0, 3, 40);
             return CameraMouse.Activate(layer, target, initialCameraPos);
         }
     }
