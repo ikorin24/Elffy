@@ -18,7 +18,7 @@ namespace Elffy.Components
         public TextureWrapMode WrapModeX => _textureCore.WrapModeX;
         public TextureWrapMode WrapModeY => _textureCore.WrapModeY;
 
-        public ref readonly TextureObject TextureObject => ref _textureCore.Texture;
+        public TextureObject TextureObject => _textureCore.Texture;
 
         public ComponentOwner? Owner => _core.Owner;
 
@@ -30,7 +30,7 @@ namespace Elffy.Components
 
         public int Height => _textureCore.Size.Y;
 
-        public ref readonly Vector2i Size => ref _textureCore.Size;
+        public Vector2i Size => _textureCore.Size;
 
         public Texture(in TextureConfig config)
         {

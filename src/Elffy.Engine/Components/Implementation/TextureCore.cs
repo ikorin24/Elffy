@@ -13,8 +13,11 @@ namespace Elffy.Components.Implementation
     public struct TextureCore : IDisposable
     {
         private TextureConfig _config;
-        public TextureObject Texture;
-        public Vector2i Size;
+        private Vector2i _size;
+        private TextureObject _texture;
+
+        public TextureObject Texture => _texture;
+        public Vector2i Size => _size;
         public TextureExpansionMode ExpansionMode => _config.ExpansionMode;
         public TextureShrinkMode ShrinkMode => _config.ShrinkMode;
         public TextureMipmapMode MipmapMode => _config.MipmapMode;
@@ -27,8 +30,8 @@ namespace Elffy.Components.Implementation
         public TextureCore(in TextureConfig config)
         {
             _config = config;
-            Texture = TextureObject.Empty;
-            Size = Vector2i.Zero;
+            _texture = TextureObject.Empty;
+            _size = Vector2i.Zero;
         }
 
         public void Load<T>(T state, in Vector2i size, ImageBuilderDelegate<T> imageBuilder)
@@ -36,10 +39,10 @@ namespace Elffy.Components.Implementation
             if(!Texture.IsEmpty) {
                 ThrowAlreadyLoaded();
             }
-            Texture = TextureLoadHelper.LoadByDMA(state, size, imageBuilder,
+            _texture = TextureLoadHelper.LoadByDMA(state, size, imageBuilder,
                                                   ExpansionMode, ShrinkMode,
                                                   MipmapMode, WrapModeX, WrapModeY);
-            Size = size;
+            _size = size;
         }
 
         public void Load(in ReadOnlyImageRef image)
@@ -47,8 +50,8 @@ namespace Elffy.Components.Implementation
             if(!Texture.IsEmpty) {
                 ThrowAlreadyLoaded();
             }
-            Texture = TextureLoadHelper.LoadByDMA(image, ExpansionMode, ShrinkMode, MipmapMode, WrapModeX, WrapModeY);
-            Size = new(image.Width, image.Height);
+            _texture = TextureLoadHelper.LoadByDMA(image, ExpansionMode, ShrinkMode, MipmapMode, WrapModeX, WrapModeY);
+            _size = new(image.Width, image.Height);
         }
 
         public unsafe void Load(in Vector2i size, in ColorByte fill)
@@ -241,8 +244,8 @@ namespace Elffy.Components.Implementation
 
         public void Dispose()
         {
-            TextureObject.Delete(ref Texture);
-            Size = default;
+            TextureObject.Delete(ref _texture);
+            _size = default;
         }
 
         private unsafe void LoadCore<TColor>(in Vector2i size, TColor* pixels) where TColor : unmanaged
@@ -252,7 +255,7 @@ namespace Elffy.Components.Implementation
                 [DoesNotReturn] static void ThrowNotSupported() => throw new NotSupportedException();
             }
 
-            Texture = TextureObject.Create();
+            _texture = TextureObject.Create();
             TextureObject.Bind2D(Texture);
             TextureObject.Parameter2DMinFilter(ShrinkMode, MipmapMode);
             TextureObject.Parameter2DMagFilter(ExpansionMode);
@@ -270,7 +273,7 @@ namespace Elffy.Components.Implementation
                 TextureObject.GenerateMipmap2D();
             }
             TextureObject.Unbind2D();
-            Size = size;
+            _size = size;
         }
 
         [DoesNotReturn]
