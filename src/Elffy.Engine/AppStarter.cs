@@ -33,6 +33,7 @@ namespace Elffy
                     await start(screen);
                 }
                 catch {
+                    if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
                     // Don't throw. (Ignore exceptions in user code)
                 }
             };
