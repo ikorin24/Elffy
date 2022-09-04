@@ -3,31 +3,65 @@ using Elffy.Components;
 using Elffy.Components.Implementation;
 using Elffy.Imaging;
 using Elffy.Shading;
-using System;
 using Elffy.Graphics.OpenGL;
+using System;
+using System.Diagnostics.CodeAnalysis;
+using Elffy.Features;
 
 namespace Elffy.Serialization.Gltf;
 
-internal sealed class GlbShader : RenderingShader
+internal sealed class GlbShader : SingleTargetRenderingShader
 {
+    private bool _disposed = false;
     private TextureCore _baseColorTex;
     private TextureCore _normalTex;
+
+    private bool _isSafetyRegistered;
+    private ContextAssociatedMemorySafety.SafetyKey _safety;
 
     public GlbShader()
     {
     }
 
+    ~GlbShader()
+    {
+        if(_isSafetyRegistered) {
+            ContextAssociatedMemorySafety.OnFinalized(_safety);
+        }
+    }
+
     public void SetBaseColorTexture(ReadOnlyImageRef image, TextureConfig config)
     {
+        if(_disposed) {
+            ThrowAlreadyDisposed();
+        }
+        var screen = Engine.GetValidCurrentContext();
         _baseColorTex = new TextureCore(config);
         _baseColorTex.Load(image);
+
+        if(_isSafetyRegistered == false) {
+            _safety = ContextAssociatedMemorySafety.RegisterNonDisposable(this, static self => self.DisposeUnmanagedData(), screen);
+            _isSafetyRegistered = true;
+        }
     }
 
     public void SetNormalTexture(ReadOnlyImageRef image, TextureConfig config)
     {
+        if(_disposed) {
+            ThrowAlreadyDisposed();
+        }
+        var screen = Engine.GetValidCurrentContext();
         _normalTex = new TextureCore(config);
         _normalTex.Load(image);
+
+        if(_isSafetyRegistered == false) {
+            _safety = ContextAssociatedMemorySafety.RegisterNonDisposable(this, static self => self.DisposeUnmanagedData(), screen);
+            _isSafetyRegistered = true;
+        }
     }
+
+    [DoesNotReturn]
+    private static void ThrowAlreadyDisposed() => throw new ObjectDisposedException(nameof(GlbShader), $"The instance is already disposed.");
 
     protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
     {
@@ -48,21 +82,26 @@ internal sealed class GlbShader : RenderingShader
 
     protected override void OnProgramDisposed()
     {
+        GC.SuppressFinalize(this);
+        DisposeUnmanagedData();
+    }
+
+    private void DisposeUnmanagedData()
+    {
         _baseColorTex.Dispose();
         _normalTex.Dispose();
+        _disposed = true;
     }
 
-    protected override ShaderSource GetShaderSource(Renderable target, WorldLayer layer)
+    protected override void OnTargetAttached(Renderable target) { }
+
+    protected override void OnTargetDetached(Renderable detachedTarget) { }
+
+    protected override ShaderSource GetShaderSource(Renderable target, WorldLayer layer) => GetForwardShader();
+
+    private static ShaderSource GetForwardShader() => new()
     {
-        return new()
-        {
-            VertexShader = VertexShader,
-            FragmentShader = FragmentShader,
-        };
-    }
-
-    private const string VertexShader =
-@"#version 410
+        VertexShader = @"#version 410
 in vec3 _pos;
 in vec2 _uv;
 in vec3 _normal;
@@ -74,8 +113,8 @@ void main()
     _vUV = _uv;
     gl_Position = _mvp * vec4(_pos, 1.0);
 }
-";
-    private const string FragmentShader =
+",
+        FragmentShader =
 @"#version 410
 in vec2 _vUV;
 in vec3 _vNormal;
@@ -94,5 +133,6 @@ void main()
     result = baseColor;
     _fragColor = vec4(result, 1);
 }
-";
+",
+    };
 }
