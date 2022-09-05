@@ -18,6 +18,8 @@ namespace Elffy
         Bone,
         /// <summary>The field layout must be (<see cref="float"/>, <see cref="float"/>, <see cref="float"/>, <see cref="float"/>)</summary>
         Weight,
+        /// <summary>The field layout must be (<see cref="float"/>, <see cref="float"/>, <see cref="float"/>)</summary>
+        Tangent,
         /// <summary>Not specified</summary>
         NotSpecified = 255,
     }

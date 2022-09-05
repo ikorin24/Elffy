@@ -58,6 +58,42 @@ namespace Elffy
             return field;
         }
 
+        public bool TryGetFieldAccessor<TField>(string fieldName, out VertexFieldAccessor<TField> accessor) where TField : unmanaged
+        {
+            if(TryGetField(fieldName, out var field)) {
+                accessor = field.GetAccessor<TField>();
+                return true;
+            }
+            accessor = default;
+            return false;
+        }
+
+        public bool TryGetFieldAccessor<TField>(VertexSpecialField specialField, out VertexFieldAccessor<TField> accessor) where TField : unmanaged
+        {
+            if(TryGetField(specialField, out var field)) {
+                accessor = field.GetAccessor<TField>();
+                return true;
+            }
+            accessor = default;
+            return false;
+        }
+
+        public VertexFieldAccessor<TField> GetFieldAccessor<TField>(string fieldName) where TField : unmanaged
+        {
+            if(TryGetFieldAccessor<TField>(fieldName, out var accessor) == false) {
+                ThrowFieldNotFound(fieldName);
+            }
+            return accessor;
+        }
+
+        public VertexFieldAccessor<TField> GetFieldAccessor<TField>(VertexSpecialField specialField) where TField : unmanaged
+        {
+            if(TryGetFieldAccessor<TField>(specialField, out var accessor) == false) {
+                ThrowSpecialFieldNotFound(specialField);
+            }
+            return accessor;
+        }
+
         [DoesNotReturn]
         private static void ThrowSpecialFieldNotFound(VertexSpecialField specialField) => throw new InvalidOperationException($"The special field is not found. (Special Field: {specialField})");
 
@@ -77,6 +113,27 @@ namespace Elffy
         public ref readonly T ReadRef<TVertex, T>(in TVertex vertex)
         {
             return ref Unsafe.As<TVertex, T>(ref Unsafe.AddByteOffset(ref Unsafe.AsRef(in vertex), (nuint)ByteOffset));
+        }
+
+        public VertexFieldAccessor<TField> GetAccessor<TField>() where TField : unmanaged
+        {
+            return new VertexFieldAccessor<TField>((nuint)ByteOffset);
+        }
+    }
+
+    public readonly struct VertexFieldAccessor<TField> where TField : unmanaged
+    {
+        private readonly nuint _byteOffset;
+        public nuint ByteOffset => _byteOffset;
+
+        public VertexFieldAccessor(nuint byteOffset)
+        {
+            _byteOffset = byteOffset;
+        }
+
+        public ref TField Field<TVertex>(in TVertex vertex) where TVertex : unmanaged
+        {
+            return ref Unsafe.As<TVertex, TField>(ref Unsafe.AddByteOffset(ref Unsafe.AsRef(in vertex), _byteOffset));
         }
     }
 }

@@ -9,6 +9,11 @@ namespace Elffy
 {
     public static class VertexMarshalHelper
     {
+        private static class TypeDicStatic<TVertex> where TVertex : unmanaged
+        {
+            public static VertexTypeData? Value { get; set; }
+        }
+
         private static readonly object _lockObj = new object();
         private static readonly Hashtable _typeDic = new Hashtable();
 
@@ -25,8 +30,17 @@ namespace Elffy
             var typeData = new VertexTypeData(fields, vertexSize);
             lock(_lockObj) {
                 _typeDic.Add(type, typeData);
+                TypeDicStatic<TVertex>.Value = typeData;
             }
             return VertexMarshalRegisterResult.Success;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool TryGetVertexTypeData<TVertex>([MaybeNullWhen(false)] out VertexTypeData typeData) where TVertex : unmanaged
+        {
+            var value = TypeDicStatic<TVertex>.Value;
+            typeData = value;
+            return value is not null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -36,6 +50,13 @@ namespace Elffy
             Debug.Assert(data is null or VertexTypeData);
             typeData = Unsafe.As<VertexTypeData>(data);
             return typeData != null;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static VertexTypeData GetVertexTypeData<TVertex>() where TVertex : unmanaged
+        {
+            if(TryGetVertexTypeData<TVertex>(out var typeData) == false) { ThrowTypeNotRegistered(typeof(TVertex)); }
+            return typeData;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
