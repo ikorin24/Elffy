@@ -98,7 +98,7 @@ public static class GlbModelBuilder
         if(node.mesh.TryGetValue(out var meshNum)) {
             ref readonly var mesh = ref GetItemOrThrow(gltf.meshes, meshNum);
             foreach(ref readonly var meshPrimitive in mesh.primitives.AsSpan()) {
-                BuildMeshPrimitive(in state, in meshPrimitive, nodePart);
+                BuildMeshPrimitive<Vertex>(in state, in meshPrimitive, nodePart);
             }
         }
 
@@ -118,7 +118,7 @@ public static class GlbModelBuilder
         parent.Children.Add(obj);
     }
 
-    private unsafe static void StoreIndices(in BufferData data, uint* dest, nuint destCount)
+    private unsafe static void StoreIndices(in BufferData data, uint* dest)
     {
         var elementCount = data.Count;
         switch(data.ComponentType) {
@@ -145,10 +145,10 @@ public static class GlbModelBuilder
         }
     }
 
-    private unsafe static void BuildMeshPrimitive(in BuilderState state, in MeshPrimitive meshPrimitive, Positionable parent)
+    private unsafe static void BuildMeshPrimitive<TVertex>(in BuilderState state, in MeshPrimitive meshPrimitive, Positionable parent) where TVertex : unmanaged
     {
         var gltf = state.Gltf;
-        var meshPrimitivePart = new GlbModelPart<Vertex>();
+        var meshPrimitivePart = new GlbModelPart<TVertex>();
         meshPrimitivePart.Name = "mesh.primitive";
         state.Tasks.Add(MakeTree(meshPrimitivePart, parent, state.Layer));
 
@@ -170,7 +170,7 @@ public static class GlbModelBuilder
             if(position is not { type: AccessorType.Vec3, componentType: AccessorComponentType.Float }) {
                 ThrowInvalidGlb();
             }
-            AccessData(in state, in position, verticesOutput, BufferWriteDestinationMode.AllocateNew, &GlbVertexWriter<Vertex>.StorePositions);
+            AccessData(in state, in position, verticesOutput, BufferWriteDestinationMode.AllocateNew, &GlbVertexWriter<TVertex>.StorePositions);
         }
         else {
             throw new NotSupportedException();
@@ -182,7 +182,7 @@ public static class GlbModelBuilder
             if(normal is not { type: AccessorType.Vec3, componentType: AccessorComponentType.Float }) {
                 ThrowInvalidGlb();
             }
-            AccessData(in state, in normal, verticesOutput, BufferWriteDestinationMode.ExistingMemory, &GlbVertexWriter<Vertex>.StoreNormals);
+            AccessData(in state, in normal, verticesOutput, BufferWriteDestinationMode.ExistingMemory, &GlbVertexWriter<TVertex>.StoreNormals);
         }
 
         // uv
@@ -191,7 +191,7 @@ public static class GlbModelBuilder
             if(uv0 is not { type: AccessorType.Vec2, componentType: AccessorComponentType.Float }) {
                 ThrowInvalidGlb();
             }
-            AccessData(in state, in uv0, verticesOutput, BufferWriteDestinationMode.ExistingMemory, &GlbVertexWriter<Vertex>.StoreUVs);
+            AccessData(in state, in uv0, verticesOutput, BufferWriteDestinationMode.ExistingMemory, &GlbVertexWriter<TVertex>.StoreUVs);
         }
 
         // tangent
@@ -200,7 +200,7 @@ public static class GlbModelBuilder
             if(tangent is not { type: AccessorType.Vec3, componentType: AccessorComponentType.Float }) {
                 ThrowInvalidGlb();
             }
-            AccessData(in state, in tangent, verticesOutput, BufferWriteDestinationMode.ExistingMemory, &GlbVertexWriter<Vertex>.StoreTangents);
+            AccessData(in state, in tangent, verticesOutput, BufferWriteDestinationMode.ExistingMemory, &GlbVertexWriter<TVertex>.StoreTangents);
         }
 
         // indices
@@ -410,7 +410,7 @@ public static class GlbModelBuilder
         in Accessor accessor,
         ILargeBufferWriter<T> output,
         BufferWriteDestinationMode destMode,
-        delegate*<in BufferData, T*, nuint, void> callback
+        delegate*<in BufferData, T*, void> callback
     ) where T : unmanaged
     {
         var gltf = state.Gltf;
@@ -435,14 +435,14 @@ public static class GlbModelBuilder
             case BufferWriteDestinationMode.AllocateNewWithoutInit: {
                 var zeroClear = destMode == BufferWriteDestinationMode.AllocateNew;
                 var dest = output.GetBufferToWrite(elementCount, zeroClear);
-                callback(in data, dest, elementCount);
+                callback(in data, dest);
                 output.Advance(elementCount);
                 break;
             }
             case BufferWriteDestinationMode.ExistingMemory: {
                 var dest = output.GetWrittenBufffer(out var writtenCount);
                 Debug.Assert(writtenCount >= elementCount);
-                callback(in data, dest, elementCount);
+                callback(in data, dest);
                 break;
             }
             default:
@@ -633,22 +633,22 @@ public static class GlbModelBuilder
 
     private static class GlbVertexWriter<TVertex> where TVertex : unmanaged
     {
-        public unsafe static void StorePositions(in BufferData data, TVertex* dest, nuint destCount)
+        public unsafe static void StorePositions(in BufferData data, TVertex* dest)
         {
             Write<Vector3>(in data, dest, VertexSpecialField.Position);
         }
 
-        public unsafe static void StoreNormals(in BufferData data, TVertex* dest, nuint destCount)
+        public unsafe static void StoreNormals(in BufferData data, TVertex* dest)
         {
             Write<Vector3>(in data, dest, VertexSpecialField.Normal);
         }
 
-        public unsafe static void StoreUVs(in BufferData data, TVertex* dest, nuint destCount)
+        public unsafe static void StoreUVs(in BufferData data, TVertex* dest)
         {
             Write<Vector2>(in data, dest, VertexSpecialField.UV);
         }
 
-        public unsafe static void StoreTangents(in BufferData data, TVertex* dest, nuint destCount)
+        public unsafe static void StoreTangents(in BufferData data, TVertex* dest)
         {
             Write<Vector3>(in data, dest, VertexSpecialField.Tangent);
         }
