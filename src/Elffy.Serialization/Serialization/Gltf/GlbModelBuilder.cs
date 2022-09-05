@@ -98,7 +98,7 @@ public static class GlbModelBuilder
         if(node.mesh.TryGetValue(out var meshNum)) {
             ref readonly var mesh = ref GetItemOrThrow(gltf.meshes, meshNum);
             foreach(ref readonly var meshPrimitive in mesh.primitives.AsSpan()) {
-                BuildMeshPrimitive<Vertex>(in state, in meshPrimitive, nodePart);
+                BuildMeshPrimitive<TangentVertex>(in state, in meshPrimitive, nodePart);
             }
         }
 
