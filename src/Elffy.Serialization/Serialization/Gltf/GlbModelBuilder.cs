@@ -120,7 +120,7 @@ public static class GlbModelBuilder
 
     private unsafe static void StoreIndices(in BufferData data, uint* dest, nuint destCount)
     {
-        var elementCount = data.ElementCount;
+        var elementCount = data.Count;
         switch(data.ComponentType) {
             case AccessorComponentType.UnsignedByte: {
                 ConvertUInt8ToUInt32((byte*)data.Ptr, dest, elementCount);
@@ -419,9 +419,17 @@ public static class GlbModelBuilder
         }
         ref readonly var bufferView = ref GetItemOrThrow(gltf.bufferViews, bufferViewNum);
         var bin = ReadBufferView(in state, in bufferView);
-        var data = new BufferData((IntPtr)bin.Ptr, bin.ByteLength, bufferView.byteStride, accessor.componentType);
+        var data = new BufferData
+        {
+            P = (IntPtr)bin.Ptr,
+            ByteLength = bin.ByteLength,
+            ByteStride = bufferView.byteStride,
+            Count = accessor.count,
+            Type = accessor.type,
+            ComponentType = accessor.componentType,
+        };
 
-        var elementCount = data.ElementCount;
+        var elementCount = accessor.count;
         switch(destMode) {
             case BufferWriteDestinationMode.AllocateNew:
             case BufferWriteDestinationMode.AllocateNewWithoutInit: {
@@ -433,7 +441,7 @@ public static class GlbModelBuilder
             }
             case BufferWriteDestinationMode.ExistingMemory: {
                 var dest = output.GetWrittenBufffer(out var writtenCount);
-                Debug.Assert(writtenCount >= data.ElementCount);
+                Debug.Assert(writtenCount >= elementCount);
                 callback(in data, dest, elementCount);
                 break;
             }
@@ -487,18 +495,12 @@ public static class GlbModelBuilder
         IntPtr P,
         nuint ByteLength,
         nuint? ByteStride,
+        nuint Count,
+        AccessorType Type,
         AccessorComponentType ComponentType
     )
     {
         public unsafe void* Ptr => (void*)P;
-
-        public nuint ElementCount => ComponentType switch
-        {
-            AccessorComponentType.Byte or AccessorComponentType.UnsignedByte => ByteLength,
-            AccessorComponentType.UnsignedShort or AccessorComponentType.Short => ByteLength / 2,
-            AccessorComponentType.UnsignedInt or AccessorComponentType.Float => ByteLength / 4,
-            _ => throw new InvalidOperationException("Invalid enum value"),
-        };
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -633,75 +635,39 @@ public static class GlbModelBuilder
     {
         public unsafe static void StorePositions(in BufferData data, TVertex* dest, nuint destCount)
         {
-            Debug.Assert(data.ComponentType is AccessorComponentType.Float);
-            var vtype = VertexMarshalHelper.GetVertexTypeData<TVertex>();
-            var fieldAccessor = vtype.GetFieldAccessor<Vector3>(VertexSpecialField.Position);
-            WriteVector3(in data, dest, fieldAccessor);
+            Write<Vector3>(in data, dest, VertexSpecialField.Position);
         }
 
         public unsafe static void StoreNormals(in BufferData data, TVertex* dest, nuint destCount)
         {
-            Debug.Assert(data.ComponentType is AccessorComponentType.Float);
-            var vtype = VertexMarshalHelper.GetVertexTypeData<TVertex>();
-            if(vtype.TryGetFieldAccessor<Vector3>(VertexSpecialField.Normal, out var fieldAccessor) == false) {
-                return;
-            }
-            WriteVector3(in data, dest, fieldAccessor);
+            Write<Vector3>(in data, dest, VertexSpecialField.Normal);
         }
 
         public unsafe static void StoreUVs(in BufferData data, TVertex* dest, nuint destCount)
         {
-            Debug.Assert(data.ComponentType is AccessorComponentType.Float);
-            var vtype = VertexMarshalHelper.GetVertexTypeData<TVertex>();
-            if(vtype.TryGetFieldAccessor<Vector2>(VertexSpecialField.UV, out var fieldAccessor) == false) {
-                return;
-            }
-            WriteVector2(in data, dest, fieldAccessor);
+            Write<Vector2>(in data, dest, VertexSpecialField.UV);
         }
 
         public unsafe static void StoreTangents(in BufferData data, TVertex* dest, nuint destCount)
         {
-            Debug.Assert(data.ComponentType is AccessorComponentType.Float);
+            Write<Vector3>(in data, dest, VertexSpecialField.Tangent);
+        }
+
+        private unsafe static void Write<TData>(in BufferData data, TVertex* dest, VertexSpecialField field) where TData : unmanaged
+        {
             var vtype = VertexMarshalHelper.GetVertexTypeData<TVertex>();
-            if(vtype.TryGetFieldAccessor<Vector3>(VertexSpecialField.Tangent, out var fieldAccessor) == false) {
+            if(vtype.TryGetFieldAccessor<TData>(field, out var fieldAccessor) == false) {
                 return;
             }
-            WriteVector3(in data, dest, fieldAccessor);
-        }
 
-        private unsafe static nuint WriteVector3(in BufferData data, TVertex* dest, VertexFieldAccessor<Vector3> fieldAccessor)
-        {
-            nuint elementCount = data.ElementCount;
-            var ptr = data.Ptr;
             if(BitConverter.IsLittleEndian == false) {
                 throw new PlatformNotSupportedException("Big endian environment is not supported.");
             }
-            for(nuint i = 0; i < elementCount / 3; i++) {
-                fieldAccessor.Field(dest[i]) = new()
-                {
-                    X = ((float*)ptr)[i * 3],
-                    Y = ((float*)ptr)[i * 3 + 1],
-                    Z = ((float*)ptr)[i * 3 + 2],
-                };
+            var ptr = (byte*)data.Ptr;
+            var byteStride = data.ByteStride ?? (nuint)sizeof(TData);
+            for(nuint i = 0; i < data.Count; i++) {
+                fieldAccessor.Field(dest[i]) = *(TData*)(ptr + byteStride * i);
             }
-            return elementCount;
-        }
-
-        private unsafe static nuint WriteVector2(in BufferData data, TVertex* dest, VertexFieldAccessor<Vector2> fieldAccessor)
-        {
-            nuint elementCount = data.ElementCount;
-            if(BitConverter.IsLittleEndian == false) {
-                throw new PlatformNotSupportedException("Big endian environment is not supported.");
-            }
-            var ptr = data.Ptr;
-            for(nuint i = 0; i < elementCount / 2; i++) {
-                fieldAccessor.Field(dest[i]) = new()
-                {
-                    X = ((float*)ptr)[i * 2],
-                    Y = ((float*)ptr)[i * 2 + 1],
-                };
-            }
-            return elementCount;
         }
     }
 
