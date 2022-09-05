@@ -148,7 +148,7 @@ public static class GlbModelBuilder
     private unsafe static void BuildMeshPrimitive(in BuilderState state, in MeshPrimitive meshPrimitive, Positionable parent)
     {
         var gltf = state.Gltf;
-        var meshPrimitivePart = new GlbModelPart();
+        var meshPrimitivePart = new GlbModelPart<Vertex>();
         meshPrimitivePart.Name = "mesh.primitive";
         state.Tasks.Add(MakeTree(meshPrimitivePart, parent, state.Layer));
 

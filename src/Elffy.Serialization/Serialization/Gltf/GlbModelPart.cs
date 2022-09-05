@@ -5,9 +5,13 @@ using System;
 
 namespace Elffy.Serialization.Gltf;
 
-internal sealed class GlbModelPart : Renderable
+internal class GlbModelPart : Renderable
 {
-    private LargeBufferWriter<Vertex>? _verticesTemporal;
+}
+
+internal sealed class GlbModelPart<TVertex> : GlbModelPart where TVertex : unmanaged
+{
+    private LargeBufferWriter<TVertex>? _verticesTemporal;
     private LargeBufferWriter<uint>? _indicesTemporal;
     private bool _meshApplied;
 
@@ -15,12 +19,12 @@ internal sealed class GlbModelPart : Renderable
     {
     }
 
-    internal ILargeBufferWriter<Vertex> GetVerticesWriter()
+    internal ILargeBufferWriter<TVertex> GetVerticesWriter()
     {
         if(_meshApplied) {
             throw new InvalidOperationException();
         }
-        _verticesTemporal ??= new LargeBufferWriter<Vertex>();
+        _verticesTemporal ??= new LargeBufferWriter<TVertex>();
         return _verticesTemporal;
     }
 
