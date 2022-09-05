@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 using Elffy.Serialization.Gltf.Internal;
 
 namespace Elffy.Serialization.Gltf.Parsing;
@@ -125,6 +126,42 @@ internal static class GltfParser
             var memories = buf.GetMemories();
             RandomAccess.Read(handle, memories, 0);
             return ParseGlb(buf.Ptr, buf.ByteLength);
+        }
+    }
+
+    public static unsafe GlbObject ParseGlb(ResourceFile file, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        if(file.TryGetHandle(out var handle)) {
+            var len = (nuint)file.FileSize;
+            void* ptr = NativeMemory.Alloc(len);
+            try {
+                handle.Read(ptr, len, 0);
+                return ParseGlb(ptr, len);
+            }
+            finally {
+                NativeMemory.Free(ptr);
+            }
+        }
+        else {
+            nuint len = (nuint)file.FileSize;
+            byte* ptr = (byte*)NativeMemory.Alloc(len);
+            try {
+                using var stream = file.GetStream();
+                ulong pos = 0;
+                while(true) {
+                    ct.ThrowIfCancellationRequested();
+                    int spanLen = (int)Math.Min(int.MaxValue, len - pos);
+                    var span = new Span<byte>(ptr + pos, spanLen);
+                    var readlen = stream.Read(span);
+                    pos += (ulong)readlen;
+                    if(readlen == 0) { break; }
+                }
+                return ParseGlb(ptr, len);
+            }
+            finally {
+                NativeMemory.Free(ptr);
+            }
         }
     }
 

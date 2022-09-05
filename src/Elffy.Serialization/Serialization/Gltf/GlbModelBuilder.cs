@@ -9,7 +9,6 @@ using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 using System.Threading;
@@ -29,10 +28,6 @@ public static class GlbModelBuilder
     private sealed record StateObject(ResourceFile File, CancellationToken CancellationToken);
 
     private static readonly Model3DBuilderDelegate<StateObject> _build = Build;
-    private static readonly AccessBufferAction<Vertex> _storePositions = StorePositions;
-    private static readonly AccessBufferAction<Vertex> _storeNormals = StoreNormals;
-    private static readonly AccessBufferAction<Vertex> _storeUVs = StoreUVs;
-    private static readonly AccessBufferAction<uint> _storeIndices = StoreIndices;
 
     public static Model3D CreateLazyLoadingGlb(ResourceFile file, CancellationToken cancellationToken = default)
     {
@@ -50,7 +45,7 @@ public static class GlbModelBuilder
         await UniTask.SwitchToThreadPool();
         ct.ThrowIfCancellationRequested();
 
-        using var glb = ParseGlb(file, ct);
+        using var glb = GltfParser.ParseGlb(file, ct);
 
         var layer = model.Layer as WorldLayer;
         Debug.Assert(layer is not null);
@@ -61,46 +56,6 @@ public static class GlbModelBuilder
         }
 
         await screen.Timings.Update.NextOrNow(ct);
-
-        // TODO: not implemented yet
-        //load.Invoke(verticesBuffer.WrittenSpan, indicesBuffer.WrittenSpan);
-        load.Invoke(ReadOnlySpan<Vertex>.Empty, ReadOnlySpan<int>.Empty);
-    }
-
-    private static unsafe GlbObject ParseGlb(ResourceFile file, CancellationToken ct)
-    {
-        ct.ThrowIfCancellationRequested();
-        if(file.TryGetHandle(out var handle)) {
-            var len = (nuint)file.FileSize;
-            void* ptr = NativeMemory.Alloc(len);
-            try {
-                handle.Read(ptr, len, 0);
-                return GltfParser.ParseGlb(ptr, len);
-            }
-            finally {
-                NativeMemory.Free(ptr);
-            }
-        }
-        else {
-            nuint len = (nuint)file.FileSize;
-            byte* ptr = (byte*)NativeMemory.Alloc(len);
-            try {
-                using var stream = file.GetStream();
-                ulong pos = 0;
-                while(true) {
-                    ct.ThrowIfCancellationRequested();
-                    int spanLen = (int)Math.Min(int.MaxValue, len - pos);
-                    var span = new Span<byte>(ptr + pos, spanLen);
-                    var readlen = stream.Read(span);
-                    pos += (ulong)readlen;
-                    if(readlen == 0) { break; }
-                }
-                return GltfParser.ParseGlb(ptr, len);
-            }
-            finally {
-                NativeMemory.Free(ptr);
-            }
-        }
     }
 
     private static void BuildRoot(in BuilderState state, Model3D model, Model3DLoadMeshDelegate load)
@@ -163,91 +118,23 @@ public static class GlbModelBuilder
         parent.Children.Add(obj);
     }
 
-    private unsafe static void StorePositions(in BuilderState state, in BufferData data, ILargeBufferWriter<Vertex> output)
-    {
-        Debug.Assert(data.ComponentType is AccessorComponentType.Float);
-
-        nuint elementCount = data.ElementCount;
-        Vertex* dest = output.GetBufferToWrite(elementCount, true);
-        if(BitConverter.IsLittleEndian == false) {
-            throw new PlatformNotSupportedException("Big endian environment is not supported.");
-        }
-        var ptr = data.Ptr;
-        for(nuint i = 0; i < elementCount / 3; i++) {
-            dest[i].Position = new()
-            {
-                X = ((float*)ptr)[i * 3],
-                Y = ((float*)ptr)[i * 3 + 1],
-                Z = ((float*)ptr)[i * 3 + 2],
-            };
-        }
-        output.Advance(elementCount);
-    }
-
-    private unsafe static void StoreNormals(in BuilderState state, in BufferData data, ILargeBufferWriter<Vertex> output)
-    {
-        Debug.Assert(data.ComponentType is AccessorComponentType.Float);
-
-        nuint elementCount = data.ElementCount;
-        Vertex* dest = output.GetWrittenBufffer(out var writtenCount);
-        Debug.Assert(writtenCount >= elementCount);
-        if(BitConverter.IsLittleEndian == false) {
-            throw new PlatformNotSupportedException("Big endian environment is not supported.");
-        }
-        var ptr = data.Ptr;
-        for(nuint i = 0; i < elementCount / 3; i++) {
-            dest[i].Normal = new()
-            {
-                X = ((float*)ptr)[i * 3],
-                Y = ((float*)ptr)[i * 3 + 1],
-                Z = ((float*)ptr)[i * 3 + 2],
-            };
-        }
-    }
-
-    private unsafe static void StoreUVs(in BuilderState state, in BufferData data, ILargeBufferWriter<Vertex> output)
-    {
-        Debug.Assert(data.ComponentType is AccessorComponentType.Float);
-
-        nuint elementCount = data.ElementCount;
-        Vertex* dest = output.GetWrittenBufffer(out var writtenCount);
-        Debug.Assert(writtenCount >= elementCount);
-        if(BitConverter.IsLittleEndian == false) {
-            throw new PlatformNotSupportedException("Big endian environment is not supported.");
-        }
-        var ptr = data.Ptr;
-        for(nuint i = 0; i < elementCount / 2; i++) {
-            dest[i].UV = new()
-            {
-                X = ((float*)ptr)[i * 2],
-                Y = ((float*)ptr)[i * 2 + 1],
-            };
-        }
-    }
-
-    private unsafe static void StoreIndices(in BuilderState state, in BufferData data, ILargeBufferWriter<uint> output)
+    private unsafe static void StoreIndices(in BufferData data, uint* dest, nuint destCount)
     {
         var elementCount = data.ElementCount;
         switch(data.ComponentType) {
             case AccessorComponentType.UnsignedByte: {
-                uint* dest = output.GetBufferToWrite(elementCount, false);
                 ConvertUInt8ToUInt32((byte*)data.Ptr, dest, elementCount);
-                output.Advance(elementCount);
                 break;
             }
             case AccessorComponentType.UnsignedShort: {
-                uint* dest = output.GetBufferToWrite(elementCount, false);
                 ConvertUInt16ToUInt32((ushort*)data.Ptr, dest, elementCount);
-                output.Advance(elementCount);
                 break;
             }
             case AccessorComponentType.UnsignedInt: {
-                uint* dest = output.GetBufferToWrite(elementCount, false);
                 System.Buffer.MemoryCopy(data.Ptr, dest, data.ByteLength, data.ByteLength);
                 if(BitConverter.IsLittleEndian == false) {
                     ReverseEndianUInt32(dest, elementCount);
                 }
-                output.Advance(elementCount);
                 break;
             }
             default: {
@@ -258,7 +145,7 @@ public static class GlbModelBuilder
         }
     }
 
-    private static void BuildMeshPrimitive(in BuilderState state, in MeshPrimitive meshPrimitive, Positionable parent)
+    private unsafe static void BuildMeshPrimitive(in BuilderState state, in MeshPrimitive meshPrimitive, Positionable parent)
     {
         var gltf = state.Gltf;
         var meshPrimitivePart = new GlbModelPart();
@@ -267,7 +154,7 @@ public static class GlbModelBuilder
 
         if(meshPrimitive.material.TryGetValue(out var materialNum)) {
             ref readonly var material = ref GetItemOrThrow(gltf.materials, materialNum);
-            ReadMaterial(in state, in material, meshPrimitivePart);
+            var result = ReadMaterial(in state, in material, meshPrimitivePart);
         }
 
         var mode = meshPrimitive.mode;
@@ -283,8 +170,7 @@ public static class GlbModelBuilder
             if(position is not { type: AccessorType.Vec3, componentType: AccessorComponentType.Float }) {
                 ThrowInvalidGlb();
             }
-
-            AccessData(in state, in position, verticesOutput, _storePositions);
+            AccessData(in state, in position, verticesOutput, BufferWriteDestinationMode.AllocateNew, &GlbVertexWriter<Vertex>.StorePositions);
         }
         else {
             throw new NotSupportedException();
@@ -296,7 +182,7 @@ public static class GlbModelBuilder
             if(normal is not { type: AccessorType.Vec3, componentType: AccessorComponentType.Float }) {
                 ThrowInvalidGlb();
             }
-            AccessData(in state, in normal, verticesOutput, _storeNormals);
+            AccessData(in state, in normal, verticesOutput, BufferWriteDestinationMode.ExistingMemory, &GlbVertexWriter<Vertex>.StoreNormals);
         }
 
         // uv
@@ -305,7 +191,16 @@ public static class GlbModelBuilder
             if(uv0 is not { type: AccessorType.Vec2, componentType: AccessorComponentType.Float }) {
                 ThrowInvalidGlb();
             }
-            AccessData(in state, in uv0, verticesOutput, _storeUVs);
+            AccessData(in state, in uv0, verticesOutput, BufferWriteDestinationMode.ExistingMemory, &GlbVertexWriter<Vertex>.StoreUVs);
+        }
+
+        // tangent
+        if(attrs.TANGENT.TryGetValue(out var tangentAttr)) {
+            ref readonly var tangent = ref GetItemOrThrow(gltf.accessors, tangentAttr);
+            if(tangent is not { type: AccessorType.Vec3, componentType: AccessorComponentType.Float }) {
+                ThrowInvalidGlb();
+            }
+            AccessData(in state, in tangent, verticesOutput, BufferWriteDestinationMode.ExistingMemory, &GlbVertexWriter<Vertex>.StoreTangents);
         }
 
         // indices
@@ -319,7 +214,7 @@ public static class GlbModelBuilder
                 ThrowInvalidGlb();
             }
             var indicesOutput = meshPrimitivePart.GetIndicesWriter();
-            AccessData(in state, indices, indicesOutput, _storeIndices);
+            AccessData(in state, indices, indicesOutput, BufferWriteDestinationMode.AllocateNewWithoutInit, &StoreIndices);
         }
 
         state.Tasks.Add(meshPrimitivePart.GetApplyMeshTask(state.Screen));
@@ -385,10 +280,15 @@ public static class GlbModelBuilder
         }
     }
 
-    private static void ReadMaterial(in BuilderState state, in Material material, GlbModelPart obj)
+    private static ReadMaterialResult ReadMaterial(in BuilderState state, in Material material, GlbModelPart obj)
     {
         var gltf = state.Gltf;
         var screen = state.Screen;
+        bool hasPbrBaseColorTex = false;
+        bool hasPbrMetallicRoughnessTex = false;
+        bool hasNormalTex = false;
+        bool hasEmissiveTex = false;
+        bool hasOcclusionTex = false;
 
         var shader = new GlbShader();
         obj.Shader = shader;
@@ -435,6 +335,7 @@ public static class GlbModelBuilder
                         // TODO:
                         shader.SetNormalTexture(imageData, texConfig);
                     });
+                hasNormalTex = true;
                 state.Tasks.Add(loadTexTask);
             }
         }
@@ -466,6 +367,15 @@ public static class GlbModelBuilder
                     });
             }
         }
+
+        return new()
+        {
+            HasPbrBaseColorTex = hasPbrBaseColorTex,
+            HasPbrMetallicRoughnessTex = hasPbrMetallicRoughnessTex,
+            HasNormalTex = hasNormalTex,
+            HasEmissiveTex = hasEmissiveTex,
+            HasOcclusionTex = hasOcclusionTex,
+        };
     }
 
     private static bool TryReadTexture(in BuilderState state, in Texture texture, out ImageData imageData, out TextureConfig config)
@@ -488,7 +398,20 @@ public static class GlbModelBuilder
         return false;
     }
 
-    private unsafe static void AccessData<T>(in BuilderState state, in Accessor accessor, ILargeBufferWriter<T> output, AccessBufferAction<T> callback) where T : unmanaged
+    private enum BufferWriteDestinationMode
+    {
+        AllocateNew,
+        AllocateNewWithoutInit,
+        ExistingMemory,
+    }
+
+    private unsafe static void AccessData<T>(
+        in BuilderState state,
+        in Accessor accessor,
+        ILargeBufferWriter<T> output,
+        BufferWriteDestinationMode destMode,
+        delegate*<in BufferData, T*, nuint, void> callback
+    ) where T : unmanaged
     {
         var gltf = state.Gltf;
         if(accessor.bufferView.TryGetValue(out var bufferViewNum) == false) {
@@ -497,7 +420,26 @@ public static class GlbModelBuilder
         ref readonly var bufferView = ref GetItemOrThrow(gltf.bufferViews, bufferViewNum);
         var bin = ReadBufferView(in state, in bufferView);
         var data = new BufferData((IntPtr)bin.Ptr, bin.ByteLength, bufferView.byteStride, accessor.componentType);
-        callback.Invoke(in state, in data, output);
+
+        var elementCount = data.ElementCount;
+        switch(destMode) {
+            case BufferWriteDestinationMode.AllocateNew:
+            case BufferWriteDestinationMode.AllocateNewWithoutInit: {
+                var zeroClear = destMode == BufferWriteDestinationMode.AllocateNew;
+                var dest = output.GetBufferToWrite(elementCount, zeroClear);
+                callback(in data, dest, elementCount);
+                output.Advance(elementCount);
+                break;
+            }
+            case BufferWriteDestinationMode.ExistingMemory: {
+                var dest = output.GetWrittenBufffer(out var writtenCount);
+                Debug.Assert(writtenCount >= data.ElementCount);
+                callback(in data, dest, elementCount);
+                break;
+            }
+            default:
+                break;
+        }
     }
 
     private unsafe static GlbBinaryData ReadBufferView(in BuilderState state, in BufferView bufferView)
@@ -669,8 +611,6 @@ public static class GlbModelBuilder
         }
     }
 
-    private unsafe delegate void AccessBufferAction<T>(in BuilderState state, in BufferData data, ILargeBufferWriter<T> output) where T : unmanaged;
-
     private record struct BuilderState(
         GlbObject Glb,
         WorldLayer Layer,
@@ -680,4 +620,105 @@ public static class GlbModelBuilder
     {
         public readonly GltfObject Gltf => Glb.Gltf;
     }
+
+    private record struct ReadMaterialResult(
+        bool HasPbrBaseColorTex,
+        bool HasPbrMetallicRoughnessTex,
+        bool HasNormalTex,
+        bool HasEmissiveTex,
+        bool HasOcclusionTex
+    );
+
+    private static class GlbVertexWriter<TVertex> where TVertex : unmanaged
+    {
+        public unsafe static void StorePositions(in BufferData data, TVertex* dest, nuint destCount)
+        {
+            Debug.Assert(data.ComponentType is AccessorComponentType.Float);
+            var vtype = VertexMarshalHelper.GetVertexTypeData<TVertex>();
+            var fieldAccessor = vtype.GetFieldAccessor<Vector3>(VertexSpecialField.Position);
+            WriteVector3(in data, dest, fieldAccessor);
+        }
+
+        public unsafe static void StoreNormals(in BufferData data, TVertex* dest, nuint destCount)
+        {
+            Debug.Assert(data.ComponentType is AccessorComponentType.Float);
+            var vtype = VertexMarshalHelper.GetVertexTypeData<TVertex>();
+            if(vtype.TryGetFieldAccessor<Vector3>(VertexSpecialField.Normal, out var fieldAccessor) == false) {
+                return;
+            }
+            WriteVector3(in data, dest, fieldAccessor);
+        }
+
+        public unsafe static void StoreUVs(in BufferData data, TVertex* dest, nuint destCount)
+        {
+            Debug.Assert(data.ComponentType is AccessorComponentType.Float);
+            var vtype = VertexMarshalHelper.GetVertexTypeData<TVertex>();
+            if(vtype.TryGetFieldAccessor<Vector2>(VertexSpecialField.UV, out var fieldAccessor) == false) {
+                return;
+            }
+            WriteVector2(in data, dest, fieldAccessor);
+        }
+
+        public unsafe static void StoreTangents(in BufferData data, TVertex* dest, nuint destCount)
+        {
+            Debug.Assert(data.ComponentType is AccessorComponentType.Float);
+            var vtype = VertexMarshalHelper.GetVertexTypeData<TVertex>();
+            if(vtype.TryGetFieldAccessor<Vector3>(VertexSpecialField.Tangent, out var fieldAccessor) == false) {
+                return;
+            }
+            WriteVector3(in data, dest, fieldAccessor);
+        }
+
+        private unsafe static nuint WriteVector3(in BufferData data, TVertex* dest, VertexFieldAccessor<Vector3> fieldAccessor)
+        {
+            nuint elementCount = data.ElementCount;
+            var ptr = data.Ptr;
+            if(BitConverter.IsLittleEndian == false) {
+                throw new PlatformNotSupportedException("Big endian environment is not supported.");
+            }
+            for(nuint i = 0; i < elementCount / 3; i++) {
+                fieldAccessor.Field(dest[i]) = new()
+                {
+                    X = ((float*)ptr)[i * 3],
+                    Y = ((float*)ptr)[i * 3 + 1],
+                    Z = ((float*)ptr)[i * 3 + 2],
+                };
+            }
+            return elementCount;
+        }
+
+        private unsafe static nuint WriteVector2(in BufferData data, TVertex* dest, VertexFieldAccessor<Vector2> fieldAccessor)
+        {
+            nuint elementCount = data.ElementCount;
+            if(BitConverter.IsLittleEndian == false) {
+                throw new PlatformNotSupportedException("Big endian environment is not supported.");
+            }
+            var ptr = data.Ptr;
+            for(nuint i = 0; i < elementCount / 2; i++) {
+                fieldAccessor.Field(dest[i]) = new()
+                {
+                    X = ((float*)ptr)[i * 2],
+                    Y = ((float*)ptr)[i * 2 + 1],
+                };
+            }
+            return elementCount;
+        }
+    }
+
+    //private static class Foo
+    //{
+    //    public unsafe static void CalcTangent<TVertex>(TVertex* vertices, nuint vLength, uint* indices, nuint iLength) where TVertex : unmanaged
+    //    {
+    //        var vt = VertexMarshalHelper.GetVertexTypeData(typeof(TVertex));
+    //        var posField = vt.GetFieldAccessor<Vector3>(VertexSpecialField.Position);
+    //        var normalField = vt.GetFieldAccessor<Vector3>(VertexSpecialField.Normal);
+    //        var tangentField = vt.GetFieldAccessor<Vector3>(VertexSpecialField.Tangent);
+
+
+    //        for(nuint i = 0; i < vLength; i++) {
+    //            ref var tangent = ref tangentField.Field(vertices[i]);
+    //            //vertices[i].
+    //        }
+    //    }
+    //}
 }
