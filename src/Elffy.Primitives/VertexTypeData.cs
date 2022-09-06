@@ -58,6 +58,9 @@ namespace Elffy
             return field;
         }
 
+        public bool HasField(string fieldName) => TryGetField(fieldName, out _);
+        public bool HasField(VertexSpecialField specialField) => TryGetField(specialField, out _);
+
         public bool TryGetFieldAccessor<TField>(string fieldName, out VertexFieldAccessor<TField> accessor) where TField : unmanaged
         {
             if(TryGetField(fieldName, out var field)) {

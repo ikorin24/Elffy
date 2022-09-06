@@ -204,6 +204,7 @@ public static class GlbModelBuilder
         }
 
         // indices
+        var indicesOutput = meshPrimitivePart.GetIndicesWriter();
         if(meshPrimitive.indices.TryGetValue(out var indicesNum)) {
             ref readonly var indices = ref GetItemOrThrow(gltf.accessors, indicesNum);
             if(indices is not
@@ -213,8 +214,22 @@ public static class GlbModelBuilder
                 }) {
                 ThrowInvalidGlb();
             }
-            var indicesOutput = meshPrimitivePart.GetIndicesWriter();
             AccessData(in state, indices, indicesOutput, BufferWriteDestinationMode.AllocateNewWithoutInit, &StoreIndices);
+        }
+
+        // Calculate tangent
+        var needToCalcTangent =
+            attrs.POSITION.HasValue &&
+            attrs.NORMAL.HasValue &&
+            attrs.TEXCOORD_0.HasValue &&
+            attrs.TANGENT.HasValue == false &&
+            VertexMarshalHelper.GetVertexTypeData<TVertex>().HasField(VertexSpecialField.Tangent);
+        if(needToCalcTangent) {
+            TVertex* vertices = verticesOutput.GetWrittenBufffer(out var vLength);
+
+            // Length of indices can be 0 in case of non indexed vertices.
+            uint* indices = indicesOutput.GetWrittenBufffer(out var iLength);
+            GlbVertexWriter<TVertex>.CalcTangents(vertices, vLength, indices, iLength);
         }
 
         state.Tasks.Add(meshPrimitivePart.GetApplyMeshTask(state.Screen));
@@ -669,22 +684,84 @@ public static class GlbModelBuilder
                 fieldAccessor.Field(dest[i]) = *(TData*)(ptr + byteStride * i);
             }
         }
+
+        public unsafe static void CalcTangents(TVertex* vertices, nuint vLength, uint* indices, nuint iLength)
+        {
+            var vtype = VertexMarshalHelper.GetVertexTypeData<TVertex>();
+            if(vtype.TryGetFieldAccessor<Vector3>(VertexSpecialField.Position, out var posField) == false) {
+                return;
+            }
+            if(vtype.TryGetFieldAccessor<Vector2>(VertexSpecialField.UV, out var uvField) == false) {
+                return;
+            }
+            if(vtype.TryGetFieldAccessor<Vector3>(VertexSpecialField.Tangent, out var tangentField) == false) {
+                return;
+            }
+
+            if(iLength == 0) {
+                // non indexed vertices
+
+                for(nuint i = 0; i < vLength / 3; i++) {
+                    var i0 = i * 3;
+                    var i1 = i * 3 + 1;
+                    var i2 = i * 3 + 2;
+                    var tangent = CalcTangent(
+                        posField.Field(vertices[i0]),
+                        posField.Field(vertices[i1]),
+                        posField.Field(vertices[i2]),
+                        uvField.Field(vertices[i0]),
+                        uvField.Field(vertices[i1]),
+                        uvField.Field(vertices[i2])).Normalized();
+                    tangentField.Field(vertices[i0]) = tangent;
+                    tangentField.Field(vertices[i1]) = tangent;
+                    tangentField.Field(vertices[i2]) = tangent;
+                }
+            }
+            else {
+                // indexed vertices
+
+                for(nuint i = 0; i < iLength / 3; i++) {
+                    var i0 = indices[i * 3];
+                    var i1 = indices[i * 3 + 1];
+                    var i2 = indices[i * 3 + 2];
+                    if(i0 >= vLength) { ThrowIndexOutOfRange(nameof(vertices), i0, vLength); }
+                    if(i1 >= vLength) { ThrowIndexOutOfRange(nameof(vertices), i1, vLength); }
+                    if(i2 >= vLength) { ThrowIndexOutOfRange(nameof(vertices), i2, vLength); }
+                    var tangent = CalcTangent(
+                        posField.Field(vertices[i0]),
+                        posField.Field(vertices[i1]),
+                        posField.Field(vertices[i2]),
+                        uvField.Field(vertices[i0]),
+                        uvField.Field(vertices[i1]),
+                        uvField.Field(vertices[i2])
+                    );
+                    tangentField.Field(vertices[i0]) += tangent;
+                    tangentField.Field(vertices[i1]) += tangent;
+                    tangentField.Field(vertices[i2]) += tangent;
+                }
+                for(nuint i = 0; i < vLength; i++) {
+                    tangentField.Field(vertices[i]).Normalize();
+                }
+            }
+            return;
+
+            static Vector3 CalcTangent(in Vector3 pos0, in Vector3 pos1, in Vector3 pos2, in Vector2 uv0, in Vector2 uv1, in Vector2 uv2)
+            {
+                var deltaUV1 = uv1 - uv0;
+                var deltaUV2 = uv2 - uv0;
+                var deltaPos1 = pos1 - pos0;
+                var deltaPos2 = pos2 - pos0;
+                var d = 1f / (deltaUV1.X * deltaUV2.Y - deltaUV1.Y * deltaUV2.X);
+                var tangent = d * (deltaUV2.Y * deltaPos1 - deltaUV1.Y * deltaPos2);
+#if DEBUG
+                var bitangent = d * (deltaUV1.X * deltaPos2 - deltaUV2.X * deltaPos1);
+#endif
+                return tangent;
+            }
+
+            [DoesNotReturn]
+            static void ThrowIndexOutOfRange(string name, nuint index, nuint len) =>
+                throw new IndexOutOfRangeException($"Index was outside the bounds of the array. (index: {index}, {name}.Length: {len})");
+        }
     }
-
-    //private static class Foo
-    //{
-    //    public unsafe static void CalcTangent<TVertex>(TVertex* vertices, nuint vLength, uint* indices, nuint iLength) where TVertex : unmanaged
-    //    {
-    //        var vt = VertexMarshalHelper.GetVertexTypeData(typeof(TVertex));
-    //        var posField = vt.GetFieldAccessor<Vector3>(VertexSpecialField.Position);
-    //        var normalField = vt.GetFieldAccessor<Vector3>(VertexSpecialField.Normal);
-    //        var tangentField = vt.GetFieldAccessor<Vector3>(VertexSpecialField.Tangent);
-
-
-    //        for(nuint i = 0; i < vLength; i++) {
-    //            ref var tangent = ref tangentField.Field(vertices[i]);
-    //            //vertices[i].
-    //        }
-    //    }
-    //}
 }
