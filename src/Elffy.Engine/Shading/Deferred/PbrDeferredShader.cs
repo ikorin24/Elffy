@@ -30,6 +30,7 @@ namespace Elffy.Shading.Deferred
         protected override void OnProgramDisposed()
         {
             _texture?.Dispose();
+            _texture = null;
             base.OnProgramDisposed();
         }
 

@@ -2,15 +2,20 @@
 using System;
 using Elffy.Graphics.OpenGL;
 using Elffy.Imaging;
-using Elffy.Features;
 using Elffy.Features.Implementation;
+using Elffy.Features;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace Elffy;
 
 public sealed class Texture : IContextAssociatedSafety
 {
+    private bool _disposed;
     private ContextAssociatedSafetyImpl _safetyImpl;    // Mutable object, Don't change into readonly
     private TextureCore _textureCore;                   // Mutable object, Don't change into readonly
+
+    public bool IsDisposed => _disposed;
 
     public TextureExpansionMode ExpansionMode => _textureCore.ExpansionMode;
     public TextureShrinkMode ShrinkMode => _textureCore.ShrinkMode;
@@ -34,10 +39,11 @@ public sealed class Texture : IContextAssociatedSafety
         _textureCore = new TextureCore(config);
     }
 
-    ~Texture() => _safetyImpl.OnFinalized();
+    ~Texture() => Dispose(false);
 
     public void Load<T>(in Vector2i size, ImageBuilderDelegate<T> imageBuilder, T state)
     {
+        ThrowIfDisposed();
         _textureCore.Load(state, size, imageBuilder);
         _safetyImpl.TryRegisterToCurrentContext(this, static x => x.DisposeContextAssociatedMemory());
     }
@@ -46,6 +52,7 @@ public sealed class Texture : IContextAssociatedSafety
     /// <param name="image">image to load</param>
     public void Load(in ReadOnlyImageRef image)
     {
+        ThrowIfDisposed();
         _textureCore.Load(image);
         _safetyImpl.TryRegisterToCurrentContext(this, static x => x.DisposeContextAssociatedMemory());
     }
@@ -56,6 +63,7 @@ public sealed class Texture : IContextAssociatedSafety
     /// <param name="fill">color to fill all pixels with</param>
     public unsafe void Load(in Vector2i size, in ColorByte fill)
     {
+        ThrowIfDisposed();
         _textureCore.Load(size, fill);
         _safetyImpl.TryRegisterToCurrentContext(this, static x => x.DisposeContextAssociatedMemory());
     }
@@ -65,6 +73,7 @@ public sealed class Texture : IContextAssociatedSafety
     /// <param name="size">texture size</param>
     public void LoadUndefined(in Vector2i size)
     {
+        ThrowIfDisposed();
         _textureCore.LoadUndefined(size);
         _safetyImpl.TryRegisterToCurrentContext(this, static x => x.DisposeContextAssociatedMemory());
     }
@@ -79,17 +88,19 @@ public sealed class Texture : IContextAssociatedSafety
 
     public void Dispose()
     {
-        GC.SuppressFinalize(this);
+        _safetyImpl.ThrowIfAssociatedContextMismatch();
         Dispose(true);
+        GC.SuppressFinalize(this);
+        _disposed = true;
     }
 
     private void Dispose(bool disposing)
     {
-        if(disposing && _safetyImpl.IsAssociatedWithCurrentContext()) {
+        if(disposing) {
             DisposeContextAssociatedMemory();
         }
         else {
-            _safetyImpl.OnFinalized();
+            _safetyImpl.OnFinalized(this);
         }
     }
 
@@ -97,58 +108,13 @@ public sealed class Texture : IContextAssociatedSafety
     {
         _textureCore.Dispose();
     }
-}
 
-public interface IContextAssociatedSafety : IDisposable
-{
-    IHostScreen? AssociatedContext { get; }
-
-    bool IsAssociatedWithCurrentContext()
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ThrowIfDisposed()
     {
-        var current = Engine.CurrentContext;
-        return current != null && current == AssociatedContext;
-    }
-}
-
-public struct ContextAssociatedSafetyImpl
-{
-    private bool _isSafetyRegistered;
-    private IHostScreen? _associatedContext;
-    private ContextAssociatedMemorySafety.SafetyKey _safety;
-
-    public readonly IHostScreen? AssociatedContext => _associatedContext;
-
-    public readonly bool IsAssociatedWithCurrentContext()
-    {
-        var current = Engine.CurrentContext;
-        return current != null && current == _associatedContext;
-    }
-
-    public bool TryRegister<T>(T obj, IHostScreen screen, Action<T> release) where T : class, IContextAssociatedSafety
-    {
-        if(obj == null) { return false; }
-        if(screen == null) { return false; }
-        if(_isSafetyRegistered) {
-            return false;
-        }
-        _safety = ContextAssociatedMemorySafety.RegisterNonDisposable(obj, release, screen);
-        _associatedContext = screen;
-        _isSafetyRegistered = true;
-        return true;
-    }
-
-    public bool TryRegisterToCurrentContext<T>(T obj, Action<T> disposeAction) where T : class, IContextAssociatedSafety
-    {
-        if(obj == null) { return false; }
-        var screen = Engine.CurrentContext;
-        if(screen == null) { return false; }
-        return TryRegister(obj, screen, disposeAction);
-    }
-
-    public readonly void OnFinalized()
-    {
-        if(_isSafetyRegistered) {
-            ContextAssociatedMemorySafety.OnFinalized(_safety);
+        if(_disposed) {
+            Throw();
+            [DoesNotReturn] static void Throw() => throw new ObjectDisposedException(nameof(Texture));
         }
     }
 }
