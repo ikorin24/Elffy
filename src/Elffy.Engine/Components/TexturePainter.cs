@@ -8,7 +8,7 @@ using Elffy.Effective;
 using Elffy.Imaging;
 using Elffy.Graphics.OpenGL;
 using SkiaSharp;
-using Elffy.Components.Implementation;
+using Elffy.Features.Implementation;
 
 namespace Elffy.Components
 {

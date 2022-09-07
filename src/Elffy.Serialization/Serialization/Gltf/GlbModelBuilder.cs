@@ -12,11 +12,13 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 using System.Threading;
-using TextureConfig = Elffy.Components.TextureConfig;
-using TextureWrapMode = Elffy.Components.TextureWrapMode;
-using TextureExpansionMode = Elffy.Components.TextureExpansionMode;
-using TextureMipmapMode = Elffy.Components.TextureMipmapMode;
-using TextureShrinkMode = Elffy.Components.TextureShrinkMode;
+using G = Elffy.Serialization.Gltf.Parsing;
+
+using TextureConfig = Elffy.TextureConfig;
+using TextureWrapMode = Elffy.TextureWrapMode;
+using TextureExpansionMode = Elffy.TextureExpansionMode;
+using TextureMipmapMode = Elffy.TextureMipmapMode;
+using TextureShrinkMode = Elffy.TextureShrinkMode;
 using ImageData = Elffy.Imaging.Image;
 using ImageDataType = Elffy.Imaging.ImageType;
 using ReadOnlyImageRef = Elffy.Imaging.ReadOnlyImageRef;
@@ -393,7 +395,7 @@ public static class GlbModelBuilder
         };
     }
 
-    private static bool TryReadTexture(in BuilderState state, in Texture texture, out ImageData imageData, out TextureConfig config)
+    private static bool TryReadTexture(in BuilderState state, in G.Texture texture, out ImageData imageData, out TextureConfig config)
     {
         var gltf = state.Gltf;
         if(texture.source.TryGetValue(out var imageNum)) {
@@ -403,7 +405,7 @@ public static class GlbModelBuilder
                 config = ToTextureConfig(sampler);
             }
             else {
-                config = Components.TextureConfig.Default;
+                config = TextureConfig.Default;
             }
             imageData = ReadImage(in state, in image);
             return true;

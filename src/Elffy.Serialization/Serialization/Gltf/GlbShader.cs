@@ -1,12 +1,12 @@
 ﻿#nullable enable
 using Elffy.Components;
-using Elffy.Components.Implementation;
 using Elffy.Imaging;
 using Elffy.Shading;
 using Elffy.Graphics.OpenGL;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using Elffy.Features;
+using Elffy.Features.Implementation;
 
 namespace Elffy.Serialization.Gltf;
 
@@ -68,6 +68,7 @@ internal sealed class GlbShader : SingleTargetRenderingShader
         definition.Map(vertexType, "_pos", VertexSpecialField.Position);
         definition.Map(vertexType, "_uv", VertexSpecialField.UV);
         definition.Map(vertexType, "_normal", VertexSpecialField.Normal);
+        definition.Map(vertexType, "_tangent", VertexSpecialField.Tangent);
     }
 
     protected override void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
@@ -105,12 +106,14 @@ internal sealed class GlbShader : SingleTargetRenderingShader
 in vec3 _pos;
 in vec2 _uv;
 in vec3 _normal;
+in vec3 _tangent;
 out vec2 _vUV;
 out vec3 _vNormal;
 uniform mat4 _mvp;
 void main()
 {
     _vUV = _uv;
+    _vNormal = _normal;
     gl_Position = _mvp * vec4(_pos, 1.0);
 }
 ",

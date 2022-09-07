@@ -6,7 +6,7 @@ namespace Elffy.Shading.Deferred
 {
     public sealed class PbrDeferredShader : RenderingShader
     {
-        private ShaderTextureSelector<PbrDeferredShader>? _textureSelector;
+        private Texture? _texture;
         private Color3 _baseColor;
         private float _metallic;
         private float _roughness;
@@ -14,20 +14,23 @@ namespace Elffy.Shading.Deferred
         public ref Color3 BaseColor => ref _baseColor;
         public float Metallic { get => _metallic; set => _metallic = value; }
         public float Roughness { get => _roughness; set => _roughness = value; }
+        public Texture? Texture { get => _texture; set => _texture = value; }
 
-        public ShaderTextureSelector<PbrDeferredShader>? TextureSelector { get => _textureSelector; set => _textureSelector = value; }
-
-        public PbrDeferredShader(ShaderTextureSelector<PbrDeferredShader>? textureSelector = null)
+        public PbrDeferredShader()
         {
-            _textureSelector = textureSelector;
         }
 
-        public PbrDeferredShader(Color3 albedo, float metallic, float roughness, ShaderTextureSelector<PbrDeferredShader>? textureSelector = null)
+        public PbrDeferredShader(Color3 albedo, float metallic, float roughness)
         {
             _baseColor = albedo;
             _metallic = metallic;
             _roughness = roughness;
-            _textureSelector = textureSelector;
+        }
+
+        protected override void OnProgramDisposed()
+        {
+            _texture?.Dispose();
+            base.OnProgramDisposed();
         }
 
         protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
@@ -44,11 +47,11 @@ namespace Elffy.Shading.Deferred
             dispatcher.SendUniform("_mvp", projection * view * model);
             dispatcher.SendUniform("_baseColorMetallic", new Color4(_baseColor, _metallic));
             dispatcher.SendUniform("_roughness", _roughness);
-
-            var selector = _textureSelector ?? DefaultShaderTextureSelector<PbrDeferredShader>.Default;
-            var hasTexture = selector.Invoke(this, target, out var texObj);
-            dispatcher.SendUniformTexture2D("_tex", texObj, TextureUnitNumber.Unit0);
-            dispatcher.SendUniform("_hasTexture", hasTexture);
+            var texture = _texture;
+            if(texture != null) {
+                dispatcher.SendUniformTexture2D("_tex", texture.TextureObject, TextureUnitNumber.Unit0);
+            }
+            dispatcher.SendUniform("_hasTexture", texture != null);
         }
 
         protected override ShaderSource GetShaderSource(Renderable target, WorldLayer layer)

@@ -65,26 +65,26 @@ namespace Elffy.Serialization.Fbx
             // ↓ main thread --------------------------------------
             var screen = model.GetValidScreen();
             Debug.Assert(Engine.CurrentContext == screen);
-            var texture = new MultiTexture();
-            model.AddComponent(texture);
-            using var textureLoader = texture.GetLoaderContext(fbx.Textures.Length);
-            try {
-                for(int i = 0; i < fbx.Textures.Length; i++) {
-                    var texPath = fbx.Textures[i];
-                    var path = texPath.ToString().Replace('\\', '/');
-                    Debug.WriteLine(path);
-                    continue;
+            //var texture = new MultiTexture();
+            //model.AddComponent(texture);
+            //using var textureLoader = texture.GetLoaderContext(fbx.Textures.Length);
+            //try {
+            //    for(int i = 0; i < fbx.Textures.Length; i++) {
+            //        var texPath = fbx.Textures[i];
+            //        var path = texPath.ToString().Replace('\\', '/');
+            //        Debug.WriteLine(path);
+            //        continue;
 
-                    // TODO: パスの解決
-                    //var name = path;
-                    //using var image = await file.ResourceLoader.LoadImageAsync(name, screen.AsyncBack, FrameTiming.Update);
-                    //textureLoader.Load(i, image);
-                }
-            }
-            catch {
-                (texture as IDisposable).Dispose();
-                throw;
-            }
+            //        // TODO: パスの解決
+            //        //var name = path;
+            //        //using var image = await file.ResourceLoader.LoadImageAsync(name, screen.AsyncBack, FrameTiming.Update);
+            //        //textureLoader.Load(i, image);
+            //    }
+            //}
+            //catch {
+            //    (texture as IDisposable).Dispose();
+            //    throw;
+            //}
             return UniTask.CompletedTask;
         }
     }

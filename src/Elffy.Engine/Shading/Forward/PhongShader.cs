@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using Elffy;
 using Elffy.Graphics.OpenGL;
 using System;
 
@@ -15,7 +16,7 @@ namespace Elffy.Shading.Forward
         private Color3 _diffuse;
         private Color3 _specular;
         private float _shininess;
-        private ShaderTextureSelector<PhongShader>? _textureSelector;
+        private Texture? _texture;
 
         public ref Color3 Ambient => ref _ambient;
         public ref Color3 Diffuse => ref _diffuse;
@@ -25,32 +26,26 @@ namespace Elffy.Shading.Forward
             get => _shininess;
             set => _shininess = value;
         }
-        public ShaderTextureSelector<PhongShader>? TextureSelector
-        {
-            get => _textureSelector;
-            set => _textureSelector = value;
-        }
+        public Texture? Texture { get => _texture; set => _texture = value; }
 
-        public PhongShader(ShaderTextureSelector<PhongShader>? textureSelector = null) : this(Color3.White, textureSelector)
+        public PhongShader() : this(Color3.White)
         {
         }
 
-        public PhongShader(Color3 color, ShaderTextureSelector<PhongShader>? textureSelector = null)
+        public PhongShader(Color3 color)
         {
             _ambient = new Color3(color.R * DefaultAFactor, color.G * DefaultAFactor, color.B * DefaultAFactor);
             _diffuse = new Color3(color.R * DefaultDFactor, color.G * DefaultDFactor, color.B * DefaultDFactor);
             _specular = new Color3(color.R * DefaultSFactor, color.G * DefaultSFactor, color.B * DefaultSFactor);
             _shininess = DefaultShininess;
-            _textureSelector = textureSelector;
         }
 
-        public PhongShader(Color3 ambient, Color3 diffuse, Color3 specular, float shininess, ShaderTextureSelector<PhongShader>? textureSelector = null)
+        public PhongShader(Color3 ambient, Color3 diffuse, Color3 specular, float shininess)
         {
             _ambient = ambient;
             _diffuse = diffuse;
             _specular = specular;
             _shininess = shininess;
-            _textureSelector = textureSelector;
         }
 
         public void SetColor(Color3 color)
@@ -58,6 +53,12 @@ namespace Elffy.Shading.Forward
             _ambient = new Color3(color.R * DefaultAFactor, color.G * DefaultAFactor, color.B * DefaultAFactor);
             _diffuse = new Color3(color.R * DefaultDFactor, color.G * DefaultDFactor, color.B * DefaultDFactor);
             _specular = new Color3(color.R * DefaultSFactor, color.G * DefaultSFactor, color.B * DefaultSFactor);
+        }
+
+        protected override void OnProgramDisposed()
+        {
+            _texture?.Dispose();
+            base.OnProgramDisposed();
         }
 
         protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
@@ -78,10 +79,11 @@ namespace Elffy.Shading.Forward
             dispatcher.SendUniform("view", view);
             dispatcher.SendUniform("modelView", view * model);
 
-            var selector = _textureSelector ?? DefaultShaderTextureSelector<PhongShader>.Default;
-            var hasTexture = selector.Invoke(this, target, out var texObj);
-            dispatcher.SendUniformTexture2D("tex_sampler", texObj, TextureUnitNumber.Unit0);
-            dispatcher.SendUniform("hasTexture", hasTexture);
+            var texture = _texture;
+            if(texture != null) {
+                dispatcher.SendUniformTexture2D("tex_sampler", texture.TextureObject, TextureUnitNumber.Unit0);
+            }
+            dispatcher.SendUniform("hasTexture", texture != null);
 
             var screen = target.GetValidScreen();
             var lights = screen.Lights;

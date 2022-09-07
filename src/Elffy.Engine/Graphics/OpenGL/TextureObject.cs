@@ -4,11 +4,10 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using OpenTK.Graphics.OpenGL4;
 using Elffy.Imaging;
-using Elffy.Components;
 using TKPixelType = OpenTK.Graphics.OpenGL4.PixelType;
 using TKPixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 using GLTextureWrapMode = OpenTK.Graphics.OpenGL4.TextureWrapMode;
-using TextureWrapMode = Elffy.Components.TextureWrapMode;
+using TextureWrapMode = Elffy.TextureWrapMode;
 
 namespace Elffy.Graphics.OpenGL
 {

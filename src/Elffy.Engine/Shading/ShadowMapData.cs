@@ -1,9 +1,8 @@
 ﻿#nullable enable
 using System;
-using Elffy.Components;
 using Elffy.Graphics.OpenGL;
 using OpenTK.Graphics.OpenGL4;
-using TextureWrapMode = Elffy.Components.TextureWrapMode;
+using TextureWrapMode = Elffy.TextureWrapMode;
 
 namespace Elffy.Shading
 {

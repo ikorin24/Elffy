@@ -3,7 +3,6 @@ using Elffy.Imaging;
 using Elffy.Graphics.OpenGL;
 using System;
 using System.Diagnostics.CodeAnalysis;
-using Elffy.Components;
 
 namespace Elffy.Features
 {

@@ -6,7 +6,6 @@ using Elffy.Mathematics;
 using Elffy.Shapes;
 using Elffy.Shading.Deferred;
 using Elffy.Shading.Forward;
-using Elffy.Components;
 using Elffy.UI;
 using Elffy.Shading;
 using Elffy.Threading;
@@ -44,6 +43,7 @@ namespace Sandbox
                     () => new WorldLayer(),
                     () => new UILayer());
 
+            await CreateCameraMouse(wLayer, new Vector3(0, 3, 0));
             await InitializeLights(wLayer);
             var uiRoot = uiLayer.UIRoot;
             var update = screen.Timings.Update;
@@ -53,12 +53,12 @@ namespace Sandbox
                     new Gizmo().Activate(wLayer),
                     //Sample.CreateUI(uiLayer.UIRoot),
                     CreateDice2(drLayer),
-                    CreateCameraMouse(wLayer, new Vector3(0, 3, 0)),
                     CreateDice(wLayer),
                     CreateDiceWireframe(wLayer),
                     CreateModel2(wLayer),
                     CreateBox(drLayer),
                     CreateFloor(drLayer),
+                    CreateModel3(wLayer),
                     //CreateSky(wLayer),
                     new Sphere()
                     {
@@ -92,19 +92,19 @@ namespace Sandbox
 
             var color = Color4.White;
             var (
-                arrow,
+                //arrow,
                 sphere,
                 light
                 ) = await UniTask.WhenAll(
-                new Arrow
-                {
-                    Shader = new SolidColorShader
-                    {
-                        Color = color,
-                    },
-                    HasShadow = false,
-                    Scale = new Vector3(2)
-                }.Activate(layer),
+                //new Arrow
+                //{
+                //    Shader = new SolidColorShader
+                //    {
+                //        Color = color,
+                //    },
+                //    HasShadow = false,
+                //    Scale = new Vector3(2)
+                //}.Activate(layer),
                 new Sphere
                 {
                     Shader = new SolidColorShader
@@ -127,7 +127,7 @@ namespace Sandbox
 
                 //light.Position = sphere.Position;
                 light.Direction = -sphere.Position;
-                arrow.SetDirection(-sphere.Position.Normalized(), sphere.Position);
+                //arrow.SetDirection(-sphere.Position.Normalized(), sphere.Position);
             });
 
             UniTask.Void(async () =>
@@ -143,35 +143,38 @@ namespace Sandbox
             });
         }
 
-        private static UniTask<Model3D> CreateDice(WorldLayer layer)
+        private static async UniTask<Model3D> CreateDice(WorldLayer layer)
         {
+            var timing = layer.GetValidScreen().Timings.Update;
             var dice = Resources.Sandbox["Dice.fbx"].CreateFbxModel();
-            dice.AddComponent(Resources.Sandbox["Dice.png"].LoadTexture());
-            dice.Shader = new PhongShader();
+            dice.Shader = new PhongShader
+            {
+                Texture = await Resources.Sandbox["Dice.png"].LoadTextureAsync(timing),
+            };
             dice.Position = new Vector3(3, 1, -2);
-            return dice.Activate(layer);
+            return await dice.Activate(layer);
         }
 
         private static UniTask<Model3D> CreateDiceWireframe(WorldLayer layer)
         {
             var dice = Resources.Sandbox["Dice.fbx"].CreateFbxModel();
-            dice.AddComponent(Resources.Sandbox["Dice.png"].LoadTexture());
             dice.Shader = new WireframeShader();
             dice.Position = new Vector3(5, 1, 0);
             return dice.Activate(layer);
         }
 
-        private static UniTask<Model3D> CreateDice2(DeferredRenderingLayer layer)
+        private static async UniTask<Model3D> CreateDice2(DeferredRenderingLayer layer)
         {
+            var timing = layer.GetValidScreen().Timings.Update;
             var dice = Resources.Sandbox["Dice.fbx"].CreateFbxModel();
-            dice.AddComponent(Resources.Sandbox["Dice.png"].LoadTexture());
             dice.Position = new Vector3(3, 1, 2);
             dice.Shader = new PbrDeferredShader()
             {
+                Texture = await Resources.Sandbox["Dice.png"].LoadTextureAsync(timing),
                 Metallic = 0f,
                 Roughness = 0.02f,
             };
-            return dice.Activate(layer);
+            return await dice.Activate(layer);
         }
 
         private static async UniTask<Model3D> CreateModel2(WorldLayer layer)
@@ -195,6 +198,12 @@ namespace Sandbox
             return model;
         }
 
+        private static async UniTask<Model3D> CreateModel3(WorldLayer layer)
+        {
+            var model = await Elffy.Serialization.Gltf.GlbModelBuilder.CreateLazyLoadingGlb(Resources.Sandbox["AntiqueCamera.glb"]).Activate(layer);
+            return model;
+        }
+
         private static UniTask<SkySphere> CreateSky(WorldLayer layer)
         {
             var sky = new SkySphere();
@@ -206,14 +215,15 @@ namespace Sandbox
         private static async UniTask<Plain> CreateFloor(WorldLayer layer)
         {
             var timing = layer.GetValidScreen().Timings.Update;
-            var plain = new Plain();
-            plain.Scale = new Vector3(40f);
-            plain.Shader = new PhongShader();
-            var config = new TextureConfig(TextureExpansionMode.NearestNeighbor, TextureShrinkMode.NearestNeighbor,
-                                           TextureMipmapMode.None, TextureWrapMode.ClampToEdge, TextureWrapMode.ClampToEdge);
-            var texture = await Resources.Sandbox["floor.png"].LoadTextureAsync(config, timing);
-            plain.AddComponent(texture);
-            plain.Rotation = Quaternion.FromAxisAngle(Vector3.UnitX, -90.ToRadian());
+            var plain = new Plain
+            {
+                Shader = new PhongShader
+                {
+                    Texture = await Resources.Sandbox["floor.png"].LoadTextureAsync(TextureConfig.DefaultNearestNeighbor, timing),
+                },
+                Scale = new Vector3(40f),
+                Rotation = Quaternion.FromAxisAngle(Vector3.UnitX, -90.ToRadian()),
+            };
             return await plain.Activate(layer);
         }
 
@@ -228,11 +238,9 @@ namespace Sandbox
                 {
                     Metallic = 0,
                     Roughness = 0.25f,
+                    Texture = await Resources.Sandbox["floor.png"].LoadTextureAsync(TextureConfig.DefaultNearestNeighbor, timing),
                 },
             };
-            var texture = await Resources.Sandbox["floor.png"]
-                .LoadTextureAsync(TextureConfig.DefaultNearestNeighbor, timing);
-            dice.AddComponent(texture);
             return await dice.Activate(layer);
         }
 
@@ -259,14 +267,16 @@ namespace Sandbox
         private static async UniTask<Cube> CreateBox(DeferredRenderingLayer layer)
         {
             var timing = layer.GetValidScreen().Timings.Update;
-            var cube = new Cube();
-            cube.Position = new(-3, 0.5f, 0);
-            cube.Shader = new PbrDeferredShader
+            var cube = new Cube
             {
-                Metallic = 0f,
-                Roughness = 0.15f,
+                Position = new(-3, 0.5f, 0),
+                Shader = new PbrDeferredShader
+                {
+                    Metallic = 0f,
+                    Roughness = 0.15f,
+                    Texture = await Resources.Sandbox["box.png"].LoadTextureAsync(timing),
+                }
             };
-            cube.AddComponent(await Resources.Sandbox["box.png"].LoadTextureAsync(timing));
             await cube.Activate(layer);
             cube.StartCoroutine(static async (coroutine, cube) =>
             {

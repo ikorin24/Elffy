@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using Elffy;
 using Elffy.Graphics.OpenGL;
 using System;
 
@@ -7,17 +8,18 @@ namespace Elffy.Shading.Forward
     /// <summary>Simple shader which displays texture.</summary>
     public sealed class TextureShader : RenderingShader
     {
-        private ShaderTextureSelector<TextureShader>? _textureSelector;
+        private Texture? _texture;
 
-        public ShaderTextureSelector<TextureShader>? TextureSelector
+        public Texture? Texture { get => _texture; set => _texture = value; }
+
+        public TextureShader()
         {
-            get => _textureSelector;
-            set => _textureSelector = value;
         }
 
-        public TextureShader(ShaderTextureSelector<TextureShader>? textureSelector = null)
+        protected override void OnProgramDisposed()
         {
-            _textureSelector = textureSelector;
+            _texture?.Dispose();
+            base.OnProgramDisposed();
         }
 
         protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
@@ -28,24 +30,17 @@ namespace Elffy.Shading.Forward
 
         protected override void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
         {
-            var selector = _textureSelector ?? DefaultShaderTextureSelector<TextureShader>.Default;
-            var hasTexture = selector.Invoke(this, target, out var texObj);
-
-            dispatcher.SendUniform("_hasTexture", hasTexture);
-            dispatcher.SendUniformTexture2D("_sampler", texObj, TextureUnitNumber.Unit0);
+            var texture = _texture;
+            dispatcher.SendUniform("_hasTexture", texture != null);
+            if(texture != null) {
+                dispatcher.SendUniformTexture2D("_sampler", texture.TextureObject, TextureUnitNumber.Unit0);
+            }
             dispatcher.SendUniform("_mvp", projection * view * model);
         }
 
-        protected override ShaderSource GetShaderSource(Renderable target, WorldLayer layer)
+        protected override ShaderSource GetShaderSource(Renderable target, WorldLayer layer) => new()
         {
-            return new()
-            {
-                VertexShader = VertSource,
-                FragmentShader = FragSource,
-            };
-        }
-
-        private const string VertSource =
+            VertexShader =
 @"#version 410
 in vec3 _pos;
 in vec2 _uv;
@@ -56,9 +51,8 @@ void main()
     gl_Position = _mvp * vec4(_pos, 1.0);
     _vUV = _uv;
 }
-";
-
-        private const string FragSource =
+",
+            FragmentShader =
 @"#version 410
 in vec2 _vUV;
 uniform sampler2D _sampler;
@@ -73,6 +67,7 @@ void main()
         _fragColor = vec4(1.0, 0.0, 1.0, 1.0);
     }
 }
-";
+",
+        };
     }
 }

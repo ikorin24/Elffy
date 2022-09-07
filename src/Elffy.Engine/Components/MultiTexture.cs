@@ -6,9 +6,11 @@ using Elffy.Graphics.OpenGL;
 using System;
 using System.Runtime.CompilerServices;
 using Elffy.Features;
+using Elffy.Features.Implementation;
 
 namespace Elffy.Components
 {
+    [Obsolete("Don't use the type", true)]
     public class MultiTexture : ISingleOwnerComponent
     {
         private SingleOwnerComponentCore _core;             // Mutable object, Don't change into readonly
@@ -143,6 +145,7 @@ namespace Elffy.Components
         }
     }
 
+    [Obsolete("Don't use the type", true)]
     public readonly struct MultiTextureLoaderContext : IDisposable
     {
         private readonly MultiTexture? _multiTexture;
