@@ -23,10 +23,6 @@ internal sealed class GlbShader : SingleTargetRenderingShader
 
     public GlbShader()
     {
-        //Debug.WriteLine($"metallicFactor: {pbr.metallicFactor}");
-        //Debug.WriteLine($"roughnessFactor: {pbr.roughnessFactor}");
-        //var bcf = pbr.baseColorFactor;
-        //Debug.WriteLine($"baseColorFactor: ({bcf.X}, {bcf.Y}, {bcf.Z}, {bcf.W})");
     }
 
     public void SetBaseColorTexture(ReadOnlyImageRef image, TextureConfig config)
@@ -245,21 +241,6 @@ void main()
     vec3 normalTan = texture(_normalTex, _v2f.uv).rgb * 2 - vec3(1, 1, 1);
     vec2 metallicRoughness = texture(_metallicRoughnessTex, _v2f.uv).rg;
 
-    //const float afactor = 0.8;
-    //const float dfactor = 0.35;
-    //const float sfactor = 0.2;
-    //const float shininess = 1;
-    //float dotNL = max(0, dot(normalTan, -_v2f.ldirTan));
-    //vec3 ambient = afactor * baseColor;
-    //vec3 diffuse = dotNL * dfactor * baseColor;
-    //vec3 rTan = reflect(_v2f.ldirTan, normalTan);
-
-    //vec3 V = _v2f.tbn * -(_view * _model * vec4(_v2f.pos, 1)).xyz;
-    //vec3 specular = max(pow(max(0.0, dot(rTan, V)), shininess), 0.0) * sfactor * baseColor;
-    //vec3 result = (ambient + diffuse + specular) * _lcolor.rgb;
-    //_fragColor = vec4(result, 1);
-
-
     vec3 v = -_v2f.cdirTan;
     vec3 n = normalTan;
     vec3 l = -_v2f.ldirTan;
@@ -276,7 +257,6 @@ void main()
     float diffuseTerm = Fd_Burley(dot_nv, dot_nl, dot_lh, roughness) * dot_nl;
     vec3 diffuse = (1.0 - reflectivity) * diffuseTerm * lColor * baseColor;
 
-
     float alpha = roughness * roughness;
     float V = V_SmithGGXCorrelated(dot_nl, dot_nv, alpha);
     float D = D_GGX(n, h, dot_nh, roughness);
@@ -284,10 +264,6 @@ void main()
     vec3 specular = max(V * D * F * dot_nl * lColor, vec3(0.0, 0.0, 0.0));
 
     _fragColor = vec4(diffuse + specular, 1.0);
-    //_fragColor = vec4(F, 1.0);
-    //_fragColor = vec4(dot_nv, 0, 0, 1.0);
-    //_fragColor = vec4((n * 0.5 + 0.5) * 1, 1.0);
-    //_fragColor = vec4((1.0 - reflectivity) * diffuseTerm, 0, 0, 1.0);
 }
 ",
     };
