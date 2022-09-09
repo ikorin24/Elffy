@@ -333,7 +333,7 @@ public static class GlbModelBuilder
                     var loadTexTask = LoadTextureTask(screen, obj, ref imageData, texConfig, shader,
                         static (obj, imageData, texConfig, shader) =>
                         {
-                            // TODO:
+                            shader.SetMetallicRoughnessTexture(imageData, texConfig);
                         });
                     state.Tasks.Add(loadTexTask);
                 }
