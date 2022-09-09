@@ -312,6 +312,9 @@ public static class GlbModelBuilder
 
         if(material.pbrMetallicRoughness != null) {
             var pbr = material.pbrMetallicRoughness.Value;
+            shader.MetallicFactor = pbr.metallicFactor;
+            shader.BaseColorFactor = new Color4(pbr.baseColorFactor.X, pbr.baseColorFactor.Y, pbr.baseColorFactor.Z, pbr.baseColorFactor.W);
+            shader.RoughnessFactor = pbr.roughnessFactor;
 
             // pbr basecolor
             if(pbr.baseColorTexture.TryGetValue(out var baseColorTexInfo)) {
