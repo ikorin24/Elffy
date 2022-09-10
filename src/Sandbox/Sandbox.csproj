@@ -22,6 +22,13 @@
     <AdditionalFiles Include="**/*.e.xml" />
   </ItemGroup>
 
+  <ItemGroup>
+    <AdditionalFiles Remove="Resources\**" />
+    <Compile Remove="Resources\**" />
+    <EmbeddedResource Remove="Resources\**" />
+    <None Remove="Resources\**" />
+  </ItemGroup>
+
   <Target Name="ElffyPostBuildEvent" AfterTargets="PostBuildEvent">
     <Exec Command="dotnet run -c Release --project ../ElffyResourceCompiler/ElffyResourceCompiler.csproj -- -o $(TargetDir)Sandbox.dat $(ProjectDir)Resources" />
   </Target>

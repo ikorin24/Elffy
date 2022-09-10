@@ -11,6 +11,8 @@ using Elffy.Shading;
 using Elffy.Threading;
 using Elffy.Graphics.OpenGL;
 
+[assembly: DefineLocalResource("Sandbox", "Sandbox.dat")]
+
 namespace Sandbox
 {
     public static class Startup
