@@ -27,10 +27,11 @@ public sealed class TypeData
         ["int"] = x => $"((int){int.Parse(x)})",
         ["ulong"] = x => $"((ulong){ulong.Parse(x)})",
         ["long"] = x => $"((long){long.Parse(x)})",
+        ["nint"] = x => $"((nint){long.Parse(x)})",
+        ["nuint"] = x => $"((nuint){ulong.Parse(x)})",
         ["float"] = x => $"((float){float.Parse(x)})",
         ["double"] = x => $"((double){double.Parse(x)})",
         ["decimal"] = x => $"((decimal){decimal.Parse(x)})",
-        // TODO: nint, nuint
         ["bool"] = x => bool.Parse(x) ? "(true)" : "(false)",
     };
 
