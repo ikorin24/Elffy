@@ -17,7 +17,7 @@ namespace Sandbox
     {
         private static void Main(string[] args)
         {
-            new AppStarter
+            AppStarter.Create().WithConfig(new()
             {
                 Width = (int)(1200 * 1.5),
                 Height = (int)(675 * 1.5f),
@@ -26,7 +26,7 @@ namespace Sandbox
                 Style = WindowStyle.Default,
                 Icon = Resources.Sandbox["icon.ico"],
                 IsDebugMode = AssemblyBuildInfo.IsDebug,
-            }.Run(Start);
+            }).Run(Start);
         }
 
         private static async UniTask Start(IHostScreen screen)
