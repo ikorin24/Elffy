@@ -159,8 +159,8 @@ namespace Elffy
                 return;
             }
             var withoutScale = modelParent * Position.ToTranslationMatrix4() * Rotation.ToMatrix4();
-            if(needToRenderSelf) {
-                EnsureShaderInitialized();
+            if(needToRenderSelf && EnsureShaderInitialized()) {
+                //EnsureShaderInitialized();
                 Debug.Assert(_rendererData.State is RendererDataState.Compiled);
                 var model = withoutScale * Scale.ToScaleMatrix4();
                 BeforeRendering?.Invoke(this, in model, in view, in projection);
@@ -171,30 +171,40 @@ namespace Elffy
                 child.RenderRecursively(withoutScale, view, projection);
             }
 
-            void EnsureShaderInitialized()
+            bool EnsureShaderInitialized()
             {
                 if(_rendererData.State == RendererDataState.Compiled) {
-                    return;
+                    return true;
                 }
                 VAO.Bind(_vao);
                 VBO.Bind(_vbo);
-                if(this is UIRenderable ui) {
-                    Debug.Assert(_rendererData.VertexType == typeof(VertexSlim));
-                    if(_rendererData.Shader is null) {
-                        var shader = ControlShaderSelector.GetDefault(ui.Control.GetType());
-                        _rendererData.SetShader(shader);
+                try {
+                    if(this is UIRenderable ui) {
+                        Debug.Assert(_rendererData.VertexType == typeof(VertexSlim));
+                        if(_rendererData.Shader is null) {
+                            var shader = ControlShaderSelector.GetDefault(ui.Control.GetType());
+                            _rendererData.SetShader(shader);
+                        }
+                        _rendererData.CompileForUI(ui.Control);
                     }
-                    _rendererData.CompileForUI(ui.Control);
-                }
-                else {
-                    if(_rendererData.Shader is null) {
-                        _rendererData.SetShader(EmptyShader.Instance);
+                    else {
+                        if(_rendererData.Shader is null) {
+                            _rendererData.SetShader(EmptyShader.Instance);
+                        }
+                        _rendererData.CompileForRenderable(this);
                     }
-                    _rendererData.CompileForRenderable(this);
                 }
-                VAO.Unbind();
-                VBO.Unbind();
+                catch {
+                    if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
+                    // Don't throw, ignore exceptions in user code.
+                    return false;
+                }
+                finally {
+                    VAO.Unbind();
+                    VBO.Unbind();
+                }
                 Debug.Assert(_rendererData.State == RendererDataState.Compiled);
+                return true;
             }
         }
 
@@ -211,8 +221,7 @@ namespace Elffy
                 return;
             }
             var withoutScale = modelParent * Position.ToTranslationMatrix4() * Rotation.ToMatrix4();
-            if(needToRenderSelf) {
-                EnsureShadowRendererInitialized();
+            if(needToRenderSelf && EnsureShadowRendererInitialized()) {
                 Debug.Assert(_shadowRendererData.State == RendererDataState.Compiled);
                 var program = _shadowRendererData.GetValidProgram();
                 var shader = SafeCast.As<RenderShadowMapShader>(_shadowRendererData.GetValidShader());
@@ -229,21 +238,31 @@ namespace Elffy
                 child.RenderShadowMapRecursively(withoutScale, lightViewProjection);
             }
 
-            void EnsureShadowRendererInitialized()
+            bool EnsureShadowRendererInitialized()
             {
                 if(_shadowRendererData.State == RendererDataState.Compiled) {
-                    return;
+                    return true;
                 }
                 VAO.Bind(_vao);
                 VBO.Bind(_vbo);
-                Debug.Assert(this is not UIRenderable);
-                if(_shadowRendererData.Shader is null) {
-                    _shadowRendererData.SetShader(RenderShadowMapShader.Instance);
+                try {
+                    Debug.Assert(this is not UIRenderable);
+                    if(_shadowRendererData.Shader is null) {
+                        _shadowRendererData.SetShader(RenderShadowMapShader.Instance);
+                    }
+                    _shadowRendererData.CompileForShadowMap(this);
                 }
-                _shadowRendererData.CompileForShadowMap(this);
-                VAO.Unbind();
-                VBO.Unbind();
+                catch {
+                    if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
+                    // Don't throw, ignore exceptions in user code.
+                    return false;
+                }
+                finally {
+                    VAO.Unbind();
+                    VBO.Unbind();
+                }
                 Debug.Assert(_shadowRendererData.State == RendererDataState.Compiled);
+                return true;
             }
         }
 

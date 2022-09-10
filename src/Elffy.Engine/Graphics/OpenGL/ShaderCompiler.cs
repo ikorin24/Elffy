@@ -105,22 +105,28 @@ namespace Elffy.Graphics.OpenGL
         {
             var log = GL.GetShaderInfoLog(shaderID);
             var sb = new StringBuilder();
-            sb.AppendLine("Compiling shader is Failed.");
+            sb.AppendLine("Failed to compile shaders.");
             sb.AppendLine(log);
-            var lines = source.Split('\n');
+            var lines = source.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
             for(int l = 0; l < lines.Length; l++) {
-                sb.Append(string.Format("{0, 3}\t", l + 1));
-                sb.Append(lines[l]);
-                sb.Append('\n');
+                sb.Append(string.Format("{0, -4}\t", l + 1));
+                sb.AppendLine(lines[l]);
             }
-            throw new InvalidDataException(sb.ToString());
+            throw new GlslException(sb.ToString());
         }
 
         [DoesNotReturn]
         private static void ThrowLinkFailed(int programID)
         {
             var log = GL.GetProgramInfoLog(programID);
-            throw new InvalidOperationException($"Linking shader is failed.\n{log}");
+            throw new GlslException($"Failed to link shaders.\n{log}");
+        }
+    }
+
+    public sealed class GlslException : Exception
+    {
+        public GlslException(string? message) : base(message)
+        {
         }
     }
 }

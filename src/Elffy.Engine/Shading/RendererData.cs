@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using Elffy.UI;
+using System.IO;
 
 namespace Elffy.Shading
 {
@@ -125,7 +126,12 @@ namespace Elffy.Shading
 
             var key = new SourceKey(shaderSource, _vertexType);
             var screen = Engine.GetValidCurrentContext();
-            _program = CompiledProgramCacheStore.GetCacheOrCompile(screen, key);
+            try {
+                _program = CompiledProgramCacheStore.GetCacheOrCompile(screen, key);
+            }
+            catch(GlslException ex) {
+                throw new InvalidDataException($"Invalid GLSL shaders. (Shader: {_shader.GetType().FullName}, Target: {target.GetType().FullName}, Layer: {layer.GetType().FullName}).", ex);
+            }
             return true;
         }
 
@@ -217,17 +223,23 @@ namespace Elffy.Shading
 
                 ref var dic = ref CollectionsMarshal.GetValueRefOrAddDefault(_dictionaries, screen, out _);
                 dic ??= new();
-                ref var cache = ref CollectionsMarshal.GetValueRefOrAddDefault(dic, key, out var hasCache);
-                if(hasCache == false) {
+
+                // Don't use CollectionsMarshal.GetValueRefOrAddDefault method.
+                // Compilation of shaders may throw exception.
+                ref var cache = ref CollectionsMarshal.GetValueRefOrNullRef(dic, key);
+                if(Unsafe.IsNullRef(ref cache)) {
                     var program = ShaderCompiler.Compile(key.VertexShader, key.FragmentShader, key.GeometryShader);
-                    cache = new CompiledCache(program, 1);
+                    var value = new CompiledCache(program, 1);
+                    dic.Add(key, value);
+                    Debug.Assert(!program.IsEmpty);
+                    return program;
                 }
                 else {
                     cache.Count++;
+                    Debug.Assert(cache.Count > 0);
+                    Debug.Assert(!cache.Program.IsEmpty);
+                    return cache.Program;
                 }
-                Debug.Assert(cache.Count > 0);
-                Debug.Assert(!cache.Program.IsEmpty);
-                return cache.Program;
             }
 
             public static void Delete(IHostScreen screen, SourceKey key, ref ProgramObject program)
