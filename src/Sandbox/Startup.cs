@@ -60,7 +60,7 @@ namespace Sandbox
                     CreateModel2(wLayer),
                     CreateBox(drLayer),
                     CreateFloor(drLayer),
-                    CreateModel3(wLayer),
+                    CreateModel3(drLayer),
                     //CreateSky(wLayer),
                     new Sphere()
                     {

@@ -59,6 +59,10 @@ namespace Elffy.Shading.Deferred
 const float INV_PI = 1.0 / 3.1415926;
 const float DielectricF0 = 0.04;
 
+// TODO: calculate from light probe
+const vec3 IndirectDiffuse = vec3(0.5, 0.5, 0.5);
+const vec3 IndirectSpecular = vec3(0, 0, 0);
+
 in vec2 _uv;
 uniform mat4 _view;
 uniform mat4 _projection;
@@ -72,7 +76,7 @@ uniform sampler1D _lmat;
 uniform sampler2D _shadowMap;
 out vec4 _fragColor;
 
-m_float D_GGX(m_vec3 n, m_vec3 h, m_float dot_nh, m_float roughness)     // Trowbridge-Reitz
+m_float GGX(m_vec3 n, m_vec3 h, m_float dot_nh, m_float roughness)     // Trowbridge-Reitz
 {
     m_float p = roughness * dot_nh;
     m_vec3 cross_nh = cross(n, h);
@@ -80,7 +84,7 @@ m_float D_GGX(m_vec3 n, m_vec3 h, m_float dot_nh, m_float roughness)     // Trow
     return min(q * q * INV_PI, 16300.0);        // 16300.0 is about 2^14, safe max of mediump float
 }
 
-float V_SmithGGXCorrelated(float dot_nl, float dot_nv, float alpha)    // Height-Correlated Smith
+float SmithGGXCorrelated(float dot_nl, float dot_nv, float alpha)    // Height-Correlated Smith
 {
     // For optimization, we will approximate the following expression.
     // (This approximation is not mathematically correct, but it works fine.)
@@ -96,16 +100,15 @@ float V_SmithGGXCorrelated(float dot_nl, float dot_nv, float alpha)    // Height
     return 0.5 / (lambdaV + lambdaL + 0.0001);
 }
 
-m_vec3 F_Schlick(m_vec3 f0, m_float u)
+m_vec3 FresnelSchlick(m_vec3 f0, m_vec3 f90, m_float u)
 {
-    vec3 f90 = vec3(1.0, 1.0, 1.0);
     m_float x = 1.0 - u;
     m_float x2 = x * x;
     m_float x5 = x2 * x2 * x;
     return f0 + (f90 - f0) * x5;
 }
 
-float Fd_Burley(float dot_nv, float dot_nl, float dot_lh, float roughness)
+float Burley(float dot_nv, float dot_nl, float dot_lh, float roughness)
 {
     float fd90 = 0.5 + 2.0 * dot_lh * dot_lh * roughness;
     float p = 1.0 - dot_nl;
@@ -117,6 +120,11 @@ float Fd_Burley(float dot_nv, float dot_nl, float dot_lh, float roughness)
     float lightScatter = 1.0 + (fd90 - 1.0) * p5;
     float viewScatter = 1.0 + (fd90 - 1.0) * q5;
     return lightScatter * viewScatter * INV_PI;
+}
+
+float Lambert()
+{
+    return INV_PI;
 }
 
 vec3 ToVec3(vec4 v)
@@ -154,6 +162,7 @@ void main()
     gl_FragDepth = (dncPos.z / dncPos.w) * 0.5 + 0.5;
     float metallic = mrt2Value.a;
     float roughness = mrt1Value.a;
+    float alpha = roughness * roughness;
     vec3 v = -normalize(pos);                               // eye direction in eye space, normalized
     vec3 n = viewInvT * nWorld;                             // normal direction in eye space, normalized
     float dot_nv = abs(dot(n, v));
@@ -171,23 +180,23 @@ void main()
             l = normalize(lPos.xyz);                // light vec in eye space, normalized
         }
         else {
-            l = normalize(lPos.xyz - pos);          // light vec in eye space, normalized
+            l = normalize(lPos.xyz / lPos.w - pos);          // light vec in eye space, normalized
         }
         vec3 h = normalize(v + l);                  // half vector in eye space, normalized
         float dot_nl = max(0.0, dot(n, l));
-        float dot_nh = max(0.0, dot(n, h));
         float dot_lh = max(0.0, dot(l, h));
+        vec3 irradiance = dot_nl * lColor;
 
         // Diffuse
-        float diffuseTerm = Fd_Burley(dot_nv, dot_nl, dot_lh, roughness) * dot_nl;
-        vec3 diffuse = (1.0 - reflectivity) * diffuseTerm * lColor * baseColor;
+        // You can use Burley instead of Lambert.
+        vec3 diffuse = (1.0 - reflectivity) * Lambert() * irradiance * baseColor;
 
         // Specular
-        float alpha = roughness * roughness;
-        float V = V_SmithGGXCorrelated(dot_nl, dot_nv, alpha);
-        float D = D_GGX(n, h, dot_nh, roughness);
-        vec3 F = F_Schlick(f0, dot_lh);
-        vec3 specular = V * D * F * dot_nl * lColor;
+        float dot_nh = dot(n, h);
+        float V = SmithGGXCorrelated(dot_nl, dot_nv, alpha);
+        float D = GGX(n, h, dot_nh, roughness) * step(0.0, dot_nh);
+        vec3 F = FresnelSchlick(f0, vec3(1.0, 1.0, 1.0), dot_lh);
+        vec3 specular = V * D * F * irradiance;
         specular = max(vec3(0.0, 0.0, 0.0), specular);
 
         if(i == 0) {
@@ -205,6 +214,13 @@ void main()
             fragColor += diffuse + specular;
         }
     }
+
+    // indirect diffuse
+    fragColor += (1.0 - reflectivity) * IndirectDiffuse * baseColor;
+
+    // indirect specular
+    float f90 = max(0, min(1, 1 - roughness + reflectivity));
+    fragColor += 1.0 / (alpha * alpha + 1.0) * FresnelSchlick(f0, vec3(f90, f90, f90), dot_nv) * IndirectSpecular;
     
     _fragColor = vec4(fragColor, 1.0);
 }
