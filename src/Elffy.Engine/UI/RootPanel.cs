@@ -37,6 +37,11 @@ namespace Elffy.UI
             _relayoutRequested = true;
         }
 
+        internal RootPanel(UIObjectLayer uiLayer)
+        {
+            throw new NotImplementedException();
+        }
+
         internal async UniTask Initialize(FrameTimingPoint timingPoint, CancellationToken ct)
         {
             var layer = _uiLayer;

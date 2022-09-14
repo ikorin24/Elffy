@@ -3,18 +3,16 @@ using Cysharp.Threading.Tasks;
 using Elffy.Graphics.OpenGL;
 using Elffy.InputSystem;
 using OpenTK.Graphics.OpenGL4;
-using System;
+using System.Diagnostics;
 using System.Threading;
 
 namespace Elffy.UI
 {
-    public sealed class UILayer : Layer
+    public sealed class UIObjectLayer : ObjectLayer
     {
         private const float UI_FAR = 1f;
         private const float UI_NEAR = -1f;
-        public const int DefaultSort = 100;
-
-        private static readonly Func<CoroutineState, UILayer, UniTask> UIEventPipelineFunc = UIEventPipeline;
+        private const int DefaultSortNumber = 100;
 
         private readonly RootPanel _uiRoot;
         private Matrix4 _uiProjection;
@@ -26,7 +24,7 @@ namespace Elffy.UI
         /// <summary>Get or set whether hit test is enabled.</summary>
         public bool IsHitTestEnabled { get => _isHitTestEnabled; set => _isHitTestEnabled = value; }
 
-        public UILayer(int sortNumber = DefaultSort) : base(sortNumber)
+        public UIObjectLayer(int sortNumber = DefaultSortNumber) : base(sortNumber)
         {
             _isHitTestEnabled = true;
             _uiRoot = new RootPanel(this);
@@ -36,31 +34,26 @@ namespace Elffy.UI
         {
             await base.ActivateOnScreen(screen, timingPoint, ct);
             await _uiRoot.Initialize(timingPoint, ct);
-            Coroutine.StartOrReserve(screen, this, UIEventPipelineFunc, FrameTiming.FrameInitializing);
+            Coroutine.StartOrReserve(screen, this, static async (coroutine, layer) =>
+            {
+                while(coroutine.CanRun && layer.LifeState.IsRunning()) {
+                    layer.HitTest(coroutine.Screen.Mouse);
+                    layer.UIEvent();
+                    await coroutine.TimingPoints.FrameInitializing.Next();
+                }
+            }, FrameTiming.FrameInitializing);
         }
 
-        protected override void OnAlive(IHostScreen screen)
+        protected override void OnAfterExecute(IHostScreen screen, ref FBO currentFbo)
         {
+            GL.Enable(EnableCap.DepthTest);
         }
 
-        protected override void SelectMatrix(IHostScreen screen, out Matrix4 view, out Matrix4 projection)
-        {
-            var scale = new Vector3(1, -1, 1);
-            var translation = new Vector3(0, _uiRoot.ActualHeight, 0);
-            view = Matrix4.FromScaleAndTranslation(scale, translation);
-            projection = _uiProjection;
-        }
-
-        protected override void OnRendering(IHostScreen screen, ref FBO currentFbo)
+        protected override void OnBeforeExecute(IHostScreen screen, ref FBO currentFbo)
         {
             currentFbo = FBO.Empty;
             FBO.Bind(currentFbo, FBO.Target.FrameBuffer);
             GL.Disable(EnableCap.DepthTest);
-        }
-
-        protected override void OnRendered(IHostScreen screen, ref FBO currentFbo)
-        {
-            GL.Enable(EnableCap.DepthTest);
         }
 
         protected override void OnSizeChanged(IHostScreen screen)
@@ -71,28 +64,17 @@ namespace Elffy.UI
             _uiRoot.RequestRelayout();
         }
 
-        protected override void OnDead()
+        protected override void SelectMatrix(IHostScreen screen, out Matrix4 view, out Matrix4 projection)
         {
-            // nop
-        }
-
-        internal override void RenderShadowMap(IHostScreen screen, in Matrix4 lightViewProjection)
-        {
-            // nop
-        }
-
-        private static async UniTask UIEventPipeline(CoroutineState coroutine, UILayer layer)
-        {
-            while(coroutine.CanRun && layer.LifeState.IsRunning()) {
-                layer.HitTest(coroutine.Screen.Mouse);
-                layer.UIEvent();
-                await coroutine.TimingPoints.FrameInitializing.Next();
-            }
+            var scale = new Vector3(1, -1, 1);
+            var translation = new Vector3(0, _uiRoot.ActualHeight, 0);
+            view = Matrix4.FromScaleAndTranslation(scale, translation);
+            projection = _uiProjection;
         }
 
         private void UIEvent()
         {
-            foreach(var frameObject in Objects) {
+            foreach(var frameObject in GetFrameObjects()) {
                 SafeCast.As<UIRenderable>(frameObject).DoUIEvent();
             }
         }
@@ -108,7 +90,7 @@ namespace Elffy.UI
                 RecursiveNotifyHitTestResult(uiRoot, hitControl);
             }
             else {
-                RecursiveNotifyHitTestFalse(uiRoot);
+                RecursiveNotifyHitTestResult(uiRoot, null);
             }
             return;
 
@@ -125,22 +107,16 @@ namespace Elffy.UI
             static void RecursiveNotifyHitTestResult(Control control, Control? hitControl)
             {
                 // [NOTE]
-                // Span で回しているので途中でコントロールを add/remove してはいけない。
-                // そのため、途中でイベントの実行等のユーザーコードを差し込める実装にしてはいけない。
-                control.NotifyHitTestResult(ReferenceEquals(control, hitControl));
-                foreach(var child in control.ChildrenCore.AsSpan()) {
-                    RecursiveNotifyHitTestResult(child, hitControl);
-                }
-            }
+                // Don't add or remove controls while the hit result is being notified.
+                // The reason is the controls are iterated as Span<T>.
+                // (In other words, user code should not be executed)
 
-            static void RecursiveNotifyHitTestFalse(Control control)
-            {
-                // [NOTE]
-                // Span で回しているので途中でコントロールを add/remove してはいけない。
-                // そのため、途中でイベントの実行等のユーザーコードを差し込める実装にしてはいけない。
-                control.NotifyHitTestResult(false);
-                foreach(var child in control.ChildrenCore.AsSpan()) {
-                    RecursiveNotifyHitTestFalse(child);
+                Debug.Assert(control is not null);
+                var isHit = ReferenceEquals(control, hitControl);
+                control.NotifyHitTestResult(isHit);
+                var children = control.ChildrenCore.AsSpan();
+                foreach(var child in children) {
+                    RecursiveNotifyHitTestResult(child, hitControl);
                 }
             }
         }

@@ -20,12 +20,11 @@ namespace Elffy
         private AsyncEventSource<PipelineOperation>? _terminating;
         private EventSource<(PipelineOperation, IHostScreen)>? _alive;
         private EventSource<PipelineOperation>? _dead;
+        private readonly PipelineOperationTimingPoint _beforeExecute;
+        private readonly PipelineOperationTimingPoint _afterExecute;
 
-        private readonly PipelineOperationTimingPoint _beforeRendering;
-        private readonly PipelineOperationTimingPoint _afterRendering;
-
-        public PipelineOperationTimingPoint BeforeRendering => _beforeRendering;
-        public PipelineOperationTimingPoint AfterRendering => _afterRendering;
+        public PipelineOperationTimingPoint BeforeExecute => _beforeExecute;
+        public PipelineOperationTimingPoint AfterExecute => _afterExecute;
 
         internal RenderPipeline? Owner => _owner;
         public bool IsEnabled { get => _isEnabled; set => _isEnabled = value; }
@@ -44,14 +43,14 @@ namespace Elffy
             _isEnabled = true;
             _sortNumber = sortNumber;
             _state = LifeState.New;
-            _beforeRendering = new PipelineOperationTimingPoint(this);
-            _afterRendering = new PipelineOperationTimingPoint(this);
+            _beforeExecute = new PipelineOperationTimingPoint(this);
+            _afterExecute = new PipelineOperationTimingPoint(this);
         }
 
         internal void AbortAllEvents()
         {
-            _beforeRendering.AbortAllEvents();
-            _afterRendering.AbortAllEvents();
+            _beforeExecute.AbortAllEvents();
+            _afterExecute.AbortAllEvents();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -196,26 +195,26 @@ namespace Elffy
             }
         }
 
-        protected abstract void OnRendering(IHostScreen screen, ref FBO currentFbo);
-        protected abstract void OnRendered(IHostScreen screen, ref FBO currentFbo);
+        protected abstract void OnBeforeExecute(IHostScreen screen, ref FBO currentFbo);
+        protected abstract void OnAfterExecute(IHostScreen screen, ref FBO currentFbo);
 
         protected abstract void OnExecute(IHostScreen screen);
 
-        internal void Render(IHostScreen screen, ref FBO currentFbo)
+        internal void Execute(IHostScreen screen, ref FBO currentFbo)
         {
-            _beforeRendering.DoQueuedEvents();
-            OnRendering(screen, ref currentFbo);
+            _beforeExecute.DoQueuedEvents();
+            OnBeforeExecute(screen, ref currentFbo);
             if(IsEnabled) {
                 OnExecute(screen);
             }
-            OnRendered(screen, ref currentFbo);
-            _afterRendering.DoQueuedEvents();
+            OnAfterExecute(screen, ref currentFbo);
+            _afterExecute.DoQueuedEvents();
         }
 
         private void AbortAllTimingPointEvents()
         {
-            _beforeRendering.AbortAllEvents();
-            _afterRendering.AbortAllEvents();
+            _beforeExecute.AbortAllEvents();
+            _afterExecute.AbortAllEvents();
         }
     }
 

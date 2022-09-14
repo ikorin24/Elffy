@@ -8,16 +8,12 @@ using Elffy.Graphics.OpenGL;
 
 namespace Elffy
 {
-    [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public sealed class RenderPipeline
     {
         private readonly LazyApplyingList<PipelineOperation> _list;
         private readonly RenderingArea _owner;
 
         internal IHostScreen Screen => _owner.OwnerScreen;
-
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private string DebuggerDisplay => $"{nameof(LayerCollection)} (Count = {_list.Count})";
 
         internal RenderPipeline(RenderingArea owner)
         {
@@ -164,7 +160,7 @@ namespace Elffy
             var screenSize = screen.FrameBufferSize;
             OpenTK.Graphics.OpenGL4.GL.Viewport(0, 0, screenSize.X, screenSize.Y);
             foreach(var operation in _list.AsReadOnlySpan()) {
-                operation.Render(screen, ref fbo);
+                operation.Execute(screen, ref fbo);
             }
         }
     }

@@ -23,7 +23,12 @@ namespace Elffy
 
         public ReadOnlySpan<FrameObject> GetFrameObjects() => _store.List;
 
-        protected abstract void SelectMatrix(IHostScreen screen, out Matrix4 view, out Matrix4 projection);
+        protected virtual void SelectMatrix(IHostScreen screen, out Matrix4 view, out Matrix4 projection)
+        {
+            var camera = screen.Camera;
+            view = camera.View;
+            projection = camera.Projection;
+        }
 
         private protected sealed override UniTask BeforeTerminating()
         {

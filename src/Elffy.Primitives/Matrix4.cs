@@ -265,6 +265,17 @@ namespace Elffy
             return result;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Matrix4 FromScaleAndTranslation(in Vector3 scale, in Vector3 translation)
+        {
+            return new Matrix4(
+                scale.X, 0, 0, translation.X,
+                0, scale.Y, 0, translation.Y,
+                0, 0, scale.Z, translation.Z,
+                0, 0, 0, 1
+            );
+        }
+
         public static ref readonly Vector4 Col0(in Matrix4 matrix) => ref Unsafe.As<float, Vector4>(ref Unsafe.AsRef(matrix.M00));
         public static ref readonly Vector4 Col1(in Matrix4 matrix) => ref Unsafe.As<float, Vector4>(ref Unsafe.AsRef(matrix.M01));
         public static ref readonly Vector4 Col2(in Matrix4 matrix) => ref Unsafe.As<float, Vector4>(ref Unsafe.AsRef(matrix.M02));

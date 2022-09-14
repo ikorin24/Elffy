@@ -5,23 +5,24 @@ namespace Elffy
 {
     public sealed class ForwardRenderLayer : ObjectLayer
     {
-        private FBO _renderTarget;
+        private const int DefaultSortNumber = 0;
+        private readonly FBO _renderTarget;
 
-        public ForwardRenderLayer(int sortNumber) : this(FBO.Empty, sortNumber)
+        public ForwardRenderLayer(int sortNumber = DefaultSortNumber) : this(FBO.Empty, sortNumber)
         {
         }
 
-        public ForwardRenderLayer(FBO renderTarget, int sortNumber) : base(sortNumber)
+        public ForwardRenderLayer(FBO renderTarget, int sortNumber = DefaultSortNumber) : base(sortNumber)
         {
             _renderTarget = renderTarget;
         }
 
-        protected override void OnRendered(IHostScreen screen, ref FBO currentFbo)
+        protected override void OnAfterExecute(IHostScreen screen, ref FBO currentFbo)
         {
             // nop
         }
 
-        protected override void OnRendering(IHostScreen screen, ref FBO currentFbo)
+        protected override void OnBeforeExecute(IHostScreen screen, ref FBO currentFbo)
         {
             FBO.Bind(_renderTarget, FBO.Target.FrameBuffer);
             currentFbo = _renderTarget;
@@ -30,13 +31,6 @@ namespace Elffy
         protected override void OnSizeChanged(IHostScreen screen)
         {
             // nop
-        }
-
-        protected override void SelectMatrix(IHostScreen screen, out Matrix4 view, out Matrix4 projection)
-        {
-            var camera = screen.Camera;
-            view = camera.View;
-            projection = camera.Projection;
         }
     }
 }
