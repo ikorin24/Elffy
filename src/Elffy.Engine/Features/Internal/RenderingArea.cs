@@ -30,6 +30,7 @@ namespace Elffy.Features.Internal
 
         public IHostScreen OwnerScreen { get; }
 
+        public RenderPipeline RenderPipeline { get; }
         public LayerCollection Layers { get; }
         public Camera Camera { get; } = new Camera();
         public Mouse Mouse { get; } = new Mouse();
@@ -47,6 +48,7 @@ namespace Elffy.Features.Internal
             OwnerScreen = screen;
             TimingPoints = new FrameTimingPointList(screen);
             Lights = new LightManager(screen);
+            RenderPipeline = new RenderPipeline(this);
             Layers = new LayerCollection(this);
             _runningTokenSource = new CancellationTokenSource();
         }

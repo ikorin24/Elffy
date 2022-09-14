@@ -41,6 +41,9 @@ namespace Elffy
         public FrameTimingPointList Timings => _renderingArea.TimingPoints;
 
         /// <inheritdoc/>
+        RenderPipeline IHostScreen.RenderPipeline => _renderingArea.RenderPipeline;
+
+        /// <inheritdoc/>
         public LayerCollection Layers => _renderingArea.Layers;
 
         public LightManager Lights => _renderingArea.Lights;

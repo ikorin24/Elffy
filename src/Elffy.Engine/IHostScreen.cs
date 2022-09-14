@@ -39,6 +39,9 @@ namespace Elffy
         /// <summary>Get list of the layers which has <see cref="FrameObject"/>s</summary>
         LayerCollection Layers { get; }
 
+        /// <summary>Get pipeline of rendering</summary>
+        RenderPipeline RenderPipeline { get; }
+
         /// <summary>Get time of current frame. (This is NOT real time.)</summary>
         TimeSpanF Time { get; }
 
