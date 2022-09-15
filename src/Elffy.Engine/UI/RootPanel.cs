@@ -11,12 +11,12 @@ namespace Elffy.UI
     /// <summary>Root panel of UI tree</summary>
     public sealed class RootPanel : Panel
     {
-        private readonly UILayer _uiLayer;
+        private readonly UIObjectLayer _uiLayer;
         private Control? _relayoutRoot;
         private LayoutExecutionType _layoutExecutionType;
         private bool _relayoutRequested;
 
-        internal UILayer UILayer => _uiLayer;
+        internal UIObjectLayer UILayer => _uiLayer;
 
         /// <summary>Get or set layout execution type.</summary>
         public LayoutExecutionType LayoutExecutionType
@@ -30,16 +30,17 @@ namespace Elffy.UI
         [Obsolete("RootPanel does not support 'Margin'.", true)]
         public new ref LayoutThickness Margin => throw new InvalidOperationException($"{nameof(RootPanel)} does not support '{nameof(Margin)}'.");
 
+        [Obsolete("", true)]
         internal RootPanel(UILayer uiLayer)
         {
-            Debug.Assert(uiLayer is not null);
-            _uiLayer = uiLayer;
-            _relayoutRequested = true;
+            throw new NotImplementedException();
         }
 
         internal RootPanel(UIObjectLayer uiLayer)
         {
-            throw new NotImplementedException();
+            Debug.Assert(uiLayer is not null);
+            _uiLayer = uiLayer;
+            _relayoutRequested = true;
         }
 
         internal async UniTask Initialize(FrameTimingPoint timingPoint, CancellationToken ct)

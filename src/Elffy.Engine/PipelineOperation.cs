@@ -29,7 +29,7 @@ namespace Elffy
         internal RenderPipeline? Owner => _owner;
         public bool IsEnabled { get => _isEnabled; set => _isEnabled = value; }
         public int SortNumber => _sortNumber;
-        public IHostScreen? Screen { get; }
+        public IHostScreen? Screen => _owner?.Screen;
         public LifeState LifeState => _state;
         public AsyncEvent<PipelineOperation> Activating => new(ref _activating);
         public AsyncEvent<PipelineOperation> Terminating => new(ref _terminating);

@@ -30,8 +30,10 @@ namespace Elffy.Features.Internal
 
         public IHostScreen OwnerScreen { get; }
 
+        [Obsolete("", true)]
+        public LayerCollection Layers => throw new NotImplementedException();
+
         public RenderPipeline RenderPipeline { get; }
-        public LayerCollection Layers { get; }
         public Camera Camera { get; } = new Camera();
         public Mouse Mouse { get; } = new Mouse();
         public Keyboard Keyboard { get; } = new Keyboard();
@@ -49,7 +51,6 @@ namespace Elffy.Features.Internal
             TimingPoints = new FrameTimingPointList(screen);
             Lights = new LightManager(screen);
             RenderPipeline = new RenderPipeline(this);
-            Layers = new LayerCollection(this);
             _runningTokenSource = new CancellationTokenSource();
         }
 
@@ -89,7 +90,7 @@ namespace Elffy.Features.Internal
             // Out of frame loop
             Debug.Assert(_currentTiming == CurrentFrameTiming.OutOfFrameLoop);
             var isCloseRequested = _isCloseRequested;
-            var layers = Layers;
+            var pipeline = RenderPipeline;
 
             var frameTimingPoints = TimingPoints;
             Mouse.InitFrame();
@@ -117,32 +118,32 @@ namespace Elffy.Features.Internal
             if(isCloseRequested && _state == LifeState.Alive) {
                 _state = LifeState.Terminating;
                 _runningTokenSource.Cancel();
-                layers.TerminateAllLayers(this,
+                pipeline.TerminateAllOperations(this,
                     onDead: static self =>
                 {
                     self._state = LifeState.Dead;
                 });
             }
-            layers.ApplyAdd();
+            pipeline.ApplyAdd();
             frameTimingPoints.FrameInitializing.DoQueuedEvents();
 
             // ------------------------------------------------------------
             // Early update
             _currentTiming = CurrentFrameTiming.EarlyUpdate;
             frameTimingPoints.EarlyUpdate.DoQueuedEvents();
-            layers.EarlyUpdate();
+            pipeline.EarlyUpdate();
 
             // ------------------------------------------------------------
             // Update
             _currentTiming = CurrentFrameTiming.Update;
             frameTimingPoints.Update.DoQueuedEvents();
-            layers.Update();
+            pipeline.Update();
 
             // ------------------------------------------------------------
             // Late update
             _currentTiming = CurrentFrameTiming.LateUpdate;
             frameTimingPoints.LateUpdate.DoQueuedEvents();
-            layers.LateUpdate();
+            pipeline.LateUpdate();
 
             // ------------------------------------------------------------
             // Before rendering
@@ -154,7 +155,7 @@ namespace Elffy.Features.Internal
             // ------------------------------------------------------------
             // Rendering
             _currentTiming = CurrentFrameTiming.Rendering;
-            layers.Render();
+            pipeline.Render();
 
             // ------------------------------------------------------------
             // After rendering
@@ -165,7 +166,7 @@ namespace Elffy.Features.Internal
             // Frame finalizing
             _currentTiming = CurrentFrameTiming.FrameFinalizing;
             frameTimingPoints.FrameFinalizing.DoQueuedEvents();
-            layers.ApplyRemove();
+            pipeline.ApplyRemove();
 
             // ------------------------------------------------------------
             // End of frame (only internal accessible)
@@ -214,7 +215,7 @@ namespace Elffy.Features.Internal
 
             _currentTiming = CurrentFrameTiming.OutOfFrameLoop;
 
-            Layers.AbortAllLayers();
+            RenderPipeline.AbortAllOperations();
 
             TimingPoints.AbortAllEvents();
             Lights.Release();
@@ -236,8 +237,8 @@ namespace Elffy.Features.Internal
             GL.Viewport(0, 0, size.X, size.Y);
             Debug.WriteLine($"Size changed ({size.X}, {size.Y})");
 
-            var layers = Layers;
-            layers.NotifySizeChanged();
+            var pipeline = RenderPipeline;
+            pipeline.NotifySizeChanged();
         }
     }
 }

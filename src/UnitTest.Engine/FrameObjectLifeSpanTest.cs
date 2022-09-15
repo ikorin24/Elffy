@@ -16,9 +16,7 @@ namespace UnitTest
         [Fact]
         public static void LifeSpan_FrameObject() => TestEngineEntryPoint.Start(async screen =>
         {
-            var layer = await LayerPipelines
-                .CreateBuilder(screen)
-                .Build(() => new WorldLayer());
+            var layer = await new ForwardRenderLayer().Activate(screen);
 
             // <New> -> call Activate() -> <Activating> -> [next frame] -> <Alive>
             // -> call Terminate() -> <Terminating> -> [next frame] -> <Dead>
@@ -79,9 +77,7 @@ namespace UnitTest
         [Fact]
         public static void LifeSpan_FrameObject_InvalidOperation() => TestEngineEntryPoint.Start(async screen =>
         {
-            var layer = await LayerPipelines
-                .CreateBuilder(screen)
-                .Build(() => new WorldLayer());
+            var layer = await new ForwardRenderLayer().Activate(screen);
 
             // 1. <New> -> call Terminate() -> exception is catched -> <New>
             // 2. <Activating> -> call Activate() -> exception is catched -> <Alive>
@@ -125,9 +121,7 @@ namespace UnitTest
         [Fact]
         public static void LifeSpan_FrameObject_InvalidOperation2() => TestEngineEntryPoint.Start(async screen =>
         {
-            var layer = await LayerPipelines
-                .CreateBuilder(screen)
-                .Build(() => new WorldLayer());
+            var layer = await new ForwardRenderLayer().Activate(screen);
 
             // <New> -> call Activate() -> <Activating> -> call Terminate()
             // -> exception is catched -> <Alive> -> call Terminate() -> <Terminating> -> <Dead>
@@ -153,9 +147,7 @@ namespace UnitTest
         [Fact]
         public static void LifeSpan_FrameObject_OnThrown() => TestEngineEntryPoint.Start(UserCodeExceptionCatchMode.Throw, async screen =>
         {
-            var layer = await LayerPipelines
-                .CreateBuilder(screen)
-                .Build(() => new WorldLayer());
+            var layer = await new ForwardRenderLayer().Activate(screen);
 
             // <Activating> -> exception is thrown -> <Alive>
             // =================================================
@@ -169,9 +161,7 @@ namespace UnitTest
         [Fact]
         public static void LifeSpan_Positionable() => TestEngineEntryPoint.Start(async screen =>
         {
-            var layer = await LayerPipelines
-                .CreateBuilder(screen)
-                .Build(() => new WorldLayer());
+            var layer = await new ForwardRenderLayer().Activate(screen);
 
             // cubes[0] -+-- cubes[1] ---- cubes[2]
             //           |-- cubes[3]
@@ -219,9 +209,7 @@ namespace UnitTest
         [Fact]
         public static void LifeSpan_LayerDead() => TestEngineEntryPoint.Start(async screen =>
         {
-            var layer = await LayerPipelines
-                .CreateBuilder(screen)
-                .Build(() => new WorldLayer());
+            var layer = await new ForwardRenderLayer().Activate(screen);
 
             // cubes[0] ---- cubes[1] ---- cubes[2] ---- cubes[3]
 
@@ -255,9 +243,7 @@ namespace UnitTest
         [Fact]
         public static void Visibility_RenderableTree() => TestEngineEntryPoint.Start(async screen =>
         {
-            var layer = await LayerPipelines
-                .CreateBuilder(screen)
-                .Build(() => new WorldLayer());
+            var layer = await new ForwardRenderLayer().Activate(screen);
 
             // cubes[0] -+-- cubes[1] ---- cubes[2]
             //           |-- cubes[3]

@@ -13,7 +13,7 @@ namespace UnitTest
         [Fact]
         public static void LifeSpan_Control() => TestEngineEntryPoint.Start(async screen =>
         {
-            var uiLayer = await new UILayer().Activate(screen);
+            var uiLayer = await new UIObjectLayer().Activate(screen);
             var uiRoot = uiLayer.UIRoot;
             Assert.Equal(0, uiRoot.Children.Count);
 
@@ -32,7 +32,7 @@ namespace UnitTest
         [Fact]
         public static void LifeSpan_Control2() => TestEngineEntryPoint.Start(async screen =>
         {
-            var uiLayer = await new UILayer().Activate(screen);
+            var uiLayer = await new UIObjectLayer().Activate(screen);
             var uiRoot = uiLayer.UIRoot;
             Assert.Equal(0, uiRoot.Children.Count);
 
@@ -60,7 +60,7 @@ namespace UnitTest
         [Fact]
         public static void LifeSpan_Control_Clear() => TestEngineEntryPoint.Start(async screen =>
         {
-            var uiLayer = await new UILayer().Activate(screen);
+            var uiLayer = await new UIObjectLayer().Activate(screen);
             var uiRoot = uiLayer.UIRoot;
             Assert.Equal(0, uiRoot.Children.Count);
 
@@ -79,7 +79,7 @@ namespace UnitTest
         [Fact]
         public static void LifeSpan_Control_Tree() => TestEngineEntryPoint.Start(async screen =>
         {
-            var uiLayer = await new UILayer().Activate(screen);
+            var uiLayer = await new UIObjectLayer().Activate(screen);
             var uiRoot = uiLayer.UIRoot;
             Assert.Equal(0, uiRoot.Children.Count);
 

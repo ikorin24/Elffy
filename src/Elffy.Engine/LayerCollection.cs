@@ -12,6 +12,7 @@ namespace Elffy
 {
     [DebuggerTypeProxy(typeof(LayerCollectionDebuggerTypeProxy))]
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
+    [Obsolete("", true)]
     public sealed class LayerCollection
     {
         private readonly LazyApplyingList<Layer> _list;

@@ -7,6 +7,7 @@ using System.Threading;
 
 namespace Elffy
 {
+    [Obsolete("", true)]
     public sealed class LayerTimingPoint : ITimingPoint
     {
         private readonly Layer _layer;

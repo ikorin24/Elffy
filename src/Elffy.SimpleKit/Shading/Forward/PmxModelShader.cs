@@ -38,7 +38,7 @@ namespace Elffy.Shading.Forward
             dispatcher.SendUniformTexture1D("lPosSampler", lights.PositionTexture, TextureUnitNumber.Unit3);
         }
 
-        protected override ShaderSource GetShaderSource(Renderable target, WorldLayer layer)
+        protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer)
         {
             return new()
             {

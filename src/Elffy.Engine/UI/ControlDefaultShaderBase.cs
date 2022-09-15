@@ -117,7 +117,7 @@ namespace Elffy.UI
             _textureCore.Dispose();
         }
 
-        protected override ShaderSource GetShaderSource(Renderable target, WorldLayer layer)
+        protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer)
         {
             return new()
             {

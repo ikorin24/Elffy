@@ -39,7 +39,7 @@ namespace Elffy
             _list.Remove(operation, onRemoved);
         }
 
-        internal void TerminateAllLayers<T>(T state, Action<T> onDead)
+        internal void TerminateAllOperations<T>(T state, Action<T> onDead)
         {
             var operations = _list.AsReadOnlySpan();
             var tasks = new UniTask<PipelineOperation>[operations.Length];
@@ -74,7 +74,7 @@ namespace Elffy
             }
         }
 
-        internal void AbortAllLayers()
+        internal void AbortAllOperations()
         {
             _list.Clear();
         }

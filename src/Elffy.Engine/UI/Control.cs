@@ -218,7 +218,7 @@ namespace Elffy.UI
             _isMouseOver = isHit;
         }
 
-        private (IHostScreen Screen, UILayer Layer, RootPanel Root) CheckArgAndStateForAddChild(Control childToAdd)
+        private (IHostScreen Screen, UIObjectLayer Layer, RootPanel Root) CheckArgAndStateForAddChild(Control childToAdd)
         {
             // Check arguments and states
             ArgumentNullException.ThrowIfNull(childToAdd);
@@ -251,7 +251,7 @@ namespace Elffy.UI
             return (screen, layer, root);
         }
 
-        private (IHostScreen Screen, UILayer Layer, int Index) CheckArgAndStateForRemoveChild(Control childToRemove)
+        private (IHostScreen Screen, UIObjectLayer Layer, int Index) CheckArgAndStateForRemoveChild(Control childToRemove)
         {
             ArgumentNullException.ThrowIfNull(childToRemove);
             if(TryGetScreen(out var screen) == false) {
@@ -337,7 +337,7 @@ namespace Elffy.UI
             _childrenCore.Add(control);
             return ActivateChild(control._renderable, root, layer, screen);
 
-            static async UniTask ActivateChild(UIRenderable controlRenderable, RootPanel root, UILayer layer, IHostScreen screen)
+            static async UniTask ActivateChild(UIRenderable controlRenderable, RootPanel root, UIObjectLayer layer, IHostScreen screen)
             {
                 var activationTimingPoint = screen.Timings.FrameInitializing;
                 await controlRenderable.ActivateOnLayerWithoutCheck(layer, activationTimingPoint, screen, CancellationToken.None);
@@ -356,7 +356,7 @@ namespace Elffy.UI
             await screen.Timings.Update.NextOrNow();
             return;
 
-            static async UniTask RemoveOnlyChild(Control control, Control child, int index, UILayer layer, IHostScreen screen)
+            static async UniTask RemoveOnlyChild(Control control, Control child, int index, UIObjectLayer layer, IHostScreen screen)
             {
                 var terminationTimingPoint = screen.Timings.FrameInitializing;
                 child._parent = null;

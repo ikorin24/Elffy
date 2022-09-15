@@ -39,7 +39,7 @@ namespace Elffy.Shading.Forward
             dispatcher.SendUniform("_mvp", projection * view * model);
         }
 
-        protected override ShaderSource GetShaderSource(Renderable target, WorldLayer layer) => new()
+        protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer) => new()
         {
             VertexShader =
 @"#version 410

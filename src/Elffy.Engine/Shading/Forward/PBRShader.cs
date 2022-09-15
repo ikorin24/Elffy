@@ -36,7 +36,7 @@ namespace Elffy.Shading.Forward
             dispatcher.SendUniform("_roughness", (float)material.Roughness);
         }
 
-        protected override ShaderSource GetShaderSource(Renderable target, WorldLayer layer)
+        protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer)
         {
             return new()
             {

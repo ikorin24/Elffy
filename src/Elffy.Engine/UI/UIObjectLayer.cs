@@ -14,6 +14,7 @@ namespace Elffy.UI
         private const float UI_NEAR = -1f;
         private const int DefaultSortNumber = 100;
 
+        private readonly FBO _renderTarget;
         private readonly RootPanel _uiRoot;
         private Matrix4 _uiProjection;
         private bool _isHitTestEnabled;
@@ -24,8 +25,11 @@ namespace Elffy.UI
         /// <summary>Get or set whether hit test is enabled.</summary>
         public bool IsHitTestEnabled { get => _isHitTestEnabled; set => _isHitTestEnabled = value; }
 
-        public UIObjectLayer(int sortNumber = DefaultSortNumber) : base(sortNumber)
+        public UIObjectLayer(int sortNumber = DefaultSortNumber) : this(FBO.Empty, sortNumber) { }
+
+        public UIObjectLayer(FBO renderTarget, int sortNumber = DefaultSortNumber) : base(sortNumber)
         {
+            _renderTarget = renderTarget;
             _isHitTestEnabled = true;
             _uiRoot = new RootPanel(this);
         }
@@ -51,7 +55,7 @@ namespace Elffy.UI
 
         protected override void OnBeforeExecute(IHostScreen screen, ref FBO currentFbo)
         {
-            currentFbo = FBO.Empty;
+            currentFbo = _renderTarget;
             FBO.Bind(currentFbo, FBO.Target.FrameBuffer);
             GL.Disable(EnableCap.DepthTest);
         }

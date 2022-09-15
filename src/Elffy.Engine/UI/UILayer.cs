@@ -8,6 +8,7 @@ using System.Threading;
 
 namespace Elffy.UI
 {
+    [System.Obsolete("", true)]
     public sealed class UILayer : Layer
     {
         private const float UI_FAR = 1f;

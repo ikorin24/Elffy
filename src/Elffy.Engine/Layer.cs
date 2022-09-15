@@ -13,6 +13,7 @@ namespace Elffy
 {
     /// <summary>Layer class which has the list of <see cref="FrameObject"/></summary>
     [DebuggerDisplay("{GetType().FullName,nq} (ObjectCount = {ObjectCount}, IsEnabled = {IsEnabled})")]
+    [Obsolete("Obsolete", true)]
     public abstract class Layer
     {
         private readonly FrameObjectStore _store;
@@ -290,6 +291,7 @@ namespace Elffy
         protected abstract void OnSizeChanged(IHostScreen screen);
     }
 
+    [Obsolete("", true)]
     public static class LayerExtension
     {
         public static async UniTask<TLayer> Activate<TLayer>(this TLayer layer, IHostScreen screen, CancellationToken cancellationToken = default) where TLayer : Layer

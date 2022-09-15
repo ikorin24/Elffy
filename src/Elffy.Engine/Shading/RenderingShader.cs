@@ -14,7 +14,7 @@ namespace Elffy.Shading
         // ShaderSource don't have any opengl resources. (e.g. ProgramObject)
         // Keep it thread-independent and context-free.
 
-        protected abstract ShaderSource GetShaderSource(Renderable target, WorldLayer layer);
+        protected abstract ShaderSource GetShaderSource(Renderable target, ObjectLayer layer);
 
         protected abstract void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType);
 
@@ -26,7 +26,7 @@ namespace Elffy.Shading
 
         protected virtual void OnProgramDisposed() { }      // nop
 
-        ShaderSource IRenderingShader.GetShaderSourceInternal(Renderable target, WorldLayer layer) => GetShaderSource(target, layer);
+        ShaderSource IRenderingShader.GetShaderSourceInternal(Renderable target, ObjectLayer layer) => GetShaderSource(target, layer);
         void IRenderingShader.OnProgramDisposedInternal() => OnProgramDisposed();
         void IRenderingShader.OnAttachedInternal(Renderable target) => OnAttached(target);
         void IRenderingShader.OnDetachedInternal(Renderable detachedTarget) => OnDetached(detachedTarget);

@@ -87,7 +87,7 @@ public sealed class TestShader : RenderingShader
         dispatcher.SendUniform("_size", new Vector2(w, h));
     }
 
-    protected override ShaderSource GetShaderSource(Renderable target, WorldLayer layer)
+    protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer)
     {
         return new()
         {

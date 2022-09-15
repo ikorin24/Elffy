@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 
 namespace Elffy
 {
+    [Obsolete("", true)]
     public record struct LayerPipelineBuilder
     {
         private readonly IHostScreen _screen;

@@ -14,7 +14,7 @@ namespace UnitTest
         [Fact]
         public static void LifeSpan_Layer() => TestEngineEntryPoint.Start(async screen =>
         {
-            var layer = new WorldLayer();
+            var layer = new ForwardRenderLayer();
             Assert.Equal(LifeState.New, layer.LifeState);
 
             var isSyncActivatingEventCalled = false;
@@ -78,7 +78,7 @@ namespace UnitTest
             // --------------------------------------------
 
             // 1.
-            var layer = await new WorldLayer().Activate(screen);
+            var layer = await new ForwardRenderLayer().Activate(screen);
             Assert.Equal(0, layer.ObjectCount);
 
             // 2.
@@ -116,7 +116,7 @@ namespace UnitTest
             // --------------------------------------------
 
             // 1.
-            var layer = await new WorldLayer().Activate(screen);
+            var layer = await new ForwardRenderLayer().Activate(screen);
 
             // 2.
             var cubes = Enumerable.Range(0, 10).Select(i => new Cube()).ToArray();

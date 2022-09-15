@@ -24,7 +24,7 @@ namespace Sandbox
             dispatcher.SendUniform("mvp", projection * view * model);
         }
 
-        protected override ShaderSource GetShaderSource(Renderable target, WorldLayer layer)
+        protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer)
         {
             return new()
             {

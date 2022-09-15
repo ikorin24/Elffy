@@ -9,6 +9,7 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace Elffy
 {
+    [System.Obsolete("", true)]
     public sealed class DeferredRenderingLayer : WorldLayer, IGBufferProvider
     {
         private const int DRLayerDefaultSort = -100;

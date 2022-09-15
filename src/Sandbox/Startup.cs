@@ -13,25 +13,23 @@ using Elffy.Graphics.OpenGL;
 
 [assembly: DefineLocalResource("Sandbox", "Sandbox.dat")]
 
+var config = new AppStarterConfig
+{
+    Width = 1800,
+    Height = 1012,
+    Title = "Sandbox",
+    AllowMultiLaunch = false,
+    Style = WindowStyle.Default,
+    Icon = Resources.Sandbox["icon.ico"],
+    IsDebugMode = AssemblyBuildInfo.IsDebug,
+};
+AppStarter.Create(config).Run(Sandbox.Startup.Start);
+
 namespace Sandbox
 {
     public static class Startup
     {
-        private static void Main(string[] args)
-        {
-            AppStarter.Create().WithConfig(new()
-            {
-                Width = (int)(1200 * 1.5),
-                Height = (int)(675 * 1.5f),
-                Title = "Sandbox",
-                AllowMultiLaunch = false,
-                Style = WindowStyle.Default,
-                Icon = Resources.Sandbox["icon.ico"],
-                IsDebugMode = AssemblyBuildInfo.IsDebug,
-            }).Run(Start);
-        }
-
-        private static async UniTask Start(IHostScreen screen)
+        public static async UniTask Start(IHostScreen screen)
         {
             screen.Timings.OnUpdate(() =>
             {
@@ -39,19 +37,18 @@ namespace Sandbox
                     screen.Close();
                 }
             });
-            var (drLayer, wLayer, uiLayer) =
-                await LayerPipelines.CreateBuilder(screen).Build(
-                    () => new DeferredRenderingLayer(),
-                    () => new WorldLayer(),
-                    () => new UILayer());
-
-            await CreateCameraMouse(wLayer, new Vector3(0, 3, 0));
-            await InitializeLights(wLayer);
+            var (drLayer, wLayer, uiLayer) = await UniTask.WhenAll(
+                new DeferredRenderLayer().Activate(screen),
+                new ForwardRenderLayer().Activate(screen),
+                new UIObjectLayer().Activate(screen)
+            );
             var uiRoot = uiLayer.UIRoot;
             var update = screen.Timings.Update;
             uiRoot.Background = Color4.Black;
             try {
                 await ParallelOperation.WhenAll(
+                    CreateCameraMouse(wLayer, new Vector3(0, 3, 0)),
+                    InitializeLights(wLayer),
                     new Gizmo().Activate(wLayer),
                     //Sample.CreateUI(uiLayer.UIRoot),
                     CreateDice2(drLayer),
@@ -61,10 +58,20 @@ namespace Sandbox
                     CreateBox(drLayer),
                     CreateFloor(drLayer),
                     CreateModel3(drLayer),
-                    //CreateSky(wLayer),
+                    CreateSky(wLayer),
                     new Sphere()
                     {
                         Position = new Vector3(-5, 1, 1),
+                        Shader = new PbrDeferredShader()
+                        {
+                            Metallic = 0f,
+                            BaseColor = new Color3(1f, 0.766f, 0.336f),
+                            Roughness = 0.01f,
+                        },
+                    }.Activate(drLayer),
+                    new Sphere()
+                    {
+                        Position = new Vector3(-5, 1, 3),
                         Shader = new PbrDeferredShader()
                         {
                             Metallic = 1f,
@@ -87,7 +94,7 @@ namespace Sandbox
             }
         }
 
-        private static async UniTask InitializeLights(WorldLayer layer)
+        private static async UniTask InitializeLights(ForwardRenderLayer layer)
         {
             var screen = layer.GetValidScreen();
             var pos = new Vector3(0, 10, 10);
@@ -145,7 +152,7 @@ namespace Sandbox
             });
         }
 
-        private static async UniTask<Model3D> CreateDice(WorldLayer layer)
+        private static async UniTask<Model3D> CreateDice(ForwardRenderLayer layer)
         {
             var timing = layer.GetValidScreen().Timings.Update;
             var dice = Resources.Sandbox["Dice.fbx"].CreateFbxModel();
@@ -157,7 +164,7 @@ namespace Sandbox
             return await dice.Activate(layer);
         }
 
-        private static UniTask<Model3D> CreateDiceWireframe(WorldLayer layer)
+        private static UniTask<Model3D> CreateDiceWireframe(ForwardRenderLayer layer)
         {
             var dice = Resources.Sandbox["Dice.fbx"].CreateFbxModel();
             dice.Shader = new WireframeShader();
@@ -165,7 +172,7 @@ namespace Sandbox
             return dice.Activate(layer);
         }
 
-        private static async UniTask<Model3D> CreateDice2(DeferredRenderingLayer layer)
+        private static async UniTask<Model3D> CreateDice2(DeferredRenderLayer layer)
         {
             var timing = layer.GetValidScreen().Timings.Update;
             var dice = Resources.Sandbox["Dice.fbx"].CreateFbxModel();
@@ -179,7 +186,7 @@ namespace Sandbox
             return await dice.Activate(layer);
         }
 
-        private static async UniTask<Model3D> CreateModel2(WorldLayer layer)
+        private static async UniTask<Model3D> CreateModel2(ForwardRenderLayer layer)
         {
             var model = Resources.Sandbox["Alicia/Alicia_solid.pmx"].CreatePmxModel();
             model.Scale = new Vector3(0.3f);
@@ -200,13 +207,13 @@ namespace Sandbox
             return model;
         }
 
-        private static async UniTask<Model3D> CreateModel3(WorldLayer layer)
+        private static async UniTask<Model3D> CreateModel3(ObjectLayer layer)
         {
             var model = await Elffy.Serialization.Gltf.GlbModelBuilder.CreateLazyLoadingGlb(Resources.Sandbox["AntiqueCamera.glb"]).Activate(layer);
             return model;
         }
 
-        private static UniTask<SkySphere> CreateSky(WorldLayer layer)
+        private static UniTask<SkySphere> CreateSky(ForwardRenderLayer layer)
         {
             var sky = new SkySphere();
             sky.Shader = SkyShader.Instance;
@@ -214,7 +221,7 @@ namespace Sandbox
             return sky.Activate(layer);
         }
 
-        private static async UniTask<Plain> CreateFloor(WorldLayer layer)
+        private static async UniTask<Plain> CreateFloor(ForwardRenderLayer layer)
         {
             var timing = layer.GetValidScreen().Timings.Update;
             var plain = new Plain
@@ -229,7 +236,7 @@ namespace Sandbox
             return await plain.Activate(layer);
         }
 
-        private static async UniTask<Plain> CreateFloor(DeferredRenderingLayer layer)
+        private static async UniTask<Plain> CreateFloor(DeferredRenderLayer layer)
         {
             var timing = layer.GetValidScreen().Timings.Update;
             var dice = new Plain()
@@ -246,7 +253,7 @@ namespace Sandbox
             return await dice.Activate(layer);
         }
 
-        private static async UniTask<Plain> CreateFloor2(WorldLayer layer)
+        private static async UniTask<Plain> CreateFloor2(ForwardRenderLayer layer)
         {
             var bufSize = new Vector2i(256, 256);
             var buffer = ShaderStorageBuffer.CreateUninitialized<Color4>(bufSize.X * bufSize.Y);
@@ -266,7 +273,7 @@ namespace Sandbox
             return await plain.Activate(layer);
         }
 
-        private static async UniTask<Cube> CreateBox(DeferredRenderingLayer layer)
+        private static async UniTask<Cube> CreateBox(DeferredRenderLayer layer)
         {
             var timing = layer.GetValidScreen().Timings.Update;
             var cube = new Cube
@@ -290,7 +297,7 @@ namespace Sandbox
             return cube;
         }
 
-        private static UniTask<FrameObject> CreateCameraMouse(WorldLayer layer, Vector3 target)
+        private static UniTask<FrameObject> CreateCameraMouse(ObjectLayer layer, Vector3 target)
         {
             var initialCameraPos = target + new Vector3(0, 3, 40);
             return CameraMouse.Activate(layer, target, initialCameraPos);

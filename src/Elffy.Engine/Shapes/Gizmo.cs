@@ -43,7 +43,7 @@ public class Gizmo : Renderable
             dispatcher.SendUniform("_viewProjection", projection * view);
         }
 
-        protected override ShaderSource GetShaderSource(Renderable target, WorldLayer layer) => new()
+        protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer) => new()
         {
             VertexShader =
 @"#version 410

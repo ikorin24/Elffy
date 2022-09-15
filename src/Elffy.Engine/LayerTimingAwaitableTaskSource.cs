@@ -9,6 +9,7 @@ using Elffy.Effective;
 
 namespace Elffy
 {
+    [Obsolete("", true)]
     internal sealed class LayerTimingAwaitableTaskSource : IUniTaskSource<AsyncUnit>, IChainInstancePooled<LayerTimingAwaitableTaskSource>
     {
         private static Int16TokenFactory _tokenFactory;

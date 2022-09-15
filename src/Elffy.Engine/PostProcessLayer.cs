@@ -5,6 +5,7 @@ using System.Diagnostics;
 
 namespace Elffy
 {
+    [Obsolete]
     public abstract class PostProcessLayer : Layer
     {
         protected PostProcessLayer(int sortNumber) : base(sortNumber, 0)

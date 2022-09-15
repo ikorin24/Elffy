@@ -27,7 +27,7 @@ namespace Elffy.Shading
 
         void IRenderingShader.OnDetachedInternal(Renderable target) { }   // nop
 
-        ShaderSource IRenderingShader.GetShaderSourceInternal(Renderable target, WorldLayer layer) => new()
+        ShaderSource IRenderingShader.GetShaderSourceInternal(Renderable target, ObjectLayer layer) => new()
         {
             VertexShader =
 @"#version 410

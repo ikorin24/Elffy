@@ -5,6 +5,7 @@ using System;
 
 namespace Elffy
 {
+    [Obsolete("", true)]
     public class WorldLayer : Layer, IObjectLayer
     {
         private const int DefaultSortNumber = 0;
@@ -42,6 +43,7 @@ namespace Elffy
         }
     }
 
+    [Obsolete("", true)]
     public interface IObjectLayer
     {
         ReadOnlySpan<FrameObject> GetFrameObjects();

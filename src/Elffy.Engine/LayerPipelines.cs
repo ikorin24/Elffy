@@ -4,6 +4,7 @@ using Elffy.UI;
 
 namespace Elffy
 {
+    [System.Obsolete("", true)]
     public static class LayerPipelines
     {
         public static UniTask<(WorldLayer, UILayer)> BuildDefault(IHostScreen screen)

@@ -24,10 +24,10 @@ public sealed class WireframeShader : SingleTargetRenderingShader
         dispatcher.SendUniform("_wireColor", _wireColor);
     }
 
-    protected override ShaderSource GetShaderSource(Renderable target, WorldLayer layer) => layer switch
+    protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer) => layer switch
     {
-        DeferredRenderingLayer => throw new NotSupportedException(),
-        WorldLayer => ForwardRenderingSource(),
+        DeferredRenderLayer => throw new NotSupportedException(),
+        ForwardRenderLayer => ForwardRenderingSource(),
         _ => throw new NotSupportedException(),
     };
 

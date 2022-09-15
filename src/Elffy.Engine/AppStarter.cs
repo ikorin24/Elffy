@@ -26,6 +26,11 @@ namespace Elffy
             return new AppStarter(AppStarterConfig.Default);
         }
 
+        public static AppStarter Create(in AppStarterConfig config)
+        {
+            return new AppStarter(config);
+        }
+
         public AppStarter WithConfig(AppStarterConfig config)
         {
             _config = config;

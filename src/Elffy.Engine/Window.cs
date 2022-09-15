@@ -43,7 +43,7 @@ namespace Elffy
         /// <inheritdoc/>
         RenderPipeline IHostScreen.RenderPipeline => _renderingArea.RenderPipeline;
 
-        /// <inheritdoc/>
+        [Obsolete("", true)]
         public LayerCollection Layers => _renderingArea.Layers;
 
         public LightManager Lights => _renderingArea.Lights;

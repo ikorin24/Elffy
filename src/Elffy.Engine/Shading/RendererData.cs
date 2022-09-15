@@ -120,7 +120,8 @@ namespace Elffy.Shading
             Debug.Assert(_vertexType is not null);
 
             var target = Target;
-            var layer = target.Layer as WorldLayer; // TODO:
+            var layer = target.Layer;
+            Debug.Assert(layer is not null);
             var shaderSource = _shader.GetShaderSourceInternal(target, layer);
             _shaderSource = shaderSource;
 

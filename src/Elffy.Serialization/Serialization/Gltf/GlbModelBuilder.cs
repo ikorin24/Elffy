@@ -14,11 +14,6 @@ using System.Runtime.Intrinsics.X86;
 using System.Threading;
 using G = Elffy.Serialization.Gltf.Parsing;
 
-using TextureConfig = Elffy.TextureConfig;
-using TextureWrapMode = Elffy.TextureWrapMode;
-using TextureExpansionMode = Elffy.TextureExpansionMode;
-using TextureMipmapMode = Elffy.TextureMipmapMode;
-using TextureShrinkMode = Elffy.TextureShrinkMode;
 using ImageData = Elffy.Imaging.Image;
 using ImageDataType = Elffy.Imaging.ImageType;
 using ReadOnlyImageRef = Elffy.Imaging.ReadOnlyImageRef;
@@ -49,7 +44,7 @@ public static class GlbModelBuilder
 
         using var glb = GltfParser.ParseGlb(file, ct);
 
-        var layer = model.Layer as WorldLayer;
+        var layer = model.Layer;
         Debug.Assert(layer is not null);
         using(var operations = new ParallelOperation()) {
             var builderState = new BuilderState(glb, layer, screen, operations);
@@ -112,7 +107,7 @@ public static class GlbModelBuilder
         }
     }
 
-    private static async UniTask MakeTree(GlbModelPart obj, Positionable parent, WorldLayer layer)
+    private static async UniTask MakeTree(GlbModelPart obj, Positionable parent, ObjectLayer layer)
     {
         var screen = layer.GetValidScreen();
         await screen.Timings.Update.Next();
@@ -635,7 +630,7 @@ public static class GlbModelBuilder
 
     private record struct BuilderState(
         GlbObject Glb,
-        WorldLayer Layer,
+        ObjectLayer Layer,
         IHostScreen Screen,
         ParallelOperation Tasks
     )

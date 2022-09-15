@@ -3,6 +3,7 @@ using Elffy.Features.Internal;
 
 namespace Elffy
 {
+    [System.Obsolete("", true)]
     public sealed class LayerTimingPointList
     {
         private readonly Layer _layer;

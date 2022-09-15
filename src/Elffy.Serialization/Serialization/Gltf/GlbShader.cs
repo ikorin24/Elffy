@@ -101,12 +101,12 @@ internal sealed class GlbShader : SingleTargetRenderingShader
 
     protected override void OnTargetDetached(Renderable detachedTarget) { }
 
-    protected override ShaderSource GetShaderSource(Renderable target, WorldLayer layer)
+    protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer)
     {
         return layer switch
         {
-            DeferredRenderingLayer => GetDeferredShader(),
-            _ => GetForwardShader(),
+            DeferredRenderLayer => GetDeferredShader(),
+            ForwardRenderLayer or _ => GetForwardShader(),
         };
     }
 

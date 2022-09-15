@@ -55,7 +55,7 @@ namespace Elffy.Shading.Deferred
             dispatcher.SendUniform("_hasTexture", texture != null);
         }
 
-        protected override ShaderSource GetShaderSource(Renderable target, WorldLayer layer)
+        protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer)
         {
             return new()
             {

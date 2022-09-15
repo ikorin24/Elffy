@@ -20,6 +20,8 @@ namespace Elffy
         private long _sizeChangeRequestedFrameNum;
         private bool _isBlendEnabledCache;
 
+        public DeferredRenderLayer(int sortNumber = DefaultSortNumber) : this(FBO.Empty, sortNumber) { }
+
         public DeferredRenderLayer(FBO renderTarget, int sortNumber = DefaultSortNumber) : base(sortNumber)
         {
             _renderTarget = renderTarget;

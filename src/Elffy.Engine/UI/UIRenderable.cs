@@ -30,9 +30,9 @@ namespace Elffy.UI
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetUILayer([MaybeNullWhen(false)] out UILayer layer)
+        public bool TryGetUILayer([MaybeNullWhen(false)] out UIObjectLayer layer)
         {
-            layer = SafeCast.As<UILayer>(Layer);
+            layer = SafeCast.As<UIObjectLayer>(Layer);
             return layer is not null;
         }
 

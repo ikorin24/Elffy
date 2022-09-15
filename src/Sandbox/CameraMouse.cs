@@ -16,7 +16,7 @@ namespace Sandbox
         {
         }
 
-        public static async UniTask<FrameObject> Activate(WorldLayer layer, Vector3 target, Vector3 initialCameraPos)
+        public static async UniTask<FrameObject> Activate(ObjectLayer layer, Vector3 target, Vector3 initialCameraPos)
         {
             var obj = new CameraMouseObject();
             await obj.Activate(layer);

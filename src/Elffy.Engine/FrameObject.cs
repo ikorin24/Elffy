@@ -14,7 +14,7 @@ namespace Elffy
     public abstract class FrameObject
     {
         private IHostScreen? _hostScreen;
-        private Layer? _layer;
+        private ObjectLayer? _layer;
         private AsyncEventSource<FrameObject>? _activating;
         private AsyncEventSource<FrameObject>? _terminating;
         private EventSource<FrameObject>? _update;
@@ -50,7 +50,7 @@ namespace Elffy
         public bool IsFrozen { get => _isFrozen; set => _isFrozen = value; }
 
         public IHostScreen? Screen => _hostScreen;
-        public Layer? Layer => _layer;
+        public ObjectLayer? Layer => _layer;
 
         public FrameObject()
         {
@@ -71,7 +71,7 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetLayer([MaybeNullWhen(false)] out Layer layer)
+        public bool TryGetLayer([MaybeNullWhen(false)] out ObjectLayer layer)
         {
             layer = _layer;
             return layer is not null;
@@ -143,7 +143,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void InvokeLateUpdate() => _lateUpdate?.Invoke(this);
 
-        internal UniTask ActivateOnLayer(Layer layer, FrameTimingPoint timingPoint, CancellationToken ct)
+        internal UniTask ActivateOnLayer(ObjectLayer layer, FrameTimingPoint timingPoint, CancellationToken ct)
         {
             var screen = layer.Screen;
             CheckStateAndThreadForActivation(screen, layer, timingPoint);
@@ -151,7 +151,7 @@ namespace Elffy
             return ActivateOnLayerWithoutCheck(layer, timingPoint, screen, ct);
         }
 
-        internal void CheckStateAndThreadForActivation([NotNull] IHostScreen? screen, [NotNull] Layer? layer, [NotNull] FrameTimingPoint? timingPoint)
+        internal void CheckStateAndThreadForActivation([NotNull] IHostScreen? screen, [NotNull] ObjectLayer? layer, [NotNull] FrameTimingPoint? timingPoint)
         {
             ArgumentNullException.ThrowIfNull(layer);
             ArgumentNullException.ThrowIfNull(timingPoint);
@@ -168,7 +168,7 @@ namespace Elffy
             }
         }
 
-        internal async UniTask ActivateOnLayerWithoutCheck(Layer layer, FrameTimingPoint timingPoint, IHostScreen screen, CancellationToken ct)
+        internal async UniTask ActivateOnLayerWithoutCheck(ObjectLayer layer, FrameTimingPoint timingPoint, IHostScreen screen, CancellationToken ct)
         {
             Debug.Assert(_state == LifeState.New);
             Debug.Assert(_hostScreen is null);
@@ -199,7 +199,7 @@ namespace Elffy
             return;
         }
 
-        internal async UniTask TerminateFromLayerWithoutCheck(Layer layer, FrameTimingPoint timingPoint, IHostScreen screen)
+        internal async UniTask TerminateFromLayerWithoutCheck(ObjectLayer layer, FrameTimingPoint timingPoint, IHostScreen screen)
         {
             _state = LifeState.Terminating;
             try {
@@ -299,7 +299,7 @@ namespace Elffy
     public static class FrameObjectActivationExtension
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static async UniTask<T> Activate<T>(this T source, WorldLayer layer, CancellationToken cancellationToken = default)
+        public static async UniTask<T> Activate<T>(this T source, ObjectLayer layer, CancellationToken cancellationToken = default)
             where T : FrameObject
         {
             if(layer.TryGetScreen(out var screen) == false) {
@@ -310,14 +310,14 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static async UniTask<T> Activate<T>(this T frameObject, WorldLayer layer, FrameTimingPoint timingPoint, CancellationToken cancellationToken = default)
+        public static async UniTask<T> Activate<T>(this T frameObject, ObjectLayer layer, FrameTimingPoint timingPoint, CancellationToken cancellationToken = default)
             where T : FrameObject
         {
             await frameObject.ActivateOnLayer(layer, timingPoint, cancellationToken);
             return frameObject;
         }
 
-        public static async UniTask<T> Activate<T>(this T frameObject, WorldLayer layer, FrameTiming timing, CancellationToken cancellationToken = default)
+        public static async UniTask<T> Activate<T>(this T frameObject, ObjectLayer layer, FrameTiming timing, CancellationToken cancellationToken = default)
             where T : FrameObject
         {
             if(layer.TryGetScreen(out var screen) == false) {

@@ -37,6 +37,7 @@ namespace Elffy
         Vector2i Location { get; set; }
 
         /// <summary>Get list of the layers which has <see cref="FrameObject"/>s</summary>
+        [Obsolete("", true)]
         LayerCollection Layers { get; }
 
         /// <summary>Get pipeline of rendering</summary>
