@@ -5,12 +5,10 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Elffy.InputSystem;
 using Elffy.Graphics.OpenGL;
-using Elffy.Imaging;
 using Elffy.Features.Internal;
 using Elffy.Features;
 using TKMouseButton = OpenTK.Windowing.GraphicsLibraryFramework.MouseButton;
 using TKMouseButtonEventArgs = OpenTK.Windowing.Common.MouseButtonEventArgs;
-using Elffy.Shading;
 
 namespace Elffy
 {
@@ -42,9 +40,6 @@ namespace Elffy
 
         /// <inheritdoc/>
         RenderPipeline IHostScreen.RenderPipeline => _renderingArea.RenderPipeline;
-
-        [Obsolete("", true)]
-        public LayerCollection Layers => _renderingArea.Layers;
 
         public LightManager Lights => _renderingArea.Lights;
 

@@ -30,9 +30,6 @@ namespace Elffy.Features.Internal
 
         public IHostScreen OwnerScreen { get; }
 
-        [Obsolete("", true)]
-        public LayerCollection Layers => throw new NotImplementedException();
-
         public RenderPipeline RenderPipeline { get; }
         public Camera Camera { get; } = new Camera();
         public Mouse Mouse { get; } = new Mouse();

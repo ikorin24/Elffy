@@ -30,12 +30,6 @@ namespace Elffy.UI
         [Obsolete("RootPanel does not support 'Margin'.", true)]
         public new ref LayoutThickness Margin => throw new InvalidOperationException($"{nameof(RootPanel)} does not support '{nameof(Margin)}'.");
 
-        [Obsolete("", true)]
-        internal RootPanel(UILayer uiLayer)
-        {
-            throw new NotImplementedException();
-        }
-
         internal RootPanel(UIObjectLayer uiLayer)
         {
             Debug.Assert(uiLayer is not null);

@@ -36,10 +36,6 @@ namespace Elffy
         /// <summary>Get location of the <see cref="IHostScreen"/></summary>
         Vector2i Location { get; set; }
 
-        /// <summary>Get list of the layers which has <see cref="FrameObject"/>s</summary>
-        [Obsolete("", true)]
-        LayerCollection Layers { get; }
-
         /// <summary>Get pipeline of rendering</summary>
         RenderPipeline RenderPipeline { get; }
 
