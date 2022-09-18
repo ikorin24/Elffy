@@ -212,8 +212,8 @@ namespace Elffy.Shading.Deferred
                 TextureObject.Image2D(frameBufferSize, (Color4*)null, TextureInternalFormat.Rgba16f, 0);
                 TextureObject.Parameter2DMagFilter(TextureExpansionMode.NearestNeighbor);
                 TextureObject.Parameter2DMinFilter(TextureShrinkMode.NearestNeighbor, TextureMipmapMode.None);
-                TextureObject.Parameter2DWrapS(TextureWrapMode.ClampToBorder);
-                TextureObject.Parameter2DWrapT(TextureWrapMode.ClampToBorder);
+                TextureObject.Parameter2DWrapS(TextureWrap.ClampToBorder);
+                TextureObject.Parameter2DWrapT(TextureWrap.ClampToBorder);
             }
         }
 

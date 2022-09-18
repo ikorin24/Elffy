@@ -2,7 +2,6 @@
 using System;
 using Elffy.Graphics.OpenGL;
 using OpenTK.Graphics.OpenGL4;
-using TextureWrapMode = Elffy.TextureWrapMode;
 
 namespace Elffy.Shading
 {
@@ -39,8 +38,8 @@ namespace Elffy.Shading
                     TextureObject.DepthImage2DUninitialized(size);
                     TextureObject.Parameter2DMinFilter(TextureShrinkMode.NearestNeighbor, TextureMipmapMode.None);
                     TextureObject.Parameter2DMagFilter(TextureExpansionMode.NearestNeighbor);
-                    TextureObject.Parameter2DWrapS(TextureWrapMode.ClampToBorder);
-                    TextureObject.Parameter2DWrapT(TextureWrapMode.ClampToBorder);
+                    TextureObject.Parameter2DWrapS(TextureWrap.ClampToBorder);
+                    TextureObject.Parameter2DWrapT(TextureWrap.ClampToBorder);
                     fbo = FBO.Create();
                     FBO.Bind(fbo, FBO.Target.FrameBuffer);
                     FBO.SetTexture2DDepthAttachment(depth);

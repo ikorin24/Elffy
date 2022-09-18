@@ -10,7 +10,7 @@ namespace Elffy.Features
     {
         public static unsafe TextureObject LoadByDMA(in ReadOnlyImageRef image, TextureExpansionMode expansionMode,
                                                      TextureShrinkMode shrinkMode, TextureMipmapMode mipmapMode,
-                                                     TextureWrapMode wrapModeX, TextureWrapMode wrapModeY)
+                                                     TextureWrap wrapModeX, TextureWrap wrapModeY)
         {
             fixed(ColorByte* ptr = image) {
                 var state = (Ptr: (IntPtr)ptr, Length: image.Width * image.Height);
@@ -25,7 +25,7 @@ namespace Elffy.Features
         public static unsafe TextureObject LoadByDMA<T>
             (T state, in Vector2i size, ImageBuilderDelegate<T> imageBuilder,
              TextureExpansionMode expansionMode, TextureShrinkMode shrinkMode,
-             TextureMipmapMode mipmapMode, TextureWrapMode wrapModeX, TextureWrapMode wrapModeY)
+             TextureMipmapMode mipmapMode, TextureWrap wrapModeX, TextureWrap wrapModeY)
         {
             if(size.X <= 0 || size.Y <= 0) {
                 ThrowInvalidSize($"{nameof(size)} is invalid");

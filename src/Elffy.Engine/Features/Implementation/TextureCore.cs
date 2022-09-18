@@ -19,8 +19,8 @@ namespace Elffy.Features.Implementation
         public TextureExpansionMode ExpansionMode => _config.ExpansionMode;
         public TextureShrinkMode ShrinkMode => _config.ShrinkMode;
         public TextureMipmapMode MipmapMode => _config.MipmapMode;
-        public TextureWrapMode WrapModeX => _config.WrapModeX;
-        public TextureWrapMode WrapModeY => _config.WrapModeY;
+        public TextureWrap WrapModeX => _config.WrapModeX;
+        public TextureWrap WrapModeY => _config.WrapModeY;
 
         public bool IsEmpty => Texture.IsEmpty;
 

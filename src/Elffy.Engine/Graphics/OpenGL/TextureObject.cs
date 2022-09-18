@@ -4,10 +4,6 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using OpenTK.Graphics.OpenGL4;
 using Elffy.Imaging;
-using TKPixelType = OpenTK.Graphics.OpenGL4.PixelType;
-using TKPixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
-using GLTextureWrapMode = OpenTK.Graphics.OpenGL4.TextureWrapMode;
-using TextureWrapMode = Elffy.TextureWrapMode;
 
 namespace Elffy.Graphics.OpenGL
 {
@@ -97,7 +93,7 @@ namespace Elffy.Graphics.OpenGL
         public static unsafe void Image2DArray(in Vector2i size, int depth, ColorByte* pixels, int level)
         {
             GL.TexImage3D(TextureTarget.Texture2DArray, level, PixelInternalFormat.Rgba, size.X, size.Y, depth,
-                          0, TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
+                          0, PixelFormat.Rgba, PixelType.UnsignedByte, (IntPtr)pixels);
         }
 
         public static unsafe void GetImage2D(Color4* pixels)
@@ -112,12 +108,12 @@ namespace Elffy.Graphics.OpenGL
 
         public static unsafe void GetImage2D(Color4* pixels, int level)
         {
-            GL.GetTexImage(TextureTarget.Texture2D, level, TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
+            GL.GetTexImage(TextureTarget.Texture2D, level, PixelFormat.Rgba, PixelType.Float, (IntPtr)pixels);
         }
 
         public static unsafe void GetImage2D(ColorByte* pixels, int level)
         {
-            GL.GetTexImage(TextureTarget.Texture2D, level, TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
+            GL.GetTexImage(TextureTarget.Texture2D, level, PixelFormat.Rgba, PixelType.UnsignedByte, (IntPtr)pixels);
         }
 
         public static unsafe void GetImage1D(Color4* pixels)
@@ -132,12 +128,12 @@ namespace Elffy.Graphics.OpenGL
 
         public static unsafe void GetImage1D(Color4* pixels, int level)
         {
-            GL.GetTexImage(TextureTarget.Texture1D, level, TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
+            GL.GetTexImage(TextureTarget.Texture1D, level, PixelFormat.Rgba, PixelType.Float, (IntPtr)pixels);
         }
 
         public static unsafe void GetImage1D(ColorByte* pixels, int level)
         {
-            GL.GetTexImage(TextureTarget.Texture1D, level, TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
+            GL.GetTexImage(TextureTarget.Texture1D, level, PixelFormat.Rgba, PixelType.UnsignedByte, (IntPtr)pixels);
         }
 
         /// <summary>Call glTexImge2D</summary>
@@ -147,7 +143,7 @@ namespace Elffy.Graphics.OpenGL
         {
             fixed(ColorByte* pixels = image) {
                 GL.TexImage2D(TextureTarget.Texture2D, level, PixelInternalFormat.Rgba, image.Width, image.Height,
-                              0, TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
+                              0, PixelFormat.Rgba, PixelType.UnsignedByte, (IntPtr)pixels);
             }
         }
 
@@ -162,7 +158,7 @@ namespace Elffy.Graphics.OpenGL
             // if pixels == null.
 
             GL.TexImage2D(TextureTarget.Texture2D, level, PixelInternalFormat.Rgba, size.X, size.Y,
-                          0, TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
+                          0, PixelFormat.Rgba, PixelType.UnsignedByte, (IntPtr)pixels);
         }
 
         /// <summary>Call glTexImage2D</summary>
@@ -176,7 +172,7 @@ namespace Elffy.Graphics.OpenGL
             // if pixels == null.
 
             GL.TexImage2D(TextureTarget.Texture2D, level, PixelInternalFormat.Rgba, size.X, size.Y,
-                          0, TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
+                          0, PixelFormat.Rgba, PixelType.Float, (IntPtr)pixels);
         }
 
         /// <summary>Call glTexImage2D</summary>
@@ -191,7 +187,7 @@ namespace Elffy.Graphics.OpenGL
             // if pixels == null.
 
             GL.TexImage2D(TextureTarget.Texture2D, level, internalFormat.ToOriginalValue(), size.X, size.Y,
-                          0, TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
+                          0, PixelFormat.Rgba, PixelType.UnsignedByte, (IntPtr)pixels);
         }
 
         /// <summary>Call glTexImage2D</summary>
@@ -206,7 +202,7 @@ namespace Elffy.Graphics.OpenGL
             // if pixels == null.
 
             GL.TexImage2D(TextureTarget.Texture2D, level, internalFormat.ToOriginalValue(), size.X, size.Y,
-                          0, TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
+                          0, PixelFormat.Rgba, PixelType.Float, (IntPtr)pixels);
         }
 
         public static unsafe void DepthImage2DUninitialized(in Vector2i size)
@@ -214,7 +210,7 @@ namespace Elffy.Graphics.OpenGL
             // Allocate memory of specified size without initialization
 
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.DepthComponent, size.X, size.Y,
-                          0, TKPixelFormat.DepthComponent, TKPixelType.Float, IntPtr.Zero);
+                          0, PixelFormat.DepthComponent, PixelType.Float, IntPtr.Zero);
         }
 
         /// <summary>Call glTexSubImage2D</summary>
@@ -224,7 +220,7 @@ namespace Elffy.Graphics.OpenGL
         public static unsafe void SubImage2D(in RectI rect, ColorByte* pixels, int level)
         {
             GL.TexSubImage2D(TextureTarget.Texture2D, level, rect.X, rect.Y, rect.Width, rect.Height,
-                             TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
+                             PixelFormat.Rgba, PixelType.UnsignedByte, (IntPtr)pixels);
         }
 
         /// <summary>Call glTexSubImage2D</summary>
@@ -234,7 +230,7 @@ namespace Elffy.Graphics.OpenGL
         public static unsafe void SubImage2D(in RectI rect, Color4* pixels, int level)
         {
             GL.TexSubImage2D(TextureTarget.Texture2D, level, rect.X, rect.Y, rect.Width, rect.Height,
-                             TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
+                             PixelFormat.Rgba, PixelType.Float, (IntPtr)pixels);
         }
 
         /// <summary>Call glTexParameter with texture2D and texture min filter</summary>
@@ -254,14 +250,14 @@ namespace Elffy.Graphics.OpenGL
 
         /// <summary>Call glTexparameter with texture2D and texture wrap s</summary>
         /// <param name="wrapMode">texture wrap mode</param>
-        public static void Parameter2DWrapS(TextureWrapMode wrapMode)
+        public static void Parameter2DWrapS(TextureWrap wrapMode)
         {
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, GetWrapMode(wrapMode));
         }
 
         /// <summary>Call glTexparameter with texture2D and texture wrap t</summary>
         /// <param name="wrapMode">texture wrap mode</param>
-        public static void Parameter2DWrapT(TextureWrapMode wrapMode)
+        public static void Parameter2DWrapT(TextureWrap wrapMode)
         {
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, GetWrapMode(wrapMode));
         }
@@ -289,14 +285,14 @@ namespace Elffy.Graphics.OpenGL
 
         /// <summary>Call glTexparameter with texture2Darray and texture wrap s</summary>
         /// <param name="wrapMode">texture wrap mode</param>
-        public static void Parameter2DArrayWrapS(TextureWrapMode wrapMode)
+        public static void Parameter2DArrayWrapS(TextureWrap wrapMode)
         {
             GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureWrapS, GetWrapMode(wrapMode));
         }
 
         /// <summary>Call glTexparameter with texture2Darray and texture wrap t</summary>
         /// <param name="wrapMode">texture wrap mode</param>
-        public static void Parameter2DArrayWrapT(TextureWrapMode wrapMode)
+        public static void Parameter2DArrayWrapT(TextureWrap wrapMode)
         {
             GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureWrapT, GetWrapMode(wrapMode));
         }
@@ -314,7 +310,7 @@ namespace Elffy.Graphics.OpenGL
         public static unsafe void Image1D(int width, ColorByte* pixels, int level)
         {
             GL.TexImage1D(TextureTarget.Texture1D, level, PixelInternalFormat.Rgba, width,
-                          0, TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
+                          0, PixelFormat.Rgba, PixelType.UnsignedByte, (IntPtr)pixels);
         }
 
         /// <summary>Call glTexImage1D</summary>
@@ -324,7 +320,7 @@ namespace Elffy.Graphics.OpenGL
         public static unsafe void Image1D(int width, Color4* pixels, int level)
         {
             GL.TexImage1D(TextureTarget.Texture1D, level, PixelInternalFormat.Rgba, width,
-                          0, TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
+                          0, PixelFormat.Rgba, PixelType.Float, (IntPtr)pixels);
         }
 
         /// <summary>Call glTexImage1D</summary>
@@ -335,7 +331,7 @@ namespace Elffy.Graphics.OpenGL
         public static unsafe void Image1D(int width, ColorByte* pixels, TextureInternalFormat internalFormat, int level)
         {
             GL.TexImage1D(TextureTarget.Texture1D, level, internalFormat.ToOriginalValue(), width,
-                          0, TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
+                          0, PixelFormat.Rgba, PixelType.UnsignedByte, (IntPtr)pixels);
         }
 
         /// <summary>Call glTexImage1D</summary>
@@ -346,7 +342,7 @@ namespace Elffy.Graphics.OpenGL
         public static unsafe void Image1D(int width, Color4* pixels, TextureInternalFormat internalFormat, int level)
         {
             GL.TexImage1D(TextureTarget.Texture1D, level, internalFormat.ToOriginalValue(), width,
-                          0, TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
+                          0, PixelFormat.Rgba, PixelType.Float, (IntPtr)pixels);
         }
 
         /// <summary>Call glTexSubImage1D</summary>
@@ -357,7 +353,7 @@ namespace Elffy.Graphics.OpenGL
         public static unsafe void SubImage1D(int xOffset, int width, ColorByte* pixels, int level)
         {
             GL.TexSubImage1D(TextureTarget.Texture1D, level, xOffset, width,
-                             TKPixelFormat.Rgba, TKPixelType.UnsignedByte, (IntPtr)pixels);
+                             PixelFormat.Rgba, PixelType.UnsignedByte, (IntPtr)pixels);
         }
 
         /// <summary>Call glTexSubImage1D</summary>
@@ -368,7 +364,7 @@ namespace Elffy.Graphics.OpenGL
         public static unsafe void SubImage1D(int xOffset, int width, Color4* pixels, int level)
         {
             GL.TexSubImage1D(TextureTarget.Texture1D, level, xOffset, width,
-                             TKPixelFormat.Rgba, TKPixelType.Float, (IntPtr)pixels);
+                             PixelFormat.Rgba, PixelType.Float, (IntPtr)pixels);
         }
 
         /// <summary>Call glTexParameter with texture1D and min filter</summary>
@@ -388,7 +384,7 @@ namespace Elffy.Graphics.OpenGL
 
         /// <summary>Call glTexparameter with texture1D and texture wrap s</summary>
         /// <param name="wrapMode">texture wrap mode</param>
-        public static void Parameter1DWrapS(TextureWrapMode wrapMode)
+        public static void Parameter1DWrapS(TextureWrap wrapMode)
         {
             GL.TexParameter(TextureTarget.Texture1D, TextureParameterName.TextureWrapS, GetWrapMode(wrapMode));
         }
@@ -449,18 +445,18 @@ namespace Elffy.Graphics.OpenGL
             throw new ArgumentException();
         }
 
-        private static int GetWrapMode(TextureWrapMode wrapMode)
+        private static int GetWrapMode(TextureWrap wrapMode)
         {
             return (int)(wrapMode switch
             {
-                TextureWrapMode.Repeat => GLTextureWrapMode.Repeat,
-                TextureWrapMode.MirroredRepeat => GLTextureWrapMode.MirroredRepeat,
-                TextureWrapMode.ClampToBorder => GLTextureWrapMode.ClampToBorder,
-                TextureWrapMode.ClampToEdge => GLTextureWrapMode.ClampToEdge,
+                TextureWrap.Repeat => TextureWrapMode.Repeat,
+                TextureWrap.MirroredRepeat => TextureWrapMode.MirroredRepeat,
+                TextureWrap.ClampToBorder => TextureWrapMode.ClampToBorder,
+                TextureWrap.ClampToEdge => TextureWrapMode.ClampToEdge,
                 _ => ThrowInvalidEnum(),
             });
 
-            [DoesNotReturn] static GLTextureWrapMode ThrowInvalidEnum() => throw new ArgumentException();
+            [DoesNotReturn] static TextureWrapMode ThrowInvalidEnum() => throw new ArgumentException();
         }
 
         public override string ToString() => _texture.ToString();

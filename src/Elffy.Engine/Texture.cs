@@ -20,8 +20,8 @@ public sealed class Texture : IContextAssociatedSafety
     public TextureExpansionMode ExpansionMode => _textureCore.ExpansionMode;
     public TextureShrinkMode ShrinkMode => _textureCore.ShrinkMode;
     public TextureMipmapMode MipmapMode => _textureCore.MipmapMode;
-    public TextureWrapMode WrapModeX => _textureCore.WrapModeX;
-    public TextureWrapMode WrapModeY => _textureCore.WrapModeY;
+    public TextureWrap WrapModeX => _textureCore.WrapModeX;
+    public TextureWrap WrapModeY => _textureCore.WrapModeY;
     public TextureObject TextureObject => _textureCore.Texture;
 
     public bool IsEmpty => _textureCore.IsEmpty;

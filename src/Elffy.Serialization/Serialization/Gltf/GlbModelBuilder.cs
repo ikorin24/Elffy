@@ -12,11 +12,8 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 using System.Threading;
-using G = Elffy.Serialization.Gltf.Parsing;
 
-using ImageData = Elffy.Imaging.Image;
-using ImageDataType = Elffy.Imaging.ImageType;
-using ReadOnlyImageRef = Elffy.Imaging.ReadOnlyImageRef;
+using EI = Elffy.Imaging;
 
 namespace Elffy.Serialization.Gltf;
 
@@ -238,16 +235,16 @@ public static class GlbModelBuilder
         {
             WrapModeX = sampler.wrapS switch
             {
-                SamplerWrap.Repeat => TextureWrapMode.Repeat,
-                SamplerWrap.MirroredRepeat => TextureWrapMode.MirroredRepeat,
-                SamplerWrap.ClampToEdge => TextureWrapMode.ClampToEdge,
+                SamplerWrap.Repeat => TextureWrap.Repeat,
+                SamplerWrap.MirroredRepeat => TextureWrap.MirroredRepeat,
+                SamplerWrap.ClampToEdge => TextureWrap.ClampToEdge,
                 _ => default,
             },
             WrapModeY = sampler.wrapT switch
             {
-                SamplerWrap.Repeat => TextureWrapMode.Repeat,
-                SamplerWrap.MirroredRepeat => TextureWrapMode.MirroredRepeat,
-                SamplerWrap.ClampToEdge => TextureWrapMode.ClampToEdge,
+                SamplerWrap.Repeat => TextureWrap.Repeat,
+                SamplerWrap.MirroredRepeat => TextureWrap.MirroredRepeat,
+                SamplerWrap.ClampToEdge => TextureWrap.ClampToEdge,
                 _ => default,
             },
             ExpansionMode = sampler.magFilter switch
@@ -273,14 +270,14 @@ public static class GlbModelBuilder
         return config;
     }
 
-    private delegate void LoadTextureAction<T>(GlbModelPart obj, ReadOnlyImageRef imageData, TextureConfig config, T arg);
+    private delegate void LoadTextureAction<T>(GlbModelPart obj, EI.ReadOnlyImageRef imageData, TextureConfig config, T arg);
 
-    private static UniTask LoadTextureTask<T>(IHostScreen screen, GlbModelPart obj, ref ImageData imageData, TextureConfig config, T arg, LoadTextureAction<T> action)
+    private static UniTask LoadTextureTask<T>(IHostScreen screen, GlbModelPart obj, ref EI.Image imageData, TextureConfig config, T arg, LoadTextureAction<T> action)
     {
         (imageData, var tmp) = (default, imageData);
         return Task(screen, obj, tmp, config, arg, action);
 
-        static async UniTask Task(IHostScreen screen, GlbModelPart obj, ImageData imageData, TextureConfig config, T arg, LoadTextureAction<T> action)
+        static async UniTask Task(IHostScreen screen, GlbModelPart obj, EI.Image imageData, TextureConfig config, T arg, LoadTextureAction<T> action)
         {
             try {
                 await screen.Timings.Update.Next();
@@ -393,7 +390,7 @@ public static class GlbModelBuilder
         };
     }
 
-    private static bool TryReadTexture(in BuilderState state, in G.Texture texture, out ImageData imageData, out TextureConfig config)
+    private static bool TryReadTexture(in BuilderState state, in Parsing.Texture texture, out EI.Image imageData, out TextureConfig config)
     {
         var gltf = state.Gltf;
         if(texture.source.TryGetValue(out var imageNum)) {
@@ -481,7 +478,7 @@ public static class GlbModelBuilder
         }
     }
 
-    private unsafe static ImageData ReadImage(in BuilderState state, in Image image)
+    private unsafe static EI.Image ReadImage(in BuilderState state, in Image image)
     {
         var gltf = state.Gltf;
         if(image.uri != null) {
@@ -500,8 +497,8 @@ public static class GlbModelBuilder
 
         return mimeType switch
         {
-            ImageMimeType.ImageJpeg => ImageData.FromStream(stream, ImageDataType.Jpg),
-            ImageMimeType.ImagePng => ImageData.FromStream(stream, ImageDataType.Png),
+            ImageMimeType.ImageJpeg => EI.Image.FromStream(stream, EI.ImageType.Jpg),
+            ImageMimeType.ImagePng => EI.Image.FromStream(stream, EI.ImageType.Png),
             _ => default,
         };
     }

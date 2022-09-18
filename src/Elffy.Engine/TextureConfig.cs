@@ -5,8 +5,8 @@ public record struct TextureConfig(
     TextureExpansionMode ExpansionMode,
     TextureShrinkMode ShrinkMode,
     TextureMipmapMode MipmapMode,
-    TextureWrapMode WrapModeX,
-    TextureWrapMode WrapModeY
+    TextureWrap WrapModeX,
+    TextureWrap WrapModeY
 )
 {
     /// <summary>Get default texture configuration</summary>
@@ -18,8 +18,8 @@ public record struct TextureConfig(
         ExpansionMode = TextureExpansionMode.Bilinear,
         ShrinkMode = TextureShrinkMode.Bilinear,
         MipmapMode = TextureMipmapMode.Bilinear,
-        WrapModeX = TextureWrapMode.ClampToEdge,
-        WrapModeY = TextureWrapMode.ClampToEdge,
+        WrapModeX = TextureWrap.ClampToEdge,
+        WrapModeY = TextureWrap.ClampToEdge,
     };
 
     public static TextureConfig DefaultNearestNeighbor => new()
@@ -27,8 +27,8 @@ public record struct TextureConfig(
         ExpansionMode = TextureExpansionMode.NearestNeighbor,
         ShrinkMode = TextureShrinkMode.NearestNeighbor,
         MipmapMode = TextureMipmapMode.None,
-        WrapModeX = TextureWrapMode.ClampToEdge,
-        WrapModeY = TextureWrapMode.ClampToEdge,
+        WrapModeX = TextureWrap.ClampToEdge,
+        WrapModeY = TextureWrap.ClampToEdge,
     };
 
     public static TextureConfig BilinearRepeat => new()
@@ -36,7 +36,7 @@ public record struct TextureConfig(
         ExpansionMode = TextureExpansionMode.Bilinear,
         ShrinkMode = TextureShrinkMode.Bilinear,
         MipmapMode = TextureMipmapMode.Bilinear,
-        WrapModeX = TextureWrapMode.Repeat,
-        WrapModeY = TextureWrapMode.Repeat,
+        WrapModeX = TextureWrap.Repeat,
+        WrapModeY = TextureWrap.Repeat,
     };
 }

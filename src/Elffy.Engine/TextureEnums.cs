@@ -31,7 +31,7 @@ public enum TextureMipmapMode : byte
 }
 
 /// <summary>Texture wrap mode</summary>
-public enum TextureWrapMode : byte
+public enum TextureWrap : byte
 {
     /// <summary>clamp to edge</summary>
     ClampToEdge = 0,

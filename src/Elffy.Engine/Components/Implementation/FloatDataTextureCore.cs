@@ -130,7 +130,7 @@ namespace Elffy.Components.Implementation
         {
             TextureObject.Parameter1DMinFilter(TextureShrinkMode.NearestNeighbor, TextureMipmapMode.None);
             TextureObject.Parameter1DMagFilter(TextureExpansionMode.NearestNeighbor);
-            TextureObject.Parameter1DWrapS(TextureWrapMode.ClampToEdge);
+            TextureObject.Parameter1DWrapS(TextureWrap.ClampToEdge);
         }
 
         /// <summary>Dispose the texture1D</summary>
