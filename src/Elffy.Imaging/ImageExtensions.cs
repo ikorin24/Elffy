@@ -1,7 +1,7 @@
 ﻿#nullable enable
 using System;
+using System.Buffers;
 using System.IO;
-using Elffy;
 using Elffy.Imaging.Internal;
 using SkiaSharp;
 
@@ -120,12 +120,44 @@ namespace Elffy.Imaging
             }
         }
 
-        public static unsafe void WriteAsPng(in this ReadOnlyImageRef source, Stream stream)
+        public static void EncodeAsPng(this Image source, Stream streamToWrite) => EncodeAsPng(source.AsReadOnlyImageRef(), streamToWrite);
+
+        public static void EncodeAsPng(this ImageRef source, Stream streamToWrite) => EncodeAsPng(source.AsReadOnly(), streamToWrite);
+
+        public static void EncodeAsPng(this ReadOnlyImageRef source, Stream streamToWrite)
         {
-            EncodeImage(source, SKEncodedImageFormat.Png, stream, static (span, stream) => stream.Write(span));
+            _ = EncodeImage(source, SKEncodedImageFormat.Png, streamToWrite, static (span, stream) =>
+            {
+                stream.Write(span);
+                return stream;
+            });
         }
 
-        public static unsafe void SaveAsPng(in this ReadOnlyImageRef source, string filePath)
+        public static void EncodeAsPng(this Image source, IBufferWriter<byte> writer) => EncodeAsPng(source.AsReadOnlyImageRef(), writer);
+
+        public static void EncodeAsPng(this ImageRef source, IBufferWriter<byte> writer) => EncodeAsPng(source.AsReadOnly(), writer);
+
+        public static void EncodeAsPng(this ReadOnlyImageRef source, IBufferWriter<byte> writer)
+        {
+            _ = EncodeImage(source, SKEncodedImageFormat.Png, writer, static (span, writer) =>
+            {
+                writer.Write(span);
+                return writer;
+            });
+        }
+
+        public static byte[] EncodeAsPng(this Image source) => EncodeAsPng(source.AsReadOnlyImageRef());
+        public static byte[] EncodeAsPng(this ImageRef source) => EncodeAsPng(source.AsReadOnly());
+
+        public static byte[] EncodeAsPng(this ReadOnlyImageRef source)
+        {
+            return EncodeImage<object?, byte[]>(source, SKEncodedImageFormat.Png, null, (span, _) => span.ToArray());
+        }
+
+        public static unsafe void SaveAsPng(this Image source, string filePath) => SaveAsPng(source.AsReadOnlyImageRef(), filePath);
+        public static unsafe void SaveAsPng(this ImageRef source, string filePath) => SaveAsPng(source.AsReadOnly(), filePath);
+
+        public static unsafe void SaveAsPng(this ReadOnlyImageRef source, string filePath)
         {
             EncodeImage(source, SKEncodedImageFormat.Png, filePath, static (span, filePath) =>
             {
@@ -134,16 +166,17 @@ namespace Elffy.Imaging
                 }
                 using var handle = File.OpenHandle(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.None, preallocationSize: span.Length);
                 RandomAccess.Write(handle, span, 0);
+                return filePath;
             });
         }
 
-        private static unsafe void EncodeImage<TState>(ReadOnlyImageRef source, SKEncodedImageFormat format, TState state, System.Buffers.ReadOnlySpanAction<byte, TState> action)
+        private static unsafe TResult EncodeImage<TState, TResult>(ReadOnlyImageRef source, SKEncodedImageFormat format, TState state, ReadOnlySpanFunc<byte, TState, TResult> func)
         {
             fixed(void* ptr = source) {
                 var info = new SKImageInfo(source.Width, source.Height, SKColorType.Rgba8888, SKAlphaType.Unpremul);
                 using var pixmap = new SKPixmap(info, (IntPtr)ptr);
                 using var data = pixmap.Encode(format, 0);
-                action.Invoke(data.AsSpan(), state);
+                return func.Invoke(data.AsSpan(), state);
             }
         }
     }

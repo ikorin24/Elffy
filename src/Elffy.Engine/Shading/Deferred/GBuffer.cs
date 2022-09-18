@@ -9,7 +9,6 @@ using Elffy.Effective;
 using Elffy.Graphics.OpenGL;
 using Elffy.Features;
 using Elffy.Components.Implementation;
-using TextureWrapMode = Elffy.TextureWrapMode;
 
 namespace Elffy.Shading.Deferred
 {
@@ -29,6 +28,21 @@ namespace Elffy.Shading.Deferred
         private RBO _depth;
         private Vector2i _size;
         private bool _initialized;
+
+        // Depth buffer should be cleared as 1 instead of 0.
+        private const float DepthClearValue = 1f;
+        private const int StencilClearValue = 0;
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private unsafe static float* ClearColor
+        {
+            get
+            {
+                // The following two lines mean `const float clearColor[4] = { 0 }` in C++
+                ReadOnlySpan<byte> ConstZeroFloat4 = new byte[16] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+                return (float*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(ConstZeroFloat4));
+            }
+        }
 
         public bool IsInitialized => _initialized;
 
@@ -75,11 +89,36 @@ namespace Elffy.Shading.Deferred
             _initialized = true;
         }
 
+        public unsafe void ClearAllBuffers()
+        {
+            if(_fbo.IsEmpty) { return; }
+            using(var _ = FBO.PreserveCurrentBinded()) {
+                FBO.Bind(_fbo, FBO.Target.FrameBuffer);
+                for(int i = 0; i < GBufferMrt.MrtCount; i++) {
+                    GL.ClearBuffer(ClearBuffer.Color, i, ClearColor);
+                }
+                GL.ClearBuffer(ClearBufferCombined.DepthStencil, 0, DepthClearValue, StencilClearValue);
+            }
+        }
+
         public unsafe void ClearColorBuffers()
         {
-            float* clearColor = stackalloc float[4] { 0, 0, 0, 0 };
-            for(int i = 0; i < GBufferMrt.MrtCount; i++) {
-                GL.ClearBuffer(ClearBuffer.Color, i, clearColor);
+            if(_fbo.IsEmpty) { return; }
+
+            using(var _ = FBO.PreserveCurrentBinded()) {
+                FBO.Bind(_fbo, FBO.Target.FrameBuffer);
+                for(int i = 0; i < GBufferMrt.MrtCount; i++) {
+                    GL.ClearBuffer(ClearBuffer.Color, i, ClearColor);
+                }
+            }
+        }
+
+        public unsafe void ClearDepthStencilBuffer()
+        {
+            if(_fbo.IsEmpty) { return; }
+            using(var _ = FBO.PreserveCurrentBinded()) {
+                FBO.Bind(_fbo, FBO.Target.FrameBuffer);
+                GL.ClearBuffer(ClearBufferCombined.DepthStencil, 0, DepthClearValue, StencilClearValue);
             }
         }
 

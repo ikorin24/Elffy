@@ -7,7 +7,7 @@ using OpenTK.Graphics.OpenGL4;
 namespace Elffy.Shading
 {
     /// <summary>Compiled post process program</summary>
-    public sealed class PostProcessProgram : IDisposable
+    internal sealed class PostProcessProgram : IDisposable
     {
         private PostProcess _source;
         private ProgramObject _program;
@@ -26,6 +26,8 @@ namespace Elffy.Shading
         }
 
         ~PostProcessProgram() => Dispose(false);
+
+        public void Render(Vector2i screenSize) => Render(screenSize, Vector2.One);
 
         public void Render(Vector2i screenSize, Vector2 uvScale)
         {

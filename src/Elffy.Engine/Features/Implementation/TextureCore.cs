@@ -5,7 +5,6 @@ using Elffy.Effective.Unsafes;
 using Elffy.Graphics.OpenGL;
 using Elffy.Imaging;
 using OpenTK.Graphics.OpenGL4;
-using TKPixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
 namespace Elffy.Features.Implementation
 {
@@ -171,37 +170,29 @@ namespace Elffy.Features.Implementation
                (uint)rect.Y >= (uint)Size.Y ||
                (uint)rect.Width > (uint)(Size.X - rect.X) ||
                (uint)rect.Height > (uint)(Size.Y - rect.Y)) {
-                ThrowOutOfRange(nameof(rect));
+                throw new ArgumentOutOfRangeException(nameof(rect));
             }
             var len = rect.X * rect.Y * sizeof(ColorByte);
             if(buffer.Length < len) {
-                ThrowOutOfRange($"{nameof(buffer)} is too short.");
+                throw new ArgumentException(nameof(buffer));
             }
 
-            // Get current binded fbo
-            var currentRead = FBO.CurrentReadBinded;
-            var currentDraw = FBO.CurrentDrawBinded;
-
-            var fbo = FBO.Create();
-            try {
-                FBO.Bind(fbo, FBO.Target.FrameBuffer);
-                FBO.SetTexture2DColorAttachment(Texture, 0);
-                FBO.ThrowIfInvalidStatus();
-                fixed(void* ptr = buffer) {
-                    GL.ReadPixels(rect.X, rect.Y, rect.Width, rect.Height, TKPixelFormat.Rgba, PixelType.UnsignedByte, (IntPtr)ptr);
+            using(var _ = FBO.PreserveCurrentBinded()) {
+                var fbo = FBO.Create();
+                try {
+                    FBO.Bind(fbo, FBO.Target.FrameBuffer);
+                    FBO.SetTexture2DColorAttachment(Texture, 0);
+                    FBO.ThrowIfInvalidStatus();
+                    fixed(void* ptr = buffer) {
+                        GL.ReadPixels(rect.X, rect.Y, rect.Width, rect.Height, PixelFormat.Rgba, PixelType.UnsignedByte, (IntPtr)ptr);
+                    }
                 }
+                finally {
+                    FBO.Unbind(FBO.Target.FrameBuffer);
+                    FBO.Delete(ref fbo);
+                }
+                return len;
             }
-            finally {
-                FBO.Unbind(FBO.Target.FrameBuffer);
-                FBO.Delete(ref fbo);
-
-                // Restore binded
-                FBO.Bind(currentRead, FBO.Target.Read);
-                FBO.Bind(currentDraw, FBO.Target.Draw);
-            }
-            return len;
-
-            [DoesNotReturn] static void ThrowOutOfRange(string message) => throw new ArgumentOutOfRangeException(message);
         }
 
         internal static unsafe int GetPixels(in TextureObject to, in RectI rect, Span<ColorByte> buffer)
@@ -212,33 +203,25 @@ namespace Elffy.Features.Implementation
             }
             var len = rect.X * rect.Y * sizeof(ColorByte);
             if(buffer.Length < len) {
-                ThrowOutOfRange($"{nameof(buffer)} is too short.");
+                throw new ArgumentException(nameof(buffer));
             }
 
-            // Get current binded fbo
-            var currentRead = FBO.CurrentReadBinded;
-            var currentDraw = FBO.CurrentDrawBinded;
-
-            var fbo = FBO.Create();
-            try {
-                FBO.Bind(fbo, FBO.Target.FrameBuffer);
-                FBO.SetTexture2DColorAttachment(to, 0);
-                FBO.ThrowIfInvalidStatus();
-                fixed(void* ptr = buffer) {
-                    GL.ReadPixels(rect.X, rect.Y, rect.Width, rect.Height, TKPixelFormat.Rgba, PixelType.UnsignedByte, (IntPtr)ptr);
+            using(var _ = FBO.PreserveCurrentBinded()) {
+                var fbo = FBO.Create();
+                try {
+                    FBO.Bind(fbo, FBO.Target.FrameBuffer);
+                    FBO.SetTexture2DColorAttachment(to, 0);
+                    FBO.ThrowIfInvalidStatus();
+                    fixed(void* ptr = buffer) {
+                        GL.ReadPixels(rect.X, rect.Y, rect.Width, rect.Height, PixelFormat.Rgba, PixelType.UnsignedByte, (IntPtr)ptr);
+                    }
                 }
+                finally {
+                    FBO.Unbind(FBO.Target.FrameBuffer);
+                    FBO.Delete(ref fbo);
+                }
+                return len;
             }
-            finally {
-                FBO.Unbind(FBO.Target.FrameBuffer);
-                FBO.Delete(ref fbo);
-
-                // Restore binded
-                FBO.Bind(currentRead, FBO.Target.Read);
-                FBO.Bind(currentDraw, FBO.Target.Draw);
-            }
-            return len;
-
-            [DoesNotReturn] static void ThrowOutOfRange(string message) => throw new ArgumentOutOfRangeException(message);
         }
 
         public void Dispose()

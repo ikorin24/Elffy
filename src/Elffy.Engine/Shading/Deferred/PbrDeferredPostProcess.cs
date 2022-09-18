@@ -63,7 +63,10 @@ const float DielectricF0 = 0.04;
 const vec3 IndirectDiffuse = vec3(0.5, 0.5, 0.5);
 const vec3 IndirectSpecular = vec3(0, 0, 0);
 
-in vec2 _uv;
+in V2f
+{
+    vec2 uv;
+} _v2f;
 uniform mat4 _view;
 uniform mat4 _projection;
 uniform sampler2D _mrt0;
@@ -145,7 +148,7 @@ float CalcShadow(vec3 shadowMapNDC, sampler2D shadowMap)
 
 void main()
 {
-    vec4 mrt0Value = textureLod(_mrt0, _uv, 0);
+    vec4 mrt0Value = textureLod(_mrt0, _v2f.uv, 0);
     vec4 posWorld = vec4(mrt0Value.rgb, 1.0);
     if(mrt0Value.w == 0) {
         gl_FragDepth = 1;
@@ -153,8 +156,8 @@ void main()
         return;
     }
     mat3 viewInvT = transpose(inverse(mat3(_view)));
-    vec4 mrt1Value = textureLod(_mrt1, _uv, 0);
-    vec4 mrt2Value = textureLod(_mrt2, _uv, 0);
+    vec4 mrt1Value = textureLod(_mrt1, _v2f.uv, 0);
+    vec4 mrt2Value = textureLod(_mrt2, _v2f.uv, 0);
     vec3 nWorld = mrt1Value.rgb;
     vec3 baseColor = mrt2Value.rgb;
     vec3 pos = ToVec3(_view * posWorld);    // pos in eye space

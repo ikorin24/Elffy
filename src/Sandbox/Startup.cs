@@ -9,7 +9,9 @@ using Elffy.Shading.Forward;
 using Elffy.UI;
 using Elffy.Shading;
 using Elffy.Threading;
+using Elffy.Imaging;
 using Elffy.Graphics.OpenGL;
+using System.Diagnostics;
 
 [assembly: DefineLocalResource("Sandbox", "Sandbox.dat")]
 
@@ -29,6 +31,48 @@ public static class Startup
             IsDebugMode = AssemblyBuildInfo.IsDebug,
         }).Run(Start);
 
+    private static async UniTask<(DeferredRenderLayer, ForwardRenderLayer, UIObjectLayer)> CreateRenderPipeline(IHostScreen screen)
+    {
+        var offscreen = new OffscreenBuffer();
+        offscreen.Initialize(screen);
+        var drLayer = new DeferredRenderLayer(offscreen.FBO);
+        var wLayer = new ForwardRenderLayer(offscreen.FBO);
+        var uiLayer = new UIObjectLayer(FBO.Empty, 1001);
+        var ppo = new PostProcessOperation(FBO.Empty)
+        {
+            PostProcess = new GrayscalePostProcess(offscreen),
+        };
+        await ParallelOperation.WhenAll(
+            drLayer.Activate(screen),
+            wLayer.Activate(screen),
+            uiLayer.Activate(screen),
+            ppo.Activate(screen));
+
+        UniTask.Void(async () =>
+        {
+            while(screen.IsRunning) {
+                await ppo.AfterExecute.Next();
+                offscreen.ClearAllBuffers();
+            }
+            offscreen.Dispose();
+        });
+
+        UniTask.Void(async () =>
+        {
+            //var t = screen.Timings.Update;
+            while(screen.IsRunning) {
+                await ppo.BeforeExecute.Next();
+                if(screen.Keyboard.IsDown(Elffy.InputSystem.Keys.Space)) {
+                    using var image = TextureHelpers.GetImage(offscreen.RenderTargetTexture);
+                    image.SaveAsPng("hoge.png");
+                    Debug.WriteLine("save");
+                }
+            }
+        });
+
+        return (drLayer, wLayer, uiLayer);
+    }
+
     private static async UniTask Start(IHostScreen screen)
     {
         screen.Timings.OnUpdate(() =>
@@ -37,11 +81,7 @@ public static class Startup
                 screen.Close();
             }
         });
-        var (drLayer, wLayer, uiLayer) = await UniTask.WhenAll(
-            new DeferredRenderLayer().Activate(screen),
-            new ForwardRenderLayer().Activate(screen),
-            new UIObjectLayer().Activate(screen)
-        );
+        var (drLayer, wLayer, uiLayer) = await CreateRenderPipeline(screen);
         var uiRoot = uiLayer.UIRoot;
         var update = screen.Timings.Update;
         uiRoot.Background = Color4.Black;
@@ -137,18 +177,6 @@ public static class Startup
             //light.Position = sphere.Position;
             light.Direction = -sphere.Position;
             //arrow.SetDirection(-sphere.Position.Normalized(), sphere.Position);
-        });
-
-        UniTask.Void(async () =>
-        {
-            var update = screen.Timings.Update;
-            while(true) {
-                await update.Next();
-                if(screen.Keyboard.IsDown(Elffy.InputSystem.Keys.Space)) {
-                    await light.Terminate();
-                    return;
-                }
-            }
         });
     }
 

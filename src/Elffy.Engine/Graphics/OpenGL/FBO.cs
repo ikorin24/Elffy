@@ -142,6 +142,29 @@ namespace Elffy.Graphics.OpenGL
             fbo = default;
         }
 
+        internal static PreservedState PreserveCurrentBinded() => new PreservedState(CurrentReadBinded, CurrentDrawBinded);
+
+        internal readonly ref struct PreservedState
+        {
+            private readonly FBO _read;
+            private readonly FBO _draw;
+
+            [Obsolete("Don't use default constructor.", true)]
+            public PreservedState() => throw new NotSupportedException("Don't use default constructor.");
+
+            public PreservedState(FBO read, FBO draw)
+            {
+                _read = read;
+                _draw = draw;
+            }
+
+            public void Dispose()
+            {
+                Bind(_read, Target.Read);
+                Bind(_draw, Target.Draw);
+            }
+        }
+
         public override string ToString() => _fbo.ToString();
 
         public override bool Equals(object? obj) => obj is FBO fBO && Equals(fBO);

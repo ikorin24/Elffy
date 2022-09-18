@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using System;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Elffy.Graphics.OpenGL;
 
@@ -11,12 +10,15 @@ namespace Elffy.Shading
         private const string VertShaderSource =
 @"#version 410
 in vec3 _pos;
-in vec2 _v_uv;
-out vec2 _uv;
+in vec2 _uv;
+out V2f
+{
+    vec2 uv;
+} _v2f;
 uniform vec2 _postProcessUVScale;
 void main()
 {
-    _uv = _v_uv * _postProcessUVScale;
+    _v2f.uv = _uv * _postProcessUVScale;
     gl_Position = vec4(_pos, 1.0);
 }
 ";
@@ -40,7 +42,7 @@ void main()
         /// <param name="screen"></param>
         /// <returns>compiled program of post process</returns>
         [SkipLocalsInit]
-        public PostProcessProgram Compile(IHostScreen screen)
+        internal PostProcessProgram Compile(IHostScreen screen)
         {
             ArgumentNullException.ThrowIfNull(screen);
             var currentContext = Engine.CurrentContext;
@@ -55,15 +57,12 @@ void main()
             const float z = 0f;
             ReadOnlySpan<VertexSlim> vertices = stackalloc VertexSlim[4]
             {
-                new (new (-1, 1, z),  new (0, 1)),
-                new (new (-1, -1, z), new (0, 0)),
-                new (new (1, -1, z),  new (1, 0)),
-                new (new (1, 1, z),   new (1, 1)),
+                new(-1, 1, z, 0, 1),
+                new(-1, -1, z, 0, 0),
+                new(1, -1, z, 1, 0),
+                new(1, 1, z, 1, 1),
             };
-            ReadOnlySpan<int> indices = stackalloc int[6]
-            {
-                0, 1, 3, 1, 2, 3,
-            };
+            ReadOnlySpan<int> indices = stackalloc int[6] { 0, 1, 3, 1, 2, 3 };
 
             VBO vbo = default;
             IBO ibo = default;
@@ -79,7 +78,7 @@ void main()
                 program = ShaderCompiler.Compile(VertShaderSource, FragShaderSource, null);
                 var definition = new VertexDefinition(program);
                 definition.Map<VertexSlim>("_pos", nameof(VertexSlim.Position));
-                definition.Map<VertexSlim>("_v_uv", nameof(VertexSlim.UV));
+                definition.Map<VertexSlim>("_uv", nameof(VertexSlim.UV));
                 VAO.Unbind();
                 VBO.Unbind();
                 return new PostProcessProgram(this, program, vbo, ibo, vao, screen);

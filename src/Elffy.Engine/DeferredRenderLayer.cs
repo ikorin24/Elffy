@@ -51,13 +51,12 @@ namespace Elffy
         {
             currentFbo = _gBuffer.FBO;
             FBO.Bind(currentFbo, FBO.Target.FrameBuffer);
-            ElffyGL.Clear(ClearMask.ColorBufferBit | ClearMask.DepthBufferBit);
+            _gBuffer.ClearAllBuffers();
             bool isBlendEnabled = GL.GetInteger(GetPName.Blend) != 0;
             _isBlendEnabledCache = isBlendEnabled;
             if(isBlendEnabled) {
                 GL.Disable(EnableCap.Blend);
             }
-            _gBuffer.ClearColorBuffers();
         }
 
         protected override void OnAfterExecute(IHostScreen screen, ref FBO currentFbo)
@@ -70,11 +69,11 @@ namespace Elffy
             var gBufSize = gBuffer.Size;
             Debug.Assert(_postProcess is not null);
             Debug.Assert(_ppProgram is not null);
+            currentFbo = _renderTarget;
             FBO.Bind(_renderTarget, FBO.Target.FrameBuffer);
             if(IsEnabled) {
                 _ppProgram.Render(screenSize, (Vector2)screenSize / (Vector2)gBufSize);
             }
-            currentFbo = _renderTarget;
         }
 
         protected override void OnSizeChanged(IHostScreen screen)
