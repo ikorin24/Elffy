@@ -204,9 +204,7 @@ namespace Elffy
         {
             _beforeExecute.DoQueuedEvents();
             OnBeforeExecute(screen, ref currentFbo);
-            if(IsEnabled) {
-                OnExecute(screen);
-            }
+            OnExecute(screen);
             OnAfterExecute(screen, ref currentFbo);
             _afterExecute.DoQueuedEvents();
         }

@@ -71,9 +71,7 @@ namespace Elffy
             Debug.Assert(_ppProgram is not null);
             currentFbo = _renderTarget;
             FBO.Bind(_renderTarget, FBO.Target.FrameBuffer);
-            if(IsEnabled) {
-                _ppProgram.Render(screenSize, (Vector2)screenSize / (Vector2)gBufSize);
-            }
+            _ppProgram.Render(screenSize, (Vector2)screenSize / (Vector2)gBufSize);
         }
 
         protected override void OnSizeChanged(IHostScreen screen)

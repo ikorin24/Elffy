@@ -51,10 +51,8 @@ namespace Elffy
 
         protected override void OnBeforeExecute(IHostScreen screen, ref FBO currentFbo)
         {
-            if(IsEnabled) {
-                currentFbo = _renderTarget;
-                FBO.Bind(currentFbo, FBO.Target.FrameBuffer);
-            }
+            currentFbo = _renderTarget;
+            FBO.Bind(currentFbo, FBO.Target.FrameBuffer);
         }
 
         protected override void OnExecute(IHostScreen screen)

@@ -149,7 +149,7 @@ namespace Elffy
                 OpenTK.Graphics.OpenGL4.GL.Viewport(0, 0, size.X, size.Y);
                 ElffyGL.Clear(ClearMask.DepthBufferBit);
                 foreach(var operation in _list.AsReadOnlySpan()) {
-                    if(operation is ObjectLayer layer) {
+                    if(operation is ObjectLayer layer && layer.IsEnabled) {
                         layer.RenderShadowMap(screen, light.LightMatrix);
                     }
                 }
@@ -160,7 +160,9 @@ namespace Elffy
             var screenSize = screen.FrameBufferSize;
             OpenTK.Graphics.OpenGL4.GL.Viewport(0, 0, screenSize.X, screenSize.Y);
             foreach(var operation in _list.AsReadOnlySpan()) {
-                operation.Execute(screen, ref fbo);
+                if(operation.IsEnabled) {
+                    operation.Execute(screen, ref fbo);
+                }
             }
         }
     }
