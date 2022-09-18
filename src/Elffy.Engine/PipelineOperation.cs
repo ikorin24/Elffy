@@ -33,7 +33,7 @@ namespace Elffy
         public LifeState LifeState => _state;
         public AsyncEvent<PipelineOperation> Activating => new(ref _activating);
         public AsyncEvent<PipelineOperation> Terminating => new(ref _terminating);
-        public Event<(PipelineOperation, IHostScreen)> Alive => new(ref _alive);
+        public Event<(PipelineOperation Operation, IHostScreen Screen)> Alive => new(ref _alive);
         public Event<PipelineOperation> Dead => new(ref _dead);
         public CancellationToken RunningToken => _runningTokenSource.Token;
 

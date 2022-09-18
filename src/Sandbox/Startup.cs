@@ -42,6 +42,7 @@ public static class Startup
         {
             PostProcess = new GrayscalePostProcess(offscreen),
         };
+        ppo.AfterExecute.Subscribe(_ => offscreen.ClearAllBuffers());
         await ParallelOperation.WhenAll(
             drLayer.Activate(screen),
             wLayer.Activate(screen),
@@ -50,24 +51,11 @@ public static class Startup
 
         UniTask.Void(async () =>
         {
+            var t = screen.Timings.FrameFinalizing;
             while(screen.IsRunning) {
-                await ppo.AfterExecute.Next();
-                offscreen.ClearAllBuffers();
+                await t.Next();
             }
             offscreen.Dispose();
-        });
-
-        UniTask.Void(async () =>
-        {
-            //var t = screen.Timings.Update;
-            while(screen.IsRunning) {
-                await ppo.BeforeExecute.Next();
-                if(screen.Keyboard.IsDown(Elffy.InputSystem.Keys.Space)) {
-                    using var image = TextureHelpers.GetImage(offscreen.RenderTargetTexture);
-                    image.SaveAsPng("hoge.png");
-                    Debug.WriteLine("save");
-                }
-            }
         });
 
         return (drLayer, wLayer, uiLayer);

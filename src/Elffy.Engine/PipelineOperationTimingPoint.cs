@@ -10,7 +10,10 @@ namespace Elffy
     public sealed class PipelineOperationTimingPoint : ITimingPoint
     {
         private readonly PipelineOperation _operation;
+        private EventSource<PipelineOperationTimingPoint>? _event;
         private AsyncEventQueueCore _eventQueue;
+
+        private Event<PipelineOperationTimingPoint> Event => new(ref _event);
 
         internal PipelineOperation Operation => _operation;
 
@@ -26,6 +29,11 @@ namespace Elffy
             return PipelineOperationTimingAwaitableTaskSource.CreateTask(this, cancellationToken);
         }
 
+        public EventUnsubscriber<PipelineOperationTimingPoint> Subscribe(Action<PipelineOperationTimingPoint> action)
+        {
+            return Event.Subscribe(action);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Post(Action continuation) => _eventQueue.Post(continuation);
 
@@ -33,9 +41,17 @@ namespace Elffy
         public void Post(Action<object?> continuation, object? state) => _eventQueue.Post(continuation, state);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void AbortAllEvents() => _eventQueue.AbortAllEvents();
+        internal void AbortAllEvents()
+        {
+            _event?.Clear();
+            _eventQueue.AbortAllEvents();
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void DoQueuedEvents() => _eventQueue.DoQueuedEvents();
+        internal void DoQueuedEvents()
+        {
+            _event?.Invoke(this);
+            _eventQueue.DoQueuedEvents();
+        }
     }
 }
