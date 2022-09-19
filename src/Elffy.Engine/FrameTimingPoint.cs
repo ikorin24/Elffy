@@ -12,6 +12,7 @@ namespace Elffy
     public sealed class FrameTimingPoint : ITimingPoint
     {
         private readonly IHostScreen _screen;
+        private EventSource<FrameTimingPoint>? _event;
         private AsyncEventQueueCore _eventQueue;
         private readonly FrameTiming _timing;
 
@@ -29,6 +30,14 @@ namespace Elffy
             _screen = screen;
             _eventQueue = new AsyncEventQueueCore();
             _timing = timing;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Event<FrameTimingPoint> AsEvent() => new(ref _event);
+
+        public EventUnsubscriber<FrameTimingPoint> Subscribe(Action<FrameTimingPoint> action)
+        {
+            return AsEvent().Subscribe(action);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -131,10 +140,18 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void AbortAllEvents() => _eventQueue.AbortAllEvents();
+        internal void AbortAllEvents()
+        {
+            _event?.Clear();
+            _eventQueue.AbortAllEvents();
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void DoQueuedEvents() => _eventQueue.DoQueuedEvents();
+        internal void DoQueuedEvents()
+        {
+            _event?.Invoke(this);
+            _eventQueue.DoQueuedEvents();
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Post(Action continuation) => _eventQueue.Post(continuation);

@@ -35,18 +35,18 @@ public static class Startup
     {
         var offscreen = new OffscreenBuffer();
         offscreen.Initialize(screen);
-        var drLayer = new DeferredRenderLayer(offscreen.FBO);
-        var wLayer = new ForwardRenderLayer(offscreen.FBO);
-        var uiLayer = new UIObjectLayer(FBO.Empty, 1001);
+        var deferred = new DeferredRenderLayer(offscreen.FBO);
+        var forward = new ForwardRenderLayer(offscreen.FBO);
+        var ui = new UIObjectLayer(FBO.Empty, 1001);
         var ppo = new PostProcessOperation(FBO.Empty)
         {
             PostProcess = new GrayscalePostProcess(offscreen),
         };
         ppo.AfterExecute.Subscribe(_ => offscreen.ClearAllBuffers());
         await ParallelOperation.WhenAll(
-            drLayer.Activate(screen),
-            wLayer.Activate(screen),
-            uiLayer.Activate(screen),
+            deferred.Activate(screen),
+            forward.Activate(screen),
+            ui.Activate(screen),
             ppo.Activate(screen));
 
         UniTask.Void(async () =>
@@ -58,35 +58,35 @@ public static class Startup
             offscreen.Dispose();
         });
 
-        return (drLayer, wLayer, uiLayer);
+        return (deferred, forward, ui);
     }
 
     private static async UniTask Start(IHostScreen screen)
     {
-        screen.Timings.OnUpdate(() =>
+        screen.Timings.Update.Subscribe(_ =>
         {
             if(screen.Keyboard.IsPress(Elffy.InputSystem.Keys.Escape)) {
                 screen.Close();
             }
         });
-        var (drLayer, wLayer, uiLayer) = await CreateRenderPipeline(screen);
-        var uiRoot = uiLayer.UIRoot;
+        var (deferred, forward, ui) = await CreateRenderPipeline(screen);
+        var uiRoot = ui.UIRoot;
         var update = screen.Timings.Update;
         uiRoot.Background = Color4.Black;
         try {
+            CameraMouse.Attach(screen, new Vector3(0, 3, 0), new Vector3(0, 6, 40));
             await ParallelOperation.WhenAll(
-                CreateCameraMouse(wLayer, new Vector3(0, 3, 0)),
-                InitializeLights(wLayer),
-                new Gizmo().Activate(wLayer),
-                //Sample.CreateUI(uiLayer.UIRoot),
-                CreateDice2(drLayer),
-                CreateDice(wLayer),
-                CreateDiceWireframe(wLayer),
-                CreateModel2(wLayer),
-                CreateBox(drLayer),
-                CreateFloor(drLayer),
-                CreateModel3(drLayer),
-                CreateSky(wLayer),
+                InitializeLights(forward),
+                new Gizmo().Activate(forward),
+                //Sample.CreateUI(ui.UIRoot),
+                CreateDice2(deferred),
+                CreateDice(forward),
+                CreateDiceWireframe(forward),
+                CreateModel2(forward),
+                CreateBox(deferred),
+                CreateFloor(deferred),
+                CreateModel3(deferred),
+                CreateSky(forward),
                 new Sphere()
                 {
                     Position = new Vector3(-5, 1, 1),
@@ -96,7 +96,7 @@ public static class Startup
                         BaseColor = new Color3(1f, 0.766f, 0.336f),
                         Roughness = 0.01f,
                     },
-                }.Activate(drLayer),
+                }.Activate(deferred),
                 new Sphere()
                 {
                     Position = new Vector3(-5, 1, 3),
@@ -106,7 +106,7 @@ public static class Startup
                         BaseColor = new Color3(1f, 0.766f, 0.336f),
                         Roughness = 0.01f,
                     },
-                }.Activate(drLayer),
+                }.Activate(deferred),
                 update.DelayTime(800)
                 );
             var time = TimeSpanF.FromMilliseconds(200);
@@ -156,7 +156,7 @@ public static class Startup
             );
 
         var i = 0;
-        screen.Timings.OnUpdate(() =>
+        screen.Timings.Update.Subscribe(_ =>
         {
             var angle = i++.ToRadian();
             var (sin, cos) = MathF.SinCos(angle);
@@ -172,9 +172,10 @@ public static class Startup
     {
         var timing = layer.GetValidScreen().Timings.Update;
         var dice = Resources.Sandbox["Dice.fbx"].CreateFbxModel();
+        var texture = await Resources.Sandbox["Dice.png"].LoadTextureAsync(timing);
         dice.Shader = new PhongShader
         {
-            Texture = await Resources.Sandbox["Dice.png"].LoadTextureAsync(timing),
+            Texture = texture,
         };
         dice.Position = new Vector3(3, 1, -2);
         return await dice.Activate(layer);
@@ -207,19 +208,16 @@ public static class Startup
         var model = Resources.Sandbox["Alicia/Alicia_solid.pmx"].CreatePmxModel();
         model.Scale = new Vector3(0.3f);
         await model.Activate(layer);
-        model.StartCoroutine(async (c, model) =>
+        model.Update.Subscribe(m =>
         {
-            while(c.CanRun) {
-                var keyborad = c.Screen.Keyboard;
-                if(keyborad.IsPress(Elffy.InputSystem.Keys.Down)) {
-                    model.Position.Y -= 0.1f;
-                }
-                if(keyborad.IsPress(Elffy.InputSystem.Keys.Up)) {
-                    model.Position.Y += 0.1f;
-                }
-                await c.Update.Next();
+            var keyborad = m.GetValidScreen().Keyboard;
+            if(keyborad.IsPress(Elffy.InputSystem.Keys.Down)) {
+                model.Position.Y -= 0.1f;
             }
-        }).Forget();
+            if(keyborad.IsPress(Elffy.InputSystem.Keys.Up)) {
+                model.Position.Y += 0.1f;
+            }
+        });
         return model;
     }
 
@@ -292,30 +290,25 @@ public static class Startup
     private static async UniTask<Cube> CreateBox(DeferredRenderLayer layer)
     {
         var timing = layer.GetValidScreen().Timings.Update;
+        var shader = new PbrDeferredShader
+        {
+            Metallic = 0f,
+            Roughness = 0.15f,
+        };
         var cube = new Cube
         {
             Position = new(-3, 0.5f, 0),
-            Shader = new PbrDeferredShader
-            {
-                Metallic = 0f,
-                Roughness = 0.15f,
-                Texture = await Resources.Sandbox["box.png"].LoadTextureAsync(timing),
-            }
+            Shader = shader,
         };
-        await cube.Activate(layer);
-        cube.StartCoroutine(static async (coroutine, cube) =>
+        cube.Activating.Subscribe(async (_, ct) =>
         {
-            while(coroutine.CanRun) {
-                await coroutine.Update.Next();
-                cube.Rotate(Vector3.UnitY, 1f.ToRadian());
-            }
-        }).Forget();
+            shader.Texture = await Resources.Sandbox["box.png"].LoadTextureAsync(timing, ct);
+        });
+        await cube.Activate(layer);
+        cube.Update.Subscribe(cube =>
+        {
+            (cube as Cube)?.Rotate(Vector3.UnitY, 1f.ToRadian());
+        });
         return cube;
-    }
-
-    private static UniTask<FrameObject> CreateCameraMouse(ObjectLayer layer, Vector3 target)
-    {
-        var initialCameraPos = target + new Vector3(0, 3, 40);
-        return CameraMouse.Activate(layer, target, initialCameraPos);
     }
 }

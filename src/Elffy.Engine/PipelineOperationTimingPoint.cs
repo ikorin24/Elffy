@@ -13,8 +13,6 @@ namespace Elffy
         private EventSource<PipelineOperationTimingPoint>? _event;
         private AsyncEventQueueCore _eventQueue;
 
-        private Event<PipelineOperationTimingPoint> Event => new(ref _event);
-
         internal PipelineOperation Operation => _operation;
 
         internal PipelineOperationTimingPoint(PipelineOperation operation)
@@ -24,14 +22,18 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Event<PipelineOperationTimingPoint> AsEvent() => new(ref _event);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public UniTask<AsyncUnit> Next(CancellationToken cancellationToken = default)
         {
             return PipelineOperationTimingAwaitableTaskSource.CreateTask(this, cancellationToken);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EventUnsubscriber<PipelineOperationTimingPoint> Subscribe(Action<PipelineOperationTimingPoint> action)
         {
-            return Event.Subscribe(action);
+            return AsEvent().Subscribe(action);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
