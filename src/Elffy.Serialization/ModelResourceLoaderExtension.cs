@@ -3,6 +3,7 @@ using Elffy.Shapes;
 using System.Threading;
 using Elffy.Serialization.Wavefront;
 using Elffy.Serialization.Fbx;
+using Elffy.Serialization.Gltf;
 
 namespace Elffy
 {
@@ -16,6 +17,11 @@ namespace Elffy
         public static Model3D CreateObjModel(this ResourceFile file, CancellationToken cancellationToken = default)
         {
             return ObjModelBuilder.CreateLazyLoadingObj(file, cancellationToken);
+        }
+
+        public static Model3D CreateGlbModel(this ResourceFile file, CancellationToken cancellationToken = default)
+        {
+            return GlbModelBuilder.CreateLazyLoadingGlb(file, cancellationToken);
         }
     }
 }

@@ -221,10 +221,9 @@ public static class Startup
         return model;
     }
 
-    private static async UniTask<Model3D> CreateModel3(ObjectLayer layer)
+    private static UniTask<Model3D> CreateModel3(ObjectLayer layer)
     {
-        var model = await Elffy.Serialization.Gltf.GlbModelBuilder.CreateLazyLoadingGlb(Resources.Sandbox["AntiqueCamera.glb"]).Activate(layer);
-        return model;
+        return Resources.Sandbox["AntiqueCamera.glb"].CreateGlbModel().Activate(layer);
     }
 
     private static UniTask<SkySphere> CreateSky(ForwardRenderLayer layer)
