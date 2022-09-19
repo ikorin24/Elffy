@@ -42,21 +42,14 @@ public static class Startup
         {
             PostProcess = new GrayscalePostProcess(offscreen),
         };
+        ppo.SizeChanged.Subscribe(_ => offscreen.ResizeToScreenFrameBufferSize());
         ppo.AfterExecute.Subscribe(_ => offscreen.ClearAllBuffers());
+        ppo.Dead.Subscribe(_ => offscreen.Dispose());
         await ParallelOperation.WhenAll(
             deferred.Activate(screen),
             forward.Activate(screen),
             ui.Activate(screen),
             ppo.Activate(screen));
-
-        UniTask.Void(async () =>
-        {
-            var t = screen.Timings.FrameFinalizing;
-            while(screen.IsRunning) {
-                await t.Next();
-            }
-            offscreen.Dispose();
-        });
 
         return (deferred, forward, ui);
     }
@@ -306,7 +299,7 @@ public static class Startup
         await cube.Activate(layer);
         cube.Update.Subscribe(cube =>
         {
-            (cube as Cube)?.Rotate(Vector3.UnitY, 1f.ToRadian());
+            SafeCast.As<Cube>(cube).Rotate(Vector3.UnitY, 1f.ToRadian());
         });
         return cube;
     }

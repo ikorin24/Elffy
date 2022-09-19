@@ -63,7 +63,6 @@ namespace Elffy
 
         protected override void OnSizeChanged(IHostScreen screen)
         {
-            // TODO:
         }
     }
 }

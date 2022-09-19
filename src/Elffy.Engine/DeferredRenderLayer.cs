@@ -15,9 +15,6 @@ namespace Elffy
         private readonly GBuffer _gBuffer;
         private readonly PbrDeferredPostProcess _postProcess;
         private PostProcessProgram? _ppProgram;
-        private bool _isSizeChangeObserved;
-        private bool _isSizeChangeRequested;
-        private long _sizeChangeRequestedFrameNum;
         private bool _isBlendEnabledCache;
 
         public DeferredRenderLayer(int sortNumber = DefaultSortNumber) : this(FBO.Empty, sortNumber) { }
@@ -76,27 +73,12 @@ namespace Elffy
 
         protected override void OnSizeChanged(IHostScreen screen)
         {
-            _isSizeChangeRequested = true;
-            _sizeChangeRequestedFrameNum = screen.FrameNum;
-            if(_isSizeChangeObserved == false) {
-                _isSizeChangeObserved = true;
-                StartObserveSizeChanged(screen);
-            }
-        }
-
-        private void StartObserveSizeChanged(IHostScreen screen)
-        {
-            screen.StartCoroutine(this, static async (co, self) =>
+            var timing = screen.Timings.FrameInitializing;
+            timing.Post(static x =>
             {
-                while(co.CanRun) {
-                    if(self._isSizeChangeRequested && co.Screen.FrameNum - self._sizeChangeRequestedFrameNum > 1) {
-                        // TODO: when height is 0.
-                        self._gBuffer.Resize();
-                        self._isSizeChangeRequested = false;
-                    }
-                    await co.TimingPoints.FrameInitializing.Next();
-                }
-            }, FrameTiming.FrameInitializing).Forget();
+                var gBuffer = SafeCast.NotNullAs<GBuffer>(x);
+                gBuffer.Resize();
+            }, _gBuffer);
         }
     }
 }

@@ -20,6 +20,7 @@ namespace Elffy
         private AsyncEventSource<PipelineOperation>? _terminating;
         private EventSource<(PipelineOperation, IHostScreen)>? _alive;
         private EventSource<PipelineOperation>? _dead;
+        private EventSource<PipelineOperation>? _sizeChanged;
         private readonly PipelineOperationTimingPoint _beforeExecute;
         private readonly PipelineOperationTimingPoint _afterExecute;
 
@@ -35,6 +36,7 @@ namespace Elffy
         public AsyncEvent<PipelineOperation> Terminating => new(ref _terminating);
         public Event<(PipelineOperation Operation, IHostScreen Screen)> Alive => new(ref _alive);
         public Event<PipelineOperation> Dead => new(ref _dead);
+        public Event<PipelineOperation> SizeChanged => new(ref _sizeChanged);
         public CancellationToken RunningToken => _runningTokenSource.Token;
 
         protected PipelineOperation(int sortNumber)
@@ -73,6 +75,7 @@ namespace Elffy
         internal void OnSizeChangedCallback(IHostScreen screen)
         {
             OnSizeChanged(screen);
+            _sizeChanged?.Invoke(this);
         }
 
         protected abstract void OnSizeChanged(IHostScreen screen);

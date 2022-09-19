@@ -105,7 +105,7 @@ public sealed class OffscreenBuffer : IOffscreenBuffer, IDisposable
         }
     }
 
-    public void Resize()
+    public void ResizeToScreenFrameBufferSize()
     {
         var screen = _screen;
         if(screen == null) {
@@ -115,10 +115,31 @@ public sealed class OffscreenBuffer : IOffscreenBuffer, IDisposable
         if(currentContext != screen) {
             ContextMismatchException.Throw(currentContext, screen);
         }
-        var newSize = screen.FrameBufferSize;
+
+        ResizePrivate(screen.FrameBufferSize);
+    }
+
+    public void Resize(Vector2i newSize)
+    {
+        if(newSize.X <= 0 || newSize.Y <= 0) {
+            throw new ArgumentOutOfRangeException(nameof(newSize));
+        }
+        var screen = _screen;
+        if(screen == null) {
+            ThrowNotInitialized();
+        }
+        var currentContext = Engine.CurrentContext;
+        if(currentContext != screen) {
+            ContextMismatchException.Throw(currentContext, screen);
+        }
+        ResizePrivate(newSize);
+    }
+
+    private void ResizePrivate(Vector2i newSize)
+    {
         if(newSize != _size) {
             DeleteResources();
-            Create(screen.FrameBufferSize, out _fbo, out _depth, out _renderTarget);
+            Create(newSize, out _fbo, out _depth, out _renderTarget);
             _size = newSize;
         }
     }
