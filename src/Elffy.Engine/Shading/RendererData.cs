@@ -76,42 +76,37 @@ namespace Elffy.Shading
             return shader;
         }
 
-        public bool SetVertexType(Type? vertexType)
+        public void SetVertexType(Type vertexType)
         {
-            if(_vertexType == vertexType) { return false; }
-            if(State == RendererDataState.Compiled) {
-                Release();
+            // [NOTE]
+            // Don't change vertex type after compilation of shader.
+            // There is no way to do that.
+            // Although it needs re-compilation if change vertex type after compilation,
+            // the resources which IRenderingShader instance would have is already disposed when the instance detached.
+            if(_vertexType != null) {
+                throw new InvalidOperationException("Vertex type is already set. Cannot change it.");
             }
             Debug.Assert(State != RendererDataState.Compiled);
             _vertexType = vertexType;
-            return true;
         }
 
-        public bool SetShader(IRenderingShader? shader)
+        public void SetShader(IRenderingShader? shader)
         {
-            if(_shader == shader) { return false; }
-
+            if(_shader == shader) { return; }
             if(shader is ISingleTargetRenderingShader s && s.HasTarget) {
                 ThrowMultiTarget();
                 [DoesNotReturn] static void ThrowMultiTarget() => throw new InvalidOperationException($"It is not possible to attach to more than one target.");
             }
-
             if(State == RendererDataState.Compiled) {
-                Release();
+                Reset();
             }
-            Debug.Assert(State != RendererDataState.Compiled);
-            (var old, _shader) = (_shader, shader);
-            if(old is not null) {
-                old.OnDetachedInternal(Target);
-            }
-            if(shader is not null) {
-                shader.OnAttachedInternal(Target);
-            }
-            return true;
+            shader?.OnAttachedInternal(Target);
+            _shader = shader;
         }
 
         private bool CompileIfNeeded()
         {
+            var screen = Engine.GetValidCurrentContext();
             var state = State;
             if(state == RendererDataState.Compiled) {
                 return false;
@@ -126,7 +121,6 @@ namespace Elffy.Shading
             _shaderSource = shaderSource;
 
             var key = new SourceKey(shaderSource, _vertexType);
-            var screen = Engine.GetValidCurrentContext();
             try {
                 _program = CompiledProgramCacheStore.GetCacheOrCompile(screen, key);
             }
@@ -182,32 +176,39 @@ namespace Elffy.Shading
             return true;
         }
 
-        public bool Release()
+        public void Release()
         {
-            if(State != RendererDataState.Compiled) {
-                return false;
-            }
-            Debug.Assert(_shader is not null);
-            Debug.Assert(_vertexType is not null);
-            Debug.Assert(_shaderSource.IsEmpty == false);
-
-            var key = new SourceKey(_shaderSource, _vertexType);
-            var screen = Engine.GetValidCurrentContext();
-            CompiledProgramCacheStore.Delete(screen, key, ref _program);
-
-            _shaderSource = ShaderSource.Empty;
-            (var shader, _shader) = (_shader, null);
+            Reset();
             _shader = null;
-            shader.OnDetachedInternal(Target);
-            try {
-                shader.OnProgramDisposedInternal();
+            _vertexType = null;
+            Debug.Assert(State == RendererDataState.NotCompiled);
+        }
+
+        private void Reset()
+        {
+            if(State == RendererDataState.Compiled) {
+                Debug.Assert(_shader is not null);
+                Debug.Assert(_vertexType is not null);
+                Debug.Assert(_shaderSource.IsEmpty == false);
+
+                var key = new SourceKey(_shaderSource, _vertexType);
+                var screen = Engine.GetValidCurrentContext();
+                CompiledProgramCacheStore.Delete(screen, key, ref _program);
+                _shaderSource = ShaderSource.Empty;
             }
-            catch {
-                if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
-                // ignore exceptions in user code.
+
+            var shader = _shader;
+            if(shader != null) {
+                shader.OnDetachedInternal(Target);
+                try {
+                    shader.OnProgramDisposedInternal();
+                }
+                catch {
+                    if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
+                    // ignore exceptions in user code.
+                }
             }
             Debug.Assert(State != RendererDataState.Compiled);
-            return true;
         }
 
         [DoesNotReturn] static void ThrowEmptyProgram() => throw new InvalidOperationException("The shader program is empty or deleted.");
