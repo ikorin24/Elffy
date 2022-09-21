@@ -14,6 +14,7 @@ internal static class LocalResourceInitializer
     private static ReadOnlySpan<byte> MagicWord => "ELFFYRES"u8;
     private static ReadOnlySpan<byte> FormatVersion => "1000"u8;
 
+    [SkipLocalsInit]
     public static Dictionary<string, ResourceObject> CreateDictionary(string filePath)
     {
         using var stream = File.OpenRead(filePath);
