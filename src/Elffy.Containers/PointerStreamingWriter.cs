@@ -19,7 +19,7 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Write<TValue>(in TValue value) where TValue : unmanaged
+        public void Write<TValue>(scoped in TValue value) where TValue : unmanaged
         {
             *(TValue*)HeadPtr = value;
             Offset += (ulong)sizeof(TValue);

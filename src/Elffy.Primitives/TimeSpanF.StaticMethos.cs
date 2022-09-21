@@ -17,7 +17,7 @@ namespace Elffy
         public static implicit operator TimeSpan(TimeSpanF timeSpan) => new TimeSpan(timeSpan.Ticks);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static unsafe ref TimeSpan OutAsTimeSpanF(out TimeSpanF timeSpan)
+        private static unsafe ref TimeSpan OutAsTimeSpanF([UnscopedRef] out TimeSpanF timeSpan)
         {
 #if CAN_SKIP_INIT
             Unsafe.SkipInit(out timeSpan);

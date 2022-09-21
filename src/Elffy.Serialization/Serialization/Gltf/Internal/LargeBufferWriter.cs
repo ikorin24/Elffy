@@ -4,6 +4,7 @@ using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Elffy.Serialization.Gltf.Internal;
 
@@ -66,21 +67,7 @@ internal unsafe sealed class LargeBufferWriter<T> : ILargeBufferWriter<T>, IDisp
         }
         var p = (T*)_buf.Ptr + _count;
         if(zeroCleared) {
-            Clear(p, count * (nuint)sizeof(T));
-
-            static void Clear(void* ptr, nuint byteLen)
-            {
-#if NET7_0_OR_GREATER
-                NativeMemory.Clear(ptr, byteLen);
-#else
-                if(byteLen <= int.MaxValue) {
-                    new Span<byte>(ptr, (int)byteLen).Clear();
-                }
-                else {
-                    throw new NotImplementedException();
-                }
-#endif
-            }
+            NativeMemory.Clear(p, count * (nuint)sizeof(T));
         }
         return p;
     }
