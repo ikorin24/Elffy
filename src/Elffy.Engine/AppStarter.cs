@@ -11,7 +11,6 @@ namespace Elffy
     public sealed class AppStarter
     {
         private AppStarterConfig _config;
-        private Action<IHostScreen>? _start;
 
         public AppStarterConfig Config { get => _config; set => _config = value; }
 
@@ -82,34 +81,37 @@ namespace Elffy
         public void Run(Func<IHostScreen, UniTask> start)
         {
             ArgumentNullException.ThrowIfNull(start);
-            _start = async screen =>
+
+            // [capture] start
+            var onInitialized = new Action<IHostScreen>(async screen =>
             {
                 try {
-                    await start(screen);
+                    await start.Invoke(screen);
                 }
                 catch {
                     if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
                     // Don't throw. (Ignore exceptions in user code)
                 }
-            };
+            });
 
             if(_config.AllowMultiLaunch) {
-                ProcessHelper.SingleLaunch(RunPrivate);
+                RunPrivate(_config, onInitialized);
             }
             else {
-                RunPrivate();
+                // [capture] this, onInitialized
+                ProcessHelper.SingleLaunch(() => RunPrivate(_config, onInitialized));
             }
         }
 
-        private void RunPrivate()
+        private static void RunPrivate(AppStarterConfig config, Action<IHostScreen> onInitialized)
         {
             try {
-                if(_config.IsDebugMode) {
+                if(config.IsDebugMode) {
                     DevEnv.Run();
                 }
                 Engine.Run();
-                var screen = CreateScreen();
-                screen.Initialized += _start;
+                var screen = CreateScreen(config);
+                screen.Initialized += onInitialized;
                 CustomSynchronizationContext.InstallIfNeeded(out _, out var syncContextReciever);
                 screen.Activate();
                 while(Engine.HandleOnce()) {
@@ -119,19 +121,19 @@ namespace Elffy
             finally {
                 CustomSynchronizationContext.Restore();
                 Engine.Stop();
-                if(_config.IsDebugMode) {
+                if(config.IsDebugMode) {
                     DevEnv.Stop();
                 }
             }
         }
 
-        private IHostScreen CreateScreen()
+        private static IHostScreen CreateScreen(AppStarterConfig config)
         {
             switch(Platform.PlatformType) {
                 case PlatformType.Windows:
                 case PlatformType.MacOSX:
                 case PlatformType.Linux: {
-                    return new Window(_config.Width, _config.Height, _config.Title, _config.Style, _config.Icon);
+                    return new Window(config.Width, config.Height, config.Title, config.Style, config.Icon);
                 }
                 case PlatformType.Android:
                 case PlatformType.Other:
