@@ -35,13 +35,13 @@ public static class Startup
     {
         var offscreen = new OffscreenBuffer();
         offscreen.Initialize(screen);
-        var deferred = new DeferredRenderLayer(offscreen.FBO);
-        var forward = new ForwardRenderLayer(offscreen.FBO);
-        var ui = new UIObjectLayer(FBO.Empty, 1001);
-        var ppo = new PostProcessOperation(FBO.Empty)
+        var deferred = new DeferredRenderLayer(offscreen.FBO, -100);
+        var forward = new ForwardRenderLayer(offscreen.FBO, 0);
+        var ppo = new PostProcessOperation(1000)
         {
             PostProcess = new GrayscalePostProcess(offscreen),
         };
+        var ui = new UIObjectLayer(1001);
         ppo.SizeChanged.Subscribe(_ => offscreen.ResizeToScreenFrameBufferSize());
         ppo.AfterExecute.Subscribe(_ => offscreen.ClearAllBuffers());
         ppo.Dead.Subscribe(_ => offscreen.Dispose());
@@ -71,7 +71,7 @@ public static class Startup
             await ParallelOperation.WhenAll(
                 InitializeLights(forward),
                 new Gizmo().Activate(forward),
-                //Sample.CreateUI(ui.UIRoot),
+                Sample.CreateUI(ui.UIRoot),
                 CreateDice2(deferred),
                 CreateDice(forward),
                 CreateDiceWireframe(forward),

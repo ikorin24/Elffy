@@ -232,7 +232,6 @@ namespace Elffy.Features.Internal
             var size = _frameBufferSize;
             Camera.ChangeScreenSize(size.X, size.Y);
             GL.Viewport(0, 0, size.X, size.Y);
-            Debug.WriteLine($"Size changed ({size.X}, {size.Y})");
 
             var pipeline = RenderPipeline;
             pipeline.NotifySizeChanged();
