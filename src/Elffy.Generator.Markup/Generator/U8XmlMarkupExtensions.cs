@@ -37,9 +37,7 @@ internal static class U8XmlMarkupExtensions
 
     public static bool IsNamespaceAttr(this XmlAttribute attr)
     {
-        ReadOnlySpan<byte> xmlns = new byte[] { (byte)'x', (byte)'m', (byte)'l', (byte)'n', (byte)'s' };
-        ReadOnlySpan<byte> xmlns_colon = new byte[] { (byte)'x', (byte)'m', (byte)'l', (byte)'n', (byte)'s', (byte)':' };
-        return attr.Name == xmlns || attr.Name.StartsWith(xmlns_colon);
+        return attr.Name == "xmlns"u8 || attr.Name.StartsWith("xmlns:"u8);
     }
 
     public static bool Contains(this RawString rawString, byte c)

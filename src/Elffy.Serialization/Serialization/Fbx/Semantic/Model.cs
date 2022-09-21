@@ -23,7 +23,7 @@ namespace Elffy.Serialization.Fbx.Semantic
             Node = node;
             ID = node.Properties[0].AsInt64();
             Name = node.Properties[1].AsString();
-            var property70 = node.FindChild(FbxConstStrings.Properties70());
+            var property70 = node.FindChild(FbxConstStrings.Properties70);
             Translation = default;
             Rotation = default;
             Scale = Vector3.One;
@@ -31,19 +31,19 @@ namespace Elffy.Serialization.Fbx.Semantic
                 var props = p.Properties;
                 if(props.Length < 1 || props[0].Type != FbxPropertyType.String) { continue; }
                 var propTypeName = props[0].AsString();
-                if(propTypeName.SequenceEqual(FbxConstStrings.Lcl_Translation())) {
+                if(propTypeName.SequenceEqual(FbxConstStrings.Lcl_Translation)) {
                     Translation = new Vector3(
                         (float)props[4].AsDouble(),
                         (float)props[5].AsDouble(),
                         (float)props[6].AsDouble());
                 }
-                else if(propTypeName.SequenceEqual(FbxConstStrings.Lcl_Rotation())) {
+                else if(propTypeName.SequenceEqual(FbxConstStrings.Lcl_Rotation)) {
                     Rotation = new Vector3(
                         (float)props[4].AsDouble(),
                         (float)props[5].AsDouble(),
                         (float)props[6].AsDouble());
                 }
-                else if(propTypeName.SequenceEqual(FbxConstStrings.Lcl_Scaling())) {
+                else if(propTypeName.SequenceEqual(FbxConstStrings.Lcl_Scaling)) {
                     Scale = new Vector3(
                         (float)props[4].AsDouble(),
                         (float)props[5].AsDouble(),
@@ -81,23 +81,23 @@ namespace Elffy.Serialization.Fbx.Semantic
             Rotation = default;
             Scale = Vector3.One;
 
-            var property70 = node.FindChild(FbxConstStrings.Properties70());
+            var property70 = node.FindChild(FbxConstStrings.Properties70);
             foreach(var p in property70.Children) {
                 var props = p.Properties;
                 var propTypeName = props[0].AsString();
-                if(propTypeName.SequenceEqual(FbxConstStrings.Lcl_Translation())) {
+                if(propTypeName.SequenceEqual(FbxConstStrings.Lcl_Translation)) {
                     Translation = new Vector3(
                         (float)props[4].AsDouble(),
                         (float)props[5].AsDouble(),
                         (float)props[6].AsDouble());
                 }
-                else if(propTypeName.SequenceEqual(FbxConstStrings.Lcl_Rotation())) {
+                else if(propTypeName.SequenceEqual(FbxConstStrings.Lcl_Rotation)) {
                     Rotation = new Vector3(
                         (float)props[4].AsDouble(),
                         (float)props[5].AsDouble(),
                         (float)props[6].AsDouble());
                 }
-                else if(propTypeName.SequenceEqual(FbxConstStrings.Lcl_Scaling())) {
+                else if(propTypeName.SequenceEqual(FbxConstStrings.Lcl_Scaling)) {
                     Scale = new Vector3(
                         (float)props[4].AsDouble(),
                         (float)props[5].AsDouble(),

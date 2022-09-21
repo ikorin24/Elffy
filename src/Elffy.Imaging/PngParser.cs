@@ -17,10 +17,10 @@ namespace Elffy.Imaging
 {
     public static unsafe class PngParser
     {
-        private static ReadOnlySpan<byte> ChunkTypeIHDR => new byte[] { (byte)'I', (byte)'H', (byte)'D', (byte)'R', };
-        private static ReadOnlySpan<byte> ChunkTypeIDAT => new byte[] { (byte)'I', (byte)'D', (byte)'A', (byte)'T', };
-        private static ReadOnlySpan<byte> ChunkTypePLTE => new byte[] { (byte)'P', (byte)'L', (byte)'T', (byte)'E', };
-        private static ReadOnlySpan<byte> ChunkTypeIEND => new byte[] { (byte)'I', (byte)'E', (byte)'N', (byte)'D', };
+        private static ReadOnlySpan<byte> ChunkTypeIHDR => "IHDR"u8;
+        private static ReadOnlySpan<byte> ChunkTypeIDAT => "IDAT"u8;
+        private static ReadOnlySpan<byte> ChunkTypePLTE => "PLTE"u8;
+        private static ReadOnlySpan<byte> ChunkTypeIEND => "IEND"u8;
 
         internal static ReadOnlySpan<byte> PngSignature => new byte[8]
         {

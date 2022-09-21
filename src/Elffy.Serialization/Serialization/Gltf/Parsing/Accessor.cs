@@ -99,27 +99,19 @@ internal enum AccessorType
 
 internal sealed class AccessorTypeConverter : JsonConverter<AccessorType>
 {
-    private static ReadOnlySpan<byte> SCALAR => new byte[6] { (byte)'S', (byte)'C', (byte)'A', (byte)'L', (byte)'A', (byte)'R' };
-    private static ReadOnlySpan<byte> VEC2 => new byte[4] { (byte)'V', (byte)'E', (byte)'C', (byte)'2' };
-    private static ReadOnlySpan<byte> VEC3 => new byte[4] { (byte)'V', (byte)'E', (byte)'C', (byte)'3' };
-    private static ReadOnlySpan<byte> VEC4 => new byte[4] { (byte)'V', (byte)'E', (byte)'C', (byte)'4' };
-    private static ReadOnlySpan<byte> MAT2 => new byte[4] { (byte)'M', (byte)'A', (byte)'T', (byte)'2' };
-    private static ReadOnlySpan<byte> MAT3 => new byte[4] { (byte)'M', (byte)'A', (byte)'T', (byte)'3' };
-    private static ReadOnlySpan<byte> MAT4 => new byte[4] { (byte)'M', (byte)'A', (byte)'T', (byte)'4' };
-
     public override AccessorType Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if(reader.TokenType != JsonTokenType.String) {
             throw new JsonException();
         }
         var value = reader.ValueSpan;
-        if(value.SequenceEqual(SCALAR)) { return AccessorType.Scalar; }
-        else if(value.SequenceEqual(VEC2)) { return AccessorType.Vec2; }
-        else if(value.SequenceEqual(VEC3)) { return AccessorType.Vec3; }
-        else if(value.SequenceEqual(VEC4)) { return AccessorType.Vec4; }
-        else if(value.SequenceEqual(MAT2)) { return AccessorType.Mat2; }
-        else if(value.SequenceEqual(MAT3)) { return AccessorType.Mat3; }
-        else if(value.SequenceEqual(MAT4)) { return AccessorType.Mat4; }
+        if(value.SequenceEqual("SCALAR"u8)) { return AccessorType.Scalar; }
+        else if(value.SequenceEqual("VEC2"u8)) { return AccessorType.Vec2; }
+        else if(value.SequenceEqual("VEC3"u8)) { return AccessorType.Vec3; }
+        else if(value.SequenceEqual("VEC4"u8)) { return AccessorType.Vec4; }
+        else if(value.SequenceEqual("MAT2"u8)) { return AccessorType.Mat2; }
+        else if(value.SequenceEqual("MAT3"u8)) { return AccessorType.Mat3; }
+        else if(value.SequenceEqual("MAT4"u8)) { return AccessorType.Mat4; }
 
         throw new JsonException();
     }

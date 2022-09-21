@@ -13,7 +13,7 @@ namespace Elffy.Serialization.Fbx.Internal
         public DeformerList(FbxNode objectsNode)
         {
             using var buf = new UnsafeRawArray<int>(objectsNode.Children.Count, false);
-            var count = objectsNode.FindChildIndexAll(FbxConstStrings.Deformer(), buf.AsSpan());
+            var count = objectsNode.FindChildIndexAll(FbxConstStrings.Deformer, buf.AsSpan());
             _dic = new BufferPooledDictionary<long, FbxNode>(count);
             foreach(var index in buf.AsSpan(0, count)) {
                 var deformer = objectsNode.Children[index];

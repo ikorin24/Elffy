@@ -27,15 +27,12 @@ internal enum ImageMimeType
 
 internal sealed class ImageMimeTypeConverter : JsonConverter<ImageMimeType>
 {
-    private static ReadOnlySpan<byte> image_jpeg => new byte[10] { (byte)'i', (byte)'m', (byte)'a', (byte)'g', (byte)'e', (byte)'/', (byte)'j', (byte)'p', (byte)'e', (byte)'g' };
-    private static ReadOnlySpan<byte> image_png => new byte[9] { (byte)'i', (byte)'m', (byte)'a', (byte)'g', (byte)'e', (byte)'/', (byte)'p', (byte)'n', (byte)'g' };
-
     public override ImageMimeType Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if(reader.TokenType != JsonTokenType.String) { throw new JsonException(); }
         var value = reader.ValueSpan;
-        if(value.SequenceEqual(image_jpeg)) { return ImageMimeType.ImageJpeg; }
-        else if(value.SequenceEqual(image_png)) { return ImageMimeType.ImagePng; }
+        if(value.SequenceEqual("image/jpeg"u8)) { return ImageMimeType.ImageJpeg; }
+        else if(value.SequenceEqual("image/png"u8)) { return ImageMimeType.ImagePng; }
         throw new JsonException();
     }
 

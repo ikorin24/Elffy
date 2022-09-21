@@ -39,25 +39,21 @@ namespace Elffy.Serialization.Fbx.Semantic
     {
         public static ModelType ToModelType(this RawString str)
         {
-            ReadOnlySpan<byte> Null = stackalloc byte[4] { (byte)'N', (byte)'u', (byte)'l', (byte)'l' };
-            ReadOnlySpan<byte> LimbNode = stackalloc byte[8] { (byte)'L', (byte)'i', (byte)'m', (byte)'b', (byte)'N', (byte)'o', (byte)'d', (byte)'e' };
-            ReadOnlySpan<byte> Mesh = stackalloc byte[4] { (byte)'M', (byte)'e', (byte)'s', (byte)'h' };
-
-            return str.SequenceEqual(Null) ? ModelType.Null
-                 : str.SequenceEqual(LimbNode) ? ModelType.LimbNode
-                 : str.SequenceEqual(Mesh) ? ModelType.Mesh
+            return str.SequenceEqual("Null"u8) ? ModelType.Null
+                 : str.SequenceEqual("LimbNode"u8) ? ModelType.LimbNode
+                 : str.SequenceEqual("Mesh"u8) ? ModelType.Mesh
                  : ModelType.Unknown;
         }
 
         public static MappingInformationType ToMappingInformationType(this RawString str)
         {
-            if(str.SequenceEqual(FbxConstStrings.ByVertice())) {
+            if(str.SequenceEqual(FbxConstStrings.ByVertice)) {
                 return MappingInformationType.ByVertice;
             }
-            else if(str.SequenceEqual(FbxConstStrings.ByPolygonVertex())) {
+            else if(str.SequenceEqual(FbxConstStrings.ByPolygonVertex)) {
                 return MappingInformationType.ByPolygonVertex;
             }
-            else if(str.SequenceEqual(FbxConstStrings.ByPolygonVertex())) {
+            else if(str.SequenceEqual(FbxConstStrings.ByPolygonVertex)) {
                 return MappingInformationType.ByControllPoint;
             }
             else {
@@ -67,10 +63,10 @@ namespace Elffy.Serialization.Fbx.Semantic
 
         public static ReferenceInformationType ToReferenceInformationType(this RawString str)
         {
-            if(str.SequenceEqual(FbxConstStrings.Direct())) {
+            if(str.SequenceEqual(FbxConstStrings.Direct)) {
                 return ReferenceInformationType.Direct;
             }
-            else if(str.SequenceEqual(FbxConstStrings.IndexToDirect())) {
+            else if(str.SequenceEqual(FbxConstStrings.IndexToDirect)) {
                 return ReferenceInformationType.IndexToDirect;
             }
             else {
@@ -80,13 +76,10 @@ namespace Elffy.Serialization.Fbx.Semantic
 
         public static ConnectionType ToConnectionType(this RawString str)
         {
-            ReadOnlySpan<byte> OO = stackalloc byte[2] { (byte)'O', (byte)'O' };
-            ReadOnlySpan<byte> OP = stackalloc byte[2] { (byte)'O', (byte)'P' };
-
-            if(str.SequenceEqual(OO)) {
+            if(str.SequenceEqual("OO"u8)) {
                 return ConnectionType.OO;
             }
-            else if(str.SequenceEqual(OP)) {
+            else if(str.SequenceEqual("OP"u8)) {
                 return ConnectionType.OP;
             }
             else {

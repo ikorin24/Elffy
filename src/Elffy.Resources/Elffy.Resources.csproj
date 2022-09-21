@@ -16,10 +16,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="StringLiteralGenerator" Version="1.1.0" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Elffy.Memory\Elffy.Memory.csproj" />
     <ProjectReference Include="..\Elffy.Containers\Elffy.Containers.csproj" />
   </ItemGroup>

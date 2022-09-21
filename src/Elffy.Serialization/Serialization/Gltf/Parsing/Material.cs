@@ -32,17 +32,13 @@ internal enum MaterialAlphaMode
 
 internal sealed class MaterialAlphaModeConverter : JsonConverter<MaterialAlphaMode>
 {
-    private static ReadOnlySpan<byte> OPAQUE => new byte[6] { (byte)'O', (byte)'P', (byte)'A', (byte)'Q', (byte)'U', (byte)'E' };
-    private static ReadOnlySpan<byte> MASK => new byte[4] { (byte)'M', (byte)'A', (byte)'S', (byte)'K' };
-    private static ReadOnlySpan<byte> BLEND => new byte[5] { (byte)'B', (byte)'L', (byte)'E', (byte)'N', (byte)'D' };
-
     public override MaterialAlphaMode Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if(reader.TokenType != JsonTokenType.String) { throw new JsonException(); }
         var value = reader.ValueSpan;
-        if(value.SequenceEqual(OPAQUE)) { return MaterialAlphaMode.Opaque; }
-        else if(value.SequenceEqual(MASK)) { return MaterialAlphaMode.Mask; }
-        else if(value.SequenceEqual(BLEND)) { return MaterialAlphaMode.Blend; }
+        if(value.SequenceEqual("OPAQUE"u8)) { return MaterialAlphaMode.Opaque; }
+        else if(value.SequenceEqual("MASK"u8)) { return MaterialAlphaMode.Mask; }
+        else if(value.SequenceEqual("BLEND"u8)) { return MaterialAlphaMode.Blend; }
         throw new JsonException();
     }
 

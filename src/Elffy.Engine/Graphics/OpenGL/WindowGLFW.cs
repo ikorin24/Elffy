@@ -333,13 +333,8 @@ namespace Elffy.Graphics.OpenGL
                 GL.LoadBindings(provider);
 
 #if false
-                ReadOnlySpan<byte> name = new byte[]
-                {
-                    (byte)'g', (byte)'l', (byte)'S', (byte)'h', (byte)'a', (byte)'d', (byte)'e', (byte)'r',
-                    (byte)'S', (byte)'o', (byte)'u', (byte)'r', (byte)'c', (byte)'e',
-                };
                 var glShaderSource = (delegate* unmanaged[Stdcall]<uint, int, IntPtr, int*, void>)
-                    GLFW.GetProcAddressRaw((byte*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(name)));
+                    GLFW.GetProcAddressRaw((byte*)Unsafe.AsPointer(ref MemoryMarshal.GetReference("glShaderSource"u8)));
 #endif
             }
             catch {

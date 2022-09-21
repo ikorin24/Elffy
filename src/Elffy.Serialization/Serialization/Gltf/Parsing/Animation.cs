@@ -49,21 +49,16 @@ internal enum AnimationChannelTargetPath
 
 internal sealed class AnimationChannelTargetPathConverter : JsonConverter<AnimationChannelTargetPath>
 {
-    private static ReadOnlySpan<byte> translation => new byte[11] { (byte)'t', (byte)'r', (byte)'a', (byte)'n', (byte)'s', (byte)'l', (byte)'a', (byte)'t', (byte)'i', (byte)'o', (byte)'n' };
-    private static ReadOnlySpan<byte> rotation => new byte[8] { (byte)'r', (byte)'o', (byte)'t', (byte)'a', (byte)'t', (byte)'i', (byte)'o', (byte)'n' };
-    private static ReadOnlySpan<byte> scale => new byte[5] { (byte)'s', (byte)'c', (byte)'a', (byte)'l', (byte)'e' };
-    private static ReadOnlySpan<byte> weights => new byte[7] { (byte)'w', (byte)'e', (byte)'i', (byte)'g', (byte)'h', (byte)'t', (byte)'s' };
-
     public override AnimationChannelTargetPath Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if(reader.TokenType != JsonTokenType.String) {
             throw new JsonException();
         }
         var value = reader.ValueSpan;
-        if(value.SequenceEqual(translation)) { return AnimationChannelTargetPath.Translation; }
-        else if(value.SequenceEqual(rotation)) { return AnimationChannelTargetPath.Rotation; }
-        else if(value.SequenceEqual(scale)) { return AnimationChannelTargetPath.Scale; }
-        else if(value.SequenceEqual(weights)) { return AnimationChannelTargetPath.Weights; }
+        if(value.SequenceEqual("translation"u8)) { return AnimationChannelTargetPath.Translation; }
+        else if(value.SequenceEqual("rotation"u8)) { return AnimationChannelTargetPath.Rotation; }
+        else if(value.SequenceEqual("scale"u8)) { return AnimationChannelTargetPath.Scale; }
+        else if(value.SequenceEqual("weights"u8)) { return AnimationChannelTargetPath.Weights; }
         throw new JsonException();
     }
 
@@ -90,19 +85,15 @@ internal enum AnimationSamplerInterpolation
 
 internal sealed class AnimationSamplerInterpolationConverter : JsonConverter<AnimationSamplerInterpolation>
 {
-    private static ReadOnlySpan<byte> LINEAR => new byte[] { (byte)'L', (byte)'I', (byte)'N', (byte)'E', (byte)'A', (byte)'R' };
-    private static ReadOnlySpan<byte> STEP => new byte[] { (byte)'S', (byte)'T', (byte)'E', (byte)'P' };
-    private static ReadOnlySpan<byte> CUBICSPLINE => new byte[] { (byte)'C', (byte)'U', (byte)'B', (byte)'I', (byte)'C', (byte)'S', (byte)'P', (byte)'L', (byte)'I', (byte)'N', (byte)'E' };
-
     public override AnimationSamplerInterpolation Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if(reader.TokenType != JsonTokenType.String) {
             throw new JsonException();
         }
         var value = reader.ValueSpan;
-        if(value.SequenceEqual(LINEAR)) { return AnimationSamplerInterpolation.Linear; }
-        else if(value.SequenceEqual(STEP)) { return AnimationSamplerInterpolation.Step; }
-        else if(value.SequenceEqual(CUBICSPLINE)) { return AnimationSamplerInterpolation.CubicSpline; }
+        if(value.SequenceEqual("LINEAR"u8)) { return AnimationSamplerInterpolation.Linear; }
+        else if(value.SequenceEqual("STEP"u8)) { return AnimationSamplerInterpolation.Step; }
+        else if(value.SequenceEqual("CUBICSPLINE"u8)) { return AnimationSamplerInterpolation.CubicSpline; }
         throw new JsonException();
     }
 

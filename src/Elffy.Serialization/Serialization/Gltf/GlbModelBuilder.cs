@@ -70,7 +70,7 @@ public static class GlbModelBuilder
     private static void ValidateVersion(GltfObject gltf)
     {
         var version = gltf.asset.version.AsSpan();
-        if(version.SequenceEqual(stackalloc byte[] { (byte)'2', (byte)'.', (byte)'0' }) == false) {
+        if(version.SequenceEqual("2.0"u8) == false) {
             throw new NotSupportedException("only supports gltf v2.0");
         }
     }

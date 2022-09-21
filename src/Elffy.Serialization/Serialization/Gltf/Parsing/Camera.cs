@@ -25,15 +25,12 @@ internal enum CameraType
 
 internal sealed class CameraTypeConverter : JsonConverter<CameraType>
 {
-    private static ReadOnlySpan<byte> perspective => new byte[11] { (byte)'p', (byte)'e', (byte)'r', (byte)'s', (byte)'p', (byte)'e', (byte)'c', (byte)'t', (byte)'i', (byte)'v', (byte)'e' };
-    private static ReadOnlySpan<byte> orthographic => new byte[12] { (byte)'o', (byte)'r', (byte)'t', (byte)'h', (byte)'o', (byte)'g', (byte)'r', (byte)'a', (byte)'p', (byte)'h', (byte)'i', (byte)'c' };
-
     public override CameraType Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if(reader.TokenType != JsonTokenType.String) { throw new JsonException(); }
         var value = reader.ValueSpan;
-        if(value.SequenceEqual(perspective)) { return CameraType.Perspective; }
-        else if(value.SequenceEqual(orthographic)) { return CameraType.Orthographic; }
+        if(value.SequenceEqual("perspective"u8)) { return CameraType.Perspective; }
+        else if(value.SequenceEqual("orthographic"u8)) { return CameraType.Orthographic; }
         throw new JsonException();
     }
 

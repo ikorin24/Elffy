@@ -10,7 +10,7 @@ namespace Elffy
     {
         private readonly ulong _value;
 
-        private static ReadOnlySpan<byte> _mesh => new byte[8] { (byte)'m', (byte)'e', (byte)'s', (byte)'h', 32, 32, 32, 32, };
+        private static ReadOnlySpan<byte> _mesh => "mesh    "u8;
         public static ref readonly ContainerType Mesh => ref Unsafe.As<byte, ContainerType>(ref MemoryMarshal.GetReference(_mesh));
 
         public override bool Equals(object? obj) => obj is ContainerType type && Equals(type);

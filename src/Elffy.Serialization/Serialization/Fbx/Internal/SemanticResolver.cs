@@ -19,8 +19,8 @@ namespace Elffy.Serialization.Fbx.Internal
 
         public SemanticResolver(FbxObject fbx)
         {
-            _objectsNode = fbx.FindChild(FbxConstStrings.Objects());
-            var connectionsNode = fbx.FindChild(FbxConstStrings.Connections());
+            _objectsNode = fbx.FindChild(FbxConstStrings.Objects);
+            var connectionsNode = fbx.FindChild(FbxConstStrings.Connections);
             _deformerList = new(_objectsNode);
             _connResolver = new(connectionsNode);
             _modelList = new(_objectsNode);
@@ -85,7 +85,7 @@ namespace Elffy.Serialization.Fbx.Internal
         {
             foreach(var id in GetSources(mesh.ID)) {
                 if(_deformerList.TryGetDeformer(id, out var deformerNode) == false) { continue; }
-                if(deformerNode.Properties.Length > 2 && deformerNode.Properties[2].AsString().SequenceEqual(FbxConstStrings.Skin())) {
+                if(deformerNode.Properties.Length > 2 && deformerNode.Properties[2].AsString().SequenceEqual(FbxConstStrings.Skin)) {
                     skin = new SkinDeformer(deformerNode);
                     return true;
                 }
@@ -99,7 +99,7 @@ namespace Elffy.Serialization.Fbx.Internal
             int count = 0;
             foreach(var id in GetSources(skin.ID)) {
                 if(_deformerList.TryGetDeformer(id, out var deformerNode) == false) { continue; }
-                if(deformerNode.Properties.Length > 2 && deformerNode.Properties[2].AsString().SequenceEqual(FbxConstStrings.Cluster()) && deformerNode.Children.Count >= 6) {
+                if(deformerNode.Properties.Length > 2 && deformerNode.Properties[2].AsString().SequenceEqual(FbxConstStrings.Cluster) && deformerNode.Children.Count >= 6) {
                     count++;
                 }
             }
@@ -111,7 +111,7 @@ namespace Elffy.Serialization.Fbx.Internal
             int count = 0;
             foreach(var id in GetSources(skin.ID)) {
                 if(_deformerList.TryGetDeformer(id, out var deformerNode) == false) { continue; }
-                if(deformerNode.Properties.Length > 2 && deformerNode.Properties[2].AsString().SequenceEqual(FbxConstStrings.Cluster()) && deformerNode.Children.Count >= 6) {
+                if(deformerNode.Properties.Length > 2 && deformerNode.Properties[2].AsString().SequenceEqual(FbxConstStrings.Cluster) && deformerNode.Children.Count >= 6) {
                     clusters[count++] = new ClusterDeformer(deformerNode);
                 }
             }
@@ -126,7 +126,7 @@ namespace Elffy.Serialization.Fbx.Internal
             try {
                 foreach(var id in sourceIDList) {
                     if(_deformerList.TryGetDeformer(id, out var deformerNode) == false) { continue; }
-                    if(deformerNode.Properties.Length > 2 && deformerNode.Properties[2].AsString().SequenceEqual(FbxConstStrings.Cluster()) && deformerNode.Children.Count >= 6) {
+                    if(deformerNode.Properties.Length > 2 && deformerNode.Properties[2].AsString().SequenceEqual(FbxConstStrings.Cluster) && deformerNode.Children.Count >= 6) {
                         clusters[count++] = new ClusterDeformer(deformerNode);
                     }
                 }
