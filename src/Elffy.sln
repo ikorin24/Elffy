@@ -14,7 +14,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elffy.Imaging", "Elffy.Imag
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sandbox", "Sandbox\Sandbox.csproj", "{03E6C1C9-B4CD-44F4-A50C-EEA272E28586}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElffyResourceCompiler", "ElffyResourceCompiler\ElffyResourceCompiler.csproj", "{23C40496-259C-4978-BF4C-9CA3F6617EA1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElffyCliTools", "ElffyCliTools\ElffyCliTools.csproj", "{23C40496-259C-4978-BF4C-9CA3F6617EA1}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTest", "UnitTest\UnitTest.csproj", "{6871FA5F-A591-4E02-B914-43AF5CA7A889}"
 EndProject
@@ -62,7 +62,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elffy.Generator.Resources",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elffy.Generator.Markup", "Elffy.Generator.Markup\Elffy.Generator.Markup.csproj", "{89771EED-833C-466C-9E08-6C32DC8FF393}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Elffy.Markup", "Elffy.Markup\Elffy.Markup.csproj", "{AE5A31AD-6F55-40BC-ABC3-4ED92C5CF648}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elffy.Markup", "Elffy.Markup\Elffy.Markup.csproj", "{AE5A31AD-6F55-40BC-ABC3-4ED92C5CF648}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

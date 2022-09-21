@@ -23,7 +23,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Elffy.Events\Elffy.Events.csproj" />
-    <ProjectReference Include="..\ElffyResourceCompiler\ElffyResourceCompiler.csproj" />
     <ProjectReference Include="..\Elffy.Engine\Elffy.Engine.csproj" />
     <ProjectReference Include="..\Elffy.SimpleKit\Elffy.SimpleKit.csproj" />
     <ProjectReference Include="..\Elffy.Serialization\Elffy.Serialization.csproj" />

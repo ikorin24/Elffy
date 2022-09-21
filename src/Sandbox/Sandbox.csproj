@@ -30,13 +30,13 @@
   </ItemGroup>
 
   <Target Name="ElffyPostBuildEvent" AfterTargets="PostBuildEvent">
-    <Exec Command="dotnet run -c Release --project ../ElffyResourceCompiler/ElffyResourceCompiler.csproj -- -o $(TargetDir)Sandbox.dat $(ProjectDir)Resources" />
+    <Exec Command="dotnet run -c Release --project ../ElffyCliTools/ElffyCliTools.csproj -- pack-res $(ProjectDir)Resources -o $(TargetDir)Sandbox.dat -c $(IntermediateOutputPath)" />
   </Target>
   <Target Name="ElffyPostPublishEvent" AfterTargets="Publish">
-    <Exec Command="dotnet run -c Release --project ../ElffyResourceCompiler/ElffyResourceCompiler.csproj -- -o $(PublishDir)Sandbox.dat $(ProjectDir)Resources" />
+    <Exec Command="dotnet run -c Release --project ../ElffyCliTools/ElffyCliTools.csproj -- pack-res $(ProjectDir)Resources -o $(PublishDir)Sandbox.dat -c $(IntermediateOutputPath) -f" />
   </Target>
   <Target Name="ElffyPostCleanEvent" AfterTargets="Clean">
-    <Delete Files="$(TargetDir)Sandbox.dat" />
+    <Exec Command="dotnet run -c Release --project ../ElffyCliTools/ElffyCliTools.csproj -- clean-res -o $(TargetDir)Sandbox.dat -c $(IntermediateOutputPath)" />
   </Target>
 
 </Project>
