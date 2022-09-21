@@ -38,39 +38,42 @@ public sealed class WireframeShader : SingleTargetRenderingShader
     private static ShaderSource ForwardRenderingSource() => new()
     {
         VertexShader =
-@"#version 410
-in vec3 _pos;
-uniform mat4 _mvp;
-void main()
-{
-    gl_Position = _mvp * vec4(_pos, 1);
-}
-",
+        """
+        #version 410
+        in vec3 _pos;
+        uniform mat4 _mvp;
+        void main()
+        {
+            gl_Position = _mvp * vec4(_pos, 1);
+        }
+        """,
         GeometryShader =
-@"#version 460
-layout (triangles) in;
-layout (line_strip, max_vertices = 3) out;
+        """
+        #version 460
+        layout (triangles) in;
+        layout (line_strip, max_vertices = 3) out;
 
-out vec3 _fcolor;
-void main()
-{
-    gl_Position = gl_in[0].gl_Position;
-    EmitVertex();
-    gl_Position = gl_in[1].gl_Position;
-    EmitVertex();
-    gl_Position = gl_in[2].gl_Position;
-    EmitVertex();
-    EndPrimitive();
-}
-",
+        out vec3 _fcolor;
+        void main()
+        {
+            gl_Position = gl_in[0].gl_Position;
+            EmitVertex();
+            gl_Position = gl_in[1].gl_Position;
+            EmitVertex();
+            gl_Position = gl_in[2].gl_Position;
+            EmitVertex();
+            EndPrimitive();
+        }
+        """,
         FragmentShader =
-@"#version 410
-out vec4 _outColor;
-uniform vec3 _wireColor;
-void main()
-{
-    _outColor = vec4(_wireColor, 1);
-}
-",
+        """
+        #version 410
+        out vec4 _outColor;
+        uniform vec3 _wireColor;
+        void main()
+        {
+            _outColor = vec4(_wireColor, 1);
+        }
+        """,
     };
 }

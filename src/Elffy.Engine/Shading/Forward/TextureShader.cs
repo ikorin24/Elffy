@@ -42,7 +42,8 @@ namespace Elffy.Shading.Forward
         protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer) => new()
         {
             VertexShader =
-@"#version 410
+"""
+#version 410
 in vec3 _pos;
 in vec2 _uv;
 uniform mat4 _mvp;
@@ -52,9 +53,10 @@ void main()
     gl_Position = _mvp * vec4(_pos, 1.0);
     _vUV = _uv;
 }
-",
+""",
             FragmentShader =
-@"#version 410
+"""
+#version 410
 in vec2 _vUV;
 uniform sampler2D _sampler;
 uniform bool _hasTexture;
@@ -68,7 +70,7 @@ void main()
         _fragColor = vec4(1.0, 0.0, 1.0, 1.0);
     }
 }
-",
+""",
         };
     }
 }

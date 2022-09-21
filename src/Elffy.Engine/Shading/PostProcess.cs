@@ -8,20 +8,21 @@ namespace Elffy.Shading
     public abstract class PostProcess
     {
         private const string VertShaderSource =
-@"#version 410
-in vec3 _pos;
-in vec2 _uv;
-out V2f
-{
-    vec2 uv;
-} _v2f;
-uniform vec2 _postProcessUVScale;
-void main()
-{
-    _v2f.uv = _uv * _postProcessUVScale;
-    gl_Position = vec4(_pos, 1.0);
-}
-";
+        """
+        #version 410
+        in vec3 _pos;
+        in vec2 _uv;
+        out V2f
+        {
+            vec2 uv;
+        } _v2f;
+        uniform vec2 _postProcessUVScale;
+        void main()
+        {
+            _v2f.uv = _uv * _postProcessUVScale;
+            gl_Position = vec4(_pos, 1.0);
+        }
+        """;
         /// <summary>Get fragment shader code of glsl</summary>
         public abstract string FragShaderSource { get; }
 

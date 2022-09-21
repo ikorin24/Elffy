@@ -34,22 +34,24 @@ namespace Elffy.Shading.Forward
         }
 
         private const string VertSource =
-@"#version 410
+"""
+#version 410
 in vec3 _pos;
 uniform mat4 _mvp;
 void main()
 {
     gl_Position = _mvp * vec4(_pos, 1.0);
 }
-";
+""";
         private const string FragSource =
-@"#version 410
+"""
+#version 410
 out vec4 _fragColor;
 uniform vec4 _color;
 void main()
 {
     _fragColor = _color;
 }
-";
+""";
     }
 }

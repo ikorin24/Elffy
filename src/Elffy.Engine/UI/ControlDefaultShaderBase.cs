@@ -121,91 +121,90 @@ namespace Elffy.UI
         {
             return new()
             {
-                VertexShader = VertSource,
-                FragmentShader = FragSource,
+                VertexShader =
+                """
+                #version 410
+                in vec3 _vPos;
+                in vec2 _vUV;
+                out vec2 _uv;
+                uniform mat4 _mvp;
+
+                void main()
+                {
+                    gl_Position = _mvp * vec4(_vPos, 1.0);
+                    _uv = _vUV;
+                }
+                """,
+                FragmentShader =
+                """
+                #version 410
+                #define LE(th,x) (step(th,x))   // (th <= x)
+                #define LT(th,x) (1-step(x,th)) // (th < x)
+                #define GE(th,x) (step(x,th))   // (th >= x)
+                #define GT(th,x) (1-step(th,x)) // (th > x)
+
+                in vec2 _uv;
+                out vec4 _fragColor;
+
+                uniform vec4 _background;
+
+                uniform bool _hasTex;
+                uniform sampler2D _tex;
+                uniform int _screenHeight;
+                uniform vec2 _origin;
+                uniform vec2 _imagePos;
+                uniform ivec2 _imageSize;
+
+                uniform bool _hasCornerRadius;
+                uniform vec2 _size;
+                uniform vec4 _cornerRadius;
+
+                float FilterCorner(vec4 r, vec2 uv, vec2 size)
+                {
+                    vec2 p = uv * size;
+                    vec2[4] center = vec2[]
+                    (
+                        vec2(r[0], r[0]),
+                        vec2(size.x - r[1], r[1]),
+                        vec2(size.x - r[2], size.y - r[2]),
+                        vec2(r[3], _size.y - r[3])
+                    );
+                    vec4 isCorner = vec4
+                    (
+                        (1.0 - step(center[0].x, p.x)) * (1.0 - step(center[0].y, p.y)),
+                        (1.0 - step(p.x, center[1].x)) * (1.0 - step(center[1].y, p.y)),
+                        (1.0 - step(p.x, center[2].x)) * (1.0 - step(p.y, center[2].y)),
+                        (1.0 - step(center[3].x, p.x)) * (1.0 - step(p.y, center[3].y))
+                    );
+                    vec4 l = vec4
+                    (
+                        length(p - center[0]),
+                        length(p - center[1]),
+                        length(p - center[2]),
+                        length(p - center[3])
+                    );
+                    vec4 a = clamp(-l + r + 0.5, 0.0, 1.0);
+                    return dot(a, isCorner) + step(isCorner[0] + isCorner[1] + isCorner[2] + isCorner[3], 0.5);
+                }
+
+                void main()
+                {
+                    if(_hasTex) {
+                        vec2 v = vec2(gl_FragCoord.x, _screenHeight - gl_FragCoord.y);
+                        ivec2 p = ivec2(v - _origin - _imagePos);
+                        vec4 color = LE(0, p.x) * LT(p.x, _imageSize.x) * LE(0, p.y) * LT(p.y, _imageSize.y) * texelFetch(_tex, p, 0);
+                        _fragColor = vec4(mix(_background.rgb, color.rgb, color.a), _background.a * (1 - color.a) + color.a);
+                    }
+                    else {
+                        _fragColor = _background;
+                    }
+
+                    if(_hasCornerRadius) {
+                        _fragColor.a *= FilterCorner(_cornerRadius, _uv, _size);
+                    }
+                }
+                """,
             };
         }
-
-        private const string VertSource =
-@"#version 410
-in vec3 _vPos;
-in vec2 _vUV;
-out vec2 _uv;
-uniform mat4 _mvp;
-
-void main()
-{
-    gl_Position = _mvp * vec4(_vPos, 1.0);
-    _uv = _vUV;
-}
-";
-        private const string FragSource =
-@"#version 410
-#define LE(th,x) (step(th,x))   // (th <= x)
-#define LT(th,x) (1-step(x,th)) // (th < x)
-#define GE(th,x) (step(x,th))   // (th >= x)
-#define GT(th,x) (1-step(th,x)) // (th > x)
-
-in vec2 _uv;
-out vec4 _fragColor;
-
-uniform vec4 _background;
-
-uniform bool _hasTex;
-uniform sampler2D _tex;
-uniform int _screenHeight;
-uniform vec2 _origin;
-uniform vec2 _imagePos;
-uniform ivec2 _imageSize;
-
-uniform bool _hasCornerRadius;
-uniform vec2 _size;
-uniform vec4 _cornerRadius;
-
-float FilterCorner(vec4 r, vec2 uv, vec2 size)
-{
-    vec2 p = uv * size;
-    vec2[4] center = vec2[]
-    (
-        vec2(r[0], r[0]),
-        vec2(size.x - r[1], r[1]),
-        vec2(size.x - r[2], size.y - r[2]),
-        vec2(r[3], _size.y - r[3])
-    );
-    vec4 isCorner = vec4
-    (
-        (1.0 - step(center[0].x, p.x)) * (1.0 - step(center[0].y, p.y)),
-        (1.0 - step(p.x, center[1].x)) * (1.0 - step(center[1].y, p.y)),
-        (1.0 - step(p.x, center[2].x)) * (1.0 - step(p.y, center[2].y)),
-        (1.0 - step(center[3].x, p.x)) * (1.0 - step(p.y, center[3].y))
-    );
-    vec4 l = vec4
-    (
-        length(p - center[0]),
-        length(p - center[1]),
-        length(p - center[2]),
-        length(p - center[3])
-    );
-    vec4 a = clamp(-l + r + 0.5, 0.0, 1.0);
-    return dot(a, isCorner) + step(isCorner[0] + isCorner[1] + isCorner[2] + isCorner[3], 0.5);
-}
-
-void main()
-{
-    if(_hasTex) {
-        vec2 v = vec2(gl_FragCoord.x, _screenHeight - gl_FragCoord.y);
-        ivec2 p = ivec2(v - _origin - _imagePos);
-        vec4 color = LE(0, p.x) * LT(p.x, _imageSize.x) * LE(0, p.y) * LT(p.y, _imageSize.y) * texelFetch(_tex, p, 0);
-        _fragColor = vec4(mix(_background.rgb, color.rgb, color.a), _background.a * (1 - color.a) + color.a);
-    }
-    else {
-        _fragColor = _background;
-    }
-
-    if(_hasCornerRadius) {
-        _fragColor.a *= FilterCorner(_cornerRadius, _uv, _size);
-    }
-}
-";
     }
 }

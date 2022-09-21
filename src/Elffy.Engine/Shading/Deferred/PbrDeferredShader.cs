@@ -65,7 +65,8 @@ namespace Elffy.Shading.Deferred
         }
 
         private const string VertSource =
-@"#version 410
+"""
+#version 410
 in vec3 _vPos;
 in vec3 _vNormal;
 in vec2 _vUV;
@@ -80,7 +81,8 @@ void main()
     _normal = _vNormal;
     _uv = _vUV;
     gl_Position = _mvp * vec4(_pos, 1.0);
-}";
+}
+""";
 
         // index  | R           | G            | B           | A         |
         // ----
@@ -91,7 +93,8 @@ void main()
         // mrt[4] | 0           | 0            | 0           | 0         |
 
         private const string FragSource =
-@"#version 410
+"""
+#version 410
 in vec3 _pos;
 in vec3 _normal;
 in vec2 _uv;
@@ -125,6 +128,6 @@ void main()
     _mrt3 = vec4(0, 0, 0, 0);
     _mrt4 = vec4(0, 0, 0, 0);
 }
-";
+""";
     }
 }

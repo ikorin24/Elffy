@@ -30,17 +30,20 @@ namespace Elffy.Shading
         ShaderSource IRenderingShader.GetShaderSourceInternal(Renderable target, ObjectLayer layer) => new()
         {
             VertexShader =
-@"#version 410
-layout (location = 0) in vec3 _vPos;
-uniform mat4 _lmvp;
-void main()
-{
-    gl_Position = _lmvp * vec4(_vPos, 1.0);
-}
-",
+            """
+            #version 410
+            layout (location = 0) in vec3 _vPos;
+            uniform mat4 _lmvp;
+            void main()
+            {
+                gl_Position = _lmvp * vec4(_vPos, 1.0);
+            }
+            """,
             FragmentShader =
-@"#version 410
-void main(){}",
+            """
+            #version 410
+            void main(){}
+            """,
         };
     }
 }

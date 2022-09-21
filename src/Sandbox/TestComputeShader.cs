@@ -32,28 +32,28 @@ public sealed unsafe class TestComputeShader : IComputeShader
         dispatcher.SendUniform("_r", r);
     }
 
-    string IComputeShader.GetShaderSource() => Source;
+    string IComputeShader.GetShaderSource() =>
+    """
+    #version 430
 
-    private const string Source =
-@"#version 430
+    layout(local_size_x=1, local_size_y=1, local_size_z=1) in;
 
-layout(local_size_x=1, local_size_y=1, local_size_z=1) in;
+    uniform float _r;
 
-uniform float _r;
+    layout (std430, binding=0) buffer SSBO
+    {
+        vec4 _data[];
+    };
 
-layout (std430, binding=0) buffer SSBO
-{
-    vec4 _data[];
-};
+    void main()
+    {
+        //uint index = gl_WorkGroupSize.x * gl_NumWorkGroups.x * gl_GlobalInvocationID.y + gl_GlobalInvocationID.x;
+        //_data[index] = vec4(0, 1, 0, 1);
 
-void main()
-{
-    //uint index = gl_WorkGroupSize.x * gl_NumWorkGroups.x * gl_GlobalInvocationID.y + gl_GlobalInvocationID.x;
-    //_data[index] = vec4(0, 1, 0, 1);
-
-    vec2 v = vec2(gl_WorkGroupID) / vec2(gl_NumWorkGroups);
-    _data[gl_WorkGroupID.y * gl_NumWorkGroups.x + gl_WorkGroupID.x] = vec4(_r, v.x, v.y, 1);
-}";
+        vec2 v = vec2(gl_WorkGroupID) / vec2(gl_NumWorkGroups);
+        _data[gl_WorkGroupID.y * gl_NumWorkGroups.x + gl_WorkGroupID.x] = vec4(_r, v.x, v.y, 1);
+    }
+    """;
 }
 
 public sealed class TestShader : RenderingShader
@@ -87,38 +87,37 @@ public sealed class TestShader : RenderingShader
         dispatcher.SendUniform("_size", new Vector2(w, h));
     }
 
-    protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer)
+    protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer) => new()
     {
-        return new()
+        VertexShader =
+        """
+        #version 430
+        in vec3 _pos;
+        in vec2 _v_uv;
+        out vec2 _uv;
+        uniform mat4 _mvp;
+        void main()
         {
-            VertexShader =
-@"#version 430
-in vec3 _pos;
-in vec2 _v_uv;
-out vec2 _uv;
-uniform mat4 _mvp;
-void main()
-{
-    _uv = _v_uv;
-    gl_Position = _mvp * vec4(_pos, 1.0);
-}
-",
-            FragmentShader =
-@"#version 430
-in vec2 _uv;
-uniform vec2 _size;
-out vec4 _outColor;
-layout (std430, binding=0) buffer SSBO
-{
-    vec4 _data[];
-};
-void main()
-{
-    ivec2 pos = ivec2(_uv * _size);
-    int index = int(pos.y * int(_size.y) + pos.x);
-    _outColor = _data[index];
-}
-",
+            _uv = _v_uv;
+            gl_Position = _mvp * vec4(_pos, 1.0);
+        }
+        """,
+        FragmentShader =
+        """
+        #version 430
+        in vec2 _uv;
+        uniform vec2 _size;
+        out vec4 _outColor;
+        layout (std430, binding=0) buffer SSBO
+        {
+            vec4 _data[];
         };
-    }
+        void main()
+        {
+            ivec2 pos = ivec2(_uv * _size);
+            int index = int(pos.y * int(_size.y) + pos.x);
+            _outColor = _data[index];
+        }
+        """,
+    };
 }

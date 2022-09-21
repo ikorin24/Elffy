@@ -116,7 +116,8 @@ namespace Elffy.Shading.Forward
         }
 
         private const string VertSource =
-@"#version 410
+"""
+#version 410
 in vec3 vPos;
 in vec3 vNormal;
 in vec2 vUV;
@@ -138,10 +139,11 @@ void main()
     _vout_shadowMapNDC = posLightSpace.xyz / posLightSpace.w;
     gl_Position = projection * modelView * vec4(vPos, 1.0);
 }
-";
+""";
 
         private const string FragSource =
-@"#version 410
+"""
+#version 410
 in vec3 _vout_pos;
 in vec3 _vout_normal;
 in vec2 _vout_uv;
@@ -204,6 +206,6 @@ void main()
     fragColor = hasTexture ? vec4(lightColor, 1.0) * texture(tex_sampler, _vout_uv)
                            : vec4(lightColor, 1.0);
 }
-";
+""";
     }
 }

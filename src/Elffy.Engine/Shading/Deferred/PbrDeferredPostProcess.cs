@@ -47,7 +47,8 @@ namespace Elffy.Shading.Deferred
         // mrt[4] | 0           | 0            | 0           | 0         |
 
         private const string FragSource =
-@"#version 410
+"""
+#version 410
 #define m_float mediump float
 #define m_vec2  mediump vec2
 #define m_vec3  mediump vec3
@@ -227,6 +228,6 @@ void main()
     
     _fragColor = vec4(fragColor, 1.0);
 }
-";
+""";
     }
 }

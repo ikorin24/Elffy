@@ -46,7 +46,8 @@ namespace Elffy.Shading.Forward
         }
 
         private const string VertSource =
-@"#version 410
+"""
+#version 410
 in vec3 _vPos;
 in vec3 _vNormal;
 in vec2 _vUV;
@@ -63,10 +64,11 @@ void main()
     _uv = _vUV;
     gl_Position = _projection * _modelView * vec4(_vPos, 1.0);
 }
-";
+""";
 
         private const string FragSource =
-@"#version 410
+"""
+#version 410
 #define m_float mediump float
 #define m_vec2 mediump vec2
 #define m_vec3 mediump vec3
@@ -166,6 +168,6 @@ void main()
     
     _fragColor = vec4(specular + diffuse, 1.0);
 }
-";
+""";
     }
 }
