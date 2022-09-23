@@ -3,7 +3,10 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
+using Elffy.Effective;
+using Elffy.Effective.Unsafes;
 using OpenTK.Graphics.OpenGL4;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace Elffy.Graphics.OpenGL
 {
@@ -49,7 +52,7 @@ namespace Elffy.Graphics.OpenGL
             int shaderID = 0;
             try {
                 shaderID = GL.CreateShader(shaderType);
-                GL.ShaderSource(shaderID, shaderSource);
+                GLHelper.ShaderSource((uint)shaderID, shaderSource);
                 GL.CompileShader(shaderID);
                 GL.GetShader(shaderID, ShaderParameter.CompileStatus, out int compilationStatus);
                 ThrowIfCompilationFailure(shaderID, shaderSource, compilationStatus);
@@ -120,6 +123,37 @@ namespace Elffy.Graphics.OpenGL
         {
             var log = GL.GetProgramInfoLog(programID);
             throw new GlslException($"Failed to link shaders.\n{log}");
+        }
+    }
+
+    internal unsafe static class GLHelper
+    {
+        private static delegate* unmanaged[Stdcall]<uint, int, byte**, int*, void> _glShaderSource;
+
+        public static void ShaderSource(uint shader, ReadOnlySpan<byte> source)
+        {
+            var len = source.Length;
+            fixed(byte* s = source) {
+                glShaderSource(shader, 1, &s, &len);
+            }
+        }
+
+        public static void ShaderSource(uint shader, ReadOnlySpan<char> source)
+        {
+            var utf8 = Encoding.UTF8;
+            var len = utf8.GetByteCount(source);
+            using var b = new UnsafeRawArray<byte>(len, false);
+            var byteSpan = b.AsSpan();
+            utf8.GetBytes(source, byteSpan);
+            ShaderSource(shader, byteSpan);
+        }
+
+        private static void glShaderSource(uint shader, int sourceCount, byte** sources, int* lengths)
+        {
+            if(_glShaderSource == null) {
+                _glShaderSource = (delegate* unmanaged[Stdcall]<uint, int, byte**, int*, void>)GLFW.GetProcAddressRaw("glShaderSource"u8.AsPointer());
+            }
+            _glShaderSource(shader, sourceCount, sources, lengths);
         }
     }
 
