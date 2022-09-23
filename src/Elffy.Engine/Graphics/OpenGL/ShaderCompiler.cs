@@ -153,6 +153,10 @@ namespace Elffy.Graphics.OpenGL
             if(_glShaderSource == null) {
                 _glShaderSource = (delegate* unmanaged[Stdcall]<uint, int, byte**, int*, void>)GLFW.GetProcAddressRaw("glShaderSource"u8.AsPointer());
             }
+
+            // [opengl specification]
+            // If 'lengths' is null, each string is assumed to be null terminated.
+            // If 'lengths' is a value other than null, it points to an array containing a string length for each of the corresponding elements of string.
             _glShaderSource(shader, sourceCount, sources, lengths);
         }
     }
