@@ -18,7 +18,7 @@
 
   <ItemGroup>
     <PackageReference Include="FbxParser" Version="2.0.0" />
-    <PackageReference Include="OpenTK" Version="4.6.4" />
+    <PackageReference Include="OpenTK" Version="4.7.5" />
     <PackageReference Include="PMXParser" Version="1.1.1" />
   </ItemGroup>
 
