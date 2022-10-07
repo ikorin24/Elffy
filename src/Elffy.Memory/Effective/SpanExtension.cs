@@ -52,6 +52,18 @@ namespace Elffy.Effective
             return (T*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(source));
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe T* AsPointerOrNull<T>(this Span<T> source) where T : unmanaged
+        {
+            return source.IsEmpty ? null : (T*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(source));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe T* AsPointerOrNull<T>(this ReadOnlySpan<T> source) where T : unmanaged
+        {
+            return source.IsEmpty ? null : (T*)Unsafe.AsPointer(ref MemoryMarshal.GetReference(source));
+        }
+
         /// <summary>Get byte span from source span</summary>
         /// <typeparam name="T">element type</typeparam>
         /// <param name="source">source span</param>

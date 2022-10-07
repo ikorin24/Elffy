@@ -1,121 +1,116 @@
 ﻿#nullable enable
-using Elffy;
 using Elffy.Graphics.OpenGL;
 using System;
 
-namespace Elffy.Shading.Forward
+namespace Elffy.Shading.Forward;
+
+public sealed class PhongShader : RenderingShader
 {
-    public sealed class PhongShader : RenderingShader
+    private const float DefaultAFactor = 0.8f;
+    private const float DefaultDFactor = 0.35f;
+    private const float DefaultSFactor = 0.5f;
+    private const float DefaultShininess = 10f;
+
+    private Color3 _ambient;
+    private Color3 _diffuse;
+    private Color3 _specular;
+    private float _shininess;
+    private Texture? _texture;
+
+    public ref Color3 Ambient => ref _ambient;
+    public ref Color3 Diffuse => ref _diffuse;
+    public ref Color3 Specular => ref _specular;
+    public float Shininess
     {
-        private const float DefaultAFactor = 0.8f;
-        private const float DefaultDFactor = 0.35f;
-        private const float DefaultSFactor = 0.5f;
-        private const float DefaultShininess = 10f;
+        get => _shininess;
+        set => _shininess = value;
+    }
+    public Texture? Texture { get => _texture; set => _texture = value; }
 
-        private Color3 _ambient;
-        private Color3 _diffuse;
-        private Color3 _specular;
-        private float _shininess;
-        private Texture? _texture;
+    public PhongShader() : this(Color3.White)
+    {
+    }
 
-        public ref Color3 Ambient => ref _ambient;
-        public ref Color3 Diffuse => ref _diffuse;
-        public ref Color3 Specular => ref _specular;
-        public float Shininess
-        {
-            get => _shininess;
-            set => _shininess = value;
+    public PhongShader(Color3 color)
+    {
+        _ambient = new Color3(color.R * DefaultAFactor, color.G * DefaultAFactor, color.B * DefaultAFactor);
+        _diffuse = new Color3(color.R * DefaultDFactor, color.G * DefaultDFactor, color.B * DefaultDFactor);
+        _specular = new Color3(color.R * DefaultSFactor, color.G * DefaultSFactor, color.B * DefaultSFactor);
+        _shininess = DefaultShininess;
+    }
+
+    public PhongShader(Color3 ambient, Color3 diffuse, Color3 specular, float shininess)
+    {
+        _ambient = ambient;
+        _diffuse = diffuse;
+        _specular = specular;
+        _shininess = shininess;
+    }
+
+    public void SetColor(Color3 color)
+    {
+        _ambient = new Color3(color.R * DefaultAFactor, color.G * DefaultAFactor, color.B * DefaultAFactor);
+        _diffuse = new Color3(color.R * DefaultDFactor, color.G * DefaultDFactor, color.B * DefaultDFactor);
+        _specular = new Color3(color.R * DefaultSFactor, color.G * DefaultSFactor, color.B * DefaultSFactor);
+    }
+
+    protected override void OnProgramDisposed()
+    {
+        _texture?.Dispose();
+        _texture = null;
+        base.OnProgramDisposed();
+    }
+
+    protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
+    {
+        definition.Map(vertexType, "vPos", VertexSpecialField.Position);
+        definition.Map(vertexType, "vNormal", VertexSpecialField.Normal);
+        definition.Map(vertexType, "vUV", VertexSpecialField.UV);
+    }
+
+    protected override void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+    {
+        dispatcher.SendUniform("ma", _ambient);
+        dispatcher.SendUniform("md", _diffuse);
+        dispatcher.SendUniform("ms", _specular);
+        dispatcher.SendUniform("shininess", _shininess);
+
+        dispatcher.SendUniform("projection", projection);
+        dispatcher.SendUniform("view", view);
+        dispatcher.SendUniform("modelView", view * model);
+
+        var texture = _texture;
+        if(texture != null) {
+            dispatcher.SendUniformTexture2D("tex_sampler", texture.TextureObject, TextureUnitNumber.Unit0);
         }
-        public Texture? Texture { get => _texture; set => _texture = value; }
+        dispatcher.SendUniform("hasTexture", texture != null);
 
-        public PhongShader() : this(Color3.White)
-        {
+        var screen = target.GetValidScreen();
+        var lights = screen.Lights;
+        dispatcher.SendUniform("lightCount", lights.LightCount);
+        dispatcher.SendUniformTexture1D("lColorSampler", lights.ColorTexture, TextureUnitNumber.Unit1);
+        dispatcher.SendUniformTexture1D("lPosSampler", lights.PositionTexture, TextureUnitNumber.Unit2);
+
+        bool hasShadowMap;
+
+        var light = lights.GetLights().FirstOrDefault();
+        if(light != null) {
+            dispatcher.SendUniform("_lmvp", light.LightMatrix * model);
+            dispatcher.SendUniformTexture2D("_shadowMap", light.ShadowMap.DepthTexture, TextureUnitNumber.Unit3);
+            hasShadowMap = true;
         }
-
-        public PhongShader(Color3 color)
-        {
-            _ambient = new Color3(color.R * DefaultAFactor, color.G * DefaultAFactor, color.B * DefaultAFactor);
-            _diffuse = new Color3(color.R * DefaultDFactor, color.G * DefaultDFactor, color.B * DefaultDFactor);
-            _specular = new Color3(color.R * DefaultSFactor, color.G * DefaultSFactor, color.B * DefaultSFactor);
-            _shininess = DefaultShininess;
+        else {
+            hasShadowMap = false;
         }
+        dispatcher.SendUniform("_hasShadowMap", hasShadowMap);
+    }
 
-        public PhongShader(Color3 ambient, Color3 diffuse, Color3 specular, float shininess)
+    protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer)
+    {
+        return new()
         {
-            _ambient = ambient;
-            _diffuse = diffuse;
-            _specular = specular;
-            _shininess = shininess;
-        }
-
-        public void SetColor(Color3 color)
-        {
-            _ambient = new Color3(color.R * DefaultAFactor, color.G * DefaultAFactor, color.B * DefaultAFactor);
-            _diffuse = new Color3(color.R * DefaultDFactor, color.G * DefaultDFactor, color.B * DefaultDFactor);
-            _specular = new Color3(color.R * DefaultSFactor, color.G * DefaultSFactor, color.B * DefaultSFactor);
-        }
-
-        protected override void OnProgramDisposed()
-        {
-            _texture?.Dispose();
-            _texture = null;
-            base.OnProgramDisposed();
-        }
-
-        protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
-        {
-            definition.Map(vertexType, "vPos", VertexSpecialField.Position);
-            definition.Map(vertexType, "vNormal", VertexSpecialField.Normal);
-            definition.Map(vertexType, "vUV", VertexSpecialField.UV);
-        }
-
-        protected override void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
-        {
-            dispatcher.SendUniform("ma", _ambient);
-            dispatcher.SendUniform("md", _diffuse);
-            dispatcher.SendUniform("ms", _specular);
-            dispatcher.SendUniform("shininess", _shininess);
-
-            dispatcher.SendUniform("projection", projection);
-            dispatcher.SendUniform("view", view);
-            dispatcher.SendUniform("modelView", view * model);
-
-            var texture = _texture;
-            if(texture != null) {
-                dispatcher.SendUniformTexture2D("tex_sampler", texture.TextureObject, TextureUnitNumber.Unit0);
-            }
-            dispatcher.SendUniform("hasTexture", texture != null);
-
-            var screen = target.GetValidScreen();
-            var lights = screen.Lights;
-            dispatcher.SendUniform("lightCount", lights.LightCount);
-            dispatcher.SendUniformTexture1D("lColorSampler", lights.ColorTexture, TextureUnitNumber.Unit1);
-            dispatcher.SendUniformTexture1D("lPosSampler", lights.PositionTexture, TextureUnitNumber.Unit2);
-
-            bool hasShadowMap;
-
-            var light = lights.GetLights().FirstOrDefault();
-            if(light != null) {
-                dispatcher.SendUniform("_lmvp", light.LightMatrix * model);
-                dispatcher.SendUniformTexture2D("_shadowMap", light.ShadowMap.DepthTexture, TextureUnitNumber.Unit3);
-                hasShadowMap = true;
-            }
-            else {
-                hasShadowMap = false;
-            }
-            dispatcher.SendUniform("_hasShadowMap", hasShadowMap);
-        }
-
-        protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer)
-        {
-            return new()
-            {
-                VertexShader = VertSource,
-                FragmentShader = FragSource,
-            };
-        }
-
-        private const string VertSource =
+            OnlyContainsConstLiteralUtf8 = true,
+            VertexShader =
 """
 #version 410
 in vec3 vPos;
@@ -139,9 +134,8 @@ void main()
     _vout_shadowMapNDC = posLightSpace.xyz / posLightSpace.w;
     gl_Position = projection * modelView * vec4(vPos, 1.0);
 }
-""";
-
-        private const string FragSource =
+"""u8,
+            FragmentShader =
 """
 #version 410
 in vec3 _vout_pos;
@@ -206,6 +200,7 @@ void main()
     fragColor = hasTexture ? vec4(lightColor, 1.0) * texture(tex_sampler, _vout_uv)
                            : vec4(lightColor, 1.0);
 }
-""";
+"""u8,
+        };
     }
 }

@@ -112,6 +112,7 @@ internal sealed class GlbShader : SingleTargetRenderingShader
 
     private static ShaderSource GetForwardShader() => new()
     {
+        OnlyContainsConstLiteralUtf8 = true,
         VertexShader =
         """
         #version 410
@@ -154,7 +155,7 @@ internal sealed class GlbShader : SingleTargetRenderingShader
             }
             _v2f.cdirTan = normalize(_v2f.tbn * -vposCam3);
         }
-        """,
+        """u8,
         FragmentShader =
         """
         #version 410
@@ -267,11 +268,12 @@ internal sealed class GlbShader : SingleTargetRenderingShader
 
             _fragColor = vec4(diffuse + specular, 1.0);
         }
-        """,
+        """u8,
     };
 
     private static ShaderSource GetDeferredShader() => new()
     {
+        OnlyContainsConstLiteralUtf8 = true,
         VertexShader =
         """
         #version 410
@@ -313,7 +315,7 @@ internal sealed class GlbShader : SingleTargetRenderingShader
                 _v2f.ldirTan = normalize(_v2f.tbn * (vposCam.xyz / vposCam.w - lposCam.xyz / lposCam.w));
             }
         }
-        """,
+        """u8,
         // index  | R           | G            | B           | A         |
         // ----
         // mrt[0] | pos.x       | pos.y        | pos.z       | 1         |
@@ -367,6 +369,6 @@ internal sealed class GlbShader : SingleTargetRenderingShader
             _mrt3 = vec4(0, 0, 0, 0);
             _mrt4 = vec4(0, 0, 0, 0);
         }
-        """,
+        """u8,
     };
 }

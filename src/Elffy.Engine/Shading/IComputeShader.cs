@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using OpenTK.Graphics.OpenGL4;
+using System;
 using System.Runtime.CompilerServices;
 
 namespace Elffy.Shading
@@ -9,10 +10,10 @@ namespace Elffy.Shading
     {
         protected void OnDispatching(ShaderDataDispatcher dispatcher, ComputeShaderContext context);
 
-        protected string GetShaderSource();
+        protected ReadOnlySpan<byte> GetShaderSource();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static string GetShaderSourceInternal(IComputeShader shader)
+        internal static ReadOnlySpan<byte> GetShaderSourceInternal(IComputeShader shader)
         {
             return shader.GetShaderSource();
         }

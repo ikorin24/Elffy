@@ -40,12 +40,8 @@ namespace Elffy.Shading.Forward
         {
             return new()
             {
-                VertexShader = VertSource,
-                FragmentShader = FragSource,
-            };
-        }
-
-        private const string VertSource =
+                OnlyContainsConstLiteralUtf8 = true,
+                VertexShader =
 """
 #version 410
 in vec3 _vPos;
@@ -64,9 +60,8 @@ void main()
     _uv = _vUV;
     gl_Position = _projection * _modelView * vec4(_vPos, 1.0);
 }
-""";
-
-        private const string FragSource =
+"""u8,
+                FragmentShader =
 """
 #version 410
 #define m_float mediump float
@@ -168,6 +163,8 @@ void main()
     
     _fragColor = vec4(specular + diffuse, 1.0);
 }
-""";
+"""u8,
+            };
+        }
     }
 }

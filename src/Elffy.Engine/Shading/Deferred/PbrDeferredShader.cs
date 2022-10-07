@@ -2,69 +2,65 @@
 using System;
 using Elffy.Graphics.OpenGL;
 
-namespace Elffy.Shading.Deferred
+namespace Elffy.Shading.Deferred;
+
+public sealed class PbrDeferredShader : RenderingShader
 {
-    public sealed class PbrDeferredShader : RenderingShader
+    private Texture? _texture;
+    private Color3 _baseColor;
+    private float _metallic;
+    private float _roughness;
+
+    public ref Color3 BaseColor => ref _baseColor;
+    public float Metallic { get => _metallic; set => _metallic = value; }
+    public float Roughness { get => _roughness; set => _roughness = value; }
+    public Texture? Texture { get => _texture; set => _texture = value; }
+
+    public PbrDeferredShader()
     {
-        private Texture? _texture;
-        private Color3 _baseColor;
-        private float _metallic;
-        private float _roughness;
+    }
 
-        public ref Color3 BaseColor => ref _baseColor;
-        public float Metallic { get => _metallic; set => _metallic = value; }
-        public float Roughness { get => _roughness; set => _roughness = value; }
-        public Texture? Texture { get => _texture; set => _texture = value; }
+    public PbrDeferredShader(Color3 albedo, float metallic, float roughness)
+    {
+        _baseColor = albedo;
+        _metallic = metallic;
+        _roughness = roughness;
+    }
 
-        public PbrDeferredShader()
-        {
+    protected override void OnProgramDisposed()
+    {
+        _texture?.Dispose();
+        _texture = null;
+        base.OnProgramDisposed();
+    }
+
+    protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
+    {
+        definition.Map(vertexType, "_vPos", VertexSpecialField.Position);
+        definition.Map(vertexType, "_vNormal", VertexSpecialField.Normal);
+        definition.Map(vertexType, "_vUV", VertexSpecialField.UV);
+    }
+
+    protected override void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+    {
+        dispatcher.SendUniform("_model", model);
+        dispatcher.SendUniform("_view", view);
+        dispatcher.SendUniform("_mvp", projection * view * model);
+        dispatcher.SendUniform("_baseColorMetallic", new Color4(_baseColor, _metallic));
+        dispatcher.SendUniform("_roughness", _roughness);
+        var texture = _texture;
+        if(texture != null) {
+            dispatcher.SendUniformTexture2D("_tex", texture.TextureObject, TextureUnitNumber.Unit0);
         }
+        dispatcher.SendUniform("_hasTexture", texture != null);
+    }
 
-        public PbrDeferredShader(Color3 albedo, float metallic, float roughness)
+    protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer)
+    {
+        return new()
         {
-            _baseColor = albedo;
-            _metallic = metallic;
-            _roughness = roughness;
-        }
-
-        protected override void OnProgramDisposed()
-        {
-            _texture?.Dispose();
-            _texture = null;
-            base.OnProgramDisposed();
-        }
-
-        protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
-        {
-            definition.Map(vertexType, "_vPos", VertexSpecialField.Position);
-            definition.Map(vertexType, "_vNormal", VertexSpecialField.Normal);
-            definition.Map(vertexType, "_vUV", VertexSpecialField.UV);
-        }
-
-        protected override void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
-        {
-            dispatcher.SendUniform("_model", model);
-            dispatcher.SendUniform("_view", view);
-            dispatcher.SendUniform("_mvp", projection * view * model);
-            dispatcher.SendUniform("_baseColorMetallic", new Color4(_baseColor, _metallic));
-            dispatcher.SendUniform("_roughness", _roughness);
-            var texture = _texture;
-            if(texture != null) {
-                dispatcher.SendUniformTexture2D("_tex", texture.TextureObject, TextureUnitNumber.Unit0);
-            }
-            dispatcher.SendUniform("_hasTexture", texture != null);
-        }
-
-        protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer)
-        {
-            return new()
-            {
-                VertexShader = VertSource,
-                FragmentShader = FragSource,
-            };
-        }
-
-        private const string VertSource =
+            OnlyContainsConstLiteralUtf8 = true,
+            VertexShader =
 """
 #version 410
 in vec3 _vPos;
@@ -82,17 +78,17 @@ void main()
     _uv = _vUV;
     gl_Position = _mvp * vec4(_pos, 1.0);
 }
-""";
+"""u8,
 
-        // index  | R           | G            | B           | A         |
-        // ----
-        // mrt[0] | pos.x       | pos.y        | pos.z       | 1         |
-        // mrt[1] | normal.x    | normal.y     | normal.z    | roughness |
-        // mrt[2] | baseColor.r | baseColor.g  | baseColor.b | metallic  |
-        // mrt[3] | 0           | 0            | 0           | 0         |
-        // mrt[4] | 0           | 0            | 0           | 0         |
+            // index  | R           | G            | B           | A         |
+            // ----
+            // mrt[0] | pos.x       | pos.y        | pos.z       | 1         |
+            // mrt[1] | normal.x    | normal.y     | normal.z    | roughness |
+            // mrt[2] | baseColor.r | baseColor.g  | baseColor.b | metallic  |
+            // mrt[3] | 0           | 0            | 0           | 0         |
+            // mrt[4] | 0           | 0            | 0           | 0         |
 
-        private const string FragSource =
+            FragmentShader =
 """
 #version 410
 in vec3 _pos;
@@ -128,6 +124,7 @@ void main()
     _mrt3 = vec4(0, 0, 0, 0);
     _mrt4 = vec4(0, 0, 0, 0);
 }
-""";
+"""u8,
+        };
     }
 }

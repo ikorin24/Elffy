@@ -26,6 +26,7 @@ namespace Sandbox
 
         protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer) => new()
         {
+            OnlyContainsConstLiteralUtf8 = true,
             VertexShader =
             """
             #version 410
@@ -42,7 +43,7 @@ namespace Sandbox
                 UV = vUV;
                 gl_Position = mvp * vec4(vPos, 1.0);
             }
-            """,
+            """u8,
             FragmentShader =
             """
             #version 410
@@ -79,7 +80,7 @@ namespace Sandbox
                 }
                 fragColor = vec4(color, 1.0);
             }
-            """,
+            """u8,
         };
     }
 }

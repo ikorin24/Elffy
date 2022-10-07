@@ -1,39 +1,25 @@
 ﻿#nullable enable
 using System;
 
-namespace Elffy.Shading.Forward
+namespace Elffy.Shading.Forward;
+
+internal sealed class EmptyShader : RenderingShader
 {
-    internal sealed class EmptyShader : RenderingShader
+    private static EmptyShader? _instance;
+
+    /// <summary>Get singleton instance</summary>
+    public static EmptyShader Instance => _instance ??= new();
+
+    private EmptyShader()
     {
-        private static EmptyShader? _instance;
+    }
 
-        /// <summary>Get singleton instance</summary>
-        public static EmptyShader Instance => _instance ??= new();
-
-        private EmptyShader()
+    protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer)
+    {
+        return new()
         {
-        }
-
-        protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer)
-        {
-            return new()
-            {
-                VertexShader = VertSource,
-                FragmentShader = FragSource,
-            };
-        }
-
-        protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
-        {
-            definition.Map(vertexType, "_pos", VertexSpecialField.Position);
-        }
-
-        protected override void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
-        {
-            dispatcher.SendUniform("_mvp", projection * view * model);
-        }
-
-        private const string VertSource =
+            OnlyContainsConstLiteralUtf8 = true,
+            VertexShader =
 """
 #version 410
 in vec3 _pos;
@@ -42,8 +28,8 @@ void main()
 {
     gl_Position = _mvp * vec4(_pos, 1.0);
 }
-""";
-        private const string FragSource =
+"""u8,
+            FragmentShader =
 """
 #version 410
 out vec4 _fragColor;
@@ -51,6 +37,17 @@ void main()
 {
     _fragColor = vec4(1.0, 0.0, 1.0, 1.0);
 }
-""";
+"""u8,
+        };
+    }
+
+    protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
+    {
+        definition.Map(vertexType, "_pos", VertexSpecialField.Position);
+    }
+
+    protected override void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+    {
+        dispatcher.SendUniform("_mvp", projection * view * model);
     }
 }

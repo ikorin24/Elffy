@@ -45,6 +45,7 @@ public class Gizmo : Renderable
 
         protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer) => new()
         {
+            OnlyContainsConstLiteralUtf8 = true,
             VertexShader =
             """
             #version 410
@@ -70,7 +71,7 @@ public class Gizmo : Renderable
                 float colorFactor = dot(vec3(0, 1, 0), (nWorld + vec3(0, 1, 0)) * 0.5) * 0.5 + 0.5;
                 _color = ColorTable[gl_InstanceID] * colorFactor;
             }
-            """,
+            """u8,
             FragmentShader =
             """
             #version 410
@@ -80,7 +81,7 @@ public class Gizmo : Renderable
             {
                 _fragColor = vec4(_color, 1);
             }
-            """,
+            """u8,
         };
     }
 }

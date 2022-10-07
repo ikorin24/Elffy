@@ -1,47 +1,47 @@
 ﻿#nullable enable
-using Elffy;
 using Elffy.Graphics.OpenGL;
 using System;
 
-namespace Elffy.Shading.Forward
+namespace Elffy.Shading.Forward;
+
+/// <summary>Simple shader which displays texture.</summary>
+public sealed class TextureShader : RenderingShader
 {
-    /// <summary>Simple shader which displays texture.</summary>
-    public sealed class TextureShader : RenderingShader
+    private Texture? _texture;
+
+    public Texture? Texture { get => _texture; set => _texture = value; }
+
+    public TextureShader()
     {
-        private Texture? _texture;
+    }
 
-        public Texture? Texture { get => _texture; set => _texture = value; }
+    protected override void OnProgramDisposed()
+    {
+        _texture?.Dispose();
+        _texture = null;
+        base.OnProgramDisposed();
+    }
 
-        public TextureShader()
-        {
+    protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
+    {
+        definition.Map(vertexType, "_pos", VertexSpecialField.Position);
+        definition.Map(vertexType, "_uv", VertexSpecialField.UV);
+    }
+
+    protected override void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+    {
+        var texture = _texture;
+        dispatcher.SendUniform("_hasTexture", texture != null);
+        if(texture != null) {
+            dispatcher.SendUniformTexture2D("_sampler", texture.TextureObject, TextureUnitNumber.Unit0);
         }
+        dispatcher.SendUniform("_mvp", projection * view * model);
+    }
 
-        protected override void OnProgramDisposed()
-        {
-            _texture?.Dispose();
-            _texture = null;
-            base.OnProgramDisposed();
-        }
-
-        protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
-        {
-            definition.Map(vertexType, "_pos", VertexSpecialField.Position);
-            definition.Map(vertexType, "_uv", VertexSpecialField.UV);
-        }
-
-        protected override void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
-        {
-            var texture = _texture;
-            dispatcher.SendUniform("_hasTexture", texture != null);
-            if(texture != null) {
-                dispatcher.SendUniformTexture2D("_sampler", texture.TextureObject, TextureUnitNumber.Unit0);
-            }
-            dispatcher.SendUniform("_mvp", projection * view * model);
-        }
-
-        protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer) => new()
-        {
-            VertexShader =
+    protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer) => new()
+    {
+        OnlyContainsConstLiteralUtf8 = true,
+        VertexShader =
 """
 #version 410
 in vec3 _pos;
@@ -53,8 +53,8 @@ void main()
     gl_Position = _mvp * vec4(_pos, 1.0);
     _vUV = _uv;
 }
-""",
-            FragmentShader =
+"""u8,
+        FragmentShader =
 """
 #version 410
 in vec2 _vUV;
@@ -70,7 +70,6 @@ void main()
         _fragColor = vec4(1.0, 0.0, 1.0, 1.0);
     }
 }
-""",
-        };
-    }
+"""u8,
+    };
 }

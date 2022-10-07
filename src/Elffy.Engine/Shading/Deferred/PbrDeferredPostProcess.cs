@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using Elffy.Graphics.OpenGL;
+using System;
 
 namespace Elffy.Shading.Deferred
 {
@@ -7,7 +8,7 @@ namespace Elffy.Shading.Deferred
     {
         private readonly IGBufferProvider _gBufferProvider;
 
-        public override string FragShaderSource => FragSource;
+        public override ReadOnlySpan<byte> FragShaderSource => FragSource;
 
         internal PbrDeferredPostProcess(IGBufferProvider gBufferProvider)
         {
@@ -46,7 +47,7 @@ namespace Elffy.Shading.Deferred
         // mrt[3] | 0           | 0            | 0           | 0         |
         // mrt[4] | 0           | 0            | 0           | 0         |
 
-        private const string FragSource =
+        private static ReadOnlySpan<byte> FragSource =>
 """
 #version 410
 #define m_float mediump float
@@ -228,6 +229,6 @@ void main()
     
     _fragColor = vec4(fragColor, 1.0);
 }
-""";
+"""u8;
     }
 }

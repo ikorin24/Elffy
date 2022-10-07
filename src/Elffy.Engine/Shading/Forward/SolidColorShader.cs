@@ -1,39 +1,35 @@
 ﻿#nullable enable
 using System;
 
-namespace Elffy.Shading.Forward
+namespace Elffy.Shading.Forward;
+
+public sealed class SolidColorShader : RenderingShader
 {
-    public sealed class SolidColorShader : RenderingShader
+    private Color4 _color;
+
+    public Color4 Color { get => _color; set => _color = value; }
+
+    public SolidColorShader()
     {
-        private Color4 _color;
+    }
 
-        public Color4 Color { get => _color; set => _color = value; }
+    protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
+    {
+        definition.Map(vertexType, "_pos", VertexSpecialField.Position);
+    }
 
-        public SolidColorShader()
+    protected override void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+    {
+        dispatcher.SendUniform("_mvp", projection * view * model);
+        dispatcher.SendUniform("_color", _color);
+    }
+
+    protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer)
+    {
+        return new()
         {
-        }
-
-        protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
-        {
-            definition.Map(vertexType, "_pos", VertexSpecialField.Position);
-        }
-
-        protected override void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
-        {
-            dispatcher.SendUniform("_mvp", projection * view * model);
-            dispatcher.SendUniform("_color", _color);
-        }
-
-        protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer)
-        {
-            return new()
-            {
-                VertexShader = VertSource,
-                FragmentShader = FragSource,
-            };
-        }
-
-        private const string VertSource =
+            OnlyContainsConstLiteralUtf8 = true,
+            VertexShader =
 """
 #version 410
 in vec3 _pos;
@@ -42,8 +38,8 @@ void main()
 {
     gl_Position = _mvp * vec4(_pos, 1.0);
 }
-""";
-        private const string FragSource =
+"""u8,
+            FragmentShader =
 """
 #version 410
 out vec4 _fragColor;
@@ -52,6 +48,7 @@ void main()
 {
     _fragColor = _color;
 }
-""";
+"""u8,
+        };
     }
 }

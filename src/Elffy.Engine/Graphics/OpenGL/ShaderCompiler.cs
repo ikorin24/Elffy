@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using System;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using System.Text;
 using Elffy.Effective;
 using Elffy.Effective.Unsafes;
@@ -12,11 +11,11 @@ namespace Elffy.Graphics.OpenGL
 {
     internal static class ShaderCompiler
     {
-        public static ProgramObject CompileComputeShader(string computeShaderSource)
+        public static ProgramObject CompileComputeShader(ReadOnlySpan<byte> computeShaderSource)
         {
             int shader = CompileShader(computeShaderSource, ShaderType.ComputeShader);
             try {
-                return LinkShaders(stackalloc int[1] { shader });
+                return LinkShaders(new ReadOnlySpan<int>(in shader));
             }
             finally {
                 if(shader != 0) {
@@ -25,15 +24,19 @@ namespace Elffy.Graphics.OpenGL
             }
         }
 
-        public static ProgramObject Compile([AllowNull] string vertexShaderSource, [AllowNull] string fragmentShaderSource, string? geometryShaderSource)
+        public static ProgramObject Compile(ReadOnlySpan<byte> vertexShaderSource, ReadOnlySpan<byte> fragmentShaderSource, ReadOnlySpan<byte> geometryShaderSource)
         {
-            ArgumentNullException.ThrowIfNull(vertexShaderSource);
-            ArgumentNullException.ThrowIfNull(fragmentShaderSource);
+            if(vertexShaderSource.IsEmpty) {
+                throw new ArgumentException(nameof(vertexShaderSource));
+            }
+            if(fragmentShaderSource.IsEmpty) {
+                throw new ArgumentException(nameof(fragmentShaderSource));
+            }
             Span<int> shaders = stackalloc int[3] { 0, 0, 0 };
             try {
                 shaders[0] = CompileShader(vertexShaderSource, ShaderType.VertexShader);
                 shaders[1] = CompileShader(fragmentShaderSource, ShaderType.FragmentShader);
-                if(geometryShaderSource != null) {
+                if(geometryShaderSource.IsEmpty == false) {
                     shaders[2] = CompileShader(geometryShaderSource, ShaderType.GeometryShader);
                 }
                 return LinkShaders(shaders);
@@ -47,7 +50,8 @@ namespace Elffy.Graphics.OpenGL
             }
         }
 
-        private static int CompileShader(string shaderSource, ShaderType shaderType)
+
+        private static int CompileShader(ReadOnlySpan<byte> shaderSource, ShaderType shaderType)
         {
             int shaderID = 0;
             try {
@@ -87,7 +91,7 @@ namespace Elffy.Graphics.OpenGL
             }
         }
 
-        private static void ThrowIfCompilationFailure(int shaderID, string source, int compilationStatus)
+        private static void ThrowIfCompilationFailure(int shaderID, ReadOnlySpan<byte> source, int compilationStatus)
         {
             const int Failure = 0;
             if(compilationStatus == Failure) {
@@ -104,13 +108,15 @@ namespace Elffy.Graphics.OpenGL
         }
 
         [DoesNotReturn]
-        private static void ThrowCompilationFailure(int shaderID, string source)
+        private static void ThrowCompilationFailure(int shaderID, ReadOnlySpan<byte> source)
         {
+            var sourceString = Encoding.UTF8.GetString(source);
+
             var log = GL.GetShaderInfoLog(shaderID);
             var sb = new StringBuilder();
             sb.AppendLine("Failed to compile shaders.");
             sb.AppendLine(log);
-            var lines = source.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            var lines = sourceString.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
             for(int l = 0; l < lines.Length; l++) {
                 sb.Append(string.Format("{0, -4}\t", l + 1));
                 sb.AppendLine(lines[l]);
@@ -124,40 +130,39 @@ namespace Elffy.Graphics.OpenGL
             var log = GL.GetProgramInfoLog(programID);
             throw new GlslException($"Failed to link shaders.\n{log}");
         }
-    }
 
-    internal unsafe static class GLHelper
-    {
-        private static delegate* unmanaged[Stdcall]<uint, int, byte**, int*, void> _glShaderSource;
-
-        public static void ShaderSource(uint shader, ReadOnlySpan<byte> source)
+        private unsafe static class GLHelper
         {
-            var len = source.Length;
-            fixed(byte* s = source) {
-                glShaderSource(shader, 1, &s, &len);
-            }
-        }
+            private static delegate* unmanaged[Stdcall]<uint, int, byte**, int*, void> _glShaderSource;
 
-        public static void ShaderSource(uint shader, ReadOnlySpan<char> source)
-        {
-            var utf8 = Encoding.UTF8;
-            var len = utf8.GetByteCount(source);
-            using var b = new UnsafeRawArray<byte>(len, false);
-            var byteSpan = b.AsSpan();
-            utf8.GetBytes(source, byteSpan);
-            ShaderSource(shader, byteSpan);
-        }
-
-        private static void glShaderSource(uint shader, int sourceCount, byte** sources, int* lengths)
-        {
-            if(_glShaderSource == null) {
-                _glShaderSource = (delegate* unmanaged[Stdcall]<uint, int, byte**, int*, void>)GLFW.GetProcAddressRaw("glShaderSource"u8.AsPointer());
+            public static void ShaderSource(uint shader, ReadOnlySpan<byte> source)
+            {
+                var len = source.Length;
+                fixed(byte* s = source) {
+                    glShaderSource(shader, 1, &s, &len);
+                }
             }
 
-            // [opengl specification]
-            // If 'lengths' is null, each string is assumed to be null terminated.
-            // If 'lengths' is a value other than null, it points to an array containing a string length for each of the corresponding elements of string.
-            _glShaderSource(shader, sourceCount, sources, lengths);
+            public static void ShaderSource(uint shader, ReadOnlySpan<char> source)
+            {
+                var utf8 = Encoding.UTF8;
+                var buflen = utf8.GetMaxByteCount(source.Length);
+                using var buf = new UnsafeRawArray<byte>(buflen, false, out var span);
+                var len = utf8.GetBytes(source, span);
+                ShaderSource(shader, span[..len]);
+            }
+
+            private static void glShaderSource(uint shader, int sourceCount, byte** sources, int* lengths)
+            {
+                if(_glShaderSource == null) {
+                    _glShaderSource = (delegate* unmanaged[Stdcall]<uint, int, byte**, int*, void>)GLFW.GetProcAddressRaw("glShaderSource"u8.AsPointer());
+                }
+
+                // [opengl specification]
+                // If 'lengths' is null, each string is assumed to be null terminated.
+                // If 'lengths' is a value other than null, it points to an array containing a string length for each of the corresponding elements of string.
+                _glShaderSource(shader, sourceCount, sources, lengths);
+            }
         }
     }
 

@@ -2,6 +2,7 @@
 using Elffy;
 using Elffy.Shading;
 using Elffy.Graphics.OpenGL;
+using System;
 
 namespace Sandbox;
 
@@ -9,7 +10,7 @@ public sealed class GrayscalePostProcess : PostProcess
 {
     private IOffscreenBuffer _input;
 
-    public override string FragShaderSource =>
+    public override ReadOnlySpan<byte> FragShaderSource =>
     """
     #version 410
     in V2f
@@ -26,7 +27,7 @@ public sealed class GrayscalePostProcess : PostProcess
         float gray = dot(color.rgb, GrayFactor);
         _fragColor = vec4(gray, gray, gray, color.a);
     }
-    """;
+    """u8;
     public GrayscalePostProcess(IOffscreenBuffer input)
     {
         _input = input;

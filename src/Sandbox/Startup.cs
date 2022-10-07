@@ -72,6 +72,7 @@ public static class Startup
                 InitializeLights(forward),
                 new Gizmo().Activate(forward),
                 Sample.CreateUI(ui.UIRoot),
+                CreateFloor2(forward),
                 CreateDice2(deferred),
                 CreateDice(forward),
                 CreateDiceWireframe(forward),
@@ -265,7 +266,7 @@ public static class Startup
         var buffer = ShaderStorageBuffer.CreateUninitialized<Color4>(bufSize.X * bufSize.Y);
         var dispatcher = new TestComputeShader(() => buffer.Ssbo).CreateDispatcher();
         var plain = new Plain();
-        plain.Position.Z = -10;
+        plain.Position = new Vector3(0, 10, -12);
         plain.Dead.Subscribe(_ =>
         {
             buffer.Dispose();
@@ -274,7 +275,6 @@ public static class Startup
         plain.Update.Subscribe(_ => dispatcher.Dispatch(bufSize.X, bufSize.Y, 1));
         plain.Scale = new Vector3(10f);
         plain.Shader = new TestShader(() => (buffer.Ssbo, bufSize.X, bufSize.Y));
-        plain.Rotation = Quaternion.FromAxisAngle(Vector3.UnitX, -90.ToRadian());
 
         return await plain.Activate(layer);
     }

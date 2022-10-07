@@ -32,7 +32,7 @@ public sealed unsafe class TestComputeShader : IComputeShader
         dispatcher.SendUniform("_r", r);
     }
 
-    string IComputeShader.GetShaderSource() =>
+    ReadOnlySpan<byte> IComputeShader.GetShaderSource() =>
     """
     #version 430
 
@@ -53,7 +53,7 @@ public sealed unsafe class TestComputeShader : IComputeShader
         vec2 v = vec2(gl_WorkGroupID) / vec2(gl_NumWorkGroups);
         _data[gl_WorkGroupID.y * gl_NumWorkGroups.x + gl_WorkGroupID.x] = vec4(_r, v.x, v.y, 1);
     }
-    """;
+    """u8;
 }
 
 public sealed class TestShader : RenderingShader
@@ -89,6 +89,7 @@ public sealed class TestShader : RenderingShader
 
     protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer) => new()
     {
+        OnlyContainsConstLiteralUtf8 = true,
         VertexShader =
         """
         #version 430
@@ -101,7 +102,7 @@ public sealed class TestShader : RenderingShader
             _uv = _v_uv;
             gl_Position = _mvp * vec4(_pos, 1.0);
         }
-        """,
+        """u8,
         FragmentShader =
         """
         #version 430
@@ -118,6 +119,6 @@ public sealed class TestShader : RenderingShader
             int index = int(pos.y * int(_size.y) + pos.x);
             _outColor = _data[index];
         }
-        """,
+        """u8,
     };
 }

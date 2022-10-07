@@ -24,6 +24,7 @@ namespace Elffy
 
         public bool TryGetField(string fieldName, [MaybeNullWhen(false)] out VertexFieldData field)
         {
+            ArgumentNullException.ThrowIfNull(fieldName);
             foreach(var f in _fields) {
                 if(f.Name == fieldName) {
                     field = f;

@@ -36,6 +36,7 @@ namespace Elffy.Shading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Map(Type vertexType, string name, VertexSpecialField specialField)
         {
+            ArgumentNullException.ThrowIfNull(name);
             var index = GL.GetAttribLocation(_program.Value, name);
             if(index < 0 && DevEnv.IsEnabled) {
                 DevEnv.ForceWriteLine($"[warning] '{name}' vertex field input is not found in shader program({_program.Value}).");
@@ -59,6 +60,7 @@ namespace Elffy.Shading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Map<TVertex>(string name, string vertexFieldName) where TVertex : unmanaged
         {
+            ArgumentNullException.ThrowIfNull(name);
             var index = GL.GetAttribLocation(_program.Value, name);
             if(index < 0 && DevEnv.IsEnabled) {
                 DevEnv.ForceWriteLine($"[warning] '{name}' vertex field input is not found in shader program({_program.Value}).");

@@ -37,6 +37,7 @@ public sealed class WireframeShader : SingleTargetRenderingShader
 
     private static ShaderSource ForwardRenderingSource() => new()
     {
+        OnlyContainsConstLiteralUtf8 = true,
         VertexShader =
         """
         #version 410
@@ -46,7 +47,7 @@ public sealed class WireframeShader : SingleTargetRenderingShader
         {
             gl_Position = _mvp * vec4(_pos, 1);
         }
-        """,
+        """u8,
         GeometryShader =
         """
         #version 460
@@ -64,7 +65,7 @@ public sealed class WireframeShader : SingleTargetRenderingShader
             EmitVertex();
             EndPrimitive();
         }
-        """,
+        """u8,
         FragmentShader =
         """
         #version 410
@@ -74,6 +75,6 @@ public sealed class WireframeShader : SingleTargetRenderingShader
         {
             _outColor = vec4(_wireColor, 1);
         }
-        """,
+        """u8,
     };
 }

@@ -86,6 +86,16 @@ namespace Elffy.Effective.Unsafes
             }
         }
 
+        /// <summary>Allocate array of specified length.</summary>
+        /// <param name="length">length of new array</param>
+        /// <param name="zeroFill">Whether to initialized the array by zero.</param>
+        /// <param name="span">The span representing itself.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public UnsafeRawArray(int length, bool zeroFill, out Span<T> span) : this(length, zeroFill)
+        {
+            span = AsSpan();
+        }
+
         /// <summary>Allocate array copied from <paramref name="span"/></summary>
         /// <param name="span"></param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
