@@ -76,6 +76,12 @@ namespace Elffy.Effective
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public RefTypeRentMemory(int length, out Span<T> span) : this(length)
+        {
+            span = AsSpan();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe ref T GetReference()
         {
             if(_array is null) {
