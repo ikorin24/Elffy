@@ -84,7 +84,7 @@ namespace Elffy
                 return false;
             }
             if(value == manager.GetPosition(_index)) { return false; }
-            var positions = MemoryMarshal.CreateReadOnlySpan(ref Unsafe.AsRef(in value), 1);
+            var positions = new ReadOnlySpan<Vector4>(in value);
             _lightManager.UpdatePositions(positions, _index);
             return true;
         }
@@ -114,7 +114,7 @@ namespace Elffy
                 return false;
             }
             if(value == manager.GetColor(_index)) { return false; }
-            var colors = MemoryMarshal.CreateReadOnlySpan(ref Unsafe.AsRef(in value), 1);
+            var colors = new ReadOnlySpan<Color4>(in value);
             _lightManager.UpdateColors(colors, _index);
             return true;
         }
