@@ -62,13 +62,11 @@ namespace Elffy
                 GL.Enable(EnableCap.Blend);
             }
             var gBuffer = _gBuffer;
-            var screenSize = screen.FrameBufferSize;
-            var gBufSize = gBuffer.Size;
             Debug.Assert(_postProcess is not null);
             Debug.Assert(_ppProgram is not null);
             currentFbo = _renderTarget;
             FBO.Bind(_renderTarget, FBO.Target.FrameBuffer);
-            _ppProgram.Render(screenSize, (Vector2)screenSize / (Vector2)gBufSize);
+            _ppProgram.Render(screen, (Vector2)screen.FrameBufferSize / (Vector2)gBuffer.Size);
         }
 
         protected override void OnSizeChanged(IHostScreen screen)

@@ -57,8 +57,7 @@ namespace Elffy
 
         protected override void OnExecute(IHostScreen screen)
         {
-            var screenSize = screen.FrameBufferSize;
-            _ppProgram?.Render(screenSize);
+            _ppProgram?.Render(screen);
         }
 
         protected override void OnSizeChanged(IHostScreen screen)

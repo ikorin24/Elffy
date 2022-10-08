@@ -27,14 +27,14 @@ namespace Elffy.Shading
 
         ~PostProcessProgram() => Dispose(false);
 
-        public void Render(Vector2i screenSize) => Render(screenSize, Vector2.One);
+        public void Render(IHostScreen screen) => Render(screen, Vector2.One);
 
-        public void Render(Vector2i screenSize, Vector2 uvScale)
+        public void Render(IHostScreen screen, Vector2 uvScale)
         {
             VAO.Bind(_vao);
             IBO.Bind(_ibo);
             ProgramObject.UseProgram(_program);
-            _source.OnRenderingInternal(_program, screenSize, uvScale);
+            _source.OnRenderingInternal(_program, screen, uvScale);
             GL.DrawElements(BeginMode.Triangles, (int)_ibo.Length, DrawElementsType.UnsignedInt, 0);
             VAO.Unbind();
             IBO.Unbind();

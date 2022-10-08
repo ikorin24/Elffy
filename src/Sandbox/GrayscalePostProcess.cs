@@ -2,7 +2,6 @@
 using Elffy;
 using Elffy.Shading;
 using Elffy.Graphics.OpenGL;
-using System;
 
 namespace Sandbox;
 
@@ -14,9 +13,11 @@ public sealed class GrayscalePostProcess : PostProcess
         _input = input;
     }
 
-    protected override void OnRendering(ShaderDataDispatcher dispatcher, in Vector2i screenSize)
+    protected override void OnRendering(PostProcessRenderContext context)
     {
-        dispatcher.SendUniform("_screenSize", screenSize);
+        var screen = context.Screen;
+        var dispatcher = context.Dispatcher;
+        dispatcher.SendUniform("_screenSize", screen.FrameBufferSize);
         dispatcher.SendUniformTexture2D("_input", _input.RenderTargetTexture, TextureUnitNumber.Unit0);
     }
 

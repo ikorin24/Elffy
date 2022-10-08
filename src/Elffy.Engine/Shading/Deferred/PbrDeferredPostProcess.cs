@@ -12,10 +12,11 @@ internal sealed class PbrDeferredPostProcess : PostProcess
         _gBufferProvider = gBufferProvider;
     }
 
-    protected override void OnRendering(ShaderDataDispatcher dispatcher, in Vector2i screenSize)
+    protected override void OnRendering(PostProcessRenderContext context)
     {
         var gBuffer = _gBufferProvider.GetGBufferData();
-        var screen = _gBufferProvider.GetValidScreen();
+        var screen = context.Screen;
+        var dispatcher = context.Dispatcher;
         var lights = screen.Lights;
 
         var lightCount = lights.LightCount;

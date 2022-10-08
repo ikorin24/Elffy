@@ -24,19 +24,16 @@ public abstract class PostProcess
     }
     """u8;
 
-    /// <summary>Send uniform variables to glsl shader code.</summary>
-    /// <param name="dispatcher">helper object to send uniform variables</param>
-    /// <param name="screenSize">screen size</param>
-    protected abstract void OnRendering(ShaderDataDispatcher dispatcher, in Vector2i screenSize);
+    protected abstract void OnRendering(PostProcessRenderContext context);
 
     protected abstract PostProcessSource GetPostProcessSource(PostProcessGetterContext context);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void OnRenderingInternal(ProgramObject program, in Vector2i screenSize, in Vector2 uvScale)
+    internal void OnRenderingInternal(ProgramObject program, IHostScreen screen, in Vector2 uvScale)
     {
-        var uniform = new ShaderDataDispatcher(program);
-        uniform.SendUniform("_postProcessUVScale", uvScale);
-        OnRendering(uniform, screenSize);
+        var context = new PostProcessRenderContext(program, screen);
+        context.Dispatcher.SendUniform("_postProcessUVScale", uvScale);
+        OnRendering(context);
     }
 
     /// <summary>Compile post process fragment shader.</summary>
@@ -106,7 +103,7 @@ public readonly ref struct PostProcessSource
     public required ReadOnlySpan<byte> FragmentShader { get; init; }
 }
 
-public readonly struct PostProcessGetterContext
+public readonly ref struct PostProcessGetterContext
 {
     private readonly IHostScreen _screen;
     public IHostScreen Screen => _screen;
@@ -115,8 +112,27 @@ public readonly struct PostProcessGetterContext
     [EditorBrowsable(EditorBrowsableState.Never)]
     public PostProcessGetterContext() => throw new NotSupportedException("Don't use default constructor.");
 
-    public PostProcessGetterContext(IHostScreen screen)
+    internal PostProcessGetterContext(IHostScreen screen)
     {
+        _screen = screen;
+    }
+}
+
+public readonly ref struct PostProcessRenderContext
+{
+    private readonly ShaderDataDispatcher _dispatcher;
+    private readonly IHostScreen _screen;
+
+    public ShaderDataDispatcher Dispatcher => _dispatcher;
+    public IHostScreen Screen => _screen;
+
+    [Obsolete("Don't use default constructor.", true)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public PostProcessRenderContext() => throw new NotSupportedException("Don't use default constructor.");
+
+    internal PostProcessRenderContext(ProgramObject program, IHostScreen screen)
+    {
+        _dispatcher = new ShaderDataDispatcher(program);
         _screen = screen;
     }
 }
