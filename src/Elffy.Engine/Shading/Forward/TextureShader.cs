@@ -28,14 +28,14 @@ public sealed class TextureShader : RenderingShader
         definition.Map(vertexType, "_uv", VertexSpecialField.UV);
     }
 
-    protected override void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+    protected override void OnRendering(ShaderDataDispatcher dispatcher, in RenderingContext context)
     {
         var texture = _texture;
         dispatcher.SendUniform("_hasTexture", texture != null);
         if(texture != null) {
             dispatcher.SendUniformTexture2D("_sampler", texture.TextureObject, TextureUnitNumber.Unit0);
         }
-        dispatcher.SendUniform("_mvp", projection * view * model);
+        dispatcher.SendUniform("_mvp", context.Projection * context.View * context.Model);
     }
 
     protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer) => new()

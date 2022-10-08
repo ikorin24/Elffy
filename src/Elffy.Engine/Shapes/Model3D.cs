@@ -63,7 +63,7 @@ namespace Elffy.Shapes
                 base.OnRendering(model, view, projection);
             }
             else {
-                _onRendering.Invoke(this, model, view, projection, new(this));
+                _onRendering.Invoke(this, model, view, projection, new Model3DDrawElementsDelegate(this));
             }
         }
 

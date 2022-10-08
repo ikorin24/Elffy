@@ -37,10 +37,10 @@ public class Gizmo : Renderable
             definition.Map(vertexType, "_normal", VertexSpecialField.Normal);
         }
 
-        protected override void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        protected override void OnRendering(ShaderDataDispatcher dispatcher, in RenderingContext context)
         {
-            dispatcher.SendUniform("_model", model);
-            dispatcher.SendUniform("_viewProjection", projection * view);
+            dispatcher.SendUniform("_model", context.Model);
+            dispatcher.SendUniform("_viewProjection", context.Projection * context.View);
         }
 
         protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer) => new()

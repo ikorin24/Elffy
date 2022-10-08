@@ -21,17 +21,18 @@ public sealed class PmxModelShader : RenderingShader
         definition.Map(vertexType, "vtexIndex", VertexSpecialField.TextureIndex);
     }
 
-    protected override void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+    protected override void OnRendering(ShaderDataDispatcher dispatcher, in RenderingContext context)
     {
-        dispatcher.SendUniform("modelView", view * model);
-        dispatcher.SendUniform("view", view);
-        dispatcher.SendUniform("projection", projection);
+        dispatcher.SendUniform("modelView", context.View * context.Model);
+        dispatcher.SendUniform("view", context.View);
+        dispatcher.SendUniform("projection", context.Projection);
 
+        var target = context.Target;
         var skeleton = target.GetComponent<HumanoidSkeleton>();
         dispatcher.SendUniformTexture1D("_boneTrans", skeleton.TranslationData, TextureUnitNumber.Unit0);
         dispatcher.SendUniformTexture2DArray("_texArrSampler", target.GetComponent<ArrayTexture>().TextureObject, TextureUnitNumber.Unit1);
 
-        var screen = target.GetValidScreen();
+        var screen = context.Screen;
         var lights = screen.Lights;
         dispatcher.SendUniform("lightCount", lights.LightCount);
         dispatcher.SendUniformTexture1D("lColorSampler", lights.ColorTexture, TextureUnitNumber.Unit2);

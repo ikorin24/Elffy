@@ -18,9 +18,9 @@ public sealed class SolidColorShader : RenderingShader
         definition.Map(vertexType, "_pos", VertexSpecialField.Position);
     }
 
-    protected override void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+    protected override void OnRendering(ShaderDataDispatcher dispatcher, in RenderingContext context)
     {
-        dispatcher.SendUniform("_mvp", projection * view * model);
+        dispatcher.SendUniform("_mvp", context.Projection * context.View * context.Model);
         dispatcher.SendUniform("_color", _color);
     }
 

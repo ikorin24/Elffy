@@ -16,16 +16,16 @@ namespace Elffy.Shading.Forward
             definition.Map(vertexType, "_vUV", VertexSpecialField.UV);
         }
 
-        protected override void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        protected override void OnRendering(ShaderDataDispatcher dispatcher, in RenderingContext context)
         {
-            dispatcher.SendUniform("_view", view);
-            dispatcher.SendUniform("_modelView", view * model);
-            dispatcher.SendUniform("_projection", projection);
+            dispatcher.SendUniform("_view", context.View);
+            dispatcher.SendUniform("_modelView", context.View * context.Model);
+            dispatcher.SendUniform("_projection", context.Projection);
             dispatcher.SendUniform("_lPos", new Vector4(0, 100, 0, 1));
             dispatcher.SendUniform("_lColor", new Color3(1, 1, 1));
 
             ref var material = ref Unsafe.NullRef<PbrMaterialData>();
-            if(target.TryGetComponent<PbrMaterial>(out var m)) {
+            if(context.Target.TryGetComponent<PbrMaterial>(out var m)) {
                 material = ref m.Data;
             }
             else {

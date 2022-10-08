@@ -60,11 +60,11 @@ internal sealed class GlbShader : SingleTargetRenderingShader
         definition.Map(vertexType, "_tangent", VertexSpecialField.Tangent);
     }
 
-    protected override void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+    protected override void OnRendering(ShaderDataDispatcher dispatcher, in RenderingContext context)
     {
-        dispatcher.SendUniform("_model", model);
-        dispatcher.SendUniform("_view", view);
-        dispatcher.SendUniform("_projection", projection);
+        dispatcher.SendUniform("_model", context.Model);
+        dispatcher.SendUniform("_view", context.View);
+        dispatcher.SendUniform("_projection", context.Projection);
 
         var baseColorTex = _baseColor?.TextureObject ?? TextureObject.Empty;
         var normalTex = _normal?.TextureObject ?? TextureObject.Empty;
@@ -72,7 +72,7 @@ internal sealed class GlbShader : SingleTargetRenderingShader
         dispatcher.SendUniformTexture2D("_baseColorTex", baseColorTex, TextureUnitNumber.Unit0);
         dispatcher.SendUniformTexture2D("_normalTex", normalTex, TextureUnitNumber.Unit1);
         dispatcher.SendUniformTexture2D("_metallicRoughnessTex", metallicRoughnessTex, TextureUnitNumber.Unit2);
-        var screen = target.GetValidScreen();
+        var screen = context.Screen;
         var lights = screen.Lights.GetLights();
         var light = lights.FirstOrDefault();
         var (lpos, lcolor) = light switch

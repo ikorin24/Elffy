@@ -16,7 +16,7 @@ namespace Elffy.Shading
 
         protected abstract void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType);
 
-        protected abstract void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection);
+        protected abstract void OnRendering(ShaderDataDispatcher dispatcher, in RenderingContext context);
 
         protected virtual void OnAttached(Renderable target) { }
 
@@ -42,43 +42,43 @@ namespace Elffy.Shading
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void OnRenderingInternal(ProgramObject program, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        internal void OnRenderingInternal(ProgramObject program, in RenderingContext context)
         {
-            OnRendering(new ShaderDataDispatcher(program), target, model, view, projection);
+            OnRendering(new ShaderDataDispatcher(program), context);
         }
     }
 
     public readonly ref struct RenderingContext
     {
-        private readonly ref RenderingContextInternal _context;
+        private readonly IHostScreen _screen;
+        private readonly Renderable _target;
+        private readonly ref readonly Matrix4 _model;
+        private readonly ref readonly Matrix4 _view;
+        private readonly ref readonly Matrix4 _projection;
 
-        public IHostScreen Screen => _context.Screen;
-        public Renderable Target => _context.Target;
-        public ref readonly Matrix4 Model => ref _context.Model;
-        public ref readonly Matrix4 View => ref _context.View;
-        public ref readonly Matrix4 Projection => ref _context.Projection;
-
-        internal ref Matrix4 ModelMut => ref _context.Model;
-        internal ref Matrix4 ViewMut => ref _context.View;
-        internal ref Matrix4 ProjectionMut => ref _context.Projection;
-        internal ref Renderable TargetMut => ref _context.Target;
+        public IHostScreen Screen => _screen;
+        public Renderable Target => _target;
+        public ref readonly Matrix4 Model => ref _model;
+        public ref readonly Matrix4 View => ref _view;
+        public ref readonly Matrix4 Projection => ref _projection;
 
         [Obsolete("Don't use defaut constructor.", true)]
         [EditorBrowsable(EditorBrowsableState.Never)]
         public RenderingContext() => throw new NotSupportedException("Don't use defaut constructor.");
 
-        internal RenderingContext(ref RenderingContextInternal context)
+        internal RenderingContext(
+            IHostScreen screen,
+            Renderable target,
+            in Matrix4 model,
+            in Matrix4 view,
+            in Matrix4 projection
+        )
         {
-            _context = ref context;
+            _screen = screen;
+            _target = target;
+            _model = ref model;
+            _view = ref view;
+            _projection = ref projection;
         }
-    }
-
-    internal struct RenderingContextInternal
-    {
-        public IHostScreen Screen;
-        public Renderable Target;
-        public Matrix4 Model;
-        public Matrix4 View;
-        public Matrix4 Projection;
     }
 }

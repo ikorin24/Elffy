@@ -41,11 +41,11 @@ public sealed class PbrDeferredShader : RenderingShader
         definition.Map(vertexType, "_vUV", VertexSpecialField.UV);
     }
 
-    protected override void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+    protected override void OnRendering(ShaderDataDispatcher dispatcher, in RenderingContext context)
     {
-        dispatcher.SendUniform("_model", model);
-        dispatcher.SendUniform("_view", view);
-        dispatcher.SendUniform("_mvp", projection * view * model);
+        dispatcher.SendUniform("_model", context.Model);
+        dispatcher.SendUniform("_view", context.View);
+        dispatcher.SendUniform("_mvp", context.Projection * context.View * context.Model);
         dispatcher.SendUniform("_baseColorMetallic", new Color4(_baseColor, _metallic));
         dispatcher.SendUniform("_roughness", _roughness);
         var texture = _texture;

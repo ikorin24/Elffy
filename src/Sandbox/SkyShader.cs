@@ -19,9 +19,9 @@ namespace Sandbox
             definition.Map(vertexType, "vUV", VertexSpecialField.UV);
         }
 
-        protected override void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        protected override void OnRendering(ShaderDataDispatcher dispatcher, in RenderingContext context)
         {
-            dispatcher.SendUniform("mvp", projection * view * model);
+            dispatcher.SendUniform("mvp", context.Projection * context.View * context.Model);
         }
 
         protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer) => new()

@@ -274,11 +274,11 @@ namespace Elffy
             if(program.IsEmpty) {
                 throw new InvalidOperationException();
             }
-
+            var context = new RenderingContext(GetValidScreen(), this, in model, in view, in projection);
             VAO.Bind(_vao);
             IBO.Bind(_ibo);
             ProgramObject.UseProgram(program);
-            shader.OnRenderingInternal(program, this, model, view, projection);
+            shader.OnRenderingInternal(program, in context);
             DrawElements(0, IBO.Length);
             VAO.Unbind();
             IBO.Unbind();

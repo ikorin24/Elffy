@@ -68,16 +68,16 @@ public sealed class PhongShader : RenderingShader
         definition.Map(vertexType, "vUV", VertexSpecialField.UV);
     }
 
-    protected override void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+    protected override void OnRendering(ShaderDataDispatcher dispatcher, in RenderingContext context)
     {
         dispatcher.SendUniform("ma", _ambient);
         dispatcher.SendUniform("md", _diffuse);
         dispatcher.SendUniform("ms", _specular);
         dispatcher.SendUniform("shininess", _shininess);
 
-        dispatcher.SendUniform("projection", projection);
-        dispatcher.SendUniform("view", view);
-        dispatcher.SendUniform("modelView", view * model);
+        dispatcher.SendUniform("projection", context.Projection);
+        dispatcher.SendUniform("view", context.View);
+        dispatcher.SendUniform("modelView", context.View * context.Model);
 
         var texture = _texture;
         if(texture != null) {
@@ -85,7 +85,7 @@ public sealed class PhongShader : RenderingShader
         }
         dispatcher.SendUniform("hasTexture", texture != null);
 
-        var screen = target.GetValidScreen();
+        var screen = context.Target.GetValidScreen();
         var lights = screen.Lights;
         dispatcher.SendUniform("lightCount", lights.LightCount);
         dispatcher.SendUniformTexture1D("lColorSampler", lights.ColorTexture, TextureUnitNumber.Unit1);
@@ -95,7 +95,7 @@ public sealed class PhongShader : RenderingShader
 
         var light = lights.GetLights().FirstOrDefault();
         if(light != null) {
-            dispatcher.SendUniform("_lmvp", light.LightMatrix * model);
+            dispatcher.SendUniform("_lmvp", light.LightMatrix * context.Model);
             dispatcher.SendUniformTexture2D("_shadowMap", light.ShadowMap.DepthTexture, TextureUnitNumber.Unit3);
             hasShadowMap = true;
         }

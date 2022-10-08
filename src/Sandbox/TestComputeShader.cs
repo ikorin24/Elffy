@@ -79,9 +79,9 @@ public sealed class TestShader : RenderingShader
         definition.Map(vertexType, "_v_uv", VertexSpecialField.UV);
     }
 
-    protected override void OnRendering(ShaderDataDispatcher dispatcher, Renderable target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+    protected override void OnRendering(ShaderDataDispatcher dispatcher, in RenderingContext context)
     {
-        dispatcher.SendUniform("_mvp", projection * view * model);
+        dispatcher.SendUniform("_mvp", context.Projection * context.View * context.Model);
         var (ssbo, w, h) = _ssboProvider.Invoke();
         dispatcher.BufferBase(ssbo, 0);
         dispatcher.SendUniform("_size", new Vector2(w, h));
