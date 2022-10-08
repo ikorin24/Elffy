@@ -24,20 +24,23 @@ namespace Elffy.Graphics.OpenGL
             }
         }
 
-        public static ProgramObject Compile(ReadOnlySpan<byte> vertexShaderSource, ReadOnlySpan<byte> fragmentShaderSource, ReadOnlySpan<byte> geometryShaderSource)
+        public static ProgramObject Compile(ReadOnlySpan<byte> vertexShader, ReadOnlySpan<byte> fragmentShader)
+            => Compile(vertexShader, fragmentShader, ReadOnlySpan<byte>.Empty);
+
+        public static ProgramObject Compile(ReadOnlySpan<byte> vertexShader, ReadOnlySpan<byte> fragmentShader, ReadOnlySpan<byte> geometryShader)
         {
-            if(vertexShaderSource.IsEmpty) {
-                throw new ArgumentException(nameof(vertexShaderSource));
+            if(vertexShader.IsEmpty) {
+                throw new ArgumentException(nameof(vertexShader));
             }
-            if(fragmentShaderSource.IsEmpty) {
-                throw new ArgumentException(nameof(fragmentShaderSource));
+            if(fragmentShader.IsEmpty) {
+                throw new ArgumentException(nameof(fragmentShader));
             }
             Span<int> shaders = stackalloc int[3] { 0, 0, 0 };
             try {
-                shaders[0] = CompileShader(vertexShaderSource, ShaderType.VertexShader);
-                shaders[1] = CompileShader(fragmentShaderSource, ShaderType.FragmentShader);
-                if(geometryShaderSource.IsEmpty == false) {
-                    shaders[2] = CompileShader(geometryShaderSource, ShaderType.GeometryShader);
+                shaders[0] = CompileShader(vertexShader, ShaderType.VertexShader);
+                shaders[1] = CompileShader(fragmentShader, ShaderType.FragmentShader);
+                if(geometryShader.IsEmpty == false) {
+                    shaders[2] = CompileShader(geometryShader, ShaderType.GeometryShader);
                 }
                 return LinkShaders(shaders);
             }

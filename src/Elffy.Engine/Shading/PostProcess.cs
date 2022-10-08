@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Elffy.Graphics.OpenGL;
 
@@ -7,8 +8,7 @@ namespace Elffy.Shading;
 
 public abstract class PostProcess
 {
-    private static ReadOnlySpan<byte> VertShaderSource =>
-    """
+    private static ReadOnlySpan<byte> DefaultVertexShader => """
     #version 410
     in vec3 _pos;
     in vec2 _uv;
@@ -23,13 +23,13 @@ public abstract class PostProcess
         gl_Position = vec4(_pos, 1.0);
     }
     """u8;
-    /// <summary>Get fragment shader code of glsl</summary>
-    public abstract ReadOnlySpan<byte> FragShaderSource { get; }
 
     /// <summary>Send uniform variables to glsl shader code.</summary>
     /// <param name="dispatcher">helper object to send uniform variables</param>
     /// <param name="screenSize">screen size</param>
     protected abstract void OnRendering(ShaderDataDispatcher dispatcher, in Vector2i screenSize);
+
+    protected abstract PostProcessSource GetPostProcessSource(PostProcessGetterContext context);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void OnRenderingInternal(ProgramObject program, in Vector2i screenSize, in Vector2 uvScale)
@@ -65,6 +65,8 @@ public abstract class PostProcess
         };
         ReadOnlySpan<int> indices = stackalloc int[6] { 0, 1, 3, 1, 2, 3 };
 
+        var source = GetPostProcessSource(new PostProcessGetterContext(screen));
+
         VBO vbo = default;
         IBO ibo = default;
         VAO vao = default;
@@ -76,7 +78,9 @@ public abstract class PostProcess
             IBO.BindBufferData(ref ibo, indices, BufferHint.StaticDraw);
             vao = VAO.Create();
             VAO.Bind(vao);
-            program = ShaderCompiler.Compile(VertShaderSource, FragShaderSource, null);
+            var vertexShader = DefaultVertexShader;
+            var fragmentShader = source.FragmentShader;
+            program = ShaderCompiler.Compile(vertexShader, fragmentShader);
             var definition = new VertexDefinition(program);
             definition.Map<VertexSlim>("_pos", nameof(VertexSlim.Position));
             definition.Map<VertexSlim>("_uv", nameof(VertexSlim.UV));
@@ -94,5 +98,25 @@ public abstract class PostProcess
             ProgramObject.Delete(ref program);
             throw;
         }
+    }
+}
+
+public readonly ref struct PostProcessSource
+{
+    public required ReadOnlySpan<byte> FragmentShader { get; init; }
+}
+
+public readonly struct PostProcessGetterContext
+{
+    private readonly IHostScreen _screen;
+    public IHostScreen Screen => _screen;
+
+    [Obsolete("Don't use default constructor.", true)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public PostProcessGetterContext() => throw new NotSupportedException("Don't use default constructor.");
+
+    public PostProcessGetterContext(IHostScreen screen)
+    {
+        _screen = screen;
     }
 }
