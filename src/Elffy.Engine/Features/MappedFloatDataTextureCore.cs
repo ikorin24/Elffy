@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Elffy.Components.Implementation;
@@ -147,15 +148,15 @@ namespace Elffy.Features
     public readonly ref struct UpdateTrackedSpan<T>
     {
         private readonly Span<T> _span;
-        private readonly Span<(int Start, int Length)> _rangeRef;     // TODO: change into ref field in C# 11
+        private readonly ref (int Start, int Length) _range;
 
         public ReadOnlySpan<T> Span => _span;
 
-        public UpdateTrackedSpan(Span<T> span, out (int Start, int Length) modifiedRange)
+        public UpdateTrackedSpan(Span<T> span, [UnscopedRef] out (int Start, int Length) modifiedRange)
         {
             modifiedRange = default;
             _span = span;
-            _rangeRef = MemoryMarshal.CreateSpan(ref modifiedRange, 1);
+            _range = ref modifiedRange;
         }
 
         public T this[int index]
@@ -164,15 +165,15 @@ namespace Elffy.Features
             set
             {
                 _span[index] = value;
-                ref var range = ref _rangeRef.GetReference();
-                if(range.Length == 0) {
-                    range.Start = index;
-                    range.Length = 1;
+
+                if(_range.Length == 0) {
+                    _range.Start = index;
+                    _range.Length = 1;
                 }
                 else {
-                    var end = Math.Max(index + 1, range.Start + range.Length);
-                    range.Start = Math.Min(index, range.Start);
-                    range.Length = end - range.Start;
+                    var end = Math.Max(index + 1, _range.Start + _range.Length);
+                    _range.Start = Math.Min(index, _range.Start);
+                    _range.Length = end - _range.Start;
                 }
             }
         }

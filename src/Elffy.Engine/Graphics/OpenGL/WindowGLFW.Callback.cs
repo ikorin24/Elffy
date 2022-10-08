@@ -109,10 +109,9 @@ namespace Elffy.Graphics.OpenGL
             _closeCallback = wnd =>
             {
                 if(wnd != _window) { return; }
-                var cancel = false;
-                var e = new CancelEventArgs(&cancel);
+                var e = new CancelEventArgs(out var canceled);
                 Closing?.Invoke(this, e);
-                if(e.Cancel) {
+                if(canceled) {
                     GLFW.SetWindowShouldClose(_window, false);
                 }
             };

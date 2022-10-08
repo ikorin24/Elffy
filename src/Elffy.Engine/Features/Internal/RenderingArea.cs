@@ -186,11 +186,10 @@ namespace Elffy.Features.Internal
                 return false;
             }
             _isCloseRequested = true;
-            var isCanceled = false;
-            var e = new CancelEventArgs(&isCanceled);
+            var e = new CancelEventArgs(out var canceled);
             try {
                 Closing?.Invoke(OwnerScreen, e);
-                if(isCanceled) {
+                if(canceled) {
                     _isCloseRequested = false;
                     return false;
                 }
