@@ -24,16 +24,17 @@ public abstract class PostProcess
     }
     """u8;
 
-    protected abstract void OnRendering(PostProcessRenderContext context);
+    protected abstract void OnRendering(ShaderDataDispatcher dispatcher, in PostProcessRenderContext context);
 
-    protected abstract PostProcessSource GetPostProcessSource(PostProcessGetterContext context);
+    protected abstract PostProcessSource GetSource(in PostProcessGetterContext context);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void OnRenderingInternal(ProgramObject program, IHostScreen screen, in Vector2 uvScale)
     {
-        var context = new PostProcessRenderContext(program, screen);
-        context.Dispatcher.SendUniform("_postProcessUVScale", uvScale);
-        OnRendering(context);
+        var dispatcher = new ShaderDataDispatcher(program);
+        var context = new PostProcessRenderContext(screen);
+        dispatcher.SendUniform("_postProcessUVScale", uvScale);
+        OnRendering(dispatcher, context);
     }
 
     /// <summary>Compile post process fragment shader.</summary>
@@ -62,7 +63,7 @@ public abstract class PostProcess
         };
         ReadOnlySpan<int> indices = stackalloc int[6] { 0, 1, 3, 1, 2, 3 };
 
-        var source = GetPostProcessSource(new PostProcessGetterContext(screen));
+        var source = GetSource(new PostProcessGetterContext(screen));
 
         VBO vbo = default;
         IBO ibo = default;
@@ -120,19 +121,16 @@ public readonly ref struct PostProcessGetterContext
 
 public readonly ref struct PostProcessRenderContext
 {
-    private readonly ShaderDataDispatcher _dispatcher;
     private readonly IHostScreen _screen;
 
-    public ShaderDataDispatcher Dispatcher => _dispatcher;
     public IHostScreen Screen => _screen;
 
     [Obsolete("Don't use default constructor.", true)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     public PostProcessRenderContext() => throw new NotSupportedException("Don't use default constructor.");
 
-    internal PostProcessRenderContext(ProgramObject program, IHostScreen screen)
+    internal PostProcessRenderContext(IHostScreen screen)
     {
-        _dispatcher = new ShaderDataDispatcher(program);
         _screen = screen;
     }
 }

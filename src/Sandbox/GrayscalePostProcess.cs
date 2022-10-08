@@ -13,15 +13,14 @@ public sealed class GrayscalePostProcess : PostProcess
         _input = input;
     }
 
-    protected override void OnRendering(PostProcessRenderContext context)
+    protected override void OnRendering(ShaderDataDispatcher dispatcher, in PostProcessRenderContext context)
     {
         var screen = context.Screen;
-        var dispatcher = context.Dispatcher;
         dispatcher.SendUniform("_screenSize", screen.FrameBufferSize);
         dispatcher.SendUniformTexture2D("_input", _input.RenderTargetTexture, TextureUnitNumber.Unit0);
     }
 
-    protected override PostProcessSource GetPostProcessSource(PostProcessGetterContext context) => new()
+    protected override PostProcessSource GetSource(in PostProcessGetterContext context) => new()
     {
         FragmentShader = """
         #version 410

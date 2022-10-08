@@ -12,11 +12,10 @@ internal sealed class PbrDeferredPostProcess : PostProcess
         _gBufferProvider = gBufferProvider;
     }
 
-    protected override void OnRendering(PostProcessRenderContext context)
+    protected override void OnRendering(ShaderDataDispatcher dispatcher, in PostProcessRenderContext context)
     {
         var gBuffer = _gBufferProvider.GetGBufferData();
         var screen = context.Screen;
-        var dispatcher = context.Dispatcher;
         var lights = screen.Lights;
 
         var lightCount = lights.LightCount;
@@ -37,7 +36,7 @@ internal sealed class PbrDeferredPostProcess : PostProcess
         }
     }
 
-    protected override PostProcessSource GetPostProcessSource(PostProcessGetterContext context) => new PostProcessSource
+    protected override PostProcessSource GetSource(in PostProcessGetterContext context) => new PostProcessSource
     {
         // index  | R           | G            | B           | A         |
         // ----
