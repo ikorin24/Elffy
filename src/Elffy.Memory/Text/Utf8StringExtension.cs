@@ -40,10 +40,10 @@ namespace Elffy.Text
             return span;
         }
 
-        /// <summary>Enumerate lines in the utf8 string</summary>
+        /// <summary>Enumerate lines in the utf8 string. LF (\n) and CRLF (\r\n) are supported.</summary>
         /// <param name="str">utf8 string</param>
         /// <returns>strings of lines</returns>
-        public static Utf8StringLines Lines(this ReadOnlySpan<byte> str) => new Utf8StringLines(str);
+        public static Utf8LineEnumerable Lines(this ReadOnlySpan<byte> str) => new Utf8LineEnumerable(str);
 
         /// <summary>Split the utf8 string by the specified character.</summary>
         /// <param name="str">utf8 string to split</param>

@@ -8,12 +8,12 @@ namespace Elffy.Text
 {
     [DebuggerTypeProxy(typeof(Utf8StringsDebuggerTypeProxy))]
     [DebuggerDisplay("ReadOnlySpan<byte>[{Count()}]")]
-    public readonly ref struct Utf8StringLines
+    public readonly ref struct Utf8LineEnumerable
     {
         private readonly ReadOnlySpan<byte> _str;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Utf8StringLines(ReadOnlySpan<byte> str) => _str = str;
+        public Utf8LineEnumerable(ReadOnlySpan<byte> str) => _str = str;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Enumerator GetEnumerator() => new Enumerator(_str);
@@ -63,6 +63,9 @@ namespace Elffy.Text
                 if(_str.IsEmpty) {
                     return false;
                 }
+
+                // LF (\n) and CRLF (\r\n) are supported.
+                // CR (\r) is not supported.
                 (_current, _str) = _str.Split2((byte)'\n');
                 if(_current.IsEmpty == false && _current.At(_current.Length - 1) == '\r') {
                     _current = _current.SliceUnsafe(0, _current.Length - 1);

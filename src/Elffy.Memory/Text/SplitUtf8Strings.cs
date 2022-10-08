@@ -134,7 +134,7 @@ namespace Elffy.Text
         public string[] Items => _array;
 
 
-        public Utf8StringsDebuggerTypeProxy(Utf8StringLines lines)
+        public Utf8StringsDebuggerTypeProxy(Utf8LineEnumerable lines)
         {
             _array = lines.ToStringArray();
         }
