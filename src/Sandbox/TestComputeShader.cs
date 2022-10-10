@@ -87,7 +87,7 @@ public sealed class TestShader : RenderingShader
         dispatcher.SendUniform("_size", new Vector2(w, h));
     }
 
-    protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer) => new()
+    protected override ShaderSource GetShaderSource(in ShaderGetterContext context) => new()
     {
         OnlyContainsConstLiteralUtf8 = true,
         VertexShader =

@@ -77,6 +77,17 @@ namespace Elffy
             return layer is not null;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ObjectLayer GetValidLayer()
+        {
+            var layer = _layer;
+            if(layer is null) {
+                ThrowNoLayer();
+                [DoesNotReturn] static void ThrowNoLayer() => throw new InvalidOperationException("No layer");
+            }
+            return layer;
+        }
+
         /// <summary>Try to get HostScreen of the <see cref="FrameObject"/></summary>
         /// <param name="screen">HostScreen of the <see cref="FrameObject"/></param>
         /// <returns>success or not</returns>

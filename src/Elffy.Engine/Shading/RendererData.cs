@@ -116,7 +116,8 @@ namespace Elffy.Shading
             var target = Target;
             var layer = target.Layer;
             Debug.Assert(layer is not null);
-            var shaderSource = _shader.GetShaderSourceInternal(target, layer);
+            var context = new ShaderGetterContext(screen, layer, target);
+            var shaderSource = _shader.GetShaderSourceInternal(in context);
             try {
                 if(shaderSource.TryFixed(out var fixedShaderSource)) {
                     var key = new SourceKey(fixedShaderSource, _vertexType);

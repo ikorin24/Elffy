@@ -12,7 +12,7 @@ namespace Elffy.Shading
         // ShaderSource don't have any opengl resources. (e.g. ProgramObject)
         // Keep it thread-independent and context-free.
 
-        protected abstract ShaderSource GetShaderSource(Renderable target, ObjectLayer layer);
+        protected abstract ShaderSource GetShaderSource(in ShaderGetterContext context);
 
         protected abstract void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType);
 
@@ -24,7 +24,7 @@ namespace Elffy.Shading
 
         protected virtual void OnProgramDisposed() { }      // nop
 
-        ShaderSource IRenderingShader.GetShaderSourceInternal(Renderable target, ObjectLayer layer) => GetShaderSource(target, layer);
+        ShaderSource IRenderingShader.GetShaderSourceInternal(in ShaderGetterContext context) => GetShaderSource(in context);
         void IRenderingShader.OnProgramDisposedInternal() => OnProgramDisposed();
         void IRenderingShader.OnAttachedInternal(Renderable target) => OnAttached(target);
         void IRenderingShader.OnDetachedInternal(Renderable detachedTarget) => OnDetached(detachedTarget);
@@ -51,12 +51,14 @@ namespace Elffy.Shading
     public readonly ref struct RenderingContext
     {
         private readonly IHostScreen _screen;
+        private readonly ObjectLayer _layer;
         private readonly Renderable _target;
         private readonly ref readonly Matrix4 _model;
         private readonly ref readonly Matrix4 _view;
         private readonly ref readonly Matrix4 _projection;
 
         public IHostScreen Screen => _screen;
+        public ObjectLayer Layer => _layer;
         public Renderable Target => _target;
         public ref readonly Matrix4 Model => ref _model;
         public ref readonly Matrix4 View => ref _view;
@@ -66,8 +68,10 @@ namespace Elffy.Shading
         [EditorBrowsable(EditorBrowsableState.Never)]
         public RenderingContext() => throw new NotSupportedException("Don't use defaut constructor.");
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal RenderingContext(
             IHostScreen screen,
+            ObjectLayer layer,
             Renderable target,
             in Matrix4 model,
             in Matrix4 view,
@@ -75,10 +79,34 @@ namespace Elffy.Shading
         )
         {
             _screen = screen;
+            _layer = layer;
             _target = target;
             _model = ref model;
             _view = ref view;
             _projection = ref projection;
+        }
+    }
+
+    public readonly ref struct ShaderGetterContext
+    {
+        private readonly IHostScreen _screen;
+        private readonly ObjectLayer _layer;
+        private readonly Renderable _target;
+
+        public IHostScreen Screen => _screen;
+        public ObjectLayer Layer => _layer;
+        public Renderable Target => _target;
+
+        [Obsolete("Don't use defaut constructor.", true)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public ShaderGetterContext() => throw new NotSupportedException("Don't use default constructor.");
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal ShaderGetterContext(IHostScreen screen, ObjectLayer layer, Renderable target)
+        {
+            _screen = screen;
+            _layer = layer;
+            _target = target;
         }
     }
 }

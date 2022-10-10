@@ -39,7 +39,7 @@ public sealed class PmxModelShader : RenderingShader
         dispatcher.SendUniformTexture1D("lPosSampler", lights.PositionTexture, TextureUnitNumber.Unit3);
     }
 
-    protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer) => new()
+    protected override ShaderSource GetShaderSource(in ShaderGetterContext context) => new()
     {
         OnlyContainsConstLiteralUtf8 = true,
         VertexShader =

@@ -113,6 +113,7 @@ public readonly ref struct PostProcessGetterContext
     [EditorBrowsable(EditorBrowsableState.Never)]
     public PostProcessGetterContext() => throw new NotSupportedException("Don't use default constructor.");
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal PostProcessGetterContext(IHostScreen screen)
     {
         _screen = screen;
@@ -129,6 +130,7 @@ public readonly ref struct PostProcessRenderContext
     [EditorBrowsable(EditorBrowsableState.Never)]
     public PostProcessRenderContext() => throw new NotSupportedException("Don't use default constructor.");
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal PostProcessRenderContext(IHostScreen screen)
     {
         _screen = screen;

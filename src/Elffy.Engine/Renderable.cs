@@ -160,12 +160,14 @@ namespace Elffy
             }
             var withoutScale = modelParent * Position.ToTranslationMatrix4() * Rotation.ToMatrix4();
             if(needToRenderSelf && EnsureShaderInitialized()) {
-                //EnsureShaderInitialized();
                 Debug.Assert(_rendererData.State is RendererDataState.Compiled);
                 var model = withoutScale * Scale.ToScaleMatrix4();
-                BeforeRendering?.Invoke(this, in model, in view, in projection);
-                OnRendering(in model, in view, in projection);
-                Rendered?.Invoke(this, in model, in view, in projection);
+                var screen = GetValidScreen();
+                var layer = GetValidLayer();
+                var context = new RenderingContext(screen, layer, this, in model, in view, in projection);
+                BeforeRendering?.Invoke(in context);
+                OnRendering(in context);
+                Rendered?.Invoke(in context);
             }
             foreach(var child in children) {
                 child.RenderRecursively(withoutScale, view, projection);
@@ -266,7 +268,7 @@ namespace Elffy
             }
         }
 
-        protected virtual void OnRendering(in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        protected virtual void OnRendering(in RenderingContext context)
         {
             Debug.Assert(this is not UIRenderable, $"{nameof(UIRenderable)} should not get here.");
             var shader = GetValidShader();
@@ -274,7 +276,6 @@ namespace Elffy
             if(program.IsEmpty) {
                 throw new InvalidOperationException();
             }
-            var context = new RenderingContext(GetValidScreen(), this, in model, in view, in projection);
             VAO.Bind(_vao);
             IBO.Bind(_ibo);
             ProgramObject.UseProgram(program);
@@ -352,7 +353,7 @@ namespace Elffy
         private static void ThrowAlreadyLoaded() => throw new InvalidOperationException("already loaded");
     }
 
-    public delegate void RenderingEventHandler(Renderable sender, in Matrix4 model, in Matrix4 view, in Matrix4 projection);
+    public delegate void RenderingEventHandler(in RenderingContext context);
 
     public enum RenderVisibility : byte
     {

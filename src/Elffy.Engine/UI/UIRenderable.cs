@@ -74,7 +74,7 @@ namespace Elffy.UI
             return new UniTask<AsyncUnit>(AsyncUnit.Default);
         }
 
-        protected override void OnRendering(in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        protected override void OnRendering(in RenderingContext context)
         {
             var control = Control;
             var rt = control.RenderTransform;
@@ -88,15 +88,15 @@ namespace Elffy.UI
             IBO.Bind(IBO);
             ProgramObject.UseProgram(program);
             if(rt.IsIdentity) {
-                shader.OnRenderingInternal(program, control, model, view, projection);
+                shader.OnRenderingInternal(program, control, context.Model, context.View, context.Projection);
 
             }
             else {
                 // TODO:
-                var modelTransformed = model;
+                ref readonly var modelTransformed = ref context.Model;
                 //ref var rto = ref control.RenderTransformOrigin;
 
-                shader.OnRenderingInternal(program, control, modelTransformed, view, projection);
+                shader.OnRenderingInternal(program, control, modelTransformed, context.View, context.Projection);
             }
             DrawElements(0, IBO.Length);
             VAO.Unbind();

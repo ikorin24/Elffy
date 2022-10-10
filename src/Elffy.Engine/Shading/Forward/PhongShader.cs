@@ -105,7 +105,7 @@ public sealed class PhongShader : RenderingShader
         dispatcher.SendUniform("_hasShadowMap", hasShadowMap);
     }
 
-    protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer)
+    protected override ShaderSource GetShaderSource(in ShaderGetterContext context)
     {
         return new()
         {

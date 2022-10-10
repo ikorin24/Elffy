@@ -14,7 +14,7 @@ internal sealed class EmptyShader : RenderingShader
     {
     }
 
-    protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer)
+    protected override ShaderSource GetShaderSource(in ShaderGetterContext context)
     {
         return new()
         {

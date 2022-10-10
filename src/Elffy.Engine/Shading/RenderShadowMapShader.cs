@@ -27,7 +27,7 @@ internal sealed class RenderShadowMapShader : IRenderingShader
 
     void IRenderingShader.OnDetachedInternal(Renderable target) { }   // nop
 
-    ShaderSource IRenderingShader.GetShaderSourceInternal(Renderable target, ObjectLayer layer) => new()
+    ShaderSource IRenderingShader.GetShaderSourceInternal(in ShaderGetterContext context) => new()
     {
         OnlyContainsConstLiteralUtf8 = true,
         VertexShader =

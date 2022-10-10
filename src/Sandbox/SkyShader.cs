@@ -24,7 +24,7 @@ namespace Sandbox
             dispatcher.SendUniform("mvp", context.Projection * context.View * context.Model);
         }
 
-        protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer) => new()
+        protected override ShaderSource GetShaderSource(in ShaderGetterContext context) => new()
         {
             OnlyContainsConstLiteralUtf8 = true,
             VertexShader =

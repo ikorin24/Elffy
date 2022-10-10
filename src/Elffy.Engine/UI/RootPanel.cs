@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using Cysharp.Threading.Tasks;
+using Elffy.Shading;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -48,7 +49,7 @@ namespace Elffy.UI
             Renderable.BeforeRendering += ExecuteRelayout;
         }
 
-        private void ExecuteRelayout(Renderable sender, in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        private void ExecuteRelayout(in RenderingContext context)
         {
             var type = _layoutExecutionType;
             if(type == LayoutExecutionType.Adaptive) {

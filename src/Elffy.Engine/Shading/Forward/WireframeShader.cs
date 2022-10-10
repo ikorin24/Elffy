@@ -24,7 +24,7 @@ public sealed class WireframeShader : SingleTargetRenderingShader
         dispatcher.SendUniform("_wireColor", _wireColor);
     }
 
-    protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer) => layer switch
+    protected override ShaderSource GetShaderSource(in ShaderGetterContext context) => context.Layer switch
     {
         DeferredRenderLayer => throw new NotSupportedException(),
         ForwardRenderLayer => ForwardRenderingSource(),

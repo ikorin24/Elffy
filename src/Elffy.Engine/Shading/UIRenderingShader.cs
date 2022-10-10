@@ -26,7 +26,7 @@ namespace Elffy.Shading
             OnRendering(new ShaderDataDispatcher(program), target, model, view, projection);
         }
 
-        protected abstract ShaderSource GetShaderSource(Renderable target, ObjectLayer layer);
+        protected abstract ShaderSource GetShaderSource(in ShaderGetterContext context);
 
         void IRenderingShader.OnProgramDisposedInternal() => OnProgramDisposed();
 
@@ -34,6 +34,6 @@ namespace Elffy.Shading
 
         void IRenderingShader.OnDetachedInternal(Renderable target) { }   // nop
 
-        ShaderSource IRenderingShader.GetShaderSourceInternal(Renderable target, ObjectLayer layer) => GetShaderSource(target, layer);
+        ShaderSource IRenderingShader.GetShaderSourceInternal(in ShaderGetterContext context) => GetShaderSource(in context);
     }
 }

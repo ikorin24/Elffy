@@ -24,7 +24,7 @@ public sealed class SolidColorShader : RenderingShader
         dispatcher.SendUniform("_color", _color);
     }
 
-    protected override ShaderSource GetShaderSource(Renderable target, ObjectLayer layer)
+    protected override ShaderSource GetShaderSource(in ShaderGetterContext context)
     {
         return new()
         {

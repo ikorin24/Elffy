@@ -6,6 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Elffy.Effective;
+using Elffy.Shading;
 
 namespace Elffy.Shapes
 {
@@ -57,13 +58,13 @@ namespace Elffy.Shapes
             }
         }
 
-        protected override void OnRendering(in Matrix4 model, in Matrix4 view, in Matrix4 projection)
+        protected override void OnRendering(in RenderingContext context)
         {
             if(_onRendering is null) {
-                base.OnRendering(model, view, projection);
+                base.OnRendering(in context);
             }
             else {
-                _onRendering.Invoke(this, model, view, projection, new Model3DDrawElementsDelegate(this));
+                _onRendering.Invoke(in context, new Model3DDrawElementsDelegate(this));
             }
         }
 
@@ -121,7 +122,7 @@ namespace Elffy.Shapes
 
     public delegate UniTask Model3DBuilderDelegate<T>(T obj, Model3D model3D, Model3DLoadMeshDelegate loadMesh) where T : class?;
 
-    public delegate void Model3DRenderingDelegate(Model3D model3D, in Matrix4 model, in Matrix4 view, in Matrix4 projection, Model3DDrawElementsDelegate drawElements);
+    public delegate void Model3DRenderingDelegate(in RenderingContext context, Model3DDrawElementsDelegate drawElements);
 
     public readonly struct Model3DLoadMeshDelegate : IEquatable<Model3DLoadMeshDelegate>
     {

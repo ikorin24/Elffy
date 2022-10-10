@@ -5,7 +5,7 @@ namespace Elffy.Shading
 {
     internal interface IRenderingShader
     {
-        ShaderSource GetShaderSourceInternal(Renderable target, ObjectLayer layer);
+        ShaderSource GetShaderSourceInternal(in ShaderGetterContext context);
         void OnProgramDisposedInternal();
         void OnAttachedInternal(Renderable target);
         void OnDetachedInternal(Renderable detachedTarget);
