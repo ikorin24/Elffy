@@ -29,12 +29,11 @@ public abstract class PostProcess
     protected abstract PostProcessSource GetSource(in PostProcessGetterContext context);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void OnRenderingInternal(ProgramObject program, IHostScreen screen, in Vector2 uvScale)
+    internal void OnRenderingInternal(ProgramObject program, in PostProcessRenderContext context, in Vector2 uvScale)
     {
         var dispatcher = new ShaderDataDispatcher(program);
-        var context = new PostProcessRenderContext(screen);
         dispatcher.SendUniform("_postProcessUVScale", uvScale);
-        OnRendering(dispatcher, context);
+        OnRendering(dispatcher, in context);
     }
 
     /// <summary>Compile post process fragment shader.</summary>
@@ -123,16 +122,19 @@ public readonly ref struct PostProcessGetterContext
 public readonly ref struct PostProcessRenderContext
 {
     private readonly IHostScreen _screen;
+    private readonly PipelineOperation _operation;
 
     public IHostScreen Screen => _screen;
+    public PipelineOperation Operation => _operation;
 
     [Obsolete("Don't use default constructor.", true)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     public PostProcessRenderContext() => throw new NotSupportedException("Don't use default constructor.");
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal PostProcessRenderContext(IHostScreen screen)
+    internal PostProcessRenderContext(IHostScreen screen, PipelineOperation operation)
     {
         _screen = screen;
+        _operation = operation;
     }
 }

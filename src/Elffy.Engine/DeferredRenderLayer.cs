@@ -66,7 +66,9 @@ namespace Elffy
             Debug.Assert(_ppProgram is not null);
             currentFbo = _renderTarget;
             FBO.Bind(_renderTarget, FBO.Target.FrameBuffer);
-            _ppProgram.Render(screen, (Vector2)screen.FrameBufferSize / (Vector2)gBuffer.Size);
+            var context = new PostProcessRenderContext(screen, this);
+            var uvScale = (Vector2)screen.FrameBufferSize / (Vector2)gBuffer.Size;
+            _ppProgram.Render(in context, in uvScale);
         }
 
         protected override void OnSizeChanged(IHostScreen screen)

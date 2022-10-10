@@ -57,7 +57,8 @@ namespace Elffy
 
         protected override void OnExecute(IHostScreen screen)
         {
-            _ppProgram?.Render(screen);
+            var context = new PostProcessRenderContext(screen, this);
+            _ppProgram?.Render(in context);
         }
 
         protected override void OnSizeChanged(IHostScreen screen)
