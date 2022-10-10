@@ -52,12 +52,12 @@ internal sealed class GlbShader : SingleTargetRenderingShader
     [DoesNotReturn]
     private static void ThrowAlreadyDisposed() => throw new ObjectDisposedException(nameof(GlbShader), $"The instance is already disposed.");
 
-    protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
+    protected override void DefineLocation(VertexDefinition definition, in LocationDefinitionContext context)
     {
-        definition.Map(vertexType, "_pos", VertexSpecialField.Position);
-        definition.Map(vertexType, "_uv", VertexSpecialField.UV);
-        definition.Map(vertexType, "_normal", VertexSpecialField.Normal);
-        definition.Map(vertexType, "_tangent", VertexSpecialField.Tangent);
+        definition.Map(context.VertexType, "_pos", VertexSpecialField.Position);
+        definition.Map(context.VertexType, "_uv", VertexSpecialField.UV);
+        definition.Map(context.VertexType, "_normal", VertexSpecialField.Normal);
+        definition.Map(context.VertexType, "_tangent", VertexSpecialField.Tangent);
     }
 
     protected override void OnRendering(ShaderDataDispatcher dispatcher, in RenderingContext context)

@@ -31,10 +31,10 @@ public class Gizmo : Renderable
         {
         }
 
-        protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
+        protected override void DefineLocation(VertexDefinition definition, in LocationDefinitionContext context)
         {
-            definition.Map(vertexType, "_pos", VertexSpecialField.Position);
-            definition.Map(vertexType, "_normal", VertexSpecialField.Normal);
+            definition.Map(context.VertexType, "_pos", VertexSpecialField.Position);
+            definition.Map(context.VertexType, "_normal", VertexSpecialField.Normal);
         }
 
         protected override void OnRendering(ShaderDataDispatcher dispatcher, in RenderingContext context)

@@ -141,7 +141,12 @@ namespace Elffy.Shading
             }
             Debug.Assert(_vertexType is not null);
             if(_shader is RenderingShader shader) {
-                shader.DefineLocationInternal(_program, renderable, _vertexType);
+                var screen = renderable.Screen;
+                var layer = renderable.Layer;
+                Debug.Assert(screen is not null);
+                Debug.Assert(layer is not null);
+                var context = new LocationDefinitionContext(screen, layer, renderable, _vertexType);
+                shader.DefineLocationInternal(_program, in context);
             }
             else {
                 Debug.Fail($"Shader must be {nameof(RenderingShader)}. actual: {_shader?.GetType()?.FullName}");

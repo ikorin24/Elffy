@@ -14,7 +14,7 @@ namespace Elffy.Shading
 
         protected abstract ShaderSource GetShaderSource(in ShaderGetterContext context);
 
-        protected abstract void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType);
+        protected abstract void DefineLocation(VertexDefinition definition, in LocationDefinitionContext context);
 
         protected abstract void OnRendering(ShaderDataDispatcher dispatcher, in RenderingContext context);
 
@@ -30,15 +30,10 @@ namespace Elffy.Shading
         void IRenderingShader.OnDetachedInternal(Renderable detachedTarget) => OnDetached(detachedTarget);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void DefineLocationInternal(ProgramObject program, Renderable target, Type vertexType)
+        internal void DefineLocationInternal(ProgramObject program, in LocationDefinitionContext context)
         {
-            DefineLocation(new VertexDefinition(program), target, vertexType);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void DefineLocationInternal(VertexDefinition definition, Renderable target, Type vertexType)
-        {
-            DefineLocation(definition, target, vertexType);
+            var definition = new VertexDefinition(program);
+            DefineLocation(definition, in context);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -84,6 +79,31 @@ namespace Elffy.Shading
             _model = ref model;
             _view = ref view;
             _projection = ref projection;
+        }
+    }
+
+    public readonly ref struct LocationDefinitionContext
+    {
+        private readonly IHostScreen _screen;
+        private readonly ObjectLayer _layer;
+        private readonly Renderable _target;
+        private readonly Type _vertexType;
+
+        public IHostScreen Screen => _screen;
+        public ObjectLayer Layer => _layer;
+        public Renderable Target => _target;
+        public Type VertexType => _vertexType;
+
+        [Obsolete("Don't use defaut constructor.", true)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public LocationDefinitionContext() => throw new NotSupportedException("Don't use default constructor.");
+
+        public LocationDefinitionContext(IHostScreen screen, ObjectLayer layer, Renderable target, Type vertexType)
+        {
+            _screen = screen;
+            _layer = layer;
+            _target = target;
+            _vertexType = vertexType;
         }
     }
 

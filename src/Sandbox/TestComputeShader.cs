@@ -73,10 +73,10 @@ public sealed class TestShader : RenderingShader
         _ssboProvider = ssboProvider;
     }
 
-    protected override void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
+    protected override void DefineLocation(VertexDefinition definition, in LocationDefinitionContext context)
     {
-        definition.Map(vertexType, "_pos", VertexSpecialField.Position);
-        definition.Map(vertexType, "_v_uv", VertexSpecialField.UV);
+        definition.Map(context.VertexType, "_pos", VertexSpecialField.Position);
+        definition.Map(context.VertexType, "_v_uv", VertexSpecialField.UV);
     }
 
     protected override void OnRendering(ShaderDataDispatcher dispatcher, in RenderingContext context)
