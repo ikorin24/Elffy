@@ -105,18 +105,29 @@ namespace Elffy
         private static void ThrowFieldNotFound(string fieldName) => throw new InvalidOperationException($"The field is not found. (Field Name: {fieldName})");
     }
 
-    public record VertexFieldData(string Name, Type Type, VertexFieldSemantics Semantics, int ByteOffset, VertexFieldMarshalType MarshalType, int MarshalCount)
+    public sealed class VertexFieldData
     {
+        public string Name { get; }
+        public Type Type { get; }
+        public VertexFieldSemantics Semantics { get; }
+        public int ByteOffset { get; }
+        public VertexFieldMarshalType MarshalType { get; }
+        public int MarshalCount { get; }
+
+        public VertexFieldData(string name, Type type, VertexFieldSemantics semantics, int byteOffset, VertexFieldMarshalType marshalType, int marshalCount)
+        {
+            Name = name ?? throw new ArgumentNullException(nameof(name));
+            Type = type ?? throw new ArgumentNullException(nameof(type));
+            Semantics = semantics;
+            ByteOffset = byteOffset >= 0 ? byteOffset : throw new ArgumentOutOfRangeException(nameof(byteOffset));
+            MarshalType = marshalType;
+            MarshalCount = marshalCount >= 1 ? marshalCount : throw new ArgumentOutOfRangeException(nameof(marshalCount));
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T GetRef<TVertex, T>(ref TVertex vertex)
         {
             return ref Unsafe.As<TVertex, T>(ref Unsafe.AddByteOffset(ref vertex, (nuint)ByteOffset));
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref readonly T ReadRef<TVertex, T>(in TVertex vertex)
-        {
-            return ref Unsafe.As<TVertex, T>(ref Unsafe.AddByteOffset(ref Unsafe.AsRef(in vertex), (nuint)ByteOffset));
         }
 
         public VertexFieldAccessor<TField> GetAccessor<TField>() where TField : unmanaged
