@@ -24,8 +24,8 @@ public sealed class TextureShader : RenderingShader
 
     protected override void DefineLocation(VertexDefinition definition, in LocationDefinitionContext context)
     {
-        definition.Map(context.VertexType, "_pos", VertexSpecialField.Position);
-        definition.Map(context.VertexType, "_uv", VertexSpecialField.UV);
+        definition.Map(context.VertexType, "_pos", VertexFieldSemantics.Position);
+        definition.Map(context.VertexType, "_uv", VertexFieldSemantics.UV);
     }
 
     protected override void OnRendering(ShaderDataDispatcher dispatcher, in RenderingContext context)

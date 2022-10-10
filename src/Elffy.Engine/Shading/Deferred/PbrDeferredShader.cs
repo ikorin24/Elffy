@@ -36,9 +36,9 @@ public sealed class PbrDeferredShader : RenderingShader
 
     protected override void DefineLocation(VertexDefinition definition, in LocationDefinitionContext context)
     {
-        definition.Map(context.VertexType, "_vPos", VertexSpecialField.Position);
-        definition.Map(context.VertexType, "_vNormal", VertexSpecialField.Normal);
-        definition.Map(context.VertexType, "_vUV", VertexSpecialField.UV);
+        definition.Map(context.VertexType, "_vPos", VertexFieldSemantics.Position);
+        definition.Map(context.VertexType, "_vNormal", VertexFieldSemantics.Normal);
+        definition.Map(context.VertexType, "_vUV", VertexFieldSemantics.UV);
     }
 
     protected override void OnRendering(ShaderDataDispatcher dispatcher, in RenderingContext context)

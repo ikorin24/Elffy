@@ -13,12 +13,12 @@ public sealed class PmxModelShader : RenderingShader
 
     protected override void DefineLocation(VertexDefinition definition, in LocationDefinitionContext context)
     {
-        definition.Map(context.VertexType, "vPos", VertexSpecialField.Position);
-        definition.Map(context.VertexType, "vNormal", VertexSpecialField.Normal);
-        definition.Map(context.VertexType, "vUV", VertexSpecialField.UV);
-        definition.Map(context.VertexType, "bone", VertexSpecialField.Bone);
-        definition.Map(context.VertexType, "weight", VertexSpecialField.Weight);
-        definition.Map(context.VertexType, "vtexIndex", VertexSpecialField.TextureIndex);
+        definition.Map(context.VertexType, "vPos", VertexFieldSemantics.Position);
+        definition.Map(context.VertexType, "vNormal", VertexFieldSemantics.Normal);
+        definition.Map(context.VertexType, "vUV", VertexFieldSemantics.UV);
+        definition.Map(context.VertexType, "bone", VertexFieldSemantics.Bone);
+        definition.Map(context.VertexType, "weight", VertexFieldSemantics.Weight);
+        definition.Map(context.VertexType, "vtexIndex", VertexFieldSemantics.TextureIndex);
     }
 
     protected override void OnRendering(ShaderDataDispatcher dispatcher, in RenderingContext context)

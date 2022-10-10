@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <Compile Include="..\Elffy.Primitives\VertexFieldMarshalType.cs" Link="VertexFieldMarshalType.cs" />
-    <Compile Include="..\Elffy.Primitives\VertexSpecialField.cs" Link="VertexSpecialField.cs" />
+    <Compile Include="..\Elffy.Primitives\VertexFieldSemantics.cs" Link="VertexFieldSemantics.cs" />
     <Compile Include="..\Elffy.Primitives\VertexAttribute.cs" Link="VertexAttribute.cs" />
   </ItemGroup>
 

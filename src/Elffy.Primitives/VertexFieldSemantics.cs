@@ -2,7 +2,7 @@
 
 namespace Elffy
 {
-    public enum VertexSpecialField : byte
+    public enum VertexFieldSemantics : byte
     {
         /// <summary>The field layout must be (<see cref="float"/>, <see cref="float"/>, <see cref="float"/>)</summary>
         Position = 0,

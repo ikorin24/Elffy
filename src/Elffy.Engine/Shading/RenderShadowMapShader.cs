@@ -13,7 +13,7 @@ internal sealed class RenderShadowMapShader : IRenderingShader
 
     public void DefineLocation(VertexDefinition definition, Renderable target, Type vertexType)
     {
-        definition.Map(vertexType, 0, VertexSpecialField.Position);
+        definition.Map(vertexType, 0, VertexFieldSemantics.Position);
     }
 
     public void DispatchShader(ShaderDataDispatcher dispatcher, in Matrix4 model, in Matrix4 lightViewProjection)

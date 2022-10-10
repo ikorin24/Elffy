@@ -94,7 +94,7 @@ namespace Elffy
                 var verticesSpan = new Span<TVertex>(vertices, VertexCount);
                 verticesSpan.Clear();
 
-                if(typeData.TryGetField(VertexSpecialField.Position, out var pos)) {
+                if(typeData.TryGetField(VertexFieldSemantics.Position, out var pos)) {
                     var posOffset = pos.ByteOffset;
                     *(Vector3*)(((byte*)(vertices + 0)) + posOffset) = new(-a, a, 0f);
                     *(Vector3*)(((byte*)(vertices + 1)) + posOffset) = new(-a, -a, 0f);
@@ -102,14 +102,14 @@ namespace Elffy
                     *(Vector3*)(((byte*)(vertices + 3)) + posOffset) = new(a, a, 0f);
                 }
 
-                if(typeData.TryGetField(VertexSpecialField.Normal, out var normal)) {
+                if(typeData.TryGetField(VertexFieldSemantics.Normal, out var normal)) {
                     var normalOffset = normal.ByteOffset;
                     *(Vector3*)(((byte*)(vertices + 0)) + normalOffset) = new(0f, 0f, 1f);
                     *(Vector3*)(((byte*)(vertices + 1)) + normalOffset) = new(0f, 0f, 1f);
                     *(Vector3*)(((byte*)(vertices + 2)) + normalOffset) = new(0f, 0f, 1f);
                     *(Vector3*)(((byte*)(vertices + 3)) + normalOffset) = new(0f, 0f, 1f);
                 }
-                if(typeData.TryGetField(VertexSpecialField.UV, out var uv)) {
+                if(typeData.TryGetField(VertexFieldSemantics.UV, out var uv)) {
                     var uvOffset = uv.ByteOffset;
                     *(Vector2*)(((byte*)(vertices + 0)) + uvOffset) = new(0, 0);
                     *(Vector2*)(((byte*)(vertices + 1)) + uvOffset) = new(0, 1);
@@ -137,11 +137,11 @@ namespace Elffy
                 ThrowInvalidVertexType();
             }
 
-            if(typeData.TryGetField(VertexSpecialField.Position, out var posField) == false) {
+            if(typeData.TryGetField(VertexFieldSemantics.Position, out var posField) == false) {
                 ThrowInvalidVertexType();
             }
-            typeData.TryGetField(VertexSpecialField.UV, out var uvField);
-            typeData.TryGetField(VertexSpecialField.Normal, out var normalField);
+            typeData.TryGetField(VertexFieldSemantics.UV, out var uvField);
+            typeData.TryGetField(VertexFieldSemantics.Normal, out var normalField);
 
 
             const int VertexCount = (B + 1) * (A + 1);
@@ -228,19 +228,19 @@ namespace Elffy
                 var (state, action, typeData) = x;
                 using var vMem = new ValueTypeRentMemory<TVertex>(vertices.Length, true, out var vertices2);
 
-                if(typeData.TryGetField(VertexSpecialField.Position, out var posField)) {
+                if(typeData.TryGetField(VertexFieldSemantics.Position, out var posField)) {
                     var posOffset = (nuint)posField.ByteOffset;
                     for(int i = 0; i < vertices2.Length; i++) {
                         Unsafe.As<TVertex, Vector3>(ref Unsafe.AddByteOffset(ref vertices2[i], posOffset)) = vertices[i].Position;
                     }
                 }
-                if(typeData.TryGetField(VertexSpecialField.UV, out var uvField)) {
+                if(typeData.TryGetField(VertexFieldSemantics.UV, out var uvField)) {
                     var uvOffset = (nuint)uvField.ByteOffset;
                     for(int i = 0; i < vertices2.Length; i++) {
                         Unsafe.As<TVertex, Vector2>(ref Unsafe.AddByteOffset(ref vertices2[i], uvOffset)) = vertices[i].UV;
                     }
                 }
-                if(typeData.TryGetField(VertexSpecialField.Normal, out var normalField)) {
+                if(typeData.TryGetField(VertexFieldSemantics.Normal, out var normalField)) {
                     var normalOffset = (nuint)normalField.ByteOffset;
                     for(int i = 0; i < vertices2.Length; i++) {
                         Unsafe.As<TVertex, Vector3>(ref Unsafe.AddByteOffset(ref vertices2[i], normalOffset)) = vertices[i].Normal;

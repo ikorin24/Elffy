@@ -18,8 +18,8 @@ internal abstract class ControlDefaultShaderBase : UIRenderingShader
 
     protected override void DefineLocation(VertexDefinition definition, Control target, Type vertexType)
     {
-        definition.Map(vertexType, "_vPos", VertexSpecialField.Position);
-        definition.Map(vertexType, "_vUV", VertexSpecialField.UV);
+        definition.Map(vertexType, "_vPos", VertexFieldSemantics.Position);
+        definition.Map(vertexType, "_vUV", VertexFieldSemantics.UV);
     }
 
     protected override void OnRendering(ShaderDataDispatcher dispatcher, Control target, in Matrix4 model, in Matrix4 view, in Matrix4 projection)

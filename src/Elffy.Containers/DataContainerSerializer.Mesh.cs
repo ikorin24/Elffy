@@ -87,7 +87,7 @@ namespace Elffy
                 foreach(var fieldData in vertexTypeData.GetFields()) {
                     writer.Write(new VertexFieldInfo
                     {
-                        Kind = fieldData.SpecialField,
+                        Kind = fieldData.Semantics,
                         Offset = (uint)fieldData.ByteOffset,
                         MarshalType = fieldData.MarshalType,
                         MarshalCount = (uint)fieldData.MarshalCount,

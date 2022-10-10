@@ -9,7 +9,7 @@ namespace Elffy
         // sizeof(VertexFieldInfo) == 13
 
         [FieldOffset(0)]
-        public VertexSpecialField Kind;
+        public VertexFieldSemantics Kind;
         [FieldOffset(1)]
         public uint Offset;
         [FieldOffset(5)]

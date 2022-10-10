@@ -63,9 +63,9 @@ public sealed class PhongShader : RenderingShader
 
     protected override void DefineLocation(VertexDefinition definition, in LocationDefinitionContext context)
     {
-        definition.Map(context.VertexType, "vPos", VertexSpecialField.Position);
-        definition.Map(context.VertexType, "vNormal", VertexSpecialField.Normal);
-        definition.Map(context.VertexType, "vUV", VertexSpecialField.UV);
+        definition.Map(context.VertexType, "vPos", VertexFieldSemantics.Position);
+        definition.Map(context.VertexType, "vNormal", VertexFieldSemantics.Normal);
+        definition.Map(context.VertexType, "vUV", VertexFieldSemantics.UV);
     }
 
     protected override void OnRendering(ShaderDataDispatcher dispatcher, in RenderingContext context)

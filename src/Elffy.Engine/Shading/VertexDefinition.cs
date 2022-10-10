@@ -19,7 +19,7 @@ namespace Elffy.Shading
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Map(Type vertexType, int index, VertexSpecialField specialField)
+        public void Map(Type vertexType, int index, VertexFieldSemantics semantics)
         {
             if(vertexType is null) {
                 ThrowNullArg();
@@ -28,13 +28,13 @@ namespace Elffy.Shading
             if(index < 0) {
                 ThrowInvalidIndex();
             }
-            VertexMapper.Map(vertexType, index, specialField);
+            VertexMapper.Map(vertexType, index, semantics);
 
             [DoesNotReturn] static void ThrowInvalidIndex() => throw new ArgumentException($"{nameof(index)} is negative value.");
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Map(Type vertexType, string name, VertexSpecialField specialField)
+        public void Map(Type vertexType, string name, VertexFieldSemantics semantics)
         {
             ArgumentNullException.ThrowIfNull(name);
             var index = GL.GetAttribLocation(_program.Value, name);
@@ -42,7 +42,7 @@ namespace Elffy.Shading
                 DevEnv.ForceWriteLine($"[warning] '{name}' vertex field input is not found in shader program({_program.Value}).");
             }
             else {
-                VertexMapper.Map(vertexType, index, specialField);
+                VertexMapper.Map(vertexType, index, semantics);
             }
         }
 

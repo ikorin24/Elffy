@@ -43,7 +43,7 @@ void main()
 
     protected override void DefineLocation(VertexDefinition definition, in LocationDefinitionContext context)
     {
-        definition.Map(context.VertexType, "_pos", VertexSpecialField.Position);
+        definition.Map(context.VertexType, "_pos", VertexFieldSemantics.Position);
     }
 
     protected override void OnRendering(ShaderDataDispatcher dispatcher, in RenderingContext context)

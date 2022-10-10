@@ -15,8 +15,8 @@ namespace Sandbox
 
         protected override void DefineLocation(VertexDefinition definition, in LocationDefinitionContext context)
         {
-            definition.Map(context.VertexType, "vPos", VertexSpecialField.Position);
-            definition.Map(context.VertexType, "vUV", VertexSpecialField.UV);
+            definition.Map(context.VertexType, "vPos", VertexFieldSemantics.Position);
+            definition.Map(context.VertexType, "vUV", VertexFieldSemantics.UV);
         }
 
         protected override void OnRendering(ShaderDataDispatcher dispatcher, in RenderingContext context)

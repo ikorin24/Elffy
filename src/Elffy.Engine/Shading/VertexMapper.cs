@@ -27,16 +27,16 @@ namespace Elffy.Shading
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void Map<TVertex>(int index, VertexSpecialField specialField) where TVertex : unmanaged
+        public static unsafe void Map<TVertex>(int index, VertexFieldSemantics semantics) where TVertex : unmanaged
         {
-            Map(typeof(TVertex), index, specialField);
+            Map(typeof(TVertex), index, semantics);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe void Map(Type vertexType, int index, VertexSpecialField specialField)
+        public static unsafe void Map(Type vertexType, int index, VertexFieldSemantics semantics)
         {
             var typeData = VertexMarshalHelper.GetVertexTypeData(vertexType);
-            var field = typeData.GetField(specialField);
+            var field = typeData.GetField(semantics);
             MapPrivate(index, field, typeData.VertexSize);
         }
 

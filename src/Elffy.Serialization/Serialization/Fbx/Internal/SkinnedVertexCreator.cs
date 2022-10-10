@@ -40,12 +40,12 @@ namespace Elffy.Serialization.Fbx.Internal
 
             return new SkinnedVertexCreator<TVertex>()
             {
-                OffsetPos = typeData.GetField(VertexSpecialField.Position).ByteOffset,
-                OffsetNormal = typeData.GetField(VertexSpecialField.Normal).ByteOffset,
-                OffsetUV = typeData.GetField(VertexSpecialField.UV).ByteOffset,
-                OffsetTextureIndex = typeData.GetField(VertexSpecialField.TextureIndex).ByteOffset,
-                OffsetBone = typeData.GetField(VertexSpecialField.Bone).ByteOffset,
-                OffsetWeight = typeData.GetField(VertexSpecialField.Weight).ByteOffset,
+                OffsetPos = typeData.GetField(VertexFieldSemantics.Position).ByteOffset,
+                OffsetNormal = typeData.GetField(VertexFieldSemantics.Normal).ByteOffset,
+                OffsetUV = typeData.GetField(VertexFieldSemantics.UV).ByteOffset,
+                OffsetTextureIndex = typeData.GetField(VertexFieldSemantics.TextureIndex).ByteOffset,
+                OffsetBone = typeData.GetField(VertexFieldSemantics.Bone).ByteOffset,
+                OffsetWeight = typeData.GetField(VertexFieldSemantics.Weight).ByteOffset,
             };
         }
 

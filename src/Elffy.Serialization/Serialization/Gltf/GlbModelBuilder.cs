@@ -217,7 +217,7 @@ public static class GlbModelBuilder
             attrs.NORMAL.HasValue &&
             attrs.TEXCOORD_0.HasValue &&
             attrs.TANGENT.HasValue == false &&
-            VertexMarshalHelper.GetVertexTypeData<TVertex>().HasField(VertexSpecialField.Tangent);
+            VertexMarshalHelper.GetVertexTypeData<TVertex>().HasField(VertexFieldSemantics.Tangent);
         if(needToCalcTangent) {
             TVertex* vertices = verticesOutput.GetWrittenBufffer(out var vLength);
 
@@ -647,25 +647,25 @@ public static class GlbModelBuilder
     {
         public unsafe static void StorePositions(in BufferData data, TVertex* dest)
         {
-            Write<Vector3>(in data, dest, VertexSpecialField.Position);
+            Write<Vector3>(in data, dest, VertexFieldSemantics.Position);
         }
 
         public unsafe static void StoreNormals(in BufferData data, TVertex* dest)
         {
-            Write<Vector3>(in data, dest, VertexSpecialField.Normal);
+            Write<Vector3>(in data, dest, VertexFieldSemantics.Normal);
         }
 
         public unsafe static void StoreUVs(in BufferData data, TVertex* dest)
         {
-            Write<Vector2>(in data, dest, VertexSpecialField.UV);
+            Write<Vector2>(in data, dest, VertexFieldSemantics.UV);
         }
 
         public unsafe static void StoreTangents(in BufferData data, TVertex* dest)
         {
-            Write<Vector3>(in data, dest, VertexSpecialField.Tangent);
+            Write<Vector3>(in data, dest, VertexFieldSemantics.Tangent);
         }
 
-        private unsafe static void Write<TData>(in BufferData data, TVertex* dest, VertexSpecialField field) where TData : unmanaged
+        private unsafe static void Write<TData>(in BufferData data, TVertex* dest, VertexFieldSemantics field) where TData : unmanaged
         {
             var vtype = VertexMarshalHelper.GetVertexTypeData<TVertex>();
             if(vtype.TryGetFieldAccessor<TData>(field, out var fieldAccessor) == false) {
@@ -685,13 +685,13 @@ public static class GlbModelBuilder
         public unsafe static void CalcTangents(TVertex* vertices, nuint vLength, uint* indices, nuint iLength)
         {
             var vtype = VertexMarshalHelper.GetVertexTypeData<TVertex>();
-            if(vtype.TryGetFieldAccessor<Vector3>(VertexSpecialField.Position, out var posField) == false) {
+            if(vtype.TryGetFieldAccessor<Vector3>(VertexFieldSemantics.Position, out var posField) == false) {
                 return;
             }
-            if(vtype.TryGetFieldAccessor<Vector2>(VertexSpecialField.UV, out var uvField) == false) {
+            if(vtype.TryGetFieldAccessor<Vector2>(VertexFieldSemantics.UV, out var uvField) == false) {
                 return;
             }
-            if(vtype.TryGetFieldAccessor<Vector3>(VertexSpecialField.Tangent, out var tangentField) == false) {
+            if(vtype.TryGetFieldAccessor<Vector3>(VertexFieldSemantics.Tangent, out var tangentField) == false) {
                 return;
             }
 

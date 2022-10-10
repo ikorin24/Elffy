@@ -53,7 +53,7 @@ namespace Elffy
         public VertexFieldAttribute(
             string name,
             global::System.Type type,
-            global::Elffy.VertexSpecialField specialField,
+            global::Elffy.VertexFieldSemantics fieldSemantics,
             uint byteOffset,
             global::Elffy.VertexFieldMarshalType marshalType,
             uint marshalCount)
@@ -122,11 +122,11 @@ namespace Elffy
                     if(comparer.Equals(attrData.AttributeClass, vertexFieldAttr) == false) { continue; }
                     var name = GetConstructorArgString(attrData, 0) ?? throw new Exception();
                     var type = GetConstructorArgType(attrData, 1) ?? throw new Exception();
-                    var specialField = GetAttrArgEnum<VertexSpecialField>(attrData, 2) ?? throw new Exception();
+                    var semantics = GetAttrArgEnum<VertexFieldSemantics>(attrData, 2) ?? throw new Exception();
                     var byteOffset = GetConstructorArgUInt(attrData, 3) ?? throw new Exception();
                     var marshalType = GetAttrArgEnum<VertexFieldMarshalType>(attrData, 4) ?? throw new Exception();
                     var marshalCount = GetConstructorArgUInt(attrData, 5) ?? throw new Exception();
-                    var field = new VertexFieldInfo(name, type, specialField, byteOffset, marshalType, marshalCount);
+                    var field = new VertexFieldInfo(name, type, semantics, byteOffset, marshalType, marshalCount);
                     fields.Add(field);
                 }
                 return new VertexInfo(structNS, structName, fields);
@@ -236,7 +236,7 @@ namespace {vertexNamespace}
             global::Elffy.VertexMarshalHelper.Register<{vertexName}>(new global::Elffy.VertexFieldData[]
             {{
 ").AppendForeach(fields, f =>
-$@"                new global::Elffy.VertexFieldData(nameof({f.Name}), typeof({f.TypeFullName}), {nameof(VertexSpecialField)}.{f.SpecialField}, {f.ByteOffset}, {nameof(VertexFieldMarshalType)}.{f.Marshal}, {f.MarshalCount}),
+$@"                new global::Elffy.VertexFieldData(nameof({f.Name}), typeof({f.TypeFullName}), {nameof(VertexFieldSemantics)}.{f.Semantics}, {f.ByteOffset}, {nameof(VertexFieldMarshalType)}.{f.Marshal}, {f.MarshalCount}),
 ").Append(
 $@"            }}).ThrowIfError();
         }}
@@ -266,7 +266,7 @@ $@"            }}).ThrowIfError();
     {
         public string Name { get; }
         public string TypeFullName { get; }
-        public VertexSpecialField SpecialField { get; }
+        public VertexFieldSemantics Semantics { get; }
         public uint ByteOffset { get; }
         public VertexFieldMarshalType Marshal { get; }
         public uint MarshalCount { get; }
@@ -286,11 +286,11 @@ $@"            }}).ThrowIfError();
             }
         }
 
-        public VertexFieldInfo(string name, string typeFullName, VertexSpecialField specialField, uint byteOffset, VertexFieldMarshalType marshal, uint marshalCount)
+        public VertexFieldInfo(string name, string typeFullName, VertexFieldSemantics semantics, uint byteOffset, VertexFieldMarshalType marshal, uint marshalCount)
         {
             Name = name;
             TypeFullName = typeFullName;
-            SpecialField = specialField;
+            Semantics = semantics;
             ByteOffset = byteOffset;
             Marshal = marshal;
             MarshalCount = marshalCount;

@@ -54,10 +54,10 @@ internal sealed class GlbShader : SingleTargetRenderingShader
 
     protected override void DefineLocation(VertexDefinition definition, in LocationDefinitionContext context)
     {
-        definition.Map(context.VertexType, "_pos", VertexSpecialField.Position);
-        definition.Map(context.VertexType, "_uv", VertexSpecialField.UV);
-        definition.Map(context.VertexType, "_normal", VertexSpecialField.Normal);
-        definition.Map(context.VertexType, "_tangent", VertexSpecialField.Tangent);
+        definition.Map(context.VertexType, "_pos", VertexFieldSemantics.Position);
+        definition.Map(context.VertexType, "_uv", VertexFieldSemantics.UV);
+        definition.Map(context.VertexType, "_normal", VertexFieldSemantics.Normal);
+        definition.Map(context.VertexType, "_tangent", VertexFieldSemantics.Tangent);
     }
 
     protected override void OnRendering(ShaderDataDispatcher dispatcher, in RenderingContext context)

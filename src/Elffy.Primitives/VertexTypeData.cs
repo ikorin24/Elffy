@@ -41,10 +41,10 @@ namespace Elffy
             return field;
         }
 
-        public bool TryGetField(VertexSpecialField specialField, [MaybeNullWhen(false)] out VertexFieldData field)
+        public bool TryGetField(VertexFieldSemantics semantics, [MaybeNullWhen(false)] out VertexFieldData field)
         {
             foreach(var f in _fields) {
-                if(f.SpecialField == specialField) {
+                if(f.Semantics == semantics) {
                     field = f;
                     return true;
                 }
@@ -53,14 +53,14 @@ namespace Elffy
             return false;
         }
 
-        public VertexFieldData GetField(VertexSpecialField specialField)
+        public VertexFieldData GetField(VertexFieldSemantics semantics)
         {
-            if(TryGetField(specialField, out var field) == false) { ThrowSpecialFieldNotFound(specialField); }
+            if(TryGetField(semantics, out var field) == false) { ThrowFieldSemanticsNotFound(semantics); }
             return field;
         }
 
         public bool HasField(string fieldName) => TryGetField(fieldName, out _);
-        public bool HasField(VertexSpecialField specialField) => TryGetField(specialField, out _);
+        public bool HasField(VertexFieldSemantics semantics) => TryGetField(semantics, out _);
 
         public bool TryGetFieldAccessor<TField>(string fieldName, out VertexFieldAccessor<TField> accessor) where TField : unmanaged
         {
@@ -72,9 +72,9 @@ namespace Elffy
             return false;
         }
 
-        public bool TryGetFieldAccessor<TField>(VertexSpecialField specialField, out VertexFieldAccessor<TField> accessor) where TField : unmanaged
+        public bool TryGetFieldAccessor<TField>(VertexFieldSemantics semantics, out VertexFieldAccessor<TField> accessor) where TField : unmanaged
         {
-            if(TryGetField(specialField, out var field)) {
+            if(TryGetField(semantics, out var field)) {
                 accessor = field.GetAccessor<TField>();
                 return true;
             }
@@ -90,22 +90,22 @@ namespace Elffy
             return accessor;
         }
 
-        public VertexFieldAccessor<TField> GetFieldAccessor<TField>(VertexSpecialField specialField) where TField : unmanaged
+        public VertexFieldAccessor<TField> GetFieldAccessor<TField>(VertexFieldSemantics semantics) where TField : unmanaged
         {
-            if(TryGetFieldAccessor<TField>(specialField, out var accessor) == false) {
-                ThrowSpecialFieldNotFound(specialField);
+            if(TryGetFieldAccessor<TField>(semantics, out var accessor) == false) {
+                ThrowFieldSemanticsNotFound(semantics);
             }
             return accessor;
         }
 
         [DoesNotReturn]
-        private static void ThrowSpecialFieldNotFound(VertexSpecialField specialField) => throw new InvalidOperationException($"The special field is not found. (Special Field: {specialField})");
+        private static void ThrowFieldSemanticsNotFound(VertexFieldSemantics semantics) => throw new InvalidOperationException($"The field semantics is not found. (semantics: {semantics})");
 
         [DoesNotReturn]
         private static void ThrowFieldNotFound(string fieldName) => throw new InvalidOperationException($"The field is not found. (Field Name: {fieldName})");
     }
 
-    public record VertexFieldData(string Name, Type Type, VertexSpecialField SpecialField, int ByteOffset, VertexFieldMarshalType MarshalType, int MarshalCount)
+    public record VertexFieldData(string Name, Type Type, VertexFieldSemantics Semantics, int ByteOffset, VertexFieldMarshalType MarshalType, int MarshalCount)
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T GetRef<TVertex, T>(ref TVertex vertex)
