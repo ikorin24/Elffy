@@ -151,17 +151,17 @@ namespace Elffy.Serialization.Fbx
                         uvIndex = uvIndices[uvIndex];
                     }
                     var v = new TVertex();
-                    vertexCreator.PositionOf(ref v) = (Vector3)positions[index] + meshModel.Translation;
-                    vertexCreator.NormalOf(ref v) = (Vector3)normals[normalIndex];
+                    vertexCreator.Pos.FieldRef(ref v) = (Vector3)positions[index] + meshModel.Translation;
+                    vertexCreator.Normal.FieldRef(ref v) = (Vector3)normals[normalIndex];
                     if(uv.IsEmpty) {
-                        vertexCreator.UVOf(ref v) = default;
+                        vertexCreator.UV.FieldRef(ref v) = default;
                     }
                     else {
                         var tmp = (Vector2)uv[uvIndex];
                         tmp.Y = 1 - tmp.Y;
-                        vertexCreator.UVOf(ref v) = tmp;
+                        vertexCreator.UV.FieldRef(ref v) = tmp;
                     }
-                    vertexCreator.WeightOf(ref v) = new Vector4(1f, 0f, 0f, 0f);
+                    vertexCreator.Weight.FieldRef(ref v) = new Vector4(1f, 0f, 0f, 0f);
                     resolvedMesh.AddVertex(v);
 
                     if(isLast) {
@@ -279,8 +279,8 @@ namespace Elffy.Serialization.Fbx
                         //throw new NotSupportedException("No single vertex can be associated with more than four bones.");
                     }
                     ref var v = ref vertices[index];
-                    Unsafe.Add(ref Unsafe.As<Vector4i, int>(ref vertexCreator.BoneOf(ref v)), offset) = boneIndex;
-                    Unsafe.Add(ref Unsafe.As<Vector4, float>(ref vertexCreator.WeightOf(ref v)), offset) = (float)weight;
+                    Unsafe.Add(ref Unsafe.As<Vector4i, int>(ref vertexCreator.Bone.FieldRef(ref v)), offset) = boneIndex;
+                    Unsafe.Add(ref Unsafe.As<Vector4, float>(ref vertexCreator.Weight.FieldRef(ref v)), offset) = (float)weight;
                     offset++;
                 }
             }

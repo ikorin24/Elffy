@@ -269,8 +269,14 @@ namespace {{vertexNamespace}}
 
 
 """).Append($$"""
+        public static global::Elffy.VertexTypeData VertexTypeData
+        {
+            [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+            get => global::Elffy.VertexMarshalHelper.GetVertexTypeData<{{vertexName}}>();
+        }
+
         [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static bool TryGetVertexTypeData([global::System.Diagnostics.CodeAnalysis.MaybeNullWhen(false)] out global::Elffy.VertexTypeData typeData) => global::Elffy.VertexMarshalHelper.TryGetVertexTypeData<{{vertexName}}>(out typeData);
+        public static bool HasField(VertexFieldSemantics semantics) => VertexTypeData.HasField(semantics);
 
         [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static global::Elffy.VertexFieldAccessor<TField> GetAccessor<TField>(VertexFieldSemantics semantics) where TField : unmanaged => TryGetAccessor<TField>(semantics, out var accessor) ? accessor : throw new global::System.InvalidOperationException("Cannot get the field accessor.");
@@ -285,14 +291,7 @@ namespace {{vertexNamespace}}
         public static global::Elffy.VertexFieldAccessor<global::Elffy.Vector2> GetUVAccessor() => TryGetUVAccessor(out var accessor) ? accessor : throw new global::System.InvalidOperationException("Cannot get the field accessor.");
 
         [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static bool TryGetAccessor<TField>(global::Elffy.VertexFieldSemantics semantics, out global::Elffy.VertexFieldAccessor<TField> accessor) where TField : unmanaged
-        {
-            if(TryGetVertexTypeData(out var typeData) == false) {
-                accessor = default;
-                return false;
-            }
-            return typeData.TryGetFieldAccessor(semantics, out accessor);
-        }
+        public static bool TryGetAccessor<TField>(global::Elffy.VertexFieldSemantics semantics, out global::Elffy.VertexFieldAccessor<TField> accessor) where TField : unmanaged => VertexTypeData.TryGetFieldAccessor(semantics, out accessor);
 
         [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static bool TryGetNormalAccessor(out global::Elffy.VertexFieldAccessor<global::Elffy.Vector3> accessor) => TryGetAccessor(global::Elffy.VertexFieldSemantics.Normal, out accessor);

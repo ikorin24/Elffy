@@ -5,7 +5,8 @@ namespace Elffy;
 
 public interface IVertex
 {
-    static abstract bool TryGetVertexTypeData([MaybeNullWhen(false)] out VertexTypeData typeData);
+    static abstract VertexTypeData VertexTypeData { get; }
+    static abstract bool HasField(VertexFieldSemantics semantics);
 
     static abstract bool TryGetAccessor<TField>(VertexFieldSemantics semantics, out VertexFieldAccessor<TField> accessor) where TField : unmanaged;
     static abstract bool TryGetPositionAccessor(out VertexFieldAccessor<Vector3> accessor);

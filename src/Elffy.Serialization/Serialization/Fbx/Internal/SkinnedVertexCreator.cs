@@ -7,57 +7,42 @@ namespace Elffy.Serialization.Fbx.Internal
 {
     internal unsafe readonly struct SkinnedVertexCreator<TVertex> where TVertex : unmanaged, IVertex
     {
-        private int OffsetPos { get; init; }
-        private int OffsetNormal { get; init; }
-        private int OffsetUV { get; init; }
-        private int OffsetTextureIndex { get; init; }
-        private int OffsetBone { get; init; }
-        private int OffsetWeight { get; init; }
+        public VertexFieldAccessor<Vector3> Pos { get; init; }
+        public VertexFieldAccessor<Vector3> Normal { get; init; }
+        public VertexFieldAccessor<Vector2> UV { get; init; }
+        public VertexFieldAccessor<int> TexIndex { get; init; }
+        public VertexFieldAccessor<Vector4i> Bone { get; init; }
+        public VertexFieldAccessor<Vector4> Weight { get; init; }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref Vector3 PositionOf(ref TVertex v) => ref FieldOf<Vector3>(ref v, OffsetPos);
+        public ref Vector3 PositionOf(ref TVertex v) => ref Pos.FieldRef(ref v);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref Vector3 NormalOf(ref TVertex v) => ref FieldOf<Vector3>(ref v, OffsetNormal);
+        public ref Vector3 NormalOf(ref TVertex v) => ref Normal.FieldRef(ref v);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref Vector2 UVOf(ref TVertex v) => ref FieldOf<Vector2>(ref v, OffsetUV);
+        public ref Vector2 UVOf(ref TVertex v) => ref UV.FieldRef(ref v);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref int TextureIndexOf(ref TVertex v) => ref FieldOf<int>(ref v, OffsetTextureIndex);
+        public ref int TextureIndexOf(ref TVertex v) => ref TexIndex.FieldRef(ref v);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref Vector4i BoneOf(ref TVertex v) => ref FieldOf<Vector4i>(ref v, OffsetBone);
+        public ref Vector4i BoneOf(ref TVertex v) => ref Bone.FieldRef(ref v);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref Vector4 WeightOf(ref TVertex v) => ref FieldOf<Vector4>(ref v, OffsetWeight);
+        public ref Vector4 WeightOf(ref TVertex v) => ref Weight.FieldRef(ref v);
 
         public static SkinnedVertexCreator<TVertex> Build()
         {
-            if(VertexMarshalHelper.TryGetVertexTypeData(typeof(TVertex), out var typeData) == false) {
-                ThrowInvalidVertexType();
-            }
-
-            return new SkinnedVertexCreator<TVertex>()
+            return new()
             {
-                OffsetPos = typeData.GetField(VertexFieldSemantics.Position).ByteOffset,
-                OffsetNormal = typeData.GetField(VertexFieldSemantics.Normal).ByteOffset,
-                OffsetUV = typeData.GetField(VertexFieldSemantics.UV).ByteOffset,
-                OffsetTextureIndex = typeData.GetField(VertexFieldSemantics.TextureIndex).ByteOffset,
-                OffsetBone = typeData.GetField(VertexFieldSemantics.Bone).ByteOffset,
-                OffsetWeight = typeData.GetField(VertexFieldSemantics.Weight).ByteOffset,
+                Pos = TVertex.GetPositionAccessor(),
+                Normal = TVertex.GetNormalAccessor(),
+                UV = TVertex.GetUVAccessor(),
+                TexIndex = TVertex.GetAccessor<int>(VertexFieldSemantics.TextureIndex),
+                Bone = TVertex.GetAccessor<Vector4i>(VertexFieldSemantics.Bone),
+                Weight = TVertex.GetAccessor<Vector4>(VertexFieldSemantics.Weight),
             };
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static ref TField FieldOf<TField>(ref TVertex v, int offset)
-        {
-            return ref Unsafe.As<byte, TField>(
-                        ref Unsafe.Add(
-                            ref Unsafe.As<TVertex, byte>(ref v), offset));
-        }
-
-        [DoesNotReturn]
-        private static void ThrowInvalidVertexType() => throw new InvalidOperationException($"The type is not supported vertex type. (Type = {typeof(TVertex).FullName})");
     }
 }
