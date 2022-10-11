@@ -9,7 +9,7 @@ namespace Elffy
 {
     public static class VertexMarshalHelper
     {
-        private static class TypeDicStatic<TVertex> where TVertex : unmanaged
+        private static class TypeDicStatic<TVertex> where TVertex : unmanaged, IVertex
         {
             public static VertexTypeData? Value { get; set; }
         }
@@ -17,11 +17,14 @@ namespace Elffy
         private static readonly object _lockObj = new object();
         private static readonly Hashtable _typeDic = new Hashtable();
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static VertexMarshalRegisterResult Register<TVertex>(VertexFieldData[] fields) where TVertex : unmanaged
+        /// <summary>Register a vertex type</summary>
+        /// <remarks>[NOTE] This method is intended to be used only from the source generator.</remarks>
+        /// <typeparam name="TVertex">vertex type</typeparam>
+        /// <param name="fields">fields data</param>
+        /// <returns>registration result</returns>
+        public static VertexMarshalRegisterResult Register<TVertex>(VertexFieldData[] fields) where TVertex : unmanaged, IVertex
         {
-            var type = typeof(TVertex);
-            var ex = CheckVertexLikeType(type);
+            var ex = CheckVertexType<TVertex>();
             if(ex is not null) {
                 return VertexMarshalRegisterResult.Error(ex);
             }
@@ -29,21 +32,20 @@ namespace Elffy
             var vertexSize = Unsafe.SizeOf<TVertex>();
             var typeData = new VertexTypeData(fields, vertexSize);
             lock(_lockObj) {
-                _typeDic.Add(type, typeData);
+                _typeDic.Add(typeof(TVertex), typeData);
                 TypeDicStatic<TVertex>.Value = typeData;
             }
             return VertexMarshalRegisterResult.Success;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryGetVertexTypeData<TVertex>([MaybeNullWhen(false)] out VertexTypeData typeData) where TVertex : unmanaged
+        public static bool TryGetVertexTypeData<TVertex>([MaybeNullWhen(false)] out VertexTypeData typeData) where TVertex : unmanaged, IVertex
         {
             var value = TypeDicStatic<TVertex>.Value;
             typeData = value;
             return value is not null;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryGetVertexTypeData(Type vertexType, [MaybeNullWhen(false)] out VertexTypeData typeData)
         {
             var data = _typeDic[vertexType];
@@ -53,27 +55,28 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static VertexTypeData GetVertexTypeData<TVertex>() where TVertex : unmanaged
+        public static VertexTypeData GetVertexTypeData<TVertex>() where TVertex : unmanaged, IVertex
         {
             if(TryGetVertexTypeData<TVertex>(out var typeData) == false) { ThrowTypeNotRegistered(typeof(TVertex)); }
             return typeData;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static VertexTypeData GetVertexTypeData(Type vertexType)
         {
             if(TryGetVertexTypeData(vertexType, out var typeData) == false) { ThrowTypeNotRegistered(vertexType); }
             return typeData;
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private static Exception? CheckVertexLikeType(Type vertexType)
+        private static Exception? CheckVertexType<TVertex>()
         {
-            if(vertexType.IsValueType == false) {
-                return new ArgumentException($"Vertex type must be struct. (Type = {vertexType.FullName})");
+            if(RuntimeHelpers.IsReferenceOrContainsReferences<TVertex>()) {
+                return new ArgumentException($"Vertex type is reference type or contains reference type fields.");
             }
-            if(VertexAttribute.IsVertexType(vertexType) == false) {
-                return new ArgumentException($"Invalid type of vertex, which has no {nameof(VertexAttribute)} (Type = {vertexType.FullName})");
+            if(typeof(IVertex).IsAssignableFrom(typeof(TVertex)) == false) {
+                return new ArgumentException($"Vertex type must implement {nameof(IVertex)}. (Type = {typeof(TVertex).FullName})");
+            }
+            if(VertexAttribute.IsVertexType(typeof(TVertex)) == false) {
+                return new ArgumentException($"Vertex type must has the attribute {nameof(VertexAttribute)} (Type = {typeof(TVertex).FullName})");
             }
             return null;
         }

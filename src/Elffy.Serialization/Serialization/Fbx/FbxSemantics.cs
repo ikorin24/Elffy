@@ -5,7 +5,7 @@ using Elffy.Serialization.Fbx.Internal;
 
 namespace Elffy.Serialization.Fbx
 {
-    public sealed class FbxSemantics<TVertex> : IDisposable where TVertex : unmanaged
+    public sealed class FbxSemantics<TVertex> : IDisposable where TVertex : unmanaged, IVertex
     {
         private FbxSemanticsUnsafe<TVertex> _core;
 

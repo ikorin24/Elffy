@@ -70,7 +70,7 @@ namespace Elffy.Shapes
 
         // This method is used by Model3DLoadMeshDelegate
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void LoadMeshInternal<TVertex>(ReadOnlySpan<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged
+        internal void LoadMeshInternal<TVertex>(ReadOnlySpan<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged, IVertex
         {
             LoadMesh(vertices, indices);
         }
@@ -138,7 +138,7 @@ namespace Elffy.Shapes
         /// <param name="vertices">vertices to load <see cref="Model3D"/></param>
         /// <param name="indices">indices to load <see cref="Model3D"/></param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Invoke<TVertex>(ReadOnlySpan<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged
+        public void Invoke<TVertex>(ReadOnlySpan<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged, IVertex
         {
             _model?.LoadMeshInternal(vertices, indices);
         }
@@ -148,7 +148,7 @@ namespace Elffy.Shapes
         /// <param name="vertices">vertices to load <see cref="Model3D"/></param>
         /// <param name="indices">indices to load <see cref="Model3D"/></param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Invoke<TVertex>(Span<TVertex> vertices, Span<int> indices) where TVertex : unmanaged
+        public void Invoke<TVertex>(Span<TVertex> vertices, Span<int> indices) where TVertex : unmanaged, IVertex
         {
             _model?.LoadMeshInternal(vertices.AsReadOnly(), indices.AsReadOnly());
         }

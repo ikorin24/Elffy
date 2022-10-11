@@ -9,7 +9,7 @@ internal class GlbModelPart : Renderable
 {
 }
 
-internal sealed class GlbModelPart<TVertex> : GlbModelPart where TVertex : unmanaged
+internal sealed class GlbModelPart<TVertex> : GlbModelPart where TVertex : unmanaged, IVertex
 {
     private LargeBufferWriter<TVertex>? _verticesTemporal;
     private LargeBufferWriter<uint>? _indicesTemporal;

@@ -130,7 +130,8 @@ namespace Elffy
             return ref Unsafe.As<TVertex, T>(ref Unsafe.AddByteOffset(ref vertex, (nuint)ByteOffset));
         }
 
-        public VertexFieldAccessor<TField> GetAccessor<TField>() where TField : unmanaged
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal VertexFieldAccessor<TField> GetAccessor<TField>() where TField : unmanaged
         {
             return new VertexFieldAccessor<TField>((nuint)ByteOffset);
         }
@@ -141,12 +142,20 @@ namespace Elffy
         private readonly nuint _byteOffset;
         public nuint ByteOffset => _byteOffset;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public VertexFieldAccessor(nuint byteOffset)
         {
             _byteOffset = byteOffset;
         }
 
-        public ref TField Field<TVertex>(in TVertex vertex) where TVertex : unmanaged
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref TField FieldRef<TVertex>(ref TVertex vertex) where TVertex : unmanaged, IVertex
+        {
+            return ref Unsafe.As<TVertex, TField>(ref Unsafe.AddByteOffset(ref vertex, _byteOffset));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref readonly TField Field<TVertex>(in TVertex vertex) where TVertex : unmanaged, IVertex
         {
             return ref Unsafe.As<TVertex, TField>(ref Unsafe.AddByteOffset(ref Unsafe.AsRef(in vertex), _byteOffset));
         }

@@ -8,7 +8,7 @@ using System.Runtime.CompilerServices;
 
 namespace Elffy
 {
-    public static unsafe class PrimitiveMeshProvider<TVertex> where TVertex : unmanaged
+    public static unsafe class PrimitiveMeshProvider<TVertex> where TVertex : unmanaged, IVertex
     {
         public static void GetPlain(MeshLoadAction<TVertex> action)
         {
@@ -87,36 +87,29 @@ namespace Elffy
 
             static void ForOthers(TState state, MeshLoadAction<TState, TVertex> action, int* indices)
             {
-                if(VertexMarshalHelper.TryGetVertexTypeData(typeof(TVertex), out var typeData) == false) {
-                    ThrowInvalidVertexType();
+                // [NOTE]
+                // Don't skip locals init.
+                // All fields should zero-initialized.
+                Span<TVertex> vertices = stackalloc TVertex[VertexCount];
+                if(TVertex.TryGetPositionAccessor(out var pos)) {
+                    pos.FieldRef(ref vertices[0]) = new(-a, a, 0f);
+                    pos.FieldRef(ref vertices[1]) = new(-a, -a, 0f);
+                    pos.FieldRef(ref vertices[2]) = new(a, -a, 0f);
+                    pos.FieldRef(ref vertices[3]) = new(a, a, 0f);
                 }
-                TVertex* vertices = stackalloc TVertex[VertexCount];
-                var verticesSpan = new Span<TVertex>(vertices, VertexCount);
-                verticesSpan.Clear();
-
-                if(typeData.TryGetField(VertexFieldSemantics.Position, out var pos)) {
-                    var posOffset = pos.ByteOffset;
-                    *(Vector3*)(((byte*)(vertices + 0)) + posOffset) = new(-a, a, 0f);
-                    *(Vector3*)(((byte*)(vertices + 1)) + posOffset) = new(-a, -a, 0f);
-                    *(Vector3*)(((byte*)(vertices + 2)) + posOffset) = new(a, -a, 0f);
-                    *(Vector3*)(((byte*)(vertices + 3)) + posOffset) = new(a, a, 0f);
+                if(TVertex.TryGetNormalAccessor(out var normal)) {
+                    normal.FieldRef(ref vertices[0]) = new(0f, 0f, 1f);
+                    normal.FieldRef(ref vertices[1]) = new(0f, 0f, 1f);
+                    normal.FieldRef(ref vertices[2]) = new(0f, 0f, 1f);
+                    normal.FieldRef(ref vertices[3]) = new(0f, 0f, 1f);
                 }
-
-                if(typeData.TryGetField(VertexFieldSemantics.Normal, out var normal)) {
-                    var normalOffset = normal.ByteOffset;
-                    *(Vector3*)(((byte*)(vertices + 0)) + normalOffset) = new(0f, 0f, 1f);
-                    *(Vector3*)(((byte*)(vertices + 1)) + normalOffset) = new(0f, 0f, 1f);
-                    *(Vector3*)(((byte*)(vertices + 2)) + normalOffset) = new(0f, 0f, 1f);
-                    *(Vector3*)(((byte*)(vertices + 3)) + normalOffset) = new(0f, 0f, 1f);
+                if(TVertex.TryGetUVAccessor(out var uv)) {
+                    uv.FieldRef(ref vertices[0]) = new(0, 0);
+                    uv.FieldRef(ref vertices[0]) = new(0, 1);
+                    uv.FieldRef(ref vertices[0]) = new(1, 1);
+                    uv.FieldRef(ref vertices[0]) = new(1, 0);
                 }
-                if(typeData.TryGetField(VertexFieldSemantics.UV, out var uv)) {
-                    var uvOffset = uv.ByteOffset;
-                    *(Vector2*)(((byte*)(vertices + 0)) + uvOffset) = new(0, 0);
-                    *(Vector2*)(((byte*)(vertices + 1)) + uvOffset) = new(0, 1);
-                    *(Vector2*)(((byte*)(vertices + 2)) + uvOffset) = new(1, 1);
-                    *(Vector2*)(((byte*)(vertices + 3)) + uvOffset) = new(1, 0);
-                }
-                action.Invoke(state, verticesSpan, new ReadOnlySpan<int>(indices, IndexCount));
+                action.Invoke(state, vertices, new ReadOnlySpan<int>(indices, IndexCount));
             }
         }
 
@@ -133,16 +126,9 @@ namespace Elffy
             const int A = 32;
             const int B = 16;
 
-            if(VertexMarshalHelper.TryGetVertexTypeData(typeof(TVertex), out var typeData) == false) {
-                ThrowInvalidVertexType();
-            }
-
-            if(typeData.TryGetField(VertexFieldSemantics.Position, out var posField) == false) {
-                ThrowInvalidVertexType();
-            }
-            typeData.TryGetField(VertexFieldSemantics.UV, out var uvField);
-            typeData.TryGetField(VertexFieldSemantics.Normal, out var normalField);
-
+            var posAccessor = TVertex.GetPositionAccessor();
+            var hasUVField = TVertex.TryGetUVAccessor(out var uvAccessor);
+            var hasNormalField = TVertex.TryGetNormalAccessor(out var normalAccessor);
 
             const int VertexCount = (B + 1) * (A + 1);
             const int IndexCount = B * A * 6;
@@ -177,12 +163,12 @@ namespace Elffy
                     }
                     else {
                         v = default;
-                        posField.GetRef<TVertex, Vector3>(ref v) = pos * R;
-                        if(uvField is not null) {
-                            uvField.GetRef<TVertex, Vector2>(ref v) = uv;
+                        posAccessor.FieldRef(ref v) = pos * R;
+                        if(hasUVField) {
+                            uvAccessor.FieldRef(ref v) = uv;
                         }
-                        if(normalField is not null) {
-                            normalField.GetRef<TVertex, Vector3>(ref v) = pos;
+                        if(hasNormalField) {
+                            normalAccessor.FieldRef(ref v) = pos;
                         }
                     }
                 }
@@ -220,33 +206,26 @@ namespace Elffy
                 });
                 return;
             }
-            if(VertexMarshalHelper.TryGetVertexTypeData(typeof(TVertex), out var typeData) == false) {
-                ThrowInvalidVertexType();
-            }
-            GetArrowVertex((state, action, typeData), static (x, vertices, indices) =>
+            GetArrowVertex((state, action), static (x, vertices, indices) =>
             {
-                var (state, action, typeData) = x;
-                using var vMem = new ValueTypeRentMemory<TVertex>(vertices.Length, true, out var vertices2);
+                var (state, action) = x;
+                using var mem = new ValueTypeRentMemory<TVertex>(vertices.Length, true, out var result);
+                var hasPos = TVertex.TryGetPositionAccessor(out var posField);
+                var hasUV = TVertex.TryGetUVAccessor(out var uvField);
+                var hasNormal = TVertex.TryGetNormalAccessor(out var normalField);
 
-                if(typeData.TryGetField(VertexFieldSemantics.Position, out var posField)) {
-                    var posOffset = (nuint)posField.ByteOffset;
-                    for(int i = 0; i < vertices2.Length; i++) {
-                        Unsafe.As<TVertex, Vector3>(ref Unsafe.AddByteOffset(ref vertices2[i], posOffset)) = vertices[i].Position;
+                for(int i = 0; i < result.Length; i++) {
+                    if(hasPos) {
+                        posField.FieldRef(ref result[i]) = vertices[i].Position;
+                    }
+                    if(hasUV) {
+                        uvField.FieldRef(ref result[i]) = vertices[i].UV;
+                    }
+                    if(hasNormal) {
+                        normalField.FieldRef(ref result[i]) = vertices[i].Normal;
                     }
                 }
-                if(typeData.TryGetField(VertexFieldSemantics.UV, out var uvField)) {
-                    var uvOffset = (nuint)uvField.ByteOffset;
-                    for(int i = 0; i < vertices2.Length; i++) {
-                        Unsafe.As<TVertex, Vector2>(ref Unsafe.AddByteOffset(ref vertices2[i], uvOffset)) = vertices[i].UV;
-                    }
-                }
-                if(typeData.TryGetField(VertexFieldSemantics.Normal, out var normalField)) {
-                    var normalOffset = (nuint)normalField.ByteOffset;
-                    for(int i = 0; i < vertices2.Length; i++) {
-                        Unsafe.As<TVertex, Vector3>(ref Unsafe.AddByteOffset(ref vertices2[i], normalOffset)) = vertices[i].Normal;
-                    }
-                }
-                action.Invoke(state, vertices2, indices);
+                action.Invoke(state, result, indices);
             });
         }
 
@@ -356,6 +335,6 @@ namespace Elffy
         private static void ThrowInvalidVertexType() => throw new InvalidOperationException($"The type is not supported vertex type. (Type = {typeof(TVertex).FullName})");
     }
 
-    public delegate void MeshLoadAction<TVertex>(ReadOnlySpan<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged;
-    public delegate void MeshLoadAction<TState, TVertex>(TState state, ReadOnlySpan<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged;
+    public delegate void MeshLoadAction<TVertex>(ReadOnlySpan<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged, IVertex;
+    public delegate void MeshLoadAction<TState, TVertex>(TState state, ReadOnlySpan<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged, IVertex;
 }

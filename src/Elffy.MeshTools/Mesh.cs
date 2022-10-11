@@ -30,7 +30,7 @@ namespace Elffy
             return new Mesh(meshData);
         }
 
-        //public TVertex* GetVertices<TVertex>(out ulong vertexCount) where TVertex : unmanaged
+        //public TVertex* GetVertices<TVertex>(out ulong vertexCount) where TVertex : unmanaged, IVertex
         //{
         //    if(sizeof(TVertex) != _vertexSize) {
         //        ThrowVertexTypeMismatched();

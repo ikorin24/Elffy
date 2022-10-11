@@ -111,10 +111,10 @@ namespace Elffy
                 out vertexType, out verticesByteSizeActual, out indicesByteSizeActual);
         }
 
-        public unsafe (int VertexCount, int IndexCount) GetMesh<TVertex>(Span<TVertex> vertices, Span<int> indices) where TVertex : unmanaged
+        public unsafe (int VertexCount, int IndexCount) GetMesh<TVertex>(Span<TVertex> vertices, Span<int> indices) where TVertex : unmanaged, IVertex
             => MeshHelper.GetMesh(this, vertices, indices);
 
-        public unsafe (ulong VertexCount, uint IndexCount) GetMesh<TVertex>(TVertex* vertices, ulong vertexCount, int* indices, uint indexCount) where TVertex : unmanaged
+        public unsafe (ulong VertexCount, uint IndexCount) GetMesh<TVertex>(TVertex* vertices, ulong vertexCount, int* indices, uint indexCount) where TVertex : unmanaged, IVertex
             => MeshHelper.GetMesh(this, vertices, vertexCount, indices, indexCount);
 
         /// <summary>Get visibility in rendering.</summary>
@@ -295,7 +295,7 @@ namespace Elffy
             }
         }
 
-        protected unsafe void LoadMesh<TVertex>(TVertex* vertices, ulong vertexCount, int* indices, uint indexCount) where TVertex : unmanaged
+        protected unsafe void LoadMesh<TVertex>(TVertex* vertices, ulong vertexCount, int* indices, uint indexCount) where TVertex : unmanaged, IVertex
         {
             ContextMismatchException.ThrowIfContextNotEqual(Engine.GetValidCurrentContext(), GetValidScreen());
 
@@ -322,7 +322,7 @@ namespace Elffy
         /// <typeparam name="TVertex">type of vertex</typeparam>
         /// <param name="vertices">vertex data to load</param>
         /// <param name="indices">index data to load</param>
-        protected unsafe void LoadMesh<TVertex>(ReadOnlySpan<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged
+        protected unsafe void LoadMesh<TVertex>(ReadOnlySpan<TVertex> vertices, ReadOnlySpan<int> indices) where TVertex : unmanaged, IVertex
         {
             fixed(TVertex* v = vertices)
             fixed(int* i = indices) {

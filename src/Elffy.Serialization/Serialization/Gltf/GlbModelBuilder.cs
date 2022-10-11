@@ -139,7 +139,7 @@ public static class GlbModelBuilder
         }
     }
 
-    private unsafe static void BuildMeshPrimitive<TVertex>(in BuilderState state, in MeshPrimitive meshPrimitive, Positionable parent) where TVertex : unmanaged
+    private unsafe static void BuildMeshPrimitive<TVertex>(in BuilderState state, in MeshPrimitive meshPrimitive, Positionable parent) where TVertex : unmanaged, IVertex
     {
         var gltf = state.Gltf;
         var meshPrimitivePart = new GlbModelPart<TVertex>();
@@ -643,7 +643,7 @@ public static class GlbModelBuilder
         bool HasOcclusionTex
     );
 
-    private static class GlbVertexWriter<TVertex> where TVertex : unmanaged
+    private static class GlbVertexWriter<TVertex> where TVertex : unmanaged, IVertex
     {
         public unsafe static void StorePositions(in BufferData data, TVertex* dest)
         {
@@ -665,33 +665,30 @@ public static class GlbModelBuilder
             Write<Vector3>(in data, dest, VertexFieldSemantics.Tangent);
         }
 
-        private unsafe static void Write<TData>(in BufferData data, TVertex* dest, VertexFieldSemantics field) where TData : unmanaged
+        private unsafe static void Write<TField>(in BufferData data, TVertex* dest, VertexFieldSemantics field) where TField : unmanaged
         {
-            var vtype = VertexMarshalHelper.GetVertexTypeData<TVertex>();
-            if(vtype.TryGetFieldAccessor<TData>(field, out var fieldAccessor) == false) {
+            if(TVertex.TryGetAccessor<TField>(field, out var fieldAccessor) == false) {
                 return;
             }
-
             if(BitConverter.IsLittleEndian == false) {
                 throw new PlatformNotSupportedException("Big endian environment is not supported.");
             }
             var ptr = (byte*)data.Ptr;
-            var byteStride = data.ByteStride ?? (nuint)sizeof(TData);
+            var byteStride = data.ByteStride ?? (nuint)sizeof(TField);
             for(nuint i = 0; i < data.Count; i++) {
-                fieldAccessor.Field(dest[i]) = *(TData*)(ptr + byteStride * i);
+                fieldAccessor.FieldRef(ref dest[i]) = *(TField*)(ptr + byteStride * i);
             }
         }
 
         public unsafe static void CalcTangents(TVertex* vertices, nuint vLength, uint* indices, nuint iLength)
         {
-            var vtype = VertexMarshalHelper.GetVertexTypeData<TVertex>();
-            if(vtype.TryGetFieldAccessor<Vector3>(VertexFieldSemantics.Position, out var posField) == false) {
+            if(TVertex.TryGetPositionAccessor(out var posField) == false) {
                 return;
             }
-            if(vtype.TryGetFieldAccessor<Vector2>(VertexFieldSemantics.UV, out var uvField) == false) {
+            if(TVertex.TryGetUVAccessor(out var uvField) == false) {
                 return;
             }
-            if(vtype.TryGetFieldAccessor<Vector3>(VertexFieldSemantics.Tangent, out var tangentField) == false) {
+            if(TVertex.TryGetAccessor<Vector3>(VertexFieldSemantics.Tangent, out var tangentField) == false) {
                 return;
             }
 
@@ -709,9 +706,9 @@ public static class GlbModelBuilder
                         uvField.Field(vertices[i0]),
                         uvField.Field(vertices[i1]),
                         uvField.Field(vertices[i2])).Normalized();
-                    tangentField.Field(vertices[i0]) = tangent;
-                    tangentField.Field(vertices[i1]) = tangent;
-                    tangentField.Field(vertices[i2]) = tangent;
+                    tangentField.FieldRef(ref vertices[i0]) = tangent;
+                    tangentField.FieldRef(ref vertices[i1]) = tangent;
+                    tangentField.FieldRef(ref vertices[i2]) = tangent;
                 }
             }
             else {
@@ -732,12 +729,13 @@ public static class GlbModelBuilder
                         uvField.Field(vertices[i1]),
                         uvField.Field(vertices[i2])
                     );
-                    tangentField.Field(vertices[i0]) += tangent;
-                    tangentField.Field(vertices[i1]) += tangent;
-                    tangentField.Field(vertices[i2]) += tangent;
+                    tangentField.FieldRef(ref vertices[i0]) += tangent;
+                    tangentField.FieldRef(ref vertices[i1]) += tangent;
+                    tangentField.FieldRef(ref vertices[i2]) += tangent;
+
                 }
                 for(nuint i = 0; i < vLength; i++) {
-                    tangentField.Field(vertices[i]).Normalize();
+                    tangentField.FieldRef(ref vertices[i]).Normalize();
                 }
             }
             return;

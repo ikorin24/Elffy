@@ -6,7 +6,7 @@ using System;
 namespace Elffy.Serialization.Fbx.Internal
 {
     [DontUseDefault]
-    internal readonly struct ResolvedMesh<TVertex> : IDisposable where TVertex : unmanaged
+    internal readonly struct ResolvedMesh<TVertex> : IDisposable where TVertex : unmanaged, IVertex
     {
         private readonly UnsafeRawList<TVertex> _vertices;
         private readonly UnsafeRawList<int> _indices;

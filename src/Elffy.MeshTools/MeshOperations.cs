@@ -129,7 +129,7 @@ namespace Elffy
         private static void ThrowArgumentIndicesLengthInvalid() => throw new ArgumentException();
     }
 
-    public readonly ref struct InterleavedMesh<TVertex> where TVertex : unmanaged
+    public readonly ref struct InterleavedMesh<TVertex> where TVertex : unmanaged, IVertex
     {
         public readonly Span<TVertex> Vertices;
         public readonly Span<int> Indices;

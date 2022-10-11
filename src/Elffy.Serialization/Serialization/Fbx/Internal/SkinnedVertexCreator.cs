@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Serialization.Fbx.Internal
 {
-    internal unsafe readonly struct SkinnedVertexCreator<TVertex> where TVertex : unmanaged
+    internal unsafe readonly struct SkinnedVertexCreator<TVertex> where TVertex : unmanaged, IVertex
     {
         private int OffsetPos { get; init; }
         private int OffsetNormal { get; init; }

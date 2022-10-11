@@ -47,7 +47,7 @@ namespace Elffy.Shading
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Map<TVertex>(int index, string vertexFieldName) where TVertex : unmanaged
+        public void Map<TVertex>(int index, string vertexFieldName) where TVertex : unmanaged, IVertex
         {
             if(index < 0) {
                 ThrowInvalidIndex();
@@ -58,7 +58,7 @@ namespace Elffy.Shading
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Map<TVertex>(string name, string vertexFieldName) where TVertex : unmanaged
+        public void Map<TVertex>(string name, string vertexFieldName) where TVertex : unmanaged, IVertex
         {
             ArgumentNullException.ThrowIfNull(name);
             var index = GL.GetAttribLocation(_program.Value, name);

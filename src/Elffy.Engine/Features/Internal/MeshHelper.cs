@@ -126,7 +126,7 @@ namespace Elffy.Features.Internal
             return false;
         }
 
-        public static unsafe (int VertexCount, int IndexCount) GetMesh<TVertex>(Renderable renderable, Span<TVertex> vertices, Span<int> indices) where TVertex : unmanaged
+        public static unsafe (int VertexCount, int IndexCount) GetMesh<TVertex>(Renderable renderable, Span<TVertex> vertices, Span<int> indices) where TVertex : unmanaged, IVertex
         {
             fixed(TVertex* v = vertices)
             fixed(int* i = indices) {
@@ -135,7 +135,7 @@ namespace Elffy.Features.Internal
             }
         }
 
-        public static unsafe (ulong VertexCount, uint IndexCount) GetMesh<TVertex>(Renderable renderable, TVertex* vertices, ulong vertexCount, int* indices, uint indexCount) where TVertex : unmanaged
+        public static unsafe (ulong VertexCount, uint IndexCount) GetMesh<TVertex>(Renderable renderable, TVertex* vertices, ulong vertexCount, int* indices, uint indexCount) where TVertex : unmanaged, IVertex
         {
             ArgumentNullException.ThrowIfNull(renderable);
             var screen = renderable.GetValidScreen();

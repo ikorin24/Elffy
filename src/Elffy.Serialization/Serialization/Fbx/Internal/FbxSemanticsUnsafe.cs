@@ -7,7 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Serialization.Fbx.Internal
 {
-    internal readonly struct FbxSemanticsUnsafe<TVertex> : IDisposable where TVertex : unmanaged
+    internal readonly struct FbxSemanticsUnsafe<TVertex> : IDisposable where TVertex : unmanaged, IVertex
     {
         private readonly FbxObject? _fbx;
         private readonly UnsafeRawArray<int> _indices;

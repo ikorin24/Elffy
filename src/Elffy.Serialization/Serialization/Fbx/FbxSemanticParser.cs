@@ -12,7 +12,7 @@ using Elffy.Serialization.Fbx.Semantic;
 
 namespace Elffy.Serialization.Fbx
 {
-    public static class FbxSemanticParser<TVertex> where TVertex : unmanaged
+    public static class FbxSemanticParser<TVertex> where TVertex : unmanaged, IVertex
     {
         public static FbxSemantics<TVertex> Parse(Stream stream, bool leaveStreamOpen = true, CancellationToken cancellationToken = default)
         {
