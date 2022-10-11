@@ -20,7 +20,7 @@ namespace Elffy.Features.Internal
 
             var vertexType = renderable.VertexType;
             Debug.Assert(vertexType != null);
-            if(VertexMarshalHelper.TryGetVertexTypeData(vertexType, out var vertexTypeData) == false) { goto FAILURE; }
+            if(VertexTypeData.TryGetVertexTypeData(vertexType, out var vertexTypeData) == false) { goto FAILURE; }
 
             var vertexSize = (ulong)vertexTypeData.VertexSize;
             Debug.Assert(vertexType != null);
@@ -83,7 +83,7 @@ namespace Elffy.Features.Internal
             if(renderable.IsLoaded == false) { goto FAILURE; }
             vertexType = renderable.VertexType;
             Debug.Assert(vertexType != null);
-            if(VertexMarshalHelper.TryGetVertexTypeData(vertexType, out var vertexTypeData) == false) { goto FAILURE; }
+            if(VertexTypeData.TryGetVertexTypeData(vertexType, out var vertexTypeData) == false) { goto FAILURE; }
 
             var vertexSize = (ulong)vertexTypeData.VertexSize;
             Debug.Assert(vertexType != null);

@@ -50,7 +50,7 @@ namespace Elffy
 
             ArgumentNullException.ThrowIfNull(handle);
             ArgumentNullException.ThrowIfNull(vertexType);
-            var vertexTypeData = VertexMarshalHelper.GetVertexTypeData(vertexType);
+            var vertexTypeData = VertexTypeData.GetVertexTypeData(vertexType);
             uint vertexSize = (uint)vertexTypeData.VertexSize;
             uint fieldCount = (uint)vertexTypeData.FieldCount;
 

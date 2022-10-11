@@ -232,19 +232,20 @@ namespace {{vertexNamespace}}
 
 """);
         sb.Append($$"""
+        private static global::Elffy.VertexTypeData _vertexTypeData = default!;
+
         [global::System.Runtime.CompilerServices.ModuleInitializer]
         [global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]
         [global::System.Obsolete("Don't call the method explicitly.", true)]
         internal static void RegisterVertexTypeDataOnModuleInitialized()
         {
-            global::Elffy.VertexMarshalHelper.Register<{{vertexName}}>(new global::Elffy.VertexFieldData[]
-            {
+            _vertexTypeData = global::Elffy.VertexTypeData.Register<{{vertexName}}>(
 
 """).AppendForeach(fields, f => $$"""
-                new global::Elffy.VertexFieldData(nameof({{f.Name}}), typeof({{f.TypeFullName}}), {{nameof(VertexFieldSemantics)}}.{{f.Semantics}}, {{f.ByteOffset}}, {{nameof(VertexFieldMarshalType)}}.{{f.Marshal}}, {{f.MarshalCount}}),
-
-""").Append($$"""
-            }).ThrowIfError();
+                new global::Elffy.VertexFieldData(nameof({{f.Name}}), typeof({{f.TypeFullName}}), {{nameof(VertexFieldSemantics)}}.{{f.Semantics}}, {{f.ByteOffset}}, {{nameof(VertexFieldMarshalType)}}.{{f.Marshal}}, {{f.MarshalCount}})
+""", @",
+").Append($$"""
+);
         }
 
         [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -269,36 +270,48 @@ namespace {{vertexNamespace}}
 
 
 """).Append($$"""
-        public static global::Elffy.VertexTypeData VertexTypeData
-        {
-            [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-            get => global::Elffy.VertexMarshalHelper.GetVertexTypeData<{{vertexName}}>();
-        }
+        /// <inheritdoc/>
+        public static global::Elffy.VertexTypeData VertexTypeData => _vertexTypeData;
 
+        /// <inheritdoc/>
+        public static int FieldCount => {{fields.Length}};
+        
+        /// <inheritdoc/>
+        public static int VertexSize => global::System.Runtime.CompilerServices.Unsafe.SizeOf<{{vertexName}}>();
+
+        /// <inheritdoc/>
         [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static bool HasField(VertexFieldSemantics semantics) => VertexTypeData.HasField(semantics);
+        public static bool HasField(VertexFieldSemantics semantics) => _vertexTypeData.HasField(semantics);
 
+        /// <inheritdoc/>
         [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static global::Elffy.VertexFieldAccessor<TField> GetAccessor<TField>(VertexFieldSemantics semantics) where TField : unmanaged => TryGetAccessor<TField>(semantics, out var accessor) ? accessor : throw new global::System.InvalidOperationException("Cannot get the field accessor.");
 
+        /// <inheritdoc/>
         [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static global::Elffy.VertexFieldAccessor<global::Elffy.Vector3> GetNormalAccessor() => TryGetNormalAccessor(out var accessor) ? accessor : throw new global::System.InvalidOperationException("Cannot get the field accessor.");
 
+        /// <inheritdoc/>
         [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static global::Elffy.VertexFieldAccessor<global::Elffy.Vector3> GetPositionAccessor() => TryGetPositionAccessor(out var accessor) ? accessor : throw new global::System.InvalidOperationException("Cannot get the field accessor.");
 
+        /// <inheritdoc/>
         [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static global::Elffy.VertexFieldAccessor<global::Elffy.Vector2> GetUVAccessor() => TryGetUVAccessor(out var accessor) ? accessor : throw new global::System.InvalidOperationException("Cannot get the field accessor.");
 
+        /// <inheritdoc/>
         [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static bool TryGetAccessor<TField>(global::Elffy.VertexFieldSemantics semantics, out global::Elffy.VertexFieldAccessor<TField> accessor) where TField : unmanaged => VertexTypeData.TryGetFieldAccessor(semantics, out accessor);
+        public static bool TryGetAccessor<TField>(global::Elffy.VertexFieldSemantics semantics, out global::Elffy.VertexFieldAccessor<TField> accessor) where TField : unmanaged => _vertexTypeData.TryGetFieldAccessor(semantics, out accessor);
 
+        /// <inheritdoc/>
         [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static bool TryGetNormalAccessor(out global::Elffy.VertexFieldAccessor<global::Elffy.Vector3> accessor) => TryGetAccessor(global::Elffy.VertexFieldSemantics.Normal, out accessor);
 
+        /// <inheritdoc/>
         [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static bool TryGetPositionAccessor(out global::Elffy.VertexFieldAccessor<global::Elffy.Vector3> accessor) => TryGetAccessor(global::Elffy.VertexFieldSemantics.Position, out accessor);
 
+        /// <inheritdoc/>
         [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static bool TryGetUVAccessor(out global::Elffy.VertexFieldAccessor<global::Elffy.Vector2> accessor) => TryGetAccessor(global::Elffy.VertexFieldSemantics.UV, out accessor);
     }

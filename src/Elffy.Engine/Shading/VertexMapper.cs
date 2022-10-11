@@ -35,7 +35,7 @@ namespace Elffy.Shading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void Map(Type vertexType, int index, VertexFieldSemantics semantics)
         {
-            var typeData = VertexMarshalHelper.GetVertexTypeData(vertexType);
+            var typeData = VertexTypeData.GetVertexTypeData(vertexType);
             var field = typeData.GetField(semantics);
             MapPrivate(index, field, typeData.VertexSize);
         }
@@ -50,7 +50,7 @@ namespace Elffy.Shading
         public static unsafe void Map(Type vertexType, int index, string vertexFieldName)
         {
             ArgumentNullException.ThrowIfNull(vertexFieldName);
-            var typeData = VertexMarshalHelper.GetVertexTypeData(vertexType);
+            var typeData = VertexTypeData.GetVertexTypeData(vertexType);
             var field = typeData.GetField(vertexFieldName);
             MapPrivate(index, field, typeData.VertexSize);
         }
