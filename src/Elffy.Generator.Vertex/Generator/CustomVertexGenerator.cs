@@ -281,44 +281,110 @@ namespace {{vertexNamespace}}
 
         /// <inheritdoc/>
         [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static bool HasField(VertexFieldSemantics semantics) => _vertexTypeData.HasField(semantics);
+        public static bool HasField(global::Elffy.VertexFieldSemantics semantics) => {{HasFieldCode(fields)}};
 
         /// <inheritdoc/>
         [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static global::Elffy.VertexFieldAccessor<TField> GetAccessor<TField>(VertexFieldSemantics semantics) where TField : unmanaged => TryGetAccessor<TField>(semantics, out var accessor) ? accessor : throw new global::System.InvalidOperationException("Cannot get the field accessor.");
+        public static global::Elffy.VertexFieldAccessor<TField> GetAccessor<TField>(global::Elffy.VertexFieldSemantics semantics) where TField : unmanaged => {{AccessorCode(fields)}};
 
         /// <inheritdoc/>
         [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static global::Elffy.VertexFieldAccessor<global::Elffy.Vector3> GetNormalAccessor() => TryGetNormalAccessor(out var accessor) ? accessor : throw new global::System.InvalidOperationException("Cannot get the field accessor.");
+        public static global::Elffy.VertexFieldAccessor<global::Elffy.Vector3> GetNormalAccessor() => {{AccessorCode(fields, VertexFieldSemantics.Normal)}};
 
         /// <inheritdoc/>
         [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static global::Elffy.VertexFieldAccessor<global::Elffy.Vector3> GetPositionAccessor() => TryGetPositionAccessor(out var accessor) ? accessor : throw new global::System.InvalidOperationException("Cannot get the field accessor.");
+        public static global::Elffy.VertexFieldAccessor<global::Elffy.Vector3> GetPositionAccessor() => {{AccessorCode(fields, VertexFieldSemantics.Position)}};
 
         /// <inheritdoc/>
         [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static global::Elffy.VertexFieldAccessor<global::Elffy.Vector2> GetUVAccessor() => TryGetUVAccessor(out var accessor) ? accessor : throw new global::System.InvalidOperationException("Cannot get the field accessor.");
+        public static global::Elffy.VertexFieldAccessor<global::Elffy.Vector2> GetUVAccessor() => {{AccessorCode(fields, VertexFieldSemantics.UV)}};
 
         /// <inheritdoc/>
         [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static bool TryGetAccessor<TField>(global::Elffy.VertexFieldSemantics semantics, out global::Elffy.VertexFieldAccessor<TField> accessor) where TField : unmanaged => _vertexTypeData.TryGetFieldAccessor(semantics, out accessor);
+        public static bool TryGetAccessor<TField>(global::Elffy.VertexFieldSemantics semantics, out global::Elffy.VertexFieldAccessor<TField> accessor) where TField : unmanaged {{AccessorCodeNoError(fields)}}
 
         /// <inheritdoc/>
         [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static bool TryGetNormalAccessor(out global::Elffy.VertexFieldAccessor<global::Elffy.Vector3> accessor) => TryGetAccessor(global::Elffy.VertexFieldSemantics.Normal, out accessor);
+        public static bool TryGetNormalAccessor(out global::Elffy.VertexFieldAccessor<global::Elffy.Vector3> accessor) {{AccessorCodeNoError(fields, VertexFieldSemantics.Normal)}}
 
         /// <inheritdoc/>
         [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static bool TryGetPositionAccessor(out global::Elffy.VertexFieldAccessor<global::Elffy.Vector3> accessor) => TryGetAccessor(global::Elffy.VertexFieldSemantics.Position, out accessor);
+        public static bool TryGetPositionAccessor(out global::Elffy.VertexFieldAccessor<global::Elffy.Vector3> accessor) {{AccessorCodeNoError(fields, VertexFieldSemantics.Position)}}
 
         /// <inheritdoc/>
         [global::System.Runtime.CompilerServices.MethodImpl(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static bool TryGetUVAccessor(out global::Elffy.VertexFieldAccessor<global::Elffy.Vector2> accessor) => TryGetAccessor(global::Elffy.VertexFieldSemantics.UV, out accessor);
+        public static bool TryGetUVAccessor(out global::Elffy.VertexFieldAccessor<global::Elffy.Vector2> accessor) {{AccessorCodeNoError(fields, VertexFieldSemantics.UV)}}
     }
 }
 """);
         return sb.ToString();
     }
+
+    private static string AccessorCode(VertexFieldInfo[] fields, VertexFieldSemantics sem) => fields.FirstOrDefault(f => f.Semantics == sem)?.ByteOffset switch
+    {
+        uint n => $"new({n})",
+        null => $"throw new global::System.InvalidOperationException(\"No semantic field of {sem}.\")",
+    };
+
+    private static string AccessorCode(VertexFieldInfo[] fields)
+    {
+        var s = fields.Select(f => $"(semantics == global::Elffy.{nameof(VertexFieldSemantics)}.{f.Semantics} && typeof(TField) == typeof({AccessorFieldType(f.Semantics)})) ? new({f.ByteOffset})");
+        var tmp = string.Join("""
+ :
+            
+""", s) + " :";
+
+
+        return $$"""
+
+            {{tmp}}
+            throw new global::System.ArgumentException("Cannot get the accessor.")
+""";
+    }
+
+    private static string AccessorCodeNoError(VertexFieldInfo[] fields, VertexFieldSemantics sem) => fields.FirstOrDefault(f => f.Semantics == sem)?.ByteOffset switch
+    {
+        uint n => $$"""
+        { accessor = new({{n}}); return true; }
+        """,
+        null => """
+        { accessor = default; return false; }
+        """,
+    };
+
+    private static string AccessorCodeNoError(VertexFieldInfo[] fields)
+    {
+        var s = fields.Select(f => $$"""
+            if(semantics == global::Elffy.{{nameof(VertexFieldSemantics)}}.{{f.Semantics}} && typeof(TField) == typeof({{AccessorFieldType(f.Semantics)}})) { accessor = new({{f.ByteOffset}}); return true; }
+""");
+        return $$"""
+
+        {
+{{string.Join(Environment.NewLine, s)}}
+            accessor = default;
+            return false;
+        }
+""";
+    }
+
+    private static string HasFieldCode(VertexFieldInfo[] fields)
+    {
+        if(fields.Length == 0) { return "false"; }
+        return string.Join("""
+||
+            
+""", fields.Select(f => $"semantics == global::Elffy.{nameof(VertexFieldSemantics)}.{f.Semantics}"));
+    }
+
+    private static string AccessorFieldType(VertexFieldSemantics sem) => sem switch
+    {
+        VertexFieldSemantics.Position or VertexFieldSemantics.Normal or VertexFieldSemantics.Tangent => "global::Elffy.Vector3",
+        VertexFieldSemantics.UV => "global::Elffy.Vector2",
+        VertexFieldSemantics.Color or VertexFieldSemantics.Weight => "global::Elffy.Vector4",
+        VertexFieldSemantics.TextureIndex => "int",
+        VertexFieldSemantics.Bone => "global::Elffy.Vector4i",
+        _ => throw new Exception($"not implemented semantics '{sem}'"),
+    };
 
     private class VertexFieldInfo
     {

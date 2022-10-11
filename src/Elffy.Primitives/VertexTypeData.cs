@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
@@ -114,6 +115,9 @@ public sealed class VertexFieldData
     public VertexFieldMarshalType MarshalType { get; }
     public int MarshalCount { get; }
 
+    /// <summary>Create vertex field data</summary>
+    /// <remarks>[NOTE] This method is intended to be used only from the source generator.</remarks>
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public VertexFieldData(string name, Type type, VertexFieldSemantics semantics, int byteOffset, VertexFieldMarshalType marshalType, int marshalCount)
     {
         Name = name ?? throw new ArgumentNullException(nameof(name));
