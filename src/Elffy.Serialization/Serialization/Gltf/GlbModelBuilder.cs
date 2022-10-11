@@ -217,7 +217,7 @@ public static class GlbModelBuilder
             attrs.NORMAL.HasValue &&
             attrs.TEXCOORD_0.HasValue &&
             attrs.TANGENT.HasValue == false &&
-            VertexMarshalHelper.GetVertexTypeData<TVertex>().HasField(VertexFieldSemantics.Tangent);
+            TVertex.HasField(VertexFieldSemantics.Tangent);
         if(needToCalcTangent) {
             TVertex* vertices = verticesOutput.GetWrittenBufffer(out var vLength);
 
