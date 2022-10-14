@@ -14,6 +14,14 @@
     <RootNamespace>Elffy</RootNamespace>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>$(DefineConstants)TRACE;ELFFY_SOURCE_GNENERATOR</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DefineConstants>$(DefineConstants)TRACE;ELFFY_SOURCE_GNENERATOR</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <Compile Include="..\Elffy.Primitives\VertexFieldMarshalType.cs" Link="VertexFieldMarshalType.cs" />
     <Compile Include="..\Elffy.Primitives\VertexFieldSemantics.cs" Link="VertexFieldSemantics.cs" />

@@ -65,8 +65,7 @@ public sealed partial class VertexTypeData
 
     public bool TryGetFieldAccessor<TField>(string fieldName, out VertexFieldAccessor<TField> accessor) where TField : unmanaged
     {
-        if(TryGetField(fieldName, out var field)) {
-            accessor = field.GetAccessor<TField>();
+        if(TryGetField(fieldName, out var field) && field.TryGetAccessor(out accessor)) {
             return true;
         }
         accessor = default;
@@ -75,8 +74,7 @@ public sealed partial class VertexTypeData
 
     public bool TryGetFieldAccessor<TField>(VertexFieldSemantics semantics, out VertexFieldAccessor<TField> accessor) where TField : unmanaged
     {
-        if(TryGetField(semantics, out var field)) {
-            accessor = field.GetAccessor<TField>();
+        if(TryGetField(semantics, out var field) && field.TryGetAccessor(out accessor)) {
             return true;
         }
         accessor = default;
@@ -114,6 +112,7 @@ public sealed class VertexFieldData
     public int ByteOffset { get; }
     public VertexFieldMarshalType MarshalType { get; }
     public int MarshalCount { get; }
+    public int Size { get; }
 
     /// <summary>Create vertex field data</summary>
     /// <remarks>[NOTE] This method is intended to be used only from the source generator.</remarks>
@@ -126,16 +125,30 @@ public sealed class VertexFieldData
         ByteOffset = byteOffset >= 0 ? byteOffset : throw new ArgumentOutOfRangeException(nameof(byteOffset));
         MarshalType = marshalType;
         MarshalCount = marshalCount >= 1 ? marshalCount : throw new ArgumentOutOfRangeException(nameof(marshalCount));
+        Size = semantics.GetValidSize();
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal VertexFieldAccessor<TField> GetAccessor<TField>() where TField : unmanaged
+    public unsafe bool TryGetAccessor<TField>(out VertexFieldAccessor<TField> accessor) where TField : unmanaged
     {
-        return new VertexFieldAccessor<TField>((nuint)ByteOffset);
+        if(sizeof(TField) == Size) {
+            accessor = new VertexFieldAccessor<TField>((nuint)ByteOffset);
+            return true;
+        }
+        accessor = default;
+        return false;
+    }
+
+    public VertexFieldAccessor<TField> GetAccessor<TField>() where TField : unmanaged
+    {
+        if(TryGetAccessor<TField>(out var accessor) == false) {
+            Throw();
+            static void Throw() => throw new InvalidOperationException("Cannot get the accessor.");
+        }
+        return accessor;
     }
 }
 
-public readonly struct VertexFieldAccessor<TField> where TField : unmanaged
+public readonly struct VertexFieldAccessor<TField> : IEquatable<VertexFieldAccessor<TField>> where TField : unmanaged
 {
     private readonly nuint _byteOffset;
     public nuint ByteOffset => _byteOffset;
@@ -157,4 +170,10 @@ public readonly struct VertexFieldAccessor<TField> where TField : unmanaged
     {
         return ref Unsafe.As<TVertex, TField>(ref Unsafe.AddByteOffset(ref Unsafe.AsRef(in vertex), _byteOffset));
     }
+
+    public override bool Equals(object? obj) => obj is VertexFieldAccessor<TField> accessor && Equals(accessor);
+
+    public bool Equals(VertexFieldAccessor<TField> other) => _byteOffset == other._byteOffset;
+
+    public override int GetHashCode() => _byteOffset.GetHashCode();
 }
