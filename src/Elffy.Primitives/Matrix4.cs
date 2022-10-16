@@ -7,6 +7,7 @@ using Elffy.Markup;
 using RP = Elffy.Markup.RegexPatterns;
 using NVec3 = System.Numerics.Vector3;
 using NMat4 = System.Numerics.Matrix4x4;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy
 {
@@ -86,6 +87,34 @@ namespace Elffy
         [FieldOffset(60)]
         public float M33;
 
+        public ref Vector4 Column0
+        {
+            [UnscopedRef]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => ref Unsafe.As<float, Vector4>(ref M00);
+        }
+
+        public ref Vector4 Column1
+        {
+            [UnscopedRef]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => ref Unsafe.As<float, Vector4>(ref M01);
+        }
+
+        public ref Vector4 Column2
+        {
+            [UnscopedRef]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => ref Unsafe.As<float, Vector4>(ref M02);
+        }
+
+        public ref Vector4 Column3
+        {
+            [UnscopedRef]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => ref Unsafe.As<float, Vector4>(ref M03);
+        }
+
         public static unsafe readonly int SizeInBytes = sizeof(Matrix4);
 
         [LiteralMarkupMember]
@@ -116,6 +145,15 @@ namespace Elffy
             M13 = m13;
             M23 = m23;
             M33 = m33;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Matrix4(in Vector4 col0, in Vector4 col1, in Vector4 col2, in Vector4 col3)
+        {
+            Column0 = col0;
+            Column1 = col1;
+            Column2 = col2;
+            Column3 = col3;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

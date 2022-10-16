@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 using Elffy.Markup;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy
 {
@@ -23,6 +24,17 @@ namespace Elffy
         public int Y;
         [FieldOffset(8)]
         public int Z;
+
+        public ref int this[int index]
+        {
+            [UnscopedRef]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                if((uint)index >= 3) { throw new IndexOutOfRangeException(nameof(index)); }
+                return ref Unsafe.Add(ref X, index);
+            }
+        }
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private readonly string DebuggerDisplay => $"({X}, {Y}, {Z})";

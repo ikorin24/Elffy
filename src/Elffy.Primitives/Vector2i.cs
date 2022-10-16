@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 using Elffy.Markup;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy
 {
@@ -21,6 +22,17 @@ namespace Elffy
         public int X;
         [FieldOffset(4)]
         public int Y;
+
+        public ref int this[int index]
+        {
+            [UnscopedRef]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                if((uint)index >= 2) { throw new IndexOutOfRangeException(nameof(index)); }
+                return ref Unsafe.Add(ref X, index);
+            }
+        }
 
         public static Vector2i UnitX => new Vector2i(1, 0);
         public static Vector2i UnitY => new Vector2i(0, 1);

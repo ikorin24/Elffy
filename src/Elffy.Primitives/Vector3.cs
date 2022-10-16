@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Diagnostics;
 using Elffy.Markup;
 using NVec3 = System.Numerics.Vector3;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy
 {
@@ -24,6 +25,17 @@ namespace Elffy
         public float Y;
         [FieldOffset(8)]
         public float Z;
+
+        public ref float this[int index]
+        {
+            [UnscopedRef]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                if((uint)index >= 3) { throw new IndexOutOfRangeException(nameof(index)); }
+                return ref Unsafe.Add(ref X, index);
+            }
+        }
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private readonly string DebuggerDisplay => $"({X}, {Y}, {Z})";
