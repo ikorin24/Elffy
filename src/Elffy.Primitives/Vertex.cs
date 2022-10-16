@@ -61,6 +61,19 @@ namespace Elffy
         }
     }
 
+    [DebuggerDisplay("{Position}")]
+    [GenerateVertex]
+    [VertexField("Position", typeof(Vector3), VertexFieldSemantics.Position, 0, VertexFieldMarshalType.Float, 3)]
+    public partial struct VertexPosOnly
+    {
+        public VertexPosOnly(float posX, float posY, float posZ)
+        {
+            Position.X = posX;
+            Position.Y = posY;
+            Position.Z = posZ;
+        }
+    }
+
 
     /// <summary>Skinned vertex struct, which has position, normal, uv, bone, weight, texture-index</summary>
     [DebuggerDisplay("{Position}")]
