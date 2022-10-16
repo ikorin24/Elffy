@@ -16,7 +16,7 @@ namespace Elffy
         protected ReadOnlySpan<FrameObject> RemovedObjects => _store.Removed;
         protected ReadOnlySpan<Positionable> Positionables => _store.Positionables;
 
-        protected ObjectLayer(int sortNumber) : base(sortNumber)
+        protected ObjectLayer(int sortNumber, string? name) : base(sortNumber, name)
         {
             _store = new FrameObjectStore(32);
         }

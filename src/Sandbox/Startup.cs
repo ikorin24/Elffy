@@ -31,27 +31,42 @@ public static class Startup
             IsDebugMode = AssemblyBuildInfo.IsDebug,
         }).Run(Start);
 
-    private static async UniTask<(DeferredRenderLayer, ForwardRenderLayer, UIObjectLayer)> CreateRenderPipeline(IHostScreen screen)
+    private static async UniTask<(DeferredRenderLayer, ForwardRenderLayer, UIObjectLayer)> CreateRenderPipeline(IHostScreen screen, bool gray)
     {
-        var offscreen = new OffscreenBuffer();
-        offscreen.Initialize(screen);
-        var deferred = new DeferredRenderLayer(offscreen.FBO, -100);
-        var forward = new ForwardRenderLayer(offscreen.FBO, 0);
-        var ppo = new PostProcessOperation(1000)
-        {
-            PostProcess = new GrayscalePostProcess(offscreen),
-        };
-        var ui = new UIObjectLayer(1001);
-        ppo.SizeChanged.Subscribe(_ => offscreen.ResizeToScreenFrameBufferSize());
-        ppo.AfterExecute.Subscribe(_ => offscreen.ClearAllBuffers());
-        ppo.Dead.Subscribe(_ => offscreen.Dispose());
-        await ParallelOperation.WhenAll(
-            deferred.Activate(screen),
-            forward.Activate(screen),
-            ui.Activate(screen),
-            ppo.Activate(screen));
+        if(AssemblyBuildInfo.IsDebug) {
+            await new ForwardRenderLayer("_DEBUGGER_LAYER").Activate(screen);
+        }
 
-        return (deferred, forward, ui);
+        if(gray) {
+            var offscreen = new OffscreenBuffer();
+            offscreen.Initialize(screen);
+            var deferred = new DeferredRenderLayer(offscreen.FBO, -100);
+            var forward = new ForwardRenderLayer(offscreen.FBO, 0);
+            var ppo = new PostProcessOperation(1000)
+            {
+                PostProcess = new GrayscalePostProcess(offscreen),
+            };
+            var ui = new UIObjectLayer(1001);
+            ppo.SizeChanged.Subscribe(_ => offscreen.ResizeToScreenFrameBufferSize());
+            ppo.AfterExecute.Subscribe(_ => offscreen.ClearAllBuffers());
+            ppo.Dead.Subscribe(_ => offscreen.Dispose());
+            await ParallelOperation.WhenAll(
+                deferred.Activate(screen),
+                forward.Activate(screen),
+                ui.Activate(screen),
+                ppo.Activate(screen));
+            return (deferred, forward, ui);
+        }
+        else {
+            var deferred = new DeferredRenderLayer();
+            var forward = new ForwardRenderLayer();
+            var ui = new UIObjectLayer();
+            await ParallelOperation.WhenAll(
+                deferred.Activate(screen),
+                forward.Activate(screen),
+                ui.Activate(screen));
+            return (deferred, forward, ui);
+        }
     }
 
     private static async UniTask Start(IHostScreen screen)
@@ -62,7 +77,7 @@ public static class Startup
                 screen.Close();
             }
         });
-        var (deferred, forward, ui) = await CreateRenderPipeline(screen);
+        var (deferred, forward, ui) = await CreateRenderPipeline(screen, false);
         var uiRoot = ui.UIRoot;
         var update = screen.Timings.Update;
         uiRoot.Background = Color4.Black;
@@ -119,46 +134,29 @@ public static class Startup
     private static async UniTask InitializeLights(ForwardRenderLayer layer)
     {
         var screen = layer.GetValidScreen();
-        var pos = new Vector3(0, 10, 10);
-
         var color = Color4.White;
-        var (
-            //arrow,
-            sphere,
-            light
-            ) = await UniTask.WhenAll(
-            //new Arrow
-            //{
-            //    Shader = new SolidColorShader
-            //    {
-            //        Color = color,
-            //    },
-            //    HasShadow = false,
-            //    Scale = new Vector3(2)
-            //}.Activate(layer),
-            new Sphere
+        var (arrow, light) = await UniTask.WhenAll(
+            new Arrow
             {
                 Shader = new SolidColorShader
                 {
                     Color = color,
                 },
-                Position = pos,
                 HasShadow = false,
+                Scale = new Vector3(3),
+                Position = new Vector3(0, 16, 0),
             }.Activate(layer),
-            //PointLight.Create(screen, pos, color)
-            DirectLight.Create(screen, -pos, color)
-            );
+            DirectLight.Create(screen, new Vector3(0, -1, 0), color)
+        );
 
         var i = 0;
         screen.Timings.Update.Subscribe(_ =>
         {
             var angle = i++.ToRadian();
             var (sin, cos) = MathF.SinCos(angle);
-            sphere.Position = new Vector3(sin * 2, 10, cos * 10);
-
-            //light.Position = sphere.Position;
-            light.Direction = -sphere.Position;
-            //arrow.SetDirection(-sphere.Position.Normalized(), sphere.Position);
+            var vec = -new Vector3(sin * 2, 10, cos * 10);
+            light.Direction = vec;
+            arrow.SetDirection(vec.Normalized());
         });
     }
 

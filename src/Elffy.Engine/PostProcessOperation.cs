@@ -20,9 +20,12 @@ namespace Elffy
             init => _postProcess = value;
         }
 
-        public PostProcessOperation(int sortNumber = DefaultSortNumber) : this(FBO.Empty, sortNumber) { }
+        public PostProcessOperation(int sortNumber = DefaultSortNumber) : this(FBO.Empty, null, sortNumber) { }
 
-        public PostProcessOperation(FBO renderTarget, int sortNumber = DefaultSortNumber) : base(sortNumber)
+        public PostProcessOperation(string? name, int sortNumber = DefaultSortNumber) : this(FBO.Empty, name, sortNumber) { }
+        public PostProcessOperation(FBO renderTarget, int sortNumber = DefaultSortNumber) : this(renderTarget, null, sortNumber) { }
+
+        public PostProcessOperation(FBO renderTarget, string? name, int sortNumber = DefaultSortNumber) : base(sortNumber, name)
         {
             _renderTarget = renderTarget;
             Activating.Subscribe(static (sender, ct) =>

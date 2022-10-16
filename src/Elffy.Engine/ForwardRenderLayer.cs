@@ -8,11 +8,11 @@ namespace Elffy
         private const int DefaultSortNumber = 0;
         private readonly FBO _renderTarget;
 
-        public ForwardRenderLayer(int sortNumber = DefaultSortNumber) : this(FBO.Empty, sortNumber)
-        {
-        }
+        public ForwardRenderLayer(int sortNumber = DefaultSortNumber) : this(FBO.Empty, null, sortNumber) { }
+        public ForwardRenderLayer(string? name, int sortNumber = DefaultSortNumber) : this(FBO.Empty, name, sortNumber) { }
+        public ForwardRenderLayer(FBO renderTarget, int sortNumber = DefaultSortNumber) : this(renderTarget, null, sortNumber) { }
 
-        public ForwardRenderLayer(FBO renderTarget, int sortNumber = DefaultSortNumber) : base(sortNumber)
+        public ForwardRenderLayer(FBO renderTarget, string? name, int sortNumber = DefaultSortNumber) : base(sortNumber, name)
         {
             _renderTarget = renderTarget;
         }

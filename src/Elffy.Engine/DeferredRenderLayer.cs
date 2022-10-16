@@ -17,9 +17,13 @@ namespace Elffy
         private PostProcessProgram? _ppProgram;
         private bool _isBlendEnabledCache;
 
-        public DeferredRenderLayer(int sortNumber = DefaultSortNumber) : this(FBO.Empty, sortNumber) { }
+        public DeferredRenderLayer(int sortNumber = DefaultSortNumber) : this(FBO.Empty, null, sortNumber) { }
 
-        public DeferredRenderLayer(FBO renderTarget, int sortNumber = DefaultSortNumber) : base(sortNumber)
+        public DeferredRenderLayer(string? name, int sortNumber = DefaultSortNumber) : this(FBO.Empty, name, sortNumber) { }
+
+        public DeferredRenderLayer(FBO renderTarget, int sortNumber = DefaultSortNumber) : this(renderTarget, null, sortNumber) { }
+
+        public DeferredRenderLayer(FBO renderTarget, string? name, int sortNumber = DefaultSortNumber) : base(sortNumber, name)
         {
             _renderTarget = renderTarget;
             _gBuffer = new GBuffer();

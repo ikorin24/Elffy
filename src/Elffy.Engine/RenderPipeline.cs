@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Cysharp.Threading.Tasks;
 using Elffy.Features.Internal;
@@ -13,12 +14,38 @@ namespace Elffy
         private readonly LazyApplyingList<PipelineOperation> _list;
         private readonly RenderingArea _owner;
 
+        internal const string DebuggerLayerName = "_DEBUGGER_LAYER";
+
         internal IHostScreen Screen => _owner.OwnerScreen;
 
         internal RenderPipeline(RenderingArea owner)
         {
             _list = new();
             _owner = owner;
+        }
+
+        public bool TryGetOperation(string? name, [MaybeNullWhen(false)] out PipelineOperation operation)
+        {
+            foreach(var op in _list.AsReadOnlySpan()) {
+                if(op.Name == name) {
+                    operation = op;
+                    return true;
+                }
+            }
+            operation = null;
+            return false;
+        }
+
+        public bool TryGetOperation<T>(string? name, [MaybeNullWhen(false)] out T operation) where T : PipelineOperation
+        {
+            foreach(var op in _list.AsReadOnlySpan()) {
+                if(op.Name == name && op is T typedOp) {
+                    operation = typedOp;
+                    return true;
+                }
+            }
+            operation = null;
+            return false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

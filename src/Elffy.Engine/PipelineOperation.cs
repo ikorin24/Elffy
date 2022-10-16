@@ -12,6 +12,7 @@ namespace Elffy
     public abstract class PipelineOperation
     {
         private readonly CancellationTokenSource _runningTokenSource;
+        private readonly string? _name;
         private readonly int _sortNumber;
         private RenderPipeline? _owner;
         private bool _isEnabled;
@@ -28,6 +29,7 @@ namespace Elffy
         public PipelineOperationTimingPoint AfterExecute => _afterExecute;
 
         internal RenderPipeline? Owner => _owner;
+        public string? Name => _name;
         public bool IsEnabled { get => _isEnabled; set => _isEnabled = value; }
         public int SortNumber => _sortNumber;
         public IHostScreen? Screen => _owner?.Screen;
@@ -39,8 +41,9 @@ namespace Elffy
         public Event<PipelineOperation> SizeChanged => new(ref _sizeChanged);
         public CancellationToken RunningToken => _runningTokenSource.Token;
 
-        protected PipelineOperation(int sortNumber)
+        protected PipelineOperation(int sortNumber, string? name)
         {
+            _name = name;
             _runningTokenSource = new CancellationTokenSource();
             _isEnabled = true;
             _sortNumber = sortNumber;

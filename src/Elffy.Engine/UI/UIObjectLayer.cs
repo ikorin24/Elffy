@@ -25,9 +25,12 @@ namespace Elffy.UI
         /// <summary>Get or set whether hit test is enabled.</summary>
         public bool IsHitTestEnabled { get => _isHitTestEnabled; set => _isHitTestEnabled = value; }
 
-        public UIObjectLayer(int sortNumber = DefaultSortNumber) : this(FBO.Empty, sortNumber) { }
+        public UIObjectLayer(int sortNumber = DefaultSortNumber) : this(FBO.Empty, null, sortNumber) { }
 
-        public UIObjectLayer(FBO renderTarget, int sortNumber = DefaultSortNumber) : base(sortNumber)
+        public UIObjectLayer(string? name, int sortNumber = DefaultSortNumber) : this(FBO.Empty, name, sortNumber) { }
+        public UIObjectLayer(FBO renderTarget, int sortNumber = DefaultSortNumber) : this(renderTarget, null, sortNumber) { }
+
+        public UIObjectLayer(FBO renderTarget, string? name, int sortNumber = DefaultSortNumber) : base(sortNumber, name)
         {
             _renderTarget = renderTarget;
             _isHitTestEnabled = true;
