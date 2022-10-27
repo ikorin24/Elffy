@@ -11,6 +11,8 @@ namespace Elffy.Shading
         private TextureObject _depth;
         private Vector2i _size;
 
+        public static ShadowMapData Empty => default;
+
         public readonly bool IsEmpty => _depth.IsEmpty;
 
         public readonly Vector2i Size => _size;

@@ -110,13 +110,14 @@ namespace Elffy
 
         public LightCollection GetLights() => new LightCollection(this);
 
-        internal ref readonly Vector4 GetPosition(int index) => ref _lightPos[index];
+        internal RefReadOnly<Vector4> GetPosition(int index) => new RefReadOnly<Vector4>(in _lightPos[index]);
 
-        internal ref readonly Color4 GetColor(int index) => ref _lightColor[index];
+        internal RefReadOnly<Color4> GetColor(int index) => new RefReadOnly<Color4>(in _lightColor[index]);
 
-        internal ref readonly Matrix4 GetMatrix(int index) => ref _lightMatrices[index];
+        internal RefReadOnly<Matrix4> GetMatrix(int index) => new RefReadOnly<Matrix4>(in _lightMatrices[index]);
 
-        internal ref readonly ShadowMapData GetShadowMap(int index) => ref _shadowMaps[index];
+        internal RefReadOnly<ShadowMapData> GetShadowMap(int index) => new RefReadOnly<ShadowMapData>(in _shadowMaps[index]);
+
 
         [SkipLocalsInit]
         internal void UpdatePositions(ReadOnlySpan<Vector4> positions, int offset)

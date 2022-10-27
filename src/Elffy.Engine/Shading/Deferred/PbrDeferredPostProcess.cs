@@ -30,9 +30,9 @@ internal sealed class PbrDeferredPostProcess : PostProcess
         dispatcher.SendUniformTexture1D("_lightColorSampler", lights.ColorTexture, TextureUnitNumber.Unit4);
 
         var light = lights.GetLights().FirstOrDefault();
-        if(light != null) {
+        if(light != null && light.ShadowMap.TryDerefer(out var shadowMap)) {
             dispatcher.SendUniformTexture1D("_lmat", lights.MatrixTexture, TextureUnitNumber.Unit5);
-            dispatcher.SendUniformTexture2D("_shadowMap", light.ShadowMap.DepthTexture, TextureUnitNumber.Unit6);
+            dispatcher.SendUniformTexture2D("_shadowMap", shadowMap.DepthTexture, TextureUnitNumber.Unit6);
         }
     }
 

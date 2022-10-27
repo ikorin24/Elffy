@@ -18,29 +18,29 @@ namespace Elffy
 
         int ILight.Index => _impl.Index;
 
-        public bool HasShadowMap => _impl.GetShadowMapOrEmpty().IsEmpty == false;
-
         Vector4 ILight.Position
         {
-            get => _impl.GetPositionOrZero();
+            get => _impl.GetPosition().DereferOrDefault();
             set => _impl.TrySetPosition(value);
         }
 
         public Vector3 Position
         {
-            get => _impl.GetPositionOrZero().Xyz;
+            get => _impl.GetPosition().TryDerefer(out var pos) ?
+                pos.Xyz / pos.W :
+                default;
             set => _impl.TrySetPosition(new Vector4(value, 1f));
         }
 
         public Color4 Color
         {
-            get => _impl.GetColorOrZero();
+            get => _impl.GetColor().DereferOrDefault();
             set => _impl.TrySetColor(value);
         }
 
-        public ref readonly Matrix4 LightMatrix => ref _impl.GetLightMatrixOrZero();
+        public RefReadOnlyOrNull<Matrix4> LightMatrix => _impl.GetLightMatrix();
 
-        public ref readonly ShadowMapData ShadowMap => ref _impl.GetShadowMapOrEmpty();
+        public RefReadOnlyOrNull<ShadowMapData> ShadowMap => _impl.GetShadowMap();
 
         public PointLight(LightManager lightManager, int index, short token)
         {
