@@ -35,6 +35,9 @@ public readonly ref struct RefReadOnly<T>
     public ref readonly T GetReference() => ref _value;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool IsSameRef(in T value) => Unsafe.AreSame(ref Unsafe.AsRef(in _value), ref Unsafe.AsRef(in value));
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static RefReadOnly<T> CreateUnsafe(in T value) => new RefReadOnly<T>(in value, true);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -28,6 +28,9 @@ public readonly ref struct RefReadOnlyOrNull<T>
     public ref readonly T GetReference() => ref _value;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool IsSameRef(in T value) => Unsafe.AreSame(ref Unsafe.AsRef(in _value), ref Unsafe.AsRef(in value));
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T DereferOrThrow()
     {
         if(IsNullRef) {
