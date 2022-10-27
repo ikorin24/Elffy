@@ -63,4 +63,19 @@ public readonly ref struct Ref<T>
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator RefReadOnlyOrNull<T>(Ref<T> r) => r.AsNullableReadOnly();
+
+#pragma warning disable 0809
+    [Obsolete("Not supported", true)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public override bool Equals(object? obj) => throw new NotSupportedException();
+
+    [Obsolete("Not supported", true)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public override int GetHashCode() => throw new NotSupportedException();
+#pragma warning restore 0809
+
+    public static bool operator ==(Ref<T> left, Ref<T> right) =>
+        Unsafe.AreSame(ref left._value, ref right._value);
+
+    public static bool operator !=(Ref<T> left, Ref<T> right) => !(left == right);
 }

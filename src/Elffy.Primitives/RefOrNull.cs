@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
@@ -60,6 +61,9 @@ public readonly ref struct RefOrNull<T>
     public Ref<T> AsNotNull() => new Ref<T>(ref _value);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public RefReadOnly<T> AsNotNullReadOnly() => new RefReadOnly<T>(in _value);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public RefReadOnlyOrNull<T> AsReadOnly() => new RefReadOnlyOrNull<T>(in _value);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -70,4 +74,19 @@ public readonly ref struct RefOrNull<T>
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static explicit operator RefReadOnly<T>(RefOrNull<T> r) => r.AsNotNull();
+
+#pragma warning disable 0809
+    [Obsolete("Not supported", true)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public override bool Equals(object? obj) => throw new NotSupportedException();
+
+    [Obsolete("Not supported", true)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public override int GetHashCode() => throw new NotSupportedException();
+#pragma warning restore 0809
+
+    public static bool operator ==(RefOrNull<T> left, RefOrNull<T> right) =>
+        Unsafe.AreSame(ref left._value, ref right._value);
+
+    public static bool operator !=(RefOrNull<T> left, RefOrNull<T> right) => !(left == right);
 }

@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
@@ -58,4 +59,19 @@ public readonly ref struct RefReadOnlyOrNull<T>
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static explicit operator RefReadOnly<T>(RefReadOnlyOrNull<T> r) => r.AsNotNull();
+
+#pragma warning disable 0809
+    [Obsolete("Not supported", true)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public override bool Equals(object? obj) => throw new NotSupportedException();
+
+    [Obsolete("Not supported", true)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public override int GetHashCode() => throw new NotSupportedException();
+#pragma warning restore 0809
+
+    public static bool operator ==(RefReadOnlyOrNull<T> left, RefReadOnlyOrNull<T> right) =>
+        Unsafe.AreSame(ref Unsafe.AsRef(in left._value), ref Unsafe.AsRef(in right._value));
+
+    public static bool operator !=(RefReadOnlyOrNull<T> left, RefReadOnlyOrNull<T> right) => !(left == right);
 }
