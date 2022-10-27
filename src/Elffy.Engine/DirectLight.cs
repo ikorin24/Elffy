@@ -163,9 +163,10 @@ internal sealed class DirectLightDebugObject : Renderable
     public DirectLightDebugObject(DirectLight light)
     {
         _light = light;
-        light.Terminating.Subscribe(async (_, _) =>
+        light.Terminating.Subscribe((_, _) =>
         {
-            await this.Terminate(FrameTiming.FrameFinalizing);
+            this.Terminate().Forget();
+            return UniTask.CompletedTask;
         });
         Activating.Subscribe(static (f, ct) =>
         {
