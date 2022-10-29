@@ -185,6 +185,7 @@ namespace Elffy
                                                             M01, M11, M21, M31,
                                                             M02, M12, M22, M32,
                                                             M03, M13, M23, M33);
+        public readonly Matrix4 Inverted() => Inverted(out var inv) ? inv : default;
 
         public readonly bool Inverted(out Matrix4 result)
         {

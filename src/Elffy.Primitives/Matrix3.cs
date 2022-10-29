@@ -139,6 +139,8 @@ namespace Elffy
             M22 = matrix[8];
         }
 
+        public readonly Matrix3 Inverted() => Inverted(out var inv) ? inv : default;
+
         public readonly bool Inverted(out Matrix3 result)
         {
             var u = new NVec3(M00, M01, M02) * new NVec3(M11, M12, M10) * new NVec3(M22, M20, M21);
