@@ -6,9 +6,14 @@ using System.Runtime.CompilerServices;
 
 namespace Elffy;
 
+[DebuggerTypeProxy(typeof(Ref<>.DebuggerProxy))]
+[DebuggerDisplay("{DebuggerView,nq}")]
 public readonly ref struct Ref<T>
 {
     private readonly ref T _value;
+
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+    private string DebuggerView => Unsafe.IsNullRef(ref _value) ? "null" : $"{{ref {typeof(T).Name}}}";
 
     [Obsolete("Don't use default constructor.", true)]
     [EditorBrowsable(EditorBrowsableState.Never)]
@@ -81,4 +86,23 @@ public readonly ref struct Ref<T>
         Unsafe.AreSame(ref left._value, ref right._value);
 
     public static bool operator !=(Ref<T> left, Ref<T> right) => !(left == right);
+
+    private sealed class DebuggerProxy
+    {
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private T? _value;
+
+        public T? Value => _value;
+
+        public DebuggerProxy(Ref<T> r)
+        {
+            // Don't use Derefer()
+            if(Unsafe.IsNullRef(ref r._value)) {
+                _value = default;
+            }
+            else {
+                _value = r._value;
+            }
+        }
+    }
 }

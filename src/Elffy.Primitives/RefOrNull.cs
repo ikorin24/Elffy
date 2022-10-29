@@ -1,16 +1,22 @@
 ﻿#nullable enable
 using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Elffy;
 
+[DebuggerTypeProxy(typeof(RefOrNull<>.DebuggerProxy))]
+[DebuggerDisplay("{DebuggerView,nq}")]
 public readonly ref struct RefOrNull<T>
 {
     private readonly ref T _value;
 
     public static RefOrNull<T> NullRef => default;
+
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+    private string DebuggerView => IsNullRef ? "null" : $"{{ref {typeof(T).Name}}}";
 
     public bool IsNullRef
     {
@@ -92,4 +98,17 @@ public readonly ref struct RefOrNull<T>
         Unsafe.AreSame(ref left._value, ref right._value);
 
     public static bool operator !=(RefOrNull<T> left, RefOrNull<T> right) => !(left == right);
+
+    private sealed class DebuggerProxy
+    {
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private T? _value;
+
+        public T? Value => _value;
+
+        public DebuggerProxy(RefOrNull<T> r)
+        {
+            r.TryDerefer(out _value);
+        }
+    }
 }
