@@ -14,18 +14,18 @@ namespace Elffy.Shapes
     public sealed class Model3D : Renderable
     {
         private object? _obj;
-        private unsafe delegate*<Model3D, object?, Delegate, UniTask> _callbackOnActivated;  // UniTask func(Model3D self, object? obj, Delegate builder)
+        private unsafe delegate*<Model3D, object?, Delegate, UniTask> _onActivating;    // UniTask func(Model3D self, object? obj, Delegate builder)
         private Delegate? _builder;
         private readonly Model3DRenderingDelegate? _onRendering;
 
         private unsafe Model3D(object? obj,
-                               delegate*<Model3D, object?, Delegate, UniTask> callbackOnAlive,
+                               delegate*<Model3D, object?, Delegate, UniTask> onActivating,
                                Delegate builder,
                                Model3DRenderingDelegate? onRendering)
         {
             Debug.Assert(builder is not null);
             _obj = obj;
-            _callbackOnActivated = callbackOnAlive;
+            _onActivating = onActivating;
             _builder = builder;
             _onRendering = onRendering;
             Activating.Subscribe((f, ct) => SafeCast.As<Model3D>(f).OnActivating(ct));
@@ -35,7 +35,7 @@ namespace Elffy.Shapes
         {
             Debug.Assert(_builder is not null);
             unsafe {
-                Debug.Assert(_callbackOnActivated is not null);
+                Debug.Assert(_onActivating is not null);
             }
 
             try {
@@ -47,14 +47,14 @@ namespace Elffy.Shapes
                 _obj = null;
                 _builder = null;
                 unsafe {
-                    _callbackOnActivated = null;
+                    _onActivating = null;
                 }
             }
 
             static unsafe UniTask InvokeCallback(Model3D model3D)
             {
                 Debug.Assert(model3D._builder is not null);
-                return model3D._callbackOnActivated(model3D, model3D._obj, model3D._builder);
+                return model3D._onActivating(model3D, model3D._obj, model3D._builder);
             }
         }
 
@@ -97,14 +97,6 @@ namespace Elffy.Shapes
                 ThrowNullArg();
                 [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(builder));
             }
-
-            // ジェネリクス型<T>をローカル関数に含め、関数ポインタを渡すことで、
-            // builder の呼び出しを OnActivating() まで遅延させつつ、<T>を復元できる。
-            // 参考: https://ikorin2.hatenablog.jp/entry/2021/01/15/110845
-
-            // Capture the generics type <T> in the local function and store its function pointer in the instance.
-            // Model3D can restore the generics type as <T>, not 'Type', when calls OnActivating().
-            // Reference (my blog in Japanese): https://ikorin2.hatenablog.jp/entry/2021/01/15/110845
 
             return new Model3D(obj, &CallbackOnActivating, builder, onRendering);
 
