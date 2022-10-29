@@ -29,7 +29,8 @@ namespace Elffy.Shading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void Map<TVertex>(int index, VertexFieldSemantics semantics) where TVertex : unmanaged, IVertex
         {
-            Map(typeof(TVertex), index, semantics);
+            var field = TVertex.VertexTypeData.GetField(semantics);
+            MapPrivate(index, field, TVertex.VertexSize);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -43,7 +44,8 @@ namespace Elffy.Shading
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void Map<TVertex>(int index, string vertexFieldName) where TVertex : unmanaged, IVertex
         {
-            Map(typeof(TVertex), index, vertexFieldName);
+            var field = TVertex.VertexTypeData.GetField(vertexFieldName);
+            MapPrivate(index, field, TVertex.VertexSize);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

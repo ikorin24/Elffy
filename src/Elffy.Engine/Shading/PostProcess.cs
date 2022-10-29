@@ -79,8 +79,8 @@ public abstract class PostProcess
             var fragmentShader = source.FragmentShader;
             program = ShaderCompiler.Compile(vertexShader, fragmentShader);
             var definition = new VertexDefinition(program);
-            definition.Map<VertexSlim>("_pos", nameof(VertexSlim.Position));
-            definition.Map<VertexSlim>("_uv", nameof(VertexSlim.UV));
+            definition.Map<VertexSlim>("_pos", VertexFieldSemantics.Position);
+            definition.Map<VertexSlim>("_uv", VertexFieldSemantics.UV);
             VAO.Unbind();
             VBO.Unbind();
             return new PostProcessProgram(this, program, vbo, ibo, vao, screen);

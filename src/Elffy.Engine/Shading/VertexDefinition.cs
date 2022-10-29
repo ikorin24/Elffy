@@ -47,18 +47,17 @@ namespace Elffy.Shading
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Map<TVertex>(int index, string vertexFieldName) where TVertex : unmanaged, IVertex
+        public void Map<TVertex>(int index, VertexFieldSemantics semantics) where TVertex : unmanaged, IVertex
         {
             if(index < 0) {
                 ThrowInvalidIndex();
+                [DoesNotReturn] static void ThrowInvalidIndex() => throw new ArgumentException($"{nameof(index)} is negative value.");
             }
-            VertexMapper.Map<TVertex>(index, vertexFieldName);
-
-            [DoesNotReturn] static void ThrowInvalidIndex() => throw new ArgumentException($"{nameof(index)} is negative value.");
+            VertexMapper.Map<TVertex>(index, semantics);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Map<TVertex>(string name, string vertexFieldName) where TVertex : unmanaged, IVertex
+        public void Map<TVertex>(string name, VertexFieldSemantics semantics) where TVertex : unmanaged, IVertex
         {
             ArgumentNullException.ThrowIfNull(name);
             var index = GL.GetAttribLocation(_program.Value, name);
@@ -66,7 +65,7 @@ namespace Elffy.Shading
                 DevEnv.ForceWriteLine($"[warning] '{name}' vertex field input is not found in shader program({_program.Value}).");
             }
             else {
-                VertexMapper.Map<TVertex>(index, vertexFieldName);
+                VertexMapper.Map<TVertex>(index, semantics);
             }
         }
 
