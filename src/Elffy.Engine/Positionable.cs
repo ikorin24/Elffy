@@ -85,6 +85,30 @@ namespace Elffy
         {
         }
 
+        internal static Matrix4 CalcModelMatrix(in Vector3 position, in Quaternion rotation, in Vector3 scale)
+        {
+            // TODO: optimize
+            return position.ToTranslationMatrix4() * rotation.ToMatrix4() * scale.ToScaleMatrix4();
+        }
+
+        public Matrix4 GetSelfModelMatrix() => CalcModelMatrix(in _position, in _ratation, in _scale);
+
+        public Matrix4 GetModelMatrix()
+        {
+            var model = GetSelfModelMatrix();
+            var parent = _parent;
+            if(parent == null) {
+                return model;
+            }
+            while(true) {
+                model = parent.GetSelfModelMatrix() * model;
+                parent = parent.Parent;
+                if(parent == null) {
+                    return model;
+                }
+            }
+        }
+
         /// <summary>Translate the <see cref="Positionable"/>.</summary>
         /// <param name="x">translation of x</param>
         /// <param name="y">translation of y</param>

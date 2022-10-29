@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -24,7 +25,25 @@ namespace Elffy
             _owner = owner;
         }
 
-        public bool TryGetOperation(string? name, [MaybeNullWhen(false)] out PipelineOperation operation)
+        public PipelineOperation FindOperation(string? name)
+        {
+            if(TryFindOperation(name, out var operation) == false) {
+                ThrowOperationNotFound(name);
+                [DoesNotReturn] static void ThrowOperationNotFound(string? name) => throw new ArgumentException($"{nameof(PipelineOperation)} '{name}' is not found.");
+            }
+            return operation;
+        }
+
+        public T FindOperation<T>(string? name) where T : PipelineOperation
+        {
+            if(TryFindOperation<T>(name, out var operation) == false) {
+                ThrowOperationNotFound(name);
+                [DoesNotReturn] static void ThrowOperationNotFound(string? name) => throw new ArgumentException($"{typeof(T).FullName} '{name}' is not found.");
+            }
+            return operation;
+        }
+
+        public bool TryFindOperation(string? name, [MaybeNullWhen(false)] out PipelineOperation operation)
         {
             foreach(var op in _list.AsReadOnlySpan()) {
                 if(op.Name == name) {
@@ -36,7 +55,7 @@ namespace Elffy
             return false;
         }
 
-        public bool TryGetOperation<T>(string? name, [MaybeNullWhen(false)] out T operation) where T : PipelineOperation
+        public bool TryFindOperation<T>(string? name, [MaybeNullWhen(false)] out T operation) where T : PipelineOperation
         {
             foreach(var op in _list.AsReadOnlySpan()) {
                 if(op.Name == name && op is T typedOp) {

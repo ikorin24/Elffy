@@ -164,13 +164,13 @@ namespace Elffy
             // TODO:
             if(position.W == 0) {
                 const float Near = 0f;
-                const float Far = 1000;
-                const float L = 3;
+                const float Far = 30;
+                const float W = 20;
                 var vec = position.Xyz.Normalized();
                 var v = new Vector3(vec.X, 0, vec.Z);
                 var up = Quaternion.FromTwoVectors(v, vec) * Vector3.UnitY;
                 Matrix4.LookAt(vec * (Far * 0.5f), Vector3.Zero, up, out lView);
-                Matrix4.OrthographicProjection(-L, L, -L, L, Near, Far, out lProj);
+                Matrix4.OrthographicProjection(-W, W, -W, W, Near, Far, out lProj);
             }
             else {
                 const float L = 3;

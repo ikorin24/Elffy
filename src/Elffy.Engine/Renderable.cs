@@ -158,10 +158,9 @@ namespace Elffy
             if(needToRenderSelf == false && children.IsEmpty) {
                 return;
             }
-            var withoutScale = modelParent * Position.ToTranslationMatrix4() * Rotation.ToMatrix4();
+            var model = modelParent * GetSelfModelMatrix();
             if(needToRenderSelf && EnsureShaderInitialized()) {
                 Debug.Assert(_rendererData.State is RendererDataState.Compiled);
-                var model = withoutScale * Scale.ToScaleMatrix4();
                 var screen = GetValidScreen();
                 var layer = GetValidLayer();
                 var context = new RenderingContext(screen, layer, this, in model, in view, in projection);
@@ -170,7 +169,7 @@ namespace Elffy
                 Rendered?.Invoke(in context);
             }
             foreach(var child in children) {
-                child.RenderRecursively(withoutScale, view, projection);
+                child.RenderRecursively(in model, in view, in projection);
             }
 
             bool EnsureShaderInitialized()

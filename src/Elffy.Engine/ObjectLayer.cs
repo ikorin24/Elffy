@@ -1,6 +1,8 @@
 ﻿#nullable enable
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Cysharp.Threading.Tasks;
 using Elffy.Features.Internal;
 using Elffy.Threading;
@@ -22,6 +24,49 @@ namespace Elffy
         }
 
         public ReadOnlySpan<FrameObject> GetFrameObjects() => _store.List;
+
+        public T FindObject<T>(string? name) where T : FrameObject
+        {
+            if(TryFindObject<T>(name, out var obj) == false) {
+                ThrowNotFound(name);
+                [DoesNotReturn] static void ThrowNotFound(string? name) => throw new ArgumentException($"{nameof(FrameObject)} '{name}' is not found");
+            }
+            return obj;
+        }
+
+        public FrameObject FindObject(string? name)
+        {
+            if(TryFindObject(name, out var obj) == false) {
+                ThrowNotFound(name);
+                [DoesNotReturn] static void ThrowNotFound(string? name) => throw new ArgumentException($"{nameof(FrameObject)} '{name}' is not found");
+            }
+            return obj;
+        }
+
+        public bool TryFindObject<T>(string? name, [MaybeNullWhen(false)] out T obj) where T : FrameObject
+        {
+            foreach(var frameObject in GetFrameObjects()) {
+                if(frameObject.Name == name && frameObject is T x) {
+                    obj = x;
+                    return true;
+                }
+            }
+            obj = default;
+            return false;
+        }
+
+        public bool TryFindObject(string? name, [MaybeNullWhen(false)] out FrameObject obj)
+        {
+            foreach(var frameObject in GetFrameObjects()) {
+                if(frameObject.Name == name) {
+                    obj = frameObject;
+                    return true;
+                }
+            }
+            obj = default;
+            return false;
+        }
+
 
         protected virtual void SelectMatrix(IHostScreen screen, out Matrix4 view, out Matrix4 projection)
         {

@@ -1,8 +1,6 @@
 ﻿#nullable enable
 using Cysharp.Threading.Tasks;
-using Elffy.Effective.Unsafes;
 using Elffy.Shading;
-using Elffy.Shading.Forward;
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -35,9 +33,9 @@ public sealed class DirectLight : ILight
     public Vector3 Direction
     {
         get => _impl.GetPosition().TryDerefer(out var pos) ?
-            -pos.Xyz / pos.W :
+            (pos.W != 0) ? (-pos.Xyz / pos.W) : default :
             default;
-        set => _impl.TrySetPosition(new Vector4(-value, 1f));
+        set => _impl.TrySetPosition(new Vector4(-value, 0));
     }
 
     public Color4 Color
@@ -148,7 +146,7 @@ public sealed class DirectLight : ILight
             manager.InitializeShadowMap(((ILight)light).Index, DefaultShadowMapSize);
         }
         var pipeline = screen.RenderPipeline;
-        if(pipeline.TryGetOperation<ForwardRenderLayer>(RenderPipeline.DebuggerLayerName, out var debuggerLayer)) {
+        if(pipeline.TryFindOperation<ForwardRenderLayer>(RenderPipeline.DebuggerLayerName, out var debuggerLayer)) {
             await new DirectLightDebugObject(light).Activate(debuggerLayer);
         }
         await timings.GetTiming(timing).NextOrNow();
@@ -159,9 +157,11 @@ public sealed class DirectLight : ILight
 internal sealed class DirectLightDebugObject : Renderable
 {
     private readonly DirectLight _light;
+    public DirectLight TargetLight => _light;
 
     public DirectLightDebugObject(DirectLight light)
     {
+        HasShadow = false;
         _light = light;
         light.Terminating.Subscribe((_, _) =>
         {
@@ -170,12 +170,180 @@ internal sealed class DirectLightDebugObject : Renderable
         });
         Activating.Subscribe(static (f, ct) =>
         {
-            PrimitiveMeshProvider<Vertex>.GetCube(
-                SafeCast.As<DirectLightDebugObject>(f),
-                static (self, vertices, indices) => self.LoadMesh(vertices, indices));
+            var self = SafeCast.As<DirectLightDebugObject>(f);
+            self.OnActivating();
             return UniTask.CompletedTask;
         });
-        Shader = new WireframeShader();
-        //Shader = new PhongShader();
+        Shader = new DirectLightDebugShader<VertexPosOnly>();
+    }
+
+    private void OnActivating()
+    {
+        ReadOnlySpan<VertexPosOnly> vertices = stackalloc VertexPosOnly[24]
+        {
+            new(-1f, 1f, -1f),
+            new(-1f, 1f, 1f),
+            new(1f, 1f, 1f),
+            new(1f, 1f, -1f),
+            new(-1f, 1f, -1f),
+            new(-1f, -1f, -1f),
+            new(-1f, -1f, 1f),
+            new(-1f, 1f, 1f),
+            new(-1f, 1f, 1f),
+            new(-1f, -1f, 1f),
+            new(1f, -1f, 1f),
+            new(1f, 1f, 1f),
+            new(1f, 1f, 1f),
+            new(1f, -1f, 1f),
+            new(1f, -1f, -1f),
+            new(1f, 1f, -1f),
+            new(1f, 1f, -1f),
+            new(1f, -1f, -1f),
+            new(-1f, -1f, -1f),
+            new(-1f, 1f, -1f),
+            new(-1f, -1f, 1f),
+            new(-1f, -1f, -1f),
+            new(1f, -1f, -1f),
+            new(1f, -1f, 1f),
+        };
+        ReadOnlySpan<int> indices = stackalloc int[36] { 0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23 };
+        LoadMesh(vertices, indices);
+    }
+
+    protected override void OnRendering(in RenderingContext context)
+    {
+        var lightMat = _light.LightMatrix.DereferOrDefault();
+        var mat = lightMat.Inverted();
+        var newContext = new RenderingContext(
+            context.Screen,
+            context.Layer,
+            context.Target,
+            in mat,
+            in context.View,
+            in context.Projection);
+        base.OnRendering(in newContext);
     }
 }
+
+internal sealed class DirectLightDebugShader<TVertex> : SingleTargetRenderingShader where TVertex : unmanaged, IVertex
+{
+    private float _width = 2;
+    public float Width
+    {
+        get => _width;
+        set => _width = MathF.Max(0, value);
+    }
+
+    public DirectLightDebugShader()
+    {
+    }
+
+    protected override void DefineLocation(VertexDefinition definition, in LocationDefinitionContext context)
+    {
+        definition.Map<TVertex>("_pos", VertexFieldSemantics.Position);
+    }
+
+    protected override void OnRendering(ShaderDataDispatcher dispatcher, in RenderingContext context)
+    {
+        var mat = context.Projection * context.View * context.Model;
+        var resolution = (Vector2)context.Screen.FrameBufferSize;
+        dispatcher.SendUniform("_mat", mat);
+        dispatcher.SendUniform("_resolutionInv", Vector2.One / resolution);
+        dispatcher.SendUniform("_width", _width);
+    }
+
+    protected override ShaderSource GetShaderSource(in ShaderGetterContext context) => context.Layer switch
+    {
+        DeferredRenderLayer => throw new NotSupportedException(),
+        ForwardRenderLayer => ForwardRenderingSource(),
+        _ => throw new NotSupportedException(),
+    };
+
+    protected override void OnTargetAttached(Renderable target) { }
+
+    protected override void OnTargetDetached(Renderable detachedTarget) { }
+
+    private static ShaderSource ForwardRenderingSource() => new()
+    {
+        OnlyContainsConstLiteralUtf8 = true,
+        VertexShader =
+        """
+        #version 410
+        in vec3 _pos;
+        uniform mat4 _mat;
+        void main()
+        {
+            vec4 p = _mat * vec4(_pos, 1);
+            gl_Position = vec4(p.xyz / p.w, 1);
+        }
+        """u8,
+        GeometryShader =
+        """
+        #version 460
+        uniform vec2 _resolutionInv;
+        uniform float _width;
+        layout (triangles) in;
+        layout (triangle_strip, max_vertices = 16) out;
+        void main()
+        {
+            vec2 s = _width * _resolutionInv;
+            vec2 v0 = gl_in[1].gl_Position.xy - gl_in[0].gl_Position.xy;
+            vec2 v1 = gl_in[2].gl_Position.xy - gl_in[1].gl_Position.xy;
+            vec2 v2 = gl_in[0].gl_Position.xy - gl_in[2].gl_Position.xy;
+            vec2 d0 = normalize(vec2(-v0.y, v0.x)) * s;
+            vec2 d1 = normalize(vec2(-v1.y, v1.x)) * s;
+            vec2 d2 = normalize(vec2(-v2.y, v2.x)) * s;
+
+            // [0] -> [1]
+            gl_Position = vec4(gl_in[0].gl_Position.xy - d0, gl_in[0].gl_Position.zw);
+            EmitVertex();
+            gl_Position = vec4(gl_in[1].gl_Position.xy - d0, gl_in[1].gl_Position.zw);
+            EmitVertex();
+            gl_Position = vec4(gl_in[0].gl_Position.xy + d0, gl_in[0].gl_Position.zw);
+            EmitVertex();
+            gl_Position = vec4(gl_in[1].gl_Position.xy + d0, gl_in[1].gl_Position.zw);
+            EmitVertex();
+
+            // [1] -> [2]
+            gl_Position = vec4(gl_in[1].gl_Position.xy + d0, gl_in[1].gl_Position.zw);
+            EmitVertex();
+            gl_Position = vec4(gl_in[1].gl_Position.xy - d1, gl_in[1].gl_Position.zw);
+            EmitVertex();
+
+            gl_Position = vec4(gl_in[1].gl_Position.xy - d1, gl_in[1].gl_Position.zw);
+            EmitVertex();
+            gl_Position = vec4(gl_in[2].gl_Position.xy - d1, gl_in[2].gl_Position.zw);
+            EmitVertex();
+            gl_Position = vec4(gl_in[1].gl_Position.xy + d1, gl_in[1].gl_Position.zw);
+            EmitVertex();
+            gl_Position = vec4(gl_in[2].gl_Position.xy + d1, gl_in[2].gl_Position.zw);
+            EmitVertex();
+
+            gl_Position = vec4(gl_in[2].gl_Position.xy + d1, gl_in[2].gl_Position.zw);
+            EmitVertex();
+            gl_Position = vec4(gl_in[2].gl_Position.xy - d2, gl_in[2].gl_Position.zw);
+            EmitVertex();
+
+            // [2] -> [0]
+            gl_Position = vec4(gl_in[2].gl_Position.xy - d2, gl_in[2].gl_Position.zw);
+            EmitVertex();
+            gl_Position = vec4(gl_in[0].gl_Position.xy - d2, gl_in[0].gl_Position.zw);
+            EmitVertex();
+            gl_Position = vec4(gl_in[2].gl_Position.xy + d2, gl_in[2].gl_Position.zw);
+            EmitVertex();
+            gl_Position = vec4(gl_in[0].gl_Position.xy + d2, gl_in[0].gl_Position.zw);
+            EmitVertex();
+        }
+        """u8,
+        FragmentShader =
+        """
+        #version 410
+        out vec4 _outColor;
+        void main()
+        {
+            _outColor = vec4(0, 0.5, 1, 1);
+        }
+        """u8,
+    };
+}
+
