@@ -52,7 +52,7 @@ public sealed class WireframeShader : SingleTargetRenderingShader
         """
         #version 460
         layout (triangles) in;
-        layout (line_strip, max_vertices = 3) out;
+        layout (line_strip, max_vertices = 4) out;
 
         out vec3 _fcolor;
         void main()
@@ -62,6 +62,8 @@ public sealed class WireframeShader : SingleTargetRenderingShader
             gl_Position = gl_in[1].gl_Position;
             EmitVertex();
             gl_Position = gl_in[2].gl_Position;
+            EmitVertex();
+            gl_Position = gl_in[0].gl_Position;
             EmitVertex();
             EndPrimitive();
         }
