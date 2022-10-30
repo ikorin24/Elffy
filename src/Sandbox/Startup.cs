@@ -148,6 +148,7 @@ public static class Startup
             }.Activate(layer),
             DirectLight.Create(screen, new Vector3(0, -1, 0), color)
         );
+        arrow.SetDirection(light.Direction);
 
         var i = 0;
         screen.Timings.Update.Subscribe(_ =>

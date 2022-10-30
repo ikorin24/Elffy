@@ -32,7 +32,11 @@ public sealed class DirectLight : ILight
             if(value.W != 0) {
                 throw new ArgumentException("W element must be 0.");
             }
-            var lightMatrix = CalcLightMatrix(in value, Vector3.Zero, 30, 15, 20);  // TODO:
+            var dir = (-value.Xyz).Normalized();
+            if(dir.IsInvalid) {
+                throw new ArgumentException("XYZ is zero vector or too small.");
+            }
+            var lightMatrix = CalcLightMatrix(in dir, Vector3.Zero, 30, 15, 20);  // TODO: 
             _impl.TrySetPosition(in value, in lightMatrix);
         }
     }
@@ -166,17 +170,21 @@ public sealed class DirectLight : ILight
         return light;
     }
 
-    private static Matrix4 CalcLightMatrix(in Vector4 position, in Vector3 target, float frontLen, float backLen, float width)
+    private static Matrix4 CalcLightMatrix(in Vector3 directionNormalized, in Vector3 target, float frontLen, float backLen, float width)
     {
         Debug.Assert(frontLen > 0);
         Debug.Assert(backLen > 0);
-        Debug.Assert(position.W == 0);
         var halfWidth = width * 0.5f;
-        var dir = (-position.Xyz).Normalized();
-        var origin = target - frontLen * dir;
-        var dirXZ = new Vector3(dir.X, 0, dir.Z).Normalized();
-        var up = Quaternion.FromTwoVectors(dirXZ, dir) * Vector3.UnitY;
-
+        var origin = target - frontLen * directionNormalized;
+        var dirX0Z = new Vector3(directionNormalized.X, 0, directionNormalized.Z).Normalized();
+        Vector3 up;
+        if(dirX0Z.IsInvalid) {
+            // direction is (0, +-1, 0) or very close to them.
+            up = Vector3.UnitX;
+        }
+        else {
+            up = Quaternion.FromTwoVectors(dirX0Z, directionNormalized) * Vector3.UnitY;
+        }
         const float Near = 0;
         float far = frontLen + backLen;
         Matrix4.LookAt(origin, target, up, out var lightView);
