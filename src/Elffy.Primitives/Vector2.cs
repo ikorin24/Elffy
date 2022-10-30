@@ -60,6 +60,13 @@ namespace Elffy
             get => MathF.Sqrt(LengthSquared);
         }
 
+        /// <summary>Return true if vector contains NaN, +Infinity or -Infinity. Otherwise false.</summary>
+        public readonly bool ContainsNaNOrInfinity
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => float.IsNaN(X) || float.IsNaN(Y) || float.IsInfinity(X) || float.IsInfinity(Y);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector2(float x, float y) => (X, Y) = (x, y);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -70,7 +77,7 @@ namespace Elffy
         public readonly void Deconstruct(out float x, out float y) => (x, y) = (X, Y);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly float SumElement() => X + Y;
+        public readonly float SumElements() => X + Y;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly float Dot(in Vector2 vec)

@@ -132,7 +132,7 @@ namespace Elffy
         public static Quaternion FromTwoVectors(Vector3 from, Vector3 to)
         {
             var axis = Vector3.Cross(from, to).Normalized();
-            if(axis.IsInvalid) {
+            if(axis.ContainsNaNOrInfinity) {
                 return Identity;
             }
             var angle = Vector3.AngleBetween(from, to);

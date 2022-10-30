@@ -84,17 +84,10 @@ namespace Elffy
         }
 
         /// <summary>Return true if vector contains NaN, +Infinity or -Infinity. Otherwise false.</summary>
-        public readonly bool IsInvalid
+        public readonly bool ContainsNaNOrInfinity
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => float.IsNaN(X) || float.IsNaN(Y) || float.IsNaN(Z) || float.IsInfinity(X) || float.IsInfinity(Y) || float.IsInfinity(Z);
-        }
-
-        /// <summary>Return (<see cref="IsZero"/> || <see cref="IsInvalid"/>)</summary>
-        public readonly bool IsZeroOrInvalid
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => IsZero || IsInvalid;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -107,10 +100,10 @@ namespace Elffy
         public readonly void Deconstruct(out float x, out float y, out float z) => (x, y, z) = (X, Y, Z);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly float SumElement() => X + Y + Z;
+        public readonly float SumElements() => X + Y + Z;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly float Dot(in Vector3 vec) => (this * vec).SumElement();
+        public readonly float Dot(in Vector3 vec) => (this * vec).SumElements();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float Dot(in Vector3 vec1, in Vector3 vec2) => vec1.Dot(vec2);
 

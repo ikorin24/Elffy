@@ -53,7 +53,7 @@ namespace Elffy
         public readonly void Deconstruct(out int x, out int y) => (x, y) = (X, Y);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly int SumElement() => X + Y;
+        public readonly int SumElements() => X + Y;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly Vector2 ToVector2() => new Vector2((float)X, (float)Y);

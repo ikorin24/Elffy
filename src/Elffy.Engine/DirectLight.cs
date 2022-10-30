@@ -33,7 +33,7 @@ public sealed class DirectLight : ILight
                 throw new ArgumentException("W element must be 0.");
             }
             var dir = (-value.Xyz).Normalized();
-            if(dir.IsInvalid) {
+            if(dir.ContainsNaNOrInfinity) {
                 throw new ArgumentException("XYZ is zero vector or too small.");
             }
             var lightMatrix = CalcLightMatrix(in dir, Vector3.Zero, 30, 15, 20);  // TODO: 
@@ -178,7 +178,7 @@ public sealed class DirectLight : ILight
         var origin = target - frontLen * directionNormalized;
         var dirX0Z = new Vector3(directionNormalized.X, 0, directionNormalized.Z).Normalized();
         Vector3 up;
-        if(dirX0Z.IsInvalid) {
+        if(dirX0Z.ContainsNaNOrInfinity) {
             // direction is (0, +-1, 0) or very close to them.
             up = Vector3.UnitX;
         }

@@ -66,7 +66,7 @@ namespace Elffy
         public readonly void Destructor(out int x, out int y, out int z, out int w) => (x, y, z, w) = (X, Y, Z, W);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly int SumElement() => X + Y + Z + W;
+        public readonly int SumElements() => X + Y + Z + W;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly Vector4 ToVector4() => new Vector4((float)X, (float)Y, (float)Z, (float)W);
