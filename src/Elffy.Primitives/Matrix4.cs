@@ -194,6 +194,29 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly Vector3 Transform(in Vector3 vec)
+        {
+            var w = M30 * vec.X + M31 * vec.Y + M32 * vec.Z + M33;
+            return new Vector3()
+            {
+                X = (M00 * vec.X + M01 * vec.Y + M02 * vec.Z + M03) / w,
+                Y = (M10 * vec.X + M11 * vec.Y + M12 * vec.Z + M13) / w,
+                Z = (M20 * vec.X + M21 * vec.Y + M22 * vec.Z + M23) / w,
+            };
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly Vector3 TransformFast(in Vector3 vec)
+        {
+            return new Vector3()
+            {
+                X = M00 * vec.X + M01 * vec.Y + M02 * vec.Z + M03,
+                Y = M10 * vec.X + M11 * vec.Y + M12 * vec.Z + M13,
+                Z = M20 * vec.X + M21 * vec.Y + M22 * vec.Z + M23,
+            };
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override bool Equals(object? obj) => obj is Matrix4 matrix && Equals(matrix);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
