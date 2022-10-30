@@ -66,6 +66,9 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly int SumElement() => X + Y + Z;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly Vector3 ToVector3() => new Vector3((float)X, (float)Y, (float)Z);
+
         public readonly override bool Equals(object? obj) => obj is Vector3i i && Equals(i);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -68,17 +68,18 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly int SumElement() => X + Y + Z + W;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly Vector4 ToVector4() => new Vector4((float)X, (float)Y, (float)Z, (float)W);
+
         public readonly override bool Equals(object? obj) => obj is Vector4i i && Equals(i);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly bool Equals(Vector4i other)
         {
-            // Use UInt128 in C# 11
-            return Unsafe.As<int, ulong>(ref Unsafe.AsRef(in X)) == Unsafe.As<int, ulong>(ref other.X) &&
-                   Unsafe.As<int, ulong>(ref Unsafe.AsRef(in Z)) == Unsafe.As<int, ulong>(ref other.Z);
+            return Unsafe.As<Vector4i, UInt128>(ref Unsafe.AsRef(in this)) == Unsafe.As<Vector4i, UInt128>(ref Unsafe.AsRef(in other));
         }
 
-        public readonly override int GetHashCode() => HashCode.Combine(X, Y, Z, W);
+        public readonly override int GetHashCode() => Unsafe.As<Vector4i, UInt128>(ref Unsafe.AsRef(in this)).GetHashCode();
 
         public readonly override string ToString() => DebuggerDisplay;
 

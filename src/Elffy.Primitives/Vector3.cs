@@ -171,6 +171,9 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly Vector3i ToVector3i() => new Vector3i((int)X, (int)Y, (int)Z);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly Matrix4 ToTranslationMatrix4() => new Matrix4(1, 0, 0, X,
                                                                       0, 1, 0, Y,
                                                                       0, 0, 1, Z,

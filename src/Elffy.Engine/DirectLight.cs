@@ -174,7 +174,11 @@ internal sealed class DirectLightDebugObject : Renderable
             self.OnActivating();
             return UniTask.CompletedTask;
         });
-        Shader = new DirectLightDebugShader<VertexPosOnly>();
+        Shader = new DirectLightDebugShader<VertexPosOnly>
+        {
+            LineColor = Color4.Red,
+            LineWidth = 4f,
+        };
     }
 
     private void OnActivating()
@@ -227,11 +231,18 @@ internal sealed class DirectLightDebugObject : Renderable
 
 internal sealed class DirectLightDebugShader<TVertex> : SingleTargetRenderingShader where TVertex : unmanaged, IVertex
 {
-    private float _width = 2;
-    public float Width
+    private float _lineWidth = 2;
+    private Color4 _lineColor = new Color4(0, 0.5f, 1f, 1f);
+    public float LineWidth
     {
-        get => _width;
-        set => _width = MathF.Max(0, value);
+        get => _lineWidth;
+        set => _lineWidth = MathF.Max(0, value);
+    }
+
+    public Color4 LineColor
+    {
+        get => _lineColor;
+        set => _lineColor = value;
     }
 
     public DirectLightDebugShader()
@@ -246,10 +257,11 @@ internal sealed class DirectLightDebugShader<TVertex> : SingleTargetRenderingSha
     protected override void OnRendering(ShaderDataDispatcher dispatcher, in RenderingContext context)
     {
         var mat = context.Projection * context.View * context.Model;
-        var resolution = (Vector2)context.Screen.FrameBufferSize;
+        var resolution = context.Screen.FrameBufferSize;
         dispatcher.SendUniform("_mat", mat);
-        dispatcher.SendUniform("_resolutionInv", Vector2.One / resolution);
-        dispatcher.SendUniform("_width", _width);
+        dispatcher.SendUniform("_resolutionInv", Vector2.One / resolution.ToVector2());
+        dispatcher.SendUniform("_lineWidth", _lineWidth);
+        dispatcher.SendUniform("_lineColor", _lineColor);
     }
 
     protected override ShaderSource GetShaderSource(in ShaderGetterContext context) => context.Layer switch
@@ -273,6 +285,7 @@ internal sealed class DirectLightDebugShader<TVertex> : SingleTargetRenderingSha
         uniform mat4 _mat;
         void main()
         {
+            // Set gl_Position.w to 1 for easy handling in the geometry shader.
             vec4 p = _mat * vec4(_pos, 1);
             gl_Position = vec4(p.xyz / p.w, 1);
         }
@@ -281,12 +294,12 @@ internal sealed class DirectLightDebugShader<TVertex> : SingleTargetRenderingSha
         """
         #version 460
         uniform vec2 _resolutionInv;
-        uniform float _width;
+        uniform float _lineWidth;
         layout (triangles) in;
         layout (triangle_strip, max_vertices = 16) out;
         void main()
         {
-            vec2 s = _width * _resolutionInv;
+            vec2 s = _lineWidth * _resolutionInv;       // (_lineWidth * 0.5) * (_resolutionInv * 2)
             vec2 v0 = gl_in[1].gl_Position.xy - gl_in[0].gl_Position.xy;
             vec2 v1 = gl_in[2].gl_Position.xy - gl_in[1].gl_Position.xy;
             vec2 v2 = gl_in[0].gl_Position.xy - gl_in[2].gl_Position.xy;
@@ -294,7 +307,7 @@ internal sealed class DirectLightDebugShader<TVertex> : SingleTargetRenderingSha
             vec2 d1 = normalize(vec2(-v1.y, v1.x)) * s;
             vec2 d2 = normalize(vec2(-v2.y, v2.x)) * s;
 
-            // [0] -> [1]
+            // Line from [0] to [1]
             gl_Position = vec4(gl_in[0].gl_Position.xy - d0, gl_in[0].gl_Position.zw);
             EmitVertex();
             gl_Position = vec4(gl_in[1].gl_Position.xy - d0, gl_in[1].gl_Position.zw);
@@ -304,12 +317,13 @@ internal sealed class DirectLightDebugShader<TVertex> : SingleTargetRenderingSha
             gl_Position = vec4(gl_in[1].gl_Position.xy + d0, gl_in[1].gl_Position.zw);
             EmitVertex();
 
-            // [1] -> [2]
+            // dummy
             gl_Position = vec4(gl_in[1].gl_Position.xy + d0, gl_in[1].gl_Position.zw);
             EmitVertex();
             gl_Position = vec4(gl_in[1].gl_Position.xy - d1, gl_in[1].gl_Position.zw);
             EmitVertex();
 
+            // Line from [1] to [2]
             gl_Position = vec4(gl_in[1].gl_Position.xy - d1, gl_in[1].gl_Position.zw);
             EmitVertex();
             gl_Position = vec4(gl_in[2].gl_Position.xy - d1, gl_in[2].gl_Position.zw);
@@ -319,12 +333,13 @@ internal sealed class DirectLightDebugShader<TVertex> : SingleTargetRenderingSha
             gl_Position = vec4(gl_in[2].gl_Position.xy + d1, gl_in[2].gl_Position.zw);
             EmitVertex();
 
+            // dummy
             gl_Position = vec4(gl_in[2].gl_Position.xy + d1, gl_in[2].gl_Position.zw);
             EmitVertex();
             gl_Position = vec4(gl_in[2].gl_Position.xy - d2, gl_in[2].gl_Position.zw);
             EmitVertex();
 
-            // [2] -> [0]
+            // Line from [2] to [0]
             gl_Position = vec4(gl_in[2].gl_Position.xy - d2, gl_in[2].gl_Position.zw);
             EmitVertex();
             gl_Position = vec4(gl_in[0].gl_Position.xy - d2, gl_in[0].gl_Position.zw);
@@ -338,10 +353,11 @@ internal sealed class DirectLightDebugShader<TVertex> : SingleTargetRenderingSha
         FragmentShader =
         """
         #version 410
+        uniform vec4 _lineColor;
         out vec4 _outColor;
         void main()
         {
-            _outColor = vec4(0, 0.5, 1, 1);
+            _outColor = _lineColor;
         }
         """u8,
     };

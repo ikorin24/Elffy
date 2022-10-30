@@ -224,6 +224,9 @@ namespace Elffy
             this = Normalized();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly Vector4i ToVector4i() => new Vector4i((int)X, (int)Y, (int)Z, (int)W);
+
         public readonly override bool Equals(object? obj) => obj is Vector4 vector && Equals(vector);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly bool Equals(Vector4 other) => AsNVec4(this) == AsNVec4(other);

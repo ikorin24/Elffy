@@ -23,7 +23,7 @@ namespace Elffy
         [FieldOffset(4)]
         public int Y;
 
-        public ref int this[int index]
+        public ref int this[int index]  // TODO: 'readonly ref' ?
         {
             [UnscopedRef]
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -51,6 +51,12 @@ namespace Elffy
         [EditorBrowsable(EditorBrowsableState.Never)]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly void Deconstruct(out int x, out int y) => (x, y) = (X, Y);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly int SumElement() => X + Y;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly Vector2 ToVector2() => new Vector2((float)X, (float)Y);
 
         public override bool Equals(object? obj) => obj is Vector2i i && Equals(i);
 
@@ -98,7 +104,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector2i operator /(in Vector2i vec, int right) => new Vector2i(vec.X / right, vec.Y / right);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector2 operator /(int left, in Vector2i vec) => new Vector2(left / vec.X, left / vec.Y);
+        public static Vector2i operator /(int left, in Vector2i vec) => new Vector2i(left / vec.X, left / vec.Y);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator Vector2i(in Vector2 vec) => new Vector2i((int)vec.X, (int)vec.Y);

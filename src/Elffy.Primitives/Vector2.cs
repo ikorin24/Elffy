@@ -96,6 +96,9 @@ namespace Elffy
             this = Normalized();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly Vector2i ToVector2i() => new Vector2i((int)X, (int)Y);
+
         public readonly override bool Equals(object? obj) => obj is Vector2 vector && Equals(vector);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly bool Equals(Vector2 other) => X == other.X && Y == other.Y;
