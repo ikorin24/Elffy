@@ -76,6 +76,15 @@ public readonly ref struct RefOrNull<T>
     public RefReadOnlyOrNull<T> AsReadOnly() => new RefReadOnlyOrNull<T>(in _value);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public RefOrNull<TTo> UnsafeAs<TTo>() => new RefOrNull<TTo>(ref Unsafe.As<T, TTo>(ref _value));
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Span<T> AsSpan() => new Span<T>(ref _value);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ReadOnlySpan<T> AsReadOnlySpan() => new ReadOnlySpan<T>(in _value);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator RefReadOnlyOrNull<T>(RefOrNull<T> r) => r.AsReadOnly();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

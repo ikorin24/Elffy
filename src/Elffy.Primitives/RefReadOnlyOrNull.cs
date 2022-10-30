@@ -67,6 +67,12 @@ public readonly ref struct RefReadOnlyOrNull<T>
     public RefReadOnly<T> AsNotNull() => new RefReadOnly<T>(in _value);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public RefReadOnlyOrNull<TTo> UnsafeAs<TTo>() => new RefReadOnlyOrNull<TTo>(in Unsafe.As<T, TTo>(ref Unsafe.AsRef(in _value)));
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ReadOnlySpan<T> AsSpan() => new ReadOnlySpan<T>(in _value);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static explicit operator RefReadOnly<T>(RefReadOnlyOrNull<T> r) => r.AsNotNull();
 
 #pragma warning disable 0809
