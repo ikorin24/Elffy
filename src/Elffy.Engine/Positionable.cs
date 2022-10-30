@@ -208,10 +208,9 @@ namespace Elffy
             if(children.IsEmpty) {
                 return;
             }
-
-            var withoutScale = modelParent * Position.ToTranslationMatrix4() * Rotation.ToMatrix4();
+            var model = modelParent * GetSelfModelMatrix();
             foreach(var child in children) {
-                child.RenderShadowMapRecursively(withoutScale, lightViewProjection);
+                child.RenderShadowMapRecursively(model, lightViewProjection);
             }
         }
     }

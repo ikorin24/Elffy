@@ -29,7 +29,10 @@ public sealed class DirectLight : ILight
         get => _impl.GetPosition().DereferOrDefault();
         set
         {
-            var lightMatrix = CalcLightMatrix(in value);
+            if(value.W != 0) {
+                throw new ArgumentException("W element must be 0.");
+            }
+            var lightMatrix = CalcLightMatrix(in value, Vector3.Zero, 30, 15, 20);  // TODO:
             _impl.TrySetPosition(in value, in lightMatrix);
         }
     }
@@ -163,16 +166,21 @@ public sealed class DirectLight : ILight
         return light;
     }
 
-    private static Matrix4 CalcLightMatrix(in Vector4 position)
+    private static Matrix4 CalcLightMatrix(in Vector4 position, in Vector3 target, float frontLen, float backLen, float width)
     {
-        const float Near = 0f;
-        const float Far = 100;
-        const float W = 10;
-        var vec = position.Xyz.Normalized();
-        var v = new Vector3(vec.X, 0, vec.Z);
-        var up = Quaternion.FromTwoVectors(v, vec) * Vector3.UnitY;
-        Matrix4.LookAt(vec * (Far * 0.5f), Vector3.Zero, up, out var lightView);
-        Matrix4.OrthographicProjection(-W, W, -W, W, Near, Far, out var lightProjection);
+        Debug.Assert(frontLen > 0);
+        Debug.Assert(backLen > 0);
+        Debug.Assert(position.W == 0);
+        var halfWidth = width * 0.5f;
+        var dir = (-position.Xyz).Normalized();
+        var origin = target - frontLen * dir;
+        var dirXZ = new Vector3(dir.X, 0, dir.Z).Normalized();
+        var up = Quaternion.FromTwoVectors(dirXZ, dir) * Vector3.UnitY;
+
+        const float Near = 0;
+        float far = frontLen + backLen;
+        Matrix4.LookAt(origin, target, up, out var lightView);
+        Matrix4.OrthographicProjection(-halfWidth, halfWidth, -halfWidth, halfWidth, Near, far, out var lightProjection);
         return lightProjection * lightView;
     }
 }

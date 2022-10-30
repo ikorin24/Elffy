@@ -221,12 +221,11 @@ namespace Elffy
             if(!needToRenderSelf && children.IsEmpty) {
                 return;
             }
-            var withoutScale = modelParent * Position.ToTranslationMatrix4() * Rotation.ToMatrix4();
+            var model = modelParent * GetSelfModelMatrix();
             if(needToRenderSelf && EnsureShadowRendererInitialized()) {
                 Debug.Assert(_shadowRendererData.State == RendererDataState.Compiled);
                 var program = _shadowRendererData.GetValidProgram();
                 var shader = SafeCast.As<RenderShadowMapShader>(_shadowRendererData.GetValidShader());
-                var model = withoutScale * Scale.ToScaleMatrix4();
                 VAO.Bind(_vao);
                 IBO.Bind(_ibo);
                 ProgramObject.UseProgram(program);
@@ -236,7 +235,7 @@ namespace Elffy
                 IBO.Unbind();
             }
             foreach(var child in children) {
-                child.RenderShadowMapRecursively(withoutScale, lightViewProjection);
+                child.RenderShadowMapRecursively(in model, in lightViewProjection);
             }
 
             bool EnsureShadowRendererInitialized()
