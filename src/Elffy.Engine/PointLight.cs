@@ -21,15 +21,25 @@ namespace Elffy
         Vector4 ILight.Position
         {
             get => _impl.GetPosition().DereferOrDefault();
-            set => _impl.TrySetPosition(value);
+            set
+            {
+                var lightMatrix = CalcLightMatrix(in value);
+                _impl.TrySetPosition(in value, in lightMatrix);
+            }
         }
 
         public Vector3 Position
         {
-            get => _impl.GetPosition().TryDerefer(out var pos) ?
-                pos.Xyz / pos.W :
-                default;
-            set => _impl.TrySetPosition(new Vector4(value, 1f));
+            get
+            {
+                if(_impl.GetPosition().TryDerefer(out var pos)) {
+                    if(pos.W != 0) {
+                        return pos.Xyz / pos.W;
+                    }
+                }
+                return Vector3.Zero;
+            }
+            set => ((ILight)this).Position = new Vector4(in value, 1f);
         }
 
         public Color4 Color
@@ -119,6 +129,18 @@ namespace Elffy
             }
             await timings.GetTiming(timing).NextOrNow();
             return light;
+        }
+
+        private static Matrix4 CalcLightMatrix(in Vector4 position)
+        {
+            Debug.Assert(position.W != 0);
+            const float L = 3;
+            var pos = position.Xyz / position.W;
+            var vec = pos.Normalized();
+            var up = Quaternion.FromTwoVectors(new Vector3(vec.X, 0, vec.Z), vec) * Vector3.UnitY;
+            Matrix4.LookAt(pos, Vector3.Zero, up, out var lightView);
+            Matrix4.PerspectiveProjection(-L, L, -L, L, 1f, 1000, out var lightProjection);
+            return lightProjection * lightView;
         }
     }
 }

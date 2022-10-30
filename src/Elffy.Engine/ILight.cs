@@ -44,13 +44,12 @@ namespace Elffy
             _manager.GetPosition(_index) :
             RefReadOnlyOrNull<Vector4>.NullRef;
 
-        public bool TrySetPosition(in Vector4 value)
+        public bool TrySetPosition(in Vector4 value, in Matrix4 lightMatrix)
         {
             if(ValidateToken() == false) {
                 return false;
             }
-            if(value == _manager.GetPosition(_index).Derefer()) { return false; }
-            _manager.UpdatePosition(in value, _index);
+            _manager.UpdatePosition(in value, in lightMatrix, _index);
             return true;
         }
 

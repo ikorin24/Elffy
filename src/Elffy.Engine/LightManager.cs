@@ -118,44 +118,23 @@ namespace Elffy
 
         internal RefReadOnly<ShadowMapData> GetShadowMap(int index) => new RefReadOnly<ShadowMapData>(in _shadowMaps[index]);
 
-        internal void UpdatePosition(in Vector4 position, int index)
+        internal void UpdatePosition(in Vector4 position, in Matrix4 lightMatrix, int index)
         {
             _lightPos.Update(new ReadOnlySpan<Vector4>(in position), index);
-            CreateLightMatrix(position, out var lightView, out var lightProj);
-            var lightMatrix = lightProj * lightView;
-            var matrices = new ReadOnlySpan<Matrix4>(in lightMatrix).MarshalCast<Matrix4, Color4>();
-            _lightMatrices.Update(matrices, index * 4);
+            _lightMatrices.Update(new ReadOnlySpan<Matrix4>(in lightMatrix).MarshalCast<Matrix4, Color4>(), index * 4);
         }
 
-        [SkipLocalsInit]
-        internal void UpdatePositions(ReadOnlySpan<Vector4> positions, int offset)
+        internal void UpdatePositions(ReadOnlySpan<Vector4> positions, ReadOnlySpan<Matrix4> lightMatrices, int offset)
         {
+            Debug.Assert(positions.Length == lightMatrices.Length);
             if(positions.Length == 0) { return; }
-
             _lightPos.Update(positions, offset);
-
-            const int Threshold = 32;
-            var useStack = positions.Length <= Threshold;
-            using var buf = useStack ? default : new ValueTypeRentMemory<Matrix4>(positions.Length, false);
-            var matrices = useStack ? stackalloc Matrix4[positions.Length] : buf.AsSpan();
-            for(int i = 0; i < positions.Length; i++) {
-                CreateLightMatrix(positions[i], out var lView, out var lProj);
-                matrices[i] = lProj * lView;
-            }
-            _lightMatrices.Update(matrices.MarshalCast<Matrix4, Color4>(), offset * 4);
+            _lightMatrices.Update(lightMatrices.MarshalCast<Matrix4, Color4>(), offset * 4);
         }
-
-        internal void UpdatePositions(SpanUpdateAction<Vector4> action) => _lightPos.Update(action);
-
-        internal void UpdatePositions<TArg>(TArg arg, SpanUpdateAction<Vector4, TArg> action) => _lightPos.Update(arg, action);
 
         internal void UpdateColor(in Color4 color, int index) => _lightColor.Update(new ReadOnlySpan<Color4>(in color), index);
 
         internal void UpdateColors(ReadOnlySpan<Color4> colors, int offset) => _lightColor.Update(colors, offset);
-
-        internal void UpdateColors(SpanUpdateAction<Color4> action) => _lightColor.Update(action);
-
-        internal void UpdateColors<TArg>(TArg arg, SpanUpdateAction<Color4, TArg> action) => _lightColor.Update(arg, action);
 
         internal void Release()
         {
@@ -167,29 +146,6 @@ namespace Elffy
             }
             _shadowMaps.Dispose();
             _lights.AsSpan().Clear();
-        }
-
-        private static void CreateLightMatrix(Vector4 position, out Matrix4 lView, out Matrix4 lProj)
-        {
-            // TODO:
-            if(position.W == 0) {
-                const float Near = 0f;
-                const float Far = 30;
-                const float W = 20;
-                var vec = position.Xyz.Normalized();
-                var v = new Vector3(vec.X, 0, vec.Z);
-                var up = Quaternion.FromTwoVectors(v, vec) * Vector3.UnitY;
-                Matrix4.LookAt(vec * (Far * 0.5f), Vector3.Zero, up, out lView);
-                Matrix4.OrthographicProjection(-W, W, -W, W, Near, Far, out lProj);
-            }
-            else {
-                const float L = 3;
-                var pos = position.Xyz / position.W;
-                var vec = pos.Normalized();
-                var up = Quaternion.FromTwoVectors(new Vector3(vec.X, 0, vec.Z), vec) * Vector3.UnitY;
-                Matrix4.LookAt(pos, Vector3.Zero, up, out lView);
-                Matrix4.PerspectiveProjection(-L, L, -L, L, 1f, 1000, out lProj);
-            }
         }
 
         private struct IndexGenerator

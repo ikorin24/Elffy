@@ -27,15 +27,25 @@ public sealed class DirectLight : ILight
     Vector4 ILight.Position
     {
         get => _impl.GetPosition().DereferOrDefault();
-        set => _impl.TrySetPosition(value);
+        set
+        {
+            var lightMatrix = CalcLightMatrix(in value);
+            _impl.TrySetPosition(in value, in lightMatrix);
+        }
     }
 
     public Vector3 Direction
     {
-        get => _impl.GetPosition().TryDerefer(out var pos) ?
-            (pos.W != 0) ? (-pos.Xyz / pos.W) : default :
-            default;
-        set => _impl.TrySetPosition(new Vector4(-value, 0));
+        get
+        {
+            if(_impl.GetPosition().TryDerefer(out var pos)) {
+                if(pos.W == 0) {
+                    return -pos.Xyz;
+                }
+            }
+            return Vector3.Zero;
+        }
+        set => ((ILight)this).Position = new Vector4(-value, 0);
     }
 
     public Color4 Color
@@ -151,6 +161,19 @@ public sealed class DirectLight : ILight
         }
         await timings.GetTiming(timing).NextOrNow();
         return light;
+    }
+
+    private static Matrix4 CalcLightMatrix(in Vector4 position)
+    {
+        const float Near = 0f;
+        const float Far = 100;
+        const float W = 10;
+        var vec = position.Xyz.Normalized();
+        var v = new Vector3(vec.X, 0, vec.Z);
+        var up = Quaternion.FromTwoVectors(v, vec) * Vector3.UnitY;
+        Matrix4.LookAt(vec * (Far * 0.5f), Vector3.Zero, up, out var lightView);
+        Matrix4.OrthographicProjection(-W, W, -W, W, Near, Far, out var lightProjection);
+        return lightProjection * lightView;
     }
 }
 
