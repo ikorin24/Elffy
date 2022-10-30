@@ -50,8 +50,7 @@ namespace Elffy
                 return false;
             }
             if(value == _manager.GetPosition(_index).Derefer()) { return false; }
-            var positions = new ReadOnlySpan<Vector4>(in value);
-            _manager.UpdatePositions(positions, _index);
+            _manager.UpdatePosition(in value, _index);
             return true;
         }
 
@@ -65,8 +64,7 @@ namespace Elffy
                 return false;
             }
             if(value == _manager.GetColor(_index).Derefer()) { return false; }
-            var colors = new ReadOnlySpan<Color4>(in value);
-            _manager.UpdateColors(colors, _index);
+            _manager.UpdateColor(in value, _index);
             return true;
         }
 

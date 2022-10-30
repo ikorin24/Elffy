@@ -118,6 +118,14 @@ namespace Elffy
 
         internal RefReadOnly<ShadowMapData> GetShadowMap(int index) => new RefReadOnly<ShadowMapData>(in _shadowMaps[index]);
 
+        internal void UpdatePosition(in Vector4 position, int index)
+        {
+            _lightPos.Update(new ReadOnlySpan<Vector4>(in position), index);
+            CreateLightMatrix(position, out var lightView, out var lightProj);
+            var lightMatrix = lightProj * lightView;
+            var matrices = new ReadOnlySpan<Matrix4>(in lightMatrix).MarshalCast<Matrix4, Color4>();
+            _lightMatrices.Update(matrices, index * 4);
+        }
 
         [SkipLocalsInit]
         internal void UpdatePositions(ReadOnlySpan<Vector4> positions, int offset)
@@ -140,6 +148,8 @@ namespace Elffy
         internal void UpdatePositions(SpanUpdateAction<Vector4> action) => _lightPos.Update(action);
 
         internal void UpdatePositions<TArg>(TArg arg, SpanUpdateAction<Vector4, TArg> action) => _lightPos.Update(arg, action);
+
+        internal void UpdateColor(in Color4 color, int index) => _lightColor.Update(new ReadOnlySpan<Color4>(in color), index);
 
         internal void UpdateColors(ReadOnlySpan<Color4> colors, int offset) => _lightColor.Update(colors, offset);
 
