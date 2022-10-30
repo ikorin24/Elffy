@@ -176,41 +176,33 @@ internal sealed class DirectLightDebugObject : Renderable
         });
         Shader = new DirectLightDebugShader<VertexPosOnly>
         {
-            LineColor = Color4.Red,
-            LineWidth = 4f,
+            LineWidth = 3f,
         };
     }
 
     private void OnActivating()
     {
-        ReadOnlySpan<VertexPosOnly> vertices = stackalloc VertexPosOnly[24]
+        ReadOnlySpan<VertexPosOnly> vertices = stackalloc VertexPosOnly[8]
         {
-            new(-1f, 1f, -1f),
-            new(-1f, 1f, 1f),
-            new(1f, 1f, 1f),
-            new(1f, 1f, -1f),
-            new(-1f, 1f, -1f),
-            new(-1f, -1f, -1f),
-            new(-1f, -1f, 1f),
-            new(-1f, 1f, 1f),
             new(-1f, 1f, 1f),
             new(-1f, -1f, 1f),
             new(1f, -1f, 1f),
             new(1f, 1f, 1f),
-            new(1f, 1f, 1f),
-            new(1f, -1f, 1f),
-            new(1f, -1f, -1f),
-            new(1f, 1f, -1f),
-            new(1f, 1f, -1f),
-            new(1f, -1f, -1f),
-            new(-1f, -1f, -1f),
             new(-1f, 1f, -1f),
-            new(-1f, -1f, 1f),
             new(-1f, -1f, -1f),
             new(1f, -1f, -1f),
-            new(1f, -1f, 1f),
+            new(1f, 1f, -1f),
         };
-        ReadOnlySpan<int> indices = stackalloc int[36] { 0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23 };
+
+        // 0   0 -- 3
+        // | \  \   |
+        // |  \  \  |
+        // |   \  \ |
+        // 1 -- 2   2
+        // 
+        // 0 -- 1 and 1 -- 2 are edges of a box.
+        // 2 -- 0 is a diagonal line of a box.
+        ReadOnlySpan<int> indices = stackalloc int[] { 0, 1, 2, 2, 3, 0, 7, 6, 5, 5, 4, 7, 4, 0, 3, 3, 7, 4, 1, 5, 6, 6, 2, 1, 4, 5, 1, 1, 0, 4, 3, 2, 6, 6, 7, 3 };
         LoadMesh(vertices, indices);
     }
 
@@ -302,10 +294,8 @@ internal sealed class DirectLightDebugShader<TVertex> : SingleTargetRenderingSha
             vec2 s = _lineWidth * _resolutionInv;       // (_lineWidth * 0.5) * (_resolutionInv * 2)
             vec2 v0 = gl_in[1].gl_Position.xy - gl_in[0].gl_Position.xy;
             vec2 v1 = gl_in[2].gl_Position.xy - gl_in[1].gl_Position.xy;
-            vec2 v2 = gl_in[0].gl_Position.xy - gl_in[2].gl_Position.xy;
             vec2 d0 = normalize(vec2(-v0.y, v0.x)) * s;
             vec2 d1 = normalize(vec2(-v1.y, v1.x)) * s;
-            vec2 d2 = normalize(vec2(-v2.y, v2.x)) * s;
 
             // Line from [0] to [1]
             gl_Position = vec4(gl_in[0].gl_Position.xy - d0, gl_in[0].gl_Position.zw);
@@ -333,21 +323,7 @@ internal sealed class DirectLightDebugShader<TVertex> : SingleTargetRenderingSha
             gl_Position = vec4(gl_in[2].gl_Position.xy + d1, gl_in[2].gl_Position.zw);
             EmitVertex();
 
-            // dummy
-            gl_Position = vec4(gl_in[2].gl_Position.xy + d1, gl_in[2].gl_Position.zw);
-            EmitVertex();
-            gl_Position = vec4(gl_in[2].gl_Position.xy - d2, gl_in[2].gl_Position.zw);
-            EmitVertex();
-
-            // Line from [2] to [0]
-            gl_Position = vec4(gl_in[2].gl_Position.xy - d2, gl_in[2].gl_Position.zw);
-            EmitVertex();
-            gl_Position = vec4(gl_in[0].gl_Position.xy - d2, gl_in[0].gl_Position.zw);
-            EmitVertex();
-            gl_Position = vec4(gl_in[2].gl_Position.xy + d2, gl_in[2].gl_Position.zw);
-            EmitVertex();
-            gl_Position = vec4(gl_in[0].gl_Position.xy + d2, gl_in[0].gl_Position.zw);
-            EmitVertex();
+            // Line from [2] to [0] is diagonal line.
         }
         """u8,
         FragmentShader =
