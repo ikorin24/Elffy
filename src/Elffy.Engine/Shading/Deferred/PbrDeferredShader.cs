@@ -50,7 +50,7 @@ public sealed class PbrDeferredShader : RenderingShader
         dispatcher.SendUniform("_roughness", _roughness);
         var texture = _texture;
         if(texture != null) {
-            dispatcher.SendUniformTexture2D("_tex", texture.TextureObject, TextureUnitNumber.Unit0);
+            dispatcher.SendUniformTexture2D("_tex", texture.TextureObject, 0);
         }
         dispatcher.SendUniform("_hasTexture", texture != null);
     }

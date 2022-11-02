@@ -81,22 +81,22 @@ public sealed class PhongShader : RenderingShader
 
         var texture = _texture;
         if(texture != null) {
-            dispatcher.SendUniformTexture2D("tex_sampler", texture.TextureObject, TextureUnitNumber.Unit0);
+            dispatcher.SendUniformTexture2D("tex_sampler", texture.TextureObject, 0);
         }
         dispatcher.SendUniform("hasTexture", texture != null);
 
         var screen = context.Target.GetValidScreen();
         var lights = screen.Lights;
         dispatcher.SendUniform("lightCount", lights.LightCount);
-        dispatcher.SendUniformTexture1D("lColorSampler", lights.ColorTexture, TextureUnitNumber.Unit1);
-        dispatcher.SendUniformTexture1D("lPosSampler", lights.PositionTexture, TextureUnitNumber.Unit2);
+        dispatcher.SendUniformTexture1D("lColorSampler", lights.ColorTexture, 1);
+        dispatcher.SendUniformTexture1D("lPosSampler", lights.PositionTexture, 2);
 
         bool hasShadowMap;
 
         var light = lights.GetLights().FirstOrDefault();
         if(light != null && light.LightMatrix.TryDerefer(out var lightMatrix) && light.ShadowMap.TryDerefer(out var shadowMap)) {
             dispatcher.SendUniform("_lmvp", lightMatrix * context.Model);
-            dispatcher.SendUniformTexture2D("_shadowMap", shadowMap.DepthTexture, TextureUnitNumber.Unit3);
+            dispatcher.SendUniformTexture2D("_shadowMap", shadowMap.DepthTexture, 3);
             hasShadowMap = true;
         }
         else {

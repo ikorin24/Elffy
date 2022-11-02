@@ -87,15 +87,15 @@ namespace Elffy.Shading
         public void SendUniform(string name, ReadOnlySpan<Matrix4> value) => SendUniform(GL.GetUniformLocation(_program.Value, name), value);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SendUniformTexture1D(string name, in TextureObject value, TextureUnitNumber unit)
+        public void SendUniformTexture1D(string name, in TextureObject value, uint unit)
             => SendTexture1D(GL.GetUniformLocation(_program.Value, name), value, unit);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SendUniformTexture2D(string name, in TextureObject value, TextureUnitNumber unit)
+        public void SendUniformTexture2D(string name, in TextureObject value, uint unit)
             => SendTexture2D(GL.GetUniformLocation(_program.Value, name), value, unit);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SendUniformTexture2DArray(string name, in TextureObject value, TextureUnitNumber unit)
+        public void SendUniformTexture2DArray(string name, in TextureObject value, uint unit)
             => SendTexture2DArray(GL.GetUniformLocation(_program.Value, name), value, unit);
 
 
@@ -227,9 +227,12 @@ namespace Elffy.Shading
                                      ref Unsafe.As<Matrix4, float>(ref Unsafe.AsRef(in value.GetReference())));
         }
 
+        private const uint MaxUnitNum = 31;
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SendTexture1D(int location, in TextureObject value, TextureUnitNumber unit)
+        public void SendTexture1D(int location, in TextureObject value, uint unit)
         {
+            if(unit > MaxUnitNum) { return; }
             GL.ActiveTexture((TextureUnit)((int)TextureUnit.Texture0 + unit));
             TextureObject.Bind1D(value);
             GL.ProgramUniform1(_program.Value, location, (int)unit);
@@ -238,8 +241,9 @@ namespace Elffy.Shading
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SendTexture2D(int location, in TextureObject value, TextureUnitNumber unit)
+        public void SendTexture2D(int location, in TextureObject value, uint unit)
         {
+            if(unit > MaxUnitNum) { return; }
             GL.ActiveTexture((TextureUnit)((int)TextureUnit.Texture0 + unit));
             TextureObject.Bind2D(value);
             GL.ProgramUniform1(_program.Value, location, (int)unit);
@@ -248,8 +252,9 @@ namespace Elffy.Shading
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SendTexture2DArray(int location, in TextureObject value, TextureUnitNumber unit)
+        public void SendTexture2DArray(int location, in TextureObject value, uint unit)
         {
+            if(unit > MaxUnitNum) { return; }
             GL.ActiveTexture((TextureUnit)((int)TextureUnit.Texture0 + unit));
             TextureObject.Bind2DArray(value);
             GL.ProgramUniform1(_program.Value, location, (int)unit);

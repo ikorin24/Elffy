@@ -69,9 +69,9 @@ internal sealed class GlbShader : SingleTargetRenderingShader
         var baseColorTex = _baseColor?.TextureObject ?? TextureObject.Empty;
         var normalTex = _normal?.TextureObject ?? TextureObject.Empty;
         var metallicRoughnessTex = _metallicRoughness?.TextureObject ?? TextureObject.Empty;
-        dispatcher.SendUniformTexture2D("_baseColorTex", baseColorTex, TextureUnitNumber.Unit0);
-        dispatcher.SendUniformTexture2D("_normalTex", normalTex, TextureUnitNumber.Unit1);
-        dispatcher.SendUniformTexture2D("_metallicRoughnessTex", metallicRoughnessTex, TextureUnitNumber.Unit2);
+        dispatcher.SendUniformTexture2D("_baseColorTex", baseColorTex, 0);
+        dispatcher.SendUniformTexture2D("_normalTex", normalTex, 1);
+        dispatcher.SendUniformTexture2D("_metallicRoughnessTex", metallicRoughnessTex, 2);
         var screen = context.Screen;
         var lights = screen.Lights.GetLights();
         var light = lights.FirstOrDefault();

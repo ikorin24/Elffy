@@ -29,14 +29,14 @@ public sealed class PmxModelShader : RenderingShader
 
         var target = context.Target;
         var skeleton = target.GetComponent<HumanoidSkeleton>();
-        dispatcher.SendUniformTexture1D("_boneTrans", skeleton.TranslationData, TextureUnitNumber.Unit0);
-        dispatcher.SendUniformTexture2DArray("_texArrSampler", target.GetComponent<ArrayTexture>().TextureObject, TextureUnitNumber.Unit1);
+        dispatcher.SendUniformTexture1D("_boneTrans", skeleton.TranslationData, 0);
+        dispatcher.SendUniformTexture2DArray("_texArrSampler", target.GetComponent<ArrayTexture>().TextureObject, 1);
 
         var screen = context.Screen;
         var lights = screen.Lights;
         dispatcher.SendUniform("lightCount", lights.LightCount);
-        dispatcher.SendUniformTexture1D("lColorSampler", lights.ColorTexture, TextureUnitNumber.Unit2);
-        dispatcher.SendUniformTexture1D("lPosSampler", lights.PositionTexture, TextureUnitNumber.Unit3);
+        dispatcher.SendUniformTexture1D("lColorSampler", lights.ColorTexture, 2);
+        dispatcher.SendUniformTexture1D("lPosSampler", lights.PositionTexture, 3);
     }
 
     protected override ShaderSource GetShaderSource(in ShaderGetterContext context) => new()

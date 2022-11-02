@@ -17,7 +17,7 @@ public sealed class GrayscalePostProcess : PostProcess
     {
         var screen = context.Screen;
         dispatcher.SendUniform("_screenSize", screen.FrameBufferSize);
-        dispatcher.SendUniformTexture2D("_input", _input.RenderTargetTexture, TextureUnitNumber.Unit0);
+        dispatcher.SendUniformTexture2D("_input", _input.RenderTargetTexture, 0);
     }
 
     protected override PostProcessSource GetSource(in PostProcessGetterContext context) => new()

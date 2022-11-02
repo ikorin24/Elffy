@@ -33,7 +33,7 @@ public sealed class TextureShader : RenderingShader
         var texture = _texture;
         dispatcher.SendUniform("_hasTexture", texture != null);
         if(texture != null) {
-            dispatcher.SendUniformTexture2D("_sampler", texture.TextureObject, TextureUnitNumber.Unit0);
+            dispatcher.SendUniformTexture2D("_sampler", texture.TextureObject, 0);
         }
         dispatcher.SendUniform("_mvp", context.Projection * context.View * context.Model);
     }

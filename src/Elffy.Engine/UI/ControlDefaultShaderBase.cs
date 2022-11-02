@@ -34,7 +34,7 @@ internal abstract class ControlDefaultShaderBase : UIRenderingShader
         dispatcher.SendUniform("_hasTex", hasTex);
         if(hasTex) {
             var screen = target.GetValidScreen();
-            dispatcher.SendUniformTexture2D("_tex", texture, TextureUnitNumber.Unit0);
+            dispatcher.SendUniformTexture2D("_tex", texture, 0);
             dispatcher.SendUniform("_screenHeight", screen.FrameBufferSize.Y);
             dispatcher.SendUniform("_origin", target.ActualPosition);
 
