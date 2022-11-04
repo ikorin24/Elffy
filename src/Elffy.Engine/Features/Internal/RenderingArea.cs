@@ -59,8 +59,6 @@ namespace Elffy.Features.Internal
 
             // Initialize viewport and so on.
             SetFrameBufferSize(OwnerScreen.FrameBufferSize);
-
-            Lights.Initialize();
         }
 
         private void InitializeGL()

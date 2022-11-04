@@ -1,7 +1,5 @@
 ﻿#nullable enable
 using Elffy.Components;
-using Elffy.Graphics.OpenGL;
-using System;
 
 namespace Elffy.Shading.Forward;
 
@@ -33,10 +31,23 @@ public sealed class PmxModelShader : RenderingShader
         dispatcher.SendUniformTexture2DArray("_texArrSampler", target.GetComponent<ArrayTexture>().TextureObject, 1);
 
         var screen = context.Screen;
-        var lights = screen.Lights;
-        dispatcher.SendUniform("lightCount", lights.LightCount);
-        dispatcher.SendUniformTexture1D("lColorSampler", lights.ColorTexture, 2);
-        dispatcher.SendUniformTexture1D("lPosSampler", lights.PositionTexture, 3);
+        var lights = screen.Lights.GetLights();
+        var light = lights.Length switch
+        {
+            > 0 => (
+                Position: lights[0].Position,
+                Color: lights[0].Color,
+                LightMvp: lights[0].LightMatrix.Derefer() * context.Model,
+                ShadowMap: lights[0].ShadowMap.Derefer(),
+                Exists: true
+            ),
+            _ => default,
+        };
+        dispatcher.SendUniform("_lPos", light.Position);
+        dispatcher.SendUniform("_lColor", light.Color);
+        dispatcher.SendUniform("_lExists", light.Exists);
+        dispatcher.SendUniform("_lmvp", light.LightMvp);
+        dispatcher.SendUniformTexture2D("_shadowMap", light.ShadowMap.DepthTexture, 2);
     }
 
     protected override ShaderSource GetShaderSource(in ShaderGetterContext context) => new()
@@ -55,12 +66,14 @@ public sealed class PmxModelShader : RenderingShader
         out vec4 Pos;
         out vec3 Normal;
         out vec2 UV;
+        out vec3 ShadowMapNDC;
         flat out float texIndex;
 
         uniform mat4 modelView;
         uniform mat4 view;
         uniform mat4 projection;
         uniform sampler1D _boneTrans;
+        uniform mat4 _lmvp;
 
         mat4 GetMat(int boneIndex)
         {
@@ -81,6 +94,8 @@ public sealed class PmxModelShader : RenderingShader
             Normal = transpose(inverse(mat3(skinning))) * vNormal;
             UV = vUV;
             texIndex = vtexIndex;
+            vec4 posLightSpace = _lmvp * vec4(vPos, 1.0);
+            ShadowMapNDC = posLightSpace.xyz / posLightSpace.w;
         }
         """u8,
         FragmentShader =
@@ -91,17 +106,31 @@ public sealed class PmxModelShader : RenderingShader
         in vec2 UV;
         in vec4 Pos;
         in vec3 Normal;
+        in vec3 ShadowMapNDC;
         flat in float texIndex;
         out vec4 fragColor;
 
         uniform mat4 modelView;
         uniform mat4 view;
         uniform mat4 projection;
-        uniform int lightCount;
-        uniform sampler1D lPosSampler;
-        uniform sampler1D lColorSampler;
+
+        uniform vec4 _lPos;
+        uniform vec4 _lColor;
+        uniform bool _lExists;
+        uniform sampler2D _shadowMap;
 
         uniform sampler2DArray _texArrSampler;
+
+        float CalcShadow(vec3 shadowMapNDC, sampler2D shadowMap)
+        {
+            const float bias = 0.001;
+            vec3 range = 1.0 - step(vec3(1.0), abs(shadowMapNDC));
+            float filter = range.x * range.y * range.z;
+            vec3 shadowMapUV = shadowMapNDC * 0.5 + 0.5;
+            float d = textureLod(shadowMap, shadowMapUV.xy, 0).x;
+            float shadow = 1.0 - step(shadowMapUV.z - bias, d);
+            return shadow * filter;
+        }
 
         void main()
         {
@@ -112,19 +141,21 @@ public sealed class PmxModelShader : RenderingShader
             const vec3 md = vec3(0.2, 0.2, 0.2);
             const vec3 ms = vec3(0.5, 0.5, 0.5);
             const float shininess = 5;
-            for(int i = 0; i < lightCount; i++) {
-                vec4 lPosView = view * texelFetch(lPosSampler, i, 0);               // light pos in eye space
-                vec3 L = (lPosView.w == 0) ? normalize(lPosView.xyz) : normalize(lPosView.xyz / lPosView.w - posView);
-                vec3 N = normalize(normalView);
-                vec3 R = reflect(-L, N);
-                vec3 V = normalize(-posView);
-                vec3 l = texelFetch(lColorSampler, i, 0).rgb;
-                vec3 la = l * 0.8;
-                vec3 ld = l * 0.8;
-                vec3 ls = l * 0.2;
-                vec3 color = (la * ma) + (ld * md * dot(N, L)) + (ls * ms * max(pow(max(0.0, dot(R, V)), shininess), 0.0));
-                lightColor += color;
-            }
+            vec4 lPosView = view * _lPos;               // light pos in eye space
+            vec3 L = (lPosView.w == 0) ? normalize(lPosView.xyz) : normalize(lPosView.xyz / lPosView.w - posView);
+            vec3 N = normalize(normalView);
+            vec3 R = reflect(-L, N);
+            vec3 V = normalize(-posView);
+            vec3 l = _lColor.rgb;
+            vec3 la = l * 0.8;
+            vec3 ld = l * 0.8;
+            vec3 ls = l * 0.2;
+            float shadow = CalcShadow(ShadowMapNDC, _shadowMap);
+            vec3 ambient = (la * ma);
+            vec3 diffuse = (ld * md * dot(N, L));
+            vec3 specular = (ls * ms * max(pow(max(0.0, dot(R, V)), shininess), 0.0));
+            vec3 color = ambient + (diffuse + specular) * (1.0 - shadow);
+            lightColor += color;
             fragColor = vec4(lightColor, 1.0) * texture2DArray(_texArrSampler, vec3(UV, texIndex));
         }
         """u8,

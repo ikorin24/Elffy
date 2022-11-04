@@ -74,10 +74,9 @@ internal sealed class GlbShader : SingleTargetRenderingShader
         dispatcher.SendUniformTexture2D("_metallicRoughnessTex", metallicRoughnessTex, 2);
         var screen = context.Screen;
         var lights = screen.Lights.GetLights();
-        var light = lights.FirstOrDefault();
-        var (lpos, lcolor) = light switch
+        var (lpos, lcolor) = lights.Length switch
         {
-            not null => (light.Position, light.Color),
+            > 0 => (lights[0].Position, lights[0].Color),
             _ => (default, Color4.Black),
         };
         dispatcher.SendUniform("_lpos", lpos);

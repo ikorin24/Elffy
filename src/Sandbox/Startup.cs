@@ -155,7 +155,7 @@ public static class Startup
         {
             var angle = i++.ToRadian();
             var (sin, cos) = MathF.SinCos(angle);
-            var vec = -new Vector3(sin * 2, 10, cos * 10);
+            var vec = -new Vector3(sin * 10, 10, cos * 2);
             light.Direction = vec;
             arrow.SetDirection(vec.Normalized());
         });
@@ -200,6 +200,7 @@ public static class Startup
     {
         var model = Resources.Sandbox["Alicia/Alicia_solid.pmx"].CreatePmxModel();
         model.Scale = new Vector3(0.3f);
+        model.Position = new Vector3(0, 0, -2.5f);
         await model.Activate(layer);
         model.Update.Subscribe(m =>
         {

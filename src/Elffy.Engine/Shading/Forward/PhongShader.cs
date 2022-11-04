@@ -86,23 +86,23 @@ public sealed class PhongShader : RenderingShader
         dispatcher.SendUniform("hasTexture", texture != null);
 
         var screen = context.Target.GetValidScreen();
-        var lights = screen.Lights;
-        dispatcher.SendUniform("lightCount", lights.LightCount);
-        dispatcher.SendUniformTexture1D("lColorSampler", lights.ColorTexture, 1);
-        dispatcher.SendUniformTexture1D("lPosSampler", lights.PositionTexture, 2);
-
-        bool hasShadowMap;
-
-        var light = lights.GetLights().FirstOrDefault();
-        if(light != null && light.LightMatrix.TryDerefer(out var lightMatrix) && light.ShadowMap.TryDerefer(out var shadowMap)) {
-            dispatcher.SendUniform("_lmvp", lightMatrix * context.Model);
-            dispatcher.SendUniformTexture2D("_shadowMap", shadowMap.DepthTexture, 3);
-            hasShadowMap = true;
-        }
-        else {
-            hasShadowMap = false;
-        }
-        dispatcher.SendUniform("_hasShadowMap", hasShadowMap);
+        var lights = screen.Lights.GetLights();
+        var light = lights.Length switch
+        {
+            > 0 => (
+                Exists: true,
+                Mat: lights[0].LightMatrix.Derefer() * context.Model,
+                Pos: lights[0].Position,
+                Color: lights[0].Color,
+                ShadowMap: lights[0].ShadowMap.GetReference().DepthTexture
+            ),
+            _ => default,
+        };
+        dispatcher.SendUniform("_lmvp", light.Mat);
+        dispatcher.SendUniform("_lPos", light.Pos);
+        dispatcher.SendUniform("_lColor", light.Color);
+        dispatcher.SendUniformTexture2D("_shadowMap", light.ShadowMap, 3);
+        dispatcher.SendUniform("_lightExists", light.Exists);
     }
 
     protected override ShaderSource GetShaderSource(in ShaderGetterContext context)
@@ -146,9 +146,6 @@ out vec4 fragColor;
 uniform mat4 modelView;
 uniform mat4 view;
 uniform mat4 projection;
-uniform int lightCount;
-uniform sampler1D lPosSampler;
-uniform sampler1D lColorSampler;
 uniform vec3 ma;
 uniform vec3 md;
 uniform vec3 ms;
@@ -158,11 +155,13 @@ uniform sampler2D tex_sampler;
 uniform bool hasTexture;
 
 uniform sampler2D _shadowMap;
-uniform bool _hasShadowMap;
+uniform bool _lightExists;
+uniform vec4 _lPos;
+uniform vec4 _lColor;
 
 float CalcShadow(vec3 shadowMapNDC, sampler2D shadowMap)
 {
-    const float bias = 0.0004;
+    const float bias = 0.001;
     vec3 range = 1.0 - step(vec3(1.0), abs(shadowMapNDC));
     float filter = range.x * range.y * range.z;
     vec3 shadowMapUV = shadowMapNDC * 0.5 + 0.5;
@@ -175,30 +174,27 @@ void main()
 {
     vec3 posView = (modelView * vec4(_vout_pos, 1.0)).xyz;                  // vertex pos in eye space
     vec3 normalView = transpose(inverse(mat3(modelView))) * _vout_normal;   // normal in eye space
-    vec3 lightAmbient = vec3(0, 0, 0);
-    vec3 lightDiffuse = vec3(0, 0, 0);
-    vec3 lightSpecular = vec3(0, 0, 0);
-    for(int i = 0; i < lightCount; i++) {
-        vec4 lPosView = view * texelFetch(lPosSampler, i, 0);
+    if(_lightExists) {
+        vec4 lPosView = view * _lPos;
         vec3 L = (lPosView.w == 0.0) ? normalize(lPosView.xyz) : normalize(lPosView.xyz / lPosView.w - posView);
         vec3 N = normalize(normalView);
         vec3 R = reflect(-L, N);
         vec3 V = normalize(-posView);
-        vec3 l = texelFetch(lColorSampler, i, 0).rgb;
+        vec3 l = _lColor.rgb;
         vec3 la = l * 0.6;
         vec3 ld = l * 0.8;
         vec3 ls = l * 0.2;
         vec3 ambient = la * ma;
         vec3 diffuse = ld * md * dot(N, L);
         vec3 specular = ls * ms * max(pow(max(0.0, dot(R, V)), shininess), 0.0);
-        lightAmbient += ambient;
-        lightDiffuse += diffuse;
-        lightSpecular += specular;
-    }
-    float shadow = CalcShadow(_vout_shadowMapNDC, _shadowMap);
-    vec3 lightColor = lightAmbient + (lightDiffuse + lightSpecular) * (1.0 - shadow);
-    fragColor = hasTexture ? vec4(lightColor, 1.0) * texture(tex_sampler, _vout_uv)
+        float shadow = CalcShadow(_vout_shadowMapNDC, _shadowMap);
+        vec3 lightColor = ambient + (diffuse + specular) * (1.0 - shadow);
+        fragColor = hasTexture ? vec4(lightColor, 1.0) * texture(tex_sampler, _vout_uv)
                            : vec4(lightColor, 1.0);
+    }
+    else {
+        fragColor = vec4(0, 0, 0, 1);
+    }
 }
 """u8,
         };

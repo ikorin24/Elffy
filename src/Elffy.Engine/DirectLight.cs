@@ -10,8 +10,13 @@ namespace Elffy;
 public sealed class DirectLight : ILight
 {
     private const int DefaultShadowMapSize = 2048;
-    private LightImpl _impl;
+
+    private readonly LightManager _manager;
     private LifeState _state;
+    private Vector4 _position;
+    private Color4 _color;
+    private Matrix4 _lightMatrix;
+    private ShadowMapData _shadowMap;
     private AsyncEventSource<DirectLight>? _terminating;
     private EventSource<DirectLight>? _dead;
 
@@ -20,13 +25,9 @@ public sealed class DirectLight : ILight
 
     public LifeState LifeState => _state;
 
-    short ILight.Token => _impl.Token;
-
-    int ILight.Index => _impl.Index;
-
     Vector4 ILight.Position
     {
-        get => _impl.GetPosition().DereferOrDefault();
+        get => _position;
         set
         {
             if(value.W != 0) {
@@ -37,7 +38,8 @@ public sealed class DirectLight : ILight
                 throw new ArgumentException("XYZ is zero vector or too small.");
             }
             var lightMatrix = CalcLightMatrix(in dir, Vector3.Zero, 30, 15, 20);  // TODO: 
-            _impl.TrySetPosition(in value, in lightMatrix);
+            _position = value;
+            _lightMatrix = lightMatrix;
         }
     }
 
@@ -45,11 +47,13 @@ public sealed class DirectLight : ILight
     {
         get
         {
-            if(_impl.GetPosition().TryDerefer(out var pos)) {
-                if(pos.W == 0) {
-                    return -pos.Xyz;
+            if(_position.W == 0) {
+                var dir = (-_position.Xyz).Normalized();
+                if(dir.ContainsNaNOrInfinity == false) {
+                    return dir;
                 }
             }
+            // invalid
             return Vector3.Zero;
         }
         set => ((ILight)this).Position = new Vector4(-value, 0);
@@ -57,17 +61,17 @@ public sealed class DirectLight : ILight
 
     public Color4 Color
     {
-        get => _impl.GetColor().DereferOrDefault();
-        set => _impl.TrySetColor(value);
+        get => _color;
+        set => _color = value;
     }
 
-    public RefReadOnlyOrNull<Matrix4> LightMatrix => _impl.GetLightMatrix();
+    public RefReadOnly<Matrix4> LightMatrix => new(in _lightMatrix);
 
-    public RefReadOnlyOrNull<ShadowMapData> ShadowMap => _impl.GetShadowMap();
+    public RefReadOnly<ShadowMapData> ShadowMap => new(in _shadowMap);
 
-    internal DirectLight(LightManager lightManager, int index, short token)
+    internal DirectLight(LightManager manager)
     {
-        _impl = new LightImpl(lightManager, index, token);
+        _manager = manager;
         _state = LifeState.New;
     }
 
@@ -75,7 +79,8 @@ public sealed class DirectLight : ILight
 
     public async UniTask Terminate(FrameTiming timing)
     {
-        var screen = _impl.Manager.Screen;
+        var manager = _manager;
+        var screen = manager.Screen;
         screen.ThrowIfCurrentTimingOufOfFrame();
 
         if(_state >= LifeState.Terminating) {
@@ -83,7 +88,6 @@ public sealed class DirectLight : ILight
         }
 
         Debug.Assert(_state == LifeState.Alive);
-        var manager = _impl.Manager;
         if(timing == FrameTiming.NotSpecified) {
             timing = FrameTiming.Update;
         }
@@ -102,6 +106,7 @@ public sealed class DirectLight : ILight
         finally {
             manager.RemoveLight(this);
         }
+        _shadowMap.Release();
         try {
             _dead?.Invoke(this);
         }
@@ -112,37 +117,20 @@ public sealed class DirectLight : ILight
         await timings.GetTiming(timing).NextFrame();
     }
 
-    public IHostScreen GetValidScreen() => _impl.Manager.Screen;
+    public IHostScreen GetValidScreen() => _manager.Screen;
 
     public static UniTask<DirectLight> Create(IHostScreen screen, Vector3 direction, Color4 color)
     {
         ArgumentNullException.ThrowIfNull(screen);
-        return Create(screen.Lights, direction, color, true, FrameTiming.Update);
-    }
-
-    public static UniTask<DirectLight> Create(IHostScreen screen, Vector3 direction, Color4 color, bool useShadowMap)
-    {
-        ArgumentNullException.ThrowIfNull(screen);
-        return Create(screen.Lights, direction, color, useShadowMap, FrameTiming.Update);
-    }
-
-    public static UniTask<DirectLight> Create(IHostScreen screen, Vector3 direction, Color4 color, bool useShadowMap, FrameTiming timing)
-    {
-        ArgumentNullException.ThrowIfNull(screen);
-        return Create(screen.Lights, direction, color, useShadowMap, timing);
+        return Create(screen.Lights, direction, color, FrameTiming.Update);
     }
 
     public static UniTask<DirectLight> Create(LightManager manager, Vector3 direction, Color4 color)
     {
-        return Create(manager, direction, color, true, FrameTiming.Update);
+        return Create(manager, direction, color, FrameTiming.Update);
     }
 
-    public static UniTask<DirectLight> Create(LightManager manager, Vector3 direction, Color4 color, bool useShadowMap)
-    {
-        return Create(manager, direction, color, useShadowMap, FrameTiming.Update);
-    }
-
-    public static async UniTask<DirectLight> Create(LightManager manager, Vector3 direction, Color4 color, bool useShadowMap, FrameTiming timing)
+    public static async UniTask<DirectLight> Create(LightManager manager, Vector3 direction, Color4 color, FrameTiming timing)
     {
         ArgumentNullException.ThrowIfNull(manager);
 
@@ -152,16 +140,16 @@ public sealed class DirectLight : ILight
         }
         var timings = screen.Timings;
         await timings.FrameInitializing.NextOrNow();
-        if(manager.TryRegisterLight(static (m, i, t) => new DirectLight(m, i, t), out var light) == false) {
-            throw new InvalidOperationException("Cannot create light");
-        }
+
+        var light = new DirectLight(manager);
+        manager.RegisterLight(light);
+
         Debug.Assert(light.LifeState == LifeState.New);
         light._state = LifeState.Alive;
         light.Direction = direction;
         light.Color = color;
-        if(useShadowMap) {
-            manager.InitializeShadowMap(((ILight)light).Index, DefaultShadowMapSize);
-        }
+        Debug.Assert(light._shadowMap.IsEmpty);
+        light._shadowMap.Initialize(DefaultShadowMapSize, DefaultShadowMapSize);
         var pipeline = screen.RenderPipeline;
         if(pipeline.TryFindOperation<ForwardRenderLayer>(RenderPipeline.DebuggerLayerName, out var debuggerLayer)) {
             await new DirectLightDebugObject(light).Activate(debuggerLayer);
@@ -247,7 +235,7 @@ internal sealed class DirectLightDebugObject : Renderable
 
     protected override void OnRendering(in RenderingContext context)
     {
-        var lightMat = _light.LightMatrix.DereferOrDefault();
+        ref readonly var lightMat = ref _light.LightMatrix.GetReference();
         var mat = lightMat.Inverted();
         var newContext = new RenderingContext(
             context.Screen,

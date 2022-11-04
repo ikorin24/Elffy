@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using Elffy.Graphics.OpenGL;
 
 namespace Elffy.Shading.Deferred;
 
@@ -16,24 +15,31 @@ internal sealed class PbrDeferredPostProcess : PostProcess
     {
         var gBuffer = _gBufferProvider.GetGBufferData();
         var screen = context.Screen;
-        var lights = screen.Lights;
+        var lights = screen.Lights.GetLights();
 
-        var lightCount = lights.LightCount;
         var camera = screen.Camera;
         dispatcher.SendUniform("_view", camera.View);
         dispatcher.SendUniform("_projection", camera.Projection);
-        dispatcher.SendUniform("_lightCount", lightCount);
         dispatcher.SendUniformTexture2D("_mrt0", gBuffer.Mrt[0], 0);
         dispatcher.SendUniformTexture2D("_mrt1", gBuffer.Mrt[1], 1);
         dispatcher.SendUniformTexture2D("_mrt2", gBuffer.Mrt[2], 2);
-        dispatcher.SendUniformTexture1D("_lightPosSampler", lights.PositionTexture, 3);
-        dispatcher.SendUniformTexture1D("_lightColorSampler", lights.ColorTexture, 4);
 
-        var light = lights.GetLights().FirstOrDefault();
-        if(light != null && light.ShadowMap.TryDerefer(out var shadowMap)) {
-            dispatcher.SendUniformTexture1D("_lmat", lights.MatrixTexture, 5);
-            dispatcher.SendUniformTexture2D("_shadowMap", shadowMap.DepthTexture, 6);
-        }
+        var light = lights.IsEmpty switch
+        {
+            false => (
+                Exists: true,
+                Position: lights[0].Position,
+                Color: lights[0].Color,
+                Matrix: lights[0].LightMatrix.Derefer(),
+                ShadowMap: lights[0].ShadowMap.GetReference().DepthTexture
+            ),
+            true => default,
+        };
+        dispatcher.SendUniform("_hasLight", light.Exists);
+        dispatcher.SendUniform("_lightPos", light.Position);
+        dispatcher.SendUniform("_lightColor", light.Color);
+        dispatcher.SendUniform("_lightMat", light.Matrix);
+        dispatcher.SendUniformTexture2D("_shadowMap", light.ShadowMap, 3);
     }
 
     protected override PostProcessSource GetSource(in PostProcessGetterContext context) => new PostProcessSource
@@ -72,10 +78,12 @@ internal sealed class PbrDeferredPostProcess : PostProcess
         uniform sampler2D _mrt0;
         uniform sampler2D _mrt1;
         uniform sampler2D _mrt2;
-        uniform sampler1D _lightPosSampler;
-        uniform sampler1D _lightColorSampler;
-        uniform int _lightCount;
-        uniform sampler1D _lmat;
+
+        uniform bool _hasLight;
+        uniform vec4 _lightPos;
+        uniform vec4 _lightColor;
+        uniform mat4 _lightMat;
+
         uniform sampler2D _shadowMap;
         out vec4 _fragColor;
 
@@ -173,9 +181,11 @@ internal sealed class PbrDeferredPostProcess : PostProcess
             vec3 f0 = mix(vec3(DielectricF0, DielectricF0, DielectricF0), baseColor, metallic);
 
             vec3 fragColor = vec3(0.0, 0.0, 0.0);
-            for(int i = 0; i < _lightCount; i++) {
-                vec4 lPosWorld = texelFetch(_lightPosSampler, i, 0);
-                vec3 lColor = texelFetch(_lightColorSampler, i, 0).rgb; // light color
+            if(_hasLight) {
+                //vec4 lPosWorld = texelFetch(_lightPosSampler, i, 0);
+                vec4 lPosWorld = _lightPos;
+                //vec3 lColor = texelFetch(_lightColorSampler, i, 0).rgb; // light color
+                vec3 lColor = _lightColor.rgb;
                 vec4 lPos = _view * lPosWorld;              // light pos in eye space
 
                 vec3 l;
@@ -202,20 +212,9 @@ internal sealed class PbrDeferredPostProcess : PostProcess
                 vec3 specular = V * D * F * irradiance;
                 specular = max(vec3(0.0, 0.0, 0.0), specular);
 
-                if(i == 0) {
-                    mat4 lmat = mat4(
-                        texelFetch(_lmat, 0, 0),
-                        texelFetch(_lmat, 1, 0),
-                        texelFetch(_lmat, 2, 0),
-                        texelFetch(_lmat, 3, 0)
-                    );
-                    vec3 shadowMapNdc = ToVec3(lmat * posWorld);
-                    float shadow = CalcShadow(shadowMapNdc, _shadowMap);
-                    fragColor += (diffuse + specular) * (1.0 - shadow);
-                }
-                else {
-                    fragColor += diffuse + specular;
-                }
+                vec3 shadowMapNdc = ToVec3(_lightMat * posWorld);
+                float shadow = CalcShadow(shadowMapNdc, _shadowMap);
+                fragColor += (diffuse + specular) * (1.0 - shadow);
             }
 
             // indirect diffuse
