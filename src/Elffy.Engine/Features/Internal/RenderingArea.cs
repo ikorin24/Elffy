@@ -86,6 +86,7 @@ namespace Elffy.Features.Internal
             Debug.Assert(_currentTiming == CurrentFrameTiming.OutOfFrameLoop);
             var isCloseRequested = _isCloseRequested;
             var pipeline = RenderPipeline;
+            var lights = Lights;
 
             var frameTimingPoints = TimingPoints;
             Mouse.InitFrame();
@@ -119,6 +120,7 @@ namespace Elffy.Features.Internal
                     self._state = LifeState.Dead;
                 });
             }
+            lights.ApplyAdd();
             pipeline.ApplyAdd();
             frameTimingPoints.FrameInitializing.DoQueuedEvents();
 
@@ -161,6 +163,7 @@ namespace Elffy.Features.Internal
             // Frame finalizing
             _currentTiming = CurrentFrameTiming.FrameFinalizing;
             frameTimingPoints.FrameFinalizing.DoQueuedEvents();
+            lights.ApplyRemove();
             pipeline.ApplyRemove();
 
             // ------------------------------------------------------------

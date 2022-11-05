@@ -135,20 +135,21 @@ public static class Startup
     {
         var screen = layer.GetValidScreen();
         var color = Color4.White;
-        var (arrow, light) = await UniTask.WhenAll(
-            new Arrow
-            {
-                Shader = new SolidColorShader
-                {
-                    Color = color,
-                },
-                HasShadow = false,
-                Scale = new Vector3(3),
-                Position = new Vector3(0, 16, 0),
-            }.Activate(layer),
-            DirectLight.Create(screen, new Vector3(0, -1, 0), color)
-        );
+        var light = new DirectLight();
+        var arrow = new Arrow
+        {
+            HasShadow = false,
+            Scale = new Vector3(3),
+            Position = new Vector3(0, 16, 0),
+        };
+        arrow.Shader = new SolidColorShader
+        {
+            Color = light.Color,
+        };
         arrow.SetDirection(light.Direction);
+        await UniTask.WhenAll(
+            arrow.Activate(layer),
+            light.Activate(screen.Lights));
 
         var i = 0;
         screen.Timings.Update.Subscribe(_ =>

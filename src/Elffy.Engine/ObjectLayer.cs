@@ -123,7 +123,8 @@ namespace Elffy
 
         internal void AddFrameObject(FrameObject frameObject)
         {
-            Debug.Assert(TryGetScreen(out var screen) && screen.CurrentTiming.IsOutOfFrameLoop() == false);
+            Debug.Assert(TryGetScreen(out var screen));
+            Debug.Assert(screen.CurrentTiming.IsOutOfFrameLoop() == false);
             _store.AddFrameObject(frameObject);
         }
 

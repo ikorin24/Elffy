@@ -67,6 +67,11 @@ namespace Elffy
             return false;
         }
 
+        internal bool TryFindDebuggerLayer([MaybeNullWhen(false)] out ForwardRenderLayer debuggerLayer)
+        {
+            return TryFindOperation(DebuggerLayerName, out debuggerLayer);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void Add(PipelineOperation operation, Action<PipelineOperation> onAdded)
         {

@@ -18,7 +18,7 @@ namespace Elffy
 
         private readonly FrameTimingPoint _internalEndOfFrame;
 
-        internal IHostScreen Screen => _screen;
+        public IHostScreen Screen => _screen;
 
         public FrameTimingPoint FrameInitializing => _frameInitializingPoint;
         public FrameTimingPoint EarlyUpdate => _earlyUpdatePoint;

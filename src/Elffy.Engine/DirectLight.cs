@@ -3,6 +3,9 @@ using Cysharp.Threading.Tasks;
 using Elffy.Shading;
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace Elffy;
@@ -11,15 +14,18 @@ public sealed class DirectLight : ILight
 {
     private const int DefaultShadowMapSize = 2048;
 
-    private readonly LightManager _manager;
+    private LightManager? _manager;
     private LifeState _state;
     private Vector4 _position;
     private Color4 _color;
     private Matrix4 _lightMatrix;
     private ShadowMapData _shadowMap;
+    private int _shadowMapSize; // should be power of 2.
     private AsyncEventSource<DirectLight>? _terminating;
+    private EventSource<DirectLight>? _alive;
     private EventSource<DirectLight>? _dead;
 
+    public Event<DirectLight> Alive => new(ref _alive);
     public AsyncEvent<DirectLight> Terminating => new(ref _terminating);
     public Event<DirectLight> Dead => new(ref _dead);
 
@@ -65,47 +71,189 @@ public sealed class DirectLight : ILight
         set => _color = value;
     }
 
+    public int ShadowMapSize
+    {
+        get => _shadowMapSize;
+        init
+        {
+            if(value <= 0) {
+                ThrowOutOfRange();
+                [DoesNotReturn] static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(value));
+            }
+            if(BitOperations.IsPow2(value) == false) {
+                ThrowNotPowerOf2();
+                [DoesNotReturn] static void ThrowNotPowerOf2() => throw new ArgumentException("The value should be power of 2.");
+            }
+            _shadowMapSize = value;
+        }
+    }
+
     public RefReadOnly<Matrix4> LightMatrix => new(in _lightMatrix);
 
     public RefReadOnly<ShadowMapData> ShadowMap => new(in _shadowMap);
 
-    internal DirectLight(LightManager manager)
+    public DirectLight()
     {
-        _manager = manager;
         _state = LifeState.New;
+        _shadowMapSize = DefaultShadowMapSize;
+        Color = Color4.White;
+        Direction = new Vector3(0, -1, 0);
     }
 
-    public UniTask Terminate() => Terminate(FrameTiming.Update);
+    public UniTask<DirectLight> Activate(LightManager manager, CancellationToken cancellationToken = default)
+        => Activate(manager, FrameTiming.Update, cancellationToken);
 
-    public async UniTask Terminate(FrameTiming timing)
+    public UniTask<DirectLight> Activate(LightManager manager, FrameTiming timing, CancellationToken cancellationToken = default)
     {
+        var timings = manager.Screen.Timings;
+        var tp = timings.GetTiming(timing.IsSpecified() ? timing : FrameTiming.Update);
+        CheckForActivation(manager, tp);
+        return ActivatePrivate(manager, tp, cancellationToken);
+    }
+
+    public UniTask<DirectLight> Activate(LightManager manager, FrameTimingPoint timingPoint, CancellationToken cancellationToken = default)
+    {
+        CheckForActivation(manager, timingPoint);
+        return ActivatePrivate(manager, timingPoint, cancellationToken);
+    }
+
+    private void CheckForActivation(LightManager manager, FrameTimingPoint timingPoint)
+    {
+        ArgumentNullException.ThrowIfNull(manager);
+        ArgumentNullException.ThrowIfNull(timingPoint);
+        var currentContext = Engine.CurrentContext;
+        if(currentContext == null) {
+            ContextMismatchException.ThrowCurrentContextIsNull();
+        }
+        if(manager.Screen != currentContext) {
+            throw new ArgumentException($"'{nameof(manager)}' instance does not belong in the current context.");
+        }
+        if(timingPoint.Screen != currentContext) {
+            throw new ArgumentException($"'{nameof(timingPoint)}' instance does not belong in the current context.");
+        }
+        if(_state > LifeState.New) {
+            throw new InvalidOperationException($"Cannot activate the instance twice.");
+        }
+    }
+
+    private async UniTask<DirectLight> ActivatePrivate(LightManager manager, FrameTimingPoint timingPoint, CancellationToken ct)
+    {
+        Debug.Assert(_state == LifeState.New);
+        _state = LifeState.Activating;
+        _manager = manager;
+        manager.AddLight(this, static self =>
+        {
+            SafeCast.As<DirectLight>(self).OnAddedToList();
+        });
+        _shadowMap.Initialize(_shadowMapSize, _shadowMapSize);
+        var pipeline = manager.Screen.RenderPipeline;
+        if(pipeline.TryFindDebuggerLayer(out var debuggerLayer)) {
+            await new DirectLightDebugObject(this).Activate(debuggerLayer, ct);
+        }
+        await timingPoint.NextFrame(ct);
+        return this;
+    }
+
+    public UniTask<DirectLight> Terminate(CancellationToken cancellationToken = default) => Terminate(FrameTiming.Update, cancellationToken);
+
+    public UniTask<DirectLight> Terminate(FrameTiming timing, CancellationToken cancellationToken = default)
+    {
+        CheckForTermination(
+            timing.IsSpecified() ? timing : FrameTiming.Update,
+            out var timingPoint);
+        return TerminatePrivate(_manager, timingPoint, cancellationToken);
+    }
+
+    public UniTask<DirectLight> Terminate(FrameTimingPoint timingPoint, CancellationToken cancellationToken = default)
+    {
+        CheckForTermination(timingPoint);
+        return TerminatePrivate(_manager, timingPoint, cancellationToken);
+    }
+
+    [MemberNotNull(nameof(_manager))]
+    private void CheckForTermination(FrameTimingPoint timingPoint)
+    {
+        ArgumentNullException.ThrowIfNull(timingPoint);
+        var currentContext = Engine.CurrentContext;
+        if(currentContext == null) {
+            ContextMismatchException.ThrowCurrentContextIsNull();
+        }
+        if(_state >= LifeState.Terminating) {
+            throw new InvalidOperationException($"Cannot terminate the instance twice.");
+        }
+        Debug.Assert(_manager is not null);
         var manager = _manager;
+        if(manager.Screen != currentContext) {
+            throw new ArgumentException($"'{nameof(manager)}' instance does not belong in the current context.");
+        }
+        if(timingPoint.Screen != currentContext) {
+            throw new ArgumentException($"'{nameof(timingPoint)}' instance does not belong in the current context.");
+        }
+    }
+
+    [MemberNotNull(nameof(_manager))]
+    private void CheckForTermination(FrameTiming timing, out FrameTimingPoint timingPoint)
+    {
+        var currentContext = Engine.CurrentContext;
+        if(currentContext == null) {
+            ContextMismatchException.ThrowCurrentContextIsNull();
+        }
+        if(_state >= LifeState.Terminating) {
+            throw new InvalidOperationException($"Cannot terminate the instance twice.");
+        }
+        Debug.Assert(_manager is not null);
+        var manager = _manager;
+        if(manager.Screen != currentContext) {
+            throw new ArgumentException($"'{nameof(manager)}' instance does not belong in the current context.");
+        }
+        Debug.Assert(timing.IsSpecified());
+        timingPoint = currentContext.Timings.GetTiming(timing);
+    }
+
+    private async UniTask<DirectLight> TerminatePrivate(LightManager manager, FrameTimingPoint timingPoint, CancellationToken ct)
+    {
         var screen = manager.Screen;
         screen.ThrowIfCurrentTimingOufOfFrame();
 
-        if(_state >= LifeState.Terminating) {
-            throw new InvalidOperationException($"Cannot terminate {nameof(DirectLight)} twice.");
-        }
-
+        var timings = screen.Timings;
         Debug.Assert(_state == LifeState.Alive);
-        if(timing == FrameTiming.NotSpecified) {
-            timing = FrameTiming.Update;
-        }
-        var timings = manager.Screen.Timings;
-        var endTiming = timings.GetTiming(timing);
-
         _state = LifeState.Terminating;
-
+        manager.RemoveLight(this, static self =>
+        {
+            SafeCast.As<DirectLight>(self).OnRemovedFromList();
+        });
         try {
             await _terminating.InvokeIfNotNull(this, CancellationToken.None);
-            await timings.FrameFinalizing.NextOrNow();
         }
         catch {
             if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
         }
-        finally {
-            manager.RemoveLight(this);
+        try {
+            await timings.FrameFinalizing.NextOrNow(ct);
         }
+        catch {
+            if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
+        }
+        await timingPoint.NextFrame(ct);
+        return this;
+    }
+
+    private void OnAddedToList()
+    {
+        Debug.Assert(_state == LifeState.Activating);
+        _state = LifeState.Alive;
+        try {
+            _alive?.Invoke(this);
+        }
+        catch {
+            if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
+        }
+    }
+
+    private void OnRemovedFromList()
+    {
+        Debug.Assert(_state == LifeState.Terminating);
+        _state = LifeState.Dead;
         _shadowMap.Release();
         try {
             _dead?.Invoke(this);
@@ -113,49 +261,14 @@ public sealed class DirectLight : ILight
         catch {
             if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
         }
-        _state = LifeState.Dead;
-        await timings.GetTiming(timing).NextFrame();
     }
 
-    public IHostScreen GetValidScreen() => _manager.Screen;
-
-    public static UniTask<DirectLight> Create(IHostScreen screen, Vector3 direction, Color4 color)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public IHostScreen GetValidScreen()
     {
-        ArgumentNullException.ThrowIfNull(screen);
-        return Create(screen.Lights, direction, color, FrameTiming.Update);
-    }
-
-    public static UniTask<DirectLight> Create(LightManager manager, Vector3 direction, Color4 color)
-    {
-        return Create(manager, direction, color, FrameTiming.Update);
-    }
-
-    public static async UniTask<DirectLight> Create(LightManager manager, Vector3 direction, Color4 color, FrameTiming timing)
-    {
-        ArgumentNullException.ThrowIfNull(manager);
-
-        var screen = manager.Screen;
-        if(timing == FrameTiming.NotSpecified) {
-            timing = FrameTiming.Update;
-        }
-        var timings = screen.Timings;
-        await timings.FrameInitializing.NextOrNow();
-
-        var light = new DirectLight(manager);
-        manager.RegisterLight(light);
-
-        Debug.Assert(light.LifeState == LifeState.New);
-        light._state = LifeState.Alive;
-        light.Direction = direction;
-        light.Color = color;
-        Debug.Assert(light._shadowMap.IsEmpty);
-        light._shadowMap.Initialize(DefaultShadowMapSize, DefaultShadowMapSize);
-        var pipeline = screen.RenderPipeline;
-        if(pipeline.TryFindOperation<ForwardRenderLayer>(RenderPipeline.DebuggerLayerName, out var debuggerLayer)) {
-            await new DirectLightDebugObject(light).Activate(debuggerLayer);
-        }
-        await timings.GetTiming(timing).NextOrNow();
-        return light;
+        var manager = _manager;
+        if(manager is null) { ThrowHelper.ThrowInvalidNullScreen(); }
+        return manager.Screen;
     }
 
     private static Matrix4 CalcLightMatrix(in Vector3 directionNormalized, in Vector3 target, float frontLen, float backLen, float width)
