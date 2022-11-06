@@ -18,6 +18,7 @@ namespace Elffy
         private VBO _vbo;
         private IBO _ibo;
         private VAO _vao;
+        private MeshPrimitiveType _primitiveType;
         private RendererData _rendererData;
         private RendererData _shadowRendererData;
         private bool _hasShadow;
@@ -77,12 +78,19 @@ namespace Elffy
             }
         }
 
+        public MeshPrimitiveType MeshPrimitiveType
+        {
+            get => _primitiveType;
+            set => _primitiveType = value;
+        }
+
         internal ref readonly RendererData RendererData => ref _rendererData;
 
         public Renderable() : base(FrameObjectInstanceType.Renderable)
         {
             _isVisible = true;
             _hasShadow = true;
+            _primitiveType = MeshPrimitiveType.Triangles;
             _rendererData = new RendererData(this);
             _shadowRendererData = new RendererData(this);
         }
@@ -286,10 +294,10 @@ namespace Elffy
         protected void DrawElements(int byteOffset, uint count)
         {
             if(_instancingCount == 0) {
-                GL.DrawElements(BeginMode.Triangles, (int)count, DrawElementsType.UnsignedInt, byteOffset);
+                GL.DrawElements(_primitiveType.ToGLPrimitiveType(), (int)count, DrawElementsType.UnsignedInt, byteOffset);
             }
             else {
-                GL.DrawElementsInstanced(PrimitiveType.Triangles, (int)count, DrawElementsType.UnsignedInt, (IntPtr)byteOffset, _instancingCount);
+                GL.DrawElementsInstanced(_primitiveType.ToGLPrimitiveType(), (int)count, DrawElementsType.UnsignedInt, (IntPtr)byteOffset, _instancingCount);
             }
         }
 
