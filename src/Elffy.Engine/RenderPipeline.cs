@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -12,17 +11,25 @@ namespace Elffy
 {
     public sealed class RenderPipeline
     {
-        private readonly LazyApplyingList<PipelineOperation> _list;
-        private readonly RenderingArea _owner;
+        private readonly LazyApplyingList<PipelineOperation> _operations;
+        private readonly LazyApplyingList<ILight> _lights;
+        private readonly IHostScreen _screen;
 
         internal const string DebuggerLayerName = "_DEBUGGER_LAYER";
 
-        internal IHostScreen Screen => _owner.OwnerScreen;
+        internal IHostScreen Screen => _screen;
 
-        internal RenderPipeline(RenderingArea owner)
+        public ReadOnlySpan<ILight> Lights
         {
-            _list = new();
-            _owner = owner;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _lights.AsReadOnlySpan();
+        }
+
+        internal RenderPipeline(IHostScreen screen)
+        {
+            _operations = new();
+            _lights = new();
+            _screen = screen;
         }
 
         public PipelineOperation FindOperation(string? name)
@@ -45,7 +52,7 @@ namespace Elffy
 
         public bool TryFindOperation(string? name, [MaybeNullWhen(false)] out PipelineOperation operation)
         {
-            foreach(var op in _list.AsReadOnlySpan()) {
+            foreach(var op in _operations.AsReadOnlySpan()) {
                 if(op.Name == name) {
                     operation = op;
                     return true;
@@ -57,7 +64,7 @@ namespace Elffy
 
         public bool TryFindOperation<T>(string? name, [MaybeNullWhen(false)] out T operation) where T : PipelineOperation
         {
-            foreach(var op in _list.AsReadOnlySpan()) {
+            foreach(var op in _operations.AsReadOnlySpan()) {
                 if(op.Name == name && op is T typedOp) {
                     operation = typedOp;
                     return true;
@@ -80,19 +87,19 @@ namespace Elffy
             Debug.Assert(operation.Owner == this);
             Debug.Assert(operation.LifeState == LifeState.Activating);
 
-            _list.Add(operation, onAdded);
+            _operations.Add(operation, onAdded);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void Remove(PipelineOperation operation, Action<PipelineOperation> onRemoved)
         {
             ArgumentNullException.ThrowIfNull(operation);
-            _list.Remove(operation, onRemoved);
+            _operations.Remove(operation, onRemoved);
         }
 
         internal void TerminateAllOperations<T>(T state, Action<T> onDead)
         {
-            var operations = _list.AsReadOnlySpan();
+            var operations = _operations.AsReadOnlySpan();
             var tasks = new UniTask<PipelineOperation>[operations.Length];
             for(int i = 0; i < tasks.Length; i++) {
                 var operation = operations[i];
@@ -127,24 +134,26 @@ namespace Elffy
 
         internal void AbortAllOperations()
         {
-            _list.Clear();
+            _operations.Clear();
+            _lights.Clear();
         }
 
         internal void NotifySizeChanged()
         {
             var screen = Screen;
-            foreach(var operation in _list.AsReadOnlySpan()) {
+            foreach(var operation in _operations.AsReadOnlySpan()) {
                 operation.OnSizeChangedCallback(screen);
             }
         }
 
         internal void ApplyAdd()
         {
-            var applied = _list.ApplyAdd();
-            if(applied) {
-                _list.AsSpan().Sort(static (l1, l2) => l1.SortNumber - l2.SortNumber);
+            Debug.Assert(Engine.IsThreadMain);
+            _lights.ApplyAdd();
+            if(_operations.ApplyAdd()) {
+                _operations.Sort(static (l1, l2) => l1.SortNumber - l2.SortNumber);
             }
-            foreach(var operation in _list.AsReadOnlySpan()) {
+            foreach(var operation in _operations.AsReadOnlySpan()) {
                 if(operation is ObjectLayer layer) {
                     layer.ApplyAdd();
                 }
@@ -153,17 +162,19 @@ namespace Elffy
 
         internal void ApplyRemove()
         {
-            foreach(var operation in _list.AsReadOnlySpan()) {
+            Debug.Assert(Engine.IsThreadMain);
+            foreach(var operation in _operations.AsReadOnlySpan()) {
                 if(operation is ObjectLayer layer) {
                     layer.ApplyRemove();
                 }
             }
-            _list.ApplyRemove();
+            _operations.ApplyRemove();
+            _lights.ApplyRemove();
         }
 
         internal void EarlyUpdate()
         {
-            foreach(var operation in _list.AsReadOnlySpan()) {
+            foreach(var operation in _operations.AsReadOnlySpan()) {
                 if(operation is ObjectLayer layer) {
                     layer.EarlyUpdate();
                 }
@@ -172,7 +183,7 @@ namespace Elffy
 
         internal void Update()
         {
-            foreach(var operation in _list.AsReadOnlySpan()) {
+            foreach(var operation in _operations.AsReadOnlySpan()) {
                 if(operation is ObjectLayer layer) {
                     layer.Update();
                 }
@@ -181,7 +192,7 @@ namespace Elffy
 
         internal void LateUpdate()
         {
-            foreach(var operation in _list.AsReadOnlySpan()) {
+            foreach(var operation in _operations.AsReadOnlySpan()) {
                 if(operation is ObjectLayer layer) {
                     layer.LateUpdate();
                 }
@@ -193,13 +204,13 @@ namespace Elffy
             var screen = Screen;
 
             // render shadow to shadow maps
-            foreach(var light in screen.Lights.GetLights()) {
+            foreach(var light in screen.RenderPipeline.Lights) {
                 var shadowMap = light.ShadowMap.Derefer();
                 var lightMatrix = light.LightMatrix.Derefer();
                 FBO.Bind(shadowMap.Fbo, FBO.Target.FrameBuffer);
                 OpenTK.Graphics.OpenGL4.GL.Viewport(0, 0, shadowMap.Size.X, shadowMap.Size.Y);
                 ElffyGL.Clear(ClearMask.DepthBufferBit);
-                foreach(var operation in _list.AsReadOnlySpan()) {
+                foreach(var operation in _operations.AsReadOnlySpan()) {
                     if(operation is ObjectLayer layer && layer.IsEnabled) {
                         layer.RenderShadowMap(screen, lightMatrix);
                     }
@@ -210,11 +221,25 @@ namespace Elffy
             var fbo = FBO.Empty;
             var screenSize = screen.FrameBufferSize;
             OpenTK.Graphics.OpenGL4.GL.Viewport(0, 0, screenSize.X, screenSize.Y);
-            foreach(var operation in _list.AsReadOnlySpan()) {
+            foreach(var operation in _operations.AsReadOnlySpan()) {
                 if(operation.IsEnabled) {
                     operation.Execute(screen, ref fbo);
                 }
             }
+        }
+
+        internal void AddLight(ILight light, Action<ILight> callback)
+        {
+            Debug.Assert(Engine.IsThreadMain);
+            Debug.Assert(light is not null);
+            _lights.Add(light, callback);
+        }
+
+        internal void RemoveLight(ILight light, Action<ILight> callback)
+        {
+            Debug.Assert(Engine.IsThreadMain);
+            Debug.Assert(light is not null);
+            _lights.Remove(light, callback);
         }
     }
 }

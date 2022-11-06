@@ -37,8 +37,6 @@ namespace Elffy.Features.Internal
 
         public FrameTimingPointList TimingPoints { get; }
 
-        public LightManager Lights { get; }
-
         public CurrentFrameTiming CurrentTiming => (_runningThreadId == ThreadHelper.CurrentThreadId) ? _currentTiming : CurrentFrameTiming.OutOfFrameLoop;
 
         internal RenderingArea(IHostScreen screen)
@@ -46,8 +44,7 @@ namespace Elffy.Features.Internal
             _state = LifeState.New;
             OwnerScreen = screen;
             TimingPoints = new FrameTimingPointList(screen);
-            Lights = new LightManager(screen);
-            RenderPipeline = new RenderPipeline(this);
+            RenderPipeline = new RenderPipeline(screen);
             _runningTokenSource = new CancellationTokenSource();
         }
 
@@ -86,7 +83,6 @@ namespace Elffy.Features.Internal
             Debug.Assert(_currentTiming == CurrentFrameTiming.OutOfFrameLoop);
             var isCloseRequested = _isCloseRequested;
             var pipeline = RenderPipeline;
-            var lights = Lights;
 
             var frameTimingPoints = TimingPoints;
             Mouse.InitFrame();
@@ -120,7 +116,6 @@ namespace Elffy.Features.Internal
                     self._state = LifeState.Dead;
                 });
             }
-            lights.ApplyAdd();
             pipeline.ApplyAdd();
             frameTimingPoints.FrameInitializing.DoQueuedEvents();
 
@@ -163,7 +158,6 @@ namespace Elffy.Features.Internal
             // Frame finalizing
             _currentTiming = CurrentFrameTiming.FrameFinalizing;
             frameTimingPoints.FrameFinalizing.DoQueuedEvents();
-            lights.ApplyRemove();
             pipeline.ApplyRemove();
 
             // ------------------------------------------------------------
@@ -215,7 +209,6 @@ namespace Elffy.Features.Internal
             RenderPipeline.AbortAllOperations();
 
             TimingPoints.AbortAllEvents();
-            Lights.Release();
             ContextAssociatedMemorySafety.EnsureCollect(OwnerScreen);   // Must be called before the opengl context is deleted.
             Disposed?.Invoke();
         }

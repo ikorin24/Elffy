@@ -125,6 +125,7 @@ public readonly ref struct PostProcessRenderContext
     private readonly PipelineOperation _operation;
 
     public IHostScreen Screen => _screen;
+    public RenderPipeline RenderPipeline => _screen.RenderPipeline;
     public PipelineOperation Operation => _operation;
 
     [Obsolete("Don't use default constructor.", true)]

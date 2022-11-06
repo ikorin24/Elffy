@@ -31,7 +31,7 @@ public sealed class PmxModelShader : RenderingShader
         dispatcher.SendUniformTexture2DArray("_texArrSampler", target.GetComponent<ArrayTexture>().TextureObject, 1);
 
         var screen = context.Screen;
-        var lights = screen.Lights.GetLights();
+        var lights = screen.RenderPipeline.Lights;
         var light = lights.Length switch
         {
             > 0 => (

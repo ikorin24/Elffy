@@ -149,7 +149,7 @@ public static class Startup
         arrow.SetDirection(light.Direction);
         await UniTask.WhenAll(
             arrow.Activate(layer),
-            light.Activate(screen.Lights));
+            light.Activate(screen.RenderPipeline));
 
         var i = 0;
         screen.Timings.Update.Subscribe(_ =>

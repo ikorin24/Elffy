@@ -53,6 +53,7 @@ namespace Elffy.Shading
         private readonly ref readonly Matrix4 _projection;
 
         public IHostScreen Screen => _screen;
+        public RenderPipeline RenderPipeline => _screen.RenderPipeline;
         public ObjectLayer Layer => _layer;
         public Renderable Target => _target;
         public ref readonly Matrix4 Model => ref _model;

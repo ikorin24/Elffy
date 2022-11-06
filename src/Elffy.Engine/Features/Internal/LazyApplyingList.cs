@@ -94,7 +94,9 @@ namespace Elffy.Features.Internal
             }
         }
 
-        public Span<T> AsSpan() => _list.AsSpan();
+        public void Sort(Comparison<T> comparison) => _list.AsSpan().Sort(comparison);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ReadOnlySpan<T> AsReadOnlySpan() => _list.AsSpan();
     }
 }

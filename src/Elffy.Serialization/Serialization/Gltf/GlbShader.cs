@@ -73,7 +73,7 @@ internal sealed class GlbShader : SingleTargetRenderingShader
         dispatcher.SendUniformTexture2D("_normalTex", normalTex, 1);
         dispatcher.SendUniformTexture2D("_metallicRoughnessTex", metallicRoughnessTex, 2);
         var screen = context.Screen;
-        var lights = screen.Lights.GetLights();
+        var lights = screen.RenderPipeline.Lights;
         var (lpos, lcolor) = lights.Length switch
         {
             > 0 => (lights[0].Position, lights[0].Color),

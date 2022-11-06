@@ -22,8 +22,6 @@ namespace Elffy
         /// <summary>Get camera</summary>
         Camera Camera { get; }
 
-        LightManager Lights { get; }
-
         /// <summary>Get asynchronous timing points</summary>
         FrameTimingPointList Timings { get; }
 

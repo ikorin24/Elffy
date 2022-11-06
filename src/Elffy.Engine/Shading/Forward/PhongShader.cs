@@ -86,7 +86,7 @@ public sealed class PhongShader : RenderingShader
         dispatcher.SendUniform("hasTexture", texture != null);
 
         var screen = context.Target.GetValidScreen();
-        var lights = screen.Lights.GetLights();
+        var lights = context.RenderPipeline.Lights;
         var light = lights.Length switch
         {
             > 0 => (

@@ -15,7 +15,7 @@ internal sealed class PbrDeferredPostProcess : PostProcess
     {
         var gBuffer = _gBufferProvider.GetGBufferData();
         var screen = context.Screen;
-        var lights = screen.Lights.GetLights();
+        var lights = context.RenderPipeline.Lights;
 
         var camera = screen.Camera;
         dispatcher.SendUniform("_view", camera.View);

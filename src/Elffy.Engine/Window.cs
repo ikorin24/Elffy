@@ -41,8 +41,6 @@ namespace Elffy
         /// <inheritdoc/>
         RenderPipeline IHostScreen.RenderPipeline => _renderingArea.RenderPipeline;
 
-        public LightManager Lights => _renderingArea.Lights;
-
         /// <inheritdoc/>
         public Camera Camera => _renderingArea.Camera;
 
