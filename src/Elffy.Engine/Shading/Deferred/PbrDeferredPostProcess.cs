@@ -30,8 +30,8 @@ internal sealed class PbrDeferredPostProcess : PostProcess
                 Exists: true,
                 Position: lights[0].Position,
                 Color: lights[0].Color,
-                Matrix: lights[0].LightMatrix.Derefer(),
-                ShadowMap: lights[0].ShadowMap.GetReference().DepthTexture
+                Matrix: lights[0].ShadowMap.LightMatrices[0],
+                ShadowMap: lights[0].ShadowMap.LightDepthTexture
             ),
             true => default,
         };
@@ -39,7 +39,7 @@ internal sealed class PbrDeferredPostProcess : PostProcess
         dispatcher.SendUniform("_lightPos", light.Position);
         dispatcher.SendUniform("_lightColor", light.Color);
         dispatcher.SendUniform("_lightMat", light.Matrix);
-        dispatcher.SendUniformTexture2D("_shadowMap", light.ShadowMap, 3);
+        dispatcher.SendUniformTexture2DArray("_shadowMap", light.ShadowMap, 3);
     }
 
     protected override PostProcessSource GetSource(in PostProcessGetterContext context) => new PostProcessSource
@@ -84,7 +84,7 @@ internal sealed class PbrDeferredPostProcess : PostProcess
         uniform vec4 _lightColor;
         uniform mat4 _lightMat;
 
-        uniform sampler2D _shadowMap;
+        uniform sampler2DArray _shadowMap;
         out vec4 _fragColor;
 
         m_float GGX(m_vec3 n, m_vec3 h, m_float dot_nh, m_float roughness)     // Trowbridge-Reitz
@@ -143,13 +143,13 @@ internal sealed class PbrDeferredPostProcess : PostProcess
             return v.xyz / v.w;
         }
 
-        float CalcShadow(vec3 shadowMapNDC, sampler2D shadowMap)
+        float CalcShadow(vec3 shadowMapNDC, sampler2DArray shadowMap)
         {
             const float bias = 0.0004;
             vec3 range = 1.0 - step(vec3(1.0), abs(shadowMapNDC));
             float filter = range.x * range.y * range.z;
             vec3 shadowMapUV = shadowMapNDC * 0.5 + 0.5;
-            float d = textureLod(shadowMap, shadowMapUV.xy, 0).x;
+            float d = textureLod(shadowMap, vec3(shadowMapUV.xy, 0), 0).x;
             float shadow = 1.0 - step(shadowMapUV.z - bias, d);
             return shadow * filter;
         }

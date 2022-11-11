@@ -205,11 +205,38 @@ namespace Elffy.Graphics.OpenGL
                           0, PixelFormat.Rgba, PixelType.Float, (IntPtr)pixels);
         }
 
-        public static unsafe void DepthImage2DUninitialized(in Vector2i size)
+        /// <summary>call glTexImage2D</summary>
+        /// <param name="size">texture size</param>
+        /// <param name="bits">depth texture bits (should be 16, 24 or 32)</param>
+        public static unsafe void DepthImage2DUninitialized(in Vector2i size, int bits = 24)
         {
             // Allocate memory of specified size without initialization
+            var internalFormat = bits switch
+            {
+                16 => PixelInternalFormat.DepthComponent16,
+                24 => PixelInternalFormat.DepthComponent24,
+                32 => PixelInternalFormat.DepthComponent32,
+                _ => PixelInternalFormat.DepthComponent,    // OpenGL will determine the appropriate precision, but we do not know the value.
+            };
+            GL.TexImage2D(TextureTarget.Texture2D, 0, internalFormat, size.X, size.Y,
+                          0, PixelFormat.DepthComponent, PixelType.Float, IntPtr.Zero);
+        }
 
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.DepthComponent, size.X, size.Y,
+        /// <summary>call glTexImage3D with GL_TEXTURE_2D_ARRAY</summary>
+        /// <param name="size">texture size</param>
+        /// <param name="arrayLength">array length</param>
+        /// <param name="bits">depth texture bits (should be 16, 24 or 32)</param>
+        public static unsafe void DepthImage2DArrayUninitialized(in Vector2i size, int arrayLength, int bits = 24)
+        {
+            // Allocate memory of specified size without initialization
+            var internalFormat = bits switch
+            {
+                16 => PixelInternalFormat.DepthComponent16,
+                24 => PixelInternalFormat.DepthComponent24,
+                32 => PixelInternalFormat.DepthComponent32,
+                _ => PixelInternalFormat.DepthComponent,    // OpenGL will determine the appropriate precision, but we do not know the value.
+            };
+            GL.TexImage3D(TextureTarget.Texture2DArray, 0, internalFormat, size.X, size.Y, arrayLength,
                           0, PixelFormat.DepthComponent, PixelType.Float, IntPtr.Zero);
         }
 

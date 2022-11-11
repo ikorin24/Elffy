@@ -33,6 +33,30 @@ namespace Elffy.Features
 
         public readonly ref readonly T this[int index] => ref _memory[index];
 
+        public void LoadZero(int length, bool asPowerOfTwoTexture = true)
+        {
+            if(length < 0) {
+                throw new ArgumentOutOfRangeException(nameof(length));
+            }
+            ThrowIfNotMultipleOfFour(Unsafe.SizeOf<T>() * length);
+            var memory = new ValueTypeRentMemory<T>(length, true);
+            try {
+                var pixels = memory.AsReadOnlySpan().MarshalCast<T, Color4>();
+                if(asPowerOfTwoTexture) {
+                    _textureCore.LoadAsPOT(pixels);
+                }
+                else {
+                    _textureCore.Load(pixels);
+                }
+            }
+            catch {
+                memory.Dispose();
+                _textureCore.Dispose();
+                throw;
+            }
+            _memory = memory;
+        }
+
         public void Load(ReadOnlySpan<T> data, bool asPowerOfTwoTexture = true)
         {
             ThrowIfNotMultipleOfFour(data.GetByteLength());

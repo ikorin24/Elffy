@@ -91,17 +91,17 @@ public sealed class PhongShader : RenderingShader
         {
             > 0 => (
                 Exists: true,
-                Mat: lights[0].LightMatrix.Derefer() * context.Model,
+                Mat: lights[0].ShadowMap.LightMatrices[0] * context.Model,
                 Pos: lights[0].Position,
                 Color: lights[0].Color,
-                ShadowMap: lights[0].ShadowMap.GetReference().DepthTexture
+                ShadowMap: lights[0].ShadowMap.LightDepthTexture
             ),
             _ => default,
         };
         dispatcher.SendUniform("_lmvp", light.Mat);
         dispatcher.SendUniform("_lPos", light.Pos);
         dispatcher.SendUniform("_lColor", light.Color);
-        dispatcher.SendUniformTexture2D("_shadowMap", light.ShadowMap, 3);
+        dispatcher.SendUniformTexture2DArray("_shadowMap", light.ShadowMap, 3);
         dispatcher.SendUniform("_lightExists", light.Exists);
     }
 
@@ -154,18 +154,18 @@ uniform float shininess;
 uniform sampler2D tex_sampler;
 uniform bool hasTexture;
 
-uniform sampler2D _shadowMap;
+uniform sampler2DArray _shadowMap;
 uniform bool _lightExists;
 uniform vec4 _lPos;
 uniform vec4 _lColor;
 
-float CalcShadow(vec3 shadowMapNDC, sampler2D shadowMap)
+float CalcShadow(vec3 shadowMapNDC, sampler2DArray shadowMap)
 {
     const float bias = 0.001;
     vec3 range = 1.0 - step(vec3(1.0), abs(shadowMapNDC));
     float filter = range.x * range.y * range.z;
     vec3 shadowMapUV = shadowMapNDC * 0.5 + 0.5;
-    float d = textureLod(shadowMap, shadowMapUV.xy, 0).x;
+    float d = textureLod(shadowMap, vec3(shadowMapUV.xy, 0), 0).x;
     float shadow = 1.0 - step(shadowMapUV.z - bias, d);
     return shadow * filter;
 }

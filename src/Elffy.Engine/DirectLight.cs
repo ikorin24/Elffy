@@ -1,6 +1,8 @@
 ﻿#nullable enable
 using Cysharp.Threading.Tasks;
+using Elffy.Effective;
 using Elffy.Shading;
+using Elffy.Threading;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -12,15 +14,11 @@ namespace Elffy;
 
 public sealed class DirectLight : ILight
 {
-    private const int DefaultShadowMapSize = 2048;
-
     private RenderPipeline? _pipeline;
+    private readonly CascadedShadowMap _shadowMap;
     private LifeState _state;
     private Vector4 _position;
     private Color4 _color;
-    private Matrix4 _lightMatrix;
-    private ShadowMapData _shadowMap;
-    private int _shadowMapSize; // should be power of 2.
     private AsyncEventSource<DirectLight>? _terminating;
     private EventSource<DirectLight>? _alive;
     private EventSource<DirectLight>? _dead;
@@ -36,32 +34,19 @@ public sealed class DirectLight : ILight
         get => _position;
         set
         {
-            if(value.W != 0) {
-                throw new ArgumentException("W element must be 0.");
+            if(TryGetDirection(value, out var dir, out var error) == false) {
+                throw new ArgumentException(error);
             }
-            var dir = (-value.Xyz).Normalized();
-            if(dir.ContainsNaNOrInfinity) {
-                throw new ArgumentException("XYZ is zero vector or too small.");
+            if(_state.IsRunning()) {
+                UpdateLightMatrices(in dir);
             }
-            var lightMatrix = CalcLightMatrix(in dir, Vector3.Zero, 30, 15, 20);  // TODO: 
             _position = value;
-            _lightMatrix = lightMatrix;
         }
     }
 
     public Vector3 Direction
     {
-        get
-        {
-            if(_position.W == 0) {
-                var dir = (-_position.Xyz).Normalized();
-                if(dir.ContainsNaNOrInfinity == false) {
-                    return dir;
-                }
-            }
-            // invalid
-            return Vector3.Zero;
-        }
+        get => TryGetDirection(_position, out var dir, out _) ? dir : Vector3.Zero;
         set => ((ILight)this).Position = new Vector4(-value, 0);
     }
 
@@ -71,53 +56,34 @@ public sealed class DirectLight : ILight
         set => _color = value;
     }
 
-    public int ShadowMapSize
-    {
-        get => _shadowMapSize;
-        init
-        {
-            if(value <= 0) {
-                ThrowOutOfRange();
-                [DoesNotReturn] static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(value));
-            }
-            if(BitOperations.IsPow2(value) == false) {
-                ThrowNotPowerOf2();
-                [DoesNotReturn] static void ThrowNotPowerOf2() => throw new ArgumentException("The value should be power of 2.");
-            }
-            _shadowMapSize = value;
-        }
-    }
-
-    public RefReadOnly<Matrix4> LightMatrix => new(in _lightMatrix);
-
-    public RefReadOnly<ShadowMapData> ShadowMap => new(in _shadowMap);
+    public CascadedShadowMap ShadowMap => _shadowMap;
 
     public DirectLight()
     {
         _state = LifeState.New;
-        _shadowMapSize = DefaultShadowMapSize;
+        _shadowMap = new CascadedShadowMap(this);
         Color = Color4.White;
         Direction = new Vector3(0, -1, 0);
     }
 
-    public UniTask<DirectLight> Activate(RenderPipeline pipeline, CancellationToken cancellationToken = default)
-        => Activate(pipeline, FrameTiming.Update, cancellationToken);
+    public UniTask<DirectLight> Activate(RenderPipeline pipeline, DirectLightConfig config, CancellationToken cancellationToken = default)
+        => Activate(pipeline, config, FrameTiming.Update, cancellationToken);
 
-    public UniTask<DirectLight> Activate(RenderPipeline pipeline, FrameTiming timing, CancellationToken cancellationToken = default)
+    public UniTask<DirectLight> Activate(RenderPipeline pipeline, DirectLightConfig config, FrameTiming timing, CancellationToken cancellationToken = default)
     {
         var timings = pipeline.Screen.Timings;
         var tp = timings.GetTiming(timing.IsSpecified() ? timing : FrameTiming.Update);
-        CheckForActivation(pipeline, tp);
-        return ActivatePrivate(pipeline, tp, cancellationToken);
+        CheckForActivation(pipeline, config, tp);
+        return ActivatePrivate(pipeline, config, tp, cancellationToken);
     }
 
-    public UniTask<DirectLight> Activate(RenderPipeline pipeline, FrameTimingPoint timingPoint, CancellationToken cancellationToken = default)
+    public UniTask<DirectLight> Activate(RenderPipeline pipeline, DirectLightConfig config, FrameTimingPoint timingPoint, CancellationToken cancellationToken = default)
     {
-        CheckForActivation(pipeline, timingPoint);
-        return ActivatePrivate(pipeline, timingPoint, cancellationToken);
+        CheckForActivation(pipeline, config, timingPoint);
+        return ActivatePrivate(pipeline, config, timingPoint, cancellationToken);
     }
 
-    private void CheckForActivation(RenderPipeline pipeline, FrameTimingPoint timingPoint)
+    private void CheckForActivation(RenderPipeline pipeline, DirectLightConfig config, FrameTimingPoint timingPoint)
     {
         ArgumentNullException.ThrowIfNull(pipeline);
         ArgumentNullException.ThrowIfNull(timingPoint);
@@ -134,9 +100,10 @@ public sealed class DirectLight : ILight
         if(_state > LifeState.New) {
             throw new InvalidOperationException($"Cannot activate the instance twice.");
         }
+        config.ValidateArg();
     }
 
-    private async UniTask<DirectLight> ActivatePrivate(RenderPipeline pipeline, FrameTimingPoint timingPoint, CancellationToken ct)
+    private async UniTask<DirectLight> ActivatePrivate(RenderPipeline pipeline, DirectLightConfig config, FrameTimingPoint timingPoint, CancellationToken ct)
     {
         Debug.Assert(_state == LifeState.New);
         _state = LifeState.Activating;
@@ -145,11 +112,18 @@ public sealed class DirectLight : ILight
         {
             SafeCast.As<DirectLight>(self).OnAddedToList();
         });
-        _shadowMap.Initialize(_shadowMapSize, _shadowMapSize);
+        _shadowMap.Initialize(config);
+        UpdateLightMatrices(Direction);
         if(pipeline.TryFindDebuggerLayer(out var debuggerLayer)) {
-            await new DirectLightDebugObject(this).Activate(debuggerLayer, ct);
+            using var tasks = new ParallelOperation();
+            for(int i = 0; i < config.CascadeCount; i++) {
+                var debugObject = new DirectLightDebugObject(this, i);
+                var activation = debugObject.Activate(debuggerLayer, timingPoint, ct);
+                tasks.Add(activation);
+            }
+            await tasks.WhenAll();
         }
-        await timingPoint.NextFrame(ct);
+        await timingPoint.NextOrNow(ct);
         return this;
     }
 
@@ -270,6 +244,37 @@ public sealed class DirectLight : ILight
         return pipeline.Screen;
     }
 
+    [SkipLocalsInit]
+    private void UpdateLightMatrices(in Vector3 direction)
+    {
+        const int Threshold = 16;
+
+        var count = ShadowMap.CascadeCount;
+        using var memory = count <= Threshold ? default : new ValueTypeRentMemory<Matrix4>(count, false);
+        Span<Matrix4> matrices = count <= Threshold ? (stackalloc Matrix4[Threshold])[..count] : memory.AsSpan();
+        for(int i = 0; i < matrices.Length; i++) {
+            matrices[i] = CalcLightMatrix(in direction, Vector3.Zero, 30, 15, 20 * (i + 1));  // TODO: 
+        }
+        _shadowMap.UpdateLightMatrices(matrices);
+    }
+
+    private static bool TryGetDirection(in Vector4 position4, out Vector3 dir, [MaybeNullWhen(true)] out string error)
+    {
+        if(position4.W == 0) {
+            dir = (-position4.Xyz).Normalized();
+            if(dir.ContainsNaNOrInfinity == false) {
+                error = null;
+                return true;
+            }
+            error = "W element must be 0.";
+        }
+        else {
+            error = "XYZ is zero vector or too small.";
+        }
+        dir = default;
+        return false;
+    }
+
     private static Matrix4 CalcLightMatrix(in Vector3 directionNormalized, in Vector3 target, float frontLen, float backLen, float width)
     {
         Debug.Assert(frontLen > 0);
@@ -293,15 +298,59 @@ public sealed class DirectLight : ILight
     }
 }
 
+public record struct DirectLightConfig
+{
+    private const int MaxCascadeCount = 16;
+
+    public int ShadowMapSize { get; init; } = 1024;
+    public int CascadeCount { get; init; } = 1;
+
+    public static DirectLightConfig Default => new();
+
+    public DirectLightConfig()
+    {
+    }
+
+    internal void ValidateArg()
+    {
+        if(CascadeCount <= 0) {
+            throw new ArgumentOutOfRangeException(nameof(CascadeCount));
+        }
+        if(CascadeCount > MaxCascadeCount) {
+            throw new ArgumentOutOfRangeException("Shadow map cascade count is too large.");
+        }
+        if(ShadowMapSize <= 0) {
+            throw new ArgumentOutOfRangeException(nameof(ShadowMapSize));
+        }
+        if(BitOperations.IsPow2(ShadowMapSize) == false) {
+            throw new ArgumentException("shadow map size should be power of 2.");
+        }
+    }
+}
+
 internal sealed class DirectLightDebugObject : Renderable
 {
     private readonly DirectLight _light;
+    private readonly int _cascadeIndex;
+
+    private static readonly Color4[] _colorTable = new Color4[7]
+    {
+        new Color4(1f, 0f, 0f, 1f),
+        new Color4(1f, 0.5882353f, 0f, 1f),
+        new Color4(1f, 0.9411765f, 0f, 1f),
+        new Color4(0f, 0.5294118f, 0f, 1f),
+        new Color4(0f, 0.5686275f, 1f, 1f),
+        new Color4(0f, 0.39215687f, 0.74509805f, 1f),
+        new Color4(0.5686275f, 0f, 0.50980395f, 1f),
+    };
+
     public DirectLight TargetLight => _light;
 
-    public DirectLightDebugObject(DirectLight light)
+    public DirectLightDebugObject(DirectLight light, int cascadeIndex)
     {
-        HasShadow = false;
+        _cascadeIndex = cascadeIndex;
         _light = light;
+        HasShadow = false;
         light.Terminating.Subscribe((_, _) =>
         {
             this.Terminate().Forget();
@@ -313,9 +362,12 @@ internal sealed class DirectLightDebugObject : Renderable
             self.OnActivating();
             return UniTask.CompletedTask;
         });
+
+        var color = _colorTable[cascadeIndex % _colorTable.Length];
         Shader = new DirectLightDebugShader<VertexPosOnly>
         {
             LineWidth = 3f,
+            LineColor = color,
         };
     }
 
@@ -347,7 +399,8 @@ internal sealed class DirectLightDebugObject : Renderable
 
     protected override void OnRendering(in RenderingContext context)
     {
-        ref readonly var lightMat = ref _light.LightMatrix.GetReference();
+        var shadowMap = _light.ShadowMap;
+        ref readonly var lightMat = ref shadowMap.LightMatrices[_cascadeIndex];
         var mat = lightMat.Inverted();
         var newContext = new RenderingContext(
             context.Screen,
@@ -477,4 +530,3 @@ internal sealed class DirectLightDebugShader<TVertex> : SingleTargetRenderingSha
         """u8,
     };
 }
-

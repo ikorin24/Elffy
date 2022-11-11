@@ -4,6 +4,8 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Collections.Generic;
 using Elffy.AssemblyServices;
+using Elffy.Effective.Unsafes;
+using System.Diagnostics;
 #if NET5_0_OR_GREATER
 using System.Runtime.InteropServices;
 #endif
@@ -73,6 +75,19 @@ namespace Elffy.Effective
             dummy._items = Array.Empty<T>();
             dummy._size = 0;
             return items;
+        }
+
+        public static bool RemoveFastUnordered<T>(this List<T> list, T item)
+        {
+            var index = list.IndexOf(item);
+            if(index < 0) {
+                return false;
+            }
+            var innerSpan = CollectionsMarshal.AsSpan(list);
+            var last = innerSpan.Length - 1;
+            innerSpan.At(index) = innerSpan.At(last);
+            list.RemoveAt(last);
+            return true;
         }
 
         private abstract class ListDummy<T>

@@ -9,7 +9,8 @@ namespace Elffy
         LifeState LifeState { get; }
         Vector4 Position { get; set; }
         Color4 Color { get; set; }
-        RefReadOnly<Matrix4> LightMatrix { get; }
-        RefReadOnly<ShadowMapData> ShadowMap { get; }
+        //RefReadOnly<Matrix4> LightMatrix { get; }
+        //RefReadOnly<ShadowMapData> ShadowMap { get; }
+        CascadedShadowMap ShadowMap { get; }
     }
 }

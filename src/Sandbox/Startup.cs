@@ -136,6 +136,11 @@ public static class Startup
         var screen = layer.GetValidScreen();
         var color = Color4.White;
         var light = new DirectLight();
+        var lightConfig = new DirectLightConfig
+        {
+            CascadeCount = 2,
+            ShadowMapSize = 1024,
+        };
         var arrow = new Arrow
         {
             HasShadow = false,
@@ -149,7 +154,7 @@ public static class Startup
         arrow.SetDirection(light.Direction);
         await UniTask.WhenAll(
             arrow.Activate(layer),
-            light.Activate(screen.RenderPipeline));
+            light.Activate(screen.RenderPipeline, lightConfig));
 
         var i = 0;
         screen.Timings.Update.Subscribe(_ =>
@@ -187,7 +192,8 @@ public static class Startup
     {
         var timing = layer.GetValidScreen().Timings.Update;
         var dice = Resources.Sandbox["Dice.fbx"].CreateFbxModel();
-        dice.Position = new Vector3(3, 1, 2);
+        //dice.Position = new Vector3(3, 1, 2);
+        dice.Position = new Vector3(3, 1, 20);
         dice.Shader = new PbrDeferredShader()
         {
             Texture = await Resources.Sandbox["Dice.png"].LoadTextureAsync(timing),

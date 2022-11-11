@@ -37,8 +37,8 @@ public sealed class PmxModelShader : RenderingShader
             > 0 => (
                 Position: lights[0].Position,
                 Color: lights[0].Color,
-                LightMvp: lights[0].LightMatrix.Derefer() * context.Model,
-                ShadowMap: lights[0].ShadowMap.Derefer(),
+                LightMvp: lights[0].ShadowMap.LightMatrices[0] * context.Model,
+                ShadowMap: lights[0].ShadowMap.LightDepthTexture,
                 Exists: true
             ),
             _ => default,
@@ -47,7 +47,7 @@ public sealed class PmxModelShader : RenderingShader
         dispatcher.SendUniform("_lColor", light.Color);
         dispatcher.SendUniform("_lExists", light.Exists);
         dispatcher.SendUniform("_lmvp", light.LightMvp);
-        dispatcher.SendUniformTexture2D("_shadowMap", light.ShadowMap.DepthTexture, 2);
+        dispatcher.SendUniformTexture2DArray("_shadowMap", light.ShadowMap, 2);
     }
 
     protected override ShaderSource GetShaderSource(in ShaderGetterContext context) => new()
@@ -117,17 +117,17 @@ public sealed class PmxModelShader : RenderingShader
         uniform vec4 _lPos;
         uniform vec4 _lColor;
         uniform bool _lExists;
-        uniform sampler2D _shadowMap;
+        uniform sampler2DArray _shadowMap;
 
         uniform sampler2DArray _texArrSampler;
 
-        float CalcShadow(vec3 shadowMapNDC, sampler2D shadowMap)
+        float CalcShadow(vec3 shadowMapNDC, sampler2DArray shadowMap)
         {
             const float bias = 0.001;
             vec3 range = 1.0 - step(vec3(1.0), abs(shadowMapNDC));
             float filter = range.x * range.y * range.z;
             vec3 shadowMapUV = shadowMapNDC * 0.5 + 0.5;
-            float d = textureLod(shadowMap, shadowMapUV.xy, 0).x;
+            float d = textureLod(shadowMap, vec3(shadowMapUV.xy, 0), 0).x;
             float shadow = 1.0 - step(shadowMapUV.z - bias, d);
             return shadow * filter;
         }

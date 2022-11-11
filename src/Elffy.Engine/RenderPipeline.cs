@@ -205,9 +205,9 @@ namespace Elffy
 
             // render shadow to shadow maps
             foreach(var light in screen.RenderPipeline.Lights) {
-                var shadowMap = light.ShadowMap.Derefer();
-                var lightMatrix = light.LightMatrix.Derefer();
-                FBO.Bind(shadowMap.Fbo, FBO.Target.FrameBuffer);
+                var shadowMap = light.ShadowMap;
+                var lightMatrix = shadowMap.LightMatrices[0];
+                FBO.Bind(shadowMap.ShadowMappingFbo, FBO.Target.FrameBuffer);
                 OpenTK.Graphics.OpenGL4.GL.Viewport(0, 0, shadowMap.Size.X, shadowMap.Size.Y);
                 ElffyGL.Clear(ClearMask.DepthBufferBit);
                 foreach(var operation in _operations.AsReadOnlySpan()) {

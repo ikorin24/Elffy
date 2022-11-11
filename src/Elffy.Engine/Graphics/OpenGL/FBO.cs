@@ -89,13 +89,13 @@ namespace Elffy.Graphics.OpenGL
             GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, attachment, TextureTarget.Texture2D, to.Value, 0);
         }
 
-        /// <summary>Call glFreameBufferTexture2D with GL_DEPTH_ATTACHMENT</summary>
+        /// <summary>Call glFreameBufferTexture with GL_DEPTH_ATTACHMENT</summary>
         /// <param name="to">texture object</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void SetTexture2DDepthAttachment(in TextureObject to)
+        public static void SetTextureDepthAttachment(in TextureObject to)
         {
             GLAssert.EnsureContext();
-            GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment, TextureTarget.Texture2D, to.Value, 0);
+            GL.FramebufferTexture(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment, to.Value, 0);
         }
 
         /// <summary>Call glFramebufferRenderbuffer with GL_DEPTH_STENCIL_ATTACHMENT</summary>
