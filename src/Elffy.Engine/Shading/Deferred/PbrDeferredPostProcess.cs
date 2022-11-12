@@ -30,16 +30,18 @@ internal sealed class PbrDeferredPostProcess : PostProcess
                 Exists: true,
                 Position: lights[0].Position,
                 Color: lights[0].Color,
-                Matrix: lights[0].ShadowMap.LightMatrices[0],
-                ShadowMap: lights[0].ShadowMap.LightDepthTexture
+                LightMatrixData: lights[0].ShadowMap.LightMatricesDataTexture,
+                ShadowMap: lights[0].ShadowMap.LightDepthTexture,
+                CascadeCount: lights[0].ShadowMap.CascadeCount
             ),
             true => default,
         };
+        dispatcher.SendUniform("_cascadeCount", light.CascadeCount);
         dispatcher.SendUniform("_hasLight", light.Exists);
         dispatcher.SendUniform("_lightPos", light.Position);
         dispatcher.SendUniform("_lightColor", light.Color);
-        dispatcher.SendUniform("_lightMat", light.Matrix);
-        dispatcher.SendUniformTexture2DArray("_shadowMap", light.ShadowMap, 3);
+        dispatcher.SendUniformTexture1D("_lightMatData", light.LightMatrixData, 3);
+        dispatcher.SendUniformTexture2DArray("_shadowMap", light.ShadowMap, 4);
     }
 
     protected override PostProcessSource GetSource(in PostProcessGetterContext context) => new PostProcessSource
@@ -80,9 +82,10 @@ internal sealed class PbrDeferredPostProcess : PostProcess
         uniform sampler2D _mrt2;
 
         uniform bool _hasLight;
+        uniform int _cascadeCount;
         uniform vec4 _lightPos;
         uniform vec4 _lightColor;
-        uniform mat4 _lightMat;
+        uniform sampler1D _lightMatData;
 
         uniform sampler2DArray _shadowMap;
         out vec4 _fragColor;
@@ -143,15 +146,24 @@ internal sealed class PbrDeferredPostProcess : PostProcess
             return v.xyz / v.w;
         }
 
-        float CalcShadow(vec3 shadowMapNDC, sampler2DArray shadowMap)
+        float CalcShadow(sampler1D lightMatData, vec4 posWorld, sampler2DArray shadowMap)
         {
-            const float bias = 0.0004;
-            vec3 range = 1.0 - step(vec3(1.0), abs(shadowMapNDC));
-            float filter = range.x * range.y * range.z;
-            vec3 shadowMapUV = shadowMapNDC * 0.5 + 0.5;
-            float d = textureLod(shadowMap, vec3(shadowMapUV.xy, 0), 0).x;
-            float shadow = 1.0 - step(shadowMapUV.z - bias, d);
-            return shadow * filter;
+            for(int cascade = 0; cascade < _cascadeCount; ++cascade) {
+                mat4 lightMat = mat4(
+                    texelFetch(lightMatData, cascade * 4,     0),
+                    texelFetch(lightMatData, cascade * 4 + 1, 0),
+                    texelFetch(lightMatData, cascade * 4 + 2, 0),
+                    texelFetch(lightMatData, cascade * 4 + 3, 0));
+                vec3 shadowMapNDC = ToVec3(lightMat * posWorld);
+                const float bias = 0.0004;
+                if(all(lessThanEqual(abs(shadowMapNDC), vec3(1.0, 1.0, 1.0)))) {
+                    vec3 shadowMapUV = shadowMapNDC * 0.5 + 0.5;
+                    float d = textureLod(shadowMap, vec3(shadowMapUV.xy, cascade), 0).x;
+                    float shadow = 1.0 - step(shadowMapUV.z - bias, d);
+                    return shadow;
+                }
+            }
+            return 0;
         }
 
         void main()
@@ -211,9 +223,7 @@ internal sealed class PbrDeferredPostProcess : PostProcess
                 vec3 F = FresnelSchlick(f0, vec3(1.0, 1.0, 1.0), dot_lh);
                 vec3 specular = V * D * F * irradiance;
                 specular = max(vec3(0.0, 0.0, 0.0), specular);
-
-                vec3 shadowMapNdc = ToVec3(_lightMat * posWorld);
-                float shadow = CalcShadow(shadowMapNdc, _shadowMap);
+                float shadow = CalcShadow(_lightMatData, posWorld, _shadowMap);
                 fragColor += (diffuse + specular) * (1.0 - shadow);
             }
 

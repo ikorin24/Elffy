@@ -103,9 +103,9 @@ namespace Elffy
             }
         }
 
-        internal virtual void RenderShadowMap(IHostScreen screen, in Matrix4 lightViewProjection)
+        internal virtual void RenderShadowMap(IHostScreen screen, CascadedShadowMap shadowMap)
         {
-            _store.RenderShadowMap(lightViewProjection);
+            _store.RenderShadowMap(shadowMap);
         }
 
         protected sealed override void OnExecute(IHostScreen screen)

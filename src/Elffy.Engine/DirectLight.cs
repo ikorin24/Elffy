@@ -253,7 +253,7 @@ public sealed class DirectLight : ILight
         using var memory = count <= Threshold ? default : new ValueTypeRentMemory<Matrix4>(count, false);
         Span<Matrix4> matrices = count <= Threshold ? (stackalloc Matrix4[Threshold])[..count] : memory.AsSpan();
         for(int i = 0; i < matrices.Length; i++) {
-            matrices[i] = CalcLightMatrix(in direction, Vector3.Zero, 30, 15, 20 * (i + 1));  // TODO: 
+            matrices[i] = CalcLightMatrix(in direction, Vector3.Zero, 30, 15 * (i + 1), 20 * (i + 1));  // TODO: 
         }
         _shadowMap.UpdateLightMatrices(matrices);
     }
@@ -300,7 +300,7 @@ public sealed class DirectLight : ILight
 
 public record struct DirectLightConfig
 {
-    private const int MaxCascadeCount = 16;
+    internal const int MaxCascadeCount = 5;
 
     public int ShadowMapSize { get; init; } = 1024;
     public int CascadeCount { get; init; } = 1;

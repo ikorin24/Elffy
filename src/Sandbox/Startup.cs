@@ -192,8 +192,7 @@ public static class Startup
     {
         var timing = layer.GetValidScreen().Timings.Update;
         var dice = Resources.Sandbox["Dice.fbx"].CreateFbxModel();
-        //dice.Position = new Vector3(3, 1, 2);
-        dice.Position = new Vector3(3, 1, 20);
+        dice.Position = new Vector3(3, 1, 15);
         dice.Shader = new PbrDeferredShader()
         {
             Texture = await Resources.Sandbox["Dice.png"].LoadTextureAsync(timing),

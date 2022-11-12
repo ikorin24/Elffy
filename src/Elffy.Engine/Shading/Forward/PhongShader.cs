@@ -1,7 +1,4 @@
 ﻿#nullable enable
-using Elffy.Graphics.OpenGL;
-using System;
-
 namespace Elffy.Shading.Forward;
 
 public sealed class PhongShader : RenderingShader
@@ -76,8 +73,8 @@ public sealed class PhongShader : RenderingShader
         dispatcher.SendUniform("shininess", _shininess);
 
         dispatcher.SendUniform("projection", context.Projection);
+        dispatcher.SendUniform("_model", context.Model);
         dispatcher.SendUniform("view", context.View);
-        dispatcher.SendUniform("modelView", context.View * context.Model);
 
         var texture = _texture;
         if(texture != null) {
@@ -91,17 +88,17 @@ public sealed class PhongShader : RenderingShader
         {
             > 0 => (
                 Exists: true,
-                Mat: lights[0].ShadowMap.LightMatrices[0] * context.Model,
+                Mat: lights[0].ShadowMap.LightMatrices[0],
                 Pos: lights[0].Position,
                 Color: lights[0].Color,
                 ShadowMap: lights[0].ShadowMap.LightDepthTexture
             ),
             _ => default,
         };
-        dispatcher.SendUniform("_lmvp", light.Mat);
+        dispatcher.SendUniform("_lightMat", light.Mat);
         dispatcher.SendUniform("_lPos", light.Pos);
         dispatcher.SendUniform("_lColor", light.Color);
-        dispatcher.SendUniformTexture2DArray("_shadowMap", light.ShadowMap, 3);
+        dispatcher.SendUniformTexture2DArray("_shadowMap", light.ShadowMap, 1);
         dispatcher.SendUniform("_lightExists", light.Exists);
     }
 
@@ -121,18 +118,19 @@ out vec3 _vout_normal;
 out vec2 _vout_uv;
 out vec3 _vout_shadowMapNDC;
 
-uniform mat4 modelView;
+uniform mat4 _model;
+uniform mat4 view;
 uniform mat4 projection;
-uniform mat4 _lmvp;
+uniform mat4 _lightMat;
 
 void main()
 {
     _vout_pos = vPos;
     _vout_normal = vNormal;
     _vout_uv = vUV;
-    vec4 posLightSpace = _lmvp * vec4(vPos, 1.0);
+    vec4 posLightSpace = _lightMat * _model * vec4(vPos, 1.0);
     _vout_shadowMapNDC = posLightSpace.xyz / posLightSpace.w;
-    gl_Position = projection * modelView * vec4(vPos, 1.0);
+    gl_Position = projection * view * _model * vec4(vPos, 1.0);
 }
 """u8,
             FragmentShader =
@@ -143,7 +141,7 @@ in vec3 _vout_normal;
 in vec2 _vout_uv;
 in vec3 _vout_shadowMapNDC;
 out vec4 fragColor;
-uniform mat4 modelView;
+uniform mat4 _model;
 uniform mat4 view;
 uniform mat4 projection;
 uniform vec3 ma;
@@ -172,6 +170,7 @@ float CalcShadow(vec3 shadowMapNDC, sampler2DArray shadowMap)
 
 void main()
 {
+    mat4 modelView = view * _model;
     vec3 posView = (modelView * vec4(_vout_pos, 1.0)).xyz;                  // vertex pos in eye space
     vec3 normalView = transpose(inverse(mat3(modelView))) * _vout_normal;   // normal in eye space
     if(_lightExists) {

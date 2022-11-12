@@ -202,7 +202,7 @@ namespace Elffy
             }
         }
 
-        internal virtual void RenderShadowMapRecursively(in Matrix4 modelParent, in Matrix4 lightViewProjection)
+        internal virtual void RenderShadowMapRecursively(in Matrix4 modelParent, CascadedShadowMap shadowMap)
         {
             var children = Children.AsSpan();
             if(children.IsEmpty) {
@@ -210,7 +210,7 @@ namespace Elffy
             }
             var model = modelParent * GetSelfModelMatrix();
             foreach(var child in children) {
-                child.RenderShadowMapRecursively(model, lightViewProjection);
+                child.RenderShadowMapRecursively(model, shadowMap);
             }
         }
     }

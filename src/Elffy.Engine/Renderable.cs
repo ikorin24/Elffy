@@ -217,7 +217,7 @@ namespace Elffy
             }
         }
 
-        internal sealed override void RenderShadowMapRecursively(in Matrix4 modelParent, in Matrix4 lightViewProjection)
+        internal sealed override void RenderShadowMapRecursively(in Matrix4 modelParent, CascadedShadowMap shadowMap)
         {
             var visibility = GetVisibility();
             if(visibility != RenderVisibility.Visible) {
@@ -233,17 +233,20 @@ namespace Elffy
             if(needToRenderSelf && EnsureShadowRendererInitialized()) {
                 Debug.Assert(_shadowRendererData.State == RendererDataState.Compiled);
                 var program = _shadowRendererData.GetValidProgram();
+                var screen = GetValidScreen();
+                var layer = GetValidLayer();
                 var shader = SafeCast.As<RenderShadowMapShader>(_shadowRendererData.GetValidShader());
                 VAO.Bind(_vao);
                 IBO.Bind(_ibo);
                 ProgramObject.UseProgram(program);
-                shader.DispatchShader(new ShaderDataDispatcher(program), model, lightViewProjection);
+                var context = new ShadowMapRenderingContext(screen, layer, this, shadowMap, in model);
+                shader.DispatchShader(new ShaderDataDispatcher(program), context);
                 DrawElements(0, IBO.Length);
                 VAO.Unbind();
                 IBO.Unbind();
             }
             foreach(var child in children) {
-                child.RenderShadowMapRecursively(in model, in lightViewProjection);
+                child.RenderShadowMapRecursively(in model, shadowMap);
             }
 
             bool EnsureShadowRendererInitialized()

@@ -129,7 +129,7 @@ namespace Elffy.Features.Internal
             }
         }
 
-        public void RenderShadowMap(in Matrix4 lightViewProjection)
+        public void RenderShadowMap(CascadedShadowMap shadowMap)
         {
             var identity = Matrix4.Identity;
             foreach(var positionable in _positionables.AsSpan()) {
@@ -137,7 +137,7 @@ namespace Elffy.Features.Internal
                 // Childen are rendered from thier parent method recursively.
                 if(positionable.IsRoot == false) { continue; }
                 try {
-                    positionable.RenderShadowMapRecursively(identity, lightViewProjection);
+                    positionable.RenderShadowMapRecursively(identity, shadowMap);
                 }
                 catch {
                     if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }

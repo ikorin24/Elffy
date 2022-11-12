@@ -22,6 +22,7 @@ public sealed class CascadedShadowMap
     /// <summary>Depth texture from a light. (Texture2DArray)</summary>
     public TextureObject LightDepthTexture => _cascades.DepthTexture;
     public ReadOnlySpan<Matrix4> LightMatrices => _lightMatrices.AsSpan();
+    /// <summary>Light matrix in Texture1D</summary>
     public TextureObject LightMatricesDataTexture => _lightMatrices.TextureObject;
     public FBO ShadowMappingFbo => _cascades.Fbo;
 
