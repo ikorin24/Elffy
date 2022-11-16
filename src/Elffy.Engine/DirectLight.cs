@@ -23,8 +23,7 @@ public sealed class DirectLight : ILight
     private AsyncEventSource<DirectLight>? _terminating;
     private EventSource<DirectLight>? _alive;
     private EventSource<DirectLight>? _dead;
-
-    private EventSubscription<Camera> _subscription;
+    private readonly SubscriptionBag _subscriptions = new SubscriptionBag();
 
     public Event<DirectLight> Alive => new(ref _alive);
     public AsyncEvent<DirectLight> Terminating => new(ref _terminating);
@@ -120,10 +119,10 @@ public sealed class DirectLight : ILight
         UpdateLightMatrices(Direction);
 
         // [capture] this
-        _subscription = pipeline.Screen.Camera.MatrixChanged.Subscribe(camera =>
+        pipeline.Screen.Camera.MatrixChanged.Subscribe(camera =>
         {
             UpdateLightMatrices(camera.Direction);
-        });
+        }).AddTo(_subscriptions);
 
         if(pipeline.TryFindDebuggerLayer(out var debuggerLayer)) {
             using var tasks = new ParallelOperation();
@@ -239,7 +238,7 @@ public sealed class DirectLight : ILight
         Debug.Assert(_state == LifeState.Terminating);
         _state = LifeState.Dead;
         _shadowMap.Release();
-        _subscription.Dispose();
+        _subscriptions.Dispose();
         try {
             _dead?.Invoke(this);
         }
