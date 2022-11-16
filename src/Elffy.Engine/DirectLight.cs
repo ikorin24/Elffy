@@ -16,12 +16,15 @@ public sealed class DirectLight : ILight
 {
     private RenderPipeline? _pipeline;
     private readonly CascadedShadowMap _shadowMap;
+    private DirectLightMatrixCalcFunc? _lightMatrixCalculator;
     private LifeState _state;
     private Vector4 _position;
     private Color4 _color;
     private AsyncEventSource<DirectLight>? _terminating;
     private EventSource<DirectLight>? _alive;
     private EventSource<DirectLight>? _dead;
+
+    private EventUnsubscriber<Camera> _subscription;
 
     public Event<DirectLight> Alive => new(ref _alive);
     public AsyncEvent<DirectLight> Terminating => new(ref _terminating);
@@ -112,8 +115,16 @@ public sealed class DirectLight : ILight
         {
             SafeCast.As<DirectLight>(self).OnAddedToList();
         });
+        _lightMatrixCalculator = config.LightMatrixCalculator ?? DirectLightMatrixCalculator.DefaultFunc;
         _shadowMap.Initialize(config);
         UpdateLightMatrices(Direction);
+
+        // [capture] this
+        _subscription = pipeline.Screen.Camera.MatrixChanged.Subscribe(camera =>
+        {
+            UpdateLightMatrices(camera.Direction);
+        });
+
         if(pipeline.TryFindDebuggerLayer(out var debuggerLayer)) {
             using var tasks = new ParallelOperation();
             for(int i = 0; i < config.CascadeCount; i++) {
@@ -228,6 +239,7 @@ public sealed class DirectLight : ILight
         Debug.Assert(_state == LifeState.Terminating);
         _state = LifeState.Dead;
         _shadowMap.Release();
+        _subscription.Dispose();
         try {
             _dead?.Invoke(this);
         }
@@ -249,11 +261,13 @@ public sealed class DirectLight : ILight
     {
         const int Threshold = 16;
 
+        var lightMatrixCalculator = _lightMatrixCalculator;
+        Debug.Assert(lightMatrixCalculator != null);
         var count = ShadowMap.CascadeCount;
         using var memory = count <= Threshold ? default : new ValueTypeRentMemory<Matrix4>(count, false);
         Span<Matrix4> matrices = count <= Threshold ? (stackalloc Matrix4[Threshold])[..count] : memory.AsSpan();
         for(int i = 0; i < matrices.Length; i++) {
-            matrices[i] = CalcLightMatrix(in direction, Vector3.Zero, 30, 15 * (i + 1), 20 * (i + 1));  // TODO: 
+            matrices[i] = lightMatrixCalculator.Invoke(i, this);
         }
         _shadowMap.UpdateLightMatrices(matrices);
     }
@@ -274,27 +288,70 @@ public sealed class DirectLight : ILight
         dir = default;
         return false;
     }
+}
 
-    private static Matrix4 CalcLightMatrix(in Vector3 directionNormalized, in Vector3 target, float frontLen, float backLen, float width)
+internal static class DirectLightMatrixCalculator
+{
+    public static DirectLightMatrixCalcFunc DefaultFunc = (int cascade, DirectLight light) =>
     {
-        Debug.Assert(frontLen > 0);
-        Debug.Assert(backLen > 0);
-        var halfWidth = width * 0.5f;
-        var origin = target - frontLen * directionNormalized;
-        var dirX0Z = new Vector3(directionNormalized.X, 0, directionNormalized.Z).Normalized();
+        var screen = light.GetValidScreen();
+        var subfrustum = CalcSubfrustum(cascade, screen.Camera, light);
+        var (worldToLight, lightOriginInWorld) = CalcWorldToLightSpace(subfrustum, light.Direction);
+        var aabbInLight = (Min: Vector3.MaxValue, Max: Vector3.MinValue);
+        foreach(var corner in subfrustum.Corners) {
+            var p = worldToLight.TransformFast4x3(corner);
+            aabbInLight.Min = Vector3.Min(p, aabbInLight.Min);
+            aabbInLight.Max = Vector3.Max(p, aabbInLight.Max);
+        }
+        const float ZScale = 4f;       // TODO:
+
+        Matrix4.OrthographicProjection(
+            aabbInLight.Min.X, aabbInLight.Max.X,
+            aabbInLight.Min.Y, aabbInLight.Max.Y,
+            aabbInLight.Min.Z * ZScale, aabbInLight.Max.Z * ZScale,
+            out var projection);
+        return projection * worldToLight;
+    };
+
+    private static Frustum CalcSubfrustum(int cascade, Camera camera, DirectLight light)
+    {
+        var frustum = camera.Frustum;
+        var cascadeCount = light.ShadowMap.CascadeCount;
+        const float MaxShadowNearToFar = 200f;       // TODO:
+        var cameraNearToFar = camera.Far - camera.Near;
+        var shadowNearToFar = float.Min(cameraNearToFar, MaxShadowNearToFar);
+        var coeff = shadowNearToFar / cameraNearToFar;
+        var nearPoint = cascade / (float)cascadeCount * coeff;
+        var farPoint = (cascade + 1) / (float)cascadeCount * coeff;
+        var subfrustum = new Frustum
+        {
+            NearLeftBottom = Vector3.Mix(frustum.NearLeftBottom, frustum.FarLeftBottom, nearPoint),
+            NearLeftTop = Vector3.Mix(frustum.NearLeftTop, frustum.FarLeftTop, nearPoint),
+            NearRightBottom = Vector3.Mix(frustum.NearRightBottom, frustum.FarRightBottom, nearPoint),
+            NearRightTop = Vector3.Mix(frustum.NearRightTop, frustum.FarRightTop, nearPoint),
+            FarLeftBottom = Vector3.Mix(frustum.NearLeftBottom, frustum.FarLeftBottom, farPoint),
+            FarLeftTop = Vector3.Mix(frustum.NearLeftTop, frustum.FarLeftTop, farPoint),
+            FarRightBottom = Vector3.Mix(frustum.NearRightBottom, frustum.FarRightBottom, farPoint),
+            FarRightTop = Vector3.Mix(frustum.NearRightTop, frustum.FarRightTop, farPoint),
+        };
+        return subfrustum;
+    }
+
+    private static (Matrix4 WorldToLight, Vector3 OriginInWorldSpace) CalcWorldToLightSpace(in Frustum frustumInWorld, Vector3 lightDir)
+    {
+        var center = frustumInWorld.Center;
+        var dirX0Z = new Vector3(lightDir.X, 0, lightDir.Z).Normalized();
+
         Vector3 up;
         if(dirX0Z.ContainsNaNOrInfinity) {
             // direction is (0, +-1, 0) or very close to them.
             up = Vector3.UnitX;
         }
         else {
-            up = Quaternion.FromTwoVectors(dirX0Z, directionNormalized) * Vector3.UnitY;
+            up = Quaternion.FromTwoVectors(dirX0Z, lightDir) * Vector3.UnitY;
         }
-        const float Near = 0;
-        float far = frontLen + backLen;
-        Matrix4.LookAt(origin, target, up, out var lightView);
-        Matrix4.OrthographicProjection(-halfWidth, halfWidth, -halfWidth, halfWidth, Near, far, out var lightProjection);
-        return lightProjection * lightView;
+        var worldToLight = Matrix4.LookAt(center - lightDir, center, up);
+        return (WorldToLight: worldToLight, OriginInWorldSpace: center);
     }
 }
 
@@ -304,6 +361,7 @@ public record struct DirectLightConfig
 
     public int ShadowMapSize { get; init; } = 1024;
     public int CascadeCount { get; init; } = 1;
+    public DirectLightMatrixCalcFunc? LightMatrixCalculator { get; init; }
 
     public static DirectLightConfig Default => new();
 
@@ -327,6 +385,8 @@ public record struct DirectLightConfig
         }
     }
 }
+
+public delegate Matrix4 DirectLightMatrixCalcFunc(int cascade, DirectLight light);
 
 internal sealed class DirectLightDebugObject : Renderable
 {
@@ -465,55 +525,51 @@ internal sealed class DirectLightDebugShader<TVertex> : SingleTargetRenderingSha
         VertexShader =
         """
         #version 410
+        precision highp float;
         in vec3 _pos;
         uniform mat4 _mat;
         void main()
         {
             // Set gl_Position.w to 1 for easy handling in the geometry shader.
-            vec4 p = _mat * vec4(_pos, 1);
-            gl_Position = vec4(p.xyz / p.w, 1);
+            gl_Position = _mat * vec4(_pos, 1.0);
         }
         """u8,
         GeometryShader =
         """
         #version 460
+        precision highp float;
         uniform vec2 _resolutionInv;
         uniform float _lineWidth;
         layout (triangles) in;
-        layout (triangle_strip, max_vertices = 16) out;
+        layout (triangle_strip, max_vertices = 10) out;
         void main()
         {
             vec2 s = _lineWidth * _resolutionInv;       // (_lineWidth * 0.5) * (_resolutionInv * 2)
-            vec2 v0 = gl_in[1].gl_Position.xy - gl_in[0].gl_Position.xy;
-            vec2 v1 = gl_in[2].gl_Position.xy - gl_in[1].gl_Position.xy;
-            vec2 d0 = normalize(vec2(-v0.y, v0.x)) * s;
-            vec2 d1 = normalize(vec2(-v1.y, v1.x)) * s;
+            vec3[3] pos = vec3[](
+                gl_in[0].gl_Position.xyz / gl_in[0].gl_Position.w,
+                gl_in[1].gl_Position.xyz / gl_in[1].gl_Position.w,
+                gl_in[2].gl_Position.xyz / gl_in[2].gl_Position.w
+            );
+            vec3 v0 = pos[1].xyz - pos[0].xyz;
+            vec3 v1 = pos[2].xyz - pos[1].xyz;
+            vec2 d0 = vec2(-v0.y, v0.x) / length(vec2(-v0.y, v0.x)) * s * sign(v0.z);
+            vec2 d1 = vec2(-v1.y, v1.x) / length(vec2(-v1.y, v1.x)) * s * sign(v1.z);
 
             // Line from [0] to [1]
-            gl_Position = vec4(gl_in[0].gl_Position.xy - d0, gl_in[0].gl_Position.zw);
-            EmitVertex();
-            gl_Position = vec4(gl_in[1].gl_Position.xy - d0, gl_in[1].gl_Position.zw);
-            EmitVertex();
-            gl_Position = vec4(gl_in[0].gl_Position.xy + d0, gl_in[0].gl_Position.zw);
-            EmitVertex();
-            gl_Position = vec4(gl_in[1].gl_Position.xy + d0, gl_in[1].gl_Position.zw);
-            EmitVertex();
+            gl_Position = vec4(vec3(pos[0].xy - d0, pos[0].z) * gl_in[0].gl_Position.w, gl_in[0].gl_Position.w); EmitVertex();
+            gl_Position = vec4(vec3(pos[1].xy - d0, pos[1].z) * gl_in[1].gl_Position.w, gl_in[1].gl_Position.w); EmitVertex();
+            gl_Position = vec4(vec3(pos[0].xy + d0, pos[0].z) * gl_in[0].gl_Position.w, gl_in[0].gl_Position.w); EmitVertex();
+            gl_Position = vec4(vec3(pos[1].xy + d0, pos[1].z) * gl_in[1].gl_Position.w, gl_in[1].gl_Position.w); EmitVertex();
 
             // dummy
-            gl_Position = vec4(gl_in[1].gl_Position.xy + d0, gl_in[1].gl_Position.zw);
-            EmitVertex();
-            gl_Position = vec4(gl_in[1].gl_Position.xy - d1, gl_in[1].gl_Position.zw);
-            EmitVertex();
+            gl_Position = vec4(vec3(pos[1].xy + d0, pos[1].z) * gl_in[1].gl_Position.w, gl_in[1].gl_Position.w); EmitVertex();
+            gl_Position = vec4(vec3(pos[1].xy - d1, pos[1].z) * gl_in[1].gl_Position.w, gl_in[1].gl_Position.w); EmitVertex();
 
             // Line from [1] to [2]
-            gl_Position = vec4(gl_in[1].gl_Position.xy - d1, gl_in[1].gl_Position.zw);
-            EmitVertex();
-            gl_Position = vec4(gl_in[2].gl_Position.xy - d1, gl_in[2].gl_Position.zw);
-            EmitVertex();
-            gl_Position = vec4(gl_in[1].gl_Position.xy + d1, gl_in[1].gl_Position.zw);
-            EmitVertex();
-            gl_Position = vec4(gl_in[2].gl_Position.xy + d1, gl_in[2].gl_Position.zw);
-            EmitVertex();
+            gl_Position = vec4(vec3(pos[1].xy - d1, pos[1].z) * gl_in[1].gl_Position.w, gl_in[1].gl_Position.w); EmitVertex();
+            gl_Position = vec4(vec3(pos[2].xy - d1, pos[2].z) * gl_in[2].gl_Position.w, gl_in[2].gl_Position.w); EmitVertex();
+            gl_Position = vec4(vec3(pos[1].xy + d1, pos[1].z) * gl_in[1].gl_Position.w, gl_in[1].gl_Position.w); EmitVertex();
+            gl_Position = vec4(vec3(pos[2].xy + d1, pos[2].z) * gl_in[2].gl_Position.w, gl_in[2].gl_Position.w); EmitVertex();
 
             // Line from [2] to [0] is diagonal line.
         }

@@ -42,6 +42,8 @@ namespace Elffy
         public static Vector2 UnitY => new Vector2(0, 1);
         public static Vector2 Zero => new Vector2(0, 0);
         public static Vector2 One => new Vector2(1, 1);
+        public static Vector2 MaxValue => new Vector2(float.MaxValue, float.MaxValue);
+        public static Vector2 MinValue => new Vector2(float.MinValue, float.MinValue);
         public static unsafe int SizeInBytes => sizeof(Vector2);
 
         public readonly bool IsZero => this == default;
@@ -89,6 +91,32 @@ namespace Elffy
         public static float Dot(in Vector2 vec1, in Vector2 vec2)
         {
             return NVec2.Dot(AsNVec2(vec1), AsNVec2(vec2));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2 Mix(in Vector2 vec1, in Vector2 vec2, float a)
+        {
+            return vec1 * (1f - a) + vec2 * a;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2 Min(in Vector2 vec1, in Vector2 vec2)
+        {
+            return new Vector2
+            {
+                X = MathF.Min(vec1.X, vec2.X),
+                Y = MathF.Min(vec1.Y, vec2.Y),
+            };
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector2 Max(in Vector2 vec1, in Vector2 vec2)
+        {
+            return new Vector2
+            {
+                X = MathF.Max(vec1.X, vec2.X),
+                Y = MathF.Max(vec1.Y, vec2.Y),
+            };
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

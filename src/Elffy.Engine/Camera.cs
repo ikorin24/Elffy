@@ -10,17 +10,20 @@ namespace Elffy
     /// <summary>Camera class</summary>
     public sealed class Camera
     {
+        private EventSourceWrap<Camera> _matrixChanged;
         private Matrix4 _view;
         private Matrix4 _projection;
         private Vector3 _position;
         private Vector3 _direction;
         private Vector3 _up;
+        private Frustum _frustum;
         private float _aspect;  // Aspect ratio (width / height). It may be NaN when height is 0.
         private float _near;
         private float _far;
         private CameraProjectionMode _projectionMode;
         private float _fovy;
         private float _height;
+        public Event<Camera> MatrixChanged => _matrixChanged.Event;
 
         /// <summary>Get or set camera projection mode</summary>
         public CameraProjectionMode ProjectionMode
@@ -34,6 +37,8 @@ namespace Elffy
                 }
                 _projectionMode = value;
                 UpdateProjectionMatrix();
+                Frustum.FromMatrix(_projection, _view, out _frustum);
+                _matrixChanged.Invoke(this);
             }
         }
 
@@ -45,6 +50,8 @@ namespace Elffy
             {
                 _position = value;
                 CalcViewMatrix(_position, _direction, _up, out _view);
+                Frustum.FromMatrix(_projection, _view, out _frustum);
+                _matrixChanged.Invoke(this);
             }
         }
 
@@ -58,6 +65,8 @@ namespace Elffy
                 if(value == Vector3.Zero) { return; }
                 _direction = value.Normalized();
                 CalcViewMatrix(_position, _direction, _up, out _view);
+                Frustum.FromMatrix(_projection, _view, out _frustum);
+                _matrixChanged.Invoke(this);
             }
         }
 
@@ -71,8 +80,12 @@ namespace Elffy
                 if(value == Vector3.Zero) { return; }
                 _up = value.Normalized();
                 CalcViewMatrix(_position, _direction, _up, out _view);
+                Frustum.FromMatrix(_projection, _view, out _frustum);
+                _matrixChanged.Invoke(this);
             }
         }
+
+        public ref readonly Frustum Frustum => ref _frustum;
 
         /// <summary>Get max distance from the camera. (Use <see cref="SetNearFar(float, float)"/> method to set the value.)</summary>
         public float Far => _far;
@@ -102,6 +115,7 @@ namespace Elffy
 
             UpdateProjectionMatrix();
             CalcViewMatrix(_position, _direction, _up, out _view);
+            Frustum.FromMatrix(_projection, _view, out _frustum);
         }
 
         /// <summary>Try to get field of view Y in the case that <see cref="ProjectionMode"/> is <see cref="CameraProjectionMode.Perspective"/>, otherwise return false.</summary>
@@ -126,6 +140,8 @@ namespace Elffy
                 if(fovy <= 0 || fovy > MathTool.Pi) { ThrowOutOfRange("Value must be 0 ~ π. (not include 0)"); }
                 _fovy = fovy;
                 UpdateProjectionMatrix();
+                Frustum.FromMatrix(_projection, _view, out _frustum);
+                _matrixChanged.Invoke(this);
                 return true;
             }
             return false;
@@ -138,7 +154,6 @@ namespace Elffy
         {
             if(_projectionMode == CameraProjectionMode.Orthographic) {
                 height = _height;
-                UpdateProjectionMatrix();
                 return true;
             }
             height = 0;
@@ -152,6 +167,9 @@ namespace Elffy
         {
             if(_projectionMode == CameraProjectionMode.Orthographic) {
                 _height = height;
+                UpdateProjectionMatrix();
+                Frustum.FromMatrix(_projection, _view, out _frustum);
+                _matrixChanged.Invoke(this);
                 return true;
             }
             return false;
@@ -168,6 +186,8 @@ namespace Elffy
             _near = near;
             _far = far;
             UpdateProjectionMatrix();
+            Frustum.FromMatrix(_projection, _view, out _frustum);
+            _matrixChanged.Invoke(this);
         }
 
         /// <summary>Look at the specified target position.</summary>
@@ -178,6 +198,8 @@ namespace Elffy
             if(vec == Vector3.Zero) { return; }
             _direction = vec.Normalized();
             CalcViewMatrix(_position, _direction, _up, out _view);
+            Frustum.FromMatrix(_projection, _view, out _frustum);
+            _matrixChanged.Invoke(this);
         }
 
         /// <summary>Look at the specified target position from specified camera position.</summary>
@@ -190,6 +212,8 @@ namespace Elffy
             _direction = vec.Normalized();
             _position = cameraPos;
             CalcViewMatrix(_position, _direction, _up, out _view);
+            Frustum.FromMatrix(_projection, _view, out _frustum);
+            _matrixChanged.Invoke(this);
         }
 
         /// <summary>Change fovy with same screen region.</summary>
@@ -206,6 +230,8 @@ namespace Elffy
             _fovy = fovy;
             UpdateProjectionMatrix();
             CalcViewMatrix(_position, _direction, _up, out _view);
+            Frustum.FromMatrix(_projection, _view, out _frustum);
+            _matrixChanged.Invoke(this);
         }
 
         /// <summary>Set screen size. (frame buffer size)</summary>
@@ -218,6 +244,8 @@ namespace Elffy
 
             _aspect = (float)width / height;
             UpdateProjectionMatrix();
+            Frustum.FromMatrix(_projection, _view, out _frustum);
+            _matrixChanged.Invoke(this);
         }
 
         private void UpdateProjectionMatrix()
@@ -271,5 +299,30 @@ namespace Elffy
     {
         Perspective = 0,
         Orthographic = 1,
+    }
+    public struct EventSourceWrap<T> : IEquatable<EventSourceWrap<T>>
+    {
+        private EventSource<T>? _source;
+
+        [UnscopedRef]
+        public Event<T> Event => new Event<T>(ref _source);
+
+        public readonly int SubscibedCount => _source?.SubscibedCount ?? 0;
+
+        public readonly void Invoke(T arg) => _source?.Invoke(arg);
+
+        public readonly void Clear() => _source?.Clear();
+
+        public readonly Action<T> ToDelegate() => new Action<T>(Invoke);
+
+        public readonly override bool Equals(object? obj) => obj is EventSourceWrap<T> wrap && Equals(wrap);
+
+        public readonly bool Equals(EventSourceWrap<T> other) => _source == other._source;
+
+        public readonly override int GetHashCode() => _source?.GetHashCode() ?? 0;
+
+        public static bool operator ==(EventSourceWrap<T> left, EventSourceWrap<T> right) => left.Equals(right);
+
+        public static bool operator !=(EventSourceWrap<T> left, EventSourceWrap<T> right) => !(left == right);
     }
 }

@@ -135,7 +135,10 @@ public static class Startup
     {
         var screen = layer.GetValidScreen();
         var color = Color4.White;
-        var light = new DirectLight();
+        var light = new DirectLight()
+        {
+            Direction = new Vector3(0, -1, -1),
+        };
         var lightConfig = new DirectLightConfig
         {
             CascadeCount = 2,

@@ -48,6 +48,8 @@ namespace Elffy
         public static Vector4 UnitW => new Vector4(0, 0, 0, 1);
         public static Vector4 Zero => new Vector4(0, 0, 0, 0);
         public static Vector4 One => new Vector4(1, 1, 1, 1);
+        public static Vector4 MaxValue => new Vector4(float.MaxValue, float.MaxValue, float.MaxValue, float.MaxValue);
+        public static Vector4 MinValue => new Vector4(float.MinValue, float.MinValue, float.MinValue, float.MinValue);
         public static unsafe int SizeInBytes => sizeof(Vector4);
 
         public readonly bool IsZero => this == default;
@@ -217,6 +219,36 @@ namespace Elffy
         public static float Dot(in Vector4 vec1, in Vector4 vec2)
         {
             return NVec4.Dot(AsNVec4(vec1), AsNVec4(vec2));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector4 Mix(in Vector4 vec1, in Vector4 vec2, float a)
+        {
+            return vec1 * (1f - a) + vec2 * a;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector4 Min(in Vector4 vec1, in Vector4 vec2)
+        {
+            return new Vector4
+            {
+                X = MathF.Min(vec1.X, vec2.X),
+                Y = MathF.Min(vec1.Y, vec2.Y),
+                Z = MathF.Min(vec1.Z, vec2.Z),
+                W = MathF.Min(vec1.W, vec2.W),
+            };
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector4 Max(in Vector4 vec1, in Vector4 vec2)
+        {
+            return new Vector4
+            {
+                X = MathF.Max(vec1.X, vec2.X),
+                Y = MathF.Max(vec1.Y, vec2.Y),
+                Z = MathF.Max(vec1.Z, vec2.Z),
+                W = MathF.Max(vec1.W, vec2.W),
+            };
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -25,6 +25,12 @@ namespace Elffy
             get => _lights.AsReadOnlySpan();
         }
 
+        public ReadOnlySpan<PipelineOperation> Operations
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => _operations.AsReadOnlySpan();
+        }
+
         internal RenderPipeline(IHostScreen screen)
         {
             _operations = new();

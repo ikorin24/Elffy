@@ -45,6 +45,8 @@ namespace Elffy
         public static Vector3 UnitZ => new Vector3(0, 0, 1);
         public static Vector3 Zero => new Vector3(0, 0, 0);
         public static Vector3 One => new Vector3(1, 1, 1);
+        public static Vector3 MaxValue => new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
+        public static Vector3 MinValue => new Vector3(float.MinValue, float.MinValue, float.MinValue);
         public static unsafe int SizeInBytes => sizeof(Vector3);
 
         public readonly bool IsZero => this == default;
@@ -119,6 +121,34 @@ namespace Elffy
             //return new Vector3(vec1.Y * vec2.Z - vec1.Z * vec2.Y,
             //                   vec1.Z * vec2.X - vec1.X * vec2.Z,
             //                   vec1.X * vec2.Y - vec1.Y * vec2.X);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 Mix(in Vector3 vec1, in Vector3 vec2, float a)
+        {
+            return vec1 * (1f - a) + vec2 * a;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 Min(in Vector3 vec1, in Vector3 vec2)
+        {
+            return new Vector3
+            {
+                X = MathF.Min(vec1.X, vec2.X),
+                Y = MathF.Min(vec1.Y, vec2.Y),
+                Z = MathF.Min(vec1.Z, vec2.Z),
+            };
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 Max(in Vector3 vec1, in Vector3 vec2)
+        {
+            return new Vector3
+            {
+                X = MathF.Max(vec1.X, vec2.X),
+                Y = MathF.Max(vec1.Y, vec2.Y),
+                Z = MathF.Max(vec1.Z, vec2.Z),
+            };
         }
 
         /// <summary>Get angle as radian between two vectors</summary>

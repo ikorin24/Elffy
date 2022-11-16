@@ -194,6 +194,9 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly Vector3 Transform(float x, float y, float z) => Transform(new Vector3(x, y, z));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly Vector3 Transform(in Vector3 vec)
         {
             var w = M30 * vec.X + M31 * vec.Y + M32 * vec.Z + M33;
@@ -206,7 +209,10 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly Vector3 TransformFast(in Vector3 vec)
+        public readonly Vector3 TransformFast4x3(float x, float y, float z) => TransformFast4x3(new Vector3(x, y, z));
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly Vector3 TransformFast4x3(in Vector3 vec)
         {
             return new Vector3()
             {
@@ -300,6 +306,13 @@ namespace Elffy
             var maxX = maxY * aspect;
 
             PerspectiveProjection(minX, maxX, minY, maxY, depthNear, depthFar, out result);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Matrix4 LookAt(in Vector3 eye, in Vector3 target, in Vector3 up)
+        {
+            LookAt(eye, target, up, out var result);
+            return result;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
