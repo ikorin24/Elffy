@@ -38,7 +38,7 @@ namespace Elffy
 
             static void OnDispose(object s, Delegate f)
             {
-                var source = SafeCast.As<EventSource<T>>(s);
+                var source = SafeCast.As<EventHandlerHolder<T>>(s);
                 var func = SafeCast.As<Action<T>>(f);
                 source.Unsubscribe(func);
             }
@@ -63,7 +63,7 @@ namespace Elffy
 
             static void OnDispose(object s, Delegate f)
             {
-                var source = SafeCast.As<AsyncEventSource<T>>(s);
+                var source = SafeCast.As<AsyncEventHandlerHolder<T>>(s);
                 var func = SafeCast.As<Func<T, CancellationToken, UniTask>>(f);
                 source.Unsubscribe(func);
             }

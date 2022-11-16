@@ -12,7 +12,7 @@ namespace Elffy
     public sealed class FrameTimingPoint : ITimingPoint
     {
         private readonly IHostScreen _screen;
-        private EventSource<FrameTimingPoint>? _event;
+        private EventSource<FrameTimingPoint> _eventSource;
         private AsyncEventQueueCore _eventQueue;
         private readonly FrameTiming _timing;
 
@@ -33,7 +33,7 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Event<FrameTimingPoint> AsEvent() => new(ref _event);
+        public Event<FrameTimingPoint> AsEvent() => _eventSource.Event;
 
         public EventSubscription<FrameTimingPoint> Subscribe(Action<FrameTimingPoint> action)
         {
@@ -142,14 +142,14 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void AbortAllEvents()
         {
-            _event?.Clear();
+            _eventSource.Clear();
             _eventQueue.AbortAllEvents();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void DoQueuedEvents()
         {
-            _event?.Invoke(this);
+            _eventSource.Invoke(this);
             _eventQueue.DoQueuedEvents();
         }
 

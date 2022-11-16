@@ -8,13 +8,13 @@ namespace Elffy
 {
     public readonly struct AsyncEventSubscription<T> : IDisposable, IEquatable<AsyncEventSubscription<T>>
     {
-        private readonly AsyncEventSource<T>? _source;
+        private readonly AsyncEventHandlerHolder<T>? _source;
         private readonly Func<T, CancellationToken, UniTask>? _func;
 
         public static AsyncEventSubscription<T> None => default;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal AsyncEventSubscription(AsyncEventSource<T>? source, Func<T, CancellationToken, UniTask>? func)
+        internal AsyncEventSubscription(AsyncEventHandlerHolder<T>? source, Func<T, CancellationToken, UniTask>? func)
         {
             _source = source;
             _func = func;
@@ -25,7 +25,7 @@ namespace Elffy
             _source?.Unsubscribe(_func);
         }
 
-        internal (AsyncEventSource<T>? Source, Func<T, CancellationToken, UniTask>? Func) GetInnerValues()
+        internal (AsyncEventHandlerHolder<T>? Source, Func<T, CancellationToken, UniTask>? Func) GetInnerValues()
         {
             return (_source, _func);
         }

@@ -56,7 +56,7 @@ namespace UnitTest
 
         private sealed class Sample
         {
-            private EventSource<Sample>? _testEvent;
+            private EventHandlerHolder<Sample>? _testEvent;
 
             public Event<Sample> TestEvent => new(ref _testEvent);
 

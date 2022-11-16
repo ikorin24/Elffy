@@ -9,15 +9,15 @@ namespace Elffy.UI
     {
         private bool _keyPressed;
         private bool _isEventFlowCanceled;
-        private EventSource<Executable>? _keyDown;
-        private EventSource<Executable>? _keyPress;
-        private EventSource<Executable>? _keyUp;
+        private EventSource<Executable> _keyDown;
+        private EventSource<Executable> _keyPress;
+        private EventSource<Executable> _keyUp;
 
         public bool IsKeyPressed => _keyPressed;
 
-        public Event<Executable> KeyDown => new Event<Executable>(ref _keyDown);
-        public Event<Executable> KeyPress => new Event<Executable>(ref _keyPress);
-        public Event<Executable> KeyUp => new Event<Executable>(ref _keyUp);
+        public Event<Executable> KeyDown => _keyDown.Event;
+        public Event<Executable> KeyPress => _keyPress.Event;
+        public Event<Executable> KeyUp => _keyUp.Event;
 
         public Executable()
         {
@@ -40,7 +40,7 @@ namespace Elffy.UI
                 if(_keyPressed) {
                     _keyPressed = false;
                     _isEventFlowCanceled = false;
-                    InvokeEvent(_keyUp, this);
+                    InvokeEvent(in _keyUp, this);
                 }
                 return;
             }
@@ -53,33 +53,33 @@ namespace Elffy.UI
             if(mouse.IsPressed(MouseButton.Left)) {
                 if(isMouseOver) {
                     if(_keyPressed) {
-                        InvokeEvent(_keyPress, this);
+                        InvokeEvent(in _keyPress, this);
                     }
                     else {
                         if(mouse.IsDown(MouseButton.Left)) {
                             _keyPressed = true;
-                            InvokeEvent(_keyDown, this);
-                            InvokeEvent(_keyPress, this);
+                            InvokeEvent(in _keyDown, this);
+                            InvokeEvent(in _keyPress, this);
                         }
                     }
                 }
                 else if(_keyPressed) {
-                    InvokeEvent(_keyPress, this);
+                    InvokeEvent(in _keyPress, this);
                 }
             }
             else {
                 if(_keyPressed) {
                     _keyPressed = false;
-                    InvokeEvent(_keyUp, this);
+                    InvokeEvent(in _keyUp, this);
                 }
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void InvokeEvent(EventSource<Executable>? source, Executable arg)
+        private static void InvokeEvent(in EventSource<Executable> source, Executable arg)
         {
             try {
-                source?.Invoke(arg);
+                source.Invoke(arg);
             }
             catch {
                 if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }

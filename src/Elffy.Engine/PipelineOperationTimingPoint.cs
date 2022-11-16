@@ -10,7 +10,7 @@ namespace Elffy
     public sealed class PipelineOperationTimingPoint : ITimingPoint
     {
         private readonly PipelineOperation _operation;
-        private EventSource<PipelineOperationTimingPoint>? _event;
+        private EventSource<PipelineOperationTimingPoint> _eventSource;
         private AsyncEventQueueCore _eventQueue;
 
         internal PipelineOperation Operation => _operation;
@@ -22,7 +22,7 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Event<PipelineOperationTimingPoint> AsEvent() => new(ref _event);
+        public Event<PipelineOperationTimingPoint> AsEvent() => _eventSource.Event;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public UniTask<AsyncUnit> Next(CancellationToken cancellationToken = default)
@@ -45,14 +45,14 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void AbortAllEvents()
         {
-            _event?.Clear();
+            _eventSource.Clear();
             _eventQueue.AbortAllEvents();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void DoQueuedEvents()
         {
-            _event?.Invoke(this);
+            _eventSource.Invoke(this);
             _eventQueue.DoQueuedEvents();
         }
     }

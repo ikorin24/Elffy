@@ -17,11 +17,11 @@ namespace Elffy
         private RenderPipeline? _owner;
         private bool _isEnabled;
         private LifeState _state;
-        private AsyncEventSource<PipelineOperation>? _activating;
-        private AsyncEventSource<PipelineOperation>? _terminating;
-        private EventSource<(PipelineOperation, IHostScreen)>? _alive;
-        private EventSource<PipelineOperation>? _dead;
-        private EventSource<PipelineOperation>? _sizeChanged;
+        private AsyncEventSource<PipelineOperation> _activating;
+        private AsyncEventSource<PipelineOperation> _terminating;
+        private EventSource<(PipelineOperation, IHostScreen)> _alive;
+        private EventSource<PipelineOperation> _dead;
+        private EventSource<PipelineOperation> _sizeChanged;
         private readonly PipelineOperationTimingPoint _beforeExecute;
         private readonly PipelineOperationTimingPoint _afterExecute;
 
@@ -34,11 +34,11 @@ namespace Elffy
         public int SortNumber => _sortNumber;
         public IHostScreen? Screen => _owner?.Screen;
         public LifeState LifeState => _state;
-        public AsyncEvent<PipelineOperation> Activating => new(ref _activating);
-        public AsyncEvent<PipelineOperation> Terminating => new(ref _terminating);
-        public Event<(PipelineOperation Operation, IHostScreen Screen)> Alive => new(ref _alive);
-        public Event<PipelineOperation> Dead => new(ref _dead);
-        public Event<PipelineOperation> SizeChanged => new(ref _sizeChanged);
+        public AsyncEvent<PipelineOperation> Activating => _activating.Event;
+        public AsyncEvent<PipelineOperation> Terminating => _terminating.Event;
+        public Event<(PipelineOperation Operation, IHostScreen Screen)> Alive => _alive.Event;
+        public Event<PipelineOperation> Dead => _dead.Event;
+        public Event<PipelineOperation> SizeChanged => _sizeChanged.Event;
         public CancellationToken RunningToken => _runningTokenSource.Token;
 
         protected PipelineOperation(int sortNumber, string? name)
@@ -78,7 +78,7 @@ namespace Elffy
         internal void OnSizeChangedCallback(IHostScreen screen)
         {
             OnSizeChanged(screen);
-            _sizeChanged?.Invoke(this);
+            _sizeChanged.Invoke(this);
         }
 
         protected abstract void OnSizeChanged(IHostScreen screen);
@@ -100,7 +100,7 @@ namespace Elffy
             _state = LifeState.Activating;
             _owner = screen.RenderPipeline;
             try {
-                await _activating.InvokeIfNotNull(this, ct);
+                await _activating.Invoke(this, ct);
             }
             catch(Exception ex) {
                 // If exceptions throw on activating, terminate the layer if possible.
@@ -116,7 +116,7 @@ namespace Elffy
                 throw;  // Throw exceptions of activating.
             }
             finally {
-                _activating?.Clear();
+                _activating.Clear();
             }
             screen.RenderPipeline.Add(this, static x => OnAdded(x));
             await timingPoint.NextFrame(CancellationToken.None);
@@ -130,7 +130,7 @@ namespace Elffy
                 Debug.Assert(screen != null);
                 self._state = LifeState.Alive;
                 try {
-                    self._alive?.Invoke((self, screen));
+                    self._alive.Invoke((self, screen));
                 }
                 catch {
                     if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
@@ -179,7 +179,7 @@ namespace Elffy
             // I don't care about exceptions in terminating event
             // because the layer is already registered to the removed list.
             // That means the layer will be dead in the next frame even if exceptions are thrown.
-            await _terminating.InvokeIfNotNull(this, CancellationToken.None);
+            await _terminating.Invoke(this, CancellationToken.None);
 
             await (timingPoint ?? screen.Timings.Update).NextFrame(CancellationToken.None);
             Debug.Assert(_state == LifeState.Dead);
@@ -192,7 +192,7 @@ namespace Elffy
                 self._state = LifeState.Dead;
                 self.AbortAllTimingPointEvents();
                 try {
-                    self._dead?.Invoke(self);
+                    self._dead.Invoke(self);
                 }
                 catch {
                     if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }

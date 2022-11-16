@@ -11,7 +11,7 @@ namespace Elffy
     public readonly ref struct Event<T>
     {
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private readonly ref EventSource<T>? _source;
+        private readonly ref EventHandlerHolder<T>? _source;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private string DebuggerView
@@ -34,7 +34,7 @@ namespace Elffy
         public Event() => throw new NotSupportedException("Don't use default constructor.");
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Event(ref EventSource<T>? source)
+        internal Event(ref EventHandlerHolder<T>? source)
         {
             _source = ref source;
         }
@@ -48,7 +48,7 @@ namespace Elffy
                 return EventSubscription<T>.None;
             }
             if(source is null) {
-                Interlocked.CompareExchange(ref source, new EventSource<T>(), null);
+                Interlocked.CompareExchange(ref source, new EventHandlerHolder<T>(), null);
             }
             source.Subscribe(action);
             return new EventSubscription<T>(source, action);

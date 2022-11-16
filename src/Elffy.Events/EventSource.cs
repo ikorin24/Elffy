@@ -3,12 +3,41 @@ using Elffy.Effective;
 using Elffy.Threading;
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Elffy
 {
-    public sealed class EventSource<T>
+    public struct EventSource<T> : IEquatable<EventSource<T>>
+    {
+        private EventHandlerHolder<T>? _source;
+
+        public static EventSource<T> Default => default;
+
+        [UnscopedRef]
+        public Event<T> Event => new Event<T>(ref _source);
+
+        public readonly int SubscibedCount => _source?.SubscibedCount ?? 0;
+
+        public readonly void Invoke(T arg) => _source?.Invoke(arg);
+
+        public readonly void Clear() => _source?.Clear();
+
+        public readonly Action<T> ToDelegate() => new Action<T>(Invoke);
+
+        public readonly override bool Equals(object? obj) => obj is EventSource<T> wrap && Equals(wrap);
+
+        public readonly bool Equals(EventSource<T> other) => _source == other._source;
+
+        public readonly override int GetHashCode() => _source?.GetHashCode() ?? 0;
+
+        public static bool operator ==(EventSource<T> left, EventSource<T> right) => left.Equals(right);
+
+        public static bool operator !=(EventSource<T> left, EventSource<T> right) => !(left == right);
+    }
+
+    internal sealed class EventHandlerHolder<T>
     {
         private const int DefaultBufferCapacity = ArrayPoolForEventSource.LengthOfPoolTargetArray;
 
@@ -21,7 +50,7 @@ namespace Elffy
 
         public int SubscibedCount => _count;
 
-        internal EventSource()
+        internal EventHandlerHolder()
         {
         }
 

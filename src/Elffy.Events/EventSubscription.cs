@@ -6,7 +6,7 @@ namespace Elffy
 {
     public readonly struct EventSubscription<T> : IDisposable, IEquatable<EventSubscription<T>>
     {
-        private readonly EventSource<T>? _source;
+        private readonly EventHandlerHolder<T>? _source;
         private readonly Action<T>? _action;
 
         public static EventSubscription<T> None => default;
@@ -15,7 +15,7 @@ namespace Elffy
         [EditorBrowsable(EditorBrowsableState.Never)]
         public EventSubscription() => throw new NotSupportedException("Don't use default constructor.");
 
-        internal EventSubscription(EventSource<T>? source, Action<T> action)
+        internal EventSubscription(EventHandlerHolder<T>? source, Action<T> action)
         {
             _source = source;
             _action = action;
@@ -26,7 +26,7 @@ namespace Elffy
             _source?.Unsubscribe(_action);
         }
 
-        internal (EventSource<T>? Source, Action<T>? Action) GetInnerValues()
+        internal (EventHandlerHolder<T>? Source, Action<T>? Action) GetInnerValues()
         {
             return (_source, _action);
         }

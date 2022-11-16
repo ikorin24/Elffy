@@ -218,18 +218,18 @@ namespace UnitTest
 
         private sealed class TestSample
         {
-            private AsyncEventSource<TestSample>? _test;
+            private AsyncEventSource<TestSample> _test;
 
-            public AsyncEvent<TestSample> Test => new AsyncEvent<TestSample>(ref _test);
+            public AsyncEvent<TestSample> Test => _test.Event;
 
-            public int SubscibedCount => _test?.SubscibedCount ?? 0;
+            public int SubscibedCount => _test.SubscibedCount;
 
 
             public int Value { get; set; }
 
             public UniTask SequentiallyRaiseTest(CancellationToken ct)
             {
-                return _test.InvokeSequentiallyIfNotNull(this, ct);
+                return _test.InvokeSequentially(this, ct);
             }
         }
     }

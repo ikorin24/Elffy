@@ -4,6 +4,7 @@ using Elffy.Effective;
 using Elffy.Threading;
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
@@ -11,7 +12,67 @@ using System.Threading;
 
 namespace Elffy
 {
-    public sealed class AsyncEventSource<T>
+    public struct AsyncEventSource<T> : IEquatable<AsyncEventSource<T>>
+    {
+        private AsyncEventHandlerHolder<T>? _source;
+
+        public static AsyncEventSource<T> Default => default;
+
+        [UnscopedRef]
+        public AsyncEvent<T> Event => new AsyncEvent<T>(ref _source);
+
+        public readonly int SubscibedCount => _source?.SubscibedCount ?? 0;
+
+        public readonly UniTask Invoke(T arg, CancellationToken cancellationToken = default)
+        {
+            var source = _source;
+            if(source is not null) {
+                return source.Invoke(arg, cancellationToken);
+            }
+            else {
+                if(cancellationToken.IsCancellationRequested) {
+                    return UniTask.FromCanceled(cancellationToken);
+                }
+                else {
+                    return UniTask.CompletedTask;
+                }
+            }
+        }
+
+        public readonly UniTask InvokeSequentially(T arg, CancellationToken cancellationToken = default)
+        {
+            var source = _source;
+            if(source is not null) {
+                return source.InvokeSequentially(arg, cancellationToken);
+            }
+            else {
+                if(cancellationToken.IsCancellationRequested) {
+                    return UniTask.FromCanceled(cancellationToken);
+                }
+                else {
+                    return UniTask.CompletedTask;
+                }
+            }
+        }
+
+        public readonly void Clear() => _source?.Clear();
+
+        public Func<T, CancellationToken, UniTask> ToSequentialDelegate() => new(InvokeSequentially);
+
+        public Func<T, CancellationToken, UniTask> ToDelegate() => new(Invoke);
+
+        public override bool Equals(object? obj) => obj is AsyncEventSource<T> source && Equals(source);
+
+        public bool Equals(AsyncEventSource<T> other) => _source == other._source;
+
+        public override int GetHashCode() => _source?.GetHashCode() ?? 0;
+
+        public static bool operator ==(AsyncEventSource<T> left, AsyncEventSource<T> right) => left.Equals(right);
+
+        public static bool operator !=(AsyncEventSource<T> left, AsyncEventSource<T> right) => !(left == right);
+    }
+
+    internal sealed class AsyncEventHandlerHolder<T>
     {
         private const int DefaultBufferCapacity = 4;
 
@@ -24,18 +85,18 @@ namespace Elffy
 
         public int SubscibedCount => _count;
 
-        internal AsyncEventSource()
+        internal AsyncEventHandlerHolder()
         {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public UniTask InvokeSequentially(T arg, CancellationToken cancellationToken = default)
+        public UniTask InvokeSequentially(T arg, CancellationToken cancellationToken)
         {
             return InvokeCore(arg, cancellationToken, EventInvokeMode.Sequential);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public UniTask Invoke(T arg, CancellationToken cancellationToken = default)
+        public UniTask Invoke(T arg, CancellationToken cancellationToken)
         {
             return InvokeCore(arg, cancellationToken, EventInvokeMode.Parallel);
         }
@@ -176,41 +237,6 @@ namespace Elffy
         {
             Parallel = 0,
             Sequential = 1,
-        }
-    }
-
-    public static class EventSourceExtensions
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static UniTask InvokeSequentiallyIfNotNull<T>(this AsyncEventSource<T>? source, T arg, CancellationToken cancellationToken = default)
-        {
-            if(source is not null) {
-                return source.InvokeSequentially(arg, cancellationToken);
-            }
-            else {
-                if(cancellationToken.IsCancellationRequested) {
-                    return UniTask.FromCanceled(cancellationToken);
-                }
-                else {
-                    return UniTask.CompletedTask;
-                }
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static UniTask InvokeIfNotNull<T>(this AsyncEventSource<T>? source, T arg, CancellationToken cancellationToken = default)
-        {
-            if(source is not null) {
-                return source.Invoke(arg, cancellationToken);
-            }
-            else {
-                if(cancellationToken.IsCancellationRequested) {
-                    return UniTask.FromCanceled(cancellationToken);
-                }
-                else {
-                    return UniTask.CompletedTask;
-                }
-            }
         }
     }
 }

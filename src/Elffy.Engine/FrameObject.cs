@@ -15,31 +15,31 @@ namespace Elffy
     {
         private IHostScreen? _hostScreen;
         private ObjectLayer? _layer;
-        private AsyncEventSource<FrameObject>? _activating;
-        private AsyncEventSource<FrameObject>? _terminating;
-        private EventSource<FrameObject>? _update;
-        private EventSource<FrameObject>? _lateUpdate;
-        private EventSource<FrameObject>? _earlyUpdate;
-        private EventSource<FrameObject>? _alive;
-        private EventSource<FrameObject>? _dead;
+        private AsyncEventSource<FrameObject> _activating;
+        private AsyncEventSource<FrameObject> _terminating;
+        private EventSource<FrameObject> _update;
+        private EventSource<FrameObject> _lateUpdate;
+        private EventSource<FrameObject> _earlyUpdate;
+        private EventSource<FrameObject> _alive;
+        private EventSource<FrameObject> _dead;
         private string? _name;
         private LifeState _state = LifeState.New;
         private bool _isFrozen;
         private readonly FrameObjectInstanceType _instanceType = FrameObjectInstanceType.FrameObject;
 
-        public AsyncEvent<FrameObject> Activating => new(ref _activating);
+        public AsyncEvent<FrameObject> Activating => _activating.Event;
 
-        public AsyncEvent<FrameObject> Terminating => new(ref _terminating);
+        public AsyncEvent<FrameObject> Terminating => _terminating.Event;
 
-        public Event<FrameObject> Alive => new Event<FrameObject>(ref _alive);
+        public Event<FrameObject> Alive => _alive.Event;
 
-        public Event<FrameObject> Dead => new Event<FrameObject>(ref _dead);
+        public Event<FrameObject> Dead => _dead.Event;
 
-        public Event<FrameObject> EarlyUpdate => new Event<FrameObject>(ref _earlyUpdate);
+        public Event<FrameObject> EarlyUpdate => _earlyUpdate.Event;
 
-        public Event<FrameObject> LateUpdate => new Event<FrameObject>(ref _lateUpdate);
+        public Event<FrameObject> LateUpdate => _lateUpdate.Event;
 
-        public Event<FrameObject> Update => new Event<FrameObject>(ref _update);
+        public Event<FrameObject> Update => _update.Event;
 
         public string? Name { get => _name; set => _name = value; }
 
@@ -146,13 +146,13 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void InvokeEarlyUpdate() => _earlyUpdate?.Invoke(this);
+        internal void InvokeEarlyUpdate() => _earlyUpdate.Invoke(this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void InvokeUpdate() => _update?.Invoke(this);
+        internal void InvokeUpdate() => _update.Invoke(this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void InvokeLateUpdate() => _lateUpdate?.Invoke(this);
+        internal void InvokeLateUpdate() => _lateUpdate.Invoke(this);
 
         internal UniTask ActivateOnLayer(ObjectLayer layer, FrameTimingPoint timingPoint, CancellationToken ct)
         {
@@ -188,8 +188,8 @@ namespace Elffy
             _state = LifeState.Activating;
             ExceptionDispatchInfo? edi = null;
             try {
-                await _activating.InvokeIfNotNull(this, ct);
-                _activating?.Clear();
+                await _activating.Invoke(this, ct);
+                _activating.Clear();
             }
             catch(Exception ex) {
                 if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) {
@@ -214,7 +214,7 @@ namespace Elffy
         {
             _state = LifeState.Terminating;
             try {
-                await _terminating.InvokeIfNotNull(this, CancellationToken.None);
+                await _terminating.Invoke(this, CancellationToken.None);
             }
             catch {
                 if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
@@ -265,9 +265,9 @@ namespace Elffy
             [DoesNotReturn] static void ThrowTerminateTwice() => throw new InvalidOperationException($"Cannot terminate {nameof(FrameObject)} twice.");
         }
 
-        protected virtual void OnAlive() => _alive?.Invoke(this);
+        protected virtual void OnAlive() => _alive.Invoke(this);
 
-        protected virtual void OnDead() => _dead?.Invoke(this);
+        protected virtual void OnDead() => _dead.Invoke(this);
 
         internal void AddToObjectStoreCallback()
         {

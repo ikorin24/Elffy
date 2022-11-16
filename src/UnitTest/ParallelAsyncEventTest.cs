@@ -214,16 +214,16 @@ namespace UnitTest
 
         private sealed class Sample
         {
-            private AsyncEventSource<Sample>? _testEvent;
+            private AsyncEventSource<Sample> _testEvent;
 
-            public AsyncEvent<Sample> TestEvent => new AsyncEvent<Sample>(ref _testEvent);
+            public AsyncEvent<Sample> TestEvent => _testEvent.Event;
 
-            public int SubscibedCount => _testEvent?.SubscibedCount ?? 0;
+            public int SubscibedCount => _testEvent.SubscibedCount;
 
 
             public UniTask ParallelRaiseTest(CancellationToken ct)
             {
-                return _testEvent.InvokeIfNotNull(this, ct);
+                return _testEvent.Invoke(this, ct);
             }
         }
 

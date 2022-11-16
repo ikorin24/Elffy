@@ -10,7 +10,7 @@ namespace Elffy
     /// <summary>Camera class</summary>
     public sealed class Camera
     {
-        private EventSourceWrap<Camera> _matrixChanged;
+        private EventSource<Camera> _matrixChanged;
         private Matrix4 _view;
         private Matrix4 _projection;
         private Vector3 _position;
@@ -299,30 +299,5 @@ namespace Elffy
     {
         Perspective = 0,
         Orthographic = 1,
-    }
-    public struct EventSourceWrap<T> : IEquatable<EventSourceWrap<T>>
-    {
-        private EventSource<T>? _source;
-
-        [UnscopedRef]
-        public Event<T> Event => new Event<T>(ref _source);
-
-        public readonly int SubscibedCount => _source?.SubscibedCount ?? 0;
-
-        public readonly void Invoke(T arg) => _source?.Invoke(arg);
-
-        public readonly void Clear() => _source?.Clear();
-
-        public readonly Action<T> ToDelegate() => new Action<T>(Invoke);
-
-        public readonly override bool Equals(object? obj) => obj is EventSourceWrap<T> wrap && Equals(wrap);
-
-        public readonly bool Equals(EventSourceWrap<T> other) => _source == other._source;
-
-        public readonly override int GetHashCode() => _source?.GetHashCode() ?? 0;
-
-        public static bool operator ==(EventSourceWrap<T> left, EventSourceWrap<T> right) => left.Equals(right);
-
-        public static bool operator !=(EventSourceWrap<T> left, EventSourceWrap<T> right) => !(left == right);
     }
 }

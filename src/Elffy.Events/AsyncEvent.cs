@@ -12,7 +12,7 @@ namespace Elffy
     public readonly ref struct AsyncEvent<T>
     {
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private readonly ref AsyncEventSource<T>? _source;
+        private readonly ref AsyncEventHandlerHolder<T>? _source;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private string DebuggerView
@@ -35,7 +35,7 @@ namespace Elffy
         public AsyncEvent() => throw new NotSupportedException("Don't use default constructor.");
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public AsyncEvent(ref AsyncEventSource<T>? source)
+        internal AsyncEvent(ref AsyncEventHandlerHolder<T>? source)
         {
             _source = ref source;
         }
@@ -49,7 +49,7 @@ namespace Elffy
                 return AsyncEventSubscription<T>.None;
             }
             if(source is null) {
-                Interlocked.CompareExchange(ref source, new AsyncEventSource<T>(), null);
+                Interlocked.CompareExchange(ref source, new AsyncEventHandlerHolder<T>(), null);
             }
             source.Subscribe(func);
             return new AsyncEventSubscription<T>(source, func);

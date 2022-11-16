@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace Elffy.UI
@@ -26,8 +27,10 @@ namespace Elffy.UI
         private HorizontalAlignment _textAlignment;
         private VerticalAlignment _verticalTextAlignment;
 
-        private EventSource<(ITextContent Sender, string PropertyName)>? _propertyChanged;
-        public Event<(ITextContent Sender, string PropertyName)> TextContentChanged => new(ref _propertyChanged);
+        private EventSource<(ITextContent Sender, string PropertyName)> _propertyChanged;
+
+        [UnscopedRef]
+        public Event<(ITextContent Sender, string PropertyName)> TextContentChanged => _propertyChanged.Event;
 
         public string? Text { get => _text; set => SetValue(ref _text, value); }
 
@@ -38,7 +41,7 @@ namespace Elffy.UI
         public Color4 Foreground { get => _foreground; set => SetValue(ref _foreground, value); }
 
         public HorizontalAlignment TextAlignment { get => _textAlignment; set => SetValue(ref _textAlignment, value); }
-        public VerticalAlignment VerticalTextAlignment { get => _verticalTextAlignment; set => _verticalTextAlignment = value; }
+        public VerticalAlignment VerticalTextAlignment { get => _verticalTextAlignment; set => SetValue(ref _verticalTextAlignment, value); }
 
         [Obsolete("Don't use default constructor.")]
         public TextContentImpl() => throw new NotSupportedException("Don't use default constructor.");
@@ -46,7 +49,7 @@ namespace Elffy.UI
         public TextContentImpl(ITextContent owner)
         {
             _owner = owner;
-            _propertyChanged = null;
+            _propertyChanged = new EventSource<(ITextContent Sender, string PropertyName)>();
             _foreground = Color4.Black;
             _text = null;
             _fontFamily = null;
@@ -60,7 +63,7 @@ namespace Elffy.UI
         {
             if(EqualityComparer<TValue>.Default.Equals(field, value)) { return; }
             field = value;
-            _propertyChanged?.Invoke((_owner, callerName));
+            _propertyChanged.Invoke((_owner, callerName));
         }
     }
 }

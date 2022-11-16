@@ -20,14 +20,14 @@ public sealed class DirectLight : ILight
     private LifeState _state;
     private Vector4 _position;
     private Color4 _color;
-    private AsyncEventSource<DirectLight>? _terminating;
-    private EventSource<DirectLight>? _alive;
-    private EventSource<DirectLight>? _dead;
+    private AsyncEventSource<DirectLight> _terminating;
+    private EventSource<DirectLight> _alive;
+    private EventSource<DirectLight> _dead;
     private readonly SubscriptionBag _subscriptions = new SubscriptionBag();
 
-    public Event<DirectLight> Alive => new(ref _alive);
-    public AsyncEvent<DirectLight> Terminating => new(ref _terminating);
-    public Event<DirectLight> Dead => new(ref _dead);
+    public Event<DirectLight> Alive => _alive.Event;
+    public AsyncEvent<DirectLight> Terminating => _terminating.Event;
+    public Event<DirectLight> Dead => _dead.Event;
 
     public LifeState LifeState => _state;
 
@@ -206,7 +206,7 @@ public sealed class DirectLight : ILight
             SafeCast.As<DirectLight>(self).OnRemovedFromList();
         });
         try {
-            await _terminating.InvokeIfNotNull(this, CancellationToken.None);
+            await _terminating.Invoke(this, CancellationToken.None);
         }
         catch {
             if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
@@ -226,7 +226,7 @@ public sealed class DirectLight : ILight
         Debug.Assert(_state == LifeState.Activating);
         _state = LifeState.Alive;
         try {
-            _alive?.Invoke(this);
+            _alive.Invoke(this);
         }
         catch {
             if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
@@ -240,7 +240,7 @@ public sealed class DirectLight : ILight
         _shadowMap.Release();
         _subscriptions.Dispose();
         try {
-            _dead?.Invoke(this);
+            _dead.Invoke(this);
         }
         catch {
             if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
