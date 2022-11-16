@@ -1,8 +1,6 @@
 ﻿#nullable enable
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -11,21 +9,26 @@ using Elffy.Threading;
 
 namespace Elffy
 {
-    public sealed class UnsubscriberBag : IDisposable
+    public sealed class SubscriptionBag : IDisposable
     {
         private List<BagItem>? _list;
         private FastSpinLock _lock;
+        private bool _disposed;
 
-        public UnsubscriberBag()
+        public SubscriptionBag()
         {
         }
 
-        public unsafe void Add<T>(EventUnsubscriber<T> unsubscriber)
+        public unsafe void Add<T>(EventSubscription<T> subscription)
         {
-            var (source, func) = unsubscriber.GetInnerValues();
+            var (source, func) = subscription.GetInnerValues();
             if(source == null || func == null) { return; }
             _lock.Enter();
             try {
+                if(_disposed) {
+                    source.Unsubscribe(func);
+                    return;
+                }
                 _list ??= new();
                 _list.Add(new BagItem(&OnDispose, source, func));
             }
@@ -41,12 +44,16 @@ namespace Elffy
             }
         }
 
-        public unsafe void Add<T>(AsyncEventUnsubscriber<T> unsubscriber)
+        public unsafe void Add<T>(AsyncEventSubscription<T> subscription)
         {
-            var (source, func) = unsubscriber.GetInnerValues();
+            var (source, func) = subscription.GetInnerValues();
             if(source == null || func == null) { return; }
             _lock.Enter();
             try {
+                if(_disposed) {
+                    source.Unsubscribe(func);
+                    return;
+                }
                 _list ??= new();
                 _list.Add(new BagItem(&OnDispose, source, func));
             }
@@ -66,6 +73,10 @@ namespace Elffy
         {
             _lock.Enter();
             try {
+                if(_disposed) {
+                    return;
+                }
+                _disposed = true;
                 var list = _list;
                 if(list is null) { return; }
                 foreach(var item in list.AsReadOnlySpan()) {
@@ -95,17 +106,17 @@ namespace Elffy
         }
     }
 
-    public static class UnsubscriberBagExtensions
+    public static class SubscriptionBagExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void AddTo<T>(this EventUnsubscriber<T> unsubscriber, UnsubscriberBag bag)
+        public static void AddTo<T>(this EventSubscription<T> unsubscriber, SubscriptionBag bag)
         {
             ArgumentNullException.ThrowIfNull(bag);
             bag.Add(unsubscriber);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void AddTo<T>(this AsyncEventUnsubscriber<T> unsubscriber, UnsubscriberBag bag)
+        public static void AddTo<T>(this AsyncEventSubscription<T> unsubscriber, SubscriptionBag bag)
         {
             ArgumentNullException.ThrowIfNull(bag);
             bag.Add(unsubscriber);

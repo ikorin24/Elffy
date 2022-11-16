@@ -40,18 +40,18 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EventUnsubscriber<T> Subscribe(Action<T> action)
+        public EventSubscription<T> Subscribe(Action<T> action)
         {
             ArgumentNullException.ThrowIfNull(action);
             ref var source = ref _source;
             if(Unsafe.IsNullRef(ref source)) {
-                return EventUnsubscriber<T>.None;
+                return EventSubscription<T>.None;
             }
             if(source is null) {
                 Interlocked.CompareExchange(ref source, new EventSource<T>(), null);
             }
             source.Subscribe(action);
-            return new EventUnsubscriber<T>(source, action);
+            return new EventSubscription<T>(source, action);
         }
 
         public override bool Equals(object? obj) => false;

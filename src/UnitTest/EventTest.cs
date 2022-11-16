@@ -13,7 +13,7 @@ namespace UnitTest
             var sample = new Sample();
             var flag = false;
             Assert.Equal(0, sample.SubscibedCount);
-            using(var bag = new UnsubscriberBag()) {
+            using(var bag = new SubscriptionBag()) {
                 sample.TestEvent.Subscribe(x => flag = true).AddTo(bag);
                 Assert.Equal(1, sample.SubscibedCount);
                 sample.RaiseTest();
@@ -37,7 +37,7 @@ namespace UnitTest
             var state = 0;
             var called = new bool[subscribeCount];
             Assert.Equal(0, sample.SubscibedCount);
-            using(var bag = new UnsubscriberBag()) {
+            using(var bag = new SubscriptionBag()) {
                 for(int i = 0; i < subscribeCount; i++) {
                     var num = i;
                     sample.TestEvent.Subscribe(x =>

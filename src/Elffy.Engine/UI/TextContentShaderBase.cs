@@ -9,7 +9,7 @@ namespace Elffy.UI
     internal abstract class TextContentShaderBase : ControlDefaultShaderBase
     {
         private ITextContent? _target;
-        private EventUnsubscriber<(ITextContent Sender, string PropertyName)> _unsubscriber;
+        private EventSubscription<(ITextContent Sender, string PropertyName)> _subscription;
         private bool _requireUpdateTexture;
 
         protected TextContentShaderBase()
@@ -20,7 +20,7 @@ namespace Elffy.UI
         {
             if(target is ITextContent textContent) {
                 _target = textContent;
-                _unsubscriber = textContent.TextContentChanged.Subscribe(x =>
+                _subscription = textContent.TextContentChanged.Subscribe(x =>
                 {
                     // avoid capturing 'this'
                     var shader = SafeCast.As<Control>(x.Sender).Shader;
@@ -52,7 +52,7 @@ namespace Elffy.UI
 
         protected override void OnProgramDisposed()
         {
-            _unsubscriber.Dispose();
+            _subscription.Dispose();
             _target = null;
             base.OnProgramDisposed();
         }

@@ -41,18 +41,18 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public AsyncEventUnsubscriber<T> Subscribe(Func<T, CancellationToken, UniTask> func)
+        public AsyncEventSubscription<T> Subscribe(Func<T, CancellationToken, UniTask> func)
         {
             ArgumentNullException.ThrowIfNull(func);
             ref var source = ref _source;
             if(Unsafe.IsNullRef(ref source)) {
-                return AsyncEventUnsubscriber<T>.None;
+                return AsyncEventSubscription<T>.None;
             }
             if(source is null) {
                 Interlocked.CompareExchange(ref source, new AsyncEventSource<T>(), null);
             }
             source.Subscribe(func);
-            return new AsyncEventUnsubscriber<T>(source, func);
+            return new AsyncEventSubscription<T>(source, func);
         }
 
         public override bool Equals(object? obj) => false;

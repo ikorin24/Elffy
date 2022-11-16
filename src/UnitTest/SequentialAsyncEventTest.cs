@@ -71,7 +71,7 @@ namespace UnitTest
         public async Task MultiSubscribe(int delegateCount)
         {
             var array = new int[delegateCount];
-            var unsubscribers = new AsyncEventUnsubscriber<TestSample>[delegateCount];
+            var unsubscribers = new AsyncEventSubscription<TestSample>[delegateCount];
             var foo = new TestSample();
             Assert.Equal(0, foo.SubscibedCount);
 
@@ -179,7 +179,7 @@ namespace UnitTest
             var assertion = condition.Assertion;
 
             Assert.Equal(0, target.SubscibedCount);
-            var unsubscribers = new List<AsyncEventUnsubscriber<TestSample>>();
+            var unsubscribers = new List<AsyncEventSubscription<TestSample>>();
             foreach(var d in delegates) {
                 var unsubscriber = target.Test.Subscribe(d);
                 unsubscribers.Add(unsubscriber);

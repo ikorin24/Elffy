@@ -4,18 +4,18 @@ using System.ComponentModel;
 
 namespace Elffy
 {
-    public readonly struct EventUnsubscriber<T> : IDisposable, IEquatable<EventUnsubscriber<T>>
+    public readonly struct EventSubscription<T> : IDisposable, IEquatable<EventSubscription<T>>
     {
         private readonly EventSource<T>? _source;
         private readonly Action<T>? _action;
 
-        public static EventUnsubscriber<T> None => default;
+        public static EventSubscription<T> None => default;
 
         [Obsolete("Don't use default constructor.", true)]
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public EventUnsubscriber() => throw new NotSupportedException("Don't use default constructor.");
+        public EventSubscription() => throw new NotSupportedException("Don't use default constructor.");
 
-        internal EventUnsubscriber(EventSource<T>? source, Action<T> action)
+        internal EventSubscription(EventSource<T>? source, Action<T> action)
         {
             _source = source;
             _action = action;
@@ -31,9 +31,9 @@ namespace Elffy
             return (_source, _action);
         }
 
-        public override bool Equals(object? obj) => obj is EventUnsubscriber<T> unsubscriber && Equals(unsubscriber);
+        public override bool Equals(object? obj) => obj is EventSubscription<T> unsubscriber && Equals(unsubscriber);
 
-        public bool Equals(EventUnsubscriber<T> other) => _source == other._source && _action == other._action;
+        public bool Equals(EventSubscription<T> other) => _source == other._source && _action == other._action;
 
         public override int GetHashCode() => HashCode.Combine(_source, _action);
     }

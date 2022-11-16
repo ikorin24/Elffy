@@ -31,7 +31,7 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EventUnsubscriber<PipelineOperationTimingPoint> Subscribe(Action<PipelineOperationTimingPoint> action)
+        public EventSubscription<PipelineOperationTimingPoint> Subscribe(Action<PipelineOperationTimingPoint> action)
         {
             return AsEvent().Subscribe(action);
         }

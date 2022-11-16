@@ -35,7 +35,7 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Event<FrameTimingPoint> AsEvent() => new(ref _event);
 
-        public EventUnsubscriber<FrameTimingPoint> Subscribe(Action<FrameTimingPoint> action)
+        public EventSubscription<FrameTimingPoint> Subscribe(Action<FrameTimingPoint> action)
         {
             return AsEvent().Subscribe(action);
         }

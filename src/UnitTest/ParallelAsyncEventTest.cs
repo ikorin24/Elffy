@@ -28,7 +28,7 @@ namespace UnitTest
         public async Task Sync_Completed_Raise(int delegateCount, bool alreadyCanceled)
         {
             var sample = new Sample();
-            using(var unsubscribers = new UnsubscriberBag()) {
+            using(var unsubscribers = new SubscriptionBag()) {
                 for(int i = 0; i < delegateCount; i++) {
                     sample.TestEvent.Subscribe((x, ct) => UniTask.CompletedTask).AddTo(unsubscribers);
                 }
@@ -62,7 +62,7 @@ namespace UnitTest
         public async Task Async_Completed_Raise(int delegateCount, bool alreadyCanceled)
         {
             var sample = new Sample();
-            using(var unsubscribers = new UnsubscriberBag()) {
+            using(var unsubscribers = new SubscriptionBag()) {
                 for(int i = 0; i < delegateCount; i++) {
                     sample.TestEvent.Subscribe(async (x, ct) => await UniTask.CompletedTask).AddTo(unsubscribers);
                 }
@@ -90,7 +90,7 @@ namespace UnitTest
         public async Task Sync_NeverCompleted_Raise(int delegateCount)
         {
             var sample = new Sample();
-            using(var unsubscribers = new UnsubscriberBag()) {
+            using(var unsubscribers = new SubscriptionBag()) {
                 for(int i = 0; i < delegateCount; i++) {
                     sample.TestEvent.Subscribe((x, ct) => UniTask.Never(ct)).AddTo(unsubscribers);
                 }
@@ -113,7 +113,7 @@ namespace UnitTest
         public async Task Async_NeverCompleted_Raise(int delegateCount)
         {
             var sample = new Sample();
-            using(var unsubscribers = new UnsubscriberBag()) {
+            using(var unsubscribers = new SubscriptionBag()) {
                 for(int i = 0; i < delegateCount; i++) {
                     sample.TestEvent.Subscribe(async (x, ct) => await UniTask.Never(ct)).AddTo(unsubscribers);
                 }
@@ -131,7 +131,7 @@ namespace UnitTest
         {
             var sample = new Sample();
             var cts = new CancellationTokenSource();
-            using(var unsubscribers = new UnsubscriberBag()) {
+            using(var unsubscribers = new SubscriptionBag()) {
 
                 sample.TestEvent.Subscribe(async (x, ct) => await RunUntilCanceled(ct)).AddTo(unsubscribers);
                 sample.TestEvent.Subscribe(async (x, ct) => await RunUntilCanceled(ct)).AddTo(unsubscribers);
@@ -170,7 +170,7 @@ namespace UnitTest
             var awaitHelper = new AwaitHelper("0");
 
             var sample = new Sample();
-            using(var unsbscribers = new UnsubscriberBag()) {
+            using(var unsbscribers = new SubscriptionBag()) {
                 sample.TestEvent.Subscribe(async (x, ct) =>
                 {
                     await Task.Delay(30, CancellationToken.None);

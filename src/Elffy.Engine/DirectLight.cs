@@ -24,7 +24,7 @@ public sealed class DirectLight : ILight
     private EventSource<DirectLight>? _alive;
     private EventSource<DirectLight>? _dead;
 
-    private EventUnsubscriber<Camera> _subscription;
+    private EventSubscription<Camera> _subscription;
 
     public Event<DirectLight> Alive => new(ref _alive);
     public AsyncEvent<DirectLight> Terminating => new(ref _terminating);
