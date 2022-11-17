@@ -9,7 +9,7 @@ using Elffy.Graphics.OpenGL;
 
 namespace Elffy
 {
-    public abstract class PipelineOperation
+    public abstract class PipelineOperation : IFramedLifetime<PipelineOperation>
     {
         private readonly CancellationTokenSource _runningTokenSource;
         private readonly string? _name;
@@ -19,11 +19,12 @@ namespace Elffy
         private LifeState _state;
         private AsyncEventSource<PipelineOperation> _activating;
         private AsyncEventSource<PipelineOperation> _terminating;
-        private EventSource<(PipelineOperation, IHostScreen)> _alive;
+        private EventSource<PipelineOperation> _alive;
         private EventSource<PipelineOperation> _dead;
         private EventSource<PipelineOperation> _sizeChanged;
         private readonly PipelineOperationTimingPoint _beforeExecute;
         private readonly PipelineOperationTimingPoint _afterExecute;
+        private readonly SubscriptionBag _subscriptions = new SubscriptionBag();
 
         public PipelineOperationTimingPoint BeforeExecute => _beforeExecute;
         public PipelineOperationTimingPoint AfterExecute => _afterExecute;
@@ -36,10 +37,12 @@ namespace Elffy
         public LifeState LifeState => _state;
         public AsyncEvent<PipelineOperation> Activating => _activating.Event;
         public AsyncEvent<PipelineOperation> Terminating => _terminating.Event;
-        public Event<(PipelineOperation Operation, IHostScreen Screen)> Alive => _alive.Event;
+        public Event<PipelineOperation> Alive => _alive.Event;
         public Event<PipelineOperation> Dead => _dead.Event;
         public Event<PipelineOperation> SizeChanged => _sizeChanged.Event;
         public CancellationToken RunningToken => _runningTokenSource.Token;
+
+        public SubscriptionRegister Subscriptions => _subscriptions.Register;
 
         protected PipelineOperation(int sortNumber, string? name)
         {
@@ -130,7 +133,7 @@ namespace Elffy
                 Debug.Assert(screen != null);
                 self._state = LifeState.Alive;
                 try {
-                    self._alive.Invoke((self, screen));
+                    self._alive.Invoke(self);
                 }
                 catch {
                     if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }

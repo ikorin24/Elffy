@@ -13,6 +13,5 @@ namespace Elffy
         Event<T> Dead { get; }
         SubscriptionRegister Subscriptions { get; }
         bool TryGetScreen([MaybeNullWhen(false)] out IHostScreen screen);
-        IHostScreen GetValidScreen();
     }
 }

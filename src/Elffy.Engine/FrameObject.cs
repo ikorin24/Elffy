@@ -15,7 +15,7 @@ namespace Elffy
     {
         private IHostScreen? _hostScreen;
         private ObjectLayer? _layer;
-        private SubscriptionBag _subscriptions = new SubscriptionBag();
+        private readonly SubscriptionBag _subscriptions = new SubscriptionBag();
         private AsyncEventSource<FrameObject> _activating;
         private AsyncEventSource<FrameObject> _terminating;
         private EventSource<FrameObject> _update;
