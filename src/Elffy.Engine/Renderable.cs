@@ -19,7 +19,7 @@ namespace Elffy
         private IBO _ibo;
         private VAO _vao;
         private MeshPrimitiveType _primitiveType;
-        private (Vector3 Min, Vector3 Max) _meshBounds;
+        private Aabb _meshBounds;
         private RendererData _rendererData;
         private RendererData _shadowRendererData;
         private bool _hasShadow;
@@ -85,7 +85,7 @@ namespace Elffy
             set => _primitiveType = value;
         }
 
-        public (Vector3 Min, Vector3 Max) MeshBounds => _meshBounds;
+        public Aabb MeshBounds => _meshBounds;
 
         internal ref readonly RendererData RendererData => ref _rendererData;
 
@@ -317,7 +317,7 @@ namespace Elffy
             if(lifeState == LifeState.New || lifeState >= LifeState.Terminating) {
                 return;
             }
-            _meshBounds = CalcMeshBounds(vertices, vertexCount, (uint*)indices, indexCount);
+            _meshBounds = Aabb.CreateMeshAabb(vertices, vertexCount, (uint*)indices, indexCount);
             _vao = VAO.Create();
             VAO.Bind(_vao);
             _vbo = VBO.Create();
@@ -348,24 +348,6 @@ namespace Elffy
             throw new NotImplementedException();
         }
 
-        private unsafe static (Vector3 Min, Vector3 Max) CalcMeshBounds<TVertex>(TVertex* vertices, ulong vertexCount, uint* indices, uint indexCount) where TVertex : unmanaged, IVertex
-        {
-            var min = Vector3.Zero;
-            var max = Vector3.Zero;
-            if(TVertex.TryGetPositionAccessor(out var posAccessor)) {
-                for(uint i = 0; i < indexCount; i++) {
-                    ref readonly var pos = ref posAccessor.Field(vertices[indices[i]]);
-                    min.X = MathF.Min(min.X, pos.X);
-                    min.Y = MathF.Min(min.Y, pos.Y);
-                    min.Z = MathF.Min(min.Z, pos.Z);
-                    max.X = MathF.Max(max.X, pos.X);
-                    max.Y = MathF.Max(max.Y, pos.Y);
-                    max.Z = MathF.Max(max.Z, pos.Z);
-                }
-            }
-            return (Min: min, Max: max);
-        }
-
         protected override void OnDead()
         {
             var isLoaded = IsLoaded;
@@ -378,7 +360,7 @@ namespace Elffy
                 IBO.Delete(ref _ibo);
                 VAO.Delete(ref _vao);
             }
-            _meshBounds = default;
+            _meshBounds = Aabb.None;
         }
 
         [DoesNotReturn]

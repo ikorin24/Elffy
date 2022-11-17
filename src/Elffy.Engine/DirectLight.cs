@@ -25,9 +25,11 @@ public sealed class DirectLight : ILight, IFramedLifetime<DirectLight>
     private AsyncEventSource<DirectLight> _terminating;
     private EventSource<DirectLight> _alive;
     private EventSource<DirectLight> _dead;
+    private bool _needToUpdateLightMatrix;
     private readonly SubscriptionBag _subscriptions = new SubscriptionBag();
 
     public IHostScreen? Screen => _pipeline?.Screen;
+    public RenderPipeline? RenderPipeline => _pipeline;
 
     public AsyncEvent<DirectLight> Activating => _activating.Event;
     public Event<DirectLight> Alive => _alive.Event;
@@ -41,12 +43,10 @@ public sealed class DirectLight : ILight, IFramedLifetime<DirectLight>
         get => _position;
         set
         {
-            if(TryGetDirection(value, out var dir, out var error) == false) {
+            if(TryGetDirection(value, out var _, out var error) == false) {
                 throw new ArgumentException(error);
             }
-            if(_state.IsRunning()) {
-                UpdateLightMatrices(in dir);
-            }
+            _needToUpdateLightMatrix = true;
             _position = value;
         }
     }
@@ -135,13 +135,24 @@ public sealed class DirectLight : ILight, IFramedLifetime<DirectLight>
         });
         _lightMatrixCalculator = config.LightMatrixCalculator ?? DirectLightMatrixCalculator.DefaultFunc;
         _shadowMap.Initialize(config);
-        UpdateLightMatrices(Direction);
+        _needToUpdateLightMatrix = true;
+
+        var screen = pipeline.Screen;
 
         // [capture] this
-        pipeline.Screen.Camera.MatrixChanged.Subscribe(camera =>
+        screen.Camera.MatrixChanged.Subscribe(camera =>
         {
-            UpdateLightMatrices(camera.Direction);
-        }).AddTo(_subscriptions);
+            _needToUpdateLightMatrix = true;
+        }).AddTo(Subscriptions);
+
+        // [capture] this
+        screen.Timings.BeforeRendering.Subscribe(tp =>
+        {
+            if(_needToUpdateLightMatrix) {
+                _needToUpdateLightMatrix = false;
+                UpdateLightMatrices(Direction);
+            }
+        }).AddTo(Subscriptions);
 
         if(pipeline.TryFindDebuggerLayer(out var debuggerLayer)) {
             using var tasks = new ParallelOperation();
@@ -275,6 +286,12 @@ public sealed class DirectLight : ILight, IFramedLifetime<DirectLight>
         var pipeline = _pipeline;
         if(pipeline is null) { ThrowHelper.ThrowInvalidNullScreen(); }
         return pipeline.Screen;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public RenderPipeline GetValidRenderPipeline()
+    {
+        return _pipeline ?? throw new InvalidOperationException("No render pipeline");
     }
 
     [SkipLocalsInit]

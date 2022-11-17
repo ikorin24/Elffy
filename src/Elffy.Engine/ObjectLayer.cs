@@ -103,7 +103,7 @@ namespace Elffy
             }
         }
 
-        internal virtual void RenderShadowMap(IHostScreen screen, CascadedShadowMap shadowMap)
+        internal void RenderShadowMap(IHostScreen screen, CascadedShadowMap shadowMap)
         {
             _store.RenderShadowMap(shadowMap);
         }

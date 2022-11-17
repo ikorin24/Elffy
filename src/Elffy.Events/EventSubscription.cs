@@ -23,6 +23,12 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddTo(SubscriptionRegister register)
+        {
+            register.Add(this);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddTo(SubscriptionBag bag)
         {
             ArgumentNullException.ThrowIfNull(bag);
