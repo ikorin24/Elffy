@@ -20,6 +20,13 @@ namespace Elffy
             _func = func;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddTo(SubscriptionBag bag)
+        {
+            ArgumentNullException.ThrowIfNull(bag);
+            bag.Add(this);
+        }
+
         public void Dispose()
         {
             _source?.Unsubscribe(_func);

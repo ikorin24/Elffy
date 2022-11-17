@@ -11,10 +11,11 @@ using Elffy.Threading;
 namespace Elffy
 {
     /// <summary>The base class which is controlled by the engine. It provides frame update operations and operations to be managed by the engine.</summary>
-    public abstract class FrameObject
+    public abstract class FrameObject : IFramedLifetime<FrameObject>
     {
         private IHostScreen? _hostScreen;
         private ObjectLayer? _layer;
+        private SubscriptionBag _subscriptions = new SubscriptionBag();
         private AsyncEventSource<FrameObject> _activating;
         private AsyncEventSource<FrameObject> _terminating;
         private EventSource<FrameObject> _update;
@@ -40,6 +41,8 @@ namespace Elffy
         public Event<FrameObject> LateUpdate => _lateUpdate.Event;
 
         public Event<FrameObject> Update => _update.Event;
+
+        public SubscriptionRegister Subscriptions => _subscriptions.Register;
 
         public string? Name { get => _name; set => _name = value; }
 

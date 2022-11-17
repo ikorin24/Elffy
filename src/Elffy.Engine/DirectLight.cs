@@ -8,11 +8,12 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using System.Threading;
 
 namespace Elffy;
 
-public sealed class DirectLight : ILight
+public sealed class DirectLight : ILight, IFramedLifetime<DirectLight>
 {
     private RenderPipeline? _pipeline;
     private readonly CascadedShadowMap _shadowMap;
@@ -20,11 +21,15 @@ public sealed class DirectLight : ILight
     private LifeState _state;
     private Vector4 _position;
     private Color4 _color;
+    private AsyncEventSource<DirectLight> _activating;
     private AsyncEventSource<DirectLight> _terminating;
     private EventSource<DirectLight> _alive;
     private EventSource<DirectLight> _dead;
     private readonly SubscriptionBag _subscriptions = new SubscriptionBag();
 
+    public IHostScreen? Screen => _pipeline?.Screen;
+
+    public AsyncEvent<DirectLight> Activating => _activating.Event;
     public Event<DirectLight> Alive => _alive.Event;
     public AsyncEvent<DirectLight> Terminating => _terminating.Event;
     public Event<DirectLight> Dead => _dead.Event;
@@ -59,6 +64,8 @@ public sealed class DirectLight : ILight
     }
 
     public CascadedShadowMap ShadowMap => _shadowMap;
+
+    public SubscriptionRegister Subscriptions => _subscriptions.Register;
 
     public DirectLight()
     {
@@ -110,6 +117,18 @@ public sealed class DirectLight : ILight
         Debug.Assert(_state == LifeState.New);
         _state = LifeState.Activating;
         _pipeline = pipeline;
+
+        ExceptionDispatchInfo? edi = null;
+        try {
+            await _activating.Invoke(this, ct);
+            _activating.Clear();
+        }
+        catch(Exception ex) {
+            if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) {
+                edi = ExceptionDispatchInfo.Capture(ex);
+            }
+        }
+
         pipeline.AddLight(this, static self =>
         {
             SafeCast.As<DirectLight>(self).OnAddedToList();
@@ -134,6 +153,9 @@ public sealed class DirectLight : ILight
             await tasks.WhenAll();
         }
         await timingPoint.NextOrNow(ct);
+        if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) {
+            edi?.Throw();
+        }
         return this;
     }
 
@@ -286,6 +308,11 @@ public sealed class DirectLight : ILight
         }
         dir = default;
         return false;
+    }
+
+    public bool TryGetScreen([MaybeNullWhen(false)] out IHostScreen screen)
+    {
+        throw new NotImplementedException();
     }
 }
 

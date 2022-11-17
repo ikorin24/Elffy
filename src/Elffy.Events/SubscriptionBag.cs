@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -15,11 +16,13 @@ namespace Elffy
         private FastSpinLock _lock;
         private bool _disposed;
 
+        public SubscriptionRegister Register => new SubscriptionRegister(this);
+
         public SubscriptionBag()
         {
         }
 
-        public unsafe void Add<T>(EventSubscription<T> subscription)
+        internal unsafe void Add<T>(EventSubscription<T> subscription)
         {
             var (source, func) = subscription.GetInnerValues();
             if(source == null || func == null) { return; }
@@ -44,7 +47,7 @@ namespace Elffy
             }
         }
 
-        public unsafe void Add<T>(AsyncEventSubscription<T> subscription)
+        internal unsafe void Add<T>(AsyncEventSubscription<T> subscription)
         {
             var (source, func) = subscription.GetInnerValues();
             if(source == null || func == null) { return; }
@@ -106,20 +109,26 @@ namespace Elffy
         }
     }
 
-    public static class SubscriptionBagExtensions
+    public readonly struct SubscriptionRegister
     {
+        private readonly SubscriptionBag? _bag;
+
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("Don't use default constructor.", true)]
+        public SubscriptionRegister() => throw new NotSupportedException("Don't use default constructor.");
+
+        internal SubscriptionRegister(SubscriptionBag bag) => _bag = bag;
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void AddTo<T>(this EventSubscription<T> unsubscriber, SubscriptionBag bag)
+        public void Add<T>(EventSubscription<T> subscription)
         {
-            ArgumentNullException.ThrowIfNull(bag);
-            bag.Add(unsubscriber);
+            _bag?.Add(subscription);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void AddTo<T>(this AsyncEventSubscription<T> unsubscriber, SubscriptionBag bag)
+        public void Add<T>(AsyncEventSubscription<T> subscription)
         {
-            ArgumentNullException.ThrowIfNull(bag);
-            bag.Add(unsubscriber);
+            _bag?.Add(subscription);
         }
     }
 }

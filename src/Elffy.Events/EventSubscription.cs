@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace Elffy
 {
@@ -19,6 +20,13 @@ namespace Elffy
         {
             _source = source;
             _action = action;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddTo(SubscriptionBag bag)
+        {
+            ArgumentNullException.ThrowIfNull(bag);
+            bag.Add(this);
         }
 
         public void Dispose()
