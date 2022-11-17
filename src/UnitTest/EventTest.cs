@@ -56,15 +56,15 @@ namespace UnitTest
 
         private sealed class Sample
         {
-            private EventHandlerHolder<Sample>? _testEvent;
+            private EventSource<Sample> _testEvent;
 
-            public Event<Sample> TestEvent => new(ref _testEvent);
+            public Event<Sample> TestEvent => _testEvent.Event;
 
-            public int SubscibedCount => _testEvent?.SubscibedCount ?? 0;
+            public int SubscibedCount => _testEvent.SubscibedCount;
 
             public void RaiseTest()
             {
-                _testEvent?.Invoke(this);
+                _testEvent.Invoke(this);
             }
         }
     }
