@@ -50,6 +50,61 @@ namespace Elffy
             get => MemoryMarshal.CreateReadOnlySpan(ref Unsafe.As<Frustum, Vector3>(ref Unsafe.AsRef(in this)), CornerCount);
         }
 
+        public bool Contains(in Vector3 pos)
+        {
+            var clips = CalcClipNormals(stackalloc (Vector3, float)[6]);
+            return IsInsideClips(pos, clips);
+        }
+
+        public bool Intersect(in Bounds bounds)
+        {
+            Span<Vector3> boundsCorners = stackalloc Vector3[8];
+            bounds.GetCorners(boundsCorners);
+            var clips = CalcClipNormals(stackalloc (Vector3, float)[6]);
+            return
+                IsInsideClips(boundsCorners[7], clips) ||
+                IsInsideClips(boundsCorners[0], clips) ||
+                IsInsideClips(boundsCorners[1], clips) ||
+                IsInsideClips(boundsCorners[2], clips) ||
+                IsInsideClips(boundsCorners[3], clips) ||
+                IsInsideClips(boundsCorners[4], clips) ||
+                IsInsideClips(boundsCorners[5], clips) ||
+                IsInsideClips(boundsCorners[6], clips);
+        }
+
+        private ReadOnlySpan<(Vector3 Normal, float D)> CalcClipNormals(Span<(Vector3 Normal, float D)> clips)
+        {
+            // The normal is oriented toward the inside of the frustum.
+            clips[0].Normal = Vector3.Cross(NearRightTop - NearLeftTop, NearLeftBottom - NearLeftTop).Normalized();        // near
+            clips[1].Normal = Vector3.Cross(FarLeftBottom - FarLeftTop, FarRightTop - FarLeftTop).Normalized();            // far
+            clips[2].Normal = Vector3.Cross(NearLeftTop - FarLeftTop, FarLeftBottom - FarLeftTop).Normalized();            // left
+            clips[3].Normal = Vector3.Cross(FarRightTop - NearRightTop, NearRightBottom - NearRightTop).Normalized();      // right
+            clips[4].Normal = Vector3.Cross(FarLeftTop - NearLeftTop, NearRightTop - NearLeftTop).Normalized();            // top
+            clips[5].Normal = Vector3.Cross(NearRightBottom - NearLeftBottom, FarLeftBottom - NearLeftBottom).Normalized();// bottom
+
+            clips[0].D = clips[0].Normal.Dot(NearLeftTop);
+            clips[1].D = clips[1].Normal.Dot(FarLeftTop);
+            clips[2].D = clips[2].Normal.Dot(FarLeftTop);
+            clips[3].D = clips[3].Normal.Dot(NearRightTop);
+            clips[4].D = clips[4].Normal.Dot(NearLeftTop);
+            clips[5].D = clips[5].Normal.Dot(NearLeftBottom);
+
+            return clips;
+        }
+
+        private static bool IsInsideClips(in Vector3 p, ReadOnlySpan<(Vector3 Normal, float D)> clips)
+        {
+            // 'clips[i].Normal.Dot(p) - clips[i].D' is distance from a clip.
+            // distance >= 0 means p is inside of the frustum
+            return
+                (clips[5].Normal.Dot(p) - clips[5].D >= 0) &&
+                (clips[0].Normal.Dot(p) - clips[0].D >= 0) &&
+                (clips[1].Normal.Dot(p) - clips[1].D >= 0) &&
+                (clips[2].Normal.Dot(p) - clips[2].D >= 0) &&
+                (clips[3].Normal.Dot(p) - clips[3].D >= 0) &&
+                (clips[4].Normal.Dot(p) - clips[4].D >= 0);
+        }
+
         public static Frustum FromMatrix(in Matrix4 projection, in Matrix4 view)
         {
             FromMatrix(projection, view, out var frustum);

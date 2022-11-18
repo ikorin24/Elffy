@@ -12,11 +12,14 @@ namespace Elffy
     /// <summary>Base class which exists in space. That provides position, size and rotation.</summary>
     public abstract class Positionable : ComponentOwner
     {
+        private Matrix4? _modelCache;
         private Quaternion _ratation = Quaternion.Identity;
         private Vector3 _scale = Vector3.One;
         private Vector3 _position;
         private ArrayPooledListCore<Positionable> _childrenCore = new();    // mutable object, don't make it readonly
         private Positionable? _parent;
+
+        internal ref Matrix4? ModelCache => ref _modelCache;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         internal ref ArrayPooledListCore<Positionable> ChildrenCore => ref _childrenCore;   // don't make it ref readonly
@@ -195,10 +198,10 @@ namespace Elffy
             if(children.IsEmpty) {
                 return;
             }
-
-            var withoutScale = modelParent * Position.ToTranslationMatrix4() * Rotation.ToMatrix4();
+            var model = _modelCache ?? modelParent * GetSelfModelMatrix();
+            _modelCache = null;
             foreach(var child in children) {
-                child.RenderRecursively(withoutScale, view, projection);
+                child.RenderRecursively(model, view, projection);
             }
         }
 
@@ -209,6 +212,7 @@ namespace Elffy
                 return;
             }
             var model = modelParent * GetSelfModelMatrix();
+            _modelCache = model;
             foreach(var child in children) {
                 child.RenderShadowMapRecursively(model, shadowMap);
             }

@@ -19,7 +19,7 @@ namespace Elffy
         private IBO _ibo;
         private VAO _vao;
         private MeshPrimitiveType _primitiveType;
-        private Aabb _meshBounds;
+        private Bounds _meshBounds;
         private RendererData _rendererData;
         private RendererData _shadowRendererData;
         private bool _hasShadow;
@@ -85,7 +85,7 @@ namespace Elffy
             set => _primitiveType = value;
         }
 
-        public Aabb MeshBounds => _meshBounds;
+        public Bounds MeshBounds => _meshBounds;
 
         internal ref readonly RendererData RendererData => ref _rendererData;
 
@@ -169,7 +169,8 @@ namespace Elffy
             if(needToRenderSelf == false && children.IsEmpty) {
                 return;
             }
-            var model = modelParent * GetSelfModelMatrix();
+            var model = ModelCache ?? modelParent * GetSelfModelMatrix();
+            ModelCache = null;
             if(needToRenderSelf && EnsureShaderInitialized()) {
                 Debug.Assert(_rendererData.State is RendererDataState.Compiled);
                 var screen = GetValidScreen();
@@ -233,6 +234,7 @@ namespace Elffy
                 return;
             }
             var model = modelParent * GetSelfModelMatrix();
+            ModelCache = model;
             if(needToRenderSelf && EnsureShadowRendererInitialized()) {
                 Debug.Assert(_shadowRendererData.State == RendererDataState.Compiled);
                 var program = _shadowRendererData.GetValidProgram();
@@ -317,7 +319,7 @@ namespace Elffy
             if(lifeState == LifeState.New || lifeState >= LifeState.Terminating) {
                 return;
             }
-            _meshBounds = Aabb.CreateMeshAabb(vertices, vertexCount, (uint*)indices, indexCount);
+            _meshBounds = Bounds.CreateMeshAabb(vertices, vertexCount, (uint*)indices, indexCount);
             _vao = VAO.Create();
             VAO.Bind(_vao);
             _vbo = VBO.Create();
@@ -360,7 +362,7 @@ namespace Elffy
                 IBO.Delete(ref _ibo);
                 VAO.Delete(ref _vao);
             }
-            _meshBounds = Aabb.None;
+            _meshBounds = Bounds.None;
         }
 
         [DoesNotReturn]
