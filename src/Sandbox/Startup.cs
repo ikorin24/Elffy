@@ -33,9 +33,9 @@ public static class Startup
 
     private static async UniTask<(DeferredRenderLayer, ForwardRenderLayer, UIObjectLayer)> CreateRenderPipeline(IHostScreen screen, bool gray)
     {
-        if(AssemblyBuildInfo.IsDebug) {
-            await new ForwardRenderLayer("_DEBUGGER_LAYER").Activate(screen);
-        }
+        //if(AssemblyBuildInfo.IsDebug) {
+        //    await new ForwardRenderLayer("_DEBUGGER_LAYER").Activate(screen);
+        //}
 
         if(gray) {
             var offscreen = new OffscreenBuffer();

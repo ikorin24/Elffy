@@ -382,7 +382,7 @@ internal static class DirectLightMatrixCalculator
 
     private static Bounds? CalcAabb(RenderPipeline pipeline, Camera camera)
     {
-        var frustum = camera.Frustum;
+        var frustum = camera.CameraFrustum;
         Bounds? wAabb = null;
         foreach(var op in pipeline.Operations) {
             if(op.IsEnabled == false || op is not ObjectLayer layer || layer is UIObjectLayer) { continue; }
@@ -391,7 +391,7 @@ internal static class DirectLightMatrixCalculator
                 if(renderable.IsVisible == false || renderable.HasShadow == false) { continue; }
                 var model = renderable.ModelCache ?? renderable.GetModelMatrix();
                 var objWAabb = renderable.MeshBounds.ChangeCoordinate(model);
-                if(frustum.Intersect(objWAabb) == false) { continue; }
+                if(frustum.Derefer().Intersect(objWAabb) == false) { continue; }
                 wAabb = (wAabb == null) ?
                     objWAabb :
                     Bounds.FromMinMax(

@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using System;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -8,17 +7,21 @@ namespace Elffy
 {
     public readonly struct Frustum : IEquatable<Frustum>
     {
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private const int CornerCount = 8;
-
-        public required Vector3 NearLeftBottom { get; init; }
-        public required Vector3 NearLeftTop { get; init; }
-        public required Vector3 NearRightBottom { get; init; }
-        public required Vector3 NearRightTop { get; init; }
-        public required Vector3 FarLeftBottom { get; init; }
-        public required Vector3 FarLeftTop { get; init; }
-        public required Vector3 FarRightBottom { get; init; }
-        public required Vector3 FarRightTop { get; init; }
+        // Don't change fields order.
+        public readonly Vector3 NearLeftBottom;
+        public readonly Vector3 NearLeftTop;
+        public readonly Vector3 NearRightBottom;
+        public readonly Vector3 NearRightTop;
+        public readonly Vector3 FarLeftBottom;
+        public readonly Vector3 FarLeftTop;
+        public readonly Vector3 FarRightBottom;
+        public readonly Vector3 FarRightTop;
+        public readonly PlainEquation NearClip;
+        public readonly PlainEquation FarClip;
+        public readonly PlainEquation LeftClip;
+        public readonly PlainEquation RightClip;
+        public readonly PlainEquation TopClip;
+        public readonly PlainEquation BottomClip;
 
         public Vector3 NearCenterBottom => (NearLeftBottom + NearRightBottom) * 0.5f;
         public Vector3 NearCenterTop => (NearLeftTop + NearRightTop) * 0.5f;
@@ -47,85 +50,83 @@ namespace Elffy
         public ReadOnlySpan<Vector3> Corners
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => MemoryMarshal.CreateReadOnlySpan(ref Unsafe.As<Frustum, Vector3>(ref Unsafe.AsRef(in this)), CornerCount);
+            get => MemoryMarshal.CreateReadOnlySpan(ref Unsafe.AsRef(in NearLeftBottom), 8);
+        }
+
+        public ReadOnlySpan<PlainEquation> ClipPlains
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => MemoryMarshal.CreateReadOnlySpan(ref Unsafe.AsRef(in NearClip), 6);
+        }
+
+        private Frustum(
+            in Vector3 nearLeftBottom,
+            in Vector3 nearLeftTop,
+            in Vector3 nearRightBottom,
+            in Vector3 nearRightTop,
+            in Vector3 farLeftBottom,
+            in Vector3 farLeftTop,
+            in Vector3 farRightBottom,
+            in Vector3 farRightTop
+        )
+        {
+            NearLeftBottom = nearLeftBottom;
+            NearLeftTop = nearLeftTop;
+            NearRightBottom = nearRightBottom;
+            NearRightTop = nearRightTop;
+            FarLeftBottom = farLeftBottom;
+            FarLeftTop = farLeftTop;
+            FarRightBottom = farRightBottom;
+            FarRightTop = farRightTop;
+
+            NearClip = PlainEquation.FromTriangle(NearLeftBottom, NearLeftTop, NearRightTop);
+            FarClip = PlainEquation.FromTriangle(FarRightTop, FarLeftTop, FarLeftBottom);
+            LeftClip = PlainEquation.FromTriangle(FarLeftBottom, FarLeftTop, NearLeftTop);
+            RightClip = PlainEquation.FromTriangle(NearRightBottom, NearRightTop, FarRightTop);
+            TopClip = PlainEquation.FromTriangle(NearRightTop, NearLeftTop, FarLeftTop);
+            BottomClip = PlainEquation.FromTriangle(FarLeftBottom, NearLeftBottom, NearRightBottom);
         }
 
         public bool Contains(in Vector3 pos)
         {
-            var clips = CalcClipNormals(stackalloc (Vector3, float)[6]);
-            return IsInsideClips(pos, clips);
+            return
+                NearClip.GetSignedDistance(pos) >= 0 &&
+                FarClip.GetSignedDistance(pos) >= 0 &&
+                LeftClip.GetSignedDistance(pos) >= 0 &&
+                RightClip.GetSignedDistance(pos) >= 0 &&
+                TopClip.GetSignedDistance(pos) >= 0 &&
+                BottomClip.GetSignedDistance(pos) >= 0;
         }
 
         [SkipLocalsInit]
         public bool Intersect(in Bounds bounds)
         {
-            Span<Vector3> boundsCorners = stackalloc Vector3[CornerCount];
+            Span<Vector3> boundsCorners = stackalloc Vector3[8];
             bounds.GetCorners(boundsCorners);
-            var clips = CalcClipNormals(stackalloc (Vector3, float)[6]);
             return
-                IsInsideClips(boundsCorners[7], clips) ||
-                IsInsideClips(boundsCorners[0], clips) ||
-                IsInsideClips(boundsCorners[1], clips) ||
-                IsInsideClips(boundsCorners[2], clips) ||
-                IsInsideClips(boundsCorners[3], clips) ||
-                IsInsideClips(boundsCorners[4], clips) ||
-                IsInsideClips(boundsCorners[5], clips) ||
-                IsInsideClips(boundsCorners[6], clips);
-        }
-
-        private ReadOnlySpan<(Vector3 Normal, float D)> CalcClipNormals(Span<(Vector3 Normal, float D)> clips)
-        {
-            // The normal is oriented toward the inside of the frustum.
-            clips[0].Normal = Vector3.Cross(NearRightTop - NearLeftTop, NearLeftBottom - NearLeftTop).Normalized();        // near
-            clips[1].Normal = Vector3.Cross(FarLeftBottom - FarLeftTop, FarRightTop - FarLeftTop).Normalized();            // far
-            clips[2].Normal = Vector3.Cross(NearLeftTop - FarLeftTop, FarLeftBottom - FarLeftTop).Normalized();            // left
-            clips[3].Normal = Vector3.Cross(FarRightTop - NearRightTop, NearRightBottom - NearRightTop).Normalized();      // right
-            clips[4].Normal = Vector3.Cross(FarLeftTop - NearLeftTop, NearRightTop - NearLeftTop).Normalized();            // top
-            clips[5].Normal = Vector3.Cross(NearRightBottom - NearLeftBottom, FarLeftBottom - NearLeftBottom).Normalized();// bottom
-
-            clips[0].D = clips[0].Normal.Dot(NearLeftTop);
-            clips[1].D = clips[1].Normal.Dot(FarLeftTop);
-            clips[2].D = clips[2].Normal.Dot(FarLeftTop);
-            clips[3].D = clips[3].Normal.Dot(NearRightTop);
-            clips[4].D = clips[4].Normal.Dot(NearLeftTop);
-            clips[5].D = clips[5].Normal.Dot(NearLeftBottom);
-
-            return clips;
-        }
-
-        private static bool IsInsideClips(in Vector3 p, ReadOnlySpan<(Vector3 Normal, float D)> clips)
-        {
-            // 'clips[i].Normal.Dot(p) - clips[i].D' is distance from a clip.
-            // distance >= 0 means p is inside of the frustum
-            return
-                (clips[5].Normal.Dot(p) - clips[5].D >= 0) &&
-                (clips[0].Normal.Dot(p) - clips[0].D >= 0) &&
-                (clips[1].Normal.Dot(p) - clips[1].D >= 0) &&
-                (clips[2].Normal.Dot(p) - clips[2].D >= 0) &&
-                (clips[3].Normal.Dot(p) - clips[3].D >= 0) &&
-                (clips[4].Normal.Dot(p) - clips[4].D >= 0);
-        }
-
-        public static Frustum FromMatrix(in Matrix4 projection, in Matrix4 view)
-        {
-            FromMatrix(projection, view, out var frustum);
-            return frustum;
+                Contains(boundsCorners[0]) &&
+                Contains(boundsCorners[1]) &&
+                Contains(boundsCorners[2]) &&
+                Contains(boundsCorners[3]) &&
+                Contains(boundsCorners[4]) &&
+                Contains(boundsCorners[5]) &&
+                Contains(boundsCorners[6]) &&
+                Contains(boundsCorners[7]);
         }
 
         public static void FromMatrix(in Matrix4 projection, in Matrix4 view, out Frustum frustum)
         {
             var viewProjInv = (projection * view).Inverted();
-            frustum = new()
-            {
-                NearLeftBottom = viewProjInv.Transform(-1, -1, -1),
-                NearLeftTop = viewProjInv.Transform(-1, 1, -1),
-                NearRightBottom = viewProjInv.Transform(1, -1, -1),
-                NearRightTop = viewProjInv.Transform(1, 1, -1),
-                FarLeftBottom = viewProjInv.Transform(-1, -1, 1),
-                FarLeftTop = viewProjInv.Transform(-1, 1, 1),
-                FarRightBottom = viewProjInv.Transform(1, -1, 1),
-                FarRightTop = viewProjInv.Transform(1, 1, 1),
-            };
+            frustum = new(
+                nearLeftBottom: viewProjInv.Transform(-1, -1, -1),
+                nearLeftTop: viewProjInv.Transform(-1, 1, -1),
+                nearRightBottom: viewProjInv.Transform(1, -1, -1),
+                nearRightTop: viewProjInv.Transform(1, 1, -1),
+                farLeftBottom: viewProjInv.Transform(-1, -1, 1),
+                farLeftTop: viewProjInv.Transform(-1, 1, 1),
+                farRightBottom: viewProjInv.Transform(1, -1, 1),
+                farRightTop: viewProjInv.Transform(1, 1, 1)
+            );
         }
 
         public override bool Equals(object? obj) => obj is Frustum frustum && Equals(frustum);
@@ -139,42 +140,33 @@ namespace Elffy
                    FarLeftBottom.Equals(other.FarLeftBottom) &&
                    FarLeftTop.Equals(other.FarLeftTop) &&
                    FarRightBottom.Equals(other.FarRightBottom) &&
-                   FarRightTop.Equals(other.FarRightTop);
+                   FarRightTop.Equals(other.FarRightTop) &&
+                   NearClip.Equals(other.NearClip) &&
+                   FarClip.Equals(other.FarClip) &&
+                   LeftClip.Equals(other.LeftClip) &&
+                   RightClip.Equals(other.RightClip) &&
+                   TopClip.Equals(other.TopClip) &&
+                   BottomClip.Equals(other.BottomClip);
         }
 
         public override int GetHashCode()
         {
-            var hashCode = new HashCode();
-            ref var r = ref Unsafe.As<Frustum, byte>(ref Unsafe.AsRef(in this));
-            var bytes = MemoryMarshal.CreateReadOnlySpan(ref r, Unsafe.SizeOf<Frustum>());
-            hashCode.AddBytes(bytes);
-            return hashCode.ToHashCode();
+            HashCode hash = new HashCode();
+            hash.Add(NearLeftBottom);
+            hash.Add(NearLeftTop);
+            hash.Add(NearRightBottom);
+            hash.Add(NearRightTop);
+            hash.Add(FarLeftBottom);
+            hash.Add(FarLeftTop);
+            hash.Add(FarRightBottom);
+            hash.Add(FarRightTop);
+            hash.Add(NearClip);
+            hash.Add(FarClip);
+            hash.Add(LeftClip);
+            hash.Add(RightClip);
+            hash.Add(TopClip);
+            hash.Add(BottomClip);
+            return hash.ToHashCode();
         }
-
-
-        //private readonly struct Plain
-        //{
-        //    // [equation of plain]
-        //    // nx*x + ny*y + nz*z - d = 0
-
-        //    public readonly Vector3 Normal; // normalized
-        //    private readonly float _d;
-
-        //    private Plain(Vector3 normal, float d)
-        //    {
-        //        Normal = normal;
-        //        _d = d;
-        //    }
-
-        //    public static Plain FromTriangle(in Vector3 p0, in Vector3 p1, in Vector3 p2)
-        //    {
-        //        var n = Vector3.Cross(p2 - p1, p0 - p1).Normalized();
-        //        return new Plain(n, n.Dot(p1));
-        //    }
-
-        //    public float GetSignedDistance(in Vector3 pos) => Normal.Dot(pos) - _d;
-
-        //    public float GetDistance(in Vector3 pos) => MathF.Abs(Normal.Dot(pos) - _d);
-        //}
     }
 }

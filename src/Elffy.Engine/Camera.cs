@@ -85,7 +85,7 @@ namespace Elffy
             }
         }
 
-        public ref readonly Frustum Frustum => ref _frustum;
+        public RefReadOnly<Frustum> CameraFrustum => new(in _frustum);
 
         /// <summary>Get max distance from the camera. (Use <see cref="SetNearFar(float, float)"/> method to set the value.)</summary>
         public float Far => _far;
