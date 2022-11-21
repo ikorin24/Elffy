@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using Elffy.Effective;
 using Elffy.Shading;
 using Elffy.Threading;
+using Elffy.UI;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -55,6 +56,19 @@ public sealed class DirectLight : ILight, IFramedLifetime<DirectLight>
     {
         get => TryGetDirection(_position, out var dir, out _) ? dir : Vector3.Zero;
         set => ((ILight)this).Position = new Vector4(-value, 0);
+    }
+
+    public Vector3 Up
+    {
+        get
+        {
+            var dir = Direction;
+            var dirX0Z = new Vector3(dir.X, 0, dir.Z).Normalized();
+            var up = dirX0Z.ContainsNaNOrInfinity ?
+                Vector3.UnitX :
+                Quaternion.FromTwoVectors(dirX0Z, dir) * Vector3.UnitY;
+            return up;
+        }
     }
 
     public Color4 Color
@@ -335,7 +349,7 @@ public sealed class DirectLight : ILight, IFramedLifetime<DirectLight>
 
 internal static class DirectLightMatrixCalculator
 {
-    public static DirectLightMatrixCalcFunc DefaultFunc = (int cascade, DirectLight light) =>
+    public static DirectLightMatrixCalcFunc DefaultFunc__ = (int cascade, DirectLight light) =>
     {
         var screen = light.GetValidScreen();
         var subfrustum = CalcSubfrustum(cascade, screen.Camera, light);
@@ -355,6 +369,65 @@ internal static class DirectLightMatrixCalculator
             out var projection);
         return projection * worldToLight;
     };
+
+    public static DirectLightMatrixCalcFunc DefaultFunc = (int cascade, DirectLight light) =>
+    {
+        var screen = light.GetValidScreen();
+        var camera = screen.Camera;
+        var view = camera.View;
+        var viewInv = view.Inverted();
+        var cascadeCount = light.ShadowMap.CascadeCount;
+        var pipeline = light.GetValidRenderPipeline();
+
+        // AABB of all objects visible from camera in world coordinate.
+        var wAabb = CalcAabb(pipeline, camera) ?? Bounds.FromCenterExtents(Vector3.Zero, Vector3.One);
+
+
+        var lview = Matrix4.LookAt(wAabb.Center - light.Direction, wAabb.Center, light.Up);
+
+        var cAabb = wAabb.ChangeCoordinate(view);
+        var lAabb = Bounds.FromCenterExtents(
+            cAabb.Center + new Vector3(0, 0, cAabb.Extents.Z * (cascadeCount - 2f * cascade - 1f) / cascadeCount),
+            cAabb.Extents * new Vector3(1, 1, 1f / cascadeCount)
+            ).ChangeCoordinate(lview * viewInv);
+
+
+        //var lAabb = wAabb.ChangeCoordinate(lview);
+
+
+        var nearToFar = lAabb.Size.Z;
+        var lightFar = -lAabb.Min.Z + float.Clamp(nearToFar * 5, 10, 1000);
+        var lightNear = -lAabb.Max.Z - float.Clamp(nearToFar * 5, 10, 1000);
+        Matrix4.OrthographicProjection(
+            lAabb.Min.X, lAabb.Max.X,
+            lAabb.Min.Y, lAabb.Max.Y,
+            lightNear,
+            lightFar,
+            out var lproj);
+        return lproj * lview;
+    };
+
+    private static Bounds? CalcAabb(RenderPipeline pipeline, Camera camera)
+    {
+        var frustum = camera.Frustum;
+        Bounds? wAabb = null;
+        foreach(var op in pipeline.Operations) {
+            if(op.IsEnabled == false || op is not ObjectLayer layer || layer is UIObjectLayer) { continue; }
+            foreach(var obj in layer.GetFrameObjects()) {
+                if(obj.IsRenderable(out var renderable) == false) { continue; }
+                if(renderable.IsVisible == false || renderable.HasShadow == false) { continue; }
+                var model = renderable.ModelCache ?? renderable.GetModelMatrix();
+                var objWAabb = renderable.MeshBounds.ChangeCoordinate(model);
+                if(frustum.Intersect(objWAabb) == false) { continue; }
+                wAabb = (wAabb == null) ?
+                    objWAabb :
+                    Bounds.FromMinMax(
+                        Vector3.Min(wAabb.Value.Min, objWAabb.Min),
+                        Vector3.Max(wAabb.Value.Max, objWAabb.Max));
+            }
+        }
+        return wAabb;
+    }
 
     private static Frustum CalcSubfrustum(int cascade, Camera camera, DirectLight light)
     {

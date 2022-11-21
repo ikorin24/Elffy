@@ -10,6 +10,7 @@ namespace Elffy.Shapes
     {
         public SkySphere()
         {
+            HasShadow = false;
             Activating.Subscribe((f, ct) => SafeCast.As<SkySphere>(f).OnActivating());
         }
 

@@ -56,9 +56,10 @@ namespace Elffy
             return IsInsideClips(pos, clips);
         }
 
+        [SkipLocalsInit]
         public bool Intersect(in Bounds bounds)
         {
-            Span<Vector3> boundsCorners = stackalloc Vector3[8];
+            Span<Vector3> boundsCorners = stackalloc Vector3[CornerCount];
             bounds.GetCorners(boundsCorners);
             var clips = CalcClipNormals(stackalloc (Vector3, float)[6]);
             return
@@ -149,5 +150,31 @@ namespace Elffy
             hashCode.AddBytes(bytes);
             return hashCode.ToHashCode();
         }
+
+
+        //private readonly struct Plain
+        //{
+        //    // [equation of plain]
+        //    // nx*x + ny*y + nz*z - d = 0
+
+        //    public readonly Vector3 Normal; // normalized
+        //    private readonly float _d;
+
+        //    private Plain(Vector3 normal, float d)
+        //    {
+        //        Normal = normal;
+        //        _d = d;
+        //    }
+
+        //    public static Plain FromTriangle(in Vector3 p0, in Vector3 p1, in Vector3 p2)
+        //    {
+        //        var n = Vector3.Cross(p2 - p1, p0 - p1).Normalized();
+        //        return new Plain(n, n.Dot(p1));
+        //    }
+
+        //    public float GetSignedDistance(in Vector3 pos) => Normal.Dot(pos) - _d;
+
+        //    public float GetDistance(in Vector3 pos) => MathF.Abs(Normal.Dot(pos) - _d);
+        //}
     }
 }

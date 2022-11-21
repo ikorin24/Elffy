@@ -1,53 +1,73 @@
 ﻿#nullable enable
 using System;
-using System.Runtime.CompilerServices;
+using System.Collections.Generic;
 
 namespace Elffy
 {
     public readonly struct Bounds : IEquatable<Bounds>
     {
-        //public readonly Vector3 Min;
-        //public readonly Vector3 Max;
-        //public Vector3 Center => (Min + Max) * 0.5f;
-        //public Vector3 Size => Max - Min;
-        //public Vector3 Extents => (Max - Min) * 0.5f;
-
-        //public Bounds(in Vector3 min, in Vector3 max)
-        //{
-        //    Min = min;
-        //    Max = max;
-        //}
-        //public static Bounds FromMinMax(in Vector3 min, in Vector3 max) => new Bounds(min, max);
-        //public static Bounds FromCenterExtents(in Vector3 center, in Vector3 extents) => new Bounds(center - extents, center + extents);
-
         public readonly Vector3 Center;
         public readonly Vector3 Extents;
+
         public Vector3 Min => Center - Extents;
         public Vector3 Max => Center + Extents;
         public Vector3 Size => Extents * 2;
+
+        public static Bounds None => default;
+
         private Bounds(in Vector3 center, in Vector3 extents)
         {
             Center = center;
             Extents = extents;
         }
-        public static Bounds FromMinMax(in Vector3 min, in Vector3 max) => new Bounds((min + max) * 0.5f, (max - min) * 0.5f);
-        public static Bounds FromCenterExtents(in Vector3 center, in Vector3 extents) => new Bounds(center, extents);
 
-
-        public static Bounds None => default;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Bounds TransformedBy(in Matrix4 transform, bool isMatrix4x3 = false)
+        public Bounds ChangeCoordinate(in Matrix4 transform, bool isMatrix4x3 = false)
         {
-            return isMatrix4x3 ?
-                FromMinMax(transform.TransformFast4x3(Min), transform.TransformFast4x3(Max)) :
-                FromMinMax(transform.Transform(Min), transform.Transform(Max));
+            var (ex, ey, ez) = Extents;
+            ReadOnlySpan<Vector3> corners = isMatrix4x3 ? stackalloc Vector3[8]
+            {
+                transform.TransformFast4x3(Center + new Vector3(ex, ey, ez)),
+                transform.TransformFast4x3(Center + new Vector3(ex, ey, -ez)),
+                transform.TransformFast4x3(Center + new Vector3(ex, -ey, ez)),
+                transform.TransformFast4x3(Center + new Vector3(ex, -ey, -ez)),
+                transform.TransformFast4x3(Center + new Vector3(-ex, ey, ez)),
+                transform.TransformFast4x3(Center + new Vector3(-ex, ey, -ez)),
+                transform.TransformFast4x3(Center + new Vector3(-ex, -ey, ez)),
+                transform.TransformFast4x3(Center + new Vector3(-ex, -ey, -ez)),
+            } : stackalloc Vector3[8]
+            {
+                transform.Transform(Center + new Vector3(ex, ey, ez)),
+                transform.Transform(Center + new Vector3(ex, ey, -ez)),
+                transform.Transform(Center + new Vector3(ex, -ey, ez)),
+                transform.Transform(Center + new Vector3(ex, -ey, -ez)),
+                transform.Transform(Center + new Vector3(-ex, ey, ez)),
+                transform.Transform(Center + new Vector3(-ex, ey, -ez)),
+                transform.Transform(Center + new Vector3(-ex, -ey, ez)),
+                transform.Transform(Center + new Vector3(-ex, -ey, -ez)),
+            };
+            var (min, max) = (corners[0], corners[0]);
+            (min, max) = (Vector3.Min(min, corners[1]), Vector3.Max(max, corners[1]));
+            (min, max) = (Vector3.Min(min, corners[2]), Vector3.Max(max, corners[2]));
+            (min, max) = (Vector3.Min(min, corners[3]), Vector3.Max(max, corners[3]));
+            (min, max) = (Vector3.Min(min, corners[4]), Vector3.Max(max, corners[4]));
+            (min, max) = (Vector3.Min(min, corners[5]), Vector3.Max(max, corners[5]));
+            (min, max) = (Vector3.Min(min, corners[6]), Vector3.Max(max, corners[6]));
+            (min, max) = (Vector3.Min(min, corners[7]), Vector3.Max(max, corners[7]));
+            return FromMinMax(min, max);
+        }
+
+        public Vector3[] GetCorners()
+        {
+            var corners = new Vector3[8];
+            GetCorners(corners);
+            return corners;
         }
 
         public int GetCorners(Span<Vector3> corners)
         {
             if(corners.Length < 8) {
-                throw new ArgumentException(nameof(corners));
+                ThrowArg();
+                static void ThrowArg() => throw new ArgumentException($"{nameof(corners)} length should be 8 at least.", nameof(corners));
             }
             var (ex, ey, ez) = Extents;
             corners[0] = Center + new Vector3(ex, ey, ez);
@@ -59,6 +79,32 @@ namespace Elffy
             corners[6] = Center + new Vector3(-ex, -ey, ez);
             corners[7] = Center + new Vector3(-ex, -ey, -ez);
             return 8;
+        }
+
+        public static Bounds FromMinMax(in Vector3 min, in Vector3 max) => new Bounds((min + max) * 0.5f, (max - min) * 0.5f);
+        public static Bounds FromCenterExtents(in Vector3 center, in Vector3 extents) => new Bounds(center, extents);
+
+        public static Bounds CreateAabb(IEnumerable<Vector3> points)
+        {
+            ArgumentNullException.ThrowIfNull(points);
+            var min = Vector3.MaxValue;
+            var max = Vector3.MinValue;
+            foreach(var p in points) {
+                min = Vector3.Min(min, p);
+                max = Vector3.Max(max, p);
+            }
+            return FromMinMax(min, max);
+        }
+
+        public static Bounds CreateAabb(ReadOnlySpan<Vector3> points)
+        {
+            var min = Vector3.MaxValue;
+            var max = Vector3.MinValue;
+            foreach(var p in points) {
+                min = Vector3.Min(min, p);
+                max = Vector3.Max(max, p);
+            }
+            return FromMinMax(min, max);
         }
 
         public static Bounds CreateMeshAabb<TVertex>(ReadOnlySpan<TVertex> vertices, ReadOnlySpan<uint> indices) where TVertex : unmanaged, IVertex
@@ -74,17 +120,13 @@ namespace Elffy
 
         public unsafe static Bounds CreateMeshAabb<TVertex>(TVertex* vertices, ulong vertexCount, uint* indices, uint indexCount) where TVertex : unmanaged, IVertex
         {
-            var min = Vector3.Zero;
-            var max = Vector3.Zero;
+            var min = Vector3.MaxValue;
+            var max = Vector3.MinValue;
             if(TVertex.TryGetPositionAccessor(out var posAccessor)) {
                 for(uint i = 0; i < indexCount; i++) {
                     ref readonly var pos = ref posAccessor.Field(vertices[indices[i]]);
-                    min.X = MathF.Min(min.X, pos.X);
-                    min.Y = MathF.Min(min.Y, pos.Y);
-                    min.Z = MathF.Min(min.Z, pos.Z);
-                    max.X = MathF.Max(max.X, pos.X);
-                    max.Y = MathF.Max(max.Y, pos.Y);
-                    max.Z = MathF.Max(max.Z, pos.Z);
+                    min = Vector3.Min(min, pos);
+                    max = Vector3.Max(max, pos);
                 }
             }
             return FromMinMax(min, max);
