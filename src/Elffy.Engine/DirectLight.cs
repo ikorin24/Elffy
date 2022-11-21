@@ -318,9 +318,7 @@ public sealed class DirectLight : ILight, IFramedLifetime<DirectLight>
         var count = ShadowMap.CascadeCount;
         using var memory = count <= Threshold ? default : new ValueTypeRentMemory<Matrix4>(count, false);
         Span<Matrix4> matrices = count <= Threshold ? (stackalloc Matrix4[Threshold])[..count] : memory.AsSpan();
-        for(int i = 0; i < matrices.Length; i++) {
-            matrices[i] = lightMatrixCalculator.Invoke(i, this);
-        }
+        lightMatrixCalculator.Invoke(this, matrices);
         _shadowMap.UpdateLightMatrices(matrices);
     }
 
@@ -349,28 +347,7 @@ public sealed class DirectLight : ILight, IFramedLifetime<DirectLight>
 
 internal static class DirectLightMatrixCalculator
 {
-    public static DirectLightMatrixCalcFunc DefaultFunc__ = (int cascade, DirectLight light) =>
-    {
-        var screen = light.GetValidScreen();
-        var subfrustum = CalcSubfrustum(cascade, screen.Camera, light);
-        var (worldToLight, lightOriginInWorld) = CalcWorldToLightSpace(subfrustum, light.Direction);
-        var aabbInLight = (Min: Vector3.MaxValue, Max: Vector3.MinValue);
-        foreach(var corner in subfrustum.Corners) {
-            var p = worldToLight.TransformFast4x3(corner);
-            aabbInLight.Min = Vector3.Min(p, aabbInLight.Min);
-            aabbInLight.Max = Vector3.Max(p, aabbInLight.Max);
-        }
-        const float ZScale = 4f;       // TODO:
-
-        Matrix4.OrthographicProjection(
-            aabbInLight.Min.X, aabbInLight.Max.X,
-            aabbInLight.Min.Y, aabbInLight.Max.Y,
-            aabbInLight.Min.Z * ZScale, aabbInLight.Max.Z * ZScale,
-            out var projection);
-        return projection * worldToLight;
-    };
-
-    public static DirectLightMatrixCalcFunc DefaultFunc = (int cascade, DirectLight light) =>
+    public static DirectLightMatrixCalcFunc DefaultFunc = (DirectLight light, Span<Matrix4> lightMatrices) =>
     {
         var screen = light.GetValidScreen();
         var camera = screen.Camera;
@@ -382,29 +359,25 @@ internal static class DirectLightMatrixCalculator
         // AABB of all objects visible from camera in world coordinate.
         var wAabb = CalcAabb(pipeline, camera) ?? Bounds.FromCenterExtents(Vector3.Zero, Vector3.One);
 
-
         var lview = Matrix4.LookAt(wAabb.Center - light.Direction, wAabb.Center, light.Up);
-
         var cAabb = wAabb.ChangeCoordinate(view);
-        var lAabb = Bounds.FromCenterExtents(
-            cAabb.Center + new Vector3(0, 0, cAabb.Extents.Z * (cascadeCount - 2f * cascade - 1f) / cascadeCount),
-            cAabb.Extents * new Vector3(1, 1, 1f / cascadeCount)
-            ).ChangeCoordinate(lview * viewInv);
 
-
-        //var lAabb = wAabb.ChangeCoordinate(lview);
-
-
-        var nearToFar = lAabb.Size.Z;
-        var lightFar = -lAabb.Min.Z + float.Clamp(nearToFar * 5, 10, 1000);
-        var lightNear = -lAabb.Max.Z - float.Clamp(nearToFar * 5, 10, 1000);
-        Matrix4.OrthographicProjection(
-            lAabb.Min.X, lAabb.Max.X,
-            lAabb.Min.Y, lAabb.Max.Y,
-            lightNear,
-            lightFar,
-            out var lproj);
-        return lproj * lview;
+        for(int i = 0; i < lightMatrices.Length; i++) {
+            var lAabb = Bounds.FromCenterExtents(
+                cAabb.Center + new Vector3(0, 0, cAabb.Extents.Z * (cascadeCount - 2f * i - 1f) / cascadeCount),
+                cAabb.Extents * new Vector3(1, 1, 1f / cascadeCount)
+                ).ChangeCoordinate(lview * viewInv);
+            var nearToFar = lAabb.Size.Z;
+            var lightFar = -lAabb.Min.Z + float.Clamp(nearToFar * 5, 10, 1000);
+            var lightNear = -lAabb.Max.Z - float.Clamp(nearToFar * 5, 10, 1000);
+            Matrix4.OrthographicProjection(
+                lAabb.Min.X, lAabb.Max.X,
+                lAabb.Min.Y, lAabb.Max.Y,
+                lightNear,
+                lightFar,
+                out var lproj);
+            lightMatrices[i] = lproj * lview;
+        }
     };
 
     private static Bounds? CalcAabb(RenderPipeline pipeline, Camera camera)
@@ -427,47 +400,6 @@ internal static class DirectLightMatrixCalculator
             }
         }
         return wAabb;
-    }
-
-    private static Frustum CalcSubfrustum(int cascade, Camera camera, DirectLight light)
-    {
-        var frustum = camera.Frustum;
-        var cascadeCount = light.ShadowMap.CascadeCount;
-        const float MaxShadowNearToFar = 200f;       // TODO:
-        var cameraNearToFar = camera.Far - camera.Near;
-        var shadowNearToFar = float.Min(cameraNearToFar, MaxShadowNearToFar);
-        var coeff = shadowNearToFar / cameraNearToFar;
-        var nearPoint = cascade / (float)cascadeCount * coeff;
-        var farPoint = (cascade + 1) / (float)cascadeCount * coeff;
-        var subfrustum = new Frustum
-        {
-            NearLeftBottom = Vector3.Mix(frustum.NearLeftBottom, frustum.FarLeftBottom, nearPoint),
-            NearLeftTop = Vector3.Mix(frustum.NearLeftTop, frustum.FarLeftTop, nearPoint),
-            NearRightBottom = Vector3.Mix(frustum.NearRightBottom, frustum.FarRightBottom, nearPoint),
-            NearRightTop = Vector3.Mix(frustum.NearRightTop, frustum.FarRightTop, nearPoint),
-            FarLeftBottom = Vector3.Mix(frustum.NearLeftBottom, frustum.FarLeftBottom, farPoint),
-            FarLeftTop = Vector3.Mix(frustum.NearLeftTop, frustum.FarLeftTop, farPoint),
-            FarRightBottom = Vector3.Mix(frustum.NearRightBottom, frustum.FarRightBottom, farPoint),
-            FarRightTop = Vector3.Mix(frustum.NearRightTop, frustum.FarRightTop, farPoint),
-        };
-        return subfrustum;
-    }
-
-    private static (Matrix4 WorldToLight, Vector3 OriginInWorldSpace) CalcWorldToLightSpace(in Frustum frustumInWorld, Vector3 lightDir)
-    {
-        var center = frustumInWorld.Center;
-        var dirX0Z = new Vector3(lightDir.X, 0, lightDir.Z).Normalized();
-
-        Vector3 up;
-        if(dirX0Z.ContainsNaNOrInfinity) {
-            // direction is (0, +-1, 0) or very close to them.
-            up = Vector3.UnitX;
-        }
-        else {
-            up = Quaternion.FromTwoVectors(dirX0Z, lightDir) * Vector3.UnitY;
-        }
-        var worldToLight = Matrix4.LookAt(center - lightDir, center, up);
-        return (WorldToLight: worldToLight, OriginInWorldSpace: center);
     }
 }
 
@@ -502,7 +434,7 @@ public record struct DirectLightConfig
     }
 }
 
-public delegate Matrix4 DirectLightMatrixCalcFunc(int cascade, DirectLight light);
+public delegate void DirectLightMatrixCalcFunc(DirectLight light, Span<Matrix4> lightMatrices);
 
 internal sealed class DirectLightDebugObject : Renderable
 {

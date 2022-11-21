@@ -257,6 +257,7 @@ public static class Startup
         var timing = layer.GetValidScreen().Timings.Update;
         var dice = new Plain()
         {
+            HasShadow = false,
             Scale = new Vector3(150f),
             Rotation = Quaternion.FromAxisAngle(Vector3.UnitX, -90.ToRadian()),
             Shader = new PbrDeferredShader()
