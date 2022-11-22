@@ -2,6 +2,8 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 
 namespace Elffy
 {
@@ -87,31 +89,73 @@ namespace Elffy
             BottomClip = PlainEquation.FromTriangle(FarLeftBottom, NearLeftBottom, NearRightBottom);
         }
 
-        public bool Contains(in Vector3 pos)
-        {
-            return
-                NearClip.GetSignedDistance(pos) >= 0 &&
-                FarClip.GetSignedDistance(pos) >= 0 &&
-                LeftClip.GetSignedDistance(pos) >= 0 &&
-                RightClip.GetSignedDistance(pos) >= 0 &&
-                TopClip.GetSignedDistance(pos) >= 0 &&
-                BottomClip.GetSignedDistance(pos) >= 0;
-        }
-
         [SkipLocalsInit]
         public bool Intersect(in Bounds bounds)
         {
             Span<Vector3> boundsCorners = stackalloc Vector3[8];
             bounds.GetCorners(boundsCorners);
             return
-                Contains(boundsCorners[0]) &&
-                Contains(boundsCorners[1]) &&
-                Contains(boundsCorners[2]) &&
-                Contains(boundsCorners[3]) &&
-                Contains(boundsCorners[4]) &&
-                Contains(boundsCorners[5]) &&
-                Contains(boundsCorners[6]) &&
+                Contains(boundsCorners[0]) ||
+                Contains(boundsCorners[1]) ||
+                Contains(boundsCorners[2]) ||
+                Contains(boundsCorners[3]) ||
+                Contains(boundsCorners[4]) ||
+                Contains(boundsCorners[5]) ||
+                Contains(boundsCorners[6]) ||
                 Contains(boundsCorners[7]);
+        }
+
+        public unsafe bool Contains(in Vector3 p)
+        {
+            // [NOTE]
+            // Layout of PlainEquation is (float nx, float ny, float nz, float d).
+            // So I consider it as Vector4 (float x, float y, float z, float w).
+
+            if(Avx.IsSupported) {
+                fixed(PlainEquation* clips = ClipPlains) {
+                    var a = Vector256.Create(p.X, p.Y, p.Z, 1f, p.X, p.Y, p.Z, 1f);     // <px, py, pz, pw, px, py, pz, pw>  (pw == 1)
+                    Vector4* c = (Vector4*)clips;
+
+                    // <dot(c0, p), 0, 0, 0, dot(c1, p), 0, 0, 0>
+                    var result0 = Avx.DotProduct(
+                        Vector256.Load((float*)&c[0]),      // <c0x, c0y, c0z, c0w,  c1x, c1y, c1z, c1w>
+                        a,
+                        0b_1111_0001);
+
+                    // <dot(c2, p), 0, 0, 0, dot(c3, p), 0, 0, 0>
+                    var result1 = Avx.DotProduct(
+                        Vector256.Load((float*)&c[2]),      // <c2x, c2y, c2z, c2w,  c3x, c3y, c3z, c3w>
+                        a,
+                        0b_1111_0001);
+
+                    // <dot(c4, p), 0, 0, 0, dot(c5, p), 0, 0, 0>
+                    var result2 = Avx.DotProduct(
+                        Vector256.Load((float*)&c[4]),      // <c4x, c4y, c4z, c4w,  c5x, c5y, c5z, c5w>
+                        a,
+                        0b_1111_0001);
+
+                    return
+                        result0[0] >= 0 &&      // dot(c0, p) >= 0
+                        result0[4] >= 0 &&      // dot(c1, p) >= 0
+                        result1[0] >= 0 &&      // dot(c2, p) >= 0
+                        result1[4] >= 0 &&      // dot(c3, p) >= 0
+                        result2[0] >= 0 &&      // dot(c4, p) >= 0
+                        result2[4] >= 0;        // dot(c5, p) >= 0
+                }
+            }
+
+            return SoftwareFallback(in this, in p);
+
+            static bool SoftwareFallback(in Frustum frustum, in Vector3 p)
+            {
+                return
+                    frustum.NearClip.IsAbove(p) &&
+                    frustum.FarClip.IsAbove(p) &&
+                    frustum.LeftClip.IsAbove(p) &&
+                    frustum.RightClip.IsAbove(p) &&
+                    frustum.TopClip.IsAbove(p) &&
+                    frustum.BottomClip.IsAbove(p);
+            }
         }
 
         public static void FromMatrix(in Matrix4 projection, in Matrix4 view, out Frustum frustum)
@@ -151,7 +195,7 @@ namespace Elffy
 
         public override int GetHashCode()
         {
-            HashCode hash = new HashCode();
+            var hash = new HashCode();
             hash.Add(NearLeftBottom);
             hash.Add(NearLeftTop);
             hash.Add(NearRightBottom);
