@@ -150,23 +150,7 @@ public sealed class DirectLight : ILight, IFramedLifetime<DirectLight>
         _lightMatrixCalculator = config.LightMatrixCalculator ?? DirectLightMatrixCalculator.DefaultFunc;
         _shadowMap.Initialize(config);
         _needToUpdateLightMatrix = true;
-
-        var screen = pipeline.Screen;
-
-        // [capture] this
-        screen.Camera.MatrixChanged.Subscribe(camera =>
-        {
-            _needToUpdateLightMatrix = true;
-        }).AddTo(Subscriptions);
-
-        // [capture] this
-        screen.Timings.BeforeRendering.Subscribe(tp =>
-        {
-            if(_needToUpdateLightMatrix) {
-                _needToUpdateLightMatrix = false;
-                UpdateLightMatrices(Direction);
-            }
-        }).AddTo(Subscriptions);
+        SubscribeEventsForUpdateLightMatrix(pipeline);
 
         if(pipeline.TryFindDebuggerLayer(out var debuggerLayer)) {
             using var tasks = new ParallelOperation();
@@ -182,6 +166,35 @@ public sealed class DirectLight : ILight, IFramedLifetime<DirectLight>
             edi?.Throw();
         }
         return this;
+    }
+
+    private void SubscribeEventsForUpdateLightMatrix(RenderPipeline pipeline)
+    {
+        var screen = pipeline.Screen;
+
+        // TODO: operation added
+        //pipeline.OperationAdded.Subscribe(pipeline =>
+        //{
+        //});
+
+        foreach(var op in pipeline.Operations) {
+            if(op is ObjectLayer layer) {
+                layer.ObjectAdded.Subscribe(_ => _needToUpdateLightMatrix = true).AddTo(Subscriptions);
+                layer.ObjectRemoved.Subscribe(_ => _needToUpdateLightMatrix = true).AddTo(Subscriptions);
+            }
+        }
+
+        // [capture] this
+        screen.Camera.MatrixChanged.Subscribe(camera => _needToUpdateLightMatrix = true).AddTo(Subscriptions);
+
+        // [capture] this
+        screen.Timings.BeforeRendering.Subscribe(tp =>
+        {
+            if(_needToUpdateLightMatrix) {
+                _needToUpdateLightMatrix = false;
+                UpdateLightMatrices(Direction);
+            }
+        }).AddTo(Subscriptions);
     }
 
     public UniTask<DirectLight> Terminate(CancellationToken cancellationToken = default) => Terminate(FrameTiming.Update, cancellationToken);

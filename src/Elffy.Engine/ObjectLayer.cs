@@ -4,26 +4,39 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Cysharp.Threading.Tasks;
-using Elffy.Features.Internal;
+using Elffy.Effective;
 using Elffy.Threading;
 
 namespace Elffy
 {
     public abstract class ObjectLayer : PipelineOperation
     {
-        private readonly FrameObjectStore _store;
+        private readonly List<FrameObject> _list;
+        private readonly List<FrameObject> _addedBuf;
+        private readonly List<FrameObject> _removedBuf;
+        private readonly List<Positionable> _positionables;
+        private EventSource<ObjectLayer> _objectAdded;
+        private EventSource<ObjectLayer> _objectRemoved;
 
-        public int ObjectCount => _store.ObjectCount;
-        protected ReadOnlySpan<FrameObject> AddedObjects => _store.Added;
-        protected ReadOnlySpan<FrameObject> RemovedObjects => _store.Removed;
-        protected ReadOnlySpan<Positionable> Positionables => _store.Positionables;
+        public int ObjectCount => _list.Count;
+        protected ReadOnlySpan<FrameObject> AddedObjects => _addedBuf.AsReadOnlySpan();
+        protected ReadOnlySpan<FrameObject> RemovedObjects => _removedBuf.AsReadOnlySpan();
+        protected ReadOnlySpan<Positionable> Positionables => _positionables.AsReadOnlySpan();
+
+        public Event<ObjectLayer> ObjectAdded => _objectAdded.Event;
+        public Event<ObjectLayer> ObjectRemoved => _objectRemoved.Event;
 
         protected ObjectLayer(int sortNumber, string? name) : base(sortNumber, name)
         {
-            _store = new FrameObjectStore(32);
+            const int InitialCapacity = 32;
+
+            _list = new List<FrameObject>(InitialCapacity);
+            _addedBuf = new List<FrameObject>(InitialCapacity / 2);
+            _removedBuf = new List<FrameObject>(InitialCapacity / 2);
+            _positionables = new List<Positionable>(InitialCapacity);
         }
 
-        public ReadOnlySpan<FrameObject> GetFrameObjects() => _store.List;
+        public ReadOnlySpan<FrameObject> GetFrameObjects() => _list.AsReadOnlySpan();
 
         public T FindObject<T>(string? name) where T : FrameObject
         {
@@ -105,32 +118,168 @@ namespace Elffy
 
         internal void RenderShadowMap(IHostScreen screen, CascadedShadowMap shadowMap)
         {
-            _store.RenderShadowMap(shadowMap);
+            var identity = Matrix4.Identity;
+            foreach(var positionable in _positionables.AsSpan()) {
+                // Render only root objects.
+                // Childen are rendered from thier parent method recursively.
+                if(positionable.IsRoot == false) { continue; }
+                try {
+                    positionable.RenderShadowMapRecursively(identity, shadowMap);
+                }
+                catch {
+                    if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
+                    // Don't throw. (Ignore exceptions in user code)
+                }
+            }
         }
 
         protected sealed override void OnExecute(IHostScreen screen)
         {
             SelectMatrix(screen, out var view, out var projection);
-            _store.Render(view, projection);
+
+            var identity = Matrix4.Identity;
+            foreach(var positionable in _positionables.AsSpan()) {
+                // Render only root objects.
+                // Childen are rendered from thier parent method recursively.
+                if(positionable.IsRoot == false) { continue; }
+                try {
+                    positionable.RenderRecursively(identity, view, projection);
+                }
+                catch {
+                    if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
+                    // Don't throw. (Ignore exceptions in user code)
+                }
+            }
         }
 
-        internal void ApplyAdd() => _store.ApplyAdd();
-        internal void ApplyRemove() => _store.ApplyRemove();
-        internal void EarlyUpdate() => _store.EarlyUpdate();
-        internal void Update() => _store.Update();
-        internal void LateUpdate() => _store.LateUpdate();
-        internal void ClearFrameObject() => _store.ClearFrameObject();
+        internal void ApplyAdd()
+        {
+            if(_addedBuf.Count <= 0) { return; }
+
+            _list.AddRange(_addedBuf);
+            foreach(var item in _addedBuf.AsSpan()) {
+                Debug.Assert(item.LifeState == LifeState.Activating);
+                if(item.IsPositionable(out var positionable)) {
+                    _positionables.Add(positionable);
+                }
+                try {
+                    item.AddToObjectStoreCallback();
+                }
+                catch {
+                    if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
+                    // Don't throw. (Ignore exceptions in user code)
+                }
+            }
+            _addedBuf.Clear();
+            _objectAdded.InvokeIgnoreException(this);
+        }
+
+        internal void ApplyRemove()
+        {
+            if(_removedBuf.Count <= 0) { return; }
+
+            var list = _list;
+            var positionables = _positionables;
+
+            foreach(var item in _removedBuf.AsSpan()) {
+                Debug.Assert(item.LifeState == LifeState.Terminating);
+
+                // The FrameObject is not in the list if it failed to activate.
+                list.Remove(item);
+                if(item.IsPositionable(out var positionable)) {
+                    positionables.Remove(positionable);
+                }
+                try {
+                    item.RemovedFromObjectStoreCallback();
+                }
+                catch {
+                    if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
+                    // Don't throw. (Ignore exceptions in user code)
+                }
+            }
+            _removedBuf.Clear();
+            _objectRemoved.InvokeIgnoreException(this);
+        }
+
+        internal void EarlyUpdate()
+        {
+            foreach(var frameObject in _list.AsSpan()) {
+                if(frameObject.IsFrozen) { continue; }
+                try {
+                    frameObject.InvokeEarlyUpdate();
+                }
+                catch {
+                    if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
+                    // Don't throw. (Ignore exceptions in user code)
+                }
+            }
+        }
+
+        internal void Update()
+        {
+            foreach(var frameObject in _list.AsSpan()) {
+                if(frameObject.IsFrozen) { continue; }
+                try {
+                    frameObject.InvokeUpdate();
+                }
+                catch {
+                    if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
+                    // Don't throw. (Ignore exceptions in user code)
+                }
+            }
+        }
+
+        internal void LateUpdate()
+        {
+            foreach(var frameObject in _list.AsSpan()) {
+                if(frameObject.IsFrozen) { continue; }
+                try {
+                    frameObject.InvokeLateUpdate();
+                }
+                catch {
+                    if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
+                    // Don't throw. (Ignore exceptions in user code)
+                }
+            }
+        }
+
+        internal void ClearFrameObject()
+        {
+            // Abort added objects at the first.
+            _addedBuf.Clear();
+
+            // Terminate all living object. (Terminated objects go to removed buffer.)
+            foreach(var item in _list.AsSpan()) {
+                try {
+                    item.Terminate().Forget();  // TODO: await
+                }
+                catch {
+                    if(EngineSetting.UserCodeExceptionCatchMode == UserCodeExceptionCatchMode.Throw) { throw; }
+                    // Don't throw. (Ignore exceptions in user code)
+                }
+            }
+
+            // Apply removing
+            ApplyRemove();
+
+            // Clear all other lists
+            _list.Clear();
+            _removedBuf.Clear();
+            _positionables.Clear();
+        }
 
         internal void AddFrameObject(FrameObject frameObject)
         {
             Debug.Assert(TryGetScreen(out var screen));
             Debug.Assert(screen.CurrentTiming.IsOutOfFrameLoop() == false);
-            _store.AddFrameObject(frameObject);
+            Debug.Assert(frameObject is not null);
+            _addedBuf.Add(frameObject);
         }
 
         internal void RemoveFrameObject(FrameObject frameObject)
         {
-            _store.RemoveFrameObject(frameObject);
+            Debug.Assert(frameObject is not null);
+            _removedBuf.Add(frameObject);
         }
     }
 }

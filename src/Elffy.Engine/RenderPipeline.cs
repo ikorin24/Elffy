@@ -11,9 +11,12 @@ namespace Elffy
 {
     public sealed class RenderPipeline
     {
-        private readonly LazyApplyingList<PipelineOperation> _operations;
-        private readonly LazyApplyingList<ILight> _lights;
+        private LazyApplyingList<PipelineOperation, RenderPipeline> _operations;
+        private LazyApplyingList<ILight, RenderPipeline> _lights;
         private readonly IHostScreen _screen;
+
+        public Event<RenderPipeline> OperationAdded => _operations.Added;
+        public Event<RenderPipeline> OperationRemoved => _operations.Removed;
 
         internal const string DebuggerLayerName = "_DEBUGGER_LAYER";
 
@@ -155,8 +158,8 @@ namespace Elffy
         internal void ApplyAdd()
         {
             Debug.Assert(Engine.IsThreadMain);
-            _lights.ApplyAdd();
-            if(_operations.ApplyAdd()) {
+            _lights.ApplyAdd(this);
+            if(_operations.ApplyAdd(this)) {
                 _operations.Sort(static (l1, l2) => l1.SortNumber - l2.SortNumber);
             }
             foreach(var operation in _operations.AsReadOnlySpan()) {
@@ -174,8 +177,8 @@ namespace Elffy
                     layer.ApplyRemove();
                 }
             }
-            _operations.ApplyRemove();
-            _lights.ApplyRemove();
+            _operations.ApplyRemove(this);
+            _lights.ApplyRemove(this);
         }
 
         internal void EarlyUpdate()

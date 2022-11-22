@@ -18,7 +18,7 @@ namespace Elffy
         private static int _mainThreadID = 0;      // 0 means the engine is not running.
         private static readonly object _syncLock = new object();
         private static bool _isHandling;
-        private static LazyApplyingList<IHostScreen> _screens = new();
+        private static LazyApplyingList<IHostScreen, None> _screens = new();
         private static readonly Stopwatch _watch = new Stopwatch();
 
         /// <summary>Get whether the current thread is the main thread of the engine or not.</summary>
@@ -94,11 +94,11 @@ namespace Elffy
             if(_isHandling) { ThrowInvalidOperation($"{nameof(HandleOnce)} method is not re-entrant."); }
             _isHandling = true;
             try {
-                _screens.ApplyAdd();
+                _screens.ApplyAdd(None.Default);
                 foreach(var s in _screens.AsReadOnlySpan()) {
                     s.HandleOnce();
                 }
-                _screens.ApplyRemove();
+                _screens.ApplyRemove(None.Default);
                 return _screens.Count != 0;
             }
             finally {
