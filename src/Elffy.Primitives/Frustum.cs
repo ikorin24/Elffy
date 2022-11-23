@@ -90,22 +90,19 @@ namespace Elffy
         }
 
         [SkipLocalsInit]
-        public bool Intersect(in Bounds bounds)
+        public static bool ContainsBoundsCorners(in Frustum frustum, in Bounds bounds)
         {
             Span<Vector3> boundsCorners = stackalloc Vector3[8];
             bounds.GetCorners(boundsCorners);
-            if(ContainsAny(in this, boundsCorners)) {
+            if(ContainsAny(in frustum, boundsCorners)) {
                 return true;
             }
-
-            // TODO:
-            //var clips = ClipPlains;
             return false;
         }
 
-        public unsafe bool Contains(in Vector3 p)
+        public static bool Contains(in Frustum frustum, in Vector3 p)
         {
-            return ContainsAny(in this, new ReadOnlySpan<Vector3>(in p));
+            return ContainsAny(in frustum, new ReadOnlySpan<Vector3>(in p));
         }
 
         private static unsafe bool ContainsAny(in Frustum frustum, ReadOnlySpan<Vector3> positions)

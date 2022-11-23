@@ -404,7 +404,10 @@ internal static class DirectLightMatrixCalculator
                 if(renderable.IsVisible == false || renderable.HasShadow == false) { continue; }
                 var model = renderable.ModelCache ?? renderable.GetModelMatrix();
                 var objWAabb = renderable.MeshBounds.ChangeCoordinate(model);
-                if(frustum.Derefer().Intersect(objWAabb) == false) { continue; }
+
+                // TODO: It is not enough to check that any corner points of AABB are included in the Frustum.
+                if(Frustum.ContainsBoundsCorners(in frustum.GetReference(), objWAabb) == false) { continue; }
+
                 wAabb = (wAabb == null) ?
                     objWAabb :
                     Bounds.FromMinMax(
