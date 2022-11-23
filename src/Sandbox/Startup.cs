@@ -215,10 +215,10 @@ public static class Startup
         {
             var keyborad = m.GetValidScreen().Keyboard;
             if(keyborad.IsPress(Elffy.InputSystem.Keys.Down)) {
-                model.Position.Y -= 0.1f;
+                model.Position += new Vector3(0, -0.1f, 0);
             }
             if(keyborad.IsPress(Elffy.InputSystem.Keys.Up)) {
-                model.Position.Y += 0.1f;
+                model.Position += new Vector3(0, 0.1f, 0);
             }
         });
         return model;

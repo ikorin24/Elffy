@@ -12,20 +12,24 @@ namespace Elffy
     /// <summary>Base class which exists in space. That provides position, size and rotation.</summary>
     public abstract class Positionable : ComponentOwner
     {
-        private Matrix4? _modelCache;
-        private Quaternion _ratation = Quaternion.Identity;
-        private Vector3 _scale = Vector3.One;
-        private Vector3 _position;
+        private Trs<Positionable> _trs = new Trs<Positionable>();           // mutable object, don't make it readonly
         private ArrayPooledListCore<Positionable> _childrenCore = new();    // mutable object, don't make it readonly
         private Positionable? _parent;
-
-        internal ref Matrix4? ModelCache => ref _modelCache;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         internal ref ArrayPooledListCore<Positionable> ChildrenCore => ref _childrenCore;   // don't make it ref readonly
 
         /// <summary>Get or set <see cref="Quaternion"/> of rotation.</summary>
-        public ref Quaternion Rotation => ref _ratation;
+        public Quaternion Rotation
+        {
+            get => _trs.Rotation;
+            set
+            {
+                if(_trs.SetRotation(value, out var changed)) {
+                    changed.InvokeIgnoreException(this);
+                }
+            }
+        }
 
         /// <summary>Get parent of the <see cref="Positionable"/>.</summary>
         public Positionable? Parent
@@ -53,7 +57,16 @@ namespace Elffy
 
         /// <summary>Get or set local position whose origin is the position of <see cref="Parent"/>.</summary>
         /// <remarks>The value is same as <see cref="WorldPosition"/> if <see cref="IsRoot"/> is true.</remarks>
-        public ref Vector3 Position => ref _position;
+        public Vector3 Position
+        {
+            get => _trs.Position;
+            set
+            {
+                if(_trs.SetPosition(value, out var changed)) {
+                    changed.InvokeIgnoreException(this);
+                }
+            }
+        }
 
         /// <summary>Get or set world position.</summary>
         /// <remarks>Both getter and setter are O(N); N is the number of all parents from self to the root object.</remarks>
@@ -62,23 +75,36 @@ namespace Elffy
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                return IsRoot ? _position : Calc(this);
+                return IsRoot ? Position : Calc(this);
 
                 static Vector3 Calc(Positionable source)
                 {
-                    var wPos = source._position;
+                    var wPos = source.Position;
                     while(!source.IsRoot) {
                         source = source._parent!;
-                        wPos += source._position;
+                        wPos += source.Position;
                     }
                     return wPos;
                 }
             }
-            set => _position += value - WorldPosition;
+            set => Position += value - WorldPosition;
         }
 
         /// <summary>Get or set scale of <see cref="Positionable"/>.</summary>
-        public ref Vector3 Scale => ref _scale;
+        public Vector3 Scale
+        {
+            get => _trs.Scale;
+            set
+            {
+                if(_trs.SetScale(value, out var changed)) {
+                    changed.InvokeIgnoreException(this);
+                }
+            }
+        }
+
+        public Event<Positionable> PositionChanged => _trs.PositionChanged;
+        public Event<Positionable> RotationChanged => _trs.RotationChanged;
+        public Event<Positionable> ScaleChanged => _trs.ScaleChanged;
 
         public Positionable() : base(FrameObjectInstanceType.Positionable)
         {
@@ -88,26 +114,26 @@ namespace Elffy
         {
         }
 
-        internal static Matrix4 CalcModelMatrix(in Vector3 position, in Quaternion rotation, in Vector3 scale)
-        {
-            // TODO: optimize
-            return position.ToTranslationMatrix4() * rotation.ToMatrix4() * scale.ToScaleMatrix4();
-        }
-
-        public Matrix4 GetSelfModelMatrix() => CalcModelMatrix(in _position, in _ratation, in _scale);
+        public Matrix4 GetSelfModelMatrix() => _trs.GetTransform();
 
         public Matrix4 GetModelMatrix()
         {
-            var model = GetSelfModelMatrix();
-            var parent = _parent;
-            if(parent == null) {
-                return model;
+            if(Parent == null) {
+                return _trs.GetTransform();
             }
-            while(true) {
-                model = parent.GetSelfModelMatrix() * model;
-                parent = parent.Parent;
-                if(parent == null) {
-                    return model;
+            return CalcRecursively(this);
+
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            static Matrix4 CalcRecursively(Positionable self)
+            {
+                var model = self._trs.GetTransform();
+                var parent = self.Parent;
+                while(true) {
+                    if(parent == null) {
+                        return model;
+                    }
+                    model = parent.GetSelfModelMatrix() * model;
+                    parent = parent.Parent;
                 }
             }
         }
@@ -118,23 +144,21 @@ namespace Elffy
         /// <param name="z">translation of z</param>
         public void Translate(float x, float y, float z)
         {
-            _position.X += x;
-            _position.Y += y;
-            _position.Z += z;
+            Position += new Vector3(x, y, z);
         }
 
         /// <summary>Translate the <see cref="Positionable"/>.</summary>
         /// <param name="vector">translation vector</param>
         public void Translate(in Vector3 vector)
         {
-            _position += vector;
+            Position += vector;
         }
 
         /// <summary>Multiply scale.</summary>
         /// <param name="ratio">ratio</param>
         public void MultiplyScale(float ratio)
         {
-            _scale *= ratio;
+            Scale *= ratio;
         }
 
         /// <summary>Multiply scale.</summary>
@@ -143,21 +167,29 @@ namespace Elffy
         /// <param name="z">ratio of z</param>
         public void MultiplyScale(float x, float y, float z)
         {
-            _scale.X *= x;
-            _scale.Y *= y;
-            _scale.Z *= z;
+            Scale *= new Vector3(x, y, z);
+        }
+
+        /// <summary>Multiply scale.</summary>
+        /// <param name="ratio">ratio</param>
+        public void MultiplyScale(in Vector3 ratio)
+        {
+            Scale *= ratio;
         }
 
         /// <summary>Rotate the <see cref="Positionable"/> by axis and angle.</summary>
         /// <param name="axis">Axis of rotation</param>
         /// <param name="angle">Angle of rotation [radian]</param>
-        public void Rotate(in Vector3 axis, float angle) => Rotate(Quaternion.FromAxisAngle(axis, angle));
+        public void Rotate(in Vector3 axis, float angle)
+        {
+            Rotation = Quaternion.FromAxisAngle(axis, angle) * Rotation;
+        }
 
         /// <summary>Rotate the <see cref="Positionable"/> by <see cref="Quaternion"/>.</summary>
         /// <param name="quaternion"><see cref="Quaternion"/></param>
         public void Rotate(in Quaternion quaternion)
         {
-            _ratation = quaternion * _ratation;
+            Rotation = quaternion * Rotation;
         }
 
         /// <summary>Get all children recursively by DFS (depth-first search).</summary>
@@ -198,8 +230,7 @@ namespace Elffy
             if(children.IsEmpty) {
                 return;
             }
-            var model = _modelCache ?? modelParent * GetSelfModelMatrix();
-            _modelCache = null;
+            var model = modelParent * GetSelfModelMatrix();
             foreach(var child in children) {
                 child.RenderRecursively(model, view, projection);
             }
@@ -212,7 +243,6 @@ namespace Elffy
                 return;
             }
             var model = modelParent * GetSelfModelMatrix();
-            _modelCache = model;
             foreach(var child in children) {
                 child.RenderShadowMapRecursively(model, shadowMap);
             }

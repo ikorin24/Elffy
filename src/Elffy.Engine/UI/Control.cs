@@ -85,7 +85,10 @@ namespace Elffy.UI
         public Vector2 ActualPosition
         {
             get => _renderable.Position.Xy;
-            internal set => _renderable.Position.RefXy() = value;
+            internal set
+            {
+                _renderable.Position = new Vector3(value.X, value.Y, _renderable.Position.Z);
+            }
         }
 
         public RectF ActualRect => new RectF(ActualPosition, ActualSize);
@@ -100,7 +103,10 @@ namespace Elffy.UI
         public Vector2 ActualSize
         {
             get => _renderable.Scale.Xy;
-            internal set => _renderable.Scale.RefXy() = value;
+            internal set
+            {
+                _renderable.Scale = new Vector3(value.X, value.Y, _renderable.Scale.Z);
+            }
         }
 
         /// <summary>get or set whether this <see cref="Control"/> is enabled in HitTest</summary>

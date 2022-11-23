@@ -402,7 +402,7 @@ internal static class DirectLightMatrixCalculator
             foreach(var obj in layer.GetFrameObjects()) {
                 if(obj.IsRenderable(out var renderable) == false) { continue; }
                 if(renderable.IsVisible == false || renderable.HasShadow == false) { continue; }
-                var model = renderable.ModelCache ?? renderable.GetModelMatrix();
+                var model = renderable.GetModelMatrix();
                 var objWAabb = renderable.MeshBounds.ChangeCoordinate(model);
 
                 // TODO: It is not enough to check that any corner points of AABB are included in the Frustum.
