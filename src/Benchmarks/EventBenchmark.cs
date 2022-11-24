@@ -17,10 +17,10 @@ namespace Benchmarks.Events
         private readonly Action<EventBenchmark> _eventDelegate4;
         private readonly Action<EventBenchmark> _eventDelegate5;
 
-        private EventSource<EventBenchmark>? _event2;
+        private EventSource<EventBenchmark> _event2;
 
         public event Action<EventBenchmark>? Event1;
-        public Event<EventBenchmark> Event2 => new(ref _event2);
+        public Event<EventBenchmark> Event2 => _event2.Event;
 
         public EventBenchmark()
         {
@@ -41,9 +41,9 @@ namespace Benchmarks.Events
 
         [Benchmark(Description = "Elffy Event")]
         [BenchmarkCategory("zero")]
-        public EventSource<EventBenchmark>? ElffyEvent0()
+        public EventSource<EventBenchmark> ElffyEvent0()
         {
-            _event2?.Invoke(this);
+            _event2.Invoke(this);
             return _event2;
         }
 
@@ -59,10 +59,10 @@ namespace Benchmarks.Events
 
         [Benchmark(Description = "Elffy Event")]
         [BenchmarkCategory("one")]
-        public EventSource<EventBenchmark>? ElffyEvent1()
+        public EventSource<EventBenchmark> ElffyEvent1()
         {
             using var u1 = Event2.Subscribe(_eventDelegate1);
-            _event2?.Invoke(this);
+            _event2.Invoke(this);
             return _event2;
         }
 
@@ -80,11 +80,11 @@ namespace Benchmarks.Events
 
         [Benchmark(Description = "Elffy Event")]
         [BenchmarkCategory("two")]
-        public EventSource<EventBenchmark>? ElffyEvent2()
+        public EventSource<EventBenchmark> ElffyEvent2()
         {
             using var u1 = Event2.Subscribe(_eventDelegate1);
             using var u2 = Event2.Subscribe(_eventDelegate2);
-            _event2?.Invoke(this);
+            _event2.Invoke(this);
             return _event2;
         }
 
@@ -104,12 +104,12 @@ namespace Benchmarks.Events
 
         [Benchmark(Description = "Elffy Event")]
         [BenchmarkCategory("three")]
-        public EventSource<EventBenchmark>? ElffyEvent3()
+        public EventSource<EventBenchmark> ElffyEvent3()
         {
             using var u1 = Event2.Subscribe(_eventDelegate1);
             using var u2 = Event2.Subscribe(_eventDelegate2);
             using var u3 = Event2.Subscribe(_eventDelegate3);
-            _event2?.Invoke(this);
+            _event2.Invoke(this);
             return _event2;
         }
 
@@ -131,13 +131,13 @@ namespace Benchmarks.Events
 
         [Benchmark(Description = "Elffy Event")]
         [BenchmarkCategory("four")]
-        public EventSource<EventBenchmark>? ElffyEvent4()
+        public EventSource<EventBenchmark> ElffyEvent4()
         {
             using var u1 = Event2.Subscribe(_eventDelegate1);
             using var u2 = Event2.Subscribe(_eventDelegate2);
             using var u3 = Event2.Subscribe(_eventDelegate3);
             using var u4 = Event2.Subscribe(_eventDelegate4);
-            _event2?.Invoke(this);
+            _event2.Invoke(this);
             return _event2;
         }
 
@@ -161,14 +161,14 @@ namespace Benchmarks.Events
 
         [Benchmark(Description = "Elffy Event")]
         [BenchmarkCategory("five")]
-        public EventSource<EventBenchmark>? ElffyEvent5()
+        public EventSource<EventBenchmark> ElffyEvent5()
         {
             using var u1 = Event2.Subscribe(_eventDelegate1);
             using var u2 = Event2.Subscribe(_eventDelegate2);
             using var u3 = Event2.Subscribe(_eventDelegate3);
             using var u4 = Event2.Subscribe(_eventDelegate4);
             using var u5 = Event2.Subscribe(_eventDelegate5);
-            _event2?.Invoke(this);
+            _event2.Invoke(this);
             return _event2;
         }
 
