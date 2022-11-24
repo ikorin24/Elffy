@@ -64,7 +64,7 @@ internal static class SafeCast
             throw new global::System.InvalidCastException($""Cannot cast the value to '{typeof(T).FullName}': The actual value is '{value.GetType().FullName}'."");
         }
 #endif
-        return global::System.Runtime.CompilerServices.Unsafe.As<T>(value);
+        return global::System.Runtime.CompilerServices.Unsafe.As<T>(value)!;
     }
 }
 }
