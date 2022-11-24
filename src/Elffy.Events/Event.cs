@@ -21,7 +21,7 @@ namespace Elffy
                 ref var source = ref _source;
                 return Unsafe.IsNullRef(ref source)
                     ? $"{nameof(Event<T>)}<{typeof(T).Name}> (Never)"
-                    : $"{nameof(Event<T>)}<{typeof(T).Name}> (Subscibed = {source?.SubscibedCount ?? 0})";
+                    : $"{nameof(Event<T>)}<{typeof(T).Name}> (Subscibed = {source?.SubscribedCount ?? 0})";
             }
         }
 

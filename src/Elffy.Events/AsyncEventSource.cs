@@ -21,7 +21,7 @@ namespace Elffy
         [UnscopedRef]
         public AsyncEvent<T> Event => new AsyncEvent<T>(ref _source);
 
-        public readonly int SubscibedCount => _source?.SubscibedCount ?? 0;
+        public readonly int SubscribedCount => _source?.SubscribedCount ?? 0;
 
         public readonly UniTask Invoke(T arg, CancellationToken cancellationToken = default)
         {
@@ -83,7 +83,7 @@ namespace Elffy
         private int _count;
         private FastSpinLock _lock;
 
-        public int SubscibedCount => _count;
+        public int SubscribedCount => _count;
 
         internal AsyncEventHandlerHolder()
         {

@@ -18,7 +18,7 @@ namespace Elffy
         [UnscopedRef]
         public Event<T> Event => new Event<T>(ref _source);
 
-        public readonly int SubscibedCount => _source?.SubscibedCount ?? 0;
+        public readonly int SubscribedCount => _source?.SubscribedCount ?? 0;
 
         public readonly void Invoke(T arg) => _source?.Invoke(arg);
 
@@ -48,7 +48,7 @@ namespace Elffy
         private int _count;
         private FastSpinLock _lock;
 
-        public int SubscibedCount => _count;
+        public int SubscribedCount => _count;
 
         internal EventHandlerHolder()
         {

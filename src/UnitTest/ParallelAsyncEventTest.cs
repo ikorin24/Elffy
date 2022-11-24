@@ -32,7 +32,7 @@ namespace UnitTest
                 for(int i = 0; i < delegateCount; i++) {
                     sample.TestEvent.Subscribe((x, ct) => UniTask.CompletedTask).AddTo(unsubscribers);
                 }
-                Assert.Equal(delegateCount, sample.SubscibedCount);
+                Assert.Equal(delegateCount, sample.SubscribedCount);
                 if(alreadyCanceled) {
                     await Assert.ThrowsAsync<OperationCanceledException>(async () =>
                     {
@@ -43,7 +43,7 @@ namespace UnitTest
                     await sample.ParallelRaiseTest(CancellationToken.None);
                 }
             }
-            Assert.Equal(0, sample.SubscibedCount);
+            Assert.Equal(0, sample.SubscribedCount);
         }
 
         [Theory]
@@ -66,7 +66,7 @@ namespace UnitTest
                 for(int i = 0; i < delegateCount; i++) {
                     sample.TestEvent.Subscribe(async (x, ct) => await UniTask.CompletedTask).AddTo(unsubscribers);
                 }
-                Assert.Equal(delegateCount, sample.SubscibedCount);
+                Assert.Equal(delegateCount, sample.SubscribedCount);
                 if(alreadyCanceled) {
                     await Assert.ThrowsAsync<OperationCanceledException>(async () =>
                     {
@@ -77,7 +77,7 @@ namespace UnitTest
                     await sample.ParallelRaiseTest(CancellationToken.None);
                 }
             }
-            Assert.Equal(0, sample.SubscibedCount);
+            Assert.Equal(0, sample.SubscribedCount);
         }
 
         [Theory]
@@ -94,13 +94,13 @@ namespace UnitTest
                 for(int i = 0; i < delegateCount; i++) {
                     sample.TestEvent.Subscribe((x, ct) => UniTask.Never(ct)).AddTo(unsubscribers);
                 }
-                Assert.Equal(delegateCount, sample.SubscibedCount);
+                Assert.Equal(delegateCount, sample.SubscribedCount);
                 await Assert.ThrowsAsync<OperationCanceledException>(async () =>
                 {
                     await sample.ParallelRaiseTest(new CancellationToken(true));
                 });
             }
-            Assert.Equal(0, sample.SubscibedCount);
+            Assert.Equal(0, sample.SubscribedCount);
         }
 
         [Theory]
@@ -117,13 +117,13 @@ namespace UnitTest
                 for(int i = 0; i < delegateCount; i++) {
                     sample.TestEvent.Subscribe(async (x, ct) => await UniTask.Never(ct)).AddTo(unsubscribers);
                 }
-                Assert.Equal(delegateCount, sample.SubscibedCount);
+                Assert.Equal(delegateCount, sample.SubscribedCount);
                 await Assert.ThrowsAsync<OperationCanceledException>(async () =>
                 {
                     await sample.ParallelRaiseTest(new CancellationToken(true));
                 });
             }
-            Assert.Equal(0, sample.SubscibedCount);
+            Assert.Equal(0, sample.SubscribedCount);
         }
 
         [Fact]
@@ -145,13 +145,13 @@ namespace UnitTest
                 sample.TestEvent.Subscribe(async (x, ct) => await RunUntilCanceled(ct)).AddTo(unsubscribers);
                 sample.TestEvent.Subscribe(async (x, ct) => await RunUntilCanceled(ct)).AddTo(unsubscribers);
 
-                Assert.Equal(5, sample.SubscibedCount);
+                Assert.Equal(5, sample.SubscribedCount);
                 await Assert.ThrowsAsync<OperationCanceledException>(async () =>
                 {
                     await sample.ParallelRaiseTest(cts.Token);
                 });
             }
-            Assert.Equal(0, sample.SubscibedCount);
+            Assert.Equal(0, sample.SubscribedCount);
             return;
 
             static async UniTask RunUntilCanceled(CancellationToken ct)
@@ -209,7 +209,7 @@ namespace UnitTest
                 Assert.True(called.SequenceEqual(new int[] { 0, 1, 2, 3, }));
             }
 
-            Assert.Equal(0, sample.SubscibedCount);
+            Assert.Equal(0, sample.SubscribedCount);
         }
 
         private sealed class Sample
@@ -218,7 +218,7 @@ namespace UnitTest
 
             public AsyncEvent<Sample> TestEvent => _testEvent.Event;
 
-            public int SubscibedCount => _testEvent.SubscibedCount;
+            public int SubscribedCount => _testEvent.SubscribedCount;
 
 
             public UniTask ParallelRaiseTest(CancellationToken ct)

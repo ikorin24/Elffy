@@ -22,7 +22,7 @@ namespace Elffy
                 ref var source = ref _source;
                 return Unsafe.IsNullRef(ref source)
                     ? $"{nameof(AsyncEvent<T>)}<{typeof(T).Name}> (Never)"
-                    : $"{nameof(AsyncEvent<T>)}<{typeof(T).Name}> (Subscibed = {source?.SubscibedCount ?? 0})";
+                    : $"{nameof(AsyncEvent<T>)}<{typeof(T).Name}> (Subscibed = {source?.SubscribedCount ?? 0})";
             }
         }
 

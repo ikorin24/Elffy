@@ -73,7 +73,7 @@ namespace UnitTest
             var array = new int[delegateCount];
             var unsubscribers = new AsyncEventSubscription<TestSample>[delegateCount];
             var foo = new TestSample();
-            Assert.Equal(0, foo.SubscibedCount);
+            Assert.Equal(0, foo.SubscribedCount);
 
             for(int i = 0; i < delegateCount; i++) {
                 var num = i;
@@ -95,16 +95,16 @@ namespace UnitTest
                 }
             }
             Assert.True(array.All(x => x == 0));
-            Assert.Equal(delegateCount, foo.SubscibedCount);
+            Assert.Equal(delegateCount, foo.SubscribedCount);
             await foo.SequentiallyRaiseTest(CancellationToken.None);
             Assert.True(array.All(x => x == 6));
-            Assert.Equal(delegateCount, foo.SubscibedCount);
+            Assert.Equal(delegateCount, foo.SubscribedCount);
             foreach(var u in unsubscribers) {
                 u.Dispose();
             }
             await foo.SequentiallyRaiseTest(CancellationToken.None);
             Assert.True(array.All(x => x == 6));
-            Assert.Equal(0, foo.SubscibedCount);
+            Assert.Equal(0, foo.SubscribedCount);
         }
 
         [Fact]
@@ -178,14 +178,14 @@ namespace UnitTest
             var taskStatus = condition.TaskStatus;
             var assertion = condition.Assertion;
 
-            Assert.Equal(0, target.SubscibedCount);
+            Assert.Equal(0, target.SubscribedCount);
             var unsubscribers = new List<AsyncEventSubscription<TestSample>>();
             foreach(var d in delegates) {
                 var unsubscriber = target.Test.Subscribe(d);
                 unsubscribers.Add(unsubscriber);
             }
 
-            Assert.Equal(delegates.Length, target.SubscibedCount);
+            Assert.Equal(delegates.Length, target.SubscribedCount);
 
             var raisedEventTask = target.SequentiallyRaiseTest(ct);
             if(taskStatus != null) {
@@ -199,12 +199,12 @@ namespace UnitTest
                 await raisedEventTask;
             }
 
-            Assert.Equal(delegates.Length, target.SubscibedCount);
+            Assert.Equal(delegates.Length, target.SubscribedCount);
             assertion?.Invoke(target);
 
             unsubscribers.ForEach(u => u.Dispose());
             unsubscribers.Clear();
-            Assert.Equal(0, target.SubscibedCount);
+            Assert.Equal(0, target.SubscribedCount);
             assertion?.Invoke(target);
         }
 
@@ -222,7 +222,7 @@ namespace UnitTest
 
             public AsyncEvent<TestSample> Test => _test.Event;
 
-            public int SubscibedCount => _test.SubscibedCount;
+            public int SubscribedCount => _test.SubscribedCount;
 
 
             public int Value { get; set; }
