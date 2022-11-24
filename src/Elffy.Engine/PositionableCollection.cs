@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using Cysharp.Threading.Tasks;
 using Elffy.Features;
 using System;
 using System.ComponentModel;
@@ -37,65 +36,43 @@ namespace Elffy
         public void Add(Positionable item)
         {
             ThrowIfInvalidInstance();
-            if(item is null) {
-                ThrowNullArg();
-                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(item));
-            }
-            item.Parent = _owner;
+            ArgumentNullException.ThrowIfNull(item);
+            if(item.Parent != null) { ThrowAlreadyHasParent(); }
             _owner.ChildrenCore.Add(item);
-        }
-
-        public void Clear()
-        {
-            ThrowIfInvalidInstance();
-            ref var core = ref _owner.ChildrenCore;
-            foreach(var item in core.AsSpan()) {
-                item.Parent = null;
-            }
-            core.Clear();
-        }
-
-        internal UniTask Clear<TState>(TState state, AsyncReadOnlySpanAction<Positionable, TState> callback)
-        {
-            ThrowIfInvalidInstance();
-            ref var core = ref _owner.ChildrenCore;
-            foreach(var item in core.AsSpan()) {
-                item.Parent = null;
-            }
-            return core.Clear(state, callback);
+            item.Parent = _owner;
         }
 
         public bool Contains(Positionable item)
         {
             ThrowIfInvalidInstance();
+            ArgumentNullException.ThrowIfNull(item);
             return _owner.ChildrenCore.IndexOf(item) >= 0;
         }
 
         public int IndexOf(Positionable item)
         {
             ThrowIfInvalidInstance();
+            ArgumentNullException.ThrowIfNull(item);
             return _owner.ChildrenCore.IndexOf(item);
         }
 
         public void Insert(int index, Positionable item)
         {
             ThrowIfInvalidInstance();
-            if(item is null) {
-                ThrowNullArg();
-                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(item));
+            if((uint)index > (uint)Count) {
+                ThrowOutOfRange();
+                [DoesNotReturn] static void ThrowOutOfRange() => throw new ArgumentOutOfRangeException(nameof(index));
             }
-
-            item.Parent = _owner;
+            ArgumentNullException.ThrowIfNull(item);
+            if(item.Parent != null) { ThrowAlreadyHasParent(); }
             _owner.ChildrenCore.Insert(index, item);
+            item.Parent = _owner;
         }
 
         public bool Remove(Positionable item)
         {
             ThrowIfInvalidInstance();
-            if(item is null) {
-                ThrowNullArg();
-                [DoesNotReturn] static void ThrowNullArg() => throw new ArgumentNullException(nameof(item));
-            }
+            ArgumentNullException.ThrowIfNull(item);
             var result = _owner.ChildrenCore.Remove(item);
             if(result) {
                 item.Parent = null;
@@ -107,8 +84,9 @@ namespace Elffy
         {
             ThrowIfInvalidInstance();
             ref var core = ref _owner.ChildrenCore;
-            core[index].Parent = null;
+            var item = core[index];
             core.RemoveAt(index);
+            item.Parent = null;
         }
 
         public Positionable[] ToArray() => _owner.ChildrenCore.AsSpan().ToArray();
@@ -125,6 +103,9 @@ namespace Elffy
                 [DoesNotReturn] static void Throw() => throw new InvalidOperationException($"Parent is already dead or the {nameof(PositionableCollection)} is invalid.");
             }
         }
+
+        [DoesNotReturn]
+        private static void ThrowAlreadyHasParent() => throw new InvalidOperationException($"The instance is already a child of another object.");
 
         public override string ToString() => nameof(PositionableCollection);
 

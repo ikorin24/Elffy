@@ -14,6 +14,8 @@ namespace Elffy
     {
         private Trs<Positionable> _trs = new Trs<Positionable>();           // mutable object, don't make it readonly
         private ArrayPooledListCore<Positionable> _childrenCore = new();    // mutable object, don't make it readonly
+        private EventSource<Positionable> _parentChanged;                   // mutable object, don't make it readonly
+        private Matrix4? _modelCache;
         private Positionable? _parent;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
@@ -37,12 +39,11 @@ namespace Elffy
             get => _parent;
             internal set
             {
-                if(_parent is null || value is null) {
-                    _parent = value;
-                }
-                else { ThrowAlreadyHasParent(); }
+                Debug.Assert((_parent is null) ^ (value is null), "Either the current parent or the new one should be null.");
+                _parent = value;
 
-                static void ThrowAlreadyHasParent() => throw new InvalidOperationException($"The instance is already a child of another object. Can not has multi parents.");
+                _modelCache = null;
+                _parentChanged.InvokeIgnoreException(this);
             }
         }
 
@@ -105,8 +106,9 @@ namespace Elffy
         public Event<Positionable> PositionChanged => _trs.PositionChanged;
         public Event<Positionable> RotationChanged => _trs.RotationChanged;
         public Event<Positionable> ScaleChanged => _trs.ScaleChanged;
+        public Event<Positionable> ParentChanged => _parentChanged.Event;
 
-        public Positionable() : base(FrameObjectInstanceType.Positionable)
+        public Positionable() : this(FrameObjectInstanceType.Positionable)
         {
         }
 
@@ -114,27 +116,24 @@ namespace Elffy
         {
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Matrix4 GetSelfModelMatrix() => _trs.GetTransform();
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Matrix4 GetModelMatrix()
         {
-            if(Parent == null) {
-                return _trs.GetTransform();
+            if(_modelCache.HasValue) {
+                return _modelCache.Value;
             }
-            return CalcRecursively(this);
+            return CalcAndCache(this);
 
             [MethodImpl(MethodImplOptions.NoInlining)]
-            static Matrix4 CalcRecursively(Positionable self)
+            static Matrix4 CalcAndCache(Positionable self)
             {
-                var model = self._trs.GetTransform();
                 var parent = self.Parent;
-                while(true) {
-                    if(parent == null) {
-                        return model;
-                    }
-                    model = parent.GetSelfModelMatrix() * model;
-                    parent = parent.Parent;
-                }
+                var mat = (parent == null) ? self.GetSelfModelMatrix() : parent.GetModelMatrix() * self.GetSelfModelMatrix();
+                self._modelCache = mat;
+                return mat;
             }
         }
 
@@ -230,7 +229,7 @@ namespace Elffy
             if(children.IsEmpty) {
                 return;
             }
-            var model = modelParent * GetSelfModelMatrix();
+            var model = GetModelMatrix();
             foreach(var child in children) {
                 child.RenderRecursively(model, view, projection);
             }
@@ -242,7 +241,7 @@ namespace Elffy
             if(children.IsEmpty) {
                 return;
             }
-            var model = modelParent * GetSelfModelMatrix();
+            var model = GetModelMatrix();
             foreach(var child in children) {
                 child.RenderShadowMapRecursively(model, shadowMap);
             }

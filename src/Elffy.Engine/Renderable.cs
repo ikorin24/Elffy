@@ -169,7 +169,7 @@ namespace Elffy
             if(needToRenderSelf == false && children.IsEmpty) {
                 return;
             }
-            var model = modelParent * GetSelfModelMatrix();
+            var model = GetModelMatrix();
             if(needToRenderSelf && EnsureShaderInitialized()) {
                 Debug.Assert(_rendererData.State is RendererDataState.Compiled);
                 var screen = GetValidScreen();
@@ -232,7 +232,7 @@ namespace Elffy
             if(!needToRenderSelf && children.IsEmpty) {
                 return;
             }
-            var model = modelParent * GetSelfModelMatrix();
+            var model = GetModelMatrix();
             if(needToRenderSelf && EnsureShadowRendererInitialized()) {
                 Debug.Assert(_shadowRendererData.State == RendererDataState.Compiled);
                 var program = _shadowRendererData.GetValidProgram();
