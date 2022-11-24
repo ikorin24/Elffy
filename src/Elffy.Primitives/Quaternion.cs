@@ -158,6 +158,9 @@ namespace Elffy
         public static bool operator !=(in Quaternion left, in Quaternion right) => !(left == right);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Quaternion operator -(in Quaternion q) => q.Inverted();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Quaternion operator *(in Quaternion q, in Quaternion p)
         {
             //return new Quaternion( q.W * p.X - q.Z * p.Y + q.Y * p.Z + q.X * p.W,

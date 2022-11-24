@@ -21,18 +21,6 @@ namespace Elffy
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         internal ref ArrayPooledListCore<Positionable> ChildrenCore => ref _childrenCore;   // don't make it ref readonly
 
-        /// <summary>Get or set <see cref="Quaternion"/> of rotation.</summary>
-        public Quaternion Rotation
-        {
-            get => _trs.Rotation;
-            set
-            {
-                if(_trs.SetRotation(value, out var changed)) {
-                    changed.InvokeIgnoreException(this);
-                }
-            }
-        }
-
         /// <summary>Get parent of the <see cref="Positionable"/>.</summary>
         public Positionable? Parent
         {
@@ -64,6 +52,7 @@ namespace Elffy
             set
             {
                 if(_trs.SetPosition(value, out var changed)) {
+                    _modelCache = null;
                     changed.InvokeIgnoreException(this);
                 }
             }
@@ -91,6 +80,41 @@ namespace Elffy
             set => Position += value - WorldPosition;
         }
 
+        /// <summary>Get or set <see cref="Quaternion"/> of rotation.</summary>
+        public Quaternion Rotation
+        {
+            get => _trs.Rotation;
+            set
+            {
+                if(_trs.SetRotation(value, out var changed)) {
+                    _modelCache = null;
+                    changed.InvokeIgnoreException(this);
+                }
+            }
+        }
+
+        public Quaternion WorldRotation
+        {
+            get
+            {
+                return IsRoot ? Rotation : Calc(this);
+
+                static Quaternion Calc(Positionable source)
+                {
+                    var rot = source.Rotation;
+                    while(!source.IsRoot) {
+                        source = source._parent!;
+                        rot = source.Rotation * rot;
+                    }
+                    return rot;
+                }
+            }
+            set
+            {
+                Rotation = -WorldRotation * value * Rotation;
+            }
+        }
+
         /// <summary>Get or set scale of <see cref="Positionable"/>.</summary>
         public Vector3 Scale
         {
@@ -98,6 +122,7 @@ namespace Elffy
             set
             {
                 if(_trs.SetScale(value, out var changed)) {
+                    _modelCache = null;
                     changed.InvokeIgnoreException(this);
                 }
             }
@@ -141,55 +166,34 @@ namespace Elffy
         /// <param name="x">translation of x</param>
         /// <param name="y">translation of y</param>
         /// <param name="z">translation of z</param>
-        public void Translate(float x, float y, float z)
-        {
-            Position += new Vector3(x, y, z);
-        }
+        public void Translate(float x, float y, float z) => Position += new Vector3(x, y, z);
 
         /// <summary>Translate the <see cref="Positionable"/>.</summary>
         /// <param name="vector">translation vector</param>
-        public void Translate(in Vector3 vector)
-        {
-            Position += vector;
-        }
+        public void Translate(in Vector3 vector) => Position += vector;
 
         /// <summary>Multiply scale.</summary>
         /// <param name="ratio">ratio</param>
-        public void MultiplyScale(float ratio)
-        {
-            Scale *= ratio;
-        }
+        public void MultiplyScale(float ratio) => Scale *= ratio;
 
         /// <summary>Multiply scale.</summary>
         /// <param name="x">ratio of x</param>
         /// <param name="y">ratio of y</param>
         /// <param name="z">ratio of z</param>
-        public void MultiplyScale(float x, float y, float z)
-        {
-            Scale *= new Vector3(x, y, z);
-        }
+        public void MultiplyScale(float x, float y, float z) => Scale *= new Vector3(x, y, z);
 
         /// <summary>Multiply scale.</summary>
         /// <param name="ratio">ratio</param>
-        public void MultiplyScale(in Vector3 ratio)
-        {
-            Scale *= ratio;
-        }
+        public void MultiplyScale(in Vector3 ratio) => Scale *= ratio;
 
         /// <summary>Rotate the <see cref="Positionable"/> by axis and angle.</summary>
         /// <param name="axis">Axis of rotation</param>
         /// <param name="angle">Angle of rotation [radian]</param>
-        public void Rotate(in Vector3 axis, float angle)
-        {
-            Rotation = Quaternion.FromAxisAngle(axis, angle) * Rotation;
-        }
+        public void Rotate(in Vector3 axis, float angle) => Rotation = Quaternion.FromAxisAngle(axis, angle) * Rotation;
 
         /// <summary>Rotate the <see cref="Positionable"/> by <see cref="Quaternion"/>.</summary>
         /// <param name="quaternion"><see cref="Quaternion"/></param>
-        public void Rotate(in Quaternion quaternion)
-        {
-            Rotation = quaternion * Rotation;
-        }
+        public void Rotate(in Quaternion quaternion) => Rotation = quaternion * Rotation;
 
         /// <summary>Get all children recursively by DFS (depth-first search).</summary>
         /// <returns>All offspring</returns>

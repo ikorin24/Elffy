@@ -404,9 +404,7 @@ internal static class DirectLightMatrixCalculator
                 if(renderable.IsVisible == false || renderable.HasShadow == false) { continue; }
                 var model = renderable.GetModelMatrix();
                 var objWAabb = renderable.MeshBounds.ChangeCoordinate(model);
-
-                // TODO: It is not enough to check that any corner points of AABB are included in the Frustum.
-                if(Frustum.ContainsBoundsCorners(in frustum.GetReference(), objWAabb) == false) { continue; }
+                if(IsInCameraFrustum(in frustum.GetReference(), in objWAabb) == false) { continue; }
 
                 wAabb = (wAabb == null) ?
                     objWAabb :
@@ -416,6 +414,31 @@ internal static class DirectLightMatrixCalculator
             }
         }
         return wAabb;
+    }
+
+    private static bool IsInCameraFrustum(in Frustum frustum, in Bounds objectWorldAabb)
+    {
+        // It is not perfect, but works.
+
+        if(Frustum.ContainsBoundsCorners(in frustum, objectWorldAabb)) {
+            return true;
+        }
+        foreach(var clip in frustum.ClipPlains) {
+            var positivePoint = objectWorldAabb.Min;
+            var negativePoint = positivePoint;
+            var size = objectWorldAabb.Size;
+            (clip.Normal.X >= 0 ? ref positivePoint.X : ref negativePoint.X) += size.X;
+            (clip.Normal.Y >= 0 ? ref positivePoint.Y : ref negativePoint.Y) += size.Y;
+            (clip.Normal.Z >= 0 ? ref positivePoint.Z : ref negativePoint.Z) += size.Z;
+
+            if(clip.GetSignedDistance(in positivePoint) <= 0) {
+                continue;
+            }
+            if(clip.GetSignedDistance(in negativePoint) <= 0) {
+                return true;
+            }
+        }
+        return false;
     }
 }
 
