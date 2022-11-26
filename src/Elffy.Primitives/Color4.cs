@@ -13,7 +13,7 @@ namespace Elffy
     [StructLayout(LayoutKind.Explicit)]
     [UseLiteralMarkup]
     [LiteralMarkupPattern(HexCodePattern, HexCodeEmit)]
-    public partial struct Color4 : IEquatable<Color4>
+    public partial struct Color4 : IEquatable<Color4>, IStringConvertible<Color4>
     {
         // lang=regex
         private const string HexCodePattern = @"^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$";
@@ -114,5 +114,17 @@ namespace Elffy
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static ref readonly NVec4 AsNVec4(in Color4 vec) => ref Unsafe.As<Color4, NVec4>(ref Unsafe.AsRef(vec));
+
+        public static Color4 Convert(string value)
+        {
+            ArgumentException.ThrowIfNullOrEmpty(value);
+            if(TryFromHexCode(value, out var hexColor)) {
+                return hexColor;
+            }
+            if(TryFromWebColorName(value, out var webColor)) {
+                return webColor;
+            }
+            throw new FormatException(value);
+        }
     }
 }

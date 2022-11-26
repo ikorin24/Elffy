@@ -2,6 +2,7 @@
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.RegularExpressions;
 using Elffy.Markup;
 using RP = Elffy.Markup.RegexPatterns;
 
@@ -12,7 +13,7 @@ namespace Elffy.UI
     [LiteralMarkupPattern(LengthPattern, LengthEmit)]
     [LiteralMarkupPattern(ProportionPattern, ProportionEmit)]
     [LiteralMarkupPattern(ProportionPattern2, ProportionEmit2)]
-    public readonly struct LayoutLength : IEquatable<LayoutLength>
+    public readonly struct LayoutLength : IEquatable<LayoutLength>, IStringConvertible<LayoutLength>
     {
         private const string LengthPattern = @$"^(?<n>{RP.Int})$";
         private const string LengthEmit = @"new global::Elffy.UI.LayoutLength((int)(${n}), global::Elffy.UI.LayoutLengthType.Length)";
@@ -57,6 +58,19 @@ namespace Elffy.UI
             }
             else {
                 return $"{Value} (Invalid Type)";
+            }
+        }
+
+        public static LayoutLength Convert(string value)
+        {
+            ArgumentException.ThrowIfNullOrEmpty(value);
+            if(value[^1] == '*') {
+                var proportion = float.Parse(value.AsSpan(0, value.Length - 1));
+                return Proportion(proportion);
+            }
+            else {
+                var length = int.Parse(value);
+                return Length(length);
             }
         }
 
