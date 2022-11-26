@@ -155,7 +155,7 @@ internal sealed class MarkupComponentAttribute : global::System.Attribute
         context.Sb.AppendLine($$"""
             namespace {{markup.Namespace}}
             {
-                partial class {{markup.ClassName}}
+                partial class {{markup.ClassName}} : Elffy.Markup.IMarkupComponent<{{markup.ClassName}}, Control>
                 {
                     private {{markup.ClassName}}() { }
 

@@ -14,4 +14,8 @@
     <NoWarn>1591;</NoWarn>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="UniTask" Version="2.2.5" />
+  </ItemGroup>
+
 </Project>
