@@ -27,6 +27,11 @@ internal static class TypeSymbolExtensions
         return false;
     }
 
+    public static string GetTypeName(this ITypeSymbol typeSymbol)
+    {
+        return typeSymbol.ToString();
+    }
+
     public static string GetTypeName(this INamedTypeSymbol typeSymbol)
     {
         // (ex)
