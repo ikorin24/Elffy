@@ -279,78 +279,95 @@ internal sealed class MarkupComponentAttribute : global::System.Attribute
         return false;
     }
 
+    private static (string? ComponentFieldName, string? PropertyAccessibility, string? PropertyName) GetCacheFieldName(XmlNode node, in TranslationContext context)
+    {
+        string? componentFieldName = null;
+        string? propertyAccessibility = null;
+        string? propName = null;
+        if(node.Attributes.TryFind("__name"u8, out var nameAttribute)) {
+            var (_, attrValue) = nameAttribute;
+            componentFieldName = $"__{attrValue}";
+            propertyAccessibility = "public";
+            propName = attrValue.ToString();
+        }
+        else if(ContainsReactiveBind(node.Attributes)) {
+            componentFieldName = $"____unnamed{context.NodeIndex[node]}";
+            propertyAccessibility = null;
+            propName = null;
+        }
+        return (componentFieldName, propertyAccessibility, propName);
+
+        static bool ContainsReactiveBind(XmlAttributeList attributes)
+        {
+            var isReactiveBound = false;
+            foreach(var (attrName, attrValue) in attributes) {
+                if(attrValue.StartsWith("{"u8) && attrValue.EndsWith("}"u8)) {
+                    isReactiveBound = true;
+                }
+            }
+            return isReactiveBound;
+        }
+    }
+
     private static void WriteNode(XmlNode node, in TranslationContext context)
     {
         var interfaceSymbol = context.Markup.StringConvertible;
+        var nodeIndex = context.NodeIndex[node];
 
         string? typeFullName;
-        INamedTypeSymbol typeSymbol;
-        if(node.TryGetFullName(out var ns, out var name)) {
-            typeFullName = $"{ns}.{name}";
-            typeSymbol = context.Markup.Compilation.GetTypeByMetadataName(typeFullName) ?? throw new Exception();
-        }
-        else if(TryGetTypeSymbol(node, context, out typeSymbol, out typeFullName) == false) {
-            throw new Exception();
+        INamedTypeSymbol? typeSymbol;
+
+        {
+            if(node.TryGetFullName(out var ns, out var nodeName)) {
+                typeFullName = $"{ns}.{nodeName}";
+                typeSymbol = context.Markup.Compilation.GetTypeByMetadataName(typeFullName) ?? throw new Exception();
+            }
+            else {
+                if(TryGetTypeSymbol(node, context, out typeSymbol, out typeFullName) == false) {
+                    throw new Exception();
+                }
+            }
         }
 
         context.Sb.AppendLine($$"""
-                    private static void __F{{context.NodeIndex[node]}}(Control parent, ref __BuilderState state)
+                    private static void __F{{nodeIndex}}(Control parent, ref __BuilderState state)
                     {
             """);
 
-        if(node.Attributes.TryFind("__name"u8, out var nameAttribute)) {
-            var (_, attrValue) = nameAttribute;
-            if(node.IsRoot) {
-                context.MemberSb.AppendLine($$"""
-                    public {{typeFullName}} RootObject => __{{attrValue}};
-            """);
-            }
-
+        var (componentFieldName, propertyAccessibility, propertyName) = GetCacheFieldName(node, context);
+        if(componentFieldName != null) {
             context.MemberSb.AppendLine($$"""
                     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-                    private {{typeFullName}} __{{attrValue}} = default!;
-                    public {{typeFullName}} {{attrValue}} => __{{attrValue}};
+                    private {{typeFullName}} {{componentFieldName}} = default!;
             """);
+            if(propertyName != null) {
+                context.MemberSb.AppendLine($$"""
+                    {{propertyAccessibility}} {{typeFullName}} {{propertyName}} => {{componentFieldName}};
+            """);
+            }
             context.FieldrefSb.AppendLine($$"""
-                    public ref {{typeFullName}} {{attrValue}};
+                    public ref {{typeFullName}} {{componentFieldName}};
             """);
             context.FieldrefSetSb.AppendLine($$"""
-                            {{attrValue}} = ref component.__{{attrValue}},
+                            {{componentFieldName}} = ref component.{{componentFieldName}},
             """);
+        }
 
-
+        if(componentFieldName != null) {
             context.Sb.AppendLine($$"""
-                        ref var obj = ref state.{{attrValue}};
+                        ref var obj = ref state.{{componentFieldName}};
             """);
         }
         else {
-            if(node.IsRoot) {
-                context.MemberSb.AppendLine($$"""
-                    [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-                    private {{typeFullName}} ____rootobject = default!;
-                    public {{typeFullName}} RootObject => ____rootobject;
-            """);
-                context.FieldrefSb.AppendLine($$"""
-                    public ref {{typeFullName}} RootObject;
-            """);
-                context.FieldrefSetSb.AppendLine($$"""
-                            RootObject = ref component.____rootobject,
-            """);
-                context.Sb.AppendLine($$"""
-                        ref var obj = ref state.RootObject;
-            """);
-            }
-            else {
-                context.Sb.AppendLine($$"""
+            context.Sb.AppendLine($$"""
                         {{typeFullName}} obj;
             """);
-            }
         }
+
         context.Sb.AppendLine($$"""
                         obj = new {{typeFullName}}();
             """);
 
-        var reactiveProps = new List<string>();
         foreach(var (attrName, attrValue) in node.Attributes) {
             if(attrName == "__name"u8) { continue; }
             else {
@@ -361,7 +378,24 @@ internal sealed class MarkupComponentAttribute : global::System.Attribute
                     var eq = SymbolEqualityComparer.Default;
                     return eq.Equals(x.ConstructedFrom, interfaceSymbol) && eq.Equals(x.TypeArguments[0], memberType);
                 });
-                var isReactive = attrValue.StartsWith("{"u8) && attrValue.EndsWith("}"u8);
+
+                if(attrValue.StartsWith("{"u8) && attrValue.EndsWith("}"u8)) {
+                    var (reactivePropName, reactiveOption) = attrValue.Slice(1, attrValue.Length - 2).Split2((byte)':');
+
+                    context.MemberSb.AppendLine($$"""
+                    public {{memberType.GetTypeName()}} {{reactivePropName}}
+                    {
+                        get => {{componentFieldName}}.{{attrName}};
+                        set
+                        {
+                            if(System.Collections.Generic.EqualityComparer<{{memberType.GetTypeName()}}>.Default.Equals({{reactivePropName}}, value)) {
+                                return;
+                            }
+                            {{componentFieldName}}.{{attrName}} = value;
+                        }
+                    }
+            """);
+                }
 
                 if(isStringConvertible) {
                     context.Sb.AppendLine($$""""
