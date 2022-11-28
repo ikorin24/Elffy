@@ -154,7 +154,7 @@ internal sealed class MarkupComponentAttribute : global::System.Attribute
         context.Sb.AppendLine($$"""
             namespace {{markup.Namespace}}
             {
-                partial class {{markup.ClassName}} : Elffy.Markup.IMarkupComponent<{{markup.ClassName}}, Control>
+                partial class {{markup.ClassName}} : Elffy.Markup.IMarkupComponent<{{markup.ClassName}}, Control>, Elffy.IReactive<FooUIComponent>
                 {
                     private {{markup.ClassName}}() { }
 
@@ -183,6 +183,9 @@ internal sealed class MarkupComponentAttribute : global::System.Attribute
                             return component;
                         }
                     }
+
+                    private Elffy.EventSource<Elffy.ReactiveState<FooUIComponent>> ____propertyChanged;
+                    public Elffy.Event<Elffy.ReactiveState<FooUIComponent>> PropertyChanged => ____propertyChanged.Event;
             
             """);
         var memberPosition = context.Sb.Length;
@@ -380,32 +383,45 @@ internal sealed class MarkupComponentAttribute : global::System.Attribute
                 });
 
                 if(attrValue.StartsWith("{"u8) && attrValue.EndsWith("}"u8)) {
-                    var (reactivePropName, reactiveOption) = attrValue.Slice(1, attrValue.Length - 2).Split2((byte)':');
-
+                    var (reactivePropName, initialValue) = attrValue.Slice(1, attrValue.Length - 2).Split2((byte)':');
                     context.MemberSb.AppendLine($$"""
+                    private {{memberType.GetTypeName()}} __{{reactivePropName}} = default!;
                     public {{memberType.GetTypeName()}} {{reactivePropName}}
                     {
-                        get => {{componentFieldName}}.{{attrName}};
+                        get => __{{reactivePropName}};
                         set
                         {
                             if(System.Collections.Generic.EqualityComparer<{{memberType.GetTypeName()}}>.Default.Equals({{reactivePropName}}, value)) {
                                 return;
                             }
+                            __{{reactivePropName}} = value;
                             {{componentFieldName}}.{{attrName}} = value;
+                            ____propertyChanged.Invoke(this, "{{reactivePropName}}");
                         }
                     }
             """);
-                }
-
-                if(isStringConvertible) {
-                    context.Sb.AppendLine($$""""
-                        obj.{{attrName}} = {{memberType.GetTypeName()}}.Convert("""{{attrValue}}""");
-            """");
+                    if(isStringConvertible) {
+                        context.Sb.AppendLine($$"""
+                        state.Component.{{reactivePropName}} = {{memberType.GetTypeName()}}.Convert(@"{{initialValue}}");
+            """);
+                    }
+                    else {
+                        context.Sb.AppendLine($$"""
+                        state.Component.{{reactivePropName}} = Elffy.Markup.StringConverter<{{memberType.GetTypeName()}}>.Convert(@"{{initialValue}}");
+            """);
+                    }
                 }
                 else {
-                    context.Sb.AppendLine($$""""
-                        obj.{{attrName}} = Elffy.Markup.StringConverter<{{memberType.GetTypeName()}}>.Convert("""{{attrValue}}""");
-            """");
+                    if(isStringConvertible) {
+                        context.Sb.AppendLine($$"""
+                        obj.{{attrName}} = {{memberType.GetTypeName()}}.Convert(@"{{attrValue}}");
+            """);
+                    }
+                    else {
+                        context.Sb.AppendLine($$"""
+                        obj.{{attrName}} = Elffy.Markup.StringConverter<{{memberType.GetTypeName()}}>.Convert(@"{{attrValue}}");
+            """);
+                    }
                 }
             }
         }

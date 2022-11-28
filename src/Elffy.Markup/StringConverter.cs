@@ -11,8 +11,17 @@ public static class StringConverter<T>
 
     public static void SetConverter(Func<string, T> converter) => _converter = converter;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T Convert(string value)
     {
+        if(typeof(T) == typeof(bool)) {
+            var v = bool.Parse(value);
+            return Unsafe.As<bool, T>(ref v);
+        }
+        if(typeof(T) == typeof(char)) {
+            var v = char.Parse(value);
+            return Unsafe.As<char, T>(ref v);
+        }
         if(typeof(T) == typeof(sbyte)) {
             var v = sbyte.Parse(value);
             return Unsafe.As<sbyte, T>(ref v);
@@ -75,5 +84,5 @@ public static class StringConverter<T>
     }
 
     [DoesNotReturn]
-    private static void ThrowNoConverter() => throw new InvalidOperationException($"Cannot convert string into '{typeof(T).FullName}'.");
+    private static void ThrowNoConverter() => throw new InvalidOperationException($"No converter for type '{typeof(T).FullName}'.");
 }
