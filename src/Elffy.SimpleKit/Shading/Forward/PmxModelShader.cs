@@ -121,9 +121,8 @@ public sealed class PmxModelShader : RenderingShader
 
         uniform sampler2DArray _texArrSampler;
 
-        float CalcShadow(vec3 shadowMapNDC, sampler2DArray shadowMap)
+        float CalcShadow(vec3 shadowMapNDC, sampler2DArray shadowMap, float bias)
         {
-            const float bias = 0.001;
             vec3 range = 1.0 - step(vec3(1.0), abs(shadowMapNDC));
             float filter = range.x * range.y * range.z;
             vec3 shadowMapUV = shadowMapNDC * 0.5 + 0.5;
@@ -150,9 +149,11 @@ public sealed class PmxModelShader : RenderingShader
             vec3 la = l * 0.8;
             vec3 ld = l * 0.8;
             vec3 ls = l * 0.2;
-            float shadow = CalcShadow(ShadowMapNDC, _shadowMap);
+            float dot_nl = clamp(dot(N, L), 0, 1);
+            float bias = clamp(0.001 * tan(acos(dot_nl)), 0.0, 0.01);
+            float shadow = CalcShadow(ShadowMapNDC, _shadowMap, bias);
             vec3 ambient = (la * ma);
-            vec3 diffuse = (ld * md * dot(N, L));
+            vec3 diffuse = (ld * md * dot_nl);
             vec3 specular = (ls * ms * max(pow(max(0.0, dot(R, V)), shininess), 0.0));
             vec3 color = ambient + (diffuse + specular) * (1.0 - shadow);
             lightColor += color;

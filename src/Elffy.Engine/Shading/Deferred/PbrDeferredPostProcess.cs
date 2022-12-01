@@ -146,7 +146,7 @@ internal sealed class PbrDeferredPostProcess : PostProcess
             return v.xyz / v.w;
         }
 
-        float CalcShadow(sampler1D lightMatData, vec4 posWorld, sampler2DArray shadowMap)
+        float CalcShadow(sampler1D lightMatData, vec4 posWorld, sampler2DArray shadowMap, float bias)
         {
             for(int cascade = 0; cascade < _cascadeCount; ++cascade) {
                 mat4 lightMat = mat4(
@@ -155,7 +155,6 @@ internal sealed class PbrDeferredPostProcess : PostProcess
                     texelFetch(lightMatData, cascade * 4 + 2, 0),
                     texelFetch(lightMatData, cascade * 4 + 3, 0));
                 vec3 shadowMapNDC = ToVec3(lightMat * posWorld);
-                const float bias = 0.0004;
                 if(all(lessThanEqual(abs(shadowMapNDC), vec3(1.0, 1.0, 1.0)))) {
                     vec3 shadowMapUV = shadowMapNDC * 0.5 + 0.5;
                     float d = textureLod(shadowMap, vec3(shadowMapUV.xy, cascade), 0).x;
@@ -223,7 +222,8 @@ internal sealed class PbrDeferredPostProcess : PostProcess
                 vec3 F = FresnelSchlick(f0, vec3(1.0, 1.0, 1.0), dot_lh);
                 vec3 specular = V * D * F * irradiance;
                 specular = max(vec3(0.0, 0.0, 0.0), specular);
-                float shadow = CalcShadow(_lightMatData, posWorld, _shadowMap);
+                float bias = clamp(0.001 * tan(acos(dot_nl)), 0.0, 0.01);
+                float shadow = CalcShadow(_lightMatData, posWorld, _shadowMap, bias);
                 fragColor += (diffuse + specular) * (1.0 - shadow);
             }
 

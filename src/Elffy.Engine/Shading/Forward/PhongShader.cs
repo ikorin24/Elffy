@@ -157,9 +157,8 @@ uniform bool _lightExists;
 uniform vec4 _lPos;
 uniform vec4 _lColor;
 
-float CalcShadow(vec3 shadowMapNDC, sampler2DArray shadowMap)
+float CalcShadow(vec3 shadowMapNDC, sampler2DArray shadowMap, float bias)
 {
-    const float bias = 0.001;
     vec3 range = 1.0 - step(vec3(1.0), abs(shadowMapNDC));
     float filter = range.x * range.y * range.z;
     vec3 shadowMapUV = shadowMapNDC * 0.5 + 0.5;
@@ -183,10 +182,12 @@ void main()
         vec3 la = l * 0.6;
         vec3 ld = l * 0.8;
         vec3 ls = l * 0.2;
+        float dot_nl = clamp(dot(N, L), 0, 1);
         vec3 ambient = la * ma;
-        vec3 diffuse = ld * md * dot(N, L);
+        vec3 diffuse = ld * md * dot_nl;
         vec3 specular = ls * ms * max(pow(max(0.0, dot(R, V)), shininess), 0.0);
-        float shadow = CalcShadow(_vout_shadowMapNDC, _shadowMap);
+        float bias = clamp(0.001 * tan(acos(dot_nl)), 0.0, 0.01);
+        float shadow = CalcShadow(_vout_shadowMapNDC, _shadowMap, bias);
         vec3 lightColor = ambient + (diffuse + specular) * (1.0 - shadow);
         fragColor = hasTexture ? vec4(lightColor, 1.0) * texture(tex_sampler, _vout_uv)
                            : vec4(lightColor, 1.0);
