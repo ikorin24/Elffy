@@ -13,9 +13,9 @@ internal sealed class GlbShader : SingleTargetRenderingShader
     private Texture? _normal;
     private Texture? _metallicRoughness;
 
-    private Color4 _baseColorFactor;
-    private float _metallicFactor;
-    private float _roughnessFactor;
+    private Color4 _baseColorFactor = new Color4(1, 1, 1, 1);
+    private float _metallicFactor = 1;
+    private float _roughnessFactor = 1;
 
     public Color4 BaseColorFactor { get => _baseColorFactor; set => _baseColorFactor = value; }
     public float MetallicFactor { get => _metallicFactor; set => _metallicFactor = value; }
@@ -60,27 +60,33 @@ internal sealed class GlbShader : SingleTargetRenderingShader
         definition.Map(context.VertexType, "_tangent", VertexFieldSemantics.Tangent);
     }
 
+    static (TextureObject Tex, bool Exists) GetTextureObject(Texture? texture)
+    {
+        return texture switch
+        {
+            not null => (texture.TextureObject, true),
+            _ => (TextureObject.Empty, false),
+        };
+    }
+
     protected override void OnRendering(ShaderDataDispatcher dispatcher, in RenderingContext context)
     {
         dispatcher.SendUniform("_model", context.Model);
         dispatcher.SendUniform("_view", context.View);
         dispatcher.SendUniform("_projection", context.Projection);
 
-        var baseColorTex = _baseColor?.TextureObject ?? TextureObject.Empty;
-        var normalTex = _normal?.TextureObject ?? TextureObject.Empty;
-        var metallicRoughnessTex = _metallicRoughness?.TextureObject ?? TextureObject.Empty;
+        var (baseColorTex, hasBaseColorTex) = GetTextureObject(_baseColor);
         dispatcher.SendUniformTexture2D("_baseColorTex", baseColorTex, 0);
+        dispatcher.SendUniform("_hasBaseColorTex", hasBaseColorTex);
+
+        var (normalTex, hasNormalTex) = GetTextureObject(_normal);
         dispatcher.SendUniformTexture2D("_normalTex", normalTex, 1);
+        dispatcher.SendUniform("_hasNormalTex", hasNormalTex);
+
+        var (metallicRoughnessTex, hasmetallicRoughnessTex) = GetTextureObject(_metallicRoughness);
         dispatcher.SendUniformTexture2D("_metallicRoughnessTex", metallicRoughnessTex, 2);
-        var screen = context.Screen;
-        var lights = screen.RenderPipeline.Lights;
-        var (lpos, lcolor) = lights.Length switch
-        {
-            > 0 => (lights[0].Position, lights[0].Color),
-            _ => (default, Color4.Black),
-        };
-        dispatcher.SendUniform("_lpos", lpos);
-        dispatcher.SendUniform("_lcolor", lcolor);
+        dispatcher.SendUniform("_hasMetallicRoughnessTex", hasmetallicRoughnessTex);
+
         dispatcher.SendUniform("_baseColorFactor", _baseColorFactor);
         dispatcher.SendUniform("_metallicFactor", _metallicFactor);
         dispatcher.SendUniform("_roughnessFactor", _roughnessFactor);
@@ -105,10 +111,11 @@ internal sealed class GlbShader : SingleTargetRenderingShader
         return context.Layer switch
         {
             DeferredRenderLayer => GetDeferredShader(),
-            ForwardRenderLayer or _ => GetForwardShader(),
+            _ => throw new NotSupportedException(),
         };
     }
 
+    [Obsolete("obsolete", true)]
     private static ShaderSource GetForwardShader() => new()
     {
         OnlyContainsConstLiteralUtf8 = true,
@@ -282,37 +289,28 @@ internal sealed class GlbShader : SingleTargetRenderingShader
         in vec3 _tangent;
         out V2f
         {
-            vec3 vposWorld;
+            vec3 pos;
             vec2 uv;
             vec3 normal;
-            mat3 tbn;       // camera space -> tangent space
-            vec3 ldirTan;   // light dir in tangent space
+            mat3 tbn;       // tangent space -> camera space
         } _v2f;
         uniform mat4 _model;
         uniform mat4 _view;
         uniform mat4 _projection;
-        uniform vec4 _lpos;
         void main()
         {
-            vec4 vposWorld4 = _model * vec4(_pos, 1.0);
-            _v2f.vposWorld = vposWorld4.xyz / vposWorld4.w;
-            _v2f.uv = _uv;
-            _v2f.normal = _normal;
             mat4 modelView = _view * _model;
+            vec4 pos4Cam = modelView * vec4(_pos, 1.0);
+            _v2f.pos = pos4Cam.xyz / pos4Cam.w;
+            _v2f.uv = _uv;
+            _v2f.normal = normalize(transpose(inverse(mat3(modelView))) * _normal);
             vec3 bitangent = cross(_normal, _tangent);
             mat3 mvMat3 = mat3(modelView);
-            _v2f.tbn = transpose(mat3(mvMat3 * _tangent, mvMat3 * bitangent, mvMat3 * _normal));
-
-            vec4 vposCam = modelView * vec4(_pos, 1.0);
-            gl_Position = _projection * vposCam;
-
-            if(_lpos.w <= 0.001) {
-                _v2f.ldirTan = normalize(_v2f.tbn * mat3(_view) * -_lpos.xyz);
-            }
-            else {
-                vec4 lposCam = _view * vec4((_lpos.xyz / _lpos.w), 1.0);
-                _v2f.ldirTan = normalize(_v2f.tbn * (vposCam.xyz / vposCam.w - lposCam.xyz / lposCam.w));
-            }
+            vec3 T = normalize(mvMat3 * _tangent);
+            vec3 B = normalize(mvMat3 * bitangent);
+            vec3 N = normalize(mvMat3 * _normal);
+            _v2f.tbn = mat3(T, B, N);
+            gl_Position = _projection * pos4Cam;
         }
         """u8,
         // index  | R           | G            | B           | A         |
@@ -327,11 +325,10 @@ internal sealed class GlbShader : SingleTargetRenderingShader
         #version 410
         in V2f
         {
-            vec3 vposWorld;
+            vec3 pos;
             vec2 uv;
             vec3 normal;
-            mat3 tbn;       // camera space -> tangent space
-            vec3 ldirTan;   // light dir in tangent space
+            mat3 tbn;       // tangent space -> camera space
         } _v2f;
 
         uniform mat4 _model;
@@ -339,6 +336,9 @@ internal sealed class GlbShader : SingleTargetRenderingShader
         uniform sampler2D _baseColorTex;
         uniform sampler2D _normalTex;
         uniform sampler2D _metallicRoughnessTex;
+        uniform bool _hasBaseColorTex;
+        uniform bool _hasNormalTex;
+        uniform bool _hasMetallicRoughnessTex;
         uniform vec4 _baseColorFactor;
         uniform float _metallicFactor;
         uniform float _roughnessFactor;
@@ -355,16 +355,23 @@ internal sealed class GlbShader : SingleTargetRenderingShader
 
         void main()
         {
-            vec3 baseColor = _baseColorFactor.rgb * texture(_baseColorTex, _v2f.uv).rgb;
-            vec2 metallicRoughness = texture(_metallicRoughnessTex, _v2f.uv).rg;
-            vec3 normalTan = texture(_normalTex, _v2f.uv).rgb * 2 - vec3(1, 1, 1);
-            vec3 normalWorld = normalize(transpose(mat3(_view)) * transpose(_v2f.tbn) * normalTan);
+            vec3 baseColor = _hasBaseColorTex ? texture(_baseColorTex, _v2f.uv).rgb : vec3(1, 1, 1);
+            vec2 metallicRoughness = _hasMetallicRoughnessTex ? texture(_metallicRoughnessTex, _v2f.uv).rg : vec2(1, 1);
+
+            vec3 normal;
+            if(_hasNormalTex) {
+                vec3 normalTan = texture(_normalTex, _v2f.uv).rgb * 2 - vec3(1, 1, 1);
+                normal = _v2f.tbn * normalTan;
+            }
+            else {
+                normal = _v2f.normal;
+            }
             float metallic = _metallicFactor * metallicRoughness.x;
             float roughness = _roughnessFactor * metallicRoughness.y;
 
-            _mrt0 = vec4(_v2f.vposWorld, 1.0);
-            _mrt1 = vec4(normalWorld, roughness);
-            _mrt2 = vec4(baseColor, metallic);
+            _mrt0 = vec4(_v2f.pos, 1.0);
+            _mrt1 = vec4(normal, roughness);
+            _mrt2 = vec4(baseColor * _baseColorFactor.rgb, metallic);
             _mrt3 = vec4(0, 0, 0, 0);
             _mrt4 = vec4(0, 0, 0, 0);
         }

@@ -5,6 +5,12 @@ namespace Elffy.Shading.Deferred;
 internal sealed class PbrDeferredPostProcess : PostProcess
 {
     private readonly IGBufferProvider _gBufferProvider;
+    private float _shadowMapBias = 0.001f;
+    public float ShadowMapBias
+    {
+        get => _shadowMapBias;
+        set => _shadowMapBias = float.Max(value, 0);
+    }
 
     internal PbrDeferredPostProcess(IGBufferProvider gBufferProvider)
     {
@@ -18,7 +24,8 @@ internal sealed class PbrDeferredPostProcess : PostProcess
         var lights = context.RenderPipeline.Lights;
 
         var camera = screen.Camera;
-        dispatcher.SendUniform("_view", camera.View);
+        var view = camera.View;
+        dispatcher.SendUniform("_viewInv", view.Inverted());
         dispatcher.SendUniform("_projection", camera.Projection);
         dispatcher.SendUniformTexture2D("_mrt0", gBuffer.Mrt[0], 0);
         dispatcher.SendUniformTexture2D("_mrt1", gBuffer.Mrt[1], 1);
@@ -38,8 +45,9 @@ internal sealed class PbrDeferredPostProcess : PostProcess
         };
         dispatcher.SendUniform("_cascadeCount", light.CascadeCount);
         dispatcher.SendUniform("_hasLight", light.Exists);
-        dispatcher.SendUniform("_lightPos", light.Position);
+        dispatcher.SendUniform("_lightPos", view * light.Position); // light pos in eye space
         dispatcher.SendUniform("_lightColor", light.Color);
+        dispatcher.SendUniform("_shadowMapBias", _shadowMapBias);
         dispatcher.SendUniformTexture1D("_lightMatData", light.LightMatrixData, 3);
         dispatcher.SendUniformTexture2DArray("_shadowMap", light.ShadowMap, 4);
     }
@@ -75,7 +83,7 @@ internal sealed class PbrDeferredPostProcess : PostProcess
         {
             vec2 uv;
         } _v2f;
-        uniform mat4 _view;
+        uniform mat4 _viewInv;
         uniform mat4 _projection;
         uniform sampler2D _mrt0;
         uniform sampler2D _mrt1;
@@ -86,6 +94,7 @@ internal sealed class PbrDeferredPostProcess : PostProcess
         uniform vec4 _lightPos;
         uniform vec4 _lightColor;
         uniform sampler1D _lightMatData;
+        uniform float _shadowMapBias;
 
         uniform sampler2DArray _shadowMap;
         out vec4 _fragColor;
@@ -168,36 +177,33 @@ internal sealed class PbrDeferredPostProcess : PostProcess
         void main()
         {
             vec4 mrt0Value = textureLod(_mrt0, _v2f.uv, 0);
-            vec4 posWorld = vec4(mrt0Value.rgb, 1.0);
             if(mrt0Value.w == 0) {
                 gl_FragDepth = 1;
                 discard;
                 return;
             }
-            mat3 viewInvT = transpose(inverse(mat3(_view)));
             vec4 mrt1Value = textureLod(_mrt1, _v2f.uv, 0);
             vec4 mrt2Value = textureLod(_mrt2, _v2f.uv, 0);
-            vec3 nWorld = mrt1Value.rgb;
             vec3 baseColor = mrt2Value.rgb;
-            vec3 pos = ToVec3(_view * posWorld);    // pos in eye space
+            vec3 pos = mrt0Value.xyz;    // pos in eye space
             vec4 dncPos = _projection * vec4(pos, 1);    // device-normalized-coordinate position
             gl_FragDepth = (dncPos.z / dncPos.w) * 0.5 + 0.5;
+            //_fragColor = vec4(baseColor, 1);
+            //return;
+
             float metallic = mrt2Value.a;
             float roughness = mrt1Value.a;
             float alpha = roughness * roughness;
-            vec3 v = -normalize(pos);                               // eye direction in eye space, normalized
-            vec3 n = viewInvT * nWorld;                             // normal direction in eye space, normalized
+            vec3 v = -normalize(pos);                       // eye direction in eye space, normalized
+            vec3 n = mrt1Value.rgb;                         // normal direction in eye space, normalized
             float dot_nv = abs(dot(n, v));
             float reflectivity = mix(DielectricF0, 1.0, metallic);
             vec3 f0 = mix(vec3(DielectricF0, DielectricF0, DielectricF0), baseColor, metallic);
 
             vec3 fragColor = vec3(0.0, 0.0, 0.0);
             if(_hasLight) {
-                //vec4 lPosWorld = texelFetch(_lightPosSampler, i, 0);
-                vec4 lPosWorld = _lightPos;
-                //vec3 lColor = texelFetch(_lightColorSampler, i, 0).rgb; // light color
                 vec3 lColor = _lightColor.rgb;
-                vec4 lPos = _view * lPosWorld;              // light pos in eye space
+                vec4 lPos = _lightPos;              // light pos in eye space
 
                 vec3 l;
                 if(lPos.w < 0.001) {
@@ -222,8 +228,8 @@ internal sealed class PbrDeferredPostProcess : PostProcess
                 vec3 F = FresnelSchlick(f0, vec3(1.0, 1.0, 1.0), dot_lh);
                 vec3 specular = V * D * F * irradiance;
                 specular = max(vec3(0.0, 0.0, 0.0), specular);
-                float bias = clamp(0.001 * tan(acos(dot_nl)), 0.0, 0.01);
-                float shadow = CalcShadow(_lightMatData, posWorld, _shadowMap, bias);
+                float bias = clamp(_shadowMapBias * tan(acos(dot_nl)), 0.0, _shadowMapBias * 10);
+                float shadow = CalcShadow(_lightMatData, _viewInv * vec4(pos, 1), _shadowMap, bias);
                 fragColor += (diffuse + specular) * (1.0 - shadow);
             }
 

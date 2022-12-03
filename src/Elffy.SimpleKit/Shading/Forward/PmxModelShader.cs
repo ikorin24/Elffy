@@ -91,7 +91,7 @@ public sealed class PmxModelShader : RenderingShader
                             weight.w * GetMat(bone.w);
             Pos = projection * modelView * skinning * vec4(vPos, 1.0);
             gl_Position = Pos;
-            Normal = transpose(inverse(mat3(skinning))) * vNormal;
+            Normal = normalize(transpose(inverse(mat3(skinning))) * vNormal);
             UV = vUV;
             texIndex = vtexIndex;
             vec4 posLightSpace = _lmvp * vec4(vPos, 1.0);
