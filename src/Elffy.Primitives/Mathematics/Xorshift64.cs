@@ -7,34 +7,31 @@ using System.Threading;
 namespace Elffy.Mathematics
 {
     /// <summary>Pseudorandom number generator based on 64 bits Xorshift algorithm.</summary>
-    internal struct Xorshift64
+    public struct Xorshift64
     {
         private ulong _seed;
+
+        public ulong CurrentSeed => _seed;
 
         // [NOTICE]
         // An instance created by default constructor DOES NOT WORK !!!!
         // Seed must not be 0.
 
-        /// <summary>Create new instance of <see cref="Xorshift64"/> initialized specified seed.</summary>
-        /// <param name="seed">seed value (not zero)</param>
-        public Xorshift64(long seed)
-        {
-            if(seed == 0) {
-                ThrowArgException();
-                [DoesNotReturn] static void ThrowArgException() => throw new ArgumentException("0 is invalid seed");
-            }
-            _seed = (ulong)seed;
-        }
-
-        /// <summary>Create new instance of <see cref="Xorshift64"/></summary>
-        public static unsafe Xorshift64 GetDefault()
+        /// <summary>Create a new instance of <see cref="Xorshift64"/> initialized by current time as a seed.</summary>
+        public Xorshift64()
         {
             var seed = DateTime.Now.Ticks;
 
             // avoid seed == 0. (It does not work if seed is 0)
-            seed = (seed == 0) ? 1 : seed;
+            _seed = (seed == 0) ? 1 : (ulong)seed;
+        }
 
-            return new Xorshift64(seed);
+        /// <summary>Create new instance of <see cref="Xorshift64"/> initialized specified seed.</summary>
+        /// <param name="seed">seed value (!= 0)</param>
+        public Xorshift64(long seed)
+        {
+            // avoid seed == 0. (It does not work if seed is 0)
+            _seed = seed == 0 ? 1 : (ulong)seed;
         }
 
         /// <summary>Get next random value of <see cref="ulong"/>, ranged by 0 &lt; value &lt;= <see cref="ulong.MaxValue"/> .</summary>

@@ -1,40 +1,35 @@
 ﻿#nullable enable
 using System;
 using System.Runtime.CompilerServices;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Mathematics
 {
     /// <summary>Pseudorandom number generator based on 32 bits Xorshift algorithm.</summary>
-    internal struct Xorshift32
+    public struct Xorshift32
     {
         private uint _seed;
+
+        public uint CurrentSeed => _seed;
 
         // [NOTICE]
         // An instance created by default constructor DOES NOT WORK !!!!
         // Seed must not be 0.
 
-        /// <summary>Create new instance of <see cref="Xorshift32"/> initialized specified seed.</summary>
-        /// <param name="seed">seed value (not zero)</param>
-        public Xorshift32(int seed)
-        {
-            if(seed == 0) {
-                ThrowArgException();
-                [DoesNotReturn] static void ThrowArgException() => throw new ArgumentException("0 is invalid seed");
-            }
-            _seed = (uint)seed;
-        }
-
-        /// <summary>Create new instance of <see cref="Xorshift32"/></summary>
-        public static unsafe Xorshift32 GetDefault()
+        /// <summary>Create a new instance of <see cref="Xorshift32"/> initialized by current time as a seed.</summary>
+        public Xorshift32()
         {
             // get lower 32 bits value of 64 bits
-            var seed = (int)DateTime.Now.Ticks;
+            var seed = (uint)DateTime.Now.Ticks;
 
             // avoid seed == 0. (It does not work if seed is 0)
-            seed = (seed == 0) ? 1 : seed;
+            _seed = (seed == 0) ? 1 : seed;
+        }
 
-            return new Xorshift32(seed);
+        /// <summary>Create a new instance of <see cref="Xorshift32"/> initialized by the specified seed.</summary>
+        /// <param name="seed">seed value (!= 0)</param>
+        public Xorshift32(int seed)
+        {
+            _seed = (seed == 0) ? 1 : (uint)seed;
         }
 
         /// <summary>Get next random value of <see cref="uint"/>, ranged by 0 &lt; value &lt;= <see cref="uint.MaxValue"/> .</summary>

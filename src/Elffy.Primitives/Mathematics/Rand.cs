@@ -8,8 +8,8 @@ namespace Elffy.Mathematics
     public static class Rand
     {
         // They are thread-safe
-        private static Xorshift32 _xorshift32 = Xorshift32.GetDefault();    // do not change into readonly
-        private static Xorshift64 _xorshift64 = Xorshift64.GetDefault();    // do not change into readonly
+        private static Xorshift32 _xorshift32 = new Xorshift32();   // do not change into readonly
+        private static Xorshift64 _xorshift64 = new Xorshift64();   // do not change into readonly
 
         /// <summary>Get random color (R, G, B are random, Alpha is 1).</summary>
         /// <returns>random color</returns>
