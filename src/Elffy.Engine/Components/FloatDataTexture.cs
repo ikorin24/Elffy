@@ -4,20 +4,17 @@ using Elffy.Graphics.OpenGL;
 using Elffy.Effective;
 using Elffy.Components.Implementation;
 using Elffy.Features;
+using System.Runtime.CompilerServices;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Elffy.Components
 {
     /// <summary>Float data texture component</summary>
-    public class FloatDataTexture : ISingleOwnerComponent
+    public sealed class FloatDataTexture : IContextAssociatedSafety
     {
-        private SingleOwnerComponentCore _core; // Mutable object, Don't change into readonly
-        private FloatDataTextureCore _impl;     // Mutable object, Don't change into readonly
-
-        /// <inheritdoc/>
-        public ComponentOwner? Owner => _core.Owner;
-
-        /// <inheritdoc/>
-        public bool AutoDisposeOnDetached => _core.AutoDisposeOnDetached;
+        private bool _disposed;
+        private ContextAssociatedSafetyImpl _safetyImpl;    // Mutable object, Don't change into readonly
+        private FloatDataTextureCore _impl;                 // Mutable object, Don't change into readonly
 
         /// <summary>Get texture object of opengl</summary>
         /// <remarks>[NOTE] This is texture1D, NOT texture2D.</remarks>
@@ -26,6 +23,8 @@ namespace Elffy.Components
         /// <summary>Get data length loaded in the texture.</summary>
         /// <remarks>[NOTE] This is the count of pixels in the texture, NOT the count of float values.</remarks>
         public int Length => _impl.Length;
+
+        IHostScreen? IContextAssociatedSafety.AssociatedContext => _safetyImpl.AssociatedContext;
 
         /// <summary>Create new <see cref="FloatDataTexture"/></summary>
         public FloatDataTexture()
@@ -38,50 +37,66 @@ namespace Elffy.Components
         /// <param name="pixels"></param>
         public void Load(ReadOnlySpan<Vector4> pixels)
         {
+            ThrowIfDisposed();
             _impl.Load(pixels.MarshalCast<Vector4, Color4>());
-            ContextAssociatedMemorySafety.Register(this, Engine.GetValidCurrentContext());
+            _safetyImpl.TryRegisterToCurrentContext(this, static x => x.DisposeContextAssociatedMemory());
         }
 
         public void Load(ReadOnlySpan<Color4> pixels)
         {
+            ThrowIfDisposed();
             _impl.Load(pixels);
-            ContextAssociatedMemorySafety.Register(this, Engine.GetValidCurrentContext());
+            _safetyImpl.TryRegisterToCurrentContext(this, static x => x.DisposeContextAssociatedMemory());
         }
 
         public void LoadAsPowerOfTwo(ReadOnlySpan<Vector4> pixels)
         {
+            ThrowIfDisposed();
             _impl.LoadAsPOT(pixels.MarshalCast<Vector4, Color4>());
-            ContextAssociatedMemorySafety.Register(this, Engine.GetValidCurrentContext());
+            _safetyImpl.TryRegisterToCurrentContext(this, static x => x.DisposeContextAssociatedMemory());
         }
 
         public void LoadAsPowerOfTwo(ReadOnlySpan<Color4> pixels)
         {
+            ThrowIfDisposed();
             _impl.LoadAsPOT(pixels);
-            ContextAssociatedMemorySafety.Register(this, Engine.GetValidCurrentContext());
+            _safetyImpl.TryRegisterToCurrentContext(this, static x => x.DisposeContextAssociatedMemory());
         }
 
         public void Update(ReadOnlySpan<Vector4> pixels, int xOffset) => _impl.Update(pixels.MarshalCast<Vector4, Color4>(), xOffset);
 
         public void Update(ReadOnlySpan<Color4> pixels, int xOffset) => _impl.Update(pixels, xOffset);
 
-        void IDisposable.Dispose()
+        public void Dispose()
         {
+            _safetyImpl.ThrowIfAssociatedContextMismatch();
             Dispose(true);
             GC.SuppressFinalize(this);
+            _disposed = true;
         }
 
-        protected virtual void Dispose(bool disposing)
+        private void Dispose(bool disposing)
         {
             if(disposing) {
-                _impl.Dispose();
+                DisposeContextAssociatedMemory();
             }
             else {
-                ContextAssociatedMemorySafety.OnFinalized(this);
+                _safetyImpl.OnFinalized(this);
             }
         }
 
-        void IComponent.OnAttached(ComponentOwner owner) => _core.OnAttached(owner, this);
+        private void DisposeContextAssociatedMemory()
+        {
+            _impl.Dispose();
+        }
 
-        void IComponent.OnDetached(ComponentOwner owner) => _core.OnDetached(owner, this);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ThrowIfDisposed()
+        {
+            if(_disposed) {
+                Throw();
+                [DoesNotReturn] static void Throw() => throw new ObjectDisposedException(nameof(Texture));
+            }
+        }
     }
 }
