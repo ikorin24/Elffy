@@ -35,11 +35,13 @@ namespace Elffy
                 Debug.Assert(screen is not null);
                 self._gBuffer.Initialize(screen);
                 self._ppProgram = self._postProcess.Compile(screen);
+                self._postProcess.InvokeAttached();
                 return UniTask.CompletedTask;
             });
             Dead.Subscribe(static sender =>
             {
                 var self = SafeCast.As<DeferredRenderLayer>(sender);
+                self._postProcess.InvokeDetached();
                 self._gBuffer.Dispose();
                 self._ppProgram?.Dispose();
                 self._ppProgram = null;

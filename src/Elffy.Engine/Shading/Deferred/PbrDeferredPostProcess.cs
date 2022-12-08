@@ -1,10 +1,16 @@
 ﻿#nullable enable
+using Elffy.Components;
+using Elffy.Mathematics;
+using System;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Elffy.Shading.Deferred;
 
 internal sealed class PbrDeferredPostProcess : PostProcess
 {
     private readonly IGBufferProvider _gBufferProvider;
+    private FloatDataTexture? _ssaoKernel;
     private float _shadowMapBias = 0.001f;
     public float ShadowMapBias
     {
@@ -15,6 +21,49 @@ internal sealed class PbrDeferredPostProcess : PostProcess
     internal PbrDeferredPostProcess(IGBufferProvider gBufferProvider)
     {
         _gBufferProvider = gBufferProvider;
+        Attached.Subscribe(sender =>
+        {
+            SafeCast.As<PbrDeferredPostProcess>(sender).OnAttached();
+        });
+        Detached.Subscribe(sender =>
+        {
+            SafeCast.As<PbrDeferredPostProcess>(sender).OnDetached();
+        });
+    }
+
+    private void OnAttached()
+    {
+        var ssaoKernel = new FloatDataTexture();
+        const int KernelSize = 64;
+        Span<Vector4> kernel = stackalloc Vector4[KernelSize];
+        var random = new Xorshift32();
+
+        // create kernel
+        for(int i = 0; i < kernel.Length; i++) {
+            var vec = new Vector3(
+                random.Single() * 2f - 1f,
+                random.Single() * 2f - 1f,
+                random.Single());
+            var s = i / (float)KernelSize;
+            var scale = Lerp(0.1f, 1.0f, s * s);
+            vec.Normalize();
+            vec *= scale;
+            kernel[i] = new Vector4(vec, 1f);
+        }
+
+        ssaoKernel.LoadAsPowerOfTwo(kernel);
+        _ssaoKernel = ssaoKernel;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static float Lerp(float a, float b, float f)
+        {
+            return a + f * (b - a);
+        }
+    }
+
+    private void OnDetached()
+    {
+        _ssaoKernel?.Dispose();
     }
 
     protected override void OnRendering(ShaderDataDispatcher dispatcher, in PostProcessRenderContext context)
@@ -50,6 +99,9 @@ internal sealed class PbrDeferredPostProcess : PostProcess
         dispatcher.SendUniform("_shadowMapBias", _shadowMapBias);
         dispatcher.SendUniformTexture1D("_lightMatData", light.LightMatrixData, 3);
         dispatcher.SendUniformTexture2DArray("_shadowMap", light.ShadowMap, 4);
+
+        Debug.Assert(_ssaoKernel is not null);
+        dispatcher.SendUniformTexture1D("_ssaoKernel", _ssaoKernel.TextureObject, 5);
     }
 
     protected override PostProcessSource GetSource(in PostProcessGetterContext context) => new PostProcessSource
@@ -97,6 +149,7 @@ internal sealed class PbrDeferredPostProcess : PostProcess
         uniform float _shadowMapBias;
 
         uniform sampler2DArray _shadowMap;
+        uniform sampler1D _ssaoKernel;
         out vec4 _fragColor;
 
         m_float GGX(m_vec3 n, m_vec3 h, m_float dot_nh, m_float roughness)     // Trowbridge-Reitz
@@ -174,6 +227,45 @@ internal sealed class PbrDeferredPostProcess : PostProcess
             return 0;
         }
 
+        vec3 SsaoRandomNoiseVec()
+        {
+            const float UIntMaxInv = 1.0 / 4294967295.0;
+            vec3 result;
+
+            uint value = uint(gl_FragCoord.x);
+            value ^= (value << 13); value ^= (value >> 17); value ^= (value << 5);
+            result.x = float(value) * UIntMaxInv * 2 - 1;   // -1 ~ 1
+            value + uint(gl_FragCoord.y);
+            value ^= (value << 13); value ^= (value >> 17); value ^= (value << 5);
+            result.y = float(value) * UIntMaxInv;   // -1 ~ 1
+            result.z = 0;
+            return result;
+        }
+
+        float Ssao(vec3 pos, vec3 normal, sampler1D kernel)
+        {
+            const int KernelSize = 64;
+            const float KernelSizeInv = 1.0 / KernelSize;
+            const float Radius = 0.5;
+            const float SsaoBias = 0.1;
+            vec3 randomVec = SsaoRandomNoiseVec();
+            vec3 tangent = normalize(randomVec - normal * dot(randomVec, normal));
+            vec3 bitangent = cross(normal, tangent);
+            mat3 TBN = mat3(tangent, bitangent, normal);
+            float occlusion = 0.0;
+            for(int i = 0; i < KernelSize; ++i) {
+                vec3 samplePos = pos + TBN * texelFetch(kernel, i, 0).xyz * Radius;
+                vec4 offset = _projection * vec4(samplePos, 1.0);
+                offset.xyz /= offset.w;
+                offset.xyz = offset.xyz * 0.5 + 0.5;
+                float sampleDepth = textureLod(_mrt0, offset.xy, 0).z;
+                float rangeCheck = smoothstep(0.0, 1.0, Radius / abs(pos.z - sampleDepth));
+                occlusion += step(samplePos.z + SsaoBias, sampleDepth) * rangeCheck;
+            }
+            float result = 1.0 - occlusion * KernelSizeInv;
+            return result;
+        }
+
         void main()
         {
             vec4 mrt0Value = textureLod(_mrt0, _v2f.uv, 0);
@@ -188,8 +280,6 @@ internal sealed class PbrDeferredPostProcess : PostProcess
             vec3 pos = mrt0Value.xyz;    // pos in eye space
             vec4 dncPos = _projection * vec4(pos, 1);    // device-normalized-coordinate position
             gl_FragDepth = (dncPos.z / dncPos.w) * 0.5 + 0.5;
-            //_fragColor = vec4(baseColor, 1);
-            //return;
 
             float metallic = mrt2Value.a;
             float roughness = mrt1Value.a;
@@ -233,6 +323,8 @@ internal sealed class PbrDeferredPostProcess : PostProcess
                 fragColor += (diffuse + specular) * (1.0 - shadow);
             }
 
+            float ssao = Ssao(pos, n, _ssaoKernel);
+
             // indirect diffuse
             fragColor += (1.0 - reflectivity) * IndirectDiffuse * baseColor;
 
@@ -240,7 +332,7 @@ internal sealed class PbrDeferredPostProcess : PostProcess
             float f90 = max(0, min(1, 1 - roughness + reflectivity));
             fragColor += 1.0 / (alpha * alpha + 1.0) * FresnelSchlick(f0, vec3(f90, f90, f90), dot_nv) * IndirectSpecular;
     
-            _fragColor = vec4(fragColor, 1.0);
+            _fragColor = vec4(fragColor * ssao, 1.0);
         }
         """u8
     };

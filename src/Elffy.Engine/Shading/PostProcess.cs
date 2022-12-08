@@ -24,6 +24,19 @@ public abstract class PostProcess
     }
     """u8;
 
+    private EventSource<PostProcess> _attached;
+    private EventSource<PostProcess> _detached;
+
+    public Event<PostProcess> Attached => _attached.Event;
+    public Event<PostProcess> Detached => _detached.Event;
+
+    public PostProcess()
+    {
+    }
+
+    internal void InvokeAttached() => _attached.InvokeIgnoreException(this);
+    internal void InvokeDetached() => _detached.InvokeIgnoreException(this);
+
     protected abstract void OnRendering(ShaderDataDispatcher dispatcher, in PostProcessRenderContext context);
 
     protected abstract PostProcessSource GetSource(in PostProcessGetterContext context);
