@@ -8,6 +8,8 @@ using System.Threading.Tasks.Sources;
 using System.Diagnostics.CodeAnalysis;
 using Elffy.Effective;
 using Elffy.Effective.Unsafes;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Elffy.Threading
 {
@@ -15,6 +17,18 @@ namespace Elffy.Threading
     {
         public delegate void TaskBuildAction<TArg>(Span<UniTask> tasks, in TArg arg);
         public delegate void TaskBuildAction(Span<UniTask> tasks);
+
+        public static UniTask WhenAll<T>(IEnumerable<UniTask<T>> tasks)
+        {
+            ArgumentNullException.ThrowIfNull(tasks);
+            return new UniTask(WhenAllPromise.Create(tasks), 0);
+        }
+
+        public static UniTask WhenAll(IEnumerable<UniTask> tasks)
+        {
+            ArgumentNullException.ThrowIfNull(tasks);
+            return new UniTask(WhenAllPromise.Create(tasks), 0);
+        }
 
         public static UniTask WhenAll<T>(ReadOnlySpan<UniTask<T>> tasks)
         {
@@ -512,6 +526,20 @@ namespace Elffy.Threading
                 return promise;
             }
 
+            public static WhenAllPromise Create(IEnumerable<UniTask> tasks)
+            {
+                var promise = new WhenAllPromise();
+                promise.Init(tasks);
+                return promise;
+            }
+
+            public static WhenAllPromise Create<T>(IEnumerable<UniTask<T>> tasks)
+            {
+                var promise = new WhenAllPromise();
+                promise.Init(tasks);
+                return promise;
+            }
+
             private void Init(ReadOnlySpan<UniTask> tasks)
             {
                 _tasksLength = tasks.Length;
@@ -536,6 +564,92 @@ namespace Elffy.Threading
                 for(int i = 0; i < tasks.Length; i++) {
                     InitEachTask(tasks[i].AsUniTask());
                 }
+            }
+
+            private void Init(IEnumerable<UniTask> tasks)
+            {
+                switch(tasks) {
+                    case UniTask[] array: {
+                        Init(array.AsSpan().AsReadOnly());
+                        break;
+                    }
+                    case ICollection<UniTask> coll: {
+                        var count = coll.Count;
+                        if(count == 0) {
+                            _core.TrySetResult(AsyncUnit.Default);
+                        }
+                        else {
+                            _tasksLength = count;
+                            _completeCount = 0;
+                            foreach(var task in coll) {
+                                InitEachTask(task);
+                            }
+                        }
+                        break;
+                    }
+                    case IReadOnlyCollection<UniTask> roc: {
+                        var count = roc.Count;
+                        if(count == 0) {
+                            _core.TrySetResult(AsyncUnit.Default);
+                        }
+                        else {
+                            _tasksLength = count;
+                            _completeCount = 0;
+                            foreach(var task in roc) {
+                                InitEachTask(task);
+                            }
+                        }
+                        break;
+                    }
+                    default: {
+                        Init(tasks.ToArray().AsSpan().AsReadOnly());
+                        break;
+                    }
+                }
+                return;
+            }
+
+            private void Init<T>(IEnumerable<UniTask<T>> tasks)
+            {
+                switch(tasks) {
+                    case UniTask<T>[] array: {
+                        Init(array.AsSpan().AsReadOnly());
+                        break;
+                    }
+                    case ICollection<UniTask<T>> coll: {
+                        var count = coll.Count;
+                        if(count == 0) {
+                            _core.TrySetResult(AsyncUnit.Default);
+                        }
+                        else {
+                            _tasksLength = count;
+                            _completeCount = 0;
+                            foreach(var task in coll) {
+                                InitEachTask(task.AsUniTask());
+                            }
+                        }
+                        break;
+                    }
+                    case IReadOnlyCollection<UniTask<T>> roc: {
+                        var count = roc.Count;
+                        if(count == 0) {
+                            _core.TrySetResult(AsyncUnit.Default);
+                        }
+                        else {
+                            _tasksLength = count;
+                            _completeCount = 0;
+                            foreach(var task in roc) {
+                                InitEachTask(task.AsUniTask());
+                            }
+                        }
+                        break;
+                    }
+                    default: {
+                        Init(tasks.ToArray().AsSpan().AsReadOnly());
+                        break;
+                    }
+                }
+                return;
             }
 
             private void InitEachTask(in UniTask task)

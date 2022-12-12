@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using Elffy.Effective;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -28,11 +29,11 @@ namespace Elffy.Threading
         {
             _lock.Enter();
             try {
-                if(task.Status == UniTaskStatus.Succeeded) { return; }
                 if(_isDead) {
                     Throw();
                     [DoesNotReturn] static void Throw() => throw new InvalidOperationException($"Can not add a task after call '{nameof(WhenAll)}' method.");
                 }
+                if(task.Status == UniTaskStatus.Succeeded) { return; }
                 if(_array.Length == _count) {
                     ResizeBuffer(ref _array);
                 }
@@ -51,6 +52,36 @@ namespace Elffy.Threading
                 currentArray.AsSpan().CopyTo(newArray.AsSpan());
                 UniTaskMemoryPool.Return(currentArray);
                 currentArray = newArray;
+            }
+        }
+
+        public void AddRange(ReadOnlySpan<UniTask> tasks)
+        {
+            _lock.Enter();
+            try {
+                if(_isDead) {
+                    Throw();
+                    [DoesNotReturn] static void Throw() => throw new InvalidOperationException($"Can not add a task after call '{nameof(WhenAll)}' method.");
+                }
+                if(tasks.Length == 0) { return; }
+                var neededCapacity = _count + tasks.Length;
+                if(_array.Length < neededCapacity) {
+                    var newArray = UniTaskMemoryPool.Rent(neededCapacity);
+                    _array.AsSpan(0, _count).CopyTo(newArray.AsSpan());
+                    UniTaskMemoryPool.Return(_array);
+                    _array = newArray;
+                }
+                Debug.Assert(_array.Length >= neededCapacity);
+
+                foreach(var task in tasks) {
+                    if(task.Status == UniTaskStatus.Succeeded) { continue; }
+                    Debug.Assert(_array.Length > _count);
+                    _array[_count] = task;
+                    _count++;
+                }
+            }
+            finally {
+                _lock.Exit();
             }
         }
 
@@ -181,6 +212,29 @@ namespace Elffy.Threading
                 }
                 return OrderedSequentialAsyncEventPromise<TArg>.CreateTask(sequentialFuncs, _arg, ct);
             }
+        }
+    }
+
+    public static class ParallelOperationExtensions
+    {
+        public static UniTask WhenAll<T>(this IEnumerable<UniTask<T>> tasks)
+        {
+            return ParallelOperation.WhenAll(tasks);
+        }
+
+        public static UniTask WhenAll(this IEnumerable<UniTask> tasks)
+        {
+            return ParallelOperation.WhenAll(tasks);
+        }
+
+        public static UniTask WhenAll<T>(this ReadOnlySpan<UniTask<T>> tasks)
+        {
+            return ParallelOperation.WhenAll(tasks);
+        }
+
+        public static UniTask WhenAll(this ReadOnlySpan<UniTask> tasks)
+        {
+            return ParallelOperation.WhenAll(tasks);
         }
     }
 }
