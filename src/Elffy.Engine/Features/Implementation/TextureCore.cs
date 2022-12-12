@@ -52,11 +52,44 @@ namespace Elffy.Features.Implementation
             _size = new(image.Width, image.Height);
         }
 
+        public void Load(in Vector2i size, ReadOnlySpan<ColorByte> pixels)
+        {
+            var image = new ReadOnlyImageRef(pixels, size.X, size.Y);
+            Load(image);
+        }
+
         public unsafe void Load(in Vector2i size, in ColorByte fill)
         {
+            if(!Texture.IsEmpty) {
+                ThrowAlreadyLoaded();
+            }
             using var pixels = new UnsafeRawArray<ColorByte>(size.X * size.Y, false);
             pixels.AsSpan().Fill(fill);
-            LoadCore(size, pixels.GetPtr());
+            LoadCore<ColorByte>(size, pixels.GetPtr());
+        }
+
+        public unsafe void Load(in Vector2i size, in Color4 fill)
+        {
+            if(!Texture.IsEmpty) {
+                ThrowAlreadyLoaded();
+            }
+            using var pixels = new UnsafeRawArray<Color4>(size.X * size.Y, false);
+            pixels.AsSpan().Fill(fill);
+            LoadCore<Color4>(size, pixels.GetPtr());
+        }
+
+        public unsafe void Load(in Vector2i size, ReadOnlySpan<Color4> pixels)
+        {
+            if(size.X * size.Y != pixels.Length) {
+                Throw();
+                [DoesNotReturn] static void Throw() => throw new ArgumentException("invalid size");
+            }
+            if(!Texture.IsEmpty) {
+                ThrowAlreadyLoaded();
+            }
+            fixed(Color4* p = pixels) {
+                LoadCore<Color4>(in size, p);
+            }
         }
 
         public unsafe void LoadUndefined(in Vector2i size)

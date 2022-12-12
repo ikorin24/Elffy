@@ -93,6 +93,10 @@ namespace Elffy.Features
                     var items = list.ClearWithExtracting();
                     DevEnv.ForceWriteLine("Some resources are leaked! Dispose them for safety.", nameof(ContextAssociatedMemorySafety));
 #if DEBUG
+                    // ===========================================================
+                    // If you are looking at this comment,
+                    // you may have forgotten to call `Dispose()` of some object.
+                    // ===========================================================
                     Debugger.Break();
 #endif
                     foreach(var item in items) {

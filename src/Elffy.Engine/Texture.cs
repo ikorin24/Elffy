@@ -57,11 +57,34 @@ public sealed class Texture : IContextAssociatedSafety
         _safetyImpl.TryRegisterToCurrentContext(this, static x => x.DisposeContextAssociatedMemory());
     }
 
+    public void Load(in Vector2i size, ReadOnlySpan<ColorByte> pixels)
+    {
+        var image = new ReadOnlyImageRef(pixels, size.X, size.Y);
+        Load(image);
+    }
+
+    public void Load(in Vector2i size, ReadOnlySpan<Color4> pixels)
+    {
+        ThrowIfDisposed();
+        if(size.X * size.Y != pixels.Length) {
+            throw new ArgumentException("invalid size");
+        }
+        _textureCore.Load(in size, pixels);
+        _safetyImpl.TryRegisterToCurrentContext(this, static x => x.DisposeContextAssociatedMemory());
+    }
+
     /// <summary>Load pixel data filled with specified color</summary>
     /// <remarks>Texture width and height should be power of two for performance.</remarks>
     /// <param name="size">texture size</param>
     /// <param name="fill">color to fill all pixels with</param>
-    public unsafe void Load(in Vector2i size, in ColorByte fill)
+    public void Load(in Vector2i size, in ColorByte fill)
+    {
+        ThrowIfDisposed();
+        _textureCore.Load(size, fill);
+        _safetyImpl.TryRegisterToCurrentContext(this, static x => x.DisposeContextAssociatedMemory());
+    }
+
+    public void Load(in Vector2i size, in Color4 fill)
     {
         ThrowIfDisposed();
         _textureCore.Load(size, fill);

@@ -1,14 +1,14 @@
 ﻿#nullable enable
 namespace Elffy;
 
-public record struct TextureConfig(
-    TextureExpansionMode ExpansionMode,
-    TextureShrinkMode ShrinkMode,
-    TextureMipmapMode MipmapMode,
-    TextureWrap WrapModeX,
-    TextureWrap WrapModeY
-)
+public readonly record struct TextureConfig
 {
+    public required TextureExpansionMode ExpansionMode { get; init; }
+    public required TextureShrinkMode ShrinkMode { get; init; }
+    public required TextureMipmapMode MipmapMode { get; init; }
+    public required TextureWrap WrapModeX { get; init; }
+    public required TextureWrap WrapModeY { get; init; }
+
     /// <summary>Get default texture configuration</summary>
     /// <remarks>
     /// ExpansionMode: Bilinear, ShrinkMode: Bilinear, MipmapMode: Bilinear, WrapModeX: ClampToEdge, WrapModeY: ClampToEdge
