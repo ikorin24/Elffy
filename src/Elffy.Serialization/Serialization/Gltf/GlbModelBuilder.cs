@@ -417,13 +417,13 @@ public static class GlbModelBuilder
         ExistingMemory,
     }
 
-    private unsafe static void AccessData<T>(
+    private unsafe static void AccessData<TVertex>(
         in BuilderState state,
         in Accessor accessor,
-        ILargeBufferWriter<T> output,
+        ILargeBufferWriter<TVertex> output,
         BufferWriteDestinationMode destMode,
-        delegate*<in BufferData, T*, void> callback
-    ) where T : unmanaged
+        delegate*<in BufferData, TVertex*, void> callback
+    ) where TVertex : unmanaged
     {
         var gltf = state.Gltf;
         if(accessor.bufferView.TryGetValue(out var bufferViewNum) == false) {
@@ -532,6 +532,7 @@ public static class GlbModelBuilder
     }
 
     [DoesNotReturn]
+    [DebuggerHidden]
     private static void ThrowInvalidGlb() => throw new FormatException("invalid glb");
 
     private static unsafe void ConvertUInt16ToUInt32(ushort* src, uint* dest, nuint elementCount)
