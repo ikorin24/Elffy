@@ -164,7 +164,10 @@ public static class GlbModelBuilder
             if(position is not { type: AccessorType.Vec3, componentType: AccessorComponentType.Float }) {
                 ThrowInvalidGlb();
             }
-            AccessData(in state, in position, verticesOutput, BufferWriteDestinationMode.AllocateNew, &GlbVertexWriter<TVertex>.StorePositions);
+            AccessData(in state, in position, verticesOutput, BufferWriteDestinationMode.AllocateNew, &StorePositions);
+
+            static void StorePositions(in BufferData data, TVertex* dest)
+                => ReadVertexField<TVertex, Vector3>(in data, dest, VertexFieldSemantics.Position);
         }
         else {
             throw new NotSupportedException();
@@ -176,7 +179,10 @@ public static class GlbModelBuilder
             if(normal is not { type: AccessorType.Vec3, componentType: AccessorComponentType.Float }) {
                 ThrowInvalidGlb();
             }
-            AccessData(in state, in normal, verticesOutput, BufferWriteDestinationMode.ExistingMemory, &GlbVertexWriter<TVertex>.StoreNormals);
+            AccessData(in state, in normal, verticesOutput, BufferWriteDestinationMode.ExistingMemory, &StoreNormals);
+
+            static void StoreNormals(in BufferData data, TVertex* dest)
+                => ReadVertexField<TVertex, Vector3>(in data, dest, VertexFieldSemantics.Normal);
         }
 
         // uv
@@ -185,16 +191,24 @@ public static class GlbModelBuilder
             if(uv0 is not { type: AccessorType.Vec2, componentType: AccessorComponentType.Float }) {
                 ThrowInvalidGlb();
             }
-            AccessData(in state, in uv0, verticesOutput, BufferWriteDestinationMode.ExistingMemory, &GlbVertexWriter<TVertex>.StoreUVs);
+            AccessData(in state, in uv0, verticesOutput, BufferWriteDestinationMode.ExistingMemory, &StoreUVs);
+
+            static void StoreUVs(in BufferData data, TVertex* dest)
+                => ReadVertexField<TVertex, Vector2>(in data, dest, VertexFieldSemantics.UV);
         }
 
         // tangent
         if(attrs.TANGENT.TryGetValue(out var tangentAttr)) {
             ref readonly var tangent = ref GetItemOrThrow(gltf.accessors, tangentAttr);
-            if(tangent is not { type: AccessorType.Vec3, componentType: AccessorComponentType.Float }) {
+            if(tangent is not { type: AccessorType.Vec4, componentType: AccessorComponentType.Float }) {
                 ThrowInvalidGlb();
             }
-            AccessData(in state, in tangent, verticesOutput, BufferWriteDestinationMode.ExistingMemory, &GlbVertexWriter<TVertex>.StoreTangents);
+            AccessData(in state, in tangent, verticesOutput, BufferWriteDestinationMode.ExistingMemory, &StoreTangents);
+
+            static void StoreTangents(in BufferData data, TVertex* dest)
+                => ReadVertexField<TVertex, Vector3, Vector4>(in data, dest, VertexFieldSemantics.Tangent, &ConvertData);
+
+            static Vector3 ConvertData(in Vector4 d) => new Vector3(d.X, d.Y, d.Z) * d.W;   // W is -1 or 1 (left-hand or right-hand)
         }
 
         // indices
@@ -223,7 +237,7 @@ public static class GlbModelBuilder
 
             // Length of indices can be 0 in case of non indexed vertices.
             uint* indices = indicesOutput.GetWrittenBufffer(out var iLength);
-            GlbVertexWriter<TVertex>.CalcTangents(vertices, vLength, indices, iLength);
+            CalcTangents(vertices, vLength, indices, iLength);
         }
 
         state.Tasks.Add(meshPrimitivePart.GetApplyMeshTask(state.Screen));
@@ -344,7 +358,6 @@ public static class GlbModelBuilder
                 var loadTexTask = LoadTextureTask(screen, obj, ref imageData, texConfig, shader,
                     static (obj, imageData, texConfig, shader) =>
                     {
-                        // TODO:
                         shader.SetNormalTexture(imageData, texConfig);
                     });
                 hasNormalTex = true;
@@ -360,6 +373,8 @@ public static class GlbModelBuilder
                 var loadTexTask = LoadTextureTask(screen, obj, ref imageData, texConfig, shader,
                     static (obj, imageData, texConfig, shader) =>
                     {
+                        //EI.ImageExtensions.SaveAsPng(imageData, "emmisive.png");
+                        //shader.SetBaseColorTexture(imageData, texConfig);
                         // TODO:
                     });
                 state.Tasks.Add(loadTexTask);
@@ -473,8 +488,8 @@ public static class GlbModelBuilder
             return bin;
         }
         else {
-            // TODO: fetch data from uri
-            throw new NotImplementedException();
+            ThrowUriNotSupported();
+            return default;
         }
     }
 
@@ -482,7 +497,7 @@ public static class GlbModelBuilder
     {
         var gltf = state.Gltf;
         if(image.uri != null) {
-            throw new NotSupportedException();
+            ThrowUriNotSupported();
         }
 
         if(image.bufferView.TryGetValue(out var bufferViewNum) == false) {
@@ -534,6 +549,10 @@ public static class GlbModelBuilder
     [DoesNotReturn]
     [DebuggerHidden]
     private static void ThrowInvalidGlb() => throw new FormatException("invalid glb");
+
+    [DoesNotReturn]
+    [DebuggerHidden]
+    private static void ThrowUriNotSupported() => throw new NotSupportedException("Data from URI is not supported.");
 
     private static unsafe void ConvertUInt16ToUInt32(ushort* src, uint* dest, nuint elementCount)
     {
@@ -644,120 +663,126 @@ public static class GlbModelBuilder
         bool HasOcclusionTex
     );
 
-    private static class GlbVertexWriter<TVertex> where TVertex : unmanaged, IVertex
+
+    private unsafe static void ReadVertexField<TVertex, TField>(in BufferData data, TVertex* dest, VertexFieldSemantics field)
+        where TVertex : unmanaged, IVertex
+        where TField : unmanaged
     {
-        public unsafe static void StorePositions(in BufferData data, TVertex* dest)
-        {
-            Write<Vector3>(in data, dest, VertexFieldSemantics.Position);
-        }
-
-        public unsafe static void StoreNormals(in BufferData data, TVertex* dest)
-        {
-            Write<Vector3>(in data, dest, VertexFieldSemantics.Normal);
-        }
-
-        public unsafe static void StoreUVs(in BufferData data, TVertex* dest)
-        {
-            Write<Vector2>(in data, dest, VertexFieldSemantics.UV);
-        }
-
-        public unsafe static void StoreTangents(in BufferData data, TVertex* dest)
-        {
-            Write<Vector3>(in data, dest, VertexFieldSemantics.Tangent);
-        }
-
-        private unsafe static void Write<TField>(in BufferData data, TVertex* dest, VertexFieldSemantics field) where TField : unmanaged
-        {
-            if(TVertex.TryGetAccessor<TField>(field, out var fieldAccessor) == false) {
-                return;
-            }
-            if(BitConverter.IsLittleEndian == false) {
-                throw new PlatformNotSupportedException("Big endian environment is not supported.");
-            }
-            var ptr = (byte*)data.Ptr;
-            var byteStride = data.ByteStride ?? (nuint)sizeof(TField);
-            for(nuint i = 0; i < data.Count; i++) {
-                fieldAccessor.FieldRef(ref dest[i]) = *(TField*)(ptr + byteStride * i);
-            }
-        }
-
-        public unsafe static void CalcTangents(TVertex* vertices, nuint vLength, uint* indices, nuint iLength)
-        {
-            if(TVertex.TryGetPositionAccessor(out var posField) == false) {
-                return;
-            }
-            if(TVertex.TryGetUVAccessor(out var uvField) == false) {
-                return;
-            }
-            if(TVertex.TryGetAccessor<Vector3>(VertexFieldSemantics.Tangent, out var tangentField) == false) {
-                return;
-            }
-
-            if(iLength == 0) {
-                // non indexed vertices
-
-                for(nuint i = 0; i < vLength / 3; i++) {
-                    var i0 = i * 3;
-                    var i1 = i * 3 + 1;
-                    var i2 = i * 3 + 2;
-                    var tangent = CalcTangent(
-                        posField.Field(vertices[i0]),
-                        posField.Field(vertices[i1]),
-                        posField.Field(vertices[i2]),
-                        uvField.Field(vertices[i0]),
-                        uvField.Field(vertices[i1]),
-                        uvField.Field(vertices[i2])).Normalized();
-                    tangentField.FieldRef(ref vertices[i0]) = tangent;
-                    tangentField.FieldRef(ref vertices[i1]) = tangent;
-                    tangentField.FieldRef(ref vertices[i2]) = tangent;
-                }
-            }
-            else {
-                // indexed vertices
-
-                for(nuint i = 0; i < iLength / 3; i++) {
-                    var i0 = indices[i * 3];
-                    var i1 = indices[i * 3 + 1];
-                    var i2 = indices[i * 3 + 2];
-                    if(i0 >= vLength) { ThrowIndexOutOfRange(nameof(vertices), i0, vLength); }
-                    if(i1 >= vLength) { ThrowIndexOutOfRange(nameof(vertices), i1, vLength); }
-                    if(i2 >= vLength) { ThrowIndexOutOfRange(nameof(vertices), i2, vLength); }
-                    var tangent = CalcTangent(
-                        posField.Field(vertices[i0]),
-                        posField.Field(vertices[i1]),
-                        posField.Field(vertices[i2]),
-                        uvField.Field(vertices[i0]),
-                        uvField.Field(vertices[i1]),
-                        uvField.Field(vertices[i2])
-                    );
-                    tangentField.FieldRef(ref vertices[i0]) += tangent;
-                    tangentField.FieldRef(ref vertices[i1]) += tangent;
-                    tangentField.FieldRef(ref vertices[i2]) += tangent;
-
-                }
-                for(nuint i = 0; i < vLength; i++) {
-                    tangentField.FieldRef(ref vertices[i]).Normalize();
-                }
-            }
+        if(TVertex.TryGetAccessor<TField>(field, out var fieldAccessor) == false) {
             return;
-
-            static Vector3 CalcTangent(in Vector3 pos0, in Vector3 pos1, in Vector3 pos2, in Vector2 uv0, in Vector2 uv1, in Vector2 uv2)
-            {
-                var deltaUV1 = uv1 - uv0;
-                var deltaUV2 = uv2 - uv0;
-                var deltaPos1 = pos1 - pos0;
-                var deltaPos2 = pos2 - pos0;
-                var d = 1f / (deltaUV1.X * deltaUV2.Y - deltaUV1.Y * deltaUV2.X);
-                var tangent = d * (deltaUV2.Y * deltaPos1 - deltaUV1.Y * deltaPos2);
-#if DEBUG
-                var bitangent = d * (deltaUV1.X * deltaPos2 - deltaUV2.X * deltaPos1);
-#endif
-                return tangent;
-            }
-
-            [DoesNotReturn]
-            static void ThrowIndexOutOfRange(string name, nuint index, nuint len) =>
-                throw new IndexOutOfRangeException($"Index was outside the bounds of the array. (index: {index}, {name}.Length: {len})");
         }
+        if(BitConverter.IsLittleEndian == false) {
+            throw new PlatformNotSupportedException("Big endian environment is not supported.");
+        }
+        var ptr = (byte*)data.Ptr;
+        var byteStride = data.ByteStride ?? (nuint)sizeof(TField);
+        for(nuint i = 0; i < data.Count; i++) {
+            fieldAccessor.FieldRef(ref dest[i]) = *(TField*)(ptr + byteStride * i);
+        }
+    }
+
+    private unsafe static void ReadVertexField<TVertex, TField, TData>(
+        in BufferData data,
+        TVertex* dest,
+        VertexFieldSemantics field,
+        delegate*<in TData, TField> converter
+    )
+        where TVertex : unmanaged, IVertex
+        where TField : unmanaged
+        where TData : unmanaged
+    {
+        if(TVertex.TryGetAccessor<TField>(field, out var fieldAccessor) == false) {
+            return;
+        }
+        if(BitConverter.IsLittleEndian == false) {
+            throw new PlatformNotSupportedException("Big endian environment is not supported.");
+        }
+        var ptr = (byte*)data.Ptr;
+        var byteStride = data.ByteStride ?? (nuint)sizeof(TData);
+        for(nuint i = 0; i < data.Count; i++) {
+            var d = (TData*)(ptr + byteStride * i);
+            fieldAccessor.FieldRef(ref dest[i]) = converter(in *d);
+        }
+    }
+
+    private unsafe static void CalcTangents<TVertex>(TVertex* vertices, nuint vLength, uint* indices, nuint iLength)
+         where TVertex : unmanaged, IVertex
+    {
+        if(TVertex.TryGetPositionAccessor(out var posField) == false) {
+            return;
+        }
+        if(TVertex.TryGetUVAccessor(out var uvField) == false) {
+            return;
+        }
+        if(TVertex.TryGetAccessor<Vector3>(VertexFieldSemantics.Tangent, out var tangentField) == false) {
+            return;
+        }
+
+        if(iLength == 0) {
+            // non indexed vertices
+
+            for(nuint i = 0; i < vLength / 3; i++) {
+                var i0 = i * 3;
+                var i1 = i * 3 + 1;
+                var i2 = i * 3 + 2;
+                var tangent = CalcTangent(
+                    posField.Field(vertices[i0]),
+                    posField.Field(vertices[i1]),
+                    posField.Field(vertices[i2]),
+                    uvField.Field(vertices[i0]),
+                    uvField.Field(vertices[i1]),
+                    uvField.Field(vertices[i2])).Normalized();
+                tangentField.FieldRef(ref vertices[i0]) = tangent;
+                tangentField.FieldRef(ref vertices[i1]) = tangent;
+                tangentField.FieldRef(ref vertices[i2]) = tangent;
+            }
+        }
+        else {
+            // indexed vertices
+
+            for(nuint i = 0; i < iLength / 3; i++) {
+                var i0 = indices[i * 3];
+                var i1 = indices[i * 3 + 1];
+                var i2 = indices[i * 3 + 2];
+                if(i0 >= vLength) { ThrowIndexOutOfRange(nameof(vertices), i0, vLength); }
+                if(i1 >= vLength) { ThrowIndexOutOfRange(nameof(vertices), i1, vLength); }
+                if(i2 >= vLength) { ThrowIndexOutOfRange(nameof(vertices), i2, vLength); }
+                var tangent = CalcTangent(
+                    posField.Field(vertices[i0]),
+                    posField.Field(vertices[i1]),
+                    posField.Field(vertices[i2]),
+                    uvField.Field(vertices[i0]),
+                    uvField.Field(vertices[i1]),
+                    uvField.Field(vertices[i2])
+                );
+                tangentField.FieldRef(ref vertices[i0]) += tangent;
+                tangentField.FieldRef(ref vertices[i1]) += tangent;
+                tangentField.FieldRef(ref vertices[i2]) += tangent;
+
+            }
+            for(nuint i = 0; i < vLength; i++) {
+                tangentField.FieldRef(ref vertices[i]).Normalize();
+            }
+        }
+        return;
+
+        static Vector3 CalcTangent(in Vector3 pos0, in Vector3 pos1, in Vector3 pos2, in Vector2 uv0, in Vector2 uv1, in Vector2 uv2)
+        {
+            var deltaUV1 = uv1 - uv0;
+            var deltaUV2 = uv2 - uv0;
+            var deltaPos1 = pos1 - pos0;
+            var deltaPos2 = pos2 - pos0;
+            var d = 1f / (deltaUV1.X * deltaUV2.Y - deltaUV1.Y * deltaUV2.X);
+            var tangent = d * (deltaUV2.Y * deltaPos1 - deltaUV1.Y * deltaPos2);
+#if DEBUG
+            var bitangent = d * (deltaUV1.X * deltaPos2 - deltaUV2.X * deltaPos1);
+#endif
+            return tangent;
+        }
+
+        [DoesNotReturn]
+        [DebuggerHidden]
+        static void ThrowIndexOutOfRange(string name, nuint index, nuint len) =>
+            throw new IndexOutOfRangeException($"Index was outside the bounds of the array. (index: {index}, {name}.Length: {len})");
     }
 }

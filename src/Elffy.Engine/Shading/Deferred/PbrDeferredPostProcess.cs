@@ -128,8 +128,8 @@ internal sealed class PbrDeferredPostProcess : PostProcess
         const float DielectricF0 = 0.04;
 
         // TODO: calculate from light probe
-        const vec3 IndirectDiffuse = vec3(0.5, 0.5, 0.5);
-        const vec3 IndirectSpecular = vec3(0, 0, 0);
+        const vec3 IndirectDiffuse = vec3(0.3, 0.3, 0.3);
+        const vec3 IndirectSpecular = vec3(0.3, 0.3, 0.3);
 
         in V2f
         {
@@ -227,20 +227,37 @@ internal sealed class PbrDeferredPostProcess : PostProcess
             return 0;
         }
 
-        vec3 SsaoRandomNoiseVec()
-        {
-            const float UIntMaxInv = 1.0 / 4294967295.0;
-            vec3 result;
-
-            uint value = uint(gl_FragCoord.x);
-            value ^= (value << 13); value ^= (value >> 17); value ^= (value << 5);
-            result.x = float(value) * UIntMaxInv * 2 - 1;   // -1 ~ 1
-            value + uint(gl_FragCoord.y);
-            value ^= (value << 13); value ^= (value >> 17); value ^= (value << 5);
-            result.y = float(value) * UIntMaxInv;   // -1 ~ 1
-            result.z = 0;
-            return result;
+        //float Random1To1(uint p){
+        //    const uint k = 0x456789abu;
+        //    uint n = floatBitsToUint(p);
+        //    n ^= (n << 9);
+        //    n ^= (n >> 1);
+        //    n ^= (n << 1);
+        //    n *= 0x456789abu;
+        //    return float(n) / float(0xffffffffu);
+        //}
+        vec2 Random2To2(vec2 p){
+            const uvec2 k = uvec2(0x456789abu, 0x6789ab45u);
+            const vec2 s = 1.0 / vec2(0xffffffffu, 0xffffffffu);
+            uvec2 n = floatBitsToUint(p);
+            n ^= (n.yx << 9);
+            n ^= (n.yx >> 1);
+            n *= k;
+            n ^= (n.yx << 1);
+            n *= k;
+            return vec2(n) * s;
         }
+        //vec3 Random3To3(vec3 p) {
+        //    const uvec3 k = uvec3(0x456789abu, 0x6789ab45u, 0x89ab4567u);
+        //    const vec3 s = 1.0 / vec3(0xffffffffu, 0xffffffffu, 0xffffffffu);
+        //    uvec3 n = floatBitsToUint(p);
+        //    n ^= (n.yzx << 9);
+        //    n ^= (n.yzx >> 1);
+        //    n *= k;
+        //    n ^= (n.yzx << 1);
+        //    n *= k;
+        //    return vec3(n) * s;
+        //}
 
         float Ssao(vec3 pos, vec3 normal, sampler1D kernel)
         {
@@ -248,7 +265,7 @@ internal sealed class PbrDeferredPostProcess : PostProcess
             const float KernelSizeInv = 1.0 / KernelSize;
             const float Radius = 0.5;
             const float SsaoBias = 0.1;
-            vec3 randomVec = SsaoRandomNoiseVec();
+            vec3 randomVec = vec3(Random2To2(gl_FragCoord.xy) * 2 - 1, 0);
             vec3 tangent = normalize(randomVec - normal * dot(randomVec, normal));
             vec3 bitangent = cross(normal, tangent);
             mat3 TBN = mat3(tangent, bitangent, normal);
