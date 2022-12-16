@@ -82,7 +82,7 @@ public sealed class PbrDeferredShader : RenderingShader
             // mrt[0] | pos.x       | pos.y        | pos.z       | 1         |
             // mrt[1] | normal.x    | normal.y     | normal.z    | roughness |
             // mrt[2] | baseColor.r | baseColor.g  | baseColor.b | metallic  |
-            // mrt[3] | 0           | 0            | 0           | 0         |
+            // mrt[3] | emmisive.r  | emmisive.g   | emmisive.b  | 0         |
             // mrt[4] | 0           | 0            | 0           | 0         |
 
             FragmentShader =

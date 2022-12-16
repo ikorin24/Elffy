@@ -71,14 +71,17 @@ internal sealed class PbrDeferredPostProcess : PostProcess
         var gBuffer = _gBufferProvider.GetGBufferData();
         var screen = context.Screen;
         var lights = context.RenderPipeline.Lights;
+        var texUnit = 0u;
 
         var camera = screen.Camera;
         var view = camera.View;
         dispatcher.SendUniform("_viewInv", view.Inverted());
         dispatcher.SendUniform("_projection", camera.Projection);
-        dispatcher.SendUniformTexture2D("_mrt0", gBuffer.Mrt[0], 0);
-        dispatcher.SendUniformTexture2D("_mrt1", gBuffer.Mrt[1], 1);
-        dispatcher.SendUniformTexture2D("_mrt2", gBuffer.Mrt[2], 2);
+        dispatcher.SendUniformTexture2D("_mrt0", gBuffer.Mrt[0], texUnit++);
+        dispatcher.SendUniformTexture2D("_mrt1", gBuffer.Mrt[1], texUnit++);
+        dispatcher.SendUniformTexture2D("_mrt2", gBuffer.Mrt[2], texUnit++);
+        dispatcher.SendUniformTexture2D("_mrt3", gBuffer.Mrt[3], texUnit++);
+        dispatcher.SendUniformTexture2D("_mrt4", gBuffer.Mrt[4], texUnit++);
 
         var light = lights.IsEmpty switch
         {
@@ -97,11 +100,11 @@ internal sealed class PbrDeferredPostProcess : PostProcess
         dispatcher.SendUniform("_lightPos", view * light.Position); // light pos in eye space
         dispatcher.SendUniform("_lightColor", light.Color);
         dispatcher.SendUniform("_shadowMapBias", _shadowMapBias);
-        dispatcher.SendUniformTexture1D("_lightMatData", light.LightMatrixData, 3);
-        dispatcher.SendUniformTexture2DArray("_shadowMap", light.ShadowMap, 4);
+        dispatcher.SendUniformTexture1D("_lightMatData", light.LightMatrixData, texUnit++);
+        dispatcher.SendUniformTexture2DArray("_shadowMap", light.ShadowMap, texUnit++);
 
         Debug.Assert(_ssaoKernel is not null);
-        dispatcher.SendUniformTexture1D("_ssaoKernel", _ssaoKernel.TextureObject, 5);
+        dispatcher.SendUniformTexture1D("_ssaoKernel", _ssaoKernel.TextureObject, texUnit++);
     }
 
     protected override PostProcessSource GetSource(in PostProcessGetterContext context) => new PostProcessSource
@@ -111,7 +114,7 @@ internal sealed class PbrDeferredPostProcess : PostProcess
         // mrt[0] | pos.x       | pos.y        | pos.z       | 1         |
         // mrt[1] | normal.x    | normal.y     | normal.z    | roughness |
         // mrt[2] | baseColor.r | baseColor.g  | baseColor.b | metallic  |
-        // mrt[3] | 0           | 0            | 0           | 0         |
+        // mrt[3] | emmisive.r  | emmisive.g   | emmisive.b  | 0         |
         // mrt[4] | 0           | 0            | 0           | 0         |
 
         FragmentShader = """
@@ -140,6 +143,8 @@ internal sealed class PbrDeferredPostProcess : PostProcess
         uniform sampler2D _mrt0;
         uniform sampler2D _mrt1;
         uniform sampler2D _mrt2;
+        uniform sampler2D _mrt3;
+        uniform sampler2D _mrt4;
 
         uniform bool _hasLight;
         uniform int _cascadeCount;
@@ -293,6 +298,7 @@ internal sealed class PbrDeferredPostProcess : PostProcess
             }
             vec4 mrt1Value = textureLod(_mrt1, _v2f.uv, 0);
             vec4 mrt2Value = textureLod(_mrt2, _v2f.uv, 0);
+            vec4 mrt3Value = textureLod(_mrt3, _v2f.uv, 0);
             vec3 baseColor = mrt2Value.rgb;
             vec3 pos = mrt0Value.xyz;    // pos in eye space
             vec4 dncPos = _projection * vec4(pos, 1);    // device-normalized-coordinate position
@@ -348,8 +354,13 @@ internal sealed class PbrDeferredPostProcess : PostProcess
             // indirect specular
             float f90 = max(0, min(1, 1 - roughness + reflectivity));
             fragColor += 1.0 / (alpha * alpha + 1.0) * FresnelSchlick(f0, vec3(f90, f90, f90), dot_nv) * IndirectSpecular;
+
+            fragColor *= ssao;
+
+            // emissive [cd/m^2] (= nit)
+            fragColor += mrt3Value.rgb;
     
-            _fragColor = vec4(fragColor * ssao, 1.0);
+            _fragColor = vec4(fragColor, 1.0);
         }
         """u8
     };

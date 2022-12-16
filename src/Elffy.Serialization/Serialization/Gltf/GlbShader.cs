@@ -12,12 +12,15 @@ internal sealed class GlbShader : SingleTargetRenderingShader
     private Texture? _baseColor;
     private Texture? _normal;
     private Texture? _metallicRoughness;
+    private Texture? _emissive;
 
     private Color4 _baseColorFactor = new Color4(1, 1, 1, 1);
+    private Vector3 _emissiveFactor = Vector3.Zero;
     private float _metallicFactor = 1;
     private float _roughnessFactor = 1;
 
     public Color4 BaseColorFactor { get => _baseColorFactor; set => _baseColorFactor = value; }
+    public Vector3 EmissiveFactor { get => _emissiveFactor; set => _emissiveFactor = value; }
     public float MetallicFactor { get => _metallicFactor; set => _metallicFactor = value; }
     public float RoughnessFactor { get => _roughnessFactor; set => _roughnessFactor = value; }
 
@@ -25,7 +28,7 @@ internal sealed class GlbShader : SingleTargetRenderingShader
     {
     }
 
-    public void SetBaseColorTexture(ReadOnlyImageRef image, TextureConfig config)
+    public void SetBaseColorTexture(ReadOnlyImageRef image, in TextureConfig config)
     {
         var texture = new Texture(config);
         texture.Load(image);
@@ -33,7 +36,7 @@ internal sealed class GlbShader : SingleTargetRenderingShader
         _baseColor = texture;
     }
 
-    public void SetNormalTexture(ReadOnlyImageRef image, TextureConfig config)
+    public void SetNormalTexture(ReadOnlyImageRef image, in TextureConfig config)
     {
         var texture = new Texture(config);
         texture.Load(image);
@@ -41,12 +44,20 @@ internal sealed class GlbShader : SingleTargetRenderingShader
         _normal = texture;
     }
 
-    public void SetMetallicRoughnessTexture(ReadOnlyImageRef image, TextureConfig config)
+    public void SetMetallicRoughnessTexture(ReadOnlyImageRef image, in TextureConfig config)
     {
         var texture = new Texture(config);
         texture.Load(image);
         _metallicRoughness?.Dispose();
         _metallicRoughness = texture;
+    }
+
+    public void SetEmissiveTexture(ReadOnlyImageRef image, in TextureConfig config)
+    {
+        var texture = new Texture(config);
+        texture.Load(image);
+        _emissive?.Dispose();
+        _emissive = texture;
     }
 
     [DoesNotReturn]
@@ -83,13 +94,17 @@ internal sealed class GlbShader : SingleTargetRenderingShader
         dispatcher.SendUniformTexture2D("_normalTex", normalTex, 1);
         dispatcher.SendUniform("_hasNormalTex", hasNormalTex);
 
-        var (metallicRoughnessTex, hasmetallicRoughnessTex) = GetTextureObject(_metallicRoughness);
+        var (metallicRoughnessTex, hasMetallicRoughnessTex) = GetTextureObject(_metallicRoughness);
         dispatcher.SendUniformTexture2D("_metallicRoughnessTex", metallicRoughnessTex, 2);
-        dispatcher.SendUniform("_hasMetallicRoughnessTex", hasmetallicRoughnessTex);
+        dispatcher.SendUniform("_hasMetallicRoughnessTex", hasMetallicRoughnessTex);
+
+        var (emissiveTex, hasEmissiveTex) = GetTextureObject(_emissive);
+        dispatcher.SendUniformTexture2D("_emissiveTex", emissiveTex, 3);
+        dispatcher.SendUniform("_hasEmissiveTex", hasEmissiveTex);
 
         dispatcher.SendUniform("_baseColorFactor", _baseColorFactor);
-        dispatcher.SendUniform("_metallicFactor", _metallicFactor);
-        dispatcher.SendUniform("_roughnessFactor", _roughnessFactor);
+        dispatcher.SendUniform("_metallicRoughnessFactor", new Vector2(_metallicFactor, _roughnessFactor));
+        dispatcher.SendUniform("_emissiveFactor", _emissiveFactor);
     }
 
     protected override void OnProgramDisposed()
@@ -100,6 +115,8 @@ internal sealed class GlbShader : SingleTargetRenderingShader
         _normal = null;
         _metallicRoughness?.Dispose();
         _metallicRoughness = null;
+        _emissive?.Dispose();
+        _emissive = null;
     }
 
     protected override void OnTargetAttached(Renderable target) { }
@@ -318,7 +335,7 @@ internal sealed class GlbShader : SingleTargetRenderingShader
         // mrt[0] | pos.x       | pos.y        | pos.z       | 1         |
         // mrt[1] | normal.x    | normal.y     | normal.z    | roughness |
         // mrt[2] | baseColor.r | baseColor.g  | baseColor.b | metallic  |
-        // mrt[3] | 0           | 0            | 0           | 0         |
+        // mrt[3] | emmisive.r  | emmisive.g   | emmisive.b  | 0         |
         // mrt[4] | 0           | 0            | 0           | 0         |
         FragmentShader =
         """
@@ -336,12 +353,14 @@ internal sealed class GlbShader : SingleTargetRenderingShader
         uniform sampler2D _baseColorTex;
         uniform sampler2D _normalTex;
         uniform sampler2D _metallicRoughnessTex;
+        uniform sampler2D _emissiveTex;
         uniform bool _hasBaseColorTex;
         uniform bool _hasNormalTex;
         uniform bool _hasMetallicRoughnessTex;
+        uniform bool _hasEmissiveTex;
         uniform vec4 _baseColorFactor;
-        uniform float _metallicFactor;
-        uniform float _roughnessFactor;
+        uniform vec2 _metallicRoughnessFactor;
+        uniform vec3 _emissiveFactor;
         layout (location = 0) out vec4 _mrt0;
         layout (location = 1) out vec4 _mrt1;
         layout (location = 2) out vec4 _mrt2;
@@ -357,6 +376,7 @@ internal sealed class GlbShader : SingleTargetRenderingShader
         {
             vec3 baseColor = _hasBaseColorTex ? texture(_baseColorTex, _v2f.uv).rgb : vec3(1, 1, 1);
             vec2 metallicRoughness = _hasMetallicRoughnessTex ? texture(_metallicRoughnessTex, _v2f.uv).rg : vec2(1, 1);
+            metallicRoughness *= _metallicRoughnessFactor;
 
             vec3 normal;
             if(_hasNormalTex) {
@@ -366,13 +386,14 @@ internal sealed class GlbShader : SingleTargetRenderingShader
             else {
                 normal = _v2f.normal;
             }
-            float metallic = _metallicFactor * metallicRoughness.x;
-            float roughness = _roughnessFactor * metallicRoughness.y;
+
+            vec3 emissive = _hasEmissiveTex ? texture(_emissiveTex, _v2f.uv).rgb : vec3(0, 0, 0);
+            emissive *= _emissiveFactor;
 
             _mrt0 = vec4(_v2f.pos, 1.0);
-            _mrt1 = vec4(normal, roughness);
-            _mrt2 = vec4(baseColor * _baseColorFactor.rgb, metallic);
-            _mrt3 = vec4(0, 0, 0, 0);
+            _mrt1 = vec4(normal, metallicRoughness.y);
+            _mrt2 = vec4(baseColor * _baseColorFactor.rgb, metallicRoughness.x);
+            _mrt3 = vec4(emissive, 0);
             _mrt4 = vec4(0, 0, 0, 0);
         }
         """u8,

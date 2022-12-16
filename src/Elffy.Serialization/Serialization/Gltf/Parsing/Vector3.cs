@@ -1,11 +1,13 @@
 ﻿#nullable enable
 using System;
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Elffy.Serialization.Gltf.Parsing;
 
 [JsonConverter(typeof(Vector3Converter))]
+[DebuggerDisplay("({X}, {Y}, {Z})")]
 internal struct Vector3
 {
     public float X;
@@ -18,6 +20,8 @@ internal struct Vector3
         Y = y;
         Z = z;
     }
+
+    public static implicit operator Elffy.Vector3(Vector3 v) => new Elffy.Vector3(v.X, v.Y, v.Z);
 }
 
 internal sealed class Vector3Converter : JsonConverter<Vector3>

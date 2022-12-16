@@ -366,6 +366,7 @@ public static class GlbModelBuilder
         }
 
         // emissive texture
+        shader.EmissiveFactor = material.emissiveFactor;
         if(material.emissiveTexture.TryGetValue(out var emissiveTextureInfo)) {
             ref readonly var texture = ref GetItemOrThrow(gltf.textures, emissiveTextureInfo.index);
             var uvN = emissiveTextureInfo.texCoord; // texcoord_n
@@ -373,9 +374,7 @@ public static class GlbModelBuilder
                 var loadTexTask = LoadTextureTask(screen, obj, ref imageData, texConfig, shader,
                     static (obj, imageData, texConfig, shader) =>
                     {
-                        //EI.ImageExtensions.SaveAsPng(imageData, "emmisive.png");
-                        //shader.SetBaseColorTexture(imageData, texConfig);
-                        // TODO:
+                        shader.SetEmissiveTexture(imageData, texConfig);
                     });
                 state.Tasks.Add(loadTexTask);
             }
