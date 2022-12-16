@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Xunit;
 using Cysharp.Threading.Tasks;
 using Elffy.Threading;
+using System.Linq;
 
 namespace UnitTest
 {
@@ -23,13 +24,23 @@ namespace UnitTest
         [InlineData(20, 20)]
         public async Task LimitedParallel(int maxParallel, int operationCount)
         {
-            var testState = new TestState(maxParallel);
-            var funcs = new Func<TestState, CancellationToken, UniTask>[operationCount];
+            // Test for the number of functions called at the same time is `maxParallel`,
+            // and ensure that all functions are called only once.
+
+            var counter = new ParallelCallCounter(maxParallel);
+            var funcCalled = new int[operationCount];
+            var funcs = new Func<ParallelCallCounter, CancellationToken, UniTask>[operationCount];
             for(int i = 0; i < funcs.Length; i++) {
-                funcs[i] = (s, ct) => TestWork(s, ct);
+                var funcNum = i;
+                funcs[i] = async (counter, ct) =>
+                {
+                    await TestWork(counter, ct);
+                    Assert.Equal(1, Interlocked.Increment(ref funcCalled[funcNum]));
+                };
             }
-            await ParallelOperation.LimitedParallel(funcs, testState, maxParallel, CancellationToken.None);
-            testState.Ensure();
+            await ParallelOperation.LimitedParallel(funcs, counter, maxParallel, CancellationToken.None);
+            counter.Ensure();
+            Assert.True(funcCalled.All(x => x == 1));
         }
 
         [Theory]
@@ -45,16 +56,20 @@ namespace UnitTest
         [InlineData(20)]
         public async Task EmptyTest(int operationCount)
         {
+            // Test that the method throws an exception if maxParallel == 0.
             const int MaxParallel = 0;
 
-            var testState = new TestState(MaxParallel);
-            var funcs = new Func<TestState, CancellationToken, UniTask>[operationCount];
+            var counter = new ParallelCallCounter(MaxParallel);
+            var funcs = new Func<ParallelCallCounter, CancellationToken, UniTask>[operationCount];
             for(int i = 0; i < funcs.Length; i++) {
-                funcs[i] = (s, ct) => TestWork(s, ct);
+                funcs[i] = (counter, ct) =>
+                {
+                    throw new Exception("This task should not be called !!");
+                };
             }
             await Assert.ThrowsAsync<ArgumentOutOfRangeException>(async () =>
             {
-                await ParallelOperation.LimitedParallel(funcs, testState, MaxParallel, CancellationToken.None);
+                await ParallelOperation.LimitedParallel(funcs, counter, MaxParallel, CancellationToken.None);
             });
         }
 
@@ -71,53 +86,57 @@ namespace UnitTest
         [InlineData(20)]
         public async Task ExceptionTest(int operationCount)
         {
+            // Test that the method throws an exception if maxParallel < 0.
             const int MaxParallel = 0;
 
-            var testState = new TestState(MaxParallel);
-            var funcs = new Func<TestState, CancellationToken, UniTask>[operationCount];
+            var counter = new ParallelCallCounter(MaxParallel);
+            var funcs = new Func<ParallelCallCounter, CancellationToken, UniTask>[operationCount];
             for(int i = 0; i < funcs.Length; i++) {
-                funcs[i] = (s, ct) => TestWork(s, ct);
+                funcs[i] = (counter, ct) =>
+                {
+                    throw new Exception("This task should not be called !!");
+                };
             }
             await Assert.ThrowsAsync<ArgumentOutOfRangeException>(async () =>
             {
-                await ParallelOperation.LimitedParallel(funcs, testState, -1, CancellationToken.None);
+                await ParallelOperation.LimitedParallel(funcs, counter, -1, CancellationToken.None);
             });
         }
 
-        private static async UniTask TestWork(TestState testState, CancellationToken ct)
+        private static async UniTask TestWork(ParallelCallCounter counter, CancellationToken ct)
         {
             await UniTask.SwitchToThreadPool();
-            testState.Enter();
+            counter.Enter();
             await Task.Delay(100);
-            testState.Exit();
+            counter.Exit();
         }
 
-        private sealed class TestState
+        private sealed class ParallelCallCounter
         {
-            private int _value;
+            private int _parallelCall;
             private int _max;
 
-            public TestState(int max)
+            public ParallelCallCounter(int max)
             {
                 _max = max;
-                _value = 0;
+                _parallelCall = 0;
             }
 
             public void Ensure()
             {
-                Assert.Equal(0, _value);
+                Assert.Equal(0, _parallelCall);
             }
 
             public void Enter()
             {
-                if(Interlocked.Increment(ref _value) > _max) {
-                    throw new Exception("Test failure");
+                if(Interlocked.Increment(ref _parallelCall) > _max) {
+                    throw new Exception($"Max limit was exceeded. (max: {_max})");
                 }
             }
 
             public void Exit()
             {
-                Interlocked.Decrement(ref _value);
+                Interlocked.Decrement(ref _parallelCall);
             }
         }
     }

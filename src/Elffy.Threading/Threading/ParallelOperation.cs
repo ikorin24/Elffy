@@ -208,7 +208,7 @@ namespace Elffy.Threading
                 var sequentialFuncs = new PooledAsyncEventFuncs<Func<TArg, CancellationToken, UniTask>>(funcCount);
                 var sf = sequentialFuncs.AsSpan();
                 for(int i = 0; i < sf.Length; i++) {
-                    sf[i] = funcs[i * maxParallel];
+                    sf[i] = funcs[i * maxParallel + parallelId];
                 }
                 return OrderedSequentialAsyncEventPromise<TArg>.CreateTask(sequentialFuncs, _arg, ct);
             }
