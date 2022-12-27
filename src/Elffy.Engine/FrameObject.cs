@@ -11,6 +11,7 @@ using Elffy.Threading;
 namespace Elffy
 {
     /// <summary>The base class which is controlled by the engine. It provides frame update operations and operations to be managed by the engine.</summary>
+    [DebuggerDisplay("{GetType().Name,nq} (Name = {Name})")]
     public abstract class FrameObject : IFramedLifetime<FrameObject>
     {
         private IHostScreen? _hostScreen;
