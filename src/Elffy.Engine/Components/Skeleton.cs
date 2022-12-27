@@ -11,6 +11,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using System.Collections.Generic;
 
 namespace Elffy.Components
 {
@@ -60,7 +61,18 @@ namespace Elffy.Components
             ContextAssociatedMemorySafety.Register(this, Engine.GetValidCurrentContext());
         }
 
-        public UniTask LoadAsync<TBoneSpan>(TBoneSpan bones, FrameTimingPointList timingPoints, CancellationToken cancellationToken = default) where TBoneSpan : IReadOnlySpan<Bone>
+        public UniTask LoadAsync(Bone[] bones, FrameTimingPointList timingPoints, CancellationToken cancellationToken = default)
+        {
+            return LoadAsync(bones.AsReadOnlySpanSource(), timingPoints, FrameTiming.Update, cancellationToken);
+        }
+
+        public UniTask LoadAsync(List<Bone> bones, FrameTimingPointList timingPoints, CancellationToken cancellationToken = default)
+        {
+            return LoadAsync(bones.AsReadOnlySpanSource(), timingPoints, FrameTiming.Update, cancellationToken);
+        }
+
+        public UniTask LoadAsync<TBoneSpan>(TBoneSpan bones, FrameTimingPointList timingPoints, CancellationToken cancellationToken = default)
+            where TBoneSpan : IReadOnlySpan<Bone>
         {
             return LoadAsync(bones, timingPoints, FrameTiming.Update, cancellationToken);
         }
