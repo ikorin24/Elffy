@@ -15,6 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Elffy.Primitives\Elffy.Primitives.csproj" />
     <ProjectReference Include="..\Elffy.Threading.Lock\Elffy.Threading.Lock.csproj" />
   </ItemGroup>
 

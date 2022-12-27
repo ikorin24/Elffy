@@ -151,17 +151,7 @@ namespace Elffy.Threading
             }
             else {
                 var runner = new LimitedParallelRunner<TArg>(funcs, arg, maxParallel);
-                return Execute(runner, cancellationToken);
-
-                static async UniTask Execute(LimitedParallelRunner<TArg> runner, CancellationToken ct)
-                {
-                    try {
-                        await runner.Execute(ct);
-                    }
-                    finally {
-                        runner.Dispose();
-                    }
-                }
+                return runner.ExecuteAndDisposeFinally(cancellationToken);
             }
         }
 
@@ -182,7 +172,7 @@ namespace Elffy.Threading
                 funcs.CopyTo(_funcs.AsSpan());
             }
 
-            public UniTask Execute(CancellationToken ct)
+            private UniTask Execute(CancellationToken ct)
             {
                 var parallelFuncs = new PooledAsyncEventFuncs<Func<LimitedParallelRunner<TArg>, CancellationToken, UniTask>>(_maxParallel);
                 var span = parallelFuncs.AsSpan();
@@ -190,6 +180,16 @@ namespace Elffy.Threading
                     span[i] = static (self, ct) => self.ExecuteChannel(ct);
                 }
                 return OrderedParallelAsyncEventPromise<LimitedParallelRunner<TArg>>.CreateTask(parallelFuncs, this, ct);
+            }
+
+            public async UniTask ExecuteAndDisposeFinally(CancellationToken ct)
+            {
+                try {
+                    await Execute(ct);
+                }
+                finally {
+                    Dispose();
+                }
             }
 
             public void Dispose()

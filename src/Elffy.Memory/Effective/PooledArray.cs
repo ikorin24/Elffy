@@ -2,6 +2,7 @@
 using Elffy.AssemblyServices;
 using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -14,7 +15,11 @@ namespace Elffy.Effective
     [DebuggerTypeProxy(typeof(PooledArrayDebuggerTypeProxy<>))]
     [DebuggerDisplay("PooledArray<{typeof(T).Name,nq}>[{Length}]")]
     [DontUseDefault]
-    public readonly struct PooledArray<T> : IDisposable
+    public readonly struct PooledArray<T> :
+        IFromEnumerable<PooledArray<T>, T>,
+        IFromReadOnlySpan<PooledArray<T>, T>,
+        ISpan<T>,
+        IDisposable
     {
         private readonly T[] _array;
         public readonly int Length;
@@ -45,6 +50,12 @@ namespace Elffy.Effective
             _array = ArrayPool<T>.Shared.Rent(source.Length);
             Length = source.Length;
             source.CopyTo(_array.AsSpan(0, Length));
+        }
+
+        private PooledArray(T[] pooledArray, int usedLength)
+        {
+            _array = pooledArray;
+            Length = usedLength;
         }
 
         /// <summary>Get <see cref="Span{T}"/></summary>
@@ -80,40 +91,6 @@ namespace Elffy.Effective
             return _array.AsSpan(start, length);
         }
 
-        /// <summary>Get <see cref="Memory{T}"/></summary>
-        /// <returns><see cref="Memory{T}"/></returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly Memory<T> AsMemory()
-        {
-            if(_array is null) { ThrowDisposedException(); }
-            return _array.AsMemory(0, Length);
-        }
-
-        /// <summary>Get <see cref="Memory{T}"/></summary>
-        /// <param name="start">start index</param>
-        /// <returns><see cref="Memory{T}"/></returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly Memory<T> AsMemory(int start)
-        {
-            if(_array is null) {
-                ThrowDisposedException();
-            }
-            return _array.AsMemory(start, Length - start);
-        }
-
-        /// <summary>Get <see cref="Memory{T}"/></summary>
-        /// <param name="start">start index</param>
-        /// <param name="length">length of memory</param>
-        /// <returns><see cref="Memory{T}"/></returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly Memory<T> AsMemory(int start, int length)
-        {
-            if(_array is null) {
-                ThrowDisposedException();
-            }
-            return _array.AsMemory(start, length);
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly T[] ToArray()
         {
@@ -137,17 +114,57 @@ namespace Elffy.Effective
             }
         }
 
+        public static PooledArray<T> From(IEnumerable<T> source)
+        {
+            ArgumentNullException.ThrowIfNull(source);
+            switch(source) {
+                case T[] array: {
+                    return new PooledArray<T>(array.AsSpan());
+                }
+                case List<T> list: {
+                    return new PooledArray<T>(list.AsReadOnlySpan());
+                }
+                case ICollection<T> collection: {
+                    return KnownCountEnumerate(collection.Count, collection);
+                }
+                case IReadOnlyCollection<T> collection: {
+                    return KnownCountEnumerate(collection.Count, collection);
+                }
+                default: {
+                    var pooledArray = FromEnumerableImplHelper.EnumerateCollectToPooledArray(source, out var usedLength);
+                    return new PooledArray<T>(pooledArray, usedLength);
+                }
+            }
+
+            static PooledArray<T> KnownCountEnumerate(int count, IEnumerable<T> source)
+            {
+                var instance = new PooledArray<T>(count);
+                var span = instance.AsSpan();
+                try {
+                    var i = 0;
+                    foreach(var item in source) {
+                        span[i++] = item;
+                    }
+                }
+                catch {
+                    instance.Dispose();
+                    throw;
+                }
+                return instance;
+            }
+        }
+
+        public static PooledArray<T> From(ReadOnlySpan<T> span) => new PooledArray<T>(span);
+
         [DoesNotReturn]
         private static void ThrowDisposedException() => throw new ObjectDisposedException(nameof(PooledArray<T>), "Buffer has been returned to pool.");
+
+        public ReadOnlySpan<T> AsReadOnlySpan() => AsSpan();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator Span<T>(PooledArray<T> buffer) => buffer.AsSpan();
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator ReadOnlySpan<T>(PooledArray<T> buffer) => buffer.AsSpan();
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator Memory<T>(PooledArray<T> buffer) => buffer.AsMemory();
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator ReadOnlyMemory<T>(PooledArray<T> buffer) => buffer.AsMemory();
     }
 
     internal sealed class PooledArrayDebuggerTypeProxy<T> where T : class?

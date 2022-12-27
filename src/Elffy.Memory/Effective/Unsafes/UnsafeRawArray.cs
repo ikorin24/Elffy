@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
 using System.ComponentModel;
-using Elffy.AssemblyServices;
+using System.Collections.Generic;
 
 namespace Elffy.Effective.Unsafes
 {
@@ -15,7 +15,13 @@ namespace Elffy.Effective.Unsafes
     /// <typeparam name="T">type of element</typeparam>
     [DebuggerTypeProxy(typeof(UnsafeRawArrayDebuggerTypeProxy<>))]
     [DebuggerDisplay("UnsafeRawArray<{typeof(T).Name,nq}>[{Length}]")]
-    public readonly unsafe struct UnsafeRawArray<T> : IDisposable, IEquatable<UnsafeRawArray<T>> where T : unmanaged
+    public readonly unsafe struct UnsafeRawArray<T> :
+        IFromEnumerable<UnsafeRawArray<T>, T>,
+        IFromReadOnlySpan<UnsafeRawArray<T>, T>,
+        ISpan<T>,
+        IDisposable,
+        IEquatable<UnsafeRawArray<T>>
+        where T : unmanaged
     {
         // =============================================================
         // new UnsafeRawArray(n)   (n > 0)
@@ -199,6 +205,39 @@ namespace Elffy.Effective.Unsafes
         public bool Equals(UnsafeRawArray<T> other) => Length == other.Length && Ptr == other.Ptr;
 
         public override int GetHashCode() => HashCode.Combine(Length, Ptr);
+
+        public static UnsafeRawArray<T> From(IEnumerable<T> source)
+        {
+            ArgumentNullException.ThrowIfNull(source);
+            return source switch
+            {
+                T[] array => new UnsafeRawArray<T>(array.AsSpan()),
+                List<T> list => new UnsafeRawArray<T>(list.AsReadOnlySpan()),
+                ICollection<T> collection => KnownCountEnumerate(collection.Count, collection),
+                IReadOnlyCollection<T> collection => KnownCountEnumerate(collection.Count, collection),
+                _ => FromEnumerableImplHelper.EnumerateCollectBlittable(source, static span => new UnsafeRawArray<T>(span)),
+            };
+
+            static UnsafeRawArray<T> KnownCountEnumerate(int count, IEnumerable<T> source)
+            {
+                var instance = new UnsafeRawArray<T>(count, false, out var span);
+                try {
+                    var i = 0;
+                    foreach(var item in source) {
+                        span[i++] = item;
+                    }
+                }
+                catch {
+                    instance.Dispose();
+                    throw;
+                }
+                return instance;
+            }
+        }
+
+        public static UnsafeRawArray<T> From(ReadOnlySpan<T> span) => new UnsafeRawArray<T>(span);
+
+        public ReadOnlySpan<T> AsReadOnlySpan() => AsSpan();
 
         public static bool operator ==(in UnsafeRawArray<T> left, in UnsafeRawArray<T> right) => left.Equals(right);
 

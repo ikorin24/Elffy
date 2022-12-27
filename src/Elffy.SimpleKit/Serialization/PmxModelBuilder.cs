@@ -62,7 +62,7 @@ namespace Elffy.Serialization
 
             var skeleton = new HumanoidSkeleton();
             model.AddComponent(skeleton);
-            await skeleton.LoadAsync(bones.AsSpanLike(), screen.Timings, obj.CancellationToken);
+            await skeleton.LoadAsync(bones, screen.Timings, obj.CancellationToken);
 
             //      ↑ thread pool
             // ------------------------------

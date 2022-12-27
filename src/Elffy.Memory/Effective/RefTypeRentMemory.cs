@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -16,7 +17,13 @@ namespace Elffy.Effective
     /// <typeparam name="T">element type</typeparam>
     [DebuggerDisplay("{DebugDisplay}")]
     [DebuggerTypeProxy(typeof(RefTypeRentMemoryDebuggerTypeProxy<>))]
-    public readonly struct RefTypeRentMemory<T> : IEquatable<RefTypeRentMemory<T>>, IDisposable where T : class?
+    public readonly struct RefTypeRentMemory<T> :
+        IFromEnumerable<RefTypeRentMemory<T>, T>,
+        IFromReadOnlySpan<RefTypeRentMemory<T>, T>,
+        ISpan<T>,
+        IDisposable,
+        IEquatable<RefTypeRentMemory<T>>
+        where T : class?
     {
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private readonly string DebugDisplay => $"{nameof(RefTypeRentMemory<T>)}<{typeof(T).Name}>[{_length}]";
@@ -81,6 +88,11 @@ namespace Elffy.Effective
             span = AsSpan();
         }
 
+        public RefTypeRentMemory(ReadOnlySpan<T> source) : this(source.Length, out var span)
+        {
+            source.CopyTo(span);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public unsafe ref T GetReference()
         {
@@ -130,6 +142,39 @@ namespace Elffy.Effective
         public override int GetHashCode() => HashCode.Combine(_array, _start, _length);
 
         public override string ToString() => DebugDisplay;
+
+        public static RefTypeRentMemory<T> From(IEnumerable<T> source)
+        {
+            ArgumentNullException.ThrowIfNull(source);
+            return source switch
+            {
+                T[] array => new RefTypeRentMemory<T>(array.AsSpan()),
+                List<T> list => new RefTypeRentMemory<T>(list.AsReadOnlySpan()),
+                ICollection<T> collection => KnownCountEnumerate(collection.Count, collection),
+                IReadOnlyCollection<T> collection => KnownCountEnumerate(collection.Count, collection),
+                _ => FromEnumerableImplHelper.EnumerateCollectRef(source, static span => new RefTypeRentMemory<T>(span)),
+            };
+
+            static RefTypeRentMemory<T> KnownCountEnumerate(int count, IEnumerable<T> source)
+            {
+                var instance = new RefTypeRentMemory<T>(count, out var span);
+                try {
+                    var i = 0;
+                    foreach(var item in source) {
+                        span[i++] = item;
+                    }
+                }
+                catch {
+                    instance.Dispose();
+                    throw;
+                }
+                return instance;
+            }
+        }
+
+        public static RefTypeRentMemory<T> From(ReadOnlySpan<T> span) => new RefTypeRentMemory<T>(span);
+
+        public ReadOnlySpan<T> AsReadOnlySpan() => AsSpan();
     }
 
     internal sealed class RefTypeRentMemoryDebuggerTypeProxy<T> where T : class?
