@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Elffy.Primitives\Elffy.Primitives.csproj" />
+    <ProjectReference Include="..\Elffy.Primitives.Vertex\Elffy.Primitives.Vertex.csproj" />
   </ItemGroup>
 
 </Project>

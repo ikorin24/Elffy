@@ -107,31 +107,6 @@ namespace Elffy
             return FromMinMax(min, max);
         }
 
-        public static Bounds CreateMeshAabb<TVertex>(ReadOnlySpan<TVertex> vertices, ReadOnlySpan<uint> indices) where TVertex : unmanaged, IVertex
-        {
-            unsafe {
-                fixed(TVertex* vp = vertices) {
-                    fixed(uint* ip = indices) {
-                        return CreateMeshAabb(vp, (ulong)vertices.Length, ip, (uint)indices.Length);
-                    }
-                }
-            }
-        }
-
-        public unsafe static Bounds CreateMeshAabb<TVertex>(TVertex* vertices, ulong vertexCount, uint* indices, uint indexCount) where TVertex : unmanaged, IVertex
-        {
-            var min = Vector3.MaxValue;
-            var max = Vector3.MinValue;
-            if(TVertex.TryGetPositionAccessor(out var posAccessor)) {
-                for(uint i = 0; i < indexCount; i++) {
-                    ref readonly var pos = ref posAccessor.Field(vertices[indices[i]]);
-                    min = Vector3.Min(min, pos);
-                    max = Vector3.Max(max, pos);
-                }
-            }
-            return FromMinMax(min, max);
-        }
-
         public override bool Equals(object? obj) => obj is Bounds aabb && Equals(aabb);
 
         public bool Equals(Bounds other) => Min.Equals(other.Min) && Max.Equals(other.Max);

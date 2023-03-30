@@ -317,7 +317,7 @@ namespace Elffy
             if(lifeState == LifeState.New || lifeState >= LifeState.Terminating) {
                 return;
             }
-            _meshBounds = Bounds.CreateMeshAabb(vertices, vertexCount, (uint*)indices, indexCount);
+            _meshBounds = CreateMeshAabb(vertices, vertexCount, (uint*)indices, indexCount);
             _vao = VAO.Create();
             VAO.Bind(_vao);
             _vbo = VBO.Create();
@@ -365,6 +365,20 @@ namespace Elffy
 
         [DoesNotReturn]
         private static void ThrowAlreadyLoaded() => throw new InvalidOperationException("already loaded");
+
+        private unsafe static Bounds CreateMeshAabb<TVertex>(TVertex* vertices, ulong vertexCount, uint* indices, uint indexCount) where TVertex : unmanaged, IVertex
+        {
+            var min = Vector3.MaxValue;
+            var max = Vector3.MinValue;
+            if(TVertex.TryGetPositionAccessor(out var posAccessor)) {
+                for(uint i = 0; i < indexCount; i++) {
+                    ref readonly var pos = ref posAccessor.Field(vertices[indices[i]]);
+                    min = Vector3.Min(min, pos);
+                    max = Vector3.Max(max, pos);
+                }
+            }
+            return Bounds.FromMinMax(min, max);
+        }
     }
 
     public delegate void RenderingEventHandler(in RenderingContext context);

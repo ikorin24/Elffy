@@ -64,6 +64,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elffy.Generator.Markup", "E
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elffy.Markup", "Elffy.Markup\Elffy.Markup.csproj", "{AE5A31AD-6F55-40BC-ABC3-4ED92C5CF648}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Elffy.Primitives.Vertex", "Elffy.Primitives.Vertex\Elffy.Primitives.Vertex.csproj", "{4D9B2AF5-61BC-4AE3-AD84-988B98EC27E7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -410,6 +412,18 @@ Global
 		{AE5A31AD-6F55-40BC-ABC3-4ED92C5CF648}.Release|x64.Build.0 = Release|Any CPU
 		{AE5A31AD-6F55-40BC-ABC3-4ED92C5CF648}.Release|x86.ActiveCfg = Release|Any CPU
 		{AE5A31AD-6F55-40BC-ABC3-4ED92C5CF648}.Release|x86.Build.0 = Release|Any CPU
+		{4D9B2AF5-61BC-4AE3-AD84-988B98EC27E7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D9B2AF5-61BC-4AE3-AD84-988B98EC27E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4D9B2AF5-61BC-4AE3-AD84-988B98EC27E7}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4D9B2AF5-61BC-4AE3-AD84-988B98EC27E7}.Debug|x64.Build.0 = Debug|Any CPU
+		{4D9B2AF5-61BC-4AE3-AD84-988B98EC27E7}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4D9B2AF5-61BC-4AE3-AD84-988B98EC27E7}.Debug|x86.Build.0 = Debug|Any CPU
+		{4D9B2AF5-61BC-4AE3-AD84-988B98EC27E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4D9B2AF5-61BC-4AE3-AD84-988B98EC27E7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4D9B2AF5-61BC-4AE3-AD84-988B98EC27E7}.Release|x64.ActiveCfg = Release|Any CPU
+		{4D9B2AF5-61BC-4AE3-AD84-988B98EC27E7}.Release|x64.Build.0 = Release|Any CPU
+		{4D9B2AF5-61BC-4AE3-AD84-988B98EC27E7}.Release|x86.ActiveCfg = Release|Any CPU
+		{4D9B2AF5-61BC-4AE3-AD84-988B98EC27E7}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

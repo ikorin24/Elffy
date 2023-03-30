@@ -23,9 +23,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\Elffy.Primitives\VertexFieldMarshalType.cs" Link="VertexFieldMarshalType.cs" />
-    <Compile Include="..\Elffy.Primitives\VertexFieldSemantics.cs" Link="VertexFieldSemantics.cs" />
-    <Compile Include="..\Elffy.Primitives\VertexAttribute.cs" Link="VertexAttribute.cs" />
+    <Compile Include="..\Elffy.Primitives.Vertex\VertexFieldMarshalType.cs" Link="VertexFieldMarshalType.cs" />
+    <Compile Include="..\Elffy.Primitives.Vertex\VertexFieldSemantics.cs" Link="VertexFieldSemantics.cs" />
+    <Compile Include="..\Elffy.Primitives.Vertex\VertexAttribute.cs" Link="VertexAttribute.cs" />
   </ItemGroup>
 
   <ItemGroup>
