@@ -187,6 +187,8 @@ namespace Elffy.Imaging
             }
         }
 
+        public void ResizeTo(ImageRef dest) => Image.Resize(this, dest);
+
         /// <summary>Cast <see langword="this"/> as <see cref="ReadOnlyImageRef"/>.</summary>
         /// <returns></returns>
         public ReadOnlyImageRef AsReadOnly() => this;

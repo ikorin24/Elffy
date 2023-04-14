@@ -199,6 +199,8 @@ namespace Elffy.Imaging
             }
         }
 
+        public void ResizeTo(ImageRef dest) => Image.Resize(this, dest);
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref readonly ColorByte GetReference()
         {
