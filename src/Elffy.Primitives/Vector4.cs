@@ -264,6 +264,12 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Vector3 DivideByW()
+        {
+            return new Vector3(X / W, Y / W, Z / W);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly Vector4i ToVector4i() => new Vector4i((int)X, (int)Y, (int)Z, (int)W);
 
         public readonly override bool Equals(object? obj) => obj is Vector4 vector && Equals(vector);

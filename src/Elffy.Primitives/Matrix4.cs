@@ -308,23 +308,34 @@ namespace Elffy
             PerspectiveProjection(minX, maxX, minY, maxY, depthNear, depthFar, out result);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Matrix4 LookAt(in Vector3 eye, in Vector3 target, in Vector3 up)
-        {
-            LookAt(eye, target, up, out var result);
-            return result;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void LookAt(in Vector3 eye, in Vector3 target, in Vector3 up, out Matrix4 result)
         {
             var z = (eye - target).Normalized();
             var x = up.Cross(z).Normalized();
             var y = z.Cross(x).Normalized();
-            result = new Matrix4(x.X, x.Y, x.Z, -x.Dot(eye),
-                                 y.X, y.Y, y.Z, -y.Dot(eye),
-                                 z.X, z.Y, z.Z, -z.Dot(eye),
+
+            var p = new Vector3(-x.Dot(eye), -y.Dot(eye), -z.Dot(eye));
+            return new Matrix4(x.X, x.Y, x.Z, p.X,
+                                 y.X, y.Y, y.Z, p.Y,
+                                 z.X, z.Y, z.Z, p.Z,
                                  0, 0, 0, 1);
+        }
+
+        public static bool LookAt(in Vector3 eye, in Vector3 target, in Vector3 up, out Matrix4 result)
+        {
+            var z = (eye - target).Normalized();
+            var x = up.Cross(z).Normalized();
+            var y = z.Cross(x).Normalized();
+
+            var p = new Vector3(-x.Dot(eye), -y.Dot(eye), -z.Dot(eye));
+            result = new Matrix4(x.X, x.Y, x.Z, p.X,
+                                 y.X, y.Y, y.Z, p.Y,
+                                 z.X, z.Y, z.Z, p.Z,
+                                 0, 0, 0, 1);
+            if(x.ContainsNaNOrInfinity || y.ContainsNaNOrInfinity || z.ContainsNaNOrInfinity || p.ContainsNaNOrInfinity) {
+                return false;
+            }
+            return true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
