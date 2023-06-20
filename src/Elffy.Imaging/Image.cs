@@ -80,6 +80,10 @@ namespace Elffy.Imaging
         {
         }
 
+        public Image(uint width, uint height) : this(checked((int)width), checked((int)height))
+        {
+        }
+
         /// <summary>Create a new image with specified size.</summary>
         /// <remarks>If <paramref name="zeroFill"/> is false, the pixels are not initialized. You must set them before using the image.</remarks>
         /// <param name="width">image width</param>
@@ -102,6 +106,10 @@ namespace Elffy.Imaging
             }
         }
 
+        public Image(uint width, uint height, bool zeroFill) : this(checked((int)width), checked((int)height), zeroFill)
+        {
+        }
+
         /// <summary>Create a new image with specified size.</summary>
         /// <param name="width">image width</param>
         /// <param name="height">image height</param>
@@ -109,6 +117,10 @@ namespace Elffy.Imaging
         public Image(int width, int height, ColorByte fill) : this(width, height, false)
         {
             GetPixels().Fill(fill);
+        }
+
+        public Image(uint width, uint height, ColorByte fill) : this(checked((int)width), checked((int)height), fill)
+        {
         }
 
         public Image(IImageSource source, short token)
