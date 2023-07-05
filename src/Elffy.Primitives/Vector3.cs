@@ -97,6 +97,14 @@ namespace Elffy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector3(float value) => (X, Y, Z) = (value, value, value);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Vector3(Vector2 xy, float z)
+        {
+            X = xy.X;
+            Y = xy.Y;
+            Z = z;
+        }
+
         [EditorBrowsable(EditorBrowsableState.Never)]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly void Deconstruct(out float x, out float y, out float z) => (x, y, z) = (X, Y, Z);
