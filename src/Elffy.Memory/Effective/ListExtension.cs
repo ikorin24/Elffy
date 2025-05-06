@@ -14,6 +14,7 @@ namespace Elffy.Effective
 {
     public static class ListExtension
     {
+#if !NET8_0_OR_GREATER
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [CriticalDotnetDependency("netcoreapp3.1 || net5.0")]
         public static void AddRange<T>(this List<T> list, ReadOnlySpan<T> span)
@@ -40,6 +41,7 @@ namespace Elffy.Effective
             Unsafe.As<ListDummy<T>>(list)._size += span.Length;
             Unsafe.As<ListDummy<T>>(list)._version++;
         }
+#endif
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #if NETCOREAPP3_1

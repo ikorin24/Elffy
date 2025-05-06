@@ -400,6 +400,7 @@ namespace Elffy.Effective
             return resultSelector(accum);
         }
 
+#if !NET8_0_OR_GREATER
         public static Span<T> Replace<T>(this Span<T> source, T oldValue, T newValue)
         {
             var eq = EqualityComparer<T>.Default;
@@ -410,6 +411,7 @@ namespace Elffy.Effective
             }
             return source;
         }
+#endif
 
         public static ReadOnlySpan<char> Replace(this ReadOnlySpan<char> source, char oldValue, char newValue, Span<char> destBuffer)
         {

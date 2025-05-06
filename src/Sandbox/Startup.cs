@@ -81,12 +81,21 @@ public static class Startup
         var uiRoot = ui.UIRoot;
         var update = screen.Timings.Update;
         uiRoot.Background = Color4.Black;
+        var gizmo = new Gizmo();
         try {
-            CameraMouse.Attach(screen, new Vector3(0, 3, 0), new Vector3(0, 6, 40));
+            CameraMouse.Attach(screen, new Vector3(0, 6, 30), new Vector3(0, -0.1f, -1));
             await ParallelOperation.WhenAll(
                 InitializeLights(forward),
-                new Gizmo().Activate(forward),
-                Sample.CreateUI(ui.UIRoot),
+                gizmo.Activate(forward),
+                UniTask.Create(async () =>
+                {
+                    var grid = await Sample.CreateUI(ui.UIRoot);
+                    var button = (Button)grid.Children[0].Children[1];
+                    button.KeyDown.Subscribe(_ =>
+                    {
+                        gizmo.IsVisible = !gizmo.IsVisible;
+                    });
+                }),
                 CreateFloor2(forward),
                 CreateDice2(deferred),
                 CreateDice(forward),
@@ -98,7 +107,7 @@ public static class Startup
                 CreateSky(forward),
                 new Sphere()
                 {
-                    Position = new Vector3(-5, 1, 1),
+                    Position = new Vector3(-5, 0.5f, 1),
                     Shader = new PbrDeferredShader()
                     {
                         Metallic = 0f,
@@ -108,7 +117,7 @@ public static class Startup
                 }.Activate(deferred),
                 new Sphere()
                 {
-                    Position = new Vector3(-5, 1, 3),
+                    Position = new Vector3(-5, 0.5f, 3),
                     Shader = new PbrDeferredShader()
                     {
                         Metallic = 1f,
@@ -162,7 +171,7 @@ public static class Startup
         var i = 0;
         screen.Timings.Update.Subscribe(_ =>
         {
-            var angle = i++.ToRadian();
+            var angle = i++.ToRadian() * 0.3f;
             var (sin, cos) = MathF.SinCos(angle);
             var vec = -new Vector3(sin * 10, 10, cos * 2);
             light.Direction = vec;
@@ -209,7 +218,7 @@ public static class Startup
     {
         var model = Resources.Sandbox["Alicia/Alicia_solid.pmx"].CreatePmxModel();
         model.Scale = new Vector3(0.3f);
-        model.Position = new Vector3(0, 0, -2.5f);
+        model.Position = new Vector3(-2, 0, -2.5f);
         await model.Activate(layer);
         model.Update.Subscribe(m =>
         {

@@ -1,11 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net7.0</TargetFrameworks>
+    <TargetFramework>net9</TargetFramework>
     <Nullable>enable</Nullable>
     <RootNamespace>Elffy.Memory</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <LangVersion>11</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>

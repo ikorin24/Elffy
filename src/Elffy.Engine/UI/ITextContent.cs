@@ -14,6 +14,7 @@ namespace Elffy.UI
         Color4 Foreground { get; set; }
         HorizontalAlignment TextAlignment { get; set; }
         VerticalAlignment VerticalTextAlignment { get; set; }
+        [UnscopedRef]
         Event<(ITextContent Sender, string PropertyName)> TextContentChanged { get; }
     }
 

@@ -12,7 +12,14 @@ namespace Elffy
     /// <summary>Base class which exists in space. That provides position, size and rotation.</summary>
     public abstract class Positionable : ComponentOwner
     {
-        private Trs<Positionable> _trs = new Trs<Positionable>();           // mutable object, don't make it readonly
+        private Vector3 _position = Vector3.Zero;
+        private Quaternion _rotation = Quaternion.Identity;
+        private Vector3 _scale = Vector3.One;
+        private Matrix4 _transform = Matrix4.Identity;
+        private bool _hasTransform = true;
+        private EventSource<Positionable> _positionChanged = EventSource<Positionable>.Default;
+        private EventSource<Positionable> _rotationChanged = EventSource<Positionable>.Default;
+        private EventSource<Positionable> _scaleChanged = EventSource<Positionable>.Default;
         private ArrayPooledListCore<Positionable> _childrenCore = new();    // mutable object, don't make it readonly
         private EventSource<Positionable> _parentChanged;                   // mutable object, don't make it readonly
         private Matrix4? _modelCache;
@@ -48,10 +55,10 @@ namespace Elffy
         /// <remarks>The value is same as <see cref="WorldPosition"/> if <see cref="IsRoot"/> is true.</remarks>
         public Vector3 Position
         {
-            get => _trs.Position;
+            get => _position;
             set
             {
-                if(_trs.SetPosition(value, out var changed)) {
+                if(SetPosition(value, out var changed)) {
                     _modelCache = null;
                     changed.InvokeIgnoreException(this);
                 }
@@ -83,10 +90,10 @@ namespace Elffy
         /// <summary>Get or set <see cref="Quaternion"/> of rotation.</summary>
         public Quaternion Rotation
         {
-            get => _trs.Rotation;
+            get => _rotation;
             set
             {
-                if(_trs.SetRotation(value, out var changed)) {
+                if(SetRotation(value, out var changed)) {
                     _modelCache = null;
                     changed.InvokeIgnoreException(this);
                 }
@@ -118,19 +125,19 @@ namespace Elffy
         /// <summary>Get or set scale of <see cref="Positionable"/>.</summary>
         public Vector3 Scale
         {
-            get => _trs.Scale;
+            get => _scale;
             set
             {
-                if(_trs.SetScale(value, out var changed)) {
+                if(SetScale(value, out var changed)) {
                     _modelCache = null;
                     changed.InvokeIgnoreException(this);
                 }
             }
         }
 
-        public Event<Positionable> PositionChanged => _trs.PositionChanged;
-        public Event<Positionable> RotationChanged => _trs.RotationChanged;
-        public Event<Positionable> ScaleChanged => _trs.ScaleChanged;
+        public Event<Positionable> PositionChanged => _positionChanged.Event;
+        public Event<Positionable> RotationChanged => _rotationChanged.Event;
+        public Event<Positionable> ScaleChanged => _scaleChanged.Event;
         public Event<Positionable> ParentChanged => _parentChanged.Event;
 
         public Positionable() : this(FrameObjectInstanceType.Positionable)
@@ -142,7 +149,56 @@ namespace Elffy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Matrix4 GetSelfModelMatrix() => _trs.GetTransform();
+        private bool SetPosition(in Vector3 value, out EventSource<Positionable> eventSource)
+        {
+            eventSource = _positionChanged;
+            if(_position == value) {
+                return false;
+            }
+            _hasTransform = false;
+            _position = value;
+            return true;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool SetRotation(in Quaternion value, out EventSource<Positionable> eventSource)
+        {
+            eventSource = _rotationChanged;
+            if(_rotation == value) {
+                return false;
+            }
+            _hasTransform = false;
+            _rotation = value;
+            return true;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool SetScale(in Vector3 value, out EventSource<Positionable> eventSource)
+        {
+            eventSource = _scaleChanged;
+            if(_scale == value) {
+                return false;
+            }
+            _hasTransform = false;
+            _scale = value;
+            return true;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Matrix4 GetSelfModelMatrix()
+        {
+            if(_hasTransform == false) {
+                UpdateTransform();
+
+                [MethodImpl(MethodImplOptions.NoInlining)]  // uncommon path
+                void UpdateTransform()
+                {
+                    _transform = _position.ToTranslationMatrix4() * _rotation.ToMatrix4() * _scale.ToScaleMatrix4();
+                    _hasTransform = true;
+                }
+            }
+            return _transform;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Matrix4 GetModelMatrix()
