@@ -13,6 +13,10 @@ Sandbox.csproj を実行すれば動きます。Windows のみ。(2025年現在�
 > dotnet run -c Release
 ```
 
+Forward Rendering, Deferred Rendering, Shado, PBR, SSAO など
+
+![scene-image](./img/image.gif)
+
 ## Other licensed products
 
 See [NOTICE](https://github.com/ikorin24/Elffy/blob/master/NOTICE.md) file.
